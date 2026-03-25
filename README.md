@@ -2,6 +2,25 @@
 
 **Hand-crafted Claude Code skills for DevOps, security, infrastructure, and software engineering.**
 
+<div align="center">
+
+```bash
+npx skills add iuliandita/skills
+```
+
+**19 production-tested skills** -- Kubernetes, Terraform, Docker, Ansible, CI/CD, databases, networking, security audits, pentesting, code review, and more.
+
+[![Claude Code](https://img.shields.io/badge/Claude_Code-skills-blue)](https://docs.anthropic.com/en/docs/claude-code/overview)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
+</div>
+
+---
+
+`kubernetes` `terraform` `docker` `ansible` `helm` `argocd` `ci-cd` `github-actions` `gitlab-ci` `postgresql` `mongodb` `mysql` `networking` `dns` `wireguard` `tailscale` `vpn` `nftables` `opnsense` `pfsense` `security-audit` `owasp` `pentesting` `privilege-escalation` `ctf` `code-review` `git` `shell` `zsh` `bash` `prompt-engineering` `pci-dss` `compliance` `devops` `infrastructure-as-code` `iac` `containers` `podman` `buildah` `sealed-secrets` `haproxy` `caddy` `traefik` `nginx`
+
+---
+
 These aren't generic prompts copy-pasted from a blog post. Every skill in this collection has been built iteratively, analyzed against real-world usage, cross-checked with official documentation, and refined through multiple passes until it actually works the way you'd expect. Each one is structured with a compact core that triggers fast and loads clean, plus dedicated reference files that get pulled in only when Claude needs the deep stuff -- compliance checklists, manifest templates, pattern libraries. No bloat in the main body, no missing context when it matters.
 
 Every skill is researched well beyond Claude's training cutoff. We're talking current CVEs, recent breaking changes, deprecation notices, and gotchas from *this week* -- not whatever the model last saw during pre-training. When Kubernetes drops a beta API, when Terraform changes provider behavior, when Docker deprecates a build flag -- these skills already know about it. Claude is smart, but its knowledge has a shelf life. These skills keep it current.
@@ -67,35 +86,40 @@ Each skill follows a specific architecture:
 
 ## Install
 
-### All skills at once
+### Quick install (via [skills.sh](https://skills.sh))
 
 ```bash
-# Clone and install everything
+# All skills
+npx skills add iuliandita/skills
+
+# Pick specific ones
+npx skills add iuliandita/skills --skill kubernetes --skill docker --skill terraform
+
+# See what's available
+npx skills add iuliandita/skills --list
+```
+
+### Using the bundled installer
+
+```bash
+# All skills
 git clone https://github.com/iuliandita/skills.git /tmp/skills-install
 /tmp/skills-install/install.sh
 rm -rf /tmp/skills-install
-```
 
-### Pick and choose
-
-```bash
-# Install specific skills
+# Pick and choose
 git clone https://github.com/iuliandita/skills.git /tmp/skills-install
 /tmp/skills-install/install.sh kubernetes docker terraform ansible
-
-# See what's available
-/tmp/skills-install/install.sh --list
+/tmp/skills-install/install.sh --list  # see what's available
 ```
 
-### Manual install
-
-Just copy the skill directory into `~/.claude/skills/`:
+### Manual
 
 ```bash
 cp -r skills/kubernetes ~/.claude/skills/kubernetes
 ```
 
-That's it. Claude Code picks them up automatically on the next conversation.
+Claude Code picks up new skills automatically on the next conversation.
 
 ## Requirements
 
