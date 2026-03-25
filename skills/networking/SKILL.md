@@ -1,0 +1,322 @@
+---
+name: networking
+description: >
+  Use when configuring, troubleshooting, or optimizing Linux networking, DNS, reverse proxies,
+  VPNs, VLANs, subnetting, HA, or nftables firewalls. Also trigger on diagnostics (tcpdump, mtr,
+  ss, dig), load balancing (HAProxy, Nginx, Caddy, Traefik), VPN setup (WireGuard, OpenVPN,
+  IPsec/strongSwan), overlays (Tailscale, Headscale, Nebula, ZeroTier), keepalived/VRRP,
+  Cloudflare Tunnels, dynamic routing (FRR, BGP, OSPF), or performance tuning (MTU, TCP,
+  bufferbloat). Triggers: 'dns', 'reverse proxy', 'load balancer', 'vpn', 'wireguard',
+  'cloudflare tunnel', 'cloudflared', 'vlan', 'subnet', 'nftables', 'iptables', 'keepalived',
+  'vrrp', 'caddy', 'nginx' (proxy context), 'haproxy', 'traefik', 'mtr', 'tcpdump', 'dig',
+  'unbound', 'coredns', 'tailscale', 'headscale', 'nebula', 'frr', 'bgp', 'ospf', 'mtu',
+  'network'. Not for OPNsense/pfSense (use opnsense), K8s networking (use kubernetes), container
+  networking (use docker), cloud VPCs (use terraform), or offensive pentesting (use lockpick).
+source: custom
+date_added: "2026-03-25"
+effort: high
+---
+
+# Networking: Configuration, Troubleshooting, and Optimization
+
+Configure, troubleshoot, and optimize Linux networking infrastructure. Covers DNS, reverse proxies,
+VPNs, firewalls (nftables), VLANs, subnetting, high availability, dynamic routing, and network
+performance tuning.
+
+**Target versions** (March 2026):
+
+| Tool | Version | Notes |
+|------|---------|-------|
+| Caddy | 2.11.2 | Auto-HTTPS, Caddyfile + JSON API |
+| Nginx | 1.28.3 stable / 1.29.7 mainline | 6 CVEs patched Mar 2026 (dav, mp4, mail, OCSP) |
+| Traefik | 3.6.11 | Gateway API native, v2 EOL approaching |
+| HAProxy | 3.3.6 stable / 3.2.15 LTS | LTS EOL 2030-Q2 |
+| WireGuard tools | 1.0.20260223 | Kernel module + userspace tools |
+| strongSwan | 6.0.5 | swanctl config (legacy ipsec.conf deprecated) |
+| nftables | 1.1.6 | iptables successor, default on modern distros |
+| keepalived | 2.3.4 | VRRP + health checks |
+| Unbound | 1.24.2 | CVE-2025-11411 fix (unsolicited NS RRSets) |
+| CoreDNS | 1.14.2 | K8s default DNS, plugin-based |
+| FRRouting | 10.5.1 | BGP, OSPF, IS-IS, PIM |
+| Tailscale / Headscale | Headscale 0.28.0 | Self-hosted control server |
+| cloudflared | 2026.3.0 | Cloudflare Tunnel (outbound-only) |
+| OpenVPN | 2.7.0 / 2.6.19 | 2.7.0: multi-socket, DCO kernel module |
+
+## When to use
+
+- Configuring DNS servers (Unbound, CoreDNS, dnsmasq, BIND9, Pi-hole, AdGuard Home)
+- Setting up or troubleshooting reverse proxies and load balancers
+- VPN configuration (WireGuard, OpenVPN, IPsec) and overlay networks
+- Linux firewall rules (nftables, legacy iptables)
+- VLAN configuration, subnetting, network segmentation
+- High availability with keepalived/VRRP, floating IPs
+- Network diagnostics (tcpdump, mtr, ss, dig, iperf3, Wireshark/tshark)
+- TCP/network performance tuning (MTU, buffers, congestion control, bufferbloat)
+- Dynamic routing with FRRouting (BGP, OSPF)
+- TLS/certificate management for network services
+- Split-horizon DNS, DNS-over-HTTPS/TLS, DNSSEC
+
+## When NOT to use
+
+- OPNsense/pfSense firewall appliance management (use **opnsense**)
+- Kubernetes networking: NetworkPolicy, Gateway API, service mesh, CNI (use **kubernetes**)
+- Docker/container networking: bridge, overlay, Compose networks (use **docker**)
+- Cloud VPCs, security groups, managed load balancers (use **terraform**)
+- Network config management at scale via playbooks (use **ansible**)
+- Offensive pentesting, exploitation, lateral movement (use **lockpick**)
+- Application-level security review, SSRF, header injection (use **security-audit**)
+
+---
+
+## AI Self-Check
+
+Before returning any generated network configuration, verify:
+
+- [ ] **No hardcoded secrets**: passwords, PSKs, API keys use placeholders or env vars
+- [ ] **Correct interface names**: didn't assume `eth0` -- modern Linux uses predictable names
+  (`enp0s3`, `ens18`, etc.). Ask or check `ip link` output
+- [ ] **MTU considered**: VPN tunnels need reduced MTU (WireGuard: 1420, OpenVPN: ~1400, VXLAN:
+  1450). Mismatched MTU causes silent packet drops
+- [ ] **DNS resolver order**: systemd-resolved vs /etc/resolv.conf vs NetworkManager -- check
+  which DNS manager is active before modifying
+- [ ] **Firewall persistence**: nftables rules need `nft list ruleset > /etc/nftables.conf` or
+  a service to persist across reboots. Raw `nft add` commands are ephemeral
+- [ ] **Port conflicts checked**: reverse proxy ports (80, 443) may conflict with existing
+  services. Verify with `ss -tlnp`
+- [ ] **TLS versions**: minimum TLS 1.2 for all services. TLS 1.3 preferred where supported
+- [ ] **Private IP ranges correct**: 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16 (not /24)
+- [ ] **Subnet overlap**: VPN address ranges must not overlap with LAN or other VPN ranges
+- [ ] **IPv6 considered**: dual-stack config or explicit disable. Half-configured IPv6 leaks
+  traffic around IPv4-only VPNs
+
+---
+
+## Workflow
+
+### Step 1: Identify the task type
+
+| Task type | Start with | Reference |
+|-----------|------------|-----------|
+| **Troubleshoot** | Symptoms, recent changes, affected scope | `${CLAUDE_SKILL_DIR}/references/troubleshooting.md` |
+| **Configure DNS** | Current resolver, authoritative vs recursive, split-horizon needs | `${CLAUDE_SKILL_DIR}/references/dns.md` |
+| **Set up reverse proxy** | Which proxy, upstream services, TLS requirements | `${CLAUDE_SKILL_DIR}/references/reverse-proxies.md` |
+| **Configure VPN** | Topology (p2p, hub-spoke, mesh), protocol choice | `${CLAUDE_SKILL_DIR}/references/vpn.md` |
+| **Network segmentation** | VLANs, subnets, nftables zones, namespaces | `${CLAUDE_SKILL_DIR}/references/segmentation.md` |
+| **High availability** | keepalived/VRRP, floating IPs, health checks | `${CLAUDE_SKILL_DIR}/references/ha.md` |
+
+### Step 2: Gather context
+
+Before writing config or running commands:
+
+1. **What distro and init system?** (systemd vs OpenRC -- affects service management)
+2. **What's the current network state?** (`ip addr`, `ip route`, `ss -tlnp`, `resolvectl status`)
+3. **Is there an existing firewall?** (`nft list ruleset`, `iptables-save`)
+4. **Who manages DNS?** (`resolvectl status` or `cat /etc/resolv.conf` -- check for systemd-resolved stub)
+5. **Is this behind NAT?** (affects VPN, reverse proxy, and HA design)
+
+### Step 3: Implement
+
+Read the appropriate reference file for detailed patterns. Key principles:
+
+- **Test before persisting.** Add nftables rules, verify connectivity, then save. Apply reverse
+  proxy config changes with `--dry-run` or syntax check first (`caddy validate`, `nginx -t`,
+  `haproxy -c`).
+- **One change at a time.** Network misconfigs can lock you out. If working over SSH, set a
+  revert timer (`at now + 5 minutes <<< 'systemctl restart networking'`).
+- **Log what you changed.** Network debugging is 10x harder when you don't know what changed.
+
+### Step 4: Validate
+
+| What to validate | How |
+|-----------------|-----|
+| DNS resolution | `dig @server domain A +short`, `dig domain AAAA +short` |
+| Reverse proxy | `curl -vk https://domain` (check cert, headers, upstream response) |
+| VPN tunnel | `wg show` (WireGuard), `ping` across tunnel, check `ip route` |
+| Firewall rules | `nft list ruleset`, test both allowed and blocked traffic |
+| VLAN tagging | `ip -d link show`, `tcpdump -e -i interface` (check 802.1Q tags) |
+| HA failover | Stop primary, verify VIP migrates, check `journalctl -u keepalived` |
+| Performance | `iperf3 -c server`, `mtr target`, check for packet loss and jitter |
+
+---
+
+## Quick Reference: Diagnostic Tools
+
+| Tool | Purpose | Key usage |
+|------|---------|-----------|
+| `ip` | Interface, route, neighbor, rule management | `ip addr`, `ip route`, `ip neigh`, `ip link` |
+| `ss` | Socket statistics (replaces netstat) | `ss -tlnp` (TCP listeners), `ss -ulnp` (UDP) |
+| `dig` | DNS queries | `dig @8.8.8.8 example.com A +short` |
+| `mtr` | Combined traceroute + ping | `mtr -n --report target` (non-interactive) |
+| `tcpdump` | Packet capture | `tcpdump -i eth0 -nn port 53` (DNS traffic) |
+| `tshark` | Wireshark CLI | `tshark -i any -f 'port 443' -Y 'tls.handshake'` |
+| `curl` | HTTP testing | `curl -vk -o /dev/null https://target` (verbose TLS info) |
+| `iperf3` | Bandwidth testing | Server: `iperf3 -s` / Client: `iperf3 -c server` |
+| `nft` | nftables rule management | `nft list ruleset`, `nft monitor trace` |
+| `wg` | WireGuard status | `wg show`, `wg showconf wg0` |
+| `resolvectl` | systemd-resolved status | `resolvectl status`, `resolvectl query domain` |
+| `doggo` | Modern dig alternative | `doggo example.com A @8.8.8.8 --json` |
+| `nmap` | Port scanning, service detection | `nmap -sV -p 1-1024 target` |
+| `socat` | Multipurpose relay | `socat TCP-LISTEN:8080,fork TCP:backend:80` |
+
+---
+
+## Quick Reference: CIDR Cheat Sheet
+
+| CIDR | Netmask | Hosts | Common use |
+|------|---------|-------|------------|
+| /32 | 255.255.255.255 | 1 | Host route, loopback |
+| /31 | 255.255.255.254 | 2 | Point-to-point link (RFC 3021) |
+| /30 | 255.255.255.252 | 2 | Legacy point-to-point |
+| /29 | 255.255.255.248 | 6 | Small service subnet |
+| /28 | 255.255.255.240 | 14 | DMZ, management |
+| /27 | 255.255.255.224 | 30 | Small office |
+| /26 | 255.255.255.192 | 62 | Department |
+| /25 | 255.255.255.128 | 126 | Floor / building wing |
+| /24 | 255.255.255.0 | 254 | Standard LAN segment |
+| /16 | 255.255.0.0 | 65534 | Large campus / datacenter |
+| /8 | 255.0.0.0 | 16M+ | Class A (10.0.0.0/8) |
+
+**Private ranges (RFC 1918):** `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`
+**CGNAT (RFC 6598):** `100.64.0.0/10` (used by Tailscale, carrier NAT)
+**Link-local:** `169.254.0.0/16` (IPv4), `fe80::/10` (IPv6)
+**ULA (IPv6):** `fd00::/8` (private, like RFC 1918 for IPv6)
+
+---
+
+## Quick Reference: DNS Record Types
+
+| Type | Purpose | Example |
+|------|---------|---------|
+| A | IPv4 address | `example.com. 300 IN A 93.184.216.34` |
+| AAAA | IPv6 address | `example.com. 300 IN AAAA 2606:2800:220:1::` |
+| CNAME | Alias to another name | `www.example.com. IN CNAME example.com.` |
+| MX | Mail server | `example.com. IN MX 10 mail.example.com.` |
+| TXT | Arbitrary text (SPF, DKIM, verification) | `example.com. IN TXT "v=spf1 ..."` |
+| SRV | Service location | `_sip._tcp.example.com. IN SRV 10 5 5060 sip.example.com.` |
+| NS | Nameserver delegation | `example.com. IN NS ns1.example.com.` |
+| CAA | Certificate authority authorization | `example.com. IN CAA 0 issue "letsencrypt.org"` |
+| SVCB/HTTPS | Service binding (newer) | `example.com. IN HTTPS 1 . alpn="h2,h3"` |
+| PTR | Reverse DNS | `34.216.184.93.in-addr.arpa. IN PTR example.com.` |
+
+---
+
+## Quick Reference: Reverse Proxy Selection
+
+| Proxy | Best for | TLS | Config style | L4 support |
+|-------|----------|-----|-------------|------------|
+| **Caddy** | Simple setups, auto-HTTPS | Automatic (ACME) | Caddyfile / JSON API | Yes (experimental) |
+| **Nginx** | High traffic, static files | Manual or certbot | nginx.conf | Yes (stream module) |
+| **Traefik** | Docker/K8s, dynamic backends | Automatic (ACME) | Labels / file / K8s CRDs | Yes (TCP/UDP) |
+| **HAProxy** | Pure load balancing, L4/L7 | Manual | haproxy.cfg | Yes (native) |
+
+Read `${CLAUDE_SKILL_DIR}/references/reverse-proxies.md` for configuration patterns, TLS setup,
+health checks, rate limiting, and WebSocket/gRPC proxying.
+
+---
+
+## Quick Reference: VPN Protocol Selection
+
+| Protocol | Speed | Complexity | Key exchange | Best for |
+|----------|-------|-----------|--------------|----------|
+| **WireGuard** | Fastest | Minimal config | Noise (Curve25519) | P2P, hub-spoke, general use |
+| **OpenVPN** | Good | Complex PKI | TLS/x509 | Legacy, tap mode (L2) |
+| **IPsec (strongSwan)** | Good | Most complex | IKEv2 | Site-to-site, standards compliance |
+| **Tailscale/Headscale** | Fast (WG underneath) | Zero config | WG + DERP relays | Overlay mesh, remote access |
+| **Nebula** | Fast | Low | Certificate-based | Large mesh, Slack-scale |
+
+Read `${CLAUDE_SKILL_DIR}/references/vpn.md` for setup patterns, key management, MTU tuning,
+NAT traversal, and overlay network comparison.
+
+---
+
+## Quick Reference: nftables vs iptables
+
+iptables is legacy. nftables is the default on Debian 11+, RHEL 9+, Arch, and most modern distros.
+
+```
+# Minimal nftables ruleset -- stateful firewall with SSH
+table inet filter {
+  chain input {
+    type filter hook input priority 0; policy drop;
+    ct state established,related accept
+    iif lo accept
+    tcp dport 22 accept
+    icmp type echo-request accept
+    icmpv6 type { echo-request, nd-neighbor-solicit, nd-router-advert } accept
+  }
+  chain forward { type filter hook forward priority 0; policy drop; }
+  chain output { type filter hook output priority 0; policy accept; }
+}
+```
+
+Read `${CLAUDE_SKILL_DIR}/references/segmentation.md` for VLAN setup, nftables zones, network
+namespaces, and inter-VLAN routing patterns.
+
+---
+
+## PCI-DSS 4.0 Relevance
+
+Network configuration touches several PCI-DSS requirements:
+
+| Req | Area | What to check |
+|-----|------|--------------|
+| 1.2 | Network security controls | Firewall rules restrict inbound/outbound to minimum necessary |
+| 1.3 | CDE segmentation | VLANs, nftables, or physical separation between CDE and other networks |
+| 1.4 | Trusted/untrusted boundaries | Reverse proxy TLS termination, WAF placement |
+| 2.2 | Hardening | Disable unnecessary services, unused ports closed |
+| 4.1 | Encryption in transit | TLS 1.2+ everywhere, no plaintext on untrusted segments |
+| 11.3 | Network monitoring | IDS/IPS (Suricata), log aggregation, flow analysis |
+
+---
+
+## Reference Files
+
+- `${CLAUDE_SKILL_DIR}/references/dns.md` -- DNS server comparison, DNSSEC, split-horizon,
+  DoH/DoT, Pi-hole/AdGuard, troubleshooting
+- `${CLAUDE_SKILL_DIR}/references/reverse-proxies.md` -- Caddy, Nginx, Traefik, HAProxy
+  configuration patterns, TLS, WebSocket, gRPC, rate limiting
+- `${CLAUDE_SKILL_DIR}/references/vpn.md` -- WireGuard, OpenVPN, IPsec/strongSwan setup,
+  overlay networks (Tailscale, Headscale, Nebula, ZeroTier), key management
+- `${CLAUDE_SKILL_DIR}/references/segmentation.md` -- VLANs, subnetting, nftables firewall
+  patterns, network namespaces, IPv6
+- `${CLAUDE_SKILL_DIR}/references/troubleshooting.md` -- Diagnostic methodology, tool deep-dives,
+  common issues, performance tuning
+- `${CLAUDE_SKILL_DIR}/references/ha.md` -- keepalived/VRRP, floating IPs, HAProxy + keepalived
+  HA, health check patterns
+
+## Related Skills
+
+- **opnsense** -- manages BSD-based firewall appliances (OPNsense, pfSense). This skill handles
+  Linux networking; opnsense handles FreeBSD appliance firewalls. If the user mentions pfctl,
+  CARP, or OPNsense/pfSense hostnames, route to opnsense.
+- **kubernetes** -- owns K8s networking (NetworkPolicy, Gateway API, service mesh, CNI). This
+  skill covers general DNS and proxy config; K8s-specific networking goes to kubernetes.
+- **docker** -- owns container networking (bridge, Compose networks, port mapping). This skill
+  covers host-level Linux networking.
+- **terraform** -- owns cloud infrastructure (VPCs, security groups, cloud LBs, Route53). This
+  skill covers bare-metal/VM networking.
+- **ansible** -- manages config at scale via playbooks. This skill provides the networking
+  knowledge; ansible handles the automation wrapper.
+- **lockpick** -- offensive network testing, exploitation, lateral movement. This skill covers
+  defensive configuration and hardening.
+- **security-audit** -- application-level security review (SSRF, header injection). This skill
+  covers network-layer security (firewalls, TLS, segmentation).
+
+## Rules
+
+1. **Ask which interface.** Never assume `eth0`. Modern Linux uses predictable interface names.
+   Check with `ip link` or ask the user.
+2. **Test before persisting.** Network misconfigs can lock you out of remote machines. Apply
+   changes temporarily, verify connectivity (especially SSH), then persist.
+3. **MTU matters.** VPN tunnels, VXLAN, and PPPoE all reduce effective MTU. Mismatched MTU
+   causes silent packet drops that are painful to debug. Always calculate and set explicitly.
+4. **Check who manages DNS.** systemd-resolved, NetworkManager, and manual /etc/resolv.conf
+   fight each other. Identify the active manager before making DNS changes.
+5. **Verify the existing firewall.** Check `nft list ruleset` and `iptables-save` before
+   adding rules. Mixing nftables and iptables on the same system causes unpredictable behavior.
+6. **No plaintext on untrusted segments.** TLS 1.2+ for all services. If something needs to
+   cross an untrusted network without TLS, tunnel it through a VPN.
+7. **Subnet overlap kills VPNs.** Before assigning VPN address ranges, inventory all LAN
+   subnets and existing VPN ranges. Overlapping ranges cause routing black holes.
+8. **Defer to specialized skills.** OPNsense/pfSense -> opnsense. K8s networking -> kubernetes.
+   Container networking -> docker. Cloud infra -> terraform. Pentesting -> lockpick.

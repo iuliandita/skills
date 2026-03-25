@@ -1,0 +1,179 @@
+---
+name: prompt-generator
+description: >
+  Use when the user has scattered ideas, brain dumps, or rough notes they want turned into
+  a proper LLM prompt, or when refining, rewriting, or restructuring an existing prompt.
+  Also trigger on prompt engineering, prompt templates, or formatting instructions as system
+  prompts. Triggers: "write a prompt", "turn this into a prompt", "structure this prompt",
+  "system prompt for", "prompt template", "prompt engineering", "rewrite this prompt",
+  "improve this prompt", "optimize this prompt", "format as a system prompt".
+  Do NOT use for brainstorming features (use brainstorming), writing code, creating skills
+  (use skill-creator), or creating inline string prompts within application code.
+source: custom
+date_added: "2026-03-25"
+effort: medium
+---
+
+# Prompt Generator
+
+Take the user's rough thoughts, scattered notes, or half-formed ideas and turn them into a clean, well-structured LLM prompt. This is a **formatter and structurer**, not a brainstorming tool -- the user already knows what they want, they just need help wording and organizing it.
+
+## When to use
+
+- User has rough notes, bullet points, or a brain dump they want turned into a clean LLM prompt
+- Refining, rewriting, or optimizing an existing prompt that isn't performing well
+- Structuring a system prompt or task prompt from scattered requirements
+- Creating prompt templates with variable placeholders for repeated use
+- User says anything like "write me a prompt for...", "turn this into a prompt", "system prompt for..."
+
+## When NOT to use
+
+- Brainstorming features or creative ideation (use brainstorming superpowers skill)
+- Creating reusable skill files for Claude Code (use skill-creator)
+- Writing inline prompt strings inside application code -- that's just coding
+- The user wants code that calls an LLM API (use claude-api if Anthropic SDK, otherwise just code it)
+
+---
+
+## Workflow
+
+### Step 1: Read the brain dump
+
+The user will give you rough notes, bullet points, or a stream-of-consciousness description of what they want the prompt to do. Parse it for:
+
+- **Core task**: What should the prompted model actually do?
+- **Target model**: Which LLM? Default: Claude.
+- **Prompt type**: System prompt vs. task prompt
+- **Constraints**: Any rules, format requirements, or behavioral boundaries mentioned
+- **Variables**: Any dynamic content that should become `{{PLACEHOLDERS}}`
+
+Don't overthink this. Don't add things the user didn't mention. The goal is to **faithfully structure their intent**, not to "improve" it with your own ideas.
+
+### Step 2: Clarify only if stuck
+
+If something is genuinely ambiguous (you can't tell if it's a system prompt or task prompt, or the target model matters for technique choice), ask. Batch questions, max 1 round. If you can reasonably infer it, just infer it.
+
+Most of the time, skip this step entirely.
+
+### Step 3: Structure and present
+
+1. Turn the rough notes into a clean prompt, applying structure proportional to complexity:
+   - **Simple** (one task, no variables): plain prose, 3-10 lines. No XML, no sections.
+   - **Medium** (multiple steps or constraints): numbered steps, clear sections.
+   - **Complex** (agentic, multi-document, behavioral rules): XML tags for content separation, variable placeholders, explicit output format.
+2. **Present the prompt in conversation for review. Don't write files yet.**
+3. On approval, save to file (see Output Format below).
+4. Revisions: edit in place, don't create new files.
+
+### Step 4: Save
+
+1. Resolve output directory: user-specified path > `docs/prompts/` > `docs/` > ask
+2. Scan for `NNN-*.md` files, increment highest number, zero-pad to 3 digits
+3. Infer a slug from the topic (e.g., `code-review`, `data-extraction`)
+4. Write to `<output-dir>/NNN-slug.md`
+
+---
+
+## Output File Format
+
+```markdown
+---
+name: Descriptive Prompt Name
+description: One-line summary
+target_model: claude
+prompt_type: system | task
+date_created: YYYY-MM-DD
+---
+
+## Purpose
+
+What this prompt does and when to use it.
+
+## Variables
+
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `{{VAR}}` | What it is | Yes/No |
+
+## Prompt
+
+The actual prompt content here.
+```
+
+Only include sections that apply. A simple prompt with no variables skips the Variables table.
+
+Optional frontmatter additions: `tags: [...]`, `related: [NNN-other.md]` -- only when genuinely useful.
+
+**Target model values**: `claude`, `gpt`, `gemini`, `llama`, `mistral`, `model-agnostic`
+
+---
+
+## Structuring Guidelines
+
+These are for YOU when structuring the user's notes. Not a knowledge dump -- just the non-obvious stuff.
+
+**Match complexity to content.** A 3-line task doesn't need XML tags and numbered steps. A multi-document agentic system prompt does. The user's rough notes give you the complexity signal.
+
+**Long content goes on top.** If the prompt will receive large documents or data at runtime, position the data slot at the top and the task instructions at the bottom. Up to 30% better performance on multi-document tasks.
+
+**Explain WHY, not just WHAT.** When the user's notes include a rule ("don't use markdown"), turn it into a motivated constraint ("write in plain prose because the output feeds a TTS engine"). Models generalize from motivation.
+
+**Agentic prompts need boundaries.** If the prompt is for a coding agent or automation, separate what it can do freely (reads, searches) from what needs confirmation (deletes, publishes, pushes).
+
+**Anti-hallucination is a sentence, not a paragraph.** "Only make claims verifiable from the provided context. If unsure, say so." That's it.
+
+### Model-Specific Notes
+
+- **Claude**: XML tags for content separation. Prefill (seeding assistant turn) steers output format. Adaptive `effort` parameter.
+  - **Claude 4.x note**: aggressive language ("CRITICAL!", "YOU MUST", "NEVER EVER") now hurts performance. Use calm, direct instructions instead. "Do X" beats "YOU ABSOLUTELY MUST DO X".
+- **GPT**: Markdown structure. System/developer messages for behavioral anchoring. JSON mode via `response_format`.
+- **Gemini**: Multi-modal native. System instructions are a separate API field, not a message role.
+
+### Structured Output Guidance
+
+When the prompt is for agent consumption (not human reading), specify output format explicitly:
+- **JSON mode**: instruct the model to return valid JSON. For Claude, use prefill to start the response with `{`.
+- **XML structure**: wrap output in tags like `<result>`, `<analysis>`, `<decision>`.
+- **Delimiter-based**: for simple key-value, use `KEY: value` format.
+
+Include a concrete output example in the prompt whenever possible -- models generalize better from examples than from format descriptions.
+
+### The Four-Block Pattern
+
+For medium-to-complex prompts, structure into four clear blocks:
+1. **INSTRUCTIONS** -- what to do (role, task, constraints)
+2. **CONTEXT** -- background information, reference data
+3. **TASK** -- the specific request for this invocation
+4. **OUTPUT FORMAT** -- exact structure of the expected response
+
+Keep blocks visually separated with XML tags or markdown headers. Place long context documents before shorter task instructions (see "Long content goes on top" above).
+
+---
+
+## Refining Existing Prompts
+
+If the user gives you an existing prompt to improve (not rough notes):
+
+1. Read it
+2. Identify gaps and anti-patterns against the guidelines above
+3. Present specific changes with reasoning -- not a full rewrite unless it's warranted
+4. On approval, edit in place
+
+## Related Skills
+
+- **skill-creator** -- creates reusable skill files (SKILL.md) for Claude Code. Skills are
+  structured prompts, but they follow different conventions (frontmatter, workflow sections,
+  rules) than standalone prompts. If someone says "create a skill", use skill-creator.
+- **claude-api** -- building apps that call LLM APIs. If the user needs a prompt string inside
+  application code (e.g., a TypeScript `const systemPrompt = ...`), that's coding, not this skill.
+- **anti-slop** -- if the user asks to "clean up" or "simplify" a prompt embedded in code, that's
+  a code quality issue, not prompt structuring.
+
+---
+
+## Rules
+
+- **Faithful structuring.** Organize what the user said, not what you think they should have said. If they didn't mention error handling, don't add error handling instructions. If they didn't mention output format, ask or leave it open.
+- **Never write files without approval.** Always present in conversation first.
+- **Scale structure to complexity.** Simple = lean. Complex = structured. Never the reverse.
+- **Respect their voice.** If the rough notes have a specific tone or personality, preserve it in the structured version.

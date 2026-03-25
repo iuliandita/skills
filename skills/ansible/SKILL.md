@@ -1,0 +1,853 @@
+---
+name: ansible
+description: >
+  Use when writing, reviewing, or architecting Ansible playbooks, roles, collections,
+  or configuration management automation. Also use for Molecule testing, ansible-lint,
+  Ansible Vault, inventory management, Execution Environments, AWX/AAP, CIS benchmarks,
+  or PCI-DSS configuration hardening. Triggers: 'ansible', 'playbook', 'role', 'collection',
+  'inventory', 'vault' (Ansible context), 'molecule', 'galaxy', 'ansible-lint',
+  'ansible-navigator', 'execution environment', 'EE', 'AWX', 'AAP', 'handlers',
+  'group_vars', 'host_vars', 'jinja2' (Ansible context), 'blockinfile', 'lineinfile',
+  'configuration management', 'config management', 'CIS benchmark', 'ansible-lockdown',
+  'hardening playbook', 'openrc' (Ansible context), 'alpine' (Ansible context), 'apk' (Ansible context).
+source: custom
+date_added: "2026-03-24"
+effort: high
+---
+
+# Ansible: Production Configuration Management
+
+Write, review, and architect Ansible automation -- from single playbooks to multi-tier, compliance-hardened infrastructure management. The goal is idempotent, auditable, maintainable automation that works the same locally and in CI/CD.
+
+**Target versions** (March 2026):
+- ansible-core 2.20.x (Python 3.12+ controller, 3.9+ target, EOL May 2027)
+- ansible (community package) 13.x (depends on ansible-core 2.20)
+- molecule 26.x (CalVer), ansible-lint 26.x (CalVer), ansible-navigator 26.x (CalVer)
+- ansible-builder 3.1.x (EE definition v3)
+- AWX 24.6.1 (stale -- no release since Jul 2024, community concern)
+- AAP 2.6 (Oct 2025 -- last RPM-installable release; AAP 2.7+ containerized-only)
+
+This skill covers four domains depending on context:
+- **Playbooks** -- tasks, handlers, variables, conditions, loops, blocks, templates, Jinja2
+- **Roles & Collections** -- role structure, collection packaging, Galaxy/Automation Hub, Molecule testing
+- **Operations** -- inventory, Execution Environments, CI/CD integration, Vault, ansible-navigator
+- **Compliance** -- PCI-DSS 4.0 hardening, CIS benchmarks, Ansible-Lockdown, audit logging
+
+## When to use
+
+- Writing or reviewing Ansible playbooks, roles, or collections
+- Configuring servers after Terraform provisions them (day-2 operations)
+- OS hardening (CIS benchmarks, STIG, PCI-DSS configuration requirements)
+- Managing packages, services, users, firewall rules, cron jobs, config files
+- Testing automation with Molecule or tox-ansible
+- Setting up Ansible Vault for secrets management
+- Designing inventory structures (static, dynamic, multi-environment)
+- Building Execution Environments for consistent runtime
+- Integrating Ansible into CI/CD pipelines (GitLab CI, GitHub Actions)
+- Reviewing AI-generated playbooks for correctness and idiomatic patterns
+
+## When NOT to use
+
+- Infrastructure provisioning (VPCs, RDS, EC2, cloud resources) -- use terraform
+- Kubernetes manifests, Helm charts, cluster architecture -- use kubernetes
+- Dockerfiles, Compose stacks, container image optimization -- use docker
+- CI/CD pipeline design (stages, runners, caching) -- use ci-cd
+- Security audits of application code (SAST, dependency scanning) -- use security-audit
+- Shell scripting or one-off commands -- use command-prompt
+- Firewall appliance management (OPNsense/pfSense) -- use opnsense
+
+---
+
+## AI Self-Check
+
+AI tools consistently produce the same Ansible mistakes. **Before returning any generated playbook, role, or task, verify against this list:**
+
+- [ ] FQCNs used everywhere (`ansible.builtin.copy`, not `copy`). AI almost never does this unprompted.
+- [ ] `become: true` present where privilege escalation is needed (AI often forgets this)
+- [ ] `no_log: true` on every task handling secrets, passwords, tokens, or API keys (CVE-2024-8775 proved this matters)
+- [ ] Every task has a descriptive `name:` field (AI sometimes omits names on simple tasks)
+- [ ] Handler names are unique and `notify:` strings match exactly (typos = silent failures)
+- [ ] Variables use `{{ var }}` with quotes: `"{{ my_var }}"` not `{{ my_var }}` (bare Jinja2 without quotes breaks YAML parsing)
+- [ ] No `command`/`shell`/`raw` when an Ansible module exists for the operation
+- [ ] Tasks are idempotent -- running twice produces the same result (watch `command`/`shell` tasks without `creates`/`removes`)
+- [ ] No hardcoded values -- IPs, paths, package versions, usernames go in variables with defaults
+- [ ] `ansible.builtin.apt`/`ansible.builtin.dnf` use `state: present`, not `state: latest` (unless explicitly upgrading)
+- [ ] Loop variable is `item` (default) or renamed via `loop_var` in nested loops (AI conflates loop variables)
+- [ ] `block`/`rescue`/`always` used for error handling, not bare `ignore_errors: true`
+- [ ] No `ansible.builtin.template` with `src:` pointing to a non-`.j2` file (confusing, even if it works)
+- [ ] `changed_when`/`failed_when` set on `command`/`shell` tasks to prevent false change reports
+- [ ] Tags present on logical task groups for selective execution
+
+Run generated playbooks through `ansible-lint` (production profile) when available.
+
+---
+
+## Workflow
+
+### Step 1: Determine the domain
+
+Based on the request:
+- **"Write a playbook to configure X"** -> Playbooks
+- **"Create a reusable role for X"** -> Roles & Collections
+- **"Set up inventory" / "CI/CD" / "vault" / "EE"** -> Operations
+- **"Harden this server" / "CIS benchmark" / "PCI compliance"** -> Compliance
+- **"Review this playbook/role"** -> Apply production checklist + critical rules + AI self-check
+
+Most real tasks blend domains. Start with the playbook, extract to roles when reuse is clear, wire into operations last.
+
+### Step 2: Gather requirements
+
+Before writing YAML, determine:
+- **Target OS**: RHEL/CentOS, Ubuntu/Debian, Alpine, Windows -- affects module choices
+- **Python version on targets**: ansible-core 2.20 requires Python 3.9+ on managed nodes
+- **Privilege escalation**: `become` method (sudo, su, doas, runas for Windows)
+- **Connection**: SSH (default), WinRM (Windows), local, network_cli (network devices)
+- **Idempotency**: every task must be safe to run multiple times
+- **Secrets**: Ansible Vault, HashiCorp Vault, CI/CD secrets, environment variables
+- **Testing**: Molecule scenario? tox-ansible matrix? Integration tests?
+- **Compliance**: PCI-DSS scope? CIS benchmark level? STIG profile?
+- **Inventory**: static, dynamic (cloud), or hybrid? Multi-environment?
+- **Execution**: ansible-playbook (direct), ansible-navigator (EE), AWX/AAP (platform)?
+
+### Step 3: Build
+
+Follow the domain-specific section below. Always apply the production checklist (Step 4) and AI self-check before finishing.
+
+### Step 4: Validate
+
+```bash
+# Syntax check (fast, no connection needed)
+ansible-playbook playbook.yml --syntax-check
+
+# Lint (use production profile for strictest checks)
+ansible-lint -p production playbook.yml
+
+# Dry run (needs inventory + connectivity)
+ansible-playbook playbook.yml --check --diff
+
+# Molecule (role testing)
+molecule test                          # full cycle: create, converge, verify, destroy
+molecule converge                      # just apply (dev loop)
+molecule verify                        # run verification only
+
+# Navigator (EE-based execution)
+ansible-navigator run playbook.yml --mode stdout --eei <ee-image>
+```
+
+---
+
+## Playbooks
+
+Read `${CLAUDE_SKILL_DIR}/references/playbook-patterns.md` for complete, copy-pasteable task examples (services, packages, files, templates, users, firewall, cron, systemd, OpenRC) and Jinja2 patterns.
+
+### Structure
+
+```yaml
+---
+- name: Configure web servers
+  hosts: webservers
+  become: true
+  gather_facts: true
+
+  vars:
+    app_port: 8080
+    app_user: appuser
+
+  pre_tasks:
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+      when: ansible_os_family == "Debian"
+
+  roles:
+    - role: common
+      tags: [common]
+    - role: nginx
+      tags: [nginx]
+
+  tasks:
+    - name: Ensure application directory exists
+      ansible.builtin.file:
+        path: /opt/app
+        state: directory
+        owner: "{{ app_user }}"
+        mode: "0755"
+
+  handlers:
+    - name: Restart nginx
+      ansible.builtin.systemd:
+        name: nginx
+        state: restarted
+        daemon_reload: true
+```
+
+### Key patterns
+
+**Variable precedence** (22 levels -- the most common source of confusion). In ascending priority:
+1. Role defaults (`defaults/main.yml`) -- weakest, meant to be overridden
+2. Inventory vars (`group_vars/`, `host_vars/`)
+3. Play vars
+4. Task vars
+5. Extra vars (`-e`) -- strongest, overrides everything
+
+**Rule of thumb**: put defaults in role `defaults/`, environment-specific values in `group_vars/`, one-off overrides in `host_vars/`, and emergency overrides via `-e`.
+
+**Handlers**: only run when notified by a changed task, execute once at the end of the play (not immediately). Key gotchas:
+- Handler names must be unique across all included roles
+- Handlers don't run if the play fails before reaching them (use `meta: flush_handlers` if needed)
+- Handlers run in definition order, not notification order
+- Multiple notifications to the same handler = one execution
+
+**Blocks** for error handling:
+```yaml
+- name: Deploy application with rollback
+  block:
+    - name: Deploy new version
+      ansible.builtin.copy:
+        src: app-v2.tar.gz
+        dest: /opt/app/
+    - name: Restart service
+      ansible.builtin.systemd:
+        name: myapp
+        state: restarted
+  rescue:
+    - name: Rollback to previous version
+      ansible.builtin.copy:
+        src: app-v1.tar.gz
+        dest: /opt/app/
+    - name: Restart with old version
+      ansible.builtin.systemd:
+        name: myapp
+        state: restarted
+  always:
+    - name: Report deployment status
+      ansible.builtin.debug:
+        msg: "Deployment completed (block={{ ansible_failed_task is defined }})"
+```
+
+**Loops** -- prefer `loop:` over the deprecated `with_*` syntax:
+```yaml
+- name: Create application users
+  ansible.builtin.user:
+    name: "{{ item.name }}"
+    groups: "{{ item.groups }}"
+    state: present
+  loop:
+    - { name: deploy, groups: www-data }
+    - { name: monitor, groups: prometheus }
+  loop_control:
+    label: "{{ item.name }}"    # cleaner output than dumping the full dict
+```
+
+**Conditional execution**:
+```yaml
+- name: Install packages (Debian)
+  ansible.builtin.apt:
+    name: "{{ packages }}"
+    state: present
+  when: ansible_os_family == "Debian"
+
+- name: Install packages (RedHat)
+  ansible.builtin.dnf:
+    name: "{{ packages }}"
+    state: present
+  when: ansible_os_family == "RedHat"
+
+- name: Install packages (Alpine)
+  community.general.apk:
+    name: "{{ packages }}"
+    state: present
+  when: ansible_os_family == "Alpine"
+```
+
+**Service management** -- use `ansible.builtin.service` (generic) instead of `ansible.builtin.systemd`
+for cross-distro roles. The `service` module auto-detects systemd, OpenRC, SysV, etc. via
+`ansible_service_mgr`. Only use the `systemd` module when you need systemd-specific features
+(`daemon_reload`, `scope`, unit file management). See `playbook-patterns.md` for OpenRC patterns.
+
+**Registering results** and using them:
+```yaml
+- name: Check if config exists
+  ansible.builtin.stat:
+    path: /etc/myapp/config.yml
+  register: config_check
+
+- name: Generate default config
+  ansible.builtin.template:
+    src: config.yml.j2
+    dest: /etc/myapp/config.yml
+    owner: root
+    mode: "0640"
+  when: not config_check.stat.exists
+```
+
+### What NOT to write
+
+- `command: apt-get install -y nginx` (use `ansible.builtin.apt`)
+- `shell: systemctl restart nginx` (use `ansible.builtin.systemd`)
+- `shell: useradd deploy` (use `ansible.builtin.user`)
+- `copy` without `mode:` on sensitive files (defaults to umask, unpredictable)
+- `template` without `.j2` extension on the source file
+- `ignore_errors: true` without a comment explaining why (use `block`/`rescue` instead)
+- `with_items` (deprecated -- use `loop:`)
+- Bare `{{ var }}` without quotes (YAML parses it as a dict start)
+- `gather_facts: true` + never using facts (wasted 5-15 seconds per host)
+- Tasks without `name:` (legal but unreadable in output)
+- `state: latest` in production playbooks (non-deterministic -- pin versions)
+
+---
+
+## Roles & Collections
+
+Read `${CLAUDE_SKILL_DIR}/references/roles-and-collections.md` for detailed role anatomy, collection structure, Galaxy patterns, and Molecule testing workflows.
+
+### Role structure
+
+```
+roles/nginx/
++-- defaults/main.yml       # Default variables (weakest precedence, meant to be overridden)
++-- vars/main.yml           # Role variables (stronger precedence -- use sparingly)
++-- tasks/main.yml          # Task entry point
++-- handlers/main.yml       # Handlers (service restarts, reloads)
++-- templates/              # Jinja2 templates (.j2 files)
++-- files/                  # Static files to copy
++-- meta/main.yml           # Dependencies, platforms, Galaxy metadata
++-- molecule/               # Test scenarios
+|   +-- default/
+|       +-- molecule.yml
+|       +-- converge.yml
+|       +-- verify.yml
++-- README.md
+```
+
+**Key principles**:
+- `defaults/main.yml` for everything users should customize. `vars/main.yml` for internal constants.
+- `meta/main.yml` declares role dependencies -- Ansible resolves and runs them automatically.
+- One responsibility per role. A role that installs nginx AND configures a database is two roles.
+- Prefix all variables with the role name: `nginx_port`, `nginx_worker_connections` -- avoids collisions.
+
+### Collections
+
+Collections bundle roles, modules, plugins, and playbooks into a distributable package:
+
+```
+namespace/collection_name/
++-- galaxy.yml              # Collection metadata
++-- roles/                  # Bundled roles
++-- plugins/
+|   +-- modules/            # Custom modules
+|   +-- inventory/          # Inventory plugins
+|   +-- callback/           # Callback plugins
++-- playbooks/              # Reusable playbooks
++-- docs/
++-- tests/
++-- meta/runtime.yml        # Module routing, deprecations
+```
+
+**FQCNs are mandatory.** `ansible.builtin.copy`, `community.general.ufw`, `kubernetes.core.k8s` -- never bare module names. This was optional pre-2.10; it is the standard now.
+
+### Key collections (March 2026)
+
+| Collection | Status | Use for |
+|-----------|--------|---------|
+| `ansible.builtin` | Active | Ships with ansible-core -- file, copy, template, apt, dnf, systemd, user, etc. |
+| `community.general` | Active | 800+ modules -- UFW, timezone, alternatives, sysctl, modprobe, etc. |
+| `ansible.posix` | Active | POSIX-specific -- sysctl, mount, authorized_key, selinux, firewalld |
+| `kubernetes.core` | Active | K8s resource management, kubectl, helm |
+| `community.docker` | Active | Docker containers, images, networks, compose |
+| `community.crypto` | Active | OpenSSL certs, ACME, x509 |
+| `hashicorp.vault` | Active | Vault secrets, PKI, dynamic credentials (certified) |
+| `community.kubernetes` | Deprecated | Renamed to `kubernetes.core` |
+| `awx.awx` | Stale | No release in 1+ year (AWX refactoring) |
+
+### Molecule testing
+
+```yaml
+# molecule/default/molecule.yml
+---
+dependency:
+  name: galaxy
+driver:
+  name: podman          # Podman preferred over Docker (rootless, no daemon)
+platforms:
+  - name: instance
+    image: "quay.io/centos/centos:stream9"
+    pre_build_image: true
+provisioner:
+  name: ansible
+  config_options:
+    defaults:
+      callbacks_enabled: profile_tasks
+verifier:
+  name: ansible         # Ansible-based verification (default)
+```
+
+```yaml
+# molecule/default/converge.yml
+---
+- name: Converge
+  hosts: all
+  become: true
+  roles:
+    - role: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') | basename }}"
+```
+
+**Testing workflow**:
+- `molecule test` -- full cycle (lint, create, converge, idempotence, verify, destroy)
+- `molecule converge` -- apply only (fast iteration during development)
+- `molecule verify` -- run verification tasks only
+- `molecule login` -- SSH into the test instance for debugging
+- Use `tox-ansible` for matrix testing across Python + ansible-core versions
+
+### Anti-patterns
+
+- Roles with no `defaults/main.yml` (forces users to dig through `tasks/` to find required vars)
+- Roles that call `ansible.builtin.include_role` recursively (hard to debug, performance hit)
+- Roles that modify `ansible.cfg` or inventory (side effects outside their scope)
+- Galaxy roles pinned to `main` branch (use tags or commit SHAs)
+- Roles without `meta/main.yml` (no dependency declaration, no Galaxy metadata)
+- Monolithic `tasks/main.yml` with 200+ tasks (split into `tasks/install.yml`, `tasks/configure.yml`, etc.)
+- Variables without the role name prefix (collision risk in multi-role plays)
+- Molecule scenarios that only test convergence, not idempotence (the idempotence check catches most bugs)
+
+---
+
+## Operations
+
+### Inventory
+
+**Static inventory** (`inventory/`):
+```
+inventory/
++-- production/
+|   +-- hosts.yml           # Host definitions
+|   +-- group_vars/
+|   |   +-- all.yml         # Variables for all hosts
+|   |   +-- webservers.yml  # Variables for webservers group
+|   |   +-- dbservers/
+|   |       +-- vars.yml    # Non-secret vars
+|   |       +-- vault.yml   # Vault-encrypted secrets
+|   +-- host_vars/
+|       +-- db01.yml        # Host-specific overrides
++-- staging/
+|   +-- hosts.yml
+|   +-- group_vars/
+|   +-- host_vars/
+```
+
+```yaml
+# inventory/production/hosts.yml
+---
+all:
+  children:
+    webservers:
+      hosts:
+        web01:
+          ansible_host: 10.0.1.10
+        web02:
+          ansible_host: 10.0.1.11
+    dbservers:
+      hosts:
+        db01:
+          ansible_host: 10.0.2.10
+```
+
+**Dynamic inventory**: use inventory plugins (`amazon.aws.aws_ec2`, `azure.azcollection.azure_rm`, `community.general.proxmox`) for cloud/virtualization environments. Static files for stable infrastructure (homelabs, on-prem).
+
+**Inventory format**: use YAML (`*.yml`). It supports complex nested structures, YAML anchors
+for DRY, and is what all Ansible docs/examples use. The legacy INI format (`hosts` files with
+`[group]` sections) still works but can't express nested groups cleanly and doesn't support
+complex variable types. Convert INI inventories to YAML when touching them.
+
+**Inventory anti-patterns**:
+- All hosts in one flat file (no environment separation)
+- `ansible_ssh_pass` in inventory (use SSH keys or Vault)
+- `ansible_become_pass` in plaintext (Vault-encrypt it)
+- Mixing static and dynamic inventory without understanding merge behavior
+
+### ansible.cfg
+
+A production-grade config. Commit this to the repo root (never with `host_key_checking = False`).
+
+```ini
+[defaults]
+# Performance
+forks = 20                          # default 5; set 2-4x CPU cores
+gathering = smart                   # cache facts, skip re-gather
+fact_caching = jsonfile
+fact_caching_connection = /tmp/ansible_facts_cache
+fact_caching_timeout = 3600
+
+# Security
+host_key_checking = True            # NEVER False in production -- manage known_hosts instead
+display_args_to_stdout = False      # True leaks sensitive task args
+
+# Logging and output
+log_path = /var/log/ansible/ansible.log
+callbacks_enabled = timer, profile_tasks, profile_roles
+stdout_callback = yaml              # much more readable than default
+
+# Behavior
+deprecation_warnings = True         # catch upcoming breakage early
+retry_files_enabled = False         # .retry files are noise in CI
+interpreter_python = auto_silent    # suppress interpreter discovery warnings
+
+[ssh_connection]
+pipelining = True                   # 30-50% speedup; requires !requiretty in sudoers
+ssh_args = -o ControlMaster=auto -o ControlPersist=300s -o PreferredAuthentications=publickey
+retries = 3
+
+[privilege_escalation]
+become = False                      # explicit per-play/task, not global
+become_method = sudo
+become_ask_pass = False
+
+[inventory]
+cache = True
+cache_plugin = jsonfile
+cache_connection = /tmp/ansible_inventory_cache
+cache_timeout = 1800
+```
+
+**Key callouts:**
+- **`pipelining = True`** is the single biggest performance win. Sends module code over the existing SSH connection instead of SCP'ing. Requires `Defaults !requiretty` in `/etc/sudoers` on all managed hosts -- without it, `become` tasks fail.
+- **`callbacks_enabled`** replaced `callback_whitelist` (deprecated since ansible-core 2.15, removal pending).
+- **`ControlPersist=300s`** keeps SSH connections alive 5 minutes between tasks. 60-300s is the sweet spot. Too short = reconnection overhead, too long = stale sockets.
+- **`stdout_callback = yaml`** makes output readable. The default callback is borderline unusable for debugging.
+- `gathering = smart` + `fact_caching` avoids re-gathering facts on hosts already touched in the same run.
+
+---
+
+### Execution Environments
+
+EEs are container images that bundle ansible-core, collections, Python dependencies, and system packages. They ensure identical execution locally and in CI/CD.
+
+```yaml
+# execution-environment.yml (v3 format -- ansible-builder 3.x)
+---
+version: 3
+
+images:
+  base_image:
+    name: "quay.io/centos/centos:stream9"
+
+dependencies:
+  galaxy:
+    collections:
+      - name: community.general
+        version: ">=9.0.0"
+      - name: ansible.posix
+      - name: kubernetes.core
+  python_interpreter:
+    package_system: "python3.12"
+  python:
+    - jmespath
+    - netaddr
+  system:
+    - openssh-clients
+    - sshpass
+
+additional_build_steps:
+  append_final:
+    - RUN pip3 install --no-cache-dir ansible-lint
+```
+
+Build with: `ansible-builder build -t my-ee:1.0.0 -f execution-environment.yml`
+
+**EE best practices**:
+- Separate EEs per domain (AWS, Azure, network, security) -- not one monolith
+- Pin collection versions in the EE definition
+- Use specific base image tags (not `:latest`) for auditability
+- Scan EE images for CVEs like any other container image
+- v3 format allows vanilla RHEL/UBI/Fedora/CentOS base images (v2 required special bases)
+
+### Ansible Vault
+
+Read `${CLAUDE_SKILL_DIR}/references/vault-and-secrets.md` for detailed Vault patterns, HashiCorp Vault integration, and CI/CD secrets workflows.
+
+**File-level encryption**:
+```bash
+ansible-vault create group_vars/production/vault.yml
+ansible-vault edit group_vars/production/vault.yml
+ansible-vault encrypt existing-file.yml
+ansible-vault decrypt existing-file.yml       # use sparingly -- prefer edit
+ansible-vault rekey group_vars/production/vault.yml
+```
+
+**Variable-level encryption** (inline):
+```bash
+ansible-vault encrypt_string 'supersecret' --name 'db_password'
+```
+Produces:
+```yaml
+db_password: !vault |
+  $ANSIBLE_VAULT;1.1;AES256
+  3938...encrypted...data
+```
+
+**Conventions**:
+- Prefix vault variables with `vault_`: `vault_db_password`, `vault_api_key`
+- Reference via indirection: `db_password: "{{ vault_db_password }}"`
+- Keep vault files in `group_vars/<env>/vault.yml` alongside `vars.yml`
+- Use `--vault-password-file` or `--vault-id` for automation (never type passwords in CI)
+- `no_log: true` on every task that uses vault variables (**CVE-2024-8775**)
+
+### CI/CD integration
+
+```yaml
+# GitLab CI example
+ansible-deploy:
+  stage: deploy
+  image:
+    name: my-ee:1.0.0       # Execution Environment with all deps
+  variables:
+    ANSIBLE_HOST_KEY_CHECKING: "false"
+  script:
+    - ansible-playbook -i inventory/production playbook.yml
+      --vault-password-file <(echo "$VAULT_PASSWORD")
+      --diff --check  # dry run first
+    - ansible-playbook -i inventory/production playbook.yml
+      --vault-password-file <(echo "$VAULT_PASSWORD")
+      --diff
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: manual
+  environment:
+    name: production
+```
+
+**CI/CD principles**:
+- Use EEs as CI job images for consistent execution
+- Vault password from CI/CD secrets (never in repo)
+- `--check --diff` first, then apply (review the diff in CI output)
+- Manual gate for production deployments
+- Pin GitHub Actions to commit SHAs (supply chain -- Trivy CVE-2026-33634, tj-actions CVE-2025-30154)
+- Archive playbook output as CI artifact for audit trail
+
+### ansible-navigator
+
+The recommended tool for EE-based execution:
+
+```bash
+# Interactive TUI mode (default)
+ansible-navigator run playbook.yml -i inventory/production
+
+# Stdout mode (for CI/CD, scripts)
+ansible-navigator run playbook.yml -i inventory/production --mode stdout
+
+# With specific EE image
+ansible-navigator run playbook.yml --eei my-ee:1.0.0
+
+# Explore collections/docs inside the EE
+ansible-navigator collections
+ansible-navigator doc ansible.builtin.copy
+```
+
+**When to use navigator vs playbook**:
+- `ansible-navigator` when using EEs, when debugging (interactive TUI is great), or when running in AAP
+- `ansible-playbook` for quick ad-hoc runs without EEs, simple scripts, legacy workflows
+
+---
+
+## Compliance
+
+Read `${CLAUDE_SKILL_DIR}/references/compliance.md` for the full PCI-DSS 4.0 requirements mapping to Ansible controls, CIS benchmark automation, and hardening patterns.
+
+### Quick reference: PCI-DSS 4.0 with Ansible
+
+PCI-DSS 4.0 is the only active version (3.2.1 retired March 2024). Ansible is the configuration management layer that enforces PCI controls on managed systems.
+
+**Critical requirements where Ansible is the primary enforcement tool:**
+- **Req 1**: Firewall configuration -> `ansible.posix.firewalld` / `community.general.ufw` rules as code
+- **Req 2.2**: System hardening -> CIS benchmark roles (Ansible-Lockdown), remove unnecessary services, disable unused protocols
+- **Req 2.2.7**: Non-console admin encrypted -> SSH hardening, disable telnet/rsh via playbooks
+- **Req 5.2**: Anti-malware -> deploy and configure AV agents, enforce scan schedules
+- **Req 8.2**: Password policies -> PAM configuration, password complexity enforcement
+- **Req 8.3.6**: Password complexity -> `/etc/security/pwquality.conf` managed by template
+- **Req 8.6.2**: No hardcoded credentials -> Ansible Vault for all secrets in playbooks
+- **Req 10.2**: Audit logging -> configure auditd rules, rsyslog forwarding, log rotation
+- **Req 10.4.1.1**: Automated log review -> deploy log shipping agents (Filebeat, Promtail)
+- **Req 11.5**: FIM -> deploy AIDE/OSSEC, configure baseline and alerting
+
+**PCI MPoC**: MPoC backend infrastructure falls under full PCI-DSS scope. Ansible hardens the OS layer of A&M backend nodes -- same controls as any CDE system.
+
+### CIS benchmarks (Ansible-Lockdown)
+
+The primary framework for automated OS hardening. Community-maintained, recognized by MITRE.
+
+Available benchmark roles:
+- RHEL 7/8/9 (CIS + STIG)
+- Ubuntu 18.04/20.04/22.04/24.04 (CIS)
+- CentOS, Amazon Linux, Windows Server 2019/2022/2025
+
+**Usage pattern**:
+```yaml
+- name: Apply CIS Level 2 hardening
+  hosts: all
+  become: true
+  vars:
+    cis_level: 2
+    # Selectively disable controls that break your application
+    rule_1_1_1_1: false    # Example: disable cramfs check if needed
+  roles:
+    - role: ansible-lockdown.rhel9_cis
+      tags: [cis]
+```
+
+**Important**: never apply CIS blindly. Review each control against your application requirements. Some controls (like disabling IPv6 or USB storage) can break legitimate functionality. Test in staging first, always.
+
+### Audit logging for Ansible itself
+
+- **Callback plugins**: `community.general.log_plays` (file), `ansible.posix.json` (structured JSON), `community.general.splunk` (SIEM)
+- **AWX/AAP**: full activity stream (who ran what, when, on which hosts) via API
+- **CI/CD**: archive playbook output as immutable artifacts (Req 10.4.1.1)
+- **ansible.cfg**: set `log_path` for local execution logging (not sufficient for production -- use callbacks or AWX)
+
+---
+
+## Production Checklist
+
+### Playbooks
+
+- [ ] FQCNs on every module (`ansible.builtin.*`, `community.general.*`, etc.)
+- [ ] Every task has a descriptive `name:`
+- [ ] `become: true` only where needed (not play-level unless every task requires it)
+- [ ] `no_log: true` on all tasks handling secrets
+- [ ] Variables quoted: `"{{ var }}"` not `{{ var }}`
+- [ ] No `command`/`shell` when a module exists
+- [ ] `changed_when`/`failed_when` on all `command`/`shell` tasks
+- [ ] Handlers have unique names and `notify:` strings match exactly
+- [ ] Tags on logical task groups
+- [ ] `--check` mode works (no tasks that break in check mode without `check_mode: false`)
+- [ ] Idempotent -- running twice produces no changes on the second run
+- [ ] No `state: latest` in production (pin package versions)
+- [ ] `ansible-lint -p production` passes clean
+
+### Roles
+
+- [ ] All variables prefixed with role name (`nginx_port`, not `port`)
+- [ ] `defaults/main.yml` for all user-configurable values
+- [ ] `meta/main.yml` with dependencies, platforms, and minimum ansible version
+- [ ] Molecule test scenario with converge + idempotence + verify
+- [ ] README with usage examples and variable documentation
+- [ ] No hardcoded values in `tasks/` (everything parameterized)
+- [ ] `handlers/main.yml` for service restarts (not inline restarts in tasks)
+
+### Operations
+
+- [ ] Inventory separated by environment (production, staging, dev)
+- [ ] `group_vars/` and `host_vars/` for environment-specific config
+- [ ] Vault-encrypted secrets in dedicated `vault.yml` files
+- [ ] Vault password via `--vault-password-file` (not interactive prompt in CI)
+- [ ] SSH key-based auth (no `ansible_ssh_pass` in inventory)
+- [ ] EE image pinned to specific tag (not `:latest`)
+- [ ] ansible.cfg committed with sane defaults (no `host_key_checking = False` in production)
+- [ ] Collections pinned in `requirements.yml` with version constraints
+- [ ] `ansible-lint` in CI pipeline (production profile)
+
+### Compliance (PCI-DSS 4.0)
+
+- [ ] CIS benchmark role applied and tested (Req 2.2)
+- [ ] SSH hardened: key-only auth, no root login, protocol 2, idle timeout (Req 2.2.7)
+- [ ] Firewall rules managed as code (Req 1)
+- [ ] Auditd rules deployed for CDE systems (Req 10.2)
+- [ ] Log forwarding to immutable SIEM (Req 10.4.1.1)
+- [ ] FIM agent deployed and configured (AIDE/OSSEC) (Req 11.5)
+- [ ] All secrets Vault-encrypted, `no_log: true` everywhere (Req 8.6.2)
+- [ ] Password policies enforced via PAM (Req 8.3.6)
+- [ ] Playbook execution logged and archived (Req 10, Req 6)
+- [ ] Anti-malware deployed on all in-scope systems (Req 5.2)
+- [ ] NTP configured for consistent timestamps (Req 10.6)
+- [ ] Unnecessary services disabled (Req 2.2.4)
+
+---
+
+## Deprecations and Breaking Changes
+
+### ansible-core 2.20 (current)
+
+**Removals (already removed)**:
+- `smart` transport value -- choose `ssh` or `paramiko` explicitly
+- Galaxy v2 API support -- Galaxy servers must support v3
+- `PARAMIKO_HOST_KEY_AUTO_ADD` and `PARAMIKO_LOOK_FOR_KEYS` config keys
+- `passlib_or_crypt` API from encrypt utility
+
+**Deprecations (removal in 2.24)**:
+- `INJECT_FACTS_AS_VARS` defaults to True but will flip to False. Access facts via `ansible_facts['hostname']` instead of `ansible_hostname`. Start migrating now.
+- `ansible.module_utils._text` imports (`to_bytes`, `to_native`, `to_text`) -- use `ansible.module_utils.common.text.converters` instead
+- `vars` internal variable cache
+
+### ansible-core 2.19 (previous)
+
+- **Data Tagging** overhaul: improved error reporting but some loop templates broke (GitHub issue #85605). If loops fail with type errors after upgrading, check for native Jinja2 type handling conflicts.
+
+### CalVer migration
+
+All Ansible DevTools projects (molecule, ansible-lint, ansible-navigator, tox-ansible) switched from SemVer to CalVer (`YY.MM.MICRO`) in 2024. Don't be confused by the version jump (e.g., ansible-lint 6.x -> 26.x).
+
+---
+
+## Security Considerations
+
+### CVEs to know
+
+| CVE | Severity | Description | Mitigation |
+|-----|----------|-------------|------------|
+| CVE-2024-11079 | Medium | Hostvars bypass unsafe content protections, enabling arbitrary code execution via templated content | Upgrade to ansible-core >= 2.16.14, 2.17.7, or 2.18.1 |
+| CVE-2024-8775 | Medium | Vault-encrypted variables exposed in plaintext via `include_vars` without `no_log` | Add `no_log: true` to all secret-handling tasks |
+| CVE-2025-14010 | Medium | community.general exposes Keycloak credentials in verbose output | Upgrade to community.general >= 12.2.0 |
+| CVE-2025-49520 | High | EDA authenticated argument injection in Git URL (command execution) | Patch AAP/EDA |
+| CVE-2025-49521 | High | EDA template injection via Git branch/refspec (command execution) | Patch AAP/EDA |
+
+### Supply chain
+
+- Galaxy has no package signing or hash verification. Academic research (2025) found 45 vulnerable dependency chains across 482 Galaxy repos, with 38-54% code overlap propagating vulnerabilities.
+- Pin collection versions in `requirements.yml`. Prefer Automation Hub (Red Hat certified) over Galaxy for production-critical collections.
+- Pin GitHub Actions to commit SHAs in CI/CD (not mutable tags).
+- Scan EE images for CVEs like any container image.
+
+### AI-generated playbook risks
+
+- AI tools hallucinate module names and parameters. Verify every module exists in the target collection version.
+- AI rarely adds `no_log: true` to secret-handling tasks.
+- AI generates non-idempotent `command`/`shell` tasks where modules exist.
+- AI uses bare module names instead of FQCNs.
+- **Slopsquatting**: AI may suggest Galaxy roles or collections that don't exist. Verify on Galaxy before adding to `requirements.yml`.
+
+---
+
+## Related Skills
+
+- **terraform** -- provisions infrastructure (VMs, networks, cloud resources). Ansible configures
+  what Terraform creates. Day-1 provisioning = terraform; day-2 configuration = ansible.
+- **kubernetes** -- for K8s manifests, Helm charts, cluster architecture. Ansible can deploy to
+  K8s via `kubernetes.core` collection, but manifest design belongs in the kubernetes skill.
+- **docker** -- for Dockerfile and Compose patterns. Ansible can manage containers via
+  `community.docker`, but image building and Compose design belong in the docker skill.
+- **databases** -- for engine configuration (postgresql.conf, pg_hba.conf). Ansible automates
+  the deployment of those configs; databases skill owns the tuning decisions.
+- **ci-cd** -- for pipeline design. Ansible can be called from CI/CD pipelines, but pipeline
+  structure (stages, jobs, caching) belongs in the ci-cd skill.
+- **security-audit** -- for auditing Ansible playbooks for credential exposure, vault misuse,
+  or supply chain risks in Galaxy dependencies.
+
+---
+
+## Critical Rules
+
+These are non-negotiable. Violating any of these is a bug.
+
+1. **FQCNs everywhere.** `ansible.builtin.copy`, not `copy`. No exceptions.
+2. **Idempotent by default.** Every task must be safe to run multiple times. `command`/`shell` tasks need `creates`/`removes` or `changed_when`.
+3. **`no_log: true` on secrets.** Every task handling passwords, tokens, API keys, or sensitive data. CVE-2024-8775 proved the cost of forgetting this.
+4. **No `command`/`shell` when a module exists.** Modules are idempotent, tested, and portable. Shell commands are none of those.
+5. **Variables over hardcoded values.** IPs, paths, package versions, usernames, ports -- all variables with defaults.
+6. **Quote Jinja2 variables.** `"{{ var }}"`, not `{{ var }}`. Bare braces break YAML parsing.
+7. **Vault for secrets.** Not plaintext in `group_vars`, not `ansible_ssh_pass` in inventory, not environment variables in playbooks.
+8. **Test with Molecule.** Every role gets a Molecule scenario with converge + idempotence check + verification.
+9. **Pin collection versions.** In `requirements.yml` and EE definitions. Unpinned collections are a supply chain risk.
+10. **`ansible-lint` clean.** Production profile. In CI. On every change.
+11. **Separate inventory per environment.** Production, staging, dev. Never a single inventory with `--limit` for environment selection.
+12. **`--check --diff` before apply.** Review what will change before applying, especially in CI/CD.
+13. **Run the AI self-check.** Every generated playbook gets verified against the checklist above before returning.
