@@ -1,4 +1,4 @@
-# skills.sh
+# skills.
 
 **Hand-crafted Claude Code skills for DevOps, security, infrastructure, and software engineering.**
 
