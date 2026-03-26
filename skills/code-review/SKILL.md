@@ -22,6 +22,13 @@ Every finding answers one of:
 2. **Will it do the wrong thing?** -- logic errors, off-by-ones, wrong comparisons, missing cases
 3. **Will it break later?** -- race conditions, implicit ordering, fragile assumptions, API contract drift
 
+## When NOT to use
+
+- Style, verbosity, or machine-generated code quality issues -- use anti-slop
+- Exploitable vulnerabilities, auth flaws, or secret scanning -- use security-audit
+- Pipeline architecture design -- use ci-cd
+- End-of-session doc hygiene or instruction-file cleanup -- use update-docs
+
 ## When Invoked
 
 ### Step 1: Scope the review
@@ -43,7 +50,7 @@ Available scopes:
 ### Step 2: Gather project context
 
 Before reviewing any code, build context:
-1. Read project instruction files (`AGENTS.md`, `CLAUDE.md`, or equivalent) if present -- project conventions, patterns, known gotchas
+1. Read project instruction files (`AGENTS.md` or equivalent) if present -- project conventions, patterns, known gotchas
 2. Check the project's language/framework versions (package.json, pyproject.toml, go.mod, etc.)
 3. Understand the architecture -- monolith, microservices, CLI tool, library?
 4. Note any custom error handling patterns, logging conventions, or testing requirements

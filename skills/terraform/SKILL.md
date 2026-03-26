@@ -240,7 +240,7 @@ moved {
 
 ## Modules
 
-Read `${CLAUDE_SKILL_DIR}/references/module-patterns.md` for detailed module structure, testing patterns, and registry strategies.
+Read `references/module-patterns.md` for detailed module structure, testing patterns, and registry strategies.
 
 ### Structure
 
@@ -280,11 +280,11 @@ modules/<provider>/<resource-type>/
 
 ## Operations
 
-Read `${CLAUDE_SKILL_DIR}/references/state-and-security.md` for state backends, locking, encryption, OIDC federation, and CI/CD pipeline patterns.
+Read `references/state-and-security.md` for state backends, locking, encryption, OIDC federation, and CI/CD pipeline patterns.
 
 ### State management
 
-See `${CLAUDE_SKILL_DIR}/references/state-and-security.md` for full backend config examples, OIDC federation patterns, and CI/CD pipeline flows.
+See `references/state-and-security.md` for full backend config examples, OIDC federation patterns, and CI/CD pipeline flows.
 
 **S3 + native locking** (TF 1.10+): DynamoDB-based locking is deprecated. Use `use_lockfile = true`. Encrypt with KMS. Enable versioning and CloudTrail data events on the bucket.
 
@@ -380,7 +380,7 @@ provider "aws" {
 
 ## Compliance
 
-Read `${CLAUDE_SKILL_DIR}/references/compliance.md` for the full PCI-DSS 4.0 requirements mapping, drift detection strategy, audit trail architecture, and OIDC patterns.
+Read `references/compliance.md` for the full PCI-DSS 4.0 requirements mapping, drift detection strategy, audit trail architecture, and OIDC patterns.
 
 ### Quick reference: PCI-DSS 4.0 and IaC
 

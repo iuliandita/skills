@@ -236,7 +236,7 @@ The Trivy supply chain attack (CVE-2026-33634) demonstrated that **mutable Git t
 
 **ESO + cloud secret manager** when you have cloud KMS. **Vault** when you need dynamic secrets or PKI. **Sealed Secrets** when you need encrypted-in-git without external infrastructure -- works well for self-hosted clusters, homelabs, and environments where standing up Vault or a cloud KMS is overkill. Sealed Secrets and ESO are not mutually exclusive -- some teams use Sealed Secrets for static config and Vault/ESO for dynamic credentials. **SOPS** for teams that prefer file-level encryption over CRDs.
 
-**Full Sealed Secrets reference**: scope modes, key management, PCI-DSS gaps, kubeseal patterns, ArgoCD integration, anti-patterns -- see `${CLAUDE_SKILL_DIR}/references/sealed-secrets.md`.
+**Full Sealed Secrets reference**: scope modes, key management, PCI-DSS gaps, kubeseal patterns, ArgoCD integration, anti-patterns -- see `references/sealed-secrets.md`.
 
 **CRITICAL: CVE-2026-22728** (Sealed Secrets < v0.36.0) -- scope-widening via the rotate API. Upgrade immediately.
 

@@ -76,10 +76,10 @@ Before writing any shell code, determine the target shell. Check these signals i
 
 | Target shell | Reference file |
 |-------------|---------------|
-| Zsh | `${CLAUDE_SKILL_DIR}/references/zsh.md` (~685 lines, 14 sections) |
-| Bash | `${CLAUDE_SKILL_DIR}/references/bash.md` (~680 lines, 13 sections) |
-| POSIX sh | `${CLAUDE_SKILL_DIR}/references/posix-sh.md` (~490 lines, 10 sections) |
-| Fish, tcsh, nushell, others | `${CLAUDE_SKILL_DIR}/references/alt-shells.md` (~410 lines, 4 shells) |
+| Zsh | `references/zsh.md` (~685 lines, 14 sections) |
+| Bash | `references/bash.md` (~680 lines, 13 sections) |
+| POSIX sh | `references/posix-sh.md` (~490 lines, 10 sections) |
+| Fish, tcsh, nushell, others | `references/alt-shells.md` (~410 lines, 4 shells) |
 
 **Don't load all references.** Pick the one that matches. If porting between two shells, load both.
 

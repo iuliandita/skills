@@ -97,12 +97,12 @@ Before returning any generated network configuration, verify:
 
 | Task type | Start with | Reference |
 |-----------|------------|-----------|
-| **Troubleshoot** | Symptoms, recent changes, affected scope | `${CLAUDE_SKILL_DIR}/references/troubleshooting.md` |
-| **Configure DNS** | Current resolver, authoritative vs recursive, split-horizon needs | `${CLAUDE_SKILL_DIR}/references/dns.md` |
-| **Set up reverse proxy** | Which proxy, upstream services, TLS requirements | `${CLAUDE_SKILL_DIR}/references/reverse-proxies.md` |
-| **Configure VPN** | Topology (p2p, hub-spoke, mesh), protocol choice | `${CLAUDE_SKILL_DIR}/references/vpn.md` |
-| **Network segmentation** | VLANs, subnets, nftables zones, namespaces | `${CLAUDE_SKILL_DIR}/references/segmentation.md` |
-| **High availability** | keepalived/VRRP, floating IPs, health checks | `${CLAUDE_SKILL_DIR}/references/ha.md` |
+| **Troubleshoot** | Symptoms, recent changes, affected scope | `references/troubleshooting.md` |
+| **Configure DNS** | Current resolver, authoritative vs recursive, split-horizon needs | `references/dns.md` |
+| **Set up reverse proxy** | Which proxy, upstream services, TLS requirements | `references/reverse-proxies.md` |
+| **Configure VPN** | Topology (p2p, hub-spoke, mesh), protocol choice | `references/vpn.md` |
+| **Network segmentation** | VLANs, subnets, nftables zones, namespaces | `references/segmentation.md` |
+| **High availability** | keepalived/VRRP, floating IPs, health checks | `references/ha.md` |
 
 ### Step 2: Gather context
 
@@ -209,7 +209,7 @@ Read the appropriate reference file for detailed patterns. Key principles:
 | **Traefik** | Docker/K8s, dynamic backends | Automatic (ACME) | Labels / file / K8s CRDs | Yes (TCP/UDP) |
 | **HAProxy** | Pure load balancing, L4/L7 | Manual | haproxy.cfg | Yes (native) |
 
-Read `${CLAUDE_SKILL_DIR}/references/reverse-proxies.md` for configuration patterns, TLS setup,
+Read `references/reverse-proxies.md` for configuration patterns, TLS setup,
 health checks, rate limiting, and WebSocket/gRPC proxying.
 
 ---
@@ -224,7 +224,7 @@ health checks, rate limiting, and WebSocket/gRPC proxying.
 | **Tailscale/Headscale** | Fast (WG underneath) | Zero config | WG + DERP relays | Overlay mesh, remote access |
 | **Nebula** | Fast | Low | Certificate-based | Large mesh, Slack-scale |
 
-Read `${CLAUDE_SKILL_DIR}/references/vpn.md` for setup patterns, key management, MTU tuning,
+Read `references/vpn.md` for setup patterns, key management, MTU tuning,
 NAT traversal, and overlay network comparison.
 
 ---
@@ -249,7 +249,7 @@ table inet filter {
 }
 ```
 
-Read `${CLAUDE_SKILL_DIR}/references/segmentation.md` for VLAN setup, nftables zones, network
+Read `references/segmentation.md` for VLAN setup, nftables zones, network
 namespaces, and inter-VLAN routing patterns.
 
 ---
@@ -271,17 +271,17 @@ Network configuration touches several PCI-DSS requirements:
 
 ## Reference Files
 
-- `${CLAUDE_SKILL_DIR}/references/dns.md` -- DNS server comparison, DNSSEC, split-horizon,
+- `references/dns.md` -- DNS server comparison, DNSSEC, split-horizon,
   DoH/DoT, Pi-hole/AdGuard, troubleshooting
-- `${CLAUDE_SKILL_DIR}/references/reverse-proxies.md` -- Caddy, Nginx, Traefik, HAProxy
+- `references/reverse-proxies.md` -- Caddy, Nginx, Traefik, HAProxy
   configuration patterns, TLS, WebSocket, gRPC, rate limiting
-- `${CLAUDE_SKILL_DIR}/references/vpn.md` -- WireGuard, OpenVPN, IPsec/strongSwan setup,
+- `references/vpn.md` -- WireGuard, OpenVPN, IPsec/strongSwan setup,
   overlay networks (Tailscale, Headscale, Nebula, ZeroTier), key management
-- `${CLAUDE_SKILL_DIR}/references/segmentation.md` -- VLANs, subnetting, nftables firewall
+- `references/segmentation.md` -- VLANs, subnetting, nftables firewall
   patterns, network namespaces, IPv6
-- `${CLAUDE_SKILL_DIR}/references/troubleshooting.md` -- Diagnostic methodology, tool deep-dives,
+- `references/troubleshooting.md` -- Diagnostic methodology, tool deep-dives,
   common issues, performance tuning
-- `${CLAUDE_SKILL_DIR}/references/ha.md` -- keepalived/VRRP, floating IPs, HAProxy + keepalived
+- `references/ha.md` -- keepalived/VRRP, floating IPs, HAProxy + keepalived
   HA, health check patterns
 
 ## Related Skills

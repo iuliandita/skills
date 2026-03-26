@@ -20,6 +20,13 @@ Every finding falls into one of three categories:
 2. **Lies** -- subtly wrong or outdated (hallucinated APIs, deprecated patterns, stale deps)
 3. **Soul** -- lacks taste (over-abstraction, generic names, defensive overkill)
 
+## When NOT to use
+
+- Correctness, logic, or race-condition bugs -- use code-review
+- Security vulnerabilities, secret scanning, or auth review -- use security-audit
+- One-off prompt authoring or prompt templates -- use prompt-generator
+- Session-end documentation maintenance -- use update-docs
+
 ## When Invoked
 
 ### Step 1: Scope the audit

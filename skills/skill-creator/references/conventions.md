@@ -44,7 +44,7 @@ allowed-tools: Read, Bash, Grep, Glob  # restrict which tools the skill can use
 | Field | Values | Purpose |
 |-------|--------|---------|
 | `name` | lowercase + hyphens | identifier, directory name, display name |
-| `description` | free text, <1024 chars | primary trigger mechanism -- Claude scans this |
+| `description` | free text, <1024 chars | primary trigger mechanism -- the agent scans this |
 | `source` | `custom` | identifies locally maintained skills |
 | `date_added` | ISO date string | staleness detection |
 | `effort` | `low`, `medium`, `high` | signals expected token usage and complexity |
@@ -53,14 +53,14 @@ allowed-tools: Read, Bash, Grep, Glob  # restrict which tools the skill can use
 
 | Tier | Token usage | Typical skills | Structure depth |
 |------|-------------|---------------|-----------------|
-| **low** | <5k tokens | lightpanda, update-docs, update-skills | Minimal workflow, few rules |
+| **low** | <5k tokens | lightpanda, update-docs | Minimal workflow, few rules |
 | **medium** | 5-15k tokens | anti-slop, prompt-generator, zsh | Moderate workflow, reference files |
 | **high** | 15k+ tokens | ansible, ci-cd, code-review, databases, docker, full-review, git, kubernetes, opnsense, security-audit, skill-creator, terraform | Full workflow, AI self-check, checklists, multiple references |
 
-### Plugin skills (for reference)
+### Upstream skills (for reference)
 
-Anthropic plugin skills (pdf, docx, pptx, xlsx) use `license:` instead of source/effort fields.
-Don't enforce custom conventions on these -- they follow their own upstream standards.
+Skills mirrored directly from upstream may use their own metadata or structure. Don't rewrite
+those to match the custom frontmatter unless the collection explicitly maintains a fork.
 
 ---
 
@@ -155,9 +155,9 @@ Overview.
 - **Plain ASCII**: no em-dashes (use `--`), no curly quotes, no ligatures
 - **Explain why**: "Pin images to SHA256 digests because mutable tags are a proven attack vector
   (Trivy March 2026, tj-actions March 2025)" beats "Always pin images"
-- **Calm directives**: "Do X" outperforms "YOU MUST ALWAYS DO X" on Claude 4.x. Use ALL CAPS
+- **Calm directives**: "Do X" outperforms "YOU MUST ALWAYS DO X" on most modern coding agents. Use ALL CAPS
   only for genuinely critical safety constraints, not for emphasis.
-- **Banned words**: per global CLAUDE.md -- "delve", "navigate" (metaphorical), "landscape"
+- **Banned words**: per the collection's instruction file -- "delve", "navigate" (metaphorical), "landscape"
   (metaphorical), "tapestry", "nuanced", "multifaceted", "utilize", "robust", "innovative",
   "cutting-edge", "certainly!", "absolutely", etc. ("best practices" is allowed -- it's
   standard IT terminology.)
@@ -221,13 +221,13 @@ skill-name/
 ### Referencing from SKILL.md
 
 ```markdown
-Read `${CLAUDE_SKILL_DIR}/references/foo.md` for detailed patterns.
+Read `references/foo.md` for detailed patterns.
 ```
 
 Always include guidance on WHEN to read the reference, not just that it exists:
 
 ```markdown
-Read `${CLAUDE_SKILL_DIR}/references/github-actions.md` for GitHub Actions patterns,
+Read `references/github-actions.md` for GitHub Actions patterns,
 templates, and security hardening.
 ```
 
@@ -267,7 +267,7 @@ For skills with complex relationships, add an explicit section explaining HOW sk
 
 ### Cross-skill reference rules
 
-1. Every skill name you mention must correspond to an actual directory in `~/.claude/skills/`
+1. Every skill name you mention must correspond to an actual published skill directory in `skills/`
 2. Characterize the relationship: "use X for Y" (routing) vs "X does Y while this does Z" (explanation)
 3. If two skills share trigger keywords, both must have "When NOT to use" entries pointing at each other
 
@@ -346,14 +346,13 @@ Use this skill even when the user doesn't explicitly say "git" but is clearly do
 
 ## 8. Skill Inventory (March 2026)
 
-### Custom skills (22)
+### Published skills (19)
 
 | Skill | Effort | Date Added | Domain |
 |-------|--------|-----------|--------|
 | ansible | high | 2026-03-24 | Configuration management |
 | anti-slop | medium | 2026-03-25 | Code quality audit |
 | ci-cd | high | 2026-03-24 | CI/CD pipelines |
-| cluster-health | high | 2026-03-25 | K8s cluster diagnostics |
 | code-review | high | 2026-03-25 | Correctness audit |
 | command-prompt | medium | 2026-03-25 | Shell scripting and config |
 | databases | high | 2026-03-24 | Database operations |
@@ -362,7 +361,6 @@ Use this skill even when the user doesn't explicitly say "git" but is clearly do
 | git | high | 2026-03-24 | Version control, multi-forge |
 | kubernetes | high | 2026-03-24 | K8s manifests, Helm, architecture |
 | lightpanda | low | 2026-03-22 | Headless browser via MCP |
-| linux-privilege-escalation | high | 2026-02-27 | Privilege escalation assessment |
 | lockpick | high | 2026-03-25 | Post-exploitation, CTF, pivoting |
 | networking | high | 2026-03-25 | DNS, reverse proxies, VPNs, nftables, HA |
 | opnsense | high | 2026-03-19 | Firewall management (FreeBSD) |
@@ -371,31 +369,6 @@ Use this skill even when the user doesn't explicitly say "git" but is clearly do
 | skill-creator | high | 2026-03-25 | Skill lifecycle management |
 | terraform | high | 2026-03-24 | Infrastructure-as-code |
 | update-docs | low | 2026-03-25 | Documentation sweep |
-| update-skills | low | 2026-03-18 | Skill update management |
 
-### Plugin skills (4)
-
-| Skill | Source | Domain |
-|-------|--------|--------|
-| docx | Anthropic plugin | Word documents |
-| pdf | Anthropic plugin | PDF processing |
-| pptx | Anthropic plugin | PowerPoint presentations |
-| xlsx | Anthropic plugin | Spreadsheets |
-
-### Superpowers skills (reference only)
-
-These are installed but should NOT be auto-triggered when a custom skill covers the same domain:
-
-| Superpowers Skill | Custom Equivalent | When to use superpowers instead |
-|-------------------|-------------------|-------------------------------|
-| skill-creator | **skill-creator (this skill)** | Only if user explicitly asks for benchmark evaluation with parallel test agents |
-| code-reviewer | code-review, full-review | Only if user explicitly asks for superpowers review |
-| brainstorming | -- (no custom equivalent) | Creative feature design, always manual |
-| writing-plans | -- (no custom equivalent) | Multi-step implementation planning, always manual |
-| executing-plans | -- (no custom equivalent) | Plan execution with review checkpoints, always manual |
-| test-driven-development | -- (no custom equivalent) | TDD workflow, always manual |
-| verification-before-completion | -- (no custom equivalent) | Pre-completion verification, always manual |
-
-Custom skills are preferred because they encode domain-specific conventions, PCI-DSS awareness,
-version currency, and the user's established patterns. Superpowers skills are generic and don't
-know about this collection's conventions.
+This inventory tracks the published skills in this repo only. Local-only, excluded, or
+third-party-installed skills should not appear in cross-reference checks for the public collection.

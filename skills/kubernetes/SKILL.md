@@ -110,7 +110,7 @@ helm install <release> <chart>/ --dry-run --debug     # Server-side dry run (nee
 
 ## Manifests
 
-Read `${CLAUDE_SKILL_DIR}/references/manifest-templates.md` for complete, copy-pasteable YAML templates (Deployment, Service, Gateway API HTTPRoute, ConfigMap, PVC, StatefulSet, native sidecar).
+Read `references/manifest-templates.md` for complete, copy-pasteable YAML templates (Deployment, Service, Gateway API HTTPRoute, ConfigMap, PVC, StatefulSet, native sidecar).
 
 ### Key patterns
 
@@ -139,7 +139,7 @@ Read `${CLAUDE_SKILL_DIR}/references/manifest-templates.md` for complete, copy-p
 
 **In-place pod resize** (GA in K8s 1.35): CPU and memory can be updated on running pods without restart. VPA can now resize without disruption using `InPlaceOrRecreate` mode.
 
-**Config/secrets**: ConfigMap for non-sensitive data. For secrets, use External Secrets Operator syncing from a vault/cloud KMS, or Sealed Secrets for encrypted-in-git workflows (see `${CLAUDE_SKILL_DIR}/references/sealed-secrets.md`). Never commit plaintext secrets anywhere.
+**Config/secrets**: ConfigMap for non-sensitive data. For secrets, use External Secrets Operator syncing from a vault/cloud KMS, or Sealed Secrets for encrypted-in-git workflows (see `references/sealed-secrets.md`). Never commit plaintext secrets anywhere.
 
 ---
 
@@ -250,7 +250,7 @@ Key Go template patterns:
 
 ## Architecture
 
-Read `${CLAUDE_SKILL_DIR}/references/architecture.md` for the full architecture decision framework. Key patterns:
+Read `references/architecture.md` for the full architecture decision framework. Key patterns:
 
 ### Cluster topology
 
@@ -288,7 +288,7 @@ Promotion: dev -> staging -> prod via PR-based promotion. No auto-sync to prod.
 4. **Network policies**: default-deny ingress/egress per namespace; Cilium for L7 policies
 5. **RBAC**: namespace-scoped roles, no cluster-admin for apps, OIDC auth with MFA
 6. **Supply chain**: cosign/Sigstore for image signing, SLSA Level 2-3, SBOMs. **Pin all CI actions and tools to commit SHAs** -- the Trivy supply chain compromise (March 2026, CVE-2026-33634) proved mutable tags can be force-pushed with malware.
-7. **Secrets**: External Secrets Operator + cloud KMS (primary); Vault for dynamic secrets/PKI; Sealed Secrets for encrypted-in-git without external deps (see `${CLAUDE_SKILL_DIR}/references/sealed-secrets.md`); SOPS for small teams
+7. **Secrets**: External Secrets Operator + cloud KMS (primary); Vault for dynamic secrets/PKI; Sealed Secrets for encrypted-in-git without external deps (see `references/sealed-secrets.md`); SOPS for small teams
 8. **Runtime security**: Falco for detection (CNCF Graduated), Tetragon for eBPF enforcement (<1% overhead)
 
 ### Supply chain integrity (lessons from Trivy compromise, March 2026)
@@ -316,7 +316,7 @@ The Trivy supply chain attack (CVE-2026-33634) is the defining security event of
 
 ## Compliance
 
-Read `${CLAUDE_SKILL_DIR}/references/compliance.md` for the full PCI-DSS 4.0 requirements mapping to Kubernetes controls.
+Read `references/compliance.md` for the full PCI-DSS 4.0 requirements mapping to Kubernetes controls.
 
 ### Quick reference: PCI-DSS 4.0 on K8s
 

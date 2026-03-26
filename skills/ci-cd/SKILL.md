@@ -110,9 +110,9 @@ Before writing pipeline config:
 ### Step 4: Apply platform-specific patterns
 
 Read the appropriate reference file:
-- **GitHub Actions**: `${CLAUDE_SKILL_DIR}/references/github-actions.md`
-- **GitLab CI/CD**: `${CLAUDE_SKILL_DIR}/references/gitlab-ci.md`
-- **Supply chain / compliance**: `${CLAUDE_SKILL_DIR}/references/supply-chain.md`
+- **GitHub Actions**: `references/github-actions.md`
+- **GitLab CI/CD**: `references/gitlab-ci.md`
+- **Supply chain / compliance**: `references/supply-chain.md`
 
 For **Forgejo CI/CD**, see the Forgejo section below (smaller scope, inline).
 
@@ -274,7 +274,7 @@ All future-dated requirements became **mandatory March 31, 2025**.
 if properly documented. An automated SAST/DAST/SCA gate with evidence = equivalent to manual
 code review for QSA assessment.
 
-Read `${CLAUDE_SKILL_DIR}/references/supply-chain.md` for detailed PCI-DSS compliance patterns.
+Read `references/supply-chain.md` for detailed PCI-DSS compliance patterns.
 
 ---
 
@@ -285,7 +285,7 @@ blocks, `allow_failure: true` without justification, `:latest` tags, secrets in 
 **Always run the AI Self-Check against AI-generated pipeline code.**
 
 For detailed coverage of slopsquatting, AI agents in CI/CD, prompt injection in pipelines, and
-the OWASP Top 10 for Agentic Applications, read `${CLAUDE_SKILL_DIR}/references/supply-chain.md`
+the OWASP Top 10 for Agentic Applications, read `references/supply-chain.md`
 (AI-Age Supply Chain Risks section).
 
 ---

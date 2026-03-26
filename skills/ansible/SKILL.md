@@ -138,7 +138,7 @@ ansible-navigator run playbook.yml --mode stdout --eei <ee-image>
 
 ## Playbooks
 
-Read `${CLAUDE_SKILL_DIR}/references/playbook-patterns.md` for complete, copy-pasteable task examples (services, packages, files, templates, users, firewall, cron, systemd, OpenRC) and Jinja2 patterns.
+Read `references/playbook-patterns.md` for complete, copy-pasteable task examples (services, packages, files, templates, users, firewall, cron, systemd, OpenRC) and Jinja2 patterns.
 
 ### Structure
 
@@ -300,7 +300,7 @@ for cross-distro roles. The `service` module auto-detects systemd, OpenRC, SysV,
 
 ## Roles & Collections
 
-Read `${CLAUDE_SKILL_DIR}/references/roles-and-collections.md` for detailed role anatomy, collection structure, Galaxy patterns, and Molecule testing workflows.
+Read `references/roles-and-collections.md` for detailed role anatomy, collection structure, Galaxy patterns, and Molecule testing workflows.
 
 ### Role structure
 
@@ -564,7 +564,7 @@ Build with: `ansible-builder build -t my-ee:1.0.0 -f execution-environment.yml`
 
 ### Ansible Vault
 
-Read `${CLAUDE_SKILL_DIR}/references/vault-and-secrets.md` for detailed Vault patterns, HashiCorp Vault integration, and CI/CD secrets workflows.
+Read `references/vault-and-secrets.md` for detailed Vault patterns, HashiCorp Vault integration, and CI/CD secrets workflows.
 
 **File-level encryption**:
 ```bash
@@ -652,7 +652,7 @@ ansible-navigator doc ansible.builtin.copy
 
 ## Compliance
 
-Read `${CLAUDE_SKILL_DIR}/references/compliance.md` for the full PCI-DSS 4.0 requirements mapping to Ansible controls, CIS benchmark automation, and hardening patterns.
+Read `references/compliance.md` for the full PCI-DSS 4.0 requirements mapping to Ansible controls, CIS benchmark automation, and hardening patterns.
 
 ### Quick reference: PCI-DSS 4.0 with Ansible
 

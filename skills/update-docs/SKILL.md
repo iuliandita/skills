@@ -1,6 +1,6 @@
 ---
 name: update-docs
-description: "Use when a session involved infrastructure, configuration, architecture, or operational changes. Also use when explicitly asked to update docs, refresh documentation, or at the end of a session after significant work. Triggers: new gotchas discovered, changed IPs/ports/versions, new services added, runbook-worthy procedures, or project instruction files (`AGENTS.md`, `CLAUDE.md`, or equivalent) growing stale. Do NOT use for writing new documentation from scratch."
+description: "Use when a session involved infrastructure, configuration, architecture, or operational changes. Also use when explicitly asked to update docs, refresh documentation, or at the end of a session after significant work. Triggers: new gotchas discovered, changed IPs/ports/versions, new services added, runbook-worthy procedures, or project instruction files (`AGENTS.md` or equivalent) growing stale. Do NOT use for writing new documentation from scratch."
 source: custom
 date_added: "2026-03-25"
 effort: low
@@ -9,6 +9,18 @@ effort: low
 # Update Docs
 
 Post-session documentation sweep. Captures non-obvious knowledge into the right docs, trims bloat, and keeps project instruction files in sync.
+
+## When to use
+
+- After infrastructure, configuration, architecture, or operational changes
+- When asked to refresh docs, instruction files, runbooks, or README content
+- When a session uncovered new gotchas, changed versions, or added services
+
+## When NOT to use
+
+- Writing brand-new documentation sets from scratch
+- Code correctness or security review -- use code-review or security-audit
+- Prompt authoring or reusable skill-file maintenance -- use prompt-generator or skill-creator
 
 ## Core Principle
 
@@ -44,7 +56,7 @@ Map changes to documentation targets. Adapt this table to the project's doc stru
 
 | Change Type | Likely Docs to Update |
 |-------------|----------------------|
-| New/changed infrastructure specs | Project instruction file (`AGENTS.md`, `CLAUDE.md`, or equivalent), inventory docs |
+| New/changed infrastructure specs | Project instruction file (`AGENTS.md` or equivalent), inventory docs |
 | New service or app deployed | Project instruction file, deployment docs |
 | IP/port/endpoint changes | Project instruction file, network inventory |
 | Version bumps (runtimes, deps, images) | Project instruction file |
@@ -87,8 +99,8 @@ Map changes to documentation targets. Adapt this table to the project's doc stru
 After editing docs, check that internal references still resolve:
 
 ```bash
-# Extract markdown link targets and verify they exist
-grep -roEh '\[[^]]*\]\([^)#]+' AGENTS.md CLAUDE.md docs/ README.md 2>/dev/null | \
+# Adjust <instruction-files> to the repo's actual instruction files
+grep -roEh '\[[^]]*\]\([^)#]+' <instruction-files> docs/ README.md 2>/dev/null | \
   sed 's/.*](//' | grep -v '^https\?://' | sort -u | while read -r path; do
     [[ -e "$path" ]] || echo "BROKEN LINK: $path"
   done
@@ -119,14 +131,15 @@ After updates, review the project's shared instruction file critically:
 **Size targets:**
 - Shared instruction files: aim for **under 40,000 characters** and under 500 lines even if the tool allows more. If over, move detailed sections to `docs/` and link.
 - Individual sections: if a section exceeds 30 lines, consider splitting into a dedicated doc.
-- Check size after edits: `wc -c AGENTS.md CLAUDE.md 2>/dev/null`
+- Check size after edits: `wc -c <instruction-files> 2>/dev/null`
 
 ### 6. Sync Companion Instruction Files
 
-If the project keeps multiple instruction files (`AGENTS.md`, `CLAUDE.md`, or tool-specific variants), keep them aligned after updates.
+If the project keeps multiple instruction files (`AGENTS.md` plus tool-specific variants, for example), keep them aligned after updates.
 
 ```bash
-test -f AGENTS.md && test -f CLAUDE.md && cp AGENTS.md CLAUDE.md
+# Example: sync a canonical shared file into a tool-specific companion
+test -f AGENTS.md && test -f <companion-instruction-file> && cp AGENTS.md <companion-instruction-file>
 ```
 
 Review the copied file after syncing and remove any tool-specific commands or behavior that do not apply to that target.
@@ -149,7 +162,7 @@ git diff --cached --quiet || git commit -m "docs: update [target] after [what ch
 | File | Purpose | Committed? |
 |------|---------|-----------|
 | `AGENTS.md` | Cross-tool project instructions | Depends on project (check .gitignore) |
-| `CLAUDE.md` | Claude-specific companion file when a project keeps one | Depends on project (check .gitignore) |
+| Tool-specific instruction file | Companion instructions for a specific agent/tool when a project keeps one | Depends on project (check .gitignore) |
 | `docs/` | Project documentation (inventory, runbooks, ADRs) | Yes |
 | `README.md` | Repo overview | Yes |
 

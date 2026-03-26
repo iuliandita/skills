@@ -127,7 +127,7 @@ trivy image <image>                   # use v0.69.3 ONLY (v0.69.4-6 COMPROMISED)
 
 ## Dockerfile
 
-Read `${CLAUDE_SKILL_DIR}/references/dockerfile-patterns.md` for complete, production-ready Dockerfile templates (Node.js/Bun, Python, Go, Rust, static site) and BuildKit syntax reference.
+Read `references/dockerfile-patterns.md` for complete, production-ready Dockerfile templates (Node.js/Bun, Python, Go, Rust, static site) and BuildKit syntax reference.
 
 ### Base image selection (March 2026)
 
@@ -212,7 +212,7 @@ EOF
 
 ## Compose
 
-Read `${CLAUDE_SKILL_DIR}/references/compose-patterns.md` for complete Compose v5 templates (web+db, dev override, production hardened, AI/ML stack) and network/volume patterns.
+Read `references/compose-patterns.md` for complete Compose v5 templates (web+db, dev override, production hardened, AI/ML stack) and network/volume patterns.
 
 ### Compose v5 (current)
 
@@ -256,7 +256,7 @@ services:
     command: bun run dev
 ```
 
-**Secrets**: use top-level `secrets:` with `file:` or `external: true`, reference via `_FILE` env convention (e.g., `POSTGRES_PASSWORD_FILE: /run/secrets/db_pass`). Never hardcode secrets in `environment:`. See `${CLAUDE_SKILL_DIR}/references/compose-patterns.md` for the full template with secret wiring.
+**Secrets**: use top-level `secrets:` with `file:` or `external: true`, reference via `_FILE` env convention (e.g., `POSTGRES_PASSWORD_FILE: /run/secrets/db_pass`). Never hardcode secrets in `environment:`. See `references/compose-patterns.md` for the full template with secret wiring.
 
 **Health-gated dependencies**: always use `depends_on:` with `condition: service_healthy` -- bare `depends_on` is ordering only, no readiness guarantee.
 
@@ -276,7 +276,7 @@ services:
 
 ## Security
 
-Read `${CLAUDE_SKILL_DIR}/references/security-and-compliance.md` for the full PCI-DSS 4.0 container requirements mapping, CVE reference, runtime hardening patterns, and scanning tool comparison.
+Read `references/security-and-compliance.md` for the full PCI-DSS 4.0 container requirements mapping, CVE reference, runtime hardening patterns, and scanning tool comparison.
 
 ### Critical vulnerabilities (2025-2026)
 
@@ -327,7 +327,7 @@ services:
         max-file: "3"
 ```
 
-For a hardened Dockerfile pattern, see `${CLAUDE_SKILL_DIR}/references/dockerfile-patterns.md` (Language Templates section).
+For a hardened Dockerfile pattern, see `references/dockerfile-patterns.md` (Language Templates section).
 
 ### Supply chain security
 
@@ -352,7 +352,7 @@ PCI-DSS 4.0 is the only active version. Key container-specific requirements:
 - **Req 10**: Audit logging -- container stdout/stderr to immutable log store
 - **Req 11.5**: Image digest pinning + Falco = FIM for containers
 
-Full mapping in `${CLAUDE_SKILL_DIR}/references/security-and-compliance.md`.
+Full mapping in `references/security-and-compliance.md`.
 
 ---
 
@@ -388,13 +388,13 @@ services:
       OPENAI_BASE_URL: http://model/v1
 ```
 
-GPU containers: use `deploy.resources.reservations.devices` with `capabilities: [gpu]`. Start `shm_size` at `16gb` for single GPU, `32gb` for multi-GPU (vLLM needs shared memory for tensor ops). See `${CLAUDE_SKILL_DIR}/references/compose-patterns.md` for the full AI/ML stack template.
+GPU containers: use `deploy.resources.reservations.devices` with `capabilities: [gpu]`. Start `shm_size` at `16gb` for single GPU, `32gb` for multi-GPU (vLLM needs shared memory for tensor ops). See `references/compose-patterns.md` for the full AI/ML stack template.
 
 ---
 
 ## Alternative Runtimes
 
-Read `${CLAUDE_SKILL_DIR}/references/alternative-runtimes.md` for Podman, Buildah, Skopeo, and containerd patterns, migration guides, and Quadlet systemd integration.
+Read `references/alternative-runtimes.md` for Podman, Buildah, Skopeo, and containerd patterns, migration guides, and Quadlet systemd integration.
 
 ### Quick comparison
 

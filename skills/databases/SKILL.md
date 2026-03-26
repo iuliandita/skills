@@ -163,7 +163,7 @@ sqlcmd -Q "DBCC CHECKDB ('dbname') WITH NO_INFOMSGS;"  # integrity check
 
 ### Configuration essentials
 
-Read `${CLAUDE_SKILL_DIR}/references/config-templates.md` for copy-pasteable `postgresql.conf` and `pg_hba.conf` templates (dev, prod, PCI-CDE variants).
+Read `references/config-templates.md` for copy-pasteable `postgresql.conf` and `pg_hba.conf` templates (dev, prod, PCI-CDE variants).
 
 **PG 18 notable changes:**
 - **OAuth 2.0 authentication** -- integrate with Keycloak, Entra ID, etc. natively
@@ -243,7 +243,7 @@ Read `${CLAUDE_SKILL_DIR}/references/config-templates.md` for copy-pasteable `po
 
 ### Configuration essentials
 
-Read `${CLAUDE_SKILL_DIR}/references/config-templates.md` for copy-pasteable `mongod.conf` templates.
+Read `references/config-templates.md` for copy-pasteable `mongod.conf` templates.
 
 **MongoDB 8.0 highlights:**
 - 25% better throughput/latency across the board, 54% faster bulk inserts
@@ -285,7 +285,7 @@ MongoDB is schemaless but not designless:
 
 ### Configuration essentials
 
-Read `${CLAUDE_SKILL_DIR}/references/config-templates.md` for copy-pasteable `my.cnf` templates.
+Read `references/config-templates.md` for copy-pasteable `my.cnf` templates.
 
 **MySQL 8.4 LTS** is what you run in production. 9.x is innovation/quarterly -- fine for dev, not for stability.
 
@@ -355,7 +355,7 @@ tls_version = TLSv1.2,TLSv1.3
 
 ### Backup strategy
 
-Read `${CLAUDE_SKILL_DIR}/references/backup-patterns.md` for the full backup strategy per engine.
+Read `references/backup-patterns.md` for the full backup strategy per engine.
 
 **MSSQL quick reference:**
 - Recovery model: `FULL` for production (enables PITR), `SIMPLE` for dev/test
@@ -433,7 +433,7 @@ For PCI-DSS CDE data: **DB-per-tenant or schema-per-tenant with Row-Level Securi
 
 ## Migration
 
-Read `${CLAUDE_SKILL_DIR}/references/migration-patterns.md` for complete cross-engine type mapping tables, zero-downtime patterns, and tooling comparison.
+Read `references/migration-patterns.md` for complete cross-engine type mapping tables, zero-downtime patterns, and tooling comparison.
 
 ### Zero-downtime schema changes (expand-contract)
 
@@ -458,7 +458,7 @@ This is the only safe pattern for production schema changes under continuous dep
 
 ### Cross-engine migration gotchas
 
-The full type mapping table is in `${CLAUDE_SKILL_DIR}/references/migration-patterns.md`. Key traps:
+The full type mapping table is in `references/migration-patterns.md`. Key traps:
 
 **MySQL -> PostgreSQL:**
 - `TINYINT(1)` -> `boolean` (not `smallint`)
@@ -532,7 +532,7 @@ Most ORMs/drivers have built-in connection pools. Key settings:
 
 ## Backup & Recovery
 
-Read `${CLAUDE_SKILL_DIR}/references/backup-patterns.md` for complete per-engine backup scripts and schedules.
+Read `references/backup-patterns.md` for complete per-engine backup scripts and schedules.
 
 ### Strategy matrix
 

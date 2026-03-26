@@ -15,9 +15,16 @@ The four audits:
 1. **Code Review** (`code-review` skill) -- bugs, logic errors, edge cases, race conditions, resource leaks, convention violations. Uses confidence-based filtering (>= 80%), adversarial self-check, and evidence-based verification.
 2. **Slop Check** (`anti-slop` skill) -- machine-generated patterns, over-abstraction, verbose code, stale idioms
 3. **Security Audit** (`security-audit` skill) -- vulnerabilities, secrets, dependency risks, OWASP mapping
-4. **Docs Sweep** (`update-docs` skill) -- stale docs, bloated CLAUDE.md, missing gotchas, broken links, AGENTS.md sync
+4. **Docs Sweep** (`update-docs` skill) -- stale docs, bloated instruction files, missing gotchas, broken links, companion-file drift
 
 Each audit runs in its own subagent with a fresh context window, so they don't compete for tokens or bias each other's findings.
+
+## When NOT to use
+
+- A targeted correctness review on specific files -- use code-review
+- Style/slop cleanup without the other audit passes -- use anti-slop
+- A dedicated security review only -- use security-audit
+- A documentation-only maintenance sweep -- use update-docs
 
 ## When Invoked
 
@@ -130,9 +137,9 @@ prompt: |
 
   Important: the update-docs skill normally runs post-session after making changes.
   In this context, you're running it as a standalone audit. Focus on:
-  - Identifying stale or outdated documentation (CLAUDE.md, AGENTS.md, README.md, docs/)
-  - Checking CLAUDE.md size (must stay under 40,000 chars) and bloat
-  - Verifying CLAUDE.md and AGENTS.md are in sync
+  - Identifying stale or outdated documentation (instruction files, README.md, docs/)
+  - Checking instruction-file size (must stay under 40,000 chars) and bloat
+  - Verifying shared and tool-specific instruction files are in sync
   - Finding broken internal links
   - Flagging orphaned gotchas or completed migration steps still documented
   - Checking for missing docs on recent changes (use git log)
@@ -194,7 +201,7 @@ If a skill isn't available (e.g., `code-review`, `anti-slop`, `security-audit`, 
 - **code-review** -- one of the four parallel audits. Finds bugs, logic errors, correctness issues.
 - **anti-slop** -- one of the four parallel audits. Finds quality/style issues and AI-generated patterns.
 - **security-audit** -- one of the four parallel audits. Finds vulnerabilities, secrets, dependency risks.
-- **update-docs** -- one of the four parallel audits. Finds stale docs, bloated CLAUDE.md, missing gotchas.
+- **update-docs** -- one of the four parallel audits. Finds stale docs, bloated instruction files, and missing gotchas.
 - **skill-creator** -- audits the skill collection itself. Full-review audits application code.
 
 ---

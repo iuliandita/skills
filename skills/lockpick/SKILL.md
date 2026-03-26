@@ -97,7 +97,7 @@ ip addr && ip route && ss -tulpn
 Core Linux privesc methodology. Start with automated enumeration, then work through
 manual techniques.
 
-Read `${CLAUDE_SKILL_DIR}/references/linux-privesc.md` for the full technique library
+Read `references/linux-privesc.md` for the full technique library
 covering:
 
 1. **Automated enumeration** -- LinPEAS, pspy, Linux Exploit Suggester
@@ -144,7 +144,7 @@ env | grep -iE 'aws|azure|gcp|cloud|token|key|secret|pass'
 
 Check for VPN configurations that reveal keys, topology, or credentials for lateral movement.
 
-Read `${CLAUDE_SKILL_DIR}/references/vpn-iac-secrets.md` for the full technique library
+Read `references/vpn-iac-secrets.md` for the full technique library
 covering:
 
 1. **WireGuard** -- `/etc/wireguard/*.conf` private key extraction, peer topology mapping, AllowedIPs as network map, PreUp/PostUp script injection
@@ -156,7 +156,7 @@ covering:
 
 If you're inside a container, look for escape vectors.
 
-Read `${CLAUDE_SKILL_DIR}/references/container-breakout.md` for the full technique library
+Read `references/container-breakout.md` for the full technique library
 covering:
 
 1. **Docker socket** -- mounted `/var/run/docker.sock` -> full host access
@@ -186,7 +186,7 @@ mount | grep -E '^/dev/' | grep -v 'overlay'
 
 If you're inside a k8s pod or have access to a kubeconfig.
 
-Read `${CLAUDE_SKILL_DIR}/references/kubernetes-privesc.md` for the full technique library
+Read `references/kubernetes-privesc.md` for the full technique library
 covering:
 
 1. **ServiceAccount token** -- auto-mounted at `/var/run/secrets/kubernetes.io/serviceaccount/`, API access, token scoping (pre/post 1.24)
@@ -219,7 +219,7 @@ curl -sk "$APISERVER/api/v1/namespaces/default/pods" \
 
 Sweep the filesystem for infrastructure-as-code secrets.
 
-Read `${CLAUDE_SKILL_DIR}/references/vpn-iac-secrets.md` (IaC Secrets section) for the full
+Read `references/vpn-iac-secrets.md` (IaC Secrets section) for the full
 technique library covering:
 
 1. **Terraform** -- `terraform.tfstate` contains plaintext secrets, `.terraform/` provider creds, `TF_VAR_*` env vars, remote state backend credentials
@@ -233,7 +233,7 @@ technique library covering:
 
 Once you've escalated, pivot to other systems.
 
-Read `${CLAUDE_SKILL_DIR}/references/shells-and-pivoting.md` for:
+Read `references/shells-and-pivoting.md` for:
 
 1. **Reverse shells** -- bash, python, perl, netcat, php, ruby, powershell
 2. **SSH tunneling** -- local forwarding (-L), remote forwarding (-R), dynamic SOCKS (-D), ProxyJump chains

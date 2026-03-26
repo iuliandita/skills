@@ -3,10 +3,10 @@ name: lightpanda
 description: >
   Browse JavaScript-heavy web pages, extract content, and interact with SPAs using the Lightpanda
   headless browser via MCP. Trigger when: scraping JS-rendered pages, reading SPAs, extracting
-  structured data from websites, when WebFetch returns empty/incomplete content from dynamic sites,
+  structured data from websites, when a basic fetch tool returns empty/incomplete content from dynamic sites,
   or when the user needs to read a page that requires JavaScript execution. Also trigger when
   dealing with React, Vue, Angular, or Next.js rendered content, dashboards, or any page where
-  WebFetch clearly won't work.
+  a basic fetch tool clearly won't work.
 source: custom
 date_added: "2026-03-22"
 effort: low
@@ -25,7 +25,7 @@ multi-step interactions, use the Playwright MCP server instead.
 
 ## When to Use
 
-- **WebFetch returned empty/broken content** from a SPA or JS-rendered page
+- **A basic fetch tool returned empty/broken content** from a SPA or JS-rendered page
 - **Need to read JavaScript-rendered pages** (dashboards, dynamic docs, SPAs)
 - **Extract structured data** (JSON-LD, OpenGraph, Twitter Cards) from any page
 - **Run JavaScript** on a page to extract or interact with content
@@ -33,7 +33,7 @@ multi-step interactions, use the Playwright MCP server instead.
 
 ## When NOT to Use
 
-- Static pages that WebFetch handles fine -- try WebFetch first, switch to Lightpanda only if it fails
+- Static pages that a basic fetch tool handles fine -- try that first, switch to Lightpanda only if it fails
 - API calls, file downloads, or anything that doesn't need JavaScript execution
 - Visual testing, screenshots, or CSS layout verification -- use Playwright instead
 - Complex multi-step browser interactions (login flows, form wizards) -- use Playwright instead
@@ -102,8 +102,8 @@ Note: goto() replaces the current page -- there's no tab/window support.
 ```
 1. goto(url) -- if timeout/error:
 2.   Wait 2s, retry goto(url) once
-3.   If still fails, fall back to WebFetch
-4.   If WebFetch also empty, report to user
+3.   If still fails, fall back to a basic fetch tool
+4.   If that also returns empty content, report to the user
 ```
 
 ### Multi-page scraping with rate awareness
@@ -126,16 +126,20 @@ Lightpanda has no cookie/session persistence between goto() calls. For pages beh
 If tools fail with connection errors:
 1. The lightpanda MCP server may not be running -- tell the user
 2. The browser container may be down -- suggest checking the k8s pod
-3. For `goto()` timeouts on pages with persistent connections, try the URL with WebFetch as fallback
+3. For `goto()` timeouts on pages with persistent connections, try the URL with a basic fetch tool as fallback
 4. If `evaluate()` throws, the page JS may use APIs Lightpanda hasn't implemented -- try a simpler extraction or switch to Playwright
 
 ## Choosing Between Tools
 
 | Scenario | Use |
 |----------|-----|
-| Static HTML page | **WebFetch** (faster, no MCP needed) |
+| Static HTML page | **Basic fetch tool** (faster, no MCP needed) |
 | JS-rendered SPA content | **Lightpanda** |
 | Visual testing / screenshots | **Playwright** |
 | Complex multi-step interactions | **Playwright** |
 | Content extraction from dynamic page | **Lightpanda** (lighter than Playwright) |
-| WebFetch returned empty/broken | **Lightpanda** (retry with JS execution) |
+| Basic fetch tool returned empty/broken | **Lightpanda** (retry with JS execution) |
+
+## Related Skills
+
+- No direct peer skill in this published collection. Use the agent's basic fetch capability first, then switch to Lightpanda when JavaScript execution is required.

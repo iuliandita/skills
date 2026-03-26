@@ -35,7 +35,7 @@ patterns activates reliably, reads clearly, and plays well with the rest of the 
 
 ## When NOT to use
 
-- Updating skills from upstream repos (use update-skills)
+- Syncing or refreshing third-party skills from upstream -- handle that directly in the repo workflow
 - Writing application code, even if the code is for a tool a skill might use
 - Creating inline prompts within application code (use prompt-generator)
 
@@ -51,7 +51,7 @@ Before returning any generated or modified skill, verify against this list:
 - [ ] **"When NOT to use" section present**: cross-references related skills by name
 - [ ] **Workflow section with numbered steps**: clear, sequential, actionable
 - [ ] **Rules section at the end**: non-negotiable constraints in imperative form
-- [ ] **No banned words** from the global instruction file (`AGENTS.md`, `CLAUDE.md`, or equivalent)
+- [ ] **No banned words** from the collection's instruction file (`AGENTS.md` or equivalent)
 - [ ] **Plain ASCII only**: no em-dashes, curly quotes, ligatures -- use `--` for dashes
 - [ ] **Under 500 lines**: if approaching limit, extract to `references/` with clear pointers
 - [ ] **Reference files use `references/` relative paths**: not hardcoded or tool-specific paths
@@ -295,7 +295,7 @@ Flag skills where `date_added` is >30 days old AND the skill covers fast-moving 
 databases, git, security-audit, code-review (AI-age patterns section)
 
 **Slow-moving** (>30 days = probably fine): opnsense, command-prompt, prompt-generator,
-lightpanda, update-docs, update-skills, skill-creator, full-review
+lightpanda, update-docs, skill-creator, full-review
 
 For each stale high-effort skill, search the web for:
 - New major/minor releases of referenced tools
@@ -365,8 +365,6 @@ These are known issues in the current skill collection that should be fixed when
 
 ## Related Skills
 
-- **update-skills** -- handles updating existing skills from upstream GitHub repos. This skill
-  creates and reviews skills; update-skills syncs plugin skills with their upstream sources.
 - **anti-slop** -- the code quality audit skill. When reviewing a skill's example code or
   reference patterns, anti-slop patterns apply (comment noise, over-abstraction, stale idioms).
 - **full-review** -- orchestrates four parallel audits. This skill audits the skill collection
@@ -390,8 +388,8 @@ These are known issues in the current skill collection that should be fixed when
 4. **Prefer dedicated skill workflows over generic helpers.** When a purpose-built skill and a generic planning or brainstorming helper both fit, prefer the purpose-built skill.
    Superpowers skills (brainstorming, writing-plans, etc.) are invoked manually when explicitly
    requested.
-5. **Update the registry.** After creating a new skill, update `update-skills/SKILL.md` to
-   include it in the local-only custom skills list and the verify loop.
+5. **Update the inventory.** After creating, removing, or renaming a skill, update any published
+   inventory file the collection uses and re-run the cross-reference checks.
 6. **No AI slop in skills.** Skills are meta-prompts -- they shape how the model works. Comment
    noise, over-abstraction, aggressive ALL CAPS directives, and "just in case" instructions
    degrade skill performance. Write like a competent human briefing a colleague.

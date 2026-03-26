@@ -74,11 +74,11 @@ verify against this list:**
 
 - [ ] **Read before rewrite.** Never `Edit`/`Write` files without `Read`ing them first. Never `git commit` without checking `git status` + `git diff`.
 - [ ] **No destructive ops without confirmation.** `reset --hard`, `push --force`, `branch -D`, `clean -fd`, `checkout .` -- all require explicit user approval. Propose safer alternatives first (`--force-with-lease`, `revert`, new branch).
-- [ ] **Authorship correct.** Check project CLAUDE.md for author overrides. Many setups have a local git config that's wrong for the remote (e.g., Forgejo identity vs GitHub identity).
+- [ ] **Authorship correct.** Check the project's instruction file for author overrides. Many setups have a local git config that's wrong for the remote (e.g., Forgejo identity vs GitHub identity).
 - [ ] **Commit message format.** Follow the project's convention (check recent `git log`). Default: conventional commits (`type(scope): description`).
 - [ ] **No secrets in commits.** Check `git diff --cached` for API keys, tokens, passwords, `.env` files, private keys before committing. If found, unstage immediately.
 - [ ] **No AI attribution in commits.** Never add `Co-Authored-By` lines or any mention of AI tools in commits. No exceptions unless the project explicitly requires it.
-- [ ] **No CLAUDE.md/AGENTS.md in commits.** Never commit `CLAUDE.md`, `AGENTS.md`, or `.claude/` directory. Never mention changes to these files in commit messages. They're local AI tooling artifacts.
+- [ ] **Instruction-file policy respected.** Follow the repo's policy for `AGENTS.md` or other instruction files. Never commit local agent state directories like `.claude/`, and never mention local-only tooling files in commit messages.
 - [ ] **No tool-specific paths in commits.** `.claude/`, `.cursor/`, `.superpowers/`, `.worktrees/`, `docs/local/`, `PLAN.md`, `SECURITY-AUDIT.md` are local artifacts. Verify `.gitignore` covers them.
 - [ ] **Branch target correct.** Verify you're on the right branch before committing. Verify the PR/MR targets the right base branch.
 - [ ] **Remote target correct.** Multi-remote setups exist. Check which remote(s) to push to. Some projects push to multiple remotes (e.g., Forgejo + GitHub).
@@ -101,7 +101,7 @@ verify against this list:**
 | `.forgejo/` directory, user says "home" | Forgejo |
 | Multiple remotes in `git remote -v` | Multi-forge |
 
-Read the project's CLAUDE.md/AGENTS.md for:
+Read the project's instruction file (`AGENTS.md` or equivalent) for:
 - **Commit conventions** (message format, scope list, authorship overrides)
 - **Branch strategy** (trunk-based, feature branches, release branches)
 - **Remote setup** (which remotes exist, which to push to, SSH keys)
@@ -134,7 +134,7 @@ Optional body explaining *why*, not *what*.
 
 Select `type` from: `feat`, `fix`, `docs`, `refactor`, `chore`, `ci`, `build`, `revert`.
 Extended types (use if the project convention allows): `test`, `perf`, `security`.
-**Always check the project's CLAUDE.md and recent `git log` first** -- the project may have a
+**Always check the project's instruction file and recent `git log` first** -- the project may have a
 different type list or naming convention. Project instructions override these defaults.
 
 **Scopes** are strongly recommended but not blindly enforced. A scope adds context that makes
@@ -155,8 +155,8 @@ Message guidelines:
   Good: `fix(caddy): self-healing volume permissions`, `feat(auth): add OIDC login`
   Bad: "fix stuff", "wip", "update files", "enhance the robustness of the authentication module"
 - **Plain ASCII only.** No em-dashes, curly quotes, ligatures, or fancy punctuation in commit messages.
-- **Never mention CLAUDE.md, AGENTS.md, or AI tooling** in commit messages or bodies.
-  If you're updating those files alongside code changes, don't include them in the commit.
+- **Never mention local instruction files or AI tooling** in commit messages or bodies.
+  If you're updating local-only instruction files alongside code changes, don't include them in the commit.
 - **Never add `Co-Authored-By` or AI attribution** lines. No `Signed-off-by: AI`. No mentions
   of specific AI tools in the commit metadata.
 
@@ -165,17 +165,17 @@ Message guidelines:
 
 ### Step 3b: PR/MR workflow
 
-**First check**: does the project use feature branches? Read the project CLAUDE.md. Some projects
+**First check**: does the project use feature branches? Read the project instruction file. Some projects
 (especially solo projects) work directly on `main` by preference. The default here assumes
 collaborative development with review. Adapt to the project's actual workflow.
 
-Read `${CLAUDE_SKILL_DIR}/references/forge-workflows.md` for forge-specific PR/MR creation
+Read `references/forge-workflows.md` for forge-specific PR/MR creation
 patterns (GitHub `gh pr create`, GitLab `glab mr create`, Forgejo web UI or API).
 
 General flow:
 1. **Create feature branch**: `git checkout -b type/short-description` (e.g., `feat/user-search`, `fix/auth-bypass`). Keep branch names lowercase, hyphenated, prefixed with type.
 2. **Make changes**: commit early, commit often. Each commit should be a logical unit.
-3. **Rebase onto base**: `git fetch origin && git rebase origin/main` (or whatever the base branch is). Resolve conflicts. Never merge the base into the feature branch. For conflict resolution tips and merge strategy guidance, see `${CLAUDE_SKILL_DIR}/references/forge-workflows.md` (Merge Strategies section).
+3. **Rebase onto base**: `git fetch origin && git rebase origin/main` (or whatever the base branch is). Resolve conflicts. Never merge the base into the feature branch. For conflict resolution tips and merge strategy guidance, see `references/forge-workflows.md` (Merge Strategies section).
 4. **Push**: `git push -u origin feat/short-description`
 5. **Create PR/MR**: with a clear title (under 70 chars), body with summary + test plan.
 6. **Review cycle**: address feedback, force-push rebased commits (squash fixups).
@@ -193,7 +193,7 @@ Branch naming convention:
 
 ### Step 3c: Release workflow
 
-Read `${CLAUDE_SKILL_DIR}/references/forge-workflows.md` for forge-specific release creation.
+Read `references/forge-workflows.md` for forge-specific release creation.
 
 **Versioning scheme**: semver `vMAJOR.MINOR.PATCH` with optional pre-release suffixes.
 
@@ -209,10 +209,10 @@ Read `${CLAUDE_SKILL_DIR}/references/forge-workflows.md` for forge-specific rele
 - Increment the alpha number (`-alpha.2`, `-alpha.3`) as you iterate
 - When stable, drop the `-alpha` suffix and release `vX.Y.0`
 - Alpha tags still get GitHub/Forgejo releases (marked `--prerelease`) so CI can optionally build images
-- The project CLAUDE.md defines whether alpha tags trigger image builds or not
+- The project instruction file defines whether alpha tags trigger image builds or not
 
 General flow:
-1. **Version bump**: update all version files (check project CLAUDE.md for the list -- every project is different).
+1. **Version bump**: update all version files (check the project instruction file for the list -- every project is different).
 2. **Commit**: `chore: bump version to X.Y.Z` (or `chore: bump version to X.Y.Z-alpha.N`)
 3. **Tag**: `git tag -a vX.Y.Z -m "vX.Y.Z"` (annotated tags, not lightweight).
 4. **Push**: push commits AND tags. `git push origin main && git push origin vX.Y.Z`. If multi-remote, push to all.
@@ -227,7 +227,7 @@ breaking change marker and consistent scopes make these tools significantly more
 
 ### Step 3d: Recovery operations
 
-Read `${CLAUDE_SKILL_DIR}/references/recovery-and-maintenance.md` for detailed recovery
+Read `references/recovery-and-maintenance.md` for detailed recovery
 procedures (reflog, bisect, rerere, filter-repo, etc.).
 
 **Golden rule**: don't panic. Git almost never loses data. The reflog has 90 days of history.
@@ -347,7 +347,7 @@ via OIDC (GitHub, Google, Microsoft identity). But it requires internet access a
 doesn't support GitHub's vigilant mode.
 
 For detailed setup instructions (SSH, GPG, gitsign, 1Password, CI signing), read
-`${CLAUDE_SKILL_DIR}/references/security-and-signing.md`.
+`references/security-and-signing.md`.
 
 ---
 
@@ -485,9 +485,8 @@ it was pushed -- scrubbing history removes future exposure, not past.
 
 Every project should ignore at minimum:
 ```gitignore
-# AI tooling and agent artifacts (NEVER committed)
-CLAUDE.md
-AGENTS.md
+# Local AI tooling and agent artifacts (adjust names to your stack)
+agent-instructions.local.md
 PLAN.md
 SECURITY-AUDIT.md
 .claude/
@@ -525,10 +524,9 @@ Thumbs.db
 **AI tooling is the new .DS_Store.** Every developer uses different AI tools with different
 local config directories. Treat them all as personal artifacts -- never committed.
 
-**CLAUDE.md/AGENTS.md policy**: by default, gitignore them (they're AI agent instructions, not
-project docs). Some projects intentionally commit a project-level CLAUDE.md as shared context --
-check the project's existing `.gitignore` and conventions before adding or removing these entries.
-The global `~/.claude/CLAUDE.md` is always local and never committed anywhere.
+**Instruction-file policy**: shared instruction files like `AGENTS.md` may be intentionally committed,
+but local-only instruction files and agent state should be gitignored. Check the project's existing
+`.gitignore` and conventions before adding or removing these entries.
 
 ### .gitattributes
 
@@ -625,7 +623,7 @@ Common failure modes:
 
 - **Never skip hooks** (`--no-verify`) -- the hook caught a real issue. Fix it.
 - **Always `git diff --cached` before commit** -- verify what's actually being committed.
-- **Project CLAUDE.md is the source of truth** for commit conventions, not AI defaults.
+- **Project instruction files are the source of truth** for commit conventions, not AI defaults.
 - **Review AI-generated commit messages** -- they should be human-readable and follow conventions.
 - **AI tooling artifacts in `.gitignore`** -- add them proactively, don't wait for an accident.
 - **Verify authorship after commit** -- `git log -1 --format="%an <%ae>"` before pushing.
@@ -637,7 +635,7 @@ Common failure modes:
 - **Tool versions** in templates are illustrative. Always check for the latest stable version
   when creating real configs. Pinned `rev:` values in hook examples may be outdated.
 - **CLI examples** show the general pattern. Adapt flags and options to the specific forge,
-  repo, and context. Check project CLAUDE.md for overrides (authorship, token prefix, etc.).
+  repo, and context. Check the project instruction file for overrides (authorship, token prefix, etc.).
 - **SSH config examples** use placeholder hostnames. Replace with actual forge hostnames.
 
 ---
@@ -659,7 +657,7 @@ Common failure modes:
   covers secrets *in git history* and git-specific security (signing, hooks, credentials).
 - **code-review** -- reviews code quality. This skill creates the PR/MR; code-review evaluates
   the code in it.
-- **update-docs** -- post-session documentation sweep. May update CLAUDE.md with new git gotchas
+- **update-docs** -- post-session documentation sweep. May update shared instruction files with new git gotchas
   discovered during a session.
 
 ## Rules

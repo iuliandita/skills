@@ -72,7 +72,7 @@ This is a growing collection. New skills get added as they're built, tested, and
 | **prompt-generator** | Turn scattered ideas into structured LLM prompts -- system prompts, templates, prompt engineering |
 | **skill-creator** | Create, review, audit, and optimize AI tool skills -- consistency checks, overlap detection |
 | **lightpanda** | Headless browser for JS-heavy pages via MCP -- scrape SPAs, extract data from dynamic sites |
-| **update-docs** | Post-session documentation sweep -- captures gotchas, syncs CLAUDE.md/AGENTS.md, trims bloat |
+| **update-docs** | Post-session documentation sweep -- captures gotchas, syncs instruction files, trims bloat |
 
 ## How they're built
 
@@ -111,9 +111,15 @@ git clone https://github.com/iuliandita/skills.git /tmp/skills-install
 /tmp/skills-install/install.sh --tool codex
 rm -rf /tmp/skills-install
 
+# Install for Cursor
+git clone https://github.com/iuliandita/skills.git /tmp/skills-install
+/tmp/skills-install/install.sh --tool cursor
+rm -rf /tmp/skills-install
+
 # Pick and choose
 git clone https://github.com/iuliandita/skills.git /tmp/skills-install
 /tmp/skills-install/install.sh --tool claude kubernetes docker terraform ansible
+/tmp/skills-install/install.sh --tool cursor prompt-generator
 /tmp/skills-install/install.sh --tool opencode prompt-generator
 /tmp/skills-install/install.sh --list  # see what's available
 ```
@@ -123,14 +129,16 @@ git clone https://github.com/iuliandita/skills.git /tmp/skills-install
 ```bash
 cp -r skills/kubernetes ~/.claude/skills/kubernetes
 cp -r skills/kubernetes ~/.codex/skills/kubernetes
+cp -r skills/kubernetes ~/.cursor/skills/kubernetes
 ```
 
-Claude and Codex pick up new skills automatically on the next conversation. Opencode users can install with `--tool opencode`.
+Claude, Codex, and Cursor can use the same `SKILL.md` directory structure for personal skills. The bundled installer supports `--tool claude`, `--tool codex`, `--tool cursor`, and `--tool opencode`.
 
 ## Requirements
 
 - Claude Code
 - Codex
+- Cursor
 - Opencode
 - Other tools that can consume skill directories or Markdown-based agent instructions
 

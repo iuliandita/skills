@@ -16,6 +16,20 @@ effort: high
 Manage, troubleshoot, and harden OPNsense and pfSense firewalls via SSH. Both are FreeBSD-based,
 pf-powered firewall distributions -- most concepts, commands, and patterns apply to both.
 
+## When to use
+
+- Managing or troubleshooting OPNsense and pfSense firewalls over SSH
+- Reviewing pf rules, NAT, CARP, Unbound, WireGuard, CrowdSec, or pfBlockerNG on these appliances
+- Hardening BSD firewall appliances and validating safe remote-change workflows
+
+## When NOT to use
+
+- Linux networking, reverse proxies, VPN setup, or nftables work outside firewall appliances -- use networking
+- General shell scripting or local shell behavior outside the BSD firewall context -- use command-prompt
+- Fleet-wide configuration management via playbooks -- use ansible
+- Offensive testing, exploitation, or post-exploitation -- use lockpick
+- Application-level security review or dependency scanning -- use security-audit
+
 ## Platform detection
 
 If the platform is not obvious from context, **ask the user** which one they're running before
@@ -309,7 +323,7 @@ pluginctl -i                     # plugin info
 pluginctl -s <query>             # search available plugins
 ```
 
-Read `${CLAUDE_SKILL_DIR}/references/plugins.md` for detailed operational guidance on common OPNsense
+Read `references/plugins.md` for detailed operational guidance on common OPNsense
 plugins (CrowdSec, WireGuard, Suricata, HAProxy, ACME, and more). Always check that file when
 dealing with OPNsense plugin-specific issues.
 
@@ -504,7 +518,7 @@ major upgrades -- faster rollback than config restore.
 Both OPNsense and pfSense support CARP for high availability. The concepts are identical
 (both use the same FreeBSD CARP implementation).
 
-Read `${CLAUDE_SKILL_DIR}/references/hardening.md` for the HA/CARP checklist (OPNsense-specific but
+Read `references/hardening.md` for the HA/CARP checklist (OPNsense-specific but
 concepts apply to pfSense).
 
 Key concepts:
@@ -537,12 +551,12 @@ pfctl -ss | wc -l                # state count -- should be similar on both node
 
 ### Improvement / hardening audit
 
-Read `${CLAUDE_SKILL_DIR}/references/hardening.md` for a comprehensive checklist covering DNS hardening,
+Read `references/hardening.md` for a comprehensive checklist covering DNS hardening,
 firewall best practices, WireGuard tuning, GUI/SSH security, CrowdSec optimization, firmware
 maintenance, HA/CARP, network segmentation, and monitoring. That checklist is OPNsense-specific
 but the principles apply equally to pfSense -- adjust command paths as documented above.
 
-## Reference files
+## Reference Files
 
 The `references/` directory contains detailed checklists for OPNsense specifically:
 - `references/plugins.md` -- operational guidance for common OPNsense plugins (CrowdSec,
@@ -552,7 +566,15 @@ The `references/` directory contains detailed checklists for OPNsense specifical
 These references cover OPNsense. For pfSense equivalents, map concepts using the platform
 comparison table above.
 
-## Safety rules
+## Related Skills
+
+- **networking** -- for Linux reverse proxies, VPNs, DNS, and nftables work outside BSD firewall appliances
+- **command-prompt** -- for general shell scripting and local shell behavior; this skill covers the FreeBSD firewall context
+- **security-audit** -- for defensive security review of application code and supply chain, rather than firewall administration
+- **lockpick** -- for authorized offensive testing and post-exploitation, not defensive firewall operations
+- **ansible** -- for fleet-wide firewall automation or playbook-based configuration management
+
+## Rules
 
 These exist because bricking a firewall remotely means driving to wherever it is.
 

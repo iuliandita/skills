@@ -18,6 +18,21 @@ Grounded in real-world OSS failures (unauthenticated admin endpoints, credential
 **Secondary**: Dockerfiles, Docker Compose, CI/CD workflows, Helm charts, Terraform, Proxmox/LXC configs, shell scripts.
 **Out of scope**: Network pentesting, DAST (running app scanning). This skill is SAST + config + supply chain.
 
+## When to use
+
+- Security review of application code, services, or self-hosted apps
+- Secret scanning, dependency audit, auth review, or OWASP-focused assessment
+- Supply chain review for build config, CI/CD, containers, or AI-agent integrations
+- Pre-release security gate for a repository or deployment artifact
+
+## When NOT to use
+
+- Correctness bugs, logic errors, or race conditions without a security angle -- use code-review
+- Style, slop, or maintainability cleanup -- use anti-slop
+- Offensive testing, privilege escalation, or post-exploitation work -- use lockpick
+- Network appliance administration or firewall tuning -- use opnsense
+- Linux networking setup and troubleshooting -- use networking
+
 ## When Invoked
 
 ### Step 0: Preflight

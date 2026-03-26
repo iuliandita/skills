@@ -17,10 +17,10 @@ usage() {
   cat <<'EOF'
 Usage: install.sh [OPTIONS] [SKILL...]
 
-Install skills for Claude, Codex, Opencode, or a generic portable directory.
+Install skills for Claude, Codex, Cursor, Opencode, or a generic portable directory.
 
 Options:
-  --tool TOOL  Target tool: claude | codex | opencode | portable
+  --tool TOOL  Target tool: claude | codex | cursor | opencode | portable
   --dest PATH  Override destination directory
   --list       List available skills
   --force      Overwrite existing skills without prompting
@@ -30,6 +30,7 @@ Options:
 Examples:
   install.sh                               # Install all skills for Claude
   install.sh --tool codex                  # Install all skills for Codex
+  install.sh --tool cursor                 # Install all skills for Cursor
   install.sh --tool opencode kubernetes    # Install one skill for Opencode
   install.sh --tool portable --dest ~/.skills
   install.sh --list
@@ -40,11 +41,12 @@ resolve_destination() {
   case "$TOOL" in
     claude)   printf '%s\n' "${CLAUDE_SKILLS_DIR:-$HOME/.claude/skills}" ;;
     codex)    printf '%s\n' "${CODEX_SKILLS_DIR:-$HOME/.codex/skills}" ;;
+    cursor)   printf '%s\n' "${CURSOR_SKILLS_DIR:-$HOME/.cursor/skills}" ;;
     opencode) printf '%s\n' "${OPENCODE_SKILLS_DIR:-$HOME/.config/opencode/skill}" ;;
     portable) printf '%s\n' "${PORTABLE_SKILLS_DIR:-$HOME/.skills}" ;;
     *)
       echo "Unknown tool: $TOOL" >&2
-      echo "Valid tools: claude, codex, opencode, portable" >&2
+      echo "Valid tools: claude, codex, cursor, opencode, portable" >&2
       exit 1
       ;;
   esac
