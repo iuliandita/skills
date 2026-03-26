@@ -19,6 +19,12 @@ The four audits:
 
 Each audit runs in its own subagent with a fresh context window, so they don't compete for tokens or bias each other's findings.
 
+## When to use
+
+- Running a repo-wide quality gate before merge, release, or handoff
+- Auditing an unfamiliar codebase across correctness, security, slop, and docs in one pass
+- Getting a broad review when the user explicitly wants multiple audit lenses at once
+
 ## When NOT to use
 
 - A targeted correctness review on specific files -- use code-review
@@ -26,7 +32,7 @@ Each audit runs in its own subagent with a fresh context window, so they don't c
 - A dedicated security review only -- use security-audit
 - A documentation-only maintenance sweep -- use update-docs
 
-## When Invoked
+## Workflow
 
 ### Step 0: Preflight
 

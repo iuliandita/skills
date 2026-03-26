@@ -302,351 +302,21 @@ for cross-distro roles. The `service` module auto-detects systemd, OpenRC, SysV,
 
 Read `references/roles-and-collections.md` for detailed role anatomy, collection structure, Galaxy patterns, and Molecule testing workflows.
 
-### Role structure
-
-```
-roles/nginx/
-+-- defaults/main.yml       # Default variables (weakest precedence, meant to be overridden)
-+-- vars/main.yml           # Role variables (stronger precedence -- use sparingly)
-+-- tasks/main.yml          # Task entry point
-+-- handlers/main.yml       # Handlers (service restarts, reloads)
-+-- templates/              # Jinja2 templates (.j2 files)
-+-- files/                  # Static files to copy
-+-- meta/main.yml           # Dependencies, platforms, Galaxy metadata
-+-- molecule/               # Test scenarios
-|   +-- default/
-|       +-- molecule.yml
-|       +-- converge.yml
-|       +-- verify.yml
-+-- README.md
-```
-
-**Key principles**:
-- `defaults/main.yml` for everything users should customize. `vars/main.yml` for internal constants.
-- `meta/main.yml` declares role dependencies -- Ansible resolves and runs them automatically.
-- One responsibility per role. A role that installs nginx AND configures a database is two roles.
-- Prefix all variables with the role name: `nginx_port`, `nginx_worker_connections` -- avoids collisions.
-
-### Collections
-
-Collections bundle roles, modules, plugins, and playbooks into a distributable package:
-
-```
-namespace/collection_name/
-+-- galaxy.yml              # Collection metadata
-+-- roles/                  # Bundled roles
-+-- plugins/
-|   +-- modules/            # Custom modules
-|   +-- inventory/          # Inventory plugins
-|   +-- callback/           # Callback plugins
-+-- playbooks/              # Reusable playbooks
-+-- docs/
-+-- tests/
-+-- meta/runtime.yml        # Module routing, deprecations
-```
-
-**FQCNs are mandatory.** `ansible.builtin.copy`, `community.general.ufw`, `kubernetes.core.k8s` -- never bare module names. This was optional pre-2.10; it is the standard now.
-
-### Key collections (March 2026)
-
-| Collection | Status | Use for |
-|-----------|--------|---------|
-| `ansible.builtin` | Active | Ships with ansible-core -- file, copy, template, apt, dnf, systemd, user, etc. |
-| `community.general` | Active | 800+ modules -- UFW, timezone, alternatives, sysctl, modprobe, etc. |
-| `ansible.posix` | Active | POSIX-specific -- sysctl, mount, authorized_key, selinux, firewalld |
-| `kubernetes.core` | Active | K8s resource management, kubectl, helm |
-| `community.docker` | Active | Docker containers, images, networks, compose |
-| `community.crypto` | Active | OpenSSL certs, ACME, x509 |
-| `hashicorp.vault` | Active | Vault secrets, PKI, dynamic credentials (certified) |
-| `community.kubernetes` | Deprecated | Renamed to `kubernetes.core` |
-| `awx.awx` | Stale | No release in 1+ year (AWX refactoring) |
-
-### Molecule testing
-
-```yaml
-# molecule/default/molecule.yml
----
-dependency:
-  name: galaxy
-driver:
-  name: podman          # Podman preferred over Docker (rootless, no daemon)
-platforms:
-  - name: instance
-    image: "quay.io/centos/centos:stream9"
-    pre_build_image: true
-provisioner:
-  name: ansible
-  config_options:
-    defaults:
-      callbacks_enabled: profile_tasks
-verifier:
-  name: ansible         # Ansible-based verification (default)
-```
-
-```yaml
-# molecule/default/converge.yml
----
-- name: Converge
-  hosts: all
-  become: true
-  roles:
-    - role: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') | basename }}"
-```
-
-**Testing workflow**:
-- `molecule test` -- full cycle (lint, create, converge, idempotence, verify, destroy)
-- `molecule converge` -- apply only (fast iteration during development)
-- `molecule verify` -- run verification tasks only
-- `molecule login` -- SSH into the test instance for debugging
-- Use `tox-ansible` for matrix testing across Python + ansible-core versions
-
-### Anti-patterns
-
-- Roles with no `defaults/main.yml` (forces users to dig through `tasks/` to find required vars)
-- Roles that call `ansible.builtin.include_role` recursively (hard to debug, performance hit)
-- Roles that modify `ansible.cfg` or inventory (side effects outside their scope)
-- Galaxy roles pinned to `main` branch (use tags or commit SHAs)
-- Roles without `meta/main.yml` (no dependency declaration, no Galaxy metadata)
-- Monolithic `tasks/main.yml` with 200+ tasks (split into `tasks/install.yml`, `tasks/configure.yml`, etc.)
-- Variables without the role name prefix (collision risk in multi-role plays)
-- Molecule scenarios that only test convergence, not idempotence (the idempotence check catches most bugs)
+- Use one responsibility per role.
+- Put user-tunable values in `defaults/main.yml`, not `vars/main.yml`.
+- Use FQCNs everywhere.
+- Prefix role variables to avoid collisions.
+- Treat Molecule idempotence checks as mandatory, not optional polish.
 
 ---
 
 ## Operations
-
-### Inventory
-
-**Static inventory** (`inventory/`):
-```
-inventory/
-+-- production/
-|   +-- hosts.yml           # Host definitions
-|   +-- group_vars/
-|   |   +-- all.yml         # Variables for all hosts
-|   |   +-- webservers.yml  # Variables for webservers group
-|   |   +-- dbservers/
-|   |       +-- vars.yml    # Non-secret vars
-|   |       +-- vault.yml   # Vault-encrypted secrets
-|   +-- host_vars/
-|       +-- db01.yml        # Host-specific overrides
-+-- staging/
-|   +-- hosts.yml
-|   +-- group_vars/
-|   +-- host_vars/
-```
-
-```yaml
-# inventory/production/hosts.yml
----
-all:
-  children:
-    webservers:
-      hosts:
-        web01:
-          ansible_host: 10.0.1.10
-        web02:
-          ansible_host: 10.0.1.11
-    dbservers:
-      hosts:
-        db01:
-          ansible_host: 10.0.2.10
-```
-
-**Dynamic inventory**: use inventory plugins (`amazon.aws.aws_ec2`, `azure.azcollection.azure_rm`, `community.general.proxmox`) for cloud/virtualization environments. Static files for stable infrastructure (homelabs, on-prem).
-
-**Inventory format**: use YAML (`*.yml`). It supports complex nested structures, YAML anchors
-for DRY, and is what all Ansible docs/examples use. The legacy INI format (`hosts` files with
-`[group]` sections) still works but can't express nested groups cleanly and doesn't support
-complex variable types. Convert INI inventories to YAML when touching them.
-
-**Inventory anti-patterns**:
-- All hosts in one flat file (no environment separation)
-- `ansible_ssh_pass` in inventory (use SSH keys or Vault)
-- `ansible_become_pass` in plaintext (Vault-encrypt it)
-- Mixing static and dynamic inventory without understanding merge behavior
-
-### ansible.cfg
-
-A production-grade config. Commit this to the repo root (never with `host_key_checking = False`).
-
-```ini
-[defaults]
-# Performance
-forks = 20                          # default 5; set 2-4x CPU cores
-gathering = smart                   # cache facts, skip re-gather
-fact_caching = jsonfile
-fact_caching_connection = /tmp/ansible_facts_cache
-fact_caching_timeout = 3600
-
-# Security
-host_key_checking = True            # NEVER False in production -- manage known_hosts instead
-display_args_to_stdout = False      # True leaks sensitive task args
-
-# Logging and output
-log_path = /var/log/ansible/ansible.log
-callbacks_enabled = timer, profile_tasks, profile_roles
-stdout_callback = yaml              # much more readable than default
-
-# Behavior
-deprecation_warnings = True         # catch upcoming breakage early
-retry_files_enabled = False         # .retry files are noise in CI
-interpreter_python = auto_silent    # suppress interpreter discovery warnings
-
-[ssh_connection]
-pipelining = True                   # 30-50% speedup; requires !requiretty in sudoers
-ssh_args = -o ControlMaster=auto -o ControlPersist=300s -o PreferredAuthentications=publickey
-retries = 3
-
-[privilege_escalation]
-become = False                      # explicit per-play/task, not global
-become_method = sudo
-become_ask_pass = False
-
-[inventory]
-cache = True
-cache_plugin = jsonfile
-cache_connection = /tmp/ansible_inventory_cache
-cache_timeout = 1800
-```
-
-**Key callouts:**
-- **`pipelining = True`** is the single biggest performance win. Sends module code over the existing SSH connection instead of SCP'ing. Requires `Defaults !requiretty` in `/etc/sudoers` on all managed hosts -- without it, `become` tasks fail.
-- **`callbacks_enabled`** replaced `callback_whitelist` (deprecated since ansible-core 2.15, removal pending).
-- **`ControlPersist=300s`** keeps SSH connections alive 5 minutes between tasks. 60-300s is the sweet spot. Too short = reconnection overhead, too long = stale sockets.
-- **`stdout_callback = yaml`** makes output readable. The default callback is borderline unusable for debugging.
-- `gathering = smart` + `fact_caching` avoids re-gathering facts on hosts already touched in the same run.
-
----
-
-### Execution Environments
-
-EEs are container images that bundle ansible-core, collections, Python dependencies, and system packages. They ensure identical execution locally and in CI/CD.
-
-```yaml
-# execution-environment.yml (v3 format -- ansible-builder 3.x)
----
-version: 3
-
-images:
-  base_image:
-    name: "quay.io/centos/centos:stream9"
-
-dependencies:
-  galaxy:
-    collections:
-      - name: community.general
-        version: ">=9.0.0"
-      - name: ansible.posix
-      - name: kubernetes.core
-  python_interpreter:
-    package_system: "python3.12"
-  python:
-    - jmespath
-    - netaddr
-  system:
-    - openssh-clients
-    - sshpass
-
-additional_build_steps:
-  append_final:
-    - RUN pip3 install --no-cache-dir ansible-lint
-```
-
-Build with: `ansible-builder build -t my-ee:1.0.0 -f execution-environment.yml`
-
-**EE best practices**:
-- Separate EEs per domain (AWS, Azure, network, security) -- not one monolith
-- Pin collection versions in the EE definition
-- Use specific base image tags (not `:latest`) for auditability
-- Scan EE images for CVEs like any other container image
-- v3 format allows vanilla RHEL/UBI/Fedora/CentOS base images (v2 required special bases)
-
-### Ansible Vault
-
-Read `references/vault-and-secrets.md` for detailed Vault patterns, HashiCorp Vault integration, and CI/CD secrets workflows.
-
-**File-level encryption**:
-```bash
-ansible-vault create group_vars/production/vault.yml
-ansible-vault edit group_vars/production/vault.yml
-ansible-vault encrypt existing-file.yml
-ansible-vault decrypt existing-file.yml       # use sparingly -- prefer edit
-ansible-vault rekey group_vars/production/vault.yml
-```
-
-**Variable-level encryption** (inline):
-```bash
-ansible-vault encrypt_string 'supersecret' --name 'db_password'
-```
-Produces:
-```yaml
-db_password: !vault |
-  $ANSIBLE_VAULT;1.1;AES256
-  3938...encrypted...data
-```
-
-**Conventions**:
-- Prefix vault variables with `vault_`: `vault_db_password`, `vault_api_key`
-- Reference via indirection: `db_password: "{{ vault_db_password }}"`
-- Keep vault files in `group_vars/<env>/vault.yml` alongside `vars.yml`
-- Use `--vault-password-file` or `--vault-id` for automation (never type passwords in CI)
-- `no_log: true` on every task that uses vault variables (**CVE-2024-8775**)
-
-### CI/CD integration
-
-```yaml
-# GitLab CI example
-ansible-deploy:
-  stage: deploy
-  image:
-    name: my-ee:1.0.0       # Execution Environment with all deps
-  variables:
-    ANSIBLE_HOST_KEY_CHECKING: "false"
-  script:
-    - ansible-playbook -i inventory/production playbook.yml
-      --vault-password-file <(echo "$VAULT_PASSWORD")
-      --diff --check  # dry run first
-    - ansible-playbook -i inventory/production playbook.yml
-      --vault-password-file <(echo "$VAULT_PASSWORD")
-      --diff
-  rules:
-    - if: $CI_COMMIT_BRANCH == "main"
-      when: manual
-  environment:
-    name: production
-```
-
-**CI/CD principles**:
-- Use EEs as CI job images for consistent execution
-- Vault password from CI/CD secrets (never in repo)
-- `--check --diff` first, then apply (review the diff in CI output)
-- Manual gate for production deployments
-- Pin GitHub Actions to commit SHAs (supply chain -- Trivy CVE-2026-33634, tj-actions CVE-2025-30154)
-- Archive playbook output as CI artifact for audit trail
-
-### ansible-navigator
-
-The recommended tool for EE-based execution:
-
-```bash
-# Interactive TUI mode (default)
-ansible-navigator run playbook.yml -i inventory/production
-
-# Stdout mode (for CI/CD, scripts)
-ansible-navigator run playbook.yml -i inventory/production --mode stdout
-
-# With specific EE image
-ansible-navigator run playbook.yml --eei my-ee:1.0.0
-
-# Explore collections/docs inside the EE
-ansible-navigator collections
-ansible-navigator doc ansible.builtin.copy
-```
-
-**When to use navigator vs playbook**:
-- `ansible-navigator` when using EEs, when debugging (interactive TUI is great), or when running in AAP
-- `ansible-playbook` for quick ad-hoc runs without EEs, simple scripts, legacy workflows
+- Read `references/operations-and-execution.md` for inventory layout, `ansible.cfg`, execution environments, CI/CD integration, and `ansible-navigator`.
+- Keep inventory split by environment.
+- Prefer YAML inventory over legacy INI when touching existing inventories.
+- Treat `pipelining = True`, fact caching, and callback configuration as standard production defaults.
+- Use execution environments for repeatable local and CI runs.
+- Keep vault usage in `references/vault-and-secrets.md`; secrets stay encrypted, prefixed, and wrapped with `no_log: true`.
 
 ---
 
@@ -654,55 +324,10 @@ ansible-navigator doc ansible.builtin.copy
 
 Read `references/compliance.md` for the full PCI-DSS 4.0 requirements mapping to Ansible controls, CIS benchmark automation, and hardening patterns.
 
-### Quick reference: PCI-DSS 4.0 with Ansible
-
-PCI-DSS 4.0 is the only active version (3.2.1 retired March 2024). Ansible is the configuration management layer that enforces PCI controls on managed systems.
-
-**Critical requirements where Ansible is the primary enforcement tool:**
-- **Req 1**: Firewall configuration -> `ansible.posix.firewalld` / `community.general.ufw` rules as code
-- **Req 2.2**: System hardening -> CIS benchmark roles (Ansible-Lockdown), remove unnecessary services, disable unused protocols
-- **Req 2.2.7**: Non-console admin encrypted -> SSH hardening, disable telnet/rsh via playbooks
-- **Req 5.2**: Anti-malware -> deploy and configure AV agents, enforce scan schedules
-- **Req 8.2**: Password policies -> PAM configuration, password complexity enforcement
-- **Req 8.3.6**: Password complexity -> `/etc/security/pwquality.conf` managed by template
-- **Req 8.6.2**: No hardcoded credentials -> Ansible Vault for all secrets in playbooks
-- **Req 10.2**: Audit logging -> configure auditd rules, rsyslog forwarding, log rotation
-- **Req 10.4.1.1**: Automated log review -> deploy log shipping agents (Filebeat, Promtail)
-- **Req 11.5**: FIM -> deploy AIDE/OSSEC, configure baseline and alerting
-
-**PCI MPoC**: MPoC backend infrastructure falls under full PCI-DSS scope. Ansible hardens the OS layer of A&M backend nodes -- same controls as any CDE system.
-
-### CIS benchmarks (Ansible-Lockdown)
-
-The primary framework for automated OS hardening. Community-maintained, recognized by MITRE.
-
-Available benchmark roles:
-- RHEL 7/8/9 (CIS + STIG)
-- Ubuntu 18.04/20.04/22.04/24.04 (CIS)
-- CentOS, Amazon Linux, Windows Server 2019/2022/2025
-
-**Usage pattern**:
-```yaml
-- name: Apply CIS Level 2 hardening
-  hosts: all
-  become: true
-  vars:
-    cis_level: 2
-    # Selectively disable controls that break your application
-    rule_1_1_1_1: false    # Example: disable cramfs check if needed
-  roles:
-    - role: ansible-lockdown.rhel9_cis
-      tags: [cis]
-```
-
-**Important**: never apply CIS blindly. Review each control against your application requirements. Some controls (like disabling IPv6 or USB storage) can break legitimate functionality. Test in staging first, always.
-
-### Audit logging for Ansible itself
-
-- **Callback plugins**: `community.general.log_plays` (file), `ansible.posix.json` (structured JSON), `community.general.splunk` (SIEM)
-- **AWX/AAP**: full activity stream (who ran what, when, on which hosts) via API
-- **CI/CD**: archive playbook output as immutable artifacts (Req 10.4.1.1)
-- **ansible.cfg**: set `log_path` for local execution logging (not sufficient for production -- use callbacks or AWX)
+- Ansible owns OS and service enforcement, not application-level security review.
+- CIS and PCI controls should be treated as role and template inputs, not blindly applied defaults.
+- Test benchmark hardening in staging before broad rollout.
+- Preserve audit evidence with callback plugins, AWX/AAP activity streams, or CI artifacts.
 
 ---
 
@@ -817,6 +442,16 @@ All Ansible DevTools projects (molecule, ansible-lint, ansible-navigator, tox-an
 
 ---
 
+## Reference Files
+
+- `references/playbook-patterns.md` -- playbook and task patterns for common automation work
+- `references/roles-and-collections.md` -- role anatomy, collection structure, Galaxy patterns, and Molecule workflows
+- `references/operations-and-execution.md` -- inventory layout, ansible.cfg, execution environments, CI/CD integration, and navigator usage
+- `references/vault-and-secrets.md` -- Vault usage, secret handling, and external secret-manager integration
+- `references/compliance.md` -- PCI-DSS and CIS-oriented hardening guidance
+
+---
+
 ## Related Skills
 
 - **terraform** -- provisions infrastructure (VMs, networks, cloud resources). Ansible configures
@@ -834,7 +469,7 @@ All Ansible DevTools projects (molecule, ansible-lint, ansible-navigator, tox-an
 
 ---
 
-## Critical Rules
+## Rules
 
 These are non-negotiable. Violating any of these is a bug.
 

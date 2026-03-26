@@ -8,8 +8,8 @@ SKILLS_DST=""
 BACKUP_DIR=""
 
 ALL_SKILLS=(
-  ansible anti-slop ci-cd code-review command-prompt databases docker
-  full-review git kubernetes lightpanda lockpick networking opnsense
+  ansible arch-btw anti-slop ci-cd code-review command-prompt databases docker
+  full-review git kubernetes lockpick networking opnsense
   prompt-generator security-audit skill-creator terraform update-docs
 )
 

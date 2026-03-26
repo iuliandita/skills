@@ -12,6 +12,13 @@ Detect and fix patterns that make code look machine-generated, over-abstracted, 
 
 This skill covers: **TypeScript/JavaScript**, **Python**, **Bash/Shell**, and **Infrastructure as Code** (Terraform, Ansible, Helm, Kubernetes manifests). The universal patterns apply everywhere; language-specific sections add targeted checks.
 
+## When to use
+
+- Reviewing code that feels machine-generated, bloated, or oddly generic
+- Simplifying code after an AI-heavy implementation pass
+- Auditing comment noise, naming quality, over-abstraction, and dependency creep
+- Looking for "ugly but technically works" code that still hurts readability or maintainability
+
 ## The Three Axes of Slop
 
 Every finding falls into one of three categories:
@@ -27,7 +34,7 @@ Every finding falls into one of three categories:
 - One-off prompt authoring or prompt templates -- use prompt-generator
 - Session-end documentation maintenance -- use update-docs
 
-## When Invoked
+## Workflow
 
 ### Step 1: Scope the audit
 
@@ -321,6 +328,18 @@ These look like slop but aren't:
 
 ---
 
+## Reference Files
+
+- `references/typescript.md` -- TypeScript and JavaScript anti-slop patterns
+- `references/python.md` -- Python anti-slop patterns
+- `references/shell.md` -- shell and script anti-slop patterns
+- `references/iac.md` -- Terraform, Ansible, Helm, and Kubernetes anti-slop patterns
+- `references/rust.md` -- Rust anti-slop patterns
+- `references/docker.md` -- Dockerfile and Compose anti-slop patterns
+- `references/research-sources.md` -- supporting research, citations, and external context
+
+---
+
 ## Output Format
 
 ````markdown
@@ -345,3 +364,12 @@ These look like slop but aren't:
 ````
 
 Keep it concise. Show the diff, not a paragraph explaining it.
+
+---
+
+## Rules
+
+- **Keep correctness out of scope.** If it would actually break behavior, route it to code-review instead of padding this report.
+- **Keep security out of scope.** Defensive code often looks verbose on purpose. Do not flag it casually.
+- **Read before judging.** A pattern that looks generic in isolation may be justified by framework or project constraints.
+- **Prefer concrete rewrites.** If you flag a pattern, show the simpler version.

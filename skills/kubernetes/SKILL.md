@@ -407,6 +407,15 @@ PCI-DSS 4.0 is the only active version (3.2.1 retired March 2024). 51 future-dat
 
 ---
 
+## Reference Files
+
+- `references/manifest-templates.md` -- manifest templates and reusable workload patterns
+- `references/architecture.md` -- cluster and platform design guidance
+- `references/sealed-secrets.md` -- Sealed Secrets patterns and caveats
+- `references/compliance.md` -- PCI-DSS and platform hardening guidance
+
+---
+
 ## Related Skills
 
 - **docker** -- for Dockerfile and Compose patterns. Kubernetes deploys the images Docker
@@ -422,7 +431,7 @@ PCI-DSS 4.0 is the only active version (3.2.1 retired March 2024). 51 future-dat
 
 ---
 
-## Critical Rules
+## Rules
 
 These are non-negotiable. Violating any of these is a bug.
 

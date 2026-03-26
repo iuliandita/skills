@@ -7,8 +7,8 @@ description: >
   prompts. Triggers: "write a prompt", "turn this into a prompt", "structure this prompt",
   "system prompt for", "prompt template", "prompt engineering", "rewrite this prompt",
   "improve this prompt", "optimize this prompt", "format as a system prompt".
-  Do NOT use for brainstorming features (use brainstorming), writing code, creating skills
-  (use skill-creator), or creating inline string prompts within application code.
+  Do NOT use for brainstorming features, writing code, creating skills (use
+  skill-creator), or creating inline string prompts within application code.
 source: custom
 date_added: "2026-03-25"
 effort: medium

@@ -192,3 +192,12 @@ When a feature, service, or API is deprecated during a session:
 - **Over-documenting migrations**: Once a migration is complete and verified, condense to a one-liner and remove the step-by-step procedure.
 - **Dangling links**: Renaming a doc without updating references elsewhere creates dead links that erode trust in documentation.
 - **Deleting deprecated docs too early**: Keep deprecated entries visible for at least one release cycle so people find the migration path.
+
+---
+
+## Rules
+
+- **Document deltas, not defaults.** Capture what changed, what broke, and what future sessions need to know.
+- **Do not rewrite healthy docs for style alone.** Keep edits tied to real operational value.
+- **Keep companion instruction files aligned.** If the repo maintains more than one instruction surface, update the others or note the drift explicitly.
+- **Prefer stable wording over brittle counts.** Avoid numbers and one-off migration prose that will rot immediately.

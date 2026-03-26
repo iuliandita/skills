@@ -53,7 +53,7 @@ allowed-tools: Read, Bash, Grep, Glob  # restrict which tools the skill can use
 
 | Tier | Token usage | Typical skills | Structure depth |
 |------|-------------|---------------|-----------------|
-| **low** | <5k tokens | lightpanda, update-docs | Minimal workflow, few rules |
+| **low** | <5k tokens | update-docs | Minimal workflow, few rules |
 | **medium** | 5-15k tokens | anti-slop, prompt-generator, zsh | Moderate workflow, reference files |
 | **high** | 15k+ tokens | ansible, ci-cd, code-review, databases, docker, full-review, git, kubernetes, opnsense, security-audit, skill-creator, terraform | Full workflow, AI self-check, checklists, multiple references |
 
@@ -360,7 +360,6 @@ Use this skill even when the user doesn't explicitly say "git" but is clearly do
 | full-review | high | 2026-03-22 | Orchestrator (4 parallel audits) |
 | git | high | 2026-03-24 | Version control, multi-forge |
 | kubernetes | high | 2026-03-24 | K8s manifests, Helm, architecture |
-| lightpanda | low | 2026-03-22 | Headless browser via MCP |
 | lockpick | high | 2026-03-25 | Post-exploitation, CTF, pivoting |
 | networking | high | 2026-03-25 | DNS, reverse proxies, VPNs, nftables, HA |
 | opnsense | high | 2026-03-19 | Firewall management (FreeBSD) |

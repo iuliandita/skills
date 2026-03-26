@@ -457,6 +457,14 @@ Read `references/compliance.md` for the full PCI-DSS 4.0 requirements mapping, d
 
 ---
 
+## Reference Files
+
+- `references/module-patterns.md` -- module design and testing patterns
+- `references/state-and-security.md` -- state backend, locking, encryption, and OIDC patterns
+- `references/compliance.md` -- compliance and audit-oriented Terraform guidance
+
+---
+
 ## Related Skills
 
 - **ansible** -- for day-2 configuration of provisioned resources. Terraform provisions the VM;
@@ -472,7 +480,7 @@ Read `references/compliance.md` for the full PCI-DSS 4.0 requirements mapping, d
 
 ---
 
-## Critical Rules
+## Rules
 
 These are non-negotiable. Violating any of these is a bug.
 

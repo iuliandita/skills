@@ -29,11 +29,12 @@ Grounded in real-world OSS failures (unauthenticated admin endpoints, credential
 
 - Correctness bugs, logic errors, or race conditions without a security angle -- use code-review
 - Style, slop, or maintainability cleanup -- use anti-slop
+- CI/CD pipeline design, runner architecture, or pipeline hardening strategy -- use ci-cd
 - Offensive testing, privilege escalation, or post-exploitation work -- use lockpick
 - Network appliance administration or firewall tuning -- use opnsense
 - Linux networking setup and troubleshooting -- use networking
 
-## When Invoked
+## Workflow
 
 ### Step 0: Preflight
 
@@ -176,6 +177,14 @@ These look like security issues but aren't (or are acceptable):
 - **`privileged: true` in CI/build containers** that never touch user input. Flag in production/runtime containers.
 - **Cloud-init with secrets from a vault/secrets-manager**. Flag hardcoded secrets in user-data scripts.
 
+---
+
+## Reference Files
+
+- `references/grep-patterns.md` -- fallback search patterns for secrets, auth, injection, and config review
+- `references/hardening-checklists.md` -- host, container, deployment, and self-hosted app hardening checklists
+- `references/report-guide.md` -- reporting format, severity mapping, and OWASP alignment
+
 ## Related Skills
 
 - **code-review** -- finds correctness bugs (logic errors, race conditions, resource leaks).
@@ -185,8 +194,8 @@ These look like security issues but aren't (or are acceptable):
   be correct security practice -- check before flagging it as slop.
 - **full-review** -- orchestrates code-review, anti-slop, security-audit, and update-docs in
   parallel. Security-audit is one of the four passes.
-- **ci-cd** -- covers supply chain hardening in CI/CD pipelines (SHA pinning, SBOM generation).
-  Security-audit covers dependency vulnerability scanning and secret detection in application code.
+- **ci-cd** -- covers pipeline design and CI/CD hardening patterns (SHA pinning, SBOM generation,
+  runner strategy). Security-audit reviews the resulting implementation for vulnerabilities and secrets.
 
 ---
 

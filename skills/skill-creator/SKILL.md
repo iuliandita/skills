@@ -157,7 +157,7 @@ One-paragraph overview. What it does, what the goal is.
 
 ## Reference Files                  <-- if references/ exist
 
-- `references/foo.md` -- description
+- `references/<topic-file>` -- description
 
 ## Related Skills                   <-- cross-references
 
@@ -279,7 +279,7 @@ done
 For each skill, check:
 1. Every skill name mentioned in "When NOT to use" exists
 2. Every skill name mentioned in "Related Skills" exists
-3. Every `references/*.md` path has a corresponding file
+3. Every declared reference file path has a corresponding file
 4. Installer, publish, or registry files list the published skills correctly
 
 #### Step 3: Trigger overlap analysis
@@ -295,7 +295,7 @@ Flag skills where `date_added` is >30 days old AND the skill covers fast-moving 
 databases, git, security-audit, code-review (AI-age patterns section)
 
 **Slow-moving** (>30 days = probably fine): opnsense, command-prompt, prompt-generator,
-lightpanda, update-docs, skill-creator, full-review
+update-docs, skill-creator, full-review
 
 For each stale high-effort skill, search the web for:
 - New major/minor releases of referenced tools
@@ -351,17 +351,6 @@ Read `references/conventions.md` for the complete convention guide including:
 - Reference file organization patterns
 - Cross-skill reference patterns
 - AI Self-Check patterns by domain
-
----
-
-## Known Collection Health Issues
-
-These are known issues in the current skill collection that should be fixed when encountered:
-
-1. **ansible** (853L), **databases** (812L), **code-review** (523L), **docker** (506L) exceed
-   the 500-line convention -- candidates for extracting domain content to `references/`
-
----
 
 ## Related Skills
 

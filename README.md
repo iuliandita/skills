@@ -8,7 +8,7 @@
 npx skills add iuliandita/skills
 ```
 
-**19 production-tested skills** -- Kubernetes, Terraform, Docker, Ansible, CI/CD, databases, networking, security audits, pentesting, code review, and more.
+**19 production-tested skills** -- Kubernetes, Terraform, Docker, Ansible, CI/CD, databases, Arch Linux, networking, security audits, pentesting, code review, and more.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
@@ -16,7 +16,7 @@ npx skills add iuliandita/skills
 
 ---
 
-`kubernetes` `terraform` `docker` `ansible` `helm` `argocd` `ci-cd` `github-actions` `gitlab-ci` `postgresql` `mongodb` `mysql` `networking` `dns` `wireguard` `tailscale` `vpn` `nftables` `opnsense` `pfsense` `security-audit` `owasp` `pentesting` `privilege-escalation` `ctf` `code-review` `git` `shell` `zsh` `bash` `prompt-engineering` `pci-dss` `compliance` `devops` `infrastructure-as-code` `iac` `containers` `podman` `buildah` `sealed-secrets` `haproxy` `caddy` `traefik` `nginx`
+`kubernetes` `terraform` `docker` `ansible` `archlinux` `cachyos` `pacman` `paru` `aur` `systemd` `helm` `argocd` `ci-cd` `github-actions` `gitlab-ci` `postgresql` `mongodb` `mysql` `networking` `dns` `wireguard` `tailscale` `vpn` `nftables` `opnsense` `pfsense` `security-audit` `owasp` `pentesting` `privilege-escalation` `ctf` `code-review` `git` `shell` `zsh` `bash` `prompt-engineering` `pci-dss` `compliance` `devops` `infrastructure-as-code` `iac` `containers` `podman` `buildah` `sealed-secrets` `haproxy` `caddy` `traefik` `nginx`
 
 ---
 
@@ -35,6 +35,7 @@ This is a growing collection. New skills get added as they're built, tested, and
 | Skill | What it does |
 |-------|-------------|
 | **ansible** | Playbooks, roles, collections, Molecule testing, Ansible Vault, CIS benchmarks, compliance hardening |
+| **arch-btw** | Arch Linux and CachyOS administration -- pacman, paru, AUR, systemd, bootloader and kernel recovery |
 | **docker** | Dockerfiles, Compose, Podman, Buildah, multi-stage builds, image signing, container hardening |
 | **kubernetes** | Manifests, Helm charts, Gateway API, Kustomize, ArgoCD, sealed secrets, PCI-DSS compliance |
 | **terraform** | Terraform/OpenTofu -- HCL patterns, module design, state management, policy-as-code, compliance |
@@ -71,7 +72,6 @@ This is a growing collection. New skills get added as they're built, tested, and
 |-------|-------------|
 | **prompt-generator** | Turn scattered ideas into structured LLM prompts -- system prompts, templates, prompt engineering |
 | **skill-creator** | Create, review, audit, and optimize AI tool skills -- consistency checks, overlap detection |
-| **lightpanda** | Headless browser for JS-heavy pages via MCP -- scrape SPAs, extract data from dynamic sites |
 | **update-docs** | Post-session documentation sweep -- captures gotchas, syncs instruction files, trims bloat |
 
 ## How they're built

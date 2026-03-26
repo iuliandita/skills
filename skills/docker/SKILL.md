@@ -129,27 +129,14 @@ trivy image <image>                   # use v0.69.3 ONLY (v0.69.4-6 COMPROMISED)
 
 Read `references/dockerfile-patterns.md` for complete, production-ready Dockerfile templates (Node.js/Bun, Python, Go, Rust, static site) and BuildKit syntax reference.
 
-### Base image selection (March 2026)
+### Base image selection
 
-| Base | Use when | Size | Notes |
-|------|----------|------|-------|
-| `node:22-slim` | Node.js runtime, need shell/debugging | ~200MB | Debian-based, glibc |
-| `oven/bun:1-slim` | Bun runtime | ~150MB | Debian-based |
-| `python:3.13-slim` | Python runtime | ~150MB | Debian-based |
-| `golang:1.24` | Go build stage only | ~800MB | Never in final stage |
-| `rust:1.85-slim` | Rust build stage only | ~700MB | Never in final stage |
-| `alpine:3.21` | Minimal, need shell | ~8MB | musl libc -- compatibility issues possible |
-| `gcr.io/distroless/static-debian12` | Static binaries (Go, Rust) | ~2MB | No shell, no package manager |
-| `gcr.io/distroless/cc-debian12` | C/C++ with glibc | ~20MB | No shell |
-| `gcr.io/distroless/nodejs22-debian12` | Node.js, minimal | ~120MB | No shell, no npm |
-| `cgr.dev/chainguard/node:latest` | Zero-CVE Node.js | ~100MB | Wolfi-based, glibc, nightly rebuild* |
-| `cgr.dev/chainguard/python:latest` | Zero-CVE Python | ~50MB | Wolfi-based* |
-| `cgr.dev/chainguard/static:latest` | Zero-CVE static binary | ~2MB | Wolfi-based* |
-| `scratch` | Absolute minimum | 0MB | Static binaries only, no debugging tools |
+- Need a shell or package manager: use slim Debian or Ubuntu bases.
+- Need the smallest static runtime: use distroless or `scratch`.
+- Need a hardened minimal userspace: use Chainguard or another verified Wolfi-style base.
+- Keep builders and runtimes separate; `golang`, `rust`, and other heavy toolchain images stay in build stages only.
 
-\* Chainguard free tier only offers `:latest` tags (rebuilt nightly). Paid plans provide versioned tags. This is the one acceptable `:latest` use case -- the tag is intentionally mutable by design for continuous patching.
-
-**Decision flow**: need shell? -> slim. Static binary? -> distroless or scratch. Compliance/zero-CVE? -> Chainguard. Multi-arch? -> all of the above support it.
+See `references/dockerfile-patterns.md` for the actual language-by-language base recommendations and templates.
 
 ### Key patterns
 
@@ -214,17 +201,12 @@ EOF
 
 Read `references/compose-patterns.md` for complete Compose v5 templates (web+db, dev override, production hardened, AI/ML stack) and network/volume patterns.
 
-### Compose v5 (current)
+### Compose v5
 
-Docker Compose v5.1.1 is the current release. Key changes from v2.x:
-
-- **No `version:` field.** It's gone. Remove it. The old file format versions (2.x/3.x) were unified into the versionless Compose Specification in 2020.
-- **Docker Bake integration.** The internal builder is replaced by Bake delegation -- faster builds, better caching, multi-platform builds out of the box.
-- **Go SDK.** Compose is now embeddable as a library.
-- **`models` top-level element.** Define AI models as Compose services (Docker Model Runner integration).
-- **`watch` command.** Real-time file sync during development -- fewer container rebuilds.
-- **`docker compose --dry-run up`** validates without starting services. Note: `--dry-run` is a global flag that goes before the subcommand.
-- **Compose Bridge.** Convert compose files to K8s manifests or Helm charts.
+- Do not use the old `version:` field.
+- Expect Bake-based builds, `watch`, dry-run validation, and newer model-oriented service wiring.
+- Keep dev and prod concerns separate; override files are still the sane default.
+- Treat healthchecks and dependency readiness as normal Compose design, not optional extras.
 
 ### Key patterns
 
@@ -360,15 +342,9 @@ Full mapping in `references/security-and-compliance.md`.
 
 ### CI pipeline pattern
 
-Recommended build pipeline (any CI system):
-
-1. `docker build --check .` -- lint Dockerfile (BuildKit dry-run)
-2. `docker buildx build -t <image>:<tag> --provenance=true --sbom=true --push .` -- build + push with attestations
-3. `docker scout cves --only-severity critical,high <image>:<tag>` -- vulnerability scan
-4. `cosign sign <image>@sha256:<digest>` -- sign (keyless in CI via OIDC, needs image in registry)
-5. `syft <image>:<tag> -o spdx-json > sbom.json` -- SBOM artifact (if not using `--sbom=true`)
-
-**Pin CI tools to SHA256 digests**, not mutable tags. Applies to ALL GitHub Actions, not just security tools.
+- Build with `docker build --check` first, then `buildx` with provenance and SBOM output.
+- Scan before deploy, sign by digest, and keep an SBOM artifact even if the registry also stores one.
+- Pin CI-side tools and actions to immutable digests, not mutable tags.
 
 ### Docker Model Runner (AI/ML)
 
@@ -396,22 +372,9 @@ GPU containers: use `deploy.resources.reservations.devices` with `capabilities: 
 
 Read `references/alternative-runtimes.md` for Podman, Buildah, Skopeo, and containerd patterns, migration guides, and Quadlet systemd integration.
 
-### Quick comparison
-
-| Feature | Docker | Podman | Buildah |
-|---------|--------|--------|---------|
-| Daemon | dockerd (root) | Daemonless | Daemonless |
-| Rootless | Supported | Native | Native |
-| Compose | `docker compose` | `podman compose` | N/A |
-| Systemd | Manual | Quadlet (native) | N/A |
-| Kubernetes | Desktop only | `podman kube` | N/A |
-| Build | BuildKit | Buildah (internal) | Direct |
-| OCI compliance | Yes | Yes | Yes |
-| Socket | `/var/run/docker.sock` | Per-user `/run/user/UID/podman/podman.sock` | N/A |
-
-**Podman 5.8.1** (March 2026): Quadlet management commands (`podman quadlet install/list/print/rm`), improved Docker compat (`podman buildx inspect`). Adopted by 40% of Fortune 500 (2025 survey).
-
-**Key Podman gotcha**: `docker.sock` compatibility via `podman system service` or `podman-docker` package. Some tools hardcode the Docker socket path.
+- Podman is the main Docker alternative here: rootless-native, daemonless, and better aligned with systemd via Quadlet.
+- Buildah is the lower-level builder when you want scripting control without a long-running daemon.
+- The main migration gotcha is socket compatibility: many tools still assume `/var/run/docker.sock`.
 
 ---
 
@@ -472,6 +435,15 @@ Read `references/alternative-runtimes.md` for Podman, Buildah, Skopeo, and conta
 
 ---
 
+## Reference Files
+
+- `references/dockerfile-patterns.md` -- Dockerfile templates and build patterns
+- `references/compose-patterns.md` -- Compose patterns and common stack layouts
+- `references/security-and-compliance.md` -- container hardening and compliance guidance
+- `references/alternative-runtimes.md` -- Podman, Buildah, Skopeo, and related runtime patterns
+
+---
+
 ## Related Skills
 
 - **kubernetes** -- for deploying containers to K8s clusters. Docker builds the image;
@@ -487,7 +459,7 @@ Read `references/alternative-runtimes.md` for Podman, Buildah, Skopeo, and conta
 
 ---
 
-## Critical Rules
+## Rules
 
 These are non-negotiable. Violating any of these is a bug.
 

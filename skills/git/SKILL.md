@@ -248,319 +248,33 @@ Quick reference:
 Many projects use multiple git remotes (e.g., Forgejo for self-hosted CI + GitHub for public releases,
 or GitLab at work + GitHub for open source mirrors).
 
-### Remote naming conventions
+- Keep `origin` as the primary development remote and name mirrors explicitly.
+- Push to multiple remotes explicitly; do not make “push everywhere” the default.
+- Use separate SSH keys per forge.
+- Remember that CLI auth can be overridden by environment variables, especially `GITHUB_TOKEN`.
 
-```bash
-# Primary development remote (where PRs/MRs go)
-origin    -> primary forge (Forgejo, GitLab, or GitHub)
-
-# Secondary remotes (mirrors, CI triggers, public releases)
-github    -> GitHub mirror
-gitlab    -> GitLab mirror
-forgejo   -> Forgejo mirror
-upstream  -> original repo (for forks)
-```
-
-### Multi-remote push
-
-When a project pushes to multiple remotes (e.g., Docker images build on GitHub Actions but
-development happens on Forgejo):
-
-```bash
-# Push commits to both
-git push origin main && git push github main
-
-# Push tags to both
-git push origin vX.Y.Z && git push github vX.Y.Z
-```
-
-**Never set up `remote.pushDefault` to push to all remotes automatically.** Explicit is safer.
-You want to know exactly where your code is going.
-
-### SSH key management for multiple forges
-
-Each forge should have its own SSH key:
-
-```bash
-# ~/.ssh/config
-Host github.com
-    IdentityFile ~/.ssh/id_github
-    IdentitiesOnly yes
-
-Host gitlab.example.com
-    IdentityFile ~/.ssh/id_gitlab
-    IdentitiesOnly yes
-
-Host git.example.com  # Forgejo
-    IdentityFile ~/.ssh/id_forgejo
-    IdentitiesOnly yes
-```
-
-`IdentitiesOnly yes` prevents SSH from trying all loaded keys -- without it, the agent
-offers keys in order and the wrong key may authenticate first (valid SSH key, wrong forge account).
-
-### CLI authentication
-
-Each forge has its own CLI tool with separate auth:
-
-| Forge | CLI | Auth mechanism | Gotcha |
-|-------|-----|----------------|--------|
-| GitHub | `gh` | Keyring, `GITHUB_TOKEN` env | Env var overrides keyring. Clear it if switching accounts. |
-| GitLab | `glab` | Config file, `GITLAB_TOKEN` env | SSH remote may resolve to IP; use API with URL-encoded paths. |
-| Forgejo | none (use `curl` or `tea`) | Personal access token | No official CLI. `tea` is community-maintained. |
-
-**`GITHUB_TOKEN` env var pitfall**: if you have `GITHUB_TOKEN` set in your shell (e.g., for a different
-account), it overrides `gh auth switch`. Prefix commands with `GITHUB_TOKEN=""` to use the keyring token.
+Detailed multi-forge workflows stay in `references/forge-workflows.md`.
 
 ---
 
 ## Commit Signing
+- Sign commits because unsigned authorship is trivial to spoof.
+- SSH signing is the default recommendation for most teams.
+- GPG still matters where long-lived key lifecycles or policy require it.
+- gitsign is attractive for low-management open-source flows, but it changes the trust model.
 
-### Why sign commits
-
-Unsigned commits attribute authorship based on `user.name` and `user.email` -- both trivially
-spoofable. Signed commits provide cryptographic proof of authorship. GitHub, GitLab, and Forgejo
-all display "Verified" badges on signed commits.
-
-For PCI-DSS 4.0 (Req 6.2.4), signed commits provide non-repudiation evidence for change tracking.
-
-### Signing methods (March 2026)
-
-| Method | Setup complexity | Key management | Offline | Vigilant mode* |
-|--------|-----------------|----------------|---------|----------------|
-| **SSH** | Low | Use existing SSH key | Yes | Yes |
-| **GPG** | Medium | GPG keyring, key servers | Yes | Yes |
-| **gitsign (Sigstore)** | Low | Keyless (OIDC) | No | No (ephemeral certs) |
-| **1Password SSH agent** | Low | 1Password vault | Yes | Yes |
-
-\* "Vigilant mode" = GitHub shows "Unverified" on unsigned commits from your account, not just verified on signed ones.
-
-**Recommendation**: SSH signing for most setups. It reuses your existing SSH key, no GPG
-complexity, works offline, and all three forges support it. Four config lines:
-`gpg.format=ssh`, `user.signingkey`, `commit.gpgsign=true`, `tag.gpgSign=true`.
-
-**GPG** remains necessary for: organizations requiring long-lived keys with expiry/revocation,
-key servers for public verification, or compliance regimes that specifically mandate GPG.
-
-**gitsign (Sigstore)** is the zero-management option for open source projects: keyless signing
-via OIDC (GitHub, Google, Microsoft identity). But it requires internet access at sign time and
-doesn't support GitHub's vigilant mode.
-
-For detailed setup instructions (SSH, GPG, gitsign, 1Password, CI signing), read
-`references/security-and-signing.md`.
+Detailed signing setup stays in `references/security-and-signing.md`.
 
 ---
 
 ## Security
+- Keep credentials out of the repo, including `.env` files, keys, and embedded connection strings.
+- Use secure credential helpers, not plaintext storage.
+- Use hooks for secrets, lint, and branch protection, but treat untrusted hook configs as code execution surfaces.
+- If a secret hit history, scrub it and rotate it. History rewriting does not undo the exposure.
+- Keep `.gitignore` and `.gitattributes` intentional; AI tooling artifacts belong out of the repo by default.
 
-### Credential management
-
-**Never store credentials in git.** This includes:
-- API keys, tokens, passwords in source code
-- `.env` files with real values (`.env.example` with placeholders is fine)
-- Private keys, certificates, keystores
-- Database connection strings with embedded passwords
-
-**Git credential helpers** (for HTTPS remotes):
-
-| Helper | Platform | Security |
-|--------|----------|----------|
-| `credential.helper=osxkeychain` | macOS | OS keychain, biometric unlock |
-| `credential.helper=libsecret` | Linux (GNOME) | GNOME Keyring, session-locked |
-| `credential.helper=store` | Any | **Plaintext file** -- avoid |
-| `credential.helper=cache --timeout=3600` | Any | In-memory, auto-expires |
-| `credential.helper=manager` | Windows/cross-platform | Git Credential Manager, OS-integrated |
-
-**Never use `credential.helper=store`** -- it writes credentials to `~/.git-credentials` in plaintext.
-
-### Pre-commit hooks
-
-Hooks run locally before commits land. They catch issues before they reach the remote.
-
-**Recommended hooks**:
-- **Secret detection**: gitleaks, trufflehog, or detect-secrets
-- **Lint**: language-specific linters (biome, ruff, shellcheck, tflint)
-- **Commit message format**: commitlint or custom regex
-- **File size**: reject files over a threshold (prevent accidental binary commits)
-- **Branch protection**: reject direct commits to `main`/`master` (local enforcement)
-
-**Hook frameworks**:
-
-| Framework | Language | Speed | Config format | Ecosystem |
-|-----------|----------|-------|---------------|-----------|
-| **prek** 0.3.x | Rust | Fastest | `.pre-commit-config.yaml` or `prek.toml` | pre-commit compatible + native builtins |
-| **pre-commit** 4.5.x | Python | Moderate | `.pre-commit-config.yaml` | Largest hook ecosystem |
-| **lefthook** 1.x | Go | Fast | `lefthook.yml` | Own format, parallel execution |
-| **husky** 9.x | Node.js | Fast (thin shim) | `.husky/` scripts | npm ecosystem, runs package.json scripts |
-
-**prek** is the recommended default. It's a Rust rewrite of the Python `pre-commit` framework
-with backward-compatible config reading. Key advantages:
-- **`repo: builtin` hooks** run as native Rust -- no subprocess spawning. Includes:
-  `trailing-whitespace`, `check-added-large-files`, `check-merge-conflict`, `detect-private-key`,
-  `check-json`, `check-yaml`, `check-toml`, `end-of-file-fixer`, `mixed-line-ending`,
-  `check-case-conflict`, `check-symlinks`, `check-executables-have-shebangs`,
-  `no-commit-to-branch`, `fix-byte-order-marker`, and more.
-- **All hook stages supported**: pre-commit, pre-push, commit-msg, prepare-commit-msg,
-  post-checkout, post-commit, post-merge, post-rewrite, pre-merge-commit, pre-rebase.
-- **`default_install_hook_types: [pre-push]`** -- run heavyweight checks (terraform validate,
-  trivy, kubeval, helm lint) at push time instead of on every commit. Fast builtin checks
-  still run on commit.
-- Compatible with the entire pre-commit hook ecosystem (same config format, same repos).
-- **`prek auto-update --cooldown-days N`** -- skip releases newer than N days. Supply chain
-  attack mitigation (e.g., `--cooldown-days 7` lets dust settle before adopting new hook versions).
-- Hooks can run **concurrently by `priority`** value (same priority = parallel execution).
-- 10x faster cold install than pre-commit, 4.5x faster runtime with builtin hooks.
-- Install: `cargo install prek`, `pacman -S prek`, or `brew install prek`
-- Already adopted by CPython, Apache Airflow, FastAPI, Home Assistant, Django.
-
-**Recommended prek setup for IaC repos**:
-```yaml
-# .pre-commit-config.yaml (prek reads this natively)
-fail_fast: true
-default_install_hook_types: [pre-push]  # heavyweight checks on push
-repos:
-  - repo: builtin  # native Rust, no subprocess
-    hooks:
-      - id: trailing-whitespace
-      - id: check-added-large-files
-        args: [--maxkb=2048]
-      - id: check-merge-conflict
-      - id: detect-private-key
-      - id: check-yaml
-        args: [--allow-multiple-documents]
-      - id: check-json
-      - id: end-of-file-fixer
-      - id: no-commit-to-branch
-        args: [--branch=main]
-```
-
-**Recommended prek setup for application repos** (TypeScript/Python/Go):
-```yaml
-fail_fast: true
-repos:
-  - repo: builtin
-    hooks:
-      - id: trailing-whitespace
-      - id: check-added-large-files
-        args: [--maxkb=500]
-      - id: check-merge-conflict
-      - id: detect-private-key
-      - id: end-of-file-fixer
-  - repo: https://github.com/gitleaks/gitleaks
-    rev: v9.0.0  # check for latest: https://github.com/gitleaks/gitleaks/releases
-    hooks:
-      - id: gitleaks
-```
-
-**Shared hooks via `core.hooksPath`**: for teams not using a framework, `git config core.hooksPath .githooks`
-points git to a committed hooks directory. This enforces hooks for everyone who clones the repo
-without requiring framework installation. Combine with `prek` or `pre-commit` for the best of both worlds.
-
-**Security warning**: hooks from `.git/hooks/` or `.pre-commit-config.yaml` in a cloned repo
-run arbitrary code. Treat hook configs in untrusted repos as hostile. CVE-2025-59536 demonstrated
-that malicious project configs (including hook definitions) can be used for code execution.
-
-### Secret scanning in git history
-
-If a secret was committed and then removed, it's still in the git history.
-
-```bash
-# Scan current state
-gitleaks detect --source .
-
-# Scan full history (slower but thorough)
-gitleaks detect --source . --log-opts="--all"
-
-# If found: use git-filter-repo to scrub, then rotate the secret
-git filter-repo --replace-text <(echo 'old_secret==>REDACTED')
-
-# Force-push ALL branches and tags after scrubbing
-git push origin --force --all && git push origin --force --tags
-```
-
-**Always rotate compromised secrets** after scrubbing history. The secret was exposed the moment
-it was pushed -- scrubbing history removes future exposure, not past.
-
-### .gitignore best practices
-
-Every project should ignore at minimum:
-```gitignore
-# Local AI tooling and agent artifacts (adjust names to your stack)
-agent-instructions.local.md
-PLAN.md
-SECURITY-AUDIT.md
-.claude/
-.cursor/
-.copilot/
-.worktrees/
-.superpowers/
-docs/local/          # generic catch-all for local AI artifacts
-
-# Environment and secrets
-.env
-.env.*
-!.env.example
-!.env.template
-*.pem
-*.key
-*.p12
-*.pfx
-credentials.json
-
-# OS artifacts
-.DS_Store
-Thumbs.db
-.directory
-
-# Editor artifacts
-*.swp
-*.swo
-*~
-.idea/
-.vscode/
-.zed/
-```
-
-**AI tooling is the new .DS_Store.** Every developer uses different AI tools with different
-local config directories. Treat them all as personal artifacts -- never committed.
-
-**Instruction-file policy**: shared instruction files like `AGENTS.md` may be intentionally committed,
-but local-only instruction files and agent state should be gitignored. Check the project's existing
-`.gitignore` and conventions before adding or removing these entries.
-
-### .gitattributes
-
-Controls line endings, diff drivers, merge strategies, and LFS tracking.
-
-```gitattributes
-# Normalize line endings (CRLF -> LF on commit)
-* text=auto
-
-# Force LF for scripts and config
-*.sh text eol=lf
-*.bash text eol=lf
-*.zsh text eol=lf
-*.yaml text eol=lf
-*.yml text eol=lf
-*.json text eol=lf
-*.toml text eol=lf
-
-# Binary files (no diff, no merge, no line-ending conversion)
-*.png binary
-*.jpg binary
-*.gif binary
-*.ico binary
-*.woff2 binary
-*.ttf binary
-
-# Lock files -- merge conflicts should always take the newer version
-package-lock.json merge=ours
-bun.lockb binary
-yarn.lock merge=ours
-
-# LFS tracking (if using Git LFS)
-# *.psd filter=lfs diff=lfs merge=lfs -text
-```
+Detailed security and signing guidance stays in `references/security-and-signing.md`.
 
 ---
 
@@ -577,66 +291,22 @@ Source code management requirements that map to git practices.
 | **6.5.1** | Custom code reviewed before production | PR/MR required reviews, no direct push to release branches |
 | **6.5.2** | Custom code reviewed for vulnerabilities | SAST/secret-scan in PR/MR checks, pre-commit hooks |
 
-**Branch protection as a PCI control:**
-- Require PR/MR for all changes to `main`/`release/*`
-- Require at least 1 approval (2 for CDE-touching changes)
-- Require passing CI (lint, test, SAST, secret scan)
-- Require signed commits (non-repudiation)
-- Disable force-push to protected branches
-- Require linear history (no merge commits that obscure review)
-- **CODEOWNERS** file enforces per-path reviewers (GitHub/GitLab). Last-match-wins for
-  overlapping patterns. Verify coverage with `git ls-files | grep -vf <(awk '{print $1}' CODEOWNERS)`.
-
-**Evidence for QSA:**
-- `git log --show-signature` proves commit signing
-- PR/MR history proves review and approval
-- Branch protection rule screenshots prove access controls
-- CI logs prove automated testing and scanning
+- Branch protection, required review, signed commits, and CI evidence are the main git-side controls.
+- `CODEOWNERS` and protected branches matter more than policy prose with no enforcement.
 
 ---
 
 ## AI-Age Considerations
-
-### AI tools and git -- common mistakes
-
-AI coding assistants (Claude Code, Copilot, Cursor, etc.) interact with git on the user's behalf.
-Common failure modes:
-
-1. **Destructive operations without confirmation**: AI runs `git reset --hard`, `git push --force`,
-   `git checkout .` to "fix" a problem. User loses uncommitted work.
-2. **Wrong authorship**: AI commits with its own configured identity instead of the user's.
-   Particularly bad in multi-remote setups where the local config doesn't match the remote.
-3. **Leaking AI tooling paths**: AI commits `.claude/`, `.cursor/`, tool-specific configs,
-   planning documents, or prompt files into the repo.
-4. **AI-generated commit messages**: generic ("update files"), wrong ("fix bug" when it's a feature),
-   or containing AI-speak ("enhance the robustness of the authentication module").
-5. **Co-Authored-By spam**: some AI tools auto-add attribution lines. This may violate project
-   policy or create noise in `git blame`.
-6. **Secret exposure through context**: AI tools read `.env` files for context, then reference
-   the values in committed code or commit messages.
-7. **Force-pushing without understanding**: AI "fixes" a failed push by force-pushing, overwriting
-   team members' work on shared branches.
-8. **Skipping hooks**: AI uses `--no-verify` to bypass failing pre-commit hooks instead of
-   fixing the underlying issue.
-
-### Guarding against AI git mistakes
-
-- **Never skip hooks** (`--no-verify`) -- the hook caught a real issue. Fix it.
-- **Always `git diff --cached` before commit** -- verify what's actually being committed.
-- **Project instruction files are the source of truth** for commit conventions, not AI defaults.
-- **Review AI-generated commit messages** -- they should be human-readable and follow conventions.
-- **AI tooling artifacts in `.gitignore`** -- add them proactively, don't wait for an accident.
-- **Verify authorship after commit** -- `git log -1 --format="%an <%ae>"` before pushing.
+- Common AI git failures are still destructive resets, wrong authorship, leaked local tool artifacts, generic commit messages, and unjustified force pushes.
+- Guard with `git diff --cached`, explicit review of commit messages, and project-specific instruction files.
+- Keep local agent artifacts in `.gitignore` proactively.
 
 ---
 
 ## Template Conventions
-
-- **Tool versions** in templates are illustrative. Always check for the latest stable version
-  when creating real configs. Pinned `rev:` values in hook examples may be outdated.
-- **CLI examples** show the general pattern. Adapt flags and options to the specific forge,
-  repo, and context. Check the project instruction file for overrides (authorship, token prefix, etc.).
-- **SSH config examples** use placeholder hostnames. Replace with actual forge hostnames.
+- Template versions are illustrative and should be refreshed before use.
+- CLI examples show patterns, not immutable commands.
+- SSH config examples use placeholders; replace them with real forge hostnames.
 
 ---
 

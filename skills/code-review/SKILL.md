@@ -14,6 +14,13 @@ This skill complements **anti-slop** (code quality/style) and **security-audit**
 
 Covers: **TypeScript/JavaScript**, **Python**, **Bash/Shell**, **Rust**, and **Infrastructure as Code** (Terraform, Ansible, Helm, Kubernetes, Docker/Compose, Proxmox/LXC). Universal patterns apply everywhere; language-specific sections add targeted checks.
 
+## When to use
+
+- Reviewing recent changes for bugs, regressions, edge cases, or fragile assumptions
+- Sanity-checking code before merge or release
+- Looking for logic errors that static tooling may miss
+- Doing a focused correctness review where style and security are secondary
+
 ## The Three Questions
 
 Every finding answers one of:
@@ -29,7 +36,7 @@ Every finding answers one of:
 - Pipeline architecture design -- use ci-cd
 - End-of-session doc hygiene or instruction-file cleanup -- use update-docs
 
-## When Invoked
+## Workflow
 
 ### Step 1: Scope the review
 
@@ -144,167 +151,22 @@ Present findings grouped by severity, with concrete fixes. See Output Format bel
 
 ## Universal Patterns (All Languages)
 
-### 1. Logic Errors (Will it do the wrong thing?)
+Read `references/universal-patterns.md` for the full cross-language bug catalog.
 
-The most dangerous category -- code that runs without errors but produces wrong results.
+Always check these ten buckets before calling a review complete:
+- logic errors
+- null or absent-value hazards
+- error-handling gaps
+- race conditions and shared-state issues
+- resource leaks and lifecycle mismatches
+- boundary or edge-case breakage
+- API and data-contract mismatches
+- real performance traps
+- correctness-relevant convention violations
+- tests that pass without proving the behavior
 
-**Detect:**
-- Off-by-one errors in loops, slices, ranges, pagination
-- Wrong comparison operators (`>` vs `>=`, `==` vs `===`, `and` vs `or`)
-- Inverted conditions (checking for success when you mean failure)
-- Missing `break` / `return` in switch/match statements (fallthrough bugs)
-- Short-circuit evaluation surprises (`&&` / `||` with side effects)
-- Integer overflow/underflow in arithmetic
-- Floating-point comparison with `==` instead of epsilon
-- String comparison when semantic comparison is needed (locale, case, normalization)
-- Regex that doesn't match what the author thinks it matches
-- Boolean logic errors (De Morgan violations, double negations)
-
-**Fix:** Trace the logic manually with concrete values. Write the truth table if the condition is complex. If you can't explain what a condition does in one sentence, it's probably wrong.
-
-### 2. Null / Undefined Hazards (Will it crash?)
-
-Code paths where values can be absent but aren't handled.
-
-**Detect:**
-- Optional chaining needed but not used (accessing `.foo` on a possibly-null value)
-- Array access without bounds checking (`arr[i]` where `i` could be out of range)
-- Map/object lookup without existence check (`map[key]` where key might not exist)
-- Destructuring with assumed properties (`const { a, b } = obj` where obj might lack `b`)
-- Function return values that can be null/undefined/None but callers don't check
-- Database/API results assumed to be non-empty
-- Environment variables assumed to exist
-
-**Fix:** Handle the null/absent case explicitly. Decide: throw (fail fast), return a default, or propagate the absence? Silent defaults are often worse than crashes -- at least crashes are honest.
-
-### 3. Error Handling Gaps (Will it crash? / Will it do the wrong thing?)
-
-Not about over-handling (that's anti-slop territory) -- about *missing* error handling where it matters.
-
-**Detect:**
-- Async operations without error handling (unhandled promise rejections, bare `await` without catch)
-- File/network/DB operations that assume success
-- Parse operations that can throw (JSON.parse, parseInt, date parsing) without guards
-- Error handlers that swallow context (catching and re-throwing as a generic error)
-- Cleanup code that doesn't run on error (missing `finally`, `defer`, context managers)
-- Error messages that don't include the failing input or operation context
-- Catch blocks that handle the wrong exception type
-- Missing error propagation in callback chains
-
-**Fix:** Handle errors at the right level. External operations (I/O, network, parsing) need error handling. Internal pure functions generally don't. When catching, either recover meaningfully or add context and re-throw.
-
-### 4. Race Conditions & State (Will it break later?)
-
-Concurrency bugs that work in testing but fail under load or timing.
-
-**Detect:**
-- TOCTOU (Time-of-Check-to-Time-of-Use): checking a condition then acting on it non-atomically
-- Shared mutable state accessed from multiple async operations without synchronization
-- Event handlers that assume ordering (e.g., `onLoad` before `onData`)
-- State mutations during iteration (modifying a collection while looping over it)
-- Stale closures capturing mutable variables
-- Database reads followed by writes without transactions
-- File operations without locking when multiple processes might access
-- Promise.all where one rejection should cancel siblings but doesn't
-- React state updates depending on previous state without using the updater function
-
-**Fix:** Make operations atomic, use proper synchronization, or restructure to avoid shared mutable state. If you need ordering guarantees, enforce them explicitly.
-
-### 5. Resource Management (Will it crash? / Will it break later?)
-
-Resources acquired but not reliably released.
-
-**Detect:**
-- File handles, DB connections, network sockets opened but not closed on all paths (including error paths)
-- Event listeners / subscriptions added but never removed
-- Timers (setInterval, setTimeout) not cleared
-- Temporary files created but not cleaned up
-- Database connections not returned to pool
-- Locks acquired but not released on error paths
-- Child processes spawned but not waited on / killed
-
-**Fix:** Use language-appropriate resource management: `try/finally`, context managers (`with` in Python), `defer` in Go, `using` in C#, RAII in Rust/C++. Acquire and release should be syntactically adjacent.
-
-### 6. Edge Cases & Boundaries (Will it do the wrong thing?)
-
-Inputs that are technically valid but exercise boundary conditions.
-
-**Detect:**
-- Empty collections (empty array, empty string, empty object) not handled
-- Zero / negative numbers where only positive are expected
-- Very large inputs (huge strings, massive arrays, deep nesting)
-- Unicode in string operations (multi-byte characters, combining characters, zero-width)
-- Timezone issues in date/time operations
-- Locale-dependent behavior (number formatting, sorting, case conversion)
-- Path traversal (relative paths, symlinks, special characters in filenames)
-- Concurrent modification during iteration
-- Pagination off-by-one on the last page
-
-**Fix:** Test boundaries explicitly. Empty, zero, one, many, MAX. If a function takes a string, what happens with ""? With a 10MB string? With emoji?
-
-### 7. API Contract Issues (Will it break later?)
-
-Code that will break when upstream or downstream changes.
-
-**Detect:**
-- Function signatures that don't match their callers (wrong arg count, wrong types)
-- Return types that don't match what callers expect
-- API responses consumed without validation (trusting the shape of external data)
-- Breaking changes to public interfaces without version bumps
-- Implicit dependencies on execution order
-- Magic strings/numbers that should be constants or enums
-- Config values used inconsistently across modules
-- Database schema assumptions that aren't enforced
-
-**Fix:** Validate at boundaries. Use types to enforce contracts where possible. Make implicit assumptions explicit.
-
-### 8. Performance Traps (Will it break later?)
-
-Not micro-optimization -- actual performance problems that cause incidents.
-
-**Detect:**
-- N+1 query patterns (querying in a loop instead of batching)
-- Unbounded growth (caches without eviction, logs without rotation, arrays that only grow)
-- Blocking the event loop / main thread with sync I/O or CPU-heavy work
-- Missing pagination on queries that return unbounded results
-- Quadratic or worse algorithms on user-controlled input sizes
-- Unnecessary re-renders / re-computations in UI frameworks
-- Loading entire files/datasets into memory when streaming would work
-- Missing database indexes for common query patterns
-- Repeated expensive computations that could be cached
-
-**Fix:** Fix the algorithm, not the symptoms. Batch queries, add pagination, stream large data, index properly.
-
-### 9. Convention Violations (Correctness-Relevant Only)
-
-Project-specific rules where violations cause bugs, data loss, or broken behavior -- not style issues (those belong in anti-slop).
-
-**Detect:**
-- Project instruction-file rules about transactions, error handling, or API patterns not followed
-- Missing required error handling per project conventions (e.g., "all DB writes must use transactions")
-- Framework usage that causes runtime errors (e.g., wrong lifecycle hook, missing middleware registration)
-- Missing required test coverage for critical paths (auth, payments, data mutations)
-- Environment-specific patterns violated (e.g., "never use sync I/O in the request path")
-
-**Don't detect** (defer to anti-slop): naming style, comment conventions, import ordering, code organization, generic "inconsistency with surrounding code."
-
-**Fix:** Follow the established patterns. When a convention exists for correctness reasons, violating it is a bug, not a style issue.
-
-### 10. Test Correctness
-
-Tests can have bugs too. A broken test is worse than no test -- it provides false confidence.
-
-**Detect:**
-- Tests that always pass regardless of implementation (testing mocks instead of behavior)
-- Wrong assertions (asserting the wrong value, wrong comparison direction)
-- Missing assertions (test runs code but doesn't check the result)
-- Flaky test patterns (timing-dependent, order-dependent, relying on external state)
-- Mocking the wrong layer (mocking so much that the test doesn't test anything real)
-- Test setup that doesn't match production behavior (different config, missing middleware)
-- Copy-pasted tests with only the description changed (same assertion, different label)
-- `expect(result).toBeTruthy()` when a specific value check is needed
-
-**Fix:** Tests should break when the behavior they describe changes. If you can delete the implementation and the test still passes, the test is broken.
+The standard is simple: if it can return the wrong result, crash on a realistic path, or silently
+rot over time, it belongs in the review.
 
 ---
 
@@ -503,6 +365,20 @@ No issues found above the confidence threshold.
 ````
 
 Keep it tight. Show the bug, show the fix, move on. Long explanations only when the bug is subtle and the reader needs to understand *why* it's wrong.
+
+---
+
+## Reference Files
+
+- `references/universal-patterns.md` -- cross-language bug patterns and failure modes
+- `references/typescript.md` -- TypeScript and JavaScript bug patterns
+- `references/python.md` -- Python bug patterns
+- `references/shell.md` -- shell bug patterns
+- `references/java.md` -- Java bug patterns
+- `references/iac.md` -- infrastructure-as-code bug patterns
+- `references/cicd-pipelines.md` -- CI/CD bug patterns
+- `references/ai-age-patterns.md` -- AI-age correctness patterns and hallucination-driven bugs
+- `references/databases.md` -- application-level database bug patterns
 
 ---
 
