@@ -31,7 +31,6 @@ patterns activates reliably, reads clearly, and plays well with the rest of the 
 - Auditing the skill collection for consistency, overlaps, or contradictions
 - Validating versions, security references, or CVE mentions in skills
 - Optimizing a skill's description for better triggering accuracy
-- Migrating a community skill to custom
 - Checking cross-skill references and "Related Skills" sections
 - Troubleshooting why a skill isn't triggering or is triggering incorrectly
 
@@ -369,7 +368,7 @@ These are known issues in the current skill collection that should be fixed when
 ## Related Skills
 
 - **update-skills** -- handles updating existing skills from upstream GitHub repos. This skill
-  creates and reviews skills; update-skills syncs community/proprietary skills with their sources.
+  creates and reviews skills; update-skills syncs plugin skills with their upstream sources.
 - **anti-slop** -- the code quality audit skill. When reviewing a skill's example code or
   reference patterns, anti-slop patterns apply (comment noise, over-abstraction, stale idioms).
 - **full-review** -- orchestrates four parallel audits. This skill audits the skill collection

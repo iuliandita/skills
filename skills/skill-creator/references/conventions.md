@@ -45,7 +45,7 @@ allowed-tools: Read, Bash, Grep, Glob  # restrict which tools the skill can use
 |-------|--------|---------|
 | `name` | lowercase + hyphens | identifier, directory name, display name |
 | `description` | free text, <1024 chars | primary trigger mechanism -- Claude scans this |
-| `source` | `custom`, `community` | distinguishes local vs upstream skills |
+| `source` | `custom` | identifies locally maintained skills |
 | `date_added` | ISO date string | staleness detection |
 | `effort` | `low`, `medium`, `high` | signals expected token usage and complexity |
 
@@ -57,10 +57,9 @@ allowed-tools: Read, Bash, Grep, Glob  # restrict which tools the skill can use
 | **medium** | 5-15k tokens | anti-slop, prompt-generator, zsh | Moderate workflow, reference files |
 | **high** | 15k+ tokens | ansible, ci-cd, code-review, databases, docker, full-review, git, kubernetes, opnsense, security-audit, skill-creator, terraform | Full workflow, AI self-check, checklists, multiple references |
 
-### Non-custom skills (for reference)
+### Plugin skills (for reference)
 
-Community skills use `source: community` and may have `risk: unknown` instead of `effort`.
-Proprietary Anthropic skills (pdf, docx, pptx, xlsx) use `license:` instead and lack source/effort.
+Anthropic plugin skills (pdf, docx, pptx, xlsx) use `license:` instead of source/effort fields.
 Don't enforce custom conventions on these -- they follow their own upstream standards.
 
 ---
@@ -347,20 +346,24 @@ Use this skill even when the user doesn't explicitly say "git" but is clearly do
 
 ## 8. Skill Inventory (March 2026)
 
-### Custom skills (19)
+### Custom skills (22)
 
 | Skill | Effort | Date Added | Domain |
 |-------|--------|-----------|--------|
 | ansible | high | 2026-03-24 | Configuration management |
 | anti-slop | medium | 2026-03-25 | Code quality audit |
 | ci-cd | high | 2026-03-24 | CI/CD pipelines |
+| cluster-health | high | 2026-03-25 | K8s cluster diagnostics |
 | code-review | high | 2026-03-25 | Correctness audit |
+| command-prompt | medium | 2026-03-25 | Shell scripting and config |
 | databases | high | 2026-03-24 | Database operations |
 | docker | high | 2026-03-24 | Containers |
 | full-review | high | 2026-03-22 | Orchestrator (4 parallel audits) |
 | git | high | 2026-03-24 | Version control, multi-forge |
 | kubernetes | high | 2026-03-24 | K8s manifests, Helm, architecture |
 | lightpanda | low | 2026-03-22 | Headless browser via MCP |
+| linux-privilege-escalation | high | 2026-02-27 | Privilege escalation assessment |
+| lockpick | high | 2026-03-25 | Post-exploitation, CTF, pivoting |
 | networking | high | 2026-03-25 | DNS, reverse proxies, VPNs, nftables, HA |
 | opnsense | high | 2026-03-19 | Firewall management (FreeBSD) |
 | prompt-generator | medium | 2026-03-25 | LLM prompt structuring |
@@ -369,23 +372,15 @@ Use this skill even when the user doesn't explicitly say "git" but is clearly do
 | terraform | high | 2026-03-24 | Infrastructure-as-code |
 | update-docs | low | 2026-03-25 | Documentation sweep |
 | update-skills | low | 2026-03-18 | Skill update management |
-| zsh | medium | 2026-03-22 | Zsh scripting and config |
 
-### Community skills (2)
-
-| Skill | Source | Domain |
-|-------|--------|--------|
-| bash-linux | community | Bash/Linux patterns |
-| linux-privilege-escalation | community | Security testing |
-
-### Proprietary skills (4)
+### Plugin skills (4)
 
 | Skill | Source | Domain |
 |-------|--------|--------|
-| docx | Anthropic | Word documents |
-| pdf | Anthropic | PDF processing |
-| pptx | Anthropic | PowerPoint presentations |
-| xlsx | Anthropic | Spreadsheets |
+| docx | Anthropic plugin | Word documents |
+| pdf | Anthropic plugin | PDF processing |
+| pptx | Anthropic plugin | PowerPoint presentations |
+| xlsx | Anthropic plugin | Spreadsheets |
 
 ### Superpowers skills (reference only)
 
