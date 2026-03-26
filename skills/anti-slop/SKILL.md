@@ -46,7 +46,7 @@ Before scanning for slop, run standard linters to clear the low-hanging fruit:
 - **Python**: `ruff check` / `mypy`
 - **TypeScript**: `eslint` / `tsc --noEmit`
 - **Terraform**: `terraform validate` / `tflint`
-- **Structural patterns**: `ast-grep` (tree-sitter powered AST search -- write rules to catch restating comments, dead code, hallucinated imports across languages. Install: `npm i -g @ast-grep/cli`. The `ast-grep/agent-skill` Claude Code skill teaches Claude to write rules: `npx skills add ast-grep/agent-skill`)
+- **Structural patterns**: `ast-grep` (tree-sitter powered AST search -- write rules to catch restating comments, dead code, hallucinated imports across languages. Install: `npm i -g @ast-grep/cli`. If your tool ecosystem provides `ast-grep` helper skills or templates, use them.)
 
 Linters handle syntax issues, unused imports, and known anti-patterns mechanically. This skill focuses on what linters can't catch: taste, over-abstraction, naming quality, unnecessary complexity, and stale idioms. Don't duplicate what a linter already covers.
 
@@ -219,7 +219,7 @@ AI models trained on multiple languages bleed idioms across boundaries. A reliab
 
 ## Language: TypeScript / JavaScript
 
-Read `${CLAUDE_SKILL_DIR}/references/typescript.md` for the full TS/JS pattern catalog. Key highlights:
+Read `references/typescript.md` for the full TS/JS pattern catalog. Key highlights:
 
 - **Type abuse**: redundant annotations where inference works, `any` instead of `unknown`, enums instead of const objects/unions, missing `satisfies` / `as const`
 - **Stale patterns**: `require()` in ESM, `var`, `React.FC`, class components, `PropTypes` alongside TS, `.then()` chains, `namespace`
@@ -229,7 +229,7 @@ Read `${CLAUDE_SKILL_DIR}/references/typescript.md` for the full TS/JS pattern c
 
 ## Language: Python
 
-Read `${CLAUDE_SKILL_DIR}/references/python.md` for the full Python pattern catalog. Key highlights:
+Read `references/python.md` for the full Python pattern catalog. Key highlights:
 
 - **Class-for-everything disease**: stateless classes that should be plain functions/modules
 - **Stale patterns**: `os.path` instead of `pathlib`, `.format()` instead of f-strings, `%` formatting, `if/elif` chains instead of `match` (3.10+), `typing.Optional[X]` instead of `X | None` (3.10+)
@@ -239,7 +239,7 @@ Read `${CLAUDE_SKILL_DIR}/references/python.md` for the full Python pattern cata
 
 ## Language: Bash / Shell
 
-Read `${CLAUDE_SKILL_DIR}/references/shell.md` for the full Shell pattern catalog. Key highlights:
+Read `references/shell.md` for the full Shell pattern catalog. Key highlights:
 
 - **Missing safety**: no `set -euo pipefail`, unquoted variables, no `shellcheck` compliance
 - **Useless use of cat**: `cat file | grep` instead of `grep file`
@@ -249,7 +249,7 @@ Read `${CLAUDE_SKILL_DIR}/references/shell.md` for the full Shell pattern catalo
 
 ## Language: Infrastructure as Code
 
-Read `${CLAUDE_SKILL_DIR}/references/iac.md` for the full IaC pattern catalog covering Terraform, Ansible, Helm, and Kubernetes manifests. Key highlights:
+Read `references/iac.md` for the full IaC pattern catalog covering Terraform, Ansible, Helm, and Kubernetes manifests. Key highlights:
 
 - **Terraform**: over-modularizing (module for a single resource), redundant `depends_on` when implicit deps exist, not using `locals` for repeated expressions, unpinned provider versions, `provisioner` blocks instead of proper config management
 - **Ansible**: `command`/`shell` when a module exists, `ignore_errors: true` everywhere, registering variables never used, not using handlers for service restarts, no YAML anchors for DRY
@@ -258,7 +258,7 @@ Read `${CLAUDE_SKILL_DIR}/references/iac.md` for the full IaC pattern catalog co
 
 ## Language: Rust
 
-Read `${CLAUDE_SKILL_DIR}/references/rust.md` for the Rust pattern catalog. Key highlights:
+Read `references/rust.md` for the Rust pattern catalog. Key highlights:
 
 - **Clone abuse**: `.clone()` to dodge the borrow checker -- the #1 AI-Rust tell
 - **Error type proliferation**: custom error enums for every module instead of `anyhow`/`thiserror`
@@ -269,7 +269,7 @@ Read `${CLAUDE_SKILL_DIR}/references/rust.md` for the Rust pattern catalog. Key 
 
 ## Language: Docker / Containers
 
-Read `${CLAUDE_SKILL_DIR}/references/docker.md` for Dockerfile and Compose pattern catalog. Key highlights:
+Read `references/docker.md` for Dockerfile and Compose pattern catalog. Key highlights:
 
 - **Fat images**: no multi-stage build, build tools in final stage, `COPY . .` before dep install (cache busting)
 - **Layer waste**: separate `RUN` per package, `ADD` for local files, `RUN cd` instead of `WORKDIR`
@@ -283,7 +283,7 @@ For Go and other languages without dedicated reference files: apply the universa
 
 ## Research & Citations
 
-Read `${CLAUDE_SKILL_DIR}/references/research-sources.md` for statistics, source citations, and deeper context on the "no soul" problem. Use when the user wants data to back up findings.
+Read `references/research-sources.md` for statistics, source citations, and deeper context on the "no soul" problem. Use when the user wants data to back up findings.
 
 ---
 

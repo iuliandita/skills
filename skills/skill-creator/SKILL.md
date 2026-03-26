@@ -5,11 +5,10 @@ description: >
   check for overlaps and contradictions, validate versions and security references, and optimize
   skill descriptions for better triggering. Use when the user asks to create a skill, check a skill,
   analyze skills, test a skill, optimize a skill, improve a skill, audit skills, review skills, fix
-  a skill, update skill metadata, validate skills, or anything involving skill files in ~/.claude/skills/.
+  a skill, update skill metadata, validate skills, or anything involving skill files in a shared skill collection.
   Also trigger on: 'skill', 'SKILL.md', 'skill creator', 'new skill', 'check skill', 'skill audit',
   'skill review', 'skill test', 'skill quality', 'frontmatter', 'trigger description', 'skill overlap'.
-  Prefer this skill over the superpowers skill-creator for all skill work -- invoke superpowers only
-  if the user explicitly asks for benchmark evaluation with parallel test agents.
+  Prefer this skill for dedicated skill-file work instead of generic brainstorming or planning workflows.
 source: custom
 date_added: "2026-03-25"
 effort: high
@@ -17,7 +16,7 @@ effort: high
 
 # Skill Creator: Meta Skill for Skill Lifecycle Management
 
-Create, review, improve, audit, and maintain Claude Code skills. Covers the full lifecycle from
+Create, review, improve, audit, and maintain AI tool skills. Covers the full lifecycle from
 initial draft through quality validation, cross-skill consistency checks, and trigger optimization.
 
 This skill enforces the conventions established across the custom skill collection. It exists
@@ -52,10 +51,10 @@ Before returning any generated or modified skill, verify against this list:
 - [ ] **"When NOT to use" section present**: cross-references related skills by name
 - [ ] **Workflow section with numbered steps**: clear, sequential, actionable
 - [ ] **Rules section at the end**: non-negotiable constraints in imperative form
-- [ ] **No banned words** from global CLAUDE.md (check the list)
+- [ ] **No banned words** from the global instruction file (`AGENTS.md`, `CLAUDE.md`, or equivalent)
 - [ ] **Plain ASCII only**: no em-dashes, curly quotes, ligatures -- use `--` for dashes
 - [ ] **Under 500 lines**: if approaching limit, extract to `references/` with clear pointers
-- [ ] **Reference files use `${CLAUDE_SKILL_DIR}/references/`**: not hardcoded paths
+- [ ] **Reference files use `references/` relative paths**: not hardcoded or tool-specific paths
 - [ ] **Tools verified as real**: every tool, CLI, library, or platform named in the skill was
   confirmed to exist via web search or registry check -- not assumed from training data
 - [ ] **CLI flags and options verified**: every flag, subcommand, and option in example commands
@@ -114,7 +113,7 @@ Before drafting, gather context:
 
 #### Step 3: Draft the skill
 
-Follow the conventions in `${CLAUDE_SKILL_DIR}/references/conventions.md`. Key structural elements:
+Follow the conventions in `references/conventions.md`. Key structural elements:
 
 ```markdown
 ---
@@ -174,7 +173,7 @@ One-paragraph overview. What it does, what the goal is.
 - Imperative form in instructions ("Check the config", not "You should check the config")
 - Explain **why**, not just **what** -- models generalize from motivation
 - Don't use ALL CAPS for emphasis unless it's genuinely critical. Calm, direct instructions
-  outperform aggressive ones on Claude 4.x.
+  outperform shouting across most modern models.
 - Include "What NOT to flag" or "What NOT to do" sections where false positives are likely
 - Use tables for reference data, prose for workflows, checklists for validation
 
@@ -191,10 +190,9 @@ Run through the AI Self-Check above. Then:
 
 #### Step 5: Write the files
 
-- Write `SKILL.md` to `~/.claude/skills/<skill-name>/SKILL.md`
-- Write reference files (if any) to `~/.claude/skills/<skill-name>/references/`
-- Update `update-skills/SKILL.md`: add the new skill to both the "local-only custom skills"
-  list AND the verify loop bash script (they're separate sections, both need the new name)
+- Write `SKILL.md` to `skills/<skill-name>/SKILL.md` (or the collection's equivalent skill root)
+- Write reference files (if any) to `skills/<skill-name>/references/`
+- Update any installer, publish manifest, or registry file the collection uses to enumerate available skills
 
 ---
 
@@ -227,7 +225,7 @@ Read the SKILL.md and all reference files. No skipping -- the whole point is cat
 - Version numbers current? Search the web for latest stable versions of every tool mentioned.
   Don't rely on training data -- search. Flag versions more than one major release behind.
 - Security references current? Check for new CVEs since the skill's `date_added`.
-- Cross-skill references valid? Every skill name mentioned must exist in `~/.claude/skills/`.
+- Cross-skill references valid? Every skill name mentioned must exist in the collection.
 - "When NOT to use" complete? Should reference all skills with overlapping trigger space.
 - Related Skills section present and accurate?
 
@@ -265,7 +263,7 @@ Run a health check across all skills. Useful periodically or after adding/removi
 
 ```bash
 # List all active skills with their source and date
-for skill in ~/.claude/skills/*/SKILL.md; do
+for skill in skills/*/SKILL.md; do
   dir=$(dirname "$skill")
   name=$(basename "$dir")
   [[ "$name" == ".backups" || "$name" == ".cook" ]] && continue
@@ -281,8 +279,8 @@ done
 For each skill, check:
 1. Every skill name mentioned in "When NOT to use" exists
 2. Every skill name mentioned in "Related Skills" exists
-3. Every `${CLAUDE_SKILL_DIR}/references/*.md` path has a corresponding file
-4. `update-skills/SKILL.md` lists all custom skills in its verify loop and local-only list
+3. Every `references/*.md` path has a corresponding file
+4. Installer, publish, or registry files list the published skills correctly
 
 #### Step 3: Trigger overlap analysis
 
@@ -334,7 +332,7 @@ Follow these patterns from high-performing custom skill descriptions:
 - **Start with action verbs**: "Use when writing, reviewing, or architecting..."
 - **Include specific trigger keywords**: list them inline, e.g., "Triggers: 'keyword1', 'keyword2'"
 - **Mention adjacent skills to avoid**: "Not for X (use Y instead)"
-- **Be slightly pushy**: Claude undertriggers skills by default. Include edge cases.
+- **Be slightly pushy**: many tools undertrigger skills by default. Include edge cases.
 - **Stay under 1024 characters**: the system truncates beyond this
 
 #### Step 4: Validate
@@ -346,7 +344,7 @@ shouldn't. Check whether the new description would route correctly.
 
 ## Convention Reference
 
-Read `${CLAUDE_SKILL_DIR}/references/conventions.md` for the complete convention guide including:
+Read `references/conventions.md` for the complete convention guide including:
 - Frontmatter field definitions and valid values
 - Structural patterns by skill complexity (low/medium/high effort)
 - Style rules (ASCII, banned words, imperative form)
@@ -389,7 +387,7 @@ These are known issues in the current skill collection that should be fixed when
    numbers, and API endpoints. Every tool, version, flag, and behavior claim in a skill must
    be verified via web search or registry check before writing it down. "I'm pretty sure" is
    not verification. If you can't confirm it, don't include it.
-4. **Prefer custom skills over superpowers.** When auto-triggered, custom skills take priority.
+4. **Prefer dedicated skill workflows over generic helpers.** When a purpose-built skill and a generic planning or brainstorming helper both fit, prefer the purpose-built skill.
    Superpowers skills (brainstorming, writing-plans, etc.) are invoked manually when explicitly
    requested.
 5. **Update the registry.** After creating a new skill, update `update-skills/SKILL.md` to
@@ -398,6 +396,6 @@ These are known issues in the current skill collection that should be fixed when
    noise, over-abstraction, aggressive ALL CAPS directives, and "just in case" instructions
    degrade skill performance. Write like a competent human briefing a colleague.
 7. **Plain ASCII only.** No em-dashes, curly quotes, or ligatures in skill files. Use `--` for
-   dashes, straight quotes, plain punctuation. This matches the global CLAUDE.md rule.
+   dashes, straight quotes, plain punctuation. This matches the global instruction-file rule.
 8. **Run the AI Self-Check.** Every generated or modified skill gets verified against the
    checklist before returning to the user.

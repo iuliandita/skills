@@ -43,7 +43,7 @@ Available scopes:
 ### Step 2: Gather project context
 
 Before reviewing any code, build context:
-1. Read `CLAUDE.md` / `AGENTS.md` if present -- project conventions, patterns, known gotchas
+1. Read project instruction files (`AGENTS.md`, `CLAUDE.md`, or equivalent) if present -- project conventions, patterns, known gotchas
 2. Check the project's language/framework versions (package.json, pyproject.toml, go.mod, etc.)
 3. Understand the architecture -- monolith, microservices, CLI tool, library?
 4. Note any custom error handling patterns, logging conventions, or testing requirements
@@ -93,7 +93,7 @@ Examine every interface between components:
 
 **Focus 4: Convention Compliance**
 Check against project-specific correctness rules -- not style (that's anti-slop), but rules that affect whether the code works:
-- CLAUDE.md rules about error handling, transactions, API patterns
+- Project instruction-file rules about error handling, transactions, API patterns
 - Consistency with surrounding code's error handling and state management
 - Framework idioms that affect correctness (not just style)
 - Required test coverage for critical paths
@@ -273,7 +273,7 @@ Not micro-optimization -- actual performance problems that cause incidents.
 Project-specific rules where violations cause bugs, data loss, or broken behavior -- not style issues (those belong in anti-slop).
 
 **Detect:**
-- CLAUDE.md rules about transactions, error handling, or API patterns not followed
+- Project instruction-file rules about transactions, error handling, or API patterns not followed
 - Missing required error handling per project conventions (e.g., "all DB writes must use transactions")
 - Framework usage that causes runtime errors (e.g., wrong lifecycle hook, missing middleware registration)
 - Missing required test coverage for critical paths (auth, payments, data mutations)
@@ -320,7 +320,7 @@ For targeted reviews (diff/specific files), read the full files being changed pl
 
 ## Language: TypeScript / JavaScript
 
-Read `${CLAUDE_SKILL_DIR}/references/typescript.md` for the full TS/JS bug pattern catalog. Key highlights:
+Read `references/typescript.md` for the full TS/JS bug pattern catalog. Key highlights:
 
 - **Promise pitfalls**: missing `await`, unhandled rejections, `Promise.all` partial failure, `async void`
 - **Type narrowing gaps**: type assertions (`as`) bypassing runtime checks, discriminated union exhaustiveness
@@ -330,7 +330,7 @@ Read `${CLAUDE_SKILL_DIR}/references/typescript.md` for the full TS/JS bug patte
 
 ## Language: Python
 
-Read `${CLAUDE_SKILL_DIR}/references/python.md` for the full Python bug pattern catalog. Key highlights:
+Read `references/python.md` for the full Python bug pattern catalog. Key highlights:
 
 - **Mutable default arguments**: `def foo(items=[])` -- the list is shared across calls
 - **Exception handling**: bare `except:` catching KeyboardInterrupt/SystemExit, context loss in exception chains
@@ -342,7 +342,7 @@ Read `${CLAUDE_SKILL_DIR}/references/python.md` for the full Python bug pattern 
 
 ## Language: Bash / Shell
 
-Read `${CLAUDE_SKILL_DIR}/references/shell.md` for the full Shell bug pattern catalog. Key highlights:
+Read `references/shell.md` for the full Shell bug pattern catalog. Key highlights:
 
 - **Word splitting**: unquoted variables breaking on spaces, glob expansion in unexpected places
 - **Exit code masking**: pipes hiding failures (`cmd1 | cmd2` only checks cmd2), `$(...)` in assignments
@@ -351,7 +351,7 @@ Read `${CLAUDE_SKILL_DIR}/references/shell.md` for the full Shell bug pattern ca
 
 ## Language: Java
 
-Read `${CLAUDE_SKILL_DIR}/references/java.md` for the full Java bug pattern catalog. Key highlights:
+Read `references/java.md` for the full Java bug pattern catalog. Key highlights:
 
 - **Quarkus**: CDI scope thread safety (`@ApplicationScoped` + mutable state), `@RequestScoped` lost in reactive pipelines, `Uni`/`Multi` never subscribed, native image reflection, dev services config drift (`drop-and-create` in prod)
 - **Spring Boot**: `@Transactional` proxy traps (self-invocation, non-public, final, checked exceptions), `SecurityFilterChain` ordering, WebFlux blocking calls, Reactor context/MDC loss
@@ -361,7 +361,7 @@ Read `${CLAUDE_SKILL_DIR}/references/java.md` for the full Java bug pattern cata
 
 ## Language: Infrastructure as Code
 
-Read `${CLAUDE_SKILL_DIR}/references/iac.md` for the full IaC bug pattern catalog. Key highlights:
+Read `references/iac.md` for the full IaC bug pattern catalog. Key highlights:
 
 - **Terraform**: resource dependencies wrong or missing, lifecycle issues with `create_before_destroy`, state drift from manual changes, data source race conditions
 - **Ansible**: handlers not notified, variable precedence surprises, `when` conditions with undefined vars, idempotency violations
@@ -374,7 +374,7 @@ Read `${CLAUDE_SKILL_DIR}/references/iac.md` for the full IaC bug pattern catalo
 
 ## CI/CD Pipelines
 
-Read `${CLAUDE_SKILL_DIR}/references/cicd-pipelines.md` for the full CI/CD bug pattern catalog. Key highlights:
+Read `references/cicd-pipelines.md` for the full CI/CD bug pattern catalog. Key highlights:
 
 - **GitLab CI/CD**: `rules:` vs `only:/except:` mixing (silently rejected), missing `when: never` causing fallthrough, `workflow:rules` absent causing duplicate pipelines, dotenv variables used in `rules:` (don't exist yet), protected variable silently empty on non-protected branches
 - **GitHub Actions**: expression injection via `${{ }}` with user-controlled input, `GITHUB_TOKEN` permission scope too broad, reusable workflow input type mismatches, concurrency group bugs canceling wrong runs
@@ -384,16 +384,16 @@ Read `${CLAUDE_SKILL_DIR}/references/cicd-pipelines.md` for the full CI/CD bug p
 
 ## AI-Age Patterns
 
-Read `${CLAUDE_SKILL_DIR}/references/ai-age-patterns.md` for the full AI-age bug pattern catalog. Key highlights:
+Read `references/ai-age-patterns.md` for the full AI-age bug pattern catalog. Key highlights:
 
 - **AI-generated code smells**: hallucinated APIs/dependencies (1 in 5 samples), deprecated patterns from stale training data, over-defensive error handling, unnecessary abstractions, insecure defaults
 - **Agentic AI patterns**: prompt injection (#1 OWASP LLM 2025), missing rate limiting on LLM API calls, context window overflow, streaming edge cases, tool/function calling validation gaps
-- **LLM SDK bugs**: Anthropic SDK streaming + tools interaction, extended thinking block preservation, OpenAI structured output gotchas, missing `max_tokens` defaults
+- **LLM SDK bugs**: provider SDK streaming + tool-calling interaction, reasoning block preservation where applicable, structured output gotchas, missing token limits or defaults
 - **MCP vulnerabilities**: command injection (43% of servers), tool poisoning (5% of open-source servers), path traversal, SSRF, cross-tenant data exposure
 
 ## Databases
 
-Read `${CLAUDE_SKILL_DIR}/references/databases.md` for the full database bug pattern catalog. Key highlights:
+Read `references/databases.md` for the full database bug pattern catalog. Key highlights:
 
 - **General SQL**: transaction misuse (partial writes, missing rollback), NULL handling (`NOT IN` with NULLs returns 0 rows), migration bugs (NOT NULL without DEFAULT on existing tables)
 - **PostgreSQL**: `timestamp` vs `timestamptz` confusion, connection pool exhaustion, `jsonb` operator mixups (`->` vs `->>`), idle-in-transaction blocking autovacuum

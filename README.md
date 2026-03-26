@@ -1,6 +1,6 @@
 # skills.
 
-**Hand-crafted Claude Code skills for DevOps, security, infrastructure, and software engineering.**
+**Hand-crafted AI skills for DevOps, security, infrastructure, and software engineering.**
 
 <div align="center">
 
@@ -10,7 +10,6 @@ npx skills add iuliandita/skills
 
 **19 production-tested skills** -- Kubernetes, Terraform, Docker, Ansible, CI/CD, databases, networking, security audits, pentesting, code review, and more.
 
-[![Claude Code](https://img.shields.io/badge/Claude_Code-skills-blue)](https://docs.anthropic.com/en/docs/claude-code/overview)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 </div>
@@ -21,11 +20,11 @@ npx skills add iuliandita/skills
 
 ---
 
-These aren't generic prompts copy-pasted from a blog post. Every skill in this collection has been built iteratively, analyzed against real-world usage, cross-checked with official documentation, and refined through multiple passes until it actually works the way you'd expect. Each one is structured with a compact core that triggers fast and loads clean, plus dedicated reference files that get pulled in only when Claude needs the deep stuff -- compliance checklists, manifest templates, pattern libraries. No bloat in the main body, no missing context when it matters.
+These aren't generic prompts copy-pasted from a blog post. Every skill in this collection has been built iteratively, analyzed against real-world usage, cross-checked with official documentation, and refined through multiple passes until it actually works the way you'd expect. Each one is structured with a compact core that triggers fast and loads clean, plus dedicated reference files that get pulled in only when the agent needs the deep stuff -- compliance checklists, manifest templates, pattern libraries. No bloat in the main body, no missing context when it matters.
 
-Every skill is researched well beyond Claude's training cutoff. We're talking current CVEs, recent breaking changes, deprecation notices, and gotchas from *this week* -- not whatever the model last saw during pre-training. When Kubernetes drops a beta API, when Terraform changes provider behavior, when Docker deprecates a build flag -- these skills already know about it. Claude is smart, but its knowledge has a shelf life. These skills keep it current.
+Every skill is researched well beyond any model's training cutoff. We're talking current CVEs, recent breaking changes, deprecation notices, and gotchas from *this week* -- not whatever the model last saw during pre-training. When Kubernetes drops a beta API, when Terraform changes provider behavior, when Docker deprecates a build flag -- these skills already know about it. Models are smart, but their knowledge has a shelf life. These skills keep it current.
 
-This is a growing collection. New skills get added as they're built, tested, and proven useful. If you're using Claude Code without custom skills, you're leaving a lot of capability on the table.
+This is a growing collection. New skills get added as they're built, tested, and proven useful. If you're using an AI coding tool without custom skills, you're leaving a lot of capability on the table.
 
 ## What's in the box
 
@@ -71,7 +70,7 @@ This is a growing collection. New skills get added as they're built, tested, and
 | Skill | What it does |
 |-------|-------------|
 | **prompt-generator** | Turn scattered ideas into structured LLM prompts -- system prompts, templates, prompt engineering |
-| **skill-creator** | Create, review, audit, and optimize Claude Code skills -- consistency checks, overlap detection |
+| **skill-creator** | Create, review, audit, and optimize AI tool skills -- consistency checks, overlap detection |
 | **lightpanda** | Headless browser for JS-heavy pages via MCP -- scrape SPAs, extract data from dynamic sites |
 | **update-docs** | Post-session documentation sweep -- captures gotchas, syncs CLAUDE.md/AGENTS.md, trims bloat |
 
@@ -80,8 +79,8 @@ This is a growing collection. New skills get added as they're built, tested, and
 Each skill follows a specific architecture:
 
 - **Compact SKILL.md body** -- the core instructions that load into every conversation. Kept lean so it doesn't eat your context window.
-- **Reference files** (`references/` directory) -- detailed pattern libraries, compliance checklists, manifest templates. Claude reads these on-demand when the task requires depth. You get expert-level detail without paying the token cost upfront.
-- **Precise trigger descriptions** -- optimized so Claude activates the right skill at the right time. Every trigger keyword is tested and tuned to minimize false positives and missed activations.
+- **Reference files** (`references/` directory) -- detailed pattern libraries, compliance checklists, manifest templates. The agent reads these on-demand when the task requires depth. You get expert-level detail without paying the token cost upfront.
+- **Precise trigger descriptions** -- optimized so the right tool activates the right skill at the right time. Every trigger keyword is tested and tuned to minimize false positives and missed activations.
 - **Cross-skill awareness** -- skills know about each other. The security-audit skill knows not to step on lockpick's territory. Docker knows to defer to Kubernetes for cluster networking. No overlapping, no conflicts.
 
 ## Install
@@ -102,14 +101,20 @@ npx skills add iuliandita/skills --list
 ### Using the bundled installer
 
 ```bash
-# All skills
+# All skills for Claude
 git clone https://github.com/iuliandita/skills.git /tmp/skills-install
 /tmp/skills-install/install.sh
 rm -rf /tmp/skills-install
 
+# Install for Codex
+git clone https://github.com/iuliandita/skills.git /tmp/skills-install
+/tmp/skills-install/install.sh --tool codex
+rm -rf /tmp/skills-install
+
 # Pick and choose
 git clone https://github.com/iuliandita/skills.git /tmp/skills-install
-/tmp/skills-install/install.sh kubernetes docker terraform ansible
+/tmp/skills-install/install.sh --tool claude kubernetes docker terraform ansible
+/tmp/skills-install/install.sh --tool opencode prompt-generator
 /tmp/skills-install/install.sh --list  # see what's available
 ```
 
@@ -117,14 +122,17 @@ git clone https://github.com/iuliandita/skills.git /tmp/skills-install
 
 ```bash
 cp -r skills/kubernetes ~/.claude/skills/kubernetes
+cp -r skills/kubernetes ~/.codex/skills/kubernetes
 ```
 
-Claude Code picks up new skills automatically on the next conversation.
+Claude and Codex pick up new skills automatically on the next conversation. Opencode users can install with `--tool opencode`.
 
 ## Requirements
 
-- [Claude Code](https://docs.anthropic.com/en/docs/claude-code/overview) (CLI, desktop app, or IDE extension)
-- Skills support (available in all current Claude Code versions)
+- Claude Code
+- Codex
+- Opencode
+- Other tools that can consume skill directories or Markdown-based agent instructions
 
 ## Updating
 

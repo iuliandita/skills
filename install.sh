@@ -3,8 +3,9 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SKILLS_SRC="$SCRIPT_DIR/skills"
-SKILLS_DST="${CLAUDE_SKILLS_DIR:-$HOME/.claude/skills}"
-BACKUP_DIR="$SKILLS_DST/.backups"
+TOOL="${SKILLS_TOOL:-claude}"
+SKILLS_DST=""
+BACKUP_DIR=""
 
 ALL_SKILLS=(
   ansible anti-slop ci-cd code-review command-prompt databases docker
@@ -16,19 +17,37 @@ usage() {
   cat <<'EOF'
 Usage: install.sh [OPTIONS] [SKILL...]
 
-Install Claude Code skills into ~/.claude/skills/
+Install skills for Claude, Codex, Opencode, or a generic portable directory.
 
 Options:
+  --tool TOOL  Target tool: claude | codex | opencode | portable
+  --dest PATH  Override destination directory
   --list       List available skills
   --force      Overwrite existing skills without prompting
   --no-backup  Skip backup of existing skills
   --help       Show this help
 
 Examples:
-  install.sh                     # Install all skills
-  install.sh kubernetes docker   # Install specific skills
-  install.sh --list              # List available skills
+  install.sh                               # Install all skills for Claude
+  install.sh --tool codex                  # Install all skills for Codex
+  install.sh --tool opencode kubernetes    # Install one skill for Opencode
+  install.sh --tool portable --dest ~/.skills
+  install.sh --list
 EOF
+}
+
+resolve_destination() {
+  case "$TOOL" in
+    claude)   printf '%s\n' "${CLAUDE_SKILLS_DIR:-$HOME/.claude/skills}" ;;
+    codex)    printf '%s\n' "${CODEX_SKILLS_DIR:-$HOME/.codex/skills}" ;;
+    opencode) printf '%s\n' "${OPENCODE_SKILLS_DIR:-$HOME/.config/opencode/skill}" ;;
+    portable) printf '%s\n' "${PORTABLE_SKILLS_DIR:-$HOME/.skills}" ;;
+    *)
+      echo "Unknown tool: $TOOL" >&2
+      echo "Valid tools: claude, codex, opencode, portable" >&2
+      exit 1
+      ;;
+  esac
 }
 
 list_skills() {
@@ -41,6 +60,17 @@ list_skills() {
     fi
   done
   echo
+}
+
+post_install_tool_adjustments() {
+  local skill="$1"
+
+  if [[ "$TOOL" == "opencode" ]]; then
+    local skill_dir="$SKILLS_DST/$skill"
+    if [[ -f "$skill_dir/SKILL.md" ]]; then
+      mv "$skill_dir/SKILL.md" "$skill_dir/SKILLS.MD"
+    fi
+  fi
 }
 
 backup_skill() {
@@ -81,17 +111,30 @@ install_skill() {
 
   mkdir -p "$SKILLS_DST/$skill"
   cp -r "$SKILLS_SRC/$skill/." "$SKILLS_DST/$skill/"
+  post_install_tool_adjustments "$skill"
   echo "  [+] $skill installed"
 }
 
 main() {
   local force=false
   local no_backup=false
+  local dest_override=""
+  local show_list=false
   local skills=()
 
   while (( $# > 0 )); do
     case "$1" in
-      --list)    list_skills; exit 0 ;;
+      --tool)
+        [[ $# -ge 2 ]] || { echo "--tool requires a value"; exit 1; }
+        TOOL="$2"
+        shift
+        ;;
+      --dest)
+        [[ $# -ge 2 ]] || { echo "--dest requires a value"; exit 1; }
+        dest_override="$2"
+        shift
+        ;;
+      --list)    show_list=true ;;
       --force)   force=true ;;
       --no-backup) no_backup=true ;;
       --help|-h) usage; exit 0 ;;
@@ -106,9 +149,21 @@ main() {
     skills=("${ALL_SKILLS[@]}")
   fi
 
+  if [[ -n "$dest_override" ]]; then
+    SKILLS_DST="$dest_override"
+  else
+    SKILLS_DST="$(resolve_destination)"
+  fi
+  BACKUP_DIR="$SKILLS_DST/.backups"
+
+  if [[ "$show_list" == "true" ]]; then
+    list_skills
+    exit 0
+  fi
+
   mkdir -p "$SKILLS_DST"
 
-  echo "Installing ${#skills[@]} skill(s) to $SKILLS_DST"
+  echo "Installing ${#skills[@]} skill(s) for $TOOL to $SKILLS_DST"
   echo
 
   local failed=0
@@ -121,7 +176,7 @@ main() {
     echo "Done with $failed error(s)."
     exit 1
   else
-    echo "Done. Skills are available in your next Claude Code conversation."
+    echo "Done. Skills are installed for $TOOL."
   fi
 }
 

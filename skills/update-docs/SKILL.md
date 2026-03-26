@@ -1,6 +1,6 @@
 ---
 name: update-docs
-description: "Use when a session involved infrastructure, configuration, architecture, or operational changes. Also use when explicitly asked to update docs, refresh documentation, or at the end of a session after significant work. Triggers: new gotchas discovered, changed IPs/ports/versions, new services added, runbook-worthy procedures, or CLAUDE.md/AGENTS.md growing stale. Do NOT use for writing new documentation from scratch."
+description: "Use when a session involved infrastructure, configuration, architecture, or operational changes. Also use when explicitly asked to update docs, refresh documentation, or at the end of a session after significant work. Triggers: new gotchas discovered, changed IPs/ports/versions, new services added, runbook-worthy procedures, or project instruction files (`AGENTS.md`, `CLAUDE.md`, or equivalent) growing stale. Do NOT use for writing new documentation from scratch."
 source: custom
 date_added: "2026-03-25"
 effort: low
@@ -8,7 +8,7 @@ effort: low
 
 # Update Docs
 
-Post-session documentation sweep. Captures non-obvious knowledge into the right docs, trims bloat, and syncs CLAUDE.md to AGENTS.md.
+Post-session documentation sweep. Captures non-obvious knowledge into the right docs, trims bloat, and keeps project instruction files in sync.
 
 ## Core Principle
 
@@ -20,8 +20,8 @@ Post-session documentation sweep. Captures non-obvious knowledge into the right 
 2. Categorize doc impact
 3. Update affected docs
 4. Verify internal links
-5. Audit CLAUDE.md bloat
-6. Sync CLAUDE.md to AGENTS.md
+5. Audit instruction-file bloat
+6. Sync companion instruction files
 7. Commit doc changes
 
 ### 1. Identify What Changed
@@ -44,24 +44,24 @@ Map changes to documentation targets. Adapt this table to the project's doc stru
 
 | Change Type | Likely Docs to Update |
 |-------------|----------------------|
-| New/changed infrastructure specs | `CLAUDE.md` (stack section), inventory docs |
-| New service or app deployed | `CLAUDE.md` (relevant section), deployment docs |
-| IP/port/endpoint changes | `CLAUDE.md`, network inventory |
-| Version bumps (runtimes, deps, images) | `CLAUDE.md` (stack section) |
-| New gotcha discovered | `CLAUDE.md` (gotchas section) |
+| New/changed infrastructure specs | Project instruction file (`AGENTS.md`, `CLAUDE.md`, or equivalent), inventory docs |
+| New service or app deployed | Project instruction file, deployment docs |
+| IP/port/endpoint changes | Project instruction file, network inventory |
+| Version bumps (runtimes, deps, images) | Project instruction file |
+| New gotcha discovered | Project instruction file |
 | Operational procedure performed | Runbooks |
 | New secret or credential | Secrets inventory |
-| CI/CD workflow changes | `CLAUDE.md` (CI/CD section) |
-| Docker/Compose changes | `CLAUDE.md` (stack section), deployment docs |
-| Proxmox/LXC changes | `CLAUDE.md` (infra section), inventory docs |
-| Rust crate/toolchain changes | `CLAUDE.md` (stack section), `README.md` (build prereqs) |
-| Architecture decision | ADR if significant (see below), otherwise CLAUDE.md bullet |
+| CI/CD workflow changes | Project instruction file, pipeline docs |
+| Docker/Compose changes | Project instruction file, deployment docs |
+| Proxmox/LXC changes | Project instruction file, inventory docs |
+| Rust crate/toolchain changes | Project instruction file, `README.md` (build prereqs) |
+| Architecture decision | ADR if significant (see below), otherwise a short bullet in the instruction file |
 | New env vars or config keys | `.env.example`, `README.md` (setup section) |
 | New dependencies or setup steps | `README.md` (getting started / prerequisites) |
 | API endpoint changes | `README.md` (API docs section), OpenAPI spec if applicable |
 | Version bumps / new release cut | Grep for old version strings across Dockerfiles, compose files, Helm values, CI workflows, tests, README badges/install instructions -- stale versions are the #1 post-release doc rot |
 
-**When to write an ADR:** If the decision affects multiple components, constrains future options, or reverses a previous decision, it's worth a dedicated Architecture Decision Record. If it's a one-liner ("switched from X to Y because Z"), a bullet in CLAUDE.md is enough.
+**When to write an ADR:** If the decision affects multiple components, constrains future options, or reverses a previous decision, it's worth a dedicated Architecture Decision Record. If it's a one-liner ("switched from X to Y because Z"), a short bullet in the project's instruction file is enough.
 
 ### 3. Update Affected Docs
 
@@ -88,7 +88,7 @@ After editing docs, check that internal references still resolve:
 
 ```bash
 # Extract markdown link targets and verify they exist
-grep -roEh '\[[^]]*\]\([^)#]+' CLAUDE.md docs/ 2>/dev/null | \
+grep -roEh '\[[^]]*\]\([^)#]+' AGENTS.md CLAUDE.md docs/ README.md 2>/dev/null | \
   sed 's/.*](//' | grep -v '^https\?://' | sort -u | while read -r path; do
     [[ -e "$path" ]] || echo "BROKEN LINK: $path"
   done
@@ -98,9 +98,9 @@ This catches `[text](path)` and `![alt](path)` links, strips anchors (`#section`
 and skips external URLs. Works on both GNU and BSD grep (no `-P` flag needed).
 If files were renamed or moved, update all references.
 
-### 5. Audit CLAUDE.md / AGENTS.md for Bloat
+### 5. Audit Project Instruction Files for Bloat
 
-After updates, review CLAUDE.md critically:
+After updates, review the project's shared instruction file critically:
 
 **Remove or condense if:**
 - A gotcha was fixed and no longer applies (mark as resolved, then delete next session)
@@ -117,25 +117,25 @@ After updates, review CLAUDE.md critically:
 - It's a "don't do X" warning born from actual breakage
 
 **Size targets:**
-- CLAUDE.md: **must stay under 40,000 characters** (Claude Code warns at this threshold and performance degrades). Aim for under 500 lines. If over, move detailed sections to `docs/` and link.
+- Shared instruction files: aim for **under 40,000 characters** and under 500 lines even if the tool allows more. If over, move detailed sections to `docs/` and link.
 - Individual sections: if a section exceeds 30 lines, consider splitting into a dedicated doc.
-- Check size after edits: `wc -c CLAUDE.md` (target: <40000). If over, aggressively condense or extract sections to `docs/` files and replace with one-line pointers.
+- Check size after edits: `wc -c AGENTS.md CLAUDE.md 2>/dev/null`
 
-### 6. Sync CLAUDE.md to AGENTS.md
+### 6. Sync Companion Instruction Files
 
-AGENTS.md is a copy of CLAUDE.md for non-Claude agents. After updating CLAUDE.md:
+If the project keeps multiple instruction files (`AGENTS.md`, `CLAUDE.md`, or tool-specific variants), keep them aligned after updates.
 
 ```bash
-cp CLAUDE.md AGENTS.md
+test -f AGENTS.md && test -f CLAUDE.md && cp AGENTS.md CLAUDE.md
 ```
 
-If CLAUDE.md contains Claude-specific instructions (references to the Skill tool, XML tags, Claude-specific behavior), review AGENTS.md after copying and adapt or remove those references so other agents aren't confused by instructions they can't follow.
+Review the copied file after syncing and remove any tool-specific commands or behavior that do not apply to that target.
 
-**Default: both files go in .gitignore.** Some projects commit a project-level CLAUDE.md as part of the repo (check .gitignore and existing git history). If the project commits CLAUDE.md, update it in-tree. If not, keep it gitignored.
+**Default: instruction files are usually gitignored unless the project intentionally tracks them.** Check `.gitignore` and existing history before committing them.
 
 ### 7. Commit Documentation Changes
 
-Only commit changes to tracked docs (inventory, runbooks, ADRs, and CLAUDE.md/AGENTS.md if the project commits them).
+Only commit changes to tracked docs (inventory, runbooks, ADRs, and instruction files if the project commits them).
 
 ```bash
 # Stage specific changed docs (don't blindly add everything)
@@ -148,11 +148,10 @@ git diff --cached --quiet || git commit -m "docs: update [target] after [what ch
 
 | File | Purpose | Committed? |
 |------|---------|-----------|
-| `CLAUDE.md` | Project instructions for Claude | Depends on project (check .gitignore) |
-| `AGENTS.md` | Same, for non-Claude agents | Depends on project (check .gitignore) |
+| `AGENTS.md` | Cross-tool project instructions | Depends on project (check .gitignore) |
+| `CLAUDE.md` | Claude-specific companion file when a project keeps one | Depends on project (check .gitignore) |
 | `docs/` | Project documentation (inventory, runbooks, ADRs) | Yes |
 | `README.md` | Repo overview | Yes |
-| `~/.claude/projects/*/memory/MEMORY.md` | Auto-memory (cross-session) | No |
 
 ## Handling Deprecated Features
 
@@ -173,10 +172,10 @@ When a feature, service, or API is deprecated during a session:
 
 ## Common Mistakes
 
-- **Documenting everything**: If it's in config files, don't repeat the default value in CLAUDE.md. Document the gotcha around it.
+- **Documenting everything**: If it's in config files, don't repeat the default value in the instruction file. Document the gotcha around it.
 - **Stale counts**: "13 dashboards" becomes wrong when you add one. Use "N dashboards" or keep the count accurate.
 - **Orphaned gotchas**: A gotcha about a bug that was fixed 3 months ago is noise. Prune regularly.
-- **Missing the AGENTS.md sync**: Non-Claude agents need the same context. Always sync after CLAUDE.md changes.
+- **Missing the companion sync**: If the project keeps multiple instruction files, keep them aligned after changes.
 - **Over-documenting migrations**: Once a migration is complete and verified, condense to a one-liner and remove the step-by-step procedure.
 - **Dangling links**: Renaming a doc without updating references elsewhere creates dead links that erode trust in documentation.
 - **Deleting deprecated docs too early**: Keep deprecated entries visible for at least one release cycle so people find the migration path.

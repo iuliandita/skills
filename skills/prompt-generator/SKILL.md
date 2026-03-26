@@ -28,10 +28,10 @@ Take the user's rough thoughts, scattered notes, or half-formed ideas and turn t
 
 ## When NOT to use
 
-- Brainstorming features or creative ideation (use brainstorming superpowers skill)
-- Creating reusable skill files for Claude Code (use skill-creator)
+- Brainstorming features or creative ideation (use a dedicated brainstorming or ideation workflow)
+- Creating reusable skill files or agent instruction bundles (use skill-creator)
 - Writing inline prompt strings inside application code -- that's just coding
-- The user wants code that calls an LLM API (use claude-api if Anthropic SDK, otherwise just code it)
+- The user wants code that calls an LLM API -- that's an implementation task, not prompt structuring
 
 ---
 
@@ -42,7 +42,7 @@ Take the user's rough thoughts, scattered notes, or half-formed ideas and turn t
 The user will give you rough notes, bullet points, or a stream-of-consciousness description of what they want the prompt to do. Parse it for:
 
 - **Core task**: What should the prompted model actually do?
-- **Target model**: Which LLM? Default: Claude.
+- **Target model**: Which LLM? Default: model-agnostic unless the user names one.
 - **Prompt type**: System prompt vs. task prompt
 - **Constraints**: Any rules, format requirements, or behavioral boundaries mentioned
 - **Variables**: Any dynamic content that should become `{{PLACEHOLDERS}}`
@@ -60,7 +60,7 @@ Most of the time, skip this step entirely.
 1. Turn the rough notes into a clean prompt, applying structure proportional to complexity:
    - **Simple** (one task, no variables): plain prose, 3-10 lines. No XML, no sections.
    - **Medium** (multiple steps or constraints): numbered steps, clear sections.
-   - **Complex** (agentic, multi-document, behavioral rules): XML tags for content separation, variable placeholders, explicit output format.
+   - **Complex** (agentic, multi-document, behavioral rules): clear section delimiters, variable placeholders, explicit output format.
 2. **Present the prompt in conversation for review. Don't write files yet.**
 3. On approval, save to file (see Output Format below).
 4. Revisions: edit in place, don't create new files.
@@ -80,7 +80,7 @@ Most of the time, skip this step entirely.
 ---
 name: Descriptive Prompt Name
 description: One-line summary
-target_model: claude
+target_model: model-agnostic
 prompt_type: system | task
 date_created: YYYY-MM-DD
 ---
@@ -124,15 +124,17 @@ These are for YOU when structuring the user's notes. Not a knowledge dump -- jus
 
 ### Model-Specific Notes
 
-- **Claude**: XML tags for content separation. Prefill (seeding assistant turn) steers output format. Adaptive `effort` parameter.
-  - **Claude 4.x note**: aggressive language ("CRITICAL!", "YOU MUST", "NEVER EVER") now hurts performance. Use calm, direct instructions instead. "Do X" beats "YOU ABSOLUTELY MUST DO X".
-- **GPT**: Markdown structure. System/developer messages for behavioral anchoring. JSON mode via `response_format`.
-- **Gemini**: Multi-modal native. System instructions are a separate API field, not a message role.
+- If the target model is known, match the prompt format to that model's interface instead of forcing one style everywhere.
+- Models that respond well to explicit delimiters benefit from XML-style tags or other strongly separated blocks on complex tasks.
+- Chat-style APIs usually respond well to clean markdown sections, explicit constraints, and schema-like output instructions.
+- If the tool supports native structured output or JSON schema enforcement, prefer that over prose-only formatting rules.
+- Multimodal models may need separate instructions for text inputs versus attached files or images.
+- Aggressive shouting ("CRITICAL!", "YOU MUST", "NEVER EVER") usually hurts more than it helps. Use calm, explicit instructions.
 
 ### Structured Output Guidance
 
 When the prompt is for agent consumption (not human reading), specify output format explicitly:
-- **JSON mode**: instruct the model to return valid JSON. For Claude, use prefill to start the response with `{`.
+- **JSON mode**: if the tool supports native JSON mode or schema-constrained output, use it. Otherwise instruct the model to return valid JSON and seed with `{` only when the tool supports assistant prefills.
 - **XML structure**: wrap output in tags like `<result>`, `<analysis>`, `<decision>`.
 - **Delimiter-based**: for simple key-value, use `KEY: value` format.
 
@@ -146,7 +148,7 @@ For medium-to-complex prompts, structure into four clear blocks:
 3. **TASK** -- the specific request for this invocation
 4. **OUTPUT FORMAT** -- exact structure of the expected response
 
-Keep blocks visually separated with XML tags or markdown headers. Place long context documents before shorter task instructions (see "Long content goes on top" above).
+Keep blocks visually separated with XML tags, markdown headers, or other clear delimiters. Place long context documents before shorter task instructions (see "Long content goes on top" above).
 
 ---
 
@@ -161,11 +163,11 @@ If the user gives you an existing prompt to improve (not rough notes):
 
 ## Related Skills
 
-- **skill-creator** -- creates reusable skill files (SKILL.md) for Claude Code. Skills are
+- **skill-creator** -- creates reusable skill files (SKILL.md) for AI tools and coding agents. Skills are
   structured prompts, but they follow different conventions (frontmatter, workflow sections,
   rules) than standalone prompts. If someone says "create a skill", use skill-creator.
-- **claude-api** -- building apps that call LLM APIs. If the user needs a prompt string inside
-  application code (e.g., a TypeScript `const systemPrompt = ...`), that's coding, not this skill.
+- **application code** -- if the user needs a prompt string inside application code (for example a
+  TypeScript `const systemPrompt = ...`), that's coding, not this skill.
 - **anti-slop** -- if the user asks to "clean up" or "simplify" a prompt embedded in code, that's
   a code quality issue, not prompt structuring.
 
