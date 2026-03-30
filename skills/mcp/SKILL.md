@@ -2,14 +2,14 @@
 name: mcp
 description: >
   Use when building, reviewing, or debugging MCP (Model Context Protocol) servers, tools,
-  resources, or prompts. Also use for MCP transport configuration (stdio, SSE, streamable HTTP),
+  resources, or prompts. Also use for MCP transport configuration (stdio, streamable HTTP),
   MCP authentication (OAuth 2.1), tool handler implementation, or reviewing MCP servers for
   security vulnerabilities. Triggers: 'mcp', 'model context protocol', 'mcp server', 'mcp tool',
-  'mcp resource', 'mcp prompt', 'tool handler', 'stdio transport', 'SSE transport',
-  'streamable HTTP', 'mcp auth', 'mcp oauth', 'elicitation', '@modelcontextprotocol/sdk',
-  'mcp-framework', 'fastmcp'. Do NOT use for general API development (just write the code),
-  Claude API / Anthropic SDK usage (use claude-api if available), or security auditing of
-  existing MCP servers (use security-audit).
+  'mcp resource', 'mcp prompt', 'tool handler', 'stdio transport', 'streamable HTTP',
+  'mcp auth', 'mcp oauth', 'elicitation', '@modelcontextprotocol/sdk', 'mcp-framework',
+  'fastmcp', 'tool poisoning', 'mcp inspector', 'JSON-RPC'. Do NOT use for general API
+  development (just write the code), Claude API / Anthropic SDK usage (use claude-api if
+  available), or security auditing of existing MCP servers (use security-audit).
 source: custom
 date_added: "2026-03-30"
 effort: high
@@ -22,19 +22,19 @@ assistants. The goal is secure, well-structured servers that follow the protocol
 become the 43% of MCP implementations with command injection vulnerabilities.
 
 **Target versions** (March 2026):
-- MCP specification: 2025-11-05 (current stable)
+- MCP specification: 2025-11-25 (current stable)
 - TypeScript SDK: @modelcontextprotocol/sdk 1.x
-- Python SDK: mcp 1.x
-- Protocol transports: stdio, SSE, streamable HTTP
+- Python SDK: mcp 1.x (v1.26.0+)
+- Protocol transports: stdio, streamable HTTP (SSE deprecated since 2024-11-05)
 
 ## When to use
 
 - Building a new MCP server (tools, resources, prompts)
 - Adding tool handlers to an existing MCP server
-- Configuring MCP transport (stdio for local, SSE/HTTP for remote)
+- Configuring MCP transport (stdio for local, streamable HTTP for remote)
 - Implementing MCP authentication (OAuth 2.1)
 - Implementing MCP elicitation (interactive dialogs)
-- Reviewing MCP server code for injection vulnerabilities
+- Reviewing MCP server code for injection or tool poisoning vulnerabilities
 - Debugging MCP connection issues between client and server
 - Migrating from a custom tool integration to MCP
 
@@ -51,17 +51,20 @@ become the 43% of MCP implementations with command injection vulnerabilities.
 
 Before returning any MCP server code, verify:
 
-- [ ] All tool handler inputs are validated and sanitized (no raw string interpolation into
+- [ ] All tool handler inputs validated server-side (no raw string interpolation into
   shell commands, SQL, file paths, or URLs)
-- [ ] Tool descriptions are accurate and under 2KB (clients may truncate beyond this)
+- [ ] Tool descriptions accurate and under 2KB (clients truncate beyond this)
 - [ ] Resource URIs use a defined scheme and are validated before use
 - [ ] Error responses use proper MCP error codes, not raw stack traces
-- [ ] Authentication is implemented for remote transports (not just stdio)
+- [ ] Authentication implemented for remote transports (OAuth 2.1 with PKCE)
 - [ ] No secrets hardcoded in tool handlers or server configuration
-- [ ] Input schemas use JSON Schema with explicit types, required fields, and constraints
+- [ ] `inputSchema` uses specific JSON Schema types with `required`, `maxLength`, constraints
 - [ ] Server handles graceful shutdown (cleanup on SIGINT/SIGTERM)
-- [ ] Elicitation handlers validate server identity and don't auto-submit credentials
-- [ ] Transport choice matches deployment context (stdio for local, HTTP for remote)
+- [ ] Streamable HTTP: binds to `127.0.0.1` (not `0.0.0.0`) when local
+- [ ] Streamable HTTP: validates `Origin` header (DNS rebinding prevention)
+- [ ] Rate limiting on tool invocations
+- [ ] Tool annotations treated as untrusted by client-side code
+- [ ] Elicitation does not request passwords, tokens, or secrets
 
 ---
 
@@ -72,7 +75,7 @@ Before returning any MCP server code, verify:
 Before writing code, clarify:
 - **What tools will it expose?** Each tool = one operation the AI can invoke.
 - **What resources will it serve?** Resources = read-only data the AI can access.
-- **What transport?** stdio for local CLI integration, SSE for web, streamable HTTP for production.
+- **What transport?** stdio for local CLI integration, streamable HTTP for remote/production.
 - **What authentication?** None for stdio, OAuth 2.1 for remote.
 - **What language?** TypeScript (most mature SDK) or Python (simpler, FastMCP).
 
@@ -90,7 +93,7 @@ const server = new McpServer({ name: "my-server", version: "1.0.0" });
 server.tool(
   "search_docs",
   "Search documentation by keyword",
-  { query: z.string().describe("Search query"), limit: z.number().default(10) },
+  { query: z.string().max(200).describe("Search query"), limit: z.number().int().min(1).max(100).default(10) },
   async ({ query, limit }) => {
     const sanitized = query.replace(/[^\w\s-]/g, "");
     const results = await searchIndex(sanitized, limit);
@@ -117,8 +120,8 @@ mcp = FastMCP("my-server")
 @mcp.tool()
 def search_docs(query: str, limit: int = 10) -> str:
     """Search documentation by keyword."""
-    sanitized = re.sub(r"[^\w\s-]", "", query)
-    return str(search_index(sanitized, limit))
+    sanitized = re.sub(r"[^\w\s-]", "", query[:200])
+    return str(search_index(sanitized, min(limit, 100)))
 
 @mcp.resource("config://app/settings")
 def get_config() -> str:
@@ -156,26 +159,43 @@ function safePath(base: string, userInput: string): string {
 }
 ```
 
+**SSRF prevention** (when tools fetch URLs from user input):
+- Block private IP ranges: `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`
+- Block link-local: `169.254.0.0/16` (includes cloud metadata at `169.254.169.254`)
+- Block loopback: `127.0.0.0/8`
+- Require HTTPS in production
+- Pin DNS resolution between check and use (TOCTOU defense)
+
 ### Step 4: Configure transport
 
 | Transport | Use case | Auth needed | Notes |
 |-----------|----------|-------------|-------|
-| **stdio** | Local tools, CLI integration | No | Runs as user's process |
-| **SSE** | Web integrations, shared servers | Yes (OAuth 2.1) | Persistent connection |
-| **Streamable HTTP** | Production remote servers | Yes (OAuth 2.1) | Resumable, reconnectable |
+| **stdio** | Local tools, CLI integration | No | Runs as user's process. Most secure. |
+| **Streamable HTTP** | Remote/multi-client servers | Yes (OAuth 2.1) | Single endpoint, POST for messages, optional SSE streaming. |
 
-For remote transports, implement OAuth 2.1 with PKCE (mandatory per MCP spec). No API key auth
-for user-facing flows.
+SSE transport was deprecated in spec 2024-11-05. Use streamable HTTP for all remote servers.
+
+**Streamable HTTP security:**
+- Bind to `127.0.0.1` for local servers (never `0.0.0.0`)
+- Validate `Origin` header on all requests (DNS rebinding prevention)
+- Session IDs must be cryptographically random (UUID v4 or equivalent)
+- Client must send `MCP-Protocol-Version` header (e.g., `2025-11-25`)
 
 ### Step 5: Handle elicitation safely
 
-MCP elicitation lets servers request structured input from users mid-task. This is a social
-engineering attack surface.
+MCP elicitation lets servers request structured input from users mid-task.
 
-**Safe**: genuine user decisions (file selection, confirmation dialogs) with clear context.
-**Dangerous**: fake "re-authenticate" dialogs, credential requests, auto-submitting responses.
+**Schema restrictions** -- elicitation schemas are intentionally limited to flat objects:
+- `string` (with optional `format`: email, uri, date, date-time)
+- `number` / `integer` (with `minimum`, `maximum`)
+- `boolean`
+- `enum` (string with `enum` + optional `enumNames`)
 
-Never request credentials or secrets through elicitation. Never auto-submit without user review.
+No nested objects, no arrays. This is by design for client simplicity.
+
+**Security**: never request credentials via elicitation. Clients should show which server is
+requesting input and allow decline/cancel at any time. Handle all three responses: `accept`
+(with data), `decline`, and `cancel`.
 
 ### Step 6: Test the server
 
@@ -183,12 +203,38 @@ Never request credentials or secrets through elicitation. Never auto-submit with
 # Test with MCP Inspector (official debugging tool)
 npx @modelcontextprotocol/inspector your-server-command
 
-# Verify tool listing
-echo '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | node your-server.js
+# Python alternative
+uv run mcp dev server.py
 ```
 
 Test each tool handler with: valid inputs (happy path), missing required fields,
 malicious inputs (injection, path traversal, oversized payloads), concurrent requests.
+
+Read `references/security.md` for specific injection test payloads.
+
+---
+
+## Tool Poisoning and Rug Pull Defense
+
+These attacks target tool metadata, not tool execution.
+
+**Tool poisoning**: malicious instructions hidden in tool `description` fields manipulate the
+AI model into exfiltrating data or calling unintended tools. Descriptions are visible to the
+model but often hidden from users in the UI.
+
+**Rug pull attacks**: server changes tool definitions after initial approval -- clean version
+during onboarding, malicious version later.
+
+**Server-side defenses:**
+- Write clear, honest tool descriptions -- no hidden instructions
+- Do not include executable logic or injection payloads in descriptions
+- Keep descriptions minimal and factual
+- Treat `annotations` as advisory (untrusted on the client side)
+
+**Client-side defenses** (document for consumers of your server):
+- Display tool descriptions to users before granting access
+- Hash tool schemas at approval time; alert on changes between sessions
+- Limit cross-server tool access
 
 ---
 
@@ -196,19 +242,28 @@ malicious inputs (injection, path traversal, oversized payloads), concurrent req
 
 AI models consistently make these errors when generating MCP server code:
 
-1. **String interpolation in shell/SQL** -- the most common vulnerability. Always use
-   parameterized queries and argument arrays for system commands.
-2. **Missing input validation** -- tool inputs arrive as JSON but may contain anything.
-   Use Zod (TS) or Pydantic (Python) schemas with explicit constraints.
-3. **Oversized tool descriptions** -- clients may cap descriptions at 2KB. Keep them concise.
-4. **No error handling** -- uncaught exceptions crash the server. Wrap tool handlers and return
-   structured MCP errors.
-5. **Hardcoded secrets** -- use environment variables or a secret manager.
-6. **No graceful shutdown** -- handle SIGINT/SIGTERM, especially for stdio servers.
-7. **Blocking the event loop** -- use async operations for I/O in tool handlers.
-8. **Returning raw errors** -- stack traces leak internals. Return user-friendly messages.
+1. **Shell commands via string interpolation** -- the #1 vulnerability. Always use
+   argument arrays for system commands.
+2. **Missing server-side validation** -- generating `inputSchema` but never validating
+   against it in the handler. The client may skip validation.
+3. **Bare `"type": "string"` in schemas** -- no `maxLength`, no `pattern`, no constraints.
+   Accepts any string of any length.
+4. **Binding HTTP to `0.0.0.0`** -- exposes local servers to the network. Use `127.0.0.1`.
+5. **No `Origin` header validation** -- enables DNS rebinding against local servers.
+6. **Leaking error details** -- stack traces, file paths, or DB errors in tool responses.
+7. **Token passthrough** -- accepting OAuth tokens meant for other services without
+   audience validation.
+8. **Hallucinating SDK methods** -- inventing API calls that don't exist. Verify every
+   method against the actual SDK docs.
+9. **Ignoring elicitation actions** -- handling `accept` but crashing on `decline`/`cancel`.
+10. **No graceful shutdown** -- missing SIGINT/SIGTERM handlers on stdio servers.
 
 ---
+
+## Reference Files
+
+- `references/security.md` -- OAuth 2.1 details, known CVEs, injection test payloads,
+  SSRF prevention, session management, and tool poisoning defense
 
 ## Related Skills
 
@@ -222,18 +277,14 @@ AI models consistently make these errors when generating MCP server code:
 
 ## Rules
 
-1. **Validate all tool inputs.** Every tool handler receives untrusted data. Use schema
-   validation (Zod, Pydantic) with explicit types, ranges, and constraints. No raw string
-   interpolation into commands, queries, or paths.
+1. **Validate all tool inputs server-side.** Never trust the client or model. Use schema
+   validation (Zod, Pydantic) with explicit types, ranges, and constraints.
 2. **No shell execution with string interpolation.** Use argument arrays for system commands.
-   This prevents shell metacharacter injection.
-3. **Keep descriptions under 2KB.** MCP clients truncate tool descriptions beyond this limit.
-4. **Authenticate remote transports.** stdio is local (no auth needed). SSE and streamable HTTP
-   must use OAuth 2.1 with PKCE. No API key auth for user-facing flows.
-5. **Return structured errors.** Use MCP error codes and human-readable messages. Never expose
-   stack traces, file paths, or internal state in error responses.
-6. **Test with malicious inputs.** Every tool handler must be tested with injection payloads,
-   path traversal attempts, and oversized inputs before deployment.
-7. **Handle shutdown gracefully.** Register signal handlers. Clean up resources and exit cleanly.
-8. **Run the AI Self-Check.** Every generated MCP server gets verified against the checklist
-   above before returning to the user.
+3. **Keep descriptions under 2KB.** MCP clients truncate beyond this limit.
+4. **Authenticate remote transports.** Streamable HTTP must use OAuth 2.1 with PKCE.
+5. **Return structured errors.** MCP error codes + human-readable messages. No stack traces.
+6. **Test with malicious inputs.** Injection payloads, path traversal, oversized inputs.
+7. **Bind local servers to 127.0.0.1.** Never `0.0.0.0` for local-only servers.
+8. **Validate Origin headers** on all streamable HTTP requests.
+9. **Handle shutdown gracefully.** Register signal handlers. Clean up resources.
+10. **Run the AI Self-Check.** Every generated MCP server gets verified against the checklist.
