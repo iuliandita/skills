@@ -5,17 +5,19 @@ description: >
   makepkg, keyring and pacnew issues, systemd, mkinitcpio or dracut, bootctl, systemd-boot,
   UKIs, Secure Boot, Hyprland, GNOME, KDE Plasma, PipeWire, Bluetooth, GPU drivers, Steam,
   Proton, OBS, WebRTC screen sharing, Discord or Teams quirks, virtual cameras, and Linux
-  gaming. Also use for EndeavourOS or Manjaro when the task is still Arch-style package, boot,
+  gaming. Also use for EndeavourOS or Manjaro when the task is Arch-style package, boot,
   desktop, graphics, media, or service management. Triggers: 'arch linux', 'cachyos', 'pacman',
   'paru', 'aur', 'systemd', 'mkinitcpio', 'bootctl', 'wayland', 'hyprland', 'gnome', 'kde',
   'pipewire', 'bluetooth', 'mesa', 'vulkan', 'nvidia', 'amdgpu', 'steam', 'proton',
   'gamescope', 'mangohud', 'gamemode', 'obs', 'screen share', 'webrtc', 'discord', 'teams',
-  'v4l2loopback', 'pacnew', 'arch-chroot'. Not for shell syntax (use command-prompt), network
-  design (use networking), config management at scale (use ansible), or security testing (use
-  security-audit or lockpick).
-source: custom
-date_added: "2026-03-26"
-effort: high
+  'v4l2loopback', 'pacnew', 'arch-chroot'. Not for shell syntax (command-prompt), networking
+  (networking), config management (ansible), or security testing (security-audit/lockpick).
+license: MIT
+compatibility: Requires Arch Linux, CachyOS, or Arch-based distro with pacman
+metadata:
+  source: custom
+  date_added: "2026-03-26"
+  effort: high
 ---
 
 # Arch BTW: Arch Linux and CachyOS Administration

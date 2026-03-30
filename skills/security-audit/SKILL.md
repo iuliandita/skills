@@ -1,9 +1,12 @@
 ---
 name: security-audit
 description: "Use when the user mentions security audit, security review, vulnerability scan, credential scan, secret scan, auth review, hardening, OWASP, supply chain security, or wants to check code for security issues before a release. Also trigger when reviewing self-hosted applications or anything touching authentication, API keys, or access control."
-source: custom
-date_added: "2026-03-25"
-effort: high
+license: MIT
+compatibility: Optional: gitleaks, trivy, semgrep, bandit, checkov, scorecard
+metadata:
+  source: custom
+  date_added: "2026-03-25"
+  effort: high
 ---
 
 # Security Audit: Multi-Pass Application Security Review

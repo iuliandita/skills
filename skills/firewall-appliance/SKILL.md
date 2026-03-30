@@ -9,9 +9,12 @@ description: >
   'pfSsh.php', 'easyrule', 'Suricata' (firewall context), 'HAProxy' (firewall context),
   'Unbound' (firewall context). Do NOT use for Linux firewalls (iptables, nftables, ufw),
   cloud security groups, or application-level WAFs.
-source: custom
-date_added: "2026-03-30"
-effort: high
+license: MIT
+compatibility: Requires SSH access to OPNsense or pfSense appliance
+metadata:
+  source: custom
+  date_added: "2026-03-30"
+  effort: high
 ---
 
 # Firewall Appliance: OPNsense & pfSense Management

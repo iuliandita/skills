@@ -5,11 +5,11 @@ on:
     branches: [main]
     paths:
       - 'skills/**'
-      - 'scripts/lint-skills.sh'
+      - 'scripts/**'
   pull_request:
     paths:
       - 'skills/**'
-      - 'scripts/lint-skills.sh'
+      - 'scripts/**'
 
 jobs:
   lint:
@@ -20,13 +20,16 @@ jobs:
       - name: Lint skill collection
         run: ./scripts/lint-skills.sh
 
+      - name: Validate Agent Skills spec compliance
+        run: ./scripts/validate-spec.sh
+
       - name: Check installer syntax
         run: bash -n install.sh
 
-      - name: Shellcheck lint script
+      - name: Shellcheck scripts
         run: |
           if command -v shellcheck >/dev/null 2>&1; then
-            shellcheck scripts/lint-skills.sh install.sh
+            shellcheck scripts/lint-skills.sh scripts/validate-spec.sh install.sh
           else
             echo "shellcheck not available, skipping"
           fi

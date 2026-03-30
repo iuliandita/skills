@@ -9,9 +9,11 @@ description: >
   Also trigger on: 'skill', 'SKILL.md', 'skill creator', 'new skill', 'check skill', 'skill audit',
   'skill review', 'skill test', 'skill quality', 'frontmatter', 'trigger description', 'skill overlap'.
   Prefer this skill for dedicated skill-file work instead of generic brainstorming or planning workflows.
-source: custom
-date_added: "2026-03-25"
-effort: high
+license: MIT
+metadata:
+  source: custom
+  date_added: "2026-03-25"
+  effort: high
 ---
 
 # Skill Creator: Meta Skill for Skill Lifecycle Management

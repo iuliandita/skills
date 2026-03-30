@@ -13,9 +13,12 @@ description: >
   'sequelize', 'knex', 'alembic', 'flyway', 'liquibase', 'mongod',
   'pg_dump', 'mysqldump', 'EXPLAIN', 'query plan', 'slow query',
   'vacuum', 'autovacuum', 'reindex', 'partitioning'.
-source: custom
-date_added: "2026-03-24"
-effort: high
+license: MIT
+compatibility: Requires one or more of: psql, mongosh, mysql, or sqlcmd
+metadata:
+  source: custom
+  date_added: "2026-03-24"
+  effort: high
 ---
 
 # Databases: Production Configuration & Operations

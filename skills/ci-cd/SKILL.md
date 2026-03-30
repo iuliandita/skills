@@ -8,9 +8,12 @@ description: >
   'workflow' (CI context), 'github actions', 'gitlab ci', 'forgejo', '.github/workflows',
   '.gitlab-ci.yml', '.forgejo/workflows', 'runner', 'sha pinning', 'actions', 'sbom'
   (CI context), 'supply chain' (CI context).
-source: custom
-date_added: "2026-03-24"
-effort: high
+license: MIT
+compatibility: Optional: gh (GitHub CLI), glab (GitLab CLI)
+metadata:
+  source: custom
+  date_added: "2026-03-24"
+  effort: high
 ---
 
 # CI/CD Pipelines: Multi-Platform Production Infrastructure

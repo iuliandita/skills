@@ -14,9 +14,12 @@ description: >
   'gh' (GitHub CLI), 'glab' (GitLab CLI), 'PR', 'MR', 'pull request',
   'merge request', 'release', 'changelog', 'conventional commits', 'version bump',
   'semver', 'git filter-repo', 'git-crypt', 'pre-commit', 'prek'.
-source: custom
-date_added: "2026-03-24"
-effort: high
+license: MIT
+compatibility: Requires git. Optional: gh (GitHub CLI), glab (GitLab CLI)
+metadata:
+  source: custom
+  date_added: "2026-03-24"
+  effort: high
 ---
 
 # Git: Multi-Forge Production Workflow

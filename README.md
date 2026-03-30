@@ -1,6 +1,6 @@
 # skills.
 
-**Hand-crafted AI skills for DevOps, security, infrastructure, and software engineering.**
+**Hand-crafted [Agent Skills](https://agentskills.io) for DevOps, security, infrastructure, and software engineering.**
 
 <div align="center">
 
@@ -10,7 +10,10 @@ npx skills add iuliandita/skills
 
 **20 production-tested skills** -- Kubernetes, Terraform, Docker, Ansible, CI/CD, databases, Arch Linux, networking, MCP servers, security audits, pentesting, code review, and more.
 
+Built on the [Agent Skills open standard](https://agentskills.io/specification). Works with any tool that supports it.
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Agent Skills](https://img.shields.io/badge/Agent_Skills-open_standard-blue.svg)](https://agentskills.io)
 
 </div>
 
@@ -19,6 +22,23 @@ npx skills add iuliandita/skills
 `kubernetes` `terraform` `docker` `ansible` `archlinux` `cachyos` `pacman` `paru` `aur` `systemd` `helm` `argocd` `ci-cd` `github-actions` `gitlab-ci` `postgresql` `mongodb` `mysql` `networking` `dns` `wireguard` `tailscale` `vpn` `nftables` `opnsense` `pfsense` `mcp` `model-context-protocol` `security-audit` `owasp` `pentesting` `privilege-escalation` `ctf` `code-review` `git` `shell` `zsh` `bash` `prompt-engineering` `pci-dss` `compliance` `devops` `infrastructure-as-code` `iac` `containers` `podman` `buildah` `sealed-secrets` `haproxy` `caddy` `traefik` `nginx`
 
 ---
+
+## Compatibility
+
+These skills follow the [Agent Skills open standard](https://agentskills.io/specification) -- the cross-vendor format for portable AI agent capabilities. Any tool that reads `SKILL.md` files can use them directly:
+
+- **Claude Code** -- native support
+- **OpenAI Codex CLI** -- native support
+- **Gemini CLI** -- native support
+- **Cursor** -- native support
+- **VS Code Copilot** -- native support
+- **Windsurf** -- native support
+- **OpenCode** -- native support
+- Any other tool that implements the Agent Skills spec
+
+No conversion, no adapters. Drop the skill folder in your tool's skills directory and it works.
+
+## Why these skills
 
 These aren't generic prompts copy-pasted from a blog post. Every skill in this collection has been built iteratively, analyzed against real-world usage, cross-checked with official documentation, and refined through multiple passes until it actually works the way you'd expect. Each one is structured with a compact core that triggers fast and loads clean, plus dedicated reference files that get pulled in only when the agent needs the deep stuff -- compliance checklists, manifest templates, pattern libraries. No bloat in the main body, no missing context when it matters.
 
@@ -77,9 +97,10 @@ This is a growing collection. New skills get added as they're built, tested, and
 
 ## How they're built
 
-Each skill follows a specific architecture:
+Each skill follows the [Agent Skills specification](https://agentskills.io/specification):
 
-- **Compact SKILL.md body** -- the core instructions that load into every conversation. Kept lean so it doesn't eat your context window.
+- **`SKILL.md` with YAML frontmatter** -- `name`, `description`, `license`, optional `compatibility` for environment requirements, and `metadata` for custom fields. The frontmatter is what agents read at startup to decide which skills to activate.
+- **Compact body** (under 500 lines) -- the core instructions that load into every conversation. Kept lean so it doesn't eat your context window.
 - **Reference files** (`references/` directory) -- detailed pattern libraries, compliance checklists, manifest templates. The agent reads these on-demand when the task requires depth. You get expert-level detail without paying the token cost upfront.
 - **Precise trigger descriptions** -- optimized so the right tool activates the right skill at the right time. Every trigger keyword is tested and tuned to minimize false positives and missed activations.
 - **Cross-skill awareness** -- skills know about each other. The security-audit skill knows not to step on lockpick's territory. Docker knows to defer to Kubernetes for cluster networking. No overlapping, no conflicts.
@@ -143,12 +164,16 @@ Claude, Codex, Cursor, and Windsurf can use the same `SKILL.md` directory struct
 
 ## Requirements
 
+Any AI coding tool that supports the [Agent Skills standard](https://agentskills.io):
+
 - Claude Code
-- Codex CLI
+- OpenAI Codex CLI
+- Gemini CLI
 - Cursor
+- VS Code Copilot
 - Windsurf
 - OpenCode
-- Other tools that can consume skill directories or Markdown-based agent instructions
+- Other tools that consume `SKILL.md` skill directories
 
 ## Updating
 
@@ -167,7 +192,7 @@ The installer backs up existing skills before overwriting, so you won't lose loc
 ```
 skills/
   ansible/
-    SKILL.md              # Core skill instructions
+    SKILL.md              # Core skill instructions (Agent Skills spec)
     references/           # Deep-dive reference files
       compliance.md
       playbook-patterns.md
@@ -180,11 +205,15 @@ skills/
   ...
 install.sh                # Installer script
 publish.sh                # Maintainer sync script
+scripts/
+  lint-skills.sh          # Collection linter
 ```
 
 ## Contributing
 
 Found a bug in a skill? Have a suggestion? Open an issue or PR. If you've built skills of your own and want to share, let's talk.
+
+Skills must pass `./scripts/lint-skills.sh` and follow the [Agent Skills specification](https://agentskills.io/specification).
 
 ## License
 

@@ -1,9 +1,11 @@
 ---
 name: update-docs
 description: "Use when a session involved infrastructure, configuration, architecture, or operational changes. Also use when explicitly asked to update docs, refresh documentation, or at the end of a session after significant work. Triggers: new gotchas discovered, changed IPs/ports/versions, new services added, runbook-worthy procedures, or project instruction files (`AGENTS.md` or equivalent) growing stale. Do NOT use for writing new documentation from scratch."
-source: custom
-date_added: "2026-03-25"
-effort: low
+license: MIT
+metadata:
+  source: custom
+  date_added: "2026-03-25"
+  effort: low
 ---
 
 # Update Docs

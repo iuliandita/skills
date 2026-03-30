@@ -1,9 +1,12 @@
 ---
 name: terraform
 description: "Use when writing, reviewing, or architecting Terraform or OpenTofu infrastructure-as-code. Also use for HCL patterns, module design, state management, policy-as-code, PCI-DSS 4.0 IaC compliance, or AI-generated IaC validation. Triggers: 'terraform', 'opentofu', 'tofu', 'hcl', 'tfvars', 'tfstate', 'provider', 'module', 'iac', 'state backend', 'terraform plan', 'terraform apply', 'sentinel', 'checkov', 'tflint'."
-source: custom
-date_added: "2026-03-24"
-effort: high
+license: MIT
+compatibility: Requires terraform or tofu CLI. Optional: tflint, checkov, conftest
+metadata:
+  source: custom
+  date_added: "2026-03-24"
+  effort: high
 ---
 
 # Terraform & OpenTofu: Production Infrastructure-as-Code
@@ -469,14 +472,10 @@ Read `references/compliance.md` for the full PCI-DSS 4.0 requirements mapping, d
 
 - **ansible** -- for day-2 configuration of provisioned resources. Terraform provisions the VM;
   Ansible configures what runs on it. No `provisioner` blocks -- use Ansible instead.
-- **kubernetes** -- for K8s manifests and Helm charts. Terraform provisions the cluster (EKS,
-  GKE, AKS); kubernetes configures what runs on it.
-- **databases** -- for engine configuration and operations. Terraform provisions managed databases
-  (RDS, Cloud SQL, Atlas) via provider resources; databases skill tunes the engine itself.
-- **ci-cd** -- for pipeline design that runs `terraform plan/apply`. Terraform skill covers HCL
-  patterns; ci-cd covers the pipeline stages around them.
-- **docker** -- for container image patterns. Terraform can provision container infrastructure
-  (ECS, Cloud Run) but Dockerfile design belongs in the docker skill.
+- **kubernetes** -- K8s manifests and Helm charts. Terraform provisions the cluster; kubernetes configures what runs on it.
+- **databases** -- engine tuning and operations. Terraform provisions managed databases; databases skill tunes the engine.
+- **ci-cd** -- pipeline design that runs `terraform plan/apply`. Terraform covers HCL; ci-cd covers the pipeline stages.
+- **docker** -- container image patterns. Terraform provisions container infrastructure but Dockerfile design belongs in docker.
 
 ---
 

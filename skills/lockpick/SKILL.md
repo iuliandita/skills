@@ -15,9 +15,12 @@ description: >
   reviews (use security-audit), application code SAST (use security-audit),
   or network firewall config (use firewall-appliance), or VPN setup/configuration
   (use networking).
-source: custom
-date_added: "2026-03-25"
-effort: high
+license: MIT
+compatibility: Requires authorized access to target Linux systems and bash/python
+metadata:
+  source: custom
+  date_added: "2026-03-25"
+  effort: high
 ---
 
 # Lockpick: Privilege Escalation & Post-Exploitation Assessment

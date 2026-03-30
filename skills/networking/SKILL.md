@@ -12,9 +12,12 @@ description: >
   'unbound', 'coredns', 'tailscale', 'headscale', 'nebula', 'frr', 'bgp', 'ospf', 'mtu',
   'network'. Not for OPNsense/pfSense (use firewall-appliance), K8s networking (use kubernetes), container
   networking (use docker), cloud VPCs (use terraform), or offensive pentesting (use lockpick).
-source: custom
-date_added: "2026-03-25"
-effort: high
+license: MIT
+compatibility: Requires Linux. Tools vary by task: nftables, WireGuard, dig, mtr, tcpdump
+metadata:
+  source: custom
+  date_added: "2026-03-25"
+  effort: high
 ---
 
 # Networking: Configuration, Troubleshooting, and Optimization

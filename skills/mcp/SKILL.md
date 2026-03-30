@@ -10,9 +10,12 @@ description: >
   'fastmcp', 'tool poisoning', 'mcp inspector', 'JSON-RPC'. Do NOT use for general API
   development (just write the code), Claude API / Anthropic SDK usage (use claude-api if
   available), or security auditing of existing MCP servers (use security-audit).
-source: custom
-date_added: "2026-03-30"
-effort: high
+license: MIT
+compatibility: Requires Node.js or Python runtime
+metadata:
+  source: custom
+  date_added: "2026-03-30"
+  effort: high
 ---
 
 # MCP: Model Context Protocol Server Development

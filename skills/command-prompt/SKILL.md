@@ -9,9 +9,11 @@ description: >
   '.profile', 'dotfiles', 'completion', 'prompt' (shell context), 'alias', 'function' (shell
   context), 'source', 'export', 'PATH', 'fish', 'nushell', 'zsh', 'bash', 'sh' (scripting
   context), 'oh-my-zsh', 'glob', 'array' (shell context), 'piping', 'redirect', 'porting'.
-source: custom
-date_added: "2026-03-25"
-effort: medium
+license: MIT
+metadata:
+  source: custom
+  date_added: "2026-03-25"
+  effort: medium
 ---
 
 # Command Prompt: Shell Scripting and Configuration

@@ -8,9 +8,12 @@ description: >
   'container', 'podman', 'buildah', 'skopeo', 'containerd', 'buildkit',
   'docker-compose', 'multi-stage', 'distroless', 'chainguard', 'OCI',
   'docker scout', 'docker init', 'cosign', 'SBOM', 'model runner'.
-source: custom
-date_added: "2026-03-24"
-effort: high
+license: MIT
+compatibility: Requires docker or podman. Optional: docker compose, buildkit, cosign, trivy
+metadata:
+  source: custom
+  date_added: "2026-03-24"
+  effort: high
 ---
 
 # Docker & Containers: Production Infrastructure

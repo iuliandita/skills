@@ -31,22 +31,41 @@ check_private_refs() {
 # ── Frontmatter checks ─────────────────────────────────────────────────
 check_frontmatter() {
   local file="$1" name="$2"
-  for field in name description source date_added effort; do
+
+  # Required top-level fields (Agent Skills spec)
+  for field in name description license; do
     if ! grep -q "^${field}:" "$file"; then
       error "$name: missing frontmatter field '$field'"
     fi
   done
 
+  # Required metadata fields (custom, nested under metadata:)
+  if ! grep -q '^metadata:' "$file"; then
+    error "$name: missing 'metadata:' block"
+  fi
+  for field in source date_added effort; do
+    if ! grep -q "^  ${field}:" "$file"; then
+      error "$name: missing metadata field '$field'"
+    fi
+  done
+
   local src
-  src=$(grep -m1 '^source:' "$file" 2>/dev/null | sed 's/source: *//' || true)
+  src=$(grep -m1 '^  source:' "$file" 2>/dev/null | sed 's/.*source: *//' || true)
   if [[ "$src" != "custom" ]]; then
-    error "$name: source must be 'custom', got '$src'"
+    error "$name: metadata.source must be 'custom', got '$src'"
   fi
 
   local eff
-  eff=$(grep -m1 '^effort:' "$file" 2>/dev/null | sed 's/effort: *//' || true)
+  eff=$(grep -m1 '^  effort:' "$file" 2>/dev/null | sed 's/.*effort: *//' || true)
   if [[ "$eff" != "low" && "$eff" != "medium" && "$eff" != "high" ]]; then
-    error "$name: effort must be low/medium/high, got '$eff'"
+    error "$name: metadata.effort must be low/medium/high, got '$eff'"
+  fi
+
+  # Validate name matches directory (Agent Skills spec requirement)
+  local fm_name
+  fm_name=$(grep -m1 '^name:' "$file" 2>/dev/null | sed 's/name: *//' || true)
+  if [[ "$fm_name" != "$name" ]]; then
+    error "$name: frontmatter name '$fm_name' does not match directory name"
   fi
 }
 

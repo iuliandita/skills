@@ -9,9 +9,11 @@ description: >
   "improve this prompt", "optimize this prompt", "format as a system prompt".
   Do NOT use for brainstorming features, writing code, creating skills (use
   skill-creator), or creating inline string prompts within application code.
-source: custom
-date_added: "2026-03-25"
-effort: medium
+license: MIT
+metadata:
+  source: custom
+  date_added: "2026-03-25"
+  effort: medium
 ---
 
 # Prompt Generator
