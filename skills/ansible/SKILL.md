@@ -11,7 +11,7 @@ description: >
   'configuration management', 'config management', 'CIS benchmark', 'ansible-lockdown',
   'hardening playbook', 'openrc' (Ansible context), 'alpine' (Ansible context), 'apk' (Ansible context).
 license: MIT
-compatibility: Requires ansible-core and Python 3.9+. Optional: ansible-lint, molecule
+compatibility: "Requires ansible-core and Python 3.9+. Optional: ansible-lint, molecule"
 metadata:
   source: custom
   date_added: "2026-03-24"

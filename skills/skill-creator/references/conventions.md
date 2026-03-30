@@ -7,35 +7,91 @@ when creating or reviewing skills to ensure consistency.
 
 ## Table of Contents
 
-1. Frontmatter
-2. Structural Patterns
-3. Style Rules
-4. Reference File Organization
-5. Cross-Skill Patterns
-6. AI Self-Check Patterns
-7. Trigger Description Patterns
-8. Skill Inventory (March 2026)
+1. Design Principles
+2. Frontmatter
+3. Structural Patterns
+4. Style Rules
+5. Reference File Organization
+6. Cross-Skill Patterns
+7. AI Self-Check Patterns
+8. Trigger Description Patterns
+9. Skill Inventory (March 2026)
 
 ---
 
-## 1. Frontmatter
+## 1. Design Principles
+
+Two principles that should guide every decision when writing or reviewing skills.
+
+### Context budget
+
+The context window is a shared resource. Every token a skill consumes is a token unavailable for
+conversation history, other skills' metadata, tool results, and the actual user request. Treat
+skill content like code in a hot loop -- every line should justify its presence.
+
+**The test:** for each paragraph, ask "does this tell the agent something it doesn't already know?"
+If the answer is no, cut it. Models are smart. They don't need explanations of what YAML is or
+how to run `kubectl apply`. They need the non-obvious stuff: your team's naming conventions, the
+gotcha with that specific Helm chart version, the compliance requirement that isn't in any docs.
+
+**Quantitative limits** (these exist to enforce the principle, not replace it):
+
+| Component | Budget | Why |
+|-----------|--------|-----|
+| Frontmatter (`name` + `description`) | ~100 tokens | always loaded for all skills at startup |
+| SKILL.md body | <500 lines, <5k tokens recommended | loaded when the skill activates |
+| Reference files | unlimited per file, but keep individual files focused | loaded on demand |
+
+Prefer concise examples over verbose explanations. A 5-line code block that shows the pattern
+beats a 20-line paragraph describing it.
+
+### Degrees of freedom
+
+Match how prescriptive the skill is to how fragile the task is:
+
+| Freedom level | Format | Use when |
+|---------------|--------|----------|
+| **High** | Prose instructions, heuristics | Multiple valid approaches; decisions depend on context |
+| **Medium** | Pseudocode, parameterized templates | A preferred pattern exists but variation is acceptable |
+| **Low** | Concrete scripts, exact commands | Operations are fragile, error-prone, or must be exact |
+
+Think of the agent walking a path: a narrow bridge with cliffs needs guardrails (low freedom),
+an open field allows many routes (high freedom).
+
+**Examples from this collection:**
+- **High freedom**: code-review workflow -- "check these ten buckets" gives categories but lets the
+  agent decide what matters for each codebase
+- **Medium freedom**: docker AI Self-Check -- specific checklist items but the agent decides how to
+  apply them to the user's Dockerfile
+- **Low freedom**: firewall-appliance pfctl commands -- exact syntax because a wrong flag can lock
+  you out of a remote appliance
+
+When in doubt, start with higher freedom and tighten only where you've seen the agent consistently
+get it wrong. Over-constraining a skill makes it brittle and harder to maintain.
+
+---
+
+## 2. Frontmatter
 
 ### Required fields (custom skills)
 
 ```yaml
 ---
-name: skill-name              # lowercase, hyphens, max 64 chars
+name: skill-name              # lowercase a-z, 0-9, hyphens; no leading/trailing/consecutive hyphens; max 64 chars; must match directory name; no reserved words (anthropic, claude)
 description: >                # max 1024 chars, trigger-optimized
   Use when... Also use for... Triggers: '...', '...'.
-source: custom                # always "custom" for local skills
-date_added: "YYYY-MM-DD"     # ISO date, quoted
-effort: low|medium|high       # determines expected complexity/token usage
+license: MIT                  # Agent Skills spec field
+metadata:
+  source: custom              # always "custom" for local skills
+  date_added: "YYYY-MM-DD"   # ISO date, quoted
+  effort: low|medium|high     # determines expected complexity/token usage
 ---
 ```
 
 ### Optional fields
 
 ```yaml
+compatibility: "Requires kubectl. Optional: helm, kustomize"  # env requirements, max 500 chars, MUST quote if value contains colons
 allowed-tools: Read, Bash, Grep, Glob  # restrict which tools the skill can use
 paths:                                  # activate only when matching files exist (YAML list of globs)
   - "Dockerfile*"
@@ -44,10 +100,12 @@ paths:                                  # activate only when matching files exis
 
 ### `paths:` frontmatter
 
-Some tools (Claude Code v2.1.84+) support `paths:` in skill frontmatter to activate the skill
-only when files matching the globs exist in the project. This is useful for domain-specific skills
-(e.g., `docker` only when `Dockerfile` exists). It's optional and ignored by tools that don't
-support it -- safe to include for progressive enhancement.
+Some tools (Claude Code v2.1.84+ (March 2026)) support `paths:` as a YAML list of globs in
+skill frontmatter to activate the skill only when matching files exist in the project. This is
+useful for domain-specific skills (e.g., `docker` only when `Dockerfile` exists). The `paths:`
+field existed for rules since v2.0.64 but v2.1.84 extended it to skills and upgraded from
+single-glob to YAML list. It's optional and ignored by tools that don't support it -- safe to
+include for progressive enhancement.
 
 ### Headless / scripted execution
 
@@ -64,19 +122,21 @@ user confirmation in steps that could run unattended.
 
 | Field | Values | Purpose |
 |-------|--------|---------|
-| `name` | lowercase + hyphens | identifier, directory name, display name |
-| `description` | free text, <1024 chars | primary trigger mechanism -- the agent scans this |
-| `source` | `custom` | identifies locally maintained skills |
-| `date_added` | ISO date string | staleness detection |
-| `effort` | `low`, `medium`, `high` | signals expected token usage and complexity |
+| `name` | `a-z`, `0-9`, hyphens; no leading/trailing/consecutive hyphens; max 64 chars; no reserved words (`anthropic`, `claude`) | identifier, must match directory name |
+| `description` | free text, <1024 chars, no XML tags | primary trigger mechanism -- the agent scans this |
+| `license` | license name (e.g., `MIT`) | Agent Skills spec field |
+| `compatibility` | free text, <500 chars | environment requirements (optional) |
+| `metadata.source` | `custom` | identifies locally maintained skills |
+| `metadata.date_added` | ISO date string | staleness detection |
+| `metadata.effort` | `low`, `medium`, `high` | signals expected token usage and complexity |
 
 ### Effort tiers
 
 | Tier | Token usage | Typical skills | Structure depth |
 |------|-------------|---------------|-----------------|
 | **low** | <5k tokens | update-docs | Minimal workflow, few rules |
-| **medium** | 5-15k tokens | anti-slop, prompt-generator, zsh | Moderate workflow, reference files |
-| **high** | 15k+ tokens | ansible, ci-cd, code-review, databases, docker, firewall-appliance, full-review, git, kubernetes, mcp, security-audit, skill-creator, terraform | Full workflow, AI self-check, checklists, multiple references |
+| **medium** | 5-15k tokens | anti-slop, prompt-generator, command-prompt | Moderate workflow, reference files |
+| **high** | 15k+ tokens | ansible, docker, kubernetes, terraform, etc. (see Skill Inventory) | Full workflow, AI self-check, checklists, multiple references |
 
 ### Upstream skills (for reference)
 
@@ -85,7 +145,7 @@ those to match the custom frontmatter unless the collection explicitly maintains
 
 ---
 
-## 2. Structural Patterns
+## 3. Structural Patterns
 
 ### High-effort skills (the infrastructure pattern)
 
@@ -96,7 +156,7 @@ All high-effort custom skills follow this pattern:
 
 Overview paragraph. Goal statement.
 
-**Target versions** (Month Year):
+**Target versions** (Month Year):   # optional, for tool/platform skills
 - Tool: version
 
 ## When to use
@@ -147,7 +207,7 @@ Overview.
 
 ## [Domain sections]
 
-## Rules (optional)
+## Rules
 ```
 
 ### Low-effort skills
@@ -168,7 +228,7 @@ Overview.
 
 ---
 
-## 3. Style Rules
+## 4. Style Rules
 
 ### Text
 
@@ -220,7 +280,7 @@ metadata:
 
 ---
 
-## 4. Reference File Organization
+## 5. Reference File Organization
 
 ### When to create reference files
 
@@ -259,7 +319,7 @@ contents for files over 300 lines.
 
 ---
 
-## 5. Cross-Skill Patterns
+## 6. Cross-Skill Patterns
 
 ### "When NOT to use" section
 
@@ -288,18 +348,19 @@ For skills with complex relationships, add an explicit section explaining HOW sk
 
 ### Cross-skill reference rules
 
-1. Every skill name you mention must correspond to an actual published skill directory in `skills/`
+1. Every skill name you mention must correspond to a published (non-gitignored) skill in the
+   collection. Use `git check-ignore -q` to filter private skills when git is available.
 2. Characterize the relationship: "use X for Y" (routing) vs "X does Y while this does Z" (explanation)
 3. If two skills share trigger keywords, both must have "When NOT to use" entries pointing at each other
 
 ---
 
-## 6. AI Self-Check Patterns
+## 7. AI Self-Check Patterns
 
 ### When to include
 
-Required for skills that generate code, config, manifests, or infrastructure. Not required for
-skills that only analyze, review, or transform existing content.
+Required for skills that generate code, config, manifests, infrastructure, or structured files
+(including skill files). Not required for skills that only analyze or review existing content.
 
 ### Pattern
 
@@ -326,7 +387,7 @@ AI tools consistently produce the same [domain] mistakes. **Before returning any
 
 ---
 
-## 7. Trigger Description Patterns
+## 8. Trigger Description Patterns
 
 ### High-performing patterns (from the custom collection)
 
@@ -365,7 +426,7 @@ Use this skill even when the user doesn't explicitly say "git" but is clearly do
 
 ---
 
-## 8. Skill Inventory (March 2026)
+## 9. Skill Inventory (March 2026)
 
 ### Published skills (20)
 
@@ -392,5 +453,8 @@ Use this skill even when the user doesn't explicitly say "git" but is clearly do
 | terraform | high | 2026-03-24 | Infrastructure-as-code |
 | update-docs | low | 2026-03-25 | Documentation sweep |
 
-This inventory tracks the published skills in this repo only. Local-only, excluded, or
-third-party-installed skills should not appear in cross-reference checks for the public collection.
+This inventory is a snapshot of the upstream iuliandita/skills collection. It serves as a
+reference example for convention compliance, not as an authoritative list for other repos.
+When auditing a different collection, build the inventory from that collection's actual contents.
+`date_added` reflects local creation date, which may predate or postdate the first commit
+to a public repo depending on the maintainer's sync workflow.

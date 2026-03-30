@@ -13,7 +13,7 @@ description: >
   'network'. Not for OPNsense/pfSense (use firewall-appliance), K8s networking (use kubernetes), container
   networking (use docker), cloud VPCs (use terraform), or offensive pentesting (use lockpick).
 license: MIT
-compatibility: Requires Linux. Tools vary by task: nftables, WireGuard, dig, mtr, tcpdump
+compatibility: "Requires Linux. Tools vary by task: nftables, WireGuard, dig, mtr, tcpdump"
 metadata:
   source: custom
   date_added: "2026-03-25"

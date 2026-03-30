@@ -14,7 +14,7 @@ description: >
   'pg_dump', 'mysqldump', 'EXPLAIN', 'query plan', 'slow query',
   'vacuum', 'autovacuum', 'reindex', 'partitioning'.
 license: MIT
-compatibility: Requires one or more of: psql, mongosh, mysql, or sqlcmd
+compatibility: "Requires one or more of: psql, mongosh, mysql, or sqlcmd"
 metadata:
   source: custom
   date_added: "2026-03-24"

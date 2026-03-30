@@ -2,7 +2,7 @@
 name: kubernetes
 description: "Use when writing, reviewing, or architecting Kubernetes manifests, Helm charts, or cluster infrastructure. Also use for Gateway API, Kustomize, ArgoCD, supply chain security, sealed secrets, or PCI-DSS K8s compliance. Triggers: 'kubernetes', 'k8s', 'helm', 'manifest', 'deployment', 'kubectl', 'chart', 'cluster', 'pod', 'service', 'ingress', 'gateway', 'namespace', 'kustomize', 'argocd', 'pci', 'compliance', 'k8s-helm', 'sealed-secrets', 'kubeseal', 'sealed secret'."
 license: MIT
-compatibility: Requires kubectl. Optional: helm, kustomize, kube-score, cosign
+compatibility: "Requires kubectl. Optional: helm, kustomize, kube-score, cosign"
 metadata:
   source: custom
   date_added: "2026-03-24"

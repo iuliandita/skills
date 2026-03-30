@@ -9,7 +9,7 @@ description: >
   'docker-compose', 'multi-stage', 'distroless', 'chainguard', 'OCI',
   'docker scout', 'docker init', 'cosign', 'SBOM', 'model runner'.
 license: MIT
-compatibility: Requires docker or podman. Optional: docker compose, buildkit, cosign, trivy
+compatibility: "Requires docker or podman. Optional: docker compose, buildkit, cosign, trivy"
 metadata:
   source: custom
   date_added: "2026-03-24"

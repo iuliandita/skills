@@ -9,7 +9,7 @@ description: >
   '.gitlab-ci.yml', '.forgejo/workflows', 'runner', 'sha pinning', 'actions', 'sbom'
   (CI context), 'supply chain' (CI context).
 license: MIT
-compatibility: Optional: gh (GitHub CLI), glab (GitLab CLI)
+compatibility: "Optional: gh (GitHub CLI), glab (GitLab CLI)"
 metadata:
   source: custom
   date_added: "2026-03-24"

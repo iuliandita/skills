@@ -2,7 +2,7 @@
 name: terraform
 description: "Use when writing, reviewing, or architecting Terraform or OpenTofu infrastructure-as-code. Also use for HCL patterns, module design, state management, policy-as-code, PCI-DSS 4.0 IaC compliance, or AI-generated IaC validation. Triggers: 'terraform', 'opentofu', 'tofu', 'hcl', 'tfvars', 'tfstate', 'provider', 'module', 'iac', 'state backend', 'terraform plan', 'terraform apply', 'sentinel', 'checkov', 'tflint'."
 license: MIT
-compatibility: Requires terraform or tofu CLI. Optional: tflint, checkov, conftest
+compatibility: "Requires terraform or tofu CLI. Optional: tflint, checkov, conftest"
 metadata:
   source: custom
   date_added: "2026-03-24"
