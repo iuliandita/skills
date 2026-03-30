@@ -13,6 +13,21 @@ warnings=0
 error() { echo "  ERROR: $1"; (( errors++ )) || true; }
 warn()  { echo "  WARN:  $1"; (( warnings++ )) || true; }
 
+# Private skills: present locally (gitignored) but must not be referenced
+# by public skills. They can reference public skills freely.
+PRIVATE_SKILLS=(cluster-health)
+
+# ── Private skill reference check ──────────────────────────────────────
+check_private_refs() {
+  local file="$1" name="$2"
+  for priv in "${PRIVATE_SKILLS[@]}"; do
+    [[ "$name" == "$priv" ]] && continue  # private skill can reference itself
+    if grep -q "\\b${priv}\\b" "$file" 2>/dev/null; then
+      error "$name: references private skill '$priv' (public skills must not reference private skills)"
+    fi
+  done
+}
+
 # ── Frontmatter checks ─────────────────────────────────────────────────
 check_frontmatter() {
   local file="$1" name="$2"
@@ -136,6 +151,7 @@ for skill_dir in "$SKILLS_DIR"/*/; do
   check_length "$skill_file" "$name"
   check_crossrefs "$skill_file" "$name"
   check_references "$skill_file" "$name" "$skill_dir"
+  check_private_refs "$skill_file" "$name"
   (( skill_count++ )) || true
 done
 
