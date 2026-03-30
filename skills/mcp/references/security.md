@@ -9,28 +9,30 @@ hardening tool handlers, or reviewing MCP code for vulnerabilities.
 
 | CVE | Component | Severity | Description | Mitigation |
 |-----|-----------|----------|-------------|------------|
-| CVE-2025-68143 | mcp-server-git | High | Command injection via branch name in git tool handler | Validate branch names against `^[a-zA-Z0-9._/-]+$` |
+| CVE-2025-68143 | mcp-server-git | High | Unrestricted `git_init` allows creating repos in arbitrary paths | Validate and restrict allowed repository root paths |
 | CVE-2025-68144 | mcp-server-git | High | Path traversal via repository path parameter | Resolve and validate path prefix |
-| CVE-2025-68145 | mcp-server-git | Medium | Information disclosure via error messages leaking file paths | Sanitize error responses |
+| CVE-2025-68145 | mcp-server-git | High | Repository path validation bypass enables out-of-scope access | Canonicalize paths before validation |
 | CVE-2025-6514 | mcp-remote | High | OAuth injection -- attacker injects malicious auth server URL | Validate authorization server metadata against allowlist |
-| CVE-2025-64106 | Cursor MCP | Medium | Install flow allows untrusted MCP servers without clear consent | Client-side -- show server identity clearly before install |
+| CVE-2025-64106 | Cursor MCP | High | Deep-link flow can hide and execute MCP server commands | Client-side -- explicit consent with full command visibility |
 
 These are representative of the vulnerability classes found in 43% of MCP server implementations
 (Equixly, 2025). The mcp-server-git chain (CVE-2025-68143/44/45) demonstrates how a single
-server can have injection, traversal, and info-leak all at once.
+server can have multiple path and access control flaws at once.
 
 ---
 
 ## OAuth 2.1 Authorization
 
-Required for any MCP server exposed over HTTP that handles user data.
+Recommended for any MCP server exposed over HTTP that handles user data. Auth is optional per
+the MCP spec but strongly recommended when tools access user-specific resources.
 
-### Spec requirements
+### Spec requirements (when implementing auth)
 
 - MCP servers act as OAuth 2.1 resource servers
 - Implement OAuth 2.0 Protected Resource Metadata (RFC 9728) for discovery
 - All clients MUST use PKCE (Proof Key for Code Exchange)
-- Support dynamic client registration or client ID metadata documents
+- Client ID Metadata Documents are the preferred client identification method
+- Dynamic Client Registration (DCR) is a fallback, not a requirement
 - Validate token audience -- reject tokens not issued for your server
 - Use minimal scopes
 
@@ -64,12 +66,15 @@ operations are attempted. Do not publish all scopes in `scopes_supported` (scope
 
 ## Session Management (Streamable HTTP)
 
-- Server assigns `MCP-Session-Id` header in the initialize response
-- Session IDs MUST be cryptographically secure (UUID v4, JWT, or crypto hash -- not sequential)
+Streamable HTTP supports both stateful (with sessions) and stateless modes. When using
+stateful mode:
+
+- Server MAY assign `MCP-Session-Id` header in the initialize response
+- If assigned, session IDs MUST be cryptographically secure (UUID v4, JWT, or crypto hash)
 - Client includes `MCP-Session-Id` in all subsequent requests
 - Client includes `MCP-Protocol-Version: 2025-11-25` header
 - Server validates `Origin` header on every request (DNS rebinding prevention)
-- Server terminates sessions on `DELETE` request with matching session ID
+- Session termination via `DELETE` is optional (server MAY respond `405`)
 - Bind to `127.0.0.1` for local servers -- `0.0.0.0` exposes to the network
 
 ### DNS rebinding attack
@@ -146,8 +151,11 @@ async function safeUrl(input: string): Promise<URL> {
 }
 
 function isPrivateIp(ip: string): boolean {
-  // 10.x, 172.16-31.x, 192.168.x, 127.x, 169.254.x (cloud metadata)
-  return /^(10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|127\.|169\.254\.)/.test(ip);
+  // IPv4: 10.x, 172.16-31.x, 192.168.x, 127.x, 169.254.x (cloud metadata)
+  if (/^(10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|127\.|169\.254\.)/.test(ip)) return true;
+  // IPv6: loopback (::1), link-local (fe80::), unique-local (fc00::/7)
+  if (/^(::1|fe80:|fc|fd)/i.test(ip)) return true;
+  return false;
 }
 ```
 
@@ -232,13 +240,14 @@ unintended operations, or leaking internal details in error messages.
 
 Elicitation allows servers to request structured input from users mid-operation (spec 2025-06-18+).
 
-**Schema restrictions** (intentionally limited to flat objects with primitives):
+**Schema restrictions** (limited to flat objects with primitive fields):
 - `string` (optional `format`: email, uri, date, date-time)
 - `number` / `integer` (with `minimum`, `maximum`)
 - `boolean`
-- `enum` (string with `enum` + optional `enumNames`)
+- `enum` (string with `enum`; use `anyOf` with `title` for labeled choices)
+- `array` of enum strings (for multi-select)
 
-No nested objects, no arrays.
+No nested objects. Keep schemas simple for broad client support.
 
 **Servers MUST NOT:**
 - Request passwords, tokens, API keys, or credentials via elicitation

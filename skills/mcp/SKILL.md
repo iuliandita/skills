@@ -53,10 +53,10 @@ Before returning any MCP server code, verify:
 
 - [ ] All tool handler inputs validated server-side (no raw string interpolation into
   shell commands, SQL, file paths, or URLs)
-- [ ] Tool descriptions accurate and under 2KB (clients truncate beyond this)
+- [ ] Tool descriptions accurate and concise (some clients truncate long descriptions)
 - [ ] Resource URIs use a defined scheme and are validated before use
 - [ ] Error responses use proper MCP error codes, not raw stack traces
-- [ ] Authentication implemented for remote transports (OAuth 2.1 with PKCE)
+- [ ] Authentication implemented for remote transports that handle user data (OAuth 2.1 with PKCE)
 - [ ] No secrets hardcoded in tool handlers or server configuration
 - [ ] `inputSchema` uses specific JSON Schema types with `required`, `maxLength`, constraints
 - [ ] Server handles graceful shutdown (cleanup on SIGINT/SIGTERM)
@@ -76,7 +76,7 @@ Before writing code, clarify:
 - **What tools will it expose?** Each tool = one operation the AI can invoke.
 - **What resources will it serve?** Resources = read-only data the AI can access.
 - **What transport?** stdio for local CLI integration, streamable HTTP for remote/production.
-- **What authentication?** None for stdio, OAuth 2.1 for remote.
+- **What authentication?** None for stdio. OAuth 2.1 recommended for remote servers handling user data.
 - **What language?** TypeScript (most mature SDK) or Python (simpler, FastMCP).
 
 ### Step 2: Scaffold the server
@@ -112,8 +112,8 @@ await server.connect(transport);
 **Python** (FastMCP for quick prototyping):
 
 ```python
+import json, re
 from mcp.server.fastmcp import FastMCP
-import re
 
 mcp = FastMCP("my-server")
 
@@ -127,6 +127,9 @@ def search_docs(query: str, limit: int = 10) -> str:
 def get_config() -> str:
     """Application configuration."""
     return json.dumps(config)
+
+if __name__ == "__main__":
+    mcp.run()
 ```
 
 ### Step 3: Implement tools securely
@@ -171,27 +174,33 @@ function safePath(base: string, userInput: string): string {
 | Transport | Use case | Auth needed | Notes |
 |-----------|----------|-------------|-------|
 | **stdio** | Local tools, CLI integration | No | Runs as user's process. Most secure. |
-| **Streamable HTTP** | Remote/multi-client servers | Yes (OAuth 2.1) | Single endpoint, POST for messages, optional SSE streaming. |
+| **Streamable HTTP** | Remote/multi-client servers | Recommended | Single endpoint, POST for messages, optional SSE streaming. |
 
 SSE transport was deprecated in spec 2024-11-05. Use streamable HTTP for all remote servers.
+Auth is optional per spec but strongly recommended for servers handling user data. When
+implementing auth, use OAuth 2.1 with PKCE. Prefer Client ID Metadata Documents over Dynamic
+Client Registration (DCR is a fallback, not a requirement).
 
 **Streamable HTTP security:**
 - Bind to `127.0.0.1` for local servers (never `0.0.0.0`)
 - Validate `Origin` header on all requests (DNS rebinding prevention)
-- Session IDs must be cryptographically random (UUID v4 or equivalent)
-- Client must send `MCP-Protocol-Version` header (e.g., `2025-11-25`)
+- If using stateful sessions: `MCP-Session-Id` must be cryptographically random (UUID v4+)
+- Client sends `MCP-Protocol-Version` header (e.g., `2025-11-25`)
+- Consider using `createMcpExpressApp()` / `createMcpHonoApp()` from the TS SDK for built-in
+  DNS rebinding protection
 
 ### Step 5: Handle elicitation safely
 
 MCP elicitation lets servers request structured input from users mid-task.
 
-**Schema restrictions** -- elicitation schemas are intentionally limited to flat objects:
+**Schema restrictions** -- elicitation schemas are limited to flat objects with primitive fields:
 - `string` (with optional `format`: email, uri, date, date-time)
 - `number` / `integer` (with `minimum`, `maximum`)
 - `boolean`
-- `enum` (string with `enum` + optional `enumNames`)
+- `enum` (string with `enum`; use `anyOf` with `title` for labeled choices)
+- `array` of enum strings (for multi-select)
 
-No nested objects, no arrays. This is by design for client simplicity.
+No nested objects. Keep schemas simple for broad client support.
 
 **Security**: never request credentials via elicitation. Clients should show which server is
 requesting input and allow decline/cancel at any time. Handle all three responses: `accept`
@@ -280,8 +289,10 @@ AI models consistently make these errors when generating MCP server code:
 1. **Validate all tool inputs server-side.** Never trust the client or model. Use schema
    validation (Zod, Pydantic) with explicit types, ranges, and constraints.
 2. **No shell execution with string interpolation.** Use argument arrays for system commands.
-3. **Keep descriptions under 2KB.** MCP clients truncate beyond this limit.
-4. **Authenticate remote transports.** Streamable HTTP must use OAuth 2.1 with PKCE.
+3. **Keep descriptions concise.** Some clients truncate long descriptions. A few sentences
+   covering what the tool does and its parameters -- not implementation details.
+4. **Authenticate when handling user data.** Use OAuth 2.1 with PKCE for remote servers that
+   access user data. Auth is optional per spec but strongly recommended.
 5. **Return structured errors.** MCP error codes + human-readable messages. No stack traces.
 6. **Test with malicious inputs.** Injection payloads, path traversal, oversized inputs.
 7. **Bind local servers to 127.0.0.1.** Never `0.0.0.0` for local-only servers.
