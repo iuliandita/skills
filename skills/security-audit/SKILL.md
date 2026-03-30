@@ -31,7 +31,7 @@ Grounded in real-world OSS failures (unauthenticated admin endpoints, credential
 - Style, slop, or maintainability cleanup -- use anti-slop
 - CI/CD pipeline design, runner architecture, or pipeline hardening strategy -- use ci-cd
 - Offensive testing, privilege escalation, or post-exploitation work -- use lockpick
-- Network appliance administration or firewall tuning -- use opnsense
+- Network appliance administration or firewall tuning -- use firewall-appliance
 - Linux networking setup and troubleshooting -- use networking
 
 ## Workflow
@@ -93,6 +93,10 @@ If the codebase uses LLMs, AI agents, MCP servers, or AI-generated code, check f
 - Missing authentication/authorization
 - Excessive tool permissions (principle of least privilege)
 - No rate limiting on tool calls
+- Elicitation abuse -- MCP servers can present interactive dialogs (form fields, browser
+  URLs) to users mid-task. Malicious servers can use this for social engineering (fake
+  "re-authenticate" prompts, credential harvesting). Check that elicitation handlers
+  validate server identity and don't auto-submit sensitive data.
 
 ### Step 3: Static Analysis (Pass 3 -- Automated)
 

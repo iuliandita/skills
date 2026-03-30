@@ -191,7 +191,7 @@ data "aws_ami" "al2023" {
 }
 ```
 
-**Ephemeral resources** (TF 1.10+ / OT 1.11+): secrets that never persist in state.
+**Ephemeral resources** (TF 1.10+ / OT 1.11+): secrets that never persist in state. Ephemeral values can only flow into `write_only` arguments, provider configs, provisioners, or other ephemeral contexts -- not into regular resource arguments.
 
 ```hcl
 ephemeral "aws_secretsmanager_secret_version" "db_password" {
@@ -199,7 +199,7 @@ ephemeral "aws_secretsmanager_secret_version" "db_password" {
 }
 
 resource "aws_db_instance" "main" {
-  password = ephemeral.aws_secretsmanager_secret_version.db_password.secret_string
+  password = ephemeral.aws_secretsmanager_secret_version.db_password.secret_string  # must be write_only in provider
 }
 ```
 

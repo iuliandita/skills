@@ -13,7 +13,7 @@ description: >
   'IMDS', 'metadata endpoint', 'lateral movement', 'pivot', 'reverse shell',
   'GTFOBins', 'LinPEAS', 'enumeration'. Do NOT use for defensive hardening
   reviews (use security-audit), application code SAST (use security-audit),
-  or network firewall config (use opnsense), or VPN setup/configuration
+  or network firewall config (use firewall-appliance), or VPN setup/configuration
   (use networking).
 source: custom
 date_added: "2026-03-25"
@@ -45,7 +45,7 @@ instead.
 - Defensive security reviews or hardening (use **security-audit**)
 - Application code vulnerability scanning / SAST (use **security-audit**)
 - VPN setup, configuration, or troubleshooting (use **networking**)
-- Firewall rule auditing (use **opnsense**)
+- Firewall rule auditing (use **firewall-appliance**)
 - Docker image hardening or Dockerfile review (use **docker**)
 - Kubernetes manifest security review (use **kubernetes**)
 - CI/CD pipeline security (use **ci-cd**)
@@ -308,7 +308,7 @@ Read `references/shells-and-pivoting.md` for:
 - **networking** -- configures and troubleshoots VPNs, DNS, proxies, firewalls. Lockpick's VPN section extracts credentials and keys from existing configs for lateral movement. Use networking for setup; use lockpick for exploitation.
 - **kubernetes** -- writes and reviews k8s manifests and Helm charts. Lockpick's k8s section attacks the cluster from inside a compromised pod. Use kubernetes for building; use lockpick for breaking.
 - **docker** -- Dockerfile and Compose authoring. Lockpick's container section escapes from running containers. Use docker for building images; use lockpick for escaping them.
-- **opnsense** -- FreeBSD firewall management. Lockpick doesn't cover network-level firewall testing.
+- **firewall-appliance** -- OPNsense/pfSense firewall management. Lockpick doesn't cover network-level firewall testing.
 - **ansible** -- playbook and role authoring. Lockpick's IaC section targets Ansible vault cracking and credential extraction, not playbook writing.
 - **terraform** -- IaC authoring. Lockpick's IaC section targets state file secret extraction, not Terraform module design.
 

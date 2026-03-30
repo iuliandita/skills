@@ -17,7 +17,7 @@ The four audits:
 3. **Security Audit** (`security-audit` skill) -- vulnerabilities, secrets, dependency risks, OWASP mapping
 4. **Docs Sweep** (`update-docs` skill) -- stale docs, bloated instruction files, missing gotchas, broken links, companion-file drift
 
-Each audit runs in its own subagent with a fresh context window, so they don't compete for tokens or bias each other's findings.
+Each audit runs in its own parallel agent/subprocess with a fresh context window, so they don't compete for tokens or bias each other's findings.
 
 ## When to use
 
@@ -40,7 +40,7 @@ Gather context before dispatching agents. Run these in parallel (guard each with
 
 1. **Repo state**: `git rev-parse --show-toplevel ; true` and `git rev-parse --short HEAD ; true`
 2. **Branch**: `git branch --show-current ; true`
-3. **Language detection**: use Glob to check for manifest files (`package.json`, `requirements.txt`, `go.mod`, `Cargo.toml`, `pyproject.toml`, `composer.json`, `Gemfile`, `*.tf`, `helmfile.yaml`)
+3. **Language detection**: check for manifest files (`package.json`, `requirements.txt`, `go.mod`, `Cargo.toml`, `pyproject.toml`, `composer.json`, `Gemfile`, `*.tf`, `helmfile.yaml`)
 4. **Repo size estimate**: `git ls-files | wc -l ; true`
 
 **If not a git repo** (step 1 fails): stop and tell the user. The audits rely on git context (history, blame, diff). Running without it produces low-quality results.
@@ -57,103 +57,49 @@ The default is a **full codebase audit** since the user is running this as a qua
 
 ### Step 2: Dispatch Four Parallel Agents
 
-Spawn all four agents in a **single message** so they run concurrently.
+Spawn all four agents concurrently. Use whatever parallel execution mechanism your tool
+provides (subagents, background tasks, threads). Each agent invokes one of the four skills
+and runs a full codebase audit.
+
+Pass this context block to every agent, substituting the `{placeholders}` from preflight:
+
+```
+Context:
+- Repo: {repo_root}
+- Commit: {short_sha}
+- Branch: {branch}
+- Languages: {detected_languages}
+- File count: {file_count}
+- Scope: full codebase review -- scan everything
+```
 
 #### Agent 1: Code Review
 
-Uses a general-purpose agent that invokes the custom `code-review` skill via the Skill tool. This is our thorough correctness audit with 10 universal pattern categories, language-specific references, confidence scoring, adversarial self-check, and evidence-based verification.
-
-```
-prompt: |
-  You are performing a code review. Context:
-  - Repo: {repo_root}
-  - Commit: {short_sha}
-  - Languages: {detected_languages}
-  - File count: {file_count}
-
-  Use the Skill tool to invoke the "code-review" skill.
-
-  Important: the code-review skill will try to determine scope from context.
-  Since you're in a fresh subagent with no prior code-writing session, it will
-  fall through to "ask the user." Preempt this: the scope is a full codebase
-  review of the entire repository. Scan everything.
-
-  Return the complete review report.
-subagent_type: general-purpose
-```
+Invoke the `code-review` skill. Preempt the scope question: the scope is a full codebase
+review of the entire repository. Return the complete review report.
 
 #### Agent 2: Slop Check
 
-Uses a general-purpose agent that invokes the `anti-slop` skill via the Skill tool.
-
-```
-prompt: |
-  You are auditing a codebase for code quality. Context:
-  - Repo: {repo_root}
-  - Commit: {short_sha}
-  - Languages: {detected_languages}
-  - File count: {file_count}
-
-  Use the Skill tool to invoke the "anti-slop" skill.
-
-  Important: the anti-slop skill will try to determine scope from context.
-  Since you're in a fresh subagent with no prior code-writing session, it will
-  fall through to "ask the user." Preempt this: the scope is a full codebase
-  audit of the entire repository. Scan everything.
-
-  Return the complete audit report.
-subagent_type: general-purpose
-```
+Invoke the `anti-slop` skill. Preempt the scope question: the scope is a full codebase
+audit of the entire repository. Return the complete audit report.
 
 #### Agent 3: Security Audit
 
-Uses a general-purpose agent that invokes the `security-audit` skill via the Skill tool.
-
-```
-prompt: |
-  You are performing a security audit. Context:
-  - Repo: {repo_root}
-  - Commit: {short_sha}
-  - Languages: {detected_languages}
-  - File count: {file_count}
-
-  Use the Skill tool to invoke the "security-audit" skill.
-
-  Important: the security-audit skill determines scope in its Step 0 preflight.
-  Preempt the scope question: this is a full repository audit. Scan everything.
-
-  Return the complete audit report, including the SECURITY-AUDIT.md content.
-subagent_type: general-purpose
-```
+Invoke the `security-audit` skill. Preempt the scope question: this is a full repository
+audit. Return the complete audit report, including the SECURITY-AUDIT.md content.
 
 #### Agent 4: Docs Sweep
 
-Uses a general-purpose agent that invokes the `update-docs` skill via the Skill tool.
+Invoke the `update-docs` skill. This skill normally runs post-session after making changes.
+In this context, run it as a standalone audit. Focus on:
+- Identifying stale or outdated documentation (instruction files, README.md, docs/)
+- Checking instruction-file size (must stay under 40,000 chars) and bloat
+- Verifying shared and tool-specific instruction files are in sync
+- Finding broken internal links
+- Flagging orphaned gotchas or completed migration steps still documented
+- Checking for missing docs on recent changes (use git log)
 
-```
-prompt: |
-  You are performing a documentation audit. Context:
-  - Repo: {repo_root}
-  - Commit: {short_sha}
-  - Branch: {branch}
-  - Languages: {detected_languages}
-  - File count: {file_count}
-
-  Use the Skill tool to invoke the "update-docs" skill.
-
-  Important: the update-docs skill normally runs post-session after making changes.
-  In this context, you're running it as a standalone audit. Focus on:
-  - Identifying stale or outdated documentation (instruction files, README.md, docs/)
-  - Checking instruction-file size (must stay under 40,000 chars) and bloat
-  - Verifying shared and tool-specific instruction files are in sync
-  - Finding broken internal links
-  - Flagging orphaned gotchas or completed migration steps still documented
-  - Checking for missing docs on recent changes (use git log)
-
-  Do NOT make changes or commit anything. Report what needs updating.
-  Return the complete audit report.
-subagent_type: general-purpose
-```
+Do NOT make changes or commit anything. Report what needs updating.
 
 ### Step 3: Present Results
 
@@ -214,7 +160,7 @@ If a skill isn't available (e.g., `code-review`, `anti-slop`, `security-audit`, 
 
 ## Rules
 
-- **Parallel dispatch is mandatory.** All four agents must be spawned in a single message. Sequential execution defeats the purpose.
+- **Parallel dispatch is mandatory.** All four agents must run concurrently. Sequential execution defeats the purpose.
 - **Don't editorialize.** Present each report as the skill produced it. No "based on these four reports, I recommend..." unless the user asks for synthesis. If they do ask, prioritize: security fixes > correctness bugs > slop cleanup > doc updates.
 - **Respect each skill's output format.** The anti-slop skill has its own format. The security audit writes SECURITY-AUDIT.md. The code reviewer and docs sweep have their formats. Don't normalize them into a single style.
 - **Don't duplicate work.** If a finding appears in multiple reports (e.g., dead code in both slop check and code review), that's fine -- independent auditors catching the same thing is signal, not noise.

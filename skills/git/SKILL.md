@@ -249,7 +249,7 @@ Many projects use multiple git remotes (e.g., Forgejo for self-hosted CI + GitHu
 or GitLab at work + GitHub for open source mirrors).
 
 - Keep `origin` as the primary development remote and name mirrors explicitly.
-- Push to multiple remotes explicitly; do not make “push everywhere” the default.
+- Push to multiple remotes explicitly; do not make "push everywhere" the default.
 - Use separate SSH keys per forge.
 - Remember that CLI auth can be overridden by environment variables, especially `GITHUB_TOKEN`.
 

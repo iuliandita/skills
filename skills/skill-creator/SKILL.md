@@ -294,7 +294,7 @@ Flag skills where `date_added` is >30 days old AND the skill covers fast-moving 
 **Fast-moving** (>30 days = stale risk): docker, kubernetes, ci-cd, terraform, ansible,
 databases, git, security-audit, code-review (AI-age patterns section)
 
-**Slow-moving** (>30 days = probably fine): opnsense, command-prompt, prompt-generator,
+**Slow-moving** (>30 days = probably fine): firewall-appliance, command-prompt, prompt-generator,
 update-docs, skill-creator, full-review
 
 For each stale high-effort skill, search the web for:
@@ -374,9 +374,9 @@ Read `references/conventions.md` for the complete convention guide including:
    numbers, and API endpoints. Every tool, version, flag, and behavior claim in a skill must
    be verified via web search or registry check before writing it down. "I'm pretty sure" is
    not verification. If you can't confirm it, don't include it.
-4. **Prefer dedicated skill workflows over generic helpers.** When a purpose-built skill and a generic planning or brainstorming helper both fit, prefer the purpose-built skill.
-   Superpowers skills (brainstorming, writing-plans, etc.) are invoked manually when explicitly
-   requested.
+4. **Prefer dedicated skill workflows over generic helpers.** When a purpose-built skill and a
+   generic planning or brainstorming helper both fit, prefer the purpose-built skill. Generic
+   workflow skills are invoked manually when explicitly requested.
 5. **Update the inventory.** After creating, removing, or renaming a skill, update any published
    inventory file the collection uses and re-run the cross-reference checks.
 6. **No AI slop in skills.** Skills are meta-prompts -- they shape how the model works. Comment

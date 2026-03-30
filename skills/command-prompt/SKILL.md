@@ -40,10 +40,27 @@ the target shell from context and routes to the appropriate reference.
 
 ## When NOT to use
 
-- Remote FreeBSD/OPNsense commands -- use **opnsense** (handles tcsh/csh in the BSD context)
+- Remote FreeBSD/OPNsense/pfSense commands -- use **firewall-appliance** (handles tcsh/csh in the BSD context)
 - Ansible shell/command modules -- use **ansible** (module gotchas differ from raw shell)
 - CI/CD pipeline shell blocks -- use **ci-cd** (restricted environments, no interactive features)
 - General Linux sysadmin that isn't shell-specific -- just do the task directly
+
+---
+
+## AI Self-Check
+
+Before returning any generated shell script or command, verify:
+
+- [ ] Shebang matches the detected target shell (not assumed bash)
+- [ ] `set -euo pipefail` (bash/zsh) or `set -eu` (POSIX sh) present in scripts
+- [ ] All variables double-quoted (`"$var"`) unless word splitting is intentional
+- [ ] No shell-isms from the wrong shell (no `[[ ]]` in `#!/bin/sh`, no `BASH_SOURCE` in zsh)
+- [ ] Array indexing correct for the target shell (bash: 0-indexed, zsh: 1-indexed)
+- [ ] `printf` used over `echo` for non-trivial output
+- [ ] Glob safety guards in place (empty-glob case handled)
+- [ ] No hardcoded paths for tools (`/usr/bin/git`) -- use `command -v` or bare command names
+- [ ] Temp files use `mktemp` with cleanup traps, not hardcoded `/tmp/foo`
+- [ ] No secrets in command history (use `read -s` or environment variables)
 
 ---
 
@@ -68,7 +85,7 @@ Before writing any shell code, determine the target shell. Check these signals i
 | Portable scripts (new) | **bash** | Widest deployment, good feature set |
 | Docker/CI containers | **bash** or **sh** | Containers often lack zsh |
 | Minimal Alpine/BusyBox scripts | **POSIX sh** | Only `ash`/`dash` available |
-| BSD system administration | **tcsh** | FreeBSD default (but see opnsense skill) |
+| BSD system administration | **tcsh** | FreeBSD default (but see firewall-appliance skill) |
 | Cross-shell startup (env vars, PATH) | **POSIX sh** | `.profile` sourced by all POSIX shells |
 | Maximum portability requirement | **POSIX sh** | Only standard guaranteed on all Unixes |
 
@@ -243,7 +260,7 @@ Before returning any shell script, check:
 
 ## Related Skills
 
-- **opnsense** -- OPNsense/pfSense uses tcsh/csh on FreeBSD. That skill handles the BSD firewall context; this skill covers tcsh syntax in general.
+- **firewall-appliance** -- OPNsense/pfSense uses tcsh/csh on FreeBSD. That skill handles the BSD firewall context; this skill covers tcsh syntax in general.
 - **ansible** -- Ansible `shell`/`command` modules have their own idiosyncrasies beyond raw shell scripting. Use ansible for playbook work.
 - **ci-cd** -- CI shell blocks run in restricted environments (no interactive features, possibly no bash). Use ci-cd for pipeline design; use this skill for the shell syntax within them.
 

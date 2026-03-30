@@ -54,7 +54,7 @@ This skill covers four domains depending on context:
 - CI/CD pipeline design (stages, runners, caching) -- use ci-cd
 - Security audits of application code (SAST, dependency scanning) -- use security-audit
 - Shell scripting or one-off commands -- use command-prompt
-- Firewall appliance management (OPNsense/pfSense) -- use opnsense
+- Firewall appliance management (OPNsense/pfSense) -- use firewall-appliance
 
 ---
 
@@ -120,7 +120,7 @@ Follow the domain-specific section below. Always apply the production checklist 
 ansible-playbook playbook.yml --syntax-check
 
 # Lint (use production profile for strictest checks)
-ansible-lint -p production playbook.yml
+ansible-lint --profile production playbook.yml
 
 # Dry run (needs inventory + connectivity)
 ansible-playbook playbook.yml --check --diff
@@ -347,7 +347,7 @@ Read `references/compliance.md` for the full PCI-DSS 4.0 requirements mapping to
 - [ ] `--check` mode works (no tasks that break in check mode without `check_mode: false`)
 - [ ] Idempotent -- running twice produces no changes on the second run
 - [ ] No `state: latest` in production (pin package versions)
-- [ ] `ansible-lint -p production` passes clean
+- [ ] `ansible-lint --profile production` passes clean
 
 ### Roles
 

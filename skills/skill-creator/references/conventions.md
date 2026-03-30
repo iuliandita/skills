@@ -37,7 +37,28 @@ effort: low|medium|high       # determines expected complexity/token usage
 
 ```yaml
 allowed-tools: Read, Bash, Grep, Glob  # restrict which tools the skill can use
+paths:                                  # activate only when matching files exist (YAML list of globs)
+  - "Dockerfile*"
+  - "compose*.yml"
 ```
+
+### `paths:` frontmatter
+
+Some tools (Claude Code v2.1.84+) support `paths:` in skill frontmatter to activate the skill
+only when files matching the globs exist in the project. This is useful for domain-specific skills
+(e.g., `docker` only when `Dockerfile` exists). It's optional and ignored by tools that don't
+support it -- safe to include for progressive enhancement.
+
+### Headless / scripted execution
+
+Skills may run in headless contexts where no interactive user is available:
+- Claude Code `--bare` flag (no hooks, no skill directory walk)
+- Cursor Automations (event-triggered, no user prompt)
+- Codex `exec` mode (non-interactive)
+
+Skills should not assume interactive prompting is always available. If a skill needs user input
+at a decision point, provide a sensible default or document the assumption. Avoid blocking on
+user confirmation in steps that could run unattended.
 
 ### Field definitions
 
@@ -55,7 +76,7 @@ allowed-tools: Read, Bash, Grep, Glob  # restrict which tools the skill can use
 |------|-------------|---------------|-----------------|
 | **low** | <5k tokens | update-docs | Minimal workflow, few rules |
 | **medium** | 5-15k tokens | anti-slop, prompt-generator, zsh | Moderate workflow, reference files |
-| **high** | 15k+ tokens | ansible, ci-cd, code-review, databases, docker, full-review, git, kubernetes, opnsense, security-audit, skill-creator, terraform | Full workflow, AI self-check, checklists, multiple references |
+| **high** | 15k+ tokens | ansible, ci-cd, code-review, databases, docker, firewall-appliance, full-review, git, kubernetes, mcp, security-audit, skill-creator, terraform | Full workflow, AI self-check, checklists, multiple references |
 
 ### Upstream skills (for reference)
 
@@ -346,23 +367,25 @@ Use this skill even when the user doesn't explicitly say "git" but is clearly do
 
 ## 8. Skill Inventory (March 2026)
 
-### Published skills (19)
+### Published skills (20)
 
 | Skill | Effort | Date Added | Domain |
 |-------|--------|-----------|--------|
 | ansible | high | 2026-03-24 | Configuration management |
 | anti-slop | medium | 2026-03-25 | Code quality audit |
+| arch-btw | high | 2026-03-26 | Arch Linux / CachyOS administration |
 | ci-cd | high | 2026-03-24 | CI/CD pipelines |
 | code-review | high | 2026-03-25 | Correctness audit |
 | command-prompt | medium | 2026-03-25 | Shell scripting and config |
 | databases | high | 2026-03-24 | Database operations |
 | docker | high | 2026-03-24 | Containers |
+| firewall-appliance | high | 2026-03-30 | OPNsense/pfSense firewall management |
 | full-review | high | 2026-03-22 | Orchestrator (4 parallel audits) |
 | git | high | 2026-03-24 | Version control, multi-forge |
 | kubernetes | high | 2026-03-24 | K8s manifests, Helm, architecture |
 | lockpick | high | 2026-03-25 | Post-exploitation, CTF, pivoting |
+| mcp | high | 2026-03-30 | MCP server development |
 | networking | high | 2026-03-25 | DNS, reverse proxies, VPNs, nftables, HA |
-| opnsense | high | 2026-03-19 | Firewall management (FreeBSD) |
 | prompt-generator | medium | 2026-03-25 | LLM prompt structuring |
 | security-audit | high | 2026-03-25 | Application security review |
 | skill-creator | high | 2026-03-25 | Skill lifecycle management |

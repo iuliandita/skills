@@ -166,7 +166,7 @@ If the user gives you an existing prompt to improve (not rough notes):
 - **skill-creator** -- creates reusable skill files (SKILL.md) for AI tools and coding agents. Skills are
   structured prompts, but they follow different conventions (frontmatter, workflow sections,
   rules) than standalone prompts. If someone says "create a skill", use skill-creator.
-- **application code** -- if the user needs a prompt string inside application code (for example a
+- Application code -- if the user needs a prompt string inside application code (for example a
   TypeScript `const systemPrompt = ...`), that's coding, not this skill.
 - **anti-slop** -- if the user asks to "clean up" or "simplify" a prompt embedded in code, that's
   a code quality issue, not prompt structuring.

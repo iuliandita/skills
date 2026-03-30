@@ -10,7 +10,7 @@ description: >
   'cloudflare tunnel', 'cloudflared', 'vlan', 'subnet', 'nftables', 'iptables', 'keepalived',
   'vrrp', 'caddy', 'nginx' (proxy context), 'haproxy', 'traefik', 'mtr', 'tcpdump', 'dig',
   'unbound', 'coredns', 'tailscale', 'headscale', 'nebula', 'frr', 'bgp', 'ospf', 'mtu',
-  'network'. Not for OPNsense/pfSense (use opnsense), K8s networking (use kubernetes), container
+  'network'. Not for OPNsense/pfSense (use firewall-appliance), K8s networking (use kubernetes), container
   networking (use docker), cloud VPCs (use terraform), or offensive pentesting (use lockpick).
 source: custom
 date_added: "2026-03-25"
@@ -58,7 +58,7 @@ performance tuning.
 
 ## When NOT to use
 
-- OPNsense/pfSense firewall appliance management (use **opnsense**)
+- OPNsense/pfSense firewall appliance management (use **firewall-appliance**)
 - Kubernetes networking: NetworkPolicy, Gateway API, service mesh, CNI (use **kubernetes**)
 - Docker/container networking: bridge, overlay, Compose networks (use **docker**)
 - Cloud VPCs, security groups, managed load balancers (use **terraform**)
@@ -286,9 +286,9 @@ Network configuration touches several PCI-DSS requirements:
 
 ## Related Skills
 
-- **opnsense** -- manages BSD-based firewall appliances (OPNsense, pfSense). This skill handles
-  Linux networking; opnsense handles FreeBSD appliance firewalls. If the user mentions pfctl,
-  CARP, or OPNsense/pfSense hostnames, route to opnsense.
+- **firewall-appliance** -- manages BSD-based firewall appliances (OPNsense, pfSense). This skill
+  handles Linux networking; firewall-appliance handles FreeBSD appliance firewalls. If the user
+  mentions pfctl, CARP, or OPNsense/pfSense hostnames, route to firewall-appliance.
 - **kubernetes** -- owns K8s networking (NetworkPolicy, Gateway API, service mesh, CNI). This
   skill covers general DNS and proxy config; K8s-specific networking goes to kubernetes.
 - **docker** -- owns container networking (bridge, Compose networks, port mapping). This skill
@@ -318,5 +318,5 @@ Network configuration touches several PCI-DSS requirements:
    cross an untrusted network without TLS, tunnel it through a VPN.
 7. **Subnet overlap kills VPNs.** Before assigning VPN address ranges, inventory all LAN
    subnets and existing VPN ranges. Overlapping ranges cause routing black holes.
-8. **Defer to specialized skills.** OPNsense/pfSense -> opnsense. K8s networking -> kubernetes.
+8. **Defer to specialized skills.** OPNsense/pfSense -> firewall-appliance. K8s networking -> kubernetes.
    Container networking -> docker. Cloud infra -> terraform. Pentesting -> lockpick.

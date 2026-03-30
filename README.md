@@ -8,7 +8,7 @@
 npx skills add iuliandita/skills
 ```
 
-**19 production-tested skills** -- Kubernetes, Terraform, Docker, Ansible, CI/CD, databases, Arch Linux, networking, security audits, pentesting, code review, and more.
+**20 production-tested skills** -- Kubernetes, Terraform, Docker, Ansible, CI/CD, databases, Arch Linux, networking, MCP servers, security audits, pentesting, code review, and more.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
@@ -16,7 +16,7 @@ npx skills add iuliandita/skills
 
 ---
 
-`kubernetes` `terraform` `docker` `ansible` `archlinux` `cachyos` `pacman` `paru` `aur` `systemd` `helm` `argocd` `ci-cd` `github-actions` `gitlab-ci` `postgresql` `mongodb` `mysql` `networking` `dns` `wireguard` `tailscale` `vpn` `nftables` `opnsense` `pfsense` `security-audit` `owasp` `pentesting` `privilege-escalation` `ctf` `code-review` `git` `shell` `zsh` `bash` `prompt-engineering` `pci-dss` `compliance` `devops` `infrastructure-as-code` `iac` `containers` `podman` `buildah` `sealed-secrets` `haproxy` `caddy` `traefik` `nginx`
+`kubernetes` `terraform` `docker` `ansible` `archlinux` `cachyos` `pacman` `paru` `aur` `systemd` `helm` `argocd` `ci-cd` `github-actions` `gitlab-ci` `postgresql` `mongodb` `mysql` `networking` `dns` `wireguard` `tailscale` `vpn` `nftables` `opnsense` `pfsense` `mcp` `model-context-protocol` `security-audit` `owasp` `pentesting` `privilege-escalation` `ctf` `code-review` `git` `shell` `zsh` `bash` `prompt-engineering` `pci-dss` `compliance` `devops` `infrastructure-as-code` `iac` `containers` `podman` `buildah` `sealed-secrets` `haproxy` `caddy` `traefik` `nginx`
 
 ---
 
@@ -28,7 +28,7 @@ This is a growing collection. New skills get added as they're built, tested, and
 
 ## What's in the box
 
-19 production-tested skills covering:
+20 production-tested skills covering:
 
 ### Infrastructure & Operations
 
@@ -47,7 +47,7 @@ This is a growing collection. New skills get added as they're built, tested, and
 | Skill | What it does |
 |-------|-------------|
 | **networking** | DNS, reverse proxies, VPNs, VLANs, load balancers, WireGuard, Tailscale, nftables, BGP/OSPF |
-| **opnsense** | OPNsense/pfSense firewall management via SSH -- pfctl, CrowdSec, CARP failover, hardening |
+| **firewall-appliance** | OPNsense/pfSense firewall management via SSH -- pfctl, CrowdSec, pfBlockerNG, CARP failover, hardening |
 
 ### Security & Pentesting
 
@@ -64,6 +64,7 @@ This is a growing collection. New skills get added as they're built, tested, and
 | **anti-slop** | Detects and fixes AI-generated code patterns -- over-abstraction, redundant comments, verbose defensive code |
 | **git** | Commits, branches, hooks, signing, multi-forge workflows (GitHub, GitLab, Forgejo), release management |
 | **command-prompt** | Shell scripting across zsh, bash, POSIX sh, fish, nushell -- dotfiles, completions, one-liners |
+| **mcp** | MCP server development -- protocol patterns, transport, auth, input validation, injection prevention |
 | **full-review** | Orchestrates code-review + anti-slop + security-audit + update-docs in one pass |
 
 ### Tooling & Meta
@@ -116,6 +117,11 @@ git clone https://github.com/iuliandita/skills.git /tmp/skills-install
 /tmp/skills-install/install.sh --tool cursor
 rm -rf /tmp/skills-install
 
+# Install for Windsurf
+git clone https://github.com/iuliandita/skills.git /tmp/skills-install
+/tmp/skills-install/install.sh --tool windsurf
+rm -rf /tmp/skills-install
+
 # Pick and choose
 git clone https://github.com/iuliandita/skills.git /tmp/skills-install
 /tmp/skills-install/install.sh --tool claude kubernetes docker terraform ansible
@@ -130,16 +136,18 @@ git clone https://github.com/iuliandita/skills.git /tmp/skills-install
 cp -r skills/kubernetes ~/.claude/skills/kubernetes
 cp -r skills/kubernetes ~/.codex/skills/kubernetes
 cp -r skills/kubernetes ~/.cursor/skills/kubernetes
+cp -r skills/kubernetes ~/.windsurf/skills/kubernetes
 ```
 
-Claude, Codex, and Cursor can use the same `SKILL.md` directory structure for personal skills. The bundled installer supports `--tool claude`, `--tool codex`, `--tool cursor`, and `--tool opencode`.
+Claude, Codex, Cursor, and Windsurf can use the same `SKILL.md` directory structure for personal skills. The bundled installer supports `--tool claude`, `--tool codex`, `--tool cursor`, `--tool windsurf`, and `--tool opencode`.
 
 ## Requirements
 
 - Claude Code
-- Codex
+- Codex CLI
 - Cursor
-- Opencode
+- Windsurf
+- OpenCode
 - Other tools that can consume skill directories or Markdown-based agent instructions
 
 ## Updating

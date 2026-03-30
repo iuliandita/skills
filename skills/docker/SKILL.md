@@ -287,7 +287,7 @@ services:
       - no-new-privileges:true
     cap_drop:
       - ALL
-    cap_add: []                 # add ONLY what's needed
+    cap_add: []                 # add ONLY what's needed (see note below)
     tmpfs:
       - /tmp
     user: "1001:1001"
@@ -308,6 +308,13 @@ services:
         max-size: "10m"
         max-file: "3"
 ```
+
+**`cap_drop: ALL` warning**: many images (LSIO, HOTIO, official redis/postgres, anything using
+gosu/setpriv/su-exec) start as root and drop privileges at runtime. They need at minimum
+`cap_add: ["SETUID", "SETGID"]`, and images that chown files at startup also need `"CHOWN"`.
+Always read the image's entrypoint to determine required capabilities before applying blanket
+drops. Blind `cap_drop: ALL` with empty `cap_add` causes CrashLoopBackOff. See the
+security-audit skill's Rule 14 for detailed guidance.
 
 For a hardened Dockerfile pattern, see `references/dockerfile-patterns.md` (Language Templates section).
 

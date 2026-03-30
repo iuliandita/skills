@@ -216,11 +216,13 @@ jobs:
 
 - **No `ubuntu-latest`** -- `runs-on` maps to your registered runner labels (e.g., `docker`)
 - **Missing tools** -- Forgejo runner containers are lean. Add `apt-get install` for git, curl, etc.
-- **GIT_SSL_NO_VERIFY** -- commonly needed when the Forgejo instance uses self-signed or expired certs
+- **TLS certs** -- if Forgejo uses self-signed or internal CA certs, configure the runner's trust
+  store (`GIT_SSL_CAINFO=/path/to/ca-bundle.crt`) or install the CA into the container image.
+  `GIT_SSL_NO_VERIFY=true` is a last resort for dev/test only -- never normalize TLS bypass in production
 - **Third-party actions** -- many GitHub Marketplace actions use GitHub-specific API calls and will silently fail
 - **Secrets in Forgejo** -- `${{ secrets.* }}` works, but no environment-level scoping
-- **`permissions:` is decoration** -- all workflows run with the same default permissions. Don't rely on
-  it for security boundaries.
+- **`permissions:` support is limited** -- Forgejo respects the field but enforcement depends on runner
+  version and configuration. Don't rely on it as your sole security boundary.
 
 ### Forgejo release workflow pattern
 
@@ -236,6 +238,7 @@ jobs:
     container:
       image: catthehacker/ubuntu:act-24.04    # heavier image for multi-tool needs
     env:
+      # Prefer GIT_SSL_CAINFO with your CA cert; this bypass is a last resort
       GIT_SSL_NO_VERIFY: "true"               # if cert is periodically expired
     steps:
       - uses: actions/checkout@v4

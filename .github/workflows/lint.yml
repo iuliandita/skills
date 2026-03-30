@@ -1,0 +1,32 @@
+name: Lint Skills
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'skills/**'
+      - 'scripts/lint-skills.sh'
+  pull_request:
+    paths:
+      - 'skills/**'
+      - 'scripts/lint-skills.sh'
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Lint skill collection
+        run: ./scripts/lint-skills.sh
+
+      - name: Check installer syntax
+        run: bash -n install.sh
+
+      - name: Shellcheck lint script
+        run: |
+          if command -v shellcheck >/dev/null 2>&1; then
+            shellcheck scripts/lint-skills.sh install.sh
+          else
+            echo "shellcheck not available, skipping"
+          fi

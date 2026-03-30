@@ -1,17 +1,20 @@
 ---
-name: opnsense
+name: firewall-appliance
 description: >
-  Use when managing, troubleshooting, or hardening OPNsense/pfSense firewalls via SSH. Also
+  Use when managing, troubleshooting, or hardening OPNsense or pfSense firewalls via SSH. Also
   trigger on firewall hostnames (e.g., "op1", "fw1", "pfsense"), pfctl, pf rules, FreeBSD
-  firewall, CrowdSec on OPNsense, pfBlockerNG, CARP failover, or any BSD-based network
-  appliance. Do NOT use for Linux firewalls (iptables, nftables, ufw), cloud security groups,
-  or application-level WAFs.
+  firewall, CrowdSec on OPNsense, pfBlockerNG on pfSense, CARP failover, HAProxy on OPNsense,
+  or any BSD-based network appliance. Triggers: 'opnsense', 'pfsense', 'pfctl', 'pf rules',
+  'firewall appliance', 'CARP', 'CrowdSec', 'pfBlockerNG', 'BSD firewall', 'configctl',
+  'pfSsh.php', 'easyrule', 'Suricata' (firewall context), 'HAProxy' (firewall context),
+  'Unbound' (firewall context). Do NOT use for Linux firewalls (iptables, nftables, ufw),
+  cloud security groups, or application-level WAFs.
 source: custom
-date_added: "2026-03-19"
+date_added: "2026-03-30"
 effort: high
 ---
 
-# OPNsense & pfSense Management
+# Firewall Appliance: OPNsense & pfSense Management
 
 Manage, troubleshoot, and harden OPNsense and pfSense firewalls via SSH. Both are FreeBSD-based,
 pf-powered firewall distributions -- most concepts, commands, and patterns apply to both.
@@ -30,6 +33,23 @@ pf-powered firewall distributions -- most concepts, commands, and patterns apply
 - Offensive testing, exploitation, or post-exploitation -- use lockpick
 - Application-level security review or dependency scanning -- use security-audit
 
+## AI Self-Check
+
+Before returning any firewall commands, verify:
+
+- [ ] Platform confirmed (OPNsense vs pfSense) -- commands differ between them
+- [ ] No commands that could lock out SSH or management access
+- [ ] Config backup taken (or reminded) before destructive changes
+- [ ] `pfctl` rules tested with `-n` (dry run) before applying
+- [ ] Service names correct for the target platform (`configctl` vs `service`)
+- [ ] Plugin names use correct prefix (`os-*` for OPNsense, unprefixed for pfSense)
+- [ ] CARP changes target the master node, not the backup
+- [ ] Shell syntax is POSIX sh (heredoc), not bash/zsh (csh/tcsh is the default shell on both)
+- [ ] No firmware or plugin updates without explicit user confirmation
+- [ ] Blast radius stated for any change affecting network connectivity
+
+---
+
 ## Workflow
 
 ### Step 1: Detect platform
@@ -39,7 +59,7 @@ issuing commands. Key differences at a glance:
 
 | | OPNsense | pfSense |
 |---|---|---|
-| Base OS | HardenedBSD (FreeBSD fork) | FreeBSD |
+| Base OS | FreeBSD (migrated from HardenedBSD in 2021) | FreeBSD |
 | Config path | `/conf/config.xml` | `/cf/conf/config.xml` |
 | Service control | `configctl service restart <svc>` | `pfSsh.php playback svc restart <svc>` or `service <svc> restart` |
 | Plugin prefix | `os-<name>` (e.g., `os-wireguard`) | No prefix (e.g., `pfSense-pkg-WireGuard`) |
@@ -85,13 +105,13 @@ config system, REST API, IPv6 gotchas, SOPs, and recovery procedures.
 
 ## Reference Files
 
-The `references/` directory contains detailed checklists for OPNsense specifically:
+- `references/platform-and-operations.md` -- FreeBSD shell model, key commands, config system,
+  REST API, IPv6 gotchas, SOPs, and recovery procedures (both platforms)
 - `references/plugins.md` -- operational guidance for common OPNsense plugins (CrowdSec,
-  WireGuard, Suricata, HAProxy, ACME, FRR, etc.)
-- `references/hardening.md` -- comprehensive hardening and improvement checklist
-
-These references cover OPNsense. For pfSense equivalents, map concepts using the platform
-comparison table above.
+  WireGuard, Suricata, HAProxy, ACME, FRR, etc.). For pfSense package equivalents, map
+  concepts using the platform comparison table above.
+- `references/hardening.md` -- comprehensive hardening checklist. OPNsense-focused but most
+  items apply to pfSense with equivalent settings in its GUI/config.
 
 ## Related Skills
 

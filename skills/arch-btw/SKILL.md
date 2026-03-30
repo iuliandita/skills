@@ -66,7 +66,7 @@ ordinary rolling packages, prefer the current repo state over stale version tabl
 - Kubernetes cluster or manifest work -- use **kubernetes**
 - Fleet-wide Linux configuration via playbooks or roles -- use **ansible**
 - Security review, vulnerability triage, or offensive testing -- use **security-audit** or **lockpick**
-- OPNsense or pfSense appliance work -- use **opnsense**
+- OPNsense or pfSense appliance work -- use **firewall-appliance**
 
 ---
 

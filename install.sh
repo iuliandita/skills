@@ -9,7 +9,7 @@ BACKUP_DIR=""
 
 ALL_SKILLS=(
   ansible arch-btw anti-slop ci-cd code-review command-prompt databases docker
-  full-review git kubernetes lockpick networking opnsense
+  firewall-appliance full-review git kubernetes lockpick mcp networking
   prompt-generator security-audit skill-creator terraform update-docs
 )
 
@@ -17,10 +17,10 @@ usage() {
   cat <<'EOF'
 Usage: install.sh [OPTIONS] [SKILL...]
 
-Install skills for Claude, Codex, Cursor, Opencode, or a generic portable directory.
+Install skills for Claude, Codex, Cursor, Windsurf, Opencode, or a generic portable directory.
 
 Options:
-  --tool TOOL  Target tool: claude | codex | cursor | opencode | portable
+  --tool TOOL  Target tool: claude | codex | cursor | windsurf | opencode | portable
   --dest PATH  Override destination directory
   --list       List available skills
   --force      Overwrite existing skills without prompting
@@ -31,6 +31,7 @@ Examples:
   install.sh                               # Install all skills for Claude
   install.sh --tool codex                  # Install all skills for Codex
   install.sh --tool cursor                 # Install all skills for Cursor
+  install.sh --tool windsurf               # Install all skills for Windsurf
   install.sh --tool opencode kubernetes    # Install one skill for Opencode
   install.sh --tool portable --dest ~/.skills
   install.sh --list
@@ -42,11 +43,12 @@ resolve_destination() {
     claude)   printf '%s\n' "${CLAUDE_SKILLS_DIR:-$HOME/.claude/skills}" ;;
     codex)    printf '%s\n' "${CODEX_SKILLS_DIR:-$HOME/.codex/skills}" ;;
     cursor)   printf '%s\n' "${CURSOR_SKILLS_DIR:-$HOME/.cursor/skills}" ;;
-    opencode) printf '%s\n' "${OPENCODE_SKILLS_DIR:-$HOME/.config/opencode/skill}" ;;
+    windsurf) printf '%s\n' "${WINDSURF_SKILLS_DIR:-$HOME/.windsurf/skills}" ;;
+    opencode) printf '%s\n' "${OPENCODE_SKILLS_DIR:-$HOME/.config/opencode/skills}" ;;
     portable) printf '%s\n' "${PORTABLE_SKILLS_DIR:-$HOME/.skills}" ;;
     *)
       echo "Unknown tool: $TOOL" >&2
-      echo "Valid tools: claude, codex, cursor, opencode, portable" >&2
+      echo "Valid tools: claude, codex, cursor, windsurf, opencode, portable" >&2
       exit 1
       ;;
   esac
@@ -66,13 +68,8 @@ list_skills() {
 
 post_install_tool_adjustments() {
   local skill="$1"
-
-  if [[ "$TOOL" == "opencode" ]]; then
-    local skill_dir="$SKILLS_DST/$skill"
-    if [[ -f "$skill_dir/SKILL.md" ]]; then
-      mv "$skill_dir/SKILL.md" "$skill_dir/SKILLS.MD"
-    fi
-  fi
+  # OpenCode loads SKILL.md natively as of v1.3.0+; no renaming needed.
+  # Windsurf also uses SKILL.md in its skills directory.
 }
 
 backup_skill() {
@@ -84,9 +81,9 @@ backup_skill() {
   cp -r "$SKILLS_DST/$skill/." "$dest/"
   # prune old backups, keep last 3
   local count
-  count=$(ls -1d "$BACKUP_DIR/$skill"/*/ 2>/dev/null | wc -l)
+  count=$(find "$BACKUP_DIR/$skill" -maxdepth 1 -mindepth 1 -type d 2>/dev/null | wc -l)
   if (( count > 3 )); then
-    ls -1d "$BACKUP_DIR/$skill"/*/ | head -n "$(( count - 3 ))" | xargs rm -rf
+    find "$BACKUP_DIR/$skill" -maxdepth 1 -mindepth 1 -type d | sort | head -n "$(( count - 3 ))" | xargs rm -rf
   fi
 }
 
