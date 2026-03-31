@@ -35,6 +35,19 @@ Each audit runs in its own parallel agent/subprocess with a fresh context window
 - A documentation-only maintenance sweep -- use update-docs
 - Auditing the skill collection for consistency or quality -- use skill-creator
 
+## AI Self-Check
+
+Before presenting the combined report, verify:
+
+- [ ] All 4 agents dispatched (code-review, anti-slop, security-audit, update-docs)
+- [ ] Each report presented under its own header, unedited
+- [ ] No cross-report merging or editorializing (findings from different audits stay separate)
+- [ ] SECURITY-AUDIT.md gitignore reminder included
+- [ ] Failed agents noted with reason (don't silently drop a missing audit)
+- [ ] Preflight context block was passed to all agents
+
+---
+
 ## Workflow
 
 ### Step 0: Preflight

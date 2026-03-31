@@ -122,6 +122,29 @@ After every change, confirm the firewall is healthy:
 
 ---
 
+## Quick Task Procedures
+
+### Creating a firewall rule (VLAN to server)
+
+1. Identify the interface the traffic originates from (e.g., `opt1` for VLAN 50)
+2. Create aliases for source subnet and destination server (keeps rules readable)
+3. Add a pass rule on that interface: source = alias, destination = server alias, port = 443
+4. Place the allow rule above any block-all rule for that interface (rule ordering matters)
+5. Test: `pfctl -n -f /tmp/rules.debug` (OPNsense) to dry-run before applying
+6. Apply: `configctl filter reload` (OPNsense) or `pfSsh.php playback svc restart filter` (pfSense)
+7. Verify: `pfctl -sr | grep <alias>` to confirm the rule is active
+
+### Troubleshooting connectivity after VLAN changes
+
+1. **Interface assigned?** `ifconfig` -- is the VLAN interface listed and UP?
+2. **Rules present?** `pfctl -sr` -- any pass rules on the new VLAN interface?
+3. **NAT configured?** Check outbound NAT rules include the new VLAN subnet
+4. **DNS working?** `drill google.com @<firewall-ip>` from a VLAN client
+5. **Packet capture**: `tcpdump -ni <vlan-iface> host <client-ip>` -- are packets arriving?
+6. If packets arrive but no response: the rule or NAT is the problem. If no packets: the VLAN trunk or interface assignment is wrong.
+
+---
+
 ## FreeBSD Mental Model
 
 Read `references/platform-and-operations.md` for the detailed FreeBSD shell model, key commands,

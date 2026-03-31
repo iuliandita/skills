@@ -44,7 +44,7 @@ become the 43% of MCP implementations with command injection vulnerabilities.
 ## When NOT to use
 
 - General REST API development that doesn't use MCP -- just write the API
-- Claude API / Anthropic SDK usage -- use claude-api if available
+- Claude API / Anthropic SDK usage -- use a Claude API / Anthropic SDK skill if installed
 - Security auditing existing servers across a codebase -- use security-audit (it has an MCP section)
 - Writing prompts for LLMs (not MCP prompt resources) -- use prompt-generator
 

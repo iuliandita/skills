@@ -30,7 +30,7 @@ Take the user's rough thoughts, scattered notes, or half-formed ideas and turn t
 
 ## When NOT to use
 
-- Brainstorming features or creative ideation (use a dedicated brainstorming or ideation workflow)
+- Brainstorming features or creative ideation -- this skill structures prompts, not ideas
 - Creating reusable skill files or agent instruction bundles (use skill-creator)
 - Writing inline prompt strings inside application code -- that's just coding
 - The user wants code that calls an LLM API -- that's an implementation task, not prompt structuring
@@ -174,7 +174,12 @@ Keep blocks visually separated with XML tags, markdown headers, or other clear d
 If the user gives you an existing prompt to improve (not rough notes):
 
 1. Read it
-2. Identify gaps and anti-patterns against the guidelines above
+2. Diagnose gaps -- check for these common prompt weaknesses:
+   - **Missing scope**: no clear boundary on what the model should and shouldn't do
+   - **No output format**: model guesses structure instead of following a spec
+   - **Vague role**: "helpful assistant" tells the model nothing useful
+   - **Missing constraints**: no anti-patterns, no "do not" list, no quality criteria
+   - **Over-specified**: drowning the model in rules when 2-3 clear constraints would work
 3. Present specific changes with reasoning -- not a full rewrite unless it's warranted
 4. On approval, edit in place
 

@@ -38,6 +38,21 @@ Every finding answers one of:
 - Pipeline architecture design -- use ci-cd
 - End-of-session doc hygiene or instruction-file cleanup -- use update-docs
 
+## AI Self-Check
+
+Before reporting any finding at >= 80% confidence, verify:
+
+- [ ] **Read full context**: read the entire function/file, not just the flagged line
+- [ ] **Check for tests**: is there a test covering this case? Is the test correct?
+- [ ] **Check git blame**: is this new code or battle-tested? Pre-existing issues belong out of scope
+- [ ] **Check for explaining comments**: a comment explaining the pattern means someone already considered it
+- [ ] **Cite the evidence**: exact file, line, and code that proves the issue. No citation = no finding
+- [ ] **Adversarial self-check**: argue against each finding. If the counter-argument is convincing, drop it
+- [ ] **Construct a failing case**: for Critical findings, describe the specific input or sequence that triggers the bug
+- [ ] **Verify API/stdlib claims**: 18% of AI code review suggestions contain factual errors about framework behavior. If unsure, look it up
+
+---
+
 ## Workflow
 
 ### Step 1: Scope the review
