@@ -240,6 +240,43 @@ done
 
 ---
 
+## Completions Quick Reference (Zsh)
+
+Zsh's completion system (`compsys`) handles subcommand routing natively. Minimal working
+example for a CLI tool with subcommands:
+
+```zsh
+#compdef mycli
+
+_mycli() {
+  local -a subcmds=(
+    'init:Initialize a new project'
+    'build:Build the project'
+    'deploy:Deploy to target environment'
+  )
+
+  _arguments -C \
+    '(-h --help)'{-h,--help}'[Show help]' \
+    '1:command:->subcmd' \
+    '*::arg:->args'
+
+  case $state in
+    subcmd) _describe 'command' subcmds ;;
+    args)
+      case $words[1] in
+        deploy) _arguments '--env[Target environment]:env:(dev staging prod)' ;;
+      esac
+      ;;
+  esac
+}
+```
+
+Place in a file named `_mycli` on your `fpath` (e.g., `~/.zsh/completions/`), or source
+inline with `compdef _mycli mycli`. The reference files have deeper coverage: glob-qualified
+completions, `_files`, `_hosts`, `_values`, and async completion patterns.
+
+---
+
 ## Verification Checklist
 
 Before returning any shell script, check:

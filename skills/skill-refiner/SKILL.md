@@ -79,8 +79,14 @@ contested major flags (non-configurable).
    this session
 4. **Probe for secondary harness**: run three-step validation (PATH check, config check,
    smoke test) per `references/harness-detection.md`. Announce result.
-5. **If no secondary found**: announce running without cross-model review, renormalize
-   scoring weights (17/39/44)
+5. **If no secondary found**: two options:
+   - **Self-review fallback**: spawn a fresh agent on the current harness with the review
+     prompt template from `references/harness-detection.md`. Label as "same-model fresh-context
+     review" in scoring, weight at 5% instead of 10% (renormalize: 16/37/42/5). This catches
+     confirmation bias but shares the primary model's blind spots.
+   - **No review**: skip cross-model entirely, renormalize weights (17/39/44).
+   Default: use self-review when the harness supports subagents (Claude Code, Codex), skip
+   when it doesn't (restricted sandboxes, headless exec modes).
 
 ### Phase 1: Regular Iterations
 

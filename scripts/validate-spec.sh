@@ -57,6 +57,10 @@ validate_compatibility() {
   if [[ -n "$compat" && ${#compat} -gt 500 ]]; then
     error "$name: compatibility exceeds 500 characters (${#compat})"
   fi
+  # Values containing colons must be quoted (strict YAML parsers choke otherwise)
+  if [[ -n "$compat" && "$compat" == *:* && "$compat" != \"*\" && "$compat" != \'*\' ]]; then
+    error "$name: compatibility value contains ':' but is not quoted (breaks strict YAML parsers)"
+  fi
 }
 
 echo "Validating Agent Skills spec compliance in $SKILLS_DIR..."

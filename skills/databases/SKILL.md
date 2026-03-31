@@ -181,7 +181,29 @@ for recovery specifics.
 - Choose tenant isolation deliberately; PCI-sensitive shared-schema designs need extra scrutiny.
 - Treat query-plan review and monitoring as normal operations, not emergency-only work.
 
-Read `references/migration-patterns.md` for migration tooling, type mapping, and cross-engine move details.
+### Major version upgrades
+
+Three approaches, pick by downtime tolerance:
+
+| Method | Downtime | Best for |
+|--------|----------|----------|
+| `pg_upgrade --link` | Minutes (metadata copy) | Small-to-medium DBs where brief downtime is acceptable |
+| Logical replication | Seconds (cutover only) | Large DBs, zero-downtime requirement, PG 10+ to any higher |
+| `pg_dump` / `pg_restore` | Hours (full copy) | Cross-engine, major schema changes, or when logical replication is impractical |
+
+**Zero-downtime with logical replication** (PG -> PG):
+1. Stand up new version replica alongside the primary
+2. Create publication on source: `CREATE PUBLICATION upgrade_pub FOR ALL TABLES;`
+3. Create subscription on target: `CREATE SUBSCRIPTION upgrade_sub CONNECTION '...' PUBLICATION upgrade_pub;`
+4. Wait for initial sync + catchup (monitor `pg_stat_subscription`, replication lag)
+5. Migrate sequences: logical replication does not replicate sequence values -- copy them manually
+6. Test application against the new version (read traffic, connection pooler split)
+7. Cutover: stop writes to old primary, verify lag = 0, point connection pooler to new primary
+8. Drop subscription and decommission old primary
+
+**Key pitfalls**: DDL is not replicated (schema changes during migration need manual sync), large objects (`lo`) are not replicated, sequence values drift, and tables need primary keys or `REPLICA IDENTITY FULL`.
+
+Read `references/migration-patterns.md` for cross-engine type mapping, ORM migration tooling, and detailed migration patterns.
 
 ---
 
