@@ -249,9 +249,11 @@ Read the SKILL.md and all reference files. No skipping -- the whole point is cat
 - "When NOT to use" complete? Should reference all skills with overlapping trigger space.
 
 **AI-age checks:**
-- Does the skill generate code or config? If yes, does it have an AI Self-Check section?
+- Does the skill generate code, config, structured output, or orchestrate other skills? If yes,
+  does it have an AI Self-Check section? This is the #1 miss across skill collections --
+  skills that produce output need a pre-flight checklist even if they're "just" orchestrators.
 - Does the AI Self-Check cover the domain's common AI mistakes? (e.g., unpinned versions,
-  missing security contexts, over-abstraction)
+  missing security contexts, over-abstraction, hallucinated CLI flags)
 - Are there patterns that would produce AI slop? (excessive MUSTs, over-defensive instructions,
   generic naming in examples)
 
