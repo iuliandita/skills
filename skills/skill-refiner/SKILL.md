@@ -91,8 +91,8 @@ contested major flags (non-configurable).
    - Behavioral: run test prompts from `references/test-cases.md`. For skills without
      pre-written test cases, auto-generate 2-3 test prompts from the skill's "When to use"
      section and quality signals from its AI Self-Check. Log a warning that generated tests
-     are lower quality than hand-written ones. Optionally save generated tests to
-     `references/test-cases-local.md` so they accumulate across runs.
+     are lower quality than hand-written ones. Optionally save generated tests to a
+     test-cases-local.md file alongside test-cases.md so they accumulate across runs.
    - Cross-model: skip on first iteration (no diff to review yet)
 7. **Log baseline scores**: record per-skill and aggregate scores
 8. **Iteration 2+**: enter adaptive focus mode

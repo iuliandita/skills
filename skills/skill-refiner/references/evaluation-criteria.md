@@ -59,9 +59,9 @@ Run 2-3 synthetic test prompts per skill from `references/test-cases.md`.
 
 **For skills without pre-written test cases**: auto-generate 2-3 prompts from the skill's
 "When to use" section and quality signals from its AI Self-Check. Pre-written tests in
-`test-cases.md` take precedence. Also check `references/test-cases-local.md` for
-user-contributed or previously auto-generated tests. Log a warning when using generated
-tests (lower quality than hand-written ones).
+`test-cases.md` take precedence. Also check for a test-cases-local.md file alongside
+test-cases.md for user-contributed or previously auto-generated tests. Log a warning when
+using generated tests (lower quality than hand-written ones).
 
 Score each output on four dimensions (0-25 each):
 
