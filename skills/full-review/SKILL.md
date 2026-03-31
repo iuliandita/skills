@@ -64,6 +64,10 @@ Spawn all four agents concurrently. Use whatever parallel execution mechanism yo
 provides (subagents, background tasks, threads). Each agent invokes one of the four skills
 and runs a full codebase audit.
 
+**If parallel execution is unavailable** (restricted sandbox, no subagent support): run
+sequentially in this order: Security Audit, Code Review, Slop Check, Docs Sweep. Security
+first because those findings are most time-sensitive.
+
 Pass this context block to every agent, substituting the `{placeholders}` from preflight:
 
 ```
@@ -107,6 +111,8 @@ Do NOT make changes or commit anything. Report what needs updating.
 ### Step 3: Present Results
 
 After all four agents return, present each report under its own header. Do not merge, summarize, or editorialize across reports -- each stands alone. The user reads the skill's native output, not a reinterpretation.
+
+After presenting results, remind the user: "Check that `SECURITY-AUDIT.md` is in `.gitignore` -- it contains vulnerability details that shouldn't be committed."
 
 Use this structure:
 

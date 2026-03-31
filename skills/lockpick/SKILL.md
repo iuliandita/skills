@@ -13,7 +13,7 @@ description: >
   'IMDS', 'metadata endpoint', 'lateral movement', 'pivot', 'reverse shell',
   'GTFOBins', 'LinPEAS', 'enumeration'. Do NOT use for defensive hardening
   reviews (use security-audit), application code SAST (use security-audit),
-  or network firewall config (use firewall-appliance), or VPN setup/configuration
+  network firewall config (use firewall-appliance), or VPN setup/configuration
   (use networking).
 license: MIT
 compatibility: Requires authorized access to target Linux systems and bash/python

@@ -585,12 +585,52 @@ echo "${map@a}"                # A (associative array)
 # readline improvements: bracketed paste mode enabled by default
 ```
 
-### Bash 5.3 (2025)
+### Bash 5.3 (July 2025)
+
+The biggest release since 5.0. Headline feature: non-forking command substitution.
+
+```bash
+# Non-forking command substitution -- runs in current shell, no fork+pipe
+# Analogous to zsh's ${ } (see zsh reference Section 13)
+
+# ${ cmd; } -- captures stdout without forking
+result=${ printf '%s' "hello"; }    # note: space after { and ; before }
+echo "$result"                       # hello
+
+# ${| cmd; } -- command writes to REPLY instead of stdout
+result=${| REPLY="computed-$(date +%s)"; }
+echo "$result"                       # computed-1234567890
+
+# Why it matters: variables modified inside ${ } persist in the caller
+count=0
+: ${ (( count++ )); }
+echo "$count"                        # 1 (would be 0 with traditional $((...)))
+```
+
+Use `${ }` and `${| }` in: hot loops, prompt rendering, frequently-called functions,
+startup scripts. The performance difference is significant when fork overhead matters
+(embedded systems, tight loops, WSL where fork is expensive).
+
+**Gotcha**: `${ cmd; }` requires the space after `{` and `;` before `}`. Without the
+space, bash interprets it as parameter expansion.
+
+Other additions:
+
+```bash
+# GLOBSORT -- control how pathname-completion results are sorted
+GLOBSORT=size        # sort by size
+GLOBSORT=name        # sort by name (default)
+GLOBSORT=nosort      # no sorting (fastest for large directories)
+
+# GLOBSORT also affects glob expansion in scripts:
+GLOBSORT=size
+files=(*.log)        # sorted by size, not name
+```
 
 - Improved `set -e` handling in compound commands
 - Better C23 conformance internally
 - Various bugfixes for edge cases in parameter expansion
-- Refinements to `type -P` behavior (the flag itself predates 5.3)
+- `type -P` behavior refinements (the flag itself predates 5.3)
 
 ---
 
@@ -615,6 +655,7 @@ If you need to port a script to `#!/bin/sh`, these bash features are NOT availab
 | `declare -A` (assoc arrays) | No equivalent -- restructure the logic |
 | `set -o pipefail` | Not POSIX -- check `${PIPESTATUS[@]}` equivalent doesn't exist either |
 | `$RANDOM` | Read from `/dev/urandom`: `od -An -N2 -tu2 /dev/urandom` |
+| `${ cmd; }` / `${| cmd; }` | `$(cmd)` (forks a subshell) |
 
 See the full posix-sh reference for portable patterns.
 

@@ -262,7 +262,7 @@ curl -s -X PUT "https://git.example.com/api/v1/repos/{owner}/{repo}/branch_prote
 
 When a project uses multiple remotes:
 
-1. **Identify which remotes need pushes** -- check project CLAUDE.md or `git remote -v`
+1. **Identify which remotes need pushes** -- check the project instruction file or `git remote -v`
 2. **Push to primary first** (usually `origin`)
 3. **Push to secondary** (e.g., `github`) -- if CI builds happen there, this triggers the build
 4. **Push tags to both** -- `git push origin <tag> && git push github <tag>`

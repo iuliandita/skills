@@ -186,7 +186,7 @@ CMD ["bun", "run", "dist/index.js"]
 
 ```dockerfile
 # syntax=docker/dockerfile:1
-FROM golang:1.24 AS build
+FROM golang:1.26 AS build
 WORKDIR /src
 COPY go.mod go.sum ./
 RUN --mount=type=cache,target=/go/pkg/mod \
@@ -209,7 +209,7 @@ ENTRYPOINT ["/app"]
 
 ```dockerfile
 # syntax=docker/dockerfile:1
-FROM python:3.13-slim AS build
+FROM python:3.14-slim AS build
 WORKDIR /app
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
@@ -218,7 +218,7 @@ RUN --mount=type=cache,target=/root/.cache/pip \
     pip install -r requirements.txt
 COPY . .
 
-FROM python:3.13-slim
+FROM python:3.14-slim
 RUN addgroup --system --gid 1001 app && \
     adduser --system --uid 1001 --ingroup app app
 WORKDIR /app
@@ -238,7 +238,7 @@ Always use a venv in the container (Python 3.12+ externally managed). `--no-cach
 
 ```dockerfile
 # syntax=docker/dockerfile:1
-FROM rust:1.85-slim AS build
+FROM rust:1.94-slim AS build
 WORKDIR /app
 COPY Cargo.toml Cargo.lock ./
 RUN mkdir src && echo "fn main() {}" > src/main.rs
@@ -343,6 +343,42 @@ docker buildx build \
 
 ---
 
+## Image Tagging Strategy
+
+Standard tag matrix for published images. Each image gets the full set:
+
+| Tag | Example | Moves on release? | Use for |
+|-----|---------|-------------------|---------|
+| `MAJOR.MINOR.PATCH` | `0.12.26` | No (pinned) | Production, CI, digest-level trust |
+| `MAJOR.MINOR.PATCH-VARIANT` | `0.12.26-alpine` | No (pinned) | Pinned + variant |
+| `MAJOR.MINOR` | `0.12` | Yes (latest patch) | Dev environments wanting bugfixes |
+| `MAJOR.MINOR-VARIANT` | `0.12-alpine` | Yes (latest patch) | Dev + variant |
+| `latest` | `latest` | Yes (latest release) | Default pull -- dev/testing only |
+| `VARIANT` | `alpine` | Yes (latest release) | Variant of latest -- dev/testing only |
+
+**Pinned tags** (`MAJOR.MINOR.PATCH[-VARIANT]`) are immutable -- once pushed, never overwritten. Production and CI reference these. For maximum immutability, pin to `@sha256:` digests.
+
+**Floating tags** (`MAJOR.MINOR`, `latest`, variant names) move on every release. A `docker pull` on a floating tag may return a different image tomorrow. Never use in production.
+
+**CI tagging example:**
+
+```bash
+VERSION="0.12.26"
+MINOR="${VERSION%.*}"
+IMAGE="ghcr.io/org/app"
+
+docker buildx build \
+  --tag "$IMAGE:$VERSION" \
+  --tag "$IMAGE:$MINOR" \
+  --tag "$IMAGE:latest" \
+  --provenance=true --sbom=true \
+  --push .
+```
+
+For variant builds (alpine, distroless), use separate Dockerfile targets or `--build-arg` switches, each getting the full tag matrix.
+
+---
+
 ## Common Gotchas
 
 - **PID 1 / signal handling**: the first process in a container runs as PID 1 and must handle SIGTERM for graceful shutdown. Node.js, Python, and most runtimes do NOT handle signals as PID 1 by default. Solutions: (1) `CMD ["node", "dist/index.js"]` exec form (not shell form `CMD node dist/index.js`), (2) use `tini` as init (`--init` flag on `docker run`, or `init: true` in Compose), (3) `ENTRYPOINT ["tini", "--"]` in Dockerfile. Without this, `docker stop` sends SIGTERM, container ignores it, Docker waits 10s, then SIGKILL. Distroless images include a minimal init. Compose `stop_grace_period: 30s` extends the timeout but doesn't fix the root cause.
@@ -353,5 +389,5 @@ docker buildx build \
 - **Distroless has no shell**: `docker exec -it ... sh` won't work. Use ephemeral debug containers or Chainguard dev variants for debugging.
 - **Scratch has no CA certs**: copy `/etc/ssl/certs/ca-certificates.crt` from the build stage for HTTPS.
 - **Go `CGO_ENABLED=0`**: required for scratch/distroless. With CGO enabled, you need glibc in the runtime image.
-- **Multi-arch + distroless**: Google distroless images support amd64 + arm64. Chainguard Wolfi images support both too. When using `--platform` in multi-stage builds, the build stage platform and runtime stage platform are independent -- `FROM --platform=$BUILDPLATFORM golang:1.24 AS build` cross-compiles on the host arch, then `FROM gcr.io/distroless/static-debian12` uses the target arch automatically.
+- **Multi-arch + distroless**: Google distroless images support amd64 + arm64. Chainguard Wolfi images support both too. When using `--platform` in multi-stage builds, the build stage platform and runtime stage platform are independent -- `FROM --platform=$BUILDPLATFORM golang:1.26 AS build` cross-compiles on the host arch, then `FROM gcr.io/distroless/static-debian12` uses the target arch automatically.
 - **pip `--no-cache-dir` vs cache mounts**: pick one approach. With `--mount=type=cache,target=/root/.cache/pip`, pip caches to the mount (fast rebuilds) -- don't add `--no-cache-dir` or it defeats the mount. Without cache mounts, use `--no-cache-dir` to avoid caching in the image layer.

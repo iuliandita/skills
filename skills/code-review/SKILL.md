@@ -14,7 +14,7 @@ Find bugs that actually break things. Not style, not slop -- correctness, reliab
 
 This skill complements **anti-slop** (code quality/style) and **security-audit** (vulnerabilities/OWASP). Those catch "is the code clean?" and "is the code safe?" -- this one catches "does the code actually work?"
 
-Covers: **TypeScript/JavaScript**, **Python**, **Bash/Shell**, **Rust**, and **Infrastructure as Code** (Terraform, Ansible, Helm, Kubernetes, Docker/Compose, Proxmox/LXC). Universal patterns apply everywhere; language-specific sections add targeted checks.
+Covers: **TypeScript/JavaScript**, **Python**, **Java**, **Bash/Shell**, and **Infrastructure as Code** (Terraform, Ansible, Helm, Kubernetes, Docker/Compose, Proxmox/LXC). Universal patterns apply everywhere; language-specific sections add targeted checks.
 
 ## When to use
 
@@ -275,7 +275,7 @@ Read `references/databases.md` for the full database bug pattern catalog. Key hi
 
 ## Other Languages
 
-For Go, Rust, and other languages without dedicated reference files: apply the universal patterns (sections 1-10) only. Note in the report that language-specific checks were skipped.
+For Go, Rust, and other languages without dedicated reference files: apply the universal patterns (sections 1-10) only. Note in the report that language-specific checks were limited to universal patterns.
 
 ---
 
@@ -394,6 +394,8 @@ Keep it tight. Show the bug, show the fix, move on. Long explanations only when 
   parallel. Code-review is one of the four passes.
 - **databases** -- `references/databases.md` in this skill covers application-level DB bug
   patterns. The databases skill covers engine configuration and operations.
+- **git** -- for PR/MR creation and git operations. Code-review evaluates the code in PRs;
+  git handles creating and managing them.
 
 ---
 

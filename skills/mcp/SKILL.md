@@ -28,7 +28,7 @@ become the 43% of MCP implementations with command injection vulnerabilities.
 - MCP specification: 2025-11-25 (current stable)
 - TypeScript SDK: @modelcontextprotocol/sdk 1.x
 - Python SDK: mcp 1.x (v1.26.0+)
-- Protocol transports: stdio, streamable HTTP (SSE deprecated since 2024-11-05)
+- Protocol transports: stdio, streamable HTTP (SSE deprecated in spec 2025-03-26)
 
 ## When to use
 
@@ -179,7 +179,7 @@ function safePath(base: string, userInput: string): string {
 | **stdio** | Local tools, CLI integration | No | Runs as user's process. Most secure. |
 | **Streamable HTTP** | Remote/multi-client servers | Recommended | Single endpoint, POST for messages, optional SSE streaming. |
 
-SSE transport was deprecated in spec 2024-11-05. Use streamable HTTP for all remote servers.
+SSE transport was deprecated in spec 2025-03-26. Use streamable HTTP for all remote servers.
 Auth is optional per spec but strongly recommended for servers handling user data. When
 implementing auth, use OAuth 2.1 with PKCE. Prefer Client ID Metadata Documents over Dynamic
 Client Registration (DCR is a fallback, not a requirement).

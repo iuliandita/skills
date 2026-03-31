@@ -10,6 +10,10 @@ description: >
   (CI context), 'supply chain' (CI context).
 license: MIT
 compatibility: "Optional: gh (GitHub CLI), glab (GitLab CLI)"
+paths:
+  - ".github/workflows/*.yml"
+  - ".gitlab-ci.yml"
+  - ".forgejo/workflows/*.yml"
 metadata:
   source: custom
   date_added: "2026-03-24"
@@ -41,7 +45,7 @@ This skill covers four domains depending on context:
 - Hardening pipelines against supply chain attacks (SHA pinning, image signing, provenance)
 - Setting up security scanning in CI (SAST, SCA, container scanning, secret detection)
 - Configuring runners, caching strategies, or artifact management
-- PCI-DSS 4.0 compliance for CI/CD (Req 6.2.1, 6.3.2, 6.4.2, 6.5.3)
+- PCI-DSS 4.0 compliance for CI/CD (Req 6.2.1, 6.2.4, 6.3.2, 6.4.2, 6.5.3)
 - Migrating pipelines between platforms (GitLab -> GitHub, GitHub -> Forgejo)
 - Troubleshooting failed pipelines, flaky jobs, or runner issues
 
@@ -184,8 +188,8 @@ It reuses the workflow syntax but makes no compatibility guarantees.
 
 | Feature | GitHub Actions | Forgejo Actions |
 |---------|---------------|-----------------|
-| **`permissions:`** | Controls GITHUB_TOKEN scope | **Silently ignored** |
-| **`continue-on-error:`** (job level) | Allows job failure without failing workflow | **Silently ignored** |
+| **`permissions:`** | Controls GITHUB_TOKEN scope | **Not enforced** -- token always has full rw (read-only for fork PRs) |
+| **`continue-on-error:`** (job level) | Allows job failure without failing workflow | **Not supported** -- step-level only |
 | **Runner images** | Managed `ubuntu-24.04` with 200+ tools | Self-hosted, typically lean Debian/Alpine |
 | **Action resolution** | `actions/checkout@v4` -> github.com | Resolves from Forgejo mirror (configurable) |
 | **OIDC** | `permissions: id-token: write` | `enable-openid-connect` key |
@@ -208,7 +212,7 @@ jobs:
     container:
       image: oven/bun:1.2             # pin to minor version minimum
     steps:
-      - uses: actions/checkout@v4     # resolves from Forgejo mirror
+      - uses: actions/checkout@<sha>  # pin to SHA; resolves from Forgejo mirror
       - run: bun install --frozen-lockfile
       - run: bun run lint
       - run: bun run typecheck
@@ -224,8 +228,9 @@ jobs:
   `GIT_SSL_NO_VERIFY=true` is a last resort for dev/test only -- never normalize TLS bypass in production
 - **Third-party actions** -- many GitHub Marketplace actions use GitHub-specific API calls and will silently fail
 - **Secrets in Forgejo** -- `${{ secrets.* }}` works, but no environment-level scoping
-- **`permissions:` support is limited** -- Forgejo respects the field but enforcement depends on runner
-  version and configuration. Don't rely on it as your sole security boundary.
+- **`permissions:` not enforced** -- Forgejo parses the field but does not restrict the workflow token.
+  The token always has full read-write access (read-only for fork PRs only). Don't assume
+  least-privilege from `permissions:` alone -- it has no effect on Forgejo.
 
 ### Forgejo release workflow pattern
 
@@ -244,7 +249,7 @@ jobs:
       # Prefer GIT_SSL_CAINFO with your CA cert; this bypass is a last resort
       GIT_SSL_NO_VERIFY: "true"               # if cert is periodically expired
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@<sha>  # pin to SHA; resolves from Forgejo mirror
       - name: Login to registry
         env:
           TOKEN: ${{ secrets.REGISTRY_TOKEN }}
@@ -321,6 +326,8 @@ the OWASP Top 10 for Agentic Applications, read `references/supply-chain.md`
 - **security-audit** -- for auditing application code, not pipeline code
 - **docker** -- for Dockerfile and container image optimization
 - **kubernetes** -- for K8s manifests and Helm charts that pipelines deploy to
+- **git** -- for git operations (commits, PRs/MRs, tags, releases) that trigger pipelines.
+  CI/CD reacts to git events; git handles the operations that produce them.
 
 ## Rules
 

@@ -13,7 +13,7 @@ metadata:
 
 Write, review, and architect Terraform/OpenTofu infrastructure -- from individual resources to multi-account, PCI-compliant platform architectures. The goal is reproducible, drift-free, auditable infrastructure that passes both peer review and QSA assessment.
 
-**Target versions**: Terraform 1.13-1.14+ (IBM/HashiCorp, BSL), OpenTofu 1.10-1.11+ (Linux Foundation, MPL). Helm 4 provider v3.1+, K8s provider v3.0+, AWS provider v6.x, Azure v4.x, GCP v7.x.
+**Target versions**: Terraform 1.13-1.14+ (IBM/HashiCorp, BSL), OpenTofu 1.10-1.11+ (Linux Foundation, MPL). Helm provider v3.1+, K8s provider v3.0+, AWS provider v6.x, Azure v4.x, GCP v7.x.
 
 This skill covers four domains depending on context:
 - **HCL** -- resource configs, variables, outputs, data sources, expressions, lifecycle rules
@@ -492,7 +492,7 @@ These are non-negotiable. Violating any of these is a bug.
 7. **State backend with locking and encryption.** Never local state in production.
 8. **Separate CDE state files.** Own backend, own IAM role, own approval workflow.
 9. **OIDC federation for CI/CD.** No static cloud credentials.
-10. **Pin CI actions to commit SHAs.** Mutable tags are compromised supply chain vectors (tj-actions, Trivy, March 2026).
+10. **Pin CI actions to commit SHAs.** Mutable tags are compromised supply chain vectors (tj-actions March 2025, Trivy March 2026).
 11. **`terraform plan` before every `apply`.** Archive the plan output.
 12. **AI never owns `terraform apply`.** Plan output is reviewed by a human. Always.
 13. **Run the AI self-check.** Every generated HCL gets verified against the checklist above before returning.

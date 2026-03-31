@@ -12,7 +12,7 @@ metadata:
 
 Detect and fix patterns that make code look machine-generated, over-abstracted, or unnecessarily verbose. The goal is code that reads like a competent human wrote it -- minimal, intentional, and clear.
 
-This skill covers: **TypeScript/JavaScript**, **Python**, **Bash/Shell**, and **Infrastructure as Code** (Terraform, Ansible, Helm, Kubernetes manifests). The universal patterns apply everywhere; language-specific sections add targeted checks.
+This skill covers: **TypeScript/JavaScript**, **Python**, **Bash/Shell**, **Rust**, **Docker/Containers**, and **Infrastructure as Code** (Terraform, Ansible, Helm, Kubernetes manifests). The universal patterns apply everywhere; language-specific sections add targeted checks.
 
 ## When to use
 
@@ -327,6 +327,8 @@ These look like slop but aren't:
   correct security practice. Check the "What NOT to Flag" list before flagging security patterns.
 - **full-review** -- orchestrates code-review, anti-slop, security-audit, and update-docs in
   parallel. Anti-slop is one of the four passes.
+- **update-docs** -- handles documentation maintenance. Anti-slop focuses on code quality;
+  update-docs focuses on keeping docs accurate and trimmed.
 
 ---
 

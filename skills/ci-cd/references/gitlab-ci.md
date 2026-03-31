@@ -118,9 +118,9 @@ build:
 ```yaml
 build-image:
   stage: build
-  image: docker:27.5
+  image: docker:29.3
   services:
-    - docker:27.5-dind
+    - docker:29.3-dind
   variables:
     DOCKER_TLS_CERTDIR: "/certs"
   before_script:
@@ -172,7 +172,7 @@ spec:
 ---
 sast-scan:
   stage: test
-  image: semgrep/semgrep:1.112
+  image: semgrep/semgrep:1.124
   script:
     - semgrep scan --config auto --severity $[[ inputs.severity ]]
   allow_failure: $[[ !inputs.fail-on-findings ]]

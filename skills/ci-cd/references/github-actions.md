@@ -19,8 +19,9 @@ runners, arm64 GA, artifact v4, attestations, SHA pinning enforcement.
 
 **No `ubuntu-latest-arm` label exists.** Use explicit `ubuntu-24.04-arm`.
 
-**Pricing (March 2026)**: hosted runner prices dropped up to 39% on Jan 1, 2026. Self-hosted
-runners now incur a $0.002/min control plane fee (public repos exempt).
+**Pricing (March 2026)**: hosted runner prices dropped up to 39% on Jan 1, 2026. A planned
+$0.002/min self-hosted runner fee was announced but **postponed indefinitely** after community
+backlash. Public repo usage remains free.
 
 ---
 
@@ -289,14 +290,15 @@ Runtime network egress monitoring. Detected the tj-actions attack anomalies.
 
 ```yaml
 steps:
-  - uses: step-security/harden-runner@<sha>  # v2.12.0+ (CVE-2025-32955 fixed)
+  - uses: step-security/harden-runner@<sha>  # v2.14.2 (v2.12.0 min -- CVE-2025-32955)
     with:
       egress-policy: audit    # or 'block' for strict mode
   # ... rest of steps
 ```
 
-**Note**: Harden-Runner v2.12.0+ required. Earlier versions had a bypass vulnerability
-(CVE-2025-32955).
+**Note**: Harden-Runner v2.12.0+ required (latest: v2.14.2, March 2026). Earlier versions had
+a bypass vulnerability (CVE-2025-32955) -- Docker group privilege escalation could restore
+sudoers and evade detection.
 
 ---
 

@@ -279,7 +279,7 @@ services:
 
   # GPU inference (vLLM)
   inference:
-    image: vllm/vllm-openai:v0.7.3   # pin to specific version
+    image: vllm/vllm-openai:v0.18.0  # pin to specific version
     deploy:
       resources:
         reservations:

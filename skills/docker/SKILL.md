@@ -10,6 +10,11 @@ description: >
   'docker scout', 'docker init', 'cosign', 'SBOM', 'model runner'.
 license: MIT
 compatibility: "Requires docker or podman. Optional: docker compose, buildkit, cosign, trivy"
+paths:
+  - "Dockerfile*"
+  - "compose*.y*ml"
+  - "docker-compose*.y*ml"
+  - ".dockerignore"
 metadata:
   source: custom
   date_added: "2026-03-24"
@@ -21,9 +26,9 @@ metadata:
 Write, review, and architect Dockerfiles, Compose stacks, and container workflows -- from single-service dev setups to multi-arch production pipelines with image signing and compliance gates. The goal is minimal, secure, reproducible images that a team can maintain and a QSA can audit.
 
 **Target versions** (March 2026):
-- Docker Engine 29.3.0, Docker Desktop 4.65.0
-- Docker Compose v5.1.1 (Compose spec v5, Go SDK, Bake-delegated builds)
-- BuildKit v0.28.0 (bundled with Engine 29.x)
+- Docker Engine 29.3.0, Docker Desktop 4.66.1
+- Docker Compose v5.1.1 (Go SDK, Bake-delegated builds)
+- BuildKit v0.28.1 (bundled with Engine 29.x)
 - containerd 2.2.2 (2.3 LTS ships April 2026)
 - Podman 5.8.1, Buildah 1.43.0
 - runc 1.4.1 (latest; CVE-2025-31133/52565/52881 patched since 1.4.0)
@@ -274,8 +279,11 @@ Read `references/security-and-compliance.md` for the full PCI-DSS 4.0 container 
 | CVE-2026-33634 | Trivy | Critical | Supply chain -- malware in Docker Hub images (v0.69.4-6) | Trivy v0.69.3 (safe) |
 | CVE-2026-2664 | Docker Desktop | Medium | gRPC-FUSE kernel module OOB read | Desktop 4.62.0+ |
 | CVE-2025-13743 | Docker Desktop | Low | Expired Hub PATs leaked in diagnostics bundles | Desktop 4.54.0 |
+| CVE-2026-28400 | Model Runner | 7.5 High | Runtime flag injection -- arbitrary file overwrite, container escape | Desktop 4.61.0+ |
+| CVE-2026-33747 | BuildKit | High | Malicious frontend file escape outside storage root | BuildKit v0.28.1 |
+| CVE-2026-33748 | BuildKit | High | Git URL validation bypass -- restricted file access | BuildKit v0.28.1 |
 
-**Action items**: upgrade runc to >= 1.4.0, Docker Desktop to >= 4.65.0, never pull Trivy v0.69.4/5/6. Pin ALL CI tool images to SHA256 digests.
+**Action items**: upgrade runc to >= 1.4.0, BuildKit to >= 0.28.1, Docker Desktop to >= 4.66.1, never pull Trivy v0.69.4/5/6. Pin ALL CI tool images to SHA256 digests.
 
 ### Hardened Compose baseline
 
@@ -317,7 +325,7 @@ gosu/setpriv/su-exec) start as root and drop privileges at runtime. They need at
 `cap_add: ["SETUID", "SETGID"]`, and images that chown files at startup also need `"CHOWN"`.
 Always read the image's entrypoint to determine required capabilities before applying blanket
 drops. Blind `cap_drop: ALL` with empty `cap_add` causes CrashLoopBackOff. See the
-security-audit skill's Rule 14 for detailed guidance.
+security-audit skill's "No blanket capability drops" rule for detailed guidance.
 
 For a hardened Dockerfile pattern, see `references/dockerfile-patterns.md` (Language Templates section).
 
@@ -421,7 +429,8 @@ Read `references/alternative-runtimes.md` for Podman, Buildah, Skopeo, and conta
 ### Security
 
 - [ ] runc >= 1.4.0 (CVE-2025-31133/52565/52881 patched)
-- [ ] Docker Desktop >= 4.65.0 (CVE-2025-9074 patched)
+- [ ] BuildKit >= 0.28.1 (CVE-2026-33747/33748 patched)
+- [ ] Docker Desktop >= 4.66.1 (CVE-2025-9074/CVE-2026-28400 patched)
 - [ ] Trivy v0.69.3 ONLY (v0.69.4-6 COMPROMISED)
 - [ ] Images signed with cosign, verified at deploy
 - [ ] SBOM generated for every production image
@@ -466,6 +475,8 @@ Read `references/alternative-runtimes.md` for Podman, Buildah, Skopeo, and conta
   design belong here.
 - **databases** -- for database containers in Docker Compose. Docker skill owns the Compose
   pattern; databases skill owns the engine tuning within the container.
+- **git** -- for git tags and version control. Docker skill handles container image tagging;
+  git handles git tags and release workflows.
 
 ---
 

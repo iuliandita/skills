@@ -22,6 +22,7 @@ Post-session documentation sweep. Captures non-obvious knowledge into the right 
 
 - Writing brand-new documentation sets from scratch
 - Code correctness or security review -- use code-review or security-audit
+- Code quality, slop, or maintainability cleanup -- use anti-slop
 - Prompt authoring or reusable skill-file maintenance -- use prompt-generator or skill-creator
 
 ## Core Principle
@@ -30,9 +31,11 @@ Post-session documentation sweep. Captures non-obvious knowledge into the right 
 
 ## Workflow
 
+**Audit-only mode:** When invoked by full-review or when the user asks to "just report" or "check docs," run Steps 1-5 and report findings without making changes or committing. Skip Steps 6-7.
+
 1. Identify changes
 2. Categorize doc impact
-3. Update affected docs
+3. Update affected docs (or report what needs updating in audit-only mode)
 4. Verify internal links
 5. Audit instruction-file bloat
 6. Sync companion instruction files

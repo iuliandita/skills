@@ -32,7 +32,7 @@ performance tuning.
 |------|---------|-------|
 | Caddy | 2.11.2 | Auto-HTTPS, Caddyfile + JSON API |
 | Nginx | 1.28.3 stable / 1.29.7 mainline | 6 CVEs patched Mar 2026 (dav, mp4, mail, OCSP) |
-| Traefik | 3.6.11 | Gateway API native, v2 EOL approaching |
+| Traefik | 3.6.12 | Gateway API native, v2 EOL approaching |
 | HAProxy | 3.3.6 stable / 3.2.15 LTS | LTS EOL 2030-Q2 |
 | WireGuard tools | 1.0.20260223 | Kernel module + userspace tools |
 | strongSwan | 6.0.5 | swanctl config (legacy ipsec.conf deprecated) |
@@ -40,7 +40,7 @@ performance tuning.
 | keepalived | 2.3.4 | VRRP + health checks |
 | Unbound | 1.24.2 | CVE-2025-11411 fix (unsolicited NS RRSets) |
 | CoreDNS | 1.14.2 | K8s default DNS, plugin-based |
-| FRRouting | 10.5.1 | BGP, OSPF, IS-IS, PIM |
+| FRRouting | 10.6.0 | BGP, OSPF, IS-IS, PIM |
 | Tailscale / Headscale | Headscale 0.28.0 | Self-hosted control server |
 | cloudflared | 2026.3.0 | Cloudflare Tunnel (outbound-only) |
 | OpenVPN | 2.7.0 / 2.6.19 | 2.7.0: multi-socket, DCO kernel module |
@@ -150,7 +150,7 @@ Read the appropriate reference file for detailed patterns. Key principles:
 | `ss` | Socket statistics (replaces netstat) | `ss -tlnp` (TCP listeners), `ss -ulnp` (UDP) |
 | `dig` | DNS queries | `dig @8.8.8.8 example.com A +short` |
 | `mtr` | Combined traceroute + ping | `mtr -n --report target` (non-interactive) |
-| `tcpdump` | Packet capture | `tcpdump -i eth0 -nn port 53` (DNS traffic) |
+| `tcpdump` | Packet capture | `tcpdump -i any -nn port 53` (DNS traffic) |
 | `tshark` | Wireshark CLI | `tshark -i any -f 'port 443' -Y 'tls.handshake'` |
 | `curl` | HTTP testing | `curl -vk -o /dev/null https://target` (verbose TLS info) |
 | `iperf3` | Bandwidth testing | Server: `iperf3 -s` / Client: `iperf3 -c server` |

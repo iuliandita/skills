@@ -17,6 +17,9 @@ Security hardening, vulnerability management, supply chain integrity, and PCI-DS
 | CVE-2026-33634 | Critical | Trivy | Supply chain -- credential-stealing malware in aquasec/trivy Docker Hub images v0.69.4-6 | Trivy v0.69.3 (safe) |
 | CVE-2026-2664 | Medium | Docker Desktop | gRPC-FUSE kernel module out-of-bounds read | Desktop 4.62.0+ |
 | CVE-2025-13743 | Low | Docker Desktop | Expired Hub PATs leaked in diagnostic bundles via error object serialization | Desktop 4.54.0+ |
+| CVE-2026-28400 | 7.5 High | Model Runner | Runtime flag injection via _configure endpoint -- arbitrary file overwrite, container escape | Desktop 4.61.0+ |
+| CVE-2026-33747 | High | BuildKit | Malicious frontend causes file escape outside BuildKit storage root | BuildKit v0.28.1 |
+| CVE-2026-33748 | High | BuildKit | Git URL #ref:subdir validation bypass -- access to restricted files | BuildKit v0.28.1 |
 
 ### Verification commands
 
@@ -29,6 +32,8 @@ containerd --version 2>/dev/null ; true
 
 # runc must be >= 1.2.8 or >= 1.3.3 or >= 1.4.0
 # containerd should be >= 2.2.2
+# BuildKit must be >= 0.28.1 (CVE-2026-33747/33748 patched)
+docker buildx version 2>/dev/null ; true
 
 # Check for vulnerable Trivy images
 docker images | grep trivy ; true

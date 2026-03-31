@@ -66,7 +66,7 @@ Also check git history for committed-then-removed secrets: `git log --all --diff
 Find known CVEs in dependencies and assess supply chain risk.
 
 **Tools by ecosystem**:
-- **Bun/Node**: `bun audit` (no `--level` flag -- grep output for "high"/"critical")
+- **Bun/Node**: `bun audit --audit-level=high` (supported levels: `low`, `moderate`, `high`, `critical`)
 - **Python**: `pip-audit --format json` or `safety check --json`
 - **Go**: `govulncheck ./...`
 - **Rust**: `cargo audit --json` -- also check for `unsafe` blocks without `// SAFETY:` comments, `transmute` misuse, unvalidated FFI boundaries
@@ -79,7 +79,7 @@ Find known CVEs in dependencies and assess supply chain risk.
 If the codebase uses LLMs, AI agents, MCP servers, or AI-generated code, check for agentic-specific risks. Based on OWASP Top 10 for Agentic Applications (released December 2025):
 
 **Slopsquatting** (AI package hallucination):
-- Check for dependencies that don't exist on the registry (AI-hallucinated package names that attackers register). ~20% of AI code samples recommend nonexistent packages, 43% consistently.
+- Check for dependencies that don't exist on the registry (AI-hallucinated package names that attackers register). ~20% of AI code samples recommend nonexistent packages, and 43% of hallucinated package names repeat consistently across reruns of the same prompt (Lanyado et al., "We Have a Package for You!", 2024).
 - Verify every unfamiliar package name actually exists: `npm view <pkg> 2>/dev/null` or `pip show <pkg>`
 
 **Agent security patterns:**

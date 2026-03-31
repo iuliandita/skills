@@ -278,13 +278,13 @@ Runtime monitoring of network egress and file system access in CI jobs. Detected
 attack anomalies.
 
 ```yaml
-- uses: step-security/harden-runner@<sha>  # v2.12.0+ required
+- uses: step-security/harden-runner@<sha>  # v2.14.2 (v2.12.0 min -- CVE-2025-32955)
   with:
     egress-policy: audit
 ```
 
-**Note**: v2.12.0 patches CVE-2025-32955 (bypass vulnerability). Do not use earlier versions
-for security-critical workloads.
+**Note**: v2.12.0 patches CVE-2025-32955 (Docker group privilege escalation bypass). Latest:
+v2.14.2 (March 2026). Do not use versions below v2.12.0 for security-critical workloads.
 
 ---
 

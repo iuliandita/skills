@@ -109,7 +109,7 @@ spec:
 - Multi-source Applications (mature since ArgoCD 2.6) for separating chart version from env values.
 - `ignoreMissingValueFiles: true` for default/override patterns with ApplicationSets.
 - OCI charts: omit `oci://` prefix in ArgoCD's `repoURL`.
-- Wildcard valueFiles (ArgoCD v3.4+): `valueFiles: ["values/*.yaml"]`.
+- Wildcard valueFiles (ArgoCD v3.4+, RC as of March 2026): `valueFiles: ["values/*.yaml"]`.
 - **Anti-pattern**: `randAlphaNum` or other random functions in Helm templates -- causes perpetual OutOfSync.
 
 ### Promotion Strategy
@@ -134,7 +134,7 @@ spec:
 
 ### Gateway API (the standard for new clusters)
 
-Gateway API v1.5 is GA. Ingress-NGINX retires March 2026. All major implementations support it: Cilium, Envoy Gateway, Istio, Kong, Traefik, NGINX Gateway Fabric, cloud provider LBs.
+Gateway API v1.5 is GA. Ingress-NGINX retired March 2026. All major implementations support it: Cilium, Envoy Gateway, Istio, Kong, Traefik, NGINX Gateway Fabric, cloud provider LBs.
 
 Advantages over Ingress:
 - Role-oriented design (infra admin manages Gateway, app dev manages HTTPRoute)
@@ -160,7 +160,7 @@ Advantages over Ingress:
 ### kube-proxy
 
 - **nftables mode** is the future (available since 1.31).
-- **IPVS mode** deprecated in 1.35, removal planned for 1.36.
+- **IPVS mode** deprecated in 1.35, removal targeted for a future release (no firm version committed).
 - **iptables mode** still works but consider migration planning.
 
 ### Service Mesh
@@ -396,7 +396,7 @@ Keep these in mind when upgrading:
 | **containerd 2.0+** | 1.36+ | Last release supporting containerd 1.x is 1.35. |
 | **AppArmor via securityContext** | 1.34+ | Annotations removed. Use `securityContext.appArmorProfile` field. |
 | **KMS v2** | Now | KMS v1 disabled by default since 1.29. Migrate to v2. |
-| **nftables kube-proxy** | Plan now | IPVS deprecated in 1.35, removal in 1.36. |
+| **nftables kube-proxy** | Plan now | IPVS deprecated in 1.35, removal version TBD. |
 | **autoscaling/v2** | Now | v2beta1/v2beta2 removed in 1.25/1.26. |
-| **User namespaces** | 1.35 beta (on by default) | `hostUsers: false` maps container UID 0 to unprivileged host UID. Huge for multi-tenancy/PCI. |
+| **User namespaces** | 1.33+ (on by default) | `hostUsers: false` maps container UID 0 to unprivileged host UID. Huge for multi-tenancy/PCI. |
 | **Pod-level mTLS** | 1.35 beta | KEP-4317. Native X.509 certs for pods without service mesh. Future alternative to Istio/Cilium for zero-trust. |

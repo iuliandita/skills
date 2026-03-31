@@ -1,6 +1,6 @@
 ---
 name: kubernetes
-description: "Use when writing, reviewing, or architecting Kubernetes manifests, Helm charts, or cluster infrastructure. Also use for Gateway API, Kustomize, ArgoCD, supply chain security, sealed secrets, or PCI-DSS K8s compliance. Triggers: 'kubernetes', 'k8s', 'helm', 'manifest', 'deployment', 'kubectl', 'chart', 'cluster', 'pod', 'service', 'ingress', 'gateway', 'namespace', 'kustomize', 'argocd', 'pci', 'compliance', 'k8s-helm', 'sealed-secrets', 'kubeseal', 'sealed secret'."
+description: "Use when writing, reviewing, or architecting Kubernetes manifests, Helm charts, or cluster infrastructure. Also use for Gateway API, Kustomize, ArgoCD, supply chain security, sealed secrets, or PCI-DSS K8s compliance. Triggers: 'kubernetes', 'k8s', 'helm', 'manifest', 'deployment', 'kubectl', 'chart', 'cluster', 'pod', 'service', 'ingress', 'gateway', 'namespace', 'kustomize', 'argocd', 'pci', 'compliance', 'k8s-helm', 'sealed-secrets', 'kubeseal', 'sealed secret', 'statefulset'."
 license: MIT
 compatibility: "Requires kubectl. Optional: helm, kustomize, kube-score, cosign"
 metadata:
@@ -13,7 +13,7 @@ metadata:
 
 Create, review, and architect Kubernetes infrastructure -- from raw manifests to Helm charts to multi-cluster strategy. The goal is production-ready, security-hardened, cost-aware infrastructure that a team can maintain.
 
-**Target versions**: Kubernetes 1.33-1.35+, Helm 4.x (Helm 3 in maintenance until Nov 2026).
+**Target versions** (March 2026): Kubernetes 1.33-1.35+ (1.36 due April 22, 2026), Helm 4.1.3, Helm 3.20.x (security fixes until Nov 2026).
 
 This skill covers four domains depending on context:
 - **Manifests** -- raw YAML for Deployments, Services, Gateway API routes, ConfigMaps, Secrets, PVCs
@@ -37,6 +37,8 @@ This skill covers four domains depending on context:
 - Configuring CI/CD pipelines (use ci-cd)
 - Docker/container image optimization (use docker)
 - Security audits of application code (use security-audit)
+- Provisioning the cluster itself via IaC (use terraform)
+- Database engine configuration running on K8s (use databases)
 
 ---
 
@@ -124,7 +126,7 @@ Read `references/manifest-templates.md` for complete, copy-pasteable YAML templa
 - `app.kubernetes.io/part-of` -- parent system
 
 **External access** (new clusters must use Gateway API, not legacy Ingress):
-- **Gateway API** `HTTPRoute` (GA v1.5): role-oriented, expressive routing, no annotation hell. Ingress-NGINX retires March 2026.
+- **Gateway API** `HTTPRoute` (GA v1.5): role-oriented, expressive routing, no annotation hell. Ingress-NGINX retired March 2026.
 - **ClusterIP** (default): internal-only
 - **LoadBalancer**: cloud LB without HTTP routing
 - **Headless** (`clusterIP: None`): StatefulSet pod discovery
@@ -271,11 +273,11 @@ Promotion: dev -> staging -> prod via PR-based promotion. No auto-sync to prod.
 
 ### Networking
 
-**Gateway API** (GA v1.5) is the standard for new clusters. Ingress-NGINX retires March 2026.
+**Gateway API** (GA v1.5) is the standard for new clusters. Ingress-NGINX retired March 2026.
 
 **CNI**: Cilium (eBPF, greenfield) or Calico (brownfield/multi-OS/Windows). Cilium includes Hubble observability, L3-L7 policy, and optional sidecar-free service mesh.
 
-**kube-proxy**: nftables mode is the future. IPVS deprecated in 1.35, removal targeted for 1.38.
+**kube-proxy**: nftables mode is the future. IPVS deprecated in 1.35, removal targeted for a future release (no firm version committed yet).
 
 **Service mesh** (add only when needed):
 - **Istio ambient** (GA in 1.24): sidecarless L4 mTLS via ztunnel, optional L7 via waypoint proxies. The "sidecars are too expensive" argument is dead.
@@ -309,11 +311,11 @@ The Trivy supply chain attack (CVE-2026-33634) is the defining security event of
 
 - **cgroup v2 required** on K8s 1.35+. Nodes on cgroup v1 (CentOS 7, RHEL 7, Ubuntu 18.04) will fail.
 - **containerd 2.0 required** on K8s 1.36+. Last release supporting containerd 1.x is 1.35.
-- **K8s 1.36 launches April 22, 2026** -- containerd 2.0 required on all nodes. IPVS kube-proxy mode removal targeted for 1.38 (nftables is the future).
+- **K8s 1.36 launches April 22, 2026** -- containerd 2.0 required on all nodes. IPVS kube-proxy mode removal not yet committed to a specific version (nftables is the replacement).
 - **AppArmor annotation auto-population stopped** in 1.34; full removal in 1.36. Use `securityContext.appArmorProfile` field.
 - **DRA (Dynamic Resource Allocation)** GA in 1.34 for GPU/FPGA/hardware scheduling. Replaces device plugin model.
-- **User namespaces** (`hostUsers: false`) beta in 1.35 (on by default). Maps container UID 0 to unprivileged host UID. Huge for PCI multi-tenancy -- container breakout doesn't yield host root.
-- **Pod-level mTLS** (KEP-4317) beta in 1.35. Native X.509 certs for pods without service mesh. Future alternative to Istio/Cilium for Req 4 compliance.
+- **User namespaces** (`hostUsers: false`) enabled by default since K8s 1.33. Maps container UID 0 to unprivileged host UID. Huge for PCI multi-tenancy -- container breakout doesn't yield host root.
+- **Pod-level mTLS** (KEP-4317) beta in 1.35, feature gate `PodCertificates` must be manually enabled. Native X.509 certs for pods without service mesh. Future alternative to Istio/Cilium for Req 4 compliance.
 
 ---
 
@@ -448,6 +450,6 @@ These are non-negotiable. Violating any of these is a bug.
 8. **Secrets never in plaintext.** Not in Git, not in ConfigMaps, not in Helm values, not in env vars in manifests.
 9. **Test changes in staging first.** Policy changes, admission controllers, upgrades, SSA migration.
 10. **Separate values files per environment.** Don't modify `values.yaml` for env-specific config.
-11. **Gateway API for new external access.** Ingress-NGINX retires March 2026. Stop deploying new Ingress resources.
+11. **Gateway API for new external access.** Ingress-NGINX retired March 2026. Stop deploying new Ingress resources.
 12. **Sign images with cosign.** Verify at admission. SLSA Level 2 minimum for production.
 13. **Run the AI self-check.** Every generated manifest gets verified against the checklist above before returning.

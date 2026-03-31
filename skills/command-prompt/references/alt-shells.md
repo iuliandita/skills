@@ -5,7 +5,7 @@
 
 ---
 
-## Fish (4.5)
+## Fish (4.6)
 
 Fish is a modern, user-friendly shell that intentionally breaks POSIX compatibility for a
 better interactive experience. You'll encounter it when users have it as their login shell or
@@ -165,6 +165,16 @@ complete -c mytool -l format -x -a "json yaml toml" -d "Output format"
 # Fish doesn't read .profile, .bashrc, etc. Environment variables from
 # login must be set in config.fish or via `set -Ux` (universal export).
 ```
+
+### Fish 4.6 additions (March 2026)
+
+- **`|&` syntax** -- bash-compat pipe-stderr shorthand now supported (in addition to `2>&1 |`)
+- **systemd env vars** -- `SHELL_PROMPT_PREFIX`, `SHELL_PROMPT_SUFFIX`, `SHELL_WELCOME` are
+  automatically applied to prompts and greeting. Set by systemd's `run0`, for example.
+- **Emoji width default changed** from 1 to 2. If terminal alignment breaks on older systems,
+  set `$fish_emoji_width` to 1.
+- `set_color` can now individually disable italics, reverse, strikethrough, and underline
+- `fish_indent` preserves comments and newlines before brace blocks
 
 ### String command (replaces bash parameter expansion)
 
@@ -344,7 +354,7 @@ open data.json | to yaml
 
 ## Brief: Other Shells
 
-### Elvish (0.21)
+### Elvish (0.22)
 
 A shell with a real programming language built in. Typed values, namespaces, exception handling.
 
@@ -369,10 +379,11 @@ try {
 **Status**: pre-1.0, small community, but stable enough for daily use. Good for people who want a
 shell that's also a real programming language.
 
-### Oils (OSH + YSH, 0.22)
+### Oils (OSH + YSH, 0.37)
 
 OSH is a bash-compatible shell (runs bash scripts correctly). YSH is the "upgrade path" -- a
-new language that fixes bash's worst problems while keeping the shell paradigm.
+new language that fixes bash's worst problems while keeping the shell paradigm. 8 releases
+shipped in the 6 months before September 2025, so the project is moving fast.
 
 ```ysh
 # YSH -- bash-like but with real data types
@@ -389,8 +400,12 @@ if (len(items) > 2) {
 }
 ```
 
-**Status**: pre-1.0, actively developed. OSH is usable as a bash replacement for testing scripts.
-YSH is experimental.
+OSH can replace `/bin/sh`, `/bin/ash`, and `/bin/bash` on a system -- tested via the Alpine
+Linux package build system (`regtest/aports`). Useful for validating that "bash-compatible"
+actually means compatible.
+
+**Status**: pre-1.0, actively developed. OSH is usable as a bash replacement for testing
+scripts. YSH is maturing but still experimental.
 
 ### Dash (0.5.13)
 

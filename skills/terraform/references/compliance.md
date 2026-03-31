@@ -291,7 +291,7 @@ states/
 | **CVE-2025-25291/92** | TFE (ruby-saml) | Critical | SAML authentication bypass |
 | **CVE-2025-25293** | TFE (ruby-saml) | High | SAML compressed response DoS |
 | **CVE-2026-25499** | Proxmox TF/OT provider | High | Path traversal via sudoers docs |
-| **tj-actions compromise** | GitHub Actions | Critical | Credential theft from CI pipelines (~12h window, March 2026) |
+| **tj-actions compromise** | GitHub Actions | Critical | Credential theft from CI pipelines (~12h window, March 2025, CVE-2025-30066) |
 | **Trivy compromise** | Trivy (tfsec successor) | Critical | CVE-2026-33634, malicious binaries, credential exfiltration |
 | **Terrascan archived** | Terrascan | N/A | No more updates. Migrate to Checkov/Trivy. |
 | **CDKTF deprecated** | CDKTF | N/A | No more updates. Migrate to HCL. |

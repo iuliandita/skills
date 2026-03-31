@@ -7,10 +7,10 @@ description: >
   Proton, OBS, WebRTC screen sharing, Discord or Teams quirks, virtual cameras, and Linux
   gaming. Also use for EndeavourOS or Manjaro when the task is Arch-style package, boot,
   desktop, graphics, media, or service management. Triggers: 'arch linux', 'cachyos', 'pacman',
-  'paru', 'aur', 'systemd', 'mkinitcpio', 'bootctl', 'wayland', 'hyprland', 'gnome', 'kde',
+  'paru', 'aur', 'systemd', 'mkinitcpio', 'dracut', 'bootctl', 'wayland', 'hyprland', 'gnome', 'kde',
   'pipewire', 'bluetooth', 'mesa', 'vulkan', 'nvidia', 'amdgpu', 'steam', 'proton',
   'gamescope', 'mangohud', 'gamemode', 'obs', 'screen share', 'webrtc', 'discord', 'teams',
-  'v4l2loopback', 'pacnew', 'arch-chroot'. Not for shell syntax (command-prompt), networking
+  'v4l2loopback', 'btrfs', 'pacnew', 'arch-chroot'. Not for shell syntax (command-prompt), networking
   (networking), config management (ansible), or security testing (security-audit/lockpick).
 license: MIT
 compatibility: Requires Arch Linux, CachyOS, or Arch-based distro with pacman
@@ -26,7 +26,7 @@ Administer Arch Linux and Arch-style systems without falling into rolling-releas
 Focus on vanilla Arch first, then layer in CachyOS behavior, `paru` workflow, systemd-native
 service management, boot recovery, kernel handling, and derivative-specific cautions.
 
-**Versions worth pinning** (March 26, 2026):
+**Versions worth pinning** (March 31, 2026):
 
 Only pin versions here when they materially affect compatibility or troubleshooting shape. For
 ordinary rolling packages, prefer the current repo state over stale version tables.
@@ -38,10 +38,10 @@ ordinary rolling packages, prefer the current repo state over stale version tabl
 | dracut | 110-2 | alternative initramfs pipeline with different expectations |
 | linux-cachyos | 6.19.10-1 | kernel and module compatibility |
 | linux-cachyos-eevdf | 6.19.10-1 | alternate kernel lane with different behavior surface |
-| Hyprland | 0.54.2-1 | old 0.4x and early 0.5x guidance is frequently stale here |
+| Hyprland | 0.54.2-2 | old 0.4x and early 0.5x guidance is frequently stale here |
 | xdg-desktop-portal-hyprland | 1.3.11-3 | Wayland portal behavior depends on this layer |
 | PipeWire | 1:1.6.2-1 | audio and capture stack anchor |
-| WirePlumber | 0.5.13-2 | policy layer paired with PipeWire behavior |
+| WirePlumber | 0.5.14-1 | policy layer paired with PipeWire behavior |
 | nvidia-utils | 595.58.03-1 | driver branch matters for gaming and Wayland breakage |
 
 ## When to use

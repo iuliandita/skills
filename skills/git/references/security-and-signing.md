@@ -198,7 +198,7 @@ trufflehog git . --since-commit=HEAD~20
 # .pre-commit-config.yaml
 repos:
   - repo: https://github.com/gitleaks/gitleaks
-    rev: v9.0.0  # check for latest  # pin to specific version
+    rev: v8.30.1  # pin to specific version, check for latest
     hooks:
       - id: gitleaks
 ```
@@ -250,9 +250,9 @@ git push origin --force --tags
 | CVE-2025-48384 | < 2.50.1 | **Critical (8.1)** | Arbitrary file write via `\r` in `.gitmodules` during recursive clone. **Actively exploited** -- CISA KEV. |
 | CVE-2025-48385 | < 2.50.1 | High | Bundle URI validation bypass -- protocol injection, potential RCE |
 | CVE-2025-48386 | < 2.50.1 | Medium | Buffer overflow in `wincred` credential helper (Windows only) |
-| CVE-2024-32002 | < 2.45.1 | Critical (9.1) | Recursive clone RCE via symlink + submodule |
-| CVE-2024-50349 | < 2.48.1 | Medium | Credential leak via terminal escape in URL |
-| CVE-2025-27509 | < 2.49.0 | Medium | Incomplete patch for CVE-2024-50349 |
+| CVE-2024-32002 | < 2.45.1 | Critical (9.1) | Recursive clone RCE via symlink + submodule (case-insensitive FS: Windows/macOS) |
+| CVE-2024-50349 | < 2.48.1 | Medium | Credential leak via terminal escape in URL (Clone2Leak disclosure) |
+| CVE-2024-52006 | < 2.48.1 | Medium | Carriage return smuggling in credential protocol (same Clone2Leak disclosure as CVE-2024-50349) |
 
 **Action**: ensure git >= 2.50.1 (ideally 2.53.x). CVE-2025-48384 is **actively exploited in the
 wild** -- a weaponized `.gitmodules` file can overwrite hook scripts to achieve RCE on `git clone
@@ -263,15 +263,15 @@ affected; Windows is not.
 
 | Incident | Date | Impact |
 |----------|------|--------|
-| tj-actions/changed-files (CVE-2025-30066) | March 2025 | GitHub Actions supply chain. Malicious code via compromised `reviewdog` maintainer account (CVE-2025-30154). Secrets exfiltrated from 23k+ repos. Led to Coinbase breach (~70k customers). |
-| Trivy Docker Hub compromise (CVE-2026-33634) | March 2026 | Credential-stealing malware in Docker Hub images v0.69.4-6. |
+| tj-actions/changed-files (CVE-2025-30066) | March 2025 | GitHub Actions supply chain. Malicious code via compromised `reviewdog` maintainer account (CVE-2025-30154). Secrets exfiltrated from 23k+ repos. Targeted Coinbase agentkit (partially thwarted). |
+| TeamPCP campaign (CVE-2026-33634) | March 2026 | Trivy Docker Hub credential-stealing malware (v0.69.4-6). Same campaign hit Checkmarx KICS Actions (35 tags hijacked) and LiteLLM PyPI (backdoored v1.82.7/v1.82.8, 95M downloads/month). |
 | xz utils backdoor (CVE-2024-3094) | March 2024 | Backdoor in xz 5.6.0/5.6.1 targeting SSH. |
 
 ### Git forge vulnerabilities
 
 | CVE | Forge | Severity | Description |
 |-----|-------|----------|-------------|
-| Forgejo directory traversal RCE | Forgejo <= v13.0.1 | Critical | Template processing allows authenticated RCE via symlink to `.ssh/authorized_keys`. Fixed in v13.0.2+. |
+| CVE-2025-68937 | Forgejo <= v13.0.1 | Critical (9.5) | Template processing allows authenticated RCE via symlink to `.ssh/authorized_keys`. Fixed in v13.0.2+ and v11.0.7 (LTS). |
 | CVE-2025-11702 | GitLab | High (8.5) | Runner hijacking -- authenticated users could hijack project runners from other projects. Fixed in 18.3.5/18.4.3/18.5.1. |
 | CVE-2025-25291/25292 | GitLab | Critical | SAML SSO authentication bypass -- user impersonation. Fixed in 17.9.x patches. |
 | CVE-2025-8110 | Gogs | High (8.7) | Symlink bypass RCE zero-day. 700+ compromised instances. Fixed in v0.13.4 (Jan 2026). |

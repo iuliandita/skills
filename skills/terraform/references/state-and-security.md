@@ -165,7 +165,7 @@ PR merged to main:
 
 ### Supply chain hardening for CI
 
-- **Pin ALL GitHub Actions to commit SHAs** -- `uses: hashicorp/setup-terraform@<sha>`, not `@v3`. The tj-actions/changed-files compromise (March 2026) stole credentials from ~12 hours of CI runs.
+- **Pin ALL GitHub Actions to commit SHAs** -- `uses: hashicorp/setup-terraform@<sha>`, not `@v3`. The tj-actions/changed-files compromise (March 2025, CVE-2025-30066) stole credentials from ~12 hours of CI runs via upstream reviewdog/action-setup (CVE-2025-30154).
 - **Pin Trivy to v0.69.3** -- v0.69.4/5/6 were compromised (CVE-2026-33634). Pin to SHA.
 - **Pin Checkov to a specific version** -- `pip install checkov==X.Y.Z` or use the container image with a digest
 - **Use StepSecurity Harden-Runner** to detect unexpected network connections in CI jobs

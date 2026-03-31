@@ -31,12 +31,12 @@ compliance requirements (PCI-DSS 4.0).
 
 **Target versions** (March 2026):
 - **git**: 2.53.x (current stable). Git 3.0 expected late 2026 (reftable default, SHA-256 default)
-- **GitHub CLI (`gh`)**: 2.88.x
-- **GitLab CLI (`glab`)**: 1.57.x
-- **Forgejo**: v13.0.4+ (critical RCE patched in v13.0.2). v14.0 (Actions multi-connection runners)
+- **GitHub CLI (`gh`)**: 2.89.x
+- **GitLab CLI (`glab`)**: 1.90.x
+- **Forgejo**: v14.0.3 (current stable). Critical RCE (CVE-2025-68937) patched in v13.0.2+.
 - **prek**: 0.3.x (Rust, recommended) or **pre-commit**: 4.5.x (Python, largest ecosystem)
-- **git-filter-repo**: 2.46.x
-- **gitleaks**: 9.x (secret scanning)
+- **git-filter-repo**: 2.47.x
+- **gitleaks**: 8.30.x (secret scanning)
 - **cosign**: 3.x (Sigstore, for tag/release signing context)
 
 This skill covers five domains depending on context:

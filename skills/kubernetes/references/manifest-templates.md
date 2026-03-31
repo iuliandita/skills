@@ -183,7 +183,7 @@ spec:
 
 ## Gateway API HTTPRoute (replaces Ingress)
 
-Gateway API is GA (v1.5). Ingress-NGINX retires March 2026. Use HTTPRoute for all new external access.
+Gateway API is GA (v1.5). Ingress-NGINX retired March 2026. Use HTTPRoute for all new external access.
 
 Prerequisites: install a Gateway API implementation (Cilium, Envoy Gateway, Istio, Kong, Traefik, NGINX Gateway Fabric) and create a Gateway resource.
 
@@ -408,7 +408,7 @@ spec:
   - metadata:
       name: data
     spec:
-      accessModes: [ReadWriteOnce]
+      accessModes: [ReadWriteOncePod]  # RWOP: single-pod exclusive (prefer over RWO for StatefulSets)
       storageClassName: <storage-class>
       resources:
         requests:

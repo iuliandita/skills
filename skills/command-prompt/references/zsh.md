@@ -1,7 +1,7 @@
 # Zsh Reference
 
-> Patterns and gotchas for Zsh 5.9 on Linux and macOS. Focuses on where Zsh diverges from
-> Bash -- the stuff that silently breaks.
+> Patterns and gotchas for Zsh 5.9/5.10 on Linux and macOS. Focuses on where Zsh diverges
+> from Bash -- the stuff that silently breaks.
 
 ---
 
@@ -611,8 +611,8 @@ ls -la G ".js"      # expands to: ls -la | grep ".js"
 
 ## 13. Zsh 5.10 Features
 
-> **Note**: macOS ships zsh 5.9 (as of Sonoma/Sequoia). These features are only available if you
-> install zsh via Homebrew or are on Linux with zsh 5.10+.
+> **Note**: macOS Tahoe still ships zsh 5.9. These features are only available if you install
+> zsh via Homebrew or are on Linux with zsh 5.10+.
 
 ### Non-forking command substitution
 
@@ -674,7 +674,7 @@ set -e
 
 ## 14. macOS-Specific Notes
 
-- macOS ships zsh 5.9 (as of Sonoma/Sequoia). Zsh 5.10 features (non-forking `${ }`, namerefs) are not available unless you install zsh via Homebrew.
+- macOS Tahoe (26.x) still ships zsh 5.9. Zsh 5.10 features (non-forking `${ }`, namerefs) are not available unless you install zsh via Homebrew.
 - `/etc/zshrc` runs `path_helper` which reorders `$PATH` -- putting `/usr/bin` before Homebrew paths. Fix: set PATH in `.zshenv` (runs before `/etc/zshrc` in non-login shells) or `.zprofile` (runs after, overrides it for login shells).
 - BSD coreutils differ from GNU: `sed -i ''` (not `sed -i`), `stat -f %m` (not `stat -c %Y`), `date` flags differ. When writing portable scripts, check which `coreutils` variant is available.
 

@@ -126,7 +126,7 @@ If co-locating CDE and non-CDE on the same cluster, ALL of these are required:
 
 **Runtime isolation:**
 - **gVisor** or **Kata Containers** for CDE pods (sandbox the kernel)
-- **User namespaces** (`hostUsers: false`, beta in 1.35) -- maps container UID 0 to unprivileged host UID. Container breakout doesn't yield host root. Significant for QSA demonstrations of privilege isolation.
+- **User namespaces** (`hostUsers: false`, enabled by default since 1.33) -- maps container UID 0 to unprivileged host UID. Container breakout doesn't yield host root. Significant for QSA demonstrations of privilege isolation.
 - Seccomp restricted profiles
 - AppArmor/SELinux mandatory
 

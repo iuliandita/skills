@@ -22,6 +22,11 @@ metadata:
 Manage, troubleshoot, and harden OPNsense and pfSense firewalls via SSH. Both are FreeBSD-based,
 pf-powered firewall distributions -- most concepts, commands, and patterns apply to both.
 
+**Target versions** (March 2026):
+- OPNsense: 26.1.5 (26.1 "Witty Woodpecker" series)
+- pfSense CE: 2.8.1 / pfSense Plus: 25.11.1
+- CrowdSec: v1.7.6
+
 ## When to use
 
 - Managing or troubleshooting OPNsense and pfSense firewalls over SSH
@@ -58,7 +63,8 @@ Before returning any firewall commands, verify:
 ### Step 1: Detect platform
 
 If the platform is not obvious from context, **ask the user** which one they're running before
-issuing commands. Key differences at a glance:
+issuing commands. Identify the target device explicitly -- never assume which firewall you're
+talking to. Key differences at a glance:
 
 | | OPNsense | pfSense |
 |---|---|---|
@@ -89,6 +95,33 @@ netstat -rn              # routing table
 sockstat -4l             # listening sockets
 ```
 
+### Step 2: Back up config
+
+Before any change that modifies rules, services, plugins, or firmware:
+- OPNsense: `configctl firmware backup` or GUI export (System > Configuration > Backups)
+- pfSense: GUI export (Diagnostics > Backup & Restore) or copy `/cf/conf/config.xml`
+- For major upgrades on virtualized firewalls, pair config backup with a hypervisor snapshot
+
+Skip this step only for read-only operations (diagnostics, log review, status checks).
+
+### Step 3: Execute the task
+
+Apply changes using the platform-appropriate commands. Refer to the domain sections below
+and the reference files for specifics. For any change that affects connectivity:
+- Test `pfctl` rules with `-n` (dry run) before applying
+- State the blast radius ("this will drop all VPN tunnels for ~30s")
+- On HA pairs, always change on the master node and let XMLRPC sync propagate
+
+### Step 4: Verify
+
+After every change, confirm the firewall is healthy:
+- Connectivity: can you still reach the device? Can clients reach the internet?
+- Logs: check `/var/log/filter.log`, service logs, and CrowdSec/Suricata if active
+- Service status: `configctl service list` (OPNsense) or `service -e` (pfSense)
+- State table: `pfctl -si | grep entries` -- watch for unexpected drops or state exhaustion
+
+---
+
 ## FreeBSD Mental Model
 
 Read `references/platform-and-operations.md` for the detailed FreeBSD shell model, key commands,
@@ -105,6 +138,8 @@ config system, REST API, IPv6 gotchas, SOPs, and recovery procedures.
 - Check plugin or package layers early because they often explain traffic behavior that looks like a firewall-rule problem.
 - Treat firmware, plugin, backup, and HA work as operational procedures, not casual single commands.
 - Use `references/plugins.md` for plugin specifics and `references/hardening.md` for hardening and CARP guidance.
+
+---
 
 ## Reference Files
 
@@ -123,6 +158,8 @@ config system, REST API, IPv6 gotchas, SOPs, and recovery procedures.
 - **security-audit** -- for defensive security review of application code and supply chain, rather than firewall administration
 - **lockpick** -- for authorized offensive testing and post-exploitation, not defensive firewall operations
 - **ansible** -- for fleet-wide firewall automation or playbook-based configuration management
+
+---
 
 ## Rules
 

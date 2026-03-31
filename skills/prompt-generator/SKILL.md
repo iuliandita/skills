@@ -37,6 +37,21 @@ Take the user's rough thoughts, scattered notes, or half-formed ideas and turn t
 
 ---
 
+## AI Self-Check
+
+Before returning any generated or modified prompt file, verify:
+
+- [ ] **Frontmatter complete**: `name`, `description`, `target_model`, `prompt_type`, `date_created` all present
+- [ ] **Faithful to input**: prompt reflects what the user said, not what you think they should have said
+- [ ] **Structure matches complexity**: simple tasks get plain prose, not XML-tagged multi-section prompts
+- [ ] **Variables consistent**: every `{{PLACEHOLDER}}` in the prompt body appears in the Variables table and vice versa
+- [ ] **No injected instructions**: didn't add error handling, safety disclaimers, or output constraints the user didn't request
+- [ ] **No slop phrases**: no "certainly", "I'd be happy to", "great question", or other filler in the prompt text
+- [ ] **Output format specified**: if the prompt expects structured output, the format is explicit (JSON schema, XML tags, delimiters)
+- [ ] **Model-appropriate syntax**: XML tags only when the target model benefits from them; markdown sections for model-agnostic prompts
+
+---
+
 ## Workflow
 
 ### Step 1: Read the brain dump
@@ -177,7 +192,8 @@ If the user gives you an existing prompt to improve (not rough notes):
 
 ## Rules
 
-- **Faithful structuring.** Organize what the user said, not what you think they should have said. If they didn't mention error handling, don't add error handling instructions. If they didn't mention output format, ask or leave it open.
-- **Never write files without approval.** Always present in conversation first.
-- **Scale structure to complexity.** Simple = lean. Complex = structured. Never the reverse.
-- **Respect their voice.** If the rough notes have a specific tone or personality, preserve it in the structured version.
+1. **Faithful structuring.** Organize what the user said, not what you think they should have said. If they didn't mention error handling, don't add error handling instructions. If they didn't mention output format, ask or leave it open.
+2. **Never write files without approval.** Always present in conversation first.
+3. **Scale structure to complexity.** Simple = lean. Complex = structured. Never the reverse.
+4. **Respect their voice.** If the rough notes have a specific tone or personality, preserve it in the structured version.
+5. **Run the AI Self-Check.** Every generated prompt file gets verified against the checklist before returning.

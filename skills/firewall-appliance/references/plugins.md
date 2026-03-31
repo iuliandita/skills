@@ -6,7 +6,7 @@ inspect via `pkg info <name>` and check `/usr/local/etc/` for their configs.
 ## Security
 
 ### os-crowdsec (CrowdSec)
-Local LAPI + bouncer. Parses logs locally, applies local bans + crowd-sourced blocklists.
+Local LAPI + bouncer (v1.7.6 as of March 2026). Parses logs locally, applies local bans + crowd-sourced blocklists.
 
 **Two separate enforcement layers:**
 - **Local decisions** (`crowdsec_blacklists` pf table): IPs your firewall detected and banned
@@ -106,7 +106,11 @@ wg show <iface> dump             # machine-readable output
   Cleaner than manual firewall rules on the raw wg device.
 - **DNS field**: leave blank on the server side to avoid overwriting OPNsense's DNS config.
   Only set on peer generator for road warriors.
-- Restart: `configctl openvpn restart` (yes, WireGuard uses the openvpn configctl namespace).
+- Restart: `configctl wireguard stop && configctl wireguard start`
+- Zero-downtime reload: `/usr/local/etc/rc.d/wireguard reload` (uses `wg syncconf` under the hood)
+- Alternative: `pluginctl -s wireguard start` / `stop` / `status`
+- **pfSense**: WireGuard is available as `pfSense-pkg-WireGuard`. Commands differ --
+  use `service wireguard restart` or manage via GUI (VPN > WireGuard).
 
 ### os-haproxy (Load Balancer / Reverse Proxy)
 TCP/HTTP load balancer with health checks and SSL offloading.
@@ -236,7 +240,7 @@ VMware Tools integration. Same as above but for ESXi/vSphere.
 
 ### 26.1 "Witty Woodpecker" (Jan 28, 2026) -- CURRENT STABLE
 
-Current release: **26.1.2** (Feb 12, 2026). 25.7.x series EOL at 25.7.11.
+Current release: **26.1.5** (March 26, 2026). 25.7.x series EOL at 25.7.11.
 
 - Redesigned Firewall Rules interface
 - IDPS moved to declarative `conf.d` structure + new inline inspection mode

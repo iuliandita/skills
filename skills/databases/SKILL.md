@@ -26,11 +26,11 @@ metadata:
 Configure, tune, design schemas, migrate, back up, and review database engines -- from single-node dev setups to PCI-compliant production clusters. The goal is correct, performant, durable databases that survive failures, pass audits, and don't wake you up at 3am.
 
 **Target versions** (March 2026):
-- PostgreSQL **18.3** (EOL 2030-11), previous LTS: 17.9, 16.13
+- PostgreSQL **18.3** (EOL 2030-11), previous: 17.9, 16.13
 - MongoDB **8.0.20** (GA), 8.2.6 (rapid release, EOL 2026-07)
-- MariaDB **11.8.6** (LTS, EOL 2028-06), 12.2.2 (innovation, EOL 2026-05)
+- MariaDB **11.8.6** (LTS, EOL 2028-06), 12.2.2 (rolling GA, EOL 2026-05)
 - MySQL **8.4.8** (LTS), 9.6.0 (innovation)
-- SQL Server **2025 RTM + CU2** (GA 2025-11-18)
+- SQL Server **2025 RTM + CU3** (GA 2025-11-18)
 - PgBouncer **1.25.1**, Pgpool-II **4.7.1**, ProxySQL **3.0.6**
 
 This skill covers six domains depending on context:
@@ -164,30 +164,24 @@ sqlcmd -Q "DBCC CHECKDB ('dbname') WITH NO_INFOMSGS;"  # integrity check
 
 ## Engine Routing
 
-Read `references/engine-operations.md` for the per-engine operational guidance.
-
 - **PostgreSQL**: SCRAM, poolers, WAL or logical replication, `pg_stat_statements`, and careful vacuum strategy
 - **MongoDB**: replica-set health, schema validation, oplog sizing, and avoiding fan-out document patterns
 - **MySQL/MariaDB**: strict mode, `utf8mb4`, GTID or Galera choices, and understanding the MySQL/MariaDB divergence
 - **MSSQL**: memory limits, TempDB layout, Query Store, and backup or restore discipline
 
-Keep copy-pasteable config examples in `references/config-templates.md` and recovery specifics in
-`references/backup-patterns.md`.
+Read `references/config-templates.md` for copy-pasteable engine configs and `references/backup-patterns.md`
+for recovery specifics.
 
 ---
 
 ## Schema, Migration, and Performance
-
-Read `references/design-performance-and-compliance.md` for indexing, partitioning, tenancy,
-performance analysis, compliance, and AI-age concerns.
 
 - Favor expand-contract for zero-downtime schema changes.
 - Composite index order still follows equality, sort, then range.
 - Choose tenant isolation deliberately; PCI-sensitive shared-schema designs need extra scrutiny.
 - Treat query-plan review and monitoring as normal operations, not emergency-only work.
 
-Migration tooling, type mapping, and cross-engine move details stay in
-`references/migration-patterns.md`.
+Read `references/migration-patterns.md` for migration tooling, type mapping, and cross-engine move details.
 
 ---
 
@@ -220,13 +214,16 @@ Migration tooling, type mapping, and cross-engine move details stay in
 
 - [ ] `pg_hba.conf`: `hostssl` only, `scram-sha-256` only, CIDR-restricted
 - [ ] `shared_buffers` = 25% RAM, `effective_cache_size` = 75% RAM
+- [ ] `work_mem` sized for concurrency (default 64MB is high for OLTP with many connections -- per-sort, not per-connection)
 - [ ] `random_page_cost = 1.1` for SSD storage
 - [ ] `statement_timeout` set per-role (not globally -- migrations need longer)
 - [ ] `idle_in_transaction_session_timeout` set (60s default)
 - [ ] `pg_stat_statements` enabled
 - [ ] Autovacuum tuned for large tables (`autovacuum_vacuum_scale_factor`)
+- [ ] WAL archiving enabled for PITR (`archive_mode = on` + pgBackRest/Barman, or managed backup)
 - [ ] Foreign key columns have indexes
 - [ ] pgAudit installed and configured (if PCI scope)
+- [ ] Patched against CVE-2026-2005 (pgcrypto heap buffer overflow, RCE) -- 18.2+ / 17.8+ / 16.12+
 
 ### MySQL/MariaDB-Specific
 
@@ -237,6 +234,7 @@ Migration tooling, type mapping, and cross-engine move details stay in
 - [ ] `character-set-server = utf8mb4`
 - [ ] Binary log enabled for PITR (`log_bin = ON`)
 - [ ] `innodb_file_per_table = ON`
+- [ ] MariaDB patched against CVE-2026-32710 (JSON_SCHEMA_VALID crash/RCE) -- 11.8.6+ / 11.4.10+
 
 ### MongoDB-Specific
 
@@ -245,6 +243,7 @@ Migration tooling, type mapping, and cross-engine move details stay in
 - [ ] Write concern `w: "majority"` (default in 8.0+)
 - [ ] Schema validation (`$jsonSchema`) on critical collections
 - [ ] Patched against MongoBleed (CVE-2025-14847) -- 8.0.17+
+- [ ] Patched against CVE-2026-25611 (pre-auth DoS via compression) -- 8.0.18+ / 8.2.4+
 - [ ] TLS enabled (`net.tls.mode: requireTLS`)
 
 ### MSSQL-Specific
@@ -256,6 +255,7 @@ Migration tooling, type mapping, and cross-engine move details stay in
 - [ ] Query Store enabled
 - [ ] Recovery model = FULL for production databases
 - [ ] TDE enabled for CDE databases
+- [ ] Patched against CVE-2026-21262 (privilege escalation) -- March 2026 CU+
 
 ### Compliance (PCI-DSS 4.0)
 
@@ -277,8 +277,6 @@ Migration tooling, type mapping, and cross-engine move details stay in
 - `references/config-templates.md` -- engine configuration templates
 - `references/backup-patterns.md` -- backup, restore, and PITR patterns
 - `references/migration-patterns.md` -- cross-engine migration patterns and type-mapping guidance
-- `references/engine-operations.md` -- PostgreSQL, MongoDB, MySQL/MariaDB, and MSSQL operational guidance
-- `references/design-performance-and-compliance.md` -- schema design, performance, compliance, AI-age, and managed-vs-self-hosted guidance
 
 ---
 
@@ -297,8 +295,9 @@ These are non-negotiable. Violating any of these is a bug.
 9. **Parameterized queries everywhere.** String concatenation for SQL is a bug, not a shortcut. Doubly true for AI-generated code.
 10. **Disk-level encryption is insufficient for PCI-DSS 4.0.** Req 3.5.1.2 requires TDE, column-level, or application-layer encryption.
 11. **Patch MongoBleed (CVE-2025-14847).** Self-hosted MongoDB < 8.0.17 / 7.0.28 / 6.0.27 is actively exploitable with no authentication required.
-12. **Patch PgBouncer (CVE-2025-12819).** PgBouncer < 1.25.1 allows unauthenticated SQL execution. Upgrade.
-13. **Run the AI self-check.** Every generated migration, schema, or config gets verified against the checklist above before returning.
+12. **Patch MongoDB compression DoS (CVE-2026-25611).** Pre-auth DoS via crafted OP_COMPRESSED messages. Default config affected (compression enabled since 3.6). Fixed in 8.0.18+ / 8.2.4+ / 7.0.29+.
+13. **Patch PgBouncer (CVE-2025-12819).** PgBouncer < 1.25.1 can allow unauthenticated SQL execution when `track_extra_parameters` includes `search_path` AND `auth_user` is set (both non-default). Upgrade regardless -- the fix is low-risk.
+14. **Run the AI self-check.** Every generated migration, schema, or config gets verified against the checklist above before returning.
 
 ---
 
