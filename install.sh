@@ -10,7 +10,7 @@ BACKUP_DIR=""
 ALL_SKILLS=(
   ansible arch-btw anti-slop ci-cd code-review command-prompt databases docker
   firewall-appliance full-review git kubernetes lockpick mcp networking
-  prompt-generator security-audit skill-creator terraform update-docs
+  prompt-generator security-audit skill-creator skill-refiner terraform update-docs
 )
 
 usage() {
