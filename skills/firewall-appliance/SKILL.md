@@ -10,7 +10,7 @@ description: >
   'Unbound' (firewall context). Do NOT use for Linux firewalls (iptables, nftables, ufw),
   cloud security groups, or application-level WAFs.
 license: MIT
-compatibility: Requires SSH access to OPNsense or pfSense appliance
+compatibility: "Requires SSH access to OPNsense or pfSense appliance"
 metadata:
   source: iuliandita/skills
   date_added: "2026-03-30"

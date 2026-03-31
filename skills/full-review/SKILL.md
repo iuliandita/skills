@@ -65,11 +65,11 @@ Record preflight values -- each subagent prompt uses them. Substitute `{placehol
 
 ### Step 1: Determine Scope
 
-The default is a **full codebase audit** since the user is running this as a quality gate. Adapt if context suggests otherwise:
+Default is **full codebase** since the user is running this as a quality gate. Adapt if context suggests otherwise:
 
-- **Uncommitted changes present** -> mention this to the user, but still audit the full repo (uncommitted files are included in the working tree).
+- **Uncommitted changes present** -> mention this, but still audit the full repo.
 - **Detached HEAD / bare repo** -> warn the user, proceed with what's available.
-- **User specified a narrower scope** (specific files, a directory) -> pass that scope to all four agents.
+- **User specified a narrower scope** (specific files, directory, module) -> pass that scope constraint to all four agents. Each agent only audits within the specified scope. This is the key to scoped reviews: narrowing the target, not the audit dimensions.
 
 ### Step 2: Dispatch Four Parallel Agents
 
@@ -95,35 +95,29 @@ Context:
 
 #### Agent 1: Code Review
 
-Invoke the `code-review` skill. Preempt the scope question: the scope is a full codebase
-review of the entire repository. Return the complete review report.
+Invoke `code-review`. Scope: full codebase (or user-specified scope). Return the complete report.
 
 #### Agent 2: Slop Check
 
-Invoke the `anti-slop` skill. Preempt the scope question: the scope is a full codebase
-audit of the entire repository. Return the complete audit report.
+Invoke `anti-slop`. Scope: full codebase (or user-specified scope). Return the complete report.
 
 #### Agent 3: Security Audit
 
-Invoke the `security-audit` skill. Preempt the scope question: this is a full repository
-audit. Return the complete audit report, including the SECURITY-AUDIT.md content.
+Invoke `security-audit`. Scope: full codebase (or user-specified scope). Return the complete report including SECURITY-AUDIT.md content.
 
 #### Agent 4: Docs Sweep
 
-Invoke the `update-docs` skill. This skill normally runs post-session after making changes.
-In this context, run it as a standalone audit. Focus on:
-- Identifying stale or outdated documentation (instruction files, README.md, docs/)
-- Checking instruction-file size (must stay under 40,000 chars) and bloat
-- Verifying shared and tool-specific instruction files are in sync
-- Finding broken internal links
-- Flagging orphaned gotchas or completed migration steps still documented
-- Checking for missing docs on recent changes (use git log)
-
-Do NOT make changes or commit anything. Report what needs updating.
+Invoke `update-docs` as a standalone read-only audit. Focus on: stale docs, instruction-file
+bloat (40,000 char limit), companion-file drift, broken links, orphaned gotchas, missing docs
+on recent changes. Do NOT make changes or commit anything.
 
 ### Step 3: Present Results
 
 After all four agents return, present each report under its own header. Do not merge, summarize, or editorialize across reports -- each stands alone. The user reads the skill's native output, not a reinterpretation.
+
+**Scoped reviews**: when the user specified a narrower scope (e.g., "review the auth module"), each report should focus on that scope. Note any domain-specific checks relevant to the scope (e.g., auth scope -> security-audit covers session handling/token validation; code-review focuses on auth logic paths; anti-slop checks auth middleware for over-abstraction; update-docs verifies auth-related docs are current).
+
+**User requests synthesis**: if the user asks for a combined summary after seeing the reports, prioritize: security fixes > correctness bugs > slop cleanup > doc updates. Keep synthesis brief -- the individual reports are the source of truth.
 
 After presenting results, remind the user: "Check that `SECURITY-AUDIT.md` is in `.gitignore` -- it contains vulnerability details that shouldn't be committed."
 
@@ -182,8 +176,8 @@ If a skill isn't available (e.g., `code-review`, `anti-slop`, `security-audit`, 
 
 ## Rules
 
-- **Parallel dispatch is mandatory.** All four agents must run concurrently. Sequential execution defeats the purpose.
-- **Don't editorialize.** Present each report as the skill produced it. No "based on these four reports, I recommend..." unless the user asks for synthesis. If they do ask, prioritize: security fixes > correctness bugs > slop cleanup > doc updates.
+- **Parallel dispatch is strongly preferred.** Run all four agents concurrently when the environment supports it. If parallel execution is unavailable, run sequentially (security first -- see Step 2).
+- **Don't editorialize.** Present each report as the skill produced it. No unsolicited synthesis across reports.
 - **Respect each skill's output format.** The anti-slop skill has its own format. The security audit writes SECURITY-AUDIT.md. The code reviewer and docs sweep have their formats. Don't normalize them into a single style.
 - **Don't duplicate work.** If a finding appears in multiple reports (e.g., dead code in both slop check and code review), that's fine -- independent auditors catching the same thing is signal, not noise.
 - **Preflight is fast.** The parallel git commands in Step 0 should take under 2 seconds. Don't skip them -- the agent prompts are much better with context.

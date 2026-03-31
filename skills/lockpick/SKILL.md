@@ -157,7 +157,7 @@ covering:
 
 ### Phase 5: Container Breakout
 
-If you're inside a container, look for escape vectors.
+If you're inside a container, look for escape vectors. **The `--privileged` flag is the critical enabler** -- it disables all security mechanisms (seccomp, AppArmor, capability drops, device cgroup) and grants full access to host devices. A privileged container is effectively root on the host.
 
 Read `references/container-breakout.md` for the full technique library
 covering:

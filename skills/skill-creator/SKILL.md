@@ -128,8 +128,8 @@ Before drafting, gather context:
    guess or rely on training data -- versions go stale fast. Pin them with dates so staleness
    is detectable later (e.g., "Docker Engine 29.3.0 (March 2026)").
 4. **Check security** -- search for recent CVEs, supply chain incidents, or known vulnerabilities
-   relevant to the domain. The custom skill collection tracks these actively (e.g., Trivy
-   CVE-2026-33634, runc CVE-2025-31133, MCP CVEs).
+   relevant to the domain. The custom skill collection tracks these actively -- verify current
+   advisories rather than relying on specific CVE numbers from training data.
 5. **Check compliance** -- if the domain touches infrastructure, containers, CI/CD, auth, or data
    handling, consider PCI-DSS 4.0 relevance. Many users work in regulated environments or run
    self-hosted infrastructure where compliance matters.

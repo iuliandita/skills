@@ -22,7 +22,7 @@ metadata:
 
 Build, review, and debug MCP servers that expose tools, resources, and prompts to AI coding
 assistants. The goal is secure, well-structured servers that follow the protocol spec and don't
-become the 43% of MCP implementations with command injection vulnerabilities.
+become yet another server with preventable injection vulnerabilities.
 
 **Target versions** (March 2026):
 - MCP specification: 2025-11-25 (current stable)
@@ -137,7 +137,7 @@ if __name__ == "__main__":
 
 ### Step 3: Implement tools securely
 
-This is where 43% of MCP servers fail. Every tool handler is an attack surface.
+Injection is the top MCP vulnerability class. Every tool handler is an attack surface.
 
 **The #1 rule: never interpolate user input into commands, queries, or paths.**
 

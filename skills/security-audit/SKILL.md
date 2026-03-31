@@ -13,7 +13,7 @@ metadata:
 
 Structured, multi-pass security audit. Combines automated tooling with manual pattern analysis, maps findings to OWASP Top 10:2025, and produces a prioritized report.
 
-Grounded in real-world OSS failures (unauthenticated admin endpoints, credential exfiltration, zip slip, auth bypass whitelists) and OpenSSF/SLSA/OWASP standards.
+Patterns drawn from real OSS incidents (unauthenticated admin endpoints, credential exfiltration, zip slip, auth bypass whitelists) and OpenSSF/SLSA/OWASP standards.
 
 ## Scope
 

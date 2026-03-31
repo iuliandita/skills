@@ -168,6 +168,7 @@ Do not load every reference by default. Pick the one that matches the failure mo
 - Fix package state before debugging services that may be broken by stale libraries.
 - Fix service configuration before declaring systemd itself broken.
 - Fix mountpoints and loader state before rebuilding initramfs or UKIs.
+- **mkinitcpio vs dracut**: check `pacman -Q mkinitcpio dracut` to determine which is installed. mkinitcpio is Arch default; CachyOS may use dracut. Do not mix them -- pick the installed one and use its config/hooks exclusively.
 - On CachyOS, separate "vanilla Arch behavior" from "optimized repo or custom kernel behavior."
 - Prefer reversible steps: snapshots, package cache, fallback kernels, saved configs.
 
@@ -234,19 +235,21 @@ When a bug looks "desktop-only," compare one clean baseline:
 
 ## Quick Triage Checklist
 
-- Package weirdness after installing one package? Check whether the system is partially upgraded.
-- Service fails after an update? Check for `.pacnew`, unit overrides, and journal errors from the current boot.
-- System no longer boots after kernel work? Verify ESP mount, bootloader, initramfs generator, and whether the kernel package actually installed its artifacts.
-- CachyOS instability after repo tuning? Re-check CPU capability, repo tier, and whether the system pulled the forked `pacman` package.
-- AUR build failures? Inspect `PKGBUILD`, key requirements, pinned dependencies, and whether the package now conflicts with official repos.
-- Hyprland desktop weirdness? Check `XDG_SESSION_TYPE`, portal backend, Xwayland availability, and user services before blaming the compositor.
-- Hyprland lock, wallpaper, or idle weirdness? Separate compositor issues from `hyprpaper`, `hypridle`, `hyprlock`, and the bar or panel layer.
-- Bluetooth audio weirdness? Check BlueZ pairing state, PipeWire node visibility, and the active card profile before reinstalling half the stack.
-- Game launches then blackscreens or crashes? Verify GPU vendor stack, Vulkan userspace, Steam multilib, and whether Gamescope or MangoHud is the real fault injector.
-- Discord or Teams cannot share a screen? Check Wayland vs X11, portal backend, PipeWire user units, and whether the browser path works before blaming Hyprland.
-- Suspend or resume breaks the desktop? Check sleep state, GPU driver logs, lock-screen path, and display manager or greetd behavior before tuning power daemons.
-- Snapshot rollback failed or booted strangely? Check subvolume layout, bootloader path, encryption, and whether rollback touched only root or also boot artifacts.
-- A weird Arch problem makes no sense? Check the gotchas reference before inventing a new theory; partial upgrades, stale portals, DKMS mismatch, and bad session startup account for a lot.
+| Symptom | First checks |
+|---------|-------------|
+| Package weirdness after install | Partial upgrade? Full sync state first |
+| Service fails after update | `.pacnew`, unit overrides, `journalctl -b` |
+| Won't boot after kernel work | ESP mount, bootloader, initramfs, kernel artifacts |
+| CachyOS unstable after repo tuning | CPU capability, repo tier, forked `pacman` |
+| AUR build failure | `PKGBUILD`, keys, pinned deps, repo conflicts |
+| Hyprland desktop weirdness | `XDG_SESSION_TYPE`, portal, Xwayland, user services |
+| Hyprland lock/wallpaper/idle | Separate compositor from `hyprpaper`/`hypridle`/`hyprlock` |
+| Bluetooth audio issues | BlueZ pairing, PipeWire nodes, card profile |
+| Game blackscreen/crash | GPU stack, Vulkan, Steam multilib, Gamescope/MangoHud |
+| Screen share broken | Wayland vs X11, portal backend, PipeWire user units |
+| Suspend/resume breaks desktop | Sleep state, GPU logs, lock-screen, display manager |
+| Snapshot rollback failed | Subvolume layout, bootloader path, encryption scope |
+| Nothing makes sense | Check gotchas reference -- partial upgrades, stale portals, DKMS drift explain most chaos |
 
 ---
 

@@ -180,6 +180,7 @@ for recovery specifics.
 - Composite index order still follows equality, sort, then range.
 - Choose tenant isolation deliberately; PCI-sensitive shared-schema designs need extra scrutiny.
 - Treat query-plan review and monitoring as normal operations, not emergency-only work.
+- Watch for `WHERE` clauses that nullify `LEFT JOIN` semantics (filtering the outer table converts it to `INNER JOIN` -- move the filter into the `ON` clause or use a subquery).
 
 ### Major version upgrades
 

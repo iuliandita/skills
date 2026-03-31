@@ -178,7 +178,7 @@ patterns (GitHub `gh pr create`, GitLab `glab mr create`, Forgejo web UI or API)
 General flow:
 1. **Create feature branch**: `git checkout -b type/short-description` (e.g., `feat/user-search`, `fix/auth-bypass`). Keep branch names lowercase, hyphenated, prefixed with type.
 2. **Make changes**: commit early, commit often. Each commit should be a logical unit.
-3. **Rebase onto base**: `git fetch origin && git rebase origin/main` (or whatever the base branch is). Resolve conflicts. Never merge the base into the feature branch. For conflict resolution tips and merge strategy guidance, see `references/forge-workflows.md` (Merge Strategies section).
+3. **Rebase onto base**: `git fetch origin && git rebase origin/main` (or whatever the base branch is). Resolve conflicts: look for `<<<<<<<`, `=======`, `>>>>>>>` markers, keep the correct content from both sides (often both additions belong), then `git add` and `git rebase --continue`. Never merge the base into the feature branch. For merge strategy guidance, see `references/forge-workflows.md`.
 4. **Push**: `git push -u origin feat/short-description`
 5. **Create PR/MR**: with a clear title (under 70 chars), body with summary + test plan.
 6. **Review cycle**: address feedback, force-push rebased commits (squash fixups).

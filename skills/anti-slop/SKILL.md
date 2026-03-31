@@ -117,13 +117,11 @@ The single biggest tell. Comments that narrate what code does instead of why.
 - Docstrings/JSDoc on every function when signatures are self-documenting
 - Inline comments on every block in a shell script or Terraform file
 
-**AI agent tells** (these almost never appear in human code):
-- Docstrings on every function regardless of complexity ("Returns the sum of two numbers" on `add(a, b)`)
-- Comments restating what the next line does in plain English on every block
-- Comments like "Error handling", "Configuration", "Main logic" as section headers in short functions
-- JSDoc/docstrings with `@param` descriptions that just repeat the parameter name ("@param name - the name")
-- Comments on obvious operations: `// increment counter`, `# check if file exists`, `// return the result`
-- Convention blindness: ignoring the repo's existing patterns to produce "generic good code" (e.g., using camelCase in a snake_case codebase, adding JSDoc when the project uses no JSDoc)
+**AI agent tells** (rarely appear in human code):
+- Docstrings on every function regardless of complexity (`add(a, b)` -> "Returns the sum")
+- Restating the next line in English on every block; section headers in short functions
+- `@param` descriptions repeating the parameter name; comments on obvious ops (`// increment counter`)
+- Convention blindness: camelCase in a snake_case repo, JSDoc in a no-JSDoc project
 
 **Fix:** Delete obvious comments. Keep only *why* comments -- business logic, workarounds, gotchas, non-obvious decisions. If code needs a *what* comment, rewrite the code. A 20-line function needs zero comments if the names are good. A 200-line module might need 3-4.
 
@@ -141,14 +139,12 @@ Error handling or validation that protects against impossible scenarios.
 - Shell scripts wrapping every command in `if ... then ... fi` instead of using `set -e`
 - Terraform `try()` / `can()` wrapping expressions that can't fail
 
-**AI agent tells** (overkill guardrails humans would never write):
-- Try/catch wrapping every single function body, catching `Error` and logging a generic message
-- Null checks on values returned from functions you control that never return null
-- Input validation on internal helper functions that only receive pre-validated data
-- `typeof x !== 'undefined'` checks when the variable was just assigned 3 lines up
+**AI agent tells** (guardrails humans would never write):
+- Try/catch wrapping every function body, catching `Error` with a generic log message
+- Null checks on values from functions you control that never return null
+- Input validation on internal helpers that only receive pre-validated data
 - Fallback defaults for required config that should crash loudly if missing
-- `if (!response.ok)` after every internal function call (not just HTTP boundaries)
-- Wrapping pure functions in error handlers "just in case"
+- `if (!response.ok)` after every internal call, not just HTTP boundaries
 
 **Fix:** Remove pointless error handling. Validate at system boundaries (user input, API responses, env vars, external data), not on every internal call. If a catch block doesn't add context, retry, or recover -- delete it.
 

@@ -189,7 +189,7 @@ EOF
 - **`--check` flag**: `docker build --check .` validates Dockerfile without building (dry-run lint)
 - **SLSA provenance**: `docker build --provenance=true --sbom=true .` attaches attestations
 
-**`docker init`**: scaffolds Dockerfile + compose.yaml + .dockerignore for detected language. Supports Go, Python, Node.js, Rust, ASP.NET, PHP, Java. Good starting point, but always review the output.
+**`docker init`**: scaffolds Dockerfile + compose.yaml + .dockerignore. Good starting point, always review.
 
 ### What NOT to write
 
@@ -256,7 +256,6 @@ services:
 - `container_name` on every service (breaks `docker compose up --scale`)
 - `restart: always` without healthcheck (infinite restart of broken containers)
 - `network_mode: host` when port mapping works
-- Custom network that every service joins (default network does this already)
 - `depends_on` without `condition:` (ordering only, no readiness)
 - `volumes:` mounting entire project dir in production (dev pattern leak)
 - `privileged: true` on a compose service instead of the host LXC
@@ -423,6 +422,7 @@ Read `references/alternative-runtimes.md` for Podman, Buildah, Skopeo, and conta
 - [ ] Separate override files for dev/prod
 - [ ] Logging config with rotation (`max-size`, `max-file`)
 - [ ] No `container_name` unless needed for external references
+- [ ] `restart: unless-stopped` (or `on-failure`) with healthcheck (never `always` without healthcheck)
 - [ ] Images pinned (no `:latest`)
 - [ ] `read_only: true` + `no-new-privileges` + `cap_drop: ALL` on production services
 

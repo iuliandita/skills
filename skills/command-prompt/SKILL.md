@@ -8,7 +8,8 @@ description: >
   choosing which shell to target. Triggers: 'shell', 'script', 'shebang', '.zshrc', '.bashrc',
   '.profile', 'dotfiles', 'completion', 'prompt' (shell context), 'alias', 'function' (shell
   context), 'source', 'export', 'PATH', 'fish', 'nushell', 'zsh', 'bash', 'sh' (scripting
-  context), 'oh-my-zsh', 'glob', 'array' (shell context), 'piping', 'redirect', 'porting'.
+  context), 'oh-my-zsh', 'glob', 'array' (shell context), 'piping', 'redirect', 'heredoc',
+  'case statement', 'read', 'trap', 'porting'.
 license: MIT
 metadata:
   source: iuliandita/skills

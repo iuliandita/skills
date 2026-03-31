@@ -239,6 +239,8 @@ Key Go template patterns:
 - Missing `.helmignore` (test/ci files end up in package)
 - `randAlphaNum` in templates deployed via ArgoCD (causes perpetual OutOfSync)
 - Mega-umbrella charts (15+ subcharts, 200+ value overrides) -- use ArgoCD ApplicationSets instead
+- `replicaCount: 1` for production HA workloads (no redundancy, single point of failure)
+- `authentication.enabled: false` or `persistence.enabled: false` in production values (data loss, unauthorized access)
 - Secrets in Helm values (use ESO/sealed-secrets/vault; Helm values end up readable in cluster Secrets)
 - Hook resources without `helm.sh/hook-delete-policy` (orphaned Jobs accumulate)
 - Using `--post-renderer` with raw executables (broken in Helm 4; must use plugin names)

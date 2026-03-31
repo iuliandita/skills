@@ -78,7 +78,7 @@ pipeline config, verify against this list:**
 - [ ] **Minimal scope**: jobs have minimum required permissions, access only needed secrets, and run only needed steps.
 - [ ] **No `allow_failure` without justification**: if a job can fail, explain why in a comment.
 - [ ] **Version pinning on tools**: `node:22`, not `node:lts`. `python:3.13`, not `python:3`. Specific versions prevent silent breakage.
-- [ ] **No expression injection** (GitHub Actions): `${{ }}` expressions never used directly in `run:` blocks. Assign to `env:` first. `github.event.*` is attacker-controlled; `github.ref_name` is also injectable via crafted tag names.
+- [ ] **No expression injection** (GitHub Actions): `${{ }}` expressions never used directly in `run:` blocks. Assign to `env:` first. `github.event.*` is attacker-controlled. Avoid `github.ref_name` in security-sensitive contexts (injectable via crafted tag/branch names).
 
 ---
 

@@ -31,7 +31,7 @@ performance tuning.
 | Tool | Version | Notes |
 |------|---------|-------|
 | Caddy | 2.11.2 | Auto-HTTPS, Caddyfile + JSON API |
-| Nginx | 1.28.3 stable / 1.29.7 mainline | 6 CVEs patched Mar 2026 (dav, mp4, mail, OCSP) |
+| Nginx | 1.28.3 stable / 1.29.7 mainline | Multiple CVEs patched early 2026 -- verify current advisories |
 | Traefik | 3.6.12 | Gateway API native, v2 EOL approaching |
 | HAProxy | 3.3.6 stable / 3.2.15 LTS | LTS EOL 2030-Q2 |
 | WireGuard tools | 1.0.20260223 | Kernel module + userspace tools |

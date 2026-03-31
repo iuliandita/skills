@@ -327,7 +327,7 @@ The Terraform ecosystem has real supply chain risks (March 2026):
 - **Module supply chain is weak** -- modules have no hash verification (unlike the provider lock file). Typosquatting on the public registry is a demonstrated attack vector (NDC Oslo 2025).
 - **Terrascan: dead.** Archived Nov 2025. Migrate to Checkov or Trivy.
 - **tfsec: merged into Trivy.** Still works standalone but no new development.
-- **Trivy IaC scanning**: use v0.69.3 only. v0.69.4/5/6 contained credential-stealing malware (CVE-2026-33634). If any CI ran these versions between March 19-23 2026, rotate ALL secrets. Pin to SHA.
+- **Trivy IaC scanning**: pin to a verified version in CI. Check release notes before updating -- supply chain attacks on CI tools are real. Pin to SHA digest, not mutable tag.
 - **CDKTF: dead.** Deprecated Dec 2025, archived. Migrate to HCL.
 
 ---

@@ -53,7 +53,7 @@ skill-refiner [--iterations N] [--mode MODE] [--secondary HARNESS] [--threshold 
 | `--iterations` | 10 | Maximum iterations for phase 1 |
 | `--mode` | circuit-breaker | `auto`, `circuit-breaker`, or `step` |
 | `--secondary` | auto-detect | Secondary harness for cross-model review, or `none` |
-| `--threshold` | 85 | Focus threshold -- skip skills scoring above this |
+| `--threshold` | 85 | Focus threshold -- skip skills scoring above this (user can override max) |
 | `--plateau` | 2 | Minimum score delta to keep iterating |
 
 **Environment override:** `SKILL_REFINER_SECONDARY=<harness>` (CLI flag takes precedence)
