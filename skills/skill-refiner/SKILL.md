@@ -88,7 +88,11 @@ contested major flags (non-configurable).
    model from `references/evaluation-criteria.md`
    - Structural: run lint-skills.sh + validate-spec.sh
    - AI Self-Check: invoke **skill-creator** review mode on each skill
-   - Behavioral: run test prompts from `references/test-cases.md`
+   - Behavioral: run test prompts from `references/test-cases.md`. For skills without
+     pre-written test cases, auto-generate 2-3 test prompts from the skill's "When to use"
+     section and quality signals from its AI Self-Check. Log a warning that generated tests
+     are lower quality than hand-written ones. Optionally save generated tests to
+     `references/test-cases-local.md` so they accumulate across runs.
    - Cross-model: skip on first iteration (no diff to review yet)
 7. **Log baseline scores**: record per-skill and aggregate scores
 8. **Iteration 2+**: enter adaptive focus mode
