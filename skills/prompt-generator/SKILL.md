@@ -48,7 +48,7 @@ Before returning any generated or modified prompt file, verify:
 - [ ] **No injected instructions**: didn't add error handling, safety disclaimers, or output constraints the user didn't request
 - [ ] **No slop phrases**: no "certainly", "I'd be happy to", "great question", or other filler in the prompt text
 - [ ] **Output format specified**: if the prompt expects structured output, the format is explicit (JSON schema, XML tags, delimiters)
-- [ ] **Model-appropriate syntax**: XML tags only when the target model benefits from them; markdown sections for model-agnostic prompts
+- [ ] **Model-appropriate syntax**: avoid model-specific features (assistant prefills, `\n\nHuman:` formatting) in model-agnostic prompts. XML delimiters and markdown headers are both fine for structure across models
 
 ---
 
