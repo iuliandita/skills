@@ -57,7 +57,7 @@ Scan for changes in: configuration, infrastructure, service deployments, scripts
 
 ### 2. Categorize Doc Impact
 
-Map changes to documentation targets. Adapt this table to the project's doc structure:
+Map changes to documentation targets. Common instruction file names: `CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, `CODEX.md`. Adapt to the project's doc structure:
 
 | Change Type | Likely Docs to Update |
 |-------------|----------------------|

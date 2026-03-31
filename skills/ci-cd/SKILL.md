@@ -179,6 +179,29 @@ Forgejo: manual dispatch (`workflow_dispatch`).
 
 ---
 
+## Monorepo Patterns
+
+When a repo contains multiple services sharing a common library:
+
+### Path-based triggering
+- **GitHub Actions**: `on.push.paths` / `on.pull_request.paths` to scope workflows per service
+- **GitLab CI/CD**: `rules: changes: paths:` with `compare_to: refs/heads/main`
+- **Forgejo**: same as GitHub Actions (`on.push.paths`)
+
+### Shared library detection
+If `libs/common/` changes, rebuild all services that depend on it:
+- List dependent services in a matrix or trigger all service workflows
+- `paths` filters accept globs: `paths: ['services/api/**', 'libs/common/**']`
+
+### Selective builds
+Build only what changed. Two approaches:
+1. **Per-service workflows** with `paths:` filters (simplest, recommended)
+2. **Single workflow with matrix** + change detection job that outputs which services need building
+
+**Rule**: always rebuild when the shared lib changes. A "nothing changed" optimization that misses a shared dependency is worse than rebuilding everything.
+
+---
+
 ## Forgejo CI/CD
 
 Forgejo Actions is "designed to be familiar, not designed to be compatible" with GitHub Actions.
