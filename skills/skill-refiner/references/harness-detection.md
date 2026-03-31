@@ -8,10 +8,10 @@ How skill-refiner detects and validates AI CLI harnesses for cross-model peer re
 
 | Harness | Binary | Config Paths | Env Vars | Smoke Test |
 |---------|--------|-------------|----------|------------|
-| Claude Code | `claude` | `~/.claude/settings.json` | `ANTHROPIC_API_KEY` | `claude -p "respond with OK"` |
-| Codex | `codex` | `~/.codex/config.toml` | `OPENAI_API_KEY` | `codex exec "respond with OK"` |
+| Claude Code | `claude` | `~/.claude/settings.json` | `ANTHROPIC_API_KEY` | `claude -p "respond with PONG"` |
+| Codex | `codex` | `~/.codex/config.toml` | `OPENAI_API_KEY` | `codex exec "respond with PONG"` |
 | OpenCode | `opencode` | project-level `.opencode/` (verify) | varies by provider | check `opencode --help` |
-| Aider | `aider` | `~/.aider.conf.yml` | `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` | `aider --message "respond with OK" --no-git --yes` |
+| Aider | `aider` | `~/.aider.conf.yml` | `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` | `aider --message "respond with PONG" --no-git --yes` |
 | Goose | `goose` | `~/.config/goose/config.yaml` | varies by provider | check `goose --help` |
 
 **Important:** Smoke test commands are approximate. Verify against current CLI versions
@@ -44,13 +44,19 @@ If neither config file nor env var exists, skip to next harness.
 
 ### Step 3: Smoke Test
 
-Send a trivial prompt, verify a response comes back:
+Send a trivial prompt with a distinct canary word, verify it appears in the output:
 
 ```bash
-timeout 30 <smoke_test_command> 2>/dev/null
+output=$(timeout 60 <smoke_test_command> 2>&1)
+echo "$output" | grep -qi "pong"
 ```
 
-30-second timeout. If no response, error, or timeout, skip to next harness.
+Use "respond with PONG" as the prompt (not "OK" -- too likely to match banner text).
+60-second timeout -- some harnesses (Codex) run MCP startup and emit verbose banners
+(10+ lines of config metadata) before the model response. Never truncate output with
+`head` or assume the response appears in the first N lines. Grep the full output.
+
+If no match, error, or timeout, skip to next harness.
 
 ---
 

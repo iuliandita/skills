@@ -1,6 +1,6 @@
 ---
 name: update-docs
-description: "Use when a session involved infrastructure, configuration, architecture, or operational changes. Also use when explicitly asked to update docs, refresh documentation, or at the end of a session after significant work. Triggers: new gotchas discovered, changed IPs/ports/versions, new services added, runbook-worthy procedures, or project instruction files (`AGENTS.md` or equivalent) growing stale. Do NOT use for writing new documentation from scratch."
+description: "Use when a session involved infrastructure, configuration, architecture, or operational changes. Also use when explicitly asked to update docs, refresh documentation, or at the end of a session after significant work. Triggers: 'update docs', 'refresh docs', 'sync docs', 'update CLAUDE.md', 'update AGENTS.md', 'update README', new gotchas discovered, changed IPs/ports/versions, new services added, runbook-worthy procedures, or project instruction files growing stale. Do NOT use for writing new documentation from scratch."
 license: MIT
 metadata:
   source: iuliandita/skills
@@ -91,6 +91,11 @@ Map changes to documentation targets. Adapt this table to the project's doc stru
 - Workarounds for known issues
 - Operational constraints (e.g., "serial: 1 required -- removing it updates all nodes simultaneously")
 - Decisions and their rationale
+
+#### When no docs exist yet:
+- Don't create a full documentation set from scratch (out of scope)
+- DO add a minimal entry to the project instruction file (CLAUDE.md, AGENTS.md, or equivalent) with the gotcha or operational note that prompted this
+- If the project has no instruction file at all, note this to the user and suggest creating one with the essential gotcha. Don't block on it.
 
 #### What NOT to add:
 - Default values readable from config files or manifests

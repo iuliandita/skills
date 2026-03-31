@@ -36,6 +36,19 @@ Every finding falls into one of three categories:
 - One-off prompt authoring or prompt templates -- use prompt-generator
 - Session-end documentation maintenance -- use update-docs
 
+## AI Self-Check
+
+Before returning any anti-slop audit, verify:
+
+- [ ] **Rewrites compile/parse**: every "after" code snippet is syntactically valid in the target language
+- [ ] **Security patterns not flagged**: auth, CORS, input validation, rate limiting, TLS -- these are correct even if verbose (check the "What NOT to Flag" list)
+- [ ] **Framework idioms respected**: what looks like over-abstraction might be the framework's expected pattern (e.g., Next.js layouts, Django class-based views, Terraform module structure)
+- [ ] **Existing project conventions preserved**: the repo's naming style, comment density, and abstraction level take precedence over generic "clean code" preferences
+- [ ] **Severity is honest**: don't inflate Low findings to Medium to pad the report
+- [ ] **No hallucinated replacements**: verify that suggested modern alternatives actually exist in the target language version (e.g., `match` requires Python 3.10+, `LazyLock` requires Rust 1.80+)
+
+---
+
 ## Workflow
 
 ### Step 1: Scope the audit
@@ -72,7 +85,7 @@ Linters handle syntax issues, unused imports, and known anti-patterns mechanical
 
 Use Grep, Glob, and Read. Read files before flagging -- context matters. A pattern that looks like slop in isolation might be justified.
 
-Classify each finding by action and severity:
+Classify each finding by axis (Noise/Lies/Soul -- see above), action, and severity:
 
 **Action:**
 - **Fix** -- clearly wrong or wasteful, should change
@@ -353,7 +366,7 @@ These look like slop but aren't:
 
 #### [Category Name] ([count] items)
 
-**[action]** ([severity]) `path/to/file:line` -- [description]
+**[action]** ([severity], [axis]) `path/to/file:line` -- [description]
 ```[language]
 // before
 [code snippet]
