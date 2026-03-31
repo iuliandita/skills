@@ -12,7 +12,7 @@ description: >
 license: MIT
 compatibility: Requires SSH access to OPNsense or pfSense appliance
 metadata:
-  source: custom
+  source: iuliandita/skills
   date_added: "2026-03-30"
   effort: high
 ---

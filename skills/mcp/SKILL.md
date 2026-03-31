@@ -13,7 +13,7 @@ description: >
 license: MIT
 compatibility: Requires Node.js or Python runtime
 metadata:
-  source: custom
+  source: iuliandita/skills
   date_added: "2026-03-30"
   effort: high
 ---

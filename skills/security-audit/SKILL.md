@@ -4,7 +4,7 @@ description: "Use when the user mentions security audit, security review, vulner
 license: MIT
 compatibility: "Optional: gitleaks, trivy, semgrep, bandit, checkov, scorecard"
 metadata:
-  source: custom
+  source: iuliandita/skills
   date_added: "2026-03-25"
   effort: high
 ---

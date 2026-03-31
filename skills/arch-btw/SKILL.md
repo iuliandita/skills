@@ -15,7 +15,7 @@ description: >
 license: MIT
 compatibility: Requires Arch Linux, CachyOS, or Arch-based distro with pacman
 metadata:
-  source: custom
+  source: iuliandita/skills
   date_added: "2026-03-26"
   effort: high
 ---

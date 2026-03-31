@@ -4,7 +4,7 @@ description: "Use when writing, reviewing, or architecting Kubernetes manifests,
 license: MIT
 compatibility: "Requires kubectl. Optional: helm, kustomize, kube-score, cosign"
 metadata:
-  source: custom
+  source: iuliandita/skills
   date_added: "2026-03-24"
   effort: high
 ---

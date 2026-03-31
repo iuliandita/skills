@@ -51,8 +51,10 @@ check_frontmatter() {
 
   local src
   src=$(grep -m1 '^  source:' "$file" 2>/dev/null | sed 's/.*source: *//' || true)
-  if [[ "$src" != "custom" ]]; then
-    error "$name: metadata.source must be 'custom', got '$src'"
+  if [[ -z "$src" ]]; then
+    error "$name: metadata.source is empty"
+  elif [[ "$src" != "custom" && ! "$src" =~ ^[a-zA-Z0-9._-]+/[a-zA-Z0-9._-]+$ ]]; then
+    error "$name: metadata.source must be 'custom' or 'owner/repo' format, got '$src'"
   fi
 
   local eff

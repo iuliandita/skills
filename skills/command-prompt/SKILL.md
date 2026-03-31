@@ -11,7 +11,7 @@ description: >
   context), 'oh-my-zsh', 'glob', 'array' (shell context), 'piping', 'redirect', 'porting'.
 license: MIT
 metadata:
-  source: custom
+  source: iuliandita/skills
   date_added: "2026-03-25"
   effort: medium
 ---

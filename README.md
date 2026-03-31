@@ -8,7 +8,7 @@
 npx skills add iuliandita/skills
 ```
 
-**20 production-tested skills** -- Kubernetes, Terraform, Docker, Ansible, CI/CD, databases, Arch Linux, networking, MCP servers, security audits, pentesting, code review, and more.
+**21 production-tested skills** -- Kubernetes, Terraform, Docker, Ansible, CI/CD, databases, Arch Linux, networking, MCP servers, security audits, pentesting, code review, and more.
 
 Built on the [Agent Skills open standard](https://agentskills.io/specification). Works with any tool that supports it.
 
@@ -19,7 +19,7 @@ Built on the [Agent Skills open standard](https://agentskills.io/specification).
 
 ---
 
-`kubernetes` `terraform` `docker` `ansible` `archlinux` `cachyos` `pacman` `paru` `aur` `systemd` `helm` `argocd` `ci-cd` `github-actions` `gitlab-ci` `postgresql` `mongodb` `mysql` `networking` `dns` `wireguard` `tailscale` `vpn` `nftables` `opnsense` `pfsense` `mcp` `model-context-protocol` `security-audit` `owasp` `pentesting` `privilege-escalation` `ctf` `code-review` `git` `shell` `zsh` `bash` `prompt-engineering` `pci-dss` `compliance` `devops` `infrastructure-as-code` `iac` `containers` `podman` `buildah` `sealed-secrets` `haproxy` `caddy` `traefik` `nginx`
+`kubernetes` `terraform` `docker` `ansible` `archlinux` `cachyos` `pacman` `paru` `aur` `systemd` `helm` `argocd` `ci-cd` `github-actions` `gitlab-ci` `postgresql` `mongodb` `mysql` `networking` `dns` `wireguard` `tailscale` `vpn` `nftables` `opnsense` `pfsense` `mcp` `model-context-protocol` `security-audit` `owasp` `pentesting` `privilege-escalation` `ctf` `code-review` `git` `shell` `zsh` `bash` `prompt-engineering` `pci-dss` `compliance` `devops` `infrastructure-as-code` `iac` `containers` `podman` `buildah` `sealed-secrets` `haproxy` `caddy` `traefik` `nginx` `autoresearch` `self-improving`
 
 ---
 
@@ -46,9 +46,23 @@ Every skill is researched well beyond any model's training cutoff. We're talking
 
 This is a growing collection. New skills get added as they're built, tested, and proven useful. If you're using an AI coding tool without custom skills, you're leaving a lot of capability on the table.
 
+## NEW: Self-Improving Skills
+
+**skill-refiner** brings [Karpathy's AutoResearch](https://github.com/karpathy/autoresearch) pattern to AI skill collections. Instead of manually reviewing and improving skills one by one, skill-refiner runs an automated loop that scores, improves, and validates every skill in the collection -- then does it again.
+
+The loop: **Score -> Improve -> Verify -> Keep or Revert -> Repeat.**
+
+- **Adaptive focus** -- first pass scores everything, then subsequent iterations zero in on the weakest skills until they're brought up to standard
+- **Three-layer evaluation** -- lint validation (structural), AI self-check (quality), and behavioral testing against synthetic tasks (does the skill actually work?)
+- **Cross-model peer review** -- if you have multiple AI harnesses installed (Claude + Codex, for example), the secondary model reviews every improvement the primary makes. Adversarial evaluation catches single-model blind spots.
+- **Karpathy gate** -- only changes that measurably improve a skill's score survive. Everything else gets reverted. No drift, no degeneration, monotonic improvement.
+- **Self-improvement** -- skill-refiner improves its own evaluation infrastructure (including itself) in a separate meta-phase with human review checkpoints
+
+10 iterations. 21 skills. One command.
+
 ## What's in the box
 
-20 production-tested skills covering:
+21 production-tested skills covering:
 
 ### Infrastructure & Operations
 
@@ -93,6 +107,7 @@ This is a growing collection. New skills get added as they're built, tested, and
 |-------|-------------|
 | **prompt-generator** | Turn scattered ideas into structured LLM prompts -- system prompts, templates, prompt engineering |
 | **skill-creator** | Create, review, audit, and optimize AI tool skills -- consistency checks, overlap detection |
+| **skill-refiner** | Self-improving loop -- iterative quality sweeps with cross-model review, inspired by Karpathy's AutoResearch |
 | **update-docs** | Post-session documentation sweep -- captures gotchas, syncs instruction files, trims bloat |
 
 ## How they're built
@@ -108,6 +123,9 @@ Each skill follows the [Agent Skills specification](https://agentskills.io/speci
 ## Install
 
 ### Quick install (via [skills.sh](https://skills.sh))
+
+> **Note:** `npx skills add` is not yet available -- pending a PR merge at
+> [skills.sh](https://skills.sh). Use the bundled installer below until then.
 
 ```bash
 # All skills

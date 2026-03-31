@@ -18,7 +18,7 @@ description: >
 license: MIT
 compatibility: Requires authorized access to target Linux systems and bash/python
 metadata:
-  source: custom
+  source: iuliandita/skills
   date_added: "2026-03-25"
   effort: high
 ---

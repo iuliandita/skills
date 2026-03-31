@@ -15,7 +15,7 @@ paths:
   - ".gitlab-ci.yml"
   - ".forgejo/workflows/*.yml"
 metadata:
-  source: custom
+  source: iuliandita/skills
   date_added: "2026-03-24"
   effort: high
 ---

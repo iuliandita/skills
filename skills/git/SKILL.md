@@ -17,7 +17,7 @@ description: >
 license: MIT
 compatibility: "Requires git. Optional: gh (GitHub CLI), glab (GitLab CLI)"
 metadata:
-  source: custom
+  source: iuliandita/skills
   date_added: "2026-03-24"
   effort: high
 ---

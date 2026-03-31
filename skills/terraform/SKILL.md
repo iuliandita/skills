@@ -4,7 +4,7 @@ description: "Use when writing, reviewing, or architecting Terraform or OpenTofu
 license: MIT
 compatibility: "Requires terraform or tofu CLI. Optional: tflint, checkov, conftest"
 metadata:
-  source: custom
+  source: iuliandita/skills
   date_added: "2026-03-24"
   effort: high
 ---

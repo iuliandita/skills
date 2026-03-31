@@ -3,7 +3,7 @@ name: full-review
 description: "Use when the user wants a full repo review, complete audit, quality gate, or asks for /full-review. Also trigger on 'review everything', 'audit this repo', 'full check', 'run all checks', or any request to run multiple review skills together."
 license: MIT
 metadata:
-  source: custom
+  source: iuliandita/skills
   date_added: "2026-03-22"
   effort: high
 ---

@@ -15,7 +15,7 @@ description: >
 license: MIT
 compatibility: "Requires Linux. Tools vary by task: nftables, WireGuard, dig, mtr, tcpdump"
 metadata:
-  source: custom
+  source: iuliandita/skills
   date_added: "2026-03-25"
   effort: high
 ---

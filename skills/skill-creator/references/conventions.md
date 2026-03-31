@@ -82,7 +82,7 @@ description: >                # max 1024 chars, trigger-optimized
   Use when... Also use for... Triggers: '...', '...'.
 license: MIT                  # Agent Skills spec field
 metadata:
-  source: custom              # always "custom" for local skills
+  source: iuliandita/skills   # collection identifier (owner/repo); use "custom" for unpublished skills
   date_added: "YYYY-MM-DD"   # ISO date, quoted
   effort: low|medium|high     # determines expected complexity/token usage
 ---
@@ -428,7 +428,7 @@ Use this skill even when the user doesn't explicitly say "git" but is clearly do
 
 ## 9. Skill Inventory (March 2026)
 
-### Published skills (20)
+### Published skills (21)
 
 | Skill | Effort | Date Added | Domain |
 |-------|--------|-----------|--------|
@@ -449,6 +449,7 @@ Use this skill even when the user doesn't explicitly say "git" but is clearly do
 | networking | high | 2026-03-25 | DNS, reverse proxies, VPNs, nftables, HA |
 | prompt-generator | medium | 2026-03-25 | LLM prompt structuring |
 | security-audit | high | 2026-03-25 | Application security review |
+| skill-refiner | high | 2026-03-31 | Iterative self-improvement loop |
 | skill-creator | high | 2026-03-25 | Skill lifecycle management |
 | terraform | high | 2026-03-24 | Infrastructure-as-code |
 | update-docs | low | 2026-03-25 | Documentation sweep |

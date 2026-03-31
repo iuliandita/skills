@@ -16,7 +16,7 @@ description: >
 license: MIT
 compatibility: "Requires one or more of: psql, mongosh, mysql, or sqlcmd"
 metadata:
-  source: custom
+  source: iuliandita/skills
   date_added: "2026-03-24"
   effort: high
 ---

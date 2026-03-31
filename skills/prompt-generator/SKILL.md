@@ -11,7 +11,7 @@ description: >
   skill-creator), or creating inline string prompts within application code.
 license: MIT
 metadata:
-  source: custom
+  source: iuliandita/skills
   date_added: "2026-03-25"
   effort: medium
 ---

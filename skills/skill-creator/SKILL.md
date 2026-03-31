@@ -11,7 +11,7 @@ description: >
 license: MIT
 compatibility: "Optional: git (for freshness and gitignore filtering)"
 metadata:
-  source: custom
+  source: iuliandita/skills
   date_added: "2026-03-25"
   effort: high
 ---
