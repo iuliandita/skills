@@ -14,6 +14,7 @@ when creating or reviewing skills to ensure consistency.
 5. Reference File Organization
 6. Cross-Skill Patterns
 7. AI Self-Check Patterns
+7.5. Diagnostic Skill Pitfalls
 8. Trigger Description Patterns
 9. Skill Inventory (March 2026)
 
@@ -68,6 +69,12 @@ an open field allows many routes (high freedom).
 
 When in doubt, start with higher freedom and tighten only where you've seen the agent consistently
 get it wrong. Over-constraining a skill makes it brittle and harder to maintain.
+
+**Exception: diagnostic and monitoring skills.** These should default to **low freedom**. Diagnostic
+tasks are fragile -- a missing flag, a misinterpreted metric, or an improvised check can silently
+report the wrong result. Define the exact commands to run, not the goal. "Verify the backup
+succeeded" invites the agent to invent checks with wrong paths and service names. "Run
+`velero backup describe $LATEST --details` and check Phase is Completed" does not.
 
 ---
 
@@ -384,6 +391,69 @@ AI tools consistently produce the same [domain] mistakes. **Before returning any
 | **Git** | authorship correct, no secrets staged, no AI attribution, no --no-verify |
 | **Databases** | no plaintext secrets, encryption at rest, audit logging, backup strategy |
 | **General code** | no hardcoded secrets, input validation at boundaries, error propagation |
+
+---
+
+## 7.5 Diagnostic Skill Pitfalls
+
+Skills that run commands, check health, or interpret system output have failure modes that
+don't apply to code-review or config-generation skills. These patterns come from real false
+positives in production health checks.
+
+### Silent failure masking
+
+Never use `2>/dev/null` on diagnostic commands. A permission error or SSH failure must surface
+clearly, not be masked as "resource not found." The agent can't fix what it can't see.
+
+**Bad:** `ssh node "ls /var/lib/snapshots" 2>/dev/null || echo "no snapshots"`
+**Good:** `ssh node "ls /var/lib/snapshots" 2>&1` (then parse the error)
+
+Acceptable uses of `2>/dev/null`: cleanup operations, cosmetic output trimming, optional tool
+detection (`command -v foo 2>/dev/null`). Not acceptable: any command whose failure reason
+matters for the diagnosis.
+
+### Failure mode differentiation
+
+When a check fails, report WHY, not just THAT it failed. "Unreachable" and "not present" are
+different findings with different remediation paths.
+
+| Failure | Looks like | Actually means |
+|---------|-----------|----------------|
+| SSH timeout | "resource missing" | network/firewall issue |
+| Permission denied | "resource missing" | sudo needed, agent ran as wrong user |
+| Empty output | "all clear" | command failed silently |
+| Tool not found | "feature unavailable" | missing dependency |
+
+### Metric misinterpretation
+
+Document what each metric actually measures. Common traps:
+
+- **LVM thin `data_percent`** = blocks ever written, not filesystem usage
+- **K8s HPA `targetCPU`** = percentage of CPU *request*, not actual CPU
+- **Docker image size** = virtual size including shared layers, not disk footprint
+- **`df` vs `du`** = filesystem allocation vs actual content size
+
+When a skill uses a metric for status (GREEN/YELLOW/RED), state what the metric represents
+and what it does NOT represent. Agents will misinterpret ambiguous metrics.
+
+### Schedule-aware staleness
+
+If a resource has a defined schedule (daily backups, weekly rotations, cron jobs), compare
+recency against that schedule, not a fixed threshold. A 3-day-old backup is overdue for a
+daily schedule but current for a weekly one. Skills should instruct the agent to read the
+schedule before judging freshness.
+
+### Agent improvisation in diagnostics
+
+Agents improvise. They see a monitoring context and add their own checks -- using wrong
+service names, wrong paths, or wrong assumptions. The fix is twofold:
+
+1. **Make the reference file comprehensive** so the agent doesn't feel compelled to freelance
+2. **Add an explicit rule**: "Run ONLY the commands listed. Note missing coverage as a
+   suggestion, don't execute it."
+
+Negative constraints ("don't do X") are weak for LLMs. Comprehensive positive definitions
+("do exactly these things") are the real defense.
 
 ---
 

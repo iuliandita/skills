@@ -45,7 +45,7 @@ Patterns drawn from real OSS incidents (unauthenticated admin endpoints, credent
 1. Detect project language(s) and framework(s) from manifest files (`package.json`, `requirements.txt`, `go.mod`, `Cargo.toml`, etc.)
 2. Check which tools are available (run in parallel, each with `; true` to avoid failing on missing):
    - `command -v semgrep`, `command -v gitleaks`, `command -v trufflehog`, `command -v trivy`, `command -v scorecard`, `command -v tfsec`, `command -v checkov`
-3. Missing tools: note as "skipped (not installed)" in the report. Don't install without asking.
+3. Missing tools: note as "skipped (not installed)" in the report. Don't install without asking. **Critical tools** (at least one must be available): `gitleaks` or `trufflehog` (secret scanning), `semgrep` (static analysis). If all critical tools are missing, warn that the audit will be manual-only and significantly less thorough.
 4. Determine scope: user-specified files > uncommitted changes (offer choice) > full repo.
 5. Record current commit SHA for the report.
 

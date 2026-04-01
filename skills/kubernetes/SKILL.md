@@ -455,3 +455,4 @@ These are non-negotiable. Violating any of these is a bug.
 11. **Gateway API for new external access.** Ingress-NGINX retired March 2026. Stop deploying new Ingress resources.
 12. **Sign images with cosign.** Verify at admission. SLSA Level 2 minimum for production.
 13. **Run the AI self-check.** Every generated manifest gets verified against the checklist above before returning.
+14. **Understand resource metric semantics.** HPA `targetCPUUtilizationPercentage` is percentage of CPU *request*, not actual CPU capacity. A pod requesting 100m with 80% target scales at 80m usage, regardless of the node's total CPU. Don't confuse requests (scheduling floor), limits (enforcement ceiling), and actual usage (what the container is consuming right now).
