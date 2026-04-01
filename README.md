@@ -161,6 +161,11 @@ git clone https://github.com/iuliandita/skills.git /tmp/skills-install
 /tmp/skills-install/install.sh --tool windsurf
 rm -rf /tmp/skills-install
 
+# Install to a generic portable directory
+git clone https://github.com/iuliandita/skills.git /tmp/skills-install
+/tmp/skills-install/install.sh --tool portable --dest ~/.skills
+rm -rf /tmp/skills-install
+
 # Pick and choose
 git clone https://github.com/iuliandita/skills.git /tmp/skills-install
 /tmp/skills-install/install.sh --tool claude kubernetes docker terraform ansible
@@ -176,9 +181,10 @@ cp -r skills/kubernetes ~/.claude/skills/kubernetes
 cp -r skills/kubernetes ~/.codex/skills/kubernetes
 cp -r skills/kubernetes ~/.cursor/skills/kubernetes
 cp -r skills/kubernetes ~/.windsurf/skills/kubernetes
+cp -r skills/kubernetes ~/.config/opencode/skills/kubernetes
 ```
 
-Claude, Codex, Cursor, and Windsurf can use the same `SKILL.md` directory structure for personal skills. The bundled installer supports `--tool claude`, `--tool codex`, `--tool cursor`, `--tool windsurf`, and `--tool opencode`.
+The bundled installer supports `--tool claude`, `--tool codex`, `--tool cursor`, `--tool windsurf`, `--tool opencode`, and `--tool portable` (for a generic `~/.skills` directory or any `--dest` path).
 
 ## Requirements
 
@@ -222,9 +228,9 @@ skills/
       ...
   ...
 install.sh                # Installer script
-publish.sh                # Maintainer sync script
 scripts/
   lint-skills.sh          # Collection linter
+  validate-spec.sh        # Agent Skills spec validator
 ```
 
 ## Contributing

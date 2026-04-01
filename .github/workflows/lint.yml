@@ -6,10 +6,14 @@ on:
     paths:
       - 'skills/**'
       - 'scripts/**'
+      - 'install.sh'
+      - '.github/workflows/lint.yml'
   pull_request:
     paths:
       - 'skills/**'
       - 'scripts/**'
+      - 'install.sh'
+      - '.github/workflows/lint.yml'
 
 jobs:
   lint:
@@ -27,9 +31,4 @@ jobs:
         run: bash -n install.sh
 
       - name: Shellcheck scripts
-        run: |
-          if command -v shellcheck >/dev/null 2>&1; then
-            shellcheck scripts/lint-skills.sh scripts/validate-spec.sh install.sh
-          else
-            echo "shellcheck not available, skipping"
-          fi
+        run: shellcheck scripts/lint-skills.sh scripts/validate-spec.sh install.sh

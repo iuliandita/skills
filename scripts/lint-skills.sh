@@ -32,25 +32,29 @@ check_private_refs() {
 check_frontmatter() {
   local file="$1" name="$2"
 
+  # Extract frontmatter block (between first --- and second ---)
+  local fm
+  fm=$(sed -n '2,/^---$/{ /^---$/d; p; }' "$file")
+
   # Required top-level fields (Agent Skills spec)
   for field in name description license; do
-    if ! grep -q "^${field}:" "$file"; then
+    if ! echo "$fm" | grep -q "^${field}:"; then
       error "$name: missing frontmatter field '$field'"
     fi
   done
 
   # Required metadata fields (custom, nested under metadata:)
-  if ! grep -q '^metadata:' "$file"; then
+  if ! echo "$fm" | grep -q '^metadata:'; then
     error "$name: missing 'metadata:' block"
   fi
   for field in source date_added effort; do
-    if ! grep -q "^  ${field}:" "$file"; then
+    if ! echo "$fm" | grep -q "^  ${field}:"; then
       error "$name: missing metadata field '$field'"
     fi
   done
 
   local src
-  src=$(grep -m1 '^  source:' "$file" 2>/dev/null | sed 's/.*source: *//' || true)
+  src=$(echo "$fm" | grep -m1 '^  source:' 2>/dev/null | sed 's/.*source: *//' || true)
   if [[ -z "$src" ]]; then
     error "$name: metadata.source is empty"
   elif [[ "$src" != "custom" && ! "$src" =~ ^[a-zA-Z0-9._-]+/[a-zA-Z0-9._-]+$ ]]; then
@@ -58,14 +62,14 @@ check_frontmatter() {
   fi
 
   local eff
-  eff=$(grep -m1 '^  effort:' "$file" 2>/dev/null | sed 's/.*effort: *//' || true)
+  eff=$(echo "$fm" | grep -m1 '^  effort:' 2>/dev/null | sed 's/.*effort: *//' || true)
   if [[ "$eff" != "low" && "$eff" != "medium" && "$eff" != "high" ]]; then
     error "$name: metadata.effort must be low/medium/high, got '$eff'"
   fi
 
   # Validate name matches directory (Agent Skills spec requirement)
   local fm_name
-  fm_name=$(grep -m1 '^name:' "$file" 2>/dev/null | sed 's/name: *//' || true)
+  fm_name=$(echo "$fm" | grep -m1 '^name:' 2>/dev/null | sed 's/name: *//' || true)
   if [[ "$fm_name" != "$name" ]]; then
     error "$name: frontmatter name '$fm_name' does not match directory name"
   fi
@@ -88,11 +92,12 @@ check_ascii() {
   bad_lines=$(grep -Pn '[^\x00-\x7F]' "$file" 2>/dev/null || true)
   if [[ -n "$bad_lines" ]]; then
     while IFS= read -r line; do
-      # Allow emoji status indicators (they're functional, not decorative)
-      if echo "$line" | grep -Pq '[\x{1F534}\x{1F7E2}\x{1F7E1}\x{1F535}\x{26A1}\x{1F3AF}\x{1F480}]' 2>/dev/null; then
-        continue
+      # Strip allowed emoji status indicators, then check for remaining non-ASCII
+      local stripped
+      stripped=$(echo "$line" | perl -CSD -pe 's/[\x{1F534}\x{1F7E2}\x{1F7E1}\x{1F535}\x{26A1}\x{1F3AF}\x{1F480}]//g' 2>/dev/null || echo "$line")
+      if echo "$stripped" | grep -Pq '[^\x00-\x7F]' 2>/dev/null; then
+        error "$name: non-ASCII character at $line"
       fi
-      error "$name: non-ASCII character at $line"
     done <<< "$bad_lines"
   fi
 }
@@ -107,24 +112,6 @@ check_length() {
   elif (( lines > 450 )); then
     warn "$name: SKILL.md is $lines lines (approaching 500 limit)"
   fi
-}
-
-# ── Cross-reference checks ─────────────────────────────────────────────
-check_crossrefs() {
-  local file="$1" name="$2"
-  # Extract skill names from bold references like **skill-name**
-  local refs
-  refs=$(grep -oP '\*\*([a-z][-a-z0-9]*)\*\*' "$file" | sed 's/\*//g' | sort -u || true)
-  for ref in $refs; do
-    # Skip common bold words that aren't skill references
-    case "$ref" in
-      name|description|source|effort|yes|no|not|all|none|note|warning|error|target|rule*) continue ;;
-    esac
-    if [[ -d "$SKILLS_DIR/$ref" ]]; then
-      : # valid reference
-    fi
-    # Don't error on unknown bold words -- too many false positives
-  done
 }
 
 # ── Reference file checks ──────────────────────────────────────────────
@@ -171,7 +158,6 @@ for skill_dir in "$SKILLS_DIR"/*/; do
   check_sections "$skill_file" "$name"
   check_ascii "$skill_file" "$name"
   check_length "$skill_file" "$name"
-  check_crossrefs "$skill_file" "$name"
   check_references "$skill_file" "$name" "$skill_dir"
   check_private_refs "$skill_file" "$name"
   (( skill_count++ )) || true

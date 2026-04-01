@@ -66,12 +66,6 @@ list_skills() {
   echo
 }
 
-post_install_tool_adjustments() {
-  local skill="$1"
-  # OpenCode loads SKILL.md natively as of v1.3.0+; no renaming needed.
-  # Windsurf also uses SKILL.md in its skills directory.
-}
-
 backup_skill() {
   local skill="$1"
   local ts
@@ -81,9 +75,9 @@ backup_skill() {
   cp -r "$SKILLS_DST/$skill/." "$dest/"
   # prune old backups, keep last 3
   local count
-  count=$(find "$BACKUP_DIR/$skill" -maxdepth 1 -mindepth 1 -type d 2>/dev/null | wc -l)
+  count=$(find "$BACKUP_DIR/$skill" -maxdepth 1 -mindepth 1 -type d -print0 2>/dev/null | tr -d -c '\0' | wc -c)
   if (( count > 3 )); then
-    find "$BACKUP_DIR/$skill" -maxdepth 1 -mindepth 1 -type d | sort | head -n "$(( count - 3 ))" | xargs rm -rf
+    find "$BACKUP_DIR/$skill" -maxdepth 1 -mindepth 1 -type d -print0 | sort -z | head -z -n "$(( count - 3 ))" | xargs -0 rm -rf
   fi
 }
 
@@ -91,6 +85,11 @@ install_skill() {
   local skill="$1"
   local force="${2:-false}"
   local no_backup="${3:-false}"
+
+  if [[ ! "$skill" =~ ^[a-z0-9]([a-z0-9-]*[a-z0-9])?$ ]]; then
+    echo "  [!] Invalid skill name: $skill"
+    return 1
+  fi
 
   if [[ ! -d "$SKILLS_SRC/$skill" ]]; then
     echo "  [!] Unknown skill: $skill"
@@ -110,7 +109,6 @@ install_skill() {
 
   mkdir -p "$SKILLS_DST/$skill"
   cp -r "$SKILLS_SRC/$skill/." "$SKILLS_DST/$skill/"
-  post_install_tool_adjustments "$skill"
   echo "  [+] $skill installed"
 }
 

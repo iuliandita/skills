@@ -81,21 +81,24 @@ for skill_dir in "$SKILLS_DIR"/*/; do
   prev_errors=$errors
   validate_name "$name"
 
-  fm_name=$(grep -m1 '^name:' "$skill_file" 2>/dev/null | sed 's/name: *//' || true)
-  if [[ "$fm_name" != "$name" ]]; then
-    error "$name: frontmatter name '$fm_name' does not match directory name"
-  fi
-
   # Spec: SKILL.md must start with frontmatter
   if ! head -1 "$skill_file" | grep -q '^---$'; then
     error "$name: SKILL.md must start with YAML frontmatter (---)"
   fi
 
+  # Extract frontmatter block (between first --- and second ---)
+  fm=$(sed -n '2,/^---$/{ /^---$/d; p; }' "$skill_file")
+
+  fm_name=$(echo "$fm" | grep -m1 '^name:' 2>/dev/null | sed 's/name: *//' || true)
+  if [[ "$fm_name" != "$name" ]]; then
+    error "$name: frontmatter name '$fm_name' does not match directory name"
+  fi
+
   # Spec: required fields
-  if ! grep -q '^name:' "$skill_file"; then
+  if ! echo "$fm" | grep -q '^name:'; then
     error "$name: missing required field 'name'"
   fi
-  if ! grep -q '^description:' "$skill_file"; then
+  if ! echo "$fm" | grep -q '^description:'; then
     error "$name: missing required field 'description'"
   fi
 
