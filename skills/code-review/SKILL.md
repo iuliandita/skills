@@ -6,6 +6,7 @@ metadata:
   source: iuliandita/skills
   date_added: "2026-03-25"
   effort: high
+  argument_hint: "<file-or-pattern>"
 ---
 
 # Code Review: Deep Correctness Audit

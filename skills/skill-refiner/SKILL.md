@@ -17,6 +17,7 @@ metadata:
   source: iuliandita/skills
   date_added: "2026-03-31"
   effort: high
+  argument_hint: "[iterations]"
 ---
 
 # Skill Refiner: Iterative Self-Improvement Loop

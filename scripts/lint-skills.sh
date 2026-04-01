@@ -67,6 +67,20 @@ check_frontmatter() {
     error "$name: metadata.effort must be low/medium/high, got '$eff'"
   fi
 
+  # Optional: metadata.argument_hint (string, max 100 chars)
+  local arg_hint
+  arg_hint=$(echo "$fm" | grep -m1 '^  argument_hint:' 2>/dev/null | sed 's/.*argument_hint: *//' || true)
+  if [[ -n "$arg_hint" && ${#arg_hint} -gt 100 ]]; then
+    error "$name: metadata.argument_hint exceeds 100 characters"
+  fi
+
+  # Optional: metadata.internal (boolean)
+  local internal
+  internal=$(echo "$fm" | grep -m1 '^  internal:' 2>/dev/null | sed 's/.*internal: *//' || true)
+  if [[ -n "$internal" && "$internal" != "true" && "$internal" != "false" ]]; then
+    error "$name: metadata.internal must be true or false, got '$internal'"
+  fi
+
   # Validate name matches directory (Agent Skills spec requirement)
   local fm_name
   fm_name=$(echo "$fm" | grep -m1 '^name:' 2>/dev/null | sed 's/name: *//' || true)

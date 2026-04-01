@@ -6,6 +6,7 @@ metadata:
   source: iuliandita/skills
   date_added: "2026-03-25"
   effort: medium
+  argument_hint: "<file-or-pattern>"
 ---
 
 # Anti-Slop: Polyglot Code Quality Audit

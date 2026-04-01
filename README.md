@@ -31,9 +31,16 @@ These skills follow the [Agent Skills open standard](https://agentskills.io/spec
 - **OpenAI Codex CLI** -- native support
 - **Gemini CLI** -- native support
 - **Cursor** -- native support
-- **VS Code Copilot** -- native support
+- **VS Code GitHub Copilot** -- native support
 - **Windsurf** -- native support
 - **OpenCode** -- native support
+- **Cline** -- native support
+- **Roo Code** -- native support
+- **Goose** -- native support
+- **Amp** -- native support
+- **Continue** -- native support
+- **Kiro CLI** -- native support
+- **Warp** -- native support
 - Any other tool that implements the Agent Skills spec
 
 No conversion, no adapters. Drop the skill folder in your tool's skills directory and it works.
@@ -117,15 +124,13 @@ Each skill follows the [Agent Skills specification](https://agentskills.io/speci
 - **`SKILL.md` with YAML frontmatter** -- `name`, `description`, `license`, optional `compatibility` for environment requirements, and `metadata` for custom fields. The frontmatter is what agents read at startup to decide which skills to activate.
 - **Compact body** (under 500 lines) -- the core instructions that load into every conversation. Kept lean so it doesn't eat your context window.
 - **Reference files** (`references/` directory) -- detailed pattern libraries, compliance checklists, manifest templates. The agent reads these on-demand when the task requires depth. You get expert-level detail without paying the token cost upfront.
+- **Argument hints** (`metadata.argument_hint`) -- tells agents what arguments a skill expects when invoked (e.g., `<file-or-pattern>`, `[iterations]`). Angle brackets for required, square brackets for optional.
 - **Precise trigger descriptions** -- optimized so the right tool activates the right skill at the right time. Every trigger keyword is tested and tuned to minimize false positives and missed activations.
 - **Cross-skill awareness** -- skills know about each other. The security-audit skill knows not to step on lockpick's territory. Docker knows to defer to Kubernetes for cluster networking. No overlapping, no conflicts.
 
 ## Install
 
 ### Quick install (via [skills.sh](https://skills.sh))
-
-> **Note:** `npx skills add` is not yet available -- pending a PR merge at
-> [skills.sh](https://skills.sh). Use the bundled installer below until then.
 
 ```bash
 # All skills
@@ -141,37 +146,53 @@ npx skills add iuliandita/skills --list
 ### Using the bundled installer
 
 ```bash
-# All skills for Claude
+# All skills for Claude (default)
 git clone https://github.com/iuliandita/skills.git /tmp/skills-install
 /tmp/skills-install/install.sh
 rm -rf /tmp/skills-install
 
-# Install for Codex
+# Install for a specific tool
 git clone https://github.com/iuliandita/skills.git /tmp/skills-install
 /tmp/skills-install/install.sh --tool codex
-rm -rf /tmp/skills-install
-
-# Install for Cursor
-git clone https://github.com/iuliandita/skills.git /tmp/skills-install
-/tmp/skills-install/install.sh --tool cursor
-rm -rf /tmp/skills-install
-
-# Install for Windsurf
-git clone https://github.com/iuliandita/skills.git /tmp/skills-install
-/tmp/skills-install/install.sh --tool windsurf
-rm -rf /tmp/skills-install
-
-# Install to a generic portable directory
-git clone https://github.com/iuliandita/skills.git /tmp/skills-install
-/tmp/skills-install/install.sh --tool portable --dest ~/.skills
 rm -rf /tmp/skills-install
 
 # Pick and choose
 git clone https://github.com/iuliandita/skills.git /tmp/skills-install
 /tmp/skills-install/install.sh --tool claude kubernetes docker terraform ansible
-/tmp/skills-install/install.sh --tool cursor prompt-generator
-/tmp/skills-install/install.sh --tool opencode prompt-generator
 /tmp/skills-install/install.sh --list  # see what's available
+rm -rf /tmp/skills-install
+```
+
+### Multi-tool install with symlinks
+
+Install once, symlink everywhere. Skills go to a single canonical directory (`~/.agents/skills/`), and each tool gets symlinks. Update the canonical copy and all tools see the change.
+
+```bash
+git clone https://github.com/iuliandita/skills.git /tmp/skills-install
+
+# Install for Claude, Cursor, and Gemini in one shot
+/tmp/skills-install/install.sh --tool claude,cursor,gemini --link
+
+# Check for updates later
+/tmp/skills-install/install.sh --check --link
+
+rm -rf /tmp/skills-install
+```
+
+Override the canonical directory with `SKILLS_CANONICAL_DIR`:
+
+```bash
+SKILLS_CANONICAL_DIR=~/my-skills ./install.sh --tool claude,roo --link
+```
+
+### Checking for updates
+
+Each install writes a `.skills-lock.json` with content hashes. Compare against the source to see what changed:
+
+```bash
+./install.sh --check                # check default (Claude)
+./install.sh --check --tool cursor  # check a specific tool
+./install.sh --check --link         # check canonical dir
 ```
 
 ### Manual
@@ -180,24 +201,35 @@ git clone https://github.com/iuliandita/skills.git /tmp/skills-install
 cp -r skills/kubernetes ~/.claude/skills/kubernetes
 cp -r skills/kubernetes ~/.codex/skills/kubernetes
 cp -r skills/kubernetes ~/.cursor/skills/kubernetes
-cp -r skills/kubernetes ~/.windsurf/skills/kubernetes
-cp -r skills/kubernetes ~/.config/opencode/skills/kubernetes
 ```
 
-The bundled installer supports `--tool claude`, `--tool codex`, `--tool cursor`, `--tool windsurf`, `--tool opencode`, and `--tool portable` (for a generic `~/.skills` directory or any `--dest` path).
+### Supported tools
+
+The installer supports 15 targets:
+
+| Tool | Flag | Default path |
+|------|------|-------------|
+| Claude Code | `claude` | `~/.claude/skills` |
+| OpenAI Codex | `codex` | `~/.codex/skills` |
+| Cursor | `cursor` | `~/.cursor/skills` |
+| Windsurf | `windsurf` | `~/.windsurf/skills` |
+| OpenCode | `opencode` | `~/.config/opencode/skills` |
+| GitHub Copilot | `copilot` | `~/.copilot/skills` |
+| Gemini CLI | `gemini` | `~/.gemini/skills` |
+| Roo Code | `roo` | `~/.roo/skills` |
+| Goose | `goose` | `~/.config/goose/skills` |
+| Amp | `amp` | `~/.amp/skills` |
+| Continue | `continue` | `~/.continue/skills` |
+| Kiro CLI | `kiro` | `~/.kiro/skills` |
+| Cline | `cline` | `~/.cline/skills` |
+| Warp | `warp` | `~/.warp/skills` |
+| Portable | `portable` | `~/.skills` |
+
+All paths are overridable via `--dest` (single-tool mode) or environment variables (e.g., `CLAUDE_SKILLS_DIR`).
 
 ## Requirements
 
-Any AI coding tool that supports the [Agent Skills standard](https://agentskills.io):
-
-- Claude Code
-- OpenAI Codex CLI
-- Gemini CLI
-- Cursor
-- VS Code Copilot
-- Windsurf
-- OpenCode
-- Other tools that consume `SKILL.md` skill directories
+Any AI coding tool that supports the [Agent Skills standard](https://agentskills.io). See the [supported tools table](#supported-tools) above for the full list of tested targets.
 
 ## Updating
 
@@ -206,10 +238,19 @@ Pull the latest and re-run the installer:
 ```bash
 cd /path/to/skills
 git pull
-./install.sh
+./install.sh --force
 ```
 
-The installer backs up existing skills before overwriting, so you won't lose local customizations.
+Or check what changed first:
+
+```bash
+cd /path/to/skills
+git pull
+./install.sh --check   # see what's outdated
+./install.sh --force   # update everything
+```
+
+The installer backs up existing skills before overwriting (unless `--no-backup`), so you won't lose local customizations.
 
 ## Structure
 
@@ -227,7 +268,7 @@ skills/
       dockerfile-patterns.md
       ...
   ...
-install.sh                # Installer script
+install.sh                # Installer (15 agents, symlink mode, lock file)
 scripts/
   lint-skills.sh          # Collection linter
   validate-spec.sh        # Agent Skills spec validator

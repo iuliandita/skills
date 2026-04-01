@@ -21,6 +21,7 @@ metadata:
   source: iuliandita/skills
   date_added: "2026-03-25"
   effort: high
+  argument_hint: "<target>"
 ---
 
 # Lockpick: Privilege Escalation & Post-Exploitation Assessment

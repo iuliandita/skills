@@ -14,6 +14,7 @@ metadata:
   source: iuliandita/skills
   date_added: "2026-03-25"
   effort: medium
+  argument_hint: "<notes-or-description>"
 ---
 
 # Prompt Generator

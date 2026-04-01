@@ -14,6 +14,7 @@ metadata:
   source: iuliandita/skills
   date_added: "2026-03-25"
   effort: high
+  argument_hint: "<action> [skill-name]"
 ---
 
 # Skill Creator: Meta Skill for Skill Lifecycle Management
