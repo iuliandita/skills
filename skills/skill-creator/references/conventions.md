@@ -40,7 +40,7 @@ gotcha with that specific Helm chart version, the compliance requirement that is
 | Component | Budget | Why |
 |-----------|--------|-----|
 | Frontmatter (`name` + `description`) | ~100 tokens | always loaded for all skills at startup |
-| SKILL.md body | <500 lines, <5k tokens recommended | loaded when the skill activates |
+| SKILL.md body | ~500 lines target, 600 hard max, <5k tokens recommended | loaded when the skill activates |
 | Reference files | unlimited per file, but keep individual files focused | loaded on demand |
 
 Prefer concise examples over verbose explanations. A 5-line code block that shows the pattern
@@ -291,7 +291,7 @@ metadata:
 
 ### When to create reference files
 
-- SKILL.md approaching 500 lines -> extract domain-specific content to references
+- SKILL.md over ~500 lines -> extract domain-specific content to references (hard max 600)
 - Multiple variants of the same pattern (e.g., GitHub Actions vs GitLab CI)
 - Large checklists or template libraries
 - Supplementary content that's only needed in specific scenarios
@@ -300,7 +300,7 @@ metadata:
 
 ```
 skill-name/
-+-- SKILL.md                    # main skill (required, <500 lines)
++-- SKILL.md                    # main skill (required, ~500 lines target)
 +-- references/                 # deep-dive content (loaded on demand)
 |   +-- foo.md                  # domain-specific reference
 |   +-- bar.md                  # another reference

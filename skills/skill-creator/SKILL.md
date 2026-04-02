@@ -65,7 +65,7 @@ Before returning any generated or modified skill, verify against this list:
 - [ ] **Style compliant**: no banned words (per `CLAUDE.md`/`AGENTS.md`), plain ASCII only
   (no em-dashes, curly quotes, ligatures -- use `--` for dashes). Check both SKILL.md AND
   reference files -- banned words in references count
-- [ ] **Under 500 lines**: if approaching limit, extract to `references/` with clear pointers
+- [ ] **Target ~500 lines**: if over 500, extract to `references/` with clear pointers. Hard max 600
 - [ ] **Reference files use `references/` relative paths**: not hardcoded or tool-specific paths
 - [ ] **All references verified**: every tool, CLI flag, IaC resource, config snippet, and
   example command confirmed against actual docs, `--help` output, or registry -- not assumed
@@ -227,7 +227,7 @@ Read the SKILL.md and all reference files. No skipping -- the whole point is cat
 - AI Self-Check section (required for skills that generate code/config)
 - Reference file paths resolve (check `references/` directory)
 - Related Skills section present and accurate (when the skill interacts with other skills)
-- Under 500 lines (SKILL.md body)
+- Target ~500 lines (SKILL.md body), hard max 600
 
 **Content checks:**
 - Tools exist? Every tool, CLI, library, or platform named in the skill must be verified as

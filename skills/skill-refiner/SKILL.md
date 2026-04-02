@@ -24,7 +24,8 @@ metadata:
 
 Adaptive evaluation loop for AI skill collections, inspired by Karpathy's AutoResearch.
 Orchestrates repeated score-improve-verify cycles using **skill-creator** as the engine
-and optional cross-model peer review as an adversarial check.
+and mandatory peer review as an adversarial check (cross-model when a secondary harness
+is available, fresh-context self-review as the minimum fallback).
 
 ## When to use
 
@@ -80,14 +81,13 @@ contested major flags (non-configurable).
    this session
 4. **Probe for secondary harness**: run three-step validation (PATH check, config check,
    smoke test) per `references/harness-detection.md`. Announce result.
-5. **If no secondary found**: two options:
-   - **Self-review fallback**: spawn a fresh agent on the current harness with the review
-     prompt template from `references/harness-detection.md`. Label as "same-model fresh-context
-     review" in scoring, weight at 5% instead of 10% (renormalize: 16/37/42/5). This catches
-     confirmation bias but shares the primary model's blind spots.
-   - **No review**: skip cross-model entirely, renormalize weights (17/39/44).
-   Default: use self-review when the harness supports subagents (Claude Code, Codex), skip
-   when it doesn't (restricted sandboxes, headless exec modes).
+5. **If no secondary found**: **always fall back to self-review.** Spawn a fresh agent on
+   the current harness with the review prompt template from `references/harness-detection.md`.
+   Label as "same-model fresh-context review" in scoring, weight at 5% instead of 10%
+   (renormalize: 16/37/42/5). This catches confirmation bias but shares the primary model's
+   blind spots. Skipping review entirely is not an option -- a fresh-context self-review is
+   the minimum bar. If the harness doesn't support subagents, run the review prompt as a
+   separate CLI invocation (`claude -p`, `codex exec`, etc.).
 
 ### Phase 1: Regular Iterations
 
@@ -191,7 +191,7 @@ Before committing any skill modification, verify:
   or cross-references without replacement
 - [ ] **Simplicity maintained**: change does not add unnecessary complexity for marginal gains
 - [ ] **Cross-references intact**: all skill names in bold still resolve to existing skills
-- [ ] **Under 500 lines**: modified SKILL.md still under limit
+- [ ] **Target ~500 lines**: modified SKILL.md stays near 500 lines. Hard max 600
 - [ ] **ASCII only**: no non-ASCII characters introduced (except allowed emoji indicators)
 - [ ] **Immutability respected**: no phase-1 modification to evaluation criteria,
   test cases, lint scripts, skill-creator, or skill-refiner

@@ -117,6 +117,12 @@ NO_FLAGS/MINOR_FLAG/MAJOR_FLAG response, fall back to self-review: spawn a fresh
 on the primary harness with the review prompt template (see Phase 0, Step 5 in SKILL.md).
 Weight self-review at 5% instead of 10% (renormalize: 16/37/42/5).
 
+**Peer review is mandatory.** Always attempt the secondary harness first (three-step probe).
+If no secondary is available or the secondary fails to produce a valid response, self-review
+on a fresh context of the primary harness is the required fallback. Skipping review entirely
+is never acceptable -- even same-model fresh-context review catches issues the working context
+is blind to.
+
 ```
 You are reviewing a skill improvement diff. Be specific and cite exact lines.
 

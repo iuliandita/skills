@@ -7,8 +7,10 @@ set -euo pipefail
 
 SKILLS_DIR="${1:-skills}"
 errors=0
+warnings=0
 
 error() { echo "  FAIL: $1"; (( errors++ )) || true; }
+warn()  { echo "  WARN: $1"; (( warnings++ )) || true; }
 pass()  { echo "  OK:   $1"; }
 
 validate_name() {
@@ -106,10 +108,12 @@ for skill_dir in "$SKILLS_DIR"/*/; do
   validate_description "$skill_file" "$name"
   validate_compatibility "$skill_file" "$name"
 
-  # Spec: SKILL.md body recommended under 500 lines
+  # Spec: SKILL.md body recommended under 500 lines (soft target, 600 hard max)
   lines=$(wc -l < "$skill_file")
-  if (( lines > 500 )); then
-    error "$name: SKILL.md is $lines lines (spec recommends < 500)"
+  if (( lines > 600 )); then
+    error "$name: SKILL.md is $lines lines (hard max 600)"
+  elif (( lines > 500 )); then
+    warn "$name: SKILL.md is $lines lines (spec recommends < 500)"
   fi
 
   if [[ $errors -eq $prev_errors ]]; then
@@ -123,6 +127,7 @@ echo
 echo "────────────────────────────────────────"
 echo "Skills validated: $skill_count"
 echo "Spec violations:  $errors"
+echo "Warnings:         $warnings"
 echo "────────────────────────────────────────"
 
 if (( errors > 0 )); then

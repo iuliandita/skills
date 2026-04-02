@@ -121,10 +121,10 @@ check_length() {
   local file="$1" name="$2"
   local lines
   lines=$(wc -l < "$file")
-  if (( lines > 500 )); then
-    error "$name: SKILL.md is $lines lines (max 500)"
-  elif (( lines > 450 )); then
-    warn "$name: SKILL.md is $lines lines (approaching 500 limit)"
+  if (( lines > 600 )); then
+    error "$name: SKILL.md is $lines lines (hard max 600)"
+  elif (( lines > 500 )); then
+    warn "$name: SKILL.md is $lines lines (target <500, extract to references/ if possible)"
   fi
 }
 

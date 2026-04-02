@@ -8,7 +8,7 @@
 npx skills add iuliandita/skills
 ```
 
-**24 production-tested skills** -- Kubernetes, Terraform, Docker, Ansible, CI/CD, databases, AI/ML, testing, virtualization, Arch Linux, networking, MCP servers, security audits, pentesting, code review, and more.
+**25 production-tested skills** -- Kubernetes, Terraform, Docker, Ansible, CI/CD, databases, AI/ML, testing, virtualization, Arch Linux, networking, MCP servers, security audits, pentesting, code review, and more.
 
 Built on the [Agent Skills open standard](https://agentskills.io/specification). Works with any tool that supports it.
 
@@ -97,6 +97,7 @@ The loop: **Score -> Improve -> Verify -> Keep or Revert -> Repeat.**
 |-------|-------------|
 | **security-audit** | Vulnerability scanning, credential detection, auth review, OWASP checks, supply chain security |
 | **lockpick** | Authorized privilege escalation assessments, CTF challenges, post-exploitation, container escape |
+| **zero-day** | Vulnerability research -- deep code analysis, binary reverse engineering, patch diffing, fuzzing, variant analysis, PoC development |
 
 ### Development & Code Quality
 
