@@ -109,7 +109,13 @@ Setting `--secondary none` explicitly disables cross-model review.
 
 ## Review Prompt Template
 
-What gets sent to the secondary harness (non-interactive):
+What gets sent to the secondary harness (non-interactive).
+
+**Known issue**: Codex in `exec` mode may run tools (lint, validate) instead of producing
+text-only review output. If the secondary returns tool output instead of a
+NO_FLAGS/MINOR_FLAG/MAJOR_FLAG response, fall back to self-review: spawn a fresh agent
+on the primary harness with the review prompt template (see Phase 0, Step 5 in SKILL.md).
+Weight self-review at 5% instead of 10% (renormalize: 16/37/42/5).
 
 ```
 You are reviewing a skill improvement diff. Be specific and cite exact lines.

@@ -31,15 +31,17 @@ pf-powered firewall distributions -- most concepts, commands, and patterns apply
 
 - Managing or troubleshooting OPNsense and pfSense firewalls over SSH
 - Reviewing pf rules, NAT, CARP, Unbound, WireGuard, CrowdSec, or pfBlockerNG on these appliances
+- Configuring VLANs, CARP HA failover, or interface assignments on firewall appliances
+- Debugging connectivity between networks or VLANs routed through OPNsense/pfSense
 - Hardening BSD firewall appliances and validating safe remote-change workflows
 
 ## When NOT to use
 
-- Linux networking, reverse proxies, VPN setup, or nftables work outside firewall appliances -- use networking
-- General shell scripting or local shell behavior outside the BSD firewall context -- use command-prompt
-- Fleet-wide configuration management via playbooks -- use ansible
-- Offensive testing, exploitation, or post-exploitation -- use lockpick
-- Application-level security review or dependency scanning -- use security-audit
+- Linux networking, reverse proxies, VPN setup, or nftables work outside firewall appliances -- use **networking**
+- General shell scripting or local shell behavior outside the BSD firewall context -- use **command-prompt**
+- Fleet-wide configuration management via playbooks -- use **ansible**
+- Offensive testing, exploitation, or post-exploitation -- use **lockpick**
+- Application-level security review or dependency scanning -- use **security-audit**
 
 ## AI Self-Check
 

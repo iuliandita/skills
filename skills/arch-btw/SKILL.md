@@ -268,6 +268,8 @@ When a bug looks "desktop-only," compare one clean baseline:
 - `references/base-linux-and-cli.md` -- core Linux inspection commands and optional tools such as `nvim`, `jq`, `ripgrep`, `bat`, and `eza`
 - `references/gotchas-and-special-situations.md` -- recurring Arch and CachyOS failure patterns, special cases, and what-to-do-next guidance
 
+---
+
 ## Related Skills
 
 - **command-prompt** -- use it for shell syntax, zsh or bash behavior, and script portability
@@ -276,6 +278,8 @@ When a bug looks "desktop-only," compare one clean baseline:
 - **ansible** -- use it when the real task is codifying Linux changes across many machines
 - **security-audit** -- use it for hardening and security review rather than normal package or service administration
 - **update-docs** -- use it after substantial system administration changes that introduce new operational gotchas
+
+---
 
 ## Rules
 

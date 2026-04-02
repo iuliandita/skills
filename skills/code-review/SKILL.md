@@ -34,10 +34,10 @@ Every finding answers one of:
 
 ## When NOT to use
 
-- Style, verbosity, or machine-generated code quality issues -- use anti-slop
-- Exploitable vulnerabilities, auth flaws, or secret scanning -- use security-audit
-- Pipeline architecture design -- use ci-cd
-- End-of-session doc hygiene or instruction-file cleanup -- use update-docs
+- Style, verbosity, or machine-generated code quality issues -- use **anti-slop**
+- Exploitable vulnerabilities, auth flaws, or secret scanning -- use **security-audit**
+- Pipeline architecture design -- use **ci-cd**
+- End-of-session doc hygiene or instruction-file cleanup -- use **update-docs**
 
 ## AI Self-Check
 

@@ -51,13 +51,13 @@ This skill covers four domains depending on context:
 
 ## When NOT to use
 
-- Infrastructure provisioning (VPCs, RDS, EC2, cloud resources) -- use terraform
-- Kubernetes manifests, Helm charts, cluster architecture -- use kubernetes
-- Dockerfiles, Compose stacks, container image optimization -- use docker
-- CI/CD pipeline design (stages, runners, caching) -- use ci-cd
-- Security audits of application code (SAST, dependency scanning) -- use security-audit
-- Shell scripting or one-off commands -- use command-prompt
-- Firewall appliance management (OPNsense/pfSense) -- use firewall-appliance
+- Infrastructure provisioning (VPCs, RDS, EC2, cloud resources) -- use **terraform**
+- Kubernetes manifests, Helm charts, cluster architecture -- use **kubernetes**
+- Dockerfiles, Compose stacks, container image optimization -- use **docker**
+- CI/CD pipeline design (stages, runners, caching) -- use **ci-cd**
+- Security audits of application code (SAST, dependency scanning) -- use **security-audit**
+- Shell scripting or one-off commands -- use **command-prompt**
+- Firewall appliance management (OPNsense/pfSense) -- use **firewall-appliance**
 
 ---
 
@@ -202,88 +202,35 @@ Read `references/playbook-patterns.md` for complete, copy-pasteable task example
 - Handlers run in definition order, not notification order
 - Multiple notifications to the same handler = one execution
 
-**Blocks** for error handling:
-```yaml
-- name: Deploy application with rollback
-  block:
-    - name: Deploy new version
-      ansible.builtin.copy:
-        src: app-v2.tar.gz
-        dest: /opt/app/
-    - name: Restart service
-      ansible.builtin.systemd:
-        name: myapp
-        state: restarted
-  rescue:
-    - name: Rollback to previous version
-      ansible.builtin.copy:
-        src: app-v1.tar.gz
-        dest: /opt/app/
-    - name: Restart with old version
-      ansible.builtin.systemd:
-        name: myapp
-        state: restarted
-  always:
-    - name: Report deployment status
-      ansible.builtin.debug:
-        msg: "Deployment completed (block={{ ansible_failed_task is defined }})"
+**Blocks**: use `block`/`rescue`/`always` for error handling and rollback -- see `playbook-patterns.md` for complete deploy-with-rollback examples. Prefer `block`/`rescue` over `ignore_errors: true`.
+
+**Loops**: prefer `loop:` over deprecated `with_*` syntax. Use `loop_control.label` for clean output.
+
+**Conditional execution**: `when: ansible_os_family == "Debian"` etc. For multi-OS roles, use conditionals or `include_tasks` per OS family. See `playbook-patterns.md` for Alpine/OpenRC patterns.
+
+**Service management**: use `ansible.builtin.service` (generic) for cross-distro roles -- it auto-detects systemd, OpenRC, SysV via `ansible_service_mgr`. Only use `ansible.builtin.systemd` when you need systemd-specific features (`daemon_reload`, `scope`). See `playbook-patterns.md` for OpenRC patterns.
+
+**Registering results**: `register: result_var` stores task output. Use `when: result_var.stat.exists`, `result_var.rc == 0`, etc. See `playbook-patterns.md` for patterns.
+
+### Vault Quick Reference
+
+```bash
+# Encrypt a single variable (inline in YAML)
+ansible-vault encrypt_string 'supersecret' --name 'db_password'
+
+# Encrypt an entire file
+ansible-vault encrypt group_vars/production/secrets.yml
+
+# Edit encrypted file
+ansible-vault edit group_vars/production/secrets.yml
+
+# Run playbook with vault
+ansible-playbook site.yml --ask-vault-pass
+# Or with a password file (for CI/CD)
+ansible-playbook site.yml --vault-password-file ~/.vault_pass
 ```
 
-**Loops** -- prefer `loop:` over the deprecated `with_*` syntax:
-```yaml
-- name: Create application users
-  ansible.builtin.user:
-    name: "{{ item.name }}"
-    groups: "{{ item.groups }}"
-    state: present
-  loop:
-    - { name: deploy, groups: www-data }
-    - { name: monitor, groups: prometheus }
-  loop_control:
-    label: "{{ item.name }}"    # cleaner output than dumping the full dict
-```
-
-**Conditional execution**:
-```yaml
-- name: Install packages (Debian)
-  ansible.builtin.apt:
-    name: "{{ packages }}"
-    state: present
-  when: ansible_os_family == "Debian"
-
-- name: Install packages (RedHat)
-  ansible.builtin.dnf:
-    name: "{{ packages }}"
-    state: present
-  when: ansible_os_family == "RedHat"
-
-- name: Install packages (Alpine)
-  community.general.apk:
-    name: "{{ packages }}"
-    state: present
-  when: ansible_os_family == "Alpine"
-```
-
-**Service management** -- use `ansible.builtin.service` (generic) instead of `ansible.builtin.systemd`
-for cross-distro roles. The `service` module auto-detects systemd, OpenRC, SysV, etc. via
-`ansible_service_mgr`. Only use the `systemd` module when you need systemd-specific features
-(`daemon_reload`, `scope`, unit file management). See `playbook-patterns.md` for OpenRC patterns.
-
-**Registering results** and using them:
-```yaml
-- name: Check if config exists
-  ansible.builtin.stat:
-    path: /etc/myapp/config.yml
-  register: config_check
-
-- name: Generate default config
-  ansible.builtin.template:
-    src: config.yml.j2
-    dest: /etc/myapp/config.yml
-    owner: root
-    mode: "0640"
-  when: not config_check.stat.exists
-```
+Never store the vault password in plaintext alongside the repo. Use `--ask-vault-pass`, a password file outside the repo, or a vault script that fetches from a secret manager.
 
 ### What NOT to write
 

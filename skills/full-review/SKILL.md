@@ -6,6 +6,7 @@ metadata:
   source: iuliandita/skills
   date_added: "2026-03-22"
   effort: high
+  argument_hint: "[scope]"
 ---
 
 # Full Review: Quad Audit Orchestrator
@@ -29,11 +30,11 @@ Each audit runs in its own parallel agent/subprocess with a fresh context window
 
 ## When NOT to use
 
-- A targeted correctness review on specific files -- use code-review
-- Style/slop cleanup without the other audit passes -- use anti-slop
-- A dedicated security review only -- use security-audit
-- A documentation-only maintenance sweep -- use update-docs
-- Auditing the skill collection for consistency or quality -- use skill-creator
+- A targeted correctness review on specific files -- use **code-review**
+- Style/slop cleanup without the other audit passes -- use **anti-slop**
+- A dedicated security review only -- use **security-audit**
+- A documentation-only maintenance sweep -- use **update-docs**
+- Auditing the skill collection for consistency or quality -- use **skill-creator**
 
 ## AI Self-Check
 
@@ -115,7 +116,16 @@ on recent changes. Do NOT make changes or commit anything.
 
 After all four agents return, present each report under its own header. Do not merge, summarize, or editorialize across reports -- each stands alone. The user reads the skill's native output, not a reinterpretation.
 
-**Scoped reviews**: when the user specified a narrower scope (e.g., "review the auth module"), each report should focus on that scope. Note any domain-specific checks relevant to the scope (e.g., auth scope -> security-audit covers session handling/token validation; code-review focuses on auth logic paths; anti-slop checks auth middleware for over-abstraction; update-docs verifies auth-related docs are current).
+**Scoped reviews**: when the user specified a narrower scope, each report focuses on that scope. Use this routing table to emphasize domain-relevant checks:
+
+| Scope | code-review focus | security-audit focus | anti-slop focus | update-docs focus |
+|-------|-------------------|---------------------|-----------------|-------------------|
+| Auth/session | Auth logic paths, token lifecycle | Session handling, token validation, credential storage | Auth middleware over-abstraction | Auth-related docs current |
+| API endpoints | Request/response handling, error paths | Input validation, injection, rate limiting | Handler boilerplate, verbose error wrapping | API docs, OpenAPI spec |
+| Data layer | Query correctness, race conditions | SQL injection, data exposure, access control | ORM abstraction, unnecessary wrappers | Schema docs, migration notes |
+| Infrastructure | Config correctness, resource handling | Secrets exposure, misconfiguration | Over-engineered deploy scripts | Infra docs, runbook accuracy |
+
+For scopes not in the table, apply each skill's standard checklist narrowed to the specified files/module.
 
 **User requests synthesis**: if the user asks for a combined summary after seeing the reports, prioritize: security fixes > correctness bugs > slop cleanup > doc updates. Keep synthesis brief -- the individual reports are the source of truth.
 

@@ -321,7 +321,7 @@ training, and when to use full fine-tuning vs parameter-efficient methods.
 ### Ollama (easiest path)
 
 ```bash
-# Install and run
+# Install (piping to sh -- verify the URL and review the script first)
 curl -fsSL https://ollama.com/install.sh | sh
 ollama pull llama3.1:8b
 ollama run llama3.1:8b

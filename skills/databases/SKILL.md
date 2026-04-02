@@ -56,13 +56,13 @@ This skill covers six domains depending on context:
 
 ## When NOT to use
 
-- Deploying databases on Kubernetes (StatefulSets, PVCs, operators) -- use kubernetes
-- Provisioning managed databases (RDS, Cloud SQL, Atlas) via IaC -- use terraform
-- Docker Compose for database containers -- use docker
-- Database-related Ansible playbooks and roles -- use ansible
-- Application-level database bugs (N+1, transaction misuse, ORM pitfalls) -- use code-review
-- SQL injection detection, connection string secrets in code -- use security-audit
-- CI/CD pipelines that run migrations -- use ci-cd
+- Deploying databases on Kubernetes (StatefulSets, PVCs, operators) -- use **kubernetes**
+- Provisioning managed databases (RDS, Cloud SQL, Atlas) via IaC -- use **terraform**
+- Docker Compose for database containers -- use **docker**
+- Database-related Ansible playbooks and roles -- use **ansible**
+- Application-level database bugs (N+1, transaction misuse, ORM pitfalls) -- use **code-review**
+- SQL injection detection, connection string secrets in code -- use **security-audit**
+- CI/CD pipelines that run migrations -- use **ci-cd**
 
 ---
 

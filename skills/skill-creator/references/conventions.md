@@ -335,10 +335,13 @@ Every custom skill should list adjacent skills that handle related but distinct 
 ```markdown
 ## When NOT to use
 
-- Kubernetes manifests, Helm charts (use kubernetes)
-- CI/CD pipeline design (use ci-cd)
-- Security audits of application code (use security-audit)
+- Kubernetes manifests, Helm charts -- use **kubernetes**
+- CI/CD pipeline design -- use **ci-cd**
+- Security audits of application code -- use **security-audit**
 ```
+
+Bold the skill name in each cross-reference (`**skill-name**`) so agents can parse them
+as structured links. Use `--` (double dash) before the skill reference, not parentheses.
 
 ### "Related Skills" section
 

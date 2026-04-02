@@ -151,6 +151,28 @@ check_references() {
   done
 }
 
+# ── Banned word check (warning only) ──────────────────────────────────
+BANNED_WORDS=(delve tapestry nuanced multifaceted utilize commence facilitate synergy leverage holistic empower seamless innovative)
+
+check_banned_words() {
+  local dir="$1" name="$2"
+  for f in "$dir"/SKILL.md "$dir"/references/*.md; do
+    [[ -f "$f" ]] || continue
+    # Skip the conventions file (it lists banned words as examples)
+    [[ "$(basename "$f")" == "conventions.md" ]] && continue
+    local basename_f
+    basename_f=$(basename "$f")
+    for word in "${BANNED_WORDS[@]}"; do
+      # Word-boundary match, case-insensitive, skip fenced code blocks
+      local matches
+      matches=$(awk '/^```/{skip=!skip; next} !skip{print NR": "$0}' "$f" | grep -i "\\b${word}\\b" || true)
+      if [[ -n "$matches" ]]; then
+        warn "$name: banned word '$word' in $basename_f"
+      fi
+    done
+  done
+}
+
 # ── Main ────────────────────────────────────────────────────────────────
 echo "Linting skills in $SKILLS_DIR..."
 echo
@@ -174,6 +196,7 @@ for skill_dir in "$SKILLS_DIR"/*/; do
   check_length "$skill_file" "$name"
   check_references "$skill_file" "$name" "$skill_dir"
   check_private_refs "$skill_file" "$name"
+  check_banned_words "$skill_dir" "$name"
   (( skill_count++ )) || true
 done
 

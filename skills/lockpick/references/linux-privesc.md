@@ -355,7 +355,7 @@ cat /proc/version
 | CVE-2024-36971 | netfilter | 5.4 - 6.10 | UAF in routing subsystem |
 | CVE-2025-21756 | vsock "Attack of the Vsock" | < 6.6.79, < 6.12.16 | Refcount UAF, guest-to-host VM escape |
 | CVE-2024-50264 | AF_VSOCK | 4.8+ | connect/signal race UAF (Pwnie 2025 "Best Privesc") |
-| CVE-2025-38617 | packet socket | multiple | UAF, needs only CAP_NET_RAW (obtainable via userns) |
+| CVE-2025-38617 | packet socket | multiple | UAF, needs only CAP_NET_RAW (available via userns) |
 | CVE-2026-23272 | nf_tables | 6.x | RCU race condition, refcount desync |
 
 ### Compile and Run

@@ -140,14 +140,18 @@ These are for YOU when structuring the user's notes. Not a knowledge dump -- jus
 
 **Anti-hallucination is a sentence, not a paragraph.** "Only make claims verifiable from the provided context. If unsure, say so." That's it.
 
-### Model-Specific Notes
+### Model-Specific Formatting
 
-- If the target model is known, match the prompt format to that model's interface instead of forcing one style everywhere.
-- Models that respond well to explicit delimiters benefit from XML-style tags or other strongly separated blocks on complex tasks.
-- Chat-style APIs usually respond well to clean markdown sections, explicit constraints, and schema-like output instructions.
-- If the tool supports native structured output or JSON schema enforcement, prefer that over prose-only formatting rules.
-- Multimodal models may need separate instructions for text inputs versus attached files or images.
-- Aggressive shouting ("CRITICAL!", "YOU MUST", "NEVER EVER") usually hurts more than it helps. Use calm, explicit instructions.
+When the target model is known, adapt format to its strengths:
+
+| Target | Preferred structure | Notes |
+|--------|-------------------|-------|
+| Claude | XML tags for sections, markdown for content | Supports assistant prefill; use `<result>` tags for structured output |
+| GPT | Markdown headers, JSON schema for structured output | Native JSON mode available -- use it over prose format instructions |
+| Gemini | Markdown sections, explicit output examples | Separate instructions for text vs. attached files/images |
+| Model-agnostic | Markdown headers + explicit delimiters | Avoid prefills, model-specific tags, or format-mode flags |
+
+Aggressive shouting ("CRITICAL!", "YOU MUST", "NEVER EVER") usually hurts more than it helps. Use calm, explicit instructions.
 
 ### Structured Output Guidance
 
@@ -183,6 +187,12 @@ If the user gives you an existing prompt to improve (not rough notes):
    - **Over-specified**: drowning the model in rules when 2-3 clear constraints would work
 3. Present specific changes with reasoning -- not a full rewrite unless it's warranted
 4. On approval, edit in place
+
+**Example refinement:**
+
+Before: `You are a helpful assistant that reviews code.`
+
+After: `You are a senior code reviewer. For each file, check for: bugs, edge cases, security issues, and performance problems. Report findings as a list with severity (critical/warning/info), file:line, and a one-line description. Skip style nitpicks. If nothing is wrong, say "No issues found."` -- added: scope, output format, severity scale, constraint against noise.
 
 ## Related Skills
 

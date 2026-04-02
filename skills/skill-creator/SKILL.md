@@ -59,11 +59,12 @@ Before returning any generated or modified skill, verify against this list:
 - [ ] **Description is trigger-optimized**: starts with action verbs, includes trigger keywords, mentions related contexts, stays under 1024 chars
 - [ ] **Compatibility field present** (when skill requires specific tools/platforms): quotes values containing colons
 - [ ] **Scope sections present**: "When to use" with concrete scenarios, "When NOT to use"
-  cross-referencing related skills by name
+  cross-referencing related skills by **bold** name (e.g., `use **skill-name**`)
 - [ ] **Workflow section with numbered steps**: clear, sequential, actionable
 - [ ] **Rules section at the end**: non-negotiable constraints in imperative form
 - [ ] **Style compliant**: no banned words (per `CLAUDE.md`/`AGENTS.md`), plain ASCII only
-  (no em-dashes, curly quotes, ligatures -- use `--` for dashes)
+  (no em-dashes, curly quotes, ligatures -- use `--` for dashes). Check both SKILL.md AND
+  reference files -- banned words in references count
 - [ ] **Under 500 lines**: if approaching limit, extract to `references/` with clear pointers
 - [ ] **Reference files use `references/` relative paths**: not hardcoded or tool-specific paths
 - [ ] **All references verified**: every tool, CLI flag, IaC resource, config snippet, and

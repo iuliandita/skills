@@ -51,12 +51,12 @@ This skill covers four domains depending on context:
 
 ## When NOT to use
 
-- Kubernetes manifests, Helm charts, cluster architecture -- use kubernetes
-- Dockerfiles, Compose stacks, container image optimization -- use docker
-- Terraform/OpenTofu infrastructure-as-code -- use terraform
-- Ansible playbooks, configuration management -- use ansible
-- Security audits of application code (SAST findings, auth bugs) -- use security-audit
-- Code review of pipeline-adjacent code (the app itself) -- use code-review
+- Kubernetes manifests, Helm charts, cluster architecture -- use **kubernetes**
+- Dockerfiles, Compose stacks, container image optimization -- use **docker**
+- Terraform/OpenTofu infrastructure-as-code -- use **terraform**
+- Ansible playbooks, configuration management -- use **ansible**
+- Security audits of application code (SAST findings, auth bugs) -- use **security-audit**
+- Code review of pipeline-adjacent code (the app itself) -- use **code-review**
 - The code-review skill has a `cicd-pipelines.md` reference for **bug patterns** in existing
   pipelines. This skill is for **writing and architecting** pipelines.
 

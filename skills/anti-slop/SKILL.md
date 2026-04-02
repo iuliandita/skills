@@ -32,10 +32,10 @@ Every finding falls into one of three categories:
 
 ## When NOT to use
 
-- Correctness, logic, or race-condition bugs -- use code-review
-- Security vulnerabilities, secret scanning, or auth review -- use security-audit
-- One-off prompt authoring or prompt templates -- use prompt-generator
-- Session-end documentation maintenance -- use update-docs
+- Correctness, logic, or race-condition bugs -- use **code-review**
+- Security vulnerabilities, secret scanning, or auth review -- use **security-audit**
+- One-off prompt authoring or prompt templates -- use **prompt-generator**
+- Session-end documentation maintenance -- use **update-docs**
 
 ## AI Self-Check
 
@@ -387,3 +387,4 @@ Keep it concise. Show the diff, not a paragraph explaining it.
 - **Keep security out of scope.** Defensive code often looks verbose on purpose. Do not flag it casually.
 - **Read before judging.** A pattern that looks generic in isolation may be justified by framework or project constraints.
 - **Prefer concrete rewrites.** If you flag a pattern, show the simpler version.
+- **Run the AI Self-Check.** Verify findings against the checklist before returning the audit.

@@ -45,8 +45,8 @@ become yet another server with preventable injection vulnerabilities.
 
 - General REST API development that doesn't use MCP -- just write the API
 - Claude API / Anthropic SDK usage -- use a Claude API / Anthropic SDK skill if installed
-- Security auditing existing servers across a codebase -- use security-audit (it has an MCP section)
-- Writing prompts for LLMs (not MCP prompt resources) -- use prompt-generator
+- Security auditing existing servers across a codebase -- use **security-audit** (it has an MCP section)
+- Writing prompts for LLMs (not MCP prompt resources) -- use **prompt-generator**
 
 ---
 
@@ -72,6 +72,8 @@ Before returning any MCP server code, verify:
 ---
 
 ## Workflow
+
+**Build vs. Review:** Steps 1-6 are for building new servers. When reviewing existing MCP server code, use Step 1 (purpose) as a scoping checklist, then jump to Step 3 (security hardening) for the vulnerability audit, cross-referencing the AI Self-Check above. The Common Mistakes section below also serves as a review checklist.
 
 ### Step 1: Determine the server's purpose
 

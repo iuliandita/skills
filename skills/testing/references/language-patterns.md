@@ -510,5 +510,5 @@ cargo nextest run --profile ci
 - **Float comparison**: `assert_eq!` on floats fails on rounding. Use `assert!((a - b).abs() < EPSILON)` or the `approx` crate.
 - **`#[should_panic]` without `expected`**: catches ANY panic, including unrelated ones. Always provide the expected message substring.
 - **Integration test compilation**: each file in `tests/` compiles as a separate crate. For shared test utilities, use `tests/common/mod.rs` (not `tests/common.rs`, which Rust treats as a test file).
-- **`Drop` for cleanup**: leverage Rust's ownership -- temp resources wrapped in structs with `Drop` impls get cleaned up automatically, even on test failure.
+- **`Drop` for cleanup**: use Rust's ownership model -- temp resources wrapped in structs with `Drop` impls get cleaned up automatically, even on test failure.
 - **Mocking**: Rust has no built-in mock framework. Use trait objects with fake implementations (like Go), or the `mockall` crate for generated mocks. `mockall` uses proc macros and can slow compilation.

@@ -21,9 +21,25 @@ Post-session documentation sweep. Captures non-obvious knowledge into the right 
 ## When NOT to use
 
 - Writing brand-new documentation sets from scratch
-- Code correctness or security review -- use code-review or security-audit
-- Code quality, slop, or maintainability cleanup -- use anti-slop
-- Prompt authoring or reusable skill-file maintenance -- use prompt-generator or skill-creator
+- Code correctness or security review -- use **code-review** or **security-audit**
+- Code quality, slop, or maintainability cleanup -- use **anti-slop**
+- Prompt authoring or reusable skill-file maintenance -- use **prompt-generator** or **skill-creator**
+
+---
+
+## AI Self-Check
+
+Before presenting documentation updates, verify:
+
+- [ ] Only documenting gotchas, decisions, and failure modes -- not defaults readable from config
+- [ ] No stale counts introduced (used "N" or kept count accurate)
+- [ ] Internal links verified (no broken references after renames or moves)
+- [ ] Companion instruction files still aligned (AGENTS.md synced if CLAUDE.md changed)
+- [ ] No orphaned gotchas for already-fixed issues
+- [ ] Deprecated entries marked with `[DEPRECATED]` prefix and date, not silently removed
+- [ ] Size check run (`wc -c`) -- instruction files under 40,000 chars
+
+---
 
 ## Core Principle
 
@@ -90,6 +106,7 @@ Map changes to documentation targets. Common instruction file names: `CLAUDE.md`
 - Failure modes and their symptoms (e.g., "PLEG unhealthy = container runtime frozen")
 - Workarounds for known issues
 - Operational constraints (e.g., "serial: 1 required -- removing it updates all nodes simultaneously")
+- Connection strings and service endpoints when IPs, ports, or hostnames change
 - Decisions and their rationale
 
 #### When no docs exist yet:
