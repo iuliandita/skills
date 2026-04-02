@@ -8,7 +8,7 @@
 npx skills add iuliandita/skills
 ```
 
-**21 production-tested skills** -- Kubernetes, Terraform, Docker, Ansible, CI/CD, databases, Arch Linux, networking, MCP servers, security audits, pentesting, code review, and more.
+**24 production-tested skills** -- Kubernetes, Terraform, Docker, Ansible, CI/CD, databases, AI/ML, testing, virtualization, Arch Linux, networking, MCP servers, security audits, pentesting, code review, and more.
 
 Built on the [Agent Skills open standard](https://agentskills.io/specification). Works with any tool that supports it.
 
@@ -19,7 +19,7 @@ Built on the [Agent Skills open standard](https://agentskills.io/specification).
 
 ---
 
-`kubernetes` `terraform` `docker` `ansible` `archlinux` `cachyos` `pacman` `paru` `aur` `systemd` `helm` `argocd` `ci-cd` `github-actions` `gitlab-ci` `postgresql` `mongodb` `mysql` `networking` `dns` `wireguard` `tailscale` `vpn` `nftables` `opnsense` `pfsense` `mcp` `model-context-protocol` `security-audit` `owasp` `pentesting` `privilege-escalation` `ctf` `code-review` `git` `shell` `zsh` `bash` `prompt-engineering` `pci-dss` `compliance` `devops` `infrastructure-as-code` `iac` `containers` `podman` `buildah` `sealed-secrets` `haproxy` `caddy` `traefik` `nginx` `autoresearch` `self-improving`
+`kubernetes` `terraform` `docker` `ansible` `archlinux` `cachyos` `pacman` `paru` `aur` `systemd` `helm` `argocd` `ci-cd` `github-actions` `gitlab-ci` `postgresql` `mongodb` `mysql` `networking` `dns` `wireguard` `tailscale` `vpn` `nftables` `opnsense` `pfsense` `mcp` `model-context-protocol` `security-audit` `owasp` `pentesting` `privilege-escalation` `ctf` `code-review` `git` `shell` `zsh` `bash` `prompt-engineering` `pci-dss` `compliance` `devops` `infrastructure-as-code` `iac` `containers` `podman` `buildah` `sealed-secrets` `haproxy` `caddy` `traefik` `nginx` `autoresearch` `self-improving` `llm` `rag` `embedding` `vector-store` `langchain` `langgraph` `openai-sdk` `anthropic-sdk` `agents` `fine-tuning` `ollama` `vllm` `promptfoo` `vitest` `jest` `playwright` `pytest` `tdd` `e2e` `accessibility` `axe-core` `load-testing` `k6` `proxmox` `qemu` `kvm` `libvirt` `packer` `cloud-init` `gpu-passthrough` `virtualization` `hypervisor`
 
 ---
 
@@ -65,11 +65,11 @@ The loop: **Score -> Improve -> Verify -> Keep or Revert -> Repeat.**
 - **Karpathy gate** -- only changes that measurably improve a skill's score survive. Everything else gets reverted. No drift, no degeneration, monotonic improvement.
 - **Self-improvement** -- skill-refiner improves its own evaluation infrastructure (including itself) in a separate meta-phase with human review checkpoints
 
-10 iterations. 21 skills. One command.
+10 iterations. 24 skills. One command.
 
 ## What's in the box
 
-21 production-tested skills covering:
+24 production-tested skills covering:
 
 ### Infrastructure & Operations
 
@@ -82,6 +82,7 @@ The loop: **Score -> Improve -> Verify -> Keep or Revert -> Repeat.**
 | **terraform** | Terraform/OpenTofu -- HCL patterns, module design, state management, policy-as-code, compliance |
 | **databases** | PostgreSQL, MongoDB, MySQL/MariaDB, MSSQL -- tuning, schemas, migrations, replication, connection pooling |
 | **ci-cd** | GitHub Actions, GitLab CI/CD, Forgejo workflows, supply chain security, SHA pinning, SBOM generation |
+| **virtualization** | Proxmox VE, libvirt/QEMU/KVM, XCP-ng, VMware -- Terraform provisioning, Packer templates, cloud-init, GPU passthrough, storage backends, clustering, live migration |
 
 ### Networking & Firewalls
 
@@ -103,9 +104,11 @@ The loop: **Score -> Improve -> Verify -> Keep or Revert -> Repeat.**
 |-------|-------------|
 | **code-review** | Bug hunting, logic errors, edge cases, race conditions, resource leaks, convention violations |
 | **anti-slop** | Detects and fixes AI-generated code patterns -- over-abstraction, redundant comments, verbose defensive code |
+| **testing** | Unit, integration, E2E, accessibility, and performance tests -- Vitest, Jest, Playwright, pytest, Go testing, cargo test, TDD workflows, mocking strategies, CI test infrastructure |
 | **git** | Commits, branches, hooks, signing, multi-forge workflows (GitHub, GitLab, Forgejo), release management |
 | **command-prompt** | Shell scripting across zsh, bash, POSIX sh, fish, nushell -- dotfiles, completions, one-liners |
 | **mcp** | MCP server development -- protocol patterns, transport, auth, input validation, injection prevention |
+| **ai-ml** | LLM integrations, RAG pipelines, agent systems, embeddings, evaluation harnesses, local inference, fine-tuning, structured output, tool use, cost optimization, safety guardrails |
 | **full-review** | Orchestrates code-review + anti-slop + security-audit + update-docs in one pass |
 
 ### Tooling & Meta
