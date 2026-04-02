@@ -5,11 +5,28 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SKILLS_SRC="$SCRIPT_DIR/skills"
 CANONICAL_DIR="${SKILLS_CANONICAL_DIR:-$HOME/.agents/skills}"
 
-ALL_SKILLS=(
-  ansible arch-btw anti-slop ci-cd code-review command-prompt databases docker
-  firewall-appliance full-review git kubernetes lockpick mcp networking
-  prompt-generator security-audit skill-creator skill-refiner terraform update-docs
-)
+# Discover skills dynamically: scan skills/ for dirs with SKILL.md,
+# exclude gitignored entries (e.g., cluster-health).
+discover_skills() {
+  local skills=()
+  for dir in "$SKILLS_SRC"/*/; do
+    [[ -f "$dir/SKILL.md" ]] || continue
+    local name
+    name="$(basename "$dir")"
+    # Skip gitignored skills -- if not in a git repo, include everything
+    if git -C "$SKILLS_SRC" rev-parse --git-dir &>/dev/null; then
+      if git -C "$SKILLS_SRC" check-ignore -q "$name" 2>/dev/null; then
+        continue
+      fi
+    fi
+    skills+=("$name")
+  done
+  # Sort for stable ordering
+  IFS=$'\n' read -r -d '' -a skills < <(printf '%s\n' "${skills[@]}" | sort; printf '\0') || true
+  printf '%s\n' "${skills[@]}"
+}
+
+mapfile -t ALL_SKILLS < <(discover_skills)
 
 SUPPORTED_TOOLS=(
   claude codex cursor windsurf opencode
