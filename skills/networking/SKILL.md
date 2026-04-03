@@ -213,6 +213,26 @@ Read the appropriate reference file for detailed patterns. Key principles:
 | **Traefik** | Docker/K8s, dynamic backends | Automatic (ACME) | Labels / file / K8s CRDs | Yes (TCP/UDP) |
 | **HAProxy** | Pure load balancing, L4/L7 | Manual | haproxy.cfg | Yes (native) |
 
+### Caddy reverse proxy quick start
+
+```
+# /etc/caddy/Caddyfile -- three subdomains, auto-HTTPS
+app.example.com {
+    reverse_proxy localhost:3000
+}
+
+api.example.com {
+    reverse_proxy localhost:8080
+}
+
+grafana.example.com {
+    reverse_proxy localhost:3001
+}
+```
+
+Caddy handles TLS certificate provisioning automatically via ACME (Let's Encrypt). DNS A/AAAA
+records for all three subdomains must point to the host. Validate: `caddy validate --config /etc/caddy/Caddyfile`.
+
 Read `references/reverse-proxies.md` for configuration patterns, TLS setup,
 health checks, rate limiting, and WebSocket/gRPC proxying.
 
@@ -227,6 +247,39 @@ health checks, rate limiting, and WebSocket/gRPC proxying.
 | **IPsec (strongSwan)** | Good | Most complex | IKEv2 | Site-to-site, standards compliance |
 | **Tailscale/Headscale** | Fast (WG underneath) | Zero config | WG + DERP relays | Overlay mesh, remote access |
 | **Nebula** | Fast | Low | Certificate-based | Large mesh, Slack-scale |
+
+### WireGuard site-to-site quick start
+
+```ini
+# Site A (/etc/wireguard/wg0.conf) -- 10.0.1.0/24
+[Interface]
+PrivateKey = <SITE_A_PRIVATE_KEY>
+Address = 10.100.0.1/30
+ListenPort = 51820
+# MTU = 1420 for most setups; subtract 80 more if over PPPoE
+
+[Peer]
+PublicKey = <SITE_B_PUBLIC_KEY>
+Endpoint = site-b.example.com:51820
+AllowedIPs = 10.0.2.0/24, 10.100.0.2/32
+PersistentKeepalive = 25
+
+# Site B (/etc/wireguard/wg0.conf) -- 10.0.2.0/24
+[Interface]
+PrivateKey = <SITE_B_PRIVATE_KEY>
+Address = 10.100.0.2/30
+ListenPort = 51820
+
+[Peer]
+PublicKey = <SITE_A_PUBLIC_KEY>
+Endpoint = site-a.example.com:51820
+AllowedIPs = 10.0.1.0/24, 10.100.0.1/32
+PersistentKeepalive = 25
+```
+
+Both sides need `net.ipv4.ip_forward = 1` in `/etc/sysctl.d/`. **AllowedIPs** is the remote
+subnet (not `0.0.0.0/0` -- that's full-tunnel, not site-to-site). Key generation:
+`wg genkey | tee privatekey | wg pubkey > publickey`.
 
 Read `references/vpn.md` for setup patterns, key management, MTU tuning,
 NAT traversal, and overlay network comparison.

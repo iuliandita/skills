@@ -54,6 +54,8 @@ Write, structure, and maintain tests across unit, integration, E2E, accessibilit
 - Cleaning up verbose/sloppy test code -- use **anti-slop**
 - CI/CD pipeline architecture (test jobs run inside pipelines, but pipeline design is ci-cd's domain) -- use **ci-cd**
 - Database testing patterns at the engine level -- use **databases**
+- Writing or refining LLM prompts (use **prompt-generator**)
+- Infrastructure or configuration validation outside tests (use **terraform**, **ansible**, or **kubernetes**)
 
 ---
 
@@ -252,8 +254,17 @@ Flaky tests erode trust. Fix or quarantine immediately.
 
 1. **Identify**: track test stability over time (most CI systems have flaky test dashboards)
 2. **Quarantine**: move to a separate job that doesn't block merges. Tag with `@flaky` or `skip`.
-3. **Fix root causes**: usually timing issues, shared state, or network dependencies
-4. **Retry with caution**: `--retries 2` (Playwright) or `--rerun-fails` (pytest) is a bandaid, not a fix
+3. **Fix root causes** -- common culprits by framework:
+   - **Playwright/Cypress**: race conditions on navigation or animation. Use `waitForLoadState`,
+     `waitForSelector`, or Playwright's auto-waiting. Avoid `page.waitForTimeout`. Stub network
+     requests to eliminate backend variability.
+   - **Vitest/Jest**: shared module state between test files. Use `--pool forks` (Vitest) or
+     `--runInBand` to isolate. Check for leaked timers (`vi.useFakeTimers` not restored).
+   - **pytest**: database state leaking between tests. Use `@pytest.mark.usefixtures("db")`
+     with transactional rollback. Check for global state mutation in fixtures.
+   - **Go**: `t.Parallel()` tests sharing package-level state. Use `t.Cleanup` for teardown.
+     Check for goroutine leaks with `goleak`.
+4. **Retry with caution**: `--retries 2` (Playwright) or `--reruns 2` (pytest-rerunfailures) is a bandaid, not a fix
 
 ### Coverage thresholds
 

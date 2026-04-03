@@ -1,0 +1,105 @@
+[
+  {
+    "run_id": "2026-04-03-183811",
+    "branch": "skill-refiner/2026-04-03-183811",
+    "date": "2026-04-03",
+    "primary": {
+      "harness": "claude-code",
+      "version": "2.1.91",
+      "model": "claude-opus-4-6",
+      "effort": "high"
+    },
+    "secondary": {
+      "harness": "codex-cli",
+      "version": "0.118.0",
+      "model": "gpt-5.4",
+      "effort": "high"
+    },
+    "config": {
+      "iterations": 5,
+      "threshold": 99,
+      "mode": "circuit-breaker",
+      "plateau": 2
+    },
+    "pool_size": 23,
+    "excluded": ["skill-creator", "skill-refiner"],
+    "terminated": "iteration-cap",
+    "iterations_completed": 5,
+    "cross_model_flags": {
+      "minor": 2,
+      "major": 0,
+      "contested": 0
+    },
+    "scores": {
+      "before": {
+        "aggregate": { "avg": 83.5, "min": 76.7, "max": 87.6 },
+        "per_skill": {
+          "ai-ml": 78.8,
+          "ansible": 85.2,
+          "anti-slop": 83.6,
+          "arch-btw": 84.0,
+          "ci-cd": 85.6,
+          "code-review": 86.8,
+          "command-prompt": 86.0,
+          "databases": 86.8,
+          "docker": 87.2,
+          "firewall-appliance": 86.0,
+          "full-review": 85.2,
+          "git": 86.0,
+          "kubernetes": 87.6,
+          "lockpick": 86.4,
+          "mcp": 86.8,
+          "networking": 81.2,
+          "prompt-generator": 77.5,
+          "security-audit": 84.0,
+          "terraform": 82.4,
+          "testing": 76.7,
+          "update-docs": 81.6,
+          "virtualization": 82.8,
+          "zero-day": 84.4
+        }
+      },
+      "after": {
+        "aggregate": { "avg": 85.1, "min": 79.7, "max": 87.6 },
+        "per_skill": {
+          "ai-ml": 81.6,
+          "ansible": 85.2,
+          "anti-slop": 85.0,
+          "arch-btw": 84.0,
+          "ci-cd": 85.6,
+          "code-review": 87.8,
+          "command-prompt": 87.0,
+          "databases": 86.8,
+          "docker": 87.2,
+          "firewall-appliance": 86.0,
+          "full-review": 86.2,
+          "git": 86.0,
+          "kubernetes": 87.6,
+          "lockpick": 86.4,
+          "mcp": 86.8,
+          "networking": 83.2,
+          "prompt-generator": 81.5,
+          "security-audit": 84.0,
+          "terraform": 84.0,
+          "testing": 80.7,
+          "update-docs": 83.1,
+          "virtualization": 82.8,
+          "zero-day": 84.4
+        }
+      }
+    },
+    "changes_summary": [
+      "testing: framework-specific flaky test debugging, cross-refs, pytest flag fix",
+      "prompt-generator: creation example, expanded cross-refs, compatibility field",
+      "ai-ml: inline RAG example, version table trim, ChromaDB restored",
+      "networking: inline WireGuard + Caddy examples",
+      "update-docs: compatibility field, cross-refs",
+      "terraform: cross-refs, bold names",
+      "anti-slop: compatibility field",
+      "full-review: compatibility field",
+      "code-review: compatibility field",
+      "command-prompt: compatibility field",
+      "skill-refiner: Phase 3 summary template with run provenance"
+    ]
+  }
+]

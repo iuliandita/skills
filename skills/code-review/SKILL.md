@@ -2,6 +2,7 @@
 name: code-review
 description: "Use when reviewing code for bugs, logic errors, edge cases, error handling gaps, race conditions, resource leaks, or convention violations. Also trigger on 'review', 'code review', 'find bugs', 'check this', 'spot check', 'what did I miss', 'sanity check'. Not for style/slop audits (use anti-slop)."
 license: MIT
+compatibility: "None -- works on any codebase"
 metadata:
   source: iuliandita/skills
   date_added: "2026-03-25"

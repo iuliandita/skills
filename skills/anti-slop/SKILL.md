@@ -2,6 +2,7 @@
 name: anti-slop
 description: "Use when auditing code for machine-generated patterns, over-abstraction, redundant comments, defensive overkill, verbose code, generic naming, stale idioms, or dependency creep. Triggers: 'slop', 'code quality', 'simplify', 'modernize', 'code smell', 'clean up'."
 license: MIT
+compatibility: "None -- works on any codebase"
 metadata:
   source: iuliandita/skills
   date_added: "2026-03-25"

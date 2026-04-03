@@ -11,6 +11,7 @@ description: >
   context), 'oh-my-zsh', 'glob', 'array' (shell context), 'piping', 'redirect', 'heredoc',
   'case statement', 'read', 'trap', 'porting'.
 license: MIT
+compatibility: "Requires a POSIX-compatible shell. Zsh, bash, fish, or nushell for shell-specific features"
 metadata:
   source: iuliandita/skills
   date_added: "2026-03-25"

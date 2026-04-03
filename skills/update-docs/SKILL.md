@@ -2,6 +2,7 @@
 name: update-docs
 description: "Use when a session involved infrastructure, configuration, architecture, or operational changes. Also use when explicitly asked to update docs, refresh documentation, or at the end of a session after significant work. Triggers: 'update docs', 'refresh docs', 'sync docs', 'update CLAUDE.md', 'update AGENTS.md', 'update README', new gotchas discovered, changed IPs/ports/versions, new services added, runbook-worthy procedures, or project instruction files growing stale. Do NOT use for writing new documentation from scratch."
 license: MIT
+compatibility: "Requires git. Optional: wc (for size audits)"
 metadata:
   source: iuliandita/skills
   date_added: "2026-03-25"
@@ -25,6 +26,8 @@ Post-session documentation sweep. Captures non-obvious knowledge into the right 
 - Code correctness or security review -- use **code-review** or **security-audit**
 - Code quality, slop, or maintainability cleanup -- use **anti-slop**
 - Prompt authoring or reusable skill-file maintenance -- use **prompt-generator** or **skill-creator**
+- Full codebase audit across multiple domains -- use **full-review** (it invokes update-docs as one pass)
+- Git commit messages, PR descriptions, or changelog entries -- use **git**
 
 ---
 

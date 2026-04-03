@@ -42,11 +42,10 @@ cost-effective, and don't hallucinate their way into an incident.
 | Transformers | 5.4.0 | Model inference, fine-tuning, PyTorch 2.4+ required |
 | vLLM | 0.18.1 | High-throughput serving, continuous batching |
 | Ollama | 0.19.0 | Local inference, MLX backend on Apple Silicon |
-| Pinecone (Python) | 8.1.0 | Managed vector DB |
-| Qdrant | 1.17.1 | Self-hosted vector DB, hybrid search |
-| Weaviate | 1.36.8 | Vector DB, GraphQL API, agent skills |
-| ChromaDB | 1.5.5 | Lightweight vector DB, local-first |
 | pgvector | 0.8.2 | PostgreSQL extension, HNSW + IVFFlat |
+| Qdrant | 1.17.1 | Self-hosted vector DB, hybrid search |
+| Pinecone (Python) | 8.1.0 | Managed vector DB |
+| ChromaDB | 1.5.5 | Lightweight vector DB, local-first |
 | promptfoo | 0.121.3 | LLM eval framework, red teaming |
 
 ## When to use
@@ -240,11 +239,47 @@ scores.
 
 | Store | Type | Best for |
 |-------|------|----------|
-| pgvector | PostgreSQL extension | Already using Postgres, moderate scale (<10M vectors) |
-| Qdrant | Self-hosted or cloud | High performance, hybrid search, production self-hosted |
+| pgvector | PostgreSQL extension | Already using Postgres, <10M vectors |
+| Qdrant | Self-hosted or cloud | Production self-hosted, hybrid search |
 | Pinecone | Managed only | Zero-ops, serverless scaling |
-| Weaviate | Self-hosted or cloud | Multi-modal, GraphQL API |
-| ChromaDB | Embedded / local | Prototyping, small datasets, dev/test |
+| ChromaDB | Embedded / local | Prototyping, small datasets |
+
+### Minimal RAG example (Python + pgvector)
+
+```python
+from anthropic import Anthropic
+import psycopg
+
+client = Anthropic()
+
+def search(query: str, limit: int = 5) -> list[dict]:
+    embedding = get_embedding(query)  # same model used at index time
+    with psycopg.connect(DB_URL) as conn:
+        rows = conn.execute(
+            "SELECT content, 1 - (embedding <=> %s::vector) AS score "
+            "FROM documents WHERE 1 - (embedding <=> %s::vector) > 0.7 "
+            "ORDER BY embedding <=> %s::vector LIMIT %s",
+            [embedding, embedding, embedding, limit],
+        ).fetchall()
+    return [{"content": r[0], "score": r[1]} for r in rows]
+
+def ask(question: str) -> str:
+    context = search(question)
+    if not context:
+        return "No relevant documents found."
+    response = client.messages.create(
+        model="claude-sonnet-4-6-20250514",
+        max_tokens=1024,
+        messages=[{"role": "user", "content": (
+            f"Answer based on these documents:\n\n"
+            + "\n---\n".join(d["content"] for d in context)
+            + f"\n\nQuestion: {question}"
+        )}],
+    )
+    return response.content[0].text
+```
+
+Key patterns: relevance threshold (0.7), same embedding model for index/query, context passed as user message prefix.
 
 Read `references/rag-patterns.md` for indexing pipelines, metadata filtering, multi-index
 strategies, and production RAG architecture.

@@ -10,6 +10,7 @@ description: >
   Do NOT use for brainstorming features, writing code, creating skills (use
   skill-creator), or creating inline string prompts within application code.
 license: MIT
+compatibility: "None -- works with any LLM target"
 metadata:
   source: iuliandita/skills
   date_added: "2026-03-25"
@@ -32,9 +33,11 @@ Take the user's rough thoughts, scattered notes, or half-formed ideas and turn t
 ## When NOT to use
 
 - Brainstorming features or creative ideation -- this skill structures prompts, not ideas
-- Creating reusable skill files or agent instruction bundles (use skill-creator)
+- Creating reusable skill files or agent instruction bundles (use **skill-creator**)
 - Writing inline prompt strings inside application code -- that's just coding
-- The user wants code that calls an LLM API -- that's an implementation task, not prompt structuring
+- The user wants code that calls an LLM API (use **ai-ml** for SDK integration)
+- Security review of prompts for injection risks (use **security-audit**)
+- Reviewing code quality of prompt-related code (use **code-review** or **anti-slop**)
 
 ---
 
@@ -193,6 +196,38 @@ If the user gives you an existing prompt to improve (not rough notes):
 Before: `You are a helpful assistant that reviews code.`
 
 After: `You are a senior code reviewer. For each file, check for: bugs, edge cases, security issues, and performance problems. Report findings as a list with severity (critical/warning/info), file:line, and a one-line description. Skip style nitpicks. If nothing is wrong, say "No issues found."` -- added: scope, output format, severity scale, constraint against noise.
+
+## Example: Creation from Scratch
+
+**User input (brain dump):**
+> I want an AI that helps me write better emails. It should fix grammar, make things more concise,
+> and match the tone I want. Sometimes formal, sometimes casual.
+
+**Structured output:**
+
+```
+You are an email editor. You receive a draft email and a target tone, then return an improved
+version.
+
+Your edits:
+- Fix grammar and spelling errors
+- Make the text more concise -- cut filler words and redundant phrases
+- Match the requested tone (formal, casual, or neutral)
+
+Preserve the sender's intent and meaning. Do not add information they didn't include.
+Do not change the greeting or sign-off style unless it clashes with the requested tone.
+
+Input format:
+  TONE: {{TONE}}
+  DRAFT:
+  {{EMAIL_DRAFT}}
+
+Return only the improved email. No commentary, no explanations, no "Here's your improved email:".
+```
+
+Note: simple task, so plain prose -- no XML sections, no numbered steps, no bloated preamble.
+
+---
 
 ## Related Skills
 

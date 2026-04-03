@@ -75,13 +75,18 @@ contested major flags (non-configurable).
 ### Phase 0: Setup
 
 1. **Create feature branch**: `skill-refiner/YYYY-MM-DD-HHMMSS` from current HEAD
-2. **Build skill inventory**: list all skills, exclude phase-2 targets (skill-creator,
+2. **Load run history**: read `.refiner-runs.json` from the collection root (if it exists).
+   Use previous run data for: baseline score comparison (detect regressions from external
+   changes), model/harness change detection (flag if the primary or secondary model changed
+   since last run -- new model = new baseline, not a comparable delta), and skip analysis
+   (don't re-attempt improvements that were already tried and reverted in a recent run).
+3. **Build skill inventory**: list all skills, exclude phase-2 targets (skill-creator,
    skill-refiner) from the improvement pool
-3. **Detect primary harness**: check environment to identify which AI CLI is running
+4. **Detect primary harness**: check environment to identify which AI CLI is running
    this session
-4. **Probe for secondary harness**: run three-step validation (PATH check, config check,
+5. **Probe for secondary harness**: run three-step validation (PATH check, config check,
    smoke test) per `references/harness-detection.md`. Announce result.
-5. **If no secondary found**: **always fall back to self-review.** Spawn a fresh agent on
+6. **If no secondary found**: **always fall back to self-review.** Spawn a fresh agent on
    the current harness with the review prompt template from `references/harness-detection.md`.
    Label as "same-model fresh-context review" in scoring, weight at 5% instead of 10%
    (renormalize: 16/37/42/5). This catches confirmation bias but shares the primary model's
@@ -165,6 +170,11 @@ contested major flags (non-configurable).
     ```
     === skill-refiner run complete ===================================
     Branch:     skill-refiner/YYYY-MM-DD-HHMMSS
+    Primary:    <harness> <version> (<model>, effort: <level>)
+    Secondary:  <harness> <version> (<model>, effort: <level>) | none
+    Pool:       N skills (skill-creator, skill-refiner excluded)
+    Config:     iterations=M, threshold=T, mode=MODE, plateau=P
+
     Iterations: N (of max M)
     Terminated: plateau / threshold / cap / user
 
@@ -175,11 +185,16 @@ contested major flags (non-configurable).
       skill-creator: 80 > 84 (+4)  [meta]
       skill-refiner: 78 > 83 (+5)  [meta]
 
+    Aggregate:  avg X.X | min X.X | max X.X
     Reverted:   X changes across Y iterations
     Contested:  Z flags escalated to human
     =================================================================
     ```
-23. **Announce branch**: remind user to review and merge when ready
+23. **Write run history**: append this run's metadata to `.refiner-runs.json` in the
+    collection root. Include: run_id, branch, date, primary/secondary harness+model+effort,
+    config, pool size, termination reason, cross-model flag counts, before/after per-skill
+    scores, and a changes summary. Commit with the phase 3 summary.
+24. **Announce branch**: remind user to review and merge when ready
 
 ## AI Self-Check
 

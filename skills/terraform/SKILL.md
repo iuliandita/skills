@@ -47,10 +47,12 @@ IBM acquired HashiCorp for $6.4B (closed Feb 2025). Terraform stays BSL 1.1. The
 
 ## When NOT to use
 
-- Kubernetes manifests or Helm charts (use kubernetes)
-- Ansible playbooks or configuration management (use ansible)
-- Docker/container optimization (use docker)
-- CI/CD pipeline design (use ci-cd)
+- Kubernetes manifests or Helm charts (use **kubernetes**)
+- Ansible playbooks or configuration management (use **ansible**)
+- Docker/container optimization (use **docker**)
+- CI/CD pipeline design (use **ci-cd**)
+- Database engine configuration, schema design, or migrations (use **databases**)
+- Security auditing application code (use **security-audit**)
 
 ---
 
