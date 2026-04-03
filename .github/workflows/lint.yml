@@ -20,7 +20,7 @@ permissions:
 
 jobs:
   lint:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
@@ -35,3 +35,29 @@ jobs:
 
       - name: Shellcheck scripts
         run: shellcheck scripts/lint-skills.sh scripts/validate-spec.sh install.sh
+
+  security:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Install gitleaks
+        run: |
+          export GOBIN="$HOME/.local/bin"
+          mkdir -p "$GOBIN"
+          go install github.com/zricethezav/gitleaks/v8@v8.30.1
+          echo "$GOBIN" >> "$GITHUB_PATH"
+
+      - name: Install semgrep
+        run: |
+          python3 -m venv "$RUNNER_TEMP/semgrep-venv"
+          "$RUNNER_TEMP/semgrep-venv/bin/pip" install --quiet semgrep==1.157.0
+          echo "$RUNNER_TEMP/semgrep-venv/bin" >> "$GITHUB_PATH"
+
+      - name: Secret scan
+        run: gitleaks detect --source . --no-git --redact
+
+      - name: Static analysis
+        # Limit semgrep to executable/config files. The Markdown corpus contains
+        # intentional security examples that would create noisy false positives.
+        run: semgrep scan --config auto --error install.sh scripts .github/workflows
