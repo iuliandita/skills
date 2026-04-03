@@ -1,19 +1,11 @@
 ---
 name: testing
 description: >
-  Use when writing, reviewing, or debugging tests. Covers unit tests, integration
-  tests, E2E tests, TDD workflow, test architecture, mocking strategies, fixture
-  management, accessibility testing, visual regression, performance testing, and
-  CI test infrastructure. Also trigger on 'test', 'spec', 'testing', 'TDD',
-  'unit test', 'integration test', 'e2e', 'end-to-end', 'playwright', 'vitest',
-  'jest', 'pytest', 'cargo test', 'go test', 'cypress', 'test coverage',
-  'flaky test', 'mock', 'stub', 'fixture', 'test data', 'snapshot test',
-  'accessibility test', 'a11y', 'axe-core', 'load test', 'benchmark',
-  'test parallelization', 'test runner'. Use this skill even when the user
-  doesn't say "test" but is clearly doing test work (e.g., "check if this
-  works", "verify the behavior", "write a spec", "add coverage").
-  Not for reviewing existing test quality (use code-review). Not for
-  security-specific testing (use security-audit).
+  · Write, review, or debug tests -- unit, integration, E2E, TDD, mocking, fixtures,
+  accessibility, visual regression, and performance. Triggers: 'test', 'spec', 'TDD',
+  'playwright', 'vitest', 'jest', 'pytest', 'cypress', 'coverage', 'flaky test', 'mock',
+  'fixture', 'a11y', 'benchmark'. Not for test quality review (use code-review) or
+  security testing (use security-audit).
 license: MIT
 compatibility: "Requires one or more of: vitest, jest, pytest, go test, cargo test, playwright"
 metadata:

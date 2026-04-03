@@ -1,16 +1,10 @@
 ---
 name: skill-refiner
 description: >
-  Iteratively improve an AI skill collection through adaptive evaluation loops.
-  Scores skills using lint validation, AI self-checks, behavioral testing, and
-  cross-model peer review. Runs N iterations with adaptive focus on weakest skills,
-  then a meta-improvement phase for evaluation infrastructure. Inspired by Karpathy's
-  AutoResearch pattern (automated iterative refinement with immutable evaluation criteria).
-  Use when you want to batch-improve skills, run quality sweeps,
-  or trigger a self-improvement cycle. Triggers: 'skill refiner', 'improve skills',
-  'refine skills', 'skill loop', 'self-improve', 'quality sweep', 'batch improve',
-  'iterate skills', 'autoresearch'. Not for single skill review (use skill-creator),
-  first-time creation (use skill-creator), or one-off collection audits (use skill-creator).
+  · Batch-improve a skill collection through adaptive evaluation loops -- lint validation,
+  AI self-checks, behavioral testing, and cross-model peer review. Triggers: 'skill refiner',
+  'improve skills', 'quality sweep', 'batch improve', 'skill loop'. Not for single skill
+  work or first-time creation (use skill-creator).
 license: MIT
 compatibility: "Requires: skill-creator skill, git. Optional: secondary AI harness (codex, claude, opencode) for cross-model review"
 metadata:

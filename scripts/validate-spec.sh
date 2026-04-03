@@ -47,8 +47,10 @@ validate_description() {
   desc="${desc%\"}"
   desc="${desc#>}"
   desc="${desc#"${desc%%[![:space:]]*}"}"
-  if [[ ${#desc} -gt 1024 ]]; then
-    error "$name: description exceeds 1024 characters (${#desc})"
+  if [[ ${#desc} -gt 600 ]]; then
+    error "$name: description exceeds 600 characters (${#desc})"
+  elif [[ ${#desc} -gt 500 ]]; then
+    warn "$name: description exceeds 500 characters (${#desc})"
   fi
 }
 

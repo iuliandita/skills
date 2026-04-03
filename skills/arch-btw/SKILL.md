@@ -1,17 +1,12 @@
 ---
 name: arch-btw
 description: >
-  Use when administering Arch Linux, CachyOS, or Arch-based distros. Covers pacman, paru, AUR,
-  makepkg, keyring and pacnew issues, systemd, mkinitcpio or dracut, bootctl, systemd-boot,
-  UKIs, Secure Boot, Hyprland, GNOME, KDE Plasma, PipeWire, Bluetooth, GPU drivers, Steam,
-  Proton, OBS, WebRTC screen sharing, Discord or Teams quirks, virtual cameras, and Linux
-  gaming. Also use for EndeavourOS or Manjaro when the task is Arch-style package, boot,
-  desktop, graphics, media, or service management. Triggers: 'arch linux', 'cachyos', 'pacman',
-  'paru', 'aur', 'systemd', 'mkinitcpio', 'dracut', 'bootctl', 'wayland', 'hyprland', 'gnome', 'kde',
-  'pipewire', 'bluetooth', 'mesa', 'vulkan', 'nvidia', 'amdgpu', 'steam', 'proton',
-  'gamescope', 'mangohud', 'gamemode', 'obs', 'screen share', 'webrtc', 'discord', 'teams',
-  'v4l2loopback', 'btrfs', 'pacnew', 'arch-chroot'. Not for shell syntax (command-prompt), networking
-  (networking), config management (ansible), or security testing (security-audit/lockpick).
+  · Administer Arch Linux, CachyOS, or Arch-based distros -- pacman, AUR, systemd, boot,
+  desktop (Hyprland, GNOME, KDE), PipeWire, GPU drivers, gaming (Steam, Proton), and media
+  (OBS, WebRTC). Triggers: 'arch linux', 'cachyos', 'pacman', 'paru', 'aur', 'systemd',
+  'mkinitcpio', 'bootctl', 'hyprland', 'pipewire', 'nvidia', 'steam', 'proton', 'obs',
+  'pacnew'. Not for shell syntax (command-prompt), networking (networking), or config
+  management (ansible).
 license: MIT
 compatibility: Requires Arch Linux, CachyOS, or Arch-based distro with pacman
 metadata:

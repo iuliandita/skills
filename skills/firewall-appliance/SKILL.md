@@ -1,14 +1,10 @@
 ---
 name: firewall-appliance
 description: >
-  Use when managing, troubleshooting, or hardening OPNsense or pfSense firewalls via SSH. Also
-  trigger on firewall hostnames (e.g., "op1", "fw1", "pfsense"), pfctl, pf rules, FreeBSD
-  firewall, CrowdSec on OPNsense, pfBlockerNG on pfSense, CARP failover, HAProxy on OPNsense,
-  or any BSD-based network appliance. Triggers: 'opnsense', 'pfsense', 'pfctl', 'pf rules',
-  'firewall appliance', 'CARP', 'CrowdSec', 'pfBlockerNG', 'BSD firewall', 'configctl',
-  'pfSsh.php', 'easyrule', 'Suricata' (firewall context), 'HAProxy' (firewall context),
-  'Unbound' (firewall context). Do NOT use for Linux firewalls (iptables, nftables, ufw),
-  cloud security groups, or application-level WAFs.
+  · Manage, troubleshoot, or harden OPNsense/pfSense firewalls via SSH -- pfctl, pf rules,
+  CARP failover, CrowdSec, pfBlockerNG, and BSD-based appliances. Triggers: 'opnsense',
+  'pfsense', 'pfctl', 'CARP', 'CrowdSec', 'pfBlockerNG', 'configctl'. Not for Linux
+  firewalls (nftables/iptables -- use networking) or cloud security groups.
 license: MIT
 compatibility: "Requires SSH access to OPNsense or pfSense appliance"
 metadata:

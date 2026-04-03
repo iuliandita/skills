@@ -1,13 +1,10 @@
 ---
 name: ci-cd
 description: >
-  Use when writing, reviewing, or architecting CI/CD pipelines for any platform --
-  GitHub Actions, GitLab CI/CD, or Forgejo CI/CD. Also use for pipeline security,
-  supply chain hardening, SHA pinning, SBOM generation, CI/CD compliance (PCI-DSS 4.0),
-  workflow optimization, or runner configuration. Triggers: 'ci/cd', 'cicd', 'pipeline',
-  'workflow' (CI context), 'github actions', 'gitlab ci', 'forgejo', '.github/workflows',
-  '.gitlab-ci.yml', '.forgejo/workflows', 'runner', 'sha pinning', 'actions', 'sbom'
-  (CI context), 'supply chain' (CI context).
+  · Write, review, or architect CI/CD pipelines -- GitHub Actions, GitLab CI, Forgejo.
+  Covers pipeline security, SHA pinning, SBOM, and runner configuration. Triggers: 'ci/cd',
+  'pipeline', 'github actions', 'gitlab ci', 'forgejo', '.github/workflows', 'runner',
+  'sha pinning'.
 license: MIT
 compatibility: "Optional: gh (GitHub CLI), glab (GitLab CLI)"
 paths:

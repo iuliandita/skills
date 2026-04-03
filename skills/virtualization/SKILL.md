@@ -1,16 +1,11 @@
 ---
 name: virtualization
 description: >
-  Use when creating, configuring, or troubleshooting virtual machines and hypervisors. Primary
-  focus on Proxmox VE (API, CLI, clustering, HA, storage, migration). Also covers libvirt/QEMU/KVM,
-  XCP-ng, VMware vSphere, VirtualBox. Use for VM provisioning with Terraform (bpg/proxmox provider),
-  Packer image builds, cloud-init, PCI/GPU passthrough, storage backends (LVM-thin, ZFS, Ceph),
-  memory management (ballooning, NUMA, hugepages), disk tuning (virtio, iothread, discard).
-  Triggers: 'proxmox', 'pve', 'qemu', 'kvm', 'libvirt', 'virsh', 'qm', 'pct', 'hypervisor',
-  'virtual machine', 'vm', 'esxi', 'vsphere', 'xcp-ng', 'virtualbox', 'virt-install',
-  'pci passthrough', 'gpu passthrough', 'live migration', 'cloud-init', 'packer', 'vm template',
-  'thin pool', 'ballooning', 'pbs'. Not for container orchestration (use kubernetes), general
-  Terraform/HCL (use terraform), network config (use networking), or config management (use ansible).
+  · Create, configure, or troubleshoot VMs and hypervisors -- Proxmox VE, libvirt/QEMU/KVM,
+  XCP-ng, VMware vSphere. Covers provisioning, passthrough, storage backends, cloud-init,
+  and Packer builds. Triggers: 'proxmox', 'qemu', 'kvm', 'libvirt', 'virsh', 'vm', 'esxi',
+  'vsphere', 'pci passthrough', 'gpu passthrough', 'cloud-init', 'packer'. Not for containers
+  (use kubernetes/docker), general Terraform (use terraform), or config management (use ansible).
 license: MIT
 compatibility: "Varies by hypervisor. Proxmox: pvesh, qm, pct. Libvirt: virsh, virt-install. Optional: packer, terraform"
 metadata:

@@ -1,6 +1,9 @@
 ---
 name: full-review
-description: "Use when the user wants a full repo review, complete audit, quality gate, or asks for /full-review. Also trigger on 'review everything', 'audit this repo', 'full check', 'run all checks', or any request to run multiple review skills together."
+description: >
+  · Full repo review -- runs code-review, anti-slop, security-audit, and update-docs in
+  parallel. Triggers: 'full review', 'review everything', 'audit this repo', 'full check',
+  'run all checks'.
 license: MIT
 compatibility: "Requires code-review, anti-slop, security-audit, update-docs skills installed"
 metadata:

@@ -1,14 +1,10 @@
 ---
 name: prompt-generator
 description: >
-  Use when the user has scattered ideas, brain dumps, or rough notes they want turned into
-  a proper LLM prompt, or when refining, rewriting, or restructuring an existing prompt.
-  Also trigger on prompt engineering, prompt templates, or formatting instructions as system
-  prompts. Triggers: "write a prompt", "turn this into a prompt", "structure this prompt",
-  "system prompt for", "prompt template", "prompt engineering", "rewrite this prompt",
-  "improve this prompt", "optimize this prompt", "format as a system prompt".
-  Do NOT use for brainstorming features, writing code, creating skills (use
-  skill-creator), or creating inline string prompts within application code.
+  · Turn scattered ideas or rough notes into structured LLM prompts, or refine existing ones.
+  Triggers: 'write a prompt', 'system prompt', 'prompt template', 'prompt engineering',
+  'improve this prompt'. Not for brainstorming features, writing code, or creating skills
+  (use skill-creator).
 license: MIT
 compatibility: "None -- works with any LLM target"
 metadata:

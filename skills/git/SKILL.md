@@ -1,19 +1,11 @@
 ---
 name: git
 description: >
-  Use when performing git operations, managing branches, creating commits, handling
-  remotes, resolving conflicts, writing hooks, configuring git, or working with
-  multiple forges (GitHub, GitLab, Forgejo). Also use for commit signing, credential
-  management, branch protection, release workflows, PR/MR creation, version bumps,
-  git security hardening, or PCI-DSS change management compliance. Use this skill
-  even when the user doesn't explicitly say "git" but is clearly doing git work
-  (e.g., "push this", "cut a release", "create a PR", "tag this version").
-  Triggers: 'git', 'commit', 'branch', 'merge', 'rebase', 'cherry-pick', 'tag',
-  'remote', 'push', 'pull', 'stash', 'bisect', 'reflog', 'worktree', 'hook',
-  'signing', 'gpg', 'ssh-signing', 'credential', '.gitignore', '.gitattributes',
-  'gh' (GitHub CLI), 'glab' (GitLab CLI), 'PR', 'MR', 'pull request',
-  'merge request', 'release', 'changelog', 'conventional commits', 'version bump',
-  'semver', 'git filter-repo', 'git-crypt', 'pre-commit', 'prek'.
+  · Git operations -- branches, commits, remotes, conflicts, hooks, signing, releases,
+  PR/MR workflows, and multi-forge support (GitHub, GitLab, Forgejo). Also trigger when
+  the user is clearly doing git work without saying "git" (e.g., "push this", "cut a release").
+  Triggers: 'git', 'commit', 'branch', 'merge', 'rebase', 'tag', 'hook', 'signing',
+  'PR', 'MR', 'release', 'changelog', 'conventional commits', 'gh', 'glab'.
 license: MIT
 compatibility: "Requires git. Optional: gh (GitHub CLI), glab (GitLab CLI)"
 metadata:

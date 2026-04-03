@@ -1,16 +1,11 @@
 ---
 name: ai-ml
 description: >
-  Use when building, reviewing, or architecting AI/ML applications -- LLM integrations, RAG
-  pipelines, agent systems, embedding workflows, evaluation harnesses, or local inference setups.
-  Also use for structured output, tool use / function calling, streaming, fine-tuning decisions,
-  vector store integration, cost optimization, and AI safety guardrails. Triggers: 'llm', 'rag',
-  'embedding', 'vector store', 'langchain', 'langgraph', 'llamaindex', 'openai sdk',
-  'anthropic sdk', 'vercel ai sdk', 'structured output', 'function calling', 'tool use',
-  'agent loop', 'multi-agent', 'fine-tune', 'lora', 'ollama', 'vllm', 'transformers',
-  'pinecone', 'qdrant', 'chromadb', 'pgvector', 'evals', 'promptfoo', 'hallucination',
-  'model routing', 'guardrails', 'chunking', 'hybrid search', 'reranking', 'ai application'.
-  Not for MCP servers (use mcp), prompt writing (use prompt-generator), or general DB (use databases).
+  · Build, review, or architect AI/ML applications -- LLM integrations, RAG pipelines, agent
+  systems, embeddings, evals, local inference, structured output, and tool use. Triggers: 'llm',
+  'rag', 'embedding', 'vector store', 'langchain', 'openai sdk', 'anthropic sdk', 'agent loop',
+  'fine-tune', 'ollama', 'vllm', 'evals', 'guardrails', 'chunking', 'reranking'. Not for MCP
+  servers (use mcp), prompt writing (use prompt-generator), or general DB (use databases).
 license: MIT
 compatibility: "Varies by task. Common: Python 3.10+, Node.js 18+. Optional: GPU for local inference"
 metadata:

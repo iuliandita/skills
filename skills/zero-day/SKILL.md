@@ -1,16 +1,12 @@
 ---
 name: zero-day
 description: >
-  Use when hunting for novel, undisclosed vulnerabilities in source code, binaries, or
-  live systems. Covers manual code analysis, reverse engineering, patch diffing, fuzzing,
-  attack surface mapping, and threat intelligence. Also use for variant analysis, 1-day-to-
-  0-day research, PoC development, and responsible disclosure. Triggers: 'zero-day',
-  '0-day', 'vulnerability research', 'vuln hunting', 'bug hunting', 'variant analysis',
-  'patch diffing', 'binary diffing', 'fuzz target', 'attack surface', 'exploit dev',
-  'responsible disclosure', 'CVE', 'PoC', 'taint analysis', 'code audit for vulns',
-  'reverse engineering', 'firmware analysis', 'supply chain attack', 'cloud-native vuln',
-  'IMDS', 'cross-tenant'. Not for SAST scanning (use security-audit), post-exploitation
-  (use lockpick), or code correctness review (use code-review).
+  · Hunt for novel vulnerabilities in source code, binaries, or live systems -- reverse
+  engineering, patch diffing, fuzzing, attack surface mapping, PoC development, and
+  responsible disclosure. Triggers: 'zero-day', '0-day', 'vulnerability research',
+  'variant analysis', 'patch diffing', 'fuzz', 'exploit dev', 'CVE', 'PoC', 'reverse
+  engineering'. Not for SAST scanning (use security-audit), post-exploitation (use lockpick),
+  or code correctness (use code-review).
 license: MIT
 compatibility: "Optional: codeql, semgrep, joern, ghidra, radare2/rizin, afl++, gdb, pwntools, strace, ltrace, checksec"
 metadata:

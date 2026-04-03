@@ -1,18 +1,10 @@
 ---
 name: databases
 description: >
-  Use when configuring, tuning, designing schemas, migrating, backing up,
-  or reviewing database engines. Covers PostgreSQL, MongoDB, MySQL/MariaDB,
-  and MSSQL. Also use for connection pooling, replication, PCI-DSS database
-  compliance, migration planning, database performance tuning, or schema
-  design review. Triggers: 'database', 'db', 'postgres', 'postgresql', 'pg_',
-  'mysql', 'mariadb', 'mongodb', 'mongo', 'mssql', 'sql server', 'schema',
-  'migration', 'index', 'backup', 'restore', 'replication', 'replica',
-  'connection pool', 'pgbouncer', 'proxysql', 'pgaudit', 'TDE',
-  'encryption at rest', 'drizzle-kit', 'prisma migrate', 'typeorm',
-  'sequelize', 'knex', 'alembic', 'flyway', 'liquibase', 'mongod',
-  'pg_dump', 'mysqldump', 'EXPLAIN', 'query plan', 'slow query',
-  'vacuum', 'autovacuum', 'reindex', 'partitioning'.
+  · Configure, tune, migrate, or review database engines -- PostgreSQL, MongoDB, MySQL/MariaDB,
+  MSSQL. Covers schemas, replication, connection pooling, backups, and performance tuning.
+  Triggers: 'database', 'postgres', 'mysql', 'mongodb', 'mssql', 'schema', 'migration',
+  'replication', 'pgbouncer', 'EXPLAIN', 'query plan', 'slow query', 'vacuum', 'pg_dump'.
 license: MIT
 compatibility: "Requires one or more of: psql, mongosh, mysql, or sqlcmd"
 metadata:

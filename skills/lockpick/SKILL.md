@@ -1,20 +1,12 @@
 ---
 name: lockpick
 description: >
-  Use when performing authorized privilege escalation assessments, security
-  testing, CTF challenges, or post-exploitation enumeration on Linux systems,
-  containers, and Kubernetes clusters. Also use for VPN credential extraction,
-  IaC secrets exposure analysis, lateral movement, and pivoting. Triggers:
-  'privesc', 'privilege escalation', 'CTF', 'pentest', 'post-exploitation',
-  'container escape', 'breakout', 'SUID', 'sudo abuse', 'capabilities',
-  'kernel exploit', 'RBAC abuse', 'serviceaccount', 'etcd secrets', 'kubelet',
-  'VPN credentials', 'WireGuard keys', 'IPsec PSK', 'OpenVPN', 'SSH hijack',
-  'agent forwarding', 'terraform state secrets', 'ansible vault crack',
-  'IMDS', 'metadata endpoint', 'lateral movement', 'pivot', 'reverse shell',
-  'GTFOBins', 'LinPEAS', 'enumeration'. Do NOT use for defensive hardening
-  reviews (use security-audit), application code SAST (use security-audit),
-  network firewall config (use firewall-appliance), or VPN setup/configuration
-  (use networking).
+  · Authorized privilege escalation, CTF challenges, post-exploitation enumeration on Linux,
+  containers, and K8s. Covers lateral movement, pivoting, credential extraction, and IaC
+  secrets exposure. Triggers: 'privesc', 'CTF', 'pentest', 'post-exploitation', 'container
+  escape', 'SUID', 'sudo abuse', 'RBAC abuse', 'reverse shell', 'GTFOBins', 'LinPEAS',
+  'lateral movement'. Not for defensive hardening (use security-audit) or firewall config
+  (use firewall-appliance).
 license: MIT
 compatibility: Requires authorized access to target Linux systems and bash/python
 metadata:

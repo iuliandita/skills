@@ -1,15 +1,10 @@
 ---
 name: ansible
 description: >
-  Use when writing, reviewing, or architecting Ansible playbooks, roles, collections,
-  or configuration management automation. Also use for Molecule testing, ansible-lint,
-  Ansible Vault, inventory management, Execution Environments, AWX/AAP, CIS benchmarks,
-  or PCI-DSS configuration hardening. Triggers: 'ansible', 'playbook', 'role', 'collection',
-  'inventory', 'vault' (Ansible context), 'molecule', 'galaxy', 'ansible-lint',
-  'ansible-navigator', 'execution environment', 'EE', 'AWX', 'AAP', 'handlers',
-  'group_vars', 'host_vars', 'jinja2' (Ansible context), 'blockinfile', 'lineinfile',
-  'configuration management', 'config management', 'CIS benchmark', 'ansible-lockdown',
-  'hardening playbook', 'openrc' (Ansible context), 'alpine' (Ansible context), 'apk' (Ansible context).
+  · Write, review, or architect Ansible playbooks, roles, collections, and configuration
+  management. Covers Molecule testing, Vault, AWX/AAP, CIS benchmarks, and Execution
+  Environments. Triggers: 'ansible', 'playbook', 'role', 'inventory', 'molecule',
+  'ansible-lint', 'AWX', 'galaxy', 'group_vars', 'CIS benchmark', 'config management'.
 license: MIT
 compatibility: "Requires ansible-core and Python 3.9+. Optional: ansible-lint, molecule"
 metadata:

@@ -1,13 +1,9 @@
 ---
 name: docker
 description: >
-  Use when writing, reviewing, or debugging Dockerfiles, Docker Compose stacks,
-  container images, or OCI workflows. Also use for Podman, Buildah, Skopeo,
-  containerd, BuildKit, image signing, SBOM generation, container hardening,
-  or PCI-DSS container compliance. Triggers: 'docker', 'dockerfile', 'compose',
-  'container', 'podman', 'buildah', 'skopeo', 'containerd', 'buildkit',
-  'docker-compose', 'multi-stage', 'distroless', 'chainguard', 'OCI',
-  'docker scout', 'docker init', 'cosign', 'SBOM', 'model runner'.
+  · Write, review, or debug Dockerfiles, Compose stacks, and OCI workflows. Covers Podman,
+  BuildKit, image signing, container hardening, and multi-stage builds. Triggers: 'docker',
+  'dockerfile', 'compose', 'container', 'podman', 'buildkit', 'distroless', 'OCI', 'cosign'.
 license: MIT
 compatibility: "Requires docker or podman. Optional: docker compose, buildkit, cosign, trivy"
 paths:

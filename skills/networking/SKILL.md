@@ -1,17 +1,11 @@
 ---
 name: networking
 description: >
-  Use when configuring, troubleshooting, or optimizing Linux networking, DNS, reverse proxies,
-  VPNs, VLANs, subnetting, HA, or nftables firewalls. Also trigger on diagnostics (tcpdump, mtr,
-  ss, dig), load balancing (HAProxy, Nginx, Caddy, Traefik), VPN setup (WireGuard, OpenVPN,
-  IPsec/strongSwan), overlays (Tailscale, Headscale, Nebula, ZeroTier), keepalived/VRRP,
-  Cloudflare Tunnels, dynamic routing (FRR, BGP, OSPF), or performance tuning (MTU, TCP,
-  bufferbloat). Triggers: 'dns', 'reverse proxy', 'load balancer', 'vpn', 'wireguard',
-  'cloudflare tunnel', 'cloudflared', 'vlan', 'subnet', 'nftables', 'iptables', 'keepalived',
-  'vrrp', 'caddy', 'nginx' (proxy context), 'haproxy', 'traefik', 'mtr', 'tcpdump', 'dig',
-  'unbound', 'coredns', 'tailscale', 'headscale', 'nebula', 'frr', 'bgp', 'ospf', 'mtu',
-  'network'. Not for OPNsense/pfSense (use firewall-appliance), K8s networking (use kubernetes), container
-  networking (use docker), cloud VPCs (use terraform), or offensive pentesting (use lockpick).
+  · Configure, troubleshoot, or optimize Linux networking -- DNS, reverse proxies, VPNs, VLANs,
+  nftables, load balancing, overlays, dynamic routing, and performance tuning. Triggers: 'dns',
+  'reverse proxy', 'vpn', 'wireguard', 'tailscale', 'vlan', 'nftables', 'caddy', 'nginx',
+  'haproxy', 'traefik', 'mtr', 'tcpdump', 'frr', 'bgp'. Not for OPNsense/pfSense (use
+  firewall-appliance) or K8s networking (use kubernetes).
 license: MIT
 compatibility: "Requires Linux. Tools vary by task: nftables, WireGuard, dig, mtr, tcpdump"
 metadata:

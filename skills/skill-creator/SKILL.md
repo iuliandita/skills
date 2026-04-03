@@ -1,13 +1,10 @@
 ---
 name: skill-creator
 description: >
-  Create new skills, review and improve existing skills, audit the skill collection for consistency,
-  check for overlaps and contradictions, validate versions and security references, and optimize
-  skill descriptions for better triggering. Use when creating, reviewing, improving, auditing,
-  testing, fixing, or debugging skills -- any work involving skill files or a shared skill collection.
-  Also trigger on: 'skill creator', 'new skill', 'check skill', 'skill audit', 'skill review',
-  'skill test', 'skill quality', 'frontmatter', 'trigger description', 'skill overlap'.
-  Prefer this skill for dedicated skill-file work instead of generic brainstorming or planning workflows.
+  · Create, review, audit, or improve individual skills -- frontmatter, triggers, overlaps,
+  collection consistency, and description optimization. Triggers: 'skill creator', 'new skill',
+  'skill audit', 'skill review', 'skill quality', 'frontmatter', 'skill overlap'. Prefer this
+  for skill-file work over generic brainstorming workflows.
 license: MIT
 compatibility: "Optional: git (for freshness and gitignore filtering)"
 metadata:

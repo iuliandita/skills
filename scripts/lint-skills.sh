@@ -108,7 +108,7 @@ check_ascii() {
     while IFS= read -r line; do
       # Strip allowed emoji status indicators, then check for remaining non-ASCII
       local stripped
-      stripped=$(echo "$line" | perl -CSD -pe 's/[\x{1F534}\x{1F7E2}\x{1F7E1}\x{1F535}\x{26A1}\x{1F3AF}\x{1F480}]//g' 2>/dev/null || echo "$line")
+      stripped=$(echo "$line" | perl -CSD -pe 's/[\x{00B7}\x{1F534}\x{1F7E2}\x{1F7E1}\x{1F535}\x{26A1}\x{1F3AF}\x{1F480}]//g' 2>/dev/null || echo "$line")
       if echo "$stripped" | grep -Pq '[^\x00-\x7F]' 2>/dev/null; then
         error "$name: non-ASCII character at $line"
       fi

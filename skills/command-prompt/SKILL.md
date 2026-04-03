@@ -1,15 +1,10 @@
 ---
 name: command-prompt
 description: >
-  Use when writing shell commands, scripts, dotfile config, completions, functions, or
-  debugging shell-specific issues. Covers zsh, bash, POSIX sh, fish, tcsh, and nushell. Also
-  trigger when porting scripts between shells, configuring oh-my-zsh/starship/p10k, writing
-  one-liners with shell-specific features (glob qualifiers, parameter expansion, arrays), or
-  choosing which shell to target. Triggers: 'shell', 'script', 'shebang', '.zshrc', '.bashrc',
-  '.profile', 'dotfiles', 'completion', 'prompt' (shell context), 'alias', 'function' (shell
-  context), 'source', 'export', 'PATH', 'fish', 'nushell', 'zsh', 'bash', 'sh' (scripting
-  context), 'oh-my-zsh', 'glob', 'array' (shell context), 'piping', 'redirect', 'heredoc',
-  'case statement', 'read', 'trap', 'porting'.
+  · Write shell commands, scripts, dotfile config, completions, or debug shell-specific issues.
+  Covers zsh, bash, POSIX sh, fish, and nushell. Triggers: 'shell', 'script', '.zshrc',
+  '.bashrc', 'dotfiles', 'completion', 'alias', 'zsh', 'bash', 'fish', 'nushell', 'oh-my-zsh',
+  'heredoc', 'trap'.
 license: MIT
 compatibility: "Requires a POSIX-compatible shell. Zsh, bash, fish, or nushell for shell-specific features"
 metadata:

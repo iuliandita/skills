@@ -1,6 +1,10 @@
 ---
 name: update-docs
-description: "Use when a session involved infrastructure, configuration, architecture, or operational changes. Also use when explicitly asked to update docs, refresh documentation, or at the end of a session after significant work. Triggers: 'update docs', 'refresh docs', 'sync docs', 'update CLAUDE.md', 'update AGENTS.md', 'update README', new gotchas discovered, changed IPs/ports/versions, new services added, runbook-worthy procedures, or project instruction files growing stale. Do NOT use for writing new documentation from scratch."
+description: >
+  · Post-session documentation sweep -- update CLAUDE.md, AGENTS.md, README, or runbooks after
+  infrastructure, config, or architecture changes. Triggers: 'update docs', 'refresh docs',
+  'sync docs', 'update CLAUDE.md', 'update README'. Not for writing new documentation from
+  scratch.
 license: MIT
 compatibility: "Requires git. Optional: wc (for size audits)"
 metadata:
