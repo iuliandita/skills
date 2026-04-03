@@ -15,6 +15,7 @@ metadata:
   source: iuliandita/skills
   date_added: "2026-03-25"
   effort: medium
+  argument_hint: "<task-or-shell>"
 ---
 
 # Command Prompt: Shell Scripting and Configuration

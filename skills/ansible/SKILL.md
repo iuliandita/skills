@@ -16,6 +16,7 @@ metadata:
   source: iuliandita/skills
   date_added: "2026-03-24"
   effort: high
+  argument_hint: "[playbook-or-task]"
 ---
 
 # Ansible: Production Configuration Management

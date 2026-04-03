@@ -457,24 +457,8 @@ Use the FIRST CVSS calculator: https://www.first.org/cvss/calculator/4.0
 
 ## Tooling Quick Reference
 
-| Tool | Purpose | Install |
-|------|---------|---------|
-| CodeQL | Semantic code analysis, variant queries | `gh codeql` or GitHub releases |
-| Semgrep | Pattern + taint analysis (cross-file with Pro) | `pip install semgrep` or `brew` |
-| Joern | Code property graph queries | `joern` binary from GitHub releases |
-| Ghidra | Binary reverse engineering, decompilation | ghidra-sre.org or GitHub releases |
-| Rizin + Cutter | OSS reverse engineering + GUI | `rizin` package or GitHub releases |
-| AFL++ | Coverage-guided fuzzing | `apt install afl++` or build from source |
-| GDB + GEF/pwndbg | Dynamic binary analysis | `apt install gdb` + plugin |
-| pwntools | Exploit development framework (Python) | `pip install pwntools` |
-| BinDiff | Binary patch diffing | Bundled with Ghidra (BinDiffHelper) or standalone |
-| Diaphora | OSS binary diffing (IDA/Ghidra) | github.com/joxeankoret/diaphora |
-| strace/ltrace | Syscall and library call tracing | `apt install strace ltrace` |
-| checksec | Binary mitigation detection (Linux) | `apt install checksec` |
-| winchecksec | Binary mitigation detection (Windows) | github.com/trailofbits/winchecksec |
-| x64dbg | Dynamic binary analysis (Windows) | x64dbg.com |
-| searchsploit | Exploit-DB CLI search | `apt install exploitdb` |
-| OSS-Fuzz-Gen | AI-generated fuzz targets | github.com/google/oss-fuzz-gen |
+Read `references/tooling-quick-reference.md` for the tool catalog, install paths,
+and when to reach for each tool during source, binary, or live-system analysis.
 
 ---
 
@@ -484,6 +468,7 @@ Use the FIRST CVSS calculator: https://www.first.org/cvss/calculator/4.0
 - `references/taint-analysis.md` -- manual data flow analysis methodology for source code, with worked examples per language
 - `references/binary-analysis.md` -- binary reverse engineering workflow, patch diffing, fuzzing harness development, dynamic analysis
 - `references/exploit-patterns.md` -- proof-of-concept development templates by vulnerability class, with safety guidelines
+- `references/tooling-quick-reference.md` -- tool catalog with install paths and best-fit usage notes
 
 ---
 

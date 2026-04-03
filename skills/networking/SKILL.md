@@ -18,6 +18,7 @@ metadata:
   source: iuliandita/skills
   date_added: "2026-03-25"
   effort: high
+  argument_hint: "<task-or-topology>"
 ---
 
 # Networking: Configuration, Troubleshooting, and Optimization

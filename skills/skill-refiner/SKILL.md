@@ -157,6 +157,7 @@ contested major flags (non-configurable).
     Format: `refactor(skill-refiner): meta -- improve <target> (+N)`
 21. **Pause for human review**: display phase 2 changes, wait for approval.
     This checkpoint is non-configurable -- it fires even in `--mode auto`.
+    A direct user approval such as "continue" or "proceed" counts as approval to resume.
 
 ### Phase 3: Summary
 

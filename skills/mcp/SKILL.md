@@ -16,6 +16,7 @@ metadata:
   source: iuliandita/skills
   date_added: "2026-03-30"
   effort: high
+  argument_hint: "<server-or-task>"
 ---
 
 # MCP: Model Context Protocol Server Development

@@ -16,7 +16,7 @@ when creating or reviewing skills to ensure consistency.
 7. AI Self-Check Patterns
 7.5. Diagnostic Skill Pitfalls
 8. Trigger Description Patterns
-9. Skill Inventory (March 2026)
+9. Skill Inventory (April 2026)
 
 ---
 
@@ -133,7 +133,7 @@ user confirmation in steps that could run unattended.
 | `description` | free text, <1024 chars, no XML tags | primary trigger mechanism -- the agent scans this |
 | `license` | license name (e.g., `MIT`) | Agent Skills spec field |
 | `compatibility` | free text, <500 chars | environment requirements (optional) |
-| `metadata.source` | `custom` | identifies locally maintained skills |
+| `metadata.source` | `owner/repo` or `custom` | identifies the publishing collection or an unpublished local skill |
 | `metadata.date_added` | ISO date string | staleness detection |
 | `metadata.effort` | `low`, `medium`, `high` | signals expected token usage and complexity |
 
@@ -499,12 +499,13 @@ Use this skill even when the user doesn't explicitly say "git" but is clearly do
 
 ---
 
-## 9. Skill Inventory (March 2026)
+## 9. Skill Inventory (April 2026)
 
-### Published skills (21)
+### Published skills (25)
 
 | Skill | Effort | Date Added | Domain |
 |-------|--------|-----------|--------|
+| ai-ml | high | 2026-04-02 | AI/ML applications, RAG, agents |
 | ansible | high | 2026-03-24 | Configuration management |
 | anti-slop | medium | 2026-03-25 | Code quality audit |
 | arch-btw | high | 2026-03-26 | Arch Linux / CachyOS administration |
@@ -522,10 +523,13 @@ Use this skill even when the user doesn't explicitly say "git" but is clearly do
 | networking | high | 2026-03-25 | DNS, reverse proxies, VPNs, nftables, HA |
 | prompt-generator | medium | 2026-03-25 | LLM prompt structuring |
 | security-audit | high | 2026-03-25 | Application security review |
-| skill-refiner | high | 2026-03-31 | Iterative self-improvement loop |
 | skill-creator | high | 2026-03-25 | Skill lifecycle management |
+| skill-refiner | high | 2026-03-31 | Iterative self-improvement loop |
 | terraform | high | 2026-03-24 | Infrastructure-as-code |
+| testing | high | 2026-03-25 | Test design, debugging, infrastructure |
 | update-docs | low | 2026-03-25 | Documentation sweep |
+| virtualization | high | 2026-03-25 | Proxmox, libvirt, VM operations |
+| zero-day | high | 2026-04-03 | Vulnerability research and discovery |
 
 This inventory is a snapshot of the upstream iuliandita/skills collection. It serves as a
 reference example for convention compliance, not as an authoritative list for other repos.

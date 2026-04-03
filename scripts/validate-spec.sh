@@ -103,6 +103,9 @@ for skill_dir in "$SKILLS_DIR"/*/; do
   if ! echo "$fm" | grep -q '^description:'; then
     error "$name: missing required field 'description'"
   fi
+  if ! echo "$fm" | grep -q '^license:'; then
+    error "$name: missing required field 'license'"
+  fi
 
   # Spec: field constraints
   validate_description "$skill_file" "$name"

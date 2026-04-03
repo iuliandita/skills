@@ -15,6 +15,7 @@ metadata:
   source: iuliandita/skills
   date_added: "2026-03-30"
   effort: high
+  argument_hint: "[platform-or-task-or-host]"
 ---
 
 # Firewall Appliance: OPNsense & pfSense Management

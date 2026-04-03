@@ -52,7 +52,7 @@ patterns activates reliably, reads clearly, and plays well with the rest of the 
 
 Before returning any generated or modified skill, verify against this list:
 
-- [ ] **Frontmatter complete**: `name`, `description`, `license`, `metadata.source: custom`, `metadata.date_added` (ISO), `metadata.effort` (low/medium/high)
+- [ ] **Frontmatter complete**: `name`, `description`, `license`, `metadata.source` (`owner/repo` for published collections or `custom` for unpublished skills), `metadata.date_added` (ISO), `metadata.effort` (low/medium/high)
 - [ ] **Name spec-valid**: lowercase alphanumeric + hyphens only, no leading/trailing/consecutive
   hyphens, no reserved words (`anthropic`, `claude`), matches directory name
 - [ ] **No XML tags** in `name` or `description` fields (Anthropic platform restriction)
@@ -432,9 +432,10 @@ collection, run Mode 2 Step 2 (quality checks) to verify no regressions were int
 
 1. **Read before edit.** Always read a skill's SKILL.md and reference files before modifying.
    No exceptions, no "I already know the content."
-2. **Conventions are non-negotiable.** Every custom skill must have: `source: custom`,
-   `date_added`, `effort`, "When to use", "When NOT to use", Workflow, and Rules sections.
-   These aren't suggestions -- they're what makes skills consistent and predictable.
+2. **Conventions are non-negotiable.** Every custom skill must have: `metadata.source`
+   (`owner/repo` for published collections or `custom` for unpublished skills), `date_added`,
+   `effort`, "When to use", "When NOT to use", Workflow, and Rules sections. These aren't
+   suggestions -- they're what makes skills consistent and predictable.
 3. **Verify everything, assume nothing.** AI models hallucinate tool names, CLI flags, version
    numbers, and API endpoints. Every tool, version, flag, and behavior claim in a skill must
    be verified via web search or registry check before writing it down. "I'm pretty sure" is

@@ -6,6 +6,7 @@ metadata:
   source: iuliandita/skills
   date_added: "2026-03-25"
   effort: low
+  argument_hint: "[doc-or-path]"
 ---
 
 # Update Docs

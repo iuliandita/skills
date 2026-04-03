@@ -7,6 +7,7 @@ metadata:
   source: iuliandita/skills
   date_added: "2026-03-24"
   effort: high
+  argument_hint: "[path-or-resource]"
 ---
 
 # Terraform & OpenTofu: Production Infrastructure-as-Code

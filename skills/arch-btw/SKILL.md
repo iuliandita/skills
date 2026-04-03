@@ -18,6 +18,7 @@ metadata:
   source: iuliandita/skills
   date_added: "2026-03-26"
   effort: high
+  argument_hint: "[issue-or-subsystem]"
 ---
 
 # Arch BTW: Arch Linux and CachyOS Administration
