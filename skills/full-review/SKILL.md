@@ -40,7 +40,7 @@ Each audit runs in its own parallel agent/subprocess with a fresh context window
 
 Before presenting the combined report, verify:
 
-- [ ] All 4 agents dispatched (code-review, anti-slop, security-audit, update-docs)
+- [ ] All 4 agents dispatched via the **Skill tool** (code-review, anti-slop, security-audit, update-docs) -- not via built-in agent types
 - [ ] Each report presented under its own header, unedited
 - [ ] No cross-report merging or editorializing (findings from different audits stay separate)
 - [ ] SECURITY-AUDIT.md gitignore reminder included
@@ -78,6 +78,14 @@ Spawn all four agents concurrently. Use whatever parallel execution mechanism yo
 provides (subagents, background tasks, threads). Each agent invokes one of the four skills
 and runs a full codebase audit.
 
+**Skill invocation priority:** Each agent MUST use the **Skill tool** (e.g., `Skill("code-review")`) to invoke the named skill. Custom skills from the user's installed collection take priority over built-in agent types, subagent types, or platform-provided reviewers. Specifically:
+- Use `/code-review` (Skill tool), NOT `feature-dev:code-reviewer` or similar built-in agents
+- Use `/anti-slop` (Skill tool), NOT `code-simplifier:code-simplifier` or similar built-in agents
+- Use `/security-audit` (Skill tool), NOT a generic security scanning agent
+- Use `/update-docs` (Skill tool), NOT a generic documentation agent
+
+**Fallback:** If a skill is not available (Skill tool returns "not found" or similar error), THEN fall back to the best available alternative (built-in agent type, manual review, etc.) and note which skill was unavailable in the output header.
+
 **If parallel execution is unavailable** (restricted sandbox, no subagent support): run
 sequentially in this order: Security Audit, Code Review, Slop Check, Docs Sweep. Security
 first because those findings are most time-sensitive.
@@ -96,19 +104,19 @@ Context:
 
 #### Agent 1: Code Review
 
-Invoke `code-review`. Scope: full codebase (or user-specified scope). Return the complete report.
+Use the Skill tool to invoke `code-review`. Scope: full codebase (or user-specified scope). Return the complete report.
 
 #### Agent 2: Slop Check
 
-Invoke `anti-slop`. Scope: full codebase (or user-specified scope). Return the complete report.
+Use the Skill tool to invoke `anti-slop`. Scope: full codebase (or user-specified scope). Return the complete report.
 
 #### Agent 3: Security Audit
 
-Invoke `security-audit`. Scope: full codebase (or user-specified scope). Return the complete report including SECURITY-AUDIT.md content.
+Use the Skill tool to invoke `security-audit`. Scope: full codebase (or user-specified scope). Return the complete report including SECURITY-AUDIT.md content.
 
 #### Agent 4: Docs Sweep
 
-Invoke `update-docs` as a standalone read-only audit. Focus on: stale docs, instruction-file
+Use the Skill tool to invoke `update-docs` as a standalone read-only audit. Focus on: stale docs, instruction-file
 bloat (40,000 char limit), companion-file drift, broken links, orphaned gotchas, missing docs
 on recent changes. Do NOT make changes or commit anything.
 
@@ -172,7 +180,7 @@ If an agent fails or times out:
 - Present whatever completed successfully
 - Do not re-run failed agents unless the user asks
 
-If a skill isn't available (e.g., `code-review`, `anti-slop`, `security-audit`, or `update-docs` not installed), note it in the output header and run the remaining audits. Partial results are still useful.
+If a skill isn't available (Skill tool returns not found): try the best built-in alternative (e.g., `feature-dev:code-reviewer` for code-review, `code-simplifier:code-simplifier` for anti-slop, a general Agent for security/docs). Note the substitution in the output header so the user knows a fallback was used. Partial results are still useful.
 
 ## Related Skills
 
@@ -186,6 +194,7 @@ If a skill isn't available (e.g., `code-review`, `anti-slop`, `security-audit`, 
 
 ## Rules
 
+- **Custom skills first.** Always invoke skills via the Skill tool (`code-review`, `anti-slop`, `security-audit`, `update-docs`). Never substitute built-in agent types (e.g., `feature-dev:code-reviewer`, `code-simplifier:code-simplifier`) when the user's custom skills are available. Fall back to built-in alternatives only if the Skill tool reports the skill is not found.
 - **Parallel dispatch is strongly preferred.** Run all four agents concurrently when the environment supports it. If parallel execution is unavailable, run sequentially (security first -- see Step 2).
 - **Don't editorialize.** Present each report as the skill produced it. No unsolicited synthesis across reports.
 - **Respect each skill's output format.** The anti-slop skill has its own format. The security audit writes SECURITY-AUDIT.md. The code reviewer and docs sweep have their formats. Don't normalize them into a single style.
