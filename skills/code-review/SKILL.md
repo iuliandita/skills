@@ -112,8 +112,10 @@ Read the code to understand what it's supposed to do. If reviewing a diff, read 
 Follow every code path. For each branch, loop, or condition:
 - What happens on the happy path?
 - What happens on each error path?
-- What happens at boundaries (empty, zero, max, null)?
+- What happens at boundaries (empty, zero, max, null, negative)?
 - Are all cases handled? (switch/match exhaustiveness, if/else completeness)
+
+**Boundary value analysis** deserves special attention: when a function accepts numeric inputs (page numbers, sizes, counts, indices), zero, negative, and overflow values are inherently high-confidence findings. Don't suppress these with the 80% threshold -- if the function doesn't guard against `page=0`, `perPage=0`, or `offset > total`, that's a real bug on a realistic path.
 
 **Focus 3: Check Contracts & Boundaries**
 Examine every interface between components:
@@ -293,6 +295,11 @@ Read `references/databases.md` for the full database bug pattern catalog. Key hi
 ## Other Languages
 
 For Go, Rust, and other languages without dedicated reference files: apply the universal patterns (sections 1-10) only. Note in the report that language-specific checks were limited to universal patterns.
+
+**Go-specific notes** (apply alongside universal patterns):
+- **Loop variable capture**: Go 1.22+ creates a new variable per iteration, fixing the classic closure capture bug. For Go < 1.22 or when `go.mod` doesn't specify >= 1.22, closures in goroutines launched from loops capture a shared variable. Check `go.mod` to determine which semantics apply.
+- **Goroutine data races**: concurrent writes to shared variables (e.g., `err`) without a mutex or `errgroup` are a race condition regardless of Go version. The `-race` flag catches these at runtime.
+- **Nil interface traps**: an interface holding a nil pointer is not nil -- `error` returned as `(*MyError)(nil)` fails nil checks.
 
 ---
 

@@ -259,9 +259,10 @@ Read `references/typescript.md` for the full TS/JS pattern catalog. Key highligh
 Read `references/python.md` for the full Python pattern catalog. Key highlights:
 
 - **Class-for-everything disease**: stateless classes that should be plain functions/modules
+- **Exception anti-patterns**: bare `except:` catching KeyboardInterrupt/SystemExit, `except Exception as e: logger.error(e); raise` (adds nothing), type/None checks on typed parameters (e.g., `if user_id is None` when the signature says `int`), broad try/except wrapping its own explicit `raise` statements
 - **Stale patterns**: `os.path` instead of `pathlib`, `.format()` instead of f-strings, `%` formatting, `if/elif` chains instead of `match` (3.10+), `typing.Optional[X]` instead of `X | None` (3.10+)
 - **Type hints**: `Any` used to bypass type errors, redundant hints on obvious assignments, overly complex `TypeVar` gymnastics
-- **Verbose**: manual dict/list building instead of comprehensions, nested `if` instead of early returns, `lambda` assigned to a variable (just use `def`)
+- **Verbose**: manual dict/list building instead of comprehensions, nested `if` instead of early returns, `lambda` assigned to a variable (just use `def`), redundant docstrings restating the function signature
 - **Dependency creep**: `requests` for a single GET when `urllib` works, `python-dotenv` when `os.environ` is fine
 
 ## Language: Bash / Shell

@@ -38,6 +38,23 @@ Patterns drawn from real OSS incidents (unauthenticated admin endpoints, credent
 - Network appliance administration or firewall tuning -- use **firewall-appliance**
 - Linux networking setup and troubleshooting -- use **networking**
 
+## AI Self-Check
+
+Before returning any security audit report, verify:
+
+- [ ] **All automated tools attempted**: gitleaks/trufflehog, semgrep/bandit, trivy/audit ran (or noted as missing)
+- [ ] **No false positives included**: each finding reviewed independently, uncertain items marked "possible false positive"
+- [ ] **Severity classification accurate**: follows the report guide table, not inflated for impact
+- [ ] **OWASP mapping present**: each finding maps to the relevant OWASP Top 10:2025 category
+- [ ] **Remediation is specific**: concrete fix per finding, not generic advice ("validate input" is insufficient)
+- [ ] **Commit SHA recorded**: report anchored to a specific point in time
+- [ ] **Report gitignored**: warned user and checked `.gitignore` for `SECURITY-AUDIT.md`
+- [ ] **Known incidents checked**: dependency audit verified against known supply chain incidents (event-stream, colors, ua-parser-js, polyfill.io), not just CVE databases
+- [ ] **Agentic risks covered** (when applicable): MCP servers, AI tool handlers, prompt injection surfaces audited if present
+- [ ] **Scope respected**: no external service probing, no DAST, repo-only analysis
+
+---
+
 ## Workflow
 
 ### Step 0: Preflight
@@ -74,6 +91,14 @@ Find known CVEs in dependencies and assess supply chain risk.
 - **General**: `trivy fs --scanners vuln .`
 
 **Flag**: HIGH/CRITICAL CVEs with fixes available, deps unmaintained 2+ years, lockfile out of sync with manifest, non-standard registries.
+
+**Known supply chain incidents** -- flag these by name, not just by CVE:
+- `event-stream` 3.3.6 (2018 backdoor targeting bitcoin wallets)
+- `ua-parser-js` 0.7.29/0.8.0/1.0.0 (2021 cryptominer injection)
+- `colors` 1.4.1+ / `faker` 6.6.6 (2022 maintainer sabotage)
+- `polyfill.io` (2024 domain takeover, malicious CDN injection)
+- `xz-utils` 5.6.0-5.6.1 (2024 backdoor in compression library)
+Any match on package name + version range is Critical severity regardless of `audit` output.
 
 ### Step 2.5: Agentic AI & Supply Chain (Pass 2.5 -- Manual)
 

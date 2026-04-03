@@ -130,21 +130,26 @@ After every change, confirm the firewall is healthy:
 ### Creating a firewall rule (VLAN to server)
 
 1. Identify the interface the traffic originates from (e.g., `opt1` for VLAN 50)
-2. Create aliases for source subnet and destination server (keeps rules readable)
+2. Create aliases for source subnet and destination server (keeps rules readable):
+   - OPNsense API: `curl -X POST -u key:secret https://<fw>/api/firewall/alias/addItem -d '{"alias":{"name":"WebServer","type":"host","content":"10.0.1.100"}}'`
+   - OPNsense CLI: `configctl template reload OPNsense/Filter` (after editing alias via API or XML)
+   - pfSense: `easyrule` doesn't support aliases -- use GUI or edit `/cf/conf/config.xml` directly
 3. Add a pass rule on that interface: source = alias, destination = server alias, port = 443
-4. Place the allow rule above any block-all rule for that interface (rule ordering matters)
+4. Place the allow rule above any block-all rule for that interface (rule ordering matters -- pf evaluates last match, not first match, so a later block overrides an earlier pass)
 5. Test: `pfctl -n -f /tmp/rules.debug` (OPNsense) to dry-run before applying
 6. Apply: `configctl filter reload` (OPNsense) or `pfSsh.php playback svc restart filter` (pfSense)
 7. Verify: `pfctl -sr | grep <alias>` to confirm the rule is active
 
 ### Troubleshooting connectivity after VLAN changes
 
-1. **Interface assigned?** `ifconfig` -- is the VLAN interface listed and UP?
-2. **Rules present?** `pfctl -sr` -- any pass rules on the new VLAN interface?
-3. **NAT configured?** Check outbound NAT rules include the new VLAN subnet
-4. **DNS working?** `drill google.com @<firewall-ip>` from a VLAN client
-5. **Packet capture**: `tcpdump -ni <vlan-iface> host <client-ip>` -- are packets arriving?
-6. If packets arrive but no response: the rule or NAT is the problem. If no packets: the VLAN trunk or interface assignment is wrong.
+Work through these steps in order. **Do not skip ahead or assume the root cause** -- each step eliminates one layer. The most common failure is a missing outbound NAT rule, not a firewall rule.
+
+1. **Interface assigned?** `ifconfig` -- is the VLAN interface listed and UP? If not: the VLAN isn't assigned to an OPNsense/pfSense interface yet.
+2. **Rules present?** `pfctl -sr` -- any pass rules on the new VLAN interface? New interfaces have no rules by default (deny all).
+3. **NAT configured?** Check outbound NAT rules include the new VLAN subnet. On OPNsense: Firewall > NAT > Outbound. Missing outbound NAT is the #1 cause of "VLAN can't reach internet."
+4. **DNS working?** `drill google.com @<firewall-ip>` from a VLAN client. If this fails but ping to 8.8.8.8 works, it's a DNS issue, not a firewall rule.
+5. **Packet capture**: `tcpdump -ni <vlan-iface> host <client-ip>` -- are packets arriving at the firewall?
+6. If packets arrive but no response: the rule or NAT is the problem. If no packets: the VLAN trunk, switch tagging, or interface assignment is wrong -- check the physical/virtual layer before touching firewall config.
 
 ---
 

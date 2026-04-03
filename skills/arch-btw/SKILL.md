@@ -238,9 +238,9 @@ When a bug looks "desktop-only," compare one clean baseline:
 
 | Symptom | First checks |
 |---------|-------------|
-| Package weirdness after install | Partial upgrade? Full sync state first |
-| Service fails after update | `.pacnew`, unit overrides, `journalctl -b` |
-| Won't boot after kernel work | ESP mount, bootloader, initramfs, kernel artifacts |
+| Package weirdness after install | Partial upgrade? `pacman -Syu` first. Conflicting files? `pacman -Syu --overwrite '/path/to/file'` (specific glob, never `'*'`) |
+| Service fails after update | `.pacnew` merge needed? `pacdiff` or `DIFFPROG=nvim pacdiff`. Check unit overrides and `journalctl -b` |
+| Won't boot after kernel work | ESP mount, bootloader, initramfs, kernel artifacts. From live USB: `mount /dev/sdX2 /mnt && mount /dev/sdX1 /mnt/boot && arch-chroot /mnt` (adjust for Btrfs subvolumes: `mount -o subvol=@ /dev/sdX2 /mnt`) |
 | CachyOS unstable after repo tuning | CPU capability, repo tier, forked `pacman` |
 | AUR build failure | `PKGBUILD`, keys, pinned deps, repo conflicts |
 | Hyprland desktop weirdness | `XDG_SESSION_TYPE`, portal, Xwayland, user services |

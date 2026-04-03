@@ -274,9 +274,17 @@ _mycli() {
 }
 ```
 
-Place in a file named `_mycli` on your `fpath` (e.g., `~/.zsh/completions/`), or source
-inline with `compdef _mycli mycli`. The reference files have deeper coverage: glob-qualified
-completions, `_files`, `_hosts`, `_values`, and async completion patterns.
+Place in a file named `_mycli` on your `fpath`, then ensure the directory is registered:
+
+```zsh
+# In .zshrc, BEFORE compinit:
+fpath=(~/.zsh/completions $fpath)
+autoload -Uz compinit && compinit
+```
+
+Or source inline with `compdef _mycli mycli` (no fpath needed). The reference files have
+deeper coverage: glob-qualified completions, `_files`, `_hosts`, `_values`, and async
+completion patterns.
 
 ---
 

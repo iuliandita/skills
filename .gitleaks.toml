@@ -1,0 +1,10 @@
+# Gitleaks configuration -- allowlist for false positives in skill examples.
+# Skills contain example commands with placeholder credentials (key:secret,
+# your-key-here, etc.) that are not real secrets.
+
+[allowlist]
+  paths = [
+    '''skills/.*/references/.*\.md''',
+  ]
+  regexTarget = "match"
+  regexes = ['''key:secret''']

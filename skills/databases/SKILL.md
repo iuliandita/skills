@@ -203,7 +203,11 @@ Three approaches, pick by downtime tolerance:
 7. Cutover: stop writes to old primary, verify lag = 0, point connection pooler to new primary
 8. Drop subscription and decommission old primary
 
-**Key pitfalls**: DDL is not replicated (schema changes during migration need manual sync), large objects (`lo`) are not replicated, sequence values drift, and tables need primary keys or `REPLICA IDENTITY FULL`.
+**Key pitfalls** (check all of these before starting):
+- Tables need primary keys or `REPLICA IDENTITY FULL` -- check first: `SELECT c.relname FROM pg_class c JOIN pg_namespace n ON c.relnamespace = n.oid WHERE n.nspname = 'public' AND c.relkind = 'r' AND NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid = c.oid AND contype = 'p');`
+- DDL is not replicated -- schema changes during migration need manual sync on both sides
+- Large objects (`lo`) are not replicated
+- Sequence values drift -- copy them manually after cutover, not before
 
 Read `references/migration-patterns.md` for cross-engine type mapping, ORM migration tooling, and detailed migration patterns.
 

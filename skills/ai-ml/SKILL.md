@@ -417,17 +417,9 @@ monthly_cost = cost_per_request * requests_per_day * 30
 
 ## Safety and Guardrails
 
-- **Input validation** -- reject or sanitize prompt injection attempts before they reach the model
-- **Output validation** -- check model responses against expected schemas and content policies
-  before returning to users
-- **PII handling** -- strip or mask PII before sending to external APIs. Use entity recognition
-  (spaCy, Presidio) for automated detection
-- **Rate limiting** -- per-user and per-IP limits on AI endpoints. AI calls are expensive;
-  abuse adds up fast
-- **Content filtering** -- apply provider-level safety settings and add application-level
-  checks for domain-specific policies
-- **Audit logging** -- log prompts, responses, and metadata for debugging and compliance.
-  Redact PII in logs.
+Input validation (prompt injection), output validation (schema + content policy), PII handling
+(strip before external API calls), rate limiting (per-user + per-IP), content filtering, and
+audit logging (redact PII). These are non-negotiable for production AI apps.
 
 Read `references/safety.md` for prompt injection defense patterns, output validation schemas,
 PII detection setup, and content policy implementation.

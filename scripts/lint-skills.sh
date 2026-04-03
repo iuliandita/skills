@@ -173,6 +173,18 @@ check_banned_words() {
   done
 }
 
+# ── AI Self-Check section check ────────────────────────────────────────
+check_ai_self_check() {
+  local file="$1" name="$2"
+  local effort
+  effort=$(sed -n '2,/^---$/p' "$file" | grep -m1 'effort:' | sed 's/.*effort: *//' || true)
+  if [[ "$effort" == "high" ]]; then
+    if ! grep -qi '^## .*Self.Check' "$file"; then
+      warn "$name: high-effort skill without 'AI Self-Check' section (recommended for skills that generate output)"
+    fi
+  fi
+}
+
 # ── Main ────────────────────────────────────────────────────────────────
 echo "Linting skills in $SKILLS_DIR..."
 echo
@@ -196,6 +208,7 @@ for skill_dir in "$SKILLS_DIR"/*/; do
   check_length "$skill_file" "$name"
   check_references "$skill_file" "$name" "$skill_dir"
   check_private_refs "$skill_file" "$name"
+  check_ai_self_check "$skill_file" "$name"
   check_banned_words "$skill_dir" "$name"
   (( skill_count++ )) || true
 done

@@ -79,7 +79,7 @@ Before returning any generated or modified skill, verify against this list:
 - [ ] **Cross-skill references are valid**: every mentioned skill name actually exists
 - [ ] **AI-age awareness**: if the skill generates code, config, or structured files (including skill files), include an AI self-check section
 - [ ] **Context budget justified**: every section earns its token cost (see `references/conventions.md`)
-- [ ] **Forward-tested** (high-effort skills, when feasible): subagent used the skill on a realistic task without leaked context. Note what was skipped and why if infeasible.
+- [ ] **Forward-tested** (high-effort skills, when feasible): during review, a subagent used the skill on a realistic task without leaked context. This is a process check on the reviewer, not a content requirement on the skill -- the skill does not need a "forward-test" section. The reviewer notes what was tested or skipped and why.
 
 ---
 

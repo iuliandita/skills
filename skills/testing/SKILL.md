@@ -278,6 +278,12 @@ Set coverage gates in CI. Reasonable defaults:
 
 Enforce via `vitest --coverage --coverage.thresholds.lines=80`, `pytest --cov --cov-fail-under=80`, or `go test -coverprofile` + threshold script.
 
+**Minimal CI example (pytest + GitHub Actions)**:
+```yaml
+- run: pip install pytest pytest-xdist pytest-cov
+- run: pytest -n auto --cov=src --cov-fail-under=80 --tb=short
+```
+
 ---
 
 ## Reference Files
