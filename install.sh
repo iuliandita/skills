@@ -405,10 +405,7 @@ main() {
         (( failed++ )) || true
         continue
       fi
-      if [[ ! -d "$CANONICAL_DIR/$skill" ]] || [[ "$force" == "true" ]]; then
-        mkdir -p "$CANONICAL_DIR/$skill"
-        cp -r "$SKILLS_SRC/$skill/." "$CANONICAL_DIR/$skill/"
-      fi
+      install_copy "$skill" "$CANONICAL_DIR" "$force" "$no_backup" || (( failed++ )) || true
     done
 
     # Create symlinks per tool
@@ -435,39 +432,41 @@ main() {
 
   # ── Install: copy mode ──────────────────────────────────────────────
   else
-    local dest
-    if [[ -n "$dest_override" ]]; then
-      dest="$dest_override"
-    else
-      dest="$(resolve_tool_path "${tools[0]}")"
-    fi
-    mkdir -p "$dest"
-
-    printf 'Installing %d skill(s) for %s to %s\n\n' "${#skills[@]}" "${tools[0]}" "$dest"
-
     local failed=0
-    for skill in "${skills[@]}"; do
-      if ! validate_skill_name "$skill"; then
-        printf '  [!] Invalid skill name: %s\n' "$skill"
-        (( failed++ )) || true
-        continue
+
+    for tool in "${tools[@]}"; do
+      local dest
+      if [[ -n "$dest_override" ]]; then
+        dest="$dest_override"
+      else
+        dest="$(resolve_tool_path "$tool")"
       fi
-      if [[ ! -d "$SKILLS_SRC/$skill" ]]; then
-        printf '  [!] Unknown skill: %s\n' "$skill"
-        (( failed++ )) || true
-        continue
-      fi
-      install_copy "$skill" "$dest" "$force" "$no_backup" || (( failed++ )) || true
+      mkdir -p "$dest"
+
+      printf '[%s] -> %s\n' "$tool" "$dest"
+      for skill in "${skills[@]}"; do
+        if ! validate_skill_name "$skill"; then
+          printf '  [!] Invalid skill name: %s\n' "$skill"
+          (( failed++ )) || true
+          continue
+        fi
+        if [[ ! -d "$SKILLS_SRC/$skill" ]]; then
+          printf '  [!] Unknown skill: %s\n' "$skill"
+          (( failed++ )) || true
+          continue
+        fi
+        install_copy "$skill" "$dest" "$force" "$no_backup" || (( failed++ )) || true
+      done
+
+      write_lock "$dest" "${skills[@]}"
+      printf '\n'
     done
 
-    write_lock "$dest" "${skills[@]}"
-
-    printf '\n'
     if (( failed > 0 )); then
       printf 'Done with %d error(s).\n' "$failed"
       exit 1
     else
-      printf 'Done. Skills installed for %s.\n' "${tools[0]}"
+      printf 'Done. Skills installed for %s.\n' "${tools[*]}"
     fi
   fi
 }

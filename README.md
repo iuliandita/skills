@@ -65,11 +65,11 @@ The loop: **Score -> Improve -> Verify -> Keep or Revert -> Repeat.**
 - **Karpathy gate** -- only changes that measurably improve a skill's score survive. Everything else gets reverted. No drift, no degeneration, monotonic improvement.
 - **Self-improvement** -- skill-refiner improves its own evaluation infrastructure (including itself) in a separate meta-phase with human review checkpoints
 
-10 iterations. 24 skills. One command.
+10 iterations. 25 skills. One command.
 
 ## What's in the box
 
-24 production-tested skills covering:
+25 production-tested skills covering:
 
 ### Infrastructure & Operations
 
@@ -126,7 +126,7 @@ The loop: **Score -> Improve -> Verify -> Keep or Revert -> Repeat.**
 Each skill follows the [Agent Skills specification](https://agentskills.io/specification):
 
 - **`SKILL.md` with YAML frontmatter** -- `name`, `description`, `license`, optional `compatibility` for environment requirements, and `metadata` for custom fields. The frontmatter is what agents read at startup to decide which skills to activate.
-- **Compact body** (under 500 lines) -- the core instructions that load into every conversation. Kept lean so it doesn't eat your context window.
+- **Compact body** (target under 500 lines, 600 hard max) -- the core instructions that load into every conversation. Kept lean so it doesn't eat your context window.
 - **Reference files** (`references/` directory) -- detailed pattern libraries, compliance checklists, manifest templates. The agent reads these on-demand when the task requires depth. You get expert-level detail without paying the token cost upfront.
 - **Argument hints** (`metadata.argument_hint`) -- tells agents what arguments a skill expects when invoked (e.g., `<file-or-pattern>`, `[iterations]`). Angle brackets for required, square brackets for optional.
 - **Precise trigger descriptions** -- optimized so the right tool activates the right skill at the right time. Every trigger keyword is tested and tuned to minimize false positives and missed activations.
