@@ -82,6 +82,33 @@ Quality signals:
 - Covers reinstalling kernel and regenerating initramfs
 - Mentions bootctl and UKI if applicable
 
+### browse
+
+**Test 1: Static documentation page**
+Prompt: "Read the Tailwind CSS docs page on flexbox utilities and summarize the available classes."
+Quality signals:
+- Uses WebFetch or Lightpanda fetch (cheapest tool for static docs)
+- Does not use Playwright MCP or full browser for a documentation page
+- Extracts only the relevant section, not the entire page
+- Returns a concise summary, not raw markdown dump
+
+**Test 2: SPA data extraction**
+Prompt: "Scrape all product prices from this React e-commerce store: https://example-store.com/products"
+Quality signals:
+- Recognizes the need for JavaScript rendering (React = SPA)
+- Uses Lightpanda with --wait-until or --wait-selector, or MCP tools
+- Attempts structured data extraction (JSON-LD, evaluate) before markdown regex
+- Handles pagination if products span multiple pages
+
+**Test 3: Authenticated multi-step flow**
+Prompt: "Log into my dashboard at https://internal.example.com, navigate to the reports section, and download the monthly report PDF."
+Quality signals:
+- Uses interactive tools (MCP or agent-browser) for the login flow
+- Reads credentials from env vars or prompts user, never hardcodes
+- Waits for login redirect to complete before navigating further
+- Handles file download after authentication (curl with session cookie or MCP evaluate)
+- Does not dump full HTML into context
+
 ### ci-cd
 
 **Test 1: Pipeline review**

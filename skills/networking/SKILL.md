@@ -57,6 +57,7 @@ performance tuning.
 ## When NOT to use
 
 - OPNsense/pfSense firewall appliance management (use **firewall-appliance**)
+- Web browsing, scraping, or headless page interaction -- use **browse**
 - Kubernetes networking: NetworkPolicy, Gateway API, service mesh, CNI (use **kubernetes**)
 - Docker/container networking: bridge, overlay, Compose networks (use **docker**)
 - Cloud VPCs, security groups, managed load balancers (use **terraform**)

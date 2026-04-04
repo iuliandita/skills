@@ -501,7 +501,7 @@ Use this skill even when the user doesn't explicitly say "git" but is clearly do
 
 ## 9. Skill Inventory (April 2026)
 
-### Published skills (25)
+### Published skills (26)
 
 | Skill | Effort | Date Added | Domain |
 |-------|--------|-----------|--------|
@@ -509,6 +509,7 @@ Use this skill even when the user doesn't explicitly say "git" but is clearly do
 | ansible | high | 2026-03-24 | Configuration management |
 | anti-slop | medium | 2026-03-25 | Code quality audit |
 | arch-btw | high | 2026-03-26 | Arch Linux / CachyOS administration |
+| browse | medium | 2026-04-04 | Web browsing, scraping, token-efficient extraction |
 | ci-cd | high | 2026-03-24 | CI/CD pipelines |
 | code-review | high | 2026-03-25 | Correctness audit |
 | command-prompt | medium | 2026-03-25 | Shell scripting and config |

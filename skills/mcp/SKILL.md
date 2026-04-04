@@ -43,6 +43,7 @@ become yet another server with preventable injection vulnerabilities.
 - General REST API development that doesn't use MCP -- just write the API
 - Claude API / Anthropic SDK usage -- use a Claude API / Anthropic SDK skill if installed
 - Security auditing existing servers across a codebase -- use **security-audit** (it has an MCP section)
+- Using MCP browsing tools to browse or scrape web pages -- use **browse**
 - Writing prompts for LLMs (not MCP prompt resources) -- use **prompt-generator**
 
 ---

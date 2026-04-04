@@ -44,6 +44,7 @@ Write, structure, and maintain tests across unit, integration, E2E, accessibilit
 - Reviewing existing test quality or correctness as part of a code review -- use **code-review**
 - Security-specific testing (penetration testing, OWASP checks) -- use **security-audit**
 - Cleaning up verbose/sloppy test code -- use **anti-slop**
+- Ad-hoc web browsing, scraping, or page interaction outside of tests -- use **browse**
 - CI/CD pipeline architecture (test jobs run inside pipelines, but pipeline design is ci-cd's domain) -- use **ci-cd**
 - Database testing patterns at the engine level -- use **databases**
 - Writing or refining LLM prompts (use **prompt-generator**)
