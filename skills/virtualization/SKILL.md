@@ -22,20 +22,20 @@ setups to multi-node clusters with HA, live migration, and GPU passthrough. The 
 production-ready VM infrastructure with correct storage, memory, and CPU config that won't
 bite you at 3 AM.
 
-**Target versions** (April 2026):
+**Target versions** (verified April 2026):
 
-| Tool | Version | Notes |
-|------|---------|-------|
-| Proxmox VE | 9.1 | Debian 13 (trixie), kernel 6.17, QEMU 10.x |
-| Proxmox Backup Server | 4.1 | Dedup, incremental, prune policies |
-| bpg/proxmox (Terraform) | ~0.100 | Primary Proxmox IaC provider |
-| QEMU | 10.2.2 | Stable (11.0 RC in progress) |
-| libvirt | 12.0.0 | Hypervisor abstraction layer |
-| XCP-ng | 8.3 LTS | Xen-based, supported until Nov 2028 |
-| VMware ESXi | 8.0 U3i | Broadcom-owned, licensing upheaval |
-| VirtualBox | 7.2.6 | Dev/testing only |
-| Packer | 1.15.1 | Image builder, multi-platform |
-| cloud-init | 26.1 | Instance initialization standard |
+| Tool | Version | Release date | Notes |
+|------|---------|-------------|-------|
+| Proxmox VE | 9.1 | Nov 2025 | Debian 13.2 (trixie), kernel 6.17.2, QEMU 10.1.2 |
+| Proxmox Backup Server | 4.1 | Nov 2025 | Dedup, incremental, prune policies |
+| bpg/proxmox (Terraform) | 0.100.0 | Apr 2026 | Primary Proxmox IaC provider |
+| QEMU | 10.2.2 | Mar 2026 | Stable (11.0-rc2 in progress) |
+| libvirt | 12.0.0 | Jan 2026 | Hypervisor abstraction layer |
+| XCP-ng | 8.3 LTS | Oct 2024 | Xen-based, LTS since Jun 2025, EOL Nov 2028 |
+| VMware ESXi | 8.0 U3i | Feb 2026 | Broadcom-owned, licensing upheaval |
+| VirtualBox | 7.2.6 | Jan 2026 | Dev/testing only |
+| Packer | 1.15.1 | Mar 2026 | Image builder, multi-platform |
+| cloud-init | 26.1 | Feb 2026 | Instance initialization standard |
 
 ## When to use
 
@@ -80,8 +80,16 @@ generated VM config, Terraform HCL, or Packer template, verify against this list
 - [ ] Terraform lifecycle: `prevent_destroy` on VMs, `ignore_changes` on `disk` and `node_name`
 - [ ] No disk resize via Terraform -- use `qm resize` on host, then update Terraform var to match
 - [ ] PCI passthrough: `pcie = false` for standard passthrough, `xvga = false` unless display GPU
+- [ ] PCI passthrough: machine type is `q35` when `pcie = true` is needed
+- [ ] BIOS type matches use case: `seabios` default, `ovmf` for UEFI/Secure Boot/Windows 11
 - [ ] Backup retention configured (not unlimited snapshots eating storage)
 - [ ] Network device uses `virtio` model, not `e1000` or `rtl8139`
+- [ ] `fstrim.timer` enabled in guest for thin-provisioned storage (completes the discard chain)
+- [ ] SCSI controller explicitly set (`virtio-scsi-single` for high IOPS, `virtio-scsi-pci` default)
+- [ ] Machine type matches BIOS: `i440fx` with `seabios`, `q35` with `ovmf` (UEFI). Mixing
+  `i440fx` + `ovmf` causes boot failures. `q35` + `seabios` works but wastes q35 features.
+- [ ] VGA type matches use case: `serial0` for headless cloud images, `virtio` for GUI VMs,
+  omit for PCI passthrough display GPUs (`x-vga=1` replaces the virtual display)
 
 ---
 
@@ -139,6 +147,28 @@ Follow the domain-specific reference file. Key principles:
 | Network connectivity | `ping gateway`, check `ip addr` matches cloud-init config |
 | Memory | `free -h` in guest matches expected (not balloon-reduced) |
 | Live migration | Test with `qm migrate <vmid> <target> --online` on non-critical VM first |
+
+---
+
+## Quick Task: VM from Cloud Image (Proxmox)
+
+The fastest path to a production-ready VM. Skip Packer and ISO installs for standard setups.
+
+1. Download a cloud image to the Proxmox node:
+   `wget -P /var/lib/vz/template/iso/ https://cloud.debian.org/images/cloud/trixie/daily/latest/debian-13-generic-amd64.qcow2`
+2. Create the VM shell:
+   `qm create 100 --name myvm --memory 2048 --cores 2 --cpu host --net0 virtio,bridge=vmbr0 --agent enabled=1 --scsihw virtio-scsi-pci`
+3. Import and attach the disk with SSD optimizations:
+   `qm importdisk 100 debian-13-generic-amd64.qcow2 local-lvm`
+   `qm set 100 --scsi0 local-lvm:vm-100-disk-0,discard=on,iothread=1,ssd=1 --boot order=scsi0`
+4. Add cloud-init drive and configure:
+   `qm set 100 --ide2 local-lvm:cloudinit`
+   `qm set 100 --ciuser admin --sshkeys ~/.ssh/id_ed25519.pub --ipconfig0 ip=10.10.10.100/24,gw=10.10.10.1`
+5. Start: `qm start 100`
+6. Verify: `qm agent 100 ping` (may take 1-2 min on first boot while cloud-init runs)
+
+To make a reusable template, stop the VM after verification and run `qm template 100`.
+Clone with `qm clone 100 101 --name new-vm --full`.
 
 ---
 

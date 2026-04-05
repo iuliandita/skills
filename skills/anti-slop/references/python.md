@@ -81,6 +81,42 @@ def process(x):
 - `pydantic` for a single validation when a dataclass with `__post_init__` works
 - `PyYAML` + `toml` + `configparser` -- pick one config format
 
+## God-Module Refactoring (Soul)
+
+A `utils.py` or `helpers.py` that grows past ~200 lines is a junk drawer. Split by domain:
+
+```
+# before: utils.py with 40 unrelated functions
+utils.py
+
+# after: split by concern
+strings.py      # slugify, truncate, strip_tags
+dates.py        # parse_date, format_iso, business_days
+files.py        # safe_write, atomic_replace, ensure_dir
+http.py         # retry_get, parse_json_response
+```
+
+Each module should have a single clear domain. If a function doesn't fit any domain file, it probably belongs closer to its only caller -- inline it. Don't create a `misc.py` to hold the leftovers.
+
+**Rule of thumb:** if two functions in the same utils file never import each other and serve different callers, they belong in different modules.
+
+## Cross-Language Tells in Python (Lies)
+
+AI-generated Python frequently leaks JavaScript or Java idioms:
+
+```python
+# JS brain: .forEach(), .push(), .length, ===, console.log()
+items.forEach(lambda x: process(x))   # not valid Python
+results.push(item)                     # list.append(item)
+if len(items) === 0:                   # == not ===; also: `not items`
+
+# Java brain: .equals(), .toString(), StringBuilder
+if name.equals(other)                  # name == other
+str_val = obj.toString()               # str(obj)
+```
+
+These never appear in human-written Python. If you see them, the code was generated without language-aware review.
+
 ## Error Handling (Noise + Lies)
 
 ```python

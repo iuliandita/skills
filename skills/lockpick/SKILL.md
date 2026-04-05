@@ -59,6 +59,7 @@ Before executing any technique or generating exploitation commands, verify:
 - [ ] **Evidence captured**: command output logged for the report before moving on
 - [ ] **Cleanup planned**: any files dropped, users created, or configs modified are tracked for removal
 - [ ] **No destructive actions**: kernel exploits tested in lab first, no `rm -rf`, no disk writes to critical paths
+- [ ] **Architecture matched**: exploit/payload matches target arch (`uname -m`). x86_64 exploits don't work on ARM, 32-bit payloads fail on 64-bit-only systems
 - [ ] **Reverse shells use authorized ports**: listener IP and port match the engagement plan
 
 ---
@@ -134,6 +135,13 @@ grep -r 'DATABASE_URL\|DB_PASS\|POSTGRES_PASSWORD' /opt/ /srv/ /var/ 2>/dev/null
 # Cloud credentials
 cat ~/.aws/credentials ~/.config/gcloud/credentials.db 2>/dev/null
 env | grep -iE 'aws|azure|gcp|cloud|token|key|secret|pass'
+
+# Process memory (credentials in running services)
+# Read environ of interesting processes (web servers, databases, agents)
+for pid in $(pgrep -f 'nginx\|apache\|postgres\|mysql\|node\|python\|java' 2>/dev/null); do
+  echo "=== PID $pid ($(cat /proc/$pid/cmdline 2>/dev/null | tr '\0' ' ')) ==="
+  cat /proc/$pid/environ 2>/dev/null | tr '\0' '\n' | grep -iE 'pass|secret|token|key|dsn|database_url'
+done
 ```
 
 ### Phase 4: VPN & Tunnel Credential Extraction
@@ -295,6 +303,31 @@ Read `references/shells-and-pivoting.md` for:
 - `references/kubernetes-privesc.md` -- Kubernetes RBAC abuse, ServiceAccount exploitation, etcd, kubelet, pod creation, PSS bypass
 - `references/vpn-iac-secrets.md` -- VPN credential extraction (WireGuard, OpenVPN, IPsec) and IaC secrets exposure (Terraform, Ansible, cloud IMDS)
 - `references/shells-and-pivoting.md` -- reverse shells, SSH tunneling, agent hijacking, port forwarding, file transfer
+
+---
+
+## Scope Boundaries
+
+**Windows targets**: This skill covers Linux, containers, and Kubernetes. Windows privilege escalation (token impersonation, SeImpersonatePrivilege, PrintSpoofer, AD abuse, Kerberoasting) is a separate domain not covered here. For Windows CTF/pentest, research Windows-specific tooling (WinPEAS, PowerUp, Rubeus, BloodHound) directly.
+
+---
+
+## Evidence Capture Template
+
+Rule 4 says document everything. Use this structure per finding:
+
+```
+## Finding: [short name]
+- **Vector**: [sudo/SUID/cron/container/k8s/kernel/etc.]
+- **Access before**: [user/group, e.g., www-data]
+- **Access after**: [user/group, e.g., root]
+- **Steps**: [numbered list of exact commands run]
+- **Proof**: [command output showing escalated access, e.g., id, whoami, cat /root/proof.txt]
+- **Cleanup**: [files created, users added, configs changed -- and how to reverse]
+- **Remediation**: [what the defender should fix]
+```
+
+Capture `script -q /tmp/session.log` at the start of each engagement to get a full terminal transcript.
 
 ---
 

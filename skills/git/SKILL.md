@@ -83,6 +83,9 @@ verify against this list:**
 - [ ] **No interactive flags.** Never use `-i` (interactive) flags (`git rebase -i`, `git add -i`) in automated contexts -- they require TTY input.
 - [ ] **Tags pushed separately.** `git push` doesn't push tags by default. Always `git push --tags` or `git push origin <tag>` explicitly.
 - [ ] **Feature branch up to date.** Before creating a PR/MR, rebase onto the latest base branch to avoid merge conflicts.
+- [ ] **Lock files regenerated after conflict resolution.** After resolving conflicts in dependency files (`package.json`, `Cargo.toml`, `go.mod`, `pyproject.toml`), re-run the package manager to regenerate the lock file. Never manually merge lock files.
+- [ ] **Force-push safety.** If force-push is needed, always use `--force-with-lease` (refuses if remote has unfetched commits). Plain `--force` requires explicit user approval and team coordination.
+- [ ] **Version info dated.** When citing tool versions, include a date so readers know when to re-check. Stale version numbers cause silent breakage.
 
 ---
 
@@ -111,6 +114,7 @@ Read the project's instruction file (`AGENTS.md` or equivalent) for:
 - **"Create a PR/MR"** -> PR/MR workflow (Step 3b)
 - **"Cut a release"** -> Release workflow (Step 3c)
 - **"Fix this mess" / "undo" / "recover"** -> Recovery operations (Step 3d)
+- **"Pull failed" / "branches diverged"** -> Diverged branch resolution (Step 3e)
 - **"Set up signing" / "configure git"** -> Configuration (references)
 - **"Clean up history" / "scrub secrets"** -> History rewriting (references)
 - **"Set up branch protection"** -> Protection rules (references)
@@ -174,7 +178,7 @@ General flow:
 3. **Rebase onto base**: `git fetch origin && git rebase origin/main` (or whatever the base branch is). Resolve conflicts: look for `<<<<<<<`, `=======`, `>>>>>>>` markers, keep the correct content from both sides (often both additions belong), then `git add` and `git rebase --continue`. After resolving conflicts in dependency files (`package.json`, `Cargo.toml`, `go.mod`, etc.), re-run the package manager to regenerate the lock file. Never merge the base into the feature branch. For merge strategy guidance, see `references/forge-workflows.md`.
 4. **Push**: `git push -u origin feat/short-description`
 5. **Create PR/MR**: with a clear title (under 70 chars), body with summary + test plan.
-6. **Review cycle**: address feedback, force-push rebased commits (squash fixups).
+6. **Review cycle**: address feedback, rebase and force-push with `--force-with-lease` (never plain `--force` on shared branches). Squash fixup commits before pushing.
 7. **Merge**: squash-merge for clean history (default), or rebase-merge if commit history is meaningful.
 8. **Cleanup**: delete the remote branch after merge. `git branch -d feat/short-description` locally.
 
@@ -234,8 +238,25 @@ Quick reference:
 - **Revert a pushed commit**: `git revert <sha>` (creates a new commit, safe for shared branches)
 - **Find lost commits**: `git reflog` -- shows every HEAD movement for 90 days
 - **Find which commit broke something**: `git bisect start && git bisect bad && git bisect good <sha>`
+- **Automated bisect with test script**: `git bisect start HEAD v1.0.0 && git bisect run bun test -- src/auth.test.ts` -- runs the test at each bisect step automatically. Any command that exits 0 (good) or 1-124/128-255 (bad) works. Exit 125 means "skip this commit". Ideal for CI integration: `git bisect run ./scripts/ci-check.sh`
+- **Squash last N commits (no interactive rebase)**: `git reset --soft HEAD~N && git commit -m "feat: combined change"` -- resets N commits but keeps all changes staged, then commits them as one. Safer than `git rebase -i` in automated contexts.
 - **Recover deleted branch**: `git reflog`, find the SHA, `git checkout -b branch-name <sha>`
 - **Scrub secrets from history**: `git filter-repo --replace-text <(echo 'SECRET==>REDACTED')` -- then force-push ALL branches and tags. Coordinate with team. See references.
+
+---
+
+### Step 3e: Diverged branch resolution
+
+When `git pull` fails with "divergent branches" or `git status` shows "have diverged":
+
+1. **Understand the divergence**: `git log --oneline HEAD..origin/branch` (what remote has) and `git log --oneline origin/branch..HEAD` (what you have locally).
+2. **Choose strategy based on context**:
+   - **Your commits are the ones that matter** (common for solo work): `git pull --rebase origin branch` -- replays your local commits on top of remote.
+   - **Remote commits are the ones that matter** (someone force-pushed, or you want to discard local): `git reset --hard origin/branch` -- **DESTRUCTIVE, confirm first**.
+   - **Both sides have real work** (collaboration divergence): `git pull --rebase origin branch`, resolve conflicts at each step, `git rebase --continue`.
+   - **You don't know yet**: `git stash && git pull && git stash pop` as a safe first attempt (only works if the divergence is minor).
+3. **After resolving**: verify with `git log --oneline -10` that history looks correct.
+4. **Prevent recurrence**: if this was caused by force-push on a shared branch, set up branch protection. If caused by forgetting to pull before committing, consider `git config pull.rebase true` for rebase-on-pull default.
 
 ---
 

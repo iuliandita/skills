@@ -28,7 +28,16 @@ off.
 - Use full upgrades on Arch-style systems. `pacman -Sy package_name` creates partial-upgrade risk.
 - Read the transaction plan before confirming. Arch tells you what it is about to remove or replace.
 - Keep an eye on `pacman -Qm`. Foreign packages are a common source of drift.
-- Do not default to `--overwrite`. Conflicting files usually mean packaging or ownership needs to be fixed first.
+- Do not default to `--overwrite`. Conflicting files usually mean packaging or ownership needs to be fixed first. When `--overwrite` is genuinely needed, use a specific glob -- never a bare wildcard:
+
+  ```bash
+  # Right: overwrite only the conflicting path
+  sudo pacman -Syu --overwrite '/usr/lib/python3.*/site-packages/collisions/*'
+
+  # Wrong: blanket overwrite hides real conflicts
+  sudo pacman -Syu --overwrite '*'
+  ```
+
 - If repo state looks corrupted, refresh carefully, then re-check mirror and keyring state before forcing package operations.
 
 ## `paru` stance
@@ -66,6 +75,21 @@ Before building, inspect:
 - PGP key expectations
 
 If the package wants a key, fetch and verify the right key rather than disabling checks.
+
+## AUR package replaced by official repos
+
+When `pacman -Qm` shows a package that now exists in the official repos:
+
+1. Confirm the official package is the same upstream project, not just a name collision.
+2. Remove the AUR package and install the official one:
+
+   ```bash
+   sudo pacman -Rns aur_package_name
+   sudo pacman -S official_package_name
+   ```
+
+3. If `pacman -Syu` shows a file conflict, the AUR package likely owns files the official package
+   wants. Resolve the conflict explicitly -- do not blindly `--overwrite`.
 
 ## `.pacnew`, `.pacsave`, and config drift
 

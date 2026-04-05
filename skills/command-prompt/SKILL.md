@@ -93,8 +93,8 @@ Before writing any shell code, determine the target shell. Check these signals i
 
 | Target shell | Reference file |
 |-------------|---------------|
-| Zsh | `references/zsh.md` (~685 lines, 14 sections) |
-| Bash | `references/bash.md` (~720 lines, 13 sections) |
+| Zsh | `references/zsh.md` (~680 lines, 14 sections) |
+| Bash | `references/bash.md` (~710 lines, 13 sections) |
 | POSIX sh | `references/posix-sh.md` (~490 lines, 10 sections) |
 | Fish, tcsh, nushell, others | `references/alt-shells.md` (~420 lines, 4 shells) |
 

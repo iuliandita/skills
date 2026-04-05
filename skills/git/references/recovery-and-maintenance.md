@@ -76,6 +76,21 @@ git bisect bad    # if this commit is broken
 git bisect start HEAD v1.0.0
 git bisect run bun test -- src/auth.test.ts
 
+# Automated bisect with a custom CI check script
+# The script must exit 0 (good), 1-124 or 128-255 (bad), or 125 (skip)
+git bisect start HEAD v1.0.0
+git bisect run ./scripts/bisect-check.sh
+
+# Example bisect-check.sh:
+#   #!/usr/bin/env bash
+#   set -euo pipefail
+#   npm ci --silent 2>/dev/null && npm test -- --filter="auth" 2>/dev/null
+#   # Exit code 0 = good commit, non-zero = bad commit
+
+# Bisect with make target
+git bisect start HEAD v1.0.0
+git bisect run make test-unit
+
 # When done
 git bisect reset
 ```

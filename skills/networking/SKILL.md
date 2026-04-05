@@ -87,6 +87,16 @@ Before returning any generated network configuration, verify:
 - [ ] **Subnet overlap**: VPN address ranges must not overlap with LAN or other VPN ranges
 - [ ] **IPv6 considered**: dual-stack config or explicit disable. Half-configured IPv6 leaks
   traffic around IPv4-only VPNs
+- [ ] **Backup before modifying**: save current config before changes (`nft list ruleset >
+  backup.nft`, `cp nginx.conf nginx.conf.bak`). Network misconfigs can lock out remote access
+- [ ] **Service reload vs restart**: prefer graceful reload (`nginx -s reload`, `systemctl
+  reload`) over restart to avoid dropping active connections
+- [ ] **IP forwarding enabled**: any config involving routing, VPN, or inter-VLAN traffic
+  needs `net.ipv4.ip_forward = 1` (and `net.ipv6.conf.all.forwarding = 1` for dual-stack).
+  Without it, the kernel silently drops forwarded packets
+- [ ] **systemd-resolved conflict**: if deploying a local DNS server (Unbound, CoreDNS,
+  dnsmasq), check whether systemd-resolved is binding port 53. Disable its stub listener
+  (`DNSStubListener=no`) or bind your server to a different port
 
 ---
 
@@ -111,7 +121,8 @@ Before writing config or running commands:
 2. **What's the current network state?** (`ip addr`, `ip route`, `ss -tlnp`, `resolvectl status`)
 3. **Is there an existing firewall?** (`nft list ruleset`, `iptables-save`)
 4. **Who manages DNS?** (`resolvectl status` or `cat /etc/resolv.conf` -- check for systemd-resolved stub)
-5. **Is this behind NAT?** (affects VPN, reverse proxy, and HA design)
+5. **Any existing VPN/overlay?** (`wg show`, `tailscale status`, `ip link` for tun/wg/vxlan devices)
+6. **Is this behind NAT?** (affects VPN, reverse proxy, and HA design)
 
 ### Step 3: Implement
 
@@ -353,6 +364,8 @@ Network configuration touches several PCI-DSS requirements:
   defensive configuration and hardening.
 - **security-audit** -- application-level security review (SSRF, header injection). This skill
   covers network-layer security (firewalls, TLS, segmentation).
+- **browse** -- web browsing, scraping, headless page interaction. This skill covers network
+  infrastructure, not web content retrieval.
 
 ## Rules
 

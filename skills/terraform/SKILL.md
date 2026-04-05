@@ -66,6 +66,7 @@ AI tools consistently produce the same Terraform mistakes. **Before returning an
 - [ ] No hardcoded values -- regions, AMI IDs, CIDR blocks, account IDs must be variables
 - [ ] No overly permissive IAM -- no `"Action": "*"` or `"Resource": "*"` unless explicitly requested
 - [ ] No `0.0.0.0/0` ingress on security groups (except port 443 for public ALBs, justified)
+- [ ] S3 buckets: `aws_s3_bucket_public_access_block` with all four settings `true` (unless public access is explicitly required and justified), plus SSE-KMS encryption (`aws_s3_bucket_server_side_encryption_configuration`), versioning enabled, access logging (`aws_s3_bucket_logging`), and no overly permissive bucket policy (review `aws_s3_bucket_policy` for broad `Principal: "*"` grants)
 - [ ] Provider versions pinned in `required_providers` with `~>` constraints
 - [ ] Backend config present (not local) with encryption and locking
 - [ ] `lifecycle` blocks where needed (`create_before_destroy`, `prevent_destroy` on stateful resources)
@@ -90,6 +91,7 @@ Based on the request:
 - **"Set up state backend" / "migrate state"** -> Operations
 - **"Make this PCI compliant" / "policy gates"** -> Compliance
 - **"Review this Terraform"** -> Apply production checklist + critical rules + AI self-check
+- **"Review S3 buckets"** -> S3 hardening review (see below) + AI self-check
 
 ### Step 2: Gather requirements
 
@@ -227,7 +229,7 @@ import {
 }
 ```
 
-**Moved blocks** (TF 1.8+): refactor without state surgery. Rename resources, move into/out of modules.
+**Moved blocks** (TF 1.8+): declarative intra-state refactoring. Rename resources or move into/out of modules within the same state file. Reviewed in PRs, applied automatically on `terraform apply`. Does NOT work across state files -- for cross-state moves, see the state surgery workflow in `references/state-and-security.md`.
 
 ```hcl
 moved {
@@ -243,7 +245,27 @@ moved {
 - `count` for conditional resources when `for_each` with a set is clearer (OpenTofu: use `enabled`)
 - String interpolation for simple references: `"${var.name}"` -> `var.name`
 - `terraform.tfvars` committed to Git with real values
+- `terraform.workspace` for environment separation (use separate state files or workspaces with distinct backends)
 - Inline `provisioner` blocks of any kind
+
+### S3 bucket review checklist
+
+When reviewing or writing S3 bucket configurations, verify every bucket has **all six** companion resources. AI-generated HCL routinely omits several of these.
+
+| # | Resource | Why | Checkov |
+|---|----------|-----|---------|
+| 1 | `aws_s3_bucket_public_access_block` | Block all public access (all four settings `true`) | CKV_AWS_53 |
+| 2 | `aws_s3_bucket_server_side_encryption_configuration` | SSE-KMS with customer-managed key | CKV_AWS_145 |
+| 3 | `aws_s3_bucket_versioning` | Rollback + tamper evidence | CKV_AWS_21 |
+| 4 | `aws_s3_bucket_logging` | Access audit trail (target a dedicated logging bucket) | CKV_AWS_18 |
+| 5 | `aws_s3_bucket_lifecycle_configuration` | Expiration/transition rules for cost and compliance retention | -- |
+| 6 | `aws_s3_bucket_policy` | Explicit deny on non-SSL requests (`aws:SecureTransport = false`); no `Principal: "*"` grants unless public access is justified | CKV_AWS_70 |
+
+Also verify the **account-level** safety net: `aws_s3_account_public_access_block` with all four settings `true`. This catches any bucket that accidentally ships without its own block.
+
+For PCI CDE buckets, add `aws_s3_bucket_object_lock_configuration` with COMPLIANCE mode retention for immutable audit storage (Req 10.5).
+
+See `references/compliance.md` for full S3 hardening HCL examples including account-level blocks and object lock.
 
 ---
 
@@ -289,11 +311,11 @@ modules/<provider>/<resource-type>/
 
 ## Operations
 
-Read `references/state-and-security.md` for state backends, locking, encryption, OIDC federation, and CI/CD pipeline patterns.
+Read `references/state-and-security.md` for state backends, locking, encryption, OIDC federation, CI/CD pipeline patterns, and state surgery (cross-state resource migration).
 
 ### State management
 
-See `references/state-and-security.md` for full backend config examples, OIDC federation patterns, and CI/CD pipeline flows.
+See `references/state-and-security.md` for full backend config examples, OIDC federation patterns, CI/CD pipeline flows, and cross-state migration workflows.
 
 **S3 + native locking** (TF 1.10+): DynamoDB-based locking is deprecated. Use `use_lockfile = true`. Encrypt with KMS. Enable versioning and CloudTrail data events on the bucket.
 
@@ -419,7 +441,7 @@ Read `references/production-checklist.md` for the full pre-deploy checklist cove
 ## Reference Files
 
 - `references/module-patterns.md` -- module design and testing patterns
-- `references/state-and-security.md` -- state backend, locking, encryption, and OIDC patterns
+- `references/state-and-security.md` -- state backend, locking, encryption, OIDC patterns, and state surgery (cross-state migration)
 - `references/compliance.md` -- compliance and audit-oriented Terraform guidance
 - `references/production-checklist.md` -- pre-deploy verification checklist (HCL, modules, operations, PCI-DSS, MPoC)
 

@@ -448,6 +448,80 @@ AI tools in CI should never execute commands based on issue/PR text.
 
 ---
 
+## Post-Compromise Incident Response
+
+When a supply chain compromise is confirmed (malicious action executed, secrets exposed,
+artifact tampered), follow these steps immediately. Speed matters -- the tj-actions attack
+had a 2-hour window, and automated exfiltration begins within seconds.
+
+### 1. Contain (first 30 minutes)
+
+- **Disable affected workflows.** Remove or comment out the compromised action/image reference
+  in all repos. Push directly to protected branches if needed (this is the exception to
+  "no direct pushes").
+- **Revoke exposed secrets.** Every secret accessible to the compromised workflow is burned.
+  Rotate immediately:
+  - Cloud credentials (AWS keys, GCP service accounts, Azure SPs)
+  - Registry tokens (GHCR, Docker Hub, GitLab registry, npm)
+  - API keys and PATs (GitHub, GitLab, third-party services)
+  - Database connection strings
+  - SSH keys used by CI runners
+- **Invalidate active sessions.** Revoke OAuth tokens and OIDC federations that may have been
+  obtained using stolen credentials.
+- **Quarantine affected runners.** If self-hosted, take runners offline. Compromised runners
+  may have persistent backdoors.
+
+### 2. Assess (first 4 hours)
+
+- **Identify the blast radius.** Check which workflows ran the compromised action/image during
+  the attack window. GitHub: audit log + workflow run history. GitLab: CI/CD job logs + audit events.
+- **Check for IOCs.** For known attacks:
+  - tj-actions: double-base64 encoded secrets in workflow logs
+  - Trivy: `tpcp-docs` repo in your org (fallback exfiltration marker)
+  - General: unexpected outbound network connections in runner logs
+- **Audit published artifacts.** Any container image, npm package, or binary built during the
+  attack window is suspect. Check digests against known-good builds.
+- **Review downstream consumers.** If your org publishes packages or images, your compromised
+  artifacts may now be in your users' supply chains.
+
+### 3. Remediate
+
+- **Pin to verified-safe SHAs.** Replace the compromised action with a known-good SHA. Do not
+  trust new tags published shortly after disclosure -- attackers sometimes publish "fix" tags
+  that are also malicious (as seen with Trivy v0.69.4/5/6).
+- **Rebuild affected artifacts.** Any image, package, or binary built during the attack window
+  must be rebuilt from clean inputs and re-signed.
+- **Revoke compromised artifacts.** Delete or yank published packages that were built during
+  the window. For container images, delete the tag and digest from the registry.
+- **Update SBOM.** Regenerate SBOMs for all affected releases to reflect the rebuilt artifacts.
+
+### 4. Harden (within 1 week)
+
+- **Enable SHA pinning enforcement** (GitHub org setting, shipped Aug 2025).
+- **Deploy egress monitoring** (StepSecurity Harden-Runner) to detect anomalous outbound
+  connections from CI jobs.
+- **Audit all third-party actions/images** currently in use. Verify SHAs, check for known
+  compromises, remove unused dependencies.
+- **Document the incident.** For PCI-DSS 4.0 (Req 6.2.4): record what happened, when it was
+  detected, what was rotated, and what was rebuilt. QSAs will ask for this.
+
+### Secret rotation checklist
+
+| Secret type | Where to rotate | Verification |
+|-------------|-----------------|--------------|
+| GitHub PAT | Settings > Developer settings > Personal access tokens | `gh auth status` |
+| AWS access keys | IAM console or `aws iam create-access-key` | `aws sts get-caller-identity` |
+| GCP service account | `gcloud iam service-accounts keys create` | `gcloud auth list` |
+| npm token | `npm token revoke` + `npm token create` | `npm whoami` |
+| Docker Hub token | Hub settings > Security > Access tokens | `docker login` |
+| GitLab CI variables | Project > Settings > CI/CD > Variables | Re-run a pipeline |
+| SSH deploy keys | Regenerate keypair, update repo deploy key settings | `ssh -T git@host` |
+
+**Rule**: when in doubt, rotate. A rotated secret that wasn't actually exposed costs minutes.
+A leaked secret that wasn't rotated costs weeks.
+
+---
+
 ## Quick Reference: Pipeline Security Checklist
 
 Run through this before shipping any pipeline to production:

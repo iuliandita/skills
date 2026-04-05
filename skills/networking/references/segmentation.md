@@ -392,7 +392,7 @@ FRRouting (FRR) provides BGP, OSPF, IS-IS, PIM, and more on Linux.
 
 ```
 # /etc/frr/frr.conf
-frr version 10.5
+frr version 10.6
 frr defaults traditional
 
 router ospf

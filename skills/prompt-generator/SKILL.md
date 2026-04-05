@@ -68,7 +68,7 @@ Don't overthink this. Don't add things the user didn't mention. The goal is to *
 
 ### Step 2: Clarify only if stuck
 
-If something is genuinely ambiguous (you can't tell if it's a system prompt or task prompt, or the target model matters for technique choice), ask. Batch questions, max 1 round. If you can reasonably infer it, just infer it.
+If something is genuinely ambiguous (you can't tell if it's a system prompt or task prompt, or the target model matters for technique choice), ask. Batch questions, max 1 round. If you can reasonably infer it, just infer it. If ambiguity remains after the one round, pick the most reasonable default and note your assumption so the user can correct it during review.
 
 Most of the time, skip this step entirely.
 

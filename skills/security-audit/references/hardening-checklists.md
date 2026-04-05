@@ -49,7 +49,7 @@ Detailed checklists for passes 6-8. Read this file when executing those passes.
 ### Terraform (skip if not applicable)
 
 **Automated** (if available):
-- `tfsec .` or `trivy config --tf-vars terraform.tfvars .` or `checkov -d .`
+- `trivy config --tf-vars terraform.tfvars .` or `checkov -d .`
 
 **Manual**:
 - [ ] State backend uses encryption at rest? (S3 SSE, GCS CMEK, Azure Blob encryption)
@@ -124,7 +124,7 @@ Detailed checklists for passes 6-8. Read this file when executing those passes.
 
 ### Supply Chain Hardening
 
-- [ ] **CI job images pinned to digest**: all `image:` references in CI configs use `tag@sha256:digest` format, not bare tags? Tags can be force-pushed to point at malicious images (Trivy supply chain attack, 2026-03).
+- [ ] **CI job images pinned to digest**: all `image:` references in CI configs use `tag@sha256:digest` format, not bare tags? Tags can be force-pushed to point at malicious images (Trivy/TeamPCP supply chain attack, 2026-03-19 -- 76 of 77 version tags force-pushed in trivy-action).
 - [ ] **No `:latest` tags in CI jobs**: CI job images don't use `:latest`? Combined with `pull_policy: always`, a single Docker Hub push silently compromises all pipeline runs.
 - [ ] **CI runner credentials scoped**: `$DOCKER_AUTH_CONFIG` and registry credentials only injected into jobs that need private registry access, not globally?
 - [ ] **Docker Content Trust**: `DOCKER_CONTENT_TRUST=1` set on CI runners to reject unsigned images?

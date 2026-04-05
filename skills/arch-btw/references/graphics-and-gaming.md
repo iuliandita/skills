@@ -85,6 +85,36 @@ Common NVIDIA mistakes:
 - broken PRIME offload assumptions on laptops
 - missing 32-bit userspace for Steam and Proton
 
+## Hybrid graphics on laptops
+
+Many laptops have two GPUs (iGPU + dGPU). On Arch, this affects gaming, Gamescope, suspend, and
+external display behavior.
+
+Common layouts:
+
+| Combo | Typical path | Key pain points |
+|-------|-------------|-----------------|
+| Intel iGPU + NVIDIA dGPU | PRIME offload or reverse PRIME | driver mismatch, suspend, external displays |
+| AMD iGPU + NVIDIA dGPU | PRIME offload | same NVIDIA pain with different iGPU driver |
+| AMD iGPU + AMD dGPU | PRIME offload via Mesa | simpler driver story, but offload routing still matters |
+
+Fast checks:
+
+```bash
+lspci -k | grep -Ei 'vga|3d|display'
+cat /proc/driver/nvidia/gpus/*/information 2>&1 || true
+command -v prime-run >/dev/null 2>&1 && echo "prime-run available"
+command -v supergfxctl >/dev/null 2>&1 && supergfxctl -g
+```
+
+Operational stance:
+
+- Identify which GPU renders the display and which runs offloaded workloads before changing driver packages.
+- Games launched via Steam can use `prime-run %command%` or env vars to target the dGPU.
+- Gamescope behavior on hybrid systems depends on which GPU it binds to.
+- Suspend bugs on hybrid laptops are often dGPU power-state issues, not compositor bugs.
+- External monitors may route through the dGPU even when the internal panel uses the iGPU.
+
 ## Steam and Proton
 
 Steam is the default Linux gaming path on Arch. Most "Steam is broken" reports are really one of:

@@ -251,6 +251,53 @@ Key Go template patterns:
 - Using `--post-renderer` with raw executables (broken in Helm 4; must use plugin names)
 - Ignoring SSA migration -- upgrading to Helm 4 on existing releases can surface previously-hidden conflicts
 
+### Example: Redis HA production values overlay
+
+Common Bitnami Redis anti-patterns fixed. Use as `values-prod.yaml` overlay:
+
+```yaml
+# values-prod.yaml -- Redis HA (Bitnami chart)
+architecture: replication           # not "standalone"
+auth:
+  enabled: true                     # NEVER false in prod
+  existingSecret: redis-auth        # ESO/Sealed Secret, not plaintext password
+replica:
+  replicaCount: 3                   # HA: >= 3 replicas
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "250m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+  persistence:
+    enabled: true                   # NEVER false in prod (data loss on restart)
+    size: 8Gi
+    storageClass: <storage-class>
+master:
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "250m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+  persistence:
+    enabled: true
+    size: 8Gi
+sentinel:
+  enabled: true                     # automatic failover
+  resources:
+    requests:
+      memory: "64Mi"
+      cpu: "50m"
+    limits:
+      memory: "128Mi"
+      cpu: "100m"
+metrics:
+  enabled: true                     # Prometheus exporter
+```
+
 ### ArgoCD + Helm caveats
 
 - ArgoCD only runs `helm template` -- it does NOT use Helm lifecycle management. Don't rely on Helm hooks for critical operations; use ArgoCD sync waves instead.
@@ -280,7 +327,7 @@ Promotion: dev -> staging -> prod via PR-based promotion. No auto-sync to prod.
 
 ### Networking
 
-**Gateway API** (GA v1.5) is the standard for new clusters. Ingress-NGINX retired March 2026.
+**Gateway API** (GA v1.5) is the standard for new clusters (see Rule 11).
 
 **CNI**: Cilium (eBPF, greenfield) or Calico (brownfield/multi-OS/Windows). Cilium includes Hubble observability, L3-L7 policy, and optional sidecar-free service mesh.
 
@@ -295,7 +342,7 @@ Promotion: dev -> staging -> prod via PR-based promotion. No auto-sync to prod.
 
 8 layers for production:
 1. **Cluster hardening**: CIS benchmark, API server audit logging, etcd encryption via KMS v2
-2. **Pod Security Standards**: `enforce: restricted` on all app namespaces; `audit: restricted` and `warn: restricted` everywhere
+2. **Pod Security Standards**: **`enforce: restricted` is mandatory on all app namespaces** -- no exceptions. Set `audit: restricted` and `warn: restricted` everywhere else for visibility into what would break before enforcing.
 3. **Admission control**: ValidatingAdmissionPolicy (CEL, native since 1.30) for standard policies; Kyverno for mutation/generation; OPA Gatekeeper for cross-platform orgs
 4. **Network policies**: default-deny ingress/egress per namespace; Cilium for L7 policies
 5. **RBAC**: namespace-scoped roles, no cluster-admin for apps, OIDC auth with MFA
@@ -390,7 +437,7 @@ PCI-DSS 4.0 is the only active version (3.2.1 retired March 2024). 51 future-dat
 - [ ] GitOps tool chosen with clear promotion strategy (no auto-sync to prod)
 - [ ] Gateway API for external traffic (not legacy Ingress)
 - [ ] Network policies default-deny in all namespaces
-- [ ] Pod Security Standards enforced (Restricted baseline)
+- [ ] Pod Security Standards: `enforce: restricted` on all app namespaces
 - [ ] ValidatingAdmissionPolicy or Kyverno for custom admission rules
 - [ ] RBAC follows least-privilege; OIDC + MFA for API access
 - [ ] Secrets via ESO + cloud KMS, Vault, or Sealed Secrets (match tool to environment -- see Architecture reference)
@@ -460,4 +507,4 @@ These are non-negotiable. Violating any of these is a bug.
 11. **Gateway API for new external access.** Ingress-NGINX retired March 2026. Stop deploying new Ingress resources.
 12. **Sign images with cosign.** Verify at admission. SLSA Level 2 minimum for production.
 13. **Run the AI self-check.** Every generated manifest gets verified against the checklist above before returning.
-14. **Understand resource metric semantics.** HPA `targetCPUUtilizationPercentage` is percentage of CPU *request*, not actual CPU capacity. A pod requesting 100m with 80% target scales at 80m usage, regardless of the node's total CPU. Don't confuse requests (scheduling floor), limits (enforcement ceiling), and actual usage (what the container is consuming right now).
+14. **Understand resource metric semantics.** HPA CPU target is percentage of CPU *request*, not node capacity. Example: a pod requesting `cpu: 100m` with `averageUtilization: 70` scales when per-pod CPU usage hits 70m (100m * 70%) -- it does not matter whether the node has 2 or 64 cores. Don't confuse requests (scheduling floor), limits (enforcement ceiling), and actual usage (what the container is consuming right now).

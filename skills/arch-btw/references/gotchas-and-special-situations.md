@@ -31,6 +31,15 @@ What to do:
 - confirm the module exists for that kernel
 - treat this as kernel-module drift before blaming the desktop, OBS, or Steam
 
+Fast triage:
+
+```bash
+uname -r
+dkms status
+# If a module shows "added" but not "installed" for the running kernel:
+sudo dkms install module_name/version -k "$(uname -r)"
+```
+
 ### Portal mismatch on Wayland
 
 Symptom pattern:

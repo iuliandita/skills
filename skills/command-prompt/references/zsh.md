@@ -7,7 +7,7 @@
 
 ## Section Routing
 
-Not every task needs all 685 lines. Use this routing:
+Not every task needs all 680 lines. Use this routing:
 
 | Task | What to read |
 |------|-------------|
@@ -226,16 +226,6 @@ echo foo # bar       # prints "foo # bar" in interactive mode
 setopt INTERACTIVE_COMMENTS
 ```
 
-### ANSI-C quoting ($'...')
-
-```zsh
-# Neither bash nor zsh allow escaping inside single quotes
-# Both support $'...' (ANSI-C quoting) for escape sequences
-echo $'it\'s working'        # it's working
-echo $'line1\nline2'         # actual newline
-echo $'tab\there'            # actual tab
-```
-
 ---
 
 ## 5. Script Portability
@@ -345,14 +335,7 @@ PROMPT='%F{green}%n@%m%f:%F{blue}%~%f$ '
 RPROMPT='%F{242}%T%f'          # gray timestamp on the right
 RPROMPT='%(?.%F{green}ok%f.%F{red}%?%f)'  # green "ok" or red exit code
 
-# Common codes:
-# %n = username
-# %m = hostname
-# %~ = cwd with ~ abbreviation
-# %F{color}...%f = foreground color
-# %B...%b = bold
-# %T = time (HH:MM)
-# %? = last exit code
+# Codes: %n=user %m=host %~=cwd %F{c}...%f=color %B...%b=bold %T=time %?=exit
 ```
 
 ### precmd / preexec hooks
@@ -527,6 +510,21 @@ main() {
 }
 
 main "$@"
+```
+
+### Graceful process termination (SIGTERM -> SIGKILL escalation)
+
+```zsh
+# Send SIGTERM, wait briefly, escalate to SIGKILL if still alive
+graceful_kill() {
+    local pid=$1 timeout=${2:-5}
+    kill "$pid" 2>/dev/null || return 0
+    for (( i=0; i < timeout; i++ )); do
+        kill -0 "$pid" 2>/dev/null || return 0
+        sleep 1
+    done
+    kill -9 "$pid" 2>/dev/null
+}
 ```
 
 ---

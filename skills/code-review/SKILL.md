@@ -19,7 +19,7 @@ Find bugs that actually break things. Not style, not slop -- correctness, reliab
 
 This skill complements **anti-slop** (code quality/style) and **security-audit** (vulnerabilities/OWASP). Those catch "is the code clean?" and "is the code safe?" -- this one catches "does the code actually work?"
 
-Covers: **TypeScript/JavaScript**, **Python**, **Java**, **Bash/Shell**, and **Infrastructure as Code** (Terraform, Ansible, Helm, Kubernetes, Docker/Compose, Proxmox/LXC). Universal patterns apply everywhere; language-specific sections add targeted checks.
+Covers: **TypeScript/JavaScript**, **Python**, **Go**, **Java**, **Bash/Shell**, and **Infrastructure as Code** (Terraform, Ansible, Helm, Kubernetes, Docker/Compose, Proxmox/LXC). Universal patterns apply everywhere; language-specific sections add targeted checks.
 
 ## When to use
 
@@ -295,14 +295,22 @@ Read `references/databases.md` for the full database bug pattern catalog. Key hi
 - **MSSQL**: `@@IDENTITY` vs `SCOPE_IDENTITY()`, VARCHAR can't store Unicode (use NVARCHAR), `TOP` without `ORDER BY`
 - **ORM pitfalls**: N+1 queries, stale entity caches, enum stored as ordinal (reorder breaks data), auto-DDL in production
 
+## Language: Go
+
+Read `references/go.md` for the full Go bug pattern catalog. Key highlights:
+
+- **Goroutine leaks**: goroutines blocked on channels with no receiver, missing context/done signal, no WaitGroup
+- **Nil interface traps**: interface holding a typed nil pointer is not nil -- `error` returned as `(*MyError)(nil)` fails nil checks
+- **Defer ordering**: LIFO execution, closure capture by reference, defer in loops exhausting file descriptors
+- **Channel deadlocks**: unbuffered channel send/receive in same goroutine, double close panic, `time.After` in for-select loop leaking timers
+- **Error wrapping**: `%s` vs `%w` in `fmt.Errorf`, sentinel comparison with `==` instead of `errors.Is()`, custom errors missing `Unwrap()`
+- **Context leaks**: `context.WithCancel`/`WithTimeout` without `defer cancel()`, ignoring request-scoped contexts
+- **Data races**: concurrent map writes (fatal panic), shared slice append, read-modify-write without sync, missing `-race` in CI
+- **Loop variable capture**: pre-Go 1.22 closure capture bug -- check `go.mod` version to determine if relevant
+
 ## Other Languages
 
-For Go, Rust, and other languages without dedicated reference files: apply the universal patterns (sections 1-10) only. Note in the report that language-specific checks were limited to universal patterns.
-
-**Go-specific notes** (apply alongside universal patterns):
-- **Loop variable capture**: Go 1.22+ creates a new variable per iteration, fixing the classic closure capture bug. For Go < 1.22 or when `go.mod` doesn't specify >= 1.22, closures in goroutines launched from loops capture a shared variable. Check `go.mod` to determine which semantics apply.
-- **Goroutine data races**: concurrent writes to shared variables (e.g., `err`) without a mutex or `errgroup` are a race condition regardless of Go version. The `-race` flag catches these at runtime.
-- **Nil interface traps**: an interface holding a nil pointer is not nil -- `error` returned as `(*MyError)(nil)` fails nil checks.
+For Rust and other languages without dedicated reference files: apply the universal patterns (sections 1-10) only. Note in the report that language-specific checks were limited to universal patterns.
 
 ---
 
@@ -404,6 +412,7 @@ Keep it tight. Show the bug, show the fix, move on. Long explanations only when 
 - `references/python.md` -- Python bug patterns
 - `references/shell.md` -- shell bug patterns
 - `references/java.md` -- Java bug patterns
+- `references/go.md` -- Go bug patterns
 - `references/iac.md` -- infrastructure-as-code bug patterns
 - `references/cicd-pipelines.md` -- CI/CD bug patterns
 - `references/ai-age-patterns.md` -- AI-age correctness patterns and hallucination-driven bugs

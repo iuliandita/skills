@@ -242,6 +242,86 @@ PCI Req 11.5 requires change detection. Manual `terraform plan` is necessary but
 
 ---
 
+## State Surgery
+
+State surgery means manipulating the state file directly via CLI commands. Use it when declarative tools (`moved` blocks, `import` blocks) cannot cover the operation -- primarily cross-state resource migration.
+
+**Key principle: state surgery changes bookkeeping, not infrastructure.** No cloud resource is created, modified, or destroyed. You are telling Terraform "this resource now lives here" without touching the physical resource.
+
+### Intra-state moves with `terraform state mv`
+
+Rename a resource or move it into/out of a module within the same state:
+
+```bash
+# Rename a resource
+terraform state mv 'aws_instance.web' 'aws_instance.app'
+
+# Move into a module
+terraform state mv 'aws_instance.app' 'module.compute.aws_instance.app'
+```
+
+**Prefer `moved` blocks over `terraform state mv`** for intra-state refactoring (TF 1.8+). `moved` blocks are declarative, reviewable in PRs, and apply automatically on `terraform apply`. Use `terraform state mv` only when you need the move to happen immediately outside the plan/apply cycle, or on older Terraform versions.
+
+### Cross-state resource migration
+
+Moving a resource from one state file to another (e.g., extracting a module into its own state, or consolidating states). There is no single command for this -- it is a two-step workflow.
+
+**Workflow: remove from source + import in destination**
+
+```bash
+# Step 1: Back up both states BEFORE touching anything
+terraform -chdir=source state pull > source-backup.tfstate
+terraform -chdir=destination state pull > destination-backup.tfstate
+
+# Step 2: Remove from source state (does NOT destroy the resource)
+terraform -chdir=source state rm 'aws_rds_cluster.main'
+
+# Step 3: Import into destination state
+# Option A: import block (TF 1.5+, preferred -- declarative, reviewable)
+#   Add to destination config:
+#     import {
+#       to = aws_rds_cluster.main
+#       id = "my-cluster-id"
+#     }
+#   Then: terraform -chdir=destination plan  (verify no changes)
+#         terraform -chdir=destination apply
+
+# Option B: CLI import (immediate, no PR review)
+terraform -chdir=destination import 'aws_rds_cluster.main' 'my-cluster-id'
+
+# Step 4: Run plan on BOTH source and destination
+# Source should show no changes (resource removed from its tracking)
+# Destination should show no changes (resource now tracked here)
+# If either plan shows destroy/create, STOP -- something is wrong
+```
+
+**Alternative for bulk moves: `terraform state pull` + `terraform state push`**
+
+For moving many resources at once, you can pull the state as JSON, use `terraform state mv` or `jq` to manipulate addresses, and push back. This is fragile -- prefer the rm+import workflow for safety. If you must use pull/push:
+
+```bash
+terraform state pull > state.json
+# ... careful manipulation ...
+terraform state push state.json
+```
+
+**Never edit the JSON manually with a text editor.** The state file contains serial numbers, lineage UUIDs, and internal checksums. Manual edits corrupt state silently -- Terraform may plan destructive changes on the next run. Always use `terraform state` subcommands.
+
+### State locking during surgery
+
+- `terraform state mv` and `terraform state rm` acquire a lock automatically on backends that support locking.
+- If running against two states simultaneously, finish the source operation fully before starting the destination operation. You cannot hold locks on two states at once from one CLI invocation.
+- If you must break a stuck lock: `terraform force-unlock LOCK_ID`. Use only when you are certain no other operation is running. Verify via your backend (DynamoDB item, S3 lock file, or HCP Terraform UI).
+
+### Backup procedure
+
+1. `terraform state pull > backup-YYYYMMDD-HHMM.tfstate` before every state surgery operation.
+2. If using S3, bucket versioning provides automatic rollback -- but do not rely on it as the only backup.
+3. Store backups outside the state bucket (different S3 prefix or local encrypted storage).
+4. After surgery, run `terraform plan` immediately. A clean "no changes" plan confirms success. Any planned destroy or create means the migration went wrong -- restore from backup.
+
+---
+
 ## Audit Trail Architecture
 
 PCI Req 10 demands comprehensive logging. Three layers for Terraform:

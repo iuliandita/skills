@@ -59,7 +59,8 @@ Reference: https://gtfobins.github.io -- search for any binary listed in `sudo -
 Common examples:
 
 ```bash
-# vim
+# vim -- -c runs an ex command on startup, bypassing interactive mode;
+# the :! prefix executes a shell command from within vim
 sudo vim -c ':!/bin/bash'
 
 # find

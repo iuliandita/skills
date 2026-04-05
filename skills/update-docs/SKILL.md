@@ -3,15 +3,15 @@ name: update-docs
 description: >
   · Post-session documentation sweep -- update CLAUDE.md, AGENTS.md, README, or runbooks after
   infrastructure, config, or architecture changes. Triggers: 'update docs', 'refresh docs',
-  'sync docs', 'update CLAUDE.md', 'update README'. Not for writing new documentation from
-  scratch.
+  'sync docs', 'update CLAUDE.md', 'update AGENTS.md', 'update README'. Not for writing new
+  documentation from scratch.
 license: MIT
 compatibility: "Requires git. Optional: wc (for size audits)"
 metadata:
   source: iuliandita/skills
   date_added: "2026-03-25"
   effort: low
-  argument_hint: "[doc-or-path]"
+  argument_hint: "[doc-or-path] (e.g., CLAUDE.md, docs/runbook.md)"
 ---
 
 # Update Docs
@@ -45,6 +45,7 @@ Before presenting documentation updates, verify:
 - [ ] Companion instruction files still aligned (AGENTS.md synced if CLAUDE.md changed)
 - [ ] No orphaned gotchas for already-fixed issues
 - [ ] Deprecated entries marked with `[DEPRECATED]` prefix and date, not silently removed
+- [ ] `.env.example` updated if env vars or runtime config changed
 - [ ] Size check run (`wc -c`) -- instruction files under 40,000 chars
 
 ---
@@ -90,14 +91,14 @@ Map changes to documentation targets. Common instruction file names: `CLAUDE.md`
 | IP/port/endpoint changes | Project instruction file, network inventory |
 | Version bumps (runtimes, deps, images) | Project instruction file |
 | New gotcha discovered | Project instruction file |
-| Operational procedure performed | Runbooks |
+| Operational procedure performed | Runbooks or deployment checklists (include when in the deploy cycle the procedure runs) |
 | New secret or credential | Secrets inventory |
 | CI/CD workflow changes | Project instruction file, pipeline docs |
 | Docker/Compose changes | Project instruction file, deployment docs |
 | Proxmox/LXC changes | Project instruction file, inventory docs |
 | Rust crate/toolchain changes | Project instruction file, `README.md` (build prereqs) |
 | Architecture decision | ADR if significant (see below), otherwise a short bullet in the instruction file |
-| New env vars or config keys | `.env.example`, `README.md` (setup section) |
+| New or changed env vars, config keys, or runtime config | `.env.example`, `README.md` (setup section) |
 | New dependencies or setup steps | `README.md` (getting started / prerequisites) |
 | API endpoint changes | `README.md` (API docs section), OpenAPI spec if applicable |
 | Version bumps / new release cut | Grep for old version strings across Dockerfiles, compose files, Helm values, CI workflows, tests, README badges/install instructions -- stale versions are the #1 post-release doc rot |
@@ -114,6 +115,7 @@ Map changes to documentation targets. Common instruction file names: `CLAUDE.md`
 - Failure modes and their symptoms (e.g., "PLEG unhealthy = container runtime frozen")
 - Workarounds for known issues
 - Operational constraints (e.g., "serial: 1 required -- removing it updates all nodes simultaneously")
+- Operational timing -- when a procedure must run relative to a deployment step, say so explicitly (e.g., "Redis FLUSHALL must run after the new image is deployed but before traffic is routed back")
 - Connection strings and service endpoints when IPs, ports, or hostnames change
 - Decisions and their rationale
 
@@ -134,8 +136,8 @@ Map changes to documentation targets. Common instruction file names: `CLAUDE.md`
 After editing docs, check that internal references still resolve:
 
 ```bash
-# Adjust <instruction-files> to the repo's actual instruction files
-grep -roEh '\[[^]]*\]\([^)#]+' <instruction-files> docs/ README.md 2>/dev/null | \
+# Adjust the file list to the repo's actual instruction files
+grep -roEh '\[[^]]*\]\([^)#]+' CLAUDE.md AGENTS.md docs/ README.md 2>/dev/null | \
   sed 's/.*](//' | grep -v '^https\?://' | sort -u | while read -r path; do
     [[ -e "$path" ]] || echo "BROKEN LINK: $path"
   done
@@ -166,15 +168,15 @@ After updates, review the project's shared instruction file critically:
 **Size targets:**
 - Shared instruction files: aim for **under 40,000 characters** and under 500 lines even if the tool allows more. If over, move detailed sections to `docs/` and link.
 - Individual sections: if a section exceeds 30 lines, consider splitting into a dedicated doc.
-- Check size after edits: `wc -c <instruction-files> 2>/dev/null`
+- Check size after edits: `wc -c CLAUDE.md AGENTS.md 2>/dev/null`
 
 ### 6. Sync Companion Instruction Files
 
 If the project keeps multiple instruction files (`AGENTS.md` plus tool-specific variants, for example), keep them aligned after updates.
 
 ```bash
-# Example: sync a canonical shared file into a tool-specific companion
-test -f AGENTS.md && test -f <companion-instruction-file> && cp AGENTS.md <companion-instruction-file>
+# Example: sync AGENTS.md into a tool-specific companion
+test -f AGENTS.md && test -f CLAUDE.md && cp AGENTS.md CLAUDE.md
 ```
 
 Review the copied file after syncing and remove any tool-specific commands or behavior that do not apply to that target.

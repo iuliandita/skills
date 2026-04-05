@@ -454,3 +454,83 @@ Quality signals:
 - Proposes clear, actionable wording for the entry (not vague)
 - Notes that AGENTS.md should be synced if CLAUDE.md is updated
 - Does not suggest burying it in a README where it will be missed
+
+### ai-ml
+
+**Test 1: RAG pipeline**
+Prompt: "Build a RAG pipeline for technical documentation with semantic search using pgvector."
+Quality signals:
+- Covers document chunking strategy (size, overlap)
+- Selects embedding model appropriate for technical content
+- Uses pgvector with correct SQL syntax (cosine distance operator)
+- Includes retrieval with similarity threshold
+- Does not suggest unnecessary frameworks when stdlib + pg driver suffice
+
+**Test 2: Agent with tool use**
+Prompt: "Design a multi-step agent that can search docs, create tickets, and send emails while respecting a $5/run cost ceiling."
+Quality signals:
+- Implements iteration limit and cost tracking
+- Uses tool_use / function calling correctly for the target provider
+- Handles tool errors gracefully (retry vs abort)
+- Enforces cost ceiling before each LLM call
+- Does not suggest LangChain when a simple custom loop suffices
+
+### testing
+
+**Test 1: Unit test with mocking**
+Prompt: "Write unit tests for this TypeScript function that fetches user data from an API and caches it in memory."
+Quality signals:
+- Mocks the HTTP client at the boundary (not deep internals)
+- Tests cache hit and cache miss paths separately
+- Uses fake timers or injectable clock for TTL testing
+- Follows Arrange-Act-Assert structure
+- Does not test implementation details (private cache map)
+
+**Test 2: Flaky test diagnosis**
+Prompt: "This Playwright E2E test passes locally but fails 30% of the time on CI. Help me fix it."
+Quality signals:
+- Identifies common flaky causes (race conditions, network timing, shared state)
+- Suggests waitForSelector or waitForLoadState over arbitrary sleep
+- Recommends test isolation (fresh context per test)
+- Mentions CI-specific factors (resource contention, headless rendering differences)
+- Does not suggest adding retries as the primary fix
+
+### virtualization
+
+**Test 1: GPU passthrough**
+Prompt: "Set up GPU passthrough on Proxmox VE for a Windows 11 guest with an NVIDIA RTX 4070."
+Quality signals:
+- Covers IOMMU enablement (kernel params, BIOS)
+- Mentions vfio-pci driver binding
+- Addresses UEFI/OVMF requirement for Windows 11
+- Covers hardware mapping (Proxmox 8.1+) or legacy hostpci syntax
+- Warns about GPU reset bug for affected models
+
+**Test 2: Cloud-init template**
+Prompt: "Create a libvirt/QEMU VM template with cloud-init for automated Ubuntu provisioning."
+Quality signals:
+- Shows cloud-init user-data YAML with packages, runcmd, ssh keys
+- Uses cloud-localds or virt-install --cloud-init for NoCloud datasource
+- Creates a reusable template (backing image or snapshot)
+- Includes validation steps (cloud-init status --wait)
+- Does not hardcode passwords in cloud-init config
+
+### zero-day
+
+**Test 1: Memory safety**
+Prompt: "Analyze this C function for exploitable memory safety vulnerabilities:\n\nvoid process_input(char *user_input) {\n  char buffer[64];\n  strcpy(buffer, user_input);\n  printf(buffer);\n}"
+Quality signals:
+- Identifies buffer overflow via strcpy (no bounds check)
+- Identifies format string vulnerability via printf(buffer)
+- Explains exploitation path for each (stack smash, arbitrary read/write)
+- Suggests mitigations (strncpy/snprintf, format string literal)
+- Mentions relevant protections to check (ASLR, stack canary, NX)
+
+**Test 2: Novel web vulnerability**
+Prompt: "Hunt for novel XSS vectors in a React application that uses DOMPurify for sanitization."
+Quality signals:
+- Considers mutation XSS (mXSS) via parser differentials
+- Checks for DOM clobbering bypasses
+- Examines unsafe innerHTML usage patterns in React components
+- Tests DOMPurify configuration (ALLOWED_TAGS, RETURN_DOM)
+- Does not limit analysis to standard reflected/stored XSS patterns

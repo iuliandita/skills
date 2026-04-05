@@ -73,6 +73,7 @@ AI tools consistently produce the same database mistakes. **Before returning any
 - [ ] No `DROP TABLE` or `DROP DATABASE` without explicit user confirmation
 - [ ] Migration is idempotent -- can be run twice without error
 - [ ] Rollback/down migration exists and is tested
+- [ ] PG enum changes use `ALTER TYPE ... ADD VALUE` outside a transaction (cannot run inside BEGIN/COMMIT, fails silently in some ORMs)
 
 ### Schema
 
@@ -116,18 +117,48 @@ Based on the request:
 
 ### Step 2: Gather requirements
 
-Before writing SQL or config:
-- **Engine and version** -- behavior differs significantly across versions
-- **Deployment model** -- self-hosted (bare metal, VM, container, K8s) vs managed (RDS, Cloud SQL, Atlas)
-- **Workload type** -- OLTP (many small transactions) vs OLAP (few large queries) vs mixed
-- **Data volume** -- row counts, table sizes, growth rate
-- **Compliance** -- PCI-DSS CDE? HIPAA? What data classification?
-- **HA requirements** -- RTO/RPO targets, multi-AZ, read replicas
-- **Existing infrastructure** -- what's already running, what ORMs/drivers are in use
+Before writing SQL or config, determine these. If the user doesn't specify, use the sensible defaults shown:
+- **Engine and version** -- behavior differs significantly across versions. Default: latest stable (see target versions above).
+- **Deployment model** -- self-hosted (bare metal, VM, container, K8s) vs managed (RDS, Cloud SQL, Atlas). Default: assume self-hosted unless context says otherwise.
+- **Workload type** -- OLTP (many small transactions) vs OLAP (few large queries) vs mixed. Default: OLTP.
+- **Data volume** -- row counts, table sizes, growth rate. Default: medium (1-100GB). If unknown, optimize for growth.
+- **Compliance** -- PCI-DSS CDE? HIPAA? What data classification? Default: no compliance scope (but still apply security baseline).
+- **HA requirements** -- RTO/RPO targets, multi-AZ, read replicas. Default: single-node with PITR.
+- **Existing infrastructure** -- what's already running, what ORMs/drivers are in use. Inspect the codebase if accessible.
 
 ### Step 3: Build
 
 Follow the domain-specific section below. Always apply the production checklist and AI self-check before finishing.
+
+**Common operations -- quick-start patterns:**
+
+**Query optimization** (the most frequent request):
+1. Get the plan: `EXPLAIN (ANALYZE, BUFFERS, FORMAT TEXT) SELECT ...;` (PG), `EXPLAIN FORMAT=TREE ...;` (MySQL 8.0+), `db.collection.explain('executionStats').find(...)` (MongoDB).
+2. Look for: `Seq Scan` on large tables (PG) / `Full Table Scan` (MySQL) / `COLLSCAN` (MongoDB), `Nested Loop` with high row estimates, `Sort` spilling to disk (`Sort Method: external merge`), and `Rows Removed by Filter` >> `Rows` returned.
+3. Check index usage: `SELECT schemaname, relname, idx_scan, seq_scan FROM pg_stat_user_tables WHERE seq_scan > 100 ORDER BY seq_scan DESC;` (PG) or `SELECT * FROM sys.schema_unused_indexes;` (MySQL performance_schema).
+4. If a missing index is the fix, create it with `CONCURRENTLY` (PG): `CREATE INDEX CONCURRENTLY idx_orders_customer ON orders (customer_id);` or `ALGORITHM=INPLACE, LOCK=NONE` (MySQL).
+5. Re-run `EXPLAIN ANALYZE` to confirm the planner uses the new index and that estimated vs actual rows are close.
+
+**Lock contention / deadlock diagnosis** (second most common "it's stuck" scenario):
+1. PG: `SELECT pid, age(backend_xact_start), query, wait_event_type, wait_event FROM pg_stat_activity WHERE state != 'idle' AND wait_event IS NOT NULL ORDER BY age(backend_xact_start) DESC;`
+2. PG blocked queries: `SELECT blocked.pid AS blocked_pid, blocked.query AS blocked_query, blocking.pid AS blocking_pid, blocking.query AS blocking_query FROM pg_stat_activity blocked JOIN pg_locks bl ON bl.pid = blocked.pid JOIN pg_locks kl ON kl.locktype = bl.locktype AND kl.database IS NOT DISTINCT FROM bl.database AND kl.relation IS NOT DISTINCT FROM bl.relation AND kl.page IS NOT DISTINCT FROM bl.page AND kl.tuple IS NOT DISTINCT FROM bl.tuple AND kl.transactionid IS NOT DISTINCT FROM bl.transactionid AND kl.pid != bl.pid JOIN pg_stat_activity blocking ON blocking.pid = kl.pid WHERE NOT bl.granted AND kl.granted;`
+3. MySQL: `SHOW ENGINE INNODB STATUS\G` -- look for `LATEST DETECTED DEADLOCK` section. Also: `SELECT * FROM performance_schema.data_lock_waits;` (MySQL 8.0+).
+4. MongoDB: `db.currentOp({"waitingForLock": true})` and check `mongod` log for `LockTimeout` entries.
+5. Fix: kill the blocking query if it's stuck (`SELECT pg_terminate_backend(PID);` / `KILL CONNECTION thread_id;`), then investigate why the lock was held (long transactions, missing indexes on UPDATE/DELETE WHERE clauses, lock ordering bugs in application code).
+
+**Connection pooler sizing** (second most common):
+1. Determine backend budget: `max_connections` minus superuser_reserved minus replication slots = available.
+2. PgBouncer `default_pool_size` per user/db pair: start at `available / number_of_app_instances`, round down.
+3. Set `max_client_conn` to the total connections your app fleet will open (all instances combined).
+4. Use `transaction` pool mode for web apps (stateless requests). Use `session` mode only if the app uses prepared statements without PgBouncer 1.21+ `max_prepared_statements`, temp tables, or `SET` commands.
+5. Validate: `psql -h pgbouncer-host -p 6432 pgbouncer -c "SHOW POOLS;"` -- watch `sv_active` vs `sv_idle` under load.
+
+**Migration safety check** (before running any DDL in production):
+1. Verify the migration is idempotent: `IF NOT EXISTS` / `IF EXISTS` guards on all DDL.
+2. Check table size: `SELECT pg_size_pretty(pg_total_relation_size('tablename'));` -- anything over 1GB needs batched operations or `CONCURRENTLY` indexes.
+3. Verify backward compatibility: can the current app version still function after this DDL runs?
+4. Test the rollback/down migration against a copy of production data, not just an empty schema.
+5. Run during low-traffic window if the operation takes locks (even brief ones).
 
 ### Step 4: Validate
 
@@ -191,9 +222,14 @@ Three approaches, pick by downtime tolerance:
 3. Create subscription on target: `CREATE SUBSCRIPTION upgrade_sub CONNECTION '...' PUBLICATION upgrade_pub;`
 4. Wait for initial sync + catchup (monitor `pg_stat_subscription`, replication lag)
 5. Migrate sequences: logical replication does not replicate sequence values -- copy them manually
-6. Test application against the new version (read traffic, connection pooler split)
+6. Test application against the new version (read traffic, connection pooler split). **Monitor during split-test**: query latency p50/p95/p99 (compare old vs new -- regression means planner stats or config drift), error rates by query type (new version may have stricter behavior), connection pool saturation (`SHOW POOLS` in PgBouncer -- watch `cl_waiting`), replication lag trend (should stay flat or decrease, never grow during read-only test), and memory/CPU on the new instance. Run for at least one full traffic cycle (24h if your workload is diurnal). Abort and route back to old primary if error rate exceeds baseline or p99 latency degrades >20%.
 7. Cutover: stop writes to old primary, verify lag = 0, point connection pooler to new primary
 8. Drop subscription and decommission old primary
+
+**Rollback procedure** (if replication stalls or validation fails):
+- **Lag not reaching zero**: Check `pg_stat_subscription` for `last_msg_send_time` vs `last_msg_receipt_time` delta. Common causes: long-running transactions on source blocking WAL send, tables missing primary keys (forces full-row comparison), or network throughput limits. If lag is stuck, check `pg_replication_slots` on the source for `active = false` -- an inactive slot means the subscription dropped. Recreate the subscription; do not proceed with cutover.
+- **Application validation fails on new version**: Route all traffic back to the old primary (update pooler config). The old primary never stopped accepting writes, so no data is lost. Drop the subscription on the new instance: `DROP SUBSCRIPTION upgrade_sub;` -- this also drops the replication slot on the source. Investigate, fix, and restart from step 3.
+- **Post-cutover rollback** (writes already went to new primary): This is the hard case. Options: (a) set up reverse logical replication from new -> old before decommissioning the old primary (plan this before cutover if RTO requires it), or (b) restore old primary from backup + WAL and accept data loss for the cutover window. Option (a) requires the old primary to still be running. **Decision point**: if you need rollback after cutover, set up reverse replication in step 6 before routing write traffic.
 
 **Key pitfalls** (check all of these before starting):
 - Tables need primary keys or `REPLICA IDENTITY FULL` -- check first: `SELECT c.relname FROM pg_class c JOIN pg_namespace n ON c.relnamespace = n.oid WHERE n.nspname = 'public' AND c.relkind = 'r' AND NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid = c.oid AND contype = 'p');`

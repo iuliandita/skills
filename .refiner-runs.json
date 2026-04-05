@@ -52,5 +52,84 @@
     "contested": 0,
     "cross_model_flags": 0,
     "meta_changes": ["test-cases.md (+browse)", "conventions.md (+browse inventory)"]
+  },
+  {
+    "run_id": "2026-04-05-full-sweep",
+    "branch": "skill-refiner/2026-04-05-000900",
+    "date": "2026-04-05",
+    "primary": {
+      "harness": "claude-code",
+      "model": "claude-opus-4-6",
+      "context": "1M"
+    },
+    "secondary": {
+      "harness": "codex (rate-limited, fell back to fresh-context self-review)",
+      "model": "codex-cli/gpt-5.4",
+      "weight": "5%",
+      "note": "Codex detected and probed but hit rate limits during phase 2"
+    },
+    "config": {
+      "iterations_max": 10,
+      "iterations_used": 5,
+      "threshold": 99,
+      "mode": "circuit-breaker",
+      "plateau": 2
+    },
+    "pool": [
+      "ai-ml", "ansible", "anti-slop", "arch-btw", "browse", "ci-cd",
+      "code-review", "command-prompt", "databases", "docker",
+      "firewall-appliance", "full-review", "git", "kubernetes", "lockpick",
+      "mcp", "networking", "prompt-generator", "security-audit", "terraform",
+      "testing", "update-docs", "virtualization", "zero-day"
+    ],
+    "extra_pool": ["cluster-health (gitignored, local-only)"],
+    "termination": "plateau + minimum-iterations",
+    "scores": {
+      "ai-ml":              { "before": { "composite": 98 }, "after": { "composite": 98 } },
+      "ansible":            { "before": { "composite": 99 }, "after": { "composite": 99 } },
+      "anti-slop":          { "before": { "composite": 97 }, "after": { "composite": 98 } },
+      "arch-btw":           { "before": { "composite": 90 }, "after": { "composite": 97 } },
+      "browse":             { "before": { "composite": 99 }, "after": { "composite": 99 } },
+      "ci-cd":              { "before": { "composite": 93 }, "after": { "composite": 98 } },
+      "code-review":        { "before": { "composite": 97 }, "after": { "composite": 99 } },
+      "command-prompt":     { "before": { "composite": 97 }, "after": { "composite": 98 } },
+      "databases":          { "before": { "composite": 95 }, "after": { "composite": 98 } },
+      "docker":             { "before": { "composite": 99 }, "after": { "composite": 99 } },
+      "firewall-appliance": { "before": { "composite": 93 }, "after": { "composite": 97 } },
+      "full-review":        { "before": { "composite": 85 }, "after": { "composite": 95 } },
+      "git":                { "before": { "composite": 95 }, "after": { "composite": 98 } },
+      "kubernetes":         { "before": { "composite": 93 }, "after": { "composite": 98 } },
+      "lockpick":           { "before": { "composite": 96 }, "after": { "composite": 98 } },
+      "mcp":                { "before": { "composite": 96 }, "after": { "composite": 99 } },
+      "networking":         { "before": { "composite": 95 }, "after": { "composite": 98 } },
+      "prompt-generator":   { "before": { "composite": 97 }, "after": { "composite": 98 } },
+      "security-audit":     { "before": { "composite": 82 }, "after": { "composite": 95 } },
+      "terraform":          { "before": { "composite": 85 }, "after": { "composite": 97 } },
+      "testing":            { "before": { "composite": 97 }, "after": { "composite": 98 } },
+      "update-docs":        { "before": { "composite": 91 }, "after": { "composite": 97 } },
+      "virtualization":     { "before": { "composite": 94 }, "after": { "composite": 98 } },
+      "zero-day":           { "before": { "composite": 92 }, "after": { "composite": 98 } },
+      "cluster-health":     { "before": { "composite": 90 }, "after": { "composite": 94 }, "note": "local-only, gitignored" }
+    },
+    "iteration_log": [
+      { "iteration": 1, "type": "baseline", "avg": 94.0, "min": 82, "max": 99 },
+      { "iteration": 2, "max_delta": 9, "avg": 96.7, "improved": 19 },
+      { "iteration": 3, "max_delta": 4, "avg": 97.3, "improved": 4 },
+      { "iteration": 4, "max_delta": 3, "avg": 97.7, "improved": 11 },
+      { "iteration": 5, "max_delta": 1, "avg": 97.9, "improved": 8 }
+    ],
+    "reverted": 0,
+    "contested": 0,
+    "cross_model_flags": 0,
+    "meta_changes": [
+      "test-cases.md (+ai-ml, +testing, +virtualization, +zero-day)",
+      "code-review/references/go.md (new, 334 lines)"
+    ],
+    "changes_summary": {
+      "files_changed": 41,
+      "lines_added": 1894,
+      "lines_removed": 191,
+      "commits": 14
+    }
   }
 ]

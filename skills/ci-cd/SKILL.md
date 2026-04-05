@@ -147,7 +147,9 @@ lint -> test -> build -> scan -> deploy
 | What | Cache key | Platform notes |
 |------|-----------|----------------|
 | **npm/bun** | `${{ hashFiles('**/package-lock.json') }}` or lockb | GH: `actions/cache`. GL: `cache:key:files`. Forgejo: same as GH. |
-| **pip** | `${{ hashFiles('**/requirements*.txt') }}` | GH: cache action. GL: cache with `$CI_COMMIT_REF_SLUG` prefix. |
+| **pip** | `${{ hashFiles('**/requirements*.txt') }}` | GH: `setup-python` with `cache: pip`. GL: cache `~/.cache/pip`. |
+| **poetry** | `${{ hashFiles('**/poetry.lock') }}` | GH: `setup-python` with `cache: poetry`. GL: cache `~/.cache/pypoetry`. |
+| **uv** | `${{ hashFiles('**/uv.lock') }}` | GH: `astral-sh/setup-uv` has built-in cache. GL: cache `~/.cache/uv`. |
 | **Go** | `${{ hashFiles('**/go.sum') }}` | GH: `actions/setup-go` has built-in cache. |
 | **Docker layers** | BuildKit cache mount or registry cache | GH: `--cache-from type=gha`. GL: `--cache-from $CI_REGISTRY_IMAGE:cache`. |
 
@@ -240,6 +242,42 @@ jobs:
       - run: bun run typecheck
       - run: bun run test
 ```
+
+### Forgejo action SHA discovery
+
+Forgejo resolves actions from its own mirror or a configured upstream, not from github.com.
+Finding the correct SHA for a self-hosted mirror requires different steps than GitHub.
+
+**Find the SHA on your Forgejo instance**:
+```bash
+# List tags and their SHAs from the Forgejo mirror
+git ls-remote https://forgejo.example.com/actions/checkout.git 'refs/tags/v4*'
+
+# Or use the Forgejo API to get a tag's commit SHA
+curl -s https://forgejo.example.com/api/v1/repos/actions/checkout/git/refs/tags/v4.2.2 \
+  | jq -r '.object.sha'
+```
+
+**If your instance mirrors from code.forgejo.org** (the default upstream):
+```bash
+git ls-remote https://code.forgejo.org/actions/checkout.git 'refs/tags/v4*'
+```
+
+**Verify a SHA matches what you expect**:
+```bash
+# Clone at the specific SHA and inspect
+git clone --depth 1 https://forgejo.example.com/actions/checkout.git /tmp/checkout-verify
+cd /tmp/checkout-verify
+git checkout <sha>
+# Review action.yml and dist/ -- compare against the known-good upstream release
+```
+
+**Key differences from GitHub SHA discovery**:
+- The same action (e.g., `actions/checkout`) may have different SHAs on Forgejo mirrors vs GitHub
+  because Forgejo forks maintain their own commits
+- `code.forgejo.org/actions/*` repos are Forgejo-maintained forks, not exact copies of GitHub repos
+- Always verify SHAs against your own instance, not against github.com
+- If the action repo is not mirrored yet, an admin must add it to the Forgejo mirror list
 
 ### Forgejo-specific gotchas
 

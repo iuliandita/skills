@@ -4,8 +4,8 @@ description: >
   · Build, review, or debug MCP servers, tools, resources, and prompts. Covers transports
   (stdio, streamable HTTP), OAuth 2.1 auth, and tool handler implementation. Triggers: 'mcp',
   'model context protocol', 'mcp server', 'mcp tool', 'tool handler', 'fastmcp',
-  '@modelcontextprotocol/sdk', 'mcp inspector'. Not for Claude API usage (use claude-api)
-  or MCP server security auditing (use security-audit).
+  '@modelcontextprotocol/sdk', 'mcp inspector', 'elicitation'. Not for Claude API usage
+  (use claude-api) or MCP server security auditing (use security-audit).
 license: MIT
 compatibility: Requires Node.js or Python runtime
 metadata:
@@ -41,7 +41,7 @@ become yet another server with preventable injection vulnerabilities.
 ## When NOT to use
 
 - General REST API development that doesn't use MCP -- just write the API
-- Claude API / Anthropic SDK usage -- use a Claude API / Anthropic SDK skill if installed
+- Claude API / Anthropic SDK usage -- use **claude-api**
 - Security auditing existing servers across a codebase -- use **security-audit** (it has an MCP section)
 - Using MCP browsing tools to browse or scrape web pages -- use **browse**
 - Writing prompts for LLMs (not MCP prompt resources) -- use **prompt-generator**
@@ -50,7 +50,7 @@ become yet another server with preventable injection vulnerabilities.
 
 ## AI Self-Check
 
-Before returning any MCP server code, verify:
+When generating or reviewing MCP server code, verify each item before presenting the result:
 
 - [ ] All tool handler inputs validated server-side (no raw string interpolation into
   shell commands, SQL, file paths, or URLs)
@@ -71,7 +71,7 @@ Before returning any MCP server code, verify:
 
 ## Workflow
 
-**Build vs. Review:** Steps 1-6 are for building new servers. When reviewing existing MCP server code, use Step 1 (purpose) as a scoping checklist, then jump to Step 3 (security hardening) for the vulnerability audit, cross-referencing the AI Self-Check above. The Common Mistakes section below also serves as a review checklist.
+**Build vs. Review:** Steps 1-6 are for building new servers. When reviewing existing MCP server code: (1) scope using Step 1 questions -- what tools, transport, and auth does the server use; (2) audit each tool handler against Step 3 injection vectors and the AI Self-Check; (3) cross-reference the Common Mistakes section for patterns AI models frequently introduce.
 
 ### Step 1: Determine the server's purpose
 
@@ -163,6 +163,29 @@ function safePath(base: string, userInput: string): string {
   }
   return resolved;
 }
+```
+
+**Before/after -- applying safePath() to a vulnerable tool handler:**
+
+```typescript
+// BEFORE (vulnerable -- user controls path directly)
+server.tool("read_file", "Read a project file",
+  { path: z.string() },
+  async ({ path: filePath }) => {
+    const data = await readFile(filePath, "utf-8"); // path traversal
+    return { content: [{ type: "text", text: data }] };
+  }
+);
+
+// AFTER (safe -- resolved path validated against allowed base)
+server.tool("read_file", "Read a project file",
+  { path: z.string().max(500) },
+  async ({ path: filePath }) => {
+    const safe = safePath("/srv/project", filePath);
+    const data = await readFile(safe, "utf-8");
+    return { content: [{ type: "text", text: data }] };
+  }
+);
 ```
 
 **SSRF prevention** (when tools fetch URLs from user input):

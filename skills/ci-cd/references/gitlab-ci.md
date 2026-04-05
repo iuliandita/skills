@@ -534,6 +534,283 @@ glab api "projects/group%2Fsubgroup%2Fproject/merge_requests" --hostname gitlab.
 
 ---
 
+## Monorepo Pipeline (Three Services + Shared Lib)
+
+Complete `.gitlab-ci.yml` for a monorepo with `services/api`, `services/web`, `services/worker`,
+and a shared library `libs/common`. Each service builds only when its own code or the shared lib
+changes. All three services share a common lint/test stage pattern.
+
+```yaml
+stages:
+  - lint
+  - test
+  - build
+  - scan
+  - deploy
+
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS
+      when: never
+    - if: $CI_COMMIT_BRANCH
+    - if: $CI_COMMIT_TAG
+
+variables:
+  DOCKER_TLS_CERTDIR: "/certs"
+
+# --- Shared templates ---
+
+.changes-api: &changes-api
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      changes:
+        paths: [services/api/**, libs/common/**]
+        compare_to: refs/heads/main
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      changes:
+        paths: [services/api/**, libs/common/**]
+
+.changes-web: &changes-web
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      changes:
+        paths: [services/web/**, libs/common/**]
+        compare_to: refs/heads/main
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      changes:
+        paths: [services/web/**, libs/common/**]
+
+.changes-worker: &changes-worker
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      changes:
+        paths: [services/worker/**, libs/common/**]
+        compare_to: refs/heads/main
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      changes:
+        paths: [services/worker/**, libs/common/**]
+
+.node-setup: &node-setup
+  image: node:22-slim
+  before_script:
+    - cd $SERVICE_DIR
+    - npm ci
+  cache:
+    key:
+      prefix: $CI_PROJECT_NAME-$SERVICE_NAME
+      files:
+        - $SERVICE_DIR/package-lock.json
+    paths:
+      - $SERVICE_DIR/node_modules/
+    policy: pull-push
+
+.docker-build:
+  stage: build
+  image: docker:29.3
+  services:
+    - docker:29.3-dind
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - |
+      docker build \
+        --tag $CI_REGISTRY_IMAGE/$SERVICE_NAME:$CI_COMMIT_SHA \
+        --tag $CI_REGISTRY_IMAGE/$SERVICE_NAME:$CI_COMMIT_REF_SLUG \
+        --label "org.opencontainers.image.revision=$CI_COMMIT_SHA" \
+        -f $SERVICE_DIR/Dockerfile \
+        .
+    - docker push $CI_REGISTRY_IMAGE/$SERVICE_NAME:$CI_COMMIT_SHA
+    - docker push $CI_REGISTRY_IMAGE/$SERVICE_NAME:$CI_COMMIT_REF_SLUG
+
+# --- Shared lib (lint + test only, no container) ---
+
+lint-common:
+  <<: *node-setup
+  stage: lint
+  variables:
+    SERVICE_DIR: libs/common
+    SERVICE_NAME: common
+  script:
+    - npm run lint
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      changes:
+        paths: [libs/common/**]
+        compare_to: refs/heads/main
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      changes:
+        paths: [libs/common/**]
+
+test-common:
+  <<: *node-setup
+  stage: test
+  variables:
+    SERVICE_DIR: libs/common
+    SERVICE_NAME: common
+  script:
+    - npm run test
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      changes:
+        paths: [libs/common/**]
+        compare_to: refs/heads/main
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      changes:
+        paths: [libs/common/**]
+
+# --- API service ---
+
+lint-api:
+  <<: [*node-setup, *changes-api]
+  stage: lint
+  variables:
+    SERVICE_DIR: services/api
+    SERVICE_NAME: api
+  script:
+    - npm run lint
+
+test-api:
+  <<: [*node-setup, *changes-api]
+  stage: test
+  variables:
+    SERVICE_DIR: services/api
+    SERVICE_NAME: api
+  script:
+    - npm run test
+
+build-api:
+  extends: .docker-build
+  <<: *changes-api
+  variables:
+    SERVICE_DIR: services/api
+    SERVICE_NAME: api
+
+# --- Web service ---
+
+lint-web:
+  <<: [*node-setup, *changes-web]
+  stage: lint
+  variables:
+    SERVICE_DIR: services/web
+    SERVICE_NAME: web
+  script:
+    - npm run lint
+
+test-web:
+  <<: [*node-setup, *changes-web]
+  stage: test
+  variables:
+    SERVICE_DIR: services/web
+    SERVICE_NAME: web
+  script:
+    - npm run test
+
+build-web:
+  extends: .docker-build
+  <<: *changes-web
+  variables:
+    SERVICE_DIR: services/web
+    SERVICE_NAME: web
+
+# --- Worker service ---
+
+lint-worker:
+  <<: [*node-setup, *changes-worker]
+  stage: lint
+  variables:
+    SERVICE_DIR: services/worker
+    SERVICE_NAME: worker
+  script:
+    - npm run lint
+
+test-worker:
+  <<: [*node-setup, *changes-worker]
+  stage: test
+  variables:
+    SERVICE_DIR: services/worker
+    SERVICE_NAME: worker
+  script:
+    - npm run test
+
+build-worker:
+  extends: .docker-build
+  <<: *changes-worker
+  variables:
+    SERVICE_DIR: services/worker
+    SERVICE_NAME: worker
+
+# --- Security scan (all images) ---
+
+scan:
+  stage: scan
+  image:
+    name: aquasec/trivy:0.69.3
+  script:
+    - |
+      for svc in api web worker; do
+        echo "--- Scanning $svc ---"
+        trivy image --exit-code 1 --severity HIGH,CRITICAL \
+          $CI_REGISTRY_IMAGE/$svc:$CI_COMMIT_SHA || SCAN_FAILED=1
+      done
+      [ -z "$SCAN_FAILED" ] || exit 1
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+# --- Deployment ---
+
+deploy-staging:
+  stage: deploy
+  image: alpine/k8s:1.32.3
+  script:
+    - |
+      for svc in api web worker; do
+        kubectl set image deployment/$svc \
+          $svc=$CI_REGISTRY_IMAGE/$svc:$CI_COMMIT_SHA \
+          -n staging
+      done
+    - |
+      for svc in api web worker; do
+        kubectl rollout status deployment/$svc -n staging --timeout=300s
+      done
+  environment:
+    name: staging
+    url: https://staging.example.com
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+deploy-production:
+  stage: deploy
+  image: alpine/k8s:1.32.3
+  script:
+    - |
+      for svc in api web worker; do
+        kubectl set image deployment/$svc \
+          $svc=$CI_REGISTRY_IMAGE/$svc:$CI_COMMIT_SHA \
+          -n production
+      done
+    - |
+      for svc in api web worker; do
+        kubectl rollout status deployment/$svc -n production --timeout=300s
+      done
+  environment:
+    name: production
+    url: https://app.example.com
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: manual
+      allow_failure: false
+```
+
+**Key patterns**:
+- **YAML anchors** (`.changes-api`, `.changes-web`, `.changes-worker`) centralize per-service `rules:` + `changes:` filters. Each service's lint, test, and build jobs inherit the same trigger rules.
+- **`compare_to: refs/heads/main`** ensures `changes:` compares against main, not the previous commit (which misses multi-commit MRs).
+- **Shared lib (`libs/common/**`)** is included in every service's change filter. If only the shared lib changes, all dependent services rebuild.
+- **Cache key prefix** uses `$SERVICE_NAME` to avoid cache collisions between services on shared runners.
+- **Single scan job** iterates all service images. In larger setups, split into per-service scan jobs for parallelism.
+
+---
+
 ## PCI-DSS 4.0 Compliance (GitLab)
 
 | Requirement | GitLab implementation |

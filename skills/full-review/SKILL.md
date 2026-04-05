@@ -42,7 +42,9 @@ Each audit runs in its own parallel agent/subprocess with a fresh context window
 
 ## AI Self-Check
 
-Before presenting the combined report, verify:
+Run this checklist after all agents return but before presenting the combined report to the user. Do not present results until every item passes.
+
+Verify:
 
 - [ ] All 4 audits dispatched by invoking the installed custom skills (`code-review`, `anti-slop`, `security-audit`, `update-docs`) before falling back to generic reviewers
 - [ ] Each report presented under its own header, unedited
@@ -50,6 +52,8 @@ Before presenting the combined report, verify:
 - [ ] SECURITY-AUDIT.md gitignore reminder included
 - [ ] Failed agents noted with reason (don't silently drop a missing audit)
 - [ ] Preflight context block was passed to all agents
+- [ ] When user specified a scope, the `Scope:` line in every agent's context block reflects that scope (not "full codebase review")
+- [ ] Scope held in output: each agent's findings reference only files/modules within the requested scope. If any agent's output references out-of-scope paths, flag it in that report's header (see Step 3 scope verification)
 
 ---
 
@@ -66,7 +70,7 @@ Gather context before dispatching agents. Run these in parallel (guard each with
 
 **If not a git repo** (step 1 fails): stop and tell the user. The audits rely on git context (history, blame, diff). Running without it produces low-quality results.
 
-Record preflight values -- each subagent prompt uses them. Substitute `{placeholders}` in the agent prompts below with the actual values from preflight (e.g., replace `{repo_root}` with the output of `git rev-parse --show-toplevel`).
+Record preflight values -- each subagent prompt uses them. Substitute `{placeholders}` in the agent prompts below with the actual values from preflight (e.g., replace `{repo_root}` with the output of `git rev-parse --show-toplevel`). Default `{scope}` to "full codebase review -- scan everything"; override in Step 1 if the user specifies a narrower target.
 
 ### Step 1: Determine Scope
 
@@ -74,7 +78,7 @@ Default is **full codebase** since the user is running this as a quality gate. A
 
 - **Uncommitted changes present** -> mention this, but still audit the full repo.
 - **Detached HEAD / bare repo** -> warn the user, proceed with what's available.
-- **User specified a narrower scope** (specific files, directory, module) -> pass that scope constraint to all four agents. Each agent only audits within the specified scope. This is the key to scoped reviews: narrowing the target, not the audit dimensions.
+- **User specified a narrower scope** (specific files, directory, module) -> pass that scope constraint to all four agents. Each agent only audits within the specified scope. This is the key to scoped reviews: narrowing the target, not the audit dimensions. Set `{scope}` in the context block to the user's scope (e.g., "src/auth/ directory only") instead of the default "full codebase review -- scan everything".
 
 ### Step 2: Dispatch Four Parallel Agents
 
@@ -92,7 +96,7 @@ and runs a full codebase audit.
 
 **If parallel execution is unavailable** (restricted sandbox, no subagent support): run
 sequentially in this order: Security Audit, Code Review, Slop Check, Docs Sweep. Security
-first because those findings are most time-sensitive.
+first because those findings are most time-sensitive. If any agent exceeds 5 minutes wall-clock, note the timeout in the output header and continue with the remaining agents.
 
 Pass this context block to every agent, substituting the `{placeholders}` from preflight:
 
@@ -103,7 +107,7 @@ Context:
 - Branch: {branch}
 - Languages: {detected_languages}
 - File count: {file_count}
-- Scope: full codebase review -- scan everything
+- Scope: {scope}
 ```
 
 #### Agent 1: Code Review
@@ -137,7 +141,9 @@ After all four agents return, present each report under its own header. Do not m
 | Data layer | Query correctness, race conditions | SQL injection, data exposure, access control | ORM abstraction, unnecessary wrappers | Schema docs, migration notes |
 | Infrastructure | Config correctness, resource handling | Secrets exposure, misconfiguration | Over-engineered deploy scripts | Infra docs, runbook accuracy |
 
-For scopes not in the table, apply each skill's standard checklist narrowed to the specified files/module.
+For scopes not in the table, apply each skill's standard checklist narrowed to the specified files/module. Do not skip an audit just because the scope seems domain-specific -- every skill may surface relevant findings on arbitrary code.
+
+**Scope verification before presenting**: when a scope was specified, confirm each agent's output before including it in the report. If an agent's findings reference files or modules outside the requested scope, that agent ignored the scope constraint -- note the discrepancy in its report header and, if possible, filter out-of-scope findings. If an agent returned zero findings, confirm it actually ran against the scoped target (not an empty or wrong path) before reporting "no issues found."
 
 **User requests synthesis**: if the user asks for a combined summary after seeing the reports, prioritize: security fixes > correctness bugs > slop cleanup > doc updates. Keep synthesis brief -- the individual reports are the source of truth.
 
@@ -184,7 +190,14 @@ If an agent fails or times out:
 - Present whatever completed successfully
 - Do not re-run failed agents unless the user asks
 
-If a skill isn't available: try the best built-in alternative (for example, the harness's native code-review, security, or docs mode). Note the substitution in the output header so the user knows a fallback was used. Partial results are still useful.
+If a skill is not available, use the best built-in alternative. Note the substitution in the output header so the user knows a fallback was used. Partial results are still useful.
+
+| Unavailable skill | Fallback approach |
+|-------------------|-------------------|
+| `code-review` | Use the harness's native code-review mode or manually review for bugs, logic errors, edge cases, and resource leaks. Focus on high-confidence findings only. |
+| `anti-slop` | Scan for verbose code, redundant comments, over-abstraction, and dead code manually. No structured slop taxonomy -- report what you find. |
+| `security-audit` | Use any built-in security scanner the harness provides, or manually check for hardcoded secrets, injection points, missing auth checks, and dependency CVEs. Skip SECURITY-AUDIT.md generation. |
+| `update-docs` | Review README, CLAUDE.md, AGENTS.md, and inline doc comments for staleness. Check that recent code changes have corresponding doc updates. |
 
 ## Related Skills
 

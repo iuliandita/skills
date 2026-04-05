@@ -105,6 +105,65 @@ From there:
 
 If the system broke after a package interruption, also inspect package integrity and whether the boot artifacts were fully written.
 
+## Snapshot + Boot Recovery Checklist (Btrfs + UKI)
+
+When a Btrfs system with UKIs will not boot, work through these steps in order from a live USB.
+Adjust device paths and subvolume names to match the actual layout.
+
+```bash
+# 1. Mount the Btrfs root subvolume
+mount -o subvol=@ /dev/sdX2 /mnt
+
+# 2. Mount remaining subvolumes and ESP
+mount -o subvol=@home /dev/sdX2 /mnt/home
+mount /dev/sdX1 /mnt/efi          # or /mnt/boot -- match fstab
+
+# 3. Identify the rollback point
+btrfs subvolume list /mnt
+# If Snapper is in use:
+chroot /mnt snapper list
+
+# 4. Restore the root snapshot (read-write snapshot of a known-good state)
+btrfs subvolume snapshot /mnt/.snapshots/NUMBER/snapshot /mnt/@_restored
+# Then update fstab or bootloader to point at @_restored, or
+# rename subvolumes so @ is the restored copy.
+
+# 5. Enter the restored root
+umount -R /mnt
+mount -o subvol=@_restored /dev/sdX2 /mnt
+mount -o subvol=@home /dev/sdX2 /mnt/home
+mount /dev/sdX1 /mnt/efi
+arch-chroot /mnt
+
+# 6. Verify bootloader state
+bootctl status
+bootctl list
+
+# 7. Rebuild initramfs / regenerate UKI with the installed generator
+pacman -Q mkinitcpio dracut
+# Pick the one that is installed:
+mkinitcpio -P        # or: dracut --regenerate-all --force
+
+# 8. Confirm UKIs landed on ESP
+ls /efi/EFI/Linux/   # adjust path to match ESP mount
+
+# 9. If Secure Boot is active, re-sign
+sbctl verify
+sbctl sign-all       # only if sbctl manages signing
+
+# 10. Exit chroot and reboot
+exit
+umount -R /mnt
+reboot
+```
+
+Key points:
+
+- Rolling back root without regenerating boot artifacts is the most common cause of post-rollback boot failure.
+- Always confirm which initramfs generator owns the pipeline before rebuilding.
+- If LUKS is involved, the mapper must be opened before any mounts (`cryptsetup open /dev/sdXN mapper_name`).
+- UKI signing (step 9) is only needed when Secure Boot is enforced.
+
 ## What NOT to do
 
 - Do not remove the only kernel package on a remote system.

@@ -320,16 +320,13 @@ count=0
 cat file.txt | while read -r line; do (( count++ )); done
 echo "$count"   # still 0!
 
-# Fix: use process substitution instead of pipe
+# Fix 1: process substitution instead of pipe
 count=0
 while read -r line; do (( count++ )); done < <(cat file.txt)
 echo "$count"   # correct
 
-# Or use lastpipe (bash 4.2+)
+# Fix 2: lastpipe (bash 4.2+) -- last pipe segment runs in current shell
 shopt -s lastpipe
-count=0
-cat file.txt | while read -r line; do (( count++ )); done
-echo "$count"   # correct (last pipe segment runs in current shell)
 ```
 
 ### Command grouping
@@ -578,11 +575,7 @@ declare -i num=42
 echo "${num@a}"                # i (integer attribute)
 declare -A map=()
 echo "${map@a}"                # A (associative array)
-
-# Improved POSIX mode compliance
-# set -e now works more consistently in subshells and command substitution
-
-# readline improvements: bracketed paste mode enabled by default
+# Also: improved set -e in subshells, bracketed paste mode on by default
 ```
 
 ### Bash 5.3 (July 2025)
@@ -628,9 +621,7 @@ files=(*.log)        # sorted by size, not name
 ```
 
 - Improved `set -e` handling in compound commands
-- Better C23 conformance internally
-- Various bugfixes for edge cases in parameter expansion
-- `type -P` behavior refinements (the flag itself predates 5.3)
+- `type -P` behavior refinements
 
 ---
 

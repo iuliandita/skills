@@ -4,7 +4,7 @@ Consolidated search patterns for manual audit passes. Use the Grep tool with the
 
 ## Secret Scanning Fallback (Pass 1)
 
-Use these only when gitleaks/trufflehog are unavailable.
+Use these only when betterleaks/gitleaks/trufflehog are all unavailable.
 
 | Pattern | What it finds | File types |
 |---------|---------------|------------|

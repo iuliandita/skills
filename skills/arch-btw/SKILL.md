@@ -22,7 +22,7 @@ Administer Arch Linux and Arch-style systems without falling into rolling-releas
 Focus on vanilla Arch first, then layer in CachyOS behavior, `paru` workflow, systemd-native
 service management, boot recovery, kernel handling, and derivative-specific cautions.
 
-**Versions worth pinning** (March 31, 2026):
+**Versions worth pinning** (April 2026):
 
 Only pin versions here when they materially affect compatibility or troubleshooting shape. For
 ordinary rolling packages, prefer the current repo state over stale version tables.
@@ -30,12 +30,12 @@ ordinary rolling packages, prefer the current repo state over stale version tabl
 | Component | Version | Why it matters |
 |-----------|---------|----------------|
 | systemd | 260.1-1 | boot and session behavior |
-| mkinitcpio | 40-4 | initramfs pipeline changed enough to matter |
+| mkinitcpio | 40-5 | initramfs pipeline changed enough to matter |
 | dracut | 110-2 | alternative initramfs pipeline with different expectations |
 | linux-cachyos | 6.19.10-1 | kernel and module compatibility |
 | linux-cachyos-eevdf | 6.19.10-1 | alternate kernel lane with different behavior surface |
-| Hyprland | 0.54.2-2 | old 0.4x and early 0.5x guidance is frequently stale here |
-| xdg-desktop-portal-hyprland | 1.3.11-3 | Wayland portal behavior depends on this layer |
+| Hyprland | 0.54.3-2 | old 0.4x and early 0.5x guidance is frequently stale here |
+| xdg-desktop-portal-hyprland | 1.3.11-4 | Wayland portal behavior depends on this layer |
 | PipeWire | 1:1.6.2-1 | audio and capture stack anchor |
 | WirePlumber | 0.5.14-1 | policy layer paired with PipeWire behavior |
 | nvidia-utils | 595.58.03-1 | driver branch matters for gaming and Wayland breakage |
@@ -86,7 +86,11 @@ Before returning Arch or CachyOS commands, verify:
 - [ ] **Gaming stack includes 32-bit userspace when needed**: Steam and Proton failures often come from missing multilib graphics pieces, not the game itself.
 - [ ] **Capture stack is coherent**: portal backend, PipeWire, WebRTC or Electron client path, and any virtual camera module choice line up with the current session type.
 - [ ] **Suspend and rollback claims are real**: hibernation, snapshots, and rollback advice matches the actual filesystem, boot path, and encryption layout.
+- [ ] **Version table is current**: if the pinned version table is more than a few weeks old, verify critical versions (kernel, systemd, nvidia-utils) against `pacman -Q` before relying on them.
 - [ ] **CachyOS advice is not backported blindly**: optimized repos, custom pacman behavior, snapshot defaults, and kernel tooling are CachyOS-specific.
+- [ ] **DKMS modules match the running kernel**: after kernel changes, confirm that NVIDIA, `v4l2loopback`, and other out-of-tree modules are built for the current kernel before blaming the desktop, OBS, or Steam.
+- [ ] **Hybrid graphics path is identified on laptops**: PRIME offload, muxless, or discrete-only mode affects display output, suspend behavior, and Gamescope compatibility. Do not assume single-GPU behavior on multi-GPU hardware.
+- [ ] **Diagnostic errors are not silenced**: do not mask failures with `2>/dev/null` on commands whose error reason matters for triage. Use `2>&1 || true` to surface errors without aborting a gathering pass.
 - [ ] **Snapshots are not backups**: on Btrfs systems, snapshots help with rollback but do not replace real backups.
 
 ---
@@ -119,19 +123,20 @@ findmnt /efi
 bootctl status
 lsblk -f
 echo "Session=$XDG_SESSION_TYPE Desktop=$XDG_CURRENT_DESKTOP"
-loginctl list-sessions 2>/dev/null || true
-systemctl status display-manager 2>/dev/null || true
-systemctl --user --failed 2>/dev/null || true
-systemctl --user status pipewire pipewire-pulse wireplumber 2>/dev/null || true
-systemctl --user status xdg-desktop-portal 2>/dev/null || true
-systemctl status power-profiles-daemon 2>/dev/null || true
+loginctl list-sessions 2>&1 || true
+systemctl status display-manager 2>&1 || true
+systemctl --user --failed 2>&1 || true
+systemctl --user status pipewire pipewire-pulse wireplumber 2>&1 || true
+systemctl --user status xdg-desktop-portal 2>&1 || true
+systemctl status power-profiles-daemon 2>&1 || true
 command -v wpctl >/dev/null 2>&1 && wpctl status
 command -v bluetoothctl >/dev/null 2>&1 && bluetoothctl show
-pacman -Q obs-studio xdg-desktop-portal discord v4l2loopback-dkms 2>/dev/null
+pacman -Q obs-studio xdg-desktop-portal discord v4l2loopback-dkms 2>&1 || true
 lspci -k | grep -Ei 'vga|3d|display'
 journalctl -b | grep -Ei 'nvrm|nvidia|amdgpu|i915|xe|drm'
 journalctl --user -b | grep -Ei 'portal|pipewire|webrtc|obs'
 lsmod | grep '^v4l2loopback'
+command -v dkms >/dev/null 2>&1 && dkms status
 findmnt -t btrfs
 systemctl status fstrim.timer 2>/dev/null || true
 ls /etc/*.pacnew /etc/*.pacsave 2>/dev/null
@@ -245,6 +250,7 @@ When a bug looks "desktop-only," compare one clean baseline:
 | Screen share broken | Wayland vs X11, portal backend, PipeWire user units |
 | Suspend/resume breaks desktop | Sleep state, GPU logs, lock-screen, display manager |
 | Snapshot rollback failed | Subvolume layout, bootloader path, encryption scope |
+| NVIDIA/module vanished after kernel change | DKMS drift: `dkms status`, confirm module built for `uname -r`, rebuild if missing |
 | Nothing makes sense | Check gotchas reference -- partial upgrades, stale portals, DKMS drift explain most chaos |
 
 ---

@@ -243,14 +243,14 @@ Read `references/vulnerability-classes.md` for the full catalog organized by:
 3. **Logic flaws** (all languages) -- authentication bypass, authorization gaps, race conditions (TOCTOU), state machine violations, business logic abuse
 4. **Deserialization** (Java, Python, PHP, .NET, Ruby) -- insecure deserialization, gadget chains, type confusion via polymorphism
 5. **Cryptographic** (all languages) -- weak algorithms, nonce reuse, padding oracles, timing side channels, key management errors
-6. **Web-specific** (web apps) -- SSRF, path traversal, prototype pollution, open redirect chains, cache poisoning
+6. **Web-specific** (web apps) -- novel XSS (mXSS, DOM clobbering), SSTI, prototype pollution chains, SSRF, path traversal, cache poisoning
 7. **Binary-specific** (compiled) -- format string bugs, heap metadata corruption, ROP/JOP gadget availability, signal handler races
 8. **Supply chain** (all ecosystems) -- dependency confusion, typosquatting, compromised maintainer accounts, malicious updates
 9. **Cloud-native** (AWS, GCP, Azure, managed services) -- IMDS abuse, IAM confused deputy, cross-tenant isolation failures, serverless event injection, managed DB/Kafka misconfigs
 
 **Selection heuristic:**
 - C/C++ binary -> memory corruption first, always
-- Web app (any language) -> logic flaws + injection
+- Web app (any language) -> logic flaws + web-specific (mXSS, SSTI, prototype pollution) + injection
 - Java/Python service -> deserialization + logic flaws
 - Crypto library or auth system -> cryptographic + logic flaws
 - Complex parser/protocol -> memory corruption (if C/C++) or logic flaws (if managed language)
@@ -460,7 +460,7 @@ and when to reach for each tool during source, binary, or live-system analysis.
 
 ## Reference Files
 
-- `references/vulnerability-classes.md` -- full vulnerability class catalog with detection patterns, common root causes, and language-specific variants
+- `references/vulnerability-classes.md` -- full vulnerability class catalog with detection patterns, common root causes, language-specific variants, and novel web vectors (mXSS, DOM clobbering, SSTI by engine, prototype pollution gadget chains)
 - `references/taint-analysis.md` -- manual data flow analysis methodology for source code, with worked examples per language
 - `references/binary-analysis.md` -- binary reverse engineering workflow, patch diffing, fuzzing harness development, dynamic analysis
 - `references/exploit-patterns.md` -- proof-of-concept development templates by vulnerability class, with safety guidelines
