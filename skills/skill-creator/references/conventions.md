@@ -501,7 +501,7 @@ Use this skill even when the user doesn't explicitly say "git" but is clearly do
 
 ## 9. Skill Inventory (April 2026)
 
-### Published skills (27)
+### Published skills (28)
 
 | Skill | Effort | Date Added | Domain |
 |-------|--------|-----------|--------|
@@ -524,6 +524,7 @@ Use this skill even when the user doesn't explicitly say "git" but is clearly do
 | mcp | high | 2026-03-30 | MCP server development |
 | networking | high | 2026-03-25 | DNS, reverse proxies, VPNs, nftables, HA |
 | prompt-generator | medium | 2026-03-25 | LLM prompt structuring |
+| roadmap | medium | 2026-04-05 | Gitignored roadmap management and competitor scouting |
 | security-audit | high | 2026-03-25 | Application security review |
 | skill-creator | high | 2026-03-25 | Skill lifecycle management |
 | skill-refiner | high | 2026-03-31 | Iterative self-improvement loop |
