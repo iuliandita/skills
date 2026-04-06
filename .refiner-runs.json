@@ -193,6 +193,20 @@
       "lines_removed": 0,
       "commits": 1
     },
+    "phase2": {
+      "approved": true,
+      "commits": [
+        "644c9e2",
+        "a897b51"
+      ],
+      "meta_changes": [
+        "skill-creator: align description-length guidance with collection validation and forward-test rules",
+        "skill-refiner: surface per-component score breakdowns in iteration and final report templates",
+        "lint-skills.sh: scan references/*.md for private-skill mentions",
+        "validate-spec.sh: validate description from extracted frontmatter only",
+        "skill-creator/references/conventions.md: add backend-api inventory entry and align description limits"
+      ]
+    },
     "sources_verified": [
       "PyPI fastapi",
       "npm express",
