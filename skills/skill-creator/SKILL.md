@@ -53,7 +53,7 @@ Before returning any generated or modified skill, verify against this list:
 - [ ] **Name spec-valid**: lowercase alphanumeric + hyphens only, no leading/trailing/consecutive
   hyphens, no reserved words (`anthropic`, `claude`), matches directory name
 - [ ] **No XML tags** in `name` or `description` fields (Anthropic platform restriction)
-- [ ] **Description is trigger-optimized**: starts with action verbs, includes trigger keywords, mentions related contexts, stays under 1024 chars
+- [ ] **Description is trigger-optimized**: starts with action verbs, includes trigger keywords, mentions related contexts, stays under 500 chars for the collection (600 hard max in `validate-spec.sh`; platform truncation happens later)
 - [ ] **Compatibility field present** (when skill requires specific tools/platforms): quotes values containing colons
 - [ ] **Scope sections present**: "When to use" with concrete scenarios, "When NOT to use"
   cross-referencing related skills by **bold** name (e.g., `use **skill-name**`)
@@ -281,9 +281,12 @@ first -- don't guess. Do not modify `date_added` (it records when the skill was 
 for historical tracking). If the skill needs a freshness marker, the `date_added` field serves
 that purpose for the initial creation; substantial refreshes are tracked via git history.
 
-#### Step 6: Forward-test (optional)
+#### Step 6: Forward-test
 
-After substantial changes, forward-test the skill (see Mode 1, Step 6). Especially valuable when:
+After substantial changes, forward-test the skill (see Mode 1, Step 6). Required for
+high-effort skills after workflow restructuring, reordered steps, or new references.
+Optional for narrow edits like version refreshes, wording cleanup, or metadata-only fixes.
+Especially valuable when:
 - The workflow was restructured or steps were reordered
 - New reference files were added and need discovery testing
 - Trigger description was rewritten (test activation, not just content)
@@ -391,7 +394,8 @@ Follow these patterns from high-performing custom skill descriptions:
 - **Include specific trigger keywords**: list them inline, e.g., "Triggers: 'keyword1', 'keyword2'"
 - **Mention adjacent skills to avoid**: "Not for X (use Y instead)"
 - **Be slightly pushy**: many tools undertrigger skills by default. Include edge cases.
-- **Stay under 1024 characters**: the system truncates beyond this
+- **Stay under 500 characters**: the collection warns above 500 and errors above 600
+- **Treat 1024 as the platform ceiling, not the collection target**: truncation happens there, but the repo convention is stricter
 
 #### Step 4: Validate
 
