@@ -19,12 +19,15 @@ PRIVATE_SKILLS=(cluster-health)
 
 # ── Private skill reference check ──────────────────────────────────────
 check_private_refs() {
-  local file="$1" name="$2"
+  local dir="$1" name="$2"
   for priv in "${PRIVATE_SKILLS[@]}"; do
     [[ "$name" == "$priv" ]] && continue  # private skill can reference itself
-    if grep -q "\\b${priv}\\b" "$file" 2>/dev/null; then
-      error "$name: references private skill '$priv' (public skills must not reference private skills)"
-    fi
+    for f in "$dir"/SKILL.md "$dir"/references/*.md; do
+      [[ -f "$f" ]] || continue
+      if grep -q "\\b${priv}\\b" "$f" 2>/dev/null; then
+        error "$name: references private skill '$priv' in $(basename "$f") (public skills must not reference private skills)"
+      fi
+    done
   done
 }
 
@@ -207,7 +210,7 @@ for skill_dir in "$SKILLS_DIR"/*/; do
   check_ascii "$skill_file" "$name"
   check_length "$skill_file" "$name"
   check_references "$skill_file" "$name" "$skill_dir"
-  check_private_refs "$skill_file" "$name"
+  check_private_refs "$skill_dir" "$name"
   check_ai_self_check "$skill_file" "$name"
   check_banned_words "$skill_dir" "$name"
   (( skill_count++ )) || true
