@@ -85,7 +85,7 @@ succeeded" invites the agent to invent checks with wrong paths and service names
 ```yaml
 ---
 name: skill-name              # lowercase a-z, 0-9, hyphens; no leading/trailing/consecutive hyphens; max 64 chars; must match directory name; no reserved words (anthropic, claude)
-description: >                # max 1024 chars, trigger-optimized
+description: >                # target <500 chars, 600 hard max in this collection; platform truncates later
   Use when... Also use for... Triggers: '...', '...'.
 license: MIT                  # Agent Skills spec field
 metadata:
@@ -130,7 +130,7 @@ user confirmation in steps that could run unattended.
 | Field | Values | Purpose |
 |-------|--------|---------|
 | `name` | `a-z`, `0-9`, hyphens; no leading/trailing/consecutive hyphens; max 64 chars; no reserved words (`anthropic`, `claude`) | identifier, must match directory name |
-| `description` | free text, <1024 chars, no XML tags | primary trigger mechanism -- the agent scans this |
+| `description` | free text, target <500 chars, 600 hard max in this collection, no XML tags | primary trigger mechanism -- the agent scans this |
 | `license` | license name (e.g., `MIT`) | Agent Skills spec field |
 | `compatibility` | free text, <500 chars | environment requirements (optional) |
 | `metadata.source` | `owner/repo` or `custom` | identifies the publishing collection or an unpublished local skill |
@@ -495,13 +495,13 @@ Use this skill even when the user doesn't explicitly say "git" but is clearly do
 - **Too vague**: "Use for Docker stuff" -- no specific triggers
 - **Too narrow**: "Use only when the user says 'write a Dockerfile'" -- misses most use cases
 - **No differentiation**: shares all keywords with another skill, no routing guidance
-- **Over 1024 chars**: gets truncated by the system
+- **Over 600 chars**: fails collection validation; platform truncation at 1024 is not the operative repo limit
 
 ---
 
 ## 9. Skill Inventory (April 2026)
 
-### Published skills (26)
+### Published skills (27)
 
 | Skill | Effort | Date Added | Domain |
 |-------|--------|-----------|--------|
@@ -509,6 +509,7 @@ Use this skill even when the user doesn't explicitly say "git" but is clearly do
 | ansible | high | 2026-03-24 | Configuration management |
 | anti-slop | medium | 2026-03-25 | Code quality audit |
 | arch-btw | high | 2026-03-26 | Arch Linux / CachyOS administration |
+| backend-api | high | 2026-04-06 | HTTP API design and implementation |
 | browse | medium | 2026-04-04 | Web browsing, scraping, token-efficient extraction |
 | ci-cd | high | 2026-03-24 | CI/CD pipelines |
 | code-review | high | 2026-03-25 | Correctness audit |

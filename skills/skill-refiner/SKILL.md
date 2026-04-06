@@ -120,9 +120,9 @@ contested major flags (non-configurable).
 12. **Log iteration summary**:
     ```
     --- iteration N / max -------------------------------------------
-    improved:  skill1 (72 > 80), skill2 (68 > 73)
+    improved:  skill1 (72 > 80 | S:100 A:76 B:78 X:90), skill2 (68 > 73 | S:95 A:70 B:72 X:100)
     skipped:   M skills above threshold
-    reverted:  skill3 (proposed change scored -2, rolled back)
+    reverted:  skill3 (proposed change scored -2, rolled back | S:100 A:74 B:69 X:100)
     contested: skill4 (secondary flagged major, primary disagreed)
     plateau:   yes/no (max delta: +X)
     -----------------------------------------------------------------
@@ -173,11 +173,11 @@ contested major flags (non-configurable).
     Terminated: plateau / threshold / cap / user
 
     Score changes:
-      skill1:  62 > 88 (+26)
-      skill2:  71 > 85 (+14)
+      skill1:  62 > 88 (+26)  [S:100 A:84 B:86 X:90]
+      skill2:  71 > 85 (+14)  [S:95 A:82 B:79 X:100]
       ...
-      skill-creator: 80 > 84 (+4)  [meta]
-      skill-refiner: 78 > 83 (+5)  [meta]
+      skill-creator: 80 > 84 (+4)  [S:100 A:82 B:81 X:100] [meta]
+      skill-refiner: 78 > 83 (+5)  [S:100 A:80 B:79 X:100] [meta]
 
     Aggregate:  avg X.X | min X.X | max X.X
     Reverted:   X changes across Y iterations
@@ -187,7 +187,9 @@ contested major flags (non-configurable).
 23. **Write run history**: append this run's metadata to `.refiner-runs.json` in the
     collection root. Include: run_id, branch, date, primary/secondary harness+model+effort,
     config, pool size, termination reason, cross-model flag counts, before/after per-skill
-    scores, and a changes summary. Commit with the phase 3 summary.
+    scores (component breakdown + composite, or clearly labeled estimates if the run used a
+    targeted manual rubric instead of the full automated sweep), and a changes summary.
+    Commit with the phase 3 summary.
 24. **Announce branch**: remind user to review and merge when ready
 
 ## AI Self-Check

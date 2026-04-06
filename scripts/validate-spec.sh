@@ -34,10 +34,10 @@ validate_name() {
 }
 
 validate_description() {
-  local file="$1" name="$2"
+  local fm="$1" name="$2"
   # Extract description value (handles multiline YAML)
   local desc
-  desc=$(sed -n '/^description:/,/^[a-z_-]*:/{ /^description:/{ s/^description: *//; p; }; /^  /p; }' "$file" | tr -d '\n' | sed 's/^ *//')
+  desc=$(printf '%s\n' "$fm" | sed -n '/^description:/,/^[a-z_-]*:/{ /^description:/{ s/^description: *//; p; }; /^  /p; }' | tr -d '\n' | sed 's/^ *//')
   if [[ -z "$desc" ]]; then
     error "$name: description is empty"
     return
@@ -110,7 +110,7 @@ for skill_dir in "$SKILLS_DIR"/*/; do
   fi
 
   # Spec: field constraints
-  validate_description "$skill_file" "$name"
+  validate_description "$fm" "$name"
   validate_compatibility "$skill_file" "$name"
 
   # Spec: SKILL.md body recommended under 500 lines (soft target, 600 hard max)
