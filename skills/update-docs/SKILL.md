@@ -1,10 +1,11 @@
 ---
 name: update-docs
 description: >
-  · Post-session documentation sweep -- update CLAUDE.md, AGENTS.md, README, or runbooks after
-  infrastructure, config, or architecture changes. Triggers: 'update docs', 'refresh docs',
-  'sync docs', 'update CLAUDE.md', 'update AGENTS.md', 'update README'. Not for writing new
-  documentation from scratch.
+  · Post-change documentation sweep -- update instruction files, README, changelogs, API docs,
+  roadmaps, feature docs, or runbooks when a change likely caused doc drift. Triggers: 'update
+  docs', 'refresh docs', 'sync docs', 'docs drift', 'merged PR', 'release cut', 'new release',
+  'update changelog', 'update roadmap', 'update API docs', 'update README'. Not for commit/PR
+  text, roadmap prioritization, or writing a full docs set from scratch.
 license: MIT
 compatibility: "Requires git. Optional: wc (for size audits)"
 metadata:
@@ -16,22 +17,26 @@ metadata:
 
 # Update Docs
 
-Post-session documentation sweep. Captures non-obvious knowledge into the right docs, trims bloat, and keeps project instruction files in sync.
+Post-change documentation sweep. Captures non-obvious knowledge into the right docs, trims bloat, and keeps the repo's documentation surfaces aligned after changes that likely introduced drift.
 
 ## When to use
 
 - After infrastructure, configuration, architecture, or operational changes
-- When asked to refresh docs, instruction files, runbooks, or README content
-- When a session uncovered new gotchas, changed versions, or added services
+- After a merged PR, release cut, feature shipment, or version bump when those changes likely caused doc drift
+- When asked to refresh docs, instruction files, runbooks, changelogs, API docs, roadmaps, or README content
+- When a session uncovered new gotchas, changed setup steps, changed external behavior, or added services
+- When an API contract, feature surface, migration path, or release/install path changed
+- When the repo's docs surface is obviously underspecified and it is worth suggesting a minimal docs bootstrap to the user
 
 ## When NOT to use
 
-- Writing brand-new documentation sets from scratch
+- Writing a full documentation set from scratch without user approval
 - Code correctness or security review -- use **code-review** or **security-audit**
 - Code quality, slop, or maintainability cleanup -- use **anti-slop**
 - Prompt authoring or reusable skill-file maintenance -- use **prompt-generator** or **skill-creator**
 - Full codebase audit across multiple domains -- use **full-review** (it invokes update-docs as one pass)
-- Git commit messages, PR descriptions, or changelog entries -- use **git**
+- Git commit messages, PR descriptions, release announcement copy, or tag operations -- use **git**
+- Roadmap prioritization, backlog shaping, or competitor scouting -- use **roadmap**
 
 ---
 
@@ -43,28 +48,32 @@ Before presenting documentation updates, verify:
 - [ ] No stale counts introduced (used "N" or kept count accurate)
 - [ ] Internal links verified (no broken references after renames or moves)
 - [ ] Companion instruction files still aligned (AGENTS.md synced if CLAUDE.md changed)
+- [ ] Existing doc surface checked first before creating a new markdown file
+- [ ] Release, API, roadmap, and feature docs updated only if the change actually affected them
 - [ ] No orphaned gotchas for already-fixed issues
 - [ ] Deprecated entries marked with `[DEPRECATED]` prefix and date, not silently removed
 - [ ] `.env.example` updated if env vars or runtime config changed
+- [ ] If repo docs are too thin, a minimal docs bootstrap was offered to the user as a suggestion, not forced
 - [ ] Size check run (`wc -c`) -- instruction files under 40,000 chars
 
 ---
 
 ## Core Principle
 
-**Document what you can't grep.** If it's in the source code, config files, or manifests, it doesn't belong in docs. Document: gotchas, decisions, failure modes, workarounds, implicit dependencies, and "the thing that took 30 minutes to figure out."
+**Document what you can't grep, in the file readers will actually check.** If it's in the source code, config files, or manifests, it usually doesn't belong in docs. Document: gotchas, decisions, failure modes, workarounds, implicit dependencies, release-facing deltas, and "the thing that took 30 minutes to figure out."
 
 ## Workflow
 
-**Audit-only mode:** When invoked by full-review or when the user asks to "just report" or "check docs," run Steps 1-5 and report findings without making changes or committing. Skip Steps 6-7.
+**Audit-only mode:** When invoked by full-review or when the user asks to "just report" or "check docs," run Steps 1-6 and report findings without making changes or committing. Skip Steps 7-8.
 
 1. Identify changes
 2. Categorize doc impact
-3. Update affected docs (or report what needs updating in audit-only mode)
-4. Verify internal links
-5. Audit instruction-file bloat
-6. Sync companion instruction files
-7. Commit doc changes
+3. Check whether the repo's docs surface is missing or too thin
+4. Update affected docs (or report what needs updating in audit-only mode)
+5. Verify internal links
+6. Audit instruction-file bloat
+7. Sync companion instruction files
+8. Commit doc changes
 
 ### 1. Identify What Changed
 
@@ -100,12 +109,34 @@ Map changes to documentation targets. Common instruction file names: `CLAUDE.md`
 | Architecture decision | ADR if significant (see below), otherwise a short bullet in the instruction file |
 | New or changed env vars, config keys, or runtime config | `.env.example`, `README.md` (setup section) |
 | New dependencies or setup steps | `README.md` (getting started / prerequisites) |
-| API endpoint changes | `README.md` (API docs section), OpenAPI spec if applicable |
-| Version bumps / new release cut | Grep for old version strings across Dockerfiles, compose files, Helm values, CI workflows, tests, README badges/install instructions -- stale versions are the #1 post-release doc rot |
+| API endpoint or contract changes | `API.md`, `README.md` (API section), endpoint docs, OpenAPI spec if applicable |
+| Feature added, removed, or materially changed | `README.md`, feature docs (`FEATURES.md`, `FEATURESET.md`, `docs/features/*.md`), changelog |
+| Merged PR with user-visible impact | Changelog, roadmap/status docs, release notes, affected feature/API/setup docs |
+| Version bumps / new release cut | `CHANGELOG.md`, release notes, `README.md`, install/upgrade docs, badges, package manager instructions |
+| Strategy or sequencing changes | `ROADMAP.md`, status docs, milestone docs |
 
 **When to write an ADR:** If the decision affects multiple components, constrains future options, or reverses a previous decision, it's worth a dedicated Architecture Decision Record. If it's a one-liner ("switched from X to Y because Z"), a short bullet in the project's instruction file is enough.
 
-### 3. Update Affected Docs
+### 3. Check Whether the Repo's Docs Surface Is Missing or Too Thin
+
+If the repo has no meaningful documentation surface, or only a minimal `README.md`, treat that as a separate observation before editing anything.
+
+**Examples of "too thin":**
+- No `docs/` directory and no durable markdown files beyond a stub `README.md`
+- A `README.md` that only names the project and gives no setup, usage, API, or feature overview
+- Repeated change-driven doc drift with nowhere sensible to record it
+
+**What to do:**
+- Suggest a minimal docs bootstrap to the user as a dismissable recommendation
+- Keep the suggestion small and concrete, for example: `README.md`, `CHANGELOG.md`, `API.md`, `ROADMAP.md`, or `docs/adr/`
+- Tailor the suggestion to the repo type; don't propose a generic docs tree mechanically
+- If the user declines, continue with the best available existing doc surface and note the limitation
+
+**What NOT to do:**
+- Don't automatically create a full new docs set
+- Don't block routine doc maintenance on the bootstrap suggestion
+
+### 4. Update Affected Docs
 
 **For each affected doc, read it first, then make targeted edits.**
 
@@ -118,9 +149,13 @@ Map changes to documentation targets. Common instruction file names: `CLAUDE.md`
 - Operational timing -- when a procedure must run relative to a deployment step, say so explicitly (e.g., "Redis FLUSHALL must run after the new image is deployed but before traffic is routed back")
 - Connection strings and service endpoints when IPs, ports, or hostnames change
 - Decisions and their rationale
+- User-visible feature additions, removals, and caveats in the doc where readers expect them
+- Release-facing deltas: upgraded versions, upgrade notes, breaking changes, and migration pointers
+- API behavior changes in `API.md`, endpoint docs, or the repo's canonical API surface
 
 #### When no docs exist yet:
-- Don't create a full documentation set from scratch (out of scope)
+- Don't create a full documentation set from scratch unless the user explicitly asks
+- DO offer a minimal docs bootstrap suggestion if the repo is under-documented
 - DO add a minimal entry to the project instruction file (CLAUDE.md, AGENTS.md, or equivalent) with the gotcha or operational note that prompted this
 - If the project has no instruction file at all, note this to the user and suggest creating one with the essential gotcha. Don't block on it.
 
@@ -131,23 +166,24 @@ Map changes to documentation targets. Common instruction file names: `CLAUDE.md`
 - Temporary state (in-progress work, one-time migration steps already completed)
 - Verbose explanations -- one line per gotcha, expand only if the fix is non-obvious
 
-### 4. Verify Internal Links
+### 5. Verify Internal Links
 
 After editing docs, check that internal references still resolve:
 
 ```bash
-# Adjust the file list to the repo's actual instruction files
-grep -roEh '\[[^]]*\]\([^)#]+' CLAUDE.md AGENTS.md docs/ README.md 2>/dev/null | \
-  sed 's/.*](//' | grep -v '^https\?://' | sort -u | while read -r path; do
-    [[ -e "$path" ]] || echo "BROKEN LINK: $path"
-  done
+# Check tracked and new markdown files
+{ git ls-files '*.md'; git ls-files --others --exclude-standard -- '*.md'; } 2>/dev/null | sort -u | while read -r file; do
+  grep -oEh '\[[^]]*\]\([^)#]+' "$file"
+done | sed 's/.*](//' | grep -v '^https\?://' | sort -u | while read -r path; do
+  [[ -e "$path" ]] || echo "BROKEN LINK: $path"
+done
 ```
 
 This catches `[text](path)` and `![alt](path)` links, strips anchors (`#section`),
 and skips external URLs. Works on both GNU and BSD grep (no `-P` flag needed).
 If files were renamed or moved, update all references.
 
-### 5. Audit Project Instruction Files for Bloat
+### 6. Audit Project Instruction Files for Bloat
 
 After updates, review the project's shared instruction file critically:
 
@@ -170,7 +206,7 @@ After updates, review the project's shared instruction file critically:
 - Individual sections: if a section exceeds 30 lines, consider splitting into a dedicated doc.
 - Check size after edits: `wc -c CLAUDE.md AGENTS.md 2>/dev/null`
 
-### 6. Sync Companion Instruction Files
+### 7. Sync Companion Instruction Files
 
 If the project keeps multiple instruction files (`AGENTS.md` plus tool-specific variants, for example), keep them aligned after updates.
 
@@ -183,13 +219,16 @@ Review the copied file after syncing and remove any tool-specific commands or be
 
 **Default: instruction files are usually gitignored unless the project intentionally tracks them.** Check `.gitignore` and existing history before committing them.
 
-### 7. Commit Documentation Changes
+### 8. Commit Documentation Changes
 
-Only commit changes to tracked docs (inventory, runbooks, ADRs, and instruction files if the project commits them).
+Only commit changes to tracked docs (inventory, runbooks, ADRs, changelogs, feature docs, API docs, roadmaps, and instruction files if the project commits them).
 
 ```bash
 # Stage specific changed docs (don't blindly add everything)
-git diff --name-only docs/ README.md 2>/dev/null | xargs -r git add
+{ git diff --name-only -- '*.md' '.env.example'; git ls-files --others --exclude-standard -- '*.md' '.env.example'; } 2>/dev/null | sort -u | \
+  while read -r path; do
+    [[ -n "$path" ]] && git add -- "$path"
+  done
 # Only if docs changed:
 git diff --cached --quiet || git commit -m "docs: update [target] after [what changed]"
 ```
@@ -198,10 +237,15 @@ git diff --cached --quiet || git commit -m "docs: update [target] after [what ch
 
 | File | Purpose | Committed? |
 |------|---------|-----------|
+| `README.md` | Repo overview, setup, install, usage | Yes |
+| `CHANGELOG.md` | Release-facing history and breaking changes | Usually yes |
+| `API.md` | Human-readable API surface and contract notes | Usually yes |
+| `ROADMAP.md` | Public or private plan/status surface | Depends on project |
+| `FEATURES.md` / `FEATURESET.md` | User-visible capability inventory | Depends on project |
+| Other `*.md` docs | Release notes, status docs, migration notes, architecture docs | Depends on project |
 | `AGENTS.md` | Cross-tool project instructions | Depends on project (check .gitignore) |
 | Tool-specific instruction file | Companion instructions for a specific agent/tool when a project keeps one | Depends on project (check .gitignore) |
-| `docs/` | Project documentation (inventory, runbooks, ADRs) | Yes |
-| `README.md` | Repo overview | Yes |
+| `docs/` | Project documentation (inventory, runbooks, ADRs, migration notes, release docs) | Yes |
 
 ## Handling Deprecated Features
 
@@ -225,9 +269,12 @@ When a feature, service, or API is deprecated during a session:
 - **Documenting everything**: If it's in config files, don't repeat the default value in the instruction file. Document the gotcha around it.
 - **Stale counts**: "13 dashboards" becomes wrong when you add one. Use "N dashboards" or keep the count accurate.
 - **Orphaned gotchas**: A gotcha about a bug that was fixed 3 months ago is noise. Prune regularly.
+- **Assuming every merge needs docs**: A merged PR is a strong hint, not an automatic docs task. Check for actual drift.
+- **Forgetting non-README surfaces**: API changes belong in `API.md`; release deltas belong in `CHANGELOG.md`; feature drift belongs in feature docs.
 - **Missing the companion sync**: If the project keeps multiple instruction files, keep them aligned after changes.
 - **Over-documenting migrations**: Once a migration is complete and verified, condense to a one-liner and remove the step-by-step procedure.
 - **Dangling links**: Renaming a doc without updating references elsewhere creates dead links that erode trust in documentation.
+- **Bootstrapping without consent**: If the repo lacks docs, suggest a minimal docs surface; don't silently create a documentation tree the user did not ask for.
 - **Deleting deprecated docs too early**: Keep deprecated entries visible for at least one release cycle so people find the migration path.
 
 ---
@@ -235,6 +282,9 @@ When a feature, service, or API is deprecated during a session:
 ## Rules
 
 - **Document deltas, not defaults.** Capture what changed, what broke, and what future sessions need to know.
+- **Treat merged PRs and releases as doc-drift signals, not guarantees.** Verify likely impact before editing.
+- **Prefer the right existing doc over the nearest convenient one.** Put API changes in API docs, release deltas in changelogs, and planning changes in roadmap/status docs.
 - **Do not rewrite healthy docs for style alone.** Keep edits tied to real operational value.
+- **Offer docs bootstrap suggestions when the repo is under-documented, but keep them dismissable.**
 - **Keep companion instruction files aligned.** If the repo maintains more than one instruction surface, update the others or note the drift explicitly.
 - **Prefer stable wording over brittle counts.** Avoid numbers and one-off migration prose that will rot immediately.
