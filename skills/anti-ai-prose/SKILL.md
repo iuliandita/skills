@@ -18,7 +18,7 @@ metadata:
 
 # Anti-AI-Prose: Audit Writing for Machine-Generated Patterns
 
-Detect and fix the linguistic tells that make written English read as machine-generated. The goal is prose that sounds like a specific, thoughtful human wrote it - not a chatbot pretending to be one.
+Detect and fix the linguistic tells that make written English read as machine-generated. The goal is prose that sounds like a specific, thoughtful human wrote it.
 
 This skill applies to any text: **documentation**, **READMEs**, **wikis** (Confluence, Notion, internal), **pull request descriptions**, **commit messages**, **release notes**, **blog posts**, **emails**, **slide copy**, **creative writing**, and **code comments / docstrings**. The vocabulary, syntax, tone, and formatting checks are language-domain, not platform-domain.
 
@@ -260,6 +260,18 @@ The voice of the text gives away the author even when the words are individually
 
 **Fix:** Delete the whole sentence. If what follows does not make sense without the padding, rewrite the surrounding paragraph.
 
+#### Hedging and qualifier stacking
+
+LLMs stack hedges and qualifiers to sound cautious or balanced. Each hedge by itself is fine English; stacking them makes every claim feel tentative.
+
+**Detect:**
+- Frequent `generally`, `typically`, `often`, `usually`, `in many cases`, `for the most part`
+- Weak modal stacking: `may`, `can`, `might`, `could potentially`, `arguably`, `relatively`
+- Two or more hedges in the same clause: `can generally be considered to be relatively reliable`
+- Hedges on claims that the author clearly knows are true: `this may help with performance` (when benchmarks are already in the paragraph)
+
+**Fix:** Delete the hedge and state the claim. If the claim really does need a caveat, state it concretely: `on Linux only`, `for connections over 1000 RPS` - not `generally speaking`.
+
 #### Scaffolding padding
 
 Phrases that wrap around the actual content without adding information. LLMs lean on these to sound organized or conversational.
@@ -294,7 +306,7 @@ Layout and punctuation patterns that LLMs default to.
 - **Three-bullet-happy layouts** - suspicious when every list has exactly three items
 - **Curly quotes** (`"`, `'`) in technical writing that should use ASCII
 - **Emoji** in professional prose where decoration is the only purpose
-- **Decorative thematic breaks** - `---` used as visual padding between unrelated short sections, or between every `##`. Section dividers that mark a real phase change are fine; pure decoration is not
+- **Decorative thematic breaks** - `---` before every `##`. Dividers that mark a real phase change are fine; decoration is not
 - **Markdown artifacts in rendered text** - `**bold**` appearing as literal characters because the paste lost its format
 - **LLM output bugs** - `turn0search0`, `contentReference`, `oaicite`, `+1`, `attached_file`, hallucinated wiki-style shortcuts
 
@@ -342,7 +354,7 @@ Rules for the report itself:
 - **Omit empty categories.** If there are no formatting tells, do not write an empty "Formatting Tells (0 items)" heading
 - **Order within a category** High > Medium > Low
 - **Deletion fixes have no "after"** - write `> after: (cut)` or just state the delete in the description
-- **Apply these rules to your own audit.** An audit that uses `this marks a pivotal moment` or `let's dive into the findings` is not credible. Run the Self-Check on the report before returning it
+- **Apply these rules to your own audit.** Run the Self-Check on the report before returning it - an audit written in AI-slop voice is not credible
 
 Keep it concise. Show the before/after pair. Do not lecture about why AI writing is bad - the user already knows.
 
