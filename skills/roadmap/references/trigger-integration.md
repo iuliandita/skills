@@ -79,7 +79,7 @@ jobs:
 ```
 
 Creates a GitHub issue as a reminder. Requires a `roadmap` label to exist (create it
-manually or add a step). The issue serves as the trigger - close it after updating
+manually or add a step). The issue is the trigger - close it after updating
 ROADMAP.md.
 
 Event data is passed through environment variables (not inline `${{ }}` interpolation)

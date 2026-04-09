@@ -89,7 +89,7 @@ rizin -A TARGET
 
 ### Windows PE Analysis
 
-Windows binaries (PE/PE32+) have a different toolchain and mitigation landscape.
+Windows binaries (PE/PE32+) use a different toolchain and a different set of mitigations.
 
 **Initial assessment:**
 

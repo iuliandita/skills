@@ -534,7 +534,7 @@ Use this skill even when the user doesn't explicitly say "git" but is clearly do
 | virtualization | high | 2026-03-25 | Proxmox, libvirt, VM operations |
 | zero-day | high | 2026-04-03 | Vulnerability research and discovery |
 
-This inventory is a snapshot of the upstream iuliandita/skills collection. It serves as a
+This inventory is a snapshot of the upstream iuliandita/skills collection. Treat it as a
 reference example for convention compliance, not as an authoritative list for other repos.
 When auditing a different collection, build the inventory from that collection's actual contents.
 `date_added` reflects local creation date, which may predate or postdate the first commit
