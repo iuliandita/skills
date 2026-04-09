@@ -16,15 +16,15 @@ metadata:
 
 # Kubernetes & Helm: Production Infrastructure
 
-Create, review, and architect Kubernetes infrastructure -- from raw manifests to Helm charts to multi-cluster strategy. The goal is production-ready, security-hardened, cost-aware infrastructure that a team can maintain.
+Create, review, and architect Kubernetes infrastructure - from raw manifests to Helm charts to multi-cluster strategy. The goal is production-ready, security-hardened, cost-aware infrastructure that a team can maintain.
 
 **Target versions** (March 2026): Kubernetes 1.33-1.35+ (1.36 due April 22, 2026), Helm 4.1.3, Helm 3.20.x (security fixes until Nov 2026).
 
 This skill covers four domains depending on context:
-- **Manifests** -- raw YAML for Deployments, Services, Gateway API routes, ConfigMaps, Secrets, PVCs
-- **Helm** -- Helm 4 chart scaffolding, OCI registries, templating, multi-environment values
-- **Architecture** -- cluster topology, GitOps, security layers, observability, cost, DR
-- **Compliance** -- PCI-DSS 4.0 controls, CDE isolation, audit logging, supply chain
+- **Manifests** - raw YAML for Deployments, Services, Gateway API routes, ConfigMaps, Secrets, PVCs
+- **Helm** - Helm 4 chart scaffolding, OCI registries, templating, multi-environment values
+- **Architecture** - cluster topology, GitOps, security layers, observability, cost, DR
+- **Compliance** - PCI-DSS 4.0 controls, CDE isolation, audit logging, supply chain
 
 ## When to use
 
@@ -125,10 +125,10 @@ Read `references/manifest-templates.md` for complete, copy-pasteable YAML templa
 ### Key patterns
 
 **Labels**: use the `app.kubernetes.io/*` standard labels on every resource:
-- `app.kubernetes.io/name` -- app name
-- `app.kubernetes.io/version` -- version string
-- `app.kubernetes.io/component` -- role (frontend, backend, database)
-- `app.kubernetes.io/part-of` -- parent system
+- `app.kubernetes.io/name` - app name
+- `app.kubernetes.io/version` - version string
+- `app.kubernetes.io/component` - role (frontend, backend, database)
+- `app.kubernetes.io/part-of` - parent system
 
 **External access** (new clusters must use Gateway API, not legacy Ingress):
 - **Gateway API** `HTTPRoute` (GA v1.5): role-oriented, expressive routing, no annotation hell. Ingress-NGINX retired March 2026.
@@ -136,12 +136,12 @@ Read `references/manifest-templates.md` for complete, copy-pasteable YAML templa
 - **LoadBalancer**: cloud LB without HTTP routing
 - **Headless** (`clusterIP: None`): StatefulSet pod discovery
 
-**Security context** (non-negotiable on every pod -- both pod-level AND container-level). See the Deployment template in `manifest-templates.md` for the full YAML. Key fields: `runAsNonRoot`, `readOnlyRootFilesystem`, `allowPrivilegeEscalation: false`, `drop: ["ALL"]`, `seccompProfile: RuntimeDefault`.
+**Security context** (non-negotiable on every pod - both pod-level AND container-level). See the Deployment template in `manifest-templates.md` for the full YAML. Key fields: `runAsNonRoot`, `readOnlyRootFilesystem`, `allowPrivilegeEscalation: false`, `drop: ["ALL"]`, `seccompProfile: RuntimeDefault`.
 
 **Three probes** (startup + liveness + readiness):
 - `startupProbe`: gates the other probes until the app is ready (high `failureThreshold`, moderate `periodSeconds`)
-- `livenessProbe`: restarts unhealthy pods (conservative -- don't restart on slow responses)
-- `readinessProbe`: removes from service endpoints (aggressive -- pull traffic fast on failure)
+- `livenessProbe`: restarts unhealthy pods (conservative - don't restart on slow responses)
+- `readinessProbe`: removes from service endpoints (aggressive - pull traffic fast on failure)
 
 **Pod distribution**: prefer `topologySpreadConstraints` over pod anti-affinity for zone-level distribution (anti-affinity is O(n^2) at scale). Combine both: `topologySpreadConstraints` for zones + soft anti-affinity for node-level separation within zones.
 
@@ -160,8 +160,8 @@ Read `references/manifest-templates.md` for complete, copy-pasteable YAML templa
 ### What changed in Helm 4
 
 - **Server-side apply (SSA) is the default** for new releases. Better conflict detection when multiple controllers touch the same resources.
-- **OCI digest installation**: `helm install myapp oci://registry/chart@sha256:abc...` -- immutable, tamper-proof.
-- **WASM plugin system** -- post-renderers must reference plugin names, not raw executables (breaking change).
+- **OCI digest installation**: `helm install myapp oci://registry/chart@sha256:abc...` - immutable, tamper-proof.
+- **WASM plugin system** - post-renderers must reference plugin names, not raw executables (breaking change).
 - **CLI flag renames**: `--atomic` -> `--rollback-on-failure`, `--force` -> `--force-replace` (old flags still work with deprecation warnings).
 - **`helm registry login` takes domain only** (e.g., `ghcr.io`, not full URL).
 - **OCI registries are the recommended distribution method.** Traditional `index.yaml` repos still work but are no longer the default path.
@@ -213,8 +213,8 @@ Organize hierarchically. Core sections:
 - `image` (repository, tag/digest, pullPolicy)
 - `replicaCount`
 - `service` (type, port, targetPort)
-- `gateway` (enabled, parentRefs, hostnames) -- prefer over `ingress`
-- `resources` (requests + limits -- ALWAYS set both)
+- `gateway` (enabled, parentRefs, hostnames) - prefer over `ingress`
+- `resources` (requests + limits - ALWAYS set both)
 - `autoscaling` (enabled, min/maxReplicas, targetCPU)
 - `securityContext` (runAsNonRoot, readOnlyRootFilesystem, drop ALL caps)
 - `nodeSelector`, `tolerations`, `affinity`
@@ -243,20 +243,20 @@ Key Go template patterns:
 - No `NOTES.txt`
 - Missing `.helmignore` (test/ci files end up in package)
 - `randAlphaNum` in templates deployed via ArgoCD (causes perpetual OutOfSync)
-- Mega-umbrella charts (15+ subcharts, 200+ value overrides) -- use ArgoCD ApplicationSets instead
+- Mega-umbrella charts (15+ subcharts, 200+ value overrides) - use ArgoCD ApplicationSets instead
 - `replicaCount: 1` for production HA workloads (no redundancy, single point of failure)
 - `authentication.enabled: false` or `persistence.enabled: false` in production values (data loss, unauthorized access)
 - Secrets in Helm values (use ESO/sealed-secrets/vault; Helm values end up readable in cluster Secrets)
 - Hook resources without `helm.sh/hook-delete-policy` (orphaned Jobs accumulate)
 - Using `--post-renderer` with raw executables (broken in Helm 4; must use plugin names)
-- Ignoring SSA migration -- upgrading to Helm 4 on existing releases can surface previously-hidden conflicts
+- Ignoring SSA migration - upgrading to Helm 4 on existing releases can surface previously-hidden conflicts
 
 ### Example: Redis HA production values overlay
 
 Common Bitnami Redis anti-patterns fixed. Use as `values-prod.yaml` overlay:
 
 ```yaml
-# values-prod.yaml -- Redis HA (Bitnami chart)
+# values-prod.yaml - Redis HA (Bitnami chart)
 architecture: replication           # not "standalone"
 auth:
   enabled: true                     # NEVER false in prod
@@ -300,7 +300,7 @@ metrics:
 
 ### ArgoCD + Helm caveats
 
-- ArgoCD only runs `helm template` -- it does NOT use Helm lifecycle management. Don't rely on Helm hooks for critical operations; use ArgoCD sync waves instead.
+- ArgoCD only runs `helm template` - it does NOT use Helm lifecycle management. Don't rely on Helm hooks for critical operations; use ArgoCD sync waves instead.
 - `test` hooks are unsupported in ArgoCD.
 - Multi-source Applications (ArgoCD 2.6+) for separating chart version from environment values.
 - OCI charts: omit the `oci://` prefix in ArgoCD's `repoURL` field.
@@ -342,11 +342,11 @@ Promotion: dev -> staging -> prod via PR-based promotion. No auto-sync to prod.
 
 8 layers for production:
 1. **Cluster hardening**: CIS benchmark, API server audit logging, etcd encryption via KMS v2
-2. **Pod Security Standards**: **`enforce: restricted` is mandatory on all app namespaces** -- no exceptions. Set `audit: restricted` and `warn: restricted` everywhere else for visibility into what would break before enforcing.
+2. **Pod Security Standards**: **`enforce: restricted` is mandatory on all app namespaces** - no exceptions. Set `audit: restricted` and `warn: restricted` everywhere else for visibility into what would break before enforcing.
 3. **Admission control**: ValidatingAdmissionPolicy (CEL, native since 1.30) for standard policies; Kyverno for mutation/generation; OPA Gatekeeper for cross-platform orgs
 4. **Network policies**: default-deny ingress/egress per namespace; Cilium for L7 policies
 5. **RBAC**: namespace-scoped roles, no cluster-admin for apps, OIDC auth with MFA
-6. **Supply chain**: cosign/Sigstore for image signing, SLSA Level 2-3, SBOMs. **Pin all CI actions and tools to commit SHAs** -- the Trivy supply chain compromise (March 2026, CVE-2026-33634) proved mutable tags can be force-pushed with malware.
+6. **Supply chain**: cosign/Sigstore for image signing, SLSA Level 2-3, SBOMs. **Pin all CI actions and tools to commit SHAs** - the Trivy supply chain compromise (March 2026, CVE-2026-33634) proved mutable tags can be force-pushed with malware.
 7. **Secrets**: External Secrets Operator + cloud KMS (primary); Vault for dynamic secrets/PKI; Sealed Secrets for encrypted-in-git without external deps (see `references/sealed-secrets.md`); SOPS for small teams
 8. **Runtime security**: Falco for detection (CNCF Graduated), Tetragon for eBPF enforcement (<1% overhead)
 
@@ -365,10 +365,10 @@ The Trivy supply chain attack (CVE-2026-33634) is the defining security event of
 
 - **cgroup v2 required** on K8s 1.35+. Nodes on cgroup v1 (CentOS 7, RHEL 7, Ubuntu 18.04) will fail.
 - **containerd 2.0 required** on K8s 1.36+. Last release supporting containerd 1.x is 1.35.
-- **K8s 1.36 launches April 22, 2026** -- containerd 2.0 required on all nodes. IPVS kube-proxy mode removal not yet committed to a specific version (nftables is the replacement).
+- **K8s 1.36 launches April 22, 2026** - containerd 2.0 required on all nodes. IPVS kube-proxy mode removal not yet committed to a specific version (nftables is the replacement).
 - **AppArmor annotation auto-population stopped** in 1.34; full removal in 1.36. Use `securityContext.appArmorProfile` field.
 - **DRA (Dynamic Resource Allocation)** GA in 1.34 for GPU/FPGA/hardware scheduling. Replaces device plugin model.
-- **User namespaces** (`hostUsers: false`) enabled by default since K8s 1.33. Maps container UID 0 to unprivileged host UID. Huge for PCI multi-tenancy -- container breakout doesn't yield host root.
+- **User namespaces** (`hostUsers: false`) enabled by default since K8s 1.33. Maps container UID 0 to unprivileged host UID. Huge for PCI multi-tenancy - container breakout doesn't yield host root.
 - **Pod-level mTLS** (KEP-4317) beta in 1.35, feature gate `PodCertificates` must be manually enabled. Native X.509 certs for pods without service mesh. Future alternative to Istio/Cilium for Req 4 compliance.
 
 ---
@@ -383,7 +383,7 @@ PCI-DSS 4.0 is the only active version (3.2.1 retired March 2024). 51 future-dat
 
 **Critical K8s-specific requirements:**
 - **Req 1**: Network segmentation -> default-deny NetworkPolicies, private API server, VPC-native clusters
-- **Req 3.5**: Data encryption -> etcd encryption via KMS v2 (not just disk encryption -- Req 3.5.1.2 forbids relying on disk-level alone)
+- **Req 3.5**: Data encryption -> etcd encryption via KMS v2 (not just disk encryption - Req 3.5.1.2 forbids relying on disk-level alone)
 - **Req 4**: Encrypt transmissions -> mTLS between all CDE services (Istio strict / Cilium mutual auth)
 - **Req 6.3.2**: Component inventory -> SBOMs for every image
 - **Req 8.4.2**: MFA for all CDE access -> OIDC + MFA on all kubectl paths
@@ -393,7 +393,7 @@ PCI-DSS 4.0 is the only active version (3.2.1 retired March 2024). 51 future-dat
 
 **CDE isolation**: dedicated cluster strongly preferred. Shared cluster puts the entire cluster in PCI scope and requires dedicated node pools + taints, gVisor/Kata for CDE pods, separate DNS, separate audit streams, and extensive QSA documentation. Most QSAs push back on shared clusters.
 
-**PCI MPoC**: MPoC backends (attestation/monitoring for tap-to-pay) fall under full PCI-DSS scope. No K8s-specific addenda -- standard PCI-DSS 4.0 controls apply.
+**PCI MPoC**: MPoC backends (attestation/monitoring for tap-to-pay) fall under full PCI-DSS scope. No K8s-specific addenda - standard PCI-DSS 4.0 controls apply.
 
 ---
 
@@ -440,7 +440,7 @@ PCI-DSS 4.0 is the only active version (3.2.1 retired March 2024). 51 future-dat
 - [ ] Pod Security Standards: `enforce: restricted` on all app namespaces
 - [ ] ValidatingAdmissionPolicy or Kyverno for custom admission rules
 - [ ] RBAC follows least-privilege; OIDC + MFA for API access
-- [ ] Secrets via ESO + cloud KMS, Vault, or Sealed Secrets (match tool to environment -- see Architecture reference)
+- [ ] Secrets via ESO + cloud KMS, Vault, or Sealed Secrets (match tool to environment - see Architecture reference)
 - [ ] Images signed (cosign/Sigstore) and verified at admission
 - [ ] Runtime security: Falco (detection) + Tetragon (enforcement)
 - [ ] Observability covers metrics, logs, traces (eBPF-based preferred)
@@ -462,30 +462,30 @@ PCI-DSS 4.0 is the only active version (3.2.1 retired March 2024). 51 future-dat
 - [ ] MFA on all CDE access paths (Req 8.4.2)
 - [ ] WAF on public-facing web apps (Req 6.4.2)
 - [ ] Certificate inventory maintained (Req 4.2.1.1)
-- [ ] Quarterly authenticated internal vulnerability scans (Req 11.3.1.2) -- application-level, not just image scanning
+- [ ] Quarterly authenticated internal vulnerability scans (Req 11.3.1.2) - application-level, not just image scanning
 
 ---
 
 ## Reference Files
 
-- `references/manifest-templates.md` -- manifest templates and reusable workload patterns
-- `references/architecture.md` -- cluster and platform design guidance
-- `references/sealed-secrets.md` -- Sealed Secrets patterns and caveats
-- `references/compliance.md` -- PCI-DSS and platform hardening guidance
+- `references/manifest-templates.md` - manifest templates and reusable workload patterns
+- `references/architecture.md` - cluster and platform design guidance
+- `references/sealed-secrets.md` - Sealed Secrets patterns and caveats
+- `references/compliance.md` - PCI-DSS and platform hardening guidance
 
 ---
 
 ## Related Skills
 
-- **docker** -- for Dockerfile and Compose patterns. Kubernetes deploys the images Docker
+- **docker** - for Dockerfile and Compose patterns. Kubernetes deploys the images Docker
   builds. Image optimization belongs in docker; manifest design belongs here.
-- **ci-cd** -- for pipeline design that deploys to K8s. Kubernetes skill covers manifests
+- **ci-cd** - for pipeline design that deploys to K8s. Kubernetes skill covers manifests
   and Helm charts; ci-cd covers the pipeline stages that apply them.
-- **terraform** -- for provisioning the cluster itself (EKS, GKE, AKS, bare-metal node pools).
+- **terraform** - for provisioning the cluster itself (EKS, GKE, AKS, bare-metal node pools).
   Terraform creates the cluster; kubernetes configures what runs on it.
-- **databases** -- for deploying databases on K8s (StatefulSets, operators, PVCs). Kubernetes
+- **databases** - for deploying databases on K8s (StatefulSets, operators, PVCs). Kubernetes
   owns the manifest pattern; databases owns the engine configuration within.
-- **ansible** -- can deploy to K8s via `kubernetes.core` collection, but manifest and Helm
+- **ansible** - can deploy to K8s via `kubernetes.core` collection, but manifest and Helm
   chart design belong here.
 
 ---
@@ -507,4 +507,4 @@ These are non-negotiable. Violating any of these is a bug.
 11. **Gateway API for new external access.** Ingress-NGINX retired March 2026. Stop deploying new Ingress resources.
 12. **Sign images with cosign.** Verify at admission. SLSA Level 2 minimum for production.
 13. **Run the AI self-check.** Every generated manifest gets verified against the checklist above before returning.
-14. **Understand resource metric semantics.** HPA CPU target is percentage of CPU *request*, not node capacity. Example: a pod requesting `cpu: 100m` with `averageUtilization: 70` scales when per-pod CPU usage hits 70m (100m * 70%) -- it does not matter whether the node has 2 or 64 cores. Don't confuse requests (scheduling floor), limits (enforcement ceiling), and actual usage (what the container is consuming right now).
+14. **Understand resource metric semantics.** HPA CPU target is percentage of CPU *request*, not node capacity. Example: a pod requesting `cpu: 100m` with `averageUtilization: 70` scales when per-pod CPU usage hits 70m (100m * 70%) - it does not matter whether the node has 2 or 64 cores. Don't confuse requests (scheduling floor), limits (enforcement ceiling), and actual usage (what the container is consuming right now).

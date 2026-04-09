@@ -43,7 +43,7 @@ Each `RUN`, `COPY`, `ADD` creates a layer. Unnecessary layers bloat the image.
 **Detect:**
 - Separate `RUN` for each `apt-get install` package
 - `COPY` followed by `RUN mv` (just `COPY` to the right path)
-- `ADD` for local files (use `COPY` -- `ADD` auto-extracts and fetches URLs, rarely what you want)
+- `ADD` for local files (use `COPY` - `ADD` auto-extracts and fetches URLs, rarely what you want)
 - `RUN cd /dir && ...` instead of `WORKDIR /dir`
 
 **Fix:** Chain related `RUN` commands with `&&`. Use `WORKDIR` for directory changes.
@@ -83,7 +83,7 @@ For secrets: use build secrets (`--mount=type=secret`) or runtime secret injecti
 
 **Detect:**
 - `FROM node:18` or `FROM python:3.10` when 22/3.13 are current
-- `MAINTAINER` directive (deprecated -- use `LABEL maintainer=`)
+- `MAINTAINER` directive (deprecated - use `LABEL maintainer=`)
 - `RUN pip install` without `--break-system-packages` or a venv in newer Python images
 - `ENTRYPOINT` + `CMD` confusion (both set, unclear which is the "real" command)
 - `HEALTHCHECK` using `curl` when `wget` is available (alpine) or vice versa
@@ -148,7 +148,7 @@ services:
 When running Docker inside Proxmox LXC containers:
 - `privileged: true` is often needed for nesting but should be on the LXC, not the compose service
 - `cgroup` version mismatches (Proxmox default is cgroupv2; some old images need v1)
-- `tmpfs` mounts may fail in unprivileged LXC -- use bind mounts instead
+- `tmpfs` mounts may fail in unprivileged LXC - use bind mounts instead
 - GPU passthrough requires LXC config, not just compose `deploy.resources.reservations`
 
 ## Hardened Compose Baseline (reference template)

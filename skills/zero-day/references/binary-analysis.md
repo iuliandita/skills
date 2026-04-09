@@ -27,7 +27,7 @@ checksec --file=TARGET 2>/dev/null || {
 # Symbols present?
 nm TARGET 2>/dev/null | wc -l  # 0 = stripped
 
-# Imports -- what functions does it call?
+# Imports - what functions does it call?
 readelf -r TARGET 2>/dev/null | grep -i 'plt' | head -30
 # Or for dynamic symbols:
 readelf --dyn-syms TARGET 2>/dev/null | head -30
@@ -37,12 +37,12 @@ readelf --dyn-syms TARGET 2>/dev/null | head -30
 
 | Mitigation | Effect | Bypass complexity |
 |------------|--------|-------------------|
-| NX (DEP) | No execute on stack/heap | Medium -- requires ROP/JOP |
-| ASLR | Randomized addresses | Medium -- needs info leak |
-| Stack Canary | Detects stack smashing | Medium -- needs canary leak or format string |
-| Full RELRO | GOT read-only after load | High -- can't overwrite GOT entries |
-| PIE | Code at random address | Medium -- needs code address leak |
-| CFI | Control flow integrity | High -- limits valid call targets |
+| NX (DEP) | No execute on stack/heap | Medium - requires ROP/JOP |
+| ASLR | Randomized addresses | Medium - needs info leak |
+| Stack Canary | Detects stack smashing | Medium - needs canary leak or format string |
+| Full RELRO | GOT read-only after load | High - can't overwrite GOT entries |
+| PIE | Code at random address | Medium - needs code address leak |
+| CFI | Control flow integrity | High - limits valid call targets |
 
 ### Ghidra Workflow
 
@@ -59,11 +59,11 @@ ghidra &
 
 1. **Find entry points**: `main`, exported functions, signal handlers, network-facing functions
 2. **Identify dangerous function calls** (Window -> Symbol References):
-   - `strcpy`, `strcat`, `sprintf`, `gets` -- unbounded copies
-   - `malloc`, `free` -- track allocation/deallocation pairs for UAF
-   - `memcpy`, `memmove` -- check size parameter origin
-   - `system`, `popen`, `execve` -- command execution
-   - `recv`, `read`, `fread` -- data ingestion points
+   - `strcpy`, `strcat`, `sprintf`, `gets` - unbounded copies
+   - `malloc`, `free` - track allocation/deallocation pairs for UAF
+   - `memcpy`, `memmove` - check size parameter origin
+   - `system`, `popen`, `execve` - command execution
+   - `recv`, `read`, `fread` - data ingestion points
 3. **Trace data flow**: from input functions to dangerous sinks
 4. **Check function boundaries**: do buffer sizes match between caller and callee?
 5. **Examine error paths**: decompiled error handlers often skip cleanup (UAF, leak)
@@ -97,7 +97,7 @@ Windows binaries (PE/PE32+) have a different toolchain and mitigation landscape.
 # PE headers
 dumpbin /headers TARGET.exe
 
-# Imports (attack surface -- which APIs does it call?)
+# Imports (attack surface - which APIs does it call?)
 dumpbin /imports TARGET.exe
 # Flag: LoadLibrary, CreateProcess, ShellExecute, WinExec, system,
 #       recv, ReadFile, InternetReadFile, URLDownloadToFile
@@ -110,15 +110,15 @@ winchecksec.exe TARGET.exe
 
 | Mitigation | Effect | Bypass complexity |
 |------------|--------|-------------------|
-| ASLR (DYNAMIC_BASE) | Randomized image base | Medium -- needs info leak |
-| DEP (NX_COMPAT) | No execute on data pages | Medium -- requires ROP |
-| CFG (GUARD_CF) | Validates indirect call targets | High -- limited call targets |
-| ACG | Blocks dynamic code generation | High -- no rwx pages, no JIT spray |
+| ASLR (DYNAMIC_BASE) | Randomized image base | Medium - needs info leak |
+| DEP (NX_COMPAT) | No execute on data pages | Medium - requires ROP |
+| CFG (GUARD_CF) | Validates indirect call targets | High - limited call targets |
+| ACG | Blocks dynamic code generation | High - no rwx pages, no JIT spray |
 | CET (Shadow Stack) | Hardware-backed return address protection | Very high |
-| SafeSEH / SEHOP | SEH chain validation | Medium -- can't overwrite SEH easily |
-| GS (Stack Cookie) | Stack buffer overrun detection | Medium -- needs cookie leak |
+| SafeSEH / SEHOP | SEH chain validation | Medium - can't overwrite SEH easily |
+| GS (Stack Cookie) | Stack buffer overrun detection | Medium - needs cookie leak |
 
-**Ghidra works for PE** -- import the .exe/.dll the same way as ELF. Auto-analysis
+**Ghidra works for PE** - import the .exe/.dll the same way as ELF. Auto-analysis
 handles PE format, PDB symbol loading (File -> Load PDB), and Windows API resolution.
 
 **x64dbg** (OSS debugger, Windows equivalent of GDB+GEF):
@@ -167,7 +167,7 @@ ubireader_extract_files firmware.ubi
 ```
 
 **After extraction:**
-- Look for ELF binaries in `/usr/bin/`, `/usr/sbin/`, `/usr/lib/` -- these are your analysis targets
+- Look for ELF binaries in `/usr/bin/`, `/usr/sbin/`, `/usr/lib/` - these are your analysis targets
 - Check `/etc/` for hardcoded credentials, default configs, private keys
 - Examine init scripts (`/etc/init.d/`, systemd units) to understand what services run
 - Cross-compile GDB for the target architecture if dynamic analysis is needed (or use QEMU user-mode emulation)
@@ -229,7 +229,7 @@ ls /var/cache/pacman/pkg/package-*.pkg.tar.zst
 2. Install BinDiffHelper extension (Ghidra -> File -> Install Extensions)
 3. Export both as BinExport files
 4. Run BinDiff: `bindiff old.BinExport new.BinExport`
-5. Focus on functions with similarity score between 0.5 and 0.95 -- these are the modified ones
+5. Focus on functions with similarity score between 0.5 and 0.95 - these are the modified ones
 
 ### Diffing with Diaphora (Alternative)
 
@@ -271,7 +271,7 @@ After understanding what the patch fixed:
 ### GDB with Extensions
 
 ```bash
-# Install GEF (GDB Enhanced Features) -- recommended for exploit dev
+# Install GEF (GDB Enhanced Features) - recommended for exploit dev
 bash -c "$(curl -fsSL https://gef.blah.cat/sh)"
 
 # Or pwndbg
@@ -368,18 +368,18 @@ echo "minimal valid input" > corpus/seed1
 cp existing_testcases/* corpus/
 
 # Run fuzzer
-afl-fuzz -i corpus/ -o findings/ -- ./target_fuzz @@
+afl-fuzz -i corpus/ -o findings/ - ./target_fuzz @@
 # @@ = placeholder for input file path
 
 # For stdin-based targets:
-afl-fuzz -i corpus/ -o findings/ -- ./target_fuzz
+afl-fuzz -i corpus/ -o findings/ - ./target_fuzz
 
 # Parallel fuzzing (multiple cores)
 # Master:
-afl-fuzz -M fuzzer01 -i corpus/ -o findings/ -- ./target_fuzz @@
+afl-fuzz -M fuzzer01 -i corpus/ -o findings/ - ./target_fuzz @@
 # Secondaries:
-afl-fuzz -S fuzzer02 -i corpus/ -o findings/ -- ./target_fuzz @@
-afl-fuzz -S fuzzer03 -i corpus/ -o findings/ -- ./target_fuzz @@
+afl-fuzz -S fuzzer02 -i corpus/ -o findings/ - ./target_fuzz @@
+afl-fuzz -S fuzzer03 -i corpus/ -o findings/ - ./target_fuzz @@
 ```
 
 ### Writing Effective Fuzz Harnesses
@@ -387,7 +387,7 @@ afl-fuzz -S fuzzer03 -i corpus/ -o findings/ -- ./target_fuzz @@
 **The harness isolates the target function for fuzzing:**
 
 ```c
-// harness.c -- fuzz a parsing function
+// harness.c - fuzz a parsing function
 #include <stdint.h>
 #include <stddef.h>
 
@@ -414,7 +414,7 @@ int main(void) {
 - Target the smallest unit that processes untrusted input (parser, decoder, handler)
 - Initialize state once outside the loop, reset per iteration
 - Skip obviously invalid inputs early (minimum length check)
-- Don't catch signals -- let ASan/fuzzer handle crashes
+- Don't catch signals - let ASan/fuzzer handle crashes
 - Use persistent mode for 10-20x speedup
 
 ### libFuzzer Harness (Alternative)
@@ -448,7 +448,7 @@ clang -fsanitize=fuzzer,address -g fuzz_target.c target.c -o fuzzer
 ASAN_OPTIONS=print_stats=1 ./target_asan < findings/crashes/id:000000,...
 
 # Minimize crash input
-afl-tmin -i findings/crashes/id:000000,... -o minimized.bin -- ./target_fuzz @@
+afl-tmin -i findings/crashes/id:000000,... -o minimized.bin - ./target_fuzz @@
 
 # Deduplicate crashes by unique ASan stack trace
 # (afl-cmin is for corpus minimization, not crash dedup)
@@ -487,7 +487,7 @@ go test -fuzz=FuzzParse -fuzztime=60s ./...
 cargo install cargo-fuzz
 cargo fuzz init
 # Edit fuzz/fuzz_targets/fuzz_target_1.rs
-cargo fuzz run fuzz_target_1 -- -max_total_time=300
+cargo fuzz run fuzz_target_1 - -max_total_time=300
 ```
 
 **Java (Jazzer):**
@@ -517,7 +517,7 @@ Once a vulnerability is confirmed, prototype the exploit to assess actual impact
 
 ```python
 #!/usr/bin/env python3
-"""PoC skeleton -- adapt to specific vulnerability."""
+"""PoC skeleton - adapt to specific vulnerability."""
 from pwn import *
 
 context.arch = 'amd64'

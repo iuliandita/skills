@@ -13,10 +13,10 @@ Pre-deploy verification for Terraform configurations. Run through every section 
 - [ ] All variables typed with descriptions; secrets marked `sensitive`
 - [ ] Tags on every taggable resource (Name, Environment, Owner, ManagedBy, pci_scope)
 - [ ] Encryption enabled on all storage resources (RDS, EBS, ElastiCache)
-- [ ] S3 buckets: public access block (all four `true`), SSE-KMS, versioning, access logging, lifecycle rules, bucket policy denying non-SSL -- see main skill S3 review checklist
+- [ ] S3 buckets: public access block (all four `true`), SSE-KMS, versioning, access logging, lifecycle rules, bucket policy denying non-SSL - see main skill S3 review checklist
 - [ ] IMDSv2 enforced on all EC2 instances (`http_tokens = "required"`)
 - [ ] Security groups: no `0.0.0.0/0` ingress except port 443 on public ALBs
-- [ ] IAM policies follow least-privilege -- no `"Action": "*"` or `"Resource": "*"`
+- [ ] IAM policies follow least-privilege - no `"Action": "*"` or `"Resource": "*"`
 - [ ] `prevent_destroy` on stateful resources (databases, S3 with data)
 - [ ] No `provisioner` blocks
 - [ ] `terraform fmt` + `terraform validate` clean
@@ -31,7 +31,7 @@ Pre-deploy verification for Terraform configurations. Run through every section 
 ## Operations
 
 - [ ] State backend with encryption, locking, versioning, and access logging
-- [ ] OIDC federation for CI/CD -- no static cloud credentials
+- [ ] OIDC federation for CI/CD - no static cloud credentials
 - [ ] Separate IAM roles for plan (read-only) and apply (write)
 - [ ] CDE state files in separate backend with separate IAM role
 - [ ] GitHub Actions pinned to commit SHAs (post tj-actions compromise)

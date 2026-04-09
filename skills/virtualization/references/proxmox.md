@@ -28,7 +28,7 @@ an API call. The `pvesh` CLI wraps the API for shell use.
 ### Authentication
 
 ```bash
-# API token (preferred for automation -- no 2FA, no session expiry)
+# API token (preferred for automation - no 2FA, no session expiry)
 pvesh get /version --token 'user@pam!tokenid=TOKEN_SECRET'
 
 # Ticket-based (interactive, short-lived)
@@ -104,7 +104,7 @@ pct create 200 local:vztmpl/debian-12-standard_12.7-1_amd64.tar.zst \
   --hostname myct --memory 512 --cores 1 --net0 name=eth0,bridge=vmbr0,ip=dhcp
 pct start/stop/shutdown 200
 pct enter 200                             # Attach console
-pct exec 200 -- apt update               # Run command in container
+pct exec 200 - apt update               # Run command in container
 pct resize 200 rootfs +5G                # Grow rootfs
 ```
 
@@ -180,7 +180,7 @@ systemctl enable --now qemu-guest-agent
 ## 3. Cloud-Init Integration
 
 Cloud-init is the standard for first-boot VM configuration. Proxmox has native cloud-init
-support -- attach a cloud-init drive and configure via API/CLI.
+support - attach a cloud-init drive and configure via API/CLI.
 
 ### Proxmox cloud-init workflow
 
@@ -362,7 +362,7 @@ qm migrate 100 pve2 --online
 # With local disks (LVM-thin to LVM-thin)
 qm migrate 100 pve2 --online --with-local-disks
 
-# For large VMs -- ALWAYS use nohup (SSH disconnect aborts migration)
+# For large VMs - ALWAYS use nohup (SSH disconnect aborts migration)
 nohup qm migrate 100 pve2 --online --with-local-disks \
   > /tmp/migrate-100.log 2>&1 &
 tail -f /tmp/migrate-100.log
@@ -430,7 +430,7 @@ pvesh create /cluster/mapping/pci --id gpu-quadro --map 'node=pve3,path=0000:01:
 qm set 100 --hostpci0 mapping=gpu-quadro,pcie=0
 # pcie=0: standard PCI passthrough (works everywhere)
 # pcie=1: PCIe passthrough (needed for some features, requires q35)
-# NO x-vga for compute GPUs -- x-vga is only for display passthrough
+# NO x-vga for compute GPUs - x-vga is only for display passthrough
 
 # Display GPU (VM uses GPU for video output)
 qm set 100 --hostpci0 mapping=gpu-display,pcie=1,x-vga=1
@@ -519,7 +519,7 @@ storage fails, both the VM and its snapshots are gone.
 ## 9. Terraform with bpg/proxmox
 
 The `bpg/proxmox` provider is the actively maintained Terraform provider for Proxmox VE.
-The older Telmate provider is abandoned -- don't use it.
+The older Telmate provider is abandoned - don't use it.
 
 ### Provider configuration
 
@@ -644,7 +644,7 @@ for the cloud-init drive. Explicitly set to `scsi1` if you need SCSI.
 
 **QEMU agent timeout:** On first boot, the QEMU agent isn't installed yet (cloud-init
 installs it). The provider's `agent.timeout = "2m"` gives cloud-init time to install and
-start the agent. First apply may show a timeout warning -- this is expected.
+start the agent. First apply may show a timeout warning - this is expected.
 
 ### Disk resize procedure (the Terraform trap)
 
@@ -655,7 +655,7 @@ Terraform CANNOT resize Proxmox VM disks. The bpg/proxmox provider doesn't suppo
 qm resize <vmid> scsi0 +10G
 
 # 2. In the VM guest
-growpart /dev/sda 1              # Expand partition (GPT) -- needed for both ext4 and XFS
+growpart /dev/sda 1              # Expand partition (GPT) - needed for both ext4 and XFS
 resize2fs /dev/sda1              # Expand ext4 filesystem
 # Or for XFS:
 # growpart /dev/sda 1 && xfs_growfs /
@@ -698,7 +698,7 @@ Use the Proxmox VE Exporter or query the API directly:
 | Node memory free | <15% | <5% | OOM killer territory |
 | Ceph health | WARN | ERR | Any non-HEALTH_OK |
 | VM disk I/O latency | >10ms | >50ms | Storage bottleneck |
-| Corosync ring status | any error | -- | Cluster communication failure |
+| Corosync ring status | any error | - | Cluster communication failure |
 
 ### LVM thin pool monitoring (textfile collector)
 
@@ -734,7 +734,7 @@ workloads that don't need full OS isolation.
 ### Unprivileged containers
 
 Always prefer unprivileged containers (default in Proxmox). Privileged containers run as
-root on the host -- a container escape gives full host access.
+root on the host - a container escape gives full host access.
 
 ```bash
 # Check if container is unprivileged

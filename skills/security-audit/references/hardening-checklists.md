@@ -20,7 +20,7 @@ Detailed checklists for passes 6-8. Read this file when executing those passes.
 ### Dockerfile
 
 - [ ] Runs as non-root user? (`USER` directive in final stage, not just `PUID` env var)
-- [ ] Minimal base image? (distroless, alpine, slim -- not full Ubuntu/Debian)
+- [ ] Minimal base image? (distroless, alpine, slim - not full Ubuntu/Debian)
 - [ ] No secrets in build args or layer history? (`docker history` check)
 - [ ] `.dockerignore` excludes `.env`, `.git`, `node_modules`, test fixtures?
 - [ ] Health check defined? (`HEALTHCHECK` directive)
@@ -34,7 +34,7 @@ Detailed checklists for passes 6-8. Read this file when executing those passes.
 - [ ] No `latest` tags in image references?
 - [ ] Images pinned to digest (`@sha256:...`), not just tag? Tags are mutable.
 - [ ] NetworkPolicy or CiliumNetworkPolicy on security-tooling namespaces (trivy, falco, etc.)?
-- [ ] SecurityContext: `readOnlyRootFilesystem`, `runAsNonRoot`, `drop ALL` capabilities? **IMPORTANT**: `drop: ["ALL"]` removes capabilities containers may need at startup. Never blanket-apply -- check each container's entrypoint first. LSIO/HOTIO images (PUID/PGID) need `add: ["SETUID", "SETGID"]`. Images that chown at startup need `add: ["CHOWN"]`. Images using gosu/setpriv/su-exec need `add: ["SETUID", "SETGID"]`. Official redis/valkey/postgres images need `add: ["SETUID", "SETGID"]`. Always test one container before rolling out across namespaces.
+- [ ] SecurityContext: `readOnlyRootFilesystem`, `runAsNonRoot`, `drop ALL` capabilities? **IMPORTANT**: `drop: ["ALL"]` removes capabilities containers may need at startup. Never blanket-apply - check each container's entrypoint first. LSIO/HOTIO images (PUID/PGID) need `add: ["SETUID", "SETGID"]`. Images that chown at startup need `add: ["CHOWN"]`. Images using gosu/setpriv/su-exec need `add: ["SETUID", "SETGID"]`. Official redis/valkey/postgres images need `add: ["SETUID", "SETGID"]`. Always test one container before rolling out across namespaces.
 - [ ] NetworkPolicy defined?
 - [ ] Secrets not hardcoded in manifests (use external-secrets, sealed-secrets, or vault)?
 - [ ] Service accounts with minimal RBAC?
@@ -124,7 +124,7 @@ Detailed checklists for passes 6-8. Read this file when executing those passes.
 
 ### Supply Chain Hardening
 
-- [ ] **CI job images pinned to digest**: all `image:` references in CI configs use `tag@sha256:digest` format, not bare tags? Tags can be force-pushed to point at malicious images (Trivy/TeamPCP supply chain attack, 2026-03-19 -- 76 of 77 version tags force-pushed in trivy-action).
+- [ ] **CI job images pinned to digest**: all `image:` references in CI configs use `tag@sha256:digest` format, not bare tags? Tags can be force-pushed to point at malicious images (Trivy/TeamPCP supply chain attack, 2026-03-19 - 76 of 77 version tags force-pushed in trivy-action).
 - [ ] **No `:latest` tags in CI jobs**: CI job images don't use `:latest`? Combined with `pull_policy: always`, a single Docker Hub push silently compromises all pipeline runs.
 - [ ] **CI runner credentials scoped**: `$DOCKER_AUTH_CONFIG` and registry credentials only injected into jobs that need private registry access, not globally?
 - [ ] **Docker Content Trust**: `DOCKER_CONTENT_TRUST=1` set on CI runners to reject unsigned images?

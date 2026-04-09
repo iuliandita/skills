@@ -1,7 +1,7 @@
 ---
 name: git
 description: >
-  · Git operations -- branches, commits, remotes, conflicts, hooks, signing, releases,
+  · Git operations - branches, commits, remotes, conflicts, hooks, signing, releases,
   PR/MR workflows, and multi-forge support (GitHub, GitLab, Forgejo). Also trigger when
   the user is clearly doing git work without saying "git" (e.g., "push this", "cut a release").
   Triggers: 'git', 'commit', 'branch', 'merge', 'rebase', 'tag', 'hook', 'signing',
@@ -33,11 +33,11 @@ compliance requirements (PCI-DSS 4.0).
 - **cosign**: 3.x (Sigstore, for tag/release signing context)
 
 This skill covers five domains depending on context:
-- **Operations** -- commits, branches, merges, rebases, stashing, bisect, reflog, recovery
-- **Remotes & forges** -- multi-remote setups, GitHub/GitLab/Forgejo differences, mirroring
-- **PR/MR workflow** -- feature branches, review flow, merge strategies, release cutting
-- **Security** -- commit signing, credential management, hooks, secret scanning, history scrubbing
-- **Compliance** -- PCI-DSS 4.0 change management, audit trails, branch protection as controls
+- **Operations** - commits, branches, merges, rebases, stashing, bisect, reflog, recovery
+- **Remotes & forges** - multi-remote setups, GitHub/GitLab/Forgejo differences, mirroring
+- **PR/MR workflow** - feature branches, review flow, merge strategies, release cutting
+- **Security** - commit signing, credential management, hooks, secret scanning, history scrubbing
+- **Compliance** - PCI-DSS 4.0 change management, audit trails, branch protection as controls
 
 ## When to use
 
@@ -56,10 +56,10 @@ This skill covers five domains depending on context:
 
 ## When NOT to use
 
-- CI/CD pipeline design (use ci-cd) -- this skill handles git operations *within* pipelines, not pipeline architecture
-- PR/MR code review (use code-review) -- this skill creates PRs, doesn't review code in them
-- Full application security audit (use security-audit) -- this skill covers secrets *in git history* and git-specific security, not application-level vulnerability assessment
-- Docker image tagging strategy (use docker) -- this skill handles git tags, not container tags
+- CI/CD pipeline design (use ci-cd) - this skill handles git operations *within* pipelines, not pipeline architecture
+- PR/MR code review (use code-review) - this skill creates PRs, doesn't review code in them
+- Full application security audit (use security-audit) - this skill covers secrets *in git history* and git-specific security, not application-level vulnerability assessment
+- Docker image tagging strategy (use docker) - this skill handles git tags, not container tags
 
 ---
 
@@ -69,7 +69,7 @@ AI tools consistently produce the same git mistakes. **Before performing any git
 verify against this list:**
 
 - [ ] **Read before rewrite.** Never `Edit`/`Write` files without `Read`ing them first. Never `git commit` without checking `git status` + `git diff`.
-- [ ] **No destructive ops without confirmation.** `reset --hard`, `push --force`, `branch -D`, `clean -fd`, `checkout .` -- all require explicit user approval. Propose safer alternatives first (`--force-with-lease`, `revert`, new branch).
+- [ ] **No destructive ops without confirmation.** `reset --hard`, `push --force`, `branch -D`, `clean -fd`, `checkout .` - all require explicit user approval. Propose safer alternatives first (`--force-with-lease`, `revert`, new branch).
 - [ ] **Authorship correct.** Check the project's instruction file for author overrides. Many setups have a local git config that's wrong for the remote (e.g., Forgejo identity vs GitHub identity).
 - [ ] **Commit message format.** Follow the project's convention (check recent `git log`). Default: conventional commits (`type(scope): description`).
 - [ ] **No secrets in commits.** Check `git diff --cached` for API keys, tokens, passwords, `.env` files, private keys before committing. If found, unstage immediately.
@@ -79,8 +79,8 @@ verify against this list:**
 - [ ] **Branch target correct.** Verify you're on the right branch before committing. Verify the PR/MR targets the right base branch.
 - [ ] **Remote target correct.** Multi-remote setups exist. Check which remote(s) to push to. Some projects push to multiple remotes (e.g., Forgejo + GitHub).
 - [ ] **Signing configured.** If the project requires signed commits, verify signing works before committing (`git log --show-signature -1`).
-- [ ] **No `--no-verify`.** Never skip pre-commit hooks unless the user explicitly asks. Hooks exist for a reason -- fix the underlying issue instead.
-- [ ] **No interactive flags.** Never use `-i` (interactive) flags (`git rebase -i`, `git add -i`) in automated contexts -- they require TTY input.
+- [ ] **No `--no-verify`.** Never skip pre-commit hooks unless the user explicitly asks. Hooks exist for a reason - fix the underlying issue instead.
+- [ ] **No interactive flags.** Never use `-i` (interactive) flags (`git rebase -i`, `git add -i`) in automated contexts - they require TTY input.
 - [ ] **Tags pushed separately.** `git push` doesn't push tags by default. Always `git push --tags` or `git push origin <tag>` explicitly.
 - [ ] **Feature branch up to date.** Before creating a PR/MR, rebase onto the latest base branch to avoid merge conflicts.
 - [ ] **Lock files regenerated after conflict resolution.** After resolving conflicts in dependency files (`package.json`, `Cargo.toml`, `go.mod`, `pyproject.toml`), re-run the package manager to regenerate the lock file. Never manually merge lock files.
@@ -122,8 +122,8 @@ Read the project's instruction file (`AGENTS.md` or equivalent) for:
 ### Step 3a: Commit workflow
 
 1. **Check state**: `git status` (never `-uall` on large repos) + `git diff` (staged and unstaged)
-2. **Stage selectively**: `git add <specific files>` -- never `git add -A` or `git add .` without reviewing what's included. Check for secrets, binaries, generated files, AI tooling artifacts.
-3. **Check the diff**: `git diff --cached` -- read what you're about to commit. Look for debug code, TODO comments, accidental changes to unrelated files.
+2. **Stage selectively**: `git add <specific files>` - never `git add -A` or `git add .` without reviewing what's included. Check for secrets, binaries, generated files, AI tooling artifacts.
+3. **Check the diff**: `git diff --cached` - read what you're about to commit. Look for debug code, TODO comments, accidental changes to unrelated files.
 4. **Write the message**: follow the project's convention. Default format:
 
 ```
@@ -134,7 +134,7 @@ Optional body explaining *why*, not *what*.
 
 Select `type` from: `feat`, `fix`, `docs`, `refactor`, `chore`, `ci`, `build`, `revert`.
 Extended types (use if the project convention allows): `test`, `perf`, `security`.
-**Always check the project's instruction file and recent `git log` first** -- the project may have a
+**Always check the project's instruction file and recent `git log` first** - the project may have a
 different type list or naming convention. Project instructions override these defaults.
 
 **Scopes** are strongly recommended but not blindly enforced. A scope adds context that makes
@@ -161,7 +161,7 @@ Message guidelines:
   of specific AI tools in the commit metadata.
 
 5. **Commit**: with any required authorship overrides and signing flags from project config.
-6. **Verify**: `git log -1 --format="%h %s%n  Author: %an <%ae>%n  Committer: %cn <%ce>"` -- check authorship is correct before pushing.
+6. **Verify**: `git log -1 --format="%h %s%n  Author: %an <%ae>%n  Committer: %cn <%ce>"` - check authorship is correct before pushing.
 
 ### Step 3b: PR/MR workflow
 
@@ -183,13 +183,13 @@ General flow:
 8. **Cleanup**: delete the remote branch after merge. `git branch -d feat/short-description` locally.
 
 Branch naming convention:
-- `feat/description` -- new features
-- `fix/description` -- bug fixes
-- `refactor/description` -- code restructuring
-- `chore/description` -- maintenance, deps, config
-- `docs/description` -- documentation only
-- `ci/description` -- CI/CD changes
-- `security/description` -- security fixes (consider if this should be a private advisory instead)
+- `feat/description` - new features
+- `fix/description` - bug fixes
+- `refactor/description` - code restructuring
+- `chore/description` - maintenance, deps, config
+- `docs/description` - documentation only
+- `ci/description` - CI/CD changes
+- `security/description` - security fixes (consider if this should be a private advisory instead)
 
 ### Step 3c: Release workflow
 
@@ -212,7 +212,7 @@ Read `references/forge-workflows.md` for forge-specific release creation.
 - The project instruction file defines whether alpha tags trigger image builds or not
 
 General flow:
-1. **Version bump**: update all version files (check the project instruction file for the list -- every project is different).
+1. **Version bump**: update all version files (check the project instruction file for the list - every project is different).
 2. **Commit**: `chore: bump version to X.Y.Z` (or `chore: bump version to X.Y.Z-alpha.N`)
 3. **Tag**: `git tag -a vX.Y.Z -m "vX.Y.Z"` (annotated tags, not lightweight).
 4. **Push**: push commits AND tags. `git push origin main && git push origin vX.Y.Z`. If multi-remote, push to all.
@@ -234,14 +234,14 @@ procedures (reflog, bisect, rerere, filter-repo, etc.).
 
 Quick reference:
 - **Undo last commit (keep changes)**: `git reset --soft HEAD~1`
-- **Undo last commit (discard changes)**: `git reset --hard HEAD~1` -- **DESTRUCTIVE, confirm first**
+- **Undo last commit (discard changes)**: `git reset --hard HEAD~1` - **DESTRUCTIVE, confirm first**
 - **Revert a pushed commit**: `git revert <sha>` (creates a new commit, safe for shared branches)
-- **Find lost commits**: `git reflog` -- shows every HEAD movement for 90 days
+- **Find lost commits**: `git reflog` - shows every HEAD movement for 90 days
 - **Find which commit broke something**: `git bisect start && git bisect bad && git bisect good <sha>`
-- **Automated bisect with test script**: `git bisect start HEAD v1.0.0 && git bisect run bun test -- src/auth.test.ts` -- runs the test at each bisect step automatically. Any command that exits 0 (good) or 1-124/128-255 (bad) works. Exit 125 means "skip this commit". Ideal for CI integration: `git bisect run ./scripts/ci-check.sh`
-- **Squash last N commits (no interactive rebase)**: `git reset --soft HEAD~N && git commit -m "feat: combined change"` -- resets N commits but keeps all changes staged, then commits them as one. Safer than `git rebase -i` in automated contexts.
+- **Automated bisect with test script**: `git bisect start HEAD v1.0.0 && git bisect run bun test - src/auth.test.ts` - runs the test at each bisect step automatically. Any command that exits 0 (good) or 1-124/128-255 (bad) works. Exit 125 means "skip this commit". Ideal for CI integration: `git bisect run ./scripts/ci-check.sh`
+- **Squash last N commits (no interactive rebase)**: `git reset --soft HEAD~N && git commit -m "feat: combined change"` - resets N commits but keeps all changes staged, then commits them as one. Safer than `git rebase -i` in automated contexts.
 - **Recover deleted branch**: `git reflog`, find the SHA, `git checkout -b branch-name <sha>`
-- **Scrub secrets from history**: `git filter-repo --replace-text <(echo 'SECRET==>REDACTED')` -- then force-push ALL branches and tags. Coordinate with team. See references.
+- **Scrub secrets from history**: `git filter-repo --replace-text <(echo 'SECRET==>REDACTED')` - then force-push ALL branches and tags. Coordinate with team. See references.
 
 ---
 
@@ -251,8 +251,8 @@ When `git pull` fails with "divergent branches" or `git status` shows "have dive
 
 1. **Understand the divergence**: `git log --oneline HEAD..origin/branch` (what remote has) and `git log --oneline origin/branch..HEAD` (what you have locally).
 2. **Choose strategy based on context**:
-   - **Your commits are the ones that matter** (common for solo work): `git pull --rebase origin branch` -- replays your local commits on top of remote.
-   - **Remote commits are the ones that matter** (someone force-pushed, or you want to discard local): `git reset --hard origin/branch` -- **DESTRUCTIVE, confirm first**.
+   - **Your commits are the ones that matter** (common for solo work): `git pull --rebase origin branch` - replays your local commits on top of remote.
+   - **Remote commits are the ones that matter** (someone force-pushed, or you want to discard local): `git reset --hard origin/branch` - **DESTRUCTIVE, confirm first**.
    - **Both sides have real work** (collaboration divergence): `git pull --rebase origin branch`, resolve conflicts at each step, `git rebase --continue`.
    - **You don't know yet**: `git stash && git pull && git stash pop` as a safe first attempt (only works if the divergence is minor).
 3. **After resolving**: verify with `git log --oneline -10` that history looks correct.
@@ -329,28 +329,28 @@ Source code management requirements that map to git practices.
 
 ## Reference Files
 
-- `references/forge-workflows.md` -- GitHub, GitLab, and Forgejo-specific patterns for PRs/MRs,
+- `references/forge-workflows.md` - GitHub, GitLab, and Forgejo-specific patterns for PRs/MRs,
   releases, branch protection, rulesets, CLI usage, and API calls
-- `references/security-and-signing.md` -- commit signing setup (SSH/GPG/gitsign), credential
+- `references/security-and-signing.md` - commit signing setup (SSH/GPG/gitsign), credential
   management, secret scanning, CVE reference, git security hardening
-- `references/recovery-and-maintenance.md` -- reflog, bisect, rerere, filter-repo, stash,
+- `references/recovery-and-maintenance.md` - reflog, bisect, rerere, filter-repo, stash,
   worktree, submodule/subtree, large repo optimization, housekeeping
 
 ## Related Skills
 
-- **ci-cd** -- pipeline design that triggers on git events (push, PR, tag). This skill handles
+- **ci-cd** - pipeline design that triggers on git events (push, PR, tag). This skill handles
   the git operations; ci-cd handles the pipeline that reacts to them.
-- **security-audit** -- application-level secret scanning and vulnerability assessment. This skill
+- **security-audit** - application-level secret scanning and vulnerability assessment. This skill
   covers secrets *in git history* and git-specific security (signing, hooks, credentials).
-- **code-review** -- reviews code quality. This skill creates the PR/MR; code-review evaluates
+- **code-review** - reviews code quality. This skill creates the PR/MR; code-review evaluates
   the code in it.
-- **update-docs** -- post-session documentation sweep. May update shared instruction files with new git gotchas
+- **update-docs** - post-session documentation sweep. May update shared instruction files with new git gotchas
   discovered during a session.
 
 ## Rules
 
 - **No destructive git operations without explicit user confirmation.** `reset --hard`, `push --force`,
-  `branch -D`, `clean -fd`, `checkout .`, `rebase` on shared branches -- all require a yes.
+  `branch -D`, `clean -fd`, `checkout .`, `rebase` on shared branches - all require a yes.
   Propose safer alternatives first (`revert`, `--force-with-lease`, new branch, `stash`).
 - **Verify authorship before pushing.** Multi-remote setups frequently have wrong local config.
   Always check `git log -1 --format="%an <%ae>"` after committing.

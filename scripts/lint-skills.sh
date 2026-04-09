@@ -161,8 +161,11 @@ check_banned_words() {
   local dir="$1" name="$2"
   for f in "$dir"/SKILL.md "$dir"/references/*.md; do
     [[ -f "$f" ]] || continue
-    # Skip the conventions file (it lists banned words as examples)
+    # Skip files that legitimately catalog banned words as examples.
+    # - skill-creator's conventions.md lists the banned vocabulary
+    # - anti-ai-prose is the meta-reference for AI prose tells and must name them
     [[ "$(basename "$f")" == "conventions.md" ]] && continue
+    [[ "$name" == "anti-ai-prose" ]] && continue
     local basename_f
     basename_f=$(basename "$f")
     for word in "${BANNED_WORDS[@]}"; do

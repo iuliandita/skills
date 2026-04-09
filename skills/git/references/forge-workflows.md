@@ -1,6 +1,6 @@
 # Forge-Specific Workflows
 
-Patterns for GitHub, GitLab, and Forgejo -- PRs/MRs, releases, branch protection, CLI usage.
+Patterns for GitHub, GitLab, and Forgejo - PRs/MRs, releases, branch protection, CLI usage.
 
 Research date: March 2026.
 
@@ -246,12 +246,12 @@ curl -s -X PUT "https://git.example.com/api/v1/repos/{owner}/{repo}/branch_prote
 
 ### Forgejo-specific gotchas
 
-- **No `permissions:` in Actions** -- silently ignored (unlike GitHub where it scopes GITHUB_TOKEN)
-- **Self-signed certs** -- `GIT_SSL_NO_VERIFY=true` may be needed for git operations. Set per-remote:
+- **No `permissions:` in Actions** - silently ignored (unlike GitHub where it scopes GITHUB_TOKEN)
+- **Self-signed certs** - `GIT_SSL_NO_VERIFY=true` may be needed for git operations. Set per-remote:
   `git config http.https://git.example.com/.sslVerify false`
-- **Runner availability** -- self-hosted runners can be down. Check runner status before relying
+- **Runner availability** - self-hosted runners can be down. Check runner status before relying
   on CI for branch protection checks.
-- **Mirror sync delay** -- if Forgejo mirrors from GitHub (or vice versa), there's a sync interval.
+- **Mirror sync delay** - if Forgejo mirrors from GitHub (or vice versa), there's a sync interval.
   Don't expect immediate consistency across forges.
 
 ---
@@ -262,11 +262,11 @@ curl -s -X PUT "https://git.example.com/api/v1/repos/{owner}/{repo}/branch_prote
 
 When a project uses multiple remotes:
 
-1. **Identify which remotes need pushes** -- check the project instruction file or `git remote -v`
+1. **Identify which remotes need pushes** - check the project instruction file or `git remote -v`
 2. **Push to primary first** (usually `origin`)
-3. **Push to secondary** (e.g., `github`) -- if CI builds happen there, this triggers the build
-4. **Push tags to both** -- `git push origin <tag> && git push github <tag>`
-5. **Create releases on the right forge** -- release may only exist on one forge (e.g., GitHub for Docker images)
+3. **Push to secondary** (e.g., `github`) - if CI builds happen there, this triggers the build
+4. **Push tags to both** - `git push origin <tag> && git push github <tag>`
+5. **Create releases on the right forge** - release may only exist on one forge (e.g., GitHub for Docker images)
 
 ### Handling different SSH keys per remote
 
@@ -319,7 +319,7 @@ merge produce ugly messages.
 ### Merge conflict resolution
 
 1. **Understand both sides** before resolving. Read the conflict markers and understand the intent of each change.
-2. **Test after resolving** -- run tests, lint, typecheck. Conflict resolution is error-prone.
+2. **Test after resolving** - run tests, lint, typecheck. Conflict resolution is error-prone.
 3. **Prefer the more recent change** when both sides modified the same logic, unless the older change was a bugfix.
 4. **Lock files** (package-lock.json, bun.lockb): regenerate, don't manually resolve. Delete the file, run the package manager, commit the fresh lockfile.
 5. **Schema/migration files**: never resolve automatically. These may require creating a new migration that merges both changes.

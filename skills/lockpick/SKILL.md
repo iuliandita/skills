@@ -22,7 +22,7 @@ Systematic privilege escalation methodology for authorized security assessments,
 challenges, and penetration testing engagements. Covers Linux systems, containers, Kubernetes
 clusters, VPN infrastructure, and IaC credential exposure.
 
-This skill is offensive -- it assumes you have initial access and guides escalation to higher
+This skill is offensive - it assumes you have initial access and guides escalation to higher
 privileges. For defensive hardening and vulnerability scanning, use the **security-audit** skill
 instead.
 
@@ -97,19 +97,19 @@ manual techniques.
 Read `references/linux-privesc.md` for the full technique library
 covering:
 
-1. **Automated enumeration** -- LinPEAS, pspy, Linux Exploit Suggester
-2. **Sudo abuse** -- `sudo -l` misconfigs, GTFOBins, LD_PRELOAD, env_keep
-3. **SUID/SGID binaries** -- find + exploit via GTFOBins
-4. **Linux capabilities** -- `getcap`, cap_setuid, cap_dac_read_search
-5. **Cron jobs** -- writable scripts, PATH hijacking in cron context
-6. **Kernel exploits** -- version-matched CVEs (Dirty Pipe, nf_tables, io_uring, OverlayFS)
-7. **PATH hijacking** -- SUID binaries calling relative commands
-8. **NFS** -- no_root_squash exploitation
-9. **Writable files** -- /etc/passwd, /etc/shadow, authorized_keys, systemd units
-10. **Wildcard injection** -- tar, chown, rsync with wildcards in cron/scripts
+1. **Automated enumeration** - LinPEAS, pspy, Linux Exploit Suggester
+2. **Sudo abuse** - `sudo -l` misconfigs, GTFOBins, LD_PRELOAD, env_keep
+3. **SUID/SGID binaries** - find + exploit via GTFOBins
+4. **Linux capabilities** - `getcap`, cap_setuid, cap_dac_read_search
+5. **Cron jobs** - writable scripts, PATH hijacking in cron context
+6. **Kernel exploits** - version-matched CVEs (Dirty Pipe, nf_tables, io_uring, OverlayFS)
+7. **PATH hijacking** - SUID binaries calling relative commands
+8. **NFS** - no_root_squash exploitation
+9. **Writable files** - /etc/passwd, /etc/shadow, authorized_keys, systemd units
+10. **Wildcard injection** - tar, chown, rsync with wildcards in cron/scripts
 
 **Priority order**: sudo > SUID > capabilities > cron > writable files > kernel exploits.
-Kernel exploits are last resort -- they can crash the system.
+Kernel exploits are last resort - they can crash the system.
 
 ### Phase 3: Credential Harvesting
 
@@ -151,26 +151,26 @@ Check for VPN configurations that reveal keys, topology, or credentials for late
 Read `references/vpn-iac-secrets.md` for the full technique library
 covering:
 
-1. **WireGuard** -- `/etc/wireguard/*.conf` private key extraction, peer topology mapping, AllowedIPs as network map, PreUp/PostUp script injection
-2. **OpenVPN** -- `.ovpn` embedded certs/keys, `auth-user-pass` credential files, management interface abuse (port 7505), plugin loading (CVE-2024-27903 chain)
-3. **IPsec** -- `/etc/ipsec.secrets` PSK/RSA extraction, `ike-scan` aggressive mode hash capture + offline cracking, swanctl credential theft
-4. **SSH agent hijacking** -- `SSH_AUTH_SOCK` socket theft from other users, key injection, tunnel pivoting (`-L`, `-R`, `-D`)
+1. **WireGuard** - `/etc/wireguard/*.conf` private key extraction, peer topology mapping, AllowedIPs as network map, PreUp/PostUp script injection
+2. **OpenVPN** - `.ovpn` embedded certs/keys, `auth-user-pass` credential files, management interface abuse (port 7505), plugin loading (CVE-2024-27903 chain)
+3. **IPsec** - `/etc/ipsec.secrets` PSK/RSA extraction, `ike-scan` aggressive mode hash capture + offline cracking, swanctl credential theft
+4. **SSH agent hijacking** - `SSH_AUTH_SOCK` socket theft from other users, key injection, tunnel pivoting (`-L`, `-R`, `-D`)
 
 ### Phase 5: Container Breakout
 
-If you're inside a container, look for escape vectors. **The `--privileged` flag is the critical enabler** -- it disables all security mechanisms (seccomp, AppArmor, capability drops, device cgroup) and grants full access to host devices. A privileged container is effectively root on the host.
+If you're inside a container, look for escape vectors. **The `--privileged` flag is the critical enabler** - it disables all security mechanisms (seccomp, AppArmor, capability drops, device cgroup) and grants full access to host devices. A privileged container is effectively root on the host.
 
 Read `references/container-breakout.md` for the full technique library
 covering:
 
-1. **Docker socket** -- mounted `/var/run/docker.sock` -> full host access
-2. **Privileged mode** -- `--privileged` -> mount host filesystems, load kernel modules
-3. **Dangerous capabilities** -- SYS_ADMIN (cgroup escape), SYS_PTRACE (process injection), DAC_READ_SEARCH (shocker), SYS_MODULE
-4. **Host mounts** -- `/host`, `/mnt`, or host paths mounted into container
-5. **Docker group** -- user in `docker` group = effective root
-6. **Runtime CVEs** -- runc (CVE-2024-21626 Leaky Vessels), containerd, BuildKit
-7. **cgroup escape** -- v1 release_agent abuse (CVE-2022-0492), notify_on_release
-8. **Namespace escape** -- nsenter, /proc/1/root, user namespace breakout
+1. **Docker socket** - mounted `/var/run/docker.sock` -> full host access
+2. **Privileged mode** - `--privileged` -> mount host filesystems, load kernel modules
+3. **Dangerous capabilities** - SYS_ADMIN (cgroup escape), SYS_PTRACE (process injection), DAC_READ_SEARCH (shocker), SYS_MODULE
+4. **Host mounts** - `/host`, `/mnt`, or host paths mounted into container
+5. **Docker group** - user in `docker` group = effective root
+6. **Runtime CVEs** - runc (CVE-2024-21626 Leaky Vessels), containerd, BuildKit
+7. **cgroup escape** - v1 release_agent abuse (CVE-2022-0492), notify_on_release
+8. **Namespace escape** - nsenter, /proc/1/root, user namespace breakout
 
 **Quick check:**
 ```bash
@@ -193,13 +193,13 @@ If you're inside a k8s pod or have access to a kubeconfig.
 Read `references/kubernetes-privesc.md` for the full technique library
 covering:
 
-1. **ServiceAccount token** -- auto-mounted at `/var/run/secrets/kubernetes.io/serviceaccount/`, API access, token scoping (pre/post 1.24)
-2. **RBAC abuse** -- wildcard permissions, escalate/bind verbs, create pods + get secrets, impersonation
-3. **Pod creation** -- schedule privileged pods, hostPath mounts, node selectors
-4. **etcd direct access** -- default port 2379, client cert theft, secret extraction
-5. **Kubelet API** -- anonymous auth on 10250, exec into any pod, node-level access
-6. **Node-to-cluster** -- kubeconfig files, static pod manifests, CNI creds, cloud IMDS
-7. **Pod Security bypass** -- namespace label manipulation, admission controller gaps
+1. **ServiceAccount token** - auto-mounted at `/var/run/secrets/kubernetes.io/serviceaccount/`, API access, token scoping (pre/post 1.24)
+2. **RBAC abuse** - wildcard permissions, escalate/bind verbs, create pods + get secrets, impersonation
+3. **Pod creation** - schedule privileged pods, hostPath mounts, node selectors
+4. **etcd direct access** - default port 2379, client cert theft, secret extraction
+5. **Kubelet API** - anonymous auth on 10250, exec into any pod, node-level access
+6. **Node-to-cluster** - kubeconfig files, static pod manifests, CNI creds, cloud IMDS
+7. **Pod Security bypass** - namespace label manipulation, admission controller gaps
 
 **Quick check from inside a pod:**
 ```bash
@@ -226,12 +226,12 @@ Sweep the filesystem for infrastructure-as-code secrets.
 Read `references/vpn-iac-secrets.md` (IaC Secrets section) for the full
 technique library covering:
 
-1. **Terraform** -- `terraform.tfstate` contains plaintext secrets, `.terraform/` provider creds, `TF_VAR_*` env vars, remote state backend credentials
-2. **Ansible** -- vault cracking (`ansible2john` + hashcat -m 16900), plaintext `group_vars/`, vault password files, inventory SSH keys
-3. **Cloud IMDS** -- AWS `169.254.169.254`, GCP `metadata.google.internal`, Azure metadata headers, IMDSv2 bypass, Kubernetes pod-to-IMDS access
-4. **kubeconfig files** -- `~/.kube/config`, `/etc/kubernetes/admin.conf`, embedded certs/tokens
-5. **Sealed Secrets** -- controller private key = decrypt everything
-6. **CI/CD credentials** -- `.env` files, runner tokens, registry credentials
+1. **Terraform** - `terraform.tfstate` contains plaintext secrets, `.terraform/` provider creds, `TF_VAR_*` env vars, remote state backend credentials
+2. **Ansible** - vault cracking (`ansible2john` + hashcat -m 16900), plaintext `group_vars/`, vault password files, inventory SSH keys
+3. **Cloud IMDS** - AWS `169.254.169.254`, GCP `metadata.google.internal`, Azure metadata headers, IMDSv2 bypass, Kubernetes pod-to-IMDS access
+4. **kubeconfig files** - `~/.kube/config`, `/etc/kubernetes/admin.conf`, embedded certs/tokens
+5. **Sealed Secrets** - controller private key = decrypt everything
+6. **CI/CD credentials** - `.env` files, runner tokens, registry credentials
 
 ### Phase 8: Lateral Movement & Pivoting
 
@@ -239,12 +239,12 @@ Once you've escalated, pivot to other systems.
 
 Read `references/shells-and-pivoting.md` for:
 
-1. **Reverse shells** -- bash, python, perl, netcat, php, ruby, powershell
-2. **SSH tunneling** -- local forwarding (-L), remote forwarding (-R), dynamic SOCKS (-D), ProxyJump chains
-3. **SSH agent hijacking** -- stealing SSH_AUTH_SOCK from other users for key reuse
-4. **Port forwarding** -- chisel, ligolo-ng, socat, SSH as SOCKS proxy
-5. **Internal network scanning** -- quick TCP sweep without nmap
-6. **File transfer** -- curl, wget, nc, python http.server, base64 encoding
+1. **Reverse shells** - bash, python, perl, netcat, php, ruby, powershell
+2. **SSH tunneling** - local forwarding (-L), remote forwarding (-R), dynamic SOCKS (-D), ProxyJump chains
+3. **SSH agent hijacking** - stealing SSH_AUTH_SOCK from other users for key reuse
+4. **Port forwarding** - chisel, ligolo-ng, socat, SSH as SOCKS proxy
+5. **Internal network scanning** - quick TCP sweep without nmap
+6. **File transfer** - curl, wget, nc, python http.server, base64 encoding
 
 ---
 
@@ -298,11 +298,11 @@ Read `references/shells-and-pivoting.md` for:
 
 ## Reference Files
 
-- `references/linux-privesc.md` -- core Linux privesc techniques (sudo, SUID, cron, capabilities, kernel exploits, PATH hijack, NFS, wildcards)
-- `references/container-breakout.md` -- Docker and container escape techniques (socket, privileged, capabilities, cgroups, runtime CVEs)
-- `references/kubernetes-privesc.md` -- Kubernetes RBAC abuse, ServiceAccount exploitation, etcd, kubelet, pod creation, PSS bypass
-- `references/vpn-iac-secrets.md` -- VPN credential extraction (WireGuard, OpenVPN, IPsec) and IaC secrets exposure (Terraform, Ansible, cloud IMDS)
-- `references/shells-and-pivoting.md` -- reverse shells, SSH tunneling, agent hijacking, port forwarding, file transfer
+- `references/linux-privesc.md` - core Linux privesc techniques (sudo, SUID, cron, capabilities, kernel exploits, PATH hijack, NFS, wildcards)
+- `references/container-breakout.md` - Docker and container escape techniques (socket, privileged, capabilities, cgroups, runtime CVEs)
+- `references/kubernetes-privesc.md` - Kubernetes RBAC abuse, ServiceAccount exploitation, etcd, kubelet, pod creation, PSS bypass
+- `references/vpn-iac-secrets.md` - VPN credential extraction (WireGuard, OpenVPN, IPsec) and IaC secrets exposure (Terraform, Ansible, cloud IMDS)
+- `references/shells-and-pivoting.md` - reverse shells, SSH tunneling, agent hijacking, port forwarding, file transfer
 
 ---
 
@@ -323,7 +323,7 @@ Rule 4 says document everything. Use this structure per finding:
 - **Access after**: [user/group, e.g., root]
 - **Steps**: [numbered list of exact commands run]
 - **Proof**: [command output showing escalated access, e.g., id, whoami, cat /root/proof.txt]
-- **Cleanup**: [files created, users added, configs changed -- and how to reverse]
+- **Cleanup**: [files created, users added, configs changed - and how to reverse]
 - **Remediation**: [what the defender should fix]
 ```
 
@@ -333,13 +333,13 @@ Capture `script -q /tmp/session.log` at the start of each engagement to get a fu
 
 ## Related Skills
 
-- **security-audit** -- defensive counterpart. Finds vulnerabilities through SAST, dependency scanning, and config review. This skill exploits them. Use security-audit for hardening; use lockpick for proving exploitability.
-- **networking** -- configures and troubleshoots VPNs, DNS, proxies, firewalls. Lockpick's VPN section extracts credentials and keys from existing configs for lateral movement. Use networking for setup; use lockpick for exploitation.
-- **kubernetes** -- writes and reviews k8s manifests and Helm charts. Lockpick's k8s section attacks the cluster from inside a compromised pod. Use kubernetes for building; use lockpick for breaking.
-- **docker** -- Dockerfile and Compose authoring. Lockpick's container section escapes from running containers. Use docker for building images; use lockpick for escaping them.
-- **firewall-appliance** -- OPNsense/pfSense firewall management. Lockpick doesn't cover network-level firewall testing.
-- **ansible** -- playbook and role authoring. Lockpick's IaC section targets Ansible vault cracking and credential extraction, not playbook writing.
-- **terraform** -- IaC authoring. Lockpick's IaC section targets state file secret extraction, not Terraform module design.
+- **security-audit** - defensive counterpart. Finds vulnerabilities through SAST, dependency scanning, and config review. This skill exploits them. Use security-audit for hardening; use lockpick for proving exploitability.
+- **networking** - configures and troubleshoots VPNs, DNS, proxies, firewalls. Lockpick's VPN section extracts credentials and keys from existing configs for lateral movement. Use networking for setup; use lockpick for exploitation.
+- **kubernetes** - writes and reviews k8s manifests and Helm charts. Lockpick's k8s section attacks the cluster from inside a compromised pod. Use kubernetes for building; use lockpick for breaking.
+- **docker** - Dockerfile and Compose authoring. Lockpick's container section escapes from running containers. Use docker for building images; use lockpick for escaping them.
+- **firewall-appliance** - OPNsense/pfSense firewall management. Lockpick doesn't cover network-level firewall testing.
+- **ansible** - playbook and role authoring. Lockpick's IaC section targets Ansible vault cracking and credential extraction, not playbook writing.
+- **terraform** - IaC authoring. Lockpick's IaC section targets state file secret extraction, not Terraform module design.
 
 ---
 

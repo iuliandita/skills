@@ -228,7 +228,7 @@ spec:
     - name: <app-name>
       port: 80
 ---
-# Traffic splitting (canary) -- replaces the base HTTPRoute during rollout
+# Traffic splitting (canary) - replaces the base HTTPRoute during rollout
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
@@ -329,7 +329,7 @@ spec:
 ```
 
 Access modes:
-- `ReadWriteOncePod` (RWOP): single pod exclusive access (GA since 1.29, CSI only). **Prefer for databases and single-writer workloads** -- `ReadWriteOnce` only restricts to a single *node*, so multiple pods on the same node can still mount it and corrupt data.
+- `ReadWriteOncePod` (RWOP): single pod exclusive access (GA since 1.29, CSI only). **Prefer for databases and single-writer workloads** - `ReadWriteOnce` only restricts to a single *node*, so multiple pods on the same node can still mount it and corrupt data.
 - `ReadWriteOnce` (RWO): single node read-write. Use when RWOP is unavailable (non-CSI drivers) or multiple pods on the same node intentionally share storage.
 - `ReadOnlyMany` (ROX): multi-node read-only
 - `ReadWriteMany` (RWX): multi-node read-write (requires NFS or similar)

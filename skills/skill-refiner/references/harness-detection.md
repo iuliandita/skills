@@ -16,7 +16,7 @@ How skill-refiner detects and validates AI CLI harnesses for cross-model peer re
 
 **Important:** Smoke test commands are approximate. Verify against current CLI versions
 before relying on them. Check `<harness> --help` for the correct non-interactive flag.
-Harness CLIs evolve rapidly -- these should be verified on each run.
+Harness CLIs evolve rapidly - these should be verified on each run.
 
 ---
 
@@ -51,8 +51,8 @@ output=$(timeout 60 <smoke_test_command> 2>&1)
 echo "$output" | grep -qi "pong"
 ```
 
-Use "respond with PONG" as the prompt (not "OK" -- too likely to match banner text).
-60-second timeout -- some harnesses (Codex) run MCP startup and emit verbose banners
+Use "respond with PONG" as the prompt (not "OK" - too likely to match banner text).
+60-second timeout - some harnesses (Codex) run MCP startup and emit verbose banners
 (10+ lines of config metadata) before the model response. Never truncate output with
 `head` or assume the response appears in the first N lines. Grep the full output.
 
@@ -75,10 +75,10 @@ secondary selection.
 
 ### Detecting the Primary Harness
 
-Check in order (env var names are approximate -- verify against current CLI versions):
-1. Claude Code env var (e.g., `CLAUDE_CODE` or similar) -- primary is claude
-2. Parent process name contains `codex` -- primary is codex
-3. OpenCode env var (e.g., `OPENCODE_SESSION` or similar) -- primary is opencode
+Check in order (env var names are approximate - verify against current CLI versions):
+1. Claude Code env var (e.g., `CLAUDE_CODE` or similar) - primary is claude
+2. Parent process name contains `codex` - primary is codex
+3. OpenCode env var (e.g., `OPENCODE_SESSION` or similar) - primary is opencode
 4. If ambiguous, prompt user once at run start
 
 ### Multi-Model Harnesses
@@ -120,7 +120,7 @@ Weight self-review at 5% instead of 10% (renormalize: 16/37/42/5).
 **Peer review is mandatory.** Always attempt the secondary harness first (three-step probe).
 If no secondary is available or the secondary fails to produce a valid response, self-review
 on a fresh context of the primary harness is the required fallback. Skipping review entirely
-is never acceptable -- even same-model fresh-context review catches issues the working context
+is never acceptable - even same-model fresh-context review catches issues the working context
 is blind to.
 
 ```
@@ -144,9 +144,9 @@ Overall: <score>/100
 3. Are there issues the primary model might have missed?
 
 Respond with exactly one of:
-- NO_FLAGS -- improvement is good, no concerns
-- MINOR_FLAG: <specific description citing lines> -- suboptimal but not harmful
-- MAJOR_FLAG: <specific description citing lines> -- harmful, regression, or removes critical content
+- NO_FLAGS - improvement is good, no concerns
+- MINOR_FLAG: <specific description citing lines> - suboptimal but not harmful
+- MAJOR_FLAG: <specific description citing lines> - harmful, regression, or removes critical content
 ```
 
 ---
@@ -165,7 +165,7 @@ Flags from the secondary model are verified before action:
 1. Present the flag + diff + secondary's full reasoning to primary
 2. Ask: "Is this change genuinely harmful? Analyze independently."
 3. If primary agrees: hard revert the change, log reason
-4. If primary disagrees: **escalate to circuit breaker** -- pause for human review
+4. If primary disagrees: **escalate to circuit breaker** - pause for human review
 5. Human decides: keep, revert, or modify
 
 The contested-major-flag-to-human escalation is non-configurable even in `--mode auto`.

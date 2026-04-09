@@ -267,8 +267,8 @@ spec:
 ### DNS policy
 
 - `ClusterFirst` (default): pod DNS queries go to CoreDNS
-- `None`: fully custom via `dnsConfig` -- use when pods need external DNS only
-- `Default`: use the node's DNS -- rarely what you want in K8s
+- `None`: fully custom via `dnsConfig` - use when pods need external DNS only
+- `Default`: use the node's DNS - rarely what you want in K8s
 
 ### CoreDNS Corefile customization
 

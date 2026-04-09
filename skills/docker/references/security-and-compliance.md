@@ -6,7 +6,7 @@ Security hardening, vulnerability management, supply chain integrity, and PCI-DS
 
 ## 2025-2026 CVE Reference
 
-### Critical vulnerabilities -- verify patched
+### Critical vulnerabilities - verify patched
 
 | CVE | CVSS | Component | Impact | Fixed in |
 |-----|------|-----------|--------|----------|
@@ -14,12 +14,12 @@ Security hardening, vulnerability management, supply chain integrity, and PCI-DS
 | CVE-2025-31133 | High | runc | Mount manipulation (/dev/null symlink) enables host procfs writes | runc 1.2.8, 1.3.3, 1.4.0-rc.3 |
 | CVE-2025-52565 | High | runc | /dev/console race condition grants premature mount access | runc 1.2.8, 1.3.3, 1.4.0-rc.3 |
 | CVE-2025-52881 | High | runc | procfs write redirect bypasses LSM relabel, host procfs writes | runc 1.2.8, 1.3.3, 1.4.0-rc.3 |
-| CVE-2026-33634 | Critical | Trivy | Supply chain -- credential-stealing malware in aquasec/trivy Docker Hub images v0.69.4-6 | Trivy v0.69.3 (safe) |
+| CVE-2026-33634 | Critical | Trivy | Supply chain - credential-stealing malware in aquasec/trivy Docker Hub images v0.69.4-6 | Trivy v0.69.3 (safe) |
 | CVE-2026-2664 | Medium | Docker Desktop | gRPC-FUSE kernel module out-of-bounds read | Desktop 4.62.0+ |
 | CVE-2025-13743 | Low | Docker Desktop | Expired Hub PATs leaked in diagnostic bundles via error object serialization | Desktop 4.54.0+ |
-| CVE-2026-28400 | 7.5 High | Model Runner | Runtime flag injection via _configure endpoint -- arbitrary file overwrite, container escape | Desktop 4.61.0+ |
+| CVE-2026-28400 | 7.5 High | Model Runner | Runtime flag injection via _configure endpoint - arbitrary file overwrite, container escape | Desktop 4.61.0+ |
 | CVE-2026-33747 | High | BuildKit | Malicious frontend causes file escape outside BuildKit storage root | BuildKit v0.28.1 |
-| CVE-2026-33748 | High | BuildKit | Git URL #ref:subdir validation bypass -- access to restricted files | BuildKit v0.28.1 |
+| CVE-2026-33748 | High | BuildKit | Git URL #ref:subdir validation bypass - access to restricted files | BuildKit v0.28.1 |
 
 ### Verification commands
 
@@ -59,7 +59,7 @@ The attackers are a cloud-native threat group active 2025-2026, known for Docker
 
 **Why it succeeded:** Docker Hub images authenticate via the publisher's credentials. Once the CI/CD pipeline credentials were compromised, the pushed images were indistinguishable from legitimate ones. Mutable tags (`latest`, `v0.69.4`) meant existing workflows pulled malware without any change to their configs.
 
-**A year earlier** (March 2025): `tj-actions/changed-files` was compromised the same way (CVE-2025-30066; upstream: reviewdog/action-setup CVE-2025-30154; ~12 hours of credential theft). These aren't isolated incidents -- supply chain attacks on CI tools are a recurring pattern.
+**A year earlier** (March 2025): `tj-actions/changed-files` was compromised the same way (CVE-2025-30066; upstream: reviewdog/action-setup CVE-2025-30154; ~12 hours of credential theft). These aren't isolated incidents - supply chain attacks on CI tools are a recurring pattern.
 
 ### Lessons (apply to ALL container workflows)
 
@@ -238,10 +238,10 @@ When `cap_drop: ALL` breaks something, add back ONLY what's needed:
 ```
 
 Key settings:
-- `icc: false` -- disable inter-container communication on default bridge
-- `no-new-privileges: true` -- global default, prevents privilege escalation via SUID
-- `userns-remap: default` -- maps container root to unprivileged host user
-- `live-restore: true` -- containers survive daemon restarts
+- `icc: false` - disable inter-container communication on default bridge
+- `no-new-privileges: true` - global default, prevents privilege escalation via SUID
+- `userns-remap: default` - maps container root to unprivileged host user
+- `live-restore: true` - containers survive daemon restarts
 
 ### Secrets management
 
@@ -338,7 +338,7 @@ services:
 
 ### PCI MPoC considerations
 
-MPoC (Mobile Payments on COTS) backend infrastructure falls under full PCI-DSS 4.0 scope. No container-specific addenda -- standard PCI-DSS 4.0 controls apply. Key points:
+MPoC (Mobile Payments on COTS) backend infrastructure falls under full PCI-DSS 4.0 scope. No container-specific addenda - standard PCI-DSS 4.0 controls apply. Key points:
 
 - A&M backends: containerized or not, same PCI requirements
 - Container logs from MPoC backends: immutable, retained per Req 10

@@ -28,7 +28,7 @@ Two principles that should guide every decision when writing or reviewing skills
 
 The context window is a shared resource. Every token a skill consumes is a token unavailable for
 conversation history, other skills' metadata, tool results, and the actual user request. Treat
-skill content like code in a hot loop -- every line should justify its presence.
+skill content like code in a hot loop - every line should justify its presence.
 
 **The test:** for each paragraph, ask "does this tell the agent something it doesn't already know?"
 If the answer is no, cut it. Models are smart. They don't need explanations of what YAML is or
@@ -60,18 +60,18 @@ Think of the agent walking a path: a narrow bridge with cliffs needs guardrails 
 an open field allows many routes (high freedom).
 
 **Examples from this collection:**
-- **High freedom**: code-review workflow -- "check these ten buckets" gives categories but lets the
+- **High freedom**: code-review workflow - "check these ten buckets" gives categories but lets the
   agent decide what matters for each codebase
-- **Medium freedom**: docker AI Self-Check -- specific checklist items but the agent decides how to
+- **Medium freedom**: docker AI Self-Check - specific checklist items but the agent decides how to
   apply them to the user's Dockerfile
-- **Low freedom**: firewall-appliance pfctl commands -- exact syntax because a wrong flag can lock
+- **Low freedom**: firewall-appliance pfctl commands - exact syntax because a wrong flag can lock
   you out of a remote appliance
 
 When in doubt, start with higher freedom and tighten only where you've seen the agent consistently
 get it wrong. Over-constraining a skill makes it brittle and harder to maintain.
 
 **Exception: diagnostic and monitoring skills.** These should default to **low freedom**. Diagnostic
-tasks are fragile -- a missing flag, a misinterpreted metric, or an improvised check can silently
+tasks are fragile - a missing flag, a misinterpreted metric, or an improvised check can silently
 report the wrong result. Define the exact commands to run, not the goal. "Verify the backup
 succeeded" invites the agent to invent checks with wrong paths and service names. "Run
 `velero backup describe $LATEST --details` and check Phase is Completed" does not.
@@ -111,7 +111,7 @@ Some tools (Claude Code v2.1.84+ (March 2026)) support `paths:` as a YAML list o
 skill frontmatter to activate the skill only when matching files exist in the project. This is
 useful for domain-specific skills (e.g., `docker` only when `Dockerfile` exists). The `paths:`
 field existed for rules since v2.0.64 but v2.1.84 extended it to skills and upgraded from
-single-glob to YAML list. It's optional and ignored by tools that don't support it -- safe to
+single-glob to YAML list. It's optional and ignored by tools that don't support it - safe to
 include for progressive enhancement.
 
 ### Headless / scripted execution
@@ -130,7 +130,7 @@ user confirmation in steps that could run unattended.
 | Field | Values | Purpose |
 |-------|--------|---------|
 | `name` | `a-z`, `0-9`, hyphens; no leading/trailing/consecutive hyphens; max 64 chars; no reserved words (`anthropic`, `claude`) | identifier, must match directory name |
-| `description` | free text, target <500 chars, 600 hard max in this collection, no XML tags | primary trigger mechanism -- the agent scans this |
+| `description` | free text, target <500 chars, 600 hard max in this collection, no XML tags | primary trigger mechanism - the agent scans this |
 | `license` | license name (e.g., `MIT`) | Agent Skills spec field |
 | `compatibility` | free text, <500 chars | environment requirements (optional) |
 | `metadata.source` | `owner/repo` or `custom` | identifies the publishing collection or an unpublished local skill |
@@ -240,18 +240,18 @@ Overview.
 ### Text
 
 - **Imperative form**: "Check the config", not "You should check the config"
-- **Plain ASCII**: no em-dashes (use `--`), no curly quotes, no ligatures
+- **Plain ASCII**: no em-dashes, no `--` double-dash substitute, no curly quotes, no ligatures. Use a single `-` where you would reach for an em dash.
 - **Explain why**: "Pin images to SHA256 digests because mutable tags are a proven attack vector
   (Trivy March 2026, tj-actions March 2025)" beats "Always pin images"
 - **Calm directives**: "Do X" outperforms "YOU MUST ALWAYS DO X" on most modern coding agents. Use ALL CAPS
   only for genuinely critical safety constraints, not for emphasis.
-- **Banned words**: per the collection's instruction file -- "delve", "navigate" (metaphorical), "landscape"
+- **Banned words**: per the collection's instruction file - "delve", "navigate" (metaphorical), "landscape"
   (metaphorical), "tapestry", "nuanced", "multifaceted", "utilize", "robust", "innovative",
-  "cutting-edge", "certainly!", "absolutely", etc. ("best practices" is allowed -- it's
+  "cutting-edge", "certainly!", "absolutely", etc. ("best practices" is allowed - it's
   standard IT terminology.)
 - **Anti-hallucination**: every tool name, CLI flag, version number, and API endpoint must be
   verified via web search or registry check before including in a skill. AI models hallucinate
-  these constantly. "I'm pretty sure" is not verification -- search or don't include it.
+  these constantly. "I'm pretty sure" is not verification - search or don't include it.
 
 ### Tables
 
@@ -335,13 +335,13 @@ Every custom skill should list adjacent skills that handle related but distinct 
 ```markdown
 ## When NOT to use
 
-- Kubernetes manifests, Helm charts -- use **kubernetes**
-- CI/CD pipeline design -- use **ci-cd**
-- Security audits of application code -- use **security-audit**
+- Kubernetes manifests, Helm charts - use **kubernetes**
+- CI/CD pipeline design - use **ci-cd**
+- Security audits of application code - use **security-audit**
 ```
 
 Bold the skill name in each cross-reference (`**skill-name**`) so agents can parse them
-as structured links. Use `--` (double dash) before the skill reference, not parentheses.
+as structured links. Use a single `-` before the skill reference, not parentheses.
 
 ### "Related Skills" section
 
@@ -350,9 +350,9 @@ For skills with complex relationships, add an explicit section explaining HOW sk
 ```markdown
 ## Related Skills
 
-- **ci-cd** -- pipeline design that triggers on git events. This skill handles the
+- **ci-cd** - pipeline design that triggers on git events. This skill handles the
   git operations; ci-cd handles the pipeline that reacts to them.
-- **code-review** -- reviews code quality. This skill creates the PR/MR; code-review
+- **code-review** - reviews code quality. This skill creates the PR/MR; code-review
   evaluates the code in it.
 ```
 
@@ -448,7 +448,7 @@ schedule before judging freshness.
 
 ### Agent improvisation in diagnostics
 
-Agents improvise. They see a monitoring context and add their own checks -- using wrong
+Agents improvise. They see a monitoring context and add their own checks - using wrong
 service names, wrong paths, or wrong assumptions. The fix is twofold:
 
 1. **Make the reference file comprehensive** so the agent doesn't feel compelled to freelance
@@ -492,8 +492,8 @@ Use this skill even when the user doesn't explicitly say "git" but is clearly do
 
 ### Anti-patterns
 
-- **Too vague**: "Use for Docker stuff" -- no specific triggers
-- **Too narrow**: "Use only when the user says 'write a Dockerfile'" -- misses most use cases
+- **Too vague**: "Use for Docker stuff" - no specific triggers
+- **Too narrow**: "Use only when the user says 'write a Dockerfile'" - misses most use cases
 - **No differentiation**: shares all keywords with another skill, no routing guidance
 - **Over 600 chars**: fails collection validation; platform truncation at 1024 is not the operative repo limit
 

@@ -1,7 +1,7 @@
 ---
 name: ci-cd
 description: >
-  · Write, review, or architect CI/CD pipelines -- GitHub Actions, GitLab CI, Forgejo.
+  · Write, review, or architect CI/CD pipelines - GitHub Actions, GitLab CI, Forgejo.
   Covers pipeline security, SHA pinning, SBOM, and runner configuration. Triggers: 'ci/cd',
   'pipeline', 'github actions', 'gitlab ci', 'forgejo', '.github/workflows', 'runner',
   'sha pinning'.
@@ -31,10 +31,10 @@ compliance requirements (PCI-DSS 4.0).
 - **Supply chain**: cosign v3.x (Sigstore), Syft/Trivy for SBOM, SLSA v1.0
 
 This skill covers four domains depending on context:
-- **Workflow design** -- stages, jobs, caching, artifacts, parallelism, reusable patterns
-- **Security** -- supply chain hardening, SHA pinning, secret management, OIDC, least-privilege
-- **Compliance** -- PCI-DSS 4.0 Req 6.x mapping, SBOM generation, signed artifacts, audit trails
-- **Cross-platform** -- writing pipelines that work across GitHub/GitLab/Forgejo, migration patterns
+- **Workflow design** - stages, jobs, caching, artifacts, parallelism, reusable patterns
+- **Security** - supply chain hardening, SHA pinning, secret management, OIDC, least-privilege
+- **Compliance** - PCI-DSS 4.0 Req 6.x mapping, SBOM generation, signed artifacts, audit trails
+- **Cross-platform** - writing pipelines that work across GitHub/GitLab/Forgejo, migration patterns
 
 ## When to use
 
@@ -49,12 +49,12 @@ This skill covers four domains depending on context:
 
 ## When NOT to use
 
-- Kubernetes manifests, Helm charts, cluster architecture -- use **kubernetes**
-- Dockerfiles, Compose stacks, container image optimization -- use **docker**
-- Terraform/OpenTofu infrastructure-as-code -- use **terraform**
-- Ansible playbooks, configuration management -- use **ansible**
-- Security audits of application code (SAST findings, auth bugs) -- use **security-audit**
-- Code review of pipeline-adjacent code (the app itself) -- use **code-review**
+- Kubernetes manifests, Helm charts, cluster architecture - use **kubernetes**
+- Dockerfiles, Compose stacks, container image optimization - use **docker**
+- Terraform/OpenTofu infrastructure-as-code - use **terraform**
+- Ansible playbooks, configuration management - use **ansible**
+- Security audits of application code (SAST findings, auth bugs) - use **security-audit**
+- Code review of pipeline-adjacent code (the app itself) - use **code-review**
 - The code-review skill has a `cicd-pipelines.md` reference for **bug patterns** in existing
   pipelines. This skill is for **writing and architecting** pipelines.
 
@@ -76,7 +76,7 @@ pipeline config, verify against this list:**
 - [ ] **Minimal scope**: jobs have minimum required permissions, access only needed secrets, and run only needed steps.
 - [ ] **No `allow_failure` without justification**: if a job can fail, explain why in a comment.
 - [ ] **Version pinning on tools**: `node:22`, not `node:lts`. `python:3.13`, not `python:3`. Specific versions prevent silent breakage.
-- [ ] **Trigger scoping**: `on: push` without branch/path filters runs on every push to every branch -- scope to `branches: [main]` and/or `paths:` filters. Same for GitLab: `rules:` with `if` conditions, not bare `only: [pushes]`.
+- [ ] **Trigger scoping**: `on: push` without branch/path filters runs on every push to every branch - scope to `branches: [main]` and/or `paths:` filters. Same for GitLab: `rules:` with `if` conditions, not bare `only: [pushes]`.
 - [ ] **No expression injection** (GitHub Actions): `${{ }}` expressions never used directly in `run:` blocks. Assign to `env:` first. `github.event.*` is attacker-controlled. Avoid `github.ref_name` in security-sensitive contexts (injectable via crafted tag/branch names).
 
 ---
@@ -136,11 +136,11 @@ Run through the checklist above before returning any generated config.
 lint -> test -> build -> scan -> deploy
 ```
 
-1. **Lint** first -- fastest feedback, catches formatting/syntax early
-2. **Test** -- unit tests, typechecking
-3. **Build** -- compile, bundle, create artifacts
-4. **Scan** -- SAST, dependency audit, container scan (on build output)
-5. **Deploy** -- staging auto, production manual
+1. **Lint** first - fastest feedback, catches formatting/syntax early
+2. **Test** - unit tests, typechecking
+3. **Build** - compile, bundle, create artifacts
+4. **Scan** - SAST, dependency audit, container scan (on build output)
+5. **Deploy** - staging auto, production manual
 
 ### Caching strategy
 
@@ -154,7 +154,7 @@ lint -> test -> build -> scan -> deploy
 | **Docker layers** | BuildKit cache mount or registry cache | GH: `--cache-from type=gha`. GL: `--cache-from $CI_REGISTRY_IMAGE:cache`. |
 
 **Rule**: cache is a speed optimization, not a correctness mechanism. Artifacts are for
-inter-job data. Cache may evict at any time -- pipelines must work without it.
+inter-job data. Cache may evict at any time - pipelines must work without it.
 
 ### Secret management
 
@@ -212,8 +212,8 @@ It reuses the workflow syntax but makes no compatibility guarantees.
 
 | Feature | GitHub Actions | Forgejo Actions |
 |---------|---------------|-----------------|
-| **`permissions:`** | Controls GITHUB_TOKEN scope | **Not enforced** -- token always has full rw (read-only for fork PRs) |
-| **`continue-on-error:`** (job level) | Allows job failure without failing workflow | **Not supported** -- step-level only |
+| **`permissions:`** | Controls GITHUB_TOKEN scope | **Not enforced** - token always has full rw (read-only for fork PRs) |
+| **`continue-on-error:`** (job level) | Allows job failure without failing workflow | **Not supported** - step-level only |
 | **Runner images** | Managed `ubuntu-24.04` with 200+ tools | Self-hosted, typically lean Debian/Alpine |
 | **Action resolution** | `actions/checkout@v4` -> github.com | Resolves from Forgejo mirror (configurable) |
 | **OIDC** | `permissions: id-token: write` | `enable-openid-connect` key |
@@ -269,7 +269,7 @@ git ls-remote https://code.forgejo.org/actions/checkout.git 'refs/tags/v4*'
 git clone --depth 1 https://forgejo.example.com/actions/checkout.git /tmp/checkout-verify
 cd /tmp/checkout-verify
 git checkout <sha>
-# Review action.yml and dist/ -- compare against the known-good upstream release
+# Review action.yml and dist/ - compare against the known-good upstream release
 ```
 
 **Key differences from GitHub SHA discovery**:
@@ -281,16 +281,16 @@ git checkout <sha>
 
 ### Forgejo-specific gotchas
 
-- **No `ubuntu-latest`** -- `runs-on` maps to your registered runner labels (e.g., `docker`)
-- **Missing tools** -- Forgejo runner containers are lean. Add `apt-get install` for git, curl, etc.
-- **TLS certs** -- if Forgejo uses self-signed or internal CA certs, configure the runner's trust
+- **No `ubuntu-latest`** - `runs-on` maps to your registered runner labels (e.g., `docker`)
+- **Missing tools** - Forgejo runner containers are lean. Add `apt-get install` for git, curl, etc.
+- **TLS certs** - if Forgejo uses self-signed or internal CA certs, configure the runner's trust
   store (`GIT_SSL_CAINFO=/path/to/ca-bundle.crt`) or install the CA into the container image.
-  `GIT_SSL_NO_VERIFY=true` is a last resort for dev/test only -- never normalize TLS bypass in production
-- **Third-party actions** -- many GitHub Marketplace actions use GitHub-specific API calls and will silently fail
-- **Secrets in Forgejo** -- `${{ secrets.* }}` works, but no environment-level scoping
-- **`permissions:` not enforced** -- Forgejo parses the field but does not restrict the workflow token.
+  `GIT_SSL_NO_VERIFY=true` is a last resort for dev/test only - never normalize TLS bypass in production
+- **Third-party actions** - many GitHub Marketplace actions use GitHub-specific API calls and will silently fail
+- **Secrets in Forgejo** - `${{ secrets.* }}` works, but no environment-level scoping
+- **`permissions:` not enforced** - Forgejo parses the field but does not restrict the workflow token.
   The token always has full read-write access (read-only for fork PRs only). Don't assume
-  least-privilege from `permissions:` alone -- it has no effect on Forgejo.
+  least-privilege from `permissions:` alone - it has no effect on Forgejo.
 
 ### Forgejo release workflow pattern
 
@@ -374,19 +374,19 @@ the OWASP Top 10 for Agentic Applications, read `references/supply-chain.md`
 
 ## Reference Files
 
-- `references/github-actions.md` -- GitHub Actions patterns, templates, and security hardening
-- `references/gitlab-ci.md` -- GitLab CI/CD 18.x patterns, Catalog, Components, security
-- `references/supply-chain.md` -- supply chain security, incident timeline, SHA pinning,
+- `references/github-actions.md` - GitHub Actions patterns, templates, and security hardening
+- `references/gitlab-ci.md` - GitLab CI/CD 18.x patterns, Catalog, Components, security
+- `references/supply-chain.md` - supply chain security, incident timeline, SHA pinning,
   SBOM/SLSA, PCI-DSS compliance, image signing
 
 ## Related Skills
 
-- **code-review** -- has `references/cicd-pipelines.md` for CI/CD **bug patterns** (expression
+- **code-review** - has `references/cicd-pipelines.md` for CI/CD **bug patterns** (expression
   injection, variable scoping, cache gotchas, ArgoCD sync issues)
-- **security-audit** -- for auditing application code, not pipeline code
-- **docker** -- for Dockerfile and container image optimization
-- **kubernetes** -- for K8s manifests and Helm charts that pipelines deploy to
-- **git** -- for git operations (commits, PRs/MRs, tags, releases) that trigger pipelines.
+- **security-audit** - for auditing application code, not pipeline code
+- **docker** - for Dockerfile and container image optimization
+- **kubernetes** - for K8s manifests and Helm charts that pipelines deploy to
+- **git** - for git operations (commits, PRs/MRs, tags, releases) that trigger pipelines.
   CI/CD reacts to git events; git handles the operations that produce them.
 
 ## Rules

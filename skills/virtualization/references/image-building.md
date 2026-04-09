@@ -183,7 +183,7 @@ source "proxmox-iso" "debian" {
   machine  = "i440fx"
   bios     = "seabios"
   # Use seabios for preseed-based installs. OVMF (UEFI) requires different
-  # boot_command -- the <esc> + preseed URL technique is BIOS-only.
+  # boot_command - the <esc> + preseed URL technique is BIOS-only.
 
   # Disk
   disks {
@@ -273,7 +273,7 @@ source "proxmox-clone" "debian" {
 
   # SSH (to run provisioners)
   ssh_username = "admin"
-  ssh_private_key_file = var.ssh_private_key_file  # avoid tilde in HCL -- use a variable or absolute path
+  ssh_private_key_file = var.ssh_private_key_file  # avoid tilde in HCL - use a variable or absolute path
 }
 ```
 
@@ -362,7 +362,7 @@ wget https://dl-cdn.alpinelinux.org/alpine/v3.21/releases/cloud/nocloud_alpine-3
 # Fedora (check https://fedoraproject.org/cloud/download for current release)
 wget https://download.fedoraproject.org/pub/fedora/linux/releases/41/Cloud/x86_64/images/Fedora-Cloud-Base-41-1.3.x86_64.qcow2
 
-# Rocky Linux (uses .latest symlink -- always current minor)
+# Rocky Linux (uses .latest symlink - always current minor)
 wget https://download.rockylinux.org/pub/rocky/9/images/x86_64/Rocky-9-GenericCloud.latest.x86_64.qcow2
 ```
 

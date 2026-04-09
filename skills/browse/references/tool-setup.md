@@ -100,13 +100,13 @@ Resources: `mcp://page/html`, `mcp://page/markdown`
 
 ### Known Limitations
 
-- No graphical rendering -- no screenshots, no visual regression
-- Partial Web API coverage -- complex SPAs may hit gaps
-- CORS not implemented -- cross-origin JS may behave differently
+- No graphical rendering - no screenshots, no visual regression
+- Partial Web API coverage - complex SPAs may hit gaps
+- CORS not implemented - cross-origin JS may behave differently
 - Multi-page/multi-context support is limited
 - Default user agent `Lightpanda/1.0` may be blocked by some sites
   (use `--user-agent-suffix` to customize)
-- AGPL-3.0 license -- share source if running as a modified service
+- AGPL-3.0 license - share source if running as a modified service
 - Telemetry enabled by default (`LIGHTPANDA_DISABLE_TELEMETRY=true` to disable)
 
 ---

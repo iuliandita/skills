@@ -133,7 +133,7 @@ Examples:
 
 ---
 
-## Regression Test Criteria (Lint Scripts -- Phase 2 Only)
+## Regression Test Criteria (Lint Scripts - Phase 2 Only)
 
 When improving lint-skills.sh or validate-spec.sh in phase 2:
 

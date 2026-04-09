@@ -59,7 +59,7 @@ gpg --armor --export <KEY_ID>
 **GPG agent caching**: by default, GPG agent caches the passphrase for 600 seconds. For
 longer sessions: `echo "default-cache-ttl 86400" >> ~/.gnupg/gpg-agent.conf`
 
-### gitsign (Sigstore) -- keyless signing
+### gitsign (Sigstore) - keyless signing
 
 Zero key management. Uses OIDC identity (GitHub, Google, Microsoft). Best for open source.
 
@@ -73,7 +73,7 @@ git config commit.gpgsign true
 git config gpg.x509.program gitsign
 git config gpg.format x509
 
-# Sign -- opens browser for OIDC auth
+# Sign - opens browser for OIDC auth
 git commit -S -m "signed commit"
 
 # Verify
@@ -233,9 +233,9 @@ git push origin --force --all
 git push origin --force --tags
 ```
 
-3. **Coordinate with team** -- force-push rewrites history. Everyone needs to re-clone or
+3. **Coordinate with team** - force-push rewrites history. Everyone needs to re-clone or
    `git fetch --all && git reset --hard origin/main`.
-4. **Update forge** -- GitHub/GitLab cache old objects. Contact support for immediate purge,
+4. **Update forge** - GitHub/GitLab cache old objects. Contact support for immediate purge,
    or wait for GC (varies by forge).
 5. **Add to `.gitignore`** to prevent recurrence.
 
@@ -247,15 +247,15 @@ git push origin --force --tags
 
 | CVE | Version | Severity | Description |
 |-----|---------|----------|-------------|
-| CVE-2025-48384 | < 2.50.1 | **Critical (8.1)** | Arbitrary file write via `\r` in `.gitmodules` during recursive clone. **Actively exploited** -- CISA KEV. |
-| CVE-2025-48385 | < 2.50.1 | High | Bundle URI validation bypass -- protocol injection, potential RCE |
+| CVE-2025-48384 | < 2.50.1 | **Critical (8.1)** | Arbitrary file write via `\r` in `.gitmodules` during recursive clone. **Actively exploited** - CISA KEV. |
+| CVE-2025-48385 | < 2.50.1 | High | Bundle URI validation bypass - protocol injection, potential RCE |
 | CVE-2025-48386 | < 2.50.1 | Medium | Buffer overflow in `wincred` credential helper (Windows only) |
 | CVE-2024-32002 | < 2.45.1 | Critical (9.1) | Recursive clone RCE via symlink + submodule (case-insensitive FS: Windows/macOS) |
 | CVE-2024-50349 | < 2.48.1 | Medium | Credential leak via terminal escape in URL (Clone2Leak disclosure) |
 | CVE-2024-52006 | < 2.48.1 | Medium | Carriage return smuggling in credential protocol (same Clone2Leak disclosure as CVE-2024-50349) |
 
 **Action**: ensure git >= 2.50.1 (ideally 2.53.x). CVE-2025-48384 is **actively exploited in the
-wild** -- a weaponized `.gitmodules` file can overwrite hook scripts to achieve RCE on `git clone
+wild** - a weaponized `.gitmodules` file can overwrite hook scripts to achieve RCE on `git clone
 --recursive`. Patched in v2.50.1, v2.49.1, v2.48.2, v2.47.3, and backports. Linux and macOS
 affected; Windows is not.
 
@@ -272,15 +272,15 @@ affected; Windows is not.
 | CVE | Forge | Severity | Description |
 |-----|-------|----------|-------------|
 | CVE-2025-68937 | Forgejo <= v13.0.1 | Critical (9.5) | Template processing allows authenticated RCE via symlink to `.ssh/authorized_keys`. Fixed in v13.0.2+ and v11.0.7 (LTS). |
-| CVE-2025-11702 | GitLab | High (8.5) | Runner hijacking -- authenticated users could hijack project runners from other projects. Fixed in 18.3.5/18.4.3/18.5.1. |
-| CVE-2025-25291/25292 | GitLab | Critical | SAML SSO authentication bypass -- user impersonation. Fixed in 17.9.x patches. |
+| CVE-2025-11702 | GitLab | High (8.5) | Runner hijacking - authenticated users could hijack project runners from other projects. Fixed in 18.3.5/18.4.3/18.5.1. |
+| CVE-2025-25291/25292 | GitLab | Critical | SAML SSO authentication bypass - user impersonation. Fixed in 17.9.x patches. |
 | CVE-2025-8110 | Gogs | High (8.7) | Symlink bypass RCE zero-day. 700+ compromised instances. Fixed in v0.13.4 (Jan 2026). |
 
 ### AI tooling and MCP vulnerabilities
 
 | CVE | Component | Severity | Description |
 |-----|-----------|----------|-------------|
-| CVE-2025-68143 | Anthropic MCP Git server | High (8.8) | Path traversal in `git_init` -- arbitrary filesystem access. Fixed 2025.9.25. |
+| CVE-2025-68143 | Anthropic MCP Git server | High (8.8) | Path traversal in `git_init` - arbitrary filesystem access. Fixed 2025.9.25. |
 | CVE-2025-68144 | Anthropic MCP Git server | High (8.1) | Argument injection in `git_diff`/`git_checkout`. Fixed 2025.12.18. |
 | CVE-2025-65964 | n8n | Critical (9.4) | RCE via `core.hooksPath` exploitation in Git hooks. |
 
@@ -294,7 +294,7 @@ can define hooks or tasks that execute arbitrary code when a developer opens the
 
 **Mitigation**: treat all project config dirs in cloned repos as untrusted. Review hook configs
 before opening a project from an untrusted source. `core.hooksPath` is a security-sensitive
-setting -- if an attacker controls it, they control code execution.
+setting - if an attacker controls it, they control code execution.
 
 ---
 
@@ -304,7 +304,7 @@ setting -- if an attacker controls it, they control code execution.
 
 ```bash
 # Refuse to clone/fetch from repos with suspicious ownership
-git config --global safe.directory '*'    # DO NOT use '*' -- this disables the check!
+git config --global safe.directory '*'    # DO NOT use '*' - this disables the check!
 # Instead, add specific trusted directories:
 git config --global --add safe.directory /home/user/projects/repo
 

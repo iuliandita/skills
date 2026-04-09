@@ -1,7 +1,7 @@
 ---
 name: arch-btw
 description: >
-  · Administer Arch Linux, CachyOS, or Arch-based distros -- pacman, AUR, systemd, boot,
+  · Administer Arch Linux, CachyOS, or Arch-based distros - pacman, AUR, systemd, boot,
   desktop (Hyprland, GNOME, KDE), PipeWire, GPU drivers, gaming (Steam, Proton), and media
   (OBS, WebRTC). Triggers: 'arch linux', 'cachyos', 'pacman', 'paru', 'aur', 'systemd',
   'mkinitcpio', 'bootctl', 'hyprland', 'pipewire', 'nvidia', 'steam', 'proton', 'obs',
@@ -58,13 +58,13 @@ ordinary rolling packages, prefer the current repo state over stale version tabl
 
 ## When NOT to use
 
-- Shell syntax, quoting, or script portability problems -- use **command-prompt**
-- Network architecture, DNS, VPNs, reverse proxies, or firewall design -- use **networking**
-- Docker, Podman, image builds, or container runtime issues -- use **docker**
-- Kubernetes cluster or manifest work -- use **kubernetes**
-- Fleet-wide Linux configuration via playbooks or roles -- use **ansible**
-- Security review, vulnerability triage, or offensive testing -- use **security-audit** or **lockpick**
-- OPNsense or pfSense appliance work -- use **firewall-appliance**
+- Shell syntax, quoting, or script portability problems - use **command-prompt**
+- Network architecture, DNS, VPNs, reverse proxies, or firewall design - use **networking**
+- Docker, Podman, image builds, or container runtime issues - use **docker**
+- Kubernetes cluster or manifest work - use **kubernetes**
+- Fleet-wide Linux configuration via playbooks or roles - use **ansible**
+- Security review, vulnerability triage, or offensive testing - use **security-audit** or **lockpick**
+- OPNsense or pfSense appliance work - use **firewall-appliance**
 
 ---
 
@@ -169,7 +169,7 @@ Do not load every reference by default. Pick the one that matches the failure mo
 - Fix package state before debugging services that may be broken by stale libraries.
 - Fix service configuration before declaring systemd itself broken.
 - Fix mountpoints and loader state before rebuilding initramfs or UKIs.
-- **mkinitcpio vs dracut**: check `pacman -Q mkinitcpio dracut` to determine which is installed. mkinitcpio is Arch default; CachyOS may use dracut. Do not mix them -- pick the installed one and use its config/hooks exclusively.
+- **mkinitcpio vs dracut**: check `pacman -Q mkinitcpio dracut` to determine which is installed. mkinitcpio is Arch default; CachyOS may use dracut. Do not mix them - pick the installed one and use its config/hooks exclusively.
 - On CachyOS, separate "vanilla Arch behavior" from "optimized repo or custom kernel behavior."
 - Prefer reversible steps: snapshots, package cache, fallback kernels, saved configs.
 
@@ -251,35 +251,35 @@ When a bug looks "desktop-only," compare one clean baseline:
 | Suspend/resume breaks desktop | Sleep state, GPU logs, lock-screen, display manager |
 | Snapshot rollback failed | Subvolume layout, bootloader path, encryption scope |
 | NVIDIA/module vanished after kernel change | DKMS drift: `dkms status`, confirm module built for `uname -r`, rebuild if missing |
-| Nothing makes sense | Check gotchas reference -- partial upgrades, stale portals, DKMS drift explain most chaos |
+| Nothing makes sense | Check gotchas reference - partial upgrades, stale portals, DKMS drift explain most chaos |
 
 ---
 
 ## Reference Files
 
-- `references/packages-and-aur.md` -- Arch package workflow, `paru`, manual AUR builds, keyring and mirror problems, `.pacnew` handling
-- `references/systemd-and-journal.md` -- systemd service debugging, unit overrides, user units, journal triage, and safe edit flow
-- `references/boot-kernel-and-recovery.md` -- kernel packages, mkinitcpio vs dracut, systemd-boot, UKIs, Secure Boot, and live-ISO recovery
-- `references/cachyos-and-derivatives.md` -- CachyOS optimized repos, custom kernels, snapshot defaults, and brief derivative guidance
-- `references/desktop-audio-and-bluetooth.md` -- X11 vs Wayland, Hyprland focus, GNOME and KDE notes, portals, PipeWire, and Bluetooth troubleshooting
-- `references/session-display-and-mobile.md` -- GDM, SDDM, greetd, session env, suspend or resume, power profiles, and hybrid graphics routing
-- `references/graphics-and-gaming.md` -- NVIDIA, AMD, Intel, Vulkan, Steam, Proton, Gamescope, MangoHud, GameMode, and why CachyOS gets attention from Linux gamers
-- `references/capture-and-sharing.md` -- OBS, WebRTC screen sharing, Discord and Teams routing, hardware encoding, and virtual camera troubleshooting
-- `references/storage-and-rollback.md` -- Btrfs, Snapper, LUKS, TRIM, hibernation, resume, and rollback boundaries
-- `references/remote-gaming-input-and-tooling.md` -- Moonlight, Sunshine-style hosting, controllers, and Steam Remote Play
-- `references/base-linux-and-cli.md` -- core Linux inspection commands and optional tools such as `nvim`, `jq`, `ripgrep`, `bat`, and `eza`
-- `references/gotchas-and-special-situations.md` -- recurring Arch and CachyOS failure patterns, special cases, and what-to-do-next guidance
+- `references/packages-and-aur.md` - Arch package workflow, `paru`, manual AUR builds, keyring and mirror problems, `.pacnew` handling
+- `references/systemd-and-journal.md` - systemd service debugging, unit overrides, user units, journal triage, and safe edit flow
+- `references/boot-kernel-and-recovery.md` - kernel packages, mkinitcpio vs dracut, systemd-boot, UKIs, Secure Boot, and live-ISO recovery
+- `references/cachyos-and-derivatives.md` - CachyOS optimized repos, custom kernels, snapshot defaults, and brief derivative guidance
+- `references/desktop-audio-and-bluetooth.md` - X11 vs Wayland, Hyprland focus, GNOME and KDE notes, portals, PipeWire, and Bluetooth troubleshooting
+- `references/session-display-and-mobile.md` - GDM, SDDM, greetd, session env, suspend or resume, power profiles, and hybrid graphics routing
+- `references/graphics-and-gaming.md` - NVIDIA, AMD, Intel, Vulkan, Steam, Proton, Gamescope, MangoHud, GameMode, and why CachyOS gets attention from Linux gamers
+- `references/capture-and-sharing.md` - OBS, WebRTC screen sharing, Discord and Teams routing, hardware encoding, and virtual camera troubleshooting
+- `references/storage-and-rollback.md` - Btrfs, Snapper, LUKS, TRIM, hibernation, resume, and rollback boundaries
+- `references/remote-gaming-input-and-tooling.md` - Moonlight, Sunshine-style hosting, controllers, and Steam Remote Play
+- `references/base-linux-and-cli.md` - core Linux inspection commands and optional tools such as `nvim`, `jq`, `ripgrep`, `bat`, and `eza`
+- `references/gotchas-and-special-situations.md` - recurring Arch and CachyOS failure patterns, special cases, and what-to-do-next guidance
 
 ---
 
 ## Related Skills
 
-- **command-prompt** -- use it for shell syntax, zsh or bash behavior, and script portability
-- **networking** -- use it for network services, DNS, VPNs, and firewall design
-- **docker** -- use it for container runtime and image concerns instead of host distro administration
-- **ansible** -- use it when the real task is codifying Linux changes across many machines
-- **security-audit** -- use it for hardening and security review rather than normal package or service administration
-- **update-docs** -- use it after substantial system administration changes that introduce new operational gotchas
+- **command-prompt** - use it for shell syntax, zsh or bash behavior, and script portability
+- **networking** - use it for network services, DNS, VPNs, and firewall design
+- **docker** - use it for container runtime and image concerns instead of host distro administration
+- **ansible** - use it when the real task is codifying Linux changes across many machines
+- **security-audit** - use it for hardening and security review rather than normal package or service administration
+- **update-docs** - use it after substantial system administration changes that introduce new operational gotchas
 
 ---
 

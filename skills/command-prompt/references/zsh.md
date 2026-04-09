@@ -1,7 +1,7 @@
 # Zsh Reference
 
 > Patterns and gotchas for Zsh 5.9/5.10 on Linux and macOS. Focuses on where Zsh diverges
-> from Bash -- the stuff that silently breaks.
+> from Bash - the stuff that silently breaks.
 
 ---
 
@@ -14,7 +14,7 @@ Not every task needs all 680 lines. Use this routing:
 | Simple one-liner (no glob qualifiers, no arrays) | Section 11 gotchas table only |
 | Writing a new zsh script | Section 11 gotchas + section 1 (globbing) + section 10 (template) |
 | Porting bash to zsh | Section 11 gotchas + full compat matrix |
-| Glob qualifiers (file age, size, type, sorting) | Section 1 -- qualifier cheat sheet is essential |
+| Glob qualifiers (file age, size, type, sorting) | Section 1 - qualifier cheat sheet is essential |
 | Debugging a zsh issue | Section 11 gotchas, then: globbing=1, arrays=2, expansion=3, quoting=4, portability=5 |
 | Editing .zshrc / startup | Section 6 (load order) + 7 (prompt, options, hooks) |
 | Completion issues | Section 8 + 9. Check: (1) `compinit` called? (2) after `fpath` mods? (3) file named `_commandname`? (4) stale cache? (`rm ~/.zcompdump*`) |
@@ -29,11 +29,11 @@ Before returning any zsh script or .zshrc edit:
 
 - [ ] Shebang is `#!/usr/bin/env zsh` (not `#!/bin/bash`, not `#!/bin/sh`)
 - [ ] `set -euo pipefail` present for scripts (or `setopt ERR_EXIT NO_UNSET PIPE_FAIL`)
-- [ ] Arrays are 1-indexed (not 0-indexed) -- every loop, slice, index
+- [ ] Arrays are 1-indexed (not 0-indexed) - every loop, slice, index
 - [ ] Globs use `(N)` qualifier where empty results are acceptable
 - [ ] File-filtering globs use type qualifiers: `(.)` files, `(/)` dirs, `(@)` symlinks
 - [ ] No bash-isms: `${!var}` -> `${(P)var}`, `read -a` -> `read -A`, `BASH_SOURCE` -> `${0:A:h}`
-- [ ] No `mapfile`/`readarray` -- use `arr=("${(@f)$(command)}")` to read lines into array
+- [ ] No `mapfile`/`readarray` - use `arr=("${(@f)$(command)}")` to read lines into array
 - [ ] `!` in double-quoted strings is escaped (`\!`) or `NO_BANG_HIST` is set
 - [ ] Word splitting: `for f in $var` iterates ONCE in zsh. Use `${=var}` to force split, or use an array
 - [ ] `print` used instead of `echo -e` for escape sequences (`print -P` for prompt escapes)
@@ -66,7 +66,7 @@ setopt NULL_GLOB
 # Recursive glob (bash needs shopt -s globstar)
 ls **/*.js              # just works in zsh
 
-# Qualifiers -- zsh-only power
+# Qualifiers - zsh-only power
 ls *(.)                 # files only
 ls *(/)                 # directories only
 ls *(.m-1)              # files modified in last day
@@ -170,8 +170,8 @@ echo ${str[7,-1]}          # World
 
 # Replacement
 echo ${str/World/Zsh}      # Hello Zsh
-echo ${str:l}              # hello world (lowercase -- zsh-only)
-echo ${str:u}              # HELLO WORLD (uppercase -- zsh-only)
+echo ${str:l}              # hello world (lowercase - zsh-only)
+echo ${str:u}              # HELLO WORLD (uppercase - zsh-only)
 ```
 
 ### Bash vs Zsh expansion
@@ -235,7 +235,7 @@ setopt INTERACTIVE_COMMENTS
 ```zsh
 #!/usr/bin/env zsh
 # Don't use #!/bin/bash for zsh scripts (obvious but common)
-# Don't use #!/bin/sh -- zsh in sh-emulation mode loses features
+# Don't use #!/bin/sh - zsh in sh-emulation mode loses features
 
 set -euo pipefail    # works in zsh too, use it
 ```
@@ -265,7 +265,7 @@ SCRIPT_DIR="${0:A:h}"
 ### BASH_SOURCE equivalent
 
 ```zsh
-# Zsh has no BASH_SOURCE -- use these instead:
+# Zsh has no BASH_SOURCE - use these instead:
 echo ${(%):-%x}          # current script path
 echo ${(%):-%N}          # current function/script name
 echo $0                  # in scripts: script path; in functions: function name
@@ -278,7 +278,7 @@ echo ${funcstack[@]}     # full function call stack
 # Bash has <(...) which creates a FIFO (named pipe)
 # Zsh has BOTH <(...) AND =(...) which creates a temp file
 
-# =(...) is unique to zsh -- creates an actual temp file, not a FIFO
+# =(...) is unique to zsh - creates an actual temp file, not a FIFO
 # Useful when the command needs to seek (read the input more than once)
 diff =(curl -s url1) =(curl -s url2)    # compare two URLs
 wc -l =(grep pattern file)              # wc can't seek on a FIFO in some cases
@@ -309,16 +309,16 @@ The order matters. Putting things in the wrong file causes subtle issues.
 
 | File | Use for | Runs when |
 |------|---------|-----------|
-| `.zshenv` | PATH, EDITOR, LANG, env vars that scripts need | Always -- every zsh invocation |
+| `.zshenv` | PATH, EDITOR, LANG, env vars that scripts need | Always - every zsh invocation |
 | `.zprofile` | Login-only setup (rarely needed, use `.zshrc` instead) | Login shells only |
 | `.zshrc` | Aliases, functions, completions, prompt, history, setopt | Interactive shells |
 | `.zlogin` | Commands after `.zshrc` in login shells (rare) | Login shells, after .zshrc |
 | `.zlogout` | Cleanup on logout | Login shell exit |
 
 **Common mistakes:**
-- Putting PATH in `.zshrc` instead of `.zshenv` -- scripts and non-interactive shells won't see it
-- Putting interactive stuff (aliases, prompt) in `.zshenv` -- runs in every subshell and script, causing noise
-- Using both `.zprofile` and `.zshrc` for the same thing -- pick one
+- Putting PATH in `.zshrc` instead of `.zshenv` - scripts and non-interactive shells won't see it
+- Putting interactive stuff (aliases, prompt) in `.zshenv` - runs in every subshell and script, causing noise
+- Using both `.zprofile` and `.zshrc` for the same thing - pick one
 
 ---
 
@@ -331,7 +331,7 @@ The order matters. Putting things in the wrong file causes subtle issues.
 # Set in .zshrc:
 PROMPT='%F{green}%n@%m%f:%F{blue}%~%f$ '
 
-# Right-side prompt (zsh-only -- disappears when typing reaches it)
+# Right-side prompt (zsh-only - disappears when typing reaches it)
 RPROMPT='%F{242}%T%f'          # gray timestamp on the right
 RPROMPT='%(?.%F{green}ok%f.%F{red}%?%f)'  # green "ok" or red exit code
 
@@ -353,7 +353,7 @@ preexec() {
     print -Pn "\e]0;$1\a"
 }
 
-# Multiple hooks (array form -- won't clobber existing hooks)
+# Multiple hooks (array form - won't clobber existing hooks)
 autoload -Uz add-zsh-hook
 add-zsh-hook precmd my_precmd_function
 add-zsh-hook preexec my_preexec_function
@@ -466,14 +466,14 @@ fpath=(~/.zsh/functions $fpath)
 # Declare it as autoloaded
 autoload -Uz greet
 
-# Now `greet World` works -- file is loaded on first call
+# Now `greet World` works - file is loaded on first call
 ```
 
 **Key points:**
 - The file name IS the function name (no `function greet() { ... }` wrapper in the file)
 - `-U` suppresses alias expansion during loading
 - `-z` forces zsh-style autoloading (not ksh-style)
-- Functions aren't loaded until first call -- no startup cost
+- Functions aren't loaded until first call - no startup cost
 - `$fpath` is the search path for autoloaded functions (like `$PATH` for commands)
 
 ```zsh
@@ -627,7 +627,7 @@ result=${| REPLY=value }        # assign to REPLY for return value
 
 Use for: hot loops, frequently-called functions, startup scripts. Especially impactful in prompt rendering and completion functions.
 
-**Gotcha**: `${ }` (non-forking) vs `$()` (forking) -- the space after `{` is required.
+**Gotcha**: `${ }` (non-forking) vs `$()` (forking) - the space after `{` is required.
 
 ### Named references (nameref)
 
@@ -673,7 +673,7 @@ set -e
 ## 14. macOS-Specific Notes
 
 - macOS Tahoe (26.x) still ships zsh 5.9. Zsh 5.10 features (non-forking `${ }`, namerefs) are not available unless you install zsh via Homebrew.
-- `/etc/zshrc` runs `path_helper` which reorders `$PATH` -- putting `/usr/bin` before Homebrew paths. Fix: set PATH in `.zshenv` (runs before `/etc/zshrc` in non-login shells) or `.zprofile` (runs after, overrides it for login shells).
+- `/etc/zshrc` runs `path_helper` which reorders `$PATH` - putting `/usr/bin` before Homebrew paths. Fix: set PATH in `.zshenv` (runs before `/etc/zshrc` in non-login shells) or `.zprofile` (runs after, overrides it for login shells).
 - BSD coreutils differ from GNU: `sed -i ''` (not `sed -i`), `stat -f %m` (not `stat -c %Y`), `date` flags differ. When writing portable scripts, check which `coreutils` variant is available.
 
 ---

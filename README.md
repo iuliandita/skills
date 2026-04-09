@@ -8,7 +8,7 @@
 npx skills add iuliandita/skills
 ```
 
-**28 production-tested skills** -- Kubernetes, Terraform, Docker, Ansible, CI/CD, HTTP APIs, databases, AI/ML, testing, virtualization, Arch Linux, networking, MCP servers, security audits, pentesting, code review, and more.
+**29 production-tested skills** - Kubernetes, Terraform, Docker, Ansible, CI/CD, HTTP APIs, databases, AI/ML, testing, virtualization, Arch Linux, networking, MCP servers, security audits, pentesting, code review, prose audits, and more.
 
 Built on the [Agent Skills open standard](https://agentskills.io/specification). Works with any tool that supports it.
 
@@ -25,71 +25,71 @@ Built on the [Agent Skills open standard](https://agentskills.io/specification).
 
 ## Compatibility
 
-These skills follow the [Agent Skills open standard](https://agentskills.io/specification) -- the cross-vendor format for portable AI agent capabilities. Any tool that reads `SKILL.md` files can use them directly:
+These skills follow the [Agent Skills open standard](https://agentskills.io/specification) - the cross-vendor format for portable AI agent capabilities. Any tool that reads `SKILL.md` files can use them directly:
 
-- **Claude Code** -- native support
-- **OpenAI Codex CLI** -- native support
-- **Gemini CLI** -- native support
-- **Cursor** -- native support
-- **VS Code GitHub Copilot** -- native support
-- **Windsurf** -- native support
-- **OpenCode** -- native support
-- **Cline** -- native support
-- **Roo Code** -- native support
-- **Goose** -- native support
-- **Amp** -- native support
-- **Continue** -- native support
-- **Kiro CLI** -- native support
-- **Warp** -- native support
+- **Claude Code** - native support
+- **OpenAI Codex CLI** - native support
+- **Gemini CLI** - native support
+- **Cursor** - native support
+- **VS Code GitHub Copilot** - native support
+- **Windsurf** - native support
+- **OpenCode** - native support
+- **Cline** - native support
+- **Roo Code** - native support
+- **Goose** - native support
+- **Amp** - native support
+- **Continue** - native support
+- **Kiro CLI** - native support
+- **Warp** - native support
 - Any other tool that implements the Agent Skills spec
 
 No conversion, no adapters. Drop the skill folder in your tool's skills directory and it works.
 
 ## Why these skills
 
-These aren't generic prompts copy-pasted from a blog post. Every skill in this collection has been built iteratively, analyzed against real-world usage, cross-checked with official documentation, and refined through multiple passes until it actually works the way you'd expect. Each one is structured with a compact core that triggers fast and loads clean, plus dedicated reference files that get pulled in only when the agent needs the deep stuff -- compliance checklists, manifest templates, pattern libraries. No bloat in the main body, no missing context when it matters.
+These aren't generic prompts copy-pasted from a blog post. Every skill in this collection has been built iteratively, analyzed against real-world usage, cross-checked with official documentation, and refined through multiple passes until it actually works the way you'd expect. Each one is structured with a compact core that triggers fast and loads clean, plus dedicated reference files that get pulled in only when the agent needs the deep stuff - compliance checklists, manifest templates, pattern libraries. No bloat in the main body, no missing context when it matters.
 
-Every skill is researched well beyond any model's training cutoff. We're talking current CVEs, recent breaking changes, deprecation notices, and gotchas from *this week* -- not whatever the model last saw during pre-training. When Kubernetes drops a beta API, when Terraform changes provider behavior, when Docker deprecates a build flag -- these skills already know about it. Models are smart, but their knowledge has a shelf life. These skills keep it current.
+Every skill is researched well beyond any model's training cutoff. We're talking current CVEs, recent breaking changes, deprecation notices, and gotchas from *this week* - not whatever the model last saw during pre-training. When Kubernetes drops a beta API, when Terraform changes provider behavior, when Docker deprecates a build flag - these skills already know about it. Models are smart, but their knowledge has a shelf life. These skills keep it current.
 
 This is a growing collection. New skills get added as they're built, tested, and proven useful. If you're using an AI coding tool without custom skills, you're leaving a lot of capability on the table.
 
 ## NEW: Self-Improving Skills
 
-**skill-refiner** brings [Karpathy's AutoResearch](https://github.com/karpathy/autoresearch) pattern to AI skill collections. Instead of manually reviewing and improving skills one by one, skill-refiner runs an automated loop that scores, improves, and validates every skill in the collection -- then does it again.
+**skill-refiner** brings [Karpathy's AutoResearch](https://github.com/karpathy/autoresearch) pattern to AI skill collections. Instead of manually reviewing and improving skills one by one, skill-refiner runs an automated loop that scores, improves, and validates every skill in the collection - then does it again.
 
 The loop: **Score -> Improve -> Verify -> Keep or Revert -> Repeat.**
 
-- **Adaptive focus** -- first pass scores everything, then subsequent iterations zero in on the weakest skills until they're brought up to standard
-- **Three-layer evaluation** -- lint validation (structural), AI self-check (quality), and behavioral testing against synthetic tasks (does the skill actually work?)
-- **Cross-model peer review** -- if you have multiple AI harnesses installed (Claude + Codex, for example), the secondary model reviews every improvement the primary makes. Adversarial evaluation catches single-model blind spots.
-- **Karpathy gate** -- only changes that measurably improve a skill's score survive. Everything else gets reverted. No drift, no degeneration, monotonic improvement.
-- **Self-improvement** -- skill-refiner improves its own evaluation infrastructure (including itself) in a separate meta-phase with human review checkpoints
+- **Adaptive focus** - first pass scores everything, then subsequent iterations zero in on the weakest skills until they're brought up to standard
+- **Three-layer evaluation** - lint validation (structural), AI self-check (quality), and behavioral testing against synthetic tasks (does the skill actually work?)
+- **Cross-model peer review** - if you have multiple AI harnesses installed (Claude + Codex, for example), the secondary model reviews every improvement the primary makes. Adversarial evaluation catches single-model blind spots.
+- **Karpathy gate** - only changes that measurably improve a skill's score survive. Everything else gets reverted. No drift, no degeneration, monotonic improvement.
+- **Self-improvement** - skill-refiner improves its own evaluation infrastructure (including itself) in a separate meta-phase with human review checkpoints
 
-10 iterations. 28 skills. One command.
+10 iterations. 29 skills. One command.
 
 ## What's in the box
 
-28 production-tested skills covering:
+29 production-tested skills covering:
 
 ### Infrastructure & Operations
 
 | Skill | What it does |
 |-------|-------------|
 | **ansible** | Playbooks, roles, collections, Molecule testing, Ansible Vault, CIS benchmarks, compliance hardening |
-| **arch-btw** | Arch Linux and CachyOS administration -- pacman, paru, AUR, systemd, bootloader and kernel recovery |
+| **arch-btw** | Arch Linux and CachyOS administration - pacman, paru, AUR, systemd, bootloader and kernel recovery |
 | **docker** | Dockerfiles, Compose, Podman, Buildah, multi-stage builds, image signing, container hardening |
 | **kubernetes** | Manifests, Helm charts, Gateway API, Kustomize, ArgoCD, sealed secrets, PCI-DSS compliance |
-| **terraform** | Terraform/OpenTofu -- HCL patterns, module design, state management, policy-as-code, compliance |
-| **databases** | PostgreSQL, MongoDB, MySQL/MariaDB, MSSQL -- tuning, schemas, migrations, replication, connection pooling |
+| **terraform** | Terraform/OpenTofu - HCL patterns, module design, state management, policy-as-code, compliance |
+| **databases** | PostgreSQL, MongoDB, MySQL/MariaDB, MSSQL - tuning, schemas, migrations, replication, connection pooling |
 | **ci-cd** | GitHub Actions, GitLab CI/CD, Forgejo workflows, supply chain security, SHA pinning, SBOM generation |
-| **virtualization** | Proxmox VE, libvirt/QEMU/KVM, XCP-ng, VMware -- Terraform provisioning, Packer templates, cloud-init, GPU passthrough, storage backends, clustering, live migration |
+| **virtualization** | Proxmox VE, libvirt/QEMU/KVM, XCP-ng, VMware - Terraform provisioning, Packer templates, cloud-init, GPU passthrough, storage backends, clustering, live migration |
 
 ### Networking & Firewalls
 
 | Skill | What it does |
 |-------|-------------|
 | **networking** | DNS, reverse proxies, VPNs, VLANs, load balancers, WireGuard, Tailscale, nftables, BGP/OSPF |
-| **firewall-appliance** | OPNsense/pfSense firewall management via SSH -- pfctl, CrowdSec, pfBlockerNG, CARP failover, hardening |
+| **firewall-appliance** | OPNsense/pfSense firewall management via SSH - pfctl, CrowdSec, pfBlockerNG, CARP failover, hardening |
 
 ### Security & Pentesting
 
@@ -97,19 +97,20 @@ The loop: **Score -> Improve -> Verify -> Keep or Revert -> Repeat.**
 |-------|-------------|
 | **security-audit** | Vulnerability scanning, credential detection, auth review, OWASP checks, supply chain security |
 | **lockpick** | Authorized privilege escalation assessments, CTF challenges, post-exploitation, container escape |
-| **zero-day** | Vulnerability research -- deep code analysis, binary reverse engineering, patch diffing, fuzzing, variant analysis, PoC development |
+| **zero-day** | Vulnerability research - deep code analysis, binary reverse engineering, patch diffing, fuzzing, variant analysis, PoC development |
 
 ### Development & Code Quality
 
 | Skill | What it does |
 |-------|-------------|
 | **code-review** | Bug hunting, logic errors, edge cases, race conditions, resource leaks, convention violations |
-| **anti-slop** | Detects and fixes AI-generated code patterns -- over-abstraction, redundant comments, verbose defensive code |
-| **backend-api** | HTTP backend APIs -- FastAPI, Express, NestJS, REST/OpenAPI contracts, auth flows, versioning, pagination, idempotency |
-| **testing** | Unit, integration, E2E, accessibility, and performance tests -- Vitest, Jest, Playwright, pytest, Go testing, cargo test, TDD workflows, mocking strategies, CI test infrastructure |
+| **anti-slop** | Detects and fixes AI-generated code patterns - over-abstraction, redundant comments, verbose defensive code |
+| **anti-ai-prose** | Audits writing for AI tells - vocabulary (delve, tapestry), syntax (negative parallelism, tricolons), tone (travel-guide voice, vague attribution), formatting (em-dash abuse). Covers docs, READMEs, wikis, PRs, emails, slides, creative writing |
+| **backend-api** | HTTP backend APIs - FastAPI, Express, NestJS, REST/OpenAPI contracts, auth flows, versioning, pagination, idempotency |
+| **testing** | Unit, integration, E2E, accessibility, and performance tests - Vitest, Jest, Playwright, pytest, Go testing, cargo test, TDD workflows, mocking strategies, CI test infrastructure |
 | **git** | Commits, branches, hooks, signing, multi-forge workflows (GitHub, GitLab, Forgejo), release management |
-| **command-prompt** | Shell scripting across zsh, bash, POSIX sh, fish, nushell -- dotfiles, completions, one-liners |
-| **mcp** | MCP server development -- protocol patterns, transport, auth, input validation, injection prevention |
+| **command-prompt** | Shell scripting across zsh, bash, POSIX sh, fish, nushell - dotfiles, completions, one-liners |
+| **mcp** | MCP server development - protocol patterns, transport, auth, input validation, injection prevention |
 | **ai-ml** | LLM integrations, RAG pipelines, agent systems, embeddings, evaluation harnesses, local inference, fine-tuning, structured output, tool use, cost optimization, safety guardrails |
 | **full-review** | Orchestrates code-review + anti-slop + security-audit + update-docs in one pass |
 
@@ -117,22 +118,22 @@ The loop: **Score -> Improve -> Verify -> Keep or Revert -> Repeat.**
 
 | Skill | What it does |
 |-------|-------------|
-| **prompt-generator** | Turn scattered ideas into structured LLM prompts -- system prompts, templates, prompt engineering |
-| **roadmap** | Keep a gitignored `ROADMAP.md` current -- capture ideas, shipped work, priorities, and competitor signals |
-| **skill-creator** | Create, review, audit, and optimize AI tool skills -- consistency checks, overlap detection |
-| **skill-refiner** | Self-improving loop -- iterative quality sweeps with cross-model review, inspired by Karpathy's AutoResearch |
-| **update-docs** | Post-session documentation sweep -- captures gotchas, syncs instruction files, trims bloat |
+| **prompt-generator** | Turn scattered ideas into structured LLM prompts - system prompts, templates, prompt engineering |
+| **roadmap** | Keep a gitignored `ROADMAP.md` current - capture ideas, shipped work, priorities, and competitor signals |
+| **skill-creator** | Create, review, audit, and optimize AI tool skills - consistency checks, overlap detection |
+| **skill-refiner** | Self-improving loop - iterative quality sweeps with cross-model review, inspired by Karpathy's AutoResearch |
+| **update-docs** | Post-session documentation sweep - captures gotchas, syncs instruction files, trims bloat |
 
 ## How they're built
 
 Each skill follows the [Agent Skills specification](https://agentskills.io/specification):
 
-- **`SKILL.md` with YAML frontmatter** -- `name`, `description`, `license`, optional `compatibility` for environment requirements, and `metadata` for custom fields. The frontmatter is what agents read at startup to decide which skills to activate.
-- **Compact body** (target under 500 lines, 600 hard max) -- the core instructions that load into every conversation. Kept lean so it doesn't eat your context window.
-- **Reference files** (`references/` directory) -- detailed pattern libraries, compliance checklists, manifest templates. The agent reads these on-demand when the task requires depth. You get expert-level detail without paying the token cost upfront.
-- **Argument hints** (`metadata.argument_hint`) -- tells agents what arguments a skill expects when invoked (e.g., `<file-or-pattern>`, `[iterations]`). Angle brackets for required, square brackets for optional.
-- **Precise trigger descriptions** -- optimized so the right tool activates the right skill at the right time. Every trigger keyword is tested and tuned to minimize false positives and missed activations.
-- **Cross-skill awareness** -- skills know about each other. The security-audit skill knows not to step on lockpick's territory. Docker knows to defer to Kubernetes for cluster networking. No overlapping, no conflicts.
+- **`SKILL.md` with YAML frontmatter** - `name`, `description`, `license`, optional `compatibility` for environment requirements, and `metadata` for custom fields. The frontmatter is what agents read at startup to decide which skills to activate.
+- **Compact body** (target under 500 lines, 600 hard max) - the core instructions that load into every conversation. Kept lean so it doesn't eat your context window.
+- **Reference files** (`references/` directory) - detailed pattern libraries, compliance checklists, manifest templates. The agent reads these on-demand when the task requires depth. You get expert-level detail without paying the token cost upfront.
+- **Argument hints** (`metadata.argument_hint`) - tells agents what arguments a skill expects when invoked (e.g., `<file-or-pattern>`, `[iterations]`). Angle brackets for required, square brackets for optional.
+- **Precise trigger descriptions** - optimized so the right tool activates the right skill at the right time. Every trigger keyword is tested and tuned to minimize false positives and missed activations.
+- **Cross-skill awareness** - skills know about each other. The security-audit skill knows not to step on lockpick's territory. Docker knows to defer to Kubernetes for cluster networking. No overlapping, no conflicts.
 
 ## Install
 

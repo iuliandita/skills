@@ -1,6 +1,6 @@
 # Infrastructure as Code Bug Patterns
 
-Bug patterns specific to Terraform, Ansible, Helm, and Kubernetes manifests. Focused on correctness -- not style (see anti-slop) or security (see security-audit).
+Bug patterns specific to Terraform, Ansible, Helm, and Kubernetes manifests. Focused on correctness - not style (see anti-slop) or security (see security-audit).
 
 ---
 
@@ -11,7 +11,7 @@ Bug patterns specific to Terraform, Ansible, Helm, and Kubernetes manifests. Foc
 **Detect:**
 - Missing `depends_on` when there's an implicit ordering requirement that Terraform can't infer (e.g., IAM policy must exist before the resource that uses it, but they're linked by ARN string, not reference)
 - Wrong `depends_on` creating unnecessary serial execution
-- `data` sources that depend on resources created in the same apply -- data sources are read during plan, so the resource doesn't exist yet
+- `data` sources that depend on resources created in the same apply - data sources are read during plan, so the resource doesn't exist yet
 - `count` or `for_each` depending on a value that isn't known until apply (e.g., output of another resource)
 
 **Example:**
@@ -35,7 +35,7 @@ resource "aws_instance" "worker" {
 ### Lifecycle Bugs
 
 **Detect:**
-- `create_before_destroy` on resources that have unique constraints (names, ports, IPs) -- the new resource can't be created while the old one exists
+- `create_before_destroy` on resources that have unique constraints (names, ports, IPs) - the new resource can't be created while the old one exists
 - Missing `create_before_destroy` on resources behind a load balancer (causes downtime)
 - `prevent_destroy` on resources that need to be replaced during upgrades
 - `ignore_changes` hiding drift that should be corrected (legitimate use: external automation managing a field)
@@ -51,8 +51,8 @@ resource "aws_instance" "worker" {
 ### Conditional Resource Bugs
 
 **Detect:**
-- `count = var.enabled ? 1 : 0` on a resource with dependents that don't check `length(resource.name)` -- dependents crash when count is 0
-- `for_each` on a set that can be empty -- all downstream references break
+- `count = var.enabled ? 1 : 0` on a resource with dependents that don't check `length(resource.name)` - dependents crash when count is 0
+- `for_each` on a set that can be empty - all downstream references break
 - Splat expressions `resource.name[*].id` vs `resource.name.*.id` behavior differences
 
 ### Provider & Module Versioning
@@ -96,7 +96,7 @@ Ansible has 22+ levels of variable precedence. Common traps:
 **Detect:**
 - `set_fact` overriding role defaults unexpectedly (set_fact has very high precedence)
 - `vars` in a play overridden by `-e` / `--extra-vars` (extra vars win everything)
-- Role defaults (`defaults/main.yml`) expected to override inventory vars (they don't -- role defaults are the lowest precedence)
+- Role defaults (`defaults/main.yml`) expected to override inventory vars (they don't - role defaults are the lowest precedence)
 - `group_vars` and `host_vars` precedence when a host is in multiple groups
 
 ### Idempotency Violations
@@ -115,7 +115,7 @@ The whole point of Ansible is idempotency. Tasks that aren't idempotent break on
 **Detect:**
 - `when: var` where `var` is undefined (error) vs `when: var is defined and var` (safe)
 - `when: result.rc == 0` without `ignore_errors: true` on the registered task (task fails before `when` is evaluated)
-- Bare variable in `when`: `when: my_var` -- if `my_var` is the string `"false"`, Jinja2 treats it as truthy (it's a non-empty string). Use `when: my_var | bool`
+- Bare variable in `when`: `when: my_var` - if `my_var` is the string `"false"`, Jinja2 treats it as truthy (it's a non-empty string). Use `when: my_var | bool`
 - `when` conditions that reference `item` outside a loop context
 
 ### Delegation & Connection Bugs
@@ -123,7 +123,7 @@ The whole point of Ansible is idempotency. Tasks that aren't idempotent break on
 **Detect:**
 - `delegate_to: localhost` but the task needs remote-host facts (facts are from the delegated host)
 - `local_action` without considering that it runs as the Ansible user, not the remote user
-- `become: true` with `delegate_to` -- become applies on the delegated host, not the original
+- `become: true` with `delegate_to` - become applies on the delegated host, not the original
 - Connection plugins not matching the target (e.g., `ssh` for a network device that needs `network_cli`)
 
 ---
@@ -138,7 +138,7 @@ Helm templates are Go templates. Errors only surface at deploy time if `helm tem
 - Missing `required` on values that must be provided (chart installs with empty/nil values, k8s objects are malformed)
 - `{{ .Values.foo.bar }}` without `{{ if .Values.foo }}` guard (nil pointer if `foo` is not set)
 - Wrong indentation with `nindent` / `indent` (YAML is whitespace-sensitive, and template indentation doesn't match the output indentation)
-- `toYaml` output not indented properly: `{{ toYaml .Values.resources | nindent 12 }}` -- wrong nindent value breaks the manifest
+- `toYaml` output not indented properly: `{{ toYaml .Values.resources | nindent 12 }}` - wrong nindent value breaks the manifest
 - Accessing `.Release.Namespace` in a helper that's called from a different context
 
 **Example:**
@@ -155,9 +155,9 @@ resources:
 ### Value Type Mismatches
 
 **Detect:**
-- String expected but number provided (e.g., `port: 8080` vs `port: "8080"` -- YAML parses unquoted numbers as integers)
+- String expected but number provided (e.g., `port: 8080` vs `port: "8080"` - YAML parses unquoted numbers as integers)
 - Boolean strings: `"true"` vs `true` in YAML (Helm treats them differently)
-- `null` vs empty string vs not-set -- all behave differently in Go templates
+- `null` vs empty string vs not-set - all behave differently in Go templates
 - Multiline strings in values (need `|` or `>` block scalars, raw strings break)
 
 ### Chart Dependency Issues
@@ -215,7 +215,7 @@ startupProbe:              # use startupProbe for slow starters
 
 **Detect:**
 - Memory limit equal to request (no burst room, OOMKilled on any spike)
-- CPU limit set too low (causes throttling, which looks like slowness not errors -- hard to debug)
+- CPU limit set too low (causes throttling, which looks like slowness not errors - hard to debug)
 - No resource requests (scheduler can't make good decisions, pods get evicted first)
 - Ephemeral storage not set (container logs / tmp files can fill the node)
 - ResourceQuota in namespace but pod doesn't set requests/limits (pod rejected)
@@ -253,7 +253,7 @@ startupProbe:              # use startupProbe for slow starters
 ### Application Bugs
 
 **Detect:**
-- `targetRevision: HEAD` on a production Application (tracks latest commit, no pinning -- any push deploys immediately)
+- `targetRevision: HEAD` on a production Application (tracks latest commit, no pinning - any push deploys immediately)
 - `syncPolicy.automated.prune: true` on production without understanding the blast radius (deletes resources removed from git)
 - `syncPolicy.automated.selfHeal: true` combined with operators that modify resources (infinite reconciliation loop)
 - Missing `ignoreDifferences` for fields managed by controllers (e.g., replica count managed by HPA, annotations added by admission webhooks)
@@ -261,7 +261,7 @@ startupProbe:              # use startupProbe for slow starters
 
 **Example:**
 ```yaml
-# bug: auto-sync with prune on production -- deleting a file from git
+# bug: auto-sync with prune on production - deleting a file from git
 # immediately deletes the resource in prod
 apiVersion: argoproj.io/v1alpha1
 kind: Application
@@ -333,7 +333,7 @@ ARG VERSION=latest
 ### Runtime Bugs
 
 **Detect:**
-- `ENTRYPOINT` as a string (shell form) instead of array (exec form) -- PID 1 is shell, signals not forwarded, `docker stop` waits 10s then SIGKILLs
+- `ENTRYPOINT` as a string (shell form) instead of array (exec form) - PID 1 is shell, signals not forwarded, `docker stop` waits 10s then SIGKILLs
 - `CMD` providing defaults that conflict with `ENTRYPOINT` (common when both are set)
 - Missing `EXPOSE` (documentation issue, but some orchestrators rely on it)
 - `USER root` without switching back to non-root (container runs as root in production)

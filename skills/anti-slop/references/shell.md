@@ -51,7 +51,7 @@ Also: `echo "$var" | command` when a here-string works: `command <<< "$var"`
 # slop: manual error checking with set -e already active
 set -euo pipefail
 result=$(some_command)
-if [ $? -ne 0 ]; then  # redundant -- set -e already handles this
+if [ $? -ne 0 ]; then  # redundant - set -e already handles this
     echo "Failed"
     exit 1
 fi

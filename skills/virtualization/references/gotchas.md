@@ -57,14 +57,14 @@ running" for the first few minutes.
 ### 100% data_percent = total I/O failure
 
 **Problem:** When an LVM thin pool's data space reaches 100%, ALL VMs on that pool
-experience I/O failure simultaneously. No graceful degradation, no warnings to the guest --
+experience I/O failure simultaneously. No graceful degradation, no warnings to the guest -
 just hung I/O and frozen VMs.
 
 **Recovery:**
-1. `lvextend -L +50G <vg>/<thin_pool>` -- add space to the thin pool
+1. `lvextend -L +50G <vg>/<thin_pool>` - add space to the thin pool
 2. If no space available: live-migrate VMs to another node/pool
-3. After extending: `qm stop <vmid>` then `qm start <vmid>` (not reboot -- QEMU needs restart)
-4. `qm reset` does NOT work here -- the QEMU disk backend needs to re-detect the pool state
+3. After extending: `qm stop <vmid>` then `qm start <vmid>` (not reboot - QEMU needs restart)
+4. `qm reset` does NOT work here - the QEMU disk backend needs to re-detect the pool state
 
 **Prevention:**
 - Monitor `data_percent` (not filesystem usage inside VMs!)
@@ -100,9 +100,9 @@ fills up, the pool becomes read-only. Monitor `metadata_percent` alongside `data
 host. This works well on recent Debian/Ubuntu with the balloon driver. It does NOT work
 reliably on:
 
-- **Alpine Linux** -- can't hotplug DIMMs. Balloon changes need full power-cycle (stop/start)
-- **FreeBSD** -- balloon driver support varies by version
-- **Older kernels** -- balloon driver may not handle memory pressure correctly
+- **Alpine Linux** - can't hotplug DIMMs. Balloon changes need full power-cycle (stop/start)
+- **FreeBSD** - balloon driver support varies by version
+- **Older kernels** - balloon driver may not handle memory pressure correctly
 
 **Symptoms:** VM becomes unresponsive, OOM kills inside guest, guest hangs when balloon
 deflates (host trying to reclaim memory).
@@ -123,7 +123,7 @@ stop/start cycle.
 ### Hugepages and ballooning are mutually exclusive
 
 Hugepages-backed memory can't be ballooned. If you enable hugepages on a VM, the balloon
-device has no effect. This isn't a bug -- hugepages are pinned physical memory by definition.
+device has no effect. This isn't a bug - hugepages are pinned physical memory by definition.
 
 ---
 
@@ -166,9 +166,9 @@ Redis, in-memory caches), this pause can be longer.
 source has AVX-512 and the target doesn't, migration fails.
 
 **Fix:** Use a baseline CPU type for VMs that need migration across heterogeneous hardware:
-- `x86-64-v2-AES` -- modern baseline (SSE4.2 + AES-NI)
-- `x86-64-v3` -- includes AVX2
-- `host` -- only for same-model CPU clusters
+- `x86-64-v2-AES` - modern baseline (SSE4.2 + AES-NI)
+- `x86-64-v3` - includes AVX2
+- `host` - only for same-model CPU clusters
 
 ---
 
@@ -235,7 +235,7 @@ bantime = 3600
 **Problem:** The `openipmi` service starts on boot and fails on hardware without a BMC/IPMI
 controller. Generates NodeSystemdServiceFailed alerts in monitoring.
 
-**Fix:** `systemctl mask openipmi` -- masking survives package updates, disabling doesn't.
+**Fix:** `systemctl mask openipmi` - masking survives package updates, disabling doesn't.
 
 ### Proxmox cluster and quorum
 

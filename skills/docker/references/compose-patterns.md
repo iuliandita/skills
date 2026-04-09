@@ -251,9 +251,9 @@ docker compose watch
 ```
 
 Actions:
-- `sync` -- copies changed files without restart (hot-reload runtimes)
-- `rebuild` -- full image rebuild + container recreation
-- `sync+restart` -- copies files and restarts the container process
+- `sync` - copies changed files without restart (hot-reload runtimes)
+- `rebuild` - full image rebuild + container recreation
+- `sync+restart` - copies files and restarts the container process
 
 ---
 
@@ -406,7 +406,7 @@ deploy:
       cpus: "0.25"        # guaranteed minimum
 ```
 
-**Note**: `deploy.resources` is supported in Docker Compose v2+ (standalone mode). The legacy Python `docker-compose` v1 silently ignores `deploy:` entirely -- resource limits won't apply. Verify with `docker compose version` (not `docker-compose --version`).
+**Note**: `deploy.resources` is supported in Docker Compose v2+ (standalone mode). The legacy Python `docker-compose` v1 silently ignores `deploy:` entirely - resource limits won't apply. Verify with `docker compose version` (not `docker-compose --version`).
 
 Rough sizing guide:
 
@@ -474,7 +474,7 @@ Both `build:` and `image:` on the same service is intentional: Compose builds th
 
 ### LXC / Proxmox gotchas
 - Docker in unprivileged LXC: needs `nesting=1` and `keyctl=1` features on the LXC
-- `tmpfs` mounts may fail in unprivileged LXC -- use bind mounts instead
+- `tmpfs` mounts may fail in unprivileged LXC - use bind mounts instead
 - cgroup v2 required (Proxmox 7+ default); some old images need cgroup v1
 - GPU passthrough: configure in LXC `.conf` (`lxc.cgroup2.devices.allow`), not just Compose
 

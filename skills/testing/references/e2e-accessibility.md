@@ -99,11 +99,11 @@ test.describe("Checkout flow", () => {
 
 Priority order (matches Testing Library philosophy):
 
-1. **Role**: `page.getByRole("button", { name: "Submit" })` -- accessible, resilient
-2. **Label**: `page.getByLabel("Email")` -- form elements
-3. **Text**: `page.getByText("Welcome back")` -- visible content
-4. **Placeholder**: `page.getByPlaceholder("Search...")` -- fallback
-5. **Test ID**: `page.getByTestId("checkout-form")` -- last resort
+1. **Role**: `page.getByRole("button", { name: "Submit" })` - accessible, resilient
+2. **Label**: `page.getByLabel("Email")` - form elements
+3. **Text**: `page.getByText("Welcome back")` - visible content
+4. **Placeholder**: `page.getByPlaceholder("Search...")` - fallback
+5. **Test ID**: `page.getByTestId("checkout-form")` - last resort
 
 Never use CSS selectors (`.btn-primary`), XPath, or DOM structure. Those are the #1 cause of brittle E2E tests.
 
@@ -127,14 +127,14 @@ await Promise.all([
 ]);
 ```
 
-**Never use `page.waitForTimeout()`** -- it's `sleep()` by another name. If you genuinely need a delay (animation settling, third-party widget loading), document why and use the shortest possible duration.
+**Never use `page.waitForTimeout()`** - it's `sleep()` by another name. If you genuinely need a delay (animation settling, third-party widget loading), document why and use the shortest possible duration.
 
 ### Authentication
 
 Don't log in through the UI for every test. Use `storageState` to save and reuse auth:
 
 ```typescript
-// auth.setup.ts -- runs once before all tests
+// auth.setup.ts - runs once before all tests
 import { test as setup } from "@playwright/test";
 
 setup("authenticate", async ({ page }) => {
@@ -179,7 +179,7 @@ test("POST /api/users validates input", async ({ request }) => {
 
 ## Cypress (secondary)
 
-Use Cypress when the project already uses it. Don't introduce Cypress into a new project -- Playwright is faster, has better parallel support, and tests all browsers.
+Use Cypress when the project already uses it. Don't introduce Cypress into a new project - Playwright is faster, has better parallel support, and tests all browsers.
 
 Key differences from Playwright:
 - Cypress runs in the browser process (same-origin only without workarounds)
@@ -314,7 +314,7 @@ test("modal traps focus", async ({ page }) => {
   const focused = page.locator(":focus");
   await expect(focused).toBeAttached();
 
-  // Tab to the last element, then tab again -- should cycle back
+  // Tab to the last element, then tab again - should cycle back
   for (let i = 0; i < 10; i++) {
     await page.keyboard.press("Tab");
   }
@@ -356,7 +356,7 @@ test("button variants match snapshot", async ({ page }) => {
 
 ### Screenshot comparison tips
 
-- **Mask dynamic content**: dates, avatars, ads -- anything that changes between runs.
+- **Mask dynamic content**: dates, avatars, ads - anything that changes between runs.
 ```typescript
 await expect(page).toHaveScreenshot({
   mask: [page.getByTestId("timestamp"), page.getByTestId("avatar")],
@@ -365,7 +365,7 @@ await expect(page).toHaveScreenshot({
 - **Consistent viewport**: set in `playwright.config.ts`, not per-test.
 - **Font loading**: wait for `networkidle` or explicitly wait for font load. Font rendering differences are the #1 cause of false positives.
 - **CI vs local**: screenshots may differ between OS/GPU. Generate baseline screenshots in CI, not locally. Use `--update-snapshots` in CI to regenerate.
-- **Threshold**: `maxDiffPixels` or `maxDiffPixelRatio` -- start permissive, tighten as you gain confidence.
+- **Threshold**: `maxDiffPixels` or `maxDiffPixelRatio` - start permissive, tighten as you gain confidence.
 
 ### Storybook + visual regression
 
@@ -462,7 +462,7 @@ e2e:
 Fail the build on accessibility violations:
 
 ```typescript
-// a11y.spec.ts -- run as a separate CI job or as part of E2E
+// a11y.spec.ts - run as a separate CI job or as part of E2E
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 

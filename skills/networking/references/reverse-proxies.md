@@ -29,7 +29,7 @@ api.example.com {
 ```
 ws.example.com {
   reverse_proxy localhost:8090
-  # WebSocket works automatically -- Caddy handles Upgrade headers
+  # WebSocket works automatically - Caddy handles Upgrade headers
 }
 ```
 
@@ -139,7 +139,7 @@ location /ws {
 }
 ```
 
-### L4 (TCP/UDP) proxying -- stream module
+### L4 (TCP/UDP) proxying - stream module
 
 ```nginx
 stream {

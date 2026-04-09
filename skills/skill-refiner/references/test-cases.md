@@ -134,7 +134,7 @@ Quality signals:
 **Test 1: Bug detection**
 Prompt: "Review this Go function:\n\nfunc processItems(items []Item) error {\n    var wg sync.WaitGroup\n    var err error\n    for _, item := range items {\n        wg.Add(1)\n        go func() {\n            defer wg.Done()\n            if e := process(item); e != nil {\n                err = e\n            }\n        }()\n    }\n    wg.Wait()\n    return err\n}"
 Quality signals:
-- Identifies closure variable capture (pre-Go 1.22 bug) or recognizes Go 1.22+ per-iteration semantics -- either way, demonstrates awareness of the issue
+- Identifies closure variable capture (pre-Go 1.22 bug) or recognizes Go 1.22+ per-iteration semantics - either way, demonstrates awareness of the issue
 - Identifies data race on err (concurrent writes without mutex)
 - Suggests errgroup or mutex-based pattern
 - Does not over-report style issues
@@ -373,7 +373,7 @@ Quality signals:
 - Flags event-stream 3.3.6 (known malicious version, 2018 supply chain attack)
 - Flags lodash 2.4.0 (critically outdated, multiple prototype pollution CVEs)
 - Flags left-pad (notorious fragility/removal incident, trivial to inline)
-- Flags colors (maintainer sabotage history -- 1.4.0 predates the incident but library is supply chain risk)
+- Flags colors (maintainer sabotage history - 1.4.0 predates the incident but library is supply chain risk)
 - Recommends npm audit and pinning exact versions for production
 
 ### skill-refiner

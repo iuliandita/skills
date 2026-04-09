@@ -43,7 +43,7 @@ became mandatory March 31, 2025. Ansible enforces configuration-level controls o
 ### PCI MPoC
 
 MPoC (Mobile Payments on COTS) backend infrastructure falls under full PCI-DSS scope.
-The A&M (Attestation & Monitoring) backend is a standard server workload -- same Ansible
+The A&M (Attestation & Monitoring) backend is a standard server workload - same Ansible
 hardening controls as any CDE system. No MPoC-specific Ansible requirements beyond PCI-DSS 4.0.
 
 Key A&M backend considerations for Ansible:
@@ -69,15 +69,15 @@ NIST, CMMC, and FedRAMP requirements.
 | RHEL 7 | Yes | Yes |
 | RHEL 8 | Yes | Yes |
 | RHEL 9 | Yes | Yes |
-| Ubuntu 18.04 | Yes | -- |
+| Ubuntu 18.04 | Yes | - |
 | Ubuntu 20.04 | Yes | Yes |
-| Ubuntu 22.04 | Yes | -- |
-| Ubuntu 24.04 | Yes | -- |
-| CentOS 7/8/Stream | Yes | -- |
-| Amazon Linux 2/2023 | Yes | -- |
+| Ubuntu 22.04 | Yes | - |
+| Ubuntu 24.04 | Yes | - |
+| CentOS 7/8/Stream | Yes | - |
+| Amazon Linux 2/2023 | Yes | - |
 | Windows Server 2019 | Yes | Yes |
 | Windows Server 2022 | Yes | Yes |
-| Windows Server 2025 | Yes | -- |
+| Windows Server 2025 | Yes | - |
 
 New benchmarks merged within 2-4 weeks of CIS/STIG release.
 
@@ -86,7 +86,7 @@ ansible-lockdown nor `devsec.hardening` officially support it. Alpine's minimal 
 (musl, BusyBox, no systemd, no PAM by default) makes it inherently hardened, but for formal
 compliance you need a custom hardening role. Alternatives: run `lynis audit system` (supports
 Alpine) for an auditable checklist, apply `devsec.hardening.ssh_hardening` (partially works
-since sshd config is distro-agnostic -- test it), and handle the rest with targeted tasks
+since sshd config is distro-agnostic - test it), and handle the rest with targeted tasks
 (sysctl, iptables/nftables, service minimization via `rc-update del`).
 
 ### Usage
@@ -151,8 +151,8 @@ roles:
 ### SSH hardening (template-based)
 
 ```jinja2
-{# sshd_config.j2 -- PCI-DSS compliant SSH configuration #}
-# Managed by Ansible -- do not edit manually
+{# sshd_config.j2 - PCI-DSS compliant SSH configuration #}
+# Managed by Ansible - do not edit manually
 # PCI-DSS 4.0: Req 2.2.7 (encrypted non-console admin), Req 8 (authentication)
 
 # Protocol 2 is the only option since OpenSSH 7.6+ (directive removed).
@@ -220,7 +220,7 @@ Banner /etc/ssh/banner
 ```
 
 ```jinja2
-{# audit.rules.j2 -- PCI-DSS 4.0 Req 10.2 audit rules #}
+{# audit.rules.j2 - PCI-DSS 4.0 Req 10.2 audit rules #}
 # Managed by Ansible
 
 # Record all authentication events (Req 10.2.1.4, 10.2.1.5)
@@ -293,7 +293,7 @@ Banner /etc/ssh/banner
   become: true
 ```
 
-### AIDE (FIM -- PCI-DSS Req 11.5)
+### AIDE (FIM - PCI-DSS Req 11.5)
 
 ```yaml
 - name: Install AIDE
@@ -400,13 +400,13 @@ A meta-playbook to verify that hardening controls are in place:
   gather_facts: true
 
   tasks:
-    - name: "Req 2.2.7 -- Verify SSH hardening"
+    - name: "Req 2.2.7 - Verify SSH hardening"
       ansible.builtin.command:
         cmd: sshd -T
       register: sshd_config
       changed_when: false
 
-    - name: "Req 2.2.7 -- Assert SSH is properly configured"
+    - name: "Req 2.2.7 - Assert SSH is properly configured"
       ansible.builtin.assert:
         that:
           - "'permitrootlogin no' in sshd_config.stdout"
@@ -416,46 +416,46 @@ A meta-playbook to verify that hardening controls are in place:
           - "'protocol 2' in sshd_config.stdout or 'protocol' not in sshd_config.stdout"
         fail_msg: "SSH hardening check FAILED"
 
-    - name: "Req 10.2 -- Verify auditd is running"
+    - name: "Req 10.2 - Verify auditd is running"
       ansible.builtin.systemd:
         name: auditd
       register: auditd_status
       changed_when: false
 
-    - name: "Req 10.2 -- Assert auditd is active"
+    - name: "Req 10.2 - Assert auditd is active"
       ansible.builtin.assert:
         that:
           - auditd_status.status.ActiveState == "active"
 
-    - name: "Req 10.6 -- Verify NTP is configured"
+    - name: "Req 10.6 - Verify NTP is configured"
       ansible.builtin.systemd:
         name: "{{ 'chronyd' if ansible_os_family == 'RedHat' else 'chrony' }}"
       register: ntp_status
       changed_when: false
 
-    - name: "Req 10.6 -- Assert NTP is active"
+    - name: "Req 10.6 - Assert NTP is active"
       ansible.builtin.assert:
         that:
           - ntp_status.status.ActiveState == "active"
 
-    - name: "Req 11.5 -- Verify AIDE is installed"
+    - name: "Req 11.5 - Verify AIDE is installed"
       ansible.builtin.stat:
         path: /var/lib/aide/aide.db.gz
       register: aide_db
 
-    - name: "Req 11.5 -- Assert AIDE database exists"
+    - name: "Req 11.5 - Assert AIDE database exists"
       ansible.builtin.assert:
         that:
           - aide_db.stat.exists
-        fail_msg: "AIDE database not found -- FIM not initialized"
+        fail_msg: "AIDE database not found - FIM not initialized"
 
-    - name: "Req 1 -- Verify firewall is active"
+    - name: "Req 1 - Verify firewall is active"
       ansible.builtin.systemd:
         name: "{{ 'firewalld' if ansible_os_family == 'RedHat' else 'ufw' }}"
       register: firewall_status
       changed_when: false
 
-    - name: "Req 1 -- Assert firewall is active"
+    - name: "Req 1 - Assert firewall is active"
       ansible.builtin.assert:
         that:
           - firewall_status.status.ActiveState == "active"

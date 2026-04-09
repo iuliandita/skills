@@ -18,7 +18,7 @@ metadata:
 # Browse: Token-Efficient Web Browsing
 
 Guide AI agents through web browsing tasks using the cheapest tool that gets the job done.
-Every browsing action has a token cost -- this skill minimizes it through progressive disclosure,
+Every browsing action has a token cost - this skill minimizes it through progressive disclosure,
 smart format selection, and backend-aware strategies.
 
 **Target versions** (April 2026):
@@ -37,12 +37,12 @@ smart format selection, and backend-aware strategies.
 
 ## When NOT to use
 
-- E2E test automation, test writing, or test debugging -- use **testing**
-- Building or debugging MCP servers (including browser MCP servers) -- use **mcp**
-- Network configuration, DNS, reverse proxies -- use **networking**
-- Fetching API endpoints or REST calls -- use curl/fetch directly
-- Static file downloads -- use curl or wget
-- Web scraping specifically for RAG pipelines or training data -- use **ai-ml** for the pipeline
+- E2E test automation, test writing, or test debugging - use **testing**
+- Building or debugging MCP servers (including browser MCP servers) - use **mcp**
+- Network configuration, DNS, reverse proxies - use **networking**
+- Fetching API endpoints or REST calls - use curl/fetch directly
+- Static file downloads - use curl or wget
+- Web scraping specifically for RAG pipelines or training data - use **ai-ml** for the pipeline
 
 ---
 
@@ -78,10 +78,10 @@ the task isn't present, skip straight to the next tier rather than failing mid-w
 
 ### Step 1: Assess the task
 
-Before touching any tool, answer these in order -- each answer narrows the tool choice:
+Before touching any tool, answer these in order - each answer narrows the tool choice:
 
 1. **Read or interact?** Read-only -> skip to Step 2. Interactive -> go to Step 3/4.
-2. **Static or dynamic?** View page source or check URL patterns -- if the content is
+2. **Static or dynamic?** View page source or check URL patterns - if the content is
    in the HTML, it's static. SPA frameworks (React, Vue, Angular) need JS rendering.
 3. **Single page or multi-step?** Multi-step flows need session persistence (MCP or serve mode).
 4. **What output format?** Markdown for human reading, structured data / JSON-LD for extraction,
@@ -130,7 +130,7 @@ Navigate first, then extract using the cheapest format:
 **Following links to find data:** if the initial extraction doesn't contain the target content
 (e.g., the page uses images or links to a separate document), extract the page's links first
 using the `links` tool or markdown output, identify the relevant link, and fetch that instead.
-Don't re-fetch the whole page -- follow the specific link to the actual data.
+Don't re-fetch the whole page - follow the specific link to the actual data.
 
 **With agent-browser CLI:**
 ```bash
@@ -151,18 +151,18 @@ lightpanda fetch --dump markdown --wait-until networkidle <url>      # dynamic c
 
 For multi-step flows (login, form submission, navigation):
 
-1. **Get interactive elements first** -- use `interactive_elements` or `semantic_tree` to find
+1. **Get interactive elements first** - use `interactive_elements` or `semantic_tree` to find
    targets without loading the full DOM
-2. **Act on specific elements** -- click, fill, select using element identifiers
-3. **Re-extract after each action** -- page state changes; get a fresh view
-4. **Wait for navigation** -- after clicks that trigger page loads, wait before extracting
+2. **Act on specific elements** - click, fill, select using element identifiers
+3. **Re-extract after each action** - page state changes; get a fresh view
+4. **Wait for navigation** - after clicks that trigger page loads, wait before extracting
 
 **MCP interaction pattern:**
 ```
 1. goto(url)
-2. interactive_elements()       -- find what to click/fill
+2. interactive_elements()       - find what to click/fill
 3. click(id) or fill(id, value)
-4. semantic_tree()              -- verify state changed
+4. semantic_tree()              - verify state changed
 5. Repeat 2-4 as needed
 ```
 
@@ -179,7 +179,7 @@ lightpanda fetch --dump markdown --wait-selector "main" <url>
 lightpanda fetch --dump markdown --wait-selector ".content" <url>
 ```
 If the full page was already fetched, extract the relevant section from the markdown output
-rather than re-fetching -- search for headings or known section titles.
+rather than re-fetching - search for headings or known section titles.
 
 **Multi-step workflows**:
 - Cache extraction results rather than re-fetching the same page
@@ -188,7 +188,7 @@ rather than re-fetching -- search for headings or known section titles.
 
 ### Step 6: Handle failures
 
-When a tool fails, escalate to the next tier -- don't retry the same tool blindly.
+When a tool fails, escalate to the next tier - don't retry the same tool blindly.
 
 | Failure | Likely cause | Action |
 |---------|-------------|--------|
@@ -198,7 +198,7 @@ When a tool fails, escalate to the next tier -- don't retry the same tool blindl
 | Connection refused | Wrong port / service down | Verify URL, check if site requires VPN or local network |
 | SSL error | Cert issue or MITM | Check cert validity, do not bypass without user confirmation |
 
-**After login failures**: re-check the form field selectors -- SPAs frequently change element IDs
+**After login failures**: re-check the form field selectors - SPAs frequently change element IDs
 between deploys. Use `interactive_elements` to get fresh selectors rather than hardcoding.
 
 **Saving fetched content**: for file downloads or large extractions, write results to a local
@@ -219,20 +219,20 @@ use MCP `evaluate` to trigger the browser's native download.
 Start with the cheapest representation. Escalate only when insufficient.
 
 ```
-Level 0: URL only (0 tokens)           -- sometimes the URL itself answers the question
-Level 1: Structured data (~100-300)     -- metadata, navigation links
-Level 2: Semantic tree (~200-500)       -- page structure, interactive elements
-Level 3: Markdown (~500-2000)           -- readable content
-Level 4: Full HTML (~5000-50000)        -- complex parsing, last resort
+Level 0: URL only (0 tokens)           - sometimes the URL itself answers the question
+Level 1: Structured data (~100-300)     - metadata, navigation links
+Level 2: Semantic tree (~200-500)       - page structure, interactive elements
+Level 3: Markdown (~500-2000)           - readable content
+Level 4: Full HTML (~5000-50000)        - complex parsing, last resort
 ```
 
 ### Strip unnecessary content
 
 With Lightpanda CLI, always use `--strip-mode`:
-- `js` -- remove script tags
-- `css` -- remove stylesheets
-- `ui` -- remove images, video, SVG
-- `full` -- all of the above (default for content extraction)
+- `js` - remove script tags
+- `css` - remove stylesheets
+- `ui` - remove images, video, SVG
+- `full` - all of the above (default for content extraction)
 
 ### Scope extraction
 
@@ -244,14 +244,14 @@ lightpanda fetch --dump markdown --wait-selector "#pricing-table" <url>
 With MCP semantic tree, limit depth:
 ```
 Tool: semantic_tree
-Args: { maxDepth: 3 }    -- top 3 levels only
+Args: { maxDepth: 3 }    - top 3 levels only
 ```
 
 ### Extract structured data from pages
 
 When you need specific data (prices, tables, metadata) rather than full page content:
 
-1. Try `structured_data` / `structuredData` first -- many sites embed JSON-LD or OpenGraph
+1. Try `structured_data` / `structuredData` first - many sites embed JSON-LD or OpenGraph
 2. If no structured data exists, use `evaluate` / `eval` to run JavaScript extraction:
 ```
 Tool: evaluate
@@ -280,14 +280,14 @@ done > output.md
 3. **Lazy loading / infinite scroll**: scroll to trigger content loading before extracting.
    For infinite scroll, use a loop: scroll, wait for new content, extract, repeat until you
    have enough data or no new content appears. Cap iterations to avoid endless scrolling
-4. **Cookie consent / popups**: dismiss overlays before extracting content -- use
+4. **Cookie consent / popups**: dismiss overlays before extracting content - use
    `interactive_elements` to find the dismiss button, then `click`. If the overlay blocks
    extraction, clicking through it costs fewer tokens than retrying with different formats
 5. **Pagination**: for paginated results, extract each page sequentially using the "Next"
-   link or pagination controls. Don't try to load all pages at once -- extract, process, advance
+   link or pagination controls. Don't try to load all pages at once - extract, process, advance
 6. **Verify content loaded**: after waiting, check that the extracted content is non-empty and
    contains expected elements before processing. An empty markdown or a semantic tree with only
-   `<html><body>` means the page didn't render -- escalate to a heavier backend
+   `<html><body>` means the page didn't render - escalate to a heavier backend
 7. **Lightpanda gaps**: partial Web API coverage means some complex SPAs won't render correctly.
    Fall back to Playwright MCP if extraction returns empty or broken content
 
@@ -297,9 +297,9 @@ done > output.md
 
 1. Navigate to the login page
 2. Use `interactive_elements` to find form fields
-3. Fill credentials from env vars or user prompt -- never hardcode
+3. Fill credentials from env vars or user prompt - never hardcode
 4. Submit the form
-5. Wait for redirect to complete (watch for multi-step redirects in OAuth/SSO flows --
+5. Wait for redirect to complete (watch for multi-step redirects in OAuth/SSO flows -
    the URL may bounce through several domains before landing)
 6. Verify login succeeded: extract page content and check for user-specific elements
    (profile name, dashboard content) before proceeding
@@ -326,7 +326,7 @@ periodically by verifying a known authenticated-only element is still visible.
 
 ## Missing Tools
 
-If no browsing tools are detected, recommend the user set up Lightpanda MCP -- it's the
+If no browsing tools are detected, recommend the user set up Lightpanda MCP - it's the
 fastest path to full browsing capability with minimal overhead.
 
 **Lightpanda MCP setup** (one-time, ~30 seconds):
@@ -337,7 +337,7 @@ chmod +x lightpanda && mv lightpanda ~/.local/bin/
 ```
 
 Add the MCP server to your Claude Code settings (`~/.claude/settings.json` or project
-`.mcp.json`) -- merge with existing config, don't overwrite:
+`.mcp.json`) - merge with existing config, don't overwrite:
 ```json
 {
   "mcpServers": {
@@ -366,12 +366,12 @@ reference file covers tool-specific depth.
 
 ## Related Skills
 
-- **testing** -- E2E test automation with Playwright. This skill handles ad-hoc browsing and
+- **testing** - E2E test automation with Playwright. This skill handles ad-hoc browsing and
   data extraction; testing handles structured test suites and assertions.
-- **mcp** -- MCP server development. This skill uses MCP browsing tools; mcp helps build them.
-- **networking** -- Network infrastructure. This skill browses over the network; networking
+- **mcp** - MCP server development. This skill uses MCP browsing tools; mcp helps build them.
+- **networking** - Network infrastructure. This skill browses over the network; networking
   configures it.
-- **ai-ml** -- RAG pipelines and web data collection. When scraping content specifically for
+- **ai-ml** - RAG pipelines and web data collection. When scraping content specifically for
   embeddings or training data, ai-ml covers the pipeline; this skill covers the extraction.
 
 ## Rules

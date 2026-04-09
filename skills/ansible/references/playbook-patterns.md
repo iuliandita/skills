@@ -97,12 +97,12 @@ conventions (idempotent, `no_log` where needed, `changed_when`/`failed_when` on 
   community.general.apk:
     name: nginx
     state: present
-    no_cache: true       # skips local cache -- useful in ephemeral containers
+    no_cache: true       # skips local cache - useful in ephemeral containers
   become: true
 ```
 
-**Note:** `community.general.apk` is NOT in `ansible-core` -- install the `community.general` collection.
-`name` and `upgrade` are mutually exclusive. Don't loop packages individually -- pass the full list to `name`.
+**Note:** `community.general.apk` is NOT in `ansible-core` - install the `community.general` collection.
+`name` and `upgrade` are mutually exclusive. Don't loop packages individually - pass the full list to `name`.
 The generic `ansible.builtin.package` auto-detects apk on Alpine but lacks apk-specific features
 (`update_cache`, `no_cache`, `repository`).
 
@@ -238,7 +238,7 @@ OpenRC via the `ansible_service_mgr` fact.
     name: nginx
     state: started
     enabled: true
-    runlevel: default       # OpenRC-specific -- which runlevel to enable in
+    runlevel: default       # OpenRC-specific - which runlevel to enable in
   become: true
 
 - name: Restart service
@@ -256,13 +256,13 @@ OpenRC via the `ansible_service_mgr` fact.
 ```
 
 **OpenRC gotchas:**
-- `ansible.builtin.systemd` does NOT work on Alpine -- always use `ansible.builtin.service`
+- `ansible.builtin.systemd` does NOT work on Alpine - always use `ansible.builtin.service`
 - `ansible.builtin.service_facts` has known bugs with OpenRC: `KeyError: '*'` crash on custom
   init scripts (ansible-core issue [#85551](https://github.com/ansible/ansible/issues/85551)),
   intermittent parsing failures ([#84512](https://github.com/ansible/ansible/issues/84512)),
   and incorrect status detection ([#50822](https://github.com/ansible/ansible/issues/50822))
 - **Workaround**: use `rc-service <name> status` via `command` + `register` instead of `service_facts`
-- Alpine uses BusyBox -- binary paths may differ (e.g. `/bin/rm` not `/usr/bin/rm`)
+- Alpine uses BusyBox - binary paths may differ (e.g. `/bin/rm` not `/usr/bin/rm`)
 
 ```yaml
 # OpenRC init script template
@@ -279,7 +279,7 @@ OpenRC via the `ansible_service_mgr` fact.
 ```
 
 ```jinja2
-{# myapp.initd.j2 -- OpenRC init script #}
+{# myapp.initd.j2 - OpenRC init script #}
 #!/sbin/openrc-run
 
 name="{{ app_description | default('Application Service') }}"

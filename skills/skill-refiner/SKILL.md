@@ -1,7 +1,7 @@
 ---
 name: skill-refiner
 description: >
-  · Batch-improve a skill collection through adaptive evaluation loops -- lint validation,
+  · Batch-improve a skill collection through adaptive evaluation loops - lint validation,
   AI self-checks, behavioral testing, and cross-model peer review. Triggers: 'skill refiner',
   'improve skills', 'quality sweep', 'batch improve', 'skill loop'. Not for single skill
   work or first-time creation (use skill-creator).
@@ -32,11 +32,11 @@ is available, fresh-context self-review as the minimum fallback).
 
 ## When NOT to use
 
-- Single skill review or improvement -- use **skill-creator** (Mode 2)
-- Creating a new skill from scratch -- use **skill-creator** (Mode 1)
-- One-off collection audit without iteration -- use **skill-creator** (Mode 3)
-- Full codebase review (code, not skills) -- use **full-review**
-- Style/slop audit on application code -- use **anti-slop**
+- Single skill review or improvement - use **skill-creator** (Mode 2)
+- Creating a new skill from scratch - use **skill-creator** (Mode 1)
+- One-off collection audit without iteration - use **skill-creator** (Mode 3)
+- Full codebase review (code, not skills) - use **full-review**
+- Style/slop audit on application code - use **anti-slop**
 
 ## Configuration
 
@@ -49,7 +49,7 @@ skill-refiner [--iterations N] [--mode MODE] [--secondary HARNESS] [--threshold 
 | `--iterations` | 10 | Maximum iterations for phase 1 |
 | `--mode` | circuit-breaker | `auto`, `circuit-breaker`, or `step` |
 | `--secondary` | auto-detect | Secondary harness for cross-model review, or `none` |
-| `--threshold` | 85 | Focus threshold -- skip skills scoring above this (user can override max) |
+| `--threshold` | 85 | Focus threshold - skip skills scoring above this (user can override max) |
 | `--plateau` | 2 | Minimum score delta to keep iterating |
 
 **Environment override:** `SKILL_REFINER_SECONDARY=<harness>` (CLI flag takes precedence)
@@ -72,7 +72,7 @@ contested major flags (non-configurable).
 2. **Load run history**: read `.refiner-runs.json` from the collection root (if it exists).
    Use previous run data for: baseline score comparison (detect regressions from external
    changes), model/harness change detection (flag if the primary or secondary model changed
-   since last run -- new model = new baseline, not a comparable delta), and skip analysis
+   since last run - new model = new baseline, not a comparable delta), and skip analysis
    (don't re-attempt improvements that were already tried and reverted in a recent run).
 3. **Build skill inventory**: list all skills, exclude phase-2 targets (skill-creator,
    skill-refiner) from the improvement pool
@@ -84,13 +84,13 @@ contested major flags (non-configurable).
    the current harness with the review prompt template from `references/harness-detection.md`.
    Label as "same-model fresh-context review" in scoring, weight at 5% instead of 10%
    (renormalize: 16/37/42/5). This catches confirmation bias but shares the primary model's
-   blind spots. Skipping review entirely is not an option -- a fresh-context self-review is
+   blind spots. Skipping review entirely is not an option - a fresh-context self-review is
    the minimum bar. If the harness doesn't support subagents, run the review prompt as a
    separate CLI invocation (`claude -p`, `codex exec`, etc.).
 
 ### Phase 1: Regular Iterations
 
-6. **Iteration 1 -- full sweep**: score every skill in the pool using the four-component
+6. **Iteration 1 - full sweep**: score every skill in the pool using the four-component
    model from `references/evaluation-criteria.md`
    - Structural: run lint-skills.sh + validate-spec.sh
    - AI Self-Check: invoke **skill-creator** review mode on each skill
@@ -105,8 +105,8 @@ contested major flags (non-configurable).
 9. **Select targets**: identify skills scoring below the focus threshold
 10. **For each targeted skill**, run the improvement cycle:
     a. Read current SKILL.md and all reference files
-    b. Invoke **skill-creator** review mode -- collect findings
-    c. Run behavioral test -- score current output quality
+    b. Invoke **skill-creator** review mode - collect findings
+    c. Run behavioral test - score current output quality
     d. Propose targeted improvements based on findings (not random changes)
     e. Apply changes to SKILL.md (and references if needed)
     f. Re-score: run lint + AI Self-Check + behavioral test
@@ -116,7 +116,7 @@ contested major flags (non-configurable).
     j. If secondary flags major issue and primary agrees: revert
     k. If secondary flags major issue and primary disagrees: escalate to circuit breaker
 11. **Commit iteration**: one commit with all improvements from this iteration
-    Format: `refactor(skill-refiner): iteration N -- skill1(+X), skill2(+Y)`
+    Format: `refactor(skill-refiner): iteration N - skill1(+X), skill2(+Y)`
 12. **Log iteration summary**:
     ```
     --- iteration N / max -------------------------------------------
@@ -136,7 +136,7 @@ contested major flags (non-configurable).
 
 ### Phase 2: Meta-Improvement
 
-15. **Announce**: "Entering phase 2 -- meta-improvement. This always requires human review."
+15. **Announce**: "Entering phase 2 - meta-improvement. This always requires human review."
 16. **Snapshot evaluation criteria**:
     - Copy **skill-creator**'s AI Self-Check section to a temp location
     - Copy `references/evaluation-criteria.md` to a temp location
@@ -153,9 +153,9 @@ contested major flags (non-configurable).
     - If false positives or false negatives introduced: revert
     - If clean: keep
 20. **Commit phase 2**: one commit per target
-    Format: `refactor(skill-refiner): meta -- improve <target> (+N)`
+    Format: `refactor(skill-refiner): meta - improve <target> (+N)`
 21. **Pause for human review**: display phase 2 changes, wait for approval.
-    This checkpoint is non-configurable -- it fires even in `--mode auto`.
+    This checkpoint is non-configurable - it fires even in `--mode auto`.
     A direct user approval such as "continue" or "proceed" counts as approval to resume.
 
 ### Phase 3: Summary
@@ -230,14 +230,14 @@ Before committing any skill modification, verify:
 
 ## Related Skills
 
-- **skill-creator** -- the evaluation and improvement engine. skill-refiner invokes
+- **skill-creator** - the evaluation and improvement engine. skill-refiner invokes
   skill-creator's review mode (Mode 2) for scoring and its improve mode for
   generating changes. skill-creator handles individual skill quality; skill-refiner
   handles iteration, prioritization, and orchestration. Primary dependency.
-- **full-review** -- one-off collection audit across code-review, anti-slop,
+- **full-review** - one-off collection audit across code-review, anti-slop,
   security-audit, and update-docs. Use **full-review** for a single pass over
   application code; use skill-refiner for iterative improvement of skill files.
-- **anti-slop** -- code quality patterns. skill-refiner may invoke anti-slop
+- **anti-slop** - code quality patterns. skill-refiner may invoke anti-slop
   principles through skill-creator during improvement, but does not call anti-slop
   directly. Different domain: anti-slop audits application code, skill-refiner
   audits skill files.

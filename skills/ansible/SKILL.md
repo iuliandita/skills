@@ -16,21 +16,21 @@ metadata:
 
 # Ansible: Production Configuration Management
 
-Write, review, and architect Ansible automation -- from single playbooks to multi-tier, compliance-hardened infrastructure management. The goal is idempotent, auditable, maintainable automation that works the same locally and in CI/CD.
+Write, review, and architect Ansible automation - from single playbooks to multi-tier, compliance-hardened infrastructure management. The goal is idempotent, auditable, maintainable automation that works the same locally and in CI/CD.
 
 **Target versions** (March 2026):
 - ansible-core 2.20.x (Python 3.12+ controller, 3.9+ target, EOL May 2027)
 - ansible (community package) 13.x (depends on ansible-core 2.20)
 - molecule 26.x (CalVer), ansible-lint 26.x (CalVer), ansible-navigator 26.x (CalVer)
 - ansible-builder 3.1.x (EE definition v3)
-- AWX 24.6.1 (stale since Jul 2024 -- verify current status before recommending)
-- AAP 2.6 (Oct 2025 -- last RPM-installable release; AAP 2.7+ containerized-only)
+- AWX 24.6.1 (stale since Jul 2024 - verify current status before recommending)
+- AAP 2.6 (Oct 2025 - last RPM-installable release; AAP 2.7+ containerized-only)
 
 This skill covers four domains depending on context:
-- **Playbooks** -- tasks, handlers, variables, conditions, loops, blocks, templates, Jinja2
-- **Roles & Collections** -- role structure, collection packaging, Galaxy/Automation Hub, Molecule testing
-- **Operations** -- inventory, Execution Environments, CI/CD integration, Vault, ansible-navigator
-- **Compliance** -- PCI-DSS 4.0 hardening, CIS benchmarks, Ansible-Lockdown, audit logging
+- **Playbooks** - tasks, handlers, variables, conditions, loops, blocks, templates, Jinja2
+- **Roles & Collections** - role structure, collection packaging, Galaxy/Automation Hub, Molecule testing
+- **Operations** - inventory, Execution Environments, CI/CD integration, Vault, ansible-navigator
+- **Compliance** - PCI-DSS 4.0 hardening, CIS benchmarks, Ansible-Lockdown, audit logging
 
 ## When to use
 
@@ -47,13 +47,13 @@ This skill covers four domains depending on context:
 
 ## When NOT to use
 
-- Infrastructure provisioning (VPCs, RDS, EC2, cloud resources) -- use **terraform**
-- Kubernetes manifests, Helm charts, cluster architecture -- use **kubernetes**
-- Dockerfiles, Compose stacks, container image optimization -- use **docker**
-- CI/CD pipeline design (stages, runners, caching) -- use **ci-cd**
-- Security audits of application code (SAST, dependency scanning) -- use **security-audit**
-- Shell scripting or one-off commands -- use **command-prompt**
-- Firewall appliance management (OPNsense/pfSense) -- use **firewall-appliance**
+- Infrastructure provisioning (VPCs, RDS, EC2, cloud resources) - use **terraform**
+- Kubernetes manifests, Helm charts, cluster architecture - use **kubernetes**
+- Dockerfiles, Compose stacks, container image optimization - use **docker**
+- CI/CD pipeline design (stages, runners, caching) - use **ci-cd**
+- Security audits of application code (SAST, dependency scanning) - use **security-audit**
+- Shell scripting or one-off commands - use **command-prompt**
+- Firewall appliance management (OPNsense/pfSense) - use **firewall-appliance**
 
 ---
 
@@ -68,8 +68,8 @@ AI tools consistently produce the same Ansible mistakes. **Before returning any 
 - [ ] Handler names are unique and `notify:` strings match exactly (typos = silent failures)
 - [ ] Variables use `{{ var }}` with quotes: `"{{ my_var }}"` not `{{ my_var }}` (bare Jinja2 without quotes breaks YAML parsing)
 - [ ] No `command`/`shell`/`raw` when an Ansible module exists for the operation
-- [ ] Tasks are idempotent -- running twice produces the same result (watch `command`/`shell` tasks without `creates`/`removes`)
-- [ ] No hardcoded values -- IPs, paths, package versions, usernames go in variables with defaults
+- [ ] Tasks are idempotent - running twice produces the same result (watch `command`/`shell` tasks without `creates`/`removes`)
+- [ ] No hardcoded values - IPs, paths, package versions, usernames go in variables with defaults
 - [ ] `ansible.builtin.apt`/`ansible.builtin.dnf` use `state: present`, not `state: latest` (unless explicitly upgrading)
 - [ ] Loop variable is `item` (default) or renamed via `loop_var` in nested loops (AI conflates loop variables)
 - [ ] `block`/`rescue`/`always` used for error handling, not bare `ignore_errors: true`
@@ -97,7 +97,7 @@ Most real tasks blend domains. Start with the playbook, extract to roles when re
 ### Step 2: Gather requirements
 
 Before writing YAML, determine:
-- **Target OS**: RHEL/CentOS, Ubuntu/Debian, Alpine, Windows -- affects module choices
+- **Target OS**: RHEL/CentOS, Ubuntu/Debian, Alpine, Windows - affects module choices
 - **Python version on targets**: ansible-core 2.20 requires Python 3.9+ on managed nodes
 - **Privilege escalation**: `become` method (sudo, su, doas, runas for Windows)
 - **Connection**: SSH (default), WinRM (Windows), local, network_cli (network devices)
@@ -183,12 +183,12 @@ Read `references/playbook-patterns.md` for complete, copy-pasteable task example
 
 ### Key patterns
 
-**Variable precedence** (22 levels -- the most common source of confusion). In ascending priority:
-1. Role defaults (`defaults/main.yml`) -- weakest, meant to be overridden
+**Variable precedence** (22 levels - the most common source of confusion). In ascending priority:
+1. Role defaults (`defaults/main.yml`) - weakest, meant to be overridden
 2. Inventory vars (`group_vars/`, `host_vars/`)
 3. Play vars
 4. Task vars
-5. Extra vars (`-e`) -- strongest, overrides everything
+5. Extra vars (`-e`) - strongest, overrides everything
 
 **Rule of thumb**: put defaults in role `defaults/`, environment-specific values in `group_vars/`, one-off overrides in `host_vars/`, and emergency overrides via `-e`.
 
@@ -198,13 +198,13 @@ Read `references/playbook-patterns.md` for complete, copy-pasteable task example
 - Handlers run in definition order, not notification order
 - Multiple notifications to the same handler = one execution
 
-**Blocks**: use `block`/`rescue`/`always` for error handling and rollback -- see `playbook-patterns.md` for complete deploy-with-rollback examples. Prefer `block`/`rescue` over `ignore_errors: true`.
+**Blocks**: use `block`/`rescue`/`always` for error handling and rollback - see `playbook-patterns.md` for complete deploy-with-rollback examples. Prefer `block`/`rescue` over `ignore_errors: true`.
 
 **Loops**: prefer `loop:` over deprecated `with_*` syntax. Use `loop_control.label` for clean output.
 
 **Conditional execution**: `when: ansible_os_family == "Debian"` etc. For multi-OS roles, use conditionals or `include_tasks` per OS family. See `playbook-patterns.md` for Alpine/OpenRC patterns.
 
-**Service management**: use `ansible.builtin.service` (generic) for cross-distro roles -- it auto-detects systemd, OpenRC, SysV via `ansible_service_mgr`. Only use `ansible.builtin.systemd` when you need systemd-specific features (`daemon_reload`, `scope`). See `playbook-patterns.md` for OpenRC patterns.
+**Service management**: use `ansible.builtin.service` (generic) for cross-distro roles - it auto-detects systemd, OpenRC, SysV via `ansible_service_mgr`. Only use `ansible.builtin.systemd` when you need systemd-specific features (`daemon_reload`, `scope`). See `playbook-patterns.md` for OpenRC patterns.
 
 **Registering results**: `register: result_var` stores task output. Use `when: result_var.stat.exists`, `result_var.rc == 0`, etc. See `playbook-patterns.md` for patterns.
 
@@ -236,11 +236,11 @@ Never store the vault password in plaintext alongside the repo. Use `--ask-vault
 - `copy` without `mode:` on sensitive files (defaults to umask, unpredictable)
 - `template` without `.j2` extension on the source file
 - `ignore_errors: true` without a comment explaining why (use `block`/`rescue` instead)
-- `with_items` (deprecated -- use `loop:`)
+- `with_items` (deprecated - use `loop:`)
 - Bare `{{ var }}` without quotes (YAML parses it as a dict start)
 - `gather_facts: true` + never using facts (wasted 5-15 seconds per host)
 - Tasks without `name:` (legal but unreadable in output)
-- `state: latest` in production playbooks (non-deterministic -- pin versions)
+- `state: latest` in production playbooks (non-deterministic - pin versions)
 
 ---
 
@@ -291,7 +291,7 @@ Read `references/compliance.md` for the full PCI-DSS 4.0 requirements mapping to
 - [ ] Handlers have unique names and `notify:` strings match exactly
 - [ ] Tags on logical task groups
 - [ ] `--check` mode works (no tasks that break in check mode without `check_mode: false`)
-- [ ] Idempotent -- running twice produces no changes on the second run
+- [ ] Idempotent - running twice produces no changes on the second run
 - [ ] No `state: latest` in production (pin package versions)
 - [ ] `ansible-lint --profile production` passes clean
 
@@ -339,14 +339,14 @@ Read `references/compliance.md` for the full PCI-DSS 4.0 requirements mapping to
 ### ansible-core 2.20 (current)
 
 **Removals (already removed)**:
-- `smart` transport value -- choose `ssh` or `paramiko` explicitly
-- Galaxy v2 API support -- Galaxy servers must support v3
+- `smart` transport value - choose `ssh` or `paramiko` explicitly
+- Galaxy v2 API support - Galaxy servers must support v3
 - `PARAMIKO_HOST_KEY_AUTO_ADD` and `PARAMIKO_LOOK_FOR_KEYS` config keys
 - `passlib_or_crypt` API from encrypt utility
 
 **Deprecations (removal in 2.24)**:
 - `INJECT_FACTS_AS_VARS` defaults to True but will flip to False. Access facts via `ansible_facts['hostname']` instead of `ansible_hostname`. Start migrating now.
-- `ansible.module_utils._text` imports (`to_bytes`, `to_native`, `to_text`) -- use `ansible.module_utils.common.text.converters` instead
+- `ansible.module_utils._text` imports (`to_bytes`, `to_native`, `to_text`) - use `ansible.module_utils.common.text.converters` instead
 - `vars` internal variable cache
 
 ### ansible-core 2.19 (previous)
@@ -390,27 +390,27 @@ All Ansible DevTools projects (molecule, ansible-lint, ansible-navigator, tox-an
 
 ## Reference Files
 
-- `references/playbook-patterns.md` -- playbook and task patterns for common automation work
-- `references/roles-and-collections.md` -- role anatomy, collection structure, Galaxy patterns, and Molecule workflows
-- `references/operations-and-execution.md` -- inventory layout, ansible.cfg, execution environments, CI/CD integration, and navigator usage
-- `references/vault-and-secrets.md` -- Vault usage, secret handling, and external secret-manager integration
-- `references/compliance.md` -- PCI-DSS and CIS-oriented hardening guidance
+- `references/playbook-patterns.md` - playbook and task patterns for common automation work
+- `references/roles-and-collections.md` - role anatomy, collection structure, Galaxy patterns, and Molecule workflows
+- `references/operations-and-execution.md` - inventory layout, ansible.cfg, execution environments, CI/CD integration, and navigator usage
+- `references/vault-and-secrets.md` - Vault usage, secret handling, and external secret-manager integration
+- `references/compliance.md` - PCI-DSS and CIS-oriented hardening guidance
 
 ---
 
 ## Related Skills
 
-- **terraform** -- provisions infrastructure (VMs, networks, cloud resources). Ansible configures
+- **terraform** - provisions infrastructure (VMs, networks, cloud resources). Ansible configures
   what Terraform creates. Day-1 provisioning = terraform; day-2 configuration = ansible.
-- **kubernetes** -- for K8s manifests, Helm charts, cluster architecture. Ansible can deploy to
+- **kubernetes** - for K8s manifests, Helm charts, cluster architecture. Ansible can deploy to
   K8s via `kubernetes.core` collection, but manifest design belongs in the kubernetes skill.
-- **docker** -- for Dockerfile and Compose patterns. Ansible can manage containers via
+- **docker** - for Dockerfile and Compose patterns. Ansible can manage containers via
   `community.docker`, but image building and Compose design belong in the docker skill.
-- **databases** -- for engine configuration (postgresql.conf, pg_hba.conf). Ansible automates
+- **databases** - for engine configuration (postgresql.conf, pg_hba.conf). Ansible automates
   the deployment of those configs; databases skill owns the tuning decisions.
-- **ci-cd** -- for pipeline design. Ansible can be called from CI/CD pipelines, but pipeline
+- **ci-cd** - for pipeline design. Ansible can be called from CI/CD pipelines, but pipeline
   structure (stages, jobs, caching) belongs in the ci-cd skill.
-- **security-audit** -- for auditing Ansible playbooks for credential exposure, vault misuse,
+- **security-audit** - for auditing Ansible playbooks for credential exposure, vault misuse,
   or supply chain risks in Galaxy dependencies.
 
 ---
@@ -423,7 +423,7 @@ These are non-negotiable. Violating any of these is a bug.
 2. **Idempotent by default.** Every task must be safe to run multiple times. `command`/`shell` tasks need `creates`/`removes` or `changed_when`.
 3. **`no_log: true` on secrets.** Every task handling passwords, tokens, API keys, or sensitive data. CVE-2024-8775 proved the cost of forgetting this.
 4. **No `command`/`shell` when a module exists.** Modules are idempotent, tested, and portable. Shell commands are none of those.
-5. **Variables over hardcoded values.** IPs, paths, package versions, usernames, ports -- all variables with defaults.
+5. **Variables over hardcoded values.** IPs, paths, package versions, usernames, ports - all variables with defaults.
 6. **Quote Jinja2 variables.** `"{{ var }}"`, not `{{ var }}`. Bare braces break YAML parsing.
 7. **Vault for secrets.** Not plaintext in `group_vars`, not `ansible_ssh_pass` in inventory, not environment variables in playbooks.
 8. **Test with Molecule.** Every role gets a Molecule scenario with converge + idempotence check + verification.

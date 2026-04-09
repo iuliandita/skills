@@ -1,6 +1,6 @@
 # Database Bug Patterns
 
-Bug patterns specific to database usage in application code. Focused on correctness -- not schema design, performance tuning, or style. Covers PostgreSQL, MongoDB, MySQL/MariaDB, and MSSQL, plus ORM pitfalls.
+Bug patterns specific to database usage in application code. Focused on correctness - not schema design, performance tuning, or style. Covers PostgreSQL, MongoDB, MySQL/MariaDB, and MSSQL, plus ORM pitfalls.
 
 ---
 
@@ -11,7 +11,7 @@ Bug patterns specific to database usage in application code. Focused on correctn
 **Detect:**
 - Missing transactions around multi-statement operations (partial writes on failure)
 - Transaction scope too wide (holding locks across network calls, user input, or long computations)
-- Nested transaction confusion -- most SQL databases don't support true nested transactions; savepoints behave differently
+- Nested transaction confusion - most SQL databases don't support true nested transactions; savepoints behave differently
 - Auto-commit mode when transactions are needed (each statement is its own transaction)
 - Missing rollback on error paths (try/catch that catches but doesn't roll back)
 - Read-then-write without `SELECT ... FOR UPDATE` or equivalent (lost update problem)
@@ -102,21 +102,21 @@ Postgres defaults to READ COMMITTED, which is fine for most cases but can surpri
 - `UPSERT` (`ON CONFLICT DO UPDATE`) without specifying the conflict target correctly (wrong constraint name or columns)
 - `TRUNCATE` not being MVCC-safe the way `DELETE` is (concurrent transactions see different things)
 - `LISTEN/NOTIFY` payloads silently truncated at 8000 bytes
-- `jsonb` operators: `->` returns JSON, `->>` returns text -- mixing them up causes type errors
+- `jsonb` operators: `->` returns JSON, `->>` returns text - mixing them up causes type errors
 - `LIKE` with `%` on a column without a trigram index (full table scan, but more importantly, `LIKE` is case-sensitive; use `ILIKE` for case-insensitive)
-- `timestamp` vs `timestamptz` confusion -- `timestamp` stores no timezone info, can cause bugs when the server or session timezone changes
+- `timestamp` vs `timestamptz` confusion - `timestamp` stores no timezone info, can cause bugs when the server or session timezone changes
 - Array operations: `ANY(array)` vs `IN (values)` behave differently with NULLs
 
 **Example:**
 ```sql
 -- bug: timestamp without timezone, server timezone change breaks everything
 CREATE TABLE events (
-    created_at timestamp DEFAULT now()  -- stores in server's current timezone
+    created_at timestamp DEFAULT now()  - stores in server's current timezone
 );
 
 -- fix: always use timestamptz
 CREATE TABLE events (
-    created_at timestamptz DEFAULT now()  -- stores UTC, renders in session timezone
+    created_at timestamptz DEFAULT now()  - stores UTC, renders in session timezone
 );
 ```
 
@@ -193,7 +193,7 @@ MySQL in non-strict mode silently truncates data that doesn't fit. This is the b
 
 **Detect:**
 - `utf8` charset is actually UTF-8 with 3-byte max (can't store emoji). Use `utf8mb4`
-- `TIMESTAMP` vs `DATETIME` -- TIMESTAMP is stored as UTC and converted on read; DATETIME is literal
+- `TIMESTAMP` vs `DATETIME` - TIMESTAMP is stored as UTC and converted on read; DATETIME is literal
 - `ON UPDATE CURRENT_TIMESTAMP` implicitly added to first TIMESTAMP column in some versions
 - `REPLACE INTO` deletes then inserts (triggers DELETE triggers, resets auto_increment gaps)
 - `INSERT ... ON DUPLICATE KEY UPDATE` incrementing auto_increment even on updates
@@ -204,9 +204,9 @@ MySQL in non-strict mode silently truncates data that doesn't fit. This is the b
 
 **Detect:**
 - `SET NOCOUNT ON` missing in stored procedures (row count messages interfere with some drivers)
-- `@@IDENTITY` vs `SCOPE_IDENTITY()` -- `@@IDENTITY` returns the last identity from ANY scope (including triggers)
-- `VARCHAR` vs `NVARCHAR` -- VARCHAR can't store Unicode; if your app handles international text, you need NVARCHAR
-- `GETDATE()` vs `SYSDATETIME()` -- GETDATE returns datetime (3ms precision), SYSDATETIME returns datetime2 (100ns)
+- `@@IDENTITY` vs `SCOPE_IDENTITY()` - `@@IDENTITY` returns the last identity from ANY scope (including triggers)
+- `VARCHAR` vs `NVARCHAR` - VARCHAR can't store Unicode; if your app handles international text, you need NVARCHAR
+- `GETDATE()` vs `SYSDATETIME()` - GETDATE returns datetime (3ms precision), SYSDATETIME returns datetime2 (100ns)
 - Implicit transactions with `SET IMPLICIT_TRANSACTIONS ON` (every statement starts a transaction that must be explicitly committed)
 - `TOP` without `ORDER BY` returns arbitrary rows (not necessarily the same ones each time)
 
@@ -231,7 +231,7 @@ The most common ORM performance bug, but also a correctness issue when it causes
 **Detect:**
 - Hibernate L2 cache returning stale data when another service writes directly to the DB
 - Entity manager not cleared between operations in a batch job (memory grows, stale entities)
-- Optimistic locking (`@Version`) not checked -- updates silently overwrite concurrent changes
+- Optimistic locking (`@Version`) not checked - updates silently overwrite concurrent changes
 - Detached entities merged back without conflict detection
 
 ### Migration / Schema Sync

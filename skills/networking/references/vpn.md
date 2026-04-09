@@ -98,7 +98,7 @@ no fragmentation).
 wg show
 wg show wg0
 
-# Check for handshake (should be recent -- within 2 minutes if active)
+# Check for handshake (should be recent - within 2 minutes if active)
 wg show wg0 latest-handshakes
 
 # Quick connectivity test
@@ -165,7 +165,7 @@ openvpn --genkey secret tc.key    # tls-crypt key
 data-ciphers AES-256-GCM:CHACHA20-POLY1305
 tls-version-min 1.2
 tls-cipher TLS-ECDHE-ECDSA-WITH-AES-256-GCM-SHA384:TLS-ECDHE-RSA-WITH-AES-256-GCM-SHA384
-# Use tls-crypt (not tls-auth) -- encrypts + authenticates control channel
+# Use tls-crypt (not tls-auth) - encrypts + authenticates control channel
 tls-crypt /etc/openvpn/pki/tc.key
 # Drop privileges after init
 user nobody
@@ -186,7 +186,7 @@ group nogroup
 IPsec is the standards-based VPN protocol. Use when interoperating with enterprise equipment,
 cloud VPN gateways (AWS VPN, Azure VPN Gateway), or when standards compliance is required.
 
-### Modern config (swanctl -- strongSwan 6.x)
+### Modern config (swanctl - strongSwan 6.x)
 
 ```yaml
 # /etc/swanctl/swanctl.conf
@@ -311,7 +311,7 @@ tailscale up --login-server https://headscale.example.com --authkey <key>
 ### Nebula
 
 Nebula (by Defined Networking, originally Slack) is a certificate-based overlay for large meshes.
-No central relay -- nodes connect directly with NAT hole-punching.
+No central relay - nodes connect directly with NAT hole-punching.
 
 ```yaml
 # /etc/nebula/config.yml
@@ -390,7 +390,7 @@ zerotier-cli join <network-id>
 ## Cloudflare Tunnels
 
 Cloudflare Tunnel (`cloudflared`, v2026.3.0) creates outbound-only encrypted connections from
-your origin to Cloudflare's edge. No inbound ports needed -- the tunnel connects out to
+your origin to Cloudflare's edge. No inbound ports needed - the tunnel connects out to
 Cloudflare, which proxies traffic back through it.
 
 ### Architecture
@@ -401,7 +401,7 @@ Internet -> Cloudflare Edge (CDN, WAF, DDoS, Access) -> cloudflared -> Origin se
 ```
 
 - `cloudflared` runs on your server and establishes 4 QUIC connections to 2 Cloudflare datacenters
-- Traffic flows through Cloudflare's network -- they terminate TLS, apply WAF rules, and enforce
+- Traffic flows through Cloudflare's network - they terminate TLS, apply WAF rules, and enforce
   Zero Trust policies before forwarding to your origin
 - The origin never needs a public IP or open firewall ports
 
@@ -444,7 +444,7 @@ cloudflared tunnel run my-tunnel
 ### Dashboard-managed tunnels (simpler)
 
 Create the tunnel in the Cloudflare Zero Trust dashboard instead of CLI. The dashboard generates
-a single `cloudflared service install <token>` command -- run it on the origin and you're done.
+a single `cloudflared service install <token>` command - run it on the origin and you're done.
 Ingress rules are managed in the dashboard UI.
 
 ### Cloudflare Access (Zero Trust)
@@ -469,7 +469,7 @@ Pair tunnels with Cloudflare Access to gate services behind SSO/MFA:
 - High-bandwidth internal traffic (all traffic routes through Cloudflare)
 - When you need full control over TLS termination (Cloudflare terminates TLS)
 - Privacy-sensitive workloads where routing through a third party is unacceptable
-- UDP services (limited support -- QUIC and WARP only, no arbitrary UDP)
+- UDP services (limited support - QUIC and WARP only, no arbitrary UDP)
 - When the service doesn't use HTTP/S, SSH, RDP, or SMB (limited protocol support)
 
 ### cloudflared vs traditional VPN

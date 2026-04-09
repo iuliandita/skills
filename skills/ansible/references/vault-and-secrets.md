@@ -14,7 +14,7 @@ Ansible Vault encrypts data at rest using AES-256. It can encrypt:
 - **Any YAML/text file** referenced by playbooks
 
 Vault is decrypted at runtime. The password is provided via:
-- `--ask-vault-pass` (interactive prompt -- development only)
+- `--ask-vault-pass` (interactive prompt - development only)
 - `--vault-password-file /path/to/file` (file containing the password)
 - `--vault-password-file /path/to/script.sh` (executable that prints the password)
 - `--vault-id label@source` (multiple vaults with labels)
@@ -35,7 +35,7 @@ ansible-vault edit group_vars/production/vault.yml
 # View without editing
 ansible-vault view group_vars/production/vault.yml
 
-# Decrypt to plaintext (avoid in production -- use edit/view instead)
+# Decrypt to plaintext (avoid in production - use edit/view instead)
 ansible-vault decrypt secrets.yml
 
 # Change the encryption password
@@ -69,7 +69,7 @@ vault_db_password: !vault |
 
 ### File organization pattern
 
-The recommended pattern uses indirection -- vault variables are referenced via regular variables:
+The recommended pattern uses indirection - vault variables are referenced via regular variables:
 
 ```
 group_vars/
@@ -123,7 +123,7 @@ ansible-playbook playbook.yml \
 ### no_log: true (mandatory for secrets)
 
 **CVE-2024-8775**: vault-encrypted variables exposed in plaintext via `include_vars` without `no_log`.
-This is not theoretical -- it happened.
+This is not theoretical - it happened.
 
 ```yaml
 # ALWAYS add no_log when handling secrets
@@ -162,7 +162,7 @@ This is not theoretical -- it happened.
 ### Vault password management
 
 ```bash
-# Password file (simplest -- protect with file permissions)
+# Password file (simplest - protect with file permissions)
 echo 'vault_password_here' > ~/.ansible-vault-pass
 chmod 600 ~/.ansible-vault-pass
 
@@ -172,7 +172,7 @@ vault_password_file = ~/.ansible-vault-pass
 
 # Password script (pulls from external source)
 #!/usr/bin/env bash
-# vault-pass.sh -- pulls from a password manager or secret store
+# vault-pass.sh - pulls from a password manager or secret store
 set -euo pipefail
 pass show ansible/vault-production
 ```
@@ -296,7 +296,7 @@ ansible-deploy:
 
 **Key points:**
 - `$VAULT_PASSWORD` is a CI/CD variable (Settings > CI/CD > Variables, masked)
-- `<(echo "$VAULT_PASSWORD")` is process substitution -- the password never touches disk
+- `<(echo "$VAULT_PASSWORD")` is process substitution - the password never touches disk
 - For HashiCorp Vault: pass `VAULT_TOKEN` or `VAULT_ROLE_ID`/`VAULT_SECRET_ID` as CI variables
 - Pin the EE image to a specific tag (not `:latest`)
 
@@ -418,12 +418,12 @@ ansible-vault rekey --vault-password-file old-pass --new-vault-password-file new
 
 ## Anti-Patterns
 
-- **Vault password in git** -- even in a "private" repo. Use CI/CD secrets or a password manager.
-- **`ansible-vault decrypt` in CI** -- decrypts to plaintext on disk. Use `--vault-password-file` instead.
-- **Vault password = "password"** -- use a generated password (64+ chars).
-- **Single vault password for all environments** -- use vault IDs to separate dev/staging/prod.
-- **Secrets in `debug` tasks** -- remove before merging. Use `no_log: true` on any task printing secrets.
-- **`ansible_ssh_pass` in inventory** -- use SSH keys. Period.
-- **Vault files without the `vault_` prefix convention** -- makes it impossible to grep for which variables are secrets.
-- **Missing `no_log: true`** on tasks handling vault variables -- CVE-2024-8775 is the poster child.
-- **Committing `.vault-pass` files** -- add to `.gitignore` immediately.
+- **Vault password in git** - even in a "private" repo. Use CI/CD secrets or a password manager.
+- **`ansible-vault decrypt` in CI** - decrypts to plaintext on disk. Use `--vault-password-file` instead.
+- **Vault password = "password"** - use a generated password (64+ chars).
+- **Single vault password for all environments** - use vault IDs to separate dev/staging/prod.
+- **Secrets in `debug` tasks** - remove before merging. Use `no_log: true` on any task printing secrets.
+- **`ansible_ssh_pass` in inventory** - use SSH keys. Period.
+- **Vault files without the `vault_` prefix convention** - makes it impossible to grep for which variables are secrets.
+- **Missing `no_log: true`** on tasks handling vault variables - CVE-2024-8775 is the poster child.
+- **Committing `.vault-pass` files** - add to `.gitignore` immediately.

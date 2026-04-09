@@ -56,7 +56,7 @@ For real: if your backups are on the same disk array as production, you don't ha
 #!/usr/bin/env bash
 set -euo pipefail
 
-# pg_dump -- single database, directory format (compressed, parallel dump + restore)
+# pg_dump - single database, directory format (compressed, parallel dump + restore)
 pg_dump \
   --host=localhost \
   --port=5432 \
@@ -71,7 +71,7 @@ pg_dump \
 # For single-file backups (no parallel dump, but supports parallel restore):
 # pg_dump --format=custom --compress=zstd:6 --file=mydb.dump mydb
 
-# pg_dumpall -- all databases + globals (roles, tablespaces)
+# pg_dumpall - all databases + globals (roles, tablespaces)
 # Always take a globals-only dump alongside per-db dumps
 pg_dumpall \
   --host=localhost \
@@ -82,15 +82,15 @@ pg_dumpall \
 ```
 
 **Recommended flags:**
-- `--format=directory` -- compressed, supports parallel dump AND restore, selective restore
-- `--format=custom` -- single compressed file, supports parallel restore (NOT parallel dump), selective restore
-- `--compress=zstd:6` -- PG 16+ native zstd (faster than gzip, better ratio)
-- `--jobs=4` -- parallel dump/restore (directory format ONLY -- incompatible with custom format for dump)
-- `--no-owner` -- if restoring to a different role setup
-- `--no-privileges` -- skip GRANT/REVOKE (useful for dev restores)
-- `--exclude-table-data='audit_log'` -- skip large, non-critical tables
+- `--format=directory` - compressed, supports parallel dump AND restore, selective restore
+- `--format=custom` - single compressed file, supports parallel restore (NOT parallel dump), selective restore
+- `--compress=zstd:6` - PG 16+ native zstd (faster than gzip, better ratio)
+- `--jobs=4` - parallel dump/restore (directory format ONLY - incompatible with custom format for dump)
+- `--no-owner` - if restoring to a different role setup
+- `--no-privileges` - skip GRANT/REVOKE (useful for dev restores)
+- `--exclude-table-data='audit_log'` - skip large, non-critical tables
 
-**Never use `--format=plain` for production backups** -- no compression, no parallel restore, no selective restore. Plain SQL is only useful for migration or human reading.
+**Never use `--format=plain` for production backups** - no compression, no parallel restore, no selective restore. Plain SQL is only useful for migration or human reading.
 
 ### Restore from Logical Backup
 
@@ -195,10 +195,10 @@ pg_ctl -D "$RESTORE_DIR" start
 ```
 
 **Recovery target options** (pick one):
-- `recovery_target_time = '2026-03-24 14:30:00+00'` -- restore to timestamp
-- `recovery_target_lsn = '0/1A2B3C4D'` -- restore to WAL position
-- `recovery_target_xid = '12345'` -- restore to transaction ID
-- `recovery_target = 'immediate'` -- stop at end of base backup (consistent state)
+- `recovery_target_time = '2026-03-24 14:30:00+00'` - restore to timestamp
+- `recovery_target_lsn = '0/1A2B3C4D'` - restore to WAL position
+- `recovery_target_xid = '12345'` - restore to transaction ID
+- `recovery_target = 'immediate'` - stop at end of base backup (consistent state)
 
 ### pgBackRest (Production-Grade Alternative)
 
@@ -310,7 +310,7 @@ gpg --decrypt /backup/mydb_20260324.dump.gpg \
 
 ### Common Gotchas
 
-- `pg_dump` takes `ACCESS SHARE` locks -- it won't block writes, but long-running dumps on busy tables can cause autovacuum to stall.
+- `pg_dump` takes `ACCESS SHARE` locks - it won't block writes, but long-running dumps on busy tables can cause autovacuum to stall.
 - `pg_dumpall` uses plain format only. Always dump globals separately and per-database with custom format.
 - `pg_basebackup` requires `replication` privilege in `pg_hba.conf` and `wal_level = replica`.
 - Forgetting `archive_timeout` means quiet databases can have WAL gaps of hours (max data loss window).
@@ -364,10 +364,10 @@ mongodump \
 ```
 
 **Recommended flags:**
-- `--oplog` -- captures a consistent snapshot even during writes (replica set only)
-- `--gzip` -- inline compression
-- `--readPreference=secondary` -- read from secondary to reduce primary load
-- `--numParallelCollections=4` -- parallel collection dumps (default 4)
+- `--oplog` - captures a consistent snapshot even during writes (replica set only)
+- `--gzip` - inline compression
+- `--readPreference=secondary` - read from secondary to reduce primary load
+- `--numParallelCollections=4` - parallel collection dumps (default 4)
 
 ### Restore
 
@@ -473,8 +473,8 @@ mongosh --eval '
 - `mongodump` without `--oplog` is NOT consistent during writes on replica sets. Always use `--oplog` in production.
 - `--oplog` only works against the entire instance, not per-database/collection dumps.
 - Large collections (>100GB) make `mongodump` impractical. Use filesystem snapshots or Percona Backup.
-- The oplog is a capped collection -- if it rolls over before your next backup, you lose your PITR window. Size the oplog for at least 48 hours of changes.
-- `mongorestore --drop` drops and recreates collections -- **this destroys data in the target**. Triple-check your connection string.
+- The oplog is a capped collection - if it rolls over before your next backup, you lose your PITR window. Size the oplog for at least 48 hours of changes.
+- `mongorestore --drop` drops and recreates collections - **this destroys data in the target**. Triple-check your connection string.
 - MongoDB 8.0 deprecated `--ssl` flags in favor of URI connection string options (`tls=true`).
 
 ---
@@ -498,7 +498,7 @@ mongosh --eval '
 #!/usr/bin/env bash
 set -euo pipefail
 
-# mysqldump -- single database, InnoDB-safe
+# mysqldump - single database, InnoDB-safe
 mysqldump \
   --host=localhost \
   --user=backup_user \
@@ -541,12 +541,12 @@ mariadb-dump \
 ```
 
 **Recommended flags:**
-- `--single-transaction` -- consistent snapshot without global lock (InnoDB only!)
-- `--routines` -- include stored procedures/functions
-- `--triggers` -- include triggers (on by default, but explicit is better)
-- `--events` -- include scheduled events
-- `--set-gtid-purged=ON` -- required for GTID replication
-- `--source-data=2` -- record binlog position as a comment (for PITR)
+- `--single-transaction` - consistent snapshot without global lock (InnoDB only!)
+- `--routines` - include stored procedures/functions
+- `--triggers` - include triggers (on by default, but explicit is better)
+- `--events` - include scheduled events
+- `--set-gtid-purged=ON` - required for GTID replication
+- `--source-data=2` - record binlog position as a comment (for PITR)
 
 **Never use `--lock-all-tables`** unless you have MyISAM tables (why do you have MyISAM tables?).
 
@@ -556,7 +556,7 @@ mariadb-dump \
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Full backup (MySQL 8.4 -- Percona XtraBackup 8.4.x)
+# Full backup (MySQL 8.4 - Percona XtraBackup 8.4.x)
 xtrabackup \
   --backup \
   --user=backup_user \
@@ -712,7 +712,7 @@ WITH
     CHECKSUM,
     STATS = 10;
 
--- Backup to multiple files (striped -- faster for large DBs)
+-- Backup to multiple files (striped - faster for large DBs)
 BACKUP DATABASE [mydb]
 TO DISK = N'/backup/mydb_stripe1.bak',
    DISK = N'/backup/mydb_stripe2.bak',
@@ -816,7 +816,7 @@ DROP DATABASE [mydb_verify];
 - `RESTORE VERIFYONLY` only checks the backup is readable, not that the data is correct. Always do actual restore tests.
 - Differential backups are cumulative (changes since last full). Each new diff replaces the previous one for restore purposes.
 - Log backup chain breaks if you switch to SIMPLE recovery or run `BACKUP LOG ... WITH TRUNCATE_ONLY`. You must take a new full backup to restart the chain.
-- `COPY_ONLY` backups don't break the log chain -- use them for ad-hoc copies.
+- `COPY_ONLY` backups don't break the log chain - use them for ad-hoc copies.
 - SQL Server on Linux (`/opt/mssql`) has the same backup capabilities as Windows. The path format changes but the T-SQL is identical.
 - Compressed backups are CPU-intensive. On CPU-bound servers, consider scheduling them during off-peak hours.
 
@@ -869,7 +869,7 @@ DROP DATABASE [mydb_verify];
 
 PCI-DSS 4.0 requirements that affect backup strategy:
 
-- **Req 3.5**: Render PAN unreadable wherever stored -- backups included. Encrypt backups at rest.
+- **Req 3.5**: Render PAN unreadable wherever stored - backups included. Encrypt backups at rest.
 - **Req 3.6/3.7**: Cryptographic key management for backup encryption keys. Key rotation annually minimum.
 - **Req 9.4**: Media (including backup media) must be physically secured and tracked.
 - **Req 10.5**: Audit logs must be backed up and immutable for 12 months.
@@ -998,7 +998,7 @@ GPG
 # Encrypt backup
 pg_dump --format=custom mydb | gpg --encrypt --recipient backup@company.com > backup.dump.gpg
 
-# age (modern alternative to GPG -- simpler, no keyring)
+# age (modern alternative to GPG - simpler, no keyring)
 pg_dump --format=custom mydb | age -r age1abc123... > backup.dump.age
 ```
 
@@ -1032,7 +1032,7 @@ pg_dump --format=custom mydb | age -r age1abc123... > backup.dump.age
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Check backup freshness -- returns non-zero if stale
+# Check backup freshness - returns non-zero if stale
 # Intended for cron + alerting (Prometheus pushgateway, PagerDuty, etc.)
 
 BACKUP_DIR="/backup"
@@ -1124,7 +1124,7 @@ aws rds restore-db-instance-to-point-in-time \
 - On-demand backups: manual trigger, persist until deleted.
 - PITR: restore to any point within retention window. Creates a new instance or restores in-place (clone recommended).
 - **Gotcha**: Cloud SQL for PostgreSQL uses pgBackRest internally but doesn't expose it. You can't run pgBackRest commands.
-- **Gotcha**: Exporting via `gcloud sql export` uses `pg_dump`/`mysqldump` internally -- slow for large databases.
+- **Gotcha**: Exporting via `gcloud sql export` uses `pg_dump`/`mysqldump` internally - slow for large databases.
 
 ```bash
 # On-demand backup
@@ -1247,7 +1247,7 @@ metadata:
     post.hook.backup.velero.io/command: '["/bin/sh", "-c", "pg_ctl -D /var/lib/postgresql/data start"]'
 ```
 
-This stops the database, takes a consistent snapshot, then starts it again. Downtime is brief but nonzero -- fine for dev, not great for production.
+This stops the database, takes a consistent snapshot, then starts it again. Downtime is brief but nonzero - fine for dev, not great for production.
 
 ### pgBackRest in Kubernetes
 

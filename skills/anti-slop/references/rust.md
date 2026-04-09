@@ -105,18 +105,18 @@ if let Some(v) = maybe_value {
 ## Supply Chain Risk (Lies)
 
 **High-risk crates** (active CVEs, March 2026):
-- `tar`, `async-tar`, `tokio-tar` -- CVE-2026-33056 (symlink-following RCE during `cargo build`). Pin `tar >= 0.4.45`. Fix shipped in Rust 1.94.0 (released March 5, 2026). Affects uv, testcontainers, wasmCloud.
+- `tar`, `async-tar`, `tokio-tar` - CVE-2026-33056 (symlink-following RCE during `cargo build`). Pin `tar >= 0.4.45`. Fix shipped in Rust 1.94.0 (released March 5, 2026). Affects uv, testcontainers, wasmCloud.
 - Rust supply chain attacks up 130% in 2025. Crates.io deploying TUF (The Update Framework) in 2026.
 
 **Detect:**
 - Unpinned `tar`/`async-tar`/`tokio-tar` in `Cargo.toml`
 - `cargo audit` not in CI pipeline
-- No `Cargo.lock` committed (for binaries/applications -- libraries should omit it)
+- No `Cargo.lock` committed (for binaries/applications - libraries should omit it)
 
 **Deeper tools** (beyond `cargo audit`):
-- `cargo-geiger` -- maps unsafe usage across entire dependency graph
-- `cargo-deny` -- gates duplicate crates, disallowed sources, license policy
-- `Miri` -- runtime interpreter catching undefined behavior in unsafe code
-- `Rudra` -- detects Rust-specific anti-patterns (unsafe + unwinding + trait system interactions)
+- `cargo-geiger` - maps unsafe usage across entire dependency graph
+- `cargo-deny` - gates duplicate crates, disallowed sources, license policy
+- `Miri` - runtime interpreter catching undefined behavior in unsafe code
+- `Rudra` - detects Rust-specific anti-patterns (unsafe + unwinding + trait system interactions)
 
 Layer **EPSS** and **CISA KEV** scoring on cargo-audit findings to prioritize actually-exploited vulns over theoretical ones.

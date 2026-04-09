@@ -6,7 +6,7 @@ description: >
   'improve this prompt'. Not for brainstorming features, writing code, or creating skills
   (use skill-creator).
 license: MIT
-compatibility: "None -- works with any LLM target"
+compatibility: "None - works with any LLM target"
 metadata:
   source: iuliandita/skills
   date_added: "2026-03-25"
@@ -16,7 +16,7 @@ metadata:
 
 # Prompt Generator
 
-Take the user's rough thoughts, scattered notes, or half-formed ideas and turn them into a clean, well-structured LLM prompt. This is a **formatter and structurer**, not a brainstorming tool -- the user already knows what they want, they just need help wording and organizing it.
+Take the user's rough thoughts, scattered notes, or half-formed ideas and turn them into a clean, well-structured LLM prompt. This is a **formatter and structurer**, not a brainstorming tool - the user already knows what they want, they just need help wording and organizing it.
 
 ## When to use
 
@@ -28,9 +28,9 @@ Take the user's rough thoughts, scattered notes, or half-formed ideas and turn t
 
 ## When NOT to use
 
-- Brainstorming features or creative ideation -- this skill structures prompts, not ideas
+- Brainstorming features or creative ideation - this skill structures prompts, not ideas
 - Creating reusable skill files or agent instruction bundles (use **skill-creator**)
-- Writing inline prompt strings inside application code -- that's just coding
+- Writing inline prompt strings inside application code - that's just coding
 - The user wants code that calls an LLM API (use **ai-ml** for SDK integration)
 - Security review of prompts for injection risks (use **security-audit**)
 - Reviewing code quality of prompt-related code (use **code-review** or **anti-slop**)
@@ -119,7 +119,7 @@ The actual prompt content here.
 
 Only include sections that apply. A simple prompt with no variables skips the Variables table.
 
-Optional frontmatter additions: `tags: [...]`, `related: [NNN-other.md]` -- only when genuinely useful.
+Optional frontmatter additions: `tags: [...]`, `related: [NNN-other.md]` - only when genuinely useful.
 
 **Target model values**: `claude`, `gpt`, `gemini`, `llama`, `mistral`, `model-agnostic`
 
@@ -127,7 +127,7 @@ Optional frontmatter additions: `tags: [...]`, `related: [NNN-other.md]` -- only
 
 ## Structuring Guidelines
 
-These are for YOU when structuring the user's notes. Not a knowledge dump -- just the non-obvious stuff.
+These are for YOU when structuring the user's notes. Not a knowledge dump - just the non-obvious stuff.
 
 **Match complexity to content.** A 3-line task doesn't need XML tags and numbered steps. A multi-document agentic system prompt does. The user's rough notes give you the complexity signal.
 
@@ -146,7 +146,7 @@ When the target model is known, adapt format to its strengths:
 | Target | Preferred structure | Notes |
 |--------|-------------------|-------|
 | Claude | XML tags for sections, markdown for content | Supports assistant prefill; use `<result>` tags for structured output |
-| GPT | Markdown headers, JSON schema for structured output | Native JSON mode available -- use it over prose format instructions |
+| GPT | Markdown headers, JSON schema for structured output | Native JSON mode available - use it over prose format instructions |
 | Gemini | Markdown sections, explicit output examples | Separate instructions for text vs. attached files/images |
 | Model-agnostic | Markdown headers + explicit delimiters | Avoid prefills, model-specific tags, or format-mode flags |
 
@@ -159,15 +159,15 @@ When the prompt is for agent consumption (not human reading), specify output for
 - **XML structure**: wrap output in tags like `<result>`, `<analysis>`, `<decision>`.
 - **Delimiter-based**: for simple key-value, use `KEY: value` format.
 
-Include a concrete output example in the prompt whenever possible -- models generalize better from examples than from format descriptions.
+Include a concrete output example in the prompt whenever possible - models generalize better from examples than from format descriptions.
 
 ### The Four-Block Pattern
 
 For medium-to-complex prompts, structure into four clear blocks:
-1. **INSTRUCTIONS** -- what to do (role, task, constraints)
-2. **CONTEXT** -- background information, reference data
-3. **TASK** -- the specific request for this invocation
-4. **OUTPUT FORMAT** -- exact structure of the expected response
+1. **INSTRUCTIONS** - what to do (role, task, constraints)
+2. **CONTEXT** - background information, reference data
+3. **TASK** - the specific request for this invocation
+4. **OUTPUT FORMAT** - exact structure of the expected response
 
 Keep blocks visually separated with XML tags, markdown headers, or other clear delimiters. Place long context documents before shorter task instructions (see "Long content goes on top" above).
 
@@ -178,20 +178,20 @@ Keep blocks visually separated with XML tags, markdown headers, or other clear d
 If the user gives you an existing prompt to improve (not rough notes):
 
 1. Read it
-2. Diagnose gaps -- check for these common prompt weaknesses:
+2. Diagnose gaps - check for these common prompt weaknesses:
    - **Missing scope**: no clear boundary on what the model should and shouldn't do
    - **No output format**: model guesses structure instead of following a spec
    - **Vague role**: "helpful assistant" tells the model nothing useful
    - **Missing constraints**: no anti-patterns, no "do not" list, no quality criteria
    - **Over-specified**: drowning the model in rules when 2-3 clear constraints would work
-3. Present specific changes with reasoning -- not a full rewrite unless it's warranted
+3. Present specific changes with reasoning - not a full rewrite unless it's warranted
 4. On approval, edit in place
 
 **Example refinement:**
 
 Before: `You are a helpful assistant that reviews code.`
 
-After: `You are a senior code reviewer. For each file, check for: bugs, edge cases, security issues, and performance problems. Report findings as a list with severity (critical/warning/info), file:line, and a one-line description. Skip style nitpicks. If nothing is wrong, say "No issues found."` -- added: scope, output format, severity scale, constraint against noise.
+After: `You are a senior code reviewer. For each file, check for: bugs, edge cases, security issues, and performance problems. Report findings as a list with severity (critical/warning/info), file:line, and a one-line description. Skip style nitpicks. If nothing is wrong, say "No issues found."` - added: scope, output format, severity scale, constraint against noise.
 
 ## Example: Creation from Scratch
 
@@ -207,7 +207,7 @@ version.
 
 Your edits:
 - Fix grammar and spelling errors
-- Make the text more concise -- cut filler words and redundant phrases
+- Make the text more concise - cut filler words and redundant phrases
 - Match the requested tone (formal, casual, or neutral)
 
 Preserve the sender's intent and meaning. Do not add information they didn't include.
@@ -221,18 +221,18 @@ Input format:
 Return only the improved email. No commentary, no explanations, no "Here's your improved email:".
 ```
 
-Note: simple task, so plain prose -- no XML sections, no numbered steps, no bloated preamble.
+Note: simple task, so plain prose - no XML sections, no numbered steps, no bloated preamble.
 
 ---
 
 ## Related Skills
 
-- **skill-creator** -- creates reusable skill files (SKILL.md) for AI tools and coding agents. Skills are
+- **skill-creator** - creates reusable skill files (SKILL.md) for AI tools and coding agents. Skills are
   structured prompts, but they follow different conventions (frontmatter, workflow sections,
   rules) than standalone prompts. If someone says "create a skill", use skill-creator.
-- Application code -- if the user needs a prompt string inside application code (for example a
+- Application code - if the user needs a prompt string inside application code (for example a
   TypeScript `const systemPrompt = ...`), that's coding, not this skill.
-- **anti-slop** -- if the user asks to "clean up" or "simplify" a prompt embedded in code, that's
+- **anti-slop** - if the user asks to "clean up" or "simplify" a prompt embedded in code, that's
   a code quality issue, not prompt structuring.
 
 ---

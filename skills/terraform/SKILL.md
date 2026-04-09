@@ -1,7 +1,7 @@
 ---
 name: terraform
 description: >
-  · Write, review, or architect Terraform/OpenTofu infrastructure-as-code -- HCL patterns,
+  · Write, review, or architect Terraform/OpenTofu infrastructure-as-code - HCL patterns,
   module design, state management, and policy-as-code. Triggers: 'terraform', 'opentofu',
   'hcl', 'tfvars', 'tfstate', 'module', 'terraform plan', 'sentinel', 'checkov', 'tflint'.
 license: MIT
@@ -15,15 +15,15 @@ metadata:
 
 # Terraform & OpenTofu: Production Infrastructure-as-Code
 
-Write, review, and architect Terraform/OpenTofu infrastructure -- from individual resources to multi-account, PCI-compliant platform architectures. The goal is reproducible, drift-free, auditable infrastructure that passes both peer review and QSA assessment.
+Write, review, and architect Terraform/OpenTofu infrastructure - from individual resources to multi-account, PCI-compliant platform architectures. The goal is reproducible, drift-free, auditable infrastructure that passes both peer review and QSA assessment.
 
 **Target versions**: Terraform 1.13-1.14+ (IBM/HashiCorp, BSL), OpenTofu 1.10-1.11+ (Linux Foundation, MPL). Helm provider v3.1+, K8s provider v3.0+, AWS provider v6.x, Azure v4.x, GCP v7.x.
 
 This skill covers four domains depending on context:
-- **HCL** -- resource configs, variables, outputs, data sources, expressions, lifecycle rules
-- **Modules** -- structure, versioning, testing, registry patterns, reusable components
-- **Operations** -- state management, backends, workspaces, import, migration, CI/CD
-- **Compliance** -- PCI-DSS 4.0 controls, policy-as-code, audit trails, drift detection, CDE isolation
+- **HCL** - resource configs, variables, outputs, data sources, expressions, lifecycle rules
+- **Modules** - structure, versioning, testing, registry patterns, reusable components
+- **Operations** - state management, backends, workspaces, import, migration, CI/CD
+- **Compliance** - PCI-DSS 4.0 controls, policy-as-code, audit trails, drift detection, CDE isolation
 
 ## Terraform vs OpenTofu (2026)
 
@@ -33,7 +33,7 @@ IBM acquired HashiCorp for $6.4B (closed Feb 2025). Terraform stays BSL 1.1. The
 
 **Choose OpenTofu** if: need client-side state encryption (Terraform never shipped this), BSL is a legal concern, want `enabled` meta-argument on resources, want OCI registry for providers/modules, need Linux Foundation governance.
 
-**Both share the provider plugin protocol** -- most providers work on both. For now.
+**Both share the provider plugin protocol** - most providers work on both. For now.
 
 **CDKTF is dead.** Deprecated Dec 2025, archived. Migrate to HCL or AWS CDK.
 
@@ -63,8 +63,8 @@ IBM acquired HashiCorp for $6.4B (closed Feb 2025). Terraform stays BSL 1.1. The
 
 AI tools consistently produce the same Terraform mistakes. **Before returning any generated HCL, verify against this list:**
 
-- [ ] No hardcoded values -- regions, AMI IDs, CIDR blocks, account IDs must be variables
-- [ ] No overly permissive IAM -- no `"Action": "*"` or `"Resource": "*"` unless explicitly requested
+- [ ] No hardcoded values - regions, AMI IDs, CIDR blocks, account IDs must be variables
+- [ ] No overly permissive IAM - no `"Action": "*"` or `"Resource": "*"` unless explicitly requested
 - [ ] No `0.0.0.0/0` ingress on security groups (except port 443 for public ALBs, justified)
 - [ ] S3 buckets: `aws_s3_bucket_public_access_block` with all four settings `true` (unless public access is explicitly required and justified), plus SSE-KMS encryption (`aws_s3_bucket_server_side_encryption_configuration`), versioning enabled, access logging (`aws_s3_bucket_logging`), and no overly permissive bucket policy (review `aws_s3_bucket_policy` for broad `Principal: "*"` grants)
 - [ ] Provider versions pinned in `required_providers` with `~>` constraints
@@ -72,8 +72,8 @@ AI tools consistently produce the same Terraform mistakes. **Before returning an
 - [ ] `lifecycle` blocks where needed (`create_before_destroy`, `prevent_destroy` on stateful resources)
 - [ ] `sensitive = true` on variables/outputs containing secrets
 - [ ] Tags on every taggable resource (at minimum: Name, Environment, Owner, pci_scope if applicable)
-- [ ] No deprecated resource arguments (check provider changelog -- AI trains on old syntax)
-- [ ] No `provisioner` blocks -- use Ansible or user_data instead
+- [ ] No deprecated resource arguments (check provider changelog - AI trains on old syntax)
+- [ ] No `provisioner` blocks - use Ansible or user_data instead
 - [ ] State file does NOT contain plaintext secrets (use ephemeral resources on TF 1.10+ or data sources for runtime secret lookup)
 - [ ] `terraform fmt` and `terraform validate` pass
 
@@ -102,7 +102,7 @@ Before writing HCL, determine:
 - **State backend** and locking mechanism
 - **Compliance scope**: PCI CDE? Regulated? What tags/policies apply?
 - **Existing modules**: reuse before creating new ones
-- **Secrets**: how are they injected? (Vault, SSM, Secrets Manager -- never tfvars)
+- **Secrets**: how are they injected? (Vault, SSM, Secrets Manager - never tfvars)
 
 ### Step 3: Build
 
@@ -139,7 +139,7 @@ resource "aws_instance" "web" {
 
   metadata_options {
     http_endpoint = "enabled"
-    http_tokens   = "required"  # IMDSv2 -- enforce this always
+    http_tokens   = "required"  # IMDSv2 - enforce this always
   }
 
   tags = merge(var.common_tags, {
@@ -202,7 +202,7 @@ data "aws_ami" "al2023" {
 }
 ```
 
-**Ephemeral resources** (TF 1.10+ / OT 1.11+): secrets that never persist in state. Ephemeral values can only flow into `write_only` arguments, provider configs, provisioners, or other ephemeral contexts -- not into regular resource arguments.
+**Ephemeral resources** (TF 1.10+ / OT 1.11+): secrets that never persist in state. Ephemeral values can only flow into `write_only` arguments, provider configs, provisioners, or other ephemeral contexts - not into regular resource arguments.
 
 ```hcl
 ephemeral "aws_secretsmanager_secret_version" "db_password" {
@@ -215,10 +215,10 @@ resource "aws_db_instance" "main" {
 ```
 
 **Lifecycle rules**: use deliberately, not defensively.
-- `create_before_destroy` -- for zero-downtime replacements (LBs, ASGs, DNS)
-- `prevent_destroy` -- for stateful resources (databases, S3 buckets with data)
-- `ignore_changes` -- for attributes managed outside Terraform (ASG desired_count managed by HPA)
-- `replace_triggered_by` -- force recreation when a dependency changes
+- `create_before_destroy` - for zero-downtime replacements (LBs, ASGs, DNS)
+- `prevent_destroy` - for stateful resources (databases, S3 buckets with data)
+- `ignore_changes` - for attributes managed outside Terraform (ASG desired_count managed by HPA)
+- `replace_triggered_by` - force recreation when a dependency changes
 
 **Import blocks** (TF 1.5+): declarative imports, no state surgery.
 
@@ -229,7 +229,7 @@ import {
 }
 ```
 
-**Moved blocks** (TF 1.8+): declarative intra-state refactoring. Rename resources or move into/out of modules within the same state file. Reviewed in PRs, applied automatically on `terraform apply`. Does NOT work across state files -- for cross-state moves, see the state surgery workflow in `references/state-and-security.md`.
+**Moved blocks** (TF 1.8+): declarative intra-state refactoring. Rename resources or move into/out of modules within the same state file. Reviewed in PRs, applied automatically on `terraform apply`. Does NOT work across state files - for cross-state moves, see the state surgery workflow in `references/state-and-security.md`.
 
 ```hcl
 moved {
@@ -240,7 +240,7 @@ moved {
 
 ### What NOT to write
 
-- `provisioner "local-exec"` or `provisioner "remote-exec"` -- use Ansible
+- `provisioner "local-exec"` or `provisioner "remote-exec"` - use Ansible
 - `depends_on` when Terraform already infers the dependency from attribute references
 - `count` for conditional resources when `for_each` with a set is clearer (OpenTofu: use `enabled`)
 - String interpolation for simple references: `"${var.name}"` -> `var.name`
@@ -258,7 +258,7 @@ When reviewing or writing S3 bucket configurations, verify every bucket has **al
 | 2 | `aws_s3_bucket_server_side_encryption_configuration` | SSE-KMS with customer-managed key | CKV_AWS_145 |
 | 3 | `aws_s3_bucket_versioning` | Rollback + tamper evidence | CKV_AWS_21 |
 | 4 | `aws_s3_bucket_logging` | Access audit trail (target a dedicated logging bucket) | CKV_AWS_18 |
-| 5 | `aws_s3_bucket_lifecycle_configuration` | Expiration/transition rules for cost and compliance retention | -- |
+| 5 | `aws_s3_bucket_lifecycle_configuration` | Expiration/transition rules for cost and compliance retention | - |
 | 6 | `aws_s3_bucket_policy` | Explicit deny on non-SSL requests (`aws:SecureTransport = false`); no `Principal: "*"` grants unless public access is justified | CKV_AWS_70 |
 
 Also verify the **account-level** safety net: `aws_s3_account_public_access_block` with all four settings `true`. This catches any bucket that accidentally ships without its own block.
@@ -291,7 +291,7 @@ modules/<provider>/<resource-type>/
 - **Production**: pin exact versions (`= 2.1.3`) or use dependency lock file
 - **Dev/staging**: allow minor updates (`~> 2.1`)
 - Every module gets semantic versioning and a CHANGELOG
-- **Provider versions**: pin with `~>` in `required_providers`. The `.terraform.lock.hcl` file pins exact hashes -- commit it.
+- **Provider versions**: pin with `~>` in `required_providers`. The `.terraform.lock.hcl` file pins exact hashes - commit it.
 
 ### Testing (2026 standard)
 
@@ -319,19 +319,19 @@ See `references/state-and-security.md` for full backend config examples, OIDC fe
 
 **S3 + native locking** (TF 1.10+): DynamoDB-based locking is deprecated. Use `use_lockfile = true`. Encrypt with KMS. Enable versioning and CloudTrail data events on the bucket.
 
-**OpenTofu**: add client-side state encryption on top (AES-GCM, AWS KMS, GCP KMS, or OpenBao) -- encrypts before upload, even a compromised backend can't read state.
+**OpenTofu**: add client-side state encryption on top (AES-GCM, AWS KMS, GCP KMS, or OpenBao) - encrypts before upload, even a compromised backend can't read state.
 
 ### State file splitting (blast radius)
 
 Split by risk and ownership:
 ```
 states/
-  network/cde/         # CDE VPC -- separate IAM role, separate approval
+  network/cde/         # CDE VPC - separate IAM role, separate approval
   network/non-cde/     # Everything else
   compute/cde/         # Payment processing
   compute/non-cde/     # App tier
   data/cde/            # RDS with cardholder data
-  iam/                 # IAM is high-risk -- own state, own approval
+  iam/                 # IAM is high-risk - own state, own approval
   monitoring/          # CloudTrail, GuardDuty, Config
 ```
 
@@ -351,11 +351,11 @@ CDE state files get their own backend, IAM role, and approval workflow. A `terra
 
 The Terraform ecosystem has real supply chain risks (March 2026):
 
-- **Pin GitHub Actions to commit SHAs** -- `tj-actions/changed-files` was compromised March 2025 via upstream reviewdog/action-setup (CVE-2025-30154) (~12 hours of credential theft). Same pattern as the Trivy compromise a year later.
-- **Module supply chain is weak** -- modules have no hash verification (unlike the provider lock file). Typosquatting on the public registry is a demonstrated attack vector (NDC Oslo 2025).
+- **Pin GitHub Actions to commit SHAs** - `tj-actions/changed-files` was compromised March 2025 via upstream reviewdog/action-setup (CVE-2025-30154) (~12 hours of credential theft). Same pattern as the Trivy compromise a year later.
+- **Module supply chain is weak** - modules have no hash verification (unlike the provider lock file). Typosquatting on the public registry is a demonstrated attack vector (NDC Oslo 2025).
 - **Terrascan: dead.** Archived Nov 2025. Migrate to Checkov or Trivy.
 - **tfsec: merged into Trivy.** Still works standalone but no new development.
-- **Trivy IaC scanning**: pin to a verified version in CI. Check release notes before updating -- supply chain attacks on CI tools are real. Pin to SHA digest, not mutable tag.
+- **Trivy IaC scanning**: pin to a verified version in CI. Check release notes before updating - supply chain attacks on CI tools are real. Pin to SHA digest, not mutable tag.
 - **CDKTF: dead.** Deprecated Dec 2025, archived. Migrate to HCL.
 
 ---
@@ -376,7 +376,7 @@ Organization root
 |   +-- Staging account
 |   +-- Production account
 +-- CDE OU (PCI)
-    +-- CDE Production account (payment processing -- isolated)
+    +-- CDE Production account (payment processing - isolated)
     +-- CDE Staging account
 ```
 
@@ -402,8 +402,8 @@ provider "aws" {
 | **OPA / Conftest** | Custom policy-as-code on JSON plan output | 🟢 Active (CNCF) |
 | **Sentinel** | Native TFC/TFE policy engine | 🟢 Active (proprietary) |
 | **tfsec** | Security scanner | 🟡 Deprecated (merged into Trivy) |
-| **Terrascan** | IaC scanner | 🔴 Archived Nov 2025 -- migrate off |
-| **CDKTF** | TypeScript/Python IaC | 🔴 Deprecated Dec 2025 -- migrate off |
+| **Terrascan** | IaC scanner | 🔴 Archived Nov 2025 - migrate off |
+| **CDKTF** | TypeScript/Python IaC | 🔴 Deprecated Dec 2025 - migrate off |
 
 **Recommended CI pipeline**: `terraform fmt` -> `terraform validate` -> `tflint` -> `checkov` -> `terraform plan` -> `conftest test` (OPA) -> human review -> `terraform apply`
 
@@ -415,16 +415,16 @@ Read `references/compliance.md` for the full PCI-DSS 4.0 requirements mapping, d
 
 ### Quick reference: PCI-DSS 4.0 and IaC
 
-**PCI DSS 4.0 explicitly puts IaC repos in scope** (Req 6). Your Terraform repo needs the same controls as any CDE system -- access controls, audit logging, change management.
+**PCI DSS 4.0 explicitly puts IaC repos in scope** (Req 6). Your Terraform repo needs the same controls as any CDE system - access controls, audit logging, change management.
 
 **Critical requirements:**
-- **Req 1**: Network segmentation via VPC/subnet/SG configs in Terraform -- these ARE the audit artifacts
+- **Req 1**: Network segmentation via VPC/subnet/SG configs in Terraform - these ARE the audit artifacts
 - **Req 3**: Encryption enforced via IaC (`storage_encrypted = true`, KMS keys, `force_ssl`)
-- **Req 6**: Secure development lifecycle -- PR reviews, static analysis, policy-as-code gates on every merge
-- **Req 7**: Least-privilege IAM enforced in Terraform -- no `"Action": "*"` in CDE
-- **Req 8.6.2**: No hardcoded secrets -- use ephemeral resources (TF 1.10+) or Vault/SSM data sources
-- **Req 10**: Audit trail -- Git PRs + archived plan/apply JSON + CloudTrail + immutable S3
-- **Req 11.5**: Change detection -- drift detection satisfies FIM requirement for infrastructure
+- **Req 6**: Secure development lifecycle - PR reviews, static analysis, policy-as-code gates on every merge
+- **Req 7**: Least-privilege IAM enforced in Terraform - no `"Action": "*"` in CDE
+- **Req 8.6.2**: No hardcoded secrets - use ephemeral resources (TF 1.10+) or Vault/SSM data sources
+- **Req 10**: Audit trail - Git PRs + archived plan/apply JSON + CloudTrail + immutable S3
+- **Req 11.5**: Change detection - drift detection satisfies FIM requirement for infrastructure
 
 **State file security**: state contains secrets (even with `sensitive`). Encrypt at rest (S3 SSE-KMS), restrict access (IAM policy), enable versioning, log all access (CloudTrail data events), retain 1+ year.
 
@@ -440,21 +440,21 @@ Read `references/production-checklist.md` for the full pre-deploy checklist cove
 
 ## Reference Files
 
-- `references/module-patterns.md` -- module design and testing patterns
-- `references/state-and-security.md` -- state backend, locking, encryption, OIDC patterns, and state surgery (cross-state migration)
-- `references/compliance.md` -- compliance and audit-oriented Terraform guidance
-- `references/production-checklist.md` -- pre-deploy verification checklist (HCL, modules, operations, PCI-DSS, MPoC)
+- `references/module-patterns.md` - module design and testing patterns
+- `references/state-and-security.md` - state backend, locking, encryption, OIDC patterns, and state surgery (cross-state migration)
+- `references/compliance.md` - compliance and audit-oriented Terraform guidance
+- `references/production-checklist.md` - pre-deploy verification checklist (HCL, modules, operations, PCI-DSS, MPoC)
 
 ---
 
 ## Related Skills
 
-- **ansible** -- for day-2 configuration of provisioned resources. Terraform provisions the VM;
-  Ansible configures what runs on it. No `provisioner` blocks -- use Ansible instead.
-- **kubernetes** -- K8s manifests and Helm charts. Terraform provisions the cluster; kubernetes configures what runs on it.
-- **databases** -- engine tuning and operations. Terraform provisions managed databases; databases skill tunes the engine.
-- **ci-cd** -- pipeline design that runs `terraform plan/apply`. Terraform covers HCL; ci-cd covers the pipeline stages.
-- **docker** -- container image patterns. Terraform provisions container infrastructure but Dockerfile design belongs in docker.
+- **ansible** - for day-2 configuration of provisioned resources. Terraform provisions the VM;
+  Ansible configures what runs on it. No `provisioner` blocks - use Ansible instead.
+- **kubernetes** - K8s manifests and Helm charts. Terraform provisions the cluster; kubernetes configures what runs on it.
+- **databases** - engine tuning and operations. Terraform provisions managed databases; databases skill tunes the engine.
+- **ci-cd** - pipeline design that runs `terraform plan/apply`. Terraform covers HCL; ci-cd covers the pipeline stages.
+- **docker** - container image patterns. Terraform provisions container infrastructure but Dockerfile design belongs in docker.
 
 ---
 

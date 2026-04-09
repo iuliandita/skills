@@ -37,9 +37,9 @@ scratchpad that evolves with the project.
 
 - Structured project management with phases, milestones, execution plans
 - Sprint or iteration planning with task dependencies
-- Code review or PR review -- use **code-review**
-- Writing project docs or READMEs -- use **update-docs**
-- Tracking bugs or incidents -- use issue trackers directly
+- Code review or PR review - use **code-review**
+- Writing project docs or READMEs - use **update-docs**
+- Tracking bugs or incidents - use issue trackers directly
 
 ---
 
@@ -51,11 +51,11 @@ Before writing or modifying ROADMAP.md, verify:
 - [ ] **No secrets**: entries don't contain API keys, internal URLs, or sensitive business info
 - [ ] **Attribution preserved**: competitive intel cites the source repo or project
 - [ ] **No duplicates**: new ideas don't repeat existing entries (check intent, not just wording)
-- [ ] **Format preserved**: edits work within the existing file structure -- don't reformat
+- [ ] **Format preserved**: edits work within the existing file structure - don't reformat
       sections the user didn't ask to change
 - [ ] **Shipped items attributed**: completed entries reference the PR, release, or commit
 - [ ] **No hallucinated competitive data**: every feature, issue count, or user demand claim
-      from a competitor repo is backed by an actual link or quote -- not inferred
+      from a competitor repo is backed by an actual link or quote - not inferred
 - [ ] **No priority inflation**: P0 items are genuine blockers, not aspirational wishes
 
 ---
@@ -65,7 +65,7 @@ Before writing or modifying ROADMAP.md, verify:
 ### Sections (fixed order)
 
 Every ROADMAP.md uses these sections in this order. Empty sections can be omitted
-but the order is not negotiable -- consistency makes the file scannable. When adding
+but the order is not negotiable - consistency makes the file scannable. When adding
 content to a previously omitted section, create it in the canonical position relative
 to existing sections.
 
@@ -90,59 +90,59 @@ What "done" means for the next milestone. Each criterion has a verdict.
 - {Requirement}
 - {Requirement}
 
-## Now -- P0
+## Now - P0
 
 Blocks the next milestone or release. Active work only.
 
-- [in-progress] {Description} -- {area} | PR #{n}
-- [planned] {Description} -- {area}
+- [in-progress] {Description} - {area} | PR #{n}
+- [planned] {Description} - {area}
 
-## Next -- P1
+## Next - P1
 
 Committed direction. Happens after Now is clear.
 
-- [planned] {Description} -- {area}
-- [exploring] {Description} -- {area}
+- [planned] {Description} - {area}
+- [exploring] {Description} - {area}
 
-## Later -- P2
+## Later - P2
 
 Good ideas, no timeline. Revisit during review.
 
-- {Description} -- {context}
+- {Description} - {context}
 
 ## Experiments
 
 Low confidence. Build only with real demand signal.
 
-- {Description} -- {what would validate it}
+- {Description} - {what would validate it}
 
 ## Shipped
 
 ### v{X.Y.Z} ({date})
 
-- ~~{Description}~~ -- {area} | PR #{n}, v{X.Y.Z} ({date})
+- ~~{Description}~~ - {area} | PR #{n}, v{X.Y.Z} ({date})
 
 ## Competitive Intel
 
 ### {owner/repo}
 
-- {Feature} ({relevant | weak signal | noise}) -- {evidence}
+- {Feature} ({relevant | weak signal | noise}) - {evidence}
 - User demand: {issue links, discussion quotes, vote counts}
 
 ## Parked
 
 Items deferred with reason.
 
-- {Description} -- {reason for parking}
+- {Description} - {reason for parking}
 ```
 
 ### Item format
 
 Items have two tiers depending on where they live:
 
-**Active items (Now, Next)** -- structured, with status and tracking:
+**Active items (Now, Next)** - structured, with status and tracking:
 ```
-- [status] Description -- area | tracking
+- [status] Description - area | tracking
 ```
 
 Status values: `exploring`, `planned`, `in-progress`
@@ -151,9 +151,9 @@ Area values are project-specific shorthand for the component or domain (e.g., `u
 `api`, `backend`, `infra`, `docs`, `auth`). Infer from the project's structure. If
 unclear, omit the area rather than guessing.
 
-**Backlog items (Later, Experiments)** -- lightweight, quick capture:
+**Backlog items (Later, Experiments)** - lightweight, quick capture:
 ```
-- Description -- context or source
+- Description - context or source
 ```
 
 Items gain structure as they're promoted. A quick idea in Later becomes a tracked
@@ -161,7 +161,7 @@ item when it moves to Next.
 
 **Shipped items** always get attribution:
 ```
-- ~~Description~~ -- area | PR #N (or MR #N), vX.Y.Z (date)
+- ~~Description~~ - area | PR #N (or MR #N), vX.Y.Z (date)
 ```
 
 ### When a ROADMAP.md already exists
@@ -195,7 +195,7 @@ git tag --sort=-creatordate 2>/dev/null | head -5
 git log --oneline --since="2 weeks ago" 2>/dev/null | head -15
 ```
 
-If neither `gh` nor `glab` is available, note it once ("PR tracking unavailable --
+If neither `gh` nor `glab` is available, note it once ("PR tracking unavailable -
 install gh or glab for full coverage") and continue with git-only data (tags + commits).
 
 If merged PRs or new releases look like they match open roadmap items, mention it
@@ -215,10 +215,10 @@ Trigger: user throws ideas at the project, says "add to roadmap", or describes f
 #### Step 1: Bootstrap if needed
 
 1. Check if ROADMAP.md exists in the project root (in monorepos, default to the git
-   root unless the user specifies a package -- if multiple ROADMAP.md files exist, ask)
+   root unless the user specifies a package - if multiple ROADMAP.md files exist, ask)
 2. If not, create it using the starter structure. Read the project's README, package.json,
    or equivalent to fill in the Snapshot section with real context
-3. Check if ROADMAP.md is in .gitignore -- if not, add it:
+3. Check if ROADMAP.md is in .gitignore - if not, add it:
    ```
    # Project roadmap (local planning doc)
    ROADMAP.md
@@ -228,7 +228,7 @@ Trigger: user throws ideas at the project, says "add to roadmap", or describes f
 #### Step 2: Parse and place ideas
 
 Extract actionable items from the user's input. For each idea:
-- Write a clear, concise description (keep the user's voice -- clean up only if unclear)
+- Write a clear, concise description (keep the user's voice - clean up only if unclear)
 - Place it in the right priority tier (ask if genuinely ambiguous, default to P1)
 - Add context: where the idea came from, what it enables, any constraints mentioned
 
@@ -272,7 +272,7 @@ directly (e.g., "PR #45"), fetch those with `gh pr view 45 --json title,mergedAt
 #### Step 2: Match activity to roadmap items
 
 Compare commit messages, PR titles, and release notes against open roadmap items.
-Use semantic matching -- "add dark mode support" matches "Dark mode theme option".
+Use semantic matching - "add dark mode support" matches "Dark mode theme option".
 
 Present matches to the user before making changes:
 
@@ -285,7 +285,7 @@ Present matches to the user before making changes:
 #### Step 3: Update the file
 
 If the user already stated which items shipped (e.g., "PR #45 adds dark mode"),
-treat that as pre-confirmed -- present the planned changes for review rather than
+treat that as pre-confirmed - present the planned changes for review rather than
 re-asking "check these off?"
 
 For confirmed matches:
@@ -306,7 +306,7 @@ Trigger: user asks to scan competitors, provides repo URLs, or accepts the Mode 
 Accept:
 - GitHub or GitLab repo URLs, or `owner/repo` references
 - Project names to search for
-- "Similar to this project" -- infer from README, package.json, or project description
+- "Similar to this project" - infer from README, package.json, or project description
 
 If the user doesn't provide targets, suggest 2-3 based on the project's domain and
 tech stack. Confirm before scanning.
@@ -362,7 +362,7 @@ pass this filter:
 
 1. **Does it fit the project's identity?** A feature that makes sense for a competitor
    with a different audience or philosophy doesn't belong here.
-2. **Are real users asking for it?** Evidence from issues, PRs, or discussions -- not
+2. **Are real users asking for it?** Evidence from issues, PRs, or discussions - not
    just "competitor X shipped it". User demand > competitor parity.
 3. **Does it conflict with existing priorities?** If it would distract from P0 work or
    pull the project in a different direction, flag it as a distraction, not a suggestion.
@@ -370,14 +370,14 @@ pass this filter:
 Rate each finding using concrete thresholds:
 
 - **Strong signal**: 3+ distinct commenters, or a single issue with 10+ reactions
-  (calibrate to repo size -- 10 reactions in a 50k-star repo is weak, 10 in a
+  (calibrate to repo size - 10 reactions in a 50k-star repo is weak, 10 in a
   500-star repo is strong). Fits project direction, fills a visible gap.
 - **Weak signal**: 1-2 user mentions with unclear fit, or a feature request with
   few reactions that aligns with the project's direction
 - **Noise**: no user evidence, different audience, scope creep, feature exists only
   in a competitor with no user demand, or solution without a problem
 
-When scanning multiple repos, note patterns that appear across sources -- features
+When scanning multiple repos, note patterns that appear across sources - features
 requested in 2+ repos suggest broader user demand beyond any single project.
 
 **Assessing project identity**: infer from README, package.json description, existing
@@ -394,10 +394,10 @@ Competitive Intel section for awareness. Drop noise entirely.
 Before writing anything to ROADMAP.md, present the filtered findings:
 
 > **Strong signal** (suggesting for roadmap):
-> - Feature X -- 15 reactions on owner/repo#123, aligns with our P1 direction
+> - Feature X - 15 reactions on owner/repo#123, aligns with our P1 direction
 >
 > **Weak signal** (for awareness only):
-> - Feature Y -- 1 mention in owner/repo#456, unclear fit
+> - Feature Y - 1 mention in owner/repo#456, unclear fit
 >
 > Add the strong-signal items to the roadmap?
 
@@ -424,7 +424,7 @@ Read ROADMAP.md. Present a summary:
 - Item counts by priority tier
 - Items currently in progress (if tracked)
 - Recently shipped items
-- Stale items (ideas sitting untouched for a long time -- check git blame or file dates)
+- Stale items (ideas sitting untouched for a long time - check git blame or file dates)
 
 #### Step 2: Suggest actions
 
@@ -432,8 +432,8 @@ Based on the current state:
 
 | Signal | Suggestion |
 |--------|-----------|
-| P0 items not being worked on | Flag -- these are supposed to be urgent |
-| Old ideas with no movement | Park or promote -- sitting isn't a priority |
+| P0 items not being worked on | Flag - these are supposed to be urgent |
+| Old ideas with no movement | Park or promote - sitting isn't a priority |
 | Related items scattered across tiers | Group into a cohesive effort |
 | Shipped items still in active sections | Move to Shipped |
 | Missing structure | Suggest organizational improvements |
@@ -452,24 +452,24 @@ Present suggestions. Apply only what the user approves.
 #### Step 4: Apply changes
 
 With user approval, reorganize, re-prioritize, park, or remove items. Never delete
-silently -- move to **Parked** with a reason, or confirm deletion explicitly.
+silently - move to **Parked** with a reason, or confirm deletion explicitly.
 
 ---
 
 ## Reference Files
 
-- `references/trigger-integration.md` -- optional auto-trigger setup for Claude Code hooks,
+- `references/trigger-integration.md` - optional auto-trigger setup for Claude Code hooks,
   GitHub Actions, and git hooks. Read this when the user wants push-based roadmap updates
   instead of (or in addition to) the built-in activity detection.
 
 ## Related Skills
 
-- **browse** -- competitive scan (Mode 3) may use browse for reading competitor repos
+- **browse** - competitive scan (Mode 3) may use browse for reading competitor repos
   and documentation when web fetch alone isn't sufficient
-- **git** -- update mode (Mode 2) reads git history and PR data to match shipped work
-- **code-review** -- reviews code correctness. This skill tracks what to build;
+- **git** - update mode (Mode 2) reads git history and PR data to match shipped work
+- **code-review** - reviews code correctness. This skill tracks what to build;
   code-review evaluates the code that implements it
-- **update-docs** -- updates project documentation. This skill manages the roadmap;
+- **update-docs** - updates project documentation. This skill manages the roadmap;
   update-docs handles READMEs, API docs, and runbooks
 
 ## Rules

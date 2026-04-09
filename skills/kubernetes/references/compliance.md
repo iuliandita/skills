@@ -2,13 +2,13 @@
 
 PCI-DSS 4.0/4.0.1 requirement mapping to Kubernetes controls. PCI-DSS 3.2.1 was retired March 2024. 51 future-dated requirements became mandatory March 31, 2025.
 
-Key shift: PCI-DSS 4.0 is outcome-based with a "customized approach" -- prove your K8s controls meet the objective, not that you followed a specific recipe. Continuous compliance replaces annual point-in-time assessment.
+Key shift: PCI-DSS 4.0 is outcome-based with a "customized approach" - prove your K8s controls meet the objective, not that you followed a specific recipe. Continuous compliance replaces annual point-in-time assessment.
 
 ---
 
 ## Requirements Mapped to K8s Controls
 
-### Req 1 -- Network Segmentation
+### Req 1 - Network Segmentation
 
 | Sub-req | K8s implementation |
 |---------|-------------------|
@@ -17,13 +17,13 @@ Key shift: PCI-DSS 4.0 is outcome-based with a "customized approach" -- prove yo
 | 1.3 (restrict direct public CDE access) | Private clusters (no public endpoint); Gateway API / ingress in DMZ namespace only. |
 | 1.4 (firewall between untrusted and CDE) | VPC-native clusters; separate subnets per node pool. |
 
-### Req 2 -- Secure Defaults
+### Req 2 - Secure Defaults
 
 | Sub-req | K8s implementation |
 |---------|-------------------|
 | 2.2.4-6 (harden system components) | Container-Optimized OS or Talos Linux for nodes; distroless or scratch base images; remove unnecessary packages/services from containers. |
 
-### Req 3 -- Protect Stored Data
+### Req 3 - Protect Stored Data
 
 | Sub-req | K8s implementation |
 |---------|-------------------|
@@ -31,20 +31,20 @@ Key shift: PCI-DSS 4.0 is outcome-based with a "customized approach" -- prove yo
 | 3.5.1.2 (disk-level alone insufficient) | KMS-backed `EncryptionConfiguration` for Secrets. Node disk encryption is NOT enough. |
 | 3.6/3.7 (key management) | **External Secrets Operator** or **Vault Agent Injector** syncing from Vault; key rotation policies. **Sealed Secrets** acceptable for static secrets with documented key management (see `sealed-secrets.md` PCI-DSS section for gaps and mitigations). |
 
-### Req 4 -- Encrypt Transmissions
+### Req 4 - Encrypt Transmissions
 
 | Sub-req | K8s implementation |
 |---------|-------------------|
 | 4.1/4.2 (TLS 1.2+ everywhere) | **mTLS via service mesh** (Istio strict, Cilium mutual auth); TLS at ingress; internal service-to-service encryption. |
 | 4.2.1.1 (certificate inventory) | **cert-manager** with automated rotation; certificate monitoring dashboards. |
 
-### Req 5 -- Malware Protection
+### Req 5 - Malware Protection
 
 | Sub-req | K8s implementation |
 |---------|-------------------|
 | 5.2/5.3 (anti-malware, FIM) | **Falco** (eBPF runtime detection); read-only root filesystems; **immutable images** (deploy by SHA256 digest). |
 
-### Req 6 -- Secure Development
+### Req 6 - Secure Development
 
 | Sub-req | K8s implementation |
 |---------|-------------------|
@@ -53,14 +53,14 @@ Key shift: PCI-DSS 4.0 is outcome-based with a "customized approach" -- prove yo
 | 6.3.2 (component inventory) | **SBOMs** generated at build time (Syft, Trivy SBOM); stored and queryable alongside images. |
 | 6.4.2 (WAF on public-facing apps) | ModSecurity, Cloud Armor, or dedicated WAF in front of ingress/gateway. |
 
-### Req 7 -- Restrict Access
+### Req 7 - Restrict Access
 
 | Sub-req | K8s implementation |
 |---------|-------------------|
 | 7.2 (least privilege) | **RBAC**: per-namespace Roles/RoleBindings; no cluster-admin for workloads; dedicated ServiceAccounts per deployment. |
 | 7.2.5 (review app account access) | Audit RBAC bindings quarterly; use rbac-lookup, rakkess. |
 
-### Req 8 -- Authentication
+### Req 8 - Authentication
 
 | Sub-req | K8s implementation |
 |---------|-------------------|
@@ -68,7 +68,7 @@ Key shift: PCI-DSS 4.0 is outcome-based with a "customized approach" -- prove yo
 | 8.4.2 (MFA for all CDE access) | MFA on all kubectl access paths via identity provider; no direct cert-based auth without MFA. |
 | 8.6.2 (no hardcoded secrets) | External secrets management; no secrets in ConfigMaps, env vars in manifests, or Helm values. |
 
-### Req 10 -- Logging & Monitoring
+### Req 10 - Logging & Monitoring
 
 | Sub-req | K8s implementation |
 |---------|-------------------|
@@ -79,19 +79,19 @@ Key shift: PCI-DSS 4.0 is outcome-based with a "customized approach" -- prove yo
 | 10.5.1 (retain 12 months) | 12 months minimum, 3 months immediately available. |
 | 10.7.1 (detect control failures) | Health checks on log pipelines; alert if Falco/audit-log shipping stops. Note: 10.7.1 is a service-provider-only requirement. |
 
-### Req 9 -- Restrict Physical Access
+### Req 9 - Restrict Physical Access
 
-Cloud provider responsibility for managed K8s (EKS, GKE, AKS). Document the shared responsibility model. For self-hosted clusters, standard datacenter physical security controls apply -- not K8s-specific.
+Cloud provider responsibility for managed K8s (EKS, GKE, AKS). Document the shared responsibility model. For self-hosted clusters, standard datacenter physical security controls apply - not K8s-specific.
 
-### Req 11 -- Security Testing
+### Req 11 - Security Testing
 
 | Sub-req | K8s implementation |
 |---------|-------------------|
-| 11.3.1 (quarterly vuln scans) | **Trivy Operator** (v0.69.3 -- see supply chain warning below) continuous in-cluster scanning; registry scanning on schedule. |
-| 11.3.1.2 (authenticated internal scans) | **Application-level** scans with credentials (Nessus, Qualys, OpenVAS) from within the cluster network. This is NOT the same as image scanning -- PCI requires scanning the running application endpoints with authenticated plugins. Trivy/Grype scan images; Nessus/Qualys scan the live app. You need both. |
+| 11.3.1 (quarterly vuln scans) | **Trivy Operator** (v0.69.3 - see supply chain warning below) continuous in-cluster scanning; registry scanning on schedule. |
+| 11.3.1.2 (authenticated internal scans) | **Application-level** scans with credentials (Nessus, Qualys, OpenVAS) from within the cluster network. This is NOT the same as image scanning - PCI requires scanning the running application endpoints with authenticated plugins. Trivy/Grype scan images; Nessus/Qualys scan the live app. You need both. |
 | 11.5/11.5.2 (FIM, change detection) | **Falco** rules for critical file writes; **ArgoCD/Flux** drift detection (Git as source of truth); admission controllers blocking non-compliant changes. |
 
-### Req 12 -- Organizational Policies
+### Req 12 - Organizational Policies
 
 | Sub-req | K8s implementation |
 |---------|-------------------|
@@ -126,7 +126,7 @@ If co-locating CDE and non-CDE on the same cluster, ALL of these are required:
 
 **Runtime isolation:**
 - **gVisor** or **Kata Containers** for CDE pods (sandbox the kernel)
-- **User namespaces** (`hostUsers: false`, enabled by default since 1.33) -- maps container UID 0 to unprivileged host UID. Container breakout doesn't yield host root. Significant for QSA demonstrations of privilege isolation.
+- **User namespaces** (`hostUsers: false`, enabled by default since 1.33) - maps container UID 0 to unprivileged host UID. Container breakout doesn't yield host root. Significant for QSA demonstrations of privilege isolation.
 - Seccomp restricted profiles
 - AppArmor/SELinux mandatory
 
@@ -206,10 +206,10 @@ resources:
 ```
 
 **Ranked by PCI compliance:**
-1. **External KMS** (Vault, AWS KMS, GCP Cloud KMS, Azure Key Vault) -- best; keys never on disk; audit trail
-2. **aescbc with external key** -- acceptable; key in EncryptionConfiguration file
-3. **aesgcm** -- acceptable but manual key rotation
-4. **identity (plaintext)** -- NOT PCI COMPLIANT
+1. **External KMS** (Vault, AWS KMS, GCP Cloud KMS, Azure Key Vault) - best; keys never on disk; audit trail
+2. **aescbc with external key** - acceptable; key in EncryptionConfiguration file
+3. **aesgcm** - acceptable but manual key rotation
+4. **identity (plaintext)** - NOT PCI COMPLIANT
 
 ---
 
@@ -227,10 +227,10 @@ PCI MPoC v1.1 (released Nov 2024, latest) governs accepting card payments on com
 | 4. Software Management | SDK distribution, key management, updates | DevOps/app overlap |
 | **5. MPoC Solution** | **Solution provider's infra, third-party management** | **Your cloud/cluster** |
 
-### Domain 3 -- A&M backend (the infra-critical one)
+### Domain 3 - A&M backend (the infra-critical one)
 
 The Attestation & Monitoring backend must either be:
-- **PCI-DSS certified** (full assessment -- most common path), OR
+- **PCI-DSS certified** (full assessment - most common path), OR
 - Assessed against **MPoC Appendix A** by the MPoC security lab (lighter, only when A&M is isolated from account data processing)
 
 **What Domain 3 requires from K8s infra:**

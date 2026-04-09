@@ -349,7 +349,7 @@ Bridge=br0
 ### macvtap
 
 Direct connection to physical NIC. Better performance than bridge, but the VM can't
-communicate with the host (by design -- use bridge if host-VM communication is needed).
+communicate with the host (by design - use bridge if host-VM communication is needed).
 
 ```xml
 <interface type='direct'>

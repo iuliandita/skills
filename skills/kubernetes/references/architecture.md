@@ -19,7 +19,7 @@ Deep-dive reference for cluster design, GitOps strategy, security architecture, 
 
 **Hub-spoke** (management + workload):
 - Central management cluster runs ArgoCD/Flux, monitoring, RBAC
-- Workload clusters are cattle -- replaceable, version-pinned
+- Workload clusters are cattle - replaceable, version-pinned
 - Best for: platform teams managing multiple product teams
 
 **Per-environment** (dev/staging/prod):
@@ -84,7 +84,7 @@ infrastructure/
 
 **App-of-apps** (ArgoCD):
 ```yaml
-# root-app.yaml -- manages all child Applications
+# root-app.yaml - manages all child Applications
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -98,7 +98,7 @@ spec:
   destination:
     server: https://kubernetes.default.svc
   syncPolicy:
-    automated:          # non-prod only -- Critical Rule #5: no auto-sync to prod
+    automated:          # non-prod only - Critical Rule #5: no auto-sync to prod
       prune: true
       selfHeal: true
 ```
@@ -110,7 +110,7 @@ spec:
 - `ignoreMissingValueFiles: true` for default/override patterns with ApplicationSets.
 - OCI charts: omit `oci://` prefix in ArgoCD's `repoURL`.
 - Wildcard valueFiles (ArgoCD v3.4+, RC as of March 2026): `valueFiles: ["values/*.yaml"]`.
-- **Anti-pattern**: `randAlphaNum` or other random functions in Helm templates -- causes perpetual OutOfSync.
+- **Anti-pattern**: `randAlphaNum` or other random functions in Helm templates - causes perpetual OutOfSync.
 
 ### Promotion Strategy
 
@@ -165,7 +165,7 @@ Advantages over Ingress:
 
 ### Service Mesh
 
-Add only when needed -- complexity cost is real.
+Add only when needed - complexity cost is real.
 
 | Mesh | Architecture | Status |
 |------|-------------|--------|
@@ -179,13 +179,13 @@ Add only when needed -- complexity cost is real.
 
 ### Admission Control (layered)
 
-1. **ValidatingAdmissionPolicy (CEL)** -- native since K8s 1.30 GA. No webhooks, no external deps. Use for standard policies (no `:latest`, require labels, require resource limits). The native answer for most admission needs.
+1. **ValidatingAdmissionPolicy (CEL)** - native since K8s 1.30 GA. No webhooks, no external deps. Use for standard policies (no `:latest`, require labels, require resource limits). The native answer for most admission needs.
 
-2. **Kyverno** (v1.17+, CNCF Incubating) -- for policies that need mutation or resource generation (auto-create NetworkPolicies, inject labels). CEL-based policies in beta (v1.16+). Momentum is stronger than OPA/Gatekeeper.
+2. **Kyverno** (v1.17+, CNCF Incubating) - for policies that need mutation or resource generation (auto-create NetworkPolicies, inject labels). CEL-based policies in beta (v1.16+). Momentum is stronger than OPA/Gatekeeper.
 
-3. **OPA Gatekeeper** (v3.22+, OPA is CNCF Graduated) -- Rego-based, cross-platform. Best when you need the same policy engine across K8s and non-K8s systems.
+3. **OPA Gatekeeper** (v3.22+, OPA is CNCF Graduated) - Rego-based, cross-platform. Best when you need the same policy engine across K8s and non-K8s systems.
 
-4. **Cedar** (AWS OSS) -- unifies RBAC authorization + admission. Rust rewrite in progress. Not production-ready for K8s yet. Watch this space.
+4. **Cedar** (AWS OSS) - unifies RBAC authorization + admission. Rust rewrite in progress. Not production-ready for K8s yet. Watch this space.
 
 ### Runtime Security
 
@@ -213,12 +213,12 @@ Pipeline: build -> scan (Trivy/Grype) -> sign (cosign) -> generate SBOM (Syft) -
 
 ### CI/CD Supply Chain Hardening (post-Trivy compromise, March 2026)
 
-The Trivy supply chain attack (CVE-2026-33634) demonstrated that **mutable Git tags and Docker Hub tags are not trustworthy** -- attackers force-pushed all trivy-action tags to credential-stealing malware and published malicious Docker images.
+The Trivy supply chain attack (CVE-2026-33634) demonstrated that **mutable Git tags and Docker Hub tags are not trustworthy** - attackers force-pushed all trivy-action tags to credential-stealing malware and published malicious Docker images.
 
 **Non-negotiable rules for CI/CD:**
 - **Pin ALL GitHub Actions to commit SHAs**: `uses: org/action@<40-char-sha>`, never `@v1` or `@latest`. This is now a PCI-DSS Req 6.2.1 expectation for CDE pipelines.
 - **Pin CI tool images to SHA256 digests**: `image: tool@sha256:<digest>`, never `:latest` or even `:v1.2.3`.
-- **Use Dependabot/Renovate** to update pinned SHAs -- automation makes SHA-pinning sustainable.
+- **Use Dependabot/Renovate** to update pinned SHAs - automation makes SHA-pinning sustainable.
 - **Enable StepSecurity Harden-Runner** or equivalent to detect unexpected network connections and file system access in CI jobs.
 - **Separate CI secrets by environment**: staging pipeline should NOT have access to production credentials.
 - **Monitor action repos for force-push events**: subscribe to security advisories for all actions you use.
@@ -234,13 +234,13 @@ The Trivy supply chain attack (CVE-2026-33634) demonstrated that **mutable Git t
 | **Sealed Secrets** v0.36.1+ | Encrypted-in-git, self-hosted, air-gapped, no external deps | Yes (encrypted CRs in git) | None |
 | **SOPS** + age/KMS | Small teams, encrypted files in git | Yes (encrypted in git) | KMS or age keys |
 
-**ESO + cloud secret manager** when you have cloud KMS. **Vault** when you need dynamic secrets or PKI. **Sealed Secrets** when you need encrypted-in-git without external infrastructure -- works well for self-hosted clusters, homelabs, and environments where standing up Vault or a cloud KMS is overkill. Sealed Secrets and ESO are not mutually exclusive -- some teams use Sealed Secrets for static config and Vault/ESO for dynamic credentials. **SOPS** for teams that prefer file-level encryption over CRDs.
+**ESO + cloud secret manager** when you have cloud KMS. **Vault** when you need dynamic secrets or PKI. **Sealed Secrets** when you need encrypted-in-git without external infrastructure - works well for self-hosted clusters, homelabs, and environments where standing up Vault or a cloud KMS is overkill. Sealed Secrets and ESO are not mutually exclusive - some teams use Sealed Secrets for static config and Vault/ESO for dynamic credentials. **SOPS** for teams that prefer file-level encryption over CRDs.
 
-**Full Sealed Secrets reference**: scope modes, key management, PCI-DSS gaps, kubeseal patterns, ArgoCD integration, anti-patterns -- see `references/sealed-secrets.md`.
+**Full Sealed Secrets reference**: scope modes, key management, PCI-DSS gaps, kubeseal patterns, ArgoCD integration, anti-patterns - see `references/sealed-secrets.md`.
 
-**CRITICAL: CVE-2026-22728** (Sealed Secrets < v0.36.0) -- scope-widening via the rotate API. Upgrade immediately.
+**CRITICAL: CVE-2026-22728** (Sealed Secrets < v0.36.0) - scope-widening via the rotate API. Upgrade immediately.
 
-**Critical**: K8s Secrets are base64-encoded, not encrypted. Enable etcd encryption at rest via KMS v2. KMS v1 is deprecated (disabled by default since 1.29). This applies regardless of which secrets tool you use -- once unsealed/synced, the Secret sits in etcd.
+**Critical**: K8s Secrets are base64-encoded, not encrypted. Enable etcd encryption at rest via KMS v2. KMS v1 is deprecated (disabled by default since 1.29). This applies regardless of which secrets tool you use - once unsealed/synced, the Secret sits in etcd.
 
 ### Pod Security Standards (PSS)
 
@@ -256,7 +256,7 @@ metadata:
     pod-security.kubernetes.io/warn: restricted
 ```
 
-Set `audit` and `warn` to restricted on ALL namespaces -- even where you can't enforce yet. This generates visibility into what would break.
+Set `audit` and `warn` to restricted on ALL namespaces - even where you can't enforce yet. This generates visibility into what would break.
 
 ### CIS Benchmark
 
@@ -306,7 +306,7 @@ eBPF enables kernel-level visibility without kernel modules, sidecar proxies, or
 1. Deploy VPA in **recommendation mode**
 2. Collect 2 weeks of data
 3. Adjust requests to p95 usage, limits to 2x requests
-4. **In-place pod resize** (GA in K8s 1.35): VPA can now use `InPlaceOrRecreate` mode to resize CPU/memory without pod restart. Re-evaluate VPA adoption -- the "restarts pods" objection is gone.
+4. **In-place pod resize** (GA in K8s 1.35): VPA can now use `InPlaceOrRecreate` mode to resize CPU/memory without pod restart. Re-evaluate VPA adoption - the "restarts pods" objection is gone.
 5. Re-evaluate monthly
 
 ### Autoscaling Stack
@@ -338,7 +338,7 @@ Unsafe for:
 - Set up alerts: namespace exceeding budget, unattached PVCs, idle nodes
 - Review monthly: delete unused PVCs, consolidate underused namespaces
 
-### DRA (Dynamic Resource Allocation) -- GA in K8s 1.34
+### DRA (Dynamic Resource Allocation) - GA in K8s 1.34
 
 New API for claiming specialized hardware (GPUs, FPGAs, network devices). Replaces the old device plugin model. 20-35% GPU cost reduction through flexible allocation. Use `ResourceClaim`, `ResourceClaimTemplate`, `DeviceClass` resources.
 

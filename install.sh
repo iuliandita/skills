@@ -13,7 +13,7 @@ discover_skills() {
     [[ -f "$dir/SKILL.md" ]] || continue
     local name
     name="$(basename "$dir")"
-    # Skip gitignored skills -- if not in a git repo, include everything
+    # Skip gitignored skills - if not in a git repo, include everything
     if git -C "$SKILLS_SRC" rev-parse --git-dir &>/dev/null; then
       if git -C "$SKILLS_SRC" check-ignore -q "$name" 2>/dev/null; then
         continue
@@ -227,7 +227,7 @@ create_link() {
         printf '  [=] %s already linked\n' "$skill"
         return 0
       fi
-      # Symlink to wrong target -- repoint it
+      # Symlink to wrong target - repoint it
       ln -sfn "$CANONICAL_DIR/$skill" "$tool_dir/$skill"
       printf '  [+] %s relinked\n' "$skill"
       return 0

@@ -40,7 +40,7 @@ Covers Terraform, Ansible, Helm, and Kubernetes manifests.
 ### Stale / Anti-Patterns (Lies)
 
 - Unpinned provider versions (no `required_providers` with version constraints)
-- `provisioner "local-exec"` or `provisioner "remote-exec"` -- use Ansible or user_data instead
+- `provisioner "local-exec"` or `provisioner "remote-exec"` - use Ansible or user_data instead
 - `terraform.tfvars` committed to git with real values
 - `count` for conditional resources when `for_each` with a set would be clearer
 - String interpolation for simple references: `"${var.name}"` -> `var.name`
@@ -49,7 +49,7 @@ Covers Terraform, Ansible, Helm, and Kubernetes manifests.
 
 ### Verbose (Noise)
 
-- Declaring variables with `type = string` and no `description`, `default`, or `validation` -- the variable block is just noise
+- Declaring variables with `type = string` and no `description`, `default`, or `validation` - the variable block is just noise
 - Empty `tags = {}` on every resource (either tag meaningfully or don't)
 - `output` blocks for values nobody consumes downstream
 

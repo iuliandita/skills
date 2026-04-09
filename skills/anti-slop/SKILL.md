@@ -5,7 +5,7 @@ description: >
   code, and dependency creep. Triggers: 'slop', 'code quality', 'simplify', 'modernize',
   'code smell', 'clean up'.
 license: MIT
-compatibility: "None -- works on any codebase"
+compatibility: "None - works on any codebase"
 metadata:
   source: iuliandita/skills
   date_added: "2026-03-25"
@@ -15,7 +15,7 @@ metadata:
 
 # Anti-Slop: Polyglot Code Quality Audit
 
-Detect and fix patterns that make code look machine-generated, over-abstracted, or unnecessarily verbose. The goal is code that reads like a competent human wrote it -- minimal, intentional, and clear.
+Detect and fix patterns that make code look machine-generated, over-abstracted, or unnecessarily verbose. The goal is code that reads like a competent human wrote it - minimal, intentional, and clear.
 
 This skill covers: **TypeScript/JavaScript**, **Python**, **Bash/Shell**, **Rust**, **Docker/Containers**, and **Infrastructure as Code** (Terraform, Ansible, Helm, Kubernetes manifests). The universal patterns apply everywhere; language-specific sections add targeted checks.
 
@@ -30,23 +30,24 @@ This skill covers: **TypeScript/JavaScript**, **Python**, **Bash/Shell**, **Rust
 
 Every finding falls into one of three categories:
 
-1. **Noise** -- bulk without value (redundant comments, boilerplate, unnecessary types/annotations)
-2. **Lies** -- subtly wrong or outdated (hallucinated APIs, deprecated patterns, stale deps)
-3. **Soul** -- lacks taste (over-abstraction, generic names, defensive overkill)
+1. **Noise** - bulk without value (redundant comments, boilerplate, unnecessary types/annotations)
+2. **Lies** - subtly wrong or outdated (hallucinated APIs, deprecated patterns, stale deps)
+3. **Soul** - lacks taste (over-abstraction, generic names, defensive overkill)
 
 ## When NOT to use
 
-- Correctness, logic, or race-condition bugs -- use **code-review**
-- Security vulnerabilities, secret scanning, or auth review -- use **security-audit**
-- One-off prompt authoring or prompt templates -- use **prompt-generator**
-- Session-end documentation maintenance -- use **update-docs**
+- Correctness, logic, or race-condition bugs - use **code-review**
+- Security vulnerabilities, secret scanning, or auth review - use **security-audit**
+- One-off prompt authoring or prompt templates - use **prompt-generator**
+- Session-end documentation maintenance - use **update-docs**
+- Prose audit of docs, READMEs, wikis, emails, or creative writing - use **anti-ai-prose**
 
 ## AI Self-Check
 
 Before returning any anti-slop audit, verify:
 
 - [ ] **Rewrites compile/parse**: every "after" code snippet is syntactically valid in the target language
-- [ ] **Security patterns not flagged**: auth, CORS, input validation, rate limiting, TLS -- these are correct even if verbose (check the "What NOT to Flag" list)
+- [ ] **Security patterns not flagged**: auth, CORS, input validation, rate limiting, TLS - these are correct even if verbose (check the "What NOT to Flag" list)
 - [ ] **Framework idioms respected**: what looks like over-abstraction might be the framework's expected pattern (e.g., Next.js layouts, Django class-based views, Terraform module structure)
 - [ ] **Existing project conventions preserved**: the repo's naming style, comment density, and abstraction level take precedence over generic "clean code" preferences
 - [ ] **Severity is honest**: don't inflate Low findings to Medium to pad the report
@@ -64,10 +65,10 @@ Default scope based on context:
 - Otherwise -> ask the user
 
 Available scopes:
-- **Full codebase audit** -- scan everything, report by category
-- **Recent changes** -- check git diff or recent commits
-- **Specific files/dirs** -- targeted review
-- **Self-check** -- review code you just wrote in this session
+- **Full codebase audit** - scan everything, report by category
+- **Recent changes** - check git diff or recent commits
+- **Specific files/dirs** - targeted review
+- **Self-check** - review code you just wrote in this session
 
 ### Step 2: Detect languages
 
@@ -80,7 +81,7 @@ Before scanning for slop, run standard linters to clear the low-hanging fruit:
 - **Python**: `ruff check` / `mypy`
 - **TypeScript**: `eslint` / `tsc --noEmit`
 - **Terraform**: `terraform validate` / `tflint`
-- **Structural patterns**: `ast-grep` (tree-sitter powered AST search -- write rules to catch restating comments, dead code, hallucinated imports across languages. Install: `npm i -g @ast-grep/cli`. If your tool ecosystem provides `ast-grep` helper skills or templates, use them.)
+- **Structural patterns**: `ast-grep` (tree-sitter powered AST search - write rules to catch restating comments, dead code, hallucinated imports across languages. Install: `npm i -g @ast-grep/cli`. If your tool ecosystem provides `ast-grep` helper skills or templates, use them.)
 
 Linters handle syntax issues, unused imports, and known anti-patterns mechanically. This skill focuses on what linters can't catch: taste, over-abstraction, naming quality, unnecessary complexity, and stale idioms. Don't duplicate what a linter already covers.
 
@@ -88,23 +89,23 @@ Linters handle syntax issues, unused imports, and known anti-patterns mechanical
 
 ### Step 4: Scan for patterns
 
-Use Grep, Glob, and Read. Read files before flagging -- context matters. A pattern that looks like slop in isolation might be justified.
+Use Grep, Glob, and Read. Read files before flagging - context matters. A pattern that looks like slop in isolation might be justified.
 
-Classify each finding by axis (Noise/Lies/Soul -- see above), action, and severity:
+Classify each finding by axis (Noise/Lies/Soul - see above), action, and severity:
 
 **Action:**
-- **Fix** -- clearly wrong or wasteful, should change
-- **Consider** -- judgment call, present it and let the user decide
-- **Fine** -- looks like slop but is justified (note why and move on)
+- **Fix** - clearly wrong or wasteful, should change
+- **Consider** - judgment call, present it and let the user decide
+- **Fine** - looks like slop but is justified (note why and move on)
 
-**Severity** (determines report ordering -- high first):
-- **High** -- security risk (silent error swallowing, `any` casts bypassing type safety, missing input validation at boundaries), correctness (stale/deprecated APIs, hallucinated patterns)
-- **Medium** -- maintainability (over-abstraction, generic naming, missing error context, logic duplication)
-- **Low** -- style (verbose patterns, comment noise, redundant annotations, barrel files)
+**Severity** (determines report ordering - high first):
+- **High** - security risk (silent error swallowing, `any` casts bypassing type safety, missing input validation at boundaries), correctness (stale/deprecated APIs, hallucinated patterns)
+- **Medium** - maintainability (over-abstraction, generic naming, missing error context, logic duplication)
+- **Low** - style (verbose patterns, comment noise, redundant annotations, barrel files)
 
 ### Step 5: Report and fix
 
-Present findings grouped by category. For each Fix-level item, show the concrete replacement. Don't just point at problems -- show the better version.
+Present findings grouped by category. For each Fix-level item, show the concrete replacement. Don't just point at problems - show the better version.
 
 ---
 
@@ -128,7 +129,7 @@ The single biggest tell. Comments that narrate what code does instead of why.
 - `@param` descriptions repeating the parameter name; comments on obvious ops (`// increment counter`)
 - Convention blindness: camelCase in a snake_case repo, JSDoc in a no-JSDoc project
 
-**Fix:** Delete obvious comments. Keep only *why* comments -- business logic, workarounds, gotchas, non-obvious decisions. If code needs a *what* comment, rewrite the code. A 20-line function needs zero comments if the names are good. A 200-line module might need 3-4.
+**Fix:** Delete obvious comments. Keep only *why* comments - business logic, workarounds, gotchas, non-obvious decisions. If code needs a *what* comment, rewrite the code. A 20-line function needs zero comments if the names are good. A 200-line module might need 3-4.
 
 **Exception:** Comments explaining workarounds for bugs, API quirks, or platform limitations are valuable. Also: shell scripts benefit from more comments than typical code because the syntax is less self-documenting.
 
@@ -151,7 +152,7 @@ Error handling or validation that protects against impossible scenarios.
 - Fallback defaults for required config that should crash loudly if missing
 - `if (!response.ok)` after every internal call, not just HTTP boundaries
 
-**Fix:** Remove pointless error handling. Validate at system boundaries (user input, API responses, env vars, external data), not on every internal call. If a catch block doesn't add context, retry, or recover -- delete it.
+**Fix:** Remove pointless error handling. Validate at system boundaries (user input, API responses, env vars, external data), not on every internal call. If a catch block doesn't add context, retry, or recover - delete it.
 
 **Exception:** Defensive checks on external data (network responses, deserialized JSON, user input, third-party libraries) are correct. Security patterns (auth, CORS, SSRF protection, input sanitization) should never be flagged.
 
@@ -202,7 +203,7 @@ Names that could mean anything: `data`, `result`, `response`, `item`, `temp`, `v
 
 ### 6. Logic Duplication (Lies)
 
-Same logic written slightly differently in multiple places -- a telltale sign of context-free generation.
+Same logic written slightly differently in multiple places - a telltale sign of context-free generation.
 
 **Detect:**
 - Near-identical helper functions in different files
@@ -211,7 +212,7 @@ Same logic written slightly differently in multiple places -- a telltale sign of
 - Terraform `locals` blocks computing the same thing in different modules
 - Ansible tasks doing the same thing with different variable names
 
-**Fix:** Consolidate into a single well-named function/local/variable. But only if truly the same -- slight variations might be intentional.
+**Fix:** Consolidate into a single well-named function/local/variable. But only if truly the same - slight variations might be intentional.
 
 ### 7. Stale Patterns (Lies)
 
@@ -243,7 +244,7 @@ AI models trained on multiple languages bleed idioms across boundaries. A reliab
 - Shell patterns in Python: backtick usage, `$VARIABLE` syntax
 - Go patterns elsewhere: `fmt.Println()`, `:=` assignment, `func ` in non-Go
 
-**Fix:** Replace with the target language's idiom. This is almost always an AI generation artifact -- humans don't accidentally write `.push()` in Python.
+**Fix:** Replace with the target language's idiom. This is almost always an AI generation artifact - humans don't accidentally write `.push()` in Python.
 
 ---
 
@@ -291,7 +292,7 @@ Read `references/iac.md` for the full IaC pattern catalog covering Terraform, An
 
 Read `references/rust.md` for the Rust pattern catalog. Key highlights:
 
-- **Clone abuse**: `.clone()` to dodge the borrow checker -- the #1 AI-Rust tell
+- **Clone abuse**: `.clone()` to dodge the borrow checker - the #1 AI-Rust tell
 - **Error type proliferation**: custom error enums for every module instead of `anyhow`/`thiserror`
 - **Overly generic trait bounds**: `T: Display + Debug + Clone + Send + Sync` when only `Display` is used
 - **Verbose**: `match` with two arms instead of `if let`, explicit `return` at function end, manual Option/Result matching instead of combinators
@@ -310,7 +311,7 @@ Read `references/docker.md` for Dockerfile and Compose pattern catalog. Key high
 
 ## Other Languages
 
-For Go and other languages without dedicated reference files: apply the universal patterns (sections 1-9) only. Note in the report that language-specific checks were skipped. Common cross-language tells still apply -- over-abstraction, comment noise, cross-language leakage, and error handling anti-patterns look similar everywhere.
+For Go and other languages without dedicated reference files: apply the universal patterns (sections 1-9) only. Note in the report that language-specific checks were skipped. Common cross-language tells still apply - over-abstraction, comment noise, cross-language leakage, and error handling anti-patterns look similar everywhere.
 
 ## Research & Citations
 
@@ -325,7 +326,7 @@ These look like slop but aren't:
 - **Security patterns**: auth, CORS, SSRF protection, input validation at boundaries, rate limiting, TLS configuration, RBAC policies. Correct even if "defensive".
 - **Explicit types/annotations on public interfaces**: function signatures, exported types, API contracts benefit from explicitness.
 - **Abstractions that enable testing**: interfaces with one implementation for dependency injection.
-- **Workaround comments**: "works around X bug", "API requires this", "platform-specific" -- institutional knowledge.
+- **Workaround comments**: "works around X bug", "API requires this", "platform-specific" - institutional knowledge.
 - **Defensive checks on external data**: network responses, user input, deserialized data, third-party library output.
 - **Shell verbosity for clarity**: complex pipelines benefit from intermediate variables and comments.
 - **Terraform `count`/`for_each` on single resources**: might be conditional (`count = var.enabled ? 1 : 0`).
@@ -335,27 +336,30 @@ These look like slop but aren't:
 
 ## Related Skills
 
-- **code-review** -- finds bugs and correctness issues. Anti-slop finds quality and style issues.
+- **code-review** - finds bugs and correctness issues. Anti-slop finds quality and style issues.
   If it would cause incorrect behavior, it's a code-review finding. If it's ugly but correct,
   it's anti-slop.
-- **security-audit** -- finds vulnerabilities. Defensive code that looks like "overkill" may be
+- **security-audit** - finds vulnerabilities. Defensive code that looks like "overkill" may be
   correct security practice. Check the "What NOT to Flag" list before flagging security patterns.
-- **full-review** -- orchestrates code-review, anti-slop, security-audit, and update-docs in
+- **full-review** - orchestrates code-review, anti-slop, security-audit, and update-docs in
   parallel. Anti-slop is one of the four passes.
-- **update-docs** -- handles documentation maintenance. Anti-slop focuses on code quality;
+- **update-docs** - handles documentation maintenance. Anti-slop focuses on code quality;
   update-docs focuses on keeping docs accurate and trimmed.
+- **anti-ai-prose** - audits prose for AI writing tells (vocabulary, syntax, tone, formatting).
+  Anti-slop audits code. Together they cover "does this repo read as machine-generated" across
+  both code and documentation.
 
 ---
 
 ## Reference Files
 
-- `references/typescript.md` -- TypeScript and JavaScript anti-slop patterns
-- `references/python.md` -- Python anti-slop patterns
-- `references/shell.md` -- shell and script anti-slop patterns
-- `references/iac.md` -- Terraform, Ansible, Helm, and Kubernetes anti-slop patterns
-- `references/rust.md` -- Rust anti-slop patterns
-- `references/docker.md` -- Dockerfile and Compose anti-slop patterns
-- `references/research-sources.md` -- supporting research, citations, and external context
+- `references/typescript.md` - TypeScript and JavaScript anti-slop patterns
+- `references/python.md` - Python anti-slop patterns
+- `references/shell.md` - shell and script anti-slop patterns
+- `references/iac.md` - Terraform, Ansible, Helm, and Kubernetes anti-slop patterns
+- `references/rust.md` - Rust anti-slop patterns
+- `references/docker.md` - Dockerfile and Compose anti-slop patterns
+- `references/research-sources.md` - supporting research, citations, and external context
 
 ---
 
@@ -368,7 +372,7 @@ These look like slop but aren't:
 
 #### [Category Name] ([count] items)
 
-**[action]** ([severity], [axis]) `path/to/file:line` -- [description]
+**[action]** ([severity], [axis]) `path/to/file:line` - [description]
 ```[language]
 // before
 [code snippet]

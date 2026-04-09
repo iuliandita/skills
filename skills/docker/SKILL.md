@@ -20,7 +20,7 @@ metadata:
 
 # Docker & Containers: Production Infrastructure
 
-Write, review, and architect Dockerfiles, Compose stacks, and container workflows -- from single-service dev setups to multi-arch production pipelines with image signing and compliance gates. The goal is minimal, secure, reproducible images that a team can maintain and a QSA can audit.
+Write, review, and architect Dockerfiles, Compose stacks, and container workflows - from single-service dev setups to multi-arch production pipelines with image signing and compliance gates. The goal is minimal, secure, reproducible images that a team can maintain and a QSA can audit.
 
 **Target versions** (March 2026):
 - Docker Engine 29.3.0, Docker Desktop 4.66.1
@@ -31,11 +31,11 @@ Write, review, and architect Dockerfiles, Compose stacks, and container workflow
 - runc 1.4.1 (latest; CVE-2025-31133/52565/52881 patched since 1.4.0)
 
 This skill covers five domains depending on context:
-- **Dockerfile** -- multi-stage builds, BuildKit syntax, base image selection, layer optimization
-- **Compose** -- Compose v5 orchestration, service wiring, dev/prod patterns, networking
-- **Security** -- hardening, supply chain, image scanning, secrets, runtime controls, PCI-DSS 4.0
-- **Registry & CI** -- OCI registries, image signing (cosign), SBOM generation, CI pipelines
-- **Runtimes** -- Podman, Buildah, Skopeo, containerd, Docker-to-Podman migration
+- **Dockerfile** - multi-stage builds, BuildKit syntax, base image selection, layer optimization
+- **Compose** - Compose v5 orchestration, service wiring, dev/prod patterns, networking
+- **Security** - hardening, supply chain, image scanning, secrets, runtime controls, PCI-DSS 4.0
+- **Registry & CI** - OCI registries, image signing (cosign), SBOM generation, CI pipelines
+- **Runtimes** - Podman, Buildah, Skopeo, containerd, Docker-to-Podman migration
 
 ## When to use
 
@@ -65,13 +65,13 @@ AI tools consistently produce the same Docker mistakes. **Before returning any g
 
 - [ ] Multi-stage build used when the app has a build step (TypeScript, Go, Rust, Java, C/C++)
 - [ ] Dependencies copied and installed BEFORE source code (layer caching)
-- [ ] Final image is slim/distroless/scratch -- no build tools, no package caches
-- [ ] `USER` directive present -- container does NOT run as root
-- [ ] No secrets in `ENV`, `ARG`, or `COPY` -- use `--mount=type=secret` or runtime injection
+- [ ] Final image is slim/distroless/scratch - no build tools, no package caches
+- [ ] `USER` directive present - container does NOT run as root
+- [ ] No secrets in `ENV`, `ARG`, or `COPY` - use `--mount=type=secret` or runtime injection
 - [ ] Base image pinned to specific version or SHA256 digest (never `:latest` except Chainguard free tier, never bare `:22`)
 - [ ] `HEALTHCHECK` present for production images
 - [ ] `.dockerignore` exists and excludes `.git`, `node_modules`, `.env`, `__pycache__`, etc.
-- [ ] No `ADD` for local files (use `COPY` -- `ADD` auto-extracts and fetches URLs)
+- [ ] No `ADD` for local files (use `COPY` - `ADD` auto-extracts and fetches URLs)
 - [ ] Compose: no `version:` field (deprecated since Compose v2, removed in spec v5)
 - [ ] Compose: `depends_on` uses `condition: service_healthy`, not bare ordering
 - [ ] Compose: resource limits set on production services
@@ -95,7 +95,7 @@ Based on the request:
 
 Before writing anything, determine:
 - **Application type**: language, framework, build system
-- **Runtime**: Bun, Node.js, Python, Go, Rust, Java -- determines base image and build pattern
+- **Runtime**: Bun, Node.js, Python, Go, Rust, Java - determines base image and build pattern
 - **Environment**: dev (hot reload, debug) vs production (minimal, hardened)
 - **Base image**: Alpine (small, musl) vs Debian-slim (glibc compat) vs distroless (no shell) vs Chainguard (zero-CVE) vs scratch (static binaries)
 - **Secrets**: how are they injected? (env vars, mounted files, Docker secrets, vault)
@@ -145,7 +145,7 @@ See `references/dockerfile-patterns.md` for the actual language-by-language base
 
 ### Key patterns
 
-**Multi-stage builds** -- the non-negotiable pattern for any compiled or transpiled language:
+**Multi-stage builds** - the non-negotiable pattern for any compiled or transpiled language:
 
 ```dockerfile
 # syntax=docker/dockerfile:1
@@ -170,8 +170,8 @@ CMD ["dist/index.js"]
 
 **BuildKit features** (require `# syntax=docker/dockerfile:1` or `DOCKER_BUILDKIT=1`):
 
-- **Cache mounts**: `RUN --mount=type=cache,target=/root/.npm npm ci` -- persists package cache across builds, up to 70% faster rebuilds
-- **Secret mounts**: `RUN --mount=type=secret,id=npmrc,target=/root/.npmrc npm ci` -- secrets never baked into layers
+- **Cache mounts**: `RUN --mount=type=cache,target=/root/.npm npm ci` - persists package cache across builds, up to 70% faster rebuilds
+- **Secret mounts**: `RUN --mount=type=secret,id=npmrc,target=/root/.npmrc npm ci` - secrets never baked into layers
 - **Heredocs**: multi-line scripts without backslash hell
 
 ```dockerfile
@@ -191,8 +191,8 @@ EOF
 ### What NOT to write
 
 - `COPY . .` before dependency install (busts cache on every source change)
-- `ADD` for local files (use `COPY` -- `ADD` is only for auto-extracting `.tar.gz` archives into the image)
-- `MAINTAINER` (deprecated -- use `LABEL maintainer="..."`)
+- `ADD` for local files (use `COPY` - `ADD` is only for auto-extracting `.tar.gz` archives into the image)
+- `MAINTAINER` (deprecated - use `LABEL maintainer="..."`)
 - `RUN cd /dir && ...` (use `WORKDIR /dir`)
 - Separate `RUN` for each package install (chain with `&&`)
 - `chmod 777` on anything
@@ -229,7 +229,7 @@ services:
       start_period: 10s
       retries: 3
 
-# compose.override.yaml (dev -- auto-loaded)
+# compose.override.yaml (dev - auto-loaded)
 services:
   app:
     build: .
@@ -245,11 +245,11 @@ services:
 
 **Secrets**: use top-level `secrets:` with `file:` or `external: true`, reference via `_FILE` env convention (e.g., `POSTGRES_PASSWORD_FILE: /run/secrets/db_pass`). Never hardcode secrets in `environment:`. See `references/compose-patterns.md` for the full template with secret wiring.
 
-**Health-gated dependencies**: always use `depends_on:` with `condition: service_healthy` -- bare `depends_on` is ordering only, no readiness guarantee.
+**Health-gated dependencies**: always use `depends_on:` with `condition: service_healthy` - bare `depends_on` is ordering only, no readiness guarantee.
 
 ### Compose anti-patterns
 
-- `version: "3.8"` -- dead field, remove it
+- `version: "3.8"` - dead field, remove it
 - `container_name` on every service (breaks `docker compose up --scale`)
 - `restart: always` without healthcheck (infinite restart of broken containers)
 - `network_mode: host` when port mapping works
@@ -272,12 +272,12 @@ Read `references/security-and-compliance.md` for the full PCI-DSS 4.0 container 
 | CVE-2025-31133 | runc | High | Container escape via /dev/null symlink race | runc 1.2.8, 1.3.3, 1.4.0-rc.3 |
 | CVE-2025-52565 | runc | High | Container escape via /dev/console mount race | runc 1.2.8, 1.3.3, 1.4.0-rc.3 |
 | CVE-2025-52881 | runc | High | Host procfs writes via /proc redirect (DoS/escape) | runc 1.2.8, 1.3.3, 1.4.0-rc.3 |
-| CVE-2026-33634 | Trivy | Critical | Supply chain -- malware in Docker Hub images (v0.69.4-6) | Trivy v0.69.3 (safe) |
+| CVE-2026-33634 | Trivy | Critical | Supply chain - malware in Docker Hub images (v0.69.4-6) | Trivy v0.69.3 (safe) |
 | CVE-2026-2664 | Docker Desktop | Medium | gRPC-FUSE kernel module OOB read | Desktop 4.62.0+ |
 | CVE-2025-13743 | Docker Desktop | Low | Expired Hub PATs leaked in diagnostics bundles | Desktop 4.54.0 |
-| CVE-2026-28400 | Model Runner | 7.5 High | Runtime flag injection -- arbitrary file overwrite, container escape | Desktop 4.61.0+ |
+| CVE-2026-28400 | Model Runner | 7.5 High | Runtime flag injection - arbitrary file overwrite, container escape | Desktop 4.61.0+ |
 | CVE-2026-33747 | BuildKit | High | Malicious frontend file escape outside storage root | BuildKit v0.28.1 |
-| CVE-2026-33748 | BuildKit | High | Git URL validation bypass -- restricted file access | BuildKit v0.28.1 |
+| CVE-2026-33748 | BuildKit | High | Git URL validation bypass - restricted file access | BuildKit v0.28.1 |
 
 **Action items**: upgrade runc to >= 1.4.0, BuildKit to >= 0.28.1, Docker Desktop to >= 4.66.1, never pull Trivy v0.69.4/5/6. Pin ALL CI tool images to SHA256 digests.
 
@@ -338,14 +338,14 @@ For a hardened Dockerfile pattern, see `references/dockerfile-patterns.md` (Lang
 
 PCI-DSS 4.0 is the only active version. Key container-specific requirements:
 
-- **Req 1**: Network segmentation -- use user-defined bridge networks, `internal: true` for backend services, never expose CDE containers on default bridge
-- **Req 2.2**: Harden containers -- non-root, drop caps, read-only rootfs, one process per container
-- **Req 4**: Encrypt transmissions -- TLS between CDE containers in Compose (mount certs, use TLS-enabled images, or front with a TLS-terminating reverse proxy)
+- **Req 1**: Network segmentation - use user-defined bridge networks, `internal: true` for backend services, never expose CDE containers on default bridge
+- **Req 2.2**: Harden containers - non-root, drop caps, read-only rootfs, one process per container
+- **Req 4**: Encrypt transmissions - TLS between CDE containers in Compose (mount certs, use TLS-enabled images, or front with a TLS-terminating reverse proxy)
 - **Req 5.2/5.3**: Immutable images (deploy by digest), Falco for runtime detection
 - **Req 6.3**: Vulnerability scanning on every image before deployment (Docker Scout, Grype, Trivy v0.69.3)
 - **Req 6.3.2**: SBOM for every production image
 - **Req 8.6.2**: No hardcoded secrets in images, compose files, or env vars
-- **Req 10**: Audit logging -- container stdout/stderr to immutable log store
+- **Req 10**: Audit logging - container stdout/stderr to immutable log store
 - **Req 11.5**: Image digest pinning + Falco = FIM for containers
 
 Full mapping in `references/security-and-compliance.md`.
@@ -453,26 +453,26 @@ Read `references/alternative-runtimes.md` for Podman, Buildah, Skopeo, and conta
 
 ## Reference Files
 
-- `references/dockerfile-patterns.md` -- Dockerfile templates and build patterns
-- `references/compose-patterns.md` -- Compose patterns and common stack layouts
-- `references/security-and-compliance.md` -- container hardening and compliance guidance
-- `references/alternative-runtimes.md` -- Podman, Buildah, Skopeo, and related runtime patterns
+- `references/dockerfile-patterns.md` - Dockerfile templates and build patterns
+- `references/compose-patterns.md` - Compose patterns and common stack layouts
+- `references/security-and-compliance.md` - container hardening and compliance guidance
+- `references/alternative-runtimes.md` - Podman, Buildah, Skopeo, and related runtime patterns
 
 ---
 
 ## Related Skills
 
-- **kubernetes** -- for deploying containers to K8s clusters. Docker builds the image;
+- **kubernetes** - for deploying containers to K8s clusters. Docker builds the image;
   kubernetes deploys it. Dockerfile optimization belongs here; K8s manifests belong there.
-- **ci-cd** -- for pipeline design that builds and pushes images. Docker skill covers the
+- **ci-cd** - for pipeline design that builds and pushes images. Docker skill covers the
   Dockerfile and Compose patterns; ci-cd covers the pipeline stages around them.
-- **security-audit** -- for auditing container images, scanning for CVEs, and supply chain
+- **security-audit** - for auditing container images, scanning for CVEs, and supply chain
   risks. Docker skill covers hardening best practices; security-audit runs the actual audit.
-- **ansible** -- can manage containers via `community.docker`, but image building and Compose
+- **ansible** - can manage containers via `community.docker`, but image building and Compose
   design belong here.
-- **databases** -- for database containers in Docker Compose. Docker skill owns the Compose
+- **databases** - for database containers in Docker Compose. Docker skill owns the Compose
   pattern; databases skill owns the engine tuning within the container.
-- **git** -- for git tags and version control. Docker skill handles container image tagging;
+- **git** - for git tags and version control. Docker skill handles container image tagging;
   git handles git tags and release workflows.
 
 ---
@@ -490,7 +490,7 @@ These are non-negotiable. Violating any of these is a bug.
 7. **Pin CI tools to SHA256 digests.** Mutable tags are compromised supply chain vectors (Trivy CVE-2026-33634 March 2026, tj-actions CVE-2025-30066 (upstream: reviewdog CVE-2025-30154) March 2025).
 8. **Trivy v0.69.3 only.** v0.69.4-6 contained credential-stealing malware. If you ran it, rotate secrets.
 9. **Compose: no `version:` field.** It's deprecated and removed. Just delete it.
-10. **Clean apt cache in the same RUN layer.** `apt-get update && apt-get install -y ... && rm -rf /var/lib/apt/lists/*` -- all one `RUN`.
-11. **`.dockerignore` is not optional.** `.git`, `node_modules`, `.env`, secrets, test fixtures, docs -- all excluded.
+10. **Clean apt cache in the same RUN layer.** `apt-get update && apt-get install -y ... && rm -rf /var/lib/apt/lists/*` - all one `RUN`.
+11. **`.dockerignore` is not optional.** `.git`, `node_modules`, `.env`, secrets, test fixtures, docs - all excluded.
 12. **Resource limits on production containers.** Memory and CPU limits prevent noisy neighbors and OOM cascading.
 13. **Run the AI self-check.** Every generated Dockerfile/Compose gets verified against the checklist above before returning.

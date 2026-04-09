@@ -1,7 +1,7 @@
 ---
 name: testing
 description: >
-  · Write, review, or debug tests -- unit, integration, E2E, TDD, mocking, fixtures,
+  · Write, review, or debug tests - unit, integration, E2E, TDD, mocking, fixtures,
   accessibility, visual regression, and performance. Triggers: 'test', 'spec', 'TDD',
   'playwright', 'vitest', 'jest', 'pytest', 'cypress', 'coverage', 'flaky test', 'mock',
   'fixture', 'a11y', 'benchmark', 'k6', 'load test'. Not for test quality review
@@ -17,7 +17,7 @@ metadata:
 
 # Testing: Write Tests That Catch Real Bugs
 
-Write, structure, and maintain tests across unit, integration, E2E, accessibility, and performance layers. The goal is tests that catch regressions, document behavior, and run fast in CI -- not tests that exist to inflate coverage numbers.
+Write, structure, and maintain tests across unit, integration, E2E, accessibility, and performance layers. The goal is tests that catch regressions, document behavior, and run fast in CI - not tests that exist to inflate coverage numbers.
 
 **Target versions** (April 2026):
 - Vitest **4.1.2**, Jest **30.3.0**
@@ -41,12 +41,12 @@ Write, structure, and maintain tests across unit, integration, E2E, accessibilit
 
 ## When NOT to use
 
-- Reviewing existing test quality or correctness as part of a code review -- use **code-review**
-- Security-specific testing (penetration testing, OWASP checks) -- use **security-audit**
-- Cleaning up verbose/sloppy test code -- use **anti-slop**
-- Ad-hoc web browsing, scraping, or page interaction outside of tests -- use **browse**
-- CI/CD pipeline architecture (test jobs run inside pipelines, but pipeline design is ci-cd's domain) -- use **ci-cd**
-- Database testing patterns at the engine level -- use **databases**
+- Reviewing existing test quality or correctness as part of a code review - use **code-review**
+- Security-specific testing (penetration testing, OWASP checks) - use **security-audit**
+- Cleaning up verbose/sloppy test code - use **anti-slop**
+- Ad-hoc web browsing, scraping, or page interaction outside of tests - use **browse**
+- CI/CD pipeline architecture (test jobs run inside pipelines, but pipeline design is ci-cd's domain) - use **ci-cd**
+- Database testing patterns at the engine level - use **databases**
 - Writing or refining LLM prompts (use **prompt-generator**)
 - Infrastructure or configuration validation outside tests (use **terraform**, **ansible**, or **kubernetes**)
 
@@ -56,18 +56,18 @@ Write, structure, and maintain tests across unit, integration, E2E, accessibilit
 
 AI tools consistently produce the same testing mistakes. **Before returning any generated test code, verify against this list:**
 
-- [ ] Tests assert behavior, not implementation -- no testing private methods or internal state
+- [ ] Tests assert behavior, not implementation - no testing private methods or internal state
 - [ ] Each test has exactly one reason to fail (single assertion concept, not single `assert` call)
 - [ ] Test names describe the scenario and expected outcome, not the method name
-- [ ] Mocks/stubs are scoped to the test -- no shared mutable mock state across tests
+- [ ] Mocks/stubs are scoped to the test - no shared mutable mock state across tests
 - [ ] No hardcoded ports, paths, or timestamps that break on other machines or in CI
-- [ ] Async tests properly await all promises/futures -- no fire-and-forget assertions
-- [ ] Test data is isolated -- each test creates its own state, no dependency on test execution order
+- [ ] Async tests properly await all promises/futures - no fire-and-forget assertions
+- [ ] Test data is isolated - each test creates its own state, no dependency on test execution order
 - [ ] Cleanup happens even when assertions fail (use `afterEach`/`teardown`/`t.Cleanup`/`Drop`)
-- [ ] No `sleep()` or fixed delays for async waits -- use polling, retries, or event-based waits
+- [ ] No `sleep()` or fixed delays for async waits - use polling, retries, or event-based waits
 - [ ] Coverage threshold is realistic (80% line coverage is a good default; 100% is a lie)
 - [ ] Snapshot tests have been reviewed manually before committing (blind `--update` is a bug factory)
-- [ ] E2E selectors use `data-testid`, `role`, or accessible names -- not CSS classes or DOM structure
+- [ ] E2E selectors use `data-testid`, `role`, or accessible names - not CSS classes or DOM structure
 
 ---
 
@@ -118,7 +118,7 @@ Follow the language-specific patterns below. Universal principles:
 
 - Run the full test suite: failures in other tests may indicate your change broke something
 - Check coverage delta: new code should be covered, but don't chase vanity numbers
-- Run in CI if possible -- tests that pass locally but fail in CI are the worst kind
+- Run in CI if possible - tests that pass locally but fail in CI are the worst kind
 
 ---
 
@@ -161,12 +161,12 @@ Read `references/language-patterns.md` for language-specific mocking idioms (Vit
 Build test data with sensible defaults and per-test overrides:
 
 ```typescript
-// TypeScript -- factory function
+// TypeScript - factory function
 function buildUser(overrides: Partial<User> = {}): User {
   return { id: randomUUID(), name: "Test User", email: "test@example.com", ...overrides };
 }
 
-// Python -- factory function
+// Python - factory function
 def build_user(**overrides) -> User:
     defaults = {"id": uuid4(), "name": "Test User", "email": "test@example.com"}
     return User(**(defaults | overrides))
@@ -175,7 +175,7 @@ def build_user(**overrides) -> User:
 ### Fixture rules
 
 - **Isolate per test.** Shared mutable fixtures cause order-dependent failures.
-- **Use builders/factories** over raw object literals -- defaults prevent test brittleness.
+- **Use builders/factories** over raw object literals - defaults prevent test brittleness.
 - **Database fixtures**: use transactions that roll back after each test (pytest `db` fixture, Jest `beforeEach` with rollback). Seeded test databases beat shared staging data.
 - **File fixtures**: use temp directories (`tmp_path` in pytest, `os.MkdirTemp` in Go, `tempfile` in Rust). Clean up in teardown.
 
@@ -185,7 +185,7 @@ def build_user(**overrides) -> User:
 
 Catch WCAG violations automatically. Not a replacement for manual testing, but catches the mechanical stuff (missing alt text, broken ARIA, contrast ratios, keyboard traps).
 
-Use `@axe-core/playwright` -- run `new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa"]).analyze()` and assert zero violations. Run axe scans on every page/component. Exclude known issues with `.exclude()` and track them as tech debt, not permanent exceptions.
+Use `@axe-core/playwright` - run `new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa"]).analyze()` and assert zero violations. Run axe scans on every page/component. Exclude known issues with `.exclude()` and track them as tech debt, not permanent exceptions.
 
 Read `references/e2e-accessibility.md` for Playwright E2E patterns, visual regression setup, and CI accessibility gates.
 
@@ -197,7 +197,7 @@ Two categories: **micro-benchmarks** (is this function fast enough?) and **load 
 
 ### Micro-benchmarks
 
-- **Go**: `func BenchmarkX(b *testing.B)` -- built into the stdlib
+- **Go**: `func BenchmarkX(b *testing.B)` - built into the stdlib
 - **Rust**: `cargo bench` with criterion (`criterion = "0.6"`)
 - **JS/TS**: `vitest bench` or `tinybench`
 - **Python**: `pytest-benchmark` or `timeit`
@@ -247,7 +247,7 @@ Flaky tests erode trust. Fix or quarantine immediately.
 
 1. **Identify**: track test stability over time (most CI systems have flaky test dashboards)
 2. **Quarantine**: move to a separate job that doesn't block merges. Tag with `@flaky` or `skip`.
-3. **Fix root causes** -- common culprits by framework:
+3. **Fix root causes** - common culprits by framework:
    - **Playwright/Cypress**: race conditions on navigation or animation. Use `waitForLoadState`,
      `waitForSelector`, or Playwright's auto-waiting. Avoid `page.waitForTimeout`. Stub network
      requests to eliminate backend variability.
@@ -281,18 +281,18 @@ Enforce via `vitest --coverage --coverage.thresholds.lines=80`, `pytest --cov --
 
 ## Reference Files
 
-- `references/language-patterns.md` -- language-specific test patterns for JS/TS (Vitest, Jest), Python (pytest), Go (testing stdlib), and Rust (cargo test). Covers mocking, table-driven tests, async testing, snapshot testing, and framework-specific idioms.
-- `references/e2e-accessibility.md` -- E2E testing with Playwright, visual regression (screenshot comparison, component snapshots), accessibility testing patterns, and CI integration for browser tests.
+- `references/language-patterns.md` - language-specific test patterns for JS/TS (Vitest, Jest), Python (pytest), Go (testing stdlib), and Rust (cargo test). Covers mocking, table-driven tests, async testing, snapshot testing, and framework-specific idioms.
+- `references/e2e-accessibility.md` - E2E testing with Playwright, visual regression (screenshot comparison, component snapshots), accessibility testing patterns, and CI integration for browser tests.
 
 ---
 
 ## Related Skills
 
-- **code-review** -- reviews test quality and correctness as part of code reviews. This skill writes the tests; code-review evaluates whether they actually test the right things.
-- **security-audit** -- handles security-specific testing (OWASP, penetration testing, credential scanning). This skill handles functional testing.
-- **anti-slop** -- cleans up verbose, over-abstracted, or AI-generated test code. If the test works but reads like a novel, route to anti-slop.
-- **ci-cd** -- designs the pipeline that runs tests. This skill writes the tests and configures test runners; ci-cd handles the pipeline structure around them.
-- **databases** -- covers database engine testing and configuration. This skill handles application-level database test patterns (transactions, fixtures, test data).
+- **code-review** - reviews test quality and correctness as part of code reviews. This skill writes the tests; code-review evaluates whether they actually test the right things.
+- **security-audit** - handles security-specific testing (OWASP, penetration testing, credential scanning). This skill handles functional testing.
+- **anti-slop** - cleans up verbose, over-abstracted, or AI-generated test code. If the test works but reads like a novel, route to anti-slop.
+- **ci-cd** - designs the pipeline that runs tests. This skill writes the tests and configures test runners; ci-cd handles the pipeline structure around them.
+- **databases** - covers database engine testing and configuration. This skill handles application-level database test patterns (transactions, fixtures, test data).
 
 ---
 
