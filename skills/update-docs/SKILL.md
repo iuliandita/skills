@@ -1,7 +1,7 @@
 ---
 name: update-docs
 description: >
-  · Post-change documentation sweep -- update instruction files, README, changelogs, API docs,
+  · Post-change documentation sweep - update instruction files, README, changelogs, API docs,
   roadmaps, feature docs, or runbooks when a change likely caused doc drift. Triggers: 'update
   docs', 'refresh docs', 'sync docs', 'docs drift', 'merged PR', 'release cut', 'new release',
   'update changelog', 'update roadmap', 'update API docs', 'update README'. Not for commit/PR
@@ -31,12 +31,12 @@ Post-change documentation sweep. Captures non-obvious knowledge into the right d
 ## When NOT to use
 
 - Writing a full documentation set from scratch without user approval
-- Code correctness or security review -- use **code-review** or **security-audit**
-- Code quality, slop, or maintainability cleanup -- use **anti-slop**
-- Prompt authoring or reusable skill-file maintenance -- use **prompt-generator** or **skill-creator**
-- Full codebase audit across multiple domains -- use **full-review** (it invokes update-docs as one pass)
-- Git commit messages, PR descriptions, release announcement copy, or tag operations -- use **git**
-- Roadmap prioritization, backlog shaping, or competitor scouting -- use **roadmap**
+- Code correctness or security review - use **code-review** or **security-audit**
+- Code quality, slop, or maintainability cleanup - use **anti-slop**
+- Prompt authoring or reusable skill-file maintenance - use **prompt-generator** or **skill-creator**
+- Full codebase audit across multiple domains - use **full-review** (it invokes update-docs as one pass)
+- Git commit messages, PR descriptions, release announcement copy, or tag operations - use **git**
+- Roadmap prioritization, backlog shaping, or competitor scouting - use **roadmap**
 
 ---
 
@@ -44,7 +44,7 @@ Post-change documentation sweep. Captures non-obvious knowledge into the right d
 
 Before presenting documentation updates, verify:
 
-- [ ] Only documenting gotchas, decisions, and failure modes -- not defaults readable from config
+- [ ] Only documenting gotchas, decisions, and failure modes - not defaults readable from config
 - [ ] No stale counts introduced (used "N" or kept count accurate)
 - [ ] Internal links verified (no broken references after renames or moves)
 - [ ] Companion instruction files still aligned (AGENTS.md synced if CLAUDE.md changed)
@@ -54,7 +54,7 @@ Before presenting documentation updates, verify:
 - [ ] Deprecated entries marked with `[DEPRECATED]` prefix and date, not silently removed
 - [ ] `.env.example` updated if env vars or runtime config changed
 - [ ] If repo docs are too thin, a minimal docs bootstrap was offered to the user as a suggestion, not forced
-- [ ] Size check run (`wc -c`) -- instruction files under 40,000 chars
+- [ ] Size check run (`wc -c`) - instruction files under 40,000 chars
 
 ---
 
@@ -141,12 +141,12 @@ If the repo has no meaningful documentation surface, or only a minimal `README.m
 **For each affected doc, read it first, then make targeted edits.**
 
 #### What to ADD:
-- Gotchas that aren't obvious from code (e.g., "VIP refuses k8s traffic -- use direct IP")
+- Gotchas that aren't obvious from code (e.g., "VIP refuses k8s traffic - use direct IP")
 - Implicit dependencies between components (e.g., "must restart pod after SealedSecret update")
 - Failure modes and their symptoms (e.g., "PLEG unhealthy = container runtime frozen")
 - Workarounds for known issues
-- Operational constraints (e.g., "serial: 1 required -- removing it updates all nodes simultaneously")
-- Operational timing -- when a procedure must run relative to a deployment step, say so explicitly (e.g., "Redis FLUSHALL must run after the new image is deployed but before traffic is routed back")
+- Operational constraints (e.g., "serial: 1 required - removing it updates all nodes simultaneously")
+- Operational timing - when a procedure must run relative to a deployment step, say so explicitly (e.g., "Redis FLUSHALL must run after the new image is deployed but before traffic is routed back")
 - Connection strings and service endpoints when IPs, ports, or hostnames change
 - Decisions and their rationale
 - User-visible feature additions, removals, and caveats in the doc where readers expect them
@@ -164,7 +164,7 @@ If the repo has no meaningful documentation surface, or only a minimal `README.m
 - Standard framework/platform behavior
 - Information already in upstream docs
 - Temporary state (in-progress work, one-time migration steps already completed)
-- Verbose explanations -- one line per gotcha, expand only if the fix is non-obvious
+- Verbose explanations - one line per gotcha, expand only if the fix is non-obvious
 
 ### 5. Verify Internal Links
 
@@ -172,7 +172,7 @@ After editing docs, check that internal references still resolve:
 
 ```bash
 # Check tracked and new markdown files
-{ git ls-files '*.md'; git ls-files --others --exclude-standard -- '*.md'; } 2>/dev/null | sort -u | while read -r file; do
+{ git ls-files '*.md'; git ls-files --others --exclude-standard - '*.md'; } 2>/dev/null | sort -u | while read -r file; do
   grep -oEh '\[[^]]*\]\([^)#]+' "$file"
 done | sed 's/.*](//' | grep -v '^https\?://' | sort -u | while read -r path; do
   [[ -e "$path" ]] || echo "BROKEN LINK: $path"
@@ -225,9 +225,9 @@ Only commit changes to tracked docs (inventory, runbooks, ADRs, changelogs, feat
 
 ```bash
 # Stage specific changed docs (don't blindly add everything)
-{ git diff --name-only -- '*.md' '.env.example'; git ls-files --others --exclude-standard -- '*.md' '.env.example'; } 2>/dev/null | sort -u | \
+{ git diff --name-only - '*.md' '.env.example'; git ls-files --others --exclude-standard - '*.md' '.env.example'; } 2>/dev/null | sort -u | \
   while read -r path; do
-    [[ -n "$path" ]] && git add -- "$path"
+    [[ -n "$path" ]] && git add - "$path"
   done
 # Only if docs changed:
 git diff --cached --quiet || git commit -m "docs: update [target] after [what changed]"
@@ -250,16 +250,16 @@ git diff --cached --quiet || git commit -m "docs: update [target] after [what ch
 ## Handling Deprecated Features
 
 When a feature, service, or API is deprecated during a session:
-- **Keep the doc entry** with a `[DEPRECATED]` prefix and the date -- don't delete immediately
+- **Keep the doc entry** with a `[DEPRECATED]` prefix and the date - don't delete immediately
 - **Add the replacement** in the same section so readers find both
 - **Remove deprecated entries** after 2 release cycles or when confirmed no longer referenced anywhere
 - **Breaking changes** deserve their own bullet: what broke, what replaces it, any migration steps
 
 ## Related Skills
 
-- **full-review** -- orchestrates code-review, anti-slop, security-audit, and update-docs in
+- **full-review** - orchestrates code-review, anti-slop, security-audit, and update-docs in
   parallel. Update-docs is one of the four passes.
-- **git** -- for commit message conventions and PR descriptions. Update-docs covers project
+- **git** - for commit message conventions and PR descriptions. Update-docs covers project
   documentation files; git covers version control operations.
 
 ---

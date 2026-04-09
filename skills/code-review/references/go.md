@@ -1,6 +1,6 @@
 # Go Bug Patterns
 
-Bug patterns specific to Go. Focused on correctness -- not style (see anti-slop) or security (see security-audit).
+Bug patterns specific to Go. Focused on correctness - not style (see anti-slop) or security (see security-audit).
 
 ---
 
@@ -8,7 +8,7 @@ Bug patterns specific to Go. Focused on correctness -- not style (see anti-slop)
 
 ### Goroutine Leaks
 
-Goroutines that block forever are memory leaks. Unlike threads, leaked goroutines are invisible to the runtime -- no finalizer, no timeout, no warning.
+Goroutines that block forever are memory leaks. Unlike threads, leaked goroutines are invisible to the runtime - no finalizer, no timeout, no warning.
 
 **Detect:**
 - Goroutine sends to a channel with no receiver (or receiver already exited)
@@ -52,7 +52,7 @@ func fetch(ctx context.Context) error {
 
 **Detect:**
 - Goroutines launched in a loop with no `sync.WaitGroup` or `errgroup.Group` to wait for completion
-- `wg.Add()` called inside the goroutine instead of before `go func()` (race condition -- parent may call `wg.Wait()` before child calls `wg.Add()`)
+- `wg.Add()` called inside the goroutine instead of before `go func()` (race condition - parent may call `wg.Wait()` before child calls `wg.Add()`)
 - `errgroup.Group` used without checking the error returned by `g.Wait()`
 
 ---
@@ -63,7 +63,7 @@ An interface value is nil only when both its type and value are nil. An interfac
 
 **Detect:**
 - Function returns a concrete error type as `nil` but the caller checks `err != nil` on the interface
-- `var err *MyError; return err` where return type is `error` -- caller sees non-nil error
+- `var err *MyError; return err` where return type is `error` - caller sees non-nil error
 - Type-switching on an interface that might hold a typed nil
 
 **Example:**
@@ -74,7 +74,7 @@ func validate(s string) error {
     if s == "" {
         err = &ValidationError{msg: "empty"}
     }
-    return err // typed nil -- interface{type: *ValidationError, value: nil} != nil
+    return err // typed nil - interface{type: *ValidationError, value: nil} != nil
 }
 
 // fix: return nil explicitly
@@ -82,7 +82,7 @@ func validate(s string) error {
     if s == "" {
         return &ValidationError{msg: "empty"}
     }
-    return nil // untyped nil -- interface is truly nil
+    return nil // untyped nil - interface is truly nil
 }
 ```
 
@@ -97,18 +97,18 @@ func validate(s string) error {
 Defers run in last-in-first-out order. This matters when operations have dependencies (e.g., flush before close).
 
 **Detect:**
-- `defer f.Close()` before `defer writer.Flush()` -- file closes before flush, data lost
+- `defer f.Close()` before `defer writer.Flush()` - file closes before flush, data lost
 - Deferred unlock before deferred lock acquisition in complex flows
 - Multiple defers on the same resource in non-obvious order
 
 ### Defer Captures by Reference
 
-Deferred function arguments are evaluated at the `defer` statement. But closures capture variables by reference -- the value at execution time (when the function returns), not declaration time.
+Deferred function arguments are evaluated at the `defer` statement. But closures capture variables by reference - the value at execution time (when the function returns), not declaration time.
 
 **Detect:**
-- `defer fmt.Println(x)` -- `x` evaluated NOW (at defer statement)
-- `defer func() { fmt.Println(x) }()` -- `x` evaluated LATER (at return)
-- Loop with `defer` inside -- defers accumulate until function returns, not until loop iteration ends
+- `defer fmt.Println(x)` - `x` evaluated NOW (at defer statement)
+- `defer func() { fmt.Println(x) }()` - `x` evaluated LATER (at return)
+- Loop with `defer` inside - defers accumulate until function returns, not until loop iteration ends
 
 **Example:**
 ```go
@@ -126,7 +126,7 @@ for i := 0; i < 5; i++ {
 ### Defer in Loops
 
 **Detect:**
-- `defer file.Close()` inside a loop -- files stay open until the enclosing function returns, not until the next iteration. For long loops this exhausts file descriptors.
+- `defer file.Close()` inside a loop - files stay open until the enclosing function returns, not until the next iteration. For long loops this exhausts file descriptors.
 - Fix: extract to a helper function so defer runs per iteration, or close explicitly.
 
 ---
@@ -172,9 +172,9 @@ func produce(ch chan int) {
 ### Select Statement Pitfalls
 
 **Detect:**
-- `select` with both `case <-ctx.Done()` and a channel operation -- Go picks randomly when both are ready, so a cancel might not be noticed immediately
+- `select` with both `case <-ctx.Done()` and a channel operation - Go picks randomly when both are ready, so a cancel might not be noticed immediately
 - `for-select` loop without a return/break on the done case (loop continues after cancel)
-- `time.After()` inside a `for-select` loop -- creates a new timer every iteration, leaking until GC
+- `time.After()` inside a `for-select` loop - creates a new timer every iteration, leaking until GC
 
 ```go
 // bug: new timer allocated every iteration, old ones leak until they fire
@@ -211,9 +211,9 @@ for {
 ### Wrapping Breaks `errors.Is()` / `errors.As()`
 
 **Detect:**
-- `fmt.Errorf("failed: %s", err)` -- wraps the message but loses the error chain. Use `%w` to preserve it.
-- `fmt.Errorf("failed: %w %w", err1, err2)` -- multiple `%w` is valid since Go 1.20 but callers must handle multi-error unwrapping
-- Custom error types that implement `Error()` but not `Unwrap()` -- breaks `errors.Is()` and `errors.As()` for wrapped errors
+- `fmt.Errorf("failed: %s", err)` - wraps the message but loses the error chain. Use `%w` to preserve it.
+- `fmt.Errorf("failed: %w %w", err1, err2)` - multiple `%w` is valid since Go 1.20 but callers must handle multi-error unwrapping
+- Custom error types that implement `Error()` but not `Unwrap()` - breaks `errors.Is()` and `errors.As()` for wrapped errors
 
 **Example:**
 ```go
@@ -231,9 +231,9 @@ if err != nil {
 ### Sentinel Error Comparison
 
 **Detect:**
-- `err == ErrFoo` instead of `errors.Is(err, ErrFoo)` -- breaks when errors are wrapped
-- `err.(*MyError)` type assertion instead of `errors.As(err, &target)` -- same problem
-- Sentinel errors defined as `var` instead of via `errors.New()` (mutable -- another package can overwrite)
+- `err == ErrFoo` instead of `errors.Is(err, ErrFoo)` - breaks when errors are wrapped
+- `err.(*MyError)` type assertion instead of `errors.As(err, &target)` - same problem
+- Sentinel errors defined as `var` instead of via `errors.New()` (mutable - another package can overwrite)
 
 ---
 
@@ -278,7 +278,7 @@ func process() error {
 
 **Detect:**
 - Shared map accessed from multiple goroutines without `sync.Mutex` or `sync.Map` (concurrent map writes panic since Go 1.6)
-- Shared slice appended to from multiple goroutines (append is not atomic -- can corrupt the slice header)
+- Shared slice appended to from multiple goroutines (append is not atomic - can corrupt the slice header)
 - Read-modify-write on shared variables without synchronization (`count++` is not atomic)
 - `go test -race` not in CI pipeline (races only detected when tests exercise concurrent paths)
 
@@ -301,7 +301,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 ### Mutex Pitfalls
 
 **Detect:**
-- Copying a `sync.Mutex` (or any sync type) -- the copy shares no state with the original. Pass by pointer.
+- Copying a `sync.Mutex` (or any sync type) - the copy shares no state with the original. Pass by pointer.
 - `Lock()` without corresponding `Unlock()` on every code path (especially early returns)
 - Nested locks in inconsistent order across functions (deadlock)
 - Using `defer mu.Unlock()` in a long function where the critical section is only a few lines (holds lock too long)
@@ -310,12 +310,12 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 ## Loop Variable Capture (Pre-Go 1.22)
 
-Go 1.22 changed loop variable semantics -- each iteration gets a new variable. For Go < 1.22, the classic closure capture bug applies.
+Go 1.22 changed loop variable semantics - each iteration gets a new variable. For Go < 1.22, the classic closure capture bug applies.
 
 **Detect:**
 - Check `go.mod` for Go version. If `go 1.21` or earlier:
-  - `go func() { use(v) }()` inside a `for _, v := range` loop -- all goroutines share the same `v`
-  - `&v` taken inside a loop -- all pointers point to the same variable
+  - `go func() { use(v) }()` inside a `for _, v := range` loop - all goroutines share the same `v`
+  - `&v` taken inside a loop - all pointers point to the same variable
 - For Go >= 1.22: this class of bug is fixed by the compiler. Skip this check.
 
 ---
@@ -325,7 +325,7 @@ Go 1.22 changed loop variable semantics -- each iteration gets a new variable. F
 ### Unkeyed Struct Literals
 
 **Detect:**
-- `MyStruct{val1, val2, val3}` -- positional fields break when struct fields are reordered or new fields are added. Use keyed literals: `MyStruct{Name: val1, Age: val2}`.
+- `MyStruct{val1, val2, val3}` - positional fields break when struct fields are reordered or new fields are added. Use keyed literals: `MyStruct{Name: val1, Age: val2}`.
 
 ### Method Set Rules (Pointer vs Value Receivers)
 

@@ -11,7 +11,7 @@ CI/CD Catalog GA, Components with typed inputs, rules-based workflows.
 - **CI/CD Catalog** GA since GitLab 17.0 (May 2024). Max 100 components per project (raised in 18.5).
 - **CI Components** are the endorsed path for reusable pipeline logic. `include:` templates still work
   but components have versioning, typed inputs, and discoverability.
-- **`only:/except:` is legacy.** Use `rules:` for all new pipelines. Migration is non-trivial -- see
+- **`only:/except:` is legacy.** Use `rules:` for all new pipelines. Migration is non-trivial - see
   the bug patterns in the code-review skill's `cicd-pipelines.md`.
 
 ---
@@ -396,7 +396,7 @@ include:
 trivy-scan:
   stage: scan
   image:
-    name: aquasec/trivy:0.69.3    # known safe -- do NOT use 0.69.4/5/6
+    name: aquasec/trivy:0.69.3    # known safe - do NOT use 0.69.4/5/6
   script:
     - trivy image --exit-code 1 --severity HIGH,CRITICAL $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
   allow_failure: true    # non-blocking for dev/staging; set to false for release pipelines (PCI 6.2.1)

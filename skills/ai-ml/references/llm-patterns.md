@@ -163,7 +163,7 @@ export async function POST(req: Request) {
 
 ## 3. Structured Output
 
-### Anthropic -- tool_use for structured output
+### Anthropic - tool_use for structured output
 
 Force the model to return structured data by defining a "tool" that captures the schema:
 
@@ -198,7 +198,7 @@ tool_block = next(b for b in response.content if b.type == "tool_use")
 data = tool_block.input  # already parsed dict
 ```
 
-### OpenAI -- response_format with json_schema
+### OpenAI - response_format with json_schema
 
 ```python
 response = client.chat.completions.create(
@@ -226,7 +226,7 @@ import json
 data = json.loads(response.choices[0].message.content)
 ```
 
-### Vercel AI SDK -- generateObject
+### Vercel AI SDK - generateObject
 
 ```typescript
 import { generateObject } from "ai";

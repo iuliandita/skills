@@ -174,7 +174,7 @@ jobs:
 ### SHA pinning
 
 **Non-negotiable.** All third-party actions MUST be pinned to full 40-character commit SHAs.
-Tags are mutable -- the tj-actions (March 2025) and Trivy (March 2026) compromises both
+Tags are mutable - the tj-actions (March 2025) and Trivy (March 2026) compromises both
 exploited tag force-pushing to redirect thousands of repos to malicious code.
 
 ```yaml
@@ -268,7 +268,7 @@ steps:
     run: echo "PR #$PR_NUMBER"
 ```
 
-Real-world exploitation: HackerBot-Claw (Feb 2026) -- automated campaign scanning public repos
+Real-world exploitation: HackerBot-Claw (Feb 2026) - automated campaign scanning public repos
 for vulnerable `pull_request_target` workflows. Microsoft, Google, Nvidia repos hit.
 
 ### Workflow linting with Zizmor
@@ -290,14 +290,14 @@ Runtime network egress monitoring. Detected the tj-actions attack anomalies.
 
 ```yaml
 steps:
-  - uses: step-security/harden-runner@<sha>  # v2.14.2 (v2.12.0 min -- CVE-2025-32955)
+  - uses: step-security/harden-runner@<sha>  # v2.14.2 (v2.12.0 min - CVE-2025-32955)
     with:
       egress-policy: audit    # or 'block' for strict mode
   # ... rest of steps
 ```
 
 **Note**: Harden-Runner v2.12.0+ required (latest: v2.14.2, March 2026). Earlier versions had
-a bypass vulnerability (CVE-2025-32955) -- Docker group privilege escalation could restore
+a bypass vulnerability (CVE-2025-32955) - Docker group privilege escalation could restore
 sudoers and evade detection.
 
 ---
@@ -320,7 +320,7 @@ jobs:
         with:
           role-to-assume: arn:aws:iam::123456789012:role/github-actions
           aws-region: us-east-1
-          # No access key needed -- OIDC federated identity
+          # No access key needed - OIDC federated identity
 ```
 
 Works with: AWS (IAM Identity Provider), GCP (Workload Identity Federation), Azure (Federated
@@ -408,9 +408,9 @@ caller.
 ### Setup actions with built-in cache
 
 Many setup actions handle caching automatically:
-- `actions/setup-node@v4` -- `cache: npm` / `cache: bun`
-- `actions/setup-go@v5` -- `cache: true` (default)
-- `actions/setup-python@v5` -- `cache: pip`
+- `actions/setup-node@v4` - `cache: npm` / `cache: bun`
+- `actions/setup-go@v5` - `cache: true` (default)
+- `actions/setup-python@v5` - `cache: pip`
 
 ### Docker layer caching
 

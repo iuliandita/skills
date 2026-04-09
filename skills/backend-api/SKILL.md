@@ -31,11 +31,11 @@ boundaries, error models, and framework structure for Python and Node.js service
 - OAuth 2.0 Security Best Current Practice: **RFC 9700** (January 2025)
 
 This skill works across five concerns:
-- **Contract design** -- resources, methods, status codes, schemas, versioning
-- **API ergonomics** -- pagination, filtering, sorting, idempotency, error format
-- **Framework structure** -- FastAPI dependencies, Express middleware, NestJS modules and guards
-- **Authentication** -- sessions, bearer tokens, OAuth/OIDC, BFF and token mediation
-- **Review** -- unstable contracts, DTO leakage, auth confusion, and HTTP misuse
+- **Contract design** - resources, methods, status codes, schemas, versioning
+- **API ergonomics** - pagination, filtering, sorting, idempotency, error format
+- **Framework structure** - FastAPI dependencies, Express middleware, NestJS modules and guards
+- **Authentication** - sessions, bearer tokens, OAuth/OIDC, BFF and token mediation
+- **Review** - unstable contracts, DTO leakage, auth confusion, and HTTP misuse
 
 ## When to use
 
@@ -50,15 +50,15 @@ This skill works across five concerns:
 
 ## When NOT to use
 
-- GraphQL schema, resolvers, federation, or persisted query work -- out of scope for this skill
-- gRPC, protobuf schema evolution, or streaming RPCs -- out of scope for this skill
-- Database schema, indexing, replication, or query tuning -- use **databases**
-- General bug-finding, race-condition hunting, or correctness review outside the API boundary -- use **code-review**
-- Security auditing for auth bypasses, injection, secrets, or OWASP findings -- use **security-audit**
-- Writing or debugging automated tests -- use **testing**
-- Deployment, containers, gateways, ingress, or cluster config -- use **docker**, **kubernetes**, or **networking**
-- CI/CD pipeline design for API delivery -- use **ci-cd**
-- MCP-specific HTTP servers and tool handlers -- use **mcp**
+- GraphQL schema, resolvers, federation, or persisted query work - out of scope for this skill
+- gRPC, protobuf schema evolution, or streaming RPCs - out of scope for this skill
+- Database schema, indexing, replication, or query tuning - use **databases**
+- General bug-finding, race-condition hunting, or correctness review outside the API boundary - use **code-review**
+- Security auditing for auth bypasses, injection, secrets, or OWASP findings - use **security-audit**
+- Writing or debugging automated tests - use **testing**
+- Deployment, containers, gateways, ingress, or cluster config - use **docker**, **kubernetes**, or **networking**
+- CI/CD pipeline design for API delivery - use **ci-cd**
+- MCP-specific HTTP servers and tool handlers - use **mcp**
 
 ---
 
@@ -67,7 +67,7 @@ This skill works across five concerns:
 Before returning API code, route design, or OpenAPI output, verify:
 
 - [ ] Resource names are nouns and URL shape is stable (`/users/{userId}/sessions`, not `/doUserSessionThing`)
-- [ ] Method semantics follow RFC 9110 -- no "GET that mutates", no PATCH used as a vague catch-all
+- [ ] Method semantics follow RFC 9110 - no "GET that mutates", no PATCH used as a vague catch-all
 - [ ] `401` vs `403` is correct: unauthenticated vs authenticated-but-forbidden
 - [ ] Ownership-hiding behavior is deliberate and consistent: decide when out-of-scope resources return `404` vs `403`
 - [ ] Error responses use one consistent format, preferably RFC 9457 problem details
@@ -112,9 +112,9 @@ Pick the framework that matches the codebase and team constraints. Do not switch
 | **NestJS** | Larger TypeScript services that benefit from modules, guards, pipes, interceptors, and DI | Over-abstraction, decorator-heavy indirection, hiding simple flows behind too many layers |
 
 Framework rules:
-- **FastAPI** -- keep dependencies explicit, use response models, and centralize exception handling
-- **Express** -- keep routing, validation, auth, and business logic separated; add one error middleware path
-- **NestJS** -- keep controllers thin, move auth into guards, validation into pipes, and cross-cutting behavior into interceptors or filters
+- **FastAPI** - keep dependencies explicit, use response models, and centralize exception handling
+- **Express** - keep routing, validation, auth, and business logic separated; add one error middleware path
+- **NestJS** - keep controllers thin, move auth into guards, validation into pipes, and cross-cutting behavior into interceptors or filters
 
 ### Step 3: Design the contract first
 
@@ -241,20 +241,20 @@ Before returning the result:
 
 ## Reference Files
 
-- `references/http-api-patterns.md` -- resource design, method semantics, status codes, versioning, pagination, filtering, idempotency
-- `references/auth-and-session-patterns.md` -- sessions vs bearer tokens, OAuth/OIDC, BFF, refresh tokens, machine clients
+- `references/http-api-patterns.md` - resource design, method semantics, status codes, versioning, pagination, filtering, idempotency
+- `references/auth-and-session-patterns.md` - sessions vs bearer tokens, OAuth/OIDC, BFF, refresh tokens, machine clients
 
 ## Related Skills
 
-- **databases** -- schema design, query tuning, migrations, and persistence concerns behind the API
-- **code-review** -- correctness bugs, logic errors, and non-API-specific review findings
-- **security-audit** -- auth bypasses, OWASP findings, secrets, and security review after the API design exists
-- **testing** -- route, integration, contract, and end-to-end verification
-- **docker** -- containerizing API services
-- **kubernetes** -- deploying API services on clusters
-- **networking** -- reverse proxies, TLS termination, CORS-adjacent network boundaries, and gateway behavior
-- **ci-cd** -- delivery pipelines for API services
-- **mcp** -- MCP-specific HTTP servers and auth patterns
+- **databases** - schema design, query tuning, migrations, and persistence concerns behind the API
+- **code-review** - correctness bugs, logic errors, and non-API-specific review findings
+- **security-audit** - auth bypasses, OWASP findings, secrets, and security review after the API design exists
+- **testing** - route, integration, contract, and end-to-end verification
+- **docker** - containerizing API services
+- **kubernetes** - deploying API services on clusters
+- **networking** - reverse proxies, TLS termination, CORS-adjacent network boundaries, and gateway behavior
+- **ci-cd** - delivery pipelines for API services
+- **mcp** - MCP-specific HTTP servers and auth patterns
 
 ## Rules
 

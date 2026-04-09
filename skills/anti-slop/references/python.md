@@ -2,14 +2,14 @@
 
 ## Class-for-Everything Disease (Soul)
 
-The Java brain transplant. Python modules are already namespaces -- you don't need a class to group functions.
+The Java brain transplant. Python modules are already namespaces - you don't need a class to group functions.
 
 **Detect:**
 - Classes with no `__init__` state (all `@staticmethod` or `@classmethod`)
 - Classes instantiated once and never stored
 - `class Config:` wrapping class-level attributes (just use a dict, dataclass, or module-level constants)
 - Inheritance hierarchies for things that could be plain functions with a dict dispatch
-- `class Singleton:` -- Python has modules, which are already singletons
+- `class Singleton:` - Python has modules, which are already singletons
 
 **Fix:** Use plain functions at module level. Use `dataclass` or `NamedTuple` for data containers. Use dicts or match/case for dispatch.
 
@@ -79,7 +79,7 @@ def process(x):
 - `python-dotenv` when `os.environ.get()` is fine
 - `click` for a 3-flag CLI when `argparse` works
 - `pydantic` for a single validation when a dataclass with `__post_init__` works
-- `PyYAML` + `toml` + `configparser` -- pick one config format
+- `PyYAML` + `toml` + `configparser` - pick one config format
 
 ## God-Module Refactoring (Soul)
 
@@ -96,7 +96,7 @@ files.py        # safe_write, atomic_replace, ensure_dir
 http.py         # retry_get, parse_json_response
 ```
 
-Each module should have a single clear domain. If a function doesn't fit any domain file, it probably belongs closer to its only caller -- inline it. Don't create a `misc.py` to hold the leftovers.
+Each module should have a single clear domain. If a function doesn't fit any domain file, it probably belongs closer to its only caller - inline it. Don't create a `misc.py` to hold the leftovers.
 
 **Rule of thumb:** if two functions in the same utils file never import each other and serve different callers, they belong in different modules.
 
@@ -140,6 +140,6 @@ except ConnectionError:
 ```
 
 - `except Exception:` catching everything instead of specific exceptions
-- `except: pass` -- silent swallow with no comment
+- `except: pass` - silent swallow with no comment
 - `logging.exception()` in every function instead of at boundaries
 - Re-raising as generic `RuntimeError` losing the original exception type

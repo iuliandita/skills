@@ -4,12 +4,12 @@
 
 Work bottom-up through the network stack:
 
-1. **Physical/Link** -- is the interface up? (`ip link show`, check for `NO-CARRIER`)
-2. **IP** -- correct address? (`ip addr`), correct route? (`ip route`)
-3. **Connectivity** -- can you reach the gateway? (`ping gateway`), the target? (`ping target`)
-4. **DNS** -- does name resolution work? (`dig domain`)
-5. **Transport** -- is the port open? (`ss -tlnp`, `nmap -p PORT target`)
-6. **Application** -- does the service respond? (`curl`, `openssl s_client`)
+1. **Physical/Link** - is the interface up? (`ip link show`, check for `NO-CARRIER`)
+2. **IP** - correct address? (`ip addr`), correct route? (`ip route`)
+3. **Connectivity** - can you reach the gateway? (`ping gateway`), the target? (`ping target`)
+4. **DNS** - does name resolution work? (`dig domain`)
+5. **Transport** - is the port open? (`ss -tlnp`, `nmap -p PORT target`)
+6. **Application** - does the service respond? (`curl`, `openssl s_client`)
 
 At each layer, determine: is the problem **here** or **further up the stack**?
 
@@ -122,7 +122,7 @@ ss -s
 # Server side
 iperf3 -s
 
-# Client side -- basic TCP test
+# Client side - basic TCP test
 iperf3 -c server-ip
 
 # UDP test with target bandwidth
@@ -264,7 +264,7 @@ mtr -n --report target
 iperf3 -c target
 
 # 3. Check for bufferbloat (see Performance Tuning below)
-# Run iperf3 in one terminal, ping in another -- if latency spikes during
+# Run iperf3 in one terminal, ping in another - if latency spikes during
 # iperf3, you have bufferbloat
 
 # 4. Check interface errors/drops
@@ -275,7 +275,7 @@ ss -ti | grep retrans
 
 # 6. Check MTU / fragmentation
 ping -M do -s 1472 target    # Should work for 1500 MTU
-# Reduce size until it works -- that's your path MTU
+# Reduce size until it works - that's your path MTU
 ```
 
 ---
@@ -313,7 +313,7 @@ Apply: `sysctl --system`
 ### Bufferbloat
 
 Bufferbloat causes high latency under load because oversized network buffers hold packets too
-long. Test: run `iperf3` and `ping` simultaneously -- if ping latency spikes 10x+ during the
+long. Test: run `iperf3` and `ping` simultaneously - if ping latency spikes 10x+ during the
 iperf3 run, you have bufferbloat.
 
 **Fix: use `fq_codel` or `cake` qdisc**
@@ -337,12 +337,12 @@ ping -M do -s 1472 target.com    # 1472 + 28 (IP+ICMP headers) = 1500
 # If it fails, reduce until it works
 
 # Common MTU values
-# 1500  -- Ethernet standard
-# 9000  -- Jumbo frames (datacenter, must be configured end-to-end)
-# 1420  -- WireGuard tunnel
-# 1400  -- OpenVPN tunnel (approximate)
-# 1450  -- VXLAN
-# 1492  -- PPPoE (DSL)
+# 1500  - Ethernet standard
+# 9000  - Jumbo frames (datacenter, must be configured end-to-end)
+# 1420  - WireGuard tunnel
+# 1400  - OpenVPN tunnel (approximate)
+# 1450  - VXLAN
+# 1492  - PPPoE (DSL)
 
 # Set MTU
 ip link set enp0s3 mtu 9000
@@ -375,7 +375,7 @@ Stack buffer overflow RCE via malformed encrypted message. Affects all OpenSSL v
 Patched in OpenSSL 3.6.1 / 3.5.5 / 3.4.4 / 3.3.6 / 3.0.19 (Jan 2026). **Upgrade immediately.**
 12 additional vulnerabilities were fixed in the same batch.
 
-Check your version: `openssl version` -- anything below the patched versions is vulnerable.
+Check your version: `openssl version` - anything below the patched versions is vulnerable.
 
 ### Let's Encrypt with certbot
 
@@ -422,7 +422,7 @@ openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 365 -node
 
 **Breaking change (2025-2027):** Major public CAs (Sectigo from Sep 2025) are removing the
 Client Authentication EKU from SSL/TLS certificates. By Feb 2027, public CA certs won't work
-for mTLS at all. **You must use a private CA** for mTLS client certificates -- step-ca, cfssl,
+for mTLS at all. **You must use a private CA** for mTLS client certificates - step-ca, cfssl,
 Vault PKI, or plain OpenSSL. This affects VPNs, mTLS, Wi-Fi onboarding, and any system using
 public CA certs for client auth.
 

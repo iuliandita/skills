@@ -116,7 +116,7 @@ mount -o subvol=@ /dev/sdX2 /mnt
 
 # 2. Mount remaining subvolumes and ESP
 mount -o subvol=@home /dev/sdX2 /mnt/home
-mount /dev/sdX1 /mnt/efi          # or /mnt/boot -- match fstab
+mount /dev/sdX1 /mnt/efi          # or /mnt/boot - match fstab
 
 # 3. Identify the rollback point
 btrfs subvolume list /mnt

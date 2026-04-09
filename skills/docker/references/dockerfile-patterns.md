@@ -45,7 +45,7 @@ Persist package manager caches across builds (up to 70% faster rebuilds):
 RUN --mount=type=cache,target=/root/.npm npm ci --omit=dev
 RUN --mount=type=cache,target=/root/.bun/install/cache bun install --frozen-lockfile --production
 
-# Python (cache mount handles caching -- don't use --no-cache-dir here)
+# Python (cache mount handles caching - don't use --no-cache-dir here)
 RUN --mount=type=cache,target=/root/.cache/pip pip install -r requirements.txt
 
 # Go
@@ -123,7 +123,7 @@ Attestations are stored in the registry alongside the image. Requires `--push`.
 
 **Choose Distroless** when: Google-maintained minimal images, standard runtimes (Node.js, Python, Java, .NET), no shell needed.
 
-**Choose Scratch** only for: statically linked binaries (`CGO_ENABLED=0` Go, `--target x86_64-unknown-linux-musl` Rust). No DNS, no CA certs -- copy them from the builder stage.
+**Choose Scratch** only for: statically linked binaries (`CGO_ENABLED=0` Go, `--target x86_64-unknown-linux-musl` Rust). No DNS, no CA certs - copy them from the builder stage.
 
 ---
 
@@ -203,7 +203,7 @@ EXPOSE 8080
 ENTRYPOINT ["/app"]
 ```
 
-`CGO_ENABLED=0` for scratch/distroless. `-ldflags="-s -w"` strips debug info (~30% smaller). No `HEALTHCHECK` in scratch/distroless -- there's no shell to run it. Use Compose `healthcheck:` or K8s probes instead.
+`CGO_ENABLED=0` for scratch/distroless. `-ldflags="-s -w"` strips debug info (~30% smaller). No `HEALTHCHECK` in scratch/distroless - there's no shell to run it. Use Compose `healthcheck:` or K8s probes instead.
 
 ### Python
 
@@ -353,10 +353,10 @@ Standard tag matrix for published images. Each image gets the full set:
 | `MAJOR.MINOR.PATCH-VARIANT` | `0.12.26-alpine` | No (pinned) | Pinned + variant |
 | `MAJOR.MINOR` | `0.12` | Yes (latest patch) | Dev environments wanting bugfixes |
 | `MAJOR.MINOR-VARIANT` | `0.12-alpine` | Yes (latest patch) | Dev + variant |
-| `latest` | `latest` | Yes (latest release) | Default pull -- dev/testing only |
-| `VARIANT` | `alpine` | Yes (latest release) | Variant of latest -- dev/testing only |
+| `latest` | `latest` | Yes (latest release) | Default pull - dev/testing only |
+| `VARIANT` | `alpine` | Yes (latest release) | Variant of latest - dev/testing only |
 
-**Pinned tags** (`MAJOR.MINOR.PATCH[-VARIANT]`) are immutable -- once pushed, never overwritten. Production and CI reference these. For maximum immutability, pin to `@sha256:` digests.
+**Pinned tags** (`MAJOR.MINOR.PATCH[-VARIANT]`) are immutable - once pushed, never overwritten. Production and CI reference these. For maximum immutability, pin to `@sha256:` digests.
 
 **Floating tags** (`MAJOR.MINOR`, `latest`, variant names) move on every release. A `docker pull` on a floating tag may return a different image tomorrow. Never use in production.
 
@@ -389,5 +389,5 @@ For variant builds (alpine, distroless), use separate Dockerfile targets or `--b
 - **Distroless has no shell**: `docker exec -it ... sh` won't work. Use ephemeral debug containers or Chainguard dev variants for debugging.
 - **Scratch has no CA certs**: copy `/etc/ssl/certs/ca-certificates.crt` from the build stage for HTTPS.
 - **Go `CGO_ENABLED=0`**: required for scratch/distroless. With CGO enabled, you need glibc in the runtime image.
-- **Multi-arch + distroless**: Google distroless images support amd64 + arm64. Chainguard Wolfi images support both too. When using `--platform` in multi-stage builds, the build stage platform and runtime stage platform are independent -- `FROM --platform=$BUILDPLATFORM golang:1.26 AS build` cross-compiles on the host arch, then `FROM gcr.io/distroless/static-debian12` uses the target arch automatically.
-- **pip `--no-cache-dir` vs cache mounts**: pick one approach. With `--mount=type=cache,target=/root/.cache/pip`, pip caches to the mount (fast rebuilds) -- don't add `--no-cache-dir` or it defeats the mount. Without cache mounts, use `--no-cache-dir` to avoid caching in the image layer.
+- **Multi-arch + distroless**: Google distroless images support amd64 + arm64. Chainguard Wolfi images support both too. When using `--platform` in multi-stage builds, the build stage platform and runtime stage platform are independent - `FROM --platform=$BUILDPLATFORM golang:1.26 AS build` cross-compiles on the host arch, then `FROM gcr.io/distroless/static-debian12` uses the target arch automatically.
+- **pip `--no-cache-dir` vs cache mounts**: pick one approach. With `--mount=type=cache,target=/root/.cache/pip`, pip caches to the mount (fast rebuilds) - don't add `--no-cache-dir` or it defeats the mount. Without cache mounts, use `--no-cache-dir` to avoid caching in the image layer.

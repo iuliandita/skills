@@ -276,8 +276,8 @@ app.get('/download', (req, res) => {
 
 **Analysis:**
 
-1. **Source**: `req.query.file` -- user-controlled query parameter
-2. **Sink**: `res.download(filepath)` -- file system read + send to client
+1. **Source**: `req.query.file` - user-controlled query parameter
+2. **Sink**: `res.download(filepath)` - file system read + send to client
 3. **Path**: `req.query.file` -> `filename` -> `path.join(UPLOAD_DIR, filename)` -> `filepath` -> `res.download(filepath)`
 4. **Sanitization**: NONE. `path.join` normalizes but doesn't prevent traversal.
 5. **Exploit**: `GET /download?file=../../etc/passwd`
@@ -311,10 +311,10 @@ def search():
 **Analysis:**
 
 1. **Sources**: `request.args.get('q')` and `request.args.get('sort')`
-2. **Sink**: `db.execute()` with f-string interpolation -- SQL injection
+2. **Sink**: `db.execute()` with f-string interpolation - SQL injection
 3. **Two injection points:**
-   - `query` in LIKE clause -- classic SQLi, break out of string context
-   - `sort` in ORDER BY -- can't parameterize identifiers, needs allowlist
+   - `query` in LIKE clause - classic SQLi, break out of string context
+   - `sort` in ORDER BY - can't parameterize identifiers, needs allowlist
 4. **Sanitization**: NONE
 5. **Exploit (query)**: `GET /search?q=' UNION SELECT username,password,null FROM users--`
 6. **Exploit (sort)**: `GET /search?q=test&sort=CASE WHEN (SELECT substring(password,1,1) FROM users WHERE username='admin')='a' THEN name ELSE price END`

@@ -22,16 +22,16 @@ Covers model selection, quantization, GPU memory estimation, and production serv
 
 ### Good reasons
 
-- **Data privacy** -- can't send data to external APIs (regulatory, compliance, air-gapped)
-- **Cost at scale** -- high-volume inference is cheaper self-hosted above ~1M tokens/day
-- **Latency** -- local inference can be faster than API round-trips for small models
-- **Offline / air-gapped** -- no internet connectivity available
-- **Development** -- iterate on prompts without API costs during development
-- **Fine-tuned models** -- serving custom models not available via APIs
+- **Data privacy** - can't send data to external APIs (regulatory, compliance, air-gapped)
+- **Cost at scale** - high-volume inference is cheaper self-hosted above ~1M tokens/day
+- **Latency** - local inference can be faster than API round-trips for small models
+- **Offline / air-gapped** - no internet connectivity available
+- **Development** - iterate on prompts without API costs during development
+- **Fine-tuned models** - serving custom models not available via APIs
 
 ### Bad reasons
 
-- "I want to avoid API costs" (with low volume -- self-hosting has significant TCO)
+- "I want to avoid API costs" (with low volume - self-hosting has significant TCO)
 - "I want the best quality" (frontier API models still beat self-hosted open models)
 - "It's more secure" (mismanaged self-hosted infra can be less secure than API providers)
 
@@ -151,11 +151,11 @@ python -m vllm.entrypoints.openai.api_server \
 
 ### Key features
 
-- **Continuous batching** -- serves multiple requests simultaneously, maximizing GPU utilization
-- **PagedAttention** -- efficient memory management for KV cache, supports more concurrent requests
-- **Tensor parallelism** -- split a model across multiple GPUs
-- **Speculative decoding** -- use a smaller draft model to accelerate generation
-- **Quantization support** -- GPTQ, AWQ, FP8 out of the box
+- **Continuous batching** - serves multiple requests simultaneously, maximizing GPU utilization
+- **PagedAttention** - efficient memory management for KV cache, supports more concurrent requests
+- **Tensor parallelism** - split a model across multiple GPUs
+- **Speculative decoding** - use a smaller draft model to accelerate generation
+- **Quantization support** - GPTQ, AWQ, FP8 out of the box
 
 ### vLLM vs Ollama
 

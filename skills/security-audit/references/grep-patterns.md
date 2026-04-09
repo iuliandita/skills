@@ -1,6 +1,6 @@
 # Security Audit: Grep Patterns
 
-Consolidated search patterns for manual audit passes. Use the Grep tool with these patterns -- don't shell out to grep/rg.
+Consolidated search patterns for manual audit passes. Use the Grep tool with these patterns - don't shell out to grep/rg.
 
 ## Secret Scanning Fallback (Pass 1)
 
@@ -18,7 +18,7 @@ Use these only when betterleaks/gitleaks/trufflehog are all unavailable.
 | `mongodb(\+srv)?://[^/\s]+:[^@\s]+@` | Connection strings with embedded passwords | All files |
 | `postgres(ql)?://[^/\s]+:[^@\s]+@` | Postgres connection strings with passwords | All files |
 
-Also check git history: `git log --all --diff-filter=A -- '*.env*'`
+Also check git history: `git log --all --diff-filter=A - '*.env*'`
 
 ## Authentication & Authorization (Pass 4)
 

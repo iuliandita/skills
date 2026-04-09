@@ -1,7 +1,7 @@
 ---
 name: skill-creator
 description: >
-  · Create, review, audit, or improve individual skills -- frontmatter, triggers, overlaps,
+  · Create, review, audit, or improve individual skills - frontmatter, triggers, overlaps,
   collection consistency, and description optimization. Triggers: 'skill creator', 'new skill',
   'skill audit', 'skill review', 'skill quality', 'frontmatter', 'skill overlap'. Prefer this
   for skill-file work over generic brainstorming workflows.
@@ -20,7 +20,7 @@ Create, review, improve, audit, and maintain AI tool skills. Covers the full lif
 initial draft through quality validation, cross-skill consistency checks, and trigger optimization.
 
 This skill enforces the conventions established across the custom skill collection. It exists
-because consistency is what makes skills predictable -- a skill that follows the established
+because consistency is what makes skills predictable - a skill that follows the established
 patterns activates reliably, reads clearly, and plays well with the rest of the collection.
 
 ## When to use
@@ -39,7 +39,7 @@ patterns activates reliably, reads clearly, and plays well with the rest of the 
 - Auditing code for AI-generated patterns or style issues (use anti-slop)
 - Running a full codebase audit across multiple dimensions (use full-review)
 - Creating inline prompts within application code (use prompt-generator)
-- Syncing or refreshing third-party skills from upstream -- handle that directly in the repo workflow
+- Syncing or refreshing third-party skills from upstream - handle that directly in the repo workflow
 - Updating project documentation after infrastructure changes (use update-docs)
 - Writing application code, even if the code is for a tool a skill might use
 
@@ -60,12 +60,12 @@ Before returning any generated or modified skill, verify against this list:
 - [ ] **Workflow section with numbered steps**: clear, sequential, actionable
 - [ ] **Rules section at the end**: non-negotiable constraints in imperative form
 - [ ] **Style compliant**: no banned words (per `CLAUDE.md`/`AGENTS.md`), plain ASCII only
-  (no em-dashes, curly quotes, ligatures -- use `--` for dashes). Check both SKILL.md AND
-  reference files -- banned words in references count
+  (no em-dashes, curly quotes, ligatures - use a single `-` where you would reach for an em
+  dash, never `--`). Check both SKILL.md AND reference files - banned words in references count
 - [ ] **Target ~500 lines**: if over 500, extract to `references/` with clear pointers. Hard max 600
 - [ ] **Reference files use `references/` relative paths**: not hardcoded or tool-specific paths
 - [ ] **All references verified**: every tool, CLI flag, IaC resource, config snippet, and
-  example command confirmed against actual docs, `--help` output, or registry -- not assumed
+  example command confirmed against actual docs, `--help` output, or registry - not assumed
   from training data. Specifically: tools exist and aren't deprecated/renamed, CLI flags are
   real (AI models invent plausible ones constantly), Terraform providers/resources match the
   registry, Ansible modules/params match `ansible-doc`, Helm values match upstream
@@ -76,7 +76,7 @@ Before returning any generated or modified skill, verify against this list:
 - [ ] **Cross-skill references are valid**: every mentioned skill name actually exists
 - [ ] **AI-age awareness**: if the skill generates code, config, or structured files (including skill files), include an AI self-check section
 - [ ] **Context budget justified**: every section earns its token cost (see `references/conventions.md`)
-- [ ] **Forward-tested** (high-effort skills, when feasible): during review, a subagent used the skill on a realistic task without leaked context. This is a process check on the reviewer, not a content requirement on the skill -- the skill does not need a "forward-test" section. The reviewer notes what was tested or skipped and why.
+- [ ] **Forward-tested** (high-effort skills, when feasible): during review, a subagent used the skill on a realistic task without leaked context. This is a process check on the reviewer, not a content requirement on the skill - the skill does not need a "forward-test" section. The reviewer notes what was tested or skipped and why.
 
 ---
 
@@ -87,14 +87,14 @@ or collections, whether inside a skill collection repo, a user's own project, or
 
 1. **Find the collection root** (if one exists): check for a `skills/` directory (common
    convention) or any path the user specifies. Different harnesses store skills in different
-   locations -- if the default doesn't match, ask or accept a user-supplied path. If no
+   locations - if the default doesn't match, ask or accept a user-supplied path. If no
    collection is found, skip collection-wide checks (cross-references, trigger overlap, audit
    mode) and note what was skipped.
 2. **Check git availability**: run `git rev-parse --git-dir` in the skill's directory. Features
    that depend on git (freshness via commit history, gitignore filtering for private skills)
    need this. Without git, fall back to file modification dates and skip gitignore filtering.
 3. **Single skill vs collection**: Modes 1 (Create) and 2 (Review) work on individual skills
-   with or without a collection -- collection-dependent steps become best-effort. Mode 3
+   with or without a collection - collection-dependent steps become best-effort. Mode 3
    (Audit) requires a collection. Mode 4 (Optimize) works standalone but benefits from
    collection context for overlap analysis.
 
@@ -114,22 +114,22 @@ skill"), extract the steps, tools used, corrections made, and patterns observed.
 #### Step 2: Research the domain
 
 Before drafting, gather context:
-1. **Check existing skills** for overlap (if a collection is available) -- read the "When to use"
+1. **Check existing skills** for overlap (if a collection is available) - read the "When to use"
    / "When NOT to use" of potentially related skills. Don't create a skill that duplicates
    existing coverage.
-2. **Verify tools exist** -- for every tool, library, CLI, or platform the skill references,
+2. **Verify tools exist** - for every tool, library, CLI, or platform the skill references,
    confirm it exists, is not deprecated or renamed, and is actively maintained. Search the web
    or check the project's GitHub/registry page. AI models hallucinate tool names, flag names,
-   and API endpoints -- treat every claim as unverified until checked. If a tool was replaced
+   and API endpoints - treat every claim as unverified until checked. If a tool was replaced
    (e.g., CDKTF is deprecated in favor of native HCL, Ingress is frozen with new features
    going to Gateway API), reference the current recommended approach.
-3. **Check versions** -- search for the latest stable release of every tool mentioned. Don't
-   guess or rely on training data -- versions go stale fast. Pin them with dates so staleness
+3. **Check versions** - search for the latest stable release of every tool mentioned. Don't
+   guess or rely on training data - versions go stale fast. Pin them with dates so staleness
    is detectable later (e.g., "Docker Engine 29.3.0 (March 2026)").
-4. **Check security** -- search for recent CVEs, supply chain incidents, or known vulnerabilities
-   relevant to the domain. The custom skill collection tracks these actively -- verify current
+4. **Check security** - search for recent CVEs, supply chain incidents, or known vulnerabilities
+   relevant to the domain. The custom skill collection tracks these actively - verify current
    advisories rather than relying on specific CVE numbers from training data.
-5. **Check compliance** -- if the domain touches infrastructure, containers, CI/CD, auth, or data
+5. **Check compliance** - if the domain touches infrastructure, containers, CI/CD, auth, or data
    handling, consider PCI-DSS 4.0 relevance. Many users work in regulated environments or run
    self-hosted infrastructure where compliance matters.
 
@@ -149,14 +149,14 @@ For tool/platform skills, include a **Target versions** block with pinned versio
 
 **Writing guidelines:**
 - Imperative form in instructions ("Check the config", not "You should check the config")
-- Explain **why**, not just **what** -- models generalize from motivation
+- Explain **why**, not just **what** - models generalize from motivation
 - Don't use ALL CAPS for emphasis unless it's genuinely critical. Calm, direct instructions
   outperform shouting across most modern models.
 - Include "What NOT to flag" or "What NOT to do" sections where false positives are likely
 - Use tables for reference data, prose for workflows, checklists for validation
 - Consider headless execution: skills may run in non-interactive contexts (Claude Code `--bare`,
   Cursor Automations, Codex `exec`). Avoid blocking on user confirmation in steps that could
-  run unattended -- provide sensible defaults or document assumptions instead
+  run unattended - provide sensible defaults or document assumptions instead
 
 #### Step 4: Validate the draft
 
@@ -179,7 +179,7 @@ Run through the AI Self-Check above. Then:
 #### Step 6: Forward-test
 
 Forward-testing is stress-testing a skill by having a subagent use it on a realistic task without
-knowing it's being evaluated. This catches issues that static review misses -- confusing
+knowing it's being evaluated. This catches issues that static review misses - confusing
 instructions, missing context, steps that only work when you already know the answer.
 
 **When to forward-test:**
@@ -198,7 +198,7 @@ instructions, missing context, steps that only work when you already know the an
 6. Clean up artifacts between iterations to avoid context contamination
 
 **Decision rule:** if forward-testing only succeeds when subagents see leaked context, the skill
-needs tightening -- not the test setup.
+needs tightening - not the test setup.
 
 **Skip forward-testing when:**
 - It would require live production access, long-running infra, or user credentials
@@ -214,7 +214,7 @@ In these cases, note what was skipped and why so the user can test manually.
 
 #### Step 1: Read the skill thoroughly
 
-Read the SKILL.md and all reference files. No skipping -- the whole point is catching issues.
+Read the SKILL.md and all reference files. No skipping - the whole point is catching issues.
 
 #### Step 2: Run the quality checks
 
@@ -229,7 +229,7 @@ Read the SKILL.md and all reference files. No skipping -- the whole point is cat
 **Content checks:**
 - Tools exist? Every tool, CLI, library, or platform named in the skill must be verified as
   real, not deprecated, and not renamed. Search the web or check the project's GitHub/registry.
-  AI hallucinates tool names, CLI flags, and API endpoints constantly -- treat every reference
+  AI hallucinates tool names, CLI flags, and API endpoints constantly - treat every reference
   as unverified until confirmed. If a tool was replaced, the skill should reference the
   replacement (e.g., CDKTF deprecated in favor of native HCL, Ingress frozen with Gateway API
   as the recommended path forward, lazy_static superseded by std::sync::LazyLock).
@@ -240,7 +240,7 @@ Read the SKILL.md and all reference files. No skipping -- the whole point is cat
   the target API version. AI invents plausible-sounding arguments for all of these.
 - Version numbers current? Search the web for latest stable versions of tools that appear in
   normative claims (pinned versions, "Target versions" blocks, compatibility fields). Don't
-  verify every passing mention -- focus on versions that drive behavior or could mislead.
+  verify every passing mention - focus on versions that drive behavior or could mislead.
 - Security references current? Check for new CVEs since the skill's `date_added`.
 - Cross-skill references valid (if a collection is available)? Every skill name mentioned must
   exist as a published (non-gitignored) skill in the collection. For standalone skills,
@@ -249,7 +249,7 @@ Read the SKILL.md and all reference files. No skipping -- the whole point is cat
 
 **AI-age checks:**
 - Does the skill generate code, config, structured output, or orchestrate other skills? If yes,
-  does it have an AI Self-Check section? This is the #1 miss across skill collections --
+  does it have an AI Self-Check section? This is the #1 miss across skill collections -
   skills that produce output need a pre-flight checklist even if they're "just" orchestrators.
 - Does the AI Self-Check cover the domain's common AI mistakes? (e.g., unpinned versions,
   missing security contexts, over-abstraction, hallucinated CLI flags)
@@ -272,12 +272,12 @@ Use severity ratings:
 
 Present findings to the user and wait for confirmation before editing. The user may want a
 report only, or may want to fix a subset. In headless mode (no interactive user), report
-findings and stop -- do not apply fixes unless the invocation explicitly requests them.
+findings and stop - do not apply fixes unless the invocation explicitly requests them.
 
 #### Step 5: Apply fixes
 
 Edit the skill files to address confirmed findings. For version updates, always search the web
-first -- don't guess. Do not modify `date_added` (it records when the skill was created, used
+first - don't guess. Do not modify `date_added` (it records when the skill was created, used
 for historical tracking). If the skill needs a freshness marker, the `date_added` field serves
 that purpose for the initial creation; substantial refreshes are tracked via git history.
 
@@ -300,7 +300,7 @@ Run a health check across all skills. Useful periodically or after adding/removi
 #### Step 1: Inventory
 
 ```bash
-# Detect collection root -- adapt to your layout
+# Detect collection root - adapt to your layout
 SKILL_ROOT="${SKILL_ROOT:-skills}"
 [[ -d "$SKILL_ROOT" ]] || { echo "No skill collection at $SKILL_ROOT"; exit 1; }
 
@@ -317,7 +317,7 @@ for skill in "$SKILL_ROOT"/*/SKILL.md; do
   date=$(grep -m1 '[[:space:]]date_added:' "$skill" 2>/dev/null | sed 's/.*date_added: *"//' | sed 's/"//' || echo "unknown")
   effort=$(grep -m1 '[[:space:]]effort:' "$skill" 2>/dev/null | sed 's/.*effort: *//' || echo "missing")
   if $IN_GIT; then
-    last_mod=$(git -C "$SKILL_ROOT" log -1 --format=%cd --date=short -- "$name" 2>/dev/null || echo "unknown")
+    last_mod=$(git -C "$SKILL_ROOT" log -1 --format=%cd --date=short - "$name" 2>/dev/null || echo "unknown")
   else
     # Portable: GNU stat then BSD stat; GNU date then BSD date
     mtime=$(stat -c %Y "$skill" 2>/dev/null || stat -f %m "$skill" 2>/dev/null || echo 0)
@@ -334,7 +334,7 @@ For each skill, check:
 2. Every skill name mentioned in "Related Skills" exists as a published (non-gitignored) skill
 3. Every declared reference file path has a corresponding file
 4. Installer, publish, or registry files list the published skills correctly
-5. Lint scripts, CI checks, and count tooling exclude gitignored (private) skills --
+5. Lint scripts, CI checks, and count tooling exclude gitignored (private) skills -
    tools that iterate `skills/*/` directly will overcount unless they filter with
    `git check-ignore`
 
@@ -361,7 +361,7 @@ For each stale high-effort skill, search the web for:
 - New major/minor releases of referenced tools
 - New CVEs affecting referenced tools
 - Deprecated or renamed tools/features since the skill was written
-- New supply chain incidents (these move the fastest -- Trivy was 6 days old when we caught it)
+- New supply chain incidents (these move the fastest - Trivy was 6 days old when we caught it)
 
 #### Step 5: Report
 
@@ -401,7 +401,7 @@ Follow these patterns from high-performing custom skill descriptions:
 
 After rewriting, list 5 user prompts that should trigger the skill and 5 that shouldn't. For
 each, state whether the rewritten description would route correctly and why. This is a heuristic
-check -- actual routing depends on the harness's skill-matching logic, which varies by tool.
+check - actual routing depends on the harness's skill-matching logic, which varies by tool.
 The goal is catching obvious gaps and false-positive magnets, not deterministic validation.
 
 #### Step 5: Apply
@@ -413,20 +413,20 @@ collection, run Mode 2 Step 2 (quality checks) to verify no regressions were int
 
 ## Reference Files
 
-- `references/conventions.md` -- the complete convention guide: frontmatter fields, structural
+- `references/conventions.md` - the complete convention guide: frontmatter fields, structural
   patterns by effort tier, style rules (ASCII, banned words), reference file organization,
   cross-skill patterns, AI Self-Check patterns, and a snapshot inventory of the upstream
   collection (useful as a reference, not an authoritative list for other repos)
 
 ## Related Skills
 
-- **anti-slop** -- the code quality audit skill. When reviewing a skill's example code or
+- **anti-slop** - the code quality audit skill. When reviewing a skill's example code or
   reference patterns, anti-slop patterns apply (comment noise, over-abstraction, stale idioms).
-- **full-review** -- orchestrates four parallel audits. This skill audits the skill collection
+- **full-review** - orchestrates four parallel audits. This skill audits the skill collection
   itself, not application code.
-- **prompt-generator** -- structures prompts for LLM consumption. Skills ARE prompts, but
+- **prompt-generator** - structures prompts for LLM consumption. Skills ARE prompts, but
   prompt-generator targets one-off prompts saved to `docs/prompts/`, not reusable skill files.
-- **code-review** -- reviews application code for correctness. This skill reviews skill files
+- **code-review** - reviews application code for correctness. This skill reviews skill files
   for convention compliance, not code correctness.
 
 ## Rules
@@ -436,7 +436,7 @@ collection, run Mode 2 Step 2 (quality checks) to verify no regressions were int
 2. **Conventions are non-negotiable.** Every custom skill must have: `metadata.source`
    (`owner/repo` for published collections or `custom` for unpublished skills), `date_added`,
    `effort`, "When to use", "When NOT to use", Workflow, and Rules sections. These aren't
-   suggestions -- they're what makes skills consistent and predictable.
+   suggestions - they're what makes skills consistent and predictable.
 3. **Verify everything, assume nothing.** AI models hallucinate tool names, CLI flags, version
    numbers, and API endpoints. Every tool, version, flag, and behavior claim in a skill must
    be verified via web search or registry check before writing it down. "I'm pretty sure" is
@@ -447,10 +447,11 @@ collection, run Mode 2 Step 2 (quality checks) to verify no regressions were int
    workflow skills are invoked manually when explicitly requested.
 5. **Update the inventory.** After creating, removing, or renaming a skill, update any published
    inventory file the collection uses and re-run the cross-reference checks.
-6. **No AI slop in skills.** Skills are meta-prompts -- they shape how the model works. Comment
+6. **No AI slop in skills.** Skills are meta-prompts - they shape how the model works. Comment
    noise, over-abstraction, aggressive ALL CAPS directives, and "just in case" instructions
    degrade skill performance. Write like a competent human briefing a colleague.
-7. **Plain ASCII only.** No em-dashes, curly quotes, or ligatures in skill files. Use `--` for
-   dashes, straight quotes, plain punctuation. This matches the global instruction-file rule.
+7. **Plain ASCII only.** No em-dashes, curly quotes, or ligatures in skill files. Use a single
+   `-` where you would reach for an em dash, never `--`. Use straight quotes and plain
+   punctuation. This matches the global instruction-file rule.
 8. **Run the AI Self-Check.** Every generated or modified skill gets verified against the
    checklist before returning to the user.

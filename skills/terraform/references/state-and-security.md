@@ -40,13 +40,13 @@ terraform {
 
 ### State File Security for PCI
 
-State files are a PCI liability -- they contain resource attributes, connection strings, and sometimes plaintext secrets.
+State files are a PCI liability - they contain resource attributes, connection strings, and sometimes plaintext secrets.
 
 **Mandatory controls:**
 - Encrypt at rest with customer-managed KMS key (Req 3.5)
 - Restrict access to pipeline IAM role + break-glass admin only
 - Enable bucket versioning for rollback
-- CloudTrail data events on state bucket -- every read/write logged (Req 10)
+- CloudTrail data events on state bucket - every read/write logged (Req 10)
 - Alert on any state access outside the CI/CD pipeline role
 - Retention: 1 year minimum (Req 10.7), fintech typically 7 years
 
@@ -133,7 +133,7 @@ plan:
 - **Separate roles**: read-only for `plan` (any branch), write for `apply` (main only)
 - Lock subject claims to specific repos AND branches
 - CDE resources get their own IAM role with tighter scope than non-CDE
-- Short-lived credentials (15min-1h) -- no long-lived keys
+- Short-lived credentials (15min-1h) - no long-lived keys
 - Audit all `AssumeRoleWithWebIdentity` calls via CloudTrail
 
 ---
@@ -165,11 +165,11 @@ PR merged to main:
 
 ### Supply chain hardening for CI
 
-- **Pin ALL GitHub Actions to commit SHAs** -- `uses: hashicorp/setup-terraform@<sha>`, not `@v3`. The tj-actions/changed-files compromise (March 2025, CVE-2025-30066) stole credentials from ~12 hours of CI runs via upstream reviewdog/action-setup (CVE-2025-30154).
-- **Pin Trivy to v0.69.3** -- v0.69.4/5/6 were compromised (CVE-2026-33634). Pin to SHA.
-- **Pin Checkov to a specific version** -- `pip install checkov==X.Y.Z` or use the container image with a digest
+- **Pin ALL GitHub Actions to commit SHAs** - `uses: hashicorp/setup-terraform@<sha>`, not `@v3`. The tj-actions/changed-files compromise (March 2025, CVE-2025-30066) stole credentials from ~12 hours of CI runs via upstream reviewdog/action-setup (CVE-2025-30154).
+- **Pin Trivy to v0.69.3** - v0.69.4/5/6 were compromised (CVE-2026-33634). Pin to SHA.
+- **Pin Checkov to a specific version** - `pip install checkov==X.Y.Z` or use the container image with a digest
 - **Use StepSecurity Harden-Runner** to detect unexpected network connections in CI jobs
-- **Separate CI secrets by environment** -- staging pipeline should NOT access prod credentials
+- **Separate CI secrets by environment** - staging pipeline should NOT access prod credentials
 
 ---
 
@@ -229,10 +229,10 @@ PCI Req 11.5 requires change detection. Manual `terraform plan` is necessary but
 
 | Approach | Frequency | Effort |
 |----------|-----------|--------|
-| Scheduled `terraform plan` in CI | Every 4-6 hours | Low -- just a cron job |
-| HCP Terraform health assessments | Every 24 hours | Low -- built-in |
-| Cloud-native monitoring (AWS Config Rules) | Real-time | Medium -- separate tool chain |
-| Dedicated tool (env0, Spacelift) | Configurable | Medium -- SaaS cost |
+| Scheduled `terraform plan` in CI | Every 4-6 hours | Low - just a cron job |
+| HCP Terraform health assessments | Every 24 hours | Low - built-in |
+| Cloud-native monitoring (AWS Config Rules) | Real-time | Medium - separate tool chain |
+| Dedicated tool (env0, Spacelift) | Configurable | Medium - SaaS cost |
 
 ### Remediation
 
@@ -244,7 +244,7 @@ PCI Req 11.5 requires change detection. Manual `terraform plan` is necessary but
 
 ## State Surgery
 
-State surgery means manipulating the state file directly via CLI commands. Use it when declarative tools (`moved` blocks, `import` blocks) cannot cover the operation -- primarily cross-state resource migration.
+State surgery means manipulating the state file directly via CLI commands. Use it when declarative tools (`moved` blocks, `import` blocks) cannot cover the operation - primarily cross-state resource migration.
 
 **Key principle: state surgery changes bookkeeping, not infrastructure.** No cloud resource is created, modified, or destroyed. You are telling Terraform "this resource now lives here" without touching the physical resource.
 
@@ -264,7 +264,7 @@ terraform state mv 'aws_instance.app' 'module.compute.aws_instance.app'
 
 ### Cross-state resource migration
 
-Moving a resource from one state file to another (e.g., extracting a module into its own state, or consolidating states). There is no single command for this -- it is a two-step workflow.
+Moving a resource from one state file to another (e.g., extracting a module into its own state, or consolidating states). There is no single command for this - it is a two-step workflow.
 
 **Workflow: remove from source + import in destination**
 
@@ -277,7 +277,7 @@ terraform -chdir=destination state pull > destination-backup.tfstate
 terraform -chdir=source state rm 'aws_rds_cluster.main'
 
 # Step 3: Import into destination state
-# Option A: import block (TF 1.5+, preferred -- declarative, reviewable)
+# Option A: import block (TF 1.5+, preferred - declarative, reviewable)
 #   Add to destination config:
 #     import {
 #       to = aws_rds_cluster.main
@@ -292,12 +292,12 @@ terraform -chdir=destination import 'aws_rds_cluster.main' 'my-cluster-id'
 # Step 4: Run plan on BOTH source and destination
 # Source should show no changes (resource removed from its tracking)
 # Destination should show no changes (resource now tracked here)
-# If either plan shows destroy/create, STOP -- something is wrong
+# If either plan shows destroy/create, STOP - something is wrong
 ```
 
 **Alternative for bulk moves: `terraform state pull` + `terraform state push`**
 
-For moving many resources at once, you can pull the state as JSON, use `terraform state mv` or `jq` to manipulate addresses, and push back. This is fragile -- prefer the rm+import workflow for safety. If you must use pull/push:
+For moving many resources at once, you can pull the state as JSON, use `terraform state mv` or `jq` to manipulate addresses, and push back. This is fragile - prefer the rm+import workflow for safety. If you must use pull/push:
 
 ```bash
 terraform state pull > state.json
@@ -305,7 +305,7 @@ terraform state pull > state.json
 terraform state push state.json
 ```
 
-**Never edit the JSON manually with a text editor.** The state file contains serial numbers, lineage UUIDs, and internal checksums. Manual edits corrupt state silently -- Terraform may plan destructive changes on the next run. Always use `terraform state` subcommands.
+**Never edit the JSON manually with a text editor.** The state file contains serial numbers, lineage UUIDs, and internal checksums. Manual edits corrupt state silently - Terraform may plan destructive changes on the next run. Always use `terraform state` subcommands.
 
 ### State locking during surgery
 
@@ -316,9 +316,9 @@ terraform state push state.json
 ### Backup procedure
 
 1. `terraform state pull > backup-YYYYMMDD-HHMM.tfstate` before every state surgery operation.
-2. If using S3, bucket versioning provides automatic rollback -- but do not rely on it as the only backup.
+2. If using S3, bucket versioning provides automatic rollback - but do not rely on it as the only backup.
 3. Store backups outside the state bucket (different S3 prefix or local encrypted storage).
-4. After surgery, run `terraform plan` immediately. A clean "no changes" plan confirms success. Any planned destroy or create means the migration went wrong -- restore from backup.
+4. After surgery, run `terraform plan` immediately. A clean "no changes" plan confirms success. Any planned destroy or create means the migration went wrong - restore from backup.
 
 ---
 

@@ -178,7 +178,7 @@ holds the VIP. If HAProxy A dies, keepalived on node B detects the failure and c
 - Both HAProxy instances must have identical configs
 - HAProxy health checks to backends are independent per instance
 - keepalived's `check_haproxy` script ensures the VIP only goes to a node where HAProxy is running
-- Clients connect to the VIP -- they don't need to know which node is active
+- Clients connect to the VIP - they don't need to know which node is active
 
 ---
 
@@ -227,8 +227,8 @@ interface via gratuitous ARP. Clients on the same L2 segment update their ARP ca
 
 Cloud providers typically don't support L2 features like gratuitous ARP. Instead:
 
-- **DigitalOcean**: Floating IPs via API -- use keepalived notify scripts to reassign via `doctl`
-- **Hetzner**: Floating IPs via API -- notify script calls Hetzner Cloud API
+- **DigitalOcean**: Floating IPs via API - use keepalived notify scripts to reassign via `doctl`
+- **Hetzner**: Floating IPs via API - notify script calls Hetzner Cloud API
 - **AWS**: Elastic IPs or ENI reassignment via API (or use Route53 health checks for DNS failover)
 
 ```bash
@@ -298,10 +298,10 @@ systemctl status keepalived
 journalctl -u keepalived -f
 
 # Common log messages
-# "Entering MASTER STATE" -- this node has the VIP
-# "Entering BACKUP STATE" -- this node released the VIP
-# "VRRP_Instance(VI_1) Transition to MASTER STATE" -- failover in progress
-# "ip address associated with VRID not present" -- VIP configuration issue
+# "Entering MASTER STATE" - this node has the VIP
+# "Entering BACKUP STATE" - this node released the VIP
+# "VRRP_Instance(VI_1) Transition to MASTER STATE" - failover in progress
+# "ip address associated with VRID not present" - VIP configuration issue
 
 # Watch VRRP advertisements (requires tcpdump)
 tcpdump -i enp0s3 -nn vrrp
@@ -354,7 +354,7 @@ pcs constraint colocation add HAProxy with VIP
 # Order: VIP must start before HAProxy
 pcs constraint order VIP then HAProxy
 
-# STONITH (fencing) -- required for production
+# STONITH (fencing) - required for production
 pcs stonith create fence_node1 fence_ipmilan ipaddr=10.0.0.1 login=admin passwd=secret
 ```
 

@@ -1,6 +1,6 @@
 # Python Bug Patterns
 
-Bug patterns specific to Python. Focused on correctness -- not style (see anti-slop) or security (see security-audit).
+Bug patterns specific to Python. Focused on correctness - not style (see anti-slop) or security (see security-audit).
 
 ---
 
@@ -20,7 +20,7 @@ def append_to(item, items=[]):
     return items
 
 append_to(1)  # [1]
-append_to(2)  # [1, 2] -- not [2]!
+append_to(2)  # [1, 2] - not [2]!
 
 # fix: use None sentinel
 def append_to(item, items=None):
@@ -133,7 +133,7 @@ funcs = [lambda i=i: i for i in range(5)]
 
 ### `global` / `nonlocal` Surprises
 
-- Reading a variable works (closure), but assigning creates a new local -- `UnboundLocalError` if you read before write without `global`/`nonlocal`
+- Reading a variable works (closure), but assigning creates a new local - `UnboundLocalError` if you read before write without `global`/`nonlocal`
 - `nonlocal` required to mutate enclosing scope variables (not just read)
 
 ---
@@ -147,7 +147,7 @@ Two modules importing each other, causing `ImportError` or partially-initialized
 **Detect:**
 - Module A imports from Module B, and Module B imports from Module A
 - `ImportError: cannot import name 'X'` at runtime
-- Imports inside function bodies (often a workaround for circular imports -- the real fix is restructuring)
+- Imports inside function bodies (often a workaround for circular imports - the real fix is restructuring)
 
 ### Module-Level Side Effects
 
@@ -176,7 +176,7 @@ Sync operations in async code blocks the entire event loop.
 
 ### Missing `await`
 
-Same pattern as JavaScript -- forgetting `await` on a coroutine.
+Same pattern as JavaScript - forgetting `await` on a coroutine.
 
 **Detect:**
 - Coroutine called without `await` (Python warns: "coroutine was never awaited")
@@ -252,7 +252,7 @@ class Config:
 a = Config()
 b = Config()
 a.tags.append("x")
-print(b.tags)  # ['x'] -- oops
+print(b.tags)  # ['x'] - oops
 
 # fix: use default_factory
 @dataclass

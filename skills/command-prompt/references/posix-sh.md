@@ -2,7 +2,7 @@
 
 > Portable shell patterns for `#!/bin/sh` scripts. Everything here works on dash, ash, busybox
 > sh, bash in POSIX mode, and zsh in sh-emulation mode. When you need a script that runs
-> everywhere -- Alpine containers, Debian, macOS, BSDs, embedded systems -- this is the reference.
+> everywhere - Alpine containers, Debian, macOS, BSDs, embedded systems - this is the reference.
 
 ---
 
@@ -20,8 +20,8 @@
 - `for`, `while`, `until`, `case`, `if`
 - `trap`, `wait`, `kill`, `exec`
 - `set -eu` (but NOT `set -o pipefail`)
-- `local` -- technically NOT in POSIX, but supported by every modern sh (dash, ash, busybox, mksh). Safe to use.
-- `printf` -- POSIX-specified and much more predictable than `echo`
+- `local` - technically NOT in POSIX, but supported by every modern sh (dash, ash, busybox, mksh). Safe to use.
+- `printf` - POSIX-specified and much more predictable than `echo`
 
 ### NOT POSIX (bash/zsh-isms to avoid)
 
@@ -29,7 +29,7 @@
 |---------|-------------|---------------------|
 | `[[ ]]` | Bash/zsh built-in, not a POSIX command | `[ ]` with proper quoting |
 | `(( ))` arithmetic | Bash/zsh extension | `[ "$(( expr ))" -ne 0 ]` or `test` |
-| Arrays | Bash 2.0+ / zsh | Positional params (`set -- a b c`) or IFS tricks |
+| Arrays | Bash 2.0+ / zsh | Positional params (`set - a b c`) or IFS tricks |
 | `${var,,}` / `${var^^}` | Bash 4.0+ case conversion | `printf '%s' "$var" \| tr '[:upper:]' '[:lower:]'` |
 | `${var:offset:length}` | Bash substring | `expr substr "$var" start length` or `cut` |
 | `<<<` here string | Bash/zsh | `printf '%s\n' "$var" \| cmd` |
@@ -37,7 +37,7 @@
 | `mapfile` / `readarray` | Bash 4.0+ | `while read` loop |
 | `source file` | Bash alias for `.` | `. file` |
 | `function name { }` | Bash/ksh form | `name() { }` |
-| `set -o pipefail` | Bash/zsh | No equivalent -- check each stage manually |
+| `set -o pipefail` | Bash/zsh | No equivalent - check each stage manually |
 | `$RANDOM` | Bash/zsh/ksh | `awk 'BEGIN{srand(); print int(rand()*32768)}'` |
 | `BASH_SOURCE` | Bash-only | `$0` (different in sourced files) |
 | `declare` / `typeset` | Bash/ksh/zsh | Plain assignment; `local` for function scope |
@@ -123,14 +123,14 @@ if [ -n "${var+x}" ]; then echo "var is set"; fi
 ### What you CAN'T do in POSIX
 
 ```sh
-# NO substring extraction -- these are bash-isms:
+# NO substring extraction - these are bash-isms:
 # ${var:0:5}           # use: printf '%.5s' "$var"   or   expr substr "$var" 1 5
 # ${var:(-3)}          # use: printf '%s' "$var" | tail -c 3
 
-# NO case conversion -- these are bash-isms:
+# NO case conversion - these are bash-isms:
 # ${var,,}   ${var^^}  # use: printf '%s' "$var" | tr '[:upper:]' '[:lower:]'
 
-# NO pattern replacement -- these are bash-isms:
+# NO pattern replacement - these are bash-isms:
 # ${var/old/new}       # use: printf '%s' "$var" | sed 's/old/new/'
 # ${var//old/new}      # use: printf '%s' "$var" | sed 's/old/new/g'
 ```
@@ -185,7 +185,7 @@ if [ -n "${var+x}" ]; then echo "var is set"; fi
 [ "$a" = "$b" ]                # POSIX
 [ "$a" == "$b" ]               # bash-ism (works in bash, not in dash)
 
-# -a and -o inside [ ] are deprecated -- use && and ||
+# -a and -o inside [ ] are deprecated - use && and ||
 [ -f "$f" ] && [ -r "$f" ]    # correct
 [ -f "$f" -a -r "$f" ]        # deprecated, broken with some values
 ```
@@ -243,7 +243,7 @@ fi
 
 ---
 
-## 6. No Arrays -- Workarounds
+## 6. No Arrays - Workarounds
 
 POSIX sh has no arrays. Here's how to work around it:
 
@@ -251,7 +251,7 @@ POSIX sh has no arrays. Here's how to work around it:
 
 ```sh
 # Set positional params
-set -- alpha bravo charlie
+set - alpha bravo charlie
 
 # Access
 printf 'First: %s\n' "$1"     # alpha
@@ -268,7 +268,7 @@ shift
 printf 'Now first: %s\n' "$1" # bravo
 
 # Append (rebuilds the list)
-set -- "$@" delta
+set - "$@" delta
 ```
 
 ### IFS splitting for simple lists
@@ -277,7 +277,7 @@ set -- "$@" delta
 # Split a colon-separated string
 old_ifs="$IFS"
 IFS=:
-set -- $PATH                   # splits PATH into positional params
+set - $PATH                   # splits PATH into positional params
 IFS="$old_ifs"
 
 for dir in "$@"; do
@@ -293,7 +293,7 @@ items="alpha
 bravo
 charlie"
 
-# Iterate (IFS must include newline -- it does by default)
+# Iterate (IFS must include newline - it does by default)
 printf '%s\n' "$items" | while IFS= read -r item; do
     printf 'Item: %s\n' "$item"
 done
@@ -346,7 +346,7 @@ done < file.txt
 ### Safe glob iteration
 
 ```sh
-# No nullglob in POSIX -- must guard against no-match
+# No nullglob in POSIX - must guard against no-match
 for f in *.txt; do
     [ -e "$f" ] || continue    # skip if glob didn't match anything
     printf 'Processing: %s\n' "$f"
@@ -367,7 +367,7 @@ printf '%05d\n' 42                # 00042
 ### Boolean checks
 
 ```sh
-# POSIX has no true booleans -- use string comparison
+# POSIX has no true booleans - use string comparison
 enabled="true"
 if [ "$enabled" = "true" ]; then
     printf 'Enabled\n'
@@ -458,7 +458,7 @@ for f in $files; do ...        # word splitting
 [ -f $path ]                   # breaks if path is empty or has spaces
 
 # GOOD: always quote
-for f in $files; do ...        # still bad -- $files isn't an array
+for f in $files; do ...        # still bad - $files isn't an array
 [ -f "$path" ]                 # safe
 ```
 

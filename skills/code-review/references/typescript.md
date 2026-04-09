@@ -1,6 +1,6 @@
 # TypeScript / JavaScript Bug Patterns
 
-Bug patterns specific to TypeScript and JavaScript. These focus on correctness -- not style (see anti-slop) or security (see security-audit).
+Bug patterns specific to TypeScript and JavaScript. These focus on correctness - not style (see anti-slop) or security (see security-audit).
 
 ---
 
@@ -14,7 +14,7 @@ The most common async bug. A function returns a Promise but the caller forgets `
 - Async function called without `await` in a non-fire-and-forget context
 - Promise assigned to a variable but never awaited
 - `return asyncFn()` in a non-async function (returns the Promise, not the value)
-- Conditional `await` (`if (x) await fn()` -- the else branch doesn't await)
+- Conditional `await` (`if (x) await fn()` - the else branch doesn't await)
 
 **Example:**
 ```typescript
@@ -23,7 +23,7 @@ function isValid(id: string) {
   return checkDatabase(id); // missing await, function isn't async
 }
 
-if (isValid("123")) { // always truthy -- it's a Promise object
+if (isValid("123")) { // always truthy - it's a Promise object
   proceed();
 }
 ```
@@ -33,7 +33,7 @@ if (isValid("123")) { // always truthy -- it's a Promise object
 Promises that reject with no `.catch()` or try/catch around `await`.
 
 **Detect:**
-- `Promise.all()` without wrapping try/catch -- one rejection kills all, but remaining promises still run
+- `Promise.all()` without wrapping try/catch - one rejection kills all, but remaining promises still run
 - Fire-and-forget async calls without `.catch()` (`doSomething()` without await or catch)
 - `async void` functions (errors can't be caught by the caller)
 - `.then()` chains without a terminal `.catch()`
@@ -55,7 +55,7 @@ Async functions that return void can't have their errors caught by the caller.
 **Detect:**
 - Event handlers declared as `async` without internal error handling
 - Callbacks passed to `.forEach()`, `.map()`, event listeners that are `async`
-- `setTimeout(async () => { ... })` -- the async return value is ignored
+- `setTimeout(async () => { ... })` - the async return value is ignored
 
 **Example:**
 ```typescript
@@ -193,7 +193,7 @@ for (const id of ids) {
 - Empty `[]` dependency array but effect body reads props or state
 - Object/array literals in dependency arrays (new reference every render, infinite loop)
 - Missing dependencies that cause stale data
-- Including `setState` functions (stable, don't need to be deps -- but raw state does)
+- Including `setState` functions (stable, don't need to be deps - but raw state does)
 
 **Example:**
 ```typescript
@@ -202,7 +202,7 @@ useEffect(() => {
   fetchUser(userId).then(setUser);
 }, []); // should be [userId]
 
-// bug: infinite loop -- {} is a new object every render
+// bug: infinite loop - {} is a new object every render
 useEffect(() => { ... }, [{ key: value }]);
 ```
 
@@ -227,7 +227,7 @@ Effects that subscribe/listen but don't clean up.
 
 **Example:**
 ```typescript
-// bug: memory leak -- listener never removed
+// bug: memory leak - listener never removed
 useEffect(() => {
   window.addEventListener('resize', handleResize);
 }, []);

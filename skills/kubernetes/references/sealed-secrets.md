@@ -4,7 +4,7 @@ Encrypt Kubernetes Secrets for safe Git storage. The controller decrypts them in
 
 **Current**: controller v0.36.1, Helm chart v2.18.4, kubeseal CLI v0.36.1.
 
-**CRITICAL: CVE-2026-22728** (fixed in v0.36.0). The `/v1/rotate` endpoint accepted untrusted annotations -- an attacker could inject `sealedsecrets.bitnami.com/cluster-wide: "true"` into a victim's SealedSecret, submit it to the rotate endpoint, and receive back a re-encrypted SealedSecret with cluster-wide scope. The attacker could then retarget it (change name/namespace) to decrypt the original secret values in any namespace they control. Upgrade past v0.35.x immediately.
+**CRITICAL: CVE-2026-22728** (fixed in v0.36.0). The `/v1/rotate` endpoint accepted untrusted annotations - an attacker could inject `sealedsecrets.bitnami.com/cluster-wide: "true"` into a victim's SealedSecret, submit it to the rotate endpoint, and receive back a re-encrypted SealedSecret with cluster-wide scope. The attacker could then retarget it (change name/namespace) to decrypt the original secret values in any namespace they control. Upgrade past v0.35.x immediately.
 
 ---
 
@@ -46,9 +46,9 @@ Developer                          Cluster
    |                                  |  (ownerRef -> SealedSecret)
 ```
 
-Private key stored as `kubernetes.io/tls` Secret labeled `sealedsecrets.bitnami.com/sealed-secrets-key=active` in the controller namespace. Multiple keys can coexist -- the controller tries all active keys for decryption.
+Private key stored as `kubernetes.io/tls` Secret labeled `sealedsecrets.bitnami.com/sealed-secrets-key=active` in the controller namespace. Multiple keys can coexist - the controller tries all active keys for decryption.
 
-**Caution**: the controller sets `ownerReference` on the generated Secret. Deleting a SealedSecret cascades to the Secret -- any pod mounting it will fail. Verify no pods reference the Secret before deleting.
+**Caution**: the controller sets `ownerReference` on the generated Secret. Deleting a SealedSecret cascades to the Secret - any pod mounting it will fail. Verify no pods reference the Secret before deleting.
 
 ---
 
@@ -88,7 +88,7 @@ kubectl get secret -n kube-system \
   -l sealedsecrets.bitnami.com/sealed-secrets-key=active \
   -o yaml > "$TMPFILE"
 
-# Encrypt before storing -- NEVER store plaintext key backups
+# Encrypt before storing - NEVER store plaintext key backups
 age -r age1... "$TMPFILE" > sealed-secrets-keys-$(date +%Y%m%d).yaml.age
 rm -P "$TMPFILE" 2>/dev/null || rm "$TMPFILE"  # -P = secure delete on macOS; shred on Linux
 
@@ -107,7 +107,7 @@ age -d sealed-secrets-keys-YYYYMMDD.yaml.age > sealed-secrets-keys.yaml
 # 1. Restore keys BEFORE deploying the controller
 kubectl apply -f sealed-secrets-keys.yaml
 
-# 2. Deploy controller -- picks up existing keys on startup
+# 2. Deploy controller - picks up existing keys on startup
 helm install sealed-secrets sealed-secrets/sealed-secrets \
   -n kube-system --version 2.18.4
 
@@ -144,8 +144,8 @@ Migrating to a new cluster does NOT require re-sealing if you restore the sealin
 
 1. Export keys from old cluster (see Backup above)
 2. Apply key backup to the new cluster before deploying the controller
-3. Deploy sealed-secrets controller -- it picks up the existing keys
-4. Apply your SealedSecret manifests from Git -- they decrypt normally
+3. Deploy sealed-secrets controller - it picks up the existing keys
+4. Apply your SealedSecret manifests from Git - they decrypt normally
 
 If you do NOT have the key backup, you must re-seal everything using the new cluster's cert.
 
@@ -179,7 +179,7 @@ kubectl -n kube-system label secret sealed-secrets-shared \
 ### Seal a secret
 
 ```bash
-# Always specify namespace explicitly (default: "default" -- common mistake)
+# Always specify namespace explicitly (default: "default" - common mistake)
 kubectl create secret generic db-creds \
   -n production \
   --from-literal=password=hunter2 \
@@ -237,7 +237,7 @@ kubectl -n kube-system get secret \
 kubeseal --cert cluster.pem -o yaml < secret.yaml > sealed.yaml
 ```
 
-**CI pipeline usage**: store `cluster.pem` as a CI variable (e.g. `SEALED_SECRETS_CERT`). The cert is the **public** half of the keypair -- safe to store as a regular CI variable or even commit to the repo. It cannot decrypt anything. Refresh after every key renewal (default: 30 days) -- stale certs still work but seal with an old key.
+**CI pipeline usage**: store `cluster.pem` as a CI variable (e.g. `SEALED_SECRETS_CERT`). The cert is the **public** half of the keypair - safe to store as a regular CI variable or even commit to the repo. It cannot decrypt anything. Refresh after every key renewal (default: 30 days) - stale certs still work but seal with an old key.
 
 ### Non-default controller location
 
@@ -254,7 +254,7 @@ kubeseal \
 
 ### ArgoCD
 
-SealedSecrets are CRDs -- ArgoCD handles them natively. No plugins needed.
+SealedSecrets are CRDs - ArgoCD handles them natively. No plugins needed.
 
 ```
 apps/my-app/
@@ -283,7 +283,7 @@ resources:
   - sealed-secret.yaml
 ```
 
-Do NOT use `secretGenerator` for secrets managed by SealedSecrets -- that generates plain Secrets with content hashes in the name, breaking strict scope.
+Do NOT use `secretGenerator` for secrets managed by SealedSecrets - that generates plain Secrets with content hashes in the name, breaking strict scope.
 
 ### File naming convention
 
@@ -307,7 +307,7 @@ Sealed Secrets satisfy some PCI requirements but have gaps.
 |-------------|------------------------|
 | **Req 3.5** (strong cryptography) | RSA-OAEP + AES-256-GCM hybrid encryption. Satisfies "strong cryptography" for data in transit to the cluster and at rest in Git. |
 | **Req 8.6.2** (no hardcoded secrets) | Plaintext never in Git, ConfigMaps, Helm values, or env vars in manifests. |
-| **Req 3.6.1** (documented key management) | Full lifecycle: generation (RSA-4096 on controller boot), distribution (public cert via `kubeseal --fetch-cert`), storage (K8s Secret in controller namespace), retirement (old keys retained for decrypt, not used for new sealing after renewal), destruction (manual -- delete old key Secrets when no SealedSecrets reference them). |
+| **Req 3.6.1** (documented key management) | Full lifecycle: generation (RSA-4096 on controller boot), distribution (public cert via `kubeseal --fetch-cert`), storage (K8s Secret in controller namespace), retirement (old keys retained for decrypt, not used for new sealing after renewal), destruction (manual - delete old key Secrets when no SealedSecrets reference them). |
 
 ### Gaps and mitigations
 
@@ -320,7 +320,7 @@ Sealed Secrets satisfy some PCI requirements but have gaps.
 | No HSM integration for key storage | Req 3.6.1 (key storage security) | BYOC with HSM-generated keys, or use ESO + cloud KMS |
 | No split knowledge for key generation | Req 3.7.4 (split knowledge / dual control) | Manual BYOC ceremony: custodian A generates key on air-gapped machine, custodian B imports to cluster, neither sees the other's portion. Document the ceremony. |
 
-**Bottom line for PCI**: Sealed Secrets work for static secrets (API keys, registry creds, webhook tokens) in a CDE if combined with etcd encryption and proper audit logging. For dynamic credentials (DB passwords, PKI), pair with Vault or ESO. QSAs will probe the key management gaps -- document your mitigations. See `compliance.md` for the full PCI-DSS requirements mapping and etcd encryption config (KMS v2 ranked options). See `architecture.md` Secrets Management section for the tool decision matrix.
+**Bottom line for PCI**: Sealed Secrets work for static secrets (API keys, registry creds, webhook tokens) in a CDE if combined with etcd encryption and proper audit logging. For dynamic credentials (DB passwords, PKI), pair with Vault or ESO. QSAs will probe the key management gaps - document your mitigations. See `compliance.md` for the full PCI-DSS requirements mapping and etcd encryption config (KMS v2 ranked options). See `architecture.md` Secrets Management section for the tool decision matrix.
 
 ---
 
@@ -331,7 +331,7 @@ Sealed Secrets satisfy some PCI requirements but have gaps.
 - **No user should have `get` on Secrets in the controller namespace.** The private key is stored there.
 - Restrict `create` on `sealedsecrets` CRs to only the namespaces/users that need them.
 - The controller ServiceAccount needs cluster-wide `get`/`list`/`create`/`update`/`patch` on Secrets (or scoped to managed namespaces via `additionalNamespaces`).
-- **Avoid SealedSecrets targeting `kube-system`.** The unsealed Secret lands in the same namespace as the sealing private key -- a single RBAC misconfiguration exposes both. Deploy application secrets in application namespaces.
+- **Avoid SealedSecrets targeting `kube-system`.** The unsealed Secret lands in the same namespace as the sealing private key - a single RBAC misconfiguration exposes both. Deploy application secrets in application namespaces.
 
 ### Network policy for the controller
 
@@ -357,7 +357,7 @@ spec:
       ports:
         - protocol: TCP
           port: 443          # K8s API
-    - to:                    # DNS -- scope to kube-dns only
+    - to:                    # DNS - scope to kube-dns only
         - namespaceSelector:
             matchLabels:
               kubernetes.io/metadata.name: kube-system
@@ -374,8 +374,8 @@ spec:
 ### Monitoring
 
 Scrape Prometheus metrics from the controller:
-- `sealed_secrets_controller_unseal_errors_total` -- alert on non-zero
-- `sealed_secrets_controller_condition` -- controller health
+- `sealed_secrets_controller_unseal_errors_total` - alert on non-zero
+- `sealed_secrets_controller_condition` - controller health
 
 ### Additional hardening
 
@@ -389,7 +389,7 @@ Scrape Prometheus metrics from the controller:
 ## Helm Installation (Production)
 
 ```bash
-# OCI registry (preferred -- immutable, no helm repo add)
+# OCI registry (preferred - immutable, no helm repo add)
 helm install sealed-secrets-controller \
   oci://registry-1.docker.io/bitnamicharts/sealed-secrets \
   -n kube-system \
@@ -427,7 +427,7 @@ kubectl -n kube-system logs -l app.kubernetes.io/name=sealed-secrets | grep "reg
 
 ### Namespace mismatch (strict scope)
 
-The SealedSecret was sealed for namespace `default` (kubeseal's default) but applied to `production`. The controller logs "no key could decrypt" even though the key exists -- the name/namespace binding in the ciphertext does not match.
+The SealedSecret was sealed for namespace `default` (kubeseal's default) but applied to `production`. The controller logs "no key could decrypt" even though the key exists - the name/namespace binding in the ciphertext does not match.
 
 **Fix**: always specify `-n <namespace>` on the input secret when sealing.
 
@@ -446,7 +446,7 @@ Usually fine unless you have thousands of SealedSecrets or `watchForSecrets: tru
 1. **Not backing up the private key.** Lose the key = lose all secrets. No recovery possible.
 2. **Using cluster-wide scope as default.** "Because it is easier" destroys namespace isolation guarantees.
 3. **Committing the private key to Git.** The entire security model depends on the private key staying in the cluster.
-4. **Assuming key renewal = secret rotation.** See Key Management section -- they are completely different operations.
+4. **Assuming key renewal = secret rotation.** See Key Management section - they are completely different operations.
 5. **Sealing without specifying namespace.** kubeseal defaults to `default`. See Common Failures > Namespace mismatch.
 6. **Stale offline certificates.** Fetching the cert once and using it for months means you are sealing with an old key. The controller can still decrypt (old keys retained), but you are not using the current key.
 7. **Not enabling etcd encryption-at-rest.** Sealed Secrets protect secrets in Git and during transit. Once unsealed, the Secret sits in etcd base64-encoded. Without etcd encryption, anyone with etcd access reads everything.

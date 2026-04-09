@@ -40,10 +40,10 @@ the target shell from context and routes to the appropriate reference.
 
 ## When NOT to use
 
-- Remote FreeBSD/OPNsense/pfSense commands -- use **firewall-appliance** (handles tcsh/csh in the BSD context)
-- Ansible shell/command modules -- use **ansible** (module gotchas differ from raw shell)
-- CI/CD pipeline shell blocks -- use **ci-cd** (restricted environments, no interactive features)
-- General Linux sysadmin that isn't shell-specific -- just do the task directly
+- Remote FreeBSD/OPNsense/pfSense commands - use **firewall-appliance** (handles tcsh/csh in the BSD context)
+- Ansible shell/command modules - use **ansible** (module gotchas differ from raw shell)
+- CI/CD pipeline shell blocks - use **ci-cd** (restricted environments, no interactive features)
+- General Linux sysadmin that isn't shell-specific - just do the task directly
 
 ---
 
@@ -58,7 +58,7 @@ Before returning any generated shell script or command, verify:
 - [ ] Array indexing correct for the target shell (bash: 0-indexed, zsh: 1-indexed)
 - [ ] `printf` used over `echo` for non-trivial output
 - [ ] Glob safety guards in place (empty-glob case handled)
-- [ ] No hardcoded paths for tools (`/usr/bin/git`) -- use `command -v` or bare command names
+- [ ] No hardcoded paths for tools (`/usr/bin/git`) - use `command -v` or bare command names
 - [ ] Temp files use `mktemp` with cleanup traps, not hardcoded `/tmp/foo`
 - [ ] No secrets in command history (use `read -s` or environment variables)
 
@@ -119,7 +119,7 @@ Verification Checklist at the bottom of this section.
 | Process sub `<()` | no | yes | yes + `=()` | `(command \| psub)` |
 | Word splitting | on unquoted `$var` | on unquoted `$var` | **no** | **no** |
 | Arithmetic | `$(( ))` only | `$(( ))`, `(( ))`, `let` | `$(( ))`, `(( ))` | `math` |
-| String lowercase | -- | `${var,,}` | `${var:l}` | `string lower` |
+| String lowercase | - | `${var,,}` | `${var:l}` | `string lower` |
 | Completions | none | basic (bash-completion) | powerful (compsys) | powerful (built-in) |
 | Config file | `.profile` | `.bashrc` | `.zshrc` | `config.fish` |
 | Shebang | `#!/bin/sh` | `#!/usr/bin/env bash` | `#!/usr/bin/env zsh` | `#!/usr/bin/env fish` |
@@ -130,7 +130,7 @@ Verification Checklist at the bottom of this section.
 
 ## Universal Patterns (All POSIX Shells)
 
-These work in sh, bash, and zsh. Fish has different syntax for most of these -- see the
+These work in sh, bash, and zsh. Fish has different syntax for most of these - see the
 alt-shells reference.
 
 ### Piping and redirection
@@ -157,7 +157,7 @@ alt-shells reference.
 | `cmd1 && cmd2` | Run cmd2 only if cmd1 succeeds (exit 0) |
 | `cmd1 \|\| cmd2` | Run cmd2 only if cmd1 fails (exit non-0) |
 | `cmd &` | Run in background |
-| `cmd1 && cmd2 \|\| cmd3` | Poor man's if/else (**not reliable** -- cmd3 runs if cmd2 fails too) |
+| `cmd1 && cmd2 \|\| cmd3` | Poor man's if/else (**not reliable** - cmd3 runs if cmd2 fails too) |
 
 ### Job control
 
@@ -299,21 +299,21 @@ Before returning any shell script, check:
 
 ## Reference Files
 
-- `references/zsh.md` -- Zsh 5.9/5.10 patterns, glob qualifiers, arrays, parameter expansion, completions, autoloading, dotfile config, prompt hooks, zsh-only features, 5.10 additions (non-forking `${ }`, namerefs, SRANDOM), bash porting matrix
-- `references/bash.md` -- Bash 5.3 patterns, parameter expansion, arrays, conditionals, process substitution, error handling, traps, heredocs, coprocesses, bash 5.x features (non-forking `${ cmd; }`, GLOBSORT, SRANDOM), script template
-- `references/posix-sh.md` -- Portable POSIX sh patterns, what's POSIX and what's not, bashism avoidance checklist, which-sh-am-I, arithmetic, parameter expansion, portable conditionals
-- `references/alt-shells.md` -- Fish 4.6 (syntax, functions, completions, config, 4.6 additions), tcsh/csh 6.24 (syntax, when you'll encounter it), nushell 0.111 (structured pipelines, types), elvish 0.22/oils 0.37 (brief)
+- `references/zsh.md` - Zsh 5.9/5.10 patterns, glob qualifiers, arrays, parameter expansion, completions, autoloading, dotfile config, prompt hooks, zsh-only features, 5.10 additions (non-forking `${ }`, namerefs, SRANDOM), bash porting matrix
+- `references/bash.md` - Bash 5.3 patterns, parameter expansion, arrays, conditionals, process substitution, error handling, traps, heredocs, coprocesses, bash 5.x features (non-forking `${ cmd; }`, GLOBSORT, SRANDOM), script template
+- `references/posix-sh.md` - Portable POSIX sh patterns, what's POSIX and what's not, bashism avoidance checklist, which-sh-am-I, arithmetic, parameter expansion, portable conditionals
+- `references/alt-shells.md` - Fish 4.6 (syntax, functions, completions, config, 4.6 additions), tcsh/csh 6.24 (syntax, when you'll encounter it), nushell 0.111 (structured pipelines, types), elvish 0.22/oils 0.37 (brief)
 
 ## Related Skills
 
-- **firewall-appliance** -- OPNsense/pfSense uses tcsh/csh on FreeBSD. That skill handles the BSD firewall context; this skill covers tcsh syntax in general.
-- **ansible** -- Ansible `shell`/`command` modules have their own idiosyncrasies beyond raw shell scripting. Use ansible for playbook work.
-- **ci-cd** -- CI shell blocks run in restricted environments (no interactive features, possibly no bash). Use ci-cd for pipeline design; use this skill for the shell syntax within them.
+- **firewall-appliance** - OPNsense/pfSense uses tcsh/csh on FreeBSD. That skill handles the BSD firewall context; this skill covers tcsh syntax in general.
+- **ansible** - Ansible `shell`/`command` modules have their own idiosyncrasies beyond raw shell scripting. Use ansible for playbook work.
+- **ci-cd** - CI shell blocks run in restricted environments (no interactive features, possibly no bash). Use ci-cd for pipeline design; use this skill for the shell syntax within them.
 
 ## Rules
 
 1. **Detect the shell first.** Check shebang, file extension, or ask. Don't assume bash when the user might mean zsh.
-2. **Load the right reference.** Don't wing zsh arrays or bash parameter expansion from memory -- the subtle differences justify loading the reference every time.
+2. **Load the right reference.** Don't wing zsh arrays or bash parameter expansion from memory - the subtle differences justify loading the reference every time.
 3. **Shebang is `#!/usr/bin/env <shell>`.** Not `#!/bin/bash`. The env form is portable across distros. Exception: `#!/bin/sh` for POSIX scripts (this IS the standard form).
 4. **`set -euo pipefail` in every bash/zsh script.** No exceptions for scripts beyond a one-liner.
 5. **User's interactive shell is zsh.** When writing commands for the user to run locally, use zsh syntax. Bash for scripts and remote machines unless the script specifically needs zsh.

@@ -26,20 +26,20 @@ during training.
 - Need lower latency than RAG provides (no retrieval step)
 - Domain specialization where the base model lacks knowledge
 - Classification or extraction tasks with well-defined categories
-- Cost optimization -- a fine-tuned small model can match a large model's quality at lower
+- Cost optimization - a fine-tuned small model can match a large model's quality at lower
   inference cost for narrow tasks
 
 ### When NOT to fine-tune
 
-- **Data changes frequently** -- use RAG instead. Fine-tuning bakes knowledge into weights;
+- **Data changes frequently** - use RAG instead. Fine-tuning bakes knowledge into weights;
   updating requires retraining.
-- **Fewer than 100 high-quality examples** -- insufficient data produces overfitting, not
+- **Fewer than 100 high-quality examples** - insufficient data produces overfitting, not
   specialization. Try few-shot prompting first.
-- **Prompt engineering works** -- if a well-crafted prompt gets 90%+ accuracy, fine-tuning
+- **Prompt engineering works** - if a well-crafted prompt gets 90%+ accuracy, fine-tuning
   adds complexity without proportional benefit.
-- **The task is general-purpose** -- fine-tuning narrows model capabilities. A fine-tuned
+- **The task is general-purpose** - fine-tuning narrows model capabilities. A fine-tuned
   model may be worse at tasks outside its training domain.
-- **You don't have eval infrastructure** -- without structured evaluation, you can't measure
+- **You don't have eval infrastructure** - without structured evaluation, you can't measure
   if fine-tuning actually helped. Set up evals first.
 
 ### Decision tree
@@ -73,7 +73,7 @@ Most fine-tuning APIs expect conversation-format JSONL:
 
 ### Data quality checklist
 
-- [ ] Examples are diverse -- cover the full range of expected inputs
+- [ ] Examples are diverse - cover the full range of expected inputs
 - [ ] Outputs follow a consistent format and style
 - [ ] No contradictions between examples
 - [ ] PII removed or anonymized
@@ -108,11 +108,11 @@ def validate_example(example: dict) -> list[str]:
 
 When you need more examples but manual creation is slow:
 
-1. **Paraphrase inputs** -- use an LLM to rephrase user queries while keeping the same
+1. **Paraphrase inputs** - use an LLM to rephrase user queries while keeping the same
    expected output
-2. **Edge case generation** -- ask an LLM to generate unusual inputs for your domain
-3. **Difficulty variation** -- create easy, medium, and hard versions of each example
-4. **Error injection** -- include examples with intentional user mistakes (typos, unclear
+2. **Edge case generation** - ask an LLM to generate unusual inputs for your domain
+3. **Difficulty variation** - create easy, medium, and hard versions of each example
+4. **Error injection** - include examples with intentional user mistakes (typos, unclear
    phrasing) and correct outputs
 
 ---
@@ -147,7 +147,7 @@ model = AutoModelForCausalLM.from_pretrained(
 
 # LoRA config
 lora_config = LoraConfig(
-    r=16,                          # rank -- higher = more capacity, more memory
+    r=16,                          # rank - higher = more capacity, more memory
     lora_alpha=32,                 # scaling factor (usually 2x rank)
     target_modules=["q_proj", "v_proj", "k_proj", "o_proj"],
     lora_dropout=0.05,
@@ -198,7 +198,7 @@ trainer.train()
 
 ### QLoRA (quantized LoRA)
 
-Fine-tune a 4-bit quantized model -- fits larger models on less hardware:
+Fine-tune a 4-bit quantized model - fits larger models on less hardware:
 
 ```python
 from transformers import BitsAndBytesConfig
@@ -226,7 +226,7 @@ fine-tuned on a single 80GB A100.
 
 ### Provider-hosted fine-tuning
 
-The easiest path -- upload data, start training, no GPU management:
+The easiest path - upload data, start training, no GPU management:
 
 ```bash
 # OpenAI fine-tuning

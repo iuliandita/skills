@@ -15,20 +15,20 @@ Copy-pasteable configuration templates for PostgreSQL, MongoDB, MySQL/MariaDB, a
 # Adjust RAM-proportional values to your actual system RAM
 # ============================================================
 
-# -- Connection --
+# - Connection -
 listen_addresses = '*'                    # bind to all interfaces (firewall + pg_hba.conf handles access)
 port = 5432
 max_connections = 200                     # tune based on pooler config; default 100 is low for prod
 superuser_reserved_connections = 3
 
-# -- Memory --
+# - Memory -
 shared_buffers = '4GB'                    # 25% of RAM (16GB system example)
-effective_cache_size = '12GB'             # 75% of RAM -- tells planner about OS page cache
+effective_cache_size = '12GB'             # 75% of RAM - tells planner about OS page cache
 work_mem = '64MB'                         # per-sort/hash operation, NOT per-connection. Lower for OLTP (many concurrent queries)
 maintenance_work_mem = '1GB'              # VACUUM, CREATE INDEX, ALTER TABLE
 huge_pages = try                          # use if OS supports (Linux: vm.nr_hugepages)
 
-# -- WAL & Durability --
+# - WAL & Durability -
 wal_level = replica                       # or 'logical' for logical replication
 max_wal_senders = 10
 max_replication_slots = 10
@@ -37,19 +37,19 @@ checkpoint_completion_target = 0.9
 min_wal_size = '1GB'
 max_wal_size = '4GB'
 
-# -- Query Planner --
+# - Query Planner -
 random_page_cost = 1.1                    # SSD storage. Default 4.0 assumes spinning disk.
 effective_io_concurrency = 200            # SSD: 200. HDD: 2.
 default_statistics_target = 200           # more accurate planner estimates (default 100)
 
-# -- Autovacuum --
+# - Autovacuum -
 autovacuum = on
 autovacuum_max_workers = 4                # increase for many tables
 autovacuum_vacuum_scale_factor = 0.05     # vacuum when 5% of rows are dead (default 0.2 is too lazy for large tables)
 autovacuum_analyze_scale_factor = 0.02    # analyze when 2% of rows change
 autovacuum_vacuum_cost_delay = '2ms'      # PG 12+: faster vacuum, less impact with SSD
 
-# -- Logging --
+# - Logging -
 logging_collector = on
 log_destination = 'stderr'
 log_directory = 'log'
@@ -64,14 +64,14 @@ log_lock_waits = on
 log_temp_files = 0                        # log all temp file usage
 log_line_prefix = '%m [%p] %q%u@%d '
 
-# -- Security --
+# - Security -
 ssl = on
 ssl_min_protocol_version = 'TLSv1.3'     # TLSv1.2 minimum for PCI
 password_encryption = scram-sha-256       # NEVER md5
 ssl_cert_file = '/etc/postgresql/server.crt'
 ssl_key_file = '/etc/postgresql/server.key'
 
-# -- Timeouts --
+# - Timeouts -
 statement_timeout = '30s'                 # per-role override for migrations: ALTER ROLE migrator SET statement_timeout = '0';
 lock_timeout = '10s'
 idle_in_transaction_session_timeout = '60s'
@@ -79,7 +79,7 @@ tcp_keepalives_idle = 60
 tcp_keepalives_interval = 10
 tcp_keepalives_count = 6
 
-# -- Extensions --
+# - Extensions -
 shared_preload_libraries = 'pg_stat_statements,pgaudit'  # add pgaudit for PCI
 pg_stat_statements.max = 10000
 pg_stat_statements.track = all
@@ -110,9 +110,9 @@ hostssl all             pgbouncer       127.0.0.1/32            scram-sha-256
 ```
 
 **Never use:**
-- `trust` -- allows passwordless access. Not even for local dev (muscle memory matters).
-- `md5` -- deprecated in PG 18, vulnerable to relay attacks. Use `scram-sha-256`.
-- `host` (without ssl) for remote connections -- unencrypted traffic.
+- `trust` - allows passwordless access. Not even for local dev (muscle memory matters).
+- `md5` - deprecated in PG 18, vulnerable to relay attacks. Use `scram-sha-256`.
+- `host` (without ssl) for remote connections - unencrypted traffic.
 
 ### pg_hba.conf (PCI-CDE additions)
 
@@ -229,7 +229,7 @@ net:
     mode: disabled                         # OK for local dev only
 
 security:
-  authorization: disabled                  # local dev only -- build auth habits anyway
+  authorization: disabled                  # local dev only - build auth habits anyway
 
 operationProfiling:
   mode: all                                # profile everything in dev
@@ -260,7 +260,7 @@ rs.printReplicationInfo();     // oplog window
 
 ## MySQL / MariaDB
 
-### my.cnf (production -- MySQL 8.4 LTS)
+### my.cnf (production - MySQL 8.4 LTS)
 
 ```ini
 [mysqld]
@@ -269,23 +269,23 @@ rs.printReplicationInfo();     // oplog window
 # Target: dedicated server, InnoDB, SSD storage
 # ============================================================
 
-# -- Core --
+# - Core -
 server-id = 1                             # unique per server in replication
 port = 3306
 bind-address = 0.0.0.0
 datadir = /var/lib/mysql
 socket = /var/run/mysqld/mysqld.sock
 
-# -- CRITICAL: Strict mode (prevents silent data corruption) --
+# - CRITICAL: Strict mode (prevents silent data corruption) -
 sql_mode = STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION
 
-# -- Character set (utf8mb4, NOT utf8 which is 3-byte only) --
+# - Character set (utf8mb4, NOT utf8 which is 3-byte only) -
 character-set-server = utf8mb4
 collation-server = utf8mb4_0900_ai_ci
 
-# -- InnoDB --
+# - InnoDB -
 innodb_buffer_pool_size = 11G             # 70% of RAM (16GB system example)
-# innodb_buffer_pool_instances -- MySQL 8.4 auto-tunes this based on pool size + CPU count. Omit to let it auto-tune, or set explicitly (1 per GB, max 64).
+# innodb_buffer_pool_instances - MySQL 8.4 auto-tunes this based on pool size + CPU count. Omit to let it auto-tune, or set explicitly (1 per GB, max 64).
 innodb_redo_log_capacity = 2G              # MySQL 8.0.30+. Replaces innodb_log_file_size (deprecated, silently ignored in 8.4)
 innodb_flush_log_at_trx_commit = 1        # ACID durability. 2 = faster but 1s data loss risk
 innodb_flush_method = O_DIRECT            # bypass OS cache (InnoDB has its own)
@@ -296,13 +296,13 @@ innodb_read_io_threads = 8
 innodb_write_io_threads = 8
 innodb_adaptive_hash_index = ON
 
-# -- Connections --
+# - Connections -
 max_connections = 200
 wait_timeout = 300                        # close idle connections after 5 min
 interactive_timeout = 300
 thread_cache_size = 32
 
-# -- Logging --
+# - Logging -
 log_output = FILE
 slow_query_log = ON
 slow_query_log_file = /var/log/mysql/slow.log
@@ -312,7 +312,7 @@ general_log = OFF                         # enable temporarily for debugging onl
 log_error = /var/log/mysql/error.log
 log_error_verbosity = 2
 
-# -- Binary log (required for replication and PITR) --
+# - Binary log (required for replication and PITR) -
 log_bin = mysql-bin
 binlog_format = ROW                       # required for GTID and safer than STATEMENT
 binlog_expire_logs_seconds = 604800       # 7 days retention
@@ -320,16 +320,16 @@ gtid_mode = ON
 enforce_gtid_consistency = ON
 sync_binlog = 1                           # flush binlog at each commit (durability)
 
-# -- Security --
+# - Security -
 require_secure_transport = ON
 tls_version = TLSv1.2,TLSv1.3
 ssl_cert = /etc/mysql/server-cert.pem
 ssl_key = /etc/mysql/server-key.pem
 ssl_ca = /etc/mysql/ca-cert.pem
-# default_authentication_plugin was REMOVED in MySQL 8.4 -- caching_sha2_password is the hardcoded default.
+# default_authentication_plugin was REMOVED in MySQL 8.4 - caching_sha2_password is the hardcoded default.
 # For older versions: default_authentication_plugin = caching_sha2_password
 
-# -- Performance Schema --
+# - Performance Schema -
 performance_schema = ON
 ```
 
@@ -338,8 +338,8 @@ performance_schema = ON
 ```ini
 # MariaDB-specific settings (in addition to / instead of MySQL settings above)
 [mariadb]
-# No gtid_mode / enforce_gtid_consistency -- MariaDB uses domain-based GTID automatically
-# No caching_sha2_password -- MariaDB uses ed25519 or mysql_native_password
+# No gtid_mode / enforce_gtid_consistency - MariaDB uses domain-based GTID automatically
+# No caching_sha2_password - MariaDB uses ed25519 or mysql_native_password
 # plugin_load_add = server_audit          # MariaDB Audit Plugin (free, unlike MySQL Enterprise)
 
 # MariaDB collation (uca1400 is the modern standard)
@@ -361,7 +361,7 @@ max_connections = 50
 innodb_buffer_pool_size = 512M
 slow_query_log = ON
 long_query_time = 0                       # log ALL queries
-general_log = ON                          # enable for debugging (disable in prod -- huge I/O)
+general_log = ON                          # enable for debugging (disable in prod - huge I/O)
 require_secure_transport = OFF            # local dev only
 ```
 
@@ -380,7 +380,7 @@ MSSQL doesn't use a config file like the others. Most settings are applied via T
 -- ============================================================
 
 -- Max memory (leave 4-8GB for OS)
-EXEC sp_configure 'max server memory (MB)', 12288;  -- 12GB on a 16GB server
+EXEC sp_configure 'max server memory (MB)', 12288;  - 12GB on a 16GB server
 RECONFIGURE;
 
 -- MAXDOP (CPU cores per NUMA node, max 8 for OLTP)

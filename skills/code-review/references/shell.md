@@ -1,6 +1,6 @@
 # Bash / Shell Bug Patterns
 
-Bug patterns specific to Bash and POSIX shell scripts. Focused on correctness -- not style (see anti-slop) or security (see security-audit).
+Bug patterns specific to Bash and POSIX shell scripts. Focused on correctness - not style (see anti-slop) or security (see security-audit).
 
 ---
 
@@ -51,7 +51,7 @@ By default, a pipeline's exit code is the exit code of the *last* command. Failu
 **Detect:**
 - `cmd1 | cmd2` where `cmd1` failing would be a problem
 - Missing `set -o pipefail` (or `pipefail` not set)
-- `curl ... | jq ...` -- if curl fails, jq gets empty input and may "succeed"
+- `curl ... | jq ...` - if curl fails, jq gets empty input and may "succeed"
 
 **Fix:** Use `set -o pipefail` or check `${PIPESTATUS[@]}` (bash) / `${pipestatus[@]}` (zsh).
 
@@ -60,9 +60,9 @@ By default, a pipeline's exit code is the exit code of the *last* command. Failu
 Assignment always succeeds, hiding the command's exit code.
 
 **Detect:**
-- `local var=$(cmd)` -- `local` always returns 0, masking cmd's exit code
-- `export var=$(cmd)` -- same problem
-- `readonly var=$(cmd)` -- same problem
+- `local var=$(cmd)` - `local` always returns 0, masking cmd's exit code
+- `export var=$(cmd)` - same problem
+- `readonly var=$(cmd)` - same problem
 
 **Example:**
 ```bash
@@ -101,7 +101,7 @@ Without `set -u` (nounset), uninitialized variables silently expand to empty str
 Variables set inside a subshell don't affect the parent shell.
 
 **Detect:**
-- `cat file | while read line; do count=$((count+1)); done; echo $count` -- count is 0 (pipe creates subshell)
+- `cat file | while read line; do count=$((count+1)); done; echo $count` - count is 0 (pipe creates subshell)
 - `(cd /tmp && var=1)` followed by using `$var` in parent
 - Process substitution gotchas: `while read line; do ...; done < <(cmd)` avoids the subshell problem but isn't POSIX
 
@@ -124,9 +124,9 @@ echo "$count"  # correct
 
 ### IFS Surprises
 
-- `IFS=: read -ra parts <<< "$PATH"` -- IFS change persists if not localized
-- `for word in $var` splits on IFS (default: space, tab, newline) -- might not be what you want
-- Missing `-r` flag on `read` -- backslashes are interpreted as escapes
+- `IFS=: read -ra parts <<< "$PATH"` - IFS change persists if not localized
+- `for word in $var` splits on IFS (default: space, tab, newline) - might not be what you want
+- Missing `-r` flag on `read` - backslashes are interpreted as escapes
 
 ---
 
@@ -181,8 +181,8 @@ Scripts with `#!/bin/sh` shebang using bash-only features.
 ### GNU vs BSD Tool Differences
 
 **Detect:**
-- `sed -i ''` (BSD) vs `sed -i` (GNU) -- different syntax for in-place editing
-- `grep -P` (GNU only, PCRE) -- use `grep -E` for portability
+- `sed -i ''` (BSD) vs `sed -i` (GNU) - different syntax for in-place editing
+- `grep -P` (GNU only, PCRE) - use `grep -E` for portability
 - `date -d` (GNU) vs `date -j -f` (BSD) for date parsing
 - `readlink -f` (GNU) not available on macOS without coreutils
 - `stat` format strings differ between GNU and BSD
@@ -229,12 +229,12 @@ Bash arithmetic is integer-only. Floating-point silently truncates or errors.
 
 ### `[` vs `[[`
 
-- `[` is a command -- needs quoting, can't use `&&`/`||` inside, no pattern matching
-- `[[` is bash syntax -- supports `&&`, `||`, `=~` regex, glob patterns, no word splitting
+- `[` is a command - needs quoting, can't use `&&`/`||` inside, no pattern matching
+- `[[` is bash syntax - supports `&&`, `||`, `=~` regex, glob patterns, no word splitting
 - Mixing the two styles inconsistently in the same script
 
 ### Common Test Mistakes
 
 - `-a` / `-o` (ambiguous in `[`; deprecated; use `&&` / `||` between separate `[` commands)
 - `[ $var = "value" ]` without quoting `$var` (breaks if var is empty or contains spaces)
-- `[ -z $var ]` succeeds when `$var` is unset (correct but misleading -- use `[[ -z ${var+x} ]]` to check if set)
+- `[ -z $var ]` succeeds when `$var` is unset (correct but misleading - use `[[ -z ${var+x} ]]` to check if set)

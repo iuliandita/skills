@@ -6,7 +6,7 @@ Idiomatic test patterns for JS/TS, Python, Go, and Rust. Each section covers tes
 
 ## JavaScript / TypeScript (Vitest, Jest)
 
-Vitest is the default for Vite-based projects. Jest for everything else. The APIs are nearly identical -- Vitest implements Jest's `expect` API with Vite-native module resolution and HMR.
+Vitest is the default for Vite-based projects. Jest for everything else. The APIs are nearly identical - Vitest implements Jest's `expect` API with Vite-native module resolution and HMR.
 
 ### Test structure
 
@@ -36,17 +36,17 @@ describe("CartService", () => {
 ### Mocking
 
 ```typescript
-// Vitest -- module mock
+// Vitest - module mock
 vi.mock("./api-client", () => ({
   fetchUser: vi.fn().mockResolvedValue({ id: 1, name: "Test" }),
 }));
 
-// Vitest -- spy on existing method
+// Vitest - spy on existing method
 const spy = vi.spyOn(service, "save");
 await service.process(data);
 expect(spy).toHaveBeenCalledWith(expect.objectContaining({ status: "complete" }));
 
-// Vitest -- timer mocking
+// Vitest - timer mocking
 vi.useFakeTimers();
 setTimeout(callback, 1000);
 vi.advanceTimersByTime(1000);
@@ -72,8 +72,8 @@ it("rejects with 404 for missing user", async () => {
   await expect(getUser(999)).rejects.toThrow("Not found");
 });
 
-// WRONG: missing await -- test passes even if assertion fails
-it("BROKEN -- no await", () => {
+// WRONG: missing await - test passes even if assertion fails
+it("BROKEN - no await", () => {
   expect(getUser(999)).rejects.toThrow("Not found"); // resolves after test ends
 });
 ```
@@ -86,13 +86,13 @@ it("renders user card", () => {
   expect(container).toMatchSnapshot();
 });
 
-// Inline snapshots (preferred -- visible in the test file)
+// Inline snapshots (preferred - visible in the test file)
 it("formats currency", () => {
   expect(formatCurrency(1234.5)).toMatchInlineSnapshot(`"$1,234.50"`);
 });
 ```
 
-**Snapshot rules**: review diffs before updating. Use inline snapshots for small values. Don't snapshot entire pages -- snapshot specific components or data structures.
+**Snapshot rules**: review diffs before updating. Use inline snapshots for small values. Don't snapshot entire pages - snapshot specific components or data structures.
 
 ### Testing Library (React, Vue, Svelte)
 
@@ -116,11 +116,11 @@ it("submits the form with user input", async () => {
 ```
 
 **Query priority** (from Testing Library docs):
-1. `getByRole` -- accessible, resilient to DOM changes
-2. `getByLabelText` -- form elements
-3. `getByPlaceholderText` -- fallback for unlabeled inputs
-4. `getByText` -- non-interactive elements
-5. `getByTestId` -- last resort
+1. `getByRole` - accessible, resilient to DOM changes
+2. `getByLabelText` - form elements
+3. `getByPlaceholderText` - fallback for unlabeled inputs
+4. `getByText` - non-interactive elements
+5. `getByTestId` - last resort
 
 Never query by CSS class, tag name, or DOM hierarchy. Those break on every design change.
 
@@ -175,7 +175,7 @@ def test_raises_on_negative_price(cart):
 ### Fixtures
 
 ```python
-# conftest.py -- shared fixtures
+# conftest.py - shared fixtures
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
@@ -189,7 +189,7 @@ def engine():
 
 @pytest.fixture
 def db(engine):
-    """Transaction-scoped DB session -- rolls back after each test."""
+    """Transaction-scoped DB session - rolls back after each test."""
     connection = engine.connect()
     transaction = connection.begin()
     session = Session(connection)  # SQLAlchemy 2.x: pass connection positionally
@@ -359,7 +359,7 @@ func TestServiceGetUser(t *testing.T) {
 }
 ```
 
-For generated mocks, use `go.uber.org/mock` (formerly `golang/mock`). Avoid `testify/mock` -- the untyped API (`On("Method", args).Return(...)`) catches zero compile-time errors.
+For generated mocks, use `go.uber.org/mock` (formerly `golang/mock`). Avoid `testify/mock` - the untyped API (`On("Method", args).Return(...)`) catches zero compile-time errors.
 
 ### Test cleanup and temp dirs
 
@@ -409,7 +409,7 @@ func BenchmarkHash(b *testing.B) {
 - **Parallel test data races**: `t.Parallel()` without protecting shared state. Run with `-race` flag.
 - **Test binary caching**: `go test` caches results. Use `-count=1` to force re-run.
 - **Missing `t.Helper()`**: helper functions that call `t.Errorf` report the wrong line. Mark them with `t.Helper()`.
-- **`testing/synctest`**: Go 1.25 promoted `synctest` from experiment to stdlib. Go 1.26 replaced `synctest.Run` with `synctest.Test` (accepts `*testing.T`). Use `synctest.Test(t, func(t *testing.T) { ... })` to test concurrent code in an isolated "bubble" -- fake clock, deterministic goroutine scheduling, no real sleeps needed.
+- **`testing/synctest`**: Go 1.25 promoted `synctest` from experiment to stdlib. Go 1.26 replaced `synctest.Run` with `synctest.Test` (accepts `*testing.T`). Use `synctest.Test(t, func(t *testing.T) { ... })` to test concurrent code in an isolated "bubble" - fake clock, deterministic goroutine scheduling, no real sleeps needed.
 
 ---
 
@@ -510,5 +510,5 @@ cargo nextest run --profile ci
 - **Float comparison**: `assert_eq!` on floats fails on rounding. Use `assert!((a - b).abs() < EPSILON)` or the `approx` crate.
 - **`#[should_panic]` without `expected`**: catches ANY panic, including unrelated ones. Always provide the expected message substring.
 - **Integration test compilation**: each file in `tests/` compiles as a separate crate. For shared test utilities, use `tests/common/mod.rs` (not `tests/common.rs`, which Rust treats as a test file).
-- **`Drop` for cleanup**: use Rust's ownership model -- temp resources wrapped in structs with `Drop` impls get cleaned up automatically, even on test failure.
+- **`Drop` for cleanup**: use Rust's ownership model - temp resources wrapped in structs with `Drop` impls get cleaned up automatically, even on test failure.
 - **Mocking**: Rust has no built-in mock framework. Use trait objects with fake implementations (like Go), or the `mockall` crate for generated mocks. `mockall` uses proc macros and can slow compilation.

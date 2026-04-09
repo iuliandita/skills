@@ -1,7 +1,7 @@
 ---
 name: ai-ml
 description: >
-  · Build, review, or architect AI/ML applications -- LLM integrations, RAG pipelines, agent
+  · Build, review, or architect AI/ML applications - LLM integrations, RAG pipelines, agent
   systems, embeddings, evals, local inference, structured output, and tool use. Triggers: 'llm',
   'rag', 'embedding', 'vector store', 'langchain', 'openai sdk', 'anthropic sdk', 'agent loop',
   'fine-tune', 'ollama', 'vllm', 'evals', 'guardrails', 'chunking', 'reranking'. Not for MCP
@@ -17,7 +17,7 @@ metadata:
 
 # AI/ML: Building Production AI Applications
 
-Build, review, and architect applications that use AI models -- from single-API calls to
+Build, review, and architect applications that use AI models - from single-API calls to
 multi-agent systems with RAG pipelines. The goal is production-grade AI apps that are reliable,
 cost-effective, and don't hallucinate their way into an incident.
 
@@ -58,7 +58,7 @@ cost-effective, and don't hallucinate their way into an incident.
 
 ## When NOT to use
 
-- Building MCP servers or tools (use **mcp** -- it handles the protocol layer)
+- Building MCP servers or tools (use **mcp** - it handles the protocol layer)
 - Writing or refining individual prompts (use **prompt-generator**)
 - General database configuration, schema design, or migrations (use **databases**)
 - Security auditing AI application code (use **security-audit**)
@@ -73,19 +73,19 @@ AI tools consistently produce the same mistakes when generating AI application c
 
 - [ ] API keys loaded from environment variables, never hardcoded
 - [ ] Streaming responses handled with proper error boundaries and cleanup
-- [ ] Token limits respected -- input truncation or chunking for long contexts
+- [ ] Token limits respected - input truncation or chunking for long contexts
 - [ ] Structured output uses the provider's native schema enforcement (Anthropic tool_use,
   OpenAI response_format), not post-hoc parsing with regex
 - [ ] Tool use / function calling validates tool results before passing back to the model
 - [ ] Retry logic uses exponential backoff with jitter, not fixed delays
 - [ ] Rate limit errors (429) handled distinctly from server errors (5xx)
-- [ ] Vector store queries include a relevance threshold -- don't blindly pass low-similarity
+- [ ] Vector store queries include a relevance threshold - don't blindly pass low-similarity
   results to the model
 - [ ] Embedding model matches between indexing and querying (mixing models = garbage results)
 - [ ] Prompt templates use parameterized injection, not string concatenation
 - [ ] Model responses validated before use (check for refusals, empty content, malformed JSON)
 - [ ] Cost estimation done before batch operations (token count * price * volume)
-- [ ] No synchronous LLM calls in request handlers -- always async with timeouts
+- [ ] No synchronous LLM calls in request handlers - always async with timeouts
 - [ ] PII stripped or masked before sending to external model APIs
 - [ ] Temperature set intentionally (0 for deterministic tasks, higher for creative)
 
@@ -108,14 +108,14 @@ AI tools consistently produce the same mistakes when generating AI application c
 
 Pick the lightest tool that solves the problem:
 
-1. **Raw SDK** -- direct Anthropic/OpenAI SDK calls. Best for simple integrations, maximum
+1. **Raw SDK** - direct Anthropic/OpenAI SDK calls. Best for simple integrations, maximum
    control, minimum dependencies. Start here unless you have a specific reason not to.
-2. **Vercel AI SDK** -- unified provider interface with streaming primitives. Good for
+2. **Vercel AI SDK** - unified provider interface with streaming primitives. Good for
    TypeScript apps that need provider-agnostic code or React/Next.js streaming UI.
-3. **LangChain / LlamaIndex** -- orchestration frameworks. Use when you need complex chains,
-   built-in document loaders, or 300+ pre-built integrations. Don't use for simple API calls --
+3. **LangChain / LlamaIndex** - orchestration frameworks. Use when you need complex chains,
+   built-in document loaders, or 300+ pre-built integrations. Don't use for simple API calls -
    the abstraction overhead isn't worth it.
-4. **LangGraph / OpenAI Agents SDK** -- stateful agent frameworks. Use when you need cycles,
+4. **LangGraph / OpenAI Agents SDK** - stateful agent frameworks. Use when you need cycles,
    persistence, human-in-the-loop, or multi-agent coordination.
 
 **The anti-pattern**: importing LangChain to make a single API call. That's like importing
@@ -128,12 +128,12 @@ patterns and code examples.
 
 ### Step 4: Evaluate and validate
 
-Every AI feature needs evaluation. Not "run it once and eyeball the output" -- structured evals
+Every AI feature needs evaluation. Not "run it once and eyeball the output" - structured evals
 with datasets, metrics, and regression detection.
 
 Minimum viable eval: create a `promptfooconfig.yaml` with 20+ test cases, use `contains`,
 `llm-rubric`, and `cost` assertions, run `npx promptfoo eval` in CI on every PR that touches
-prompts. Track pass rate over time -- any regression blocks the merge.
+prompts. Track pass rate over time - any regression blocks the merge.
 
 Read `references/evaluation.md` for promptfoo setup, assertion types, CI integration (GitHub
 Actions example), RAG-specific evals, agent evals, and red teaming patterns.
@@ -222,12 +222,12 @@ scores.
 
 ### Retrieval patterns
 
-1. **Vector search alone** -- fast, good for semantic similarity, bad for exact keyword matches
-2. **Hybrid search** (vector + BM25/keyword) -- best default. Qdrant, Weaviate, and Pinecone
+1. **Vector search alone** - fast, good for semantic similarity, bad for exact keyword matches
+2. **Hybrid search** (vector + BM25/keyword) - best default. Qdrant, Weaviate, and Pinecone
    support this natively. pgvector + `tsvector` for PostgreSQL.
-3. **Reranking** -- retrieve more candidates (top-50), rerank with a cross-encoder or Cohere
+3. **Reranking** - retrieve more candidates (top-50), rerank with a cross-encoder or Cohere
    Rerank, return top-5. Adds latency but significantly improves relevance.
-4. **Query expansion** -- rephrase the user query using an LLM before retrieval. Helps when
+4. **Query expansion** - rephrase the user query using an LLM before retrieval. Helps when
    user queries are vague or use different terminology than the source docs.
 
 ### Vector store selection
@@ -311,13 +311,13 @@ while not done:
 
 ### Common pitfalls
 
-1. **Infinite loops** -- always set a max iteration count. Agents will happily loop forever.
-2. **Tool explosion** -- more than 10-15 tools degrades model performance. Group related
+1. **Infinite loops** - always set a max iteration count. Agents will happily loop forever.
+2. **Tool explosion** - more than 10-15 tools degrades model performance. Group related
    operations into fewer, more capable tools.
-3. **Missing error handling** -- tool failures are normal. The agent needs to recover, not crash.
-4. **No cost ceiling** -- a runaway agent can burn through API budget. Set per-request token
+3. **Missing error handling** - tool failures are normal. The agent needs to recover, not crash.
+4. **No cost ceiling** - a runaway agent can burn through API budget. Set per-request token
    and cost limits.
-5. **Stale context** -- long-running agents accumulate context. Summarize or prune periodically.
+5. **Stale context** - long-running agents accumulate context. Summarize or prune periodically.
 
 Read `references/agent-patterns.md` for multi-agent architectures, human-in-the-loop patterns,
 memory management, and production agent deployment.
@@ -351,7 +351,7 @@ training, and when to use full fine-tuning vs parameter-efficient methods.
 ### Ollama (easiest path)
 
 ```bash
-# Install (piping to sh -- verify the URL and review the script first)
+# Install (piping to sh - verify the URL and review the script first)
 curl -fsSL https://ollama.com/install.sh | sh
 ollama pull llama3.1:8b
 ollama run llama3.1:8b
@@ -398,14 +398,14 @@ monthly_cost = cost_per_request * requests_per_day * 30
 
 ### Strategies (ordered by impact)
 
-1. **Model routing** -- use cheaper models for easy tasks, frontier models for hard ones.
+1. **Model routing** - use cheaper models for easy tasks, frontier models for hard ones.
    Route by task complexity, not by default.
-2. **Caching** -- cache identical or semantically similar requests. Anthropic prompt caching
+2. **Caching** - cache identical or semantically similar requests. Anthropic prompt caching
    reduces repeated prefix costs by 90%.
-3. **Prompt optimization** -- shorter prompts cost less. Cut examples, compress instructions.
-4. **Batch APIs** -- Anthropic and OpenAI offer 50% discounts for async batch processing.
-5. **Output length limits** -- set `max_tokens` to what you actually need, not 4096 "just in case."
-6. **Context pruning** -- for multi-turn conversations, summarize history instead of sending
+3. **Prompt optimization** - shorter prompts cost less. Cut examples, compress instructions.
+4. **Batch APIs** - Anthropic and OpenAI offer 50% discounts for async batch processing.
+5. **Output length limits** - set `max_tokens` to what you actually need, not 4096 "just in case."
+6. **Context pruning** - for multi-turn conversations, summarize history instead of sending
    the full transcript.
 
 ---
@@ -442,34 +442,34 @@ PII detection setup, and content policy implementation.
 
 ## Reference Files
 
-- `references/llm-patterns.md` -- SDK usage patterns, streaming, structured output, tool use,
+- `references/llm-patterns.md` - SDK usage patterns, streaming, structured output, tool use,
   multi-turn conversations, provider-specific details
-- `references/rag-patterns.md` -- chunking strategies, embedding pipelines, retrieval patterns,
+- `references/rag-patterns.md` - chunking strategies, embedding pipelines, retrieval patterns,
   hybrid search, reranking, production RAG architecture
-- `references/agent-patterns.md` -- agent loop implementations, multi-agent architectures,
+- `references/agent-patterns.md` - agent loop implementations, multi-agent architectures,
   memory management, human-in-the-loop, deployment patterns
-- `references/evaluation.md` -- eval frameworks (promptfoo, Braintrust, LangSmith), metric
+- `references/evaluation.md` - eval frameworks (promptfoo, Braintrust, LangSmith), metric
   selection, CI integration, regression detection, red teaming
-- `references/fine-tuning.md` -- data preparation, PEFT/LoRA, full fine-tuning, evaluation
+- `references/fine-tuning.md` - data preparation, PEFT/LoRA, full fine-tuning, evaluation
   during training, when to fine-tune vs alternatives
-- `references/local-inference.md` -- Ollama, vLLM, quantization, model selection, GPU memory,
+- `references/local-inference.md` - Ollama, vLLM, quantization, model selection, GPU memory,
   production serving configuration
-- `references/safety.md` -- prompt injection defense, output validation, PII handling, content
+- `references/safety.md` - prompt injection defense, output validation, PII handling, content
   filtering, audit logging, rate limiting patterns
 
 ## Related Skills
 
-- **mcp** -- handles MCP server development (the protocol/tooling layer). This skill handles
-  the application layer -- how to build apps that call models, retrieve context, and orchestrate
+- **mcp** - handles MCP server development (the protocol/tooling layer). This skill handles
+  the application layer - how to build apps that call models, retrieve context, and orchestrate
   agents. If building an MCP server, use mcp. If building an app that uses AI, use this skill.
-- **prompt-generator** -- for crafting and refining individual prompts. This skill covers prompt
+- **prompt-generator** - for crafting and refining individual prompts. This skill covers prompt
   template management and patterns within applications; prompt-generator handles one-off prompt
   creation and iteration.
-- **databases** -- for general database operations. This skill covers vector store integration
+- **databases** - for general database operations. This skill covers vector store integration
   for RAG; databases handles engine configuration, schema design, and traditional DB operations.
-- **security-audit** -- for security review of AI application code. This skill provides
+- **security-audit** - for security review of AI application code. This skill provides
   guardrail patterns; security-audit provides the audit methodology.
-- **code-review** -- for reviewing AI application code quality beyond AI-specific patterns.
+- **code-review** - for reviewing AI application code quality beyond AI-specific patterns.
 
 ---
 
@@ -484,7 +484,7 @@ PII detection setup, and content policy implementation.
 5. **Match embedding models.** Same model for indexing and querying. Mixing models produces
    meaningless similarity scores that silently degrade retrieval quality.
 6. **Validate model output.** Check for refusals, empty content, malformed structured output.
-   Models fail in creative ways -- handle all of them.
+   Models fail in creative ways - handle all of them.
 7. **Budget before you batch.** Calculate cost before running batch operations. A 100k-row
    embedding job at the wrong model can cost thousands.
 8. **Evaluate with data, not vibes.** Structured evals with datasets and metrics. "It looks

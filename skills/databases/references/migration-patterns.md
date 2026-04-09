@@ -1,6 +1,6 @@
 # Database Migration Patterns
 
-Cross-engine type mappings, zero-downtime schema changes, migration tooling, and SQL dialect differences. Opinionated toward safety -- if a pattern risks data loss, it's called out.
+Cross-engine type mappings, zero-downtime schema changes, migration tooling, and SQL dialect differences. Opinionated toward safety - if a pattern risks data loss, it's called out.
 
 ---
 
@@ -112,9 +112,9 @@ Common in enterprises moving off SQL Server licensing.
 | `VARBINARY(MAX)` | `BYTEA` | Direct map. |
 | `UNIQUEIDENTIFIER` | `UUID` | PG has native UUID type. `CREATE EXTENSION "uuid-ossp"` for generation, or `gen_random_uuid()` (PG 13+). |
 | `DATETIME` | `TIMESTAMP` | MSSQL DATETIME has 3.33ms precision. PG TIMESTAMP has microsecond. |
-| `DATETIME2` | `TIMESTAMP` | PG TIMESTAMP has microsecond precision (6 digits). DATETIME2(7) has 100ns (7 digits) -- values truncated to microseconds on migration. |
+| `DATETIME2` | `TIMESTAMP` | PG TIMESTAMP has microsecond precision (6 digits). DATETIME2(7) has 100ns (7 digits) - values truncated to microseconds on migration. |
 | `DATETIMEOFFSET` | `TIMESTAMPTZ` | Direct map. |
-| `SMALLDATETIME` | `TIMESTAMP(0)` | Minute precision -- use `TIMESTAMP(0)` to match. |
+| `SMALLDATETIME` | `TIMESTAMP(0)` | Minute precision - use `TIMESTAMP(0)` to match. |
 | `XML` | `XML` | PG has native XML type. Most projects should use JSONB instead. |
 | `SQL_VARIANT` | No equivalent | Redesign the schema. `SQL_VARIANT` is a code smell. |
 | `IDENTITY(1,1)` | `GENERATED ALWAYS AS IDENTITY` | Direct conceptual map. |
@@ -127,7 +127,7 @@ Common in enterprises moving off SQL Server licensing.
 
 ## Cross-Engine: Relational -> MongoDB
 
-Not a type mapping -- it's a modeling paradigm shift.
+Not a type mapping - it's a modeling paradigm shift.
 
 | Relational Concept | MongoDB Approach | Guidance |
 |---|---|---|
@@ -161,11 +161,11 @@ Not a type mapping -- it's a modeling paradigm shift.
 
 The gold standard for schema changes in production with zero downtime. Every change is split into phases that are individually backward-compatible.
 
-**Phase 1: Expand** -- add the new structure alongside the old.
+**Phase 1: Expand** - add the new structure alongside the old.
 
-**Phase 2: Migrate** -- backfill data, deploy code that writes to both.
+**Phase 2: Migrate** - backfill data, deploy code that writes to both.
 
-**Phase 3: Contract** -- remove the old structure once nothing reads it.
+**Phase 3: Contract** - remove the old structure once nothing reads it.
 
 Never combine phases in one deployment. Each phase gets its own deploy cycle.
 
@@ -223,7 +223,7 @@ You cannot atomically rename a column and update all application code. This is a
 Step 1: Add the new column.
 Step 2: Deploy code that writes to BOTH old and new columns.
 Step 3: Backfill: UPDATE table SET new_col = old_col WHERE new_col IS NULL;
-         (batch this for large tables -- see "Large Table Migration Patterns")
+         (batch this for large tables - see "Large Table Migration Patterns")
 Step 4: Deploy code that reads from new column (falls back to old).
 Step 5: Deploy code that only reads/writes new column.
 Step 6: Drop old column.
@@ -304,7 +304,7 @@ Before migrating a database engine, evaluate:
 - [ ] **Implicit type coercion**: MySQL silently truncates, PG throws errors. Test all write paths.
 - [ ] **NULL handling**: MySQL treats NULL differently in some comparisons
 - [ ] **Query patterns**: LIMIT/OFFSET, GROUP BY rules, window functions, CTEs
-- [ ] **Connection pooling**: PgBouncer (PG), ProxySQL (MySQL) -- different configs
+- [ ] **Connection pooling**: PgBouncer (PG), ProxySQL (MySQL) - different configs
 - [ ] **ORM/driver compatibility**: check driver support for target engine
 - [ ] **Backup/restore tooling**: different per engine
 - [ ] **Replication topology**: may need redesign
@@ -413,7 +413,7 @@ bun run drizzle-kit migrate
 
 **Drizzle gotchas:**
 
-- `generate` reads schema files only -- no DB connection needed.
+- `generate` reads schema files only - no DB connection needed.
 - `migrate` requires `DATABASE_URL` (or equivalent connection config).
 - Generated SQL has no `IF NOT EXISTS` / `IF EXISTS` guards. If a previous deploy applied DDL but crashed before journaling the migration, re-running crashes. Always add guards manually.
 - Drizzle doesn't generate data backfill SQL. Write separate scripts for data migrations.
@@ -429,7 +429,7 @@ npx prisma migrate dev --name add_email_column
 # Apply in production (no interactive prompts)
 npx prisma migrate deploy
 
-# Reset (dev only -- drops and recreates DB)
+# Reset (dev only - drops and recreates DB)
 npx prisma migrate reset
 ```
 
@@ -437,7 +437,7 @@ npx prisma migrate reset
 
 - `migrate dev` creates AND applies the migration. `migrate deploy` only applies.
 - Prisma locks you into its migration format. Ejecting is painful.
-- Shadow database required for `migrate dev` -- needs CREATE DATABASE permissions.
+- Shadow database required for `migrate dev` - needs CREATE DATABASE permissions.
 - No `IF NOT EXISTS` guards either. Same re-run crash risk as Drizzle.
 - Prisma's introspection (`db pull`) can lose information (comments, partial indexes, custom types).
 - Data migrations: write separate SQL files, reference them in the migration directory.
@@ -459,7 +459,7 @@ alembic downgrade -1
 
 - Autogenerate misses: table/column renames (detects as drop+add), some constraint changes, data-only migrations.
 - Always review autogenerated code. It's a starting point, not gospel.
-- Each migration has `upgrade()` and `downgrade()` -- write both.
+- Each migration has `upgrade()` and `downgrade()` - write both.
 - `alembic stamp head` marks current state without running migrations (useful after manual schema fixes).
 - For zero-downtime, split expand and contract into separate revisions.
 - Alembic can't detect changes in custom types, enums, or server defaults reliably.
@@ -575,7 +575,7 @@ SELECT TOP 20 * FROM (
 ) t WHERE rn > 40;
 ```
 
-**Pagination gotcha:** `OFFSET` is O(n) -- it scans and discards rows. For deep pagination (page 1000+), use keyset pagination:
+**Pagination gotcha:** `OFFSET` is O(n) - it scans and discards rows. For deep pagination (page 1000+), use keyset pagination:
 
 ```sql
 -- All engines (keyset / cursor-based):
@@ -628,12 +628,12 @@ ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name;
 ```sql
 -- PostgreSQL: real booleans
 SELECT * FROM users WHERE is_active = TRUE;
-SELECT * FROM users WHERE is_active;  -- implicit TRUE check
+SELECT * FROM users WHERE is_active;  - implicit TRUE check
 SELECT * FROM users WHERE NOT is_active;
 
 -- MySQL: TINYINT(1) pretending to be boolean
 SELECT * FROM users WHERE is_active = 1;
-SELECT * FROM users WHERE is_active;  -- works (truthy: non-zero)
+SELECT * FROM users WHERE is_active;  - works (truthy: non-zero)
 -- TRUE and FALSE keywords exist but are just aliases for 1 and 0.
 
 -- MSSQL: BIT type
@@ -648,15 +648,15 @@ SELECT * FROM users WHERE is_active = 1;
 -- But there are subtle differences:
 
 -- MySQL: NULL-safe equality operator
-SELECT * FROM t WHERE col <=> NULL;   -- returns rows where col IS NULL
-SELECT * FROM t WHERE col <=> 'foo';  -- NULL-safe comparison
+SELECT * FROM t WHERE col <=> NULL;   - returns rows where col IS NULL
+SELECT * FROM t WHERE col <=> 'foo';  - NULL-safe comparison
 
 -- PostgreSQL: IS NOT DISTINCT FROM (SQL standard, verbose)
 SELECT * FROM t WHERE col IS NOT DISTINCT FROM NULL;
 
 -- MSSQL: SET ANSI_NULLS OFF (legacy, avoid)
 -- With ANSI_NULLS ON (default): col = NULL never matches.
--- MSSQL-specific: ISNULL() vs COALESCE() -- ISNULL is faster but only takes 2 args.
+-- MSSQL-specific: ISNULL() vs COALESCE() - ISNULL is faster but only takes 2 args.
 
 -- String concatenation with NULL:
 -- MySQL CONCAT('a', NULL, 'b') = 'ab' (NULL is skipped)
@@ -742,7 +742,7 @@ pg_repack --jobs=4 mydb
 pg_repack --only-indexes --table=orders mydb
 ```
 
-**Not a DDL tool** -- pg_repack is for maintenance (bloat, reindexing). For schema changes, use expand-contract + `CREATE INDEX CONCURRENTLY`.
+**Not a DDL tool** - pg_repack is for maintenance (bloat, reindexing). For schema changes, use expand-contract + `CREATE INDEX CONCURRENTLY`.
 
 ### Online DDL (MySQL 8.0+)
 
@@ -750,9 +750,9 @@ MySQL 8.0+ supports many DDL operations as online (INPLACE or INSTANT algorithm)
 
 ```sql
 -- INSTANT operations (metadata-only, PG 16+ equivalent):
-ALTER TABLE t ADD COLUMN c INT, ALGORITHM=INSTANT;               -- 8.0.12+
+ALTER TABLE t ADD COLUMN c INT, ALGORITHM=INSTANT;               - 8.0.12+
 ALTER TABLE t ALTER COLUMN c SET DEFAULT 42, ALGORITHM=INSTANT;
-ALTER TABLE t RENAME COLUMN old TO new, ALGORITHM=INSTANT;        -- 8.0.28+
+ALTER TABLE t RENAME COLUMN old TO new, ALGORITHM=INSTANT;        - 8.0.28+
 
 -- INPLACE operations (no table copy, allows concurrent DML):
 ALTER TABLE t ADD INDEX idx_col (col), ALGORITHM=INPLACE, LOCK=NONE;
@@ -834,7 +834,7 @@ BATCH_SIZE=5000
 SLEEP_BETWEEN=0.5  # seconds
 
 while true; do
-    # psql prints "UPDATE N" on success -- extract N
+    # psql prints "UPDATE N" on success - extract N
     output=$(psql -c "
         WITH batch AS (
             SELECT id FROM orders

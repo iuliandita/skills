@@ -172,7 +172,7 @@ set -euo pipefail
 ctr=$(buildah from node:22-slim)
 
 # Run commands in the container
-buildah run $ctr -- npm ci --omit=dev
+buildah run $ctr - npm ci --omit=dev
 buildah copy $ctr ./dist /app/dist
 
 # Configure the image

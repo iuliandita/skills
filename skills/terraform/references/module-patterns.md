@@ -9,8 +9,8 @@ Module design, testing, versioning, and registry strategies for production Terra
 ```
 modules/<provider>/<resource-type>/
   main.tf             # Resources
-  variables.tf        # Inputs -- typed, described, validated
-  outputs.tf          # Outputs -- expose what consumers need, nothing more
+  variables.tf        # Inputs - typed, described, validated
+  outputs.tf          # Outputs - expose what consumers need, nothing more
   versions.tf         # required_providers + required_version
   locals.tf           # Computed values (optional, merge into main.tf if small)
   data.tf             # Data sources (optional)
@@ -40,13 +40,13 @@ terraform {
 ### variables.tf patterns
 
 ```hcl
-# Required -- no default
+# Required - no default
 variable "vpc_id" {
   type        = string
   description = "VPC ID to deploy into"
 }
 
-# Optional -- sensible default
+# Optional - sensible default
 variable "instance_type" {
   type        = string
   description = "EC2 instance type"
@@ -199,7 +199,7 @@ For real infrastructure verification. Slower but proves things work end-to-end. 
 
 ### The lock file
 
-`.terraform.lock.hcl` pins exact provider hashes (SHA256). **Commit it.** This is your provider supply chain protection -- without it, a compromised registry can serve different binaries.
+`.terraform.lock.hcl` pins exact provider hashes (SHA256). **Commit it.** This is your provider supply chain protection - without it, a compromised registry can serve different binaries.
 
 ```bash
 terraform providers lock \

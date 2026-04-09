@@ -5,7 +5,7 @@ description: >
   convention violations. Triggers: 'review', 'code review', 'find bugs', 'check this',
   'spot check', 'what did I miss', 'sanity check'. Not for style/slop audits (use anti-slop).
 license: MIT
-compatibility: "None -- works on any codebase"
+compatibility: "None - works on any codebase"
 metadata:
   source: iuliandita/skills
   date_added: "2026-03-25"
@@ -15,9 +15,9 @@ metadata:
 
 # Code Review: Deep Correctness Audit
 
-Find bugs that actually break things. Not style, not slop -- correctness, reliability, and logic errors that will bite in production.
+Find bugs that actually break things. Not style, not slop - correctness, reliability, and logic errors that will bite in production.
 
-This skill complements **anti-slop** (code quality/style) and **security-audit** (vulnerabilities/OWASP). Those catch "is the code clean?" and "is the code safe?" -- this one catches "does the code actually work?"
+This skill complements **anti-slop** (code quality/style) and **security-audit** (vulnerabilities/OWASP). Those catch "is the code clean?" and "is the code safe?" - this one catches "does the code actually work?"
 
 Covers: **TypeScript/JavaScript**, **Python**, **Go**, **Java**, **Bash/Shell**, and **Infrastructure as Code** (Terraform, Ansible, Helm, Kubernetes, Docker/Compose, Proxmox/LXC). Universal patterns apply everywhere; language-specific sections add targeted checks.
 
@@ -32,16 +32,16 @@ Covers: **TypeScript/JavaScript**, **Python**, **Go**, **Java**, **Bash/Shell**,
 
 Every finding answers one of:
 
-1. **Will it crash?** -- null derefs, unhandled errors, resource exhaustion, missing imports
-2. **Will it do the wrong thing?** -- logic errors, off-by-ones, wrong comparisons, missing cases
-3. **Will it break later?** -- race conditions, implicit ordering, fragile assumptions, API contract drift
+1. **Will it crash?** - null derefs, unhandled errors, resource exhaustion, missing imports
+2. **Will it do the wrong thing?** - logic errors, off-by-ones, wrong comparisons, missing cases
+3. **Will it break later?** - race conditions, implicit ordering, fragile assumptions, API contract drift
 
 ## When NOT to use
 
-- Style, verbosity, or machine-generated code quality issues -- use **anti-slop**
-- Exploitable vulnerabilities, auth flaws, or secret scanning -- use **security-audit**
-- Pipeline architecture design -- use **ci-cd**
-- End-of-session doc hygiene or instruction-file cleanup -- use **update-docs**
+- Style, verbosity, or machine-generated code quality issues - use **anti-slop**
+- Exploitable vulnerabilities, auth flaws, or secret scanning - use **security-audit**
+- Pipeline architecture design - use **ci-cd**
+- End-of-session doc hygiene or instruction-file cleanup - use **update-docs**
 
 ## AI Self-Check
 
@@ -69,44 +69,44 @@ Default scope based on context:
 - Otherwise -> ask the user
 
 Available scopes:
-- **Full codebase review** -- scan everything, report by category
-- **Recent changes** -- check git diff or specific commits
-- **Specific files/dirs** -- targeted review
-- **Self-check** -- review code you just wrote in this session
+- **Full codebase review** - scan everything, report by category
+- **Recent changes** - check git diff or specific commits
+- **Specific files/dirs** - targeted review
+- **Self-check** - review code you just wrote in this session
 
 **Large diffs (> 500 lines):** Chunk by file. Review each file with its surrounding context, then do a cross-file pass looking for integration issues (mismatched types across boundaries, inconsistent error handling, broken call chains). Large diffs are also a code smell worth noting in Observations.
 
 ### Step 2: Gather project context
 
 Before reviewing any code, build context:
-1. Read project instruction files (`AGENTS.md` or equivalent) if present -- project conventions, patterns, known gotchas
+1. Read project instruction files (`AGENTS.md` or equivalent) if present - project conventions, patterns, known gotchas
 2. Check the project's language/framework versions (package.json, pyproject.toml, go.mod, etc.)
-3. Understand the architecture -- monolith, microservices, CLI tool, library?
+3. Understand the architecture - monolith, microservices, CLI tool, library?
 4. Note any custom error handling patterns, logging conventions, or testing requirements
 
 This context prevents false positives. A pattern that's wrong in a React app might be correct in a Node CLI tool.
 
 ### Step 3: Run mechanical checks first (if available and practical)
 
-Before manual review, run standard tooling to clear obvious issues -- but only when it makes sense:
-- **TypeScript**: `tsc --noEmit` / `eslint` (skip if no `tsconfig.json` / `.eslintrc*`, or if the project has 500+ TS files -- too slow)
+Before manual review, run standard tooling to clear obvious issues - but only when it makes sense:
+- **TypeScript**: `tsc --noEmit` / `eslint` (skip if no `tsconfig.json` / `.eslintrc*`, or if the project has 500+ TS files - too slow)
 - **Python**: `ruff check` / `mypy` (skip if no `pyproject.toml` / `ruff.toml` / `mypy.ini`)
 - **Shell**: `shellcheck` (fast, always worth running if installed)
-- **Terraform**: `terraform validate` (skip if `terraform init` hasn't been run -- validate requires initialized providers)
+- **Terraform**: `terraform validate` (skip if `terraform init` hasn't been run - validate requires initialized providers)
 - **Ansible**: `ansible-lint` (skip if no `.ansible-lint` config and the project isn't primarily Ansible)
 
 **When to skip a tool:**
 - No config file for it in the project (no `tsconfig.json`, no `pyproject.toml`, etc.)
-- Reviewing a small diff (< 5 files) -- linting the whole project for a 3-file change is wasted effort
+- Reviewing a small diff (< 5 files) - linting the whole project for a 3-file change is wasted effort
 - The user just wants a quick review, not a full audit
 
-**When a tool isn't installed:** Don't silently skip it. Tell the user which tools are missing so they can install them. Example: "shellcheck isn't installed -- consider `pacman -S shellcheck` for shell script linting." This is a one-time heads-up, not a blocker -- continue the review without it.
+**When a tool isn't installed:** Don't silently skip it. Tell the user which tools are missing so they can install them. Example: "shellcheck isn't installed - consider `pacman -S shellcheck` for shell script linting." This is a one-time heads-up, not a blocker - continue the review without it.
 
-Linters catch syntax, imports, and known anti-patterns mechanically. This skill focuses on what automated tools miss: logic errors, edge cases, incorrect assumptions, and subtle bugs that require understanding intent. Don't burn time and tokens on linter output -- move to the actual review.
+Linters catch syntax, imports, and known anti-patterns mechanically. This skill focuses on what automated tools miss: logic errors, edge cases, incorrect assumptions, and subtle bugs that require understanding intent. Don't burn time and tokens on linter output - move to the actual review.
 
 ### Step 4: Review with four focus areas
 
-Review the code through four lenses. These aren't sequential passes -- they're dimensions to evaluate as you read. The order reflects priority: understanding intent comes first because everything else depends on it.
+Review the code through four lenses. These aren't sequential passes - they're dimensions to evaluate as you read. The order reflects priority: understanding intent comes first because everything else depends on it.
 
 **Focus 1: Understand Intent**
 Read the code to understand what it's supposed to do. If reviewing a diff, read the surrounding context too. Check commit messages, PR descriptions, or comments for stated intent. You can't find bugs if you don't know what "correct" looks like.
@@ -118,7 +118,7 @@ Follow every code path. For each branch, loop, or condition:
 - What happens at boundaries (empty, zero, max, null, negative)?
 - Are all cases handled? (switch/match exhaustiveness, if/else completeness)
 
-**Boundary value analysis** deserves special attention: when a function accepts numeric inputs (page numbers, sizes, counts, indices), zero, negative, and overflow values are inherently high-confidence findings. Don't suppress these with the 80% threshold -- if the function doesn't guard against `page=0`, `perPage=0`, or `offset > total`, that's a real bug on a realistic path.
+**Boundary value analysis** deserves special attention: when a function accepts numeric inputs (page numbers, sizes, counts, indices), zero, negative, and overflow values are inherently high-confidence findings. Don't suppress these with the 80% threshold - if the function doesn't guard against `page=0`, `perPage=0`, or `offset > total`, that's a real bug on a realistic path.
 
 **Focus 3: Check Contracts & Boundaries**
 Examine every interface between components:
@@ -130,7 +130,7 @@ Examine every interface between components:
 - **Downstream impact**: when reviewing changes to exported functions, interfaces, or API endpoints, grep for all callers/consumers. For config/env var changes, check all files that reference the changed key. A boolean toggle in one file can break feature-flag logic across twelve modules.
 
 **Focus 4: Convention Compliance**
-Check against project-specific correctness rules -- not style (that's anti-slop), but rules that affect whether the code works:
+Check against project-specific correctness rules - not style (that's anti-slop), but rules that affect whether the code works:
 - Project instruction-file rules about error handling, transactions, API patterns
 - Consistency with surrounding code's error handling and state management
 - Framework idioms that affect correctness (not just style)
@@ -151,21 +151,21 @@ Rate every potential issue on a confidence scale of 0-100:
 
 **Only report findings scored >= 80.** Quality over quantity. A report with 3 real bugs beats one with 20 maybes.
 
-**Self-review mode exception:** When reviewing code you just wrote in this session, lower the threshold to >= 70%. The cost of fixing is near-zero right now, and you can skip the git blame step (everything is new). Focus harder on logic paths and contracts -- that's where fresh code has the most bugs.
+**Self-review mode exception:** When reviewing code you just wrote in this session, lower the threshold to >= 70%. The cost of fixing is near-zero right now, and you can skip the git blame step (everything is new). Focus harder on logic paths and contracts - that's where fresh code has the most bugs.
 
-**Finding cap:** If you have more than 8-10 reportable findings, something is wrong -- either the code is catastrophically bad (say so in the summary) or your threshold is too low. Prioritize ruthlessly. Wall-of-text reviews get ignored.
+**Finding cap:** If you have more than 8-10 reportable findings, something is wrong - either the code is catastrophically bad (say so in the summary) or your threshold is too low. Prioritize ruthlessly. Wall-of-text reviews get ignored.
 
-For each significant code change, ask: **What are the three most likely failure modes?** This question catches architecture-level bugs that line-by-line review misses -- especially in AI-generated code where individual lines look fine but the overall design has gaps.
+For each significant code change, ask: **What are the three most likely failure modes?** This question catches architecture-level bugs that line-by-line review misses - especially in AI-generated code where individual lines look fine but the overall design has gaps.
 
 Before assigning a score, verify:
 - Read the full function/file, not just the flagged line
 - Check if there's a test covering this case (and whether the test is correct)
-- Check git blame -- is this new code or battle-tested?
+- Check git blame - is this new code or battle-tested?
 - Look for comments explaining why something looks odd (if a comment explains the pattern, it's not a bug)
 - **Cite the evidence.** Every >= 80% finding must reference the exact file, line, and code that proves the issue. If you can't cite it, go find it. If you can't find evidence, downgrade the score.
 - **Adversarial self-check.** Before finalizing each finding, argue *against* it. Try to explain why the code is actually correct. If the counter-argument is convincing, drop the finding.
 - **Construct a failing case.** For critical findings, describe the specific input or sequence that triggers the bug. If you can't construct one, it's not critical.
-- **Never claim API/stdlib behavior without verifying.** 18% of "high-confidence" AI code review suggestions contain factual errors about framework behavior. If unsure whether a function is stable-sorted, returns a view, or handles null -- look it up first.
+- **Never claim API/stdlib behavior without verifying.** 18% of "high-confidence" AI code review suggestions contain factual errors about framework behavior. If unsure whether a function is stable-sorted, returns a view, or handles null - look it up first.
 
 ### Step 6: Report
 
@@ -198,16 +198,16 @@ rot over time, it belongs in the review.
 
 For full codebase reviews on repos with 100+ files, you can't read everything. Prioritize:
 
-1. **Recently changed files** (`git log --since='2 weeks ago' --name-only`) -- fresh code has more bugs
-2. **Critical paths** -- auth, payments, data mutations, API handlers, middleware
-3. **Entry points** -- main files, route definitions, CLI commands, event handlers
-4. **Files without tests** -- `git ls-files '*.ts' | while read f; do test -f "${f%.ts}.test.ts" || echo "$f"; done`
-5. **Complex files** -- long functions, high cyclomatic complexity, many branches
-6. **Shared utilities** -- bugs here multiply across the codebase
+1. **Recently changed files** (`git log --since='2 weeks ago' --name-only`) - fresh code has more bugs
+2. **Critical paths** - auth, payments, data mutations, API handlers, middleware
+3. **Entry points** - main files, route definitions, CLI commands, event handlers
+4. **Files without tests** - `git ls-files '*.ts' | while read f; do test -f "${f%.ts}.test.ts" || echo "$f"; done`
+5. **Complex files** - long functions, high cyclomatic complexity, many branches
+6. **Shared utilities** - bugs here multiply across the codebase
 
 Skip: vendored code, generated files, test fixtures/snapshots, documentation, static assets.
 
-For targeted reviews (diff/specific files), read the full files being changed plus their immediate callers/callees. Context matters -- a function that looks fine in isolation might be called incorrectly.
+For targeted reviews (diff/specific files), read the full files being changed plus their immediate callers/callees. Context matters - a function that looks fine in isolation might be called incorrectly.
 
 ---
 
@@ -225,13 +225,13 @@ Read `references/typescript.md` for the full TS/JS bug pattern catalog. Key high
 
 Read `references/python.md` for the full Python bug pattern catalog. Key highlights:
 
-- **Mutable default arguments**: `def foo(items=[])` -- the list is shared across calls
+- **Mutable default arguments**: `def foo(items=[])` - the list is shared across calls
 - **Exception handling**: bare `except:` catching KeyboardInterrupt/SystemExit, context loss in exception chains
 - **Iterator exhaustion**: generators consumed twice silently, `map()`/`filter()` returning iterators not lists
 - **Import side effects**: circular imports, module-level code that runs on import
 - **Async pitfalls**: mixing sync and async, blocking the event loop, missing `await`
 - **Dataclass/pydantic bugs**: mutable default fields without `default_factory`, validator side effects, `model_validate()` coercion on untrusted input
-- **Attribute typos**: `self.nmae = name` silently creates a new attribute on regular classes -- use `__slots__` or dataclasses
+- **Attribute typos**: `self.nmae = name` silently creates a new attribute on regular classes - use `__slots__` or dataclasses
 
 ## Language: Bash / Shell
 
@@ -300,13 +300,13 @@ Read `references/databases.md` for the full database bug pattern catalog. Key hi
 Read `references/go.md` for the full Go bug pattern catalog. Key highlights:
 
 - **Goroutine leaks**: goroutines blocked on channels with no receiver, missing context/done signal, no WaitGroup
-- **Nil interface traps**: interface holding a typed nil pointer is not nil -- `error` returned as `(*MyError)(nil)` fails nil checks
+- **Nil interface traps**: interface holding a typed nil pointer is not nil - `error` returned as `(*MyError)(nil)` fails nil checks
 - **Defer ordering**: LIFO execution, closure capture by reference, defer in loops exhausting file descriptors
 - **Channel deadlocks**: unbuffered channel send/receive in same goroutine, double close panic, `time.After` in for-select loop leaking timers
 - **Error wrapping**: `%s` vs `%w` in `fmt.Errorf`, sentinel comparison with `==` instead of `errors.Is()`, custom errors missing `Unwrap()`
 - **Context leaks**: `context.WithCancel`/`WithTimeout` without `defer cancel()`, ignoring request-scoped contexts
 - **Data races**: concurrent map writes (fatal panic), shared slice append, read-modify-write without sync, missing `-race` in CI
-- **Loop variable capture**: pre-Go 1.22 closure capture bug -- check `go.mod` version to determine if relevant
+- **Loop variable capture**: pre-Go 1.22 closure capture bug - check `go.mod` version to determine if relevant
 
 ## Other Languages
 
@@ -316,17 +316,17 @@ For Rust and other languages without dedicated reference files: apply the univer
 
 ## What NOT to Flag
 
-- **Style/quality issues** -- that's anti-slop's job.
-- **Security vulnerabilities** -- that's security-audit's job.
-- **Pre-existing bugs** -- issues on lines not touched by the current changes (when reviewing a diff).
-- **Linter/compiler catches** -- missing imports, type errors, formatting. The toolchain handles these.
-- **Intentional trade-offs** -- code comments explaining "we do X because Y" signal the author already considered it.
-- **Test-only code** -- relaxed error handling in test fixtures/helpers is often fine.
-- **Defensive code at boundaries** -- input validation on external data is correct, not a bug.
-- **Known framework quirks** -- patterns that look wrong but are idiomatic for the framework.
-- **TODOs with issue references** -- `// TODO(#1234)` shows awareness, not negligence.
-- **Generated / vendored code** -- lock files, compiled output, auto-generated types, vendored deps, ORM migrations.
-- **Previously reviewed code** -- if invoked multiple times in a session, focus on changes since the last review.
+- **Style/quality issues** - that's anti-slop's job.
+- **Security vulnerabilities** - that's security-audit's job.
+- **Pre-existing bugs** - issues on lines not touched by the current changes (when reviewing a diff).
+- **Linter/compiler catches** - missing imports, type errors, formatting. The toolchain handles these.
+- **Intentional trade-offs** - code comments explaining "we do X because Y" signal the author already considered it.
+- **Test-only code** - relaxed error handling in test fixtures/helpers is often fine.
+- **Defensive code at boundaries** - input validation on external data is correct, not a bug.
+- **Known framework quirks** - patterns that look wrong but are idiomatic for the framework.
+- **TODOs with issue references** - `// TODO(#1234)` shows awareness, not negligence.
+- **Generated / vendored code** - lock files, compiled output, auto-generated types, vendored deps, ORM migrations.
+- **Previously reviewed code** - if invoked multiple times in a session, focus on changes since the last review.
 
 ---
 
@@ -334,8 +334,8 @@ For Rust and other languages without dedicated reference files: apply the univer
 
 Each reported finding (confidence >= 80) gets a severity:
 
-- **Critical** -- will crash, corrupt data, or produce wrong results in normal usage. Includes: null derefs on common paths, data loss, race conditions that affect correctness, broken error propagation that hides failures, security-adjacent logic errors (auth bypass through logic bug).
-- **Important** -- will cause problems under specific conditions or degrade reliability over time. Includes: edge case crashes, resource leaks, performance traps that will eventually hit, missing error handling on external operations, convention violations that cause bugs in this codebase.
+- **Critical** - will crash, corrupt data, or produce wrong results in normal usage. Includes: null derefs on common paths, data loss, race conditions that affect correctness, broken error propagation that hides failures, security-adjacent logic errors (auth bypass through logic bug).
+- **Important** - will cause problems under specific conditions or degrade reliability over time. Includes: edge case crashes, resource leaks, performance traps that will eventually hit, missing error handling on external operations, convention violations that cause bugs in this codebase.
 
 Rule of thumb: if you'd wake someone up at 2am over it, it's Critical. If it can wait for the next sprint, it's Important.
 
@@ -352,7 +352,7 @@ Rule of thumb: if you'd wake someone up at 2am over it, it's Critical. If it can
 
 #### Critical ([count] issues)
 
-🔴 **[confidence]%** `path/to/file:line` -- [description]
+🔴 **[confidence]%** `path/to/file:line` - [description]
 
 [Why this is wrong and what will happen if it isn't fixed]
 **Triggers when:** [specific input, sequence, or condition that causes the bug]
@@ -367,7 +367,7 @@ Rule of thumb: if you'd wake someone up at 2am over it, it's Critical. If it can
 
 #### Important ([count] issues)
 
-🟡 **[confidence]%** `path/to/file:line` -- [description]
+🟡 **[confidence]%** `path/to/file:line` - [description]
 
 [Explanation]
 
@@ -381,7 +381,7 @@ Rule of thumb: if you'd wake someone up at 2am over it, it's Critical. If it can
 
 ### Observations
 
-[Patterns noticed below the 80% threshold but worth mentioning as a group. This is where higher-level insights go -- "error handling is inconsistent across the API handlers", "no input validation on any of the CLI commands", "the test suite mocks the database everywhere so nothing tests actual queries." These aggregate observations are often more valuable than individual findings.]
+[Patterns noticed below the 80% threshold but worth mentioning as a group. This is where higher-level insights go - "error handling is inconsistent across the API handlers", "no input validation on any of the CLI commands", "the test suite mocks the database everywhere so nothing tests actual queries." These aggregate observations are often more valuable than individual findings.]
 
 ### Summary
 - X findings across Y files (Z critical, W important)
@@ -395,10 +395,10 @@ Rule of thumb: if you'd wake someone up at 2am over it, it's Critical. If it can
 
 No issues found above the confidence threshold.
 
-**Checked:** [list what was reviewed -- e.g., "14 files, focused on API handlers and auth middleware"]
-**Linters:** [what ran, what was missing -- e.g., "eslint clean, shellcheck not installed (`pacman -S shellcheck`)"]
+**Checked:** [list what was reviewed - e.g., "14 files, focused on API handlers and auth middleware"]
+**Linters:** [what ran, what was missing - e.g., "eslint clean, shellcheck not installed (`pacman -S shellcheck`)"]
 
-[Optional: 1-2 sentences noting anything positive -- well-structured error handling, good test coverage, etc.]
+[Optional: 1-2 sentences noting anything positive - well-structured error handling, good test coverage, etc.]
 ````
 
 Keep it tight. Show the bug, show the fix, move on. Long explanations only when the bug is subtle and the reader needs to understand *why* it's wrong.
@@ -407,30 +407,30 @@ Keep it tight. Show the bug, show the fix, move on. Long explanations only when 
 
 ## Reference Files
 
-- `references/universal-patterns.md` -- cross-language bug patterns and failure modes
-- `references/typescript.md` -- TypeScript and JavaScript bug patterns
-- `references/python.md` -- Python bug patterns
-- `references/shell.md` -- shell bug patterns
-- `references/java.md` -- Java bug patterns
-- `references/go.md` -- Go bug patterns
-- `references/iac.md` -- infrastructure-as-code bug patterns
-- `references/cicd-pipelines.md` -- CI/CD bug patterns
-- `references/ai-age-patterns.md` -- AI-age correctness patterns and hallucination-driven bugs
-- `references/databases.md` -- application-level database bug patterns
+- `references/universal-patterns.md` - cross-language bug patterns and failure modes
+- `references/typescript.md` - TypeScript and JavaScript bug patterns
+- `references/python.md` - Python bug patterns
+- `references/shell.md` - shell bug patterns
+- `references/java.md` - Java bug patterns
+- `references/go.md` - Go bug patterns
+- `references/iac.md` - infrastructure-as-code bug patterns
+- `references/cicd-pipelines.md` - CI/CD bug patterns
+- `references/ai-age-patterns.md` - AI-age correctness patterns and hallucination-driven bugs
+- `references/databases.md` - application-level database bug patterns
 
 ---
 
 ## Related Skills
 
-- **anti-slop** -- handles style, quality, and machine-generated code patterns. If the finding
+- **anti-slop** - handles style, quality, and machine-generated code patterns. If the finding
   is "ugly but correct," route to anti-slop. If it would cause incorrect behavior, keep it here.
-- **security-audit** -- handles vulnerability detection (injection, auth bypass, credential
+- **security-audit** - handles vulnerability detection (injection, auth bypass, credential
   exposure). Code-review catches logic bugs; security-audit catches exploitable flaws.
-- **full-review** -- orchestrates code-review, anti-slop, security-audit, and update-docs in
+- **full-review** - orchestrates code-review, anti-slop, security-audit, and update-docs in
   parallel. Code-review is one of the four passes.
-- **databases** -- `references/databases.md` in this skill covers application-level DB bug
+- **databases** - `references/databases.md` in this skill covers application-level DB bug
   patterns. The databases skill covers engine configuration and operations.
-- **git** -- for PR/MR creation and git operations. Code-review evaluates the code in PRs;
+- **git** - for PR/MR creation and git operations. Code-review evaluates the code in PRs;
   git handles creating and managing them.
 
 ---

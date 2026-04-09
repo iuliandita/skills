@@ -1,7 +1,7 @@
 ---
 name: networking
 description: >
-  · Configure, troubleshoot, or optimize Linux networking -- DNS, reverse proxies, VPNs, VLANs,
+  · Configure, troubleshoot, or optimize Linux networking - DNS, reverse proxies, VPNs, VLANs,
   nftables, load balancing, overlays, dynamic routing, and performance tuning. Triggers: 'dns',
   'reverse proxy', 'vpn', 'wireguard', 'tailscale', 'vlan', 'nftables', 'caddy', 'nginx',
   'haproxy', 'traefik', 'mtr', 'tcpdump', 'frr', 'bgp'. Not for OPNsense/pfSense (use
@@ -26,7 +26,7 @@ performance tuning.
 | Tool | Version | Notes |
 |------|---------|-------|
 | Caddy | 2.11.2 | Auto-HTTPS, Caddyfile + JSON API |
-| Nginx | 1.28.3 stable / 1.29.7 mainline | Multiple CVEs patched early 2026 -- verify current advisories |
+| Nginx | 1.28.3 stable / 1.29.7 mainline | Multiple CVEs patched early 2026 - verify current advisories |
 | Traefik | 3.6.12 | Gateway API native, v2 EOL approaching |
 | HAProxy | 3.3.6 stable / 3.2.15 LTS | LTS EOL 2030-Q2 |
 | WireGuard tools | 1.0.20260223 | Kernel module + userspace tools |
@@ -57,7 +57,7 @@ performance tuning.
 ## When NOT to use
 
 - OPNsense/pfSense firewall appliance management (use **firewall-appliance**)
-- Web browsing, scraping, or headless page interaction -- use **browse**
+- Web browsing, scraping, or headless page interaction - use **browse**
 - Kubernetes networking: NetworkPolicy, Gateway API, service mesh, CNI (use **kubernetes**)
 - Docker/container networking: bridge, overlay, Compose networks (use **docker**)
 - Cloud VPCs, security groups, managed load balancers (use **terraform**)
@@ -72,11 +72,11 @@ performance tuning.
 Before returning any generated network configuration, verify:
 
 - [ ] **No hardcoded secrets**: passwords, PSKs, API keys use placeholders or env vars
-- [ ] **Correct interface names**: didn't assume `eth0` -- modern Linux uses predictable names
+- [ ] **Correct interface names**: didn't assume `eth0` - modern Linux uses predictable names
   (`enp0s3`, `ens18`, etc.). Ask or check `ip link` output
 - [ ] **MTU considered**: VPN tunnels need reduced MTU (WireGuard: 1420, OpenVPN: ~1400, VXLAN:
   1450). Mismatched MTU causes silent packet drops
-- [ ] **DNS resolver order**: systemd-resolved vs /etc/resolv.conf vs NetworkManager -- check
+- [ ] **DNS resolver order**: systemd-resolved vs /etc/resolv.conf vs NetworkManager - check
   which DNS manager is active before modifying
 - [ ] **Firewall persistence**: nftables rules need `nft list ruleset > /etc/nftables.conf` or
   a service to persist across reboots. Raw `nft add` commands are ephemeral
@@ -117,10 +117,10 @@ Before returning any generated network configuration, verify:
 
 Before writing config or running commands:
 
-1. **What distro and init system?** (systemd vs OpenRC -- affects service management)
+1. **What distro and init system?** (systemd vs OpenRC - affects service management)
 2. **What's the current network state?** (`ip addr`, `ip route`, `ss -tlnp`, `resolvectl status`)
 3. **Is there an existing firewall?** (`nft list ruleset`, `iptables-save`)
-4. **Who manages DNS?** (`resolvectl status` or `cat /etc/resolv.conf` -- check for systemd-resolved stub)
+4. **Who manages DNS?** (`resolvectl status` or `cat /etc/resolv.conf` - check for systemd-resolved stub)
 5. **Any existing VPN/overlay?** (`wg show`, `tailscale status`, `ip link` for tun/wg/vxlan devices)
 6. **Is this behind NAT?** (affects VPN, reverse proxy, and HA design)
 
@@ -222,7 +222,7 @@ Read the appropriate reference file for detailed patterns. Key principles:
 ### Caddy reverse proxy quick start
 
 ```
-# /etc/caddy/Caddyfile -- three subdomains, auto-HTTPS
+# /etc/caddy/Caddyfile - three subdomains, auto-HTTPS
 app.example.com {
     reverse_proxy localhost:3000
 }
@@ -257,7 +257,7 @@ health checks, rate limiting, and WebSocket/gRPC proxying.
 ### WireGuard site-to-site quick start
 
 ```ini
-# Site A (/etc/wireguard/wg0.conf) -- 10.0.1.0/24
+# Site A (/etc/wireguard/wg0.conf) - 10.0.1.0/24
 [Interface]
 PrivateKey = <SITE_A_PRIVATE_KEY>
 Address = 10.100.0.1/30
@@ -270,7 +270,7 @@ Endpoint = site-b.example.com:51820
 AllowedIPs = 10.0.2.0/24, 10.100.0.2/32
 PersistentKeepalive = 25
 
-# Site B (/etc/wireguard/wg0.conf) -- 10.0.2.0/24
+# Site B (/etc/wireguard/wg0.conf) - 10.0.2.0/24
 [Interface]
 PrivateKey = <SITE_B_PRIVATE_KEY>
 Address = 10.100.0.2/30
@@ -284,7 +284,7 @@ PersistentKeepalive = 25
 ```
 
 Both sides need `net.ipv4.ip_forward = 1` in `/etc/sysctl.d/`. **AllowedIPs** is the remote
-subnet (not `0.0.0.0/0` -- that's full-tunnel, not site-to-site). Key generation:
+subnet (not `0.0.0.0/0` - that's full-tunnel, not site-to-site). Key generation:
 `wg genkey | tee privatekey | wg pubkey > publickey`.
 
 Read `references/vpn.md` for setup patterns, key management, MTU tuning,
@@ -297,7 +297,7 @@ NAT traversal, and overlay network comparison.
 iptables is legacy. nftables is the default on Debian 11+, RHEL 9+, Arch, and most modern distros.
 
 ```
-# Minimal nftables ruleset -- stateful firewall with SSH
+# Minimal nftables ruleset - stateful firewall with SSH
 table inet filter {
   chain input {
     type filter hook input priority 0; policy drop;
@@ -334,37 +334,37 @@ Network configuration touches several PCI-DSS requirements:
 
 ## Reference Files
 
-- `references/dns.md` -- DNS server comparison, DNSSEC, split-horizon,
+- `references/dns.md` - DNS server comparison, DNSSEC, split-horizon,
   DoH/DoT, Pi-hole/AdGuard, troubleshooting
-- `references/reverse-proxies.md` -- Caddy, Nginx, Traefik, HAProxy
+- `references/reverse-proxies.md` - Caddy, Nginx, Traefik, HAProxy
   configuration patterns, TLS, WebSocket, gRPC, rate limiting
-- `references/vpn.md` -- WireGuard, OpenVPN, IPsec/strongSwan setup,
+- `references/vpn.md` - WireGuard, OpenVPN, IPsec/strongSwan setup,
   overlay networks (Tailscale, Headscale, Nebula, ZeroTier), key management
-- `references/segmentation.md` -- VLANs, subnetting, nftables firewall
+- `references/segmentation.md` - VLANs, subnetting, nftables firewall
   patterns, network namespaces, IPv6
-- `references/troubleshooting.md` -- Diagnostic methodology, tool deep-dives,
+- `references/troubleshooting.md` - Diagnostic methodology, tool deep-dives,
   common issues, performance tuning
-- `references/ha.md` -- keepalived/VRRP, floating IPs, HAProxy + keepalived
+- `references/ha.md` - keepalived/VRRP, floating IPs, HAProxy + keepalived
   HA, health check patterns
 
 ## Related Skills
 
-- **firewall-appliance** -- manages BSD-based firewall appliances (OPNsense, pfSense). This skill
+- **firewall-appliance** - manages BSD-based firewall appliances (OPNsense, pfSense). This skill
   handles Linux networking; firewall-appliance handles FreeBSD appliance firewalls. If the user
   mentions pfctl, CARP, or OPNsense/pfSense hostnames, route to firewall-appliance.
-- **kubernetes** -- owns K8s networking (NetworkPolicy, Gateway API, service mesh, CNI). This
+- **kubernetes** - owns K8s networking (NetworkPolicy, Gateway API, service mesh, CNI). This
   skill covers general DNS and proxy config; K8s-specific networking goes to kubernetes.
-- **docker** -- owns container networking (bridge, Compose networks, port mapping). This skill
+- **docker** - owns container networking (bridge, Compose networks, port mapping). This skill
   covers host-level Linux networking.
-- **terraform** -- owns cloud infrastructure (VPCs, security groups, cloud LBs, Route53). This
+- **terraform** - owns cloud infrastructure (VPCs, security groups, cloud LBs, Route53). This
   skill covers bare-metal/VM networking.
-- **ansible** -- manages config at scale via playbooks. This skill provides the networking
+- **ansible** - manages config at scale via playbooks. This skill provides the networking
   knowledge; ansible handles the automation wrapper.
-- **lockpick** -- offensive network testing, exploitation, lateral movement. This skill covers
+- **lockpick** - offensive network testing, exploitation, lateral movement. This skill covers
   defensive configuration and hardening.
-- **security-audit** -- application-level security review (SSRF, header injection). This skill
+- **security-audit** - application-level security review (SSRF, header injection). This skill
   covers network-layer security (firewalls, TLS, segmentation).
-- **browse** -- web browsing, scraping, headless page interaction. This skill covers network
+- **browse** - web browsing, scraping, headless page interaction. This skill covers network
   infrastructure, not web content retrieval.
 
 ## Rules

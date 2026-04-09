@@ -28,7 +28,7 @@ off.
 - Use full upgrades on Arch-style systems. `pacman -Sy package_name` creates partial-upgrade risk.
 - Read the transaction plan before confirming. Arch tells you what it is about to remove or replace.
 - Keep an eye on `pacman -Qm`. Foreign packages are a common source of drift.
-- Do not default to `--overwrite`. Conflicting files usually mean packaging or ownership needs to be fixed first. When `--overwrite` is genuinely needed, use a specific glob -- never a bare wildcard:
+- Do not default to `--overwrite`. Conflicting files usually mean packaging or ownership needs to be fixed first. When `--overwrite` is genuinely needed, use a specific glob - never a bare wildcard:
 
   ```bash
   # Right: overwrite only the conflicting path
@@ -89,7 +89,7 @@ When `pacman -Qm` shows a package that now exists in the official repos:
    ```
 
 3. If `pacman -Syu` shows a file conflict, the AUR package likely owns files the official package
-   wants. Resolve the conflict explicitly -- do not blindly `--overwrite`.
+   wants. Resolve the conflict explicitly - do not blindly `--overwrite`.
 
 ## `.pacnew`, `.pacsave`, and config drift
 

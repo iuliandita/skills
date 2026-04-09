@@ -1,7 +1,7 @@
 # Trigger Integration
 
 Optional auto-trigger setups for roadmap updates. The skill's built-in activity detection
-(Step 0) works without any of this -- these are for users who want push-based reminders.
+(Step 0) works without any of this - these are for users who want push-based reminders.
 
 ---
 
@@ -18,7 +18,7 @@ Add to `.claude/settings.json` in the project:
         "hooks": [
           {
             "type": "command",
-            "command": "bash -c 'CMD=$(cat | jq -r \".tool_input.command // empty\" 2>/dev/null); if echo \"$CMD\" | grep -qE \"(gh pr merge|git push.*--tags|gh release create)\"; then echo \"[roadmap] PR merged or release created -- consider running /roadmap update\"; fi'"
+            "command": "bash -c 'CMD=$(cat | jq -r \".tool_input.command // empty\" 2>/dev/null); if echo \"$CMD\" | grep -qE \"(gh pr merge|git push.*--tags|gh release create)\"; then echo \"[roadmap] PR merged or release created - consider running /roadmap update\"; fi'"
           }
         ]
       }
@@ -29,7 +29,7 @@ Add to `.claude/settings.json` in the project:
 
 Claude Code hooks receive tool input as JSON on stdin. The hook parses the Bash
 command via `jq`, checks if it matches merge/release patterns, and prints a reminder.
-It does not auto-edit ROADMAP.md -- the user still invokes the skill.
+It does not auto-edit ROADMAP.md - the user still invokes the skill.
 
 Requires `jq` installed. If unavailable, a simpler approach is a `Notification` hook
 that fires a generic reminder after any Bash call containing "merge" or "release."
@@ -79,7 +79,7 @@ jobs:
 ```
 
 Creates a GitHub issue as a reminder. Requires a `roadmap` label to exist (create it
-manually or add a step). The issue serves as the trigger -- close it after updating
+manually or add a step). The issue serves as the trigger - close it after updating
 ROADMAP.md.
 
 Event data is passed through environment variables (not inline `${{ }}` interpolation)

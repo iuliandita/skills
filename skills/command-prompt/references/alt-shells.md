@@ -31,7 +31,7 @@ when writing fish-specific config.
 | Array index | 0-based (bash) / 1-based (zsh) | **1-based** |
 | String ops | `${var%%pattern}` | `string match`, `string replace` |
 | Process sub | `<(cmd)` | `(cmd \| psub)` |
-| Here docs | `<<EOF ... EOF` | **Not supported** -- use `printf` or `echo` |
+| Here docs | `<<EOF ... EOF` | **Not supported** - use `printf` or `echo` |
 | History expansion | `!!`, `!$` | **Not supported** (use `Alt+.` for last arg) |
 
 ### Variables
@@ -46,7 +46,7 @@ set -g name "world"
 # Exported (visible to child processes, like export)
 set -gx PATH $PATH /usr/local/bin
 
-# Universal (persisted across sessions -- fish-unique feature)
+# Universal (persisted across sessions - fish-unique feature)
 set -U fish_greeting ""        # disable greeting permanently
 
 # Erase
@@ -140,7 +140,7 @@ funcsave greet    # writes to ~/.config/fish/functions/greet.fish
 ### Completions
 
 ```fish
-# Fish has the best completion system -- mostly auto-generated from man pages
+# Fish has the best completion system - mostly auto-generated from man pages
 # Custom completions go in ~/.config/fish/completions/mytool.fish
 
 complete -c mytool -s v -l verbose -d "Verbose output"
@@ -157,7 +157,7 @@ complete -c mytool -l format -x -a "json yaml toml" -d "Output format"
 
 ```fish
 # Config file: ~/.config/fish/config.fish
-# NO .fishrc -- don't create one
+# NO .fishrc - don't create one
 
 # Functions: ~/.config/fish/functions/*.fish (one file per function)
 # Completions: ~/.config/fish/completions/*.fish
@@ -168,8 +168,8 @@ complete -c mytool -l format -x -a "json yaml toml" -d "Output format"
 
 ### Fish 4.6 additions (March 2026)
 
-- **`|&` syntax** -- bash-compat pipe-stderr shorthand now supported (in addition to `2>&1 |`)
-- **systemd env vars** -- `SHELL_PROMPT_PREFIX`, `SHELL_PROMPT_SUFFIX`, `SHELL_WELCOME` are
+- **`|&` syntax** - bash-compat pipe-stderr shorthand now supported (in addition to `2>&1 |`)
+- **systemd env vars** - `SHELL_PROMPT_PREFIX`, `SHELL_PROMPT_SUFFIX`, `SHELL_WELCOME` are
   automatically applied to prompts and greeting. Set by systemd's `run0`, for example.
 - **Emoji width default changed** from 1 to 2. If terminal alignment breaks on older systems,
   set `$fish_emoji_width` to 1.
@@ -198,7 +198,7 @@ string trim "  hello  "                      # hello
 ## Tcsh / Csh (6.24)
 
 The C shell and its descendant tcsh. You'll encounter these on FreeBSD systems, legacy Unix
-servers, and some academic environments. **Never write new scripts in csh/tcsh** -- use it only
+servers, and some academic environments. **Never write new scripts in csh/tcsh** - use it only
 for interactive commands on systems where it's the default.
 
 **When you'll see it**: FreeBSD default shell (`/bin/csh` or `/bin/tcsh`), OPNsense/pfSense
@@ -343,8 +343,8 @@ open data.json | to yaml
 
 ### Key gotchas
 
-- **Not POSIX.** Can't run bash/sh scripts directly -- use `^bash script.sh`.
-- **Pipelines are typed.** `ls | grep pattern` doesn't work -- use `ls | where name =~ pattern`.
+- **Not POSIX.** Can't run bash/sh scripts directly - use `^bash script.sh`.
+- **Pipelines are typed.** `ls | grep pattern` doesn't work - use `ls | where name =~ pattern`.
 - **External commands** need `^` prefix if they conflict with builtins: `^git status`.
 - **Environment variables**: `$env.PATH` not `$PATH`. Set with `$env.VAR = "value"`.
 - **No background jobs** in the traditional sense. Use `par-each` for parallelism.
@@ -381,12 +381,12 @@ shell that's also a real programming language.
 
 ### Oils (OSH + YSH, 0.37)
 
-OSH is a bash-compatible shell (runs bash scripts correctly). YSH is the "upgrade path" -- a
+OSH is a bash-compatible shell (runs bash scripts correctly). YSH is the "upgrade path" - a
 new language that fixes bash's worst problems while keeping the shell paradigm. 8 releases
 shipped in the 6 months before September 2025, so the project is moving fast.
 
 ```ysh
-# YSH -- bash-like but with real data types
+# YSH - bash-like but with real data types
 var name = "world"
 var items = ['one', 'two', 'three']
 
@@ -400,7 +400,7 @@ if (len(items) > 2) {
 }
 ```
 
-OSH can replace `/bin/sh`, `/bin/ash`, and `/bin/bash` on a system -- tested via the Alpine
+OSH can replace `/bin/sh`, `/bin/ash`, and `/bin/bash` on a system - tested via the Alpine
 Linux package build system (`regtest/aports`). Useful for validating that "bash-compatible"
 actually means compatible.
 
@@ -409,8 +409,8 @@ scripts. YSH is maturing but still experimental.
 
 ### Dash (0.5.13)
 
-Not really an "alternative" shell -- dash is the Debian Almquist Shell, the `/bin/sh` on Debian
-and Ubuntu. It's intentionally minimal and POSIX-strict. You don't write "dash scripts" -- you
+Not really an "alternative" shell - dash is the Debian Almquist Shell, the `/bin/sh` on Debian
+and Ubuntu. It's intentionally minimal and POSIX-strict. You don't write "dash scripts" - you
 write POSIX sh scripts and dash runs them.
 
 **Use the POSIX sh reference for dash.**

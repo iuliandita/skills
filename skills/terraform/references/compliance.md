@@ -6,12 +6,12 @@ PCI-DSS 4.0 requirements mapped to Terraform controls, policy-as-code patterns, 
 
 ## PCI Requirements Mapped to Terraform
 
-### Req 1 -- Network Segmentation
+### Req 1 - Network Segmentation
 
 Terraform configs defining VPCs, subnets, security groups, and NACLs **are the network control implementation**. They are in-scope audit artifacts.
 
 ```hcl
-# CDE VPC -- private subnets only, no internet gateway
+# CDE VPC - private subnets only, no internet gateway
 resource "aws_vpc" "cde" {
   cidr_block           = "10.100.0.0/16"
   enable_dns_hostnames = true
@@ -39,7 +39,7 @@ resource "aws_subnet" "cde_private" {
 }
 ```
 
-### Req 3 -- Encryption at Rest
+### Req 3 - Encryption at Rest
 
 ```hcl
 # CDE KMS key with auto-rotation (Req 3.6)
@@ -52,14 +52,14 @@ resource "aws_kms_key" "cde" {
   tags = merge(local.common_tags, { pci_scope = "cde" })
 }
 
-# RDS -- force encryption + force SSL (Req 3/4)
+# RDS - force encryption + force SSL (Req 3/4)
 resource "aws_db_instance" "payment_db" {
   storage_encrypted = true
   kms_key_id        = aws_kms_key.cde.arn
 
   parameter_group_name = aws_db_parameter_group.force_ssl.name
 
-  # prevent_destroy -- this is cardholder data
+  # prevent_destroy - this is cardholder data
   lifecycle {
     prevent_destroy = true
   }
@@ -86,7 +86,7 @@ resource "aws_s3_bucket" "data" {
   tags   = merge(local.common_tags, { pci_scope = var.pci_scope })
 }
 
-# Block all public access -- apply to every bucket unless public access
+# Block all public access - apply to every bucket unless public access
 # is explicitly required and documented with business justification
 resource "aws_s3_bucket_public_access_block" "data" {
   bucket = aws_s3_bucket.data.id
@@ -123,14 +123,14 @@ resource "aws_s3_bucket_versioning" "data" {
 ```
 
 ```hcl
-# Access logging -- every bucket needs this for audit trail
+# Access logging - every bucket needs this for audit trail
 resource "aws_s3_bucket_logging" "data" {
   bucket        = aws_s3_bucket.data.id
   target_bucket = aws_s3_bucket.access_logs.id
   target_prefix = "s3-access-logs/${aws_s3_bucket.data.id}/"
 }
 
-# Lifecycle rules -- retention for compliance, transitions for cost
+# Lifecycle rules - retention for compliance, transitions for cost
 resource "aws_s3_bucket_lifecycle_configuration" "data" {
   bucket = aws_s3_bucket.data.id
 
@@ -151,7 +151,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "data" {
   }
 }
 
-# Bucket policy -- enforce TLS and deny overly broad access
+# Bucket policy - enforce TLS and deny overly broad access
 resource "aws_s3_bucket_policy" "data" {
   bucket = aws_s3_bucket.data.id
   policy = jsonencode({
@@ -177,7 +177,7 @@ resource "aws_s3_bucket_policy" "data" {
 
 **Checkov checks**: `CKV_AWS_53` (block public access), `CKV_AWS_19` (SSE), `CKV_AWS_145` (CMK encryption), `CKV_AWS_18` (access logging), `CKV_AWS_21` (versioning), `CKV_AWS_70` (deny non-SSL). If any S3 bucket in a review lacks `aws_s3_bucket_public_access_block`, flag it immediately.
 
-### Req 6 -- Secure Development
+### Req 6 - Secure Development
 
 **PCI DSS 4.0 puts IaC repos in scope.** Your Terraform repo needs:
 - Access controls (branch protection, RBAC on the repo)
@@ -185,13 +185,13 @@ resource "aws_s3_bucket_policy" "data" {
 - Change management (PR-based, reviewed, scanned)
 - Static analysis (Checkov, TFLint) on every merge
 
-### Req 7 -- Least-Privilege IAM
+### Req 7 - Least-Privilege IAM
 
 ```hcl
-# BAD -- AI loves to generate this
+# BAD - AI loves to generate this
 resource "aws_iam_policy" "bad" {
   policy = jsonencode({
-    Version = "2012-10-17"   # always include -- default is 2008 which breaks modern conditions
+    Version = "2012-10-17"   # always include - default is 2008 which breaks modern conditions
     Statement = [{
       Effect   = "Allow"
       Action   = "*"        # instant PCI failure
@@ -200,7 +200,7 @@ resource "aws_iam_policy" "bad" {
   })
 }
 
-# GOOD -- scoped to exactly what's needed
+# GOOD - scoped to exactly what's needed
 resource "aws_iam_policy" "payment_service" {
   policy = jsonencode({
     Version = "2012-10-17"
@@ -223,10 +223,10 @@ resource "aws_iam_policy" "payment_service" {
 }
 ```
 
-### Req 10 -- Logging and Monitoring
+### Req 10 - Logging and Monitoring
 
 ```hcl
-# CloudTrail for CDE account -- all events, all regions
+# CloudTrail for CDE account - all events, all regions
 resource "aws_cloudtrail" "cde" {
   name                       = "cde-audit-trail"
   s3_bucket_name             = aws_s3_bucket.audit_logs.id
@@ -248,7 +248,7 @@ resource "aws_cloudtrail" "cde" {
   tags = merge(local.common_tags, { pci_scope = "cde" })
 }
 
-# Audit log bucket -- immutable storage (Req 10.5)
+# Audit log bucket - immutable storage (Req 10.5)
 resource "aws_s3_bucket" "audit_logs" {
   bucket = "${local.name_prefix}-audit-logs"
   tags   = merge(local.common_tags, { pci_scope = "cde" })
@@ -270,12 +270,12 @@ resource "aws_s3_bucket_object_lock_configuration" "audit_logs" {
 }
 ```
 
-### Req 11.5 -- Change Detection
+### Req 11.5 - Change Detection
 
 Drift detection satisfies the FIM requirement for infrastructure.
 
 ```hcl
-# AWS Config rule -- detect security group changes
+# AWS Config rule - detect security group changes
 resource "aws_config_config_rule" "sg_open_check" {
   name = "restricted-incoming-traffic"
   source {
@@ -285,7 +285,7 @@ resource "aws_config_config_rule" "sg_open_check" {
   tags = merge(local.common_tags, { pci_scope = "cde" })
 }
 
-# AWS Config rule -- detect unencrypted storage
+# AWS Config rule - detect unencrypted storage
 resource "aws_config_config_rule" "encrypted_volumes" {
   name = "encrypted-volumes"
   source {
@@ -322,7 +322,7 @@ Key PCI checks:
 
 ### OPA / Conftest (post-plan gate)
 
-Evaluates the JSON plan output -- catches dynamic values static analysis misses.
+Evaluates the JSON plan output - catches dynamic values static analysis misses.
 
 ```rego
 # policy/pci/no_public_ingress.rego
@@ -420,13 +420,13 @@ resource "aws_vpc" "mpoc_am" {
   })
 }
 
-# A&M attestation endpoint -- needs DDoS protection (exposed to all merchant devices)
+# A&M attestation endpoint - needs DDoS protection (exposed to all merchant devices)
 resource "aws_shield_protection" "am_endpoint" {
   name         = "mpoc-am-endpoint"
   resource_arn = aws_lb.mpoc_am.arn
 }
 
-# WAF on A&M ALB -- rate limiting per device
+# WAF on A&M ALB - rate limiting per device
 resource "aws_wafv2_web_acl" "mpoc_am" {
   name  = "mpoc-am-ratelimit"
   scope = "REGIONAL"

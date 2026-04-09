@@ -1,7 +1,7 @@
 ---
 name: virtualization
 description: >
-  · Create, configure, or troubleshoot VMs and hypervisors -- Proxmox VE, libvirt/QEMU/KVM,
+  · Create, configure, or troubleshoot VMs and hypervisors - Proxmox VE, libvirt/QEMU/KVM,
   XCP-ng, VMware vSphere. Covers provisioning, passthrough, storage backends, cloud-init,
   and Packer builds. Triggers: 'proxmox', 'qemu', 'kvm', 'libvirt', 'virsh', 'vm', 'esxi',
   'vsphere', 'pci passthrough', 'gpu passthrough', 'cloud-init', 'packer'. Not for containers
@@ -17,7 +17,7 @@ metadata:
 
 # Virtualization: Hypervisors, VMs, and Infrastructure
 
-Create, configure, and manage virtual machines across hypervisors -- from single-node Proxmox
+Create, configure, and manage virtual machines across hypervisors - from single-node Proxmox
 setups to multi-node clusters with HA, live migration, and GPU passthrough. The goal is
 production-ready VM infrastructure with correct storage, memory, and CPU config that won't
 bite you at 3 AM.
@@ -66,19 +66,19 @@ bite you at 3 AM.
 AI tools consistently produce the same VM configuration mistakes. **Before returning any
 generated VM config, Terraform HCL, or Packer template, verify against this list:**
 
-- [ ] No hardcoded IPs, passwords, or SSH keys -- use variables or cloud-init injection
+- [ ] No hardcoded IPs, passwords, or SSH keys - use variables or cloud-init injection
 - [ ] Disk interface is virtio (scsi0 with virtio-scsi controller), not IDE, unless legacy OS
 - [ ] `iothread = true` on virtio-scsi disks for SSD-backed storage
 - [ ] `ssd = true` emulation enabled when backing store is SSD (enables guest TRIM)
 - [ ] `discard = on` on QEMU disk config for thin-provisioned storage (fstrim passthrough)
 - [ ] Memory ballooning disabled unless tested on the specific guest OS (Alpine, some BSDs can't
-  hotplug DIMMs -- balloon changes need full power-cycle, not reboot)
+  hotplug DIMMs - balloon changes need full power-cycle, not reboot)
 - [ ] CPU type is `host` for production (full feature passthrough), not `kvm64`/`qemu64`
 - [ ] NUMA enabled for multi-socket or large-memory VMs
 - [ ] QEMU guest agent enabled (cloud-init installs it, but verify)
 - [ ] Cloud-init interface specified (bpg/proxmox defaults to ide2 when null)
 - [ ] Terraform lifecycle: `prevent_destroy` on VMs, `ignore_changes` on `disk` and `node_name`
-- [ ] No disk resize via Terraform -- use `qm resize` on host, then update Terraform var to match
+- [ ] No disk resize via Terraform - use `qm resize` on host, then update Terraform var to match
 - [ ] PCI passthrough: `pcie = false` for standard passthrough, `xvga = false` unless display GPU
 - [ ] PCI passthrough: machine type is `q35` when `pcie = true` is needed
 - [ ] BIOS type matches use case: `seabios` default, `ovmf` for UEFI/Secure Boot/Windows 11
@@ -111,16 +111,16 @@ generated VM config, Terraform HCL, or Packer template, verify against this list
 
 Before creating or modifying VMs:
 
-- **Hypervisor and version** -- Proxmox VE 9.x? libvirt? VMware migration?
-- **Guest OS** -- Linux distro, Windows, BSD? (affects virtio drivers, ballooning, agent)
-- **CPU** -- core count, type (host vs emulated), pinning needs, NUMA topology
-- **Memory** -- dedicated amount, ballooning (usually: don't), hugepages for databases
-- **Storage** -- backend (LVM-thin, ZFS, Ceph, NFS), disk size, format (raw vs qcow2)
-- **Network** -- bridge, VLAN tag, virtio, firewall
-- **Passthrough** -- GPU/PCI devices, USB, serial ports
-- **Provisioning method** -- manual, Terraform, Packer template + cloud-init
-- **HA requirements** -- clustered? live migration? fencing?
-- **Backup strategy** -- PBS, snapshots, vzdump, frequency
+- **Hypervisor and version** - Proxmox VE 9.x? libvirt? VMware migration?
+- **Guest OS** - Linux distro, Windows, BSD? (affects virtio drivers, ballooning, agent)
+- **CPU** - core count, type (host vs emulated), pinning needs, NUMA topology
+- **Memory** - dedicated amount, ballooning (usually: don't), hugepages for databases
+- **Storage** - backend (LVM-thin, ZFS, Ceph, NFS), disk size, format (raw vs qcow2)
+- **Network** - bridge, VLAN tag, virtio, firewall
+- **Passthrough** - GPU/PCI devices, USB, serial ports
+- **Provisioning method** - manual, Terraform, Packer template + cloud-init
+- **HA requirements** - clustered? live migration? fencing?
+- **Backup strategy** - PBS, snapshots, vzdump, frequency
 
 ### Step 3: Build
 
@@ -132,7 +132,7 @@ Follow the domain-specific reference file. Key principles:
   headless). IDE and e1000 exist for legacy OS compatibility only.
 - **Pin CPU type to `host`.** Emulated CPU types (kvm64, qemu64) hide features the guest needs
   (AES-NI, AVX, SSE4). Use `host` unless you need live migration across heterogeneous hardware.
-- **Test disk config changes with stop/start, not reboot.** Guest reboot doesn't restart QEMU --
+- **Test disk config changes with stop/start, not reboot.** Guest reboot doesn't restart QEMU -
   disk config changes (discard, cache, iothread) only take effect after `qm stop` + `qm start`.
 
 ### Step 4: Validate
@@ -214,10 +214,10 @@ Always use `qm stop` then `qm start` for hardware config changes. This also appl
 memory balloon device changes.
 
 **LVM thin pool at 100%:** When data_percent hits 100%, ALL VM I/O on that pool fails
-instantly -- guests hang, no graceful degradation. Recovery requires `lvextend` on the
+instantly - guests hang, no graceful degradation. Recovery requires `lvextend` on the
 thin pool or migrating VMs off. Monitor thin pool usage and alert well before 100% (80%
 warning, 90% critical). `data_percent` measures blocks ever written, not current filesystem
-usage -- a VM that wrote then deleted 50GB still shows that 50GB in data_percent until
+usage - a VM that wrote then deleted 50GB still shows that 50GB in data_percent until
 fstrim reclaims it.
 
 **Live migration via SSH:** `qm migrate` runs in the foreground. If the SSH session drops,
@@ -229,7 +229,7 @@ nohup qm migrate <vmid> <target> --online --with-local-disks \
 Migration is abort-safe: source VM stays running on failure, target LVs are cleaned up.
 
 **KVM ballooning:** The balloon device lets the host reclaim unused guest memory. Sounds
-great, causes pain. Alpine Linux (and some BSDs) can't hotplug DIMMs -- balloon changes
+great, causes pain. Alpine Linux (and some BSDs) can't hotplug DIMMs - balloon changes
 need full power-cycle (stop/start, not reboot). Even on Debian, balloon behavior is
 unpredictable under memory pressure. Recommendation: disable ballooning (`memory_min_mb = 0`
 in Terraform, or set balloon to 0 in qm) and provision VMs with the memory they actually need.
@@ -254,10 +254,10 @@ updates; disabling doesn't.
 | local (dir) | Small/test | No (file-based) | qcow2 only | No |
 
 **Disk interface hierarchy** (fastest to slowest):
-1. **virtio-scsi-single** + iothread -- one controller per disk, best IOPS
-2. **virtio-scsi-pci** + iothread -- shared controller, good for most workloads
-3. **virtio-blk** -- legacy virtio, good performance but fewer features
-4. **IDE** -- legacy only, needed for some old OSes
+1. **virtio-scsi-single** + iothread - one controller per disk, best IOPS
+2. **virtio-scsi-pci** + iothread - shared controller, good for most workloads
+3. **virtio-blk** - legacy virtio, good performance but fewer features
+4. **IDE** - legacy only, needed for some old OSes
 
 **SSD optimization checklist:**
 - [ ] `ssd = 1` on disk config (tells guest it's on SSD, enables TRIM in guest)
@@ -276,7 +276,7 @@ provider. The correct procedure:
 
 ## Memory Management
 
-**Ballooning -- the short version:** Don't use it unless you've tested it on your exact
+**Ballooning - the short version:** Don't use it unless you've tested it on your exact
 guest OS and workload. Disable with `balloon: 0` in VM config.
 
 **NUMA:** Enable for VMs with 4+ cores or 8GB+ RAM. Proxmox: `numa: 1` in VM config.
@@ -293,7 +293,7 @@ vm.nr_hugepages = 1024
 Then enable in VM config. Note: hugepages memory can't be shared or ballooned.
 
 **CPU hotplug vs memory hotplug:** CPU hotplug works live on most modern Linux guests.
-Memory hotplug (adding DIMMs at runtime) is fragile -- Alpine can't do it at all, and even
+Memory hotplug (adding DIMMs at runtime) is fragile - Alpine can't do it at all, and even
 Debian requires specific kernel config. Size memory correctly at creation time.
 
 ---
@@ -318,31 +318,31 @@ but non-trivial for large estates.
 
 ## Reference Files
 
-- `references/proxmox.md` -- Proxmox VE deep-dive: API, CLI, storage, clustering, HA,
+- `references/proxmox.md` - Proxmox VE deep-dive: API, CLI, storage, clustering, HA,
   live migration, PCI passthrough, Proxmox Backup Server, and Terraform (bpg/proxmox
   provider patterns, lifecycle gotchas, cloud-init)
-- `references/libvirt-qemu-kvm.md` -- libvirt/QEMU/KVM: virsh commands, XML domain
+- `references/libvirt-qemu-kvm.md` - libvirt/QEMU/KVM: virsh commands, XML domain
   definitions, QEMU command-line, KVM modules, disk formats, networking
-- `references/image-building.md` -- Packer templates, cloud-init configuration,
+- `references/image-building.md` - Packer templates, cloud-init configuration,
   cloud image workflows, template management
-- `references/gotchas.md` -- Battle-tested pitfalls and failure modes from production
+- `references/gotchas.md` - Battle-tested pitfalls and failure modes from production
   Proxmox/KVM environments. Read this before any non-trivial change.
 
 ---
 
 ## Related Skills
 
-- **terraform** -- owns HCL patterns, module design, state management. This skill owns
+- **terraform** - owns HCL patterns, module design, state management. This skill owns
   Proxmox-specific provider patterns (bpg/proxmox lifecycle rules, cloud-init interface,
   disk resize workarounds). Use terraform for general IaC; this skill for Proxmox-specific
   Terraform.
-- **kubernetes** -- for container orchestration running on top of VMs. This skill provisions
+- **kubernetes** - for container orchestration running on top of VMs. This skill provisions
   the VM infrastructure; kubernetes manages what runs inside the cluster.
-- **networking** -- for network config not specific to hypervisors (DNS, VPNs, reverse
+- **networking** - for network config not specific to hypervisors (DNS, VPNs, reverse
   proxies, nftables). This skill covers VM networking (bridges, VLANs, virtio-net).
-- **ansible** -- for day-2 configuration of VMs after provisioning. This skill creates the
+- **ansible** - for day-2 configuration of VMs after provisioning. This skill creates the
   VM; ansible configures what runs on it.
-- **docker** -- for container image optimization. This skill manages VMs that may host
+- **docker** - for container image optimization. This skill manages VMs that may host
   Docker/container workloads.
 
 ---
@@ -366,5 +366,5 @@ These are non-negotiable. Violating any of these is a bug.
    from accidental destruction and migration drift.
 9. **Run the AI self-check.** Every generated VM config gets verified against the checklist
    above before returning.
-10. **Test before production.** New VM configs, passthrough setups, storage backends -- test
+10. **Test before production.** New VM configs, passthrough setups, storage backends - test
     on a non-critical VM first.

@@ -496,7 +496,7 @@ molecule test
 # Development loop (fast iteration)
 molecule create                 # Create test instances
 molecule converge               # Apply role
-molecule converge               # Run again (idempotence check -- should have 0 changes)
+molecule converge               # Run again (idempotence check - should have 0 changes)
 molecule verify                 # Run verification
 molecule login -h ubuntu-noble  # SSH into instance for debugging
 molecule destroy                # Clean up

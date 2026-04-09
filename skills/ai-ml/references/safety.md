@@ -268,11 +268,11 @@ def redact_for_logging(data: dict) -> dict:
 Most providers have built-in content safety. Configure appropriately:
 
 ```python
-# Anthropic -- safety settings are default-on
+# Anthropic - safety settings are default-on
 # For applications that need to process sensitive content for legitimate purposes,
 # use the system prompt to set appropriate context
 
-# OpenAI -- moderation API for custom checks
+# OpenAI - moderation API for custom checks
 moderation = client.moderations.create(input=user_input)
 if moderation.results[0].flagged:
     return "This request cannot be processed."

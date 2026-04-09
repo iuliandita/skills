@@ -1,7 +1,7 @@
 # CI/CD Supply Chain Security
 
 Cross-platform supply chain hardening patterns, incident timeline, and PCI-DSS 4.0 compliance.
-Updated March 2026 -- post-Trivy compromise.
+Updated March 2026 - post-Trivy compromise.
 
 ---
 
@@ -10,27 +10,27 @@ Updated March 2026 -- post-Trivy compromise.
 These are real supply chain attacks that exploited CI/CD pipelines. They're here because
 they inform every recommendation in this document.
 
-### reviewdog/action-setup (CVE-2025-30154) -- March 11, 2025
+### reviewdog/action-setup (CVE-2025-30154) - March 11, 2025
 
 - **2-hour window** (18:42-20:31 UTC)
 - Payload dumped CI runner memory, exposing env vars and secrets to workflow logs (double-base64 encoded)
 - Root cause: reviewdog org auto-invited contributors to `@reviewdog/actions-maintainer` team with **write access**. Compromised contributor account.
 - Enabled the downstream tj-actions attack.
 
-### tj-actions/changed-files (CVE-2025-30066) -- March 10-14, 2025
+### tj-actions/changed-files (CVE-2025-30066) - March 10-14, 2025
 
 - Attacker modified action to execute malicious Python script extracting secrets from Runner Worker process memory
-- All version tags force-pushed to malicious commit -- even "pinned" tag users got hit
+- All version tags force-pushed to malicious commit - even "pinned" tag users got hit
 - **23,000+ repositories affected**. Leaked PATs, npm tokens, RSA keys, AWS keys.
 - Coinbase was specifically targeted (Palo Alto Unit42 confirmed).
 - CISA issued alert March 18, 2025.
 - **Lesson**: mutable tags are not security boundaries. SHA pinning is the only protection.
 
-### aquasecurity/trivy-action (CVE-2026-33634) -- March 2026
+### aquasecurity/trivy-action (CVE-2026-33634) - March 2026
 
 - **CVSS 9.4**. Threat actor: **TeamPCP**.
 - Late Feb 2026: attackers exploited misconfigured GH Actions environment, extracted privileged token
-- March 1: Aqua disclosed, rotated credentials -- but rotation was **incomplete**
+- March 1: Aqua disclosed, rotated credentials - but rotation was **incomplete**
 - March 19, ~17:43 UTC: attacker force-pushed **76 of 77** version tags in `trivy-action` and all 7 tags in `setup-trivy` to credential-stealing code
 - Simultaneously published malicious Trivy binary v0.69.4 via compromised `aqua-bot` service account
 - March 22: malicious v0.69.5 and v0.69.6 Docker Hub images published
@@ -43,7 +43,7 @@ they inform every recommendation in this document.
 - `setup-trivy`: v0.2.6
 - **DO NOT USE**: v0.69.4, v0.69.5, v0.69.6
 
-**IOC**: check for a repo named `tpcp-docs` in your org -- its presence indicates the fallback
+**IOC**: check for a repo named `tpcp-docs` in your org - its presence indicates the fallback
 exfiltration mechanism was triggered.
 
 ### HackerBot-Claw (February 2026)
@@ -146,7 +146,7 @@ Docker retired DCT/Notary in favor of Sigstore (August 2025). cosign is the indu
     DIGEST: ${{ steps.build.outputs.digest }}
     IMAGE: ghcr.io/${{ github.repository }}
   run: cosign sign --yes "$IMAGE@$DIGEST"
-  # keyless signing is default since cosign v2.0 -- no COSIGN_EXPERIMENTAL needed
+  # keyless signing is default since cosign v2.0 - no COSIGN_EXPERIMENTAL needed
 ```
 
 Keyless signing: workflow gets OIDC token from GitHub -> Sigstore's Fulcio CA mints a
@@ -278,7 +278,7 @@ Runtime monitoring of network egress and file system access in CI jobs. Detected
 attack anomalies.
 
 ```yaml
-- uses: step-security/harden-runner@<sha>  # v2.14.2 (v2.12.0 min -- CVE-2025-32955)
+- uses: step-security/harden-runner@<sha>  # v2.14.2 (v2.12.0 min - CVE-2025-32955)
   with:
     egress-policy: audit
 ```
@@ -339,7 +339,7 @@ Same syntax as GitHub. No environment-level scoping yet.
 
 All future-dated requirements became **mandatory March 31, 2025**.
 
-### Requirement 6.2.1 -- Secure Development
+### Requirement 6.2.1 - Secure Development
 
 **What it says**: developers trained in secure coding, processes address common vulns.
 
@@ -350,7 +350,7 @@ All future-dated requirements became **mandatory March 31, 2025**.
 - Block merges when HIGH/CRITICAL findings exist
 - Document scanning coverage in runbooks
 
-### Requirement 6.2.4 -- Access Control and Change Tracking
+### Requirement 6.2.4 - Access Control and Change Tracking
 
 **What it says**: access control, change approvals, audit trails.
 
@@ -361,7 +361,7 @@ All future-dated requirements became **mandatory March 31, 2025**.
 - Audit logging enabled (GitHub: audit log, GitLab: audit events)
 - No direct pushes to protected branches
 
-### Requirement 6.3.2 -- Software Inventory (SBOM)
+### Requirement 6.3.2 - Software Inventory (SBOM)
 
 **What it says**: maintain inventory of bespoke and custom software components.
 
@@ -372,7 +372,7 @@ All future-dated requirements became **mandatory March 31, 2025**.
 - Index in vulnerability management system
 - Cover both application code AND container base image
 
-### Requirement 6.4.2 -- Change Control
+### Requirement 6.4.2 - Change Control
 
 **What it says**: changes approved, documented, tested before production.
 
@@ -382,13 +382,13 @@ All future-dated requirements became **mandatory March 31, 2025**.
 - Deployment audit trail (who approved, when, what SHA)
 - IaC changes through git only (no manual kubectl/terraform from laptops)
 
-### Requirement 6.5.3 -- Consistent Security Controls
+### Requirement 6.5.3 - Consistent Security Controls
 
 **What it says**: security controls consistent across all environments.
 
 **CI/CD implementation**:
 - Same scanning pipeline in dev, staging, AND production
-- Not just scanning in production -- scanning in ALL environments
+- Not just scanning in production - scanning in ALL environments
 - Shared CI components/templates to enforce consistency
 - Regular audit that dev pipelines haven't drifted from prod pipelines
 
@@ -451,7 +451,7 @@ AI tools in CI should never execute commands based on issue/PR text.
 ## Post-Compromise Incident Response
 
 When a supply chain compromise is confirmed (malicious action executed, secrets exposed,
-artifact tampered), follow these steps immediately. Speed matters -- the tj-actions attack
+artifact tampered), follow these steps immediately. Speed matters - the tj-actions attack
 had a 2-hour window, and automated exfiltration begins within seconds.
 
 ### 1. Contain (first 30 minutes)
@@ -487,7 +487,7 @@ had a 2-hour window, and automated exfiltration begins within seconds.
 ### 3. Remediate
 
 - **Pin to verified-safe SHAs.** Replace the compromised action with a known-good SHA. Do not
-  trust new tags published shortly after disclosure -- attackers sometimes publish "fix" tags
+  trust new tags published shortly after disclosure - attackers sometimes publish "fix" tags
   that are also malicious (as seen with Trivy v0.69.4/5/6).
 - **Rebuild affected artifacts.** Any image, package, or binary built during the attack window
   must be rebuilt from clean inputs and re-signed.

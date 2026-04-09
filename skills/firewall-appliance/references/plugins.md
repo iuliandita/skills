@@ -1,6 +1,6 @@
 # OPNsense Plugin Reference
 
-Operational guidance for common plugins. Not exhaustive -- for unlisted plugins,
+Operational guidance for common plugins. Not exhaustive - for unlisted plugins,
 inspect via `pkg info <name>` and check `/usr/local/etc/` for their configs.
 
 ## Security
@@ -10,7 +10,7 @@ Local LAPI + bouncer (v1.7.6 as of March 2026). Parses logs locally, applies loc
 
 **Two separate enforcement layers:**
 - **Local decisions** (`crowdsec_blacklists` pf table): IPs your firewall detected and banned
-  based on its own log parsing. These are the ones that matter most -- they reflect actual
+  based on its own log parsing. These are the ones that matter most - they reflect actual
   attacks against YOUR infrastructure.
 - **CAPI blocklists** (`crowdsec_blocklists` pf table): crowd-sourced community blocklist
   pulled from CrowdSec central API. Useful background protection, but less actionable for
@@ -18,7 +18,7 @@ Local LAPI + bouncer (v1.7.6 as of March 2026). Parses logs locally, applies loc
 
 ```
 # Local activity (check these first)
-cscli decisions list             # active LOCAL bans -- what YOUR firewall caught
+cscli decisions list             # active LOCAL bans - what YOUR firewall caught
 cscli alerts list -l 15          # recent detections with scenario/source/country
 cscli metrics                    # parsing stats, scenario hits, bouncer pulls
 
@@ -45,10 +45,10 @@ cscli hub update && cscli hub upgrade  # update detection scenarios + parsers
   `cscli parsers list | grep whitelist`. Only remove if you specifically need to ban LAN clients.
 - Default collections: `crowdsecurity/freebsd` and `crowdsecurity/opnsense` installed automatically.
   Consider adding `crowdsecurity/http-cve` if running web services.
-- Testing safely: `cscli decisions add -t ban -d 2m -i <ip>` -- 2-minute test ban.
+- Testing safely: `cscli decisions add -t ban -d 2m -i <ip>` - 2-minute test ban.
   Find your connecting IP: `echo $SSH_CLIENT | awk '{print $1}'`
 - Console enrollment: connect to app.crowdsec.net for dashboard and shared threat intel.
-  Without enrollment, you'll see periodic "Machine is not enrolled" log messages -- cosmetic only,
+  Without enrollment, you'll see periodic "Machine is not enrolled" log messages - cosmetic only,
   does not affect LAPI or CAPI functionality.
 
 ### os-acme-client (Let's Encrypt)
@@ -58,7 +58,7 @@ Automated TLS certificate management.
 - Renewal logs: GUI under Services > ACME > Log
 - Common failure: DNS validation failing due to Unbound caching stale records.
   Restart DNS after ACME config changes.
-- Verify automations are actually running -- a configured ACME client that stopped
+- Verify automations are actually running - a configured ACME client that stopped
   renewing silently is worse than no ACME at all.
 
 ### os-openconnect (OpenConnect VPN)
@@ -71,7 +71,7 @@ browser-based VPN login or RADIUS/LDAP auth integration.
 
 ### os-zerotier (ZeroTier)
 Peer-to-peer mesh VPN. Useful for connecting devices across NATs without port forwarding.
-Not a traditional firewall VPN -- operates more like a virtual switch.
+Not a traditional firewall VPN - operates more like a virtual switch.
 
 - Join network: `zerotier-cli join <network-id>`
 - Status: `zerotier-cli listnetworks`
@@ -80,7 +80,7 @@ Not a traditional firewall VPN -- operates more like a virtual switch.
   on that interface just like any other network segment.
 
 ### os-stunnel (SSL Tunnel)
-Wraps non-SSL services in TLS. Niche -- usually only needed for legacy protocols.
+Wraps non-SSL services in TLS. Niche - usually only needed for legacy protocols.
 Config: `/usr/local/etc/stunnel/stunnel.conf`.
 
 ## Networking
@@ -109,7 +109,7 @@ wg show <iface> dump             # machine-readable output
 - Restart: `configctl wireguard stop && configctl wireguard start`
 - Zero-downtime reload: `/usr/local/etc/rc.d/wireguard reload` (uses `wg syncconf` under the hood)
 - Alternative: `pluginctl -s wireguard start` / `stop` / `status`
-- **pfSense**: WireGuard is available as `pfSense-pkg-WireGuard`. Commands differ --
+- **pfSense**: WireGuard is available as `pfSense-pkg-WireGuard`. Commands differ -
   use `service wireguard restart` or manage via GUI (VPN > WireGuard).
 
 ### os-haproxy (Load Balancer / Reverse Proxy)
@@ -178,7 +178,7 @@ Network traffic analysis. Web UI on port 3000 by default.
 
 ### os-qemu-guest-agent
 QEMU/KVM guest integration. Enables graceful shutdown and filesystem freeze from hypervisor.
-No operational concerns -- it either works or it doesn't.
+No operational concerns - it either works or it doesn't.
 
 ### os-vmtools
 VMware Tools integration. Same as above but for ESXi/vSphere.
@@ -221,14 +221,14 @@ VMware Tools integration. Same as above but for ESXi/vSphere.
 - Setup wizard completely rewritten (MVC/API)
 
 ### Dnsmasq migration gotchas (ISC DHCP -> Dnsmasq)
-- **Reservations MUST be inside the pool range** -- ISC DHCP required them outside. This is the #1 migration footgun. Existing reservations silently break.
+- **Reservations MUST be inside the pool range** - ISC DHCP required them outside. This is the #1 migration footgun. Existing reservations silently break.
 - **Unbound DNS can't resolve dnsmasq reservations** unless the `Domain` field is explicitly set per reservation (OPNsense [Issue #8612](https://github.com/opnsense/core/issues/8612))
 - **macOS clients get `.localdomain` appended** post-migration, causing resolution failures
-- **Port conflicts**: disable ISC DHCP/Kea BEFORE enabling dnsmasq -- they grab the same ports
+- **Port conflicts**: disable ISC DHCP/Kea BEFORE enabling dnsmasq - they grab the same ports
 - Migration scripts: [meyergru/iscdhcp_to_dnsmasq](https://github.com/meyergru/iscdhcp_to_dnsmasq), [dreary-ennui/Convert-OPNSenseISCDHCPtoDNSMasqDHCP](https://github.com/dreary-ennui/Convert-OPNSenseISCDHCPtoDNSMasqDHCP)
 
 ### Migration checklist
-- [ ] Check API scripts for camelCase URLs -- update to snake_case
+- [ ] Check API scripts for camelCase URLs - update to snake_case
 - [ ] Plan ISC DHCP migration path before upgrading to 26.1
 - [ ] Verify DHCP reservations are INSIDE the pool range (dnsmasq requirement)
 - [ ] Set Domain field on all DHCP reservations if using Unbound DNS
@@ -238,7 +238,7 @@ VMware Tools integration. Same as above but for ESXi/vSphere.
 - [ ] Test custom plugins against Python 3.13 compatibility
 - [ ] Update backup scripts if using Google Drive backend
 
-### 26.1 "Witty Woodpecker" (Jan 28, 2026) -- CURRENT STABLE
+### 26.1 "Witty Woodpecker" (Jan 28, 2026) - CURRENT STABLE
 
 Current release: **26.1.5** (March 26, 2026). 25.7.x series EOL at 25.7.11.
 

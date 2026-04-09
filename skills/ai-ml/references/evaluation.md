@@ -115,7 +115,7 @@ npx promptfoo view
 | `contains` | Output contains string | `"reset password"` |
 | `not-contains` | Output doesn't contain string | `"I don't know"` |
 | `regex` | Output matches regex | `"\\d{3}-\\d{4}"` |
-| `is-json` | Output is valid JSON | -- |
+| `is-json` | Output is valid JSON | - |
 | `json-schema` | Output matches JSON schema | Schema object |
 | `llm-rubric` | LLM judges output quality | Natural language criteria |
 | `similar` | Semantic similarity to expected | `threshold: 0.8` |
@@ -143,7 +143,7 @@ npx promptfoo view
 ### Generation quality
 
 - **Faithfulness**: does the answer only use information from the provided context?
-  (aka groundedness -- measures hallucination)
+  (aka groundedness - measures hallucination)
 - **Relevance**: does the answer address the question?
 - **Completeness**: does the answer cover all aspects of the question?
 - **Coherence**: is the answer well-structured and readable?

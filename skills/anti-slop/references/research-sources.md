@@ -4,14 +4,14 @@ Read this file for deeper context on specific findings or when the user wants ci
 
 ## Key Statistics
 
-- AI-generated PRs average 10.83 issues vs 6.45 for human PRs (1.7x more) -- CodeRabbit 2025
-- AI coding assistants produce output 2x as verbose as Stack Overflow answers -- LeadDev
-- AI models are 9x more prone to use `any` than human developers -- arxiv.org/html/2602.17955
-- 82% of AI-generated catch blocks fail to distinguish error types -- AlterSquare
-- 76% of AI-generated code omits critical network timeouts -- AlterSquare
-- 25-38% of AI-generated code relies on deprecated APIs -- multiple sources
-- ~20% of AI-suggested package dependencies point to non-existent libraries -- multiple sources
-- 45% of AI-generated code contains security flaws -- Veracode 2025
+- AI-generated PRs average 10.83 issues vs 6.45 for human PRs (1.7x more) - CodeRabbit 2025
+- AI coding assistants produce output 2x as verbose as Stack Overflow answers - LeadDev
+- AI models are 9x more prone to use `any` than human developers - arxiv.org/html/2602.17955
+- 82% of AI-generated catch blocks fail to distinguish error types - AlterSquare
+- 76% of AI-generated code omits critical network timeouts - AlterSquare
+- 25-38% of AI-generated code relies on deprecated APIs - multiple sources
+- ~20% of AI-suggested package dependencies point to non-existent libraries - multiple sources
+- 45% of AI-generated code contains security flaws - Veracode 2025
 
 ## Source List
 
@@ -31,7 +31,7 @@ Read this file for deeper context on specific findings or when the user wants ci
 
 ## The "No Soul" Problem
 
-The hardest slop to detect programmatically. Code that compiles, passes tests, and follows conventions -- but feels generic. Signs:
+The hardest slop to detect programmatically. Code that compiles, passes tests, and follows conventions - but feels generic. Signs:
 
 - Every module follows the exact same structure regardless of its role
 - Naming is correct but bland (follows conventions without adding domain clarity)

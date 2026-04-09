@@ -1,7 +1,7 @@
 # Bash Reference
 
 > Patterns and features for Bash 5.3 on Linux and macOS. Covers what you need beyond the
-> universal patterns in the main skill -- bash-specific features, gotchas, and idioms.
+> universal patterns in the main skill - bash-specific features, gotchas, and idioms.
 
 ---
 
@@ -18,7 +18,7 @@
 | Reading input / parsing files | Section 7 |
 | Bash 5.x features | Section 10 |
 | Porting bash to POSIX sh | Section 11 |
-| Porting bash to zsh | Load the zsh reference instead -- it has the full compat matrix |
+| Porting bash to zsh | Load the zsh reference instead - it has the full compat matrix |
 | Debugging a bash script | Section 12 |
 
 ---
@@ -100,8 +100,8 @@ echo "${str^}"                 # Hello World (first char upper)
 
 # Pattern removal
 path="/home/user/file.tar.gz"
-echo "${path##*/}"             # file.tar.gz (basename -- remove longest prefix)
-echo "${path%/*}"              # /home/user (dirname -- remove shortest suffix)
+echo "${path##*/}"             # file.tar.gz (basename - remove longest prefix)
+echo "${path%/*}"              # /home/user (dirname - remove shortest suffix)
 echo "${path%%.*}"             # /home/user/file (remove longest suffix)
 echo "${path#*.}"              # tar.gz (remove shortest prefix through first .)
 
@@ -115,28 +115,28 @@ echo "${str/%World/Earth}"     # Hello Earth (anchor to end)
 ### Default / fallback values
 
 ```bash
-# ${var:-default}  -- use default if var is unset or empty
+# ${var:-default}  - use default if var is unset or empty
 name="${1:-anonymous}"
 
-# ${var:=default}  -- assign default if var is unset or empty
+# ${var:=default}  - assign default if var is unset or empty
 : "${TMPDIR:=/tmp}"
 
-# ${var:+value}    -- use value if var IS set and non-empty
+# ${var:+value}    - use value if var IS set and non-empty
 extra="${DEBUG:+--verbose}"
 
-# ${var:?message}  -- error if var is unset or empty
+# ${var:?message}  - error if var is unset or empty
 : "${API_KEY:?API_KEY must be set}"
 ```
 
 ### Indirect expansion
 
 ```bash
-# ${!prefix*} -- list variable names starting with prefix
+# ${!prefix*} - list variable names starting with prefix
 CONF_HOST="localhost"
 CONF_PORT="8080"
 echo "${!CONF_*}"              # CONF_HOST CONF_PORT
 
-# ${!var} -- indirect reference (the value of var names another variable)
+# ${!var} - indirect reference (the value of var names another variable)
 key="HOME"
 echo "${!key}"                 # /home/user
 ```
@@ -165,7 +165,7 @@ arr+=(delta)
 echo "${arr[@]:1:2}"           # bravo charlie (offset 1, count 2)
 
 # Delete
-unset 'arr[1]'                 # removes bravo (leaves gap -- indices don't shift)
+unset 'arr[1]'                 # removes bravo (leaves gap - indices don't shift)
 
 # Iterate
 for item in "${arr[@]}"; do
@@ -237,7 +237,7 @@ done
 `[[ ]]` is bash-specific and preferred. `[ ]` is POSIX and runs `/usr/bin/[` (or the builtin).
 
 ```bash
-# String comparison (use [[ ]] -- no word splitting or glob expansion)
+# String comparison (use [[ ]] - no word splitting or glob expansion)
 [[ "$str" == "hello" ]]        # equality
 [[ "$str" != "hello" ]]        # inequality
 [[ "$str" == hello* ]]         # glob match (no quotes on pattern!)
@@ -304,18 +304,18 @@ if (( count > 10 )); then echo "big"; fi
 ### Process substitution
 
 ```bash
-# <(cmd) -- treat command output as a file (FIFO)
+# <(cmd) - treat command output as a file (FIFO)
 diff <(sort file1.txt) <(sort file2.txt)
 while IFS= read -r line; do echo "$line"; done < <(some_command)
 
-# >(...) -- treat command input as a file (FIFO)
+# >(...) - treat command input as a file (FIFO)
 some_command | tee >(grep ERROR > errors.log) >(wc -l > count.txt) > /dev/null
 ```
 
 ### Subshell gotchas
 
 ```bash
-# Variables set inside a pipe are in a subshell -- they don't persist
+# Variables set inside a pipe are in a subshell - they don't persist
 count=0
 cat file.txt | while read -r line; do (( count++ )); done
 echo "$count"   # still 0!
@@ -325,18 +325,18 @@ count=0
 while read -r line; do (( count++ )); done < <(cat file.txt)
 echo "$count"   # correct
 
-# Fix 2: lastpipe (bash 4.2+) -- last pipe segment runs in current shell
+# Fix 2: lastpipe (bash 4.2+) - last pipe segment runs in current shell
 shopt -s lastpipe
 ```
 
 ### Command grouping
 
 ```bash
-# { } -- runs in current shell (preserves variables)
+# { } - runs in current shell (preserves variables)
 { read -r first; read -r second; } < file.txt
 echo "$first $second"    # both set
 
-# ( ) -- runs in subshell (variables are lost)
+# ( ) - runs in subshell (variables are lost)
 ( cd /tmp; do_something )
 # cwd is unchanged here
 ```
@@ -435,7 +435,7 @@ my_func() {
     local count="${2:-1}"
     echo "$name: $count"
 }
-# or: function my_func { ... }  -- avoid this form for POSIX compat
+# or: function my_func { ... }  - avoid this form for POSIX compat
 
 # Local variables (always use local in functions)
 process() {
@@ -452,7 +452,7 @@ get_name() {
 }
 result=$(get_name)
 
-# Nameref (bash 4.3+) -- pass variable by reference
+# Nameref (bash 4.3+) - pass variable by reference
 fill_array() {
     local -n arr_ref="$1"        # nameref to caller's variable
     arr_ref=(one two three)
@@ -551,10 +551,10 @@ echo "${str: -1}"              # o (already worked, but now consistent)
 ### Bash 5.1 (2020)
 
 ```bash
-# SRANDOM -- cryptographic random (not based on PID like $RANDOM)
+# SRANDOM - cryptographic random (not based on PID like $RANDOM)
 echo "$SRANDOM"                # 32-bit random from /dev/urandom
 
-# ${var@U} / ${var@u} / ${var@L} -- case transformation operators
+# ${var@U} / ${var@u} / ${var@L} - case transformation operators
 name="hello"
 echo "${name@U}"               # HELLO (uppercase)
 echo "${name@u}"               # Hello (capitalize first)
@@ -583,14 +583,14 @@ echo "${map@a}"                # A (associative array)
 The biggest release since 5.0. Headline feature: non-forking command substitution.
 
 ```bash
-# Non-forking command substitution -- runs in current shell, no fork+pipe
+# Non-forking command substitution - runs in current shell, no fork+pipe
 # Analogous to zsh's ${ } (see zsh reference Section 13)
 
-# ${ cmd; } -- captures stdout without forking
+# ${ cmd; } - captures stdout without forking
 result=${ printf '%s' "hello"; }    # note: space after { and ; before }
 echo "$result"                       # hello
 
-# ${| cmd; } -- command writes to REPLY instead of stdout
+# ${| cmd; } - command writes to REPLY instead of stdout
 result=${| REPLY="computed-$(date +%s)"; }
 echo "$result"                       # computed-1234567890
 
@@ -610,7 +610,7 @@ space, bash interprets it as parameter expansion.
 Other additions:
 
 ```bash
-# GLOBSORT -- control how pathname-completion results are sorted
+# GLOBSORT - control how pathname-completion results are sorted
 GLOBSORT=size        # sort by size
 GLOBSORT=name        # sort by name (default)
 GLOBSORT=nosort      # no sorting (fastest for large directories)
@@ -633,7 +633,7 @@ If you need to port a script to `#!/bin/sh`, these bash features are NOT availab
 |-------------|-------------------|
 | `[[ ]]` | `[ ]` (with more quoting) |
 | `(( ))` arithmetic | `$(( ))` in test: `[ "$(( a > b ))" = 1 ]` |
-| Arrays | Positional params (`set -- a b c; echo "$1"`) |
+| Arrays | Positional params (`set - a b c; echo "$1"`) |
 | `${var,,}` / `${var^^}` | `tr '[:upper:]' '[:lower:]'` via pipe or `$(...)` |
 | `${var:offset:length}` | `expr substr` or `cut` |
 | `<<<` here string | `echo "$var" \| cmd` or `printf '%s' "$var" \| cmd` |
@@ -643,8 +643,8 @@ If you need to port a script to `#!/bin/sh`, these bash features are NOT availab
 | `function name { }` | `name() { }` (POSIX form) |
 | `source file` | `. file` (POSIX form) |
 | `BASH_SOURCE` | `$0` (different semantics in sourced files) |
-| `declare -A` (assoc arrays) | No equivalent -- restructure the logic |
-| `set -o pipefail` | Not POSIX -- check `${PIPESTATUS[@]}` equivalent doesn't exist either |
+| `declare -A` (assoc arrays) | No equivalent - restructure the logic |
+| `set -o pipefail` | Not POSIX - check `${PIPESTATUS[@]}` equivalent doesn't exist either |
 | `$RANDOM` | Read from `/dev/urandom`: `od -An -N2 -tu2 /dev/urandom` |
 | `${ cmd; }` / `${| cmd; }` | `$(cmd)` (forks a subshell) |
 

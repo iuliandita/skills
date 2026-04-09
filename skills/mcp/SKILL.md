@@ -40,11 +40,11 @@ become yet another server with preventable injection vulnerabilities.
 
 ## When NOT to use
 
-- General REST API development that doesn't use MCP -- just write the API
-- Claude API / Anthropic SDK usage -- use **claude-api**
-- Security auditing existing servers across a codebase -- use **security-audit** (it has an MCP section)
-- Using MCP browsing tools to browse or scrape web pages -- use **browse**
-- Writing prompts for LLMs (not MCP prompt resources) -- use **prompt-generator**
+- General REST API development that doesn't use MCP - just write the API
+- Claude API / Anthropic SDK usage - use **claude-api**
+- Security auditing existing servers across a codebase - use **security-audit** (it has an MCP section)
+- Using MCP browsing tools to browse or scrape web pages - use **browse**
+- Writing prompts for LLMs (not MCP prompt resources) - use **prompt-generator**
 
 ---
 
@@ -71,7 +71,7 @@ When generating or reviewing MCP server code, verify each item before presenting
 
 ## Workflow
 
-**Build vs. Review:** Steps 1-6 are for building new servers. When reviewing existing MCP server code: (1) scope using Step 1 questions -- what tools, transport, and auth does the server use; (2) audit each tool handler against Step 3 injection vectors and the AI Self-Check; (3) cross-reference the Common Mistakes section for patterns AI models frequently introduce.
+**Build vs. Review:** Steps 1-6 are for building new servers. When reviewing existing MCP server code: (1) scope using Step 1 questions - what tools, transport, and auth does the server use; (2) audit each tool handler against Step 3 injection vectors and the AI Self-Check; (3) cross-reference the Common Mistakes section for patterns AI models frequently introduce.
 
 ### Step 1: Determine the server's purpose
 
@@ -165,10 +165,10 @@ function safePath(base: string, userInput: string): string {
 }
 ```
 
-**Before/after -- applying safePath() to a vulnerable tool handler:**
+**Before/after - applying safePath() to a vulnerable tool handler:**
 
 ```typescript
-// BEFORE (vulnerable -- user controls path directly)
+// BEFORE (vulnerable - user controls path directly)
 server.tool("read_file", "Read a project file",
   { path: z.string() },
   async ({ path: filePath }) => {
@@ -177,7 +177,7 @@ server.tool("read_file", "Read a project file",
   }
 );
 
-// AFTER (safe -- resolved path validated against allowed base)
+// AFTER (safe - resolved path validated against allowed base)
 server.tool("read_file", "Read a project file",
   { path: z.string().max(500) },
   async ({ path: filePath }) => {
@@ -219,7 +219,7 @@ Client Registration (DCR is a fallback, not a requirement).
 
 MCP elicitation lets servers request structured input from users mid-task.
 
-**Schema restrictions** -- elicitation schemas are limited to flat objects with primitive fields:
+**Schema restrictions** - elicitation schemas are limited to flat objects with primitive fields:
 - `string` (with optional `format`: email, uri, date, date-time)
 - `number` / `integer` (with `minimum`, `maximum`)
 - `boolean`
@@ -257,11 +257,11 @@ These attacks target tool metadata, not tool execution.
 AI model into exfiltrating data or calling unintended tools. Descriptions are visible to the
 model but often hidden from users in the UI.
 
-**Rug pull attacks**: server changes tool definitions after initial approval -- clean version
+**Rug pull attacks**: server changes tool definitions after initial approval - clean version
 during onboarding, malicious version later.
 
 **Server-side defenses:**
-- Write clear, honest tool descriptions -- no hidden instructions
+- Write clear, honest tool descriptions - no hidden instructions
 - Do not include executable logic or injection payloads in descriptions
 - Keep descriptions minimal and factual
 - Treat `annotations` as advisory (untrusted on the client side)
@@ -277,36 +277,36 @@ during onboarding, malicious version later.
 
 AI models consistently make these errors when generating MCP server code:
 
-1. **Shell commands via string interpolation** -- the #1 vulnerability. Always use
+1. **Shell commands via string interpolation** - the #1 vulnerability. Always use
    argument arrays for system commands.
-2. **Missing server-side validation** -- generating `inputSchema` but never validating
+2. **Missing server-side validation** - generating `inputSchema` but never validating
    against it in the handler. The client may skip validation.
-3. **Bare `"type": "string"` in schemas** -- no `maxLength`, no `pattern`, no constraints.
+3. **Bare `"type": "string"` in schemas** - no `maxLength`, no `pattern`, no constraints.
    Accepts any string of any length.
-4. **Binding HTTP to `0.0.0.0`** -- exposes local servers to the network. Use `127.0.0.1`.
-5. **No `Origin` header validation** -- enables DNS rebinding against local servers.
-6. **Leaking error details** -- stack traces, file paths, or DB errors in tool responses.
-7. **Token passthrough** -- accepting OAuth tokens meant for other services without
+4. **Binding HTTP to `0.0.0.0`** - exposes local servers to the network. Use `127.0.0.1`.
+5. **No `Origin` header validation** - enables DNS rebinding against local servers.
+6. **Leaking error details** - stack traces, file paths, or DB errors in tool responses.
+7. **Token passthrough** - accepting OAuth tokens meant for other services without
    audience validation.
-8. **Hallucinating SDK methods** -- inventing API calls that don't exist. Verify every
+8. **Hallucinating SDK methods** - inventing API calls that don't exist. Verify every
    method against the actual SDK docs.
-9. **Ignoring elicitation actions** -- handling `accept` but crashing on `decline`/`cancel`.
-10. **No graceful shutdown** -- missing SIGINT/SIGTERM handlers on stdio servers.
+9. **Ignoring elicitation actions** - handling `accept` but crashing on `decline`/`cancel`.
+10. **No graceful shutdown** - missing SIGINT/SIGTERM handlers on stdio servers.
 
 ---
 
 ## Reference Files
 
-- `references/security.md` -- OAuth 2.1 details, known CVEs, injection test payloads,
+- `references/security.md` - OAuth 2.1 details, known CVEs, injection test payloads,
   SSRF prevention, session management, and tool poisoning defense
 
 ## Related Skills
 
-- **security-audit** -- for auditing MCP servers as part of a broader security review. The
+- **security-audit** - for auditing MCP servers as part of a broader security review. The
   security-audit skill's ASI and MCP sections cover vulnerability patterns; this skill covers
   building servers correctly from the start.
-- **code-review** -- for reviewing MCP server code for correctness beyond security.
-- **docker** -- for containerizing MCP servers with minimal capabilities.
+- **code-review** - for reviewing MCP server code for correctness beyond security.
+- **docker** - for containerizing MCP servers with minimal capabilities.
 
 ---
 
@@ -316,7 +316,7 @@ AI models consistently make these errors when generating MCP server code:
    validation (Zod, Pydantic) with explicit types, ranges, and constraints.
 2. **No shell execution with string interpolation.** Use argument arrays for system commands.
 3. **Keep descriptions concise.** Some clients truncate long descriptions. A few sentences
-   covering what the tool does and its parameters -- not implementation details.
+   covering what the tool does and its parameters - not implementation details.
 4. **Authenticate when handling user data.** Use OAuth 2.1 with PKCE for remote servers that
    access user data. Auth is optional per spec but strongly recommended.
 5. **Return structured errors.** MCP error codes + human-readable messages. No stack traces.

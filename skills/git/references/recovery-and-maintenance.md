@@ -8,7 +8,7 @@ Research date: March 2026.
 
 ## Recovery Operations
 
-### The reflog -- git's safety net
+### The reflog - git's safety net
 
 The reflog records every HEAD movement for 90 days. Almost nothing is truly lost in git.
 
@@ -33,7 +33,7 @@ git reset --hard HEAD@{5}  # number from reflog
 ```
 
 **Reflog is local only.** It's not pushed to remotes. If you need to recover after a re-clone,
-the reflog is gone. This is why `--force-with-lease` is safer than `--force` -- it at least
+the reflog is gone. This is why `--force-with-lease` is safer than `--force` - it at least
 checks the remote state.
 
 ### Undo operations
@@ -54,7 +54,7 @@ checks the remote state.
 **Rule**: prefer `revert` over `reset` for shared branches. `revert` creates a new commit
 (safe), `reset` rewrites history (requires force-push).
 
-### Bisect -- find the commit that broke things
+### Bisect - find the commit that broke things
 
 ```bash
 # Start bisect
@@ -74,7 +74,7 @@ git bisect bad    # if this commit is broken
 
 # Automated bisect (run a test script)
 git bisect start HEAD v1.0.0
-git bisect run bun test -- src/auth.test.ts
+git bisect run bun test - src/auth.test.ts
 
 # Automated bisect with a custom CI check script
 # The script must exit 0 (good), 1-124 or 128-255 (bad), or 125 (skip)
@@ -84,7 +84,7 @@ git bisect run ./scripts/bisect-check.sh
 # Example bisect-check.sh:
 #   #!/usr/bin/env bash
 #   set -euo pipefail
-#   npm ci --silent 2>/dev/null && npm test -- --filter="auth" 2>/dev/null
+#   npm ci --silent 2>/dev/null && npm test - --filter="auth" 2>/dev/null
 #   # Exit code 0 = good commit, non-zero = bad commit
 
 # Bisect with make target
@@ -159,7 +159,7 @@ multiple stashes, use `git stash list` and apply by index.
 
 ## History Rewriting
 
-### Interactive rebase (manual only -- never automated)
+### Interactive rebase (manual only - never automated)
 
 Interactive rebase (`git rebase -i`) requires a TTY. Never use it in automated/AI contexts.
 Instead, use specific rebase operations:
@@ -178,7 +178,7 @@ git rebase origin/main
 git rebase --autosquash origin/main
 ```
 
-### git-filter-repo -- the right tool for history rewriting
+### git-filter-repo - the right tool for history rewriting
 
 `git-filter-repo` (Python) replaces the deprecated `git filter-branch`. It's faster, safer,
 and handles edge cases that filter-branch misses.
@@ -218,7 +218,7 @@ git push origin --force --tags
 
 ---
 
-## Rerere -- remember conflict resolutions
+## Rerere - remember conflict resolutions
 
 `rerere` (reuse recorded resolution) records how you resolve merge conflicts and automatically
 applies the same resolution next time.
@@ -238,7 +238,7 @@ git rerere forget <file>
 ```
 
 Particularly useful for long-lived feature branches that frequently rebase against a moving
-base branch -- you resolve each conflict once, and rerere handles it on subsequent rebases.
+base branch - you resolve each conflict once, and rerere handles it on subsequent rebases.
 
 ---
 
@@ -423,4 +423,4 @@ Regular maintenance for healthy repos:
 - [ ] **Run gc if needed**: `git gc` (usually automatic, but manual after large filter-repo ops)
 - [ ] **Update hooks**: check pre-commit config is current, hook tools are up to date
 - [ ] **Review .gitignore**: new tools, new build artifacts, new AI tooling dirs
-- [ ] **Check credential helper**: `git config credential.helper` -- ensure it's not `store` (plaintext)
+- [ ] **Check credential helper**: `git config credential.helper` - ensure it's not `store` (plaintext)

@@ -1,7 +1,7 @@
 ---
 name: zero-day
 description: >
-  · Hunt for novel vulnerabilities in source code, binaries, or live systems -- reverse
+  · Hunt for novel vulnerabilities in source code, binaries, or live systems - reverse
   engineering, patch diffing, fuzzing, attack surface mapping, PoC development, and
   responsible disclosure. Triggers: 'zero-day', '0-day', 'vulnerability research',
   'variant analysis', 'patch diffing', 'fuzz', 'exploit dev', 'CVE', 'PoC', 'reverse
@@ -22,7 +22,7 @@ Systematic methodology for finding novel, undisclosed vulnerabilities in source 
 binaries, and live systems. This skill guides the research process from intelligence gathering
 through proof-of-concept development to responsible disclosure.
 
-This is the *discovery* skill -- it finds vulnerabilities nobody has catalogued yet. For
+This is the *discovery* skill - it finds vulnerabilities nobody has catalogued yet. For
 exploiting known weaknesses on live systems, use **lockpick**. For scanning code against known
 vulnerability patterns, use **security-audit**.
 
@@ -38,7 +38,7 @@ vulnerability patterns, use **security-audit**.
 
 - Hunting for undisclosed vulnerabilities in a codebase, binary, or running service
 - Variant analysis after a CVE is published (finding similar bugs in related code)
-- Patch diffing -- analyzing what a security update fixed to find nearby issues
+- Patch diffing - analyzing what a security update fixed to find nearby issues
 - Developing proof-of-concept exploits for discovered vulnerabilities
 - Attack surface mapping before a focused security engagement
 - Gathering threat intelligence on a target's technology stack
@@ -71,7 +71,7 @@ Before reporting any vulnerability or generating exploit code, verify:
 - [ ] **No collateral damage**: PoC doesn't destroy data, DoS production, or affect other users
 - [ ] **Disclosure plan**: findings destined for responsible disclosure, not public dump
 - [ ] **Evidence preserved**: all analysis steps documented for reproducibility
-- [ ] **Complexity honest**: if exploitation requires unlikely conditions (specific config, race window, chained bugs), state that clearly -- don't inflate impact
+- [ ] **Complexity honest**: if exploitation requires unlikely conditions (specific config, race window, chained bugs), state that clearly - don't inflate impact
 
 ---
 
@@ -98,12 +98,12 @@ searchsploit TARGET_NAME 2>/dev/null || echo "searchsploit not installed (apt in
 ```
 
 **Community sources to check** (use web search):
-- **oss-security mailing list** -- where researchers post before/alongside CVEs
-- **Full Disclosure** -- uncoordinated disclosures, PoCs
-- **r/netsec**, **r/ReverseEngineering**, **Hacker News** -- community discussion, writeups, early signal
-- **Project-specific bug trackers** -- Chromium, Firefox, Linux kernel, etc.
-- **Vendor security bulletins** -- Microsoft Patch Tuesday, Apple security updates, etc.
-- **Twitter/X** -- #0day, #bugbounty, researcher accounts, vendor security teams
+- **oss-security mailing list** - where researchers post before/alongside CVEs
+- **Full Disclosure** - uncoordinated disclosures, PoCs
+- **r/netsec**, **r/ReverseEngineering**, **Hacker News** - community discussion, writeups, early signal
+- **Project-specific bug trackers** - Chromium, Firefox, Linux kernel, etc.
+- **Vendor security bulletins** - Microsoft Patch Tuesday, Apple security updates, etc.
+- **Twitter/X** - #0day, #bugbounty, researcher accounts, vendor security teams
 
 **What to extract:**
 - Recently patched vulnerability classes (variant analysis targets)
@@ -112,7 +112,7 @@ searchsploit TARGET_NAME 2>/dev/null || echo "searchsploit not installed (apt in
 - Unfixed issues in bug trackers marked as security-sensitive
 
 **Proceed to Phase 1 when:** you have a clear picture of recent CVEs, active research, and
-community attention on the target or its ecosystem. If nothing comes up, that's still useful --
+community attention on the target or its ecosystem. If nothing comes up, that's still useful -
 it means fewer known attack patterns to build on, so original research matters more.
 
 ### Phase 1: Target Profiling
@@ -130,7 +130,7 @@ tokei . 2>/dev/null || (find . -name '*.py' -o -name '*.js' -o -name '*.ts' -o -
 # Dependencies (attack surface via supply chain)
 cat package.json requirements.txt go.mod Cargo.toml pom.xml 2>/dev/null | head -80
 
-# Entry points -- where external input enters the system
+# Entry points - where external input enters the system
 grep -rn 'app\.\(get\|post\|put\|delete\|patch\|use\)\|@app\.route\|@RequestMapping\|func.*http\.Handler\|#\[.*route\]' --include='*.py' --include='*.js' --include='*.ts' --include='*.go' --include='*.rs' --include='*.java' . 2>/dev/null | head -30
 
 # Parser/deserializer locations (high-value targets)
@@ -139,14 +139,14 @@ grep -rn 'parse\|deserialize\|unmarshal\|decode\|from_bytes\|read_struct\|unpack
 # Security-sensitive operations
 grep -rn 'exec\|system\|popen\|eval\|spawn\|crypto\|encrypt\|decrypt\|hash\|sign\|verify\|auth\|token\|session\|cookie\|jwt' --include='*.py' --include='*.js' --include='*.ts' --include='*.go' --include='*.rs' . 2>/dev/null | head -40
 
-# Git history -- recent security-related changes
+# Git history - recent security-related changes
 git log --oneline --all --grep='CVE\|vuln\|security\|fix\|patch\|overflow\|inject\|bypass\|sanitize' | head -20
 ```
 
 **Language-specific high-value targets** (where memory corruption hides in "safe" languages):
-- **Rust**: `unsafe` blocks and FFI boundaries -- memory corruption enters here
-- **Go**: `import "C"` (CGo) -- C code behind Go interface, plus marshaling bugs
-- **Java**: `native` methods (JNI) -- C/C++ code callable from managed code
+- **Rust**: `unsafe` blocks and FFI boundaries - memory corruption enters here
+- **Go**: `import "C"` (CGo) - C code behind Go interface, plus marshaling bugs
+- **Java**: `native` methods (JNI) - C/C++ code callable from managed code
 
 **For binaries (Linux/macOS):**
 
@@ -164,7 +164,7 @@ checksec --file=TARGET_BINARY 2>/dev/null || (
 # Linked libraries (attack surface)
 ldd TARGET_BINARY 2>/dev/null || otool -L TARGET_BINARY 2>/dev/null
 
-# Strings -- low-hanging fruit (URLs, paths, format strings, debug messages)
+# Strings - low-hanging fruit (URLs, paths, format strings, debug messages)
 strings -n 8 TARGET_BINARY | grep -iE 'http://\|https://\|/tmp/\|/etc/\|password\|key\|token\|%s\|%d\|%x\|%n\|debug\|error\|fail' | head -40
 
 # Symbols (if not stripped)
@@ -180,13 +180,13 @@ readelf -s TARGET_BINARY 2>/dev/null | grep -v 'UND\|LOCAL' | head -30
 # PE headers and architecture (Visual Studio tools or dumpbin)
 dumpbin /headers TARGET.exe | Select-String "machine|subsystem|entry point"
 
-# Security mitigations -- use PE-bear, winchecksec, or dumpbin
+# Security mitigations - use PE-bear, winchecksec, or dumpbin
 winchecksec.exe TARGET.exe   # shows ASLR, DEP, CFG, ACG, CET, SEH, SafeSEH, GS
 # Or manually via dumpbin:
 dumpbin /headers TARGET.exe | Select-String "DLL characteristics"
 # Look for: DYNAMIC_BASE (ASLR), NX_COMPAT (DEP), GUARD_CF (CFG), HIGH_ENTROPY_VA
 
-# Imports -- what DLLs and functions does it call?
+# Imports - what DLLs and functions does it call?
 dumpbin /imports TARGET.exe | Select-String "kernel32|ntdll|ws2_32|advapi32|shell32"
 
 # Exports (for DLLs)
@@ -233,20 +233,20 @@ If everything is low-priority, reconsider whether this target is worth deep anal
 ### Phase 2: Vulnerability Class Selection
 
 Based on the target profile, select which vulnerability classes to hunt. Don't search for
-everything -- pick 2-3 classes most likely to yield results given the target's language,
+everything - pick 2-3 classes most likely to yield results given the target's language,
 architecture, and attack surface.
 
 Read `references/vulnerability-classes.md` for the full catalog organized by:
 
-1. **Memory corruption** (C/C++, unsafe Rust, CGo) -- buffer overflows, use-after-free, double-free, integer overflow/underflow, type confusion, uninitialized memory
-2. **Injection** (all languages) -- SQL, command, LDAP, template, header, CRLF, expression language
-3. **Logic flaws** (all languages) -- authentication bypass, authorization gaps, race conditions (TOCTOU), state machine violations, business logic abuse
-4. **Deserialization** (Java, Python, PHP, .NET, Ruby) -- insecure deserialization, gadget chains, type confusion via polymorphism
-5. **Cryptographic** (all languages) -- weak algorithms, nonce reuse, padding oracles, timing side channels, key management errors
-6. **Web-specific** (web apps) -- novel XSS (mXSS, DOM clobbering), SSTI, prototype pollution chains, SSRF, path traversal, cache poisoning
-7. **Binary-specific** (compiled) -- format string bugs, heap metadata corruption, ROP/JOP gadget availability, signal handler races
-8. **Supply chain** (all ecosystems) -- dependency confusion, typosquatting, compromised maintainer accounts, malicious updates
-9. **Cloud-native** (AWS, GCP, Azure, managed services) -- IMDS abuse, IAM confused deputy, cross-tenant isolation failures, serverless event injection, managed DB/Kafka misconfigs
+1. **Memory corruption** (C/C++, unsafe Rust, CGo) - buffer overflows, use-after-free, double-free, integer overflow/underflow, type confusion, uninitialized memory
+2. **Injection** (all languages) - SQL, command, LDAP, template, header, CRLF, expression language
+3. **Logic flaws** (all languages) - authentication bypass, authorization gaps, race conditions (TOCTOU), state machine violations, business logic abuse
+4. **Deserialization** (Java, Python, PHP, .NET, Ruby) - insecure deserialization, gadget chains, type confusion via polymorphism
+5. **Cryptographic** (all languages) - weak algorithms, nonce reuse, padding oracles, timing side channels, key management errors
+6. **Web-specific** (web apps) - novel XSS (mXSS, DOM clobbering), SSTI, prototype pollution chains, SSRF, path traversal, cache poisoning
+7. **Binary-specific** (compiled) - format string bugs, heap metadata corruption, ROP/JOP gadget availability, signal handler races
+8. **Supply chain** (all ecosystems) - dependency confusion, typosquatting, compromised maintainer accounts, malicious updates
+9. **Cloud-native** (AWS, GCP, Azure, managed services) - IMDS abuse, IAM confused deputy, cross-tenant isolation failures, serverless event injection, managed DB/Kafka misconfigs
 
 **Selection heuristic:**
 - C/C++ binary -> memory corruption first, always
@@ -259,7 +259,7 @@ Read `references/vulnerability-classes.md` for the full catalog organized by:
 
 **When classes tie:** prioritize by exploitability ceiling. Memory corruption and deserialization
 yield RCE most reliably. Injection is next. Logic flaws require deeper understanding but produce
-the most creative findings -- pick these when the target has a complex state machine or multi-step
+the most creative findings - pick these when the target has a complex state machine or multi-step
 auth flow.
 
 **Proceed to Phase 3 when:** you've selected 2-3 vulnerability classes and can articulate why
@@ -275,19 +275,19 @@ vulnerability class first (same attack surface, different class). If that fails 
 the attack surface. Switching both simultaneously means you learned nothing from the first
 attempt.
 
-**Source code -- manual taint analysis:**
+**Source code - manual taint analysis:**
 
 Read `references/taint-analysis.md` for the full methodology. Summary:
 
-1. Identify **sources** -- where external/untrusted data enters (HTTP params, file reads, env vars, IPC, database results from user-controlled queries)
-2. Identify **sinks** -- where data causes impact (exec, SQL, file writes, memory operations, crypto operations, response bodies)
+1. Identify **sources** - where external/untrusted data enters (HTTP params, file reads, env vars, IPC, database results from user-controlled queries)
+2. Identify **sinks** - where data causes impact (exec, SQL, file writes, memory operations, crypto operations, response bodies)
 3. Trace every path from source to sink. For each path:
    - What sanitization/validation exists?
    - Can the sanitization be bypassed? (encoding tricks, type juggling, truncation)
    - Are there paths that skip sanitization entirely? (error handlers, fallback paths, admin routes)
    - Does the data pass through a transformation that changes its security properties? (base64, URL encoding, serialization)
 
-**Source code -- variant analysis:**
+**Source code - variant analysis:**
 
 When a CVE is published for a component you're reviewing:
 
@@ -296,13 +296,13 @@ When a CVE is published for a component you're reviewing:
 3. Search the codebase for the same pattern:
 
 ```bash
-# CodeQL (if available) -- write a query for the pattern
+# CodeQL (if available) - write a query for the pattern
 codeql query run --database=TARGET_DB path/to/variant-query.ql
 
-# Semgrep -- write a custom rule
+# Semgrep - write a custom rule
 semgrep --config path/to/variant-rule.yaml .
 
-# Joern (code property graph) -- query for dataflow pattern
+# Joern (code property graph) - query for dataflow pattern
 joern --script path/to/variant-query.sc
 
 # Manual grep for structural similarity
@@ -315,10 +315,10 @@ grep -rn 'PATTERN' --include='*.EXT' . | head -30
 
 Read `references/binary-analysis.md` for the full methodology covering:
 
-1. **Static analysis** -- Ghidra/Rizin decompilation, function identification, cross-references
-2. **Patch diffing** -- BinDiff/Diaphora to compare pre-patch and post-patch binaries, identify fixed functions, understand the vulnerability class
-3. **Dynamic analysis** -- GDB/LLDB debugging, strace/ltrace syscall tracing, input/output observation
-4. **Fuzzing** -- AFL++ harness writing, corpus selection, crash triage
+1. **Static analysis** - Ghidra/Rizin decompilation, function identification, cross-references
+2. **Patch diffing** - BinDiff/Diaphora to compare pre-patch and post-patch binaries, identify fixed functions, understand the vulnerability class
+3. **Dynamic analysis** - GDB/LLDB debugging, strace/ltrace syscall tracing, input/output observation
+4. **Fuzzing** - AFL++ harness writing, corpus selection, crash triage
 
 **System analysis:**
 
@@ -332,19 +332,19 @@ Read `references/binary-analysis.md` for the full methodology covering:
 
 Read `references/vulnerability-classes.md` section 9 for the full catalog. Key methodology:
 
-1. **Enumerate IAM** -- map roles, policies, and trust relationships. Look for `sts:AssumeRole`
+1. **Enumerate IAM** - map roles, policies, and trust relationships. Look for `sts:AssumeRole`
    without `ExternalId`, wildcard permissions, and dangerous combos (`iam:PassRole` + service creation)
-2. **Test IMDS reachability** -- from every SSRF-capable endpoint, attempt metadata access.
+2. **Test IMDS reachability** - from every SSRF-capable endpoint, attempt metadata access.
    Check IMDSv1 vs v2 enforcement. Even partial SSRF (no response body) can leak via DNS
-3. **Probe managed service isolation** -- can tenant A's credentials reach tenant B's resources?
+3. **Probe managed service isolation** - can tenant A's credentials reach tenant B's resources?
    Test across RDS instances, Kafka topics, K8s namespaces, S3 buckets
-4. **Audit serverless event sources** -- Lambda/Cloud Function triggers (S3, SNS, API Gateway,
+4. **Audit serverless event sources** - Lambda/Cloud Function triggers (S3, SNS, API Gateway,
    Kafka) pass event payloads as untrusted input. Trace from event to sink like any other taint analysis
-5. **Check for direct backend access** -- bypass API gateways by hitting the backend service
+5. **Check for direct backend access** - bypass API gateways by hitting the backend service
    URL directly. Many "protected" APIs are only protected by the gateway, not the service itself
 
 **Proceed to Phase 4 when:** you have a specific, reproducible trigger condition for a
-vulnerability. "This buffer can overflow" is not enough -- you need the exact input or sequence
+vulnerability. "This buffer can overflow" is not enough - you need the exact input or sequence
 that causes it.
 
 ### Phase 4: Proof of Concept
@@ -353,10 +353,10 @@ A vulnerability without a PoC is a theory. Build one.
 
 **PoC requirements:**
 - Triggers the vulnerability reliably (not "sometimes crashes")
-- Demonstrates security impact (code execution, data leak, auth bypass -- not just a crash dump)
-- Minimal -- smallest possible input/sequence that triggers the bug
-- Self-contained -- another researcher can reproduce it without your environment
-- Non-destructive -- doesn't delete data, DoS production, or cause lasting damage
+- Demonstrates security impact (code execution, data leak, auth bypass - not just a crash dump)
+- Minimal - smallest possible input/sequence that triggers the bug
+- Self-contained - another researcher can reproduce it without your environment
+- Non-destructive - doesn't delete data, DoS production, or cause lasting damage
 
 Before investing in a full exploit, check mitigations (`checksec` / `winchecksec`). Full
 RELRO + PIE + canary + NX + CFI makes RCE impractical for most targets. A controlled crash
@@ -366,13 +366,13 @@ or info leak PoC is still valuable for disclosure.
 
 Read `references/exploit-patterns.md` for detailed PoC templates covering:
 
-1. **Memory corruption** -- crafted input to trigger overflow, heap spray for reliability, ROP chain for code execution
-2. **Injection** -- payload that demonstrates data exfiltration or command execution
-3. **Logic flaw** -- step-by-step request sequence that bypasses intended controls
-4. **Deserialization** -- crafted serialized object with gadget chain
-5. **Crypto** -- script that recovers key material or forges signatures
-6. **SSRF/path traversal** -- request that reads internal resources or sensitive files
-7. **Cloud/IAM** -- demonstrate credential theft via IMDS, cross-tenant access, or privilege escalation via IAM policy chain
+1. **Memory corruption** - crafted input to trigger overflow, heap spray for reliability, ROP chain for code execution
+2. **Injection** - payload that demonstrates data exfiltration or command execution
+3. **Logic flaw** - step-by-step request sequence that bypasses intended controls
+4. **Deserialization** - crafted serialized object with gadget chain
+5. **Crypto** - script that recovers key material or forges signatures
+6. **SSRF/path traversal** - request that reads internal resources or sensitive files
+7. **Cloud/IAM** - demonstrate credential theft via IMDS, cross-tenant access, or privilege escalation via IAM policy chain
 
 **Testing the PoC:**
 - Run against a local/lab copy of the target, never production
@@ -432,11 +432,11 @@ Use the FIRST CVSS calculator: https://www.first.org/cvss/calculator/4.0
 [Recommended remediation approach]
 
 ## Timeline
-- [date] -- Vulnerability discovered
-- [date] -- Vendor notified via [channel]
-- [date] -- Vendor acknowledged
-- [date] -- Patch released (pending)
-- [date] -- Public disclosure (coordinated)
+- [date] - Vulnerability discovered
+- [date] - Vendor notified via [channel]
+- [date] - Vendor acknowledged
+- [date] - Patch released (pending)
+- [date] - Public disclosure (coordinated)
 
 ## Credit
 [Researcher name/handle]
@@ -460,20 +460,20 @@ and when to reach for each tool during source, binary, or live-system analysis.
 
 ## Reference Files
 
-- `references/vulnerability-classes.md` -- full vulnerability class catalog with detection patterns, common root causes, language-specific variants, and novel web vectors (mXSS, DOM clobbering, SSTI by engine, prototype pollution gadget chains)
-- `references/taint-analysis.md` -- manual data flow analysis methodology for source code, with worked examples per language
-- `references/binary-analysis.md` -- binary reverse engineering workflow, patch diffing, fuzzing harness development, dynamic analysis
-- `references/exploit-patterns.md` -- proof-of-concept development templates by vulnerability class, with safety guidelines
-- `references/tooling-quick-reference.md` -- tool catalog with install paths and best-fit usage notes
+- `references/vulnerability-classes.md` - full vulnerability class catalog with detection patterns, common root causes, language-specific variants, and novel web vectors (mXSS, DOM clobbering, SSTI by engine, prototype pollution gadget chains)
+- `references/taint-analysis.md` - manual data flow analysis methodology for source code, with worked examples per language
+- `references/binary-analysis.md` - binary reverse engineering workflow, patch diffing, fuzzing harness development, dynamic analysis
+- `references/exploit-patterns.md` - proof-of-concept development templates by vulnerability class, with safety guidelines
+- `references/tooling-quick-reference.md` - tool catalog with install paths and best-fit usage notes
 
 ---
 
 ## Related Skills
 
-- **security-audit** -- scans for *known* vulnerability patterns (OWASP, CVEs, misconfigs) using automated tools. Zero-day finds *novel* vulnerabilities through deep manual analysis. Use security-audit for breadth; use zero-day for depth. If security-audit finds something interesting, zero-day can investigate whether it's the tip of a larger iceberg.
-- **lockpick** -- exploits vulnerabilities on *live systems* for privilege escalation and lateral movement. Zero-day *discovers* the vulnerabilities. Use zero-day to find the bug, lockpick to demonstrate exploitation on a live target. Zero-day's system mode hands off to lockpick once a vulnerability is confirmed.
-- **code-review** -- finds correctness bugs (logic errors, race conditions). Zero-day finds *security-relevant* logic flaws. Overlap: a race condition is both a bug and potentially a vulnerability. Zero-day owns it when exploitability is the question.
-- **networking** -- configures and troubleshoots network services. Zero-day may analyze these services for vulnerabilities but doesn't configure them.
+- **security-audit** - scans for *known* vulnerability patterns (OWASP, CVEs, misconfigs) using automated tools. Zero-day finds *novel* vulnerabilities through deep manual analysis. Use security-audit for breadth; use zero-day for depth. If security-audit finds something interesting, zero-day can investigate whether it's the tip of a larger iceberg.
+- **lockpick** - exploits vulnerabilities on *live systems* for privilege escalation and lateral movement. Zero-day *discovers* the vulnerabilities. Use zero-day to find the bug, lockpick to demonstrate exploitation on a live target. Zero-day's system mode hands off to lockpick once a vulnerability is confirmed.
+- **code-review** - finds correctness bugs (logic errors, race conditions). Zero-day finds *security-relevant* logic flaws. Overlap: a race condition is both a bug and potentially a vulnerability. Zero-day owns it when exploitability is the question.
+- **networking** - configures and troubleshoots network services. Zero-day may analyze these services for vulnerabilities but doesn't configure them.
 
 ---
 

@@ -36,7 +36,7 @@ Name=enp0s3.100
 Address=10.0.100.1/24
 ```
 
-### Persistent VLANs (Netplan -- Ubuntu/Debian)
+### Persistent VLANs (Netplan - Ubuntu/Debian)
 
 ```yaml
 network:
@@ -74,7 +74,7 @@ table inet filter {
 ### Trunk vs access ports
 
 - **Trunk port**: carries multiple VLANs (tagged traffic). The physical interface on the Linux
-  router/server is a trunk -- it receives 802.1Q-tagged frames.
+  router/server is a trunk - it receives 802.1Q-tagged frames.
 - **Access port**: carries one VLAN (untagged). End-host ports on the switch.
 
 The switch must be configured to trunk the VLANs to the Linux host's physical port.
@@ -223,7 +223,7 @@ nft -f /etc/nftables.conf
 
 Do NOT mix nftables and iptables on the same system. They share the same kernel hooks and
 can conflict. On modern distros, `iptables` is often a wrapper around nftables (iptables-nft).
-Check with: `iptables --version` -- if it says `nf_tables`, it's the nft backend.
+Check with: `iptables --version` - if it says `nf_tables`, it's the nft backend.
 
 Migration: `iptables-save | iptables-restore-translate > /etc/nftables.conf`
 
@@ -309,10 +309,10 @@ A common pattern for homelabs with VLANs:
 | 100 | 10.100.0.0/24 | WireGuard VPN |
 
 **Rules of thumb:**
-- Don't use 192.168.0.0/24 or 192.168.1.0/24 for VPN ranges -- they overlap with most home routers
+- Don't use 192.168.0.0/24 or 192.168.1.0/24 for VPN ranges - they overlap with most home routers
 - Use 10.x.x.x/24 ranges for VLANs to avoid conflicts with default home router subnets
 - Keep VPN ranges in a distinct /16 (e.g., 10.100.x.x) to avoid overlap
-- CGNAT range (100.64.0.0/10) is used by Tailscale -- don't overlap if using both
+- CGNAT range (100.64.0.0/10) is used by Tailscale - don't overlap if using both
 
 ### IPv6
 
@@ -325,7 +325,7 @@ IPv6 uses /64 for all regular subnets. Smaller than /64 breaks SLAAC.
 | /64 | Standard subnet (LAN, VLAN) |
 | /56 | Typical ISP delegation to residential |
 | /48 | Typical ISP delegation to business, or ULA site |
-| fd00::/8 | Unique Local Addresses (ULA) -- like RFC 1918 for IPv6 |
+| fd00::/8 | Unique Local Addresses (ULA) - like RFC 1918 for IPv6 |
 | fe80::/10 | Link-local (auto-configured, non-routable) |
 ```
 

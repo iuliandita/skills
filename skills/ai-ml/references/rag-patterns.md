@@ -52,7 +52,7 @@ Use document loaders to normalize content before chunking:
 - [ ] Remove boilerplate (headers, footers, navigation, ads)
 - [ ] Normalize whitespace and encoding (UTF-8)
 - [ ] Extract and preserve metadata (title, date, author, URL)
-- [ ] Handle tables -- convert to text with column headers or extract separately
+- [ ] Handle tables - convert to text with column headers or extract separately
 - [ ] Detect and handle code blocks differently from prose
 - [ ] Remove or replace images with alt text / captions
 
@@ -202,7 +202,7 @@ CREATE EXTENSION IF NOT EXISTS vector;
 CREATE TABLE documents (
     id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     content TEXT NOT NULL,
-    embedding vector(1024) NOT NULL,  -- match your model's dimensions
+    embedding vector(1024) NOT NULL,  - match your model's dimensions
     metadata JSONB DEFAULT '{}',
     created_at TIMESTAMPTZ DEFAULT now()
 );
@@ -400,7 +400,7 @@ def build_prompt(query: str, chunks: list[dict]) -> str:
         for c in chunks
     )
     return f"""Answer the question based on the provided context. If the context doesn't
-contain enough information, say so -- don't make up an answer.
+contain enough information, say so - don't make up an answer.
 
 Context:
 {context}

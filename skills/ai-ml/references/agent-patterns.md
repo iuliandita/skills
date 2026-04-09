@@ -1,6 +1,6 @@
 # Agent Patterns
 
-Detailed patterns for building agent systems -- tool orchestration, state management,
+Detailed patterns for building agent systems - tool orchestration, state management,
 multi-agent architectures, human-in-the-loop, and production deployment.
 
 ---
@@ -23,11 +23,11 @@ multi-agent architectures, human-in-the-loop, and production deployment.
 
 Every agent follows the same core loop:
 
-1. **Observe** -- gather context (user input, tool results, memory)
-2. **Think** -- model decides next action (tool call or final response)
-3. **Act** -- execute the chosen tool
-4. **Update** -- add the result to state
-5. **Check** -- is the task done? If not, loop back to step 1.
+1. **Observe** - gather context (user input, tool results, memory)
+2. **Think** - model decides next action (tool call or final response)
+3. **Act** - execute the chosen tool
+4. **Update** - add the result to state
+5. **Check** - is the task done? If not, loop back to step 1.
 
 The differences between frameworks are in how they manage state persistence,
 handle branching/cycles, and coordinate multiple agents.
