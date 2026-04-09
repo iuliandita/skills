@@ -20,7 +20,9 @@
       "mode": "circuit-breaker",
       "plateau": 2
     },
-    "pool": ["browse"],
+    "pool": [
+      "browse"
+    ],
     "termination": "threshold",
     "scores": {
       "browse": {
@@ -39,19 +41,54 @@
       }
     },
     "iteration_log": [
-      { "iteration": 1, "type": "baseline", "score": 90.5 },
-      { "iteration": 2, "delta": 4.8, "score": 95.3 },
-      { "iteration": 3, "delta": 1.2, "score": 96.5 },
-      { "iteration": 4, "delta": 0.6, "score": 97.1 },
-      { "iteration": 5, "delta": 0.6, "score": 97.7 },
-      { "iteration": 6, "delta": 0.5, "score": 98.2 },
-      { "iteration": 7, "delta": 0.5, "score": 98.7 },
-      { "iteration": 8, "delta": 0.3, "score": 99.0 }
+      {
+        "iteration": 1,
+        "type": "baseline",
+        "score": 90.5
+      },
+      {
+        "iteration": 2,
+        "delta": 4.8,
+        "score": 95.3
+      },
+      {
+        "iteration": 3,
+        "delta": 1.2,
+        "score": 96.5
+      },
+      {
+        "iteration": 4,
+        "delta": 0.6,
+        "score": 97.1
+      },
+      {
+        "iteration": 5,
+        "delta": 0.6,
+        "score": 97.7
+      },
+      {
+        "iteration": 6,
+        "delta": 0.5,
+        "score": 98.2
+      },
+      {
+        "iteration": 7,
+        "delta": 0.5,
+        "score": 98.7
+      },
+      {
+        "iteration": 8,
+        "delta": 0.3,
+        "score": 99.0
+      }
     ],
     "reverted": 0,
     "contested": 0,
     "cross_model_flags": 0,
-    "meta_changes": ["test-cases.md (+browse)", "conventions.md (+browse inventory)"]
+    "meta_changes": [
+      "test-cases.md (+browse)",
+      "conventions.md (+browse inventory)"
+    ]
   },
   {
     "run_id": "2026-04-05-full-sweep",
@@ -76,47 +113,270 @@
       "plateau": 2
     },
     "pool": [
-      "ai-ml", "ansible", "anti-slop", "arch-btw", "browse", "ci-cd",
-      "code-review", "command-prompt", "databases", "docker",
-      "firewall-appliance", "full-review", "git", "kubernetes", "lockpick",
-      "mcp", "networking", "prompt-generator", "security-audit", "terraform",
-      "testing", "update-docs", "virtualization", "zero-day"
+      "ai-ml",
+      "ansible",
+      "anti-slop",
+      "arch-btw",
+      "browse",
+      "ci-cd",
+      "code-review",
+      "command-prompt",
+      "databases",
+      "docker",
+      "firewall-appliance",
+      "full-review",
+      "git",
+      "kubernetes",
+      "lockpick",
+      "mcp",
+      "networking",
+      "prompt-generator",
+      "security-audit",
+      "terraform",
+      "testing",
+      "update-docs",
+      "virtualization",
+      "zero-day"
     ],
-    "extra_pool": ["cluster-health (gitignored, local-only)"],
+    "extra_pool": [
+      "cluster-health (gitignored, local-only)"
+    ],
     "termination": "plateau + minimum-iterations",
     "scores": {
-      "ai-ml":              { "before": { "composite": 98 }, "after": { "composite": 98 } },
-      "ansible":            { "before": { "composite": 99 }, "after": { "composite": 99 } },
-      "anti-slop":          { "before": { "composite": 97 }, "after": { "composite": 98 } },
-      "arch-btw":           { "before": { "composite": 90 }, "after": { "composite": 97 } },
-      "browse":             { "before": { "composite": 99 }, "after": { "composite": 99 } },
-      "ci-cd":              { "before": { "composite": 93 }, "after": { "composite": 98 } },
-      "code-review":        { "before": { "composite": 97 }, "after": { "composite": 99 } },
-      "command-prompt":     { "before": { "composite": 97 }, "after": { "composite": 98 } },
-      "databases":          { "before": { "composite": 95 }, "after": { "composite": 98 } },
-      "docker":             { "before": { "composite": 99 }, "after": { "composite": 99 } },
-      "firewall-appliance": { "before": { "composite": 93 }, "after": { "composite": 97 } },
-      "full-review":        { "before": { "composite": 85 }, "after": { "composite": 95 } },
-      "git":                { "before": { "composite": 95 }, "after": { "composite": 98 } },
-      "kubernetes":         { "before": { "composite": 93 }, "after": { "composite": 98 } },
-      "lockpick":           { "before": { "composite": 96 }, "after": { "composite": 98 } },
-      "mcp":                { "before": { "composite": 96 }, "after": { "composite": 99 } },
-      "networking":         { "before": { "composite": 95 }, "after": { "composite": 98 } },
-      "prompt-generator":   { "before": { "composite": 97 }, "after": { "composite": 98 } },
-      "security-audit":     { "before": { "composite": 82 }, "after": { "composite": 95 } },
-      "terraform":          { "before": { "composite": 85 }, "after": { "composite": 97 } },
-      "testing":            { "before": { "composite": 97 }, "after": { "composite": 98 } },
-      "update-docs":        { "before": { "composite": 91 }, "after": { "composite": 97 } },
-      "virtualization":     { "before": { "composite": 94 }, "after": { "composite": 98 } },
-      "zero-day":           { "before": { "composite": 92 }, "after": { "composite": 98 } },
-      "cluster-health":     { "before": { "composite": 90 }, "after": { "composite": 94 }, "note": "local-only, gitignored" }
+      "ai-ml": {
+        "before": {
+          "composite": 98
+        },
+        "after": {
+          "composite": 98
+        }
+      },
+      "ansible": {
+        "before": {
+          "composite": 99
+        },
+        "after": {
+          "composite": 99
+        }
+      },
+      "anti-slop": {
+        "before": {
+          "composite": 97
+        },
+        "after": {
+          "composite": 98
+        }
+      },
+      "arch-btw": {
+        "before": {
+          "composite": 90
+        },
+        "after": {
+          "composite": 97
+        }
+      },
+      "browse": {
+        "before": {
+          "composite": 99
+        },
+        "after": {
+          "composite": 99
+        }
+      },
+      "ci-cd": {
+        "before": {
+          "composite": 93
+        },
+        "after": {
+          "composite": 98
+        }
+      },
+      "code-review": {
+        "before": {
+          "composite": 97
+        },
+        "after": {
+          "composite": 99
+        }
+      },
+      "command-prompt": {
+        "before": {
+          "composite": 97
+        },
+        "after": {
+          "composite": 98
+        }
+      },
+      "databases": {
+        "before": {
+          "composite": 95
+        },
+        "after": {
+          "composite": 98
+        }
+      },
+      "docker": {
+        "before": {
+          "composite": 99
+        },
+        "after": {
+          "composite": 99
+        }
+      },
+      "firewall-appliance": {
+        "before": {
+          "composite": 93
+        },
+        "after": {
+          "composite": 97
+        }
+      },
+      "full-review": {
+        "before": {
+          "composite": 85
+        },
+        "after": {
+          "composite": 95
+        }
+      },
+      "git": {
+        "before": {
+          "composite": 95
+        },
+        "after": {
+          "composite": 98
+        }
+      },
+      "kubernetes": {
+        "before": {
+          "composite": 93
+        },
+        "after": {
+          "composite": 98
+        }
+      },
+      "lockpick": {
+        "before": {
+          "composite": 96
+        },
+        "after": {
+          "composite": 98
+        }
+      },
+      "mcp": {
+        "before": {
+          "composite": 96
+        },
+        "after": {
+          "composite": 99
+        }
+      },
+      "networking": {
+        "before": {
+          "composite": 95
+        },
+        "after": {
+          "composite": 98
+        }
+      },
+      "prompt-generator": {
+        "before": {
+          "composite": 97
+        },
+        "after": {
+          "composite": 98
+        }
+      },
+      "security-audit": {
+        "before": {
+          "composite": 82
+        },
+        "after": {
+          "composite": 95
+        }
+      },
+      "terraform": {
+        "before": {
+          "composite": 85
+        },
+        "after": {
+          "composite": 97
+        }
+      },
+      "testing": {
+        "before": {
+          "composite": 97
+        },
+        "after": {
+          "composite": 98
+        }
+      },
+      "update-docs": {
+        "before": {
+          "composite": 91
+        },
+        "after": {
+          "composite": 97
+        }
+      },
+      "virtualization": {
+        "before": {
+          "composite": 94
+        },
+        "after": {
+          "composite": 98
+        }
+      },
+      "zero-day": {
+        "before": {
+          "composite": 92
+        },
+        "after": {
+          "composite": 98
+        }
+      },
+      "cluster-health": {
+        "before": {
+          "composite": 90
+        },
+        "after": {
+          "composite": 94
+        },
+        "note": "local-only, gitignored"
+      }
     },
     "iteration_log": [
-      { "iteration": 1, "type": "baseline", "avg": 94.0, "min": 82, "max": 99 },
-      { "iteration": 2, "max_delta": 9, "avg": 96.7, "improved": 19 },
-      { "iteration": 3, "max_delta": 4, "avg": 97.3, "improved": 4 },
-      { "iteration": 4, "max_delta": 3, "avg": 97.7, "improved": 11 },
-      { "iteration": 5, "max_delta": 1, "avg": 97.9, "improved": 8 }
+      {
+        "iteration": 1,
+        "type": "baseline",
+        "avg": 94.0,
+        "min": 82,
+        "max": 99
+      },
+      {
+        "iteration": 2,
+        "max_delta": 9,
+        "avg": 96.7,
+        "improved": 19
+      },
+      {
+        "iteration": 3,
+        "max_delta": 4,
+        "avg": 97.3,
+        "improved": 4
+      },
+      {
+        "iteration": 4,
+        "max_delta": 3,
+        "avg": 97.7,
+        "improved": 11
+      },
+      {
+        "iteration": 5,
+        "max_delta": 1,
+        "avg": 97.9,
+        "improved": 8
+      }
     ],
     "reverted": 0,
     "contested": 0,
@@ -155,7 +415,9 @@
       "plateau": 2,
       "ceiling": "none"
     },
-    "pool": ["backend-api"],
+    "pool": [
+      "backend-api"
+    ],
     "termination": "plateau",
     "score_basis": "estimated from lint/spec validation, targeted behavioral prompts, source verification, and manual AI-self-check review; not from exhaustive automated rubric execution",
     "scores": {
@@ -176,12 +438,42 @@
       }
     },
     "iteration_log": [
-      { "iteration": 1, "type": "baseline", "score_est": 91.2, "notes": "spec warning on description length; behavior generally sound but under-specified around service house style" },
-      { "iteration": 2, "delta_est": 2.8, "score_est": 94.0, "notes": "trimmed description and clarified service-convention matching" },
-      { "iteration": 3, "delta_est": 1.1, "score_est": 95.1, "notes": "tightened compatibility wording and added cookie/CSRF self-check guidance" },
-      { "iteration": 4, "delta_est": 0.8, "score_est": 95.9, "notes": "refined auth reference: OAuth vs OIDC, CSRF, machine-client language" },
-      { "iteration": 5, "delta_est": 0.9, "score_est": 96.8, "notes": "refined HTTP reference: validation-status and pagination-parameter consistency" },
-      { "iteration": 6, "delta_est": 0.6, "score_est": 97.4, "notes": "added ownership-hiding and command retry semantics; further peer review showed no valid high-signal follow-up changes" }
+      {
+        "iteration": 1,
+        "type": "baseline",
+        "score_est": 91.2,
+        "notes": "spec warning on description length; behavior generally sound but under-specified around service house style"
+      },
+      {
+        "iteration": 2,
+        "delta_est": 2.8,
+        "score_est": 94.0,
+        "notes": "trimmed description and clarified service-convention matching"
+      },
+      {
+        "iteration": 3,
+        "delta_est": 1.1,
+        "score_est": 95.1,
+        "notes": "tightened compatibility wording and added cookie/CSRF self-check guidance"
+      },
+      {
+        "iteration": 4,
+        "delta_est": 0.8,
+        "score_est": 95.9,
+        "notes": "refined auth reference: OAuth vs OIDC, CSRF, machine-client language"
+      },
+      {
+        "iteration": 5,
+        "delta_est": 0.9,
+        "score_est": 96.8,
+        "notes": "refined HTTP reference: validation-status and pagination-parameter consistency"
+      },
+      {
+        "iteration": 6,
+        "delta_est": 0.6,
+        "score_est": 97.4,
+        "notes": "added ownership-hiding and command retry semantics; further peer review showed no valid high-signal follow-up changes"
+      }
     ],
     "reverted": 0,
     "contested": 0,
@@ -215,5 +507,119 @@
       "RFC 9457",
       "RFC 9700"
     ]
+  },
+  {
+    "run_id": "2026-04-09-anti-ai-prose",
+    "branch": "skill-refiner/2026-04-09-anti-ai-prose",
+    "date": "2026-04-09",
+    "primary": {
+      "harness": "claude-code",
+      "model": "claude-opus-4-6",
+      "context": "1M",
+      "note": "primary model change since 2026-04-06 run (codex/gpt-5.4 -> claude-opus-4-6); scores not comparable across runs as baselines"
+    },
+    "secondary": {
+      "harness": "claude-code (fresh-context subagent self-review)",
+      "model": "same as primary",
+      "weight": "5%",
+      "note": "same-model fresh-context review, not cross-model. ran once on accumulated iter 1+2 diff."
+    },
+    "config": {
+      "iterations_max": 3,
+      "iterations_used": 3,
+      "threshold": "none (--no-ceiling)",
+      "mode": "circuit-breaker",
+      "plateau": 2,
+      "ceiling": "none"
+    },
+    "pool": [
+      "anti-ai-prose"
+    ],
+    "termination": "iteration cap (ran all 3 despite plateau from iter 2, per --no-ceiling directive)",
+    "score_basis": "estimated from lint/spec validation, manual AI self-check scoring against skill-creator rubric, and behavioral reasoning against auto-generated test prompts; not from exhaustive automated rubric execution",
+    "scores": {
+      "anti-ai-prose": {
+        "before": {
+          "structural": 100,
+          "ai_self_check_est": 92.9,
+          "behavioral_est": 87,
+          "composite_est": 91.5,
+          "note": "baseline was untracked file; iter 1 polish was applied in the initial add commit"
+        },
+        "after": {
+          "structural": 100,
+          "ai_self_check_est": 100,
+          "behavioral_est": 95,
+          "cross_model": 100,
+          "composite_est": 97.9,
+          "weights": "16/37/42/5 (same-model fresh-context review weighted at 5%)"
+        }
+      }
+    },
+    "iteration_log": [
+      {
+        "iteration": 1,
+        "type": "baseline+improvements",
+        "score_est": 95.6,
+        "delta_est": 4.1,
+        "changes": [
+          "fix self-contradiction on thematic breaks before headings (rule now targets decorative use, not section dividers)",
+          "remove redundant inline Exception block in Vocabulary Tells category (subset of What NOT to Flag)",
+          "add density heuristic to Step 3 (items per 500 words as concrete noise/pattern threshold)"
+        ]
+      },
+      {
+        "iteration": 2,
+        "delta_est": 1.3,
+        "score_est": 96.9,
+        "changes": [
+          "add Scaffolding padding subsection to Tonal Tells (it's worth noting, let's dive into, in this article we'll explore)",
+          "Output Format rigor: omit empty categories, order findings by severity, (cut) notation for deletion fixes, self-application rule"
+        ],
+        "notes": "below default plateau threshold but continued per --no-ceiling"
+      },
+      {
+        "iteration": 3,
+        "delta_est": 1.0,
+        "score_est": 97.9,
+        "changes": [
+          "fix self-contradiction: intro line 21 removed negative-parallelism construction the skill itself bans",
+          "add Hedging and qualifier stacking subsection to Tonal Tells (generally, typically, may, can, stacked qualifiers)",
+          "tighten decorative-breaks bullet (run-on sentence)",
+          "tighten self-application note (remove redundant example)"
+        ],
+        "notes": "peer review on iter 1+2 diff: 0 MAJOR, 4 MINOR concerns, all addressed in this iteration"
+      }
+    ],
+    "reverted": 0,
+    "contested": 0,
+    "cross_model_flags": {
+      "major": 0,
+      "minor": 4,
+      "minor_addressed": 4,
+      "discarded": 0
+    },
+    "changes_summary": {
+      "files_changed": 1,
+      "lines_added": 381,
+      "lines_removed": 0,
+      "commits": 3,
+      "note": "brand new skill - iter 1 commit was the initial add (baseline + polish combined); iter 2 and iter 3 are clean refactor commits on top"
+    },
+    "phase2": {
+      "run": false,
+      "reason": "single-skill run - meta-improvement of skill-creator and skill-refiner does not apply"
+    },
+    "peer_review": {
+      "type": "same-model fresh-context self-review",
+      "scope": "accumulated iter 1+2 diff",
+      "result": "0 MAJOR, 4 MINOR concerns",
+      "minor_concerns": [
+        "hedging pattern not yet covered (addressed in iter 3)",
+        "intro sentence uses negative parallelism the skill bans (addressed in iter 3)",
+        "decorative-breaks bullet is a run-on (addressed in iter 3)",
+        "self-application note partially duplicates AI Self-Check (addressed in iter 3)"
+      ]
+    }
   }
 ]
