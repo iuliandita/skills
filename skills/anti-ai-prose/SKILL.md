@@ -260,6 +260,20 @@ The voice of the text gives away the author even when the words are individually
 
 **Fix:** Delete the whole sentence. If what follows does not make sense without the padding, rewrite the surrounding paragraph.
 
+#### Scaffolding padding
+
+Phrases that wrap around the actual content without adding information. LLMs lean on these to sound organized or conversational.
+
+**Detect:**
+- `it's worth noting that`, `it's important to note`, `it's worth mentioning`
+- `in this article, we'll explore` / `in this guide, we'll cover` (meta-commentary about the piece itself)
+- `let's dive into` / `let's explore` / `let's take a look at`
+- `here's the thing:` / `the fact is:` / `the truth is:`
+- `at the end of the day` / `when all is said and done`
+- `as we've seen` / `as mentioned earlier` / `as previously discussed` (when the reader just read it)
+
+**Fix:** Cut the wrapper and keep the content. `It's worth noting that X` becomes `X`. `In this article, we'll explore Y` becomes a first sentence that is about Y.
+
 #### "Despite its X, faces challenges"
 
 LLMs reach for a formula when asked to describe any organization or project: positives first, then a "however" paragraph listing challenges, often ending with a "future outlook" paragraph.
@@ -323,6 +337,12 @@ These look like AI tells but are not:
 - [overall read: does the piece sound human?]
 - [top-level observation: e.g., "vocabulary is mostly fine but the structure is formulaic"]
 ````
+
+Rules for the report itself:
+- **Omit empty categories.** If there are no formatting tells, do not write an empty "Formatting Tells (0 items)" heading
+- **Order within a category** High > Medium > Low
+- **Deletion fixes have no "after"** - write `> after: (cut)` or just state the delete in the description
+- **Apply these rules to your own audit.** An audit that uses `this marks a pivotal moment` or `let's dive into the findings` is not credible. Run the Self-Check on the report before returning it
 
 Keep it concise. Show the before/after pair. Do not lecture about why AI writing is bad - the user already knows.
 
