@@ -136,7 +136,7 @@ After every change, confirm the firewall is healthy:
 3. **Check existing rules**: `pfctl -sr | grep <iface>` - new interfaces have no rules (implicit deny all). Confirm the baseline before adding anything so you know exactly what you're changing.
 4. Create aliases for source subnet and destination server (keeps rules readable):
    - OPNsense API: `curl -X POST -u key:secret https://<fw>/api/firewall/alias/addItem -d '{"alias":{"name":"WebServer","type":"host","content":"10.0.1.100"}}'`
-   - OPNsense CLI: `configctl template reload OPNsense/Filter` (after editing alias via API or XML)
+   - OPNsense CLI: `configctl template reload OPNsense/Filter` (after editing alias via API or XML). To verify the alias was created: `configctl template list | grep Alias`, then confirm with `pfctl -t WebServer -T show`.
    - pfSense: `easyrule` doesn't support aliases - use GUI or edit `/cf/conf/config.xml` directly
 5. Add a pass rule on that interface: source = alias, destination = server alias, port = 443
 6. Place the allow rule above any block-all rule for that interface (rule ordering matters - pf evaluates last match, not first match, so a later block overrides an earlier pass)

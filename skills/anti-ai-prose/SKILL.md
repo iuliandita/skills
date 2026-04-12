@@ -96,6 +96,8 @@ Apply the four categories (see below). For each match, read the surrounding cont
 - **2-3 per 500 words** - a pattern, flag the cluster with Medium severity
 - **4+ per 500 words** - dominant voice, High severity, recommend structural rewrite
 
+**Short text scaling:** for text under 100 words, any 2+ tells in a single paragraph is High severity regardless of the per-500-words threshold. A single sentence crammed with AI vocabulary is worse than a long doc with scattered instances.
+
 Density only applies to vocabulary and syntax tells. A single travel-guide paragraph is enough to flag on its own. One fabricated citation is always High.
 
 Classify each finding by category, action, and severity:
@@ -156,6 +158,8 @@ Specific words that LLMs overuse far beyond their natural English frequency.
 | synergy | fit, overlap, how X and Y work together (or drop) |
 | innovative | new, novel (or name what is new) |
 | commence | start, begin |
+| journey toward | work toward, move toward, aim for (or drop) |
+| moving forward | from now on, next, going forward (or drop) |
 
 **Detect:**
 - Multiple flagged words in the same paragraph

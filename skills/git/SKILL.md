@@ -176,6 +176,8 @@ General flow:
 1. **Create feature branch**: `git checkout -b type/short-description` (e.g., `feat/user-search`, `fix/auth-bypass`). Keep branch names lowercase, hyphenated, prefixed with type.
 2. **Make changes**: commit early, commit often. Each commit should be a logical unit.
 3. **Rebase onto base**: `git fetch origin && git rebase origin/main` (or whatever the base branch is). Resolve conflicts: look for `<<<<<<<`, `=======`, `>>>>>>>` markers, keep the correct content from both sides (often both additions belong), then `git add` and `git rebase --continue`. After resolving conflicts in dependency files (`package.json`, `Cargo.toml`, `go.mod`, etc.), re-run the package manager to regenerate the lock file. Never merge the base into the feature branch. For merge strategy guidance, see `references/forge-workflows.md`.
+
+   **Dependency file conflicts** (`package.json`, `go.mod`, `pyproject.toml`): keep additions from both branches; when the same dependency has conflicting version pins, take the higher compatible version conservatively and validate. Never hand-edit the lock file - always regenerate it by running the package manager (`npm install`, `go mod tidy`, `uv sync`, etc.) after resolving the manifest conflict.
 4. **Push**: `git push -u origin feat/short-description`
 5. **Create PR/MR**: with a clear title (under 70 chars), body with summary + test plan.
 6. **Review cycle**: address feedback, rebase and force-push with `--force-with-lease` (never plain `--force` on shared branches). Squash fixup commits before pushing.

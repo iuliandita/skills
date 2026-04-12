@@ -98,6 +98,7 @@ server.tool(
   "Search documentation by keyword",
   { query: z.string().max(200).describe("Search query"), limit: z.number().int().min(1).max(100).default(10) },
   async ({ query, limit }) => {
+    // If this tool reads files, apply path validation from Step 3 before any fs access.
     const sanitized = query.replace(/[^\w\s-]/g, "");
     const results = await searchIndex(sanitized, limit);
     return { content: [{ type: "text", text: JSON.stringify(results) }] };

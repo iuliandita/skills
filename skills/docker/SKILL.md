@@ -252,7 +252,7 @@ services:
 - `version: "3.8"` - dead field, remove it
 - `container_name` on every service (breaks `docker compose up --scale`)
 - `restart: always` without healthcheck (infinite restart of broken containers)
-- `network_mode: host` when port mapping works
+- `network_mode: host` when port mapping works (replace with a user-defined bridge network and explicit `ports:` mapping)
 - `depends_on` without `condition:` (ordering only, no readiness)
 - `volumes:` mounting entire project dir in production (dev pattern leak)
 - `privileged: true` on a compose service instead of the host LXC

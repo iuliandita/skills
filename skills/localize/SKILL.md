@@ -142,6 +142,29 @@ Urdu), the UI needs `dir="rtl"` support, CSS logical properties (`margin-inline-
 instead of `margin-left`), and bidirectional text handling. RTL is a layout concern beyond
 catalog setup - plan for it in the infrastructure, not as an afterthought.
 
+**Quick setup for React (react-i18next)** - the most common case:
+
+```tsx
+// 1. Install: npm install react-i18next i18next
+// 2. src/i18n.ts - init once, import before rendering
+import i18n from 'i18next'
+import { initReactI18next } from 'react-i18next'
+import en from './locales/en.json'
+i18n.use(initReactI18next).init({ lng: 'en', fallbackLng: 'en',
+  resources: { en: { translation: en } } })
+export default i18n
+
+// 3. src/main.tsx - import side-effect before <App />
+import './i18n'
+
+// 4. In any component
+import { useTranslation } from 'react-i18next'
+const { t } = useTranslation()
+return <button>{t('auth.signIn')}</button>
+```
+
+For Next.js use `next-intl`; for Vue use `vue-i18n`; for others see `references/audit-patterns.md`.
+
 Read `references/audit-patterns.md` for framework-specific patterns on where strings hide.
 
 ### Step 3: Audit and extract strings

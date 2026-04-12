@@ -306,7 +306,7 @@ Read `references/go.md` for the full Go bug pattern catalog. Key highlights:
 - **Error wrapping**: `%s` vs `%w` in `fmt.Errorf`, sentinel comparison with `==` instead of `errors.Is()`, custom errors missing `Unwrap()`
 - **Context leaks**: `context.WithCancel`/`WithTimeout` without `defer cancel()`, ignoring request-scoped contexts
 - **Data races**: concurrent map writes (fatal panic), shared slice append, read-modify-write without sync, missing `-race` in CI
-- **Loop variable capture**: pre-Go 1.22 closure capture bug - check `go.mod` version to determine if relevant
+- **Loop variable capture**: pre-Go 1.22 closure capture bug. Check `go.mod` first: `go 1.22` or higher means per-iteration semantics (safe); below 1.22 means the loop variable is shared across all goroutines/closures (classic capture bug). This check is version-gated - read `go.mod` before flagging.
 
 ## Other Languages
 
