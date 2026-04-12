@@ -61,6 +61,9 @@ This skill runs inside an AI agent. AI tools consistently produce the same K8s s
 - [ ] No `privileged: true` or `hostNetwork: true` unless explicitly requested and justified
 - [ ] `seccompProfile: { type: RuntimeDefault }` present (often forgotten)
 - [ ] Using Gateway API `HTTPRoute` for new external access, not legacy Ingress
+- [ ] Liveness and readiness probes defined: every container has at least a readiness probe
+- [ ] Kube context verified before any kubectl/helm command
+- [ ] No auto-sync to production without approval gate
 
 Run generated manifests through `kube-score`, `kubelinter`, or `checkov` when available.
 

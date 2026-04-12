@@ -442,8 +442,13 @@ PII detection setup, and content policy implementation.
 
 ## Reference Files
 
-- `references/safety.md` - prompt injection defense, output validation, PII handling, content
-  filtering, audit logging, rate limiting patterns
+- `references/llm-patterns.md` - multi-turn tool use, parallel tool calls, error recovery, provider gotchas
+- `references/rag-patterns.md` - indexing pipelines, metadata filtering, multi-index, production architecture
+- `references/agent-patterns.md` - multi-agent, human-in-the-loop, memory management, production deployment
+- `references/evaluation.md` - promptfoo setup, assertion types, CI integration, RAG/agent evals, red teaming
+- `references/fine-tuning.md` - data prep, PEFT/LoRA, training evaluation, full vs parameter-efficient methods
+- `references/local-inference.md` - quantization, model selection, GPU memory, production serving config
+- `references/safety.md` - prompt injection defense, output validation, PII handling, content filtering, audit logging
 
 ## Related Skills
 

@@ -83,7 +83,7 @@ verify against this list:**
 - [ ] **No interactive flags.** Never use `-i` (interactive) flags (`git rebase -i`, `git add -i`) in automated contexts - they require TTY input.
 - [ ] **Tags pushed separately.** `git push` doesn't push tags by default. Always `git push --tags` or `git push origin <tag>` explicitly.
 - [ ] **Feature branch up to date.** Before creating a PR/MR, rebase onto the latest base branch to avoid merge conflicts.
-- [ ] **Lock files regenerated after conflict resolution.** After resolving conflicts in dependency files (`package.json`, `Cargo.toml`, `go.mod`, `pyproject.toml`), re-run the package manager to regenerate the lock file. Never manually merge lock files.
+- [ ] **Lock files regenerated after conflict resolution.** After resolving conflicts in dependency files (`package.json`, `Cargo.toml`, `go.mod`, `pyproject.toml`), re-run the package manager to regenerate the lock file. Never manually merge lock files. Then regenerate: `npm install`, `yarn install`, `go mod tidy`, or `cargo generate-lockfile`.
 - [ ] **Force-push safety.** If force-push is needed, always use `--force-with-lease` (refuses if remote has unfetched commits). Plain `--force` requires explicit user approval and team coordination.
 - [ ] **Version info dated.** When citing tool versions, include a date so readers know when to re-check. Stale version numbers cause silent breakage.
 

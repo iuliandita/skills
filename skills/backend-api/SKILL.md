@@ -245,6 +245,26 @@ Minimal RFC 9457 problem detail response:
 - Use explicit idempotency keys for payment-like or request-replay-prone operations
 - Distinguish "request accepted" from "side effect completed" when async workflows exist
 
+Idempotency key header pattern (Express/NestJS):
+```typescript
+const key = req.headers['idempotency-key'];
+if (key) {
+  const cached = await cache.get(`idem:${key}`);
+  if (cached) return res.status(cached.status).json(cached.body);
+}
+// ... execute, then store result keyed by idempotency-key before returning
+```
+
+Cursor pagination response envelope:
+```json
+{
+  "data": [...],
+  "next_cursor": "eyJpZCI6MTIzfQ",
+  "has_more": true
+}
+```
+Decode the cursor server-side (`WHERE id > :cursor_id ORDER BY id LIMIT :limit`). Never expose raw DB offsets or row numbers in the cursor.
+
 ## What NOT to Force
 
 - Do not force cursor pagination onto every small internal list or backoffice table

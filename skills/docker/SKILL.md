@@ -76,6 +76,7 @@ AI tools consistently produce the same Docker mistakes. **Before returning any g
 - [ ] Compose: `depends_on` uses `condition: service_healthy`, not bare ordering
 - [ ] Compose: resource limits set on production services
 - [ ] Package caches cleaned in same layer: `--no-cache` (apk), `rm -rf /var/lib/apt/lists/*` (apt). For pip: use `--mount=type=cache` OR `--no-cache-dir`, not both.
+- [ ] CMD uses exec form (JSON array), not shell form: `CMD ["node", "app.js"]` not `CMD node app.js`
 
 ---
 

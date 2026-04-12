@@ -56,6 +56,9 @@ Before returning any audit, verify:
 - [ ] **Code blocks untouched**: do not flag identifiers, strings, or code comments that contain banned words as part of functional code
 - [ ] **Rewrites are real improvements**: every "after" is shorter, clearer, or more specific than the "before". No lateral rewrites that just swap synonyms
 - [ ] **Severity is honest**: do not inflate Low findings to Medium to pad the report
+- [ ] **Short text rule applied**: under 100 words, 2+ tells in one paragraph = High severity
+- [ ] **Audit output itself uses no AI-prose tells** (apply these rules to your own output)
+- [ ] **Density threshold applied** before assigning severity level
 
 ---
 

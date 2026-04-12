@@ -118,7 +118,7 @@ Follow every code path. For each branch, loop, or condition:
 - What happens at boundaries (empty, zero, max, null, negative)?
 - Are all cases handled? (switch/match exhaustiveness, if/else completeness)
 
-**Boundary value analysis** deserves special attention: when a function accepts numeric inputs (page numbers, sizes, counts, indices), zero, negative, and overflow values are inherently high-confidence findings. Don't suppress these with the 80% threshold - if the function doesn't guard against `page=0`, `perPage=0`, or `offset > total`, that's a real bug on a realistic path.
+**Boundary value analysis** deserves special attention: when a function accepts numeric inputs (page numbers, sizes, counts, indices), zero, negative, and overflow values are inherently high-confidence findings. Don't suppress these with the 80% threshold - if the function doesn't guard against `page=0`, `perPage=0` (division by zero in callers), or `offset > total`, that's a real bug on a realistic path.
 
 **Focus 3: Check Contracts & Boundaries**
 Examine every interface between components:
