@@ -442,18 +442,6 @@ PII detection setup, and content policy implementation.
 
 ## Reference Files
 
-- `references/llm-patterns.md` - SDK usage patterns, streaming, structured output, tool use,
-  multi-turn conversations, provider-specific details
-- `references/rag-patterns.md` - chunking strategies, embedding pipelines, retrieval patterns,
-  hybrid search, reranking, production RAG architecture
-- `references/agent-patterns.md` - agent loop implementations, multi-agent architectures,
-  memory management, human-in-the-loop, deployment patterns
-- `references/evaluation.md` - eval frameworks (promptfoo, Braintrust, LangSmith), metric
-  selection, CI integration, regression detection, red teaming
-- `references/fine-tuning.md` - data preparation, PEFT/LoRA, full fine-tuning, evaluation
-  during training, when to fine-tune vs alternatives
-- `references/local-inference.md` - Ollama, vLLM, quantization, model selection, GPU memory,
-  production serving configuration
 - `references/safety.md` - prompt injection defense, output validation, PII handling, content
   filtering, audit logging, rate limiting patterns
 
@@ -487,6 +475,16 @@ PII detection setup, and content policy implementation.
    Models fail in creative ways - handle all of them.
 7. **Budget before you batch.** Calculate cost before running batch operations. A 100k-row
    embedding job at the wrong model can cost thousands.
+
+```python
+# Cost-tracking guard before each LLM call
+BUDGET_USD = 0.50  # per-request ceiling
+input_price, output_price = 3.00, 15.00  # per 1M tokens (claude-sonnet)
+total_tokens = count_tokens(messages)
+estimated = (total_tokens * input_price + max_tokens * output_price) / 1_000_000
+if estimated > BUDGET_USD:
+    raise BudgetExceeded(f"Estimated ${estimated:.4f} exceeds ceiling ${BUDGET_USD}")
+```
 8. **Evaluate with data, not vibes.** Structured evals with datasets and metrics. "It looks
    good" is not a quality gate.
 9. **Cap agent iterations.** Set a max loop count. Runaway agents burn budget and produce

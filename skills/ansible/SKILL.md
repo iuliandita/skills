@@ -5,6 +5,7 @@ description: >
   management. Covers Molecule testing, Vault, AWX/AAP, CIS benchmarks, and Execution
   Environments. Triggers: 'ansible', 'playbook', 'role', 'inventory', 'molecule',
   'ansible-lint', 'AWX', 'galaxy', 'group_vars', 'CIS benchmark', 'config management'.
+  Not for shell scripts (use command-prompt).
 license: MIT
 compatibility: "Requires ansible-core and Python 3.9+. Optional: ansible-lint, molecule"
 metadata:

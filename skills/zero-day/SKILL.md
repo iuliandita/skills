@@ -64,7 +64,7 @@ Before reporting any vulnerability or generating exploit code, verify:
 
 - [ ] **Authorization confirmed**: own repo, active bug bounty program, or written permission
 - [ ] **Scope respected**: target is within authorized boundary (specific repos, domains, IPs)
-- [ ] **Novel finding**: verified this isn't already a known CVE or public advisory
+- [ ] **Novel finding**: verified this isn't already a known CVE or public advisory (cross-check Phase 0 intelligence gathering - NVD, oss-security, GitHub advisories, searchsploit)
 - [ ] **Reproducible**: PoC demonstrates the issue reliably, not a theoretical concern
 - [ ] **Impact assessed**: clear description of what an attacker gains (not just "crash")
 - [ ] **Root cause identified**: the underlying flaw, not just the symptom
@@ -243,7 +243,7 @@ Read `references/vulnerability-classes.md` for the full catalog organized by:
 3. **Logic flaws** (all languages) - authentication bypass, authorization gaps, race conditions (TOCTOU), state machine violations, business logic abuse
 4. **Deserialization** (Java, Python, PHP, .NET, Ruby) - insecure deserialization, gadget chains, type confusion via polymorphism
 5. **Cryptographic** (all languages) - weak algorithms, nonce reuse, padding oracles, timing side channels, key management errors
-6. **Web-specific** (web apps) - novel XSS (mXSS, DOM clobbering), SSTI, prototype pollution chains, SSRF, path traversal, cache poisoning
+6. **Web-specific** (web apps) - novel XSS (mXSS, DOM clobbering), SSTI, prototype pollution chains, SSRF, path traversal, cache poisoning. For XSS sinks: treat sanitizer config as a taint sink - DOMPurify `ALLOWED_TAGS`/`RETURN_DOM` misconfig, custom `sanitize()` hooks, and React innerHTML injection patterns are common bypasses; a misconfigured sanitizer is itself a sink
 7. **Binary-specific** (compiled) - format string bugs, heap metadata corruption, ROP/JOP gadget availability, signal handler races
 8. **Supply chain** (all ecosystems) - dependency confusion, typosquatting, compromised maintainer accounts, malicious updates
 9. **Cloud-native** (AWS, GCP, Azure, managed services) - IMDS abuse, IAM confused deputy, cross-tenant isolation failures, serverless event injection, managed DB/Kafka misconfigs

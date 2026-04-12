@@ -117,6 +117,11 @@ Map changes to documentation targets. Common instruction file names: `CLAUDE.md`
 
 **When to write an ADR:** If the decision affects multiple components, constrains future options, or reverses a previous decision, it's worth a dedicated Architecture Decision Record. If it's a one-liner ("switched from X to Y because Z"), a short bullet in the project's instruction file is enough.
 
+**Gotcha placement heuristic:**
+- One-liner gotcha (e.g., "VIP refuses k8s traffic - use direct IP") -> `CLAUDE.md` bullet.
+- Multi-step procedure (e.g., "rotating a cert requires drain, replace, reload in order") -> dedicated runbook section.
+- Time-critical pre/post-deploy action (e.g., "Redis FLUSHALL must run after deploy but before traffic is routed back") -> checklist at the top of the runbook, not buried in a section.
+
 ### 3. Check Whether the Repo's Docs Surface Is Missing or Too Thin
 
 If the repo has no meaningful documentation surface, or only a minimal `README.md`, treat that as a separate observation before editing anything.

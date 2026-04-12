@@ -150,6 +150,21 @@ Mock at boundaries, not everywhere. Over-mocking produces tests that pass while 
 
 **Prefer fakes over mocks when possible.** An in-memory database implementation tests more real behavior than a mock that returns canned responses.
 
+**Injectable clock for TTL/time-dependent tests** - pass a clock dependency rather than calling `Date.now()` or `time.Now()` directly:
+
+```typescript
+// Production: clock = () => Date.now()
+// Test: clock = () => FIXED_TS + offset
+function isExpired(createdAt: number, ttlMs: number, clock = Date.now): boolean {
+  return clock() - createdAt > ttlMs;
+}
+// In test: advance virtual time without sleeping
+const fakeNow = vi.fn().mockReturnValue(START);
+expect(isExpired(START, 1000, fakeNow)).toBe(false);
+fakeNow.mockReturnValue(START + 1001);
+expect(isExpired(START, 1000, fakeNow)).toBe(true);
+```
+
 Read `references/language-patterns.md` for language-specific mocking idioms (Vitest `vi.mock`, Jest `jest.mock`, pytest `monkeypatch`, Go interfaces, Rust trait objects).
 
 ---
@@ -250,7 +265,9 @@ Flaky tests erode trust. Fix or quarantine immediately.
 3. **Fix root causes** - common culprits by framework:
    - **Playwright/Cypress**: race conditions on navigation or animation. Use `waitForLoadState`,
      `waitForSelector`, or Playwright's auto-waiting. Avoid `page.waitForTimeout`. Stub network
-     requests to eliminate backend variability.
+     requests to eliminate backend variability. Headless mode (CI) has different rendering
+     timing than headed - animations may be skipped or font metrics differ; use
+     `--headed` locally to reproduce CI-only failures.
    - **Vitest/Jest**: shared module state between test files. Use `--pool forks` (Vitest) or
      `--runInBand` to isolate. Check for leaked timers (`vi.useFakeTimers` not restored).
    - **pytest**: database state leaking between tests. Use `@pytest.mark.usefixtures("db")`

@@ -3,7 +3,8 @@ name: anti-slop
 description: >
   · Audit code for machine-generated patterns, over-abstraction, redundant comments, verbose
   code, and dependency creep. Triggers: 'slop', 'code quality', 'simplify', 'modernize',
-  'code smell', 'clean up'.
+  'code smell', 'clean up'. Not for prose review (use anti-ai-prose). Not for full repo
+  audit (use full-review).
 license: MIT
 compatibility: "None - works on any codebase"
 metadata:
@@ -200,6 +201,19 @@ Names that could mean anything: `data`, `result`, `response`, `item`, `temp`, `v
 **Fix:** Use domain-specific names. `data` -> `active_subscriptions`. `utils.sh` -> split by concern or inline.
 
 **Exception:** Generic names in genuinely generic code (a `map()` callback, a type parameter `T`, a Terraform module's `this` when it's the only resource of that type).
+
+#### Module-level smells
+
+God modules are a structural form of generic naming: the file itself has no clear identity.
+
+**Detect:**
+- Files named `utils.*`, `helpers.*`, `common.*`, `misc.*` with 30+ functions
+- A single module mixing unrelated domains (auth + formatting + DB queries + file I/O)
+- `utils.py` with functions spanning 5+ distinct concerns
+
+**Fix:** Split by domain concern, not by arbitrary grouping. A 47-function `utils.py` typically contains 3-5 coherent modules (`auth_utils.py`, `format_helpers.py`, `db_queries.py`). Steps: (1) cluster functions by what they operate on or what domain they serve, (2) create a module per cluster, (3) update imports. Do not create a new junk-drawer module - each split module should have a name that describes its single concern.
+
+**Exception:** Genuinely cross-cutting helpers (e.g., a `retry()` decorator used by 8 modules) can stay in a small, tightly scoped `core.py` or `retry.py`.
 
 ### 6. Logic Duplication (Lies)
 

@@ -81,6 +81,7 @@ generated VM config, Terraform HCL, or Packer template, verify against this list
 - [ ] No disk resize via Terraform - use `qm resize` on host, then update Terraform var to match
 - [ ] PCI passthrough: `pcie = false` for standard passthrough, `xvga = false` unless display GPU
 - [ ] PCI passthrough: machine type is `q35` when `pcie = true` is needed
+- [ ] GPU passthrough: AMD GPUs are prone to reset bugs (vendor-reset kernel module or `pcie_port_pm=off` may be required); NVIDIA generally resets cleanly but verify with your card model before production use
 - [ ] BIOS type matches use case: `seabios` default, `ovmf` for UEFI/Secure Boot/Windows 11
 - [ ] Backup retention configured (not unlimited snapshots eating storage)
 - [ ] Network device uses `virtio` model, not `e1000` or `rtl8139`
@@ -295,6 +296,25 @@ Then enable in VM config. Note: hugepages memory can't be shared or ballooned.
 **CPU hotplug vs memory hotplug:** CPU hotplug works live on most modern Linux guests.
 Memory hotplug (adding DIMMs at runtime) is fragile - Alpine can't do it at all, and even
 Debian requires specific kernel config. Size memory correctly at creation time.
+
+---
+
+## libvirt/QEMU Quick Start
+
+For libvirt/KVM without Proxmox, the fastest path to a running VM:
+
+```bash
+# Install a Debian cloud image via virt-install with cloud-init
+virt-install --name myvm --ram 2048 --vcpus 2 --cpu host \
+  --disk path=/var/lib/libvirt/images/myvm.qcow2,size=20,bus=virtio \
+  --network network=default,model=virtio \
+  --cloud-init user-data=user-data.yaml,meta-data=meta-data.yaml \
+  --import --os-variant debian12 --noautoconsole
+```
+
+`virsh list --all` to confirm state; `virsh console myvm` to attach. For full XML domain
+definitions, network and storage pool management, and virsh lifecycle commands, see
+`references/libvirt-qemu-kvm.md`.
 
 ---
 

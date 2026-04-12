@@ -157,6 +157,12 @@ Auth rules:
 - Define scope or role boundaries at the API boundary, not ad hoc inside random handlers
 - If the browser app talks to third-party identity providers, follow authorization code + PKCE and current browser-app guidance rather than resurrecting implicit flow patterns
 
+BFF token mediation (first-party browser app calling an external API):
+```
+Browser -> BFF (session cookie) -> BFF attaches Bearer token -> Upstream API
+```
+The BFF holds the access token server-side; the browser never sees it.
+
 Read `references/auth-and-session-patterns.md` for sessions, bearer tokens, OAuth, BFF, refresh tokens, and machine auth.
 
 ### Step 5: Implement the framework surface
@@ -215,6 +221,16 @@ Before returning the result:
 - Prefer RFC 9457 problem details with stable `type`, `title`, `status`, and domain-specific extension fields
 - Do not return one error shape from validation, another from auth, and a third from business rules
 - Never leak raw stack traces or ORM internals to clients
+
+Minimal RFC 9457 problem detail response:
+```json
+{
+  "type": "https://api.example.com/errors/insufficient-funds",
+  "title": "Insufficient funds",
+  "status": 422,
+  "detail": "Account balance is $10.00; transfer requires $50.00."
+}
+```
 
 ### Pagination and filtering
 
