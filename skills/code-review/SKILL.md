@@ -121,6 +121,8 @@ Follow every code path. For each branch, loop, or condition:
 
 **Boundary value analysis** deserves special attention: when a function accepts numeric inputs (page numbers, sizes, counts, indices), zero, negative, and overflow values are inherently high-confidence findings. Don't suppress these with the 80% threshold - if the function doesn't guard against `page=0`, `perPage=0` (division by zero in callers), or `offset > total`, that's a real bug on a realistic path.
 
+If no `go.mod` is available (inline snippet, paste, interview question), flag version-dependent issues at reduced confidence and note the version dependency.
+
 **Focus 3: Check Contracts & Boundaries**
 Examine every interface between components:
 - Function signatures: are callers passing the right types/shapes?

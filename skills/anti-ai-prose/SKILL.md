@@ -139,6 +139,7 @@ Specific words that LLMs overuse far beyond their natural English frequency.
 | realm | area, field, world |
 | landscape | scene, field, mix |
 | showcase | show, display, feature |
+| empower | help, enable, let (or rewrite with a specific claim) |
 | foster | build, grow, support, encourage |
 | navigate | handle, work through, manage |
 | nestled | set, located, built |

@@ -317,6 +317,9 @@ virt-install --name myvm --ram 2048 --vcpus 2 --cpu host \
   --import --os-variant debian12 --noautoconsole
 ```
 
+Build the cloud-init ISO with `cloud-localds cidata.iso user-data.yaml meta-data.yaml` and attach
+it as a second disk, or use the `--cloud-init` flag shown above (virt-install 4.0+).
+
 `virsh list --all` to confirm state; `virsh console myvm` to attach. For full XML domain
 definitions, network and storage pool management, and virsh lifecycle commands, see
 `references/libvirt-qemu-kvm.md`.
