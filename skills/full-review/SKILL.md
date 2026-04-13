@@ -38,6 +38,7 @@ Each audit runs in its own parallel agent/subprocess with a fresh context window
 - Style/slop cleanup without the other audit passes - use **anti-slop**
 - A dedicated security review only - use **security-audit**
 - A documentation-only maintenance sweep - use **update-docs**
+- A comprehensive audit across all applicable skills (up to 21) - use **deep-audit**
 - Auditing the skill collection for consistency or quality - use **skill-creator**
 
 ## AI Self-Check
