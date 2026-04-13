@@ -93,6 +93,14 @@ AI tools consistently produce the same database mistakes. **Before returning any
 - [ ] Password authentication uses modern hashing (SCRAM-SHA-256 for PG, `caching_sha2_password` for MySQL)
 - [ ] No default/example passwords in config files
 
+### Bulk Operations
+
+- [ ] Bulk inserts are chunked - never pass an unbounded array into a single `INSERT ... VALUES` statement
+- [ ] Chunk size computed as `floor(max_host_parameters / columns_per_row)`, where host-parameter limits are: PostgreSQL 65,535, MySQL 65,535, SQLite 32,766 (default `SQLITE_MAX_VARIABLE_NUMBER`), MSSQL 2,100
+- [ ] When the app targets multiple backends, chunk size uses the lowest limit across all supported engines
+- [ ] Chunked writes stay inside one transaction when replace-all semantics are required (DELETE + INSERT pattern)
+- [ ] Tests assert that multiple insert calls fire when row count crosses the safe chunk threshold
+
 ### General
 
 - [ ] All SQL uses parameterized queries / prepared statements (never string concatenation)
@@ -354,7 +362,8 @@ These are non-negotiable. Violating any of these is a bug.
 11. **Patch MongoBleed (CVE-2025-14847).** Self-hosted MongoDB < 8.0.17 / 7.0.28 / 6.0.27 is actively exploitable with no authentication required.
 12. **Patch MongoDB compression DoS (CVE-2026-25611).** Pre-auth DoS via crafted OP_COMPRESSED messages. Default config affected (compression enabled since 3.6). Fixed in 8.0.18+ / 8.2.4+ / 7.0.29+.
 13. **Patch PgBouncer (CVE-2025-12819).** PgBouncer < 1.25.1 can allow unauthenticated SQL execution when `track_extra_parameters` includes `search_path` AND `auth_user` is set (both non-default). Upgrade regardless - the fix is low-risk.
-14. **Run the AI self-check.** Every generated migration, schema, or config gets verified against the checklist above before returning.
+14. **Chunk bulk inserts.** Never build a single `INSERT ... VALUES` with an unbounded row list. Compute batch size from the lowest host-parameter ceiling across supported backends (`floor(limit / columns_per_row)`). Wrap chunks in one transaction when atomicity matters.
+15. **Run the AI self-check.** Every generated migration, schema, or config gets verified against the checklist above before returning.
 
 ---
 
