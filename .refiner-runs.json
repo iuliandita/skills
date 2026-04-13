@@ -621,5 +621,108 @@
         "self-application note partially duplicates AI Self-Check (addressed in iter 3)"
       ]
     }
+  },
+  {
+    "run_id": "2026-04-13-overnight",
+    "branch": "skill-refiner/2026-04-13-overnight",
+    "date": "2026-04-13",
+    "primary": {
+      "harness": "claude-code",
+      "model": "claude-opus-4-6",
+      "context": "1M"
+    },
+    "secondary": {
+      "harness": "codex",
+      "model": "gpt-5.4",
+      "weight": "5%",
+      "note": "Cross-model review on accumulated diff. 2 MAJOR + 3 MINOR flags. 2 MAJOR agreed and fixed (terraform state op, virtualization virt-install). 2 MINOR agreed and fixed (databases column name, localize versions). 1 MINOR disputed (roadmap --limit caps adequate)."
+    },
+    "config": {
+      "iterations_max": 10,
+      "iterations_used": 10,
+      "threshold": 100,
+      "mode": "auto",
+      "plateau": 2,
+      "ceiling": "none (100% target)"
+    },
+    "pool": [
+      "ai-ml", "ansible", "anti-ai-prose", "anti-slop", "arch-btw",
+      "backend-api", "browse", "ci-cd", "code-review", "command-prompt",
+      "databases", "docker", "firewall-appliance", "full-review", "git",
+      "kubernetes", "localize", "lockpick", "mcp", "networking",
+      "prompt-generator", "roadmap", "security-audit", "terraform",
+      "testing", "update-docs", "virtualization", "zero-day"
+    ],
+    "extra_pool": [
+      "cluster-health (gitignored, local-only)"
+    ],
+    "termination": "iteration cap (10/10) + all skills at 100%",
+    "scores": {
+      "ai-ml": { "before": { "composite": 86.6 }, "after": { "composite": 100 } },
+      "ansible": { "before": { "composite": 89.1 }, "after": { "composite": 100 } },
+      "anti-ai-prose": { "before": { "composite": 91.5 }, "after": { "composite": 100 } },
+      "anti-slop": { "before": { "composite": 82.6 }, "after": { "composite": 100 } },
+      "arch-btw": { "before": { "composite": 93.4 }, "after": { "composite": 100 } },
+      "backend-api": { "before": { "composite": 89.3 }, "after": { "composite": 100 } },
+      "browse": { "before": { "composite": 91.9 }, "after": { "composite": 100 } },
+      "ci-cd": { "before": { "composite": 94.5 }, "after": { "composite": 100 } },
+      "code-review": { "before": { "composite": 93.5 }, "after": { "composite": 100 } },
+      "command-prompt": { "before": { "composite": 88.1 }, "after": { "composite": 100 } },
+      "databases": { "before": { "composite": 93.0 }, "after": { "composite": 100 } },
+      "docker": { "before": { "composite": 93.0 }, "after": { "composite": 100 } },
+      "firewall-appliance": { "before": { "composite": 94.8 }, "after": { "composite": 100 } },
+      "full-review": { "before": { "composite": 94.3 }, "after": { "composite": 100 } },
+      "git": { "before": { "composite": 92.8 }, "after": { "composite": 100 } },
+      "kubernetes": { "before": { "composite": 92.6 }, "after": { "composite": 100 } },
+      "localize": { "before": { "composite": 93.0 }, "after": { "composite": 100 } },
+      "lockpick": { "before": { "composite": 92.0 }, "after": { "composite": 100 } },
+      "mcp": { "before": { "composite": 94.5 }, "after": { "composite": 100 } },
+      "networking": { "before": { "composite": 95.0 }, "after": { "composite": 100 } },
+      "prompt-generator": { "before": { "composite": 88.1 }, "after": { "composite": 100 } },
+      "roadmap": { "before": { "composite": 85.0 }, "after": { "composite": 100 } },
+      "security-audit": { "before": { "composite": 90.6 }, "after": { "composite": 100 } },
+      "terraform": { "before": { "composite": 87.9 }, "after": { "composite": 100 } },
+      "testing": { "before": { "composite": 87.1 }, "after": { "composite": 100 } },
+      "update-docs": { "before": { "composite": 88.5 }, "after": { "composite": 100 } },
+      "virtualization": { "before": { "composite": 89.1 }, "after": { "composite": 100 } },
+      "zero-day": { "before": { "composite": 88.0 }, "after": { "composite": 100 } },
+      "cluster-health": { "before": { "composite": 85.1 }, "after": { "composite": 100 }, "note": "local-only, gitignored" }
+    },
+    "iteration_log": [
+      { "iteration": 1, "type": "baseline", "avg": 90.5, "min": 82.6, "max": 95.0 },
+      { "iteration": 2, "max_delta": 16.1, "avg": 95.8, "improved": 16 },
+      { "iteration": 3, "max_delta": 5.5, "avg": 97.2, "improved": 12 },
+      { "iteration": 4, "max_delta": 8.9, "avg": 98.8, "improved": 10 },
+      { "iteration": 5, "max_delta": 3.2, "avg": 99.6, "improved": 6 },
+      { "iteration": 6, "type": "codex-cross-model-review", "flags_major": 2, "flags_minor": 3, "fixed": 4, "disputed": 1 },
+      { "iteration": 7, "type": "forward-test", "tested": 6, "passed": 6, "gaps_fixed": 3 },
+      { "iteration": 8, "type": "forward-test", "tested": 6, "passed": 6, "gaps_fixed": 0 },
+      { "iteration": 9, "type": "forward-test", "tested": 6, "passed": 6, "gaps_fixed": 0 },
+      { "iteration": 10, "type": "summary", "all_at_100": true }
+    ],
+    "reverted": 0,
+    "contested": 0,
+    "cross_model_flags": {
+      "major": 2,
+      "major_agreed": 2,
+      "minor": 3,
+      "minor_agreed": 2,
+      "minor_disputed": 1
+    },
+    "forward_tests": {
+      "total_tested": 18,
+      "total_passed": 18,
+      "skills_tested": [
+        "code-review", "terraform", "anti-ai-prose", "lockpick", "mcp", "virtualization",
+        "databases", "ansible", "docker", "security-audit", "kubernetes", "browse",
+        "git", "anti-slop", "networking", "command-prompt", "full-review", "roadmap"
+      ]
+    },
+    "changes_summary": {
+      "files_changed": 29,
+      "lines_added": 291,
+      "lines_removed": 113,
+      "commits": 6
+    }
   }
 ]
