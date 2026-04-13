@@ -92,6 +92,7 @@ Before returning Arch or CachyOS commands, verify:
 - [ ] **Hybrid graphics path is identified on laptops**: PRIME offload, muxless, or discrete-only mode affects display output, suspend behavior, and Gamescope compatibility. Do not assume single-GPU behavior on multi-GPU hardware.
 - [ ] **Diagnostic errors are not silenced**: do not mask failures with `2>/dev/null` on commands whose error reason matters for triage. Use `2>&1 || true` to surface errors without aborting a gathering pass.
 - [ ] **Snapshots are not backups**: on Btrfs systems, snapshots help with rollback but do not replace real backups.
+- [ ] **Conflicting files use exact path**: `--overwrite` uses the specific file path from pacman error output, never a blanket `'*'` glob
 
 ---
 

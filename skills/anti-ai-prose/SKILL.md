@@ -328,6 +328,8 @@ These look like AI tells but are not:
 - **Direct quotations** - do not edit words written by someone else, even if they contain banned vocabulary
 - **Genre conventions** - travel writing uses travel-guide voice because that is what travel writing sounds like. Marketing copy uses promotional tone. Journalism uses em-dashes. Fiction uses elegant variation and tricolons intentionally. Respect the genre.
 - **Technical terms of art** - `pivotal` in mechanical engineering, `realm` in networking or identity (Kerberos, OIDC), `foster` in child welfare, `landscape` in horticulture or graphic design, `crucial experiment` in philosophy of science
+- `landscape` in ML/AI contexts (optimization landscape, loss landscape, feature landscape)
+- `robust` in statistics/ML (robust estimation, robust optimization, robust regression)
 - **Deliberate register play** - satire, parody, pastiche, and stylistic experiments
 - **Direct speech / dialog** in fiction - characters can sound however they sound
 - **Lists that are actually lists** - a three-item list is only suspicious if the items are padded. An enumeration of three real things is fine

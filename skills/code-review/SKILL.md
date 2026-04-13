@@ -55,6 +55,7 @@ Before reporting any finding at >= 80% confidence, verify:
 - [ ] **Adversarial self-check**: argue against each finding. If the counter-argument is convincing, drop it
 - [ ] **Construct a failing case**: for Critical findings, describe the specific input or sequence that triggers the bug
 - [ ] **Verify API/stdlib claims**: AI code review suggestions frequently contain factual errors about framework behavior. If unsure, look it up
+- [ ] **Boundary values on numeric inputs flagged**: zero, negative, and overflow values on page numbers, sizes, counts, and indices are high-confidence findings - do not suppress with the 80% threshold
 
 ---
 
