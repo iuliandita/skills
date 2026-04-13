@@ -50,6 +50,12 @@ mechanical word-by-word output.
 AI tools consistently produce the same i18n mistakes. **Before returning any generated i18n
 code, catalogs, or translations, verify against this list:**
 
+- [ ] **Native orthography in catalogs**: translated strings use proper Unicode characters
+  for the target language (umlauts, accents, cedillas, CJK characters, etc.). ASCII-only
+  rules from global or project config (CLAUDE.md, AGENTS.md, .cursorrules, etc.) apply to
+  source code and prose, NOT to locale catalogs. Writing "hinzugefuegt" (ASCII ae/oe/ue
+  substitution) instead of proper umlauts is a bug. Locale files are the one place where
+  native script is mandatory.
 - [ ] **Every string category covered**: checked all categories in the String Categories
   table below, not just visible text. Toast notifications, validation messages, aria-labels,
   placeholders, title attributes, alt text, loading states, conditional fragments, and error
@@ -365,3 +371,9 @@ Once i18n is set up, the workflow for new features is:
 9. **Don't translate what shouldn't be translated.** Code identifiers, CSS classes, data
    attributes, technical log messages, and developer-facing strings stay in the source
    language.
+10. **Use native orthography in locale catalogs.** Translated strings must use proper
+    Unicode characters for the target language - umlauts, accents, cedillas, CJK characters,
+    full-width punctuation, etc. ASCII-only rules from global or project config apply to
+    source code and prose, not to translation output. Writing "hinzugefuegt" instead of
+    proper German umlauts, or "nino" instead of Spanish n-with-tilde, is a translation
+    bug, not a style choice.

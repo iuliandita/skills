@@ -45,12 +45,18 @@ Preserve exactly as-is:
 - Line breaks within values
 - Brand and product names: [LIST OF PROTECTED TERMS]
 
+Encoding: use native Unicode orthography for the target language. Umlauts, accents,
+cedillas, CJK characters, and other diacritics are mandatory - never substitute ASCII
+approximations (e.g., write "hinzugefügt", not "hinzugefuegt"; write "niño", not "nino").
+If your global config says "ASCII only", that rule does not apply to locale catalogs.
+
 Do not:
 - Add or remove placeholders
 - Change placeholder syntax (e.g., {0} to {name})
 - Translate brand names or technical identifiers
 - Add honorifics or formality markers not present in the source
 - Use different register (formal/informal) across strings
+- Replace native characters with ASCII approximations (ue for ü, ss for ß, etc.)
 ```
 
 ### Example with context
