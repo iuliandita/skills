@@ -304,9 +304,14 @@ Debian requires specific kernel config. Size memory correctly at creation time.
 For libvirt/KVM without Proxmox, the fastest path to a running VM:
 
 ```bash
-# Install a Debian cloud image via virt-install with cloud-init
+# Download a Debian cloud image and resize it
+wget -O /var/lib/libvirt/images/myvm.qcow2 \
+  https://cloud.debian.org/images/cloud/bookworm/latest/debian-12-generic-amd64.qcow2
+qemu-img resize /var/lib/libvirt/images/myvm.qcow2 20G
+
+# Boot from the cloud image with cloud-init
 virt-install --name myvm --ram 2048 --vcpus 2 --cpu host \
-  --disk path=/var/lib/libvirt/images/myvm.qcow2,size=20,bus=virtio \
+  --disk path=/var/lib/libvirt/images/myvm.qcow2,bus=virtio \
   --network network=default,model=virtio \
   --cloud-init user-data=user-data.yaml,meta-data=meta-data.yaml \
   --import --os-variant debian12 --noautoconsole

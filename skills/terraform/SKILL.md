@@ -241,17 +241,16 @@ moved {
 **Cross-state resource move** (state surgery - when `moved` blocks can't help):
 
 ```bash
-# 1. Pull source state, remove the resource, push back
-terraform state pull > source.tfstate
-terraform state rm aws_instance.web          # removes from source
-terraform state push source.tfstate
+# 1. Back up source state, then remove the resource
+terraform state pull > backup.tfstate         # safety backup only
+terraform state rm aws_instance.web           # removes from source backend directly
 
 # 2. In the destination workspace, import the resource
 terraform import aws_instance.web i-0abc1234def56789
 # Then add the matching resource block in HCL to avoid drift
 ```
 
-Verify both states with `terraform plan` before and after. Never push a state file without first pulling the current version - concurrent edits corrupt state.
+Verify both states with `terraform plan` before and after. `state rm` writes directly to the backend - do not `state push` the backup afterward (that would undo the removal).
 
 ### What NOT to write
 

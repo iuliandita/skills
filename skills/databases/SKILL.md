@@ -136,7 +136,7 @@ Follow the domain-specific section below. Always apply the production checklist 
 1. Get the plan: `EXPLAIN (ANALYZE, BUFFERS, FORMAT TEXT) SELECT ...;` (PG), `EXPLAIN FORMAT=TREE ...;` (MySQL 8.0+), `db.collection.explain('executionStats').find(...)` (MongoDB).
 2. Look for: `Seq Scan` on large tables (PG) / `Full Table Scan` (MySQL) / `COLLSCAN` (MongoDB), `Nested Loop` with high row estimates, `Sort` spilling to disk (`Sort Method: external merge`), and `Rows Removed by Filter` >> `Rows` returned.
 2a. Before assuming an index problem, verify semantic correctness: check JOIN conditions for column mismatches, confirm WHERE clause predicates don't unintentionally filter nulls, and verify LEFT JOIN semantics aren't silently converted to INNER JOIN by outer-table filters.
-3. Check index usage: `SELECT schemaname, relname, idx_scan, seq_scan FROM pg_stat_user_tables WHERE seq_scan > 100 ORDER BY seq_scan DESC;` (PG; adjust `nspname = 'public'` filter for non-public schemas) or `SELECT * FROM sys.schema_unused_indexes;` (MySQL performance_schema).
+3. Check index usage: `SELECT schemaname, relname, idx_scan, seq_scan FROM pg_stat_user_tables WHERE seq_scan > 100 ORDER BY seq_scan DESC;` (PG; adjust `schemaname = 'public'` filter for non-public schemas) or `SELECT * FROM sys.schema_unused_indexes;` (MySQL performance_schema).
 4. If a missing index is the fix, create it with `CONCURRENTLY` (PG): `CREATE INDEX CONCURRENTLY idx_orders_customer ON orders (customer_id);` or `ALGORITHM=INPLACE, LOCK=NONE` (MySQL).
 5. Re-run `EXPLAIN ANALYZE` to confirm the planner uses the new index and that estimated vs actual rows are close.
 
