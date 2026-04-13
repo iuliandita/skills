@@ -76,6 +76,8 @@ AI tools consistently produce the same Docker mistakes. **Before returning any g
 - [ ] Compose: `depends_on` uses `condition: service_healthy`, not bare ordering
 - [ ] Compose: resource limits set on production services
 - [ ] Package caches cleaned in same layer: `--no-cache` (apk), `rm -rf /var/lib/apt/lists/*` (apt). For pip: use `--mount=type=cache` OR `--no-cache-dir`, not both.
+- [ ] CMD uses exec form (JSON array), not shell form: `CMD ["node", "app.js"]` not `CMD node app.js`
+- [ ] **HEALTHCHECK uses available tools**: probe command uses a binary present in the final image (wget in Alpine, curl in Debian, none in scratch/distroless - use the app's own health endpoint)
 
 ---
 
@@ -252,7 +254,7 @@ services:
 - `version: "3.8"` - dead field, remove it
 - `container_name` on every service (breaks `docker compose up --scale`)
 - `restart: always` without healthcheck (infinite restart of broken containers)
-- `network_mode: host` when port mapping works
+- `network_mode: host` when port mapping works (replace with a user-defined bridge network and explicit `ports:` mapping)
 - `depends_on` without `condition:` (ordering only, no readiness)
 - `volumes:` mounting entire project dir in production (dev pattern leak)
 - `privileged: true` on a compose service instead of the host LXC

@@ -99,6 +99,9 @@ Spawn all four agents concurrently. Each agent invokes one of the four custom sk
 sequentially in this order: Security Audit, Code Review, Slop Check, Docs Sweep. Security
 first because those findings are most time-sensitive. If any agent exceeds 5 minutes wall-clock, note the timeout in the output header and continue with the remaining agents.
 
+**If agent dispatch is unavailable** (non-Claude harness, no subagent API): run each audit
+sequentially in separate CLI sessions, invoking each skill manually in its own conversation.
+
 Pass this context block to every agent, substituting the `{placeholders}` from preflight:
 
 ```

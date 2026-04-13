@@ -6,7 +6,7 @@ description: >
   'improve this prompt'. Not for brainstorming features, writing code, or creating skills
   (use skill-creator).
 license: MIT
-compatibility: "None - works with any LLM target"
+compatibility: "Model-agnostic. Optional: tailor output format to Claude, GPT, or Gemini when target is known"
 metadata:
   source: iuliandita/skills
   date_added: "2026-03-25"

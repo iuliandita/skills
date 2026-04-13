@@ -61,6 +61,9 @@ This skill runs inside an AI agent. AI tools consistently produce the same K8s s
 - [ ] No `privileged: true` or `hostNetwork: true` unless explicitly requested and justified
 - [ ] `seccompProfile: { type: RuntimeDefault }` present (often forgotten)
 - [ ] Using Gateway API `HTTPRoute` for new external access, not legacy Ingress
+- [ ] Liveness and readiness probes defined: every container has at least a readiness probe
+- [ ] Kube context verified before any kubectl/helm command
+- [ ] No auto-sync to production without approval gate
 
 Run generated manifests through `kube-score`, `kubelinter`, or `checkov` when available.
 
@@ -250,53 +253,6 @@ Key Go template patterns:
 - Hook resources without `helm.sh/hook-delete-policy` (orphaned Jobs accumulate)
 - Using `--post-renderer` with raw executables (broken in Helm 4; must use plugin names)
 - Ignoring SSA migration - upgrading to Helm 4 on existing releases can surface previously-hidden conflicts
-
-### Example: Redis HA production values overlay
-
-Common Bitnami Redis anti-patterns fixed. Use as `values-prod.yaml` overlay:
-
-```yaml
-# values-prod.yaml - Redis HA (Bitnami chart)
-architecture: replication           # not "standalone"
-auth:
-  enabled: true                     # NEVER false in prod
-  existingSecret: redis-auth        # ESO/Sealed Secret, not plaintext password
-replica:
-  replicaCount: 3                   # HA: >= 3 replicas
-  resources:
-    requests:
-      memory: "256Mi"
-      cpu: "250m"
-    limits:
-      memory: "512Mi"
-      cpu: "500m"
-  persistence:
-    enabled: true                   # NEVER false in prod (data loss on restart)
-    size: 8Gi
-    storageClass: <storage-class>
-master:
-  resources:
-    requests:
-      memory: "256Mi"
-      cpu: "250m"
-    limits:
-      memory: "512Mi"
-      cpu: "500m"
-  persistence:
-    enabled: true
-    size: 8Gi
-sentinel:
-  enabled: true                     # automatic failover
-  resources:
-    requests:
-      memory: "64Mi"
-      cpu: "50m"
-    limits:
-      memory: "128Mi"
-      cpu: "100m"
-metrics:
-  enabled: true                     # Prometheus exporter
-```
 
 ### ArgoCD + Helm caveats
 

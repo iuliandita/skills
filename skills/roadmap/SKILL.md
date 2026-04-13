@@ -185,12 +185,11 @@ Otherwise, check for recent project activity:
 # Detect forge CLI: gh (GitHub), glab (GitLab), or git-only fallback
 # GitHub
 gh pr list --state merged --limit 10 \
-  --search "merged:>=$(date -d '2 weeks ago' +%Y-%m-%d)" \
   --json number,title,mergedAt 2>/dev/null
 # GitLab
 glab mr list --state merged --per-page 10 2>/dev/null
 
-# Always available
+# Always available (portable - no GNU date required)
 git tag --sort=-creatordate 2>/dev/null | head -5
 git log --oneline --since="2 weeks ago" 2>/dev/null | head -15
 ```
@@ -253,13 +252,12 @@ If no ROADMAP.md exists, redirect to Mode 1 (bootstrap) first.
 #### Step 1: Gather recent activity
 
 ```bash
-# Always available
+# Always available (portable - no GNU date required)
 git log --oneline --since="2 weeks ago" 2>/dev/null
 git tag --sort=-creatordate 2>/dev/null | head -5
 
 # GitHub
 gh pr list --state merged --limit 20 \
-  --search "merged:>=$(date -d '2 weeks ago' +%Y-%m-%d)" \
   --json title,number,mergedAt 2>/dev/null
 # GitLab
 glab mr list --state merged --per-page 20 2>/dev/null
@@ -341,7 +339,6 @@ gh issue list -R owner/repo --state all \
   --limit 50 --json number,title,reactionGroups,comments,labels 2>/dev/null
 # Filter for feature/enhancement labels client-side (label names vary per repo)
 gh pr list -R owner/repo --state merged \
-  --search "merged:>=$(date -d '6 months ago' +%Y-%m-%d)" \
   --limit 20 --json number,title,mergedAt 2>/dev/null
 
 # GitLab (glab)
@@ -424,19 +421,17 @@ Read ROADMAP.md. Present a summary:
 - Item counts by priority tier
 - Items currently in progress (if tracked)
 - Recently shipped items
-- Stale items (ideas sitting untouched for a long time - check git blame or file dates)
+- Stale items: items untouched for 60+ days are candidates for archival or re-prioritization
+  (use git blame or file modification dates to estimate age)
 
 #### Step 2: Suggest actions
 
-Based on the current state:
-
-| Signal | Suggestion |
-|--------|-----------|
-| P0 items not being worked on | Flag - these are supposed to be urgent |
-| Old ideas with no movement | Park or promote - sitting isn't a priority |
-| Related items scattered across tiers | Group into a cohesive effort |
-| Shipped items still in active sections | Move to Shipped |
-| Missing structure | Suggest organizational improvements |
+Based on the current state, flag any of these:
+- **P0 items not being worked on** - supposed to be urgent; needs explanation or demotion
+- **Items untouched 60+ days** - park with reason or promote; sitting isn't a priority
+- **Related items scattered across tiers** - group into a cohesive effort
+- **Shipped items still in active sections** - move to Shipped
+- **Missing structure** - suggest organizational improvements
 
 #### Step 3: Offer structural improvements
 

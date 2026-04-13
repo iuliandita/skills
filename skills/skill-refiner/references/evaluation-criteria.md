@@ -15,10 +15,10 @@ Each skill receives a composite score (0-100) from four weighted components.
 
 | Component | Weight | Source |
 |---|---|---|
-| Structural compliance | 15% | lint-skills.sh + validate-spec.sh |
+| Structural compliance | 10% | lint-skills.sh + validate-spec.sh |
 | AI Self-Check | 35% | skill-creator review mode |
-| Behavioral test | 40% | Synthetic task execution |
-| Cross-model review | 10% | Secondary model flag count |
+| Behavioral test | 50% | Synthetic task execution |
+| Cross-model review | 5% | Secondary model flag count |
 
 ### Renormalized Weights (No Secondary Model)
 
@@ -26,15 +26,15 @@ When cross-model review is unavailable, redistribute proportionally:
 
 | Component | Weight |
 |---|---|
-| Structural compliance | 17% |
-| AI Self-Check | 39% |
-| Behavioral test | 44% |
+| Structural compliance | 11% |
+| AI Self-Check | 37% |
+| Behavioral test | 52% |
 
 ---
 
 ## Component Scoring
 
-### Structural Compliance (15%)
+### Structural Compliance (10%)
 
 Binary pass/fail per lint and validate check, normalized to 0-100:
 
@@ -53,7 +53,7 @@ skill-creator's AI Self-Check checklist, scored individually:
 - Items not applicable to a given skill are excluded from the denominator
   (e.g., "AI self-check section" for skills that don't generate code)
 
-### Behavioral Test (40%)
+### Behavioral Test (50%)
 
 Run 2-3 synthetic test prompts per skill from `references/test-cases.md`.
 
@@ -74,7 +74,7 @@ Score each output on four dimensions (0-25 each):
 
 Score: average across all test prompts, normalized to 0-100.
 
-### Cross-Model Review (10%)
+### Cross-Model Review (5%)
 
 Secondary model reviews the improvement diff and flags issues:
 

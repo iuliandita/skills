@@ -56,6 +56,9 @@ Before returning any audit, verify:
 - [ ] **Code blocks untouched**: do not flag identifiers, strings, or code comments that contain banned words as part of functional code
 - [ ] **Rewrites are real improvements**: every "after" is shorter, clearer, or more specific than the "before". No lateral rewrites that just swap synonyms
 - [ ] **Severity is honest**: do not inflate Low findings to Medium to pad the report
+- [ ] **Short text rule applied**: under 100 words, 2+ tells in one paragraph = High severity
+- [ ] **Audit output itself uses no AI-prose tells** (apply these rules to your own output)
+- [ ] **Density threshold applied** before assigning severity level
 
 ---
 
@@ -96,6 +99,8 @@ Apply the four categories (see below). For each match, read the surrounding cont
 - **2-3 per 500 words** - a pattern, flag the cluster with Medium severity
 - **4+ per 500 words** - dominant voice, High severity, recommend structural rewrite
 
+**Short text scaling:** for text under 100 words, any 2+ tells in a single paragraph is High severity regardless of the per-500-words threshold. A single sentence crammed with AI vocabulary is worse than a long doc with scattered instances.
+
 Density only applies to vocabulary and syntax tells. A single travel-guide paragraph is enough to flag on its own. One fabricated citation is always High.
 
 Classify each finding by category, action, and severity:
@@ -134,6 +139,7 @@ Specific words that LLMs overuse far beyond their natural English frequency.
 | realm | area, field, world |
 | landscape | scene, field, mix |
 | showcase | show, display, feature |
+| empower | help, enable, let (or rewrite with a specific claim) |
 | foster | build, grow, support, encourage |
 | navigate | handle, work through, manage |
 | nestled | set, located, built |
@@ -156,6 +162,8 @@ Specific words that LLMs overuse far beyond their natural English frequency.
 | synergy | fit, overlap, how X and Y work together (or drop) |
 | innovative | new, novel (or name what is new) |
 | commence | start, begin |
+| journey toward | work toward, move toward, aim for (or drop) |
+| moving forward | from now on, next, going forward (or drop) |
 
 **Detect:**
 - Multiple flagged words in the same paragraph
@@ -321,6 +329,8 @@ These look like AI tells but are not:
 - **Direct quotations** - do not edit words written by someone else, even if they contain banned vocabulary
 - **Genre conventions** - travel writing uses travel-guide voice because that is what travel writing sounds like. Marketing copy uses promotional tone. Journalism uses em-dashes. Fiction uses elegant variation and tricolons intentionally. Respect the genre.
 - **Technical terms of art** - `pivotal` in mechanical engineering, `realm` in networking or identity (Kerberos, OIDC), `foster` in child welfare, `landscape` in horticulture or graphic design, `crucial experiment` in philosophy of science
+- `landscape` in ML/AI contexts (optimization landscape, loss landscape, feature landscape)
+- `robust` in statistics/ML (robust estimation, robust optimization, robust regression)
 - **Deliberate register play** - satire, parody, pastiche, and stylistic experiments
 - **Direct speech / dialog** in fiction - characters can sound however they sound
 - **Lists that are actually lists** - a three-item list is only suspicious if the items are padded. An enumeration of three real things is fine

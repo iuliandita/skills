@@ -16,6 +16,8 @@ metadata:
 
 # Localize: App Internationalization Workflow
 
+**Target versions (April 2026):** react-i18next 15.x, vue-i18n 11.x, next-intl 4.x, i18next 25.x
+
 Systematic approach to internationalizing applications. Covers two scenarios: adding
 multilingual support from scratch and auditing existing i18n for gaps. Built from real
 production pain - the hardest part of i18n is not translation but finding every string
@@ -75,6 +77,12 @@ code, catalogs, or translations, verify against this list:**
   sound like a native speaker wrote them for that specific app
 - [ ] **No library API hallucination**: if using a library (i18next, next-intl, vue-i18n),
   verify import paths, hook names, and configuration options against current docs
+- [ ] **RTL/bidirectional text handled**: layout direction set in HTML lang/dir attributes,
+  no LTR-only CSS assumptions
+- [ ] **Catalog files parseable**: JSON/YAML validates without syntax errors, no trailing
+  commas or unquoted keys
+- [ ] **Locale detection complete**: browser navigator.language, Accept-Language header,
+  or user preference stored and respected
 
 ---
 
@@ -141,6 +149,44 @@ If no i18n system exists, set one up. If one exists, skip to Step 3.
 Urdu), the UI needs `dir="rtl"` support, CSS logical properties (`margin-inline-start`
 instead of `margin-left`), and bidirectional text handling. RTL is a layout concern beyond
 catalog setup - plan for it in the infrastructure, not as an afterthought.
+
+**Quick setup for React (react-i18next)** - the most common case:
+
+```tsx
+// 1. Install: npm install react-i18next i18next
+// 2. src/i18n.ts - init once, import before rendering
+import i18n from 'i18next'
+import { initReactI18next } from 'react-i18next'
+import en from './locales/en.json'
+i18n.use(initReactI18next).init({ lng: 'en', fallbackLng: 'en',
+  resources: { en: { translation: en } } })
+export default i18n
+
+// 3. src/main.tsx - import side-effect before <App />
+import './i18n'
+
+// 4. In any component
+import { useTranslation } from 'react-i18next'
+const { t } = useTranslation()
+return <button>{t('auth.signIn')}</button>
+```
+
+**Quick setup for Vue (vue-i18n):**
+
+```ts
+// 1. Install: npm install vue-i18n
+// 2. src/i18n.ts
+import { createI18n } from 'vue-i18n'
+import en from './locales/en.json'
+export const i18n = createI18n({ locale: 'en', fallbackLocale: 'en', messages: { en } })
+
+// 3. In any component
+import { useI18n } from 'vue-i18n'
+const { t } = useI18n()
+// <button>{{ t('auth.signIn') }}</button>
+```
+
+For Next.js use `next-intl`; for others see `references/audit-patterns.md`.
 
 Read `references/audit-patterns.md` for framework-specific patterns on where strings hide.
 

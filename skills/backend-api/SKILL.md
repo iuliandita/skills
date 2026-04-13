@@ -157,6 +157,12 @@ Auth rules:
 - Define scope or role boundaries at the API boundary, not ad hoc inside random handlers
 - If the browser app talks to third-party identity providers, follow authorization code + PKCE and current browser-app guidance rather than resurrecting implicit flow patterns
 
+BFF token mediation (first-party browser app calling an external API):
+```
+Browser -> BFF (session cookie) -> BFF attaches Bearer token -> Upstream API
+```
+The BFF holds the access token server-side; the browser never sees it.
+
 Read `references/auth-and-session-patterns.md` for sessions, bearer tokens, OAuth, BFF, refresh tokens, and machine auth.
 
 ### Step 5: Implement the framework surface
@@ -216,6 +222,16 @@ Before returning the result:
 - Do not return one error shape from validation, another from auth, and a third from business rules
 - Never leak raw stack traces or ORM internals to clients
 
+Minimal RFC 9457 problem detail response:
+```json
+{
+  "type": "https://api.example.com/errors/insufficient-funds",
+  "title": "Insufficient funds",
+  "status": 422,
+  "detail": "Account balance is $10.00; transfer requires $50.00."
+}
+```
+
 ### Pagination and filtering
 
 - Offset pagination is fine for small, stable backoffice lists
@@ -228,6 +244,26 @@ Before returning the result:
 - Define idempotency for writes that clients or gateways may retry
 - Use explicit idempotency keys for payment-like or request-replay-prone operations
 - Distinguish "request accepted" from "side effect completed" when async workflows exist
+
+Idempotency key header pattern (Express/NestJS):
+```typescript
+const key = req.headers['idempotency-key'];
+if (key) {
+  const cached = await cache.get(`idem:${key}`);
+  if (cached) return res.status(cached.status).json(cached.body);
+}
+// ... execute, then store result keyed by idempotency-key before returning
+```
+
+Cursor pagination response envelope:
+```json
+{
+  "data": [...],
+  "next_cursor": "eyJpZCI6MTIzfQ",
+  "has_more": true
+}
+```
+Decode the cursor server-side (`WHERE id > :cursor_id ORDER BY id LIMIT :limit`). Never expose raw DB offsets or row numbers in the cursor.
 
 ## What NOT to Force
 

@@ -273,6 +273,8 @@ done > output.md
 
 ## SPA and Dynamic Content
 
+**Data extraction priority**: try structured data (JSON-LD, `structuredData`) before markdown parsing, and markdown before full HTML.
+
 1. **Always wait**: use `--wait-until networkidle` or `--wait-selector` with Lightpanda,
    `waitForSelector` / `browser_wait_for` with MCP tools
 2. **Client-side routing**: if a link changes the URL without a full page load, re-extract
@@ -373,6 +375,21 @@ reference file covers tool-specific depth.
   configures it.
 - **ai-ml** - RAG pipelines and web data collection. When scraping content specifically for
   embeddings or training data, ai-ml covers the pipeline; this skill covers the extraction.
+
+## AI Self-Check
+
+Before returning any browsing result, verify:
+
+- [ ] Used the cheapest tool available for the task - no Playwright when WebFetch would have worked
+- [ ] Did not dump full HTML into context when markdown or structured data was sufficient
+- [ ] Waited for dynamic content before extracting from SPAs (`networkidle` or `--wait-selector`)
+- [ ] Stripped boilerplate (nav, ads, footers) before returning content to the user
+- [ ] Scoped extraction to the relevant section, not the whole page
+- [ ] Did not hardcode credentials - used env vars, secret manager, or user prompt
+- [ ] Re-extracted page state after any click or form submission before making decisions
+- [ ] Escalated to the next tool tier on failure rather than retrying the same tool
+
+---
 
 ## Rules
 

@@ -229,7 +229,7 @@ import {
 }
 ```
 
-**Moved blocks** (TF 1.8+): declarative intra-state refactoring. Rename resources or move into/out of modules within the same state file. Reviewed in PRs, applied automatically on `terraform apply`. Does NOT work across state files - for cross-state moves, see the state surgery workflow in `references/state-and-security.md`.
+**Moved blocks** (TF 1.8+): declarative intra-state refactoring. Rename resources or move into/out of modules within the same state file. Reviewed in PRs, applied automatically on `terraform apply`. Does NOT work across state files.
 
 ```hcl
 moved {
@@ -237,6 +237,20 @@ moved {
   to   = module.compute.aws_instance.web
 }
 ```
+
+**Cross-state resource move** (state surgery - when `moved` blocks can't help):
+
+```bash
+# 1. Back up source state, then remove the resource
+terraform state pull > backup.tfstate         # safety backup only
+terraform state rm aws_instance.web           # removes from source backend directly
+
+# 2. In the destination workspace, import the resource
+terraform import aws_instance.web i-0abc1234def56789
+# Then add the matching resource block in HCL to avoid drift
+```
+
+Verify both states with `terraform plan` before and after. `state rm` writes directly to the backend - do not `state push` the backup afterward (that would undo the removal).
 
 ### What NOT to write
 
@@ -417,14 +431,12 @@ Read `references/compliance.md` for the full PCI-DSS 4.0 requirements mapping, d
 
 **PCI DSS 4.0 explicitly puts IaC repos in scope** (Req 6). Your Terraform repo needs the same controls as any CDE system - access controls, audit logging, change management.
 
-**Critical requirements:**
-- **Req 1**: Network segmentation via VPC/subnet/SG configs in Terraform - these ARE the audit artifacts
-- **Req 3**: Encryption enforced via IaC (`storage_encrypted = true`, KMS keys, `force_ssl`)
-- **Req 6**: Secure development lifecycle - PR reviews, static analysis, policy-as-code gates on every merge
-- **Req 7**: Least-privilege IAM enforced in Terraform - no `"Action": "*"` in CDE
-- **Req 8.6.2**: No hardcoded secrets - use ephemeral resources (TF 1.10+) or Vault/SSM data sources
-- **Req 10**: Audit trail - Git PRs + archived plan/apply JSON + CloudTrail + immutable S3
-- **Req 11.5**: Change detection - drift detection satisfies FIM requirement for infrastructure
+**Critical requirements (most commonly cited in QSA findings):**
+- **Req 6 + 8.6.2**: IaC repo in scope - PR reviews, policy-as-code gates, no hardcoded secrets (use ephemeral resources TF 1.10+ or Vault/SSM)
+- **Req 10**: Audit trail - archived plan/apply JSON + CloudTrail + immutable S3 with object lock (COMPLIANCE mode)
+- **Req 11.5**: Drift detection satisfies FIM - schedule `terraform plan` runs and alert on unexpected changes
+
+See `references/compliance.md` for full Req 1/3/7 mapping, drift detection strategy, and audit trail architecture.
 
 **State file security**: state contains secrets (even with `sensitive`). Encrypt at rest (S3 SSE-KMS), restrict access (IAM policy), enable versioning, log all access (CloudTrail data events), retain 1+ year.
 

@@ -82,8 +82,8 @@ contested major flags (non-configurable).
    smoke test) per `references/harness-detection.md`. Announce result.
 6. **If no secondary found**: **always fall back to self-review.** Spawn a fresh agent on
    the current harness with the review prompt template from `references/harness-detection.md`.
-   Label as "same-model fresh-context review" in scoring, weight at 5% instead of 10%
-   (renormalize: 16/37/42/5). This catches confirmation bias but shares the primary model's
+   Label as "same-model fresh-context review" in scoring, weight at 3% instead of 5%
+   (renormalize: 10/36/51/3). This catches confirmation bias but shares the primary model's
    blind spots. Skipping review entirely is not an option - a fresh-context self-review is
    the minimum bar. If the harness doesn't support subagents, run the review prompt as a
    separate CLI invocation (`claude -p`, `codex exec`, etc.).

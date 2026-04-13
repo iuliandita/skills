@@ -75,7 +75,7 @@ verify against this list:**
 - [ ] **No secrets in commits.** Check `git diff --cached` for API keys, tokens, passwords, `.env` files, private keys before committing. If found, unstage immediately.
 - [ ] **No AI attribution in commits.** Never add `Co-Authored-By` lines or any mention of AI tools in commits. No exceptions unless the project explicitly requires it.
 - [ ] **Instruction-file policy respected.** Follow the repo's policy for `AGENTS.md` or other instruction files. Never commit local agent state directories like `.claude/`, and never mention local-only tooling files in commit messages.
-- [ ] **No tool-specific paths in commits.** `.claude/`, `.cursor/`, `.superpowers/`, `.worktrees/`, `docs/local/`, `PLAN.md`, `SECURITY-AUDIT.md` are local artifacts. Verify `.gitignore` covers them.
+- [ ] **No tool-specific paths in commits.** `.claude/`, `.cursor/`, `.superpowers/`, `.worktrees/`, `docs/local/`, `PLAN.md`, `SECURITY-AUDIT.md` are local artifacts. Verify `.gitignore` covers AI tooling artifacts BEFORE staging (.claude/, .cursor/, .codex/, PLAN.md)
 - [ ] **Branch target correct.** Verify you're on the right branch before committing. Verify the PR/MR targets the right base branch.
 - [ ] **Remote target correct.** Multi-remote setups exist. Check which remote(s) to push to. Some projects push to multiple remotes (e.g., Forgejo + GitHub).
 - [ ] **Signing configured.** If the project requires signed commits, verify signing works before committing (`git log --show-signature -1`).
@@ -83,7 +83,7 @@ verify against this list:**
 - [ ] **No interactive flags.** Never use `-i` (interactive) flags (`git rebase -i`, `git add -i`) in automated contexts - they require TTY input.
 - [ ] **Tags pushed separately.** `git push` doesn't push tags by default. Always `git push --tags` or `git push origin <tag>` explicitly.
 - [ ] **Feature branch up to date.** Before creating a PR/MR, rebase onto the latest base branch to avoid merge conflicts.
-- [ ] **Lock files regenerated after conflict resolution.** After resolving conflicts in dependency files (`package.json`, `Cargo.toml`, `go.mod`, `pyproject.toml`), re-run the package manager to regenerate the lock file. Never manually merge lock files.
+- [ ] **Lock files regenerated after conflict resolution.** After resolving conflicts in dependency files (`package.json`, `Cargo.toml`, `go.mod`, `pyproject.toml`), re-run the package manager to regenerate the lock file. Never manually merge lock files. Then regenerate: `npm install`, `yarn install`, `go mod tidy`, or `cargo generate-lockfile`.
 - [ ] **Force-push safety.** If force-push is needed, always use `--force-with-lease` (refuses if remote has unfetched commits). Plain `--force` requires explicit user approval and team coordination.
 - [ ] **Version info dated.** When citing tool versions, include a date so readers know when to re-check. Stale version numbers cause silent breakage.
 
@@ -176,6 +176,8 @@ General flow:
 1. **Create feature branch**: `git checkout -b type/short-description` (e.g., `feat/user-search`, `fix/auth-bypass`). Keep branch names lowercase, hyphenated, prefixed with type.
 2. **Make changes**: commit early, commit often. Each commit should be a logical unit.
 3. **Rebase onto base**: `git fetch origin && git rebase origin/main` (or whatever the base branch is). Resolve conflicts: look for `<<<<<<<`, `=======`, `>>>>>>>` markers, keep the correct content from both sides (often both additions belong), then `git add` and `git rebase --continue`. After resolving conflicts in dependency files (`package.json`, `Cargo.toml`, `go.mod`, etc.), re-run the package manager to regenerate the lock file. Never merge the base into the feature branch. For merge strategy guidance, see `references/forge-workflows.md`.
+
+   **Dependency file conflicts** (`package.json`, `go.mod`, `pyproject.toml`): keep additions from both branches; when the same dependency has conflicting version pins, take the higher compatible version conservatively and validate. Never hand-edit the lock file - always regenerate it by running the package manager (`npm install`, `go mod tidy`, `uv sync`, etc.) after resolving the manifest conflict. Do not use `--ours` or `--theirs` for dependency manifest conflicts - these silently drop one branch's additions.
 4. **Push**: `git push -u origin feat/short-description`
 5. **Create PR/MR**: with a clear title (under 70 chars), body with summary + test plan.
 6. **Review cycle**: address feedback, rebase and force-push with `--force-with-lease` (never plain `--force` on shared branches). Squash fixup commits before pushing.

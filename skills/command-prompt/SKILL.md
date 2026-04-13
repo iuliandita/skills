@@ -4,7 +4,7 @@ description: >
   · Write shell commands, scripts, dotfile config, completions, or debug shell-specific issues.
   Covers zsh, bash, POSIX sh, fish, and nushell. Triggers: 'shell', 'script', '.zshrc',
   '.bashrc', 'dotfiles', 'completion', 'alias', 'zsh', 'bash', 'fish', 'nushell', 'oh-my-zsh',
-  'heredoc', 'trap'.
+  'heredoc', 'trap'. Not for CI pipeline shell blocks (use ci-cd).
 license: MIT
 compatibility: "Requires a POSIX-compatible shell. Zsh, bash, fish, or nushell for shell-specific features"
 metadata:
@@ -185,6 +185,17 @@ trap cleanup EXIT INT TERM
 trap '' HUP
 
 # Common signals: EXIT (0), HUP (1), INT (2), TERM (15), USR1 (10), USR2 (12)
+
+# Graceful kill with SIGTERM -> wait -> SIGKILL escalation
+kill_gracefully() {
+    local pid=$1 timeout=${2:-5}
+    kill -TERM "$pid" 2>/dev/null || return
+    local i=0
+    while kill -0 "$pid" 2>/dev/null && [ $i -lt $timeout ]; do
+        sleep 1; i=$((i+1))
+    done
+    kill -0 "$pid" 2>/dev/null && kill -KILL "$pid"
+}
 ```
 
 ### Quoting rules

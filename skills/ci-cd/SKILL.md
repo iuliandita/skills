@@ -63,7 +63,11 @@ This skill covers four domains depending on context:
 ## AI Self-Check
 
 AI tools consistently produce the same CI/CD mistakes. **Before returning any generated
-pipeline config, verify against this list:**
+pipeline config, verify against this list.**
+
+**Review mode:** if auditing an existing pipeline rather than generating one, invert this
+checklist - each item that fails is a finding. Work through the list top-to-bottom and report
+every failure with file and line reference.
 
 - [ ] **SHA pinning**: all third-party actions/images pinned to full commit SHA or digest, not mutable tags. Add `# vX.Y.Z` comment for readability.
 - [ ] **Permissions**: explicit `permissions:` block on every GitHub Actions workflow (read-only default). GitLab: protected variables scoped correctly.
