@@ -23,7 +23,7 @@ TypeScript's inference is good. Fighting it with redundant annotations is noise.
 - `const` type parameters (TS 5.0+) where applicable
 - Template literal types for string patterns
 - `using` / `Symbol.dispose` (TS 5.2+) for resource cleanup
-- `X | null` over `Optional<X>` for simple nullable types
+- Plain unions (`T | null`, `T | undefined`) over homegrown `Optional<T>` wrappers for simple nullable types
 
 ## Stale Patterns (Lies)
 
@@ -63,6 +63,20 @@ TypeScript's inference is good. Fighting it with redundant annotations is noise.
 - Two HTTP clients (e.g., `axios` + `node-fetch`)
 - Two date libraries
 - `dotenv` when the runtime supports `.env` natively (Bun, Deno, Node 20.6+)
+
+## AI-Native Tells (Lies + Soul)
+
+Patterns that often look polished enough to pass review unless someone asks, "Why does this exist?"
+
+**Detect:**
+- `try/catch` around deterministic local code (`console.*`, object spreads, pure transforms) where the catch only logs or returns a fallback
+- `new Promise(async (resolve, reject) => { ... })` or extra promise wrappers around already-async code
+- Required env/config read with a silent default: `process.env.API_URL ?? 'http://localhost:3000'` in production code
+- Internal helper calls guarded with `if (!response.ok)` or null checks even though the helper already normalizes failures
+- Tests that only assert `toHaveBeenCalledTimes`, exact mock arguments, or snapshots without checking returned behavior
+- Invented framework APIs, hook options, or config keys that are not present in local types or docs
+
+**Fix:** Delete defensive wrappers that add no recovery. Fail loudly on required config. Let the type system and real boundary checks do the work. For suspected hallucinations, check the project's installed types, generated docs, or framework docs before flagging.
 
 ## Barrel Files (Noise)
 

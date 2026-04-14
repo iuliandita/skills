@@ -143,3 +143,15 @@ except ConnectionError:
 - `except: pass` - silent swallow with no comment
 - `logging.exception()` in every function instead of at boundaries
 - Re-raising as generic `RuntimeError` losing the original exception type
+
+## AI-Native Tells (Lies + Soul)
+
+**Detect:**
+- `dict.get("key", {})` or `obj.attr if obj else {}` chains used to hide a missing invariant instead of checking the real contract once
+- Broad `try/except` wrapped around its own explicit validation and raises
+- Catch-log-reraise blocks that add no context and make the function look "safe"
+- Dataclasses or tiny classes created only to hold one function and a logger
+- Mock-heavy tests using `MagicMock` everywhere, with assertions only on method calls instead of returned behavior or state
+- Library methods that sound Pythonic but are not real in the installed package or stdlib version
+
+**Fix:** Validate once at the boundary, then trust internal invariants. Use narrow exceptions. Prefer behavior assertions over interaction-only tests. When a method or module name looks suspicious, verify it in the local environment or docs before rewriting around it.

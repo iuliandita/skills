@@ -104,3 +104,14 @@ cd "$(dirname "$0")"
 - Missing `readonly` on constants
 
 **Fix:** Use `main()` pattern for scripts >50 lines. Define functions before use. Use `readonly` for constants. Accept paths as arguments with sensible defaults.
+
+## AI-Native Tells (Lies + Soul)
+
+**Detect:**
+- Hallucinated flags or subcommands copied from adjacent CLIs (`--json`, `--force`, `--yes`, `config get`) without checking `--help`
+- `2>/dev/null || true` glued onto uncertain commands to make the script "robust"
+- Large inline heredocs used to generate YAML/JSON/config in automation when the repo already has templates or source files
+- Retry loops and sleeps around local deterministic commands instead of fixing ordering or preconditions
+- `command -v tool >/dev/null || install_tool` inside project scripts where tool installation should be explicit
+
+**Fix:** Check the real CLI help text before keeping a flag. Let failures surface unless the non-zero is expected and documented. Prefer checked-in files or templates over opaque heredocs for non-trivial config. Keep installation/bootstrap separate from normal task scripts.

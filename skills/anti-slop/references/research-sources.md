@@ -29,6 +29,21 @@ Read this file for deeper context on specific findings or when the user wants ci
 - Sloplint: github.com/dannote/sloplint
 - Anti-slop (peakoss): github.com/peakoss/anti-slop
 
+## Community / Recent Signals
+
+- Medium: "The Illusion of Fluency and the Risk of Overtrust in AI-Assisted Coding" - medium.com/@rafaelperin/the-illusion-of-fluency-and-the-risk-of-overtrust-in-ai-assisted-coding-5ca8fca84907
+- Medium: "I Let AI Write Tests for 2 Months. 100% Coverage. 0% Useful." - medium.com/lets-code-future/i-let-ai-write-tests-for-2-months-100-coverage-0-useful-heres-what-broke-in-production-c088a5ecd030
+- DEV: "AI Writes Your Tests. Here's What It Systematically Misses." - dev.to/anhnguyensynctree/ai-writes-your-tests-heres-what-it-systematically-misses-3a38
+- Hacker News discussion: "Toward automated verification of unreviewed AI-generated code" - news.ycombinator.com/item?id=47397367
+- Lemmy discussion amplifying AI-vs-human code quality concerns - lemmy.world/post/40761686
+
+## Repeated Failure Themes
+
+- Fluent output gets over-trusted because it looks intentional even when it is not grounded.
+- Generated tests often mirror the implementation and validate the same wrong assumption.
+- Models use fallback defaults, broad catches, and extra wrappers to hide uncertainty.
+- Hallucinated APIs, flags, resource fields, and version mismatches are common in IaC and shell-heavy repos because the syntax is plausible enough to survive casual review.
+
 ## The "No Soul" Problem
 
 The hardest slop to detect programmatically. Code that compiles, passes tests, and follows conventions - but feels generic. Signs:

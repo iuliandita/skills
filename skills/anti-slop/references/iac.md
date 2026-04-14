@@ -47,6 +47,16 @@ Covers Terraform, Ansible, Helm, and Kubernetes manifests.
 - Nested `dynamic` blocks when a simple `for_each` on the resource would work
 - `data "template_file"` (deprecated) -> `templatefile()` function
 
+### Schema / Provider Hallucinations (Lies)
+
+**Detect:**
+- Resource arguments that are not in the provider schema for the version in `required_providers` or `.terraform.lock.hcl`
+- Resource names copied from the wrong provider or from a stale blog post
+- Defaulting required inputs with `try()` / `lookup()` to avoid understanding whether they are actually optional
+- Version-blind examples: using provider arguments introduced after the pinned version in the repo
+
+**Fix:** Check `terraform providers schema -json`, registry docs, or generated provider docs for the exact pinned version. Remove invented arguments and fail loudly on required inputs.
+
 ### Verbose (Noise)
 
 - Declaring variables with `type = string` and no `description`, `default`, or `validation` - the variable block is just noise
@@ -106,6 +116,16 @@ The #1 Ansible slop pattern. If there's a module for it, use the module.
 - `include:` -> `include_tasks:` or `import_tasks:`
 - No YAML anchors for repeated blocks (DRY violation)
 
+### Module / Collection Hallucinations (Lies)
+
+**Detect:**
+- Parameters that do not exist for the named module
+- Correct parameter names attached to the wrong module or collection
+- `community.*` modules used without the collection being declared or installed
+- Shell commands added because the model could not remember the module shape
+
+**Fix:** Check `ansible-doc`, collection docs, or local collection metadata before keeping module args. Prefer the real module when it exists; use `command`/`shell` only with a stated reason.
+
 ---
 
 ## Helm
@@ -136,6 +156,16 @@ The #1 Ansible slop pattern. If there's a module for it, use the module.
 - Subchart values overridden in parent `values.yaml` without documenting why
 - No `NOTES.txt` for post-install instructions
 - `.helmignore` missing, including test/ci files in the packaged chart
+
+### Values / Template Drift (Lies)
+
+**Detect:**
+- Keys in `values.yaml` that no template consumes
+- Template lookups for values that are never defined, documented, or defaulted
+- Copy-pasted Kubernetes fields stuffed into chart values with no matching template logic
+- Version-specific chart values copied from another chart or release line
+
+**Fix:** Grep templates and chart docs to confirm a value path is real. Delete dead values. Add defaults or documentation for optional ones.
 
 ---
 
@@ -173,6 +203,16 @@ The #1 Ansible slop pattern. If there's a module for it, use the module.
 - `emptyDir` for persistent data
 - Sidecar containers doing what an init container should
 - `nodeSelector` with a single node name (defeats scheduling)
+
+### API Version / Field Drift (Lies)
+
+**Detect:**
+- `apiVersion` and field combinations that do not belong together for the target cluster version
+- Fields copied from a blog, CRD, or older manifest into the wrong object kind
+- Probes, securityContext, or rollout fields nested at the wrong level but still looking plausible in YAML
+- `kubectl` flags in scripts or docs that do not exist for the actual client version in use
+
+**Fix:** Validate against cluster/OpenAPI schema or client-side validators (`kubectl apply --dry-run=client`, `kubeconform`, generated CRD schemas). Keep manifests version-aware instead of "YAML-shaped."
 
 ## Proxmox / LXC / VM IaC Patterns
 
