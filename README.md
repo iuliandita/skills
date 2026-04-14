@@ -8,7 +8,7 @@
 npx skills add iuliandita/skills
 ```
 
-**32 production-tested skills** - Kubernetes, Terraform, Docker, Ansible, CI/CD, HTTP APIs, databases, AI/ML, testing, virtualization, Arch Linux, networking, MCP servers, security audits, pentesting, code review, prose audits, dev workflow orchestration, and more.
+**33 production-tested skills** - Kubernetes, Terraform, Docker, Ansible, CI/CD, HTTP APIs, databases, AI/ML, testing, virtualization, Arch Linux, networking, MCP servers, security audits, pentesting, code review, prose audits, dev workflow orchestration, and more.
 
 Built on the [Agent Skills open standard](https://agentskills.io/specification). Works with any tool that supports it.
 
@@ -120,6 +120,7 @@ The loop: **Score -> Improve -> Verify -> Keep or Revert -> Repeat.**
 |-------|-------------|
 | **prompt-generator** | Turn scattered ideas into structured LLM prompts - system prompts, templates, prompt engineering |
 | **roadmap** | Keep a gitignored `ROADMAP.md` current - capture ideas, shipped work, priorities, and competitor signals |
+| **routine-writer** | Write Claude Code routine prompts - self-contained tasks that run unattended on Anthropic cloud via schedule, API, or GitHub triggers. Emits `/schedule` CLI commands and `/fire` curl templates |
 | **skill-creator** | Create, review, audit, and optimize AI tool skills - consistency checks, overlap detection |
 | **skill-refiner** | Self-improving loop - iterative quality sweeps with cross-model review, inspired by Karpathy's AutoResearch |
 | **update-docs** | Post-session documentation sweep - captures gotchas, syncs instruction files, trims bloat |
