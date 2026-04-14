@@ -54,6 +54,14 @@ TypeScript's inference is good. Fighting it with redundant annotations is noise.
 - `new Promise((resolve, reject) => { asyncFn().then(resolve).catch(reject) })` (the Promise constructor anti-pattern)
 - `Array.from(set).map(...)` when `[...set].map(...)` works
 
+## Structural Duplication (Lies + Soul)
+
+- Sibling integration modules with the same exported shape where only product names, IDs, or injected client types change
+- Repeated registry classes built from the same `Map` + `register/get/all|list/clear` skeleton across domains
+- Adapter wrappers that map the same backend data into the same local shape with renamed nouns only
+
+**Fix:** If the files are near-twins today, surface one representative finding and name the spread. Suggest a shared mapper/factory only when it stays readable; otherwise mark it as a **Consider** finding and note the likely divergence point.
+
 ## Dependency Creep (Lies)
 
 - `node-fetch` when `fetch` is global (Node 18+, Bun, Deno)
