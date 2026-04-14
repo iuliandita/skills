@@ -239,6 +239,21 @@ All paths are overridable via `--dest` (single-tool mode) or environment variabl
 
 Any AI coding tool that supports the [Agent Skills standard](https://agentskills.io). See the [supported tools table](#supported-tools) above for the full list of tested targets.
 
+## Releases
+
+Releases use release-please in PR mode. Releasable commits merged to `main` open or
+update a release PR, and merging that release PR creates the tag and GitHub Release.
+
+- `feat:` creates a minor release
+- `fix:` creates a patch release
+- `deps:` creates a patch release
+- Any releasable commit type marked with `!` or containing `BREAKING CHANGE:` creates a major release
+- `docs:`, `chore:`, `ci:`, `test:`, and `style:` do not trigger a release on their own
+
+This repo uses release-please, which only treats `feat`, `fix`, and `deps` as releasable
+units. If a refactor or performance change should cut a release, use a squash-merge title
+that reflects the user-facing impact, usually `fix:`.
+
 ## Updating
 
 Pull the latest and re-run the installer:
