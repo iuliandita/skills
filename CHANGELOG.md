@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.21.0](https://github.com/iuliandita/skills/compare/v1.20.0...v1.21.0) (2026-04-14)
+
+
+### Features
+
+* **release:** automate releases with release-please ([#15](https://github.com/iuliandita/skills/issues/15)) ([4a19864](https://github.com/iuliandita/skills/commit/4a1986475f0857b46ee10e7f13fe9e0419205fd4))
+* **routine-writer:** add skill for Claude Code routines ([#14](https://github.com/iuliandita/skills/issues/14)) ([0e6736f](https://github.com/iuliandita/skills/commit/0e6736facf3bf5db8a8536e64d0365f28302374f))
+
+
+### Refactoring
+
+* **anti-slop:** surface structural duplication findings ([#13](https://github.com/iuliandita/skills/issues/13)) ([2252cc9](https://github.com/iuliandita/skills/commit/2252cc928a390bc675a02a40a59f97236a4ba2ae))
+* **anti-slop:** tighten AI-specific smell detection ([#11](https://github.com/iuliandita/skills/issues/11)) ([ef3bbae](https://github.com/iuliandita/skills/commit/ef3bbae8b59b8c697f2072865e9637ce5718c712))
+
 ## [1.20.0](https://github.com/iuliandita/skills/releases/tag/v1.20.0) (2026-04-14)
 
 ### Miscellaneous
