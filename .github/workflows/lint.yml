@@ -47,7 +47,7 @@ jobs:
         run: |
           if [[ "$EVENT_NAME" == "pull_request" ]]; then
             git fetch origin "$BASE_REF" --depth=1
-            git diff --check "origin/$BASE_REF"...HEAD
+            git diff --check "origin/$BASE_REF"..HEAD
           else
             git diff-tree --check --no-commit-id -r HEAD
           fi
