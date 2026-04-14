@@ -247,7 +247,7 @@ update a release PR, and merging that release PR creates the tag and GitHub Rele
 - `feat:` creates a minor release
 - `fix:` creates a patch release
 - `deps:` creates a patch release
-- Any conventional commit marked with `!` or containing `BREAKING CHANGE:` creates a major release
+- Any releasable commit type marked with `!` or containing `BREAKING CHANGE:` creates a major release
 - `docs:`, `chore:`, `ci:`, `test:`, and `style:` do not trigger a release on their own
 
 This repo uses release-please, which only treats `feat`, `fix`, and `deps` as releasable
