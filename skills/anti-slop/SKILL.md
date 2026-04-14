@@ -1,10 +1,12 @@
 ---
 name: anti-slop
 description: >
-  · Audit code for machine-generated patterns, over-abstraction, redundant comments, verbose
-  code, and dependency creep. Triggers: 'slop', 'code quality', 'simplify', 'modernize',
-  'code smell', 'clean up'. Not for prose review (use anti-ai-prose). Not for full repo
-  audit (use full-review).
+  · Audit code for machine-generated patterns, hallucinated APIs/flags/resources,
+  over-abstraction, test theater, redundant comments, verbose code, and dependency creep.
+  Triggers: 'slop', 'AI-generated code', 'hallucinated API', 'hallucinated flag',
+  'hallucinated resource', 'weird code pattern', 'cleanup', 'clean up',
+  'overengineered', 'mock-heavy tests', 'schema drift'. Not for prose review (use
+  anti-ai-prose). Not for full repo audit (use full-review).
 license: MIT
 compatibility: "None - works on any codebase"
 metadata:
@@ -16,7 +18,7 @@ metadata:
 
 # Anti-Slop: Polyglot Code Quality Audit
 
-Detect and fix patterns that make code look machine-generated, over-abstracted, or unnecessarily verbose. The goal is code that reads like a competent human wrote it - minimal, intentional, and clear.
+Detect and fix patterns that make code look machine-generated, over-abstracted, unnecessarily verbose, or fluently wrong. The goal is code that reads like a competent human wrote it - minimal, intentional, grounded, and clear.
 
 This skill covers: **TypeScript/JavaScript**, **Python**, **Bash/Shell**, **Rust**, **Docker/Containers**, and **Infrastructure as Code** (Terraform, Ansible, Helm, Kubernetes manifests). The universal patterns apply everywhere; language-specific sections add targeted checks.
 
@@ -26,6 +28,7 @@ This skill covers: **TypeScript/JavaScript**, **Python**, **Bash/Shell**, **Rust
 - Simplifying code after an AI-heavy implementation pass
 - Auditing comment noise, naming quality, over-abstraction, and dependency creep
 - Looking for "ugly but technically works" code that still hurts readability or maintainability
+- Looking for AI-native tells: hallucinated APIs, schema drift, fallback laundering, and tests that only ratify the implementation
 
 ## The Three Axes of Slop
 
@@ -53,6 +56,8 @@ Before returning any anti-slop audit, verify:
 - [ ] **Existing project conventions preserved**: the repo's naming style, comment density, and abstraction level take precedence over generic "clean code" preferences
 - [ ] **Severity is honest**: don't inflate Low findings to Medium to pad the report
 - [ ] **No hallucinated replacements**: verify that suggested modern alternatives actually exist in the target language version (e.g., `match` requires Python 3.10+, `LazyLock` requires Rust 1.80+)
+- [ ] **Grounding checked**: if flagging a hallucinated API, CLI flag, resource, chart value, or config key, verify it against local types/schema/tool help or official docs before claiming it is fake
+- [ ] **Test theater distinguished from correctness**: implementation-mirroring tests, mock-heavy ceremony, and snapshots with no semantic assertions belong here; actual failing behavior still belongs to code-review
 
 ---
 
@@ -82,6 +87,7 @@ Before scanning for slop, run standard linters to clear the low-hanging fruit:
 - **Python**: `ruff check` / `mypy`
 - **TypeScript**: `eslint` / `tsc --noEmit`
 - **Terraform**: `terraform validate` / `tflint`
+- **IaC schema tools**: `ansible-lint`, `helm lint`, `kubectl apply --dry-run=client`, `kubeconform` when available
 - **Structural patterns**: `ast-grep` (tree-sitter powered AST search - write rules to catch restating comments, dead code, hallucinated imports across languages. Install: `npm i -g @ast-grep/cli`. If your tool ecosystem provides `ast-grep` helper skills or templates, use them.)
 
 Linters handle syntax issues, unused imports, and known anti-patterns mechanically. This skill focuses on what linters can't catch: taste, over-abstraction, naming quality, unnecessary complexity, and stale idioms. Don't duplicate what a linter already covers.
@@ -100,7 +106,7 @@ Classify each finding by axis (Noise/Lies/Soul - see above), action, and severit
 - **Fine** - looks like slop but is justified (note why and move on)
 
 **Severity** (determines report ordering - high first):
-- **High** - security risk (silent error swallowing, `any` casts bypassing type safety, missing input validation at boundaries), correctness (stale/deprecated APIs, hallucinated patterns)
+- **High** - strongly suggests fabricated or ungrounded code (hallucinated APIs, schema drift, silent swallowing used to hide uncertainty, fallback laundering)
 - **Medium** - maintainability (over-abstraction, generic naming, missing error context, logic duplication)
 - **Low** - style (verbose patterns, comment noise, redundant annotations, barrel files)
 
@@ -260,6 +266,35 @@ AI models trained on multiple languages bleed idioms across boundaries. A reliab
 
 **Fix:** Replace with the target language's idiom. This is almost always an AI generation artifact - humans don't accidentally write `.push()` in Python.
 
+### 10. Plausible Hallucinations / Schema Drift (Lies)
+
+Code that looks locally plausible because the names sound right, but it is not grounded in the actual API, schema, CLI, provider, or framework version in use.
+
+**Detect:**
+- Functions, methods, imports, CLI flags, config keys, or resource arguments that look real but are not in local types, tool help, or docs
+- Mixing adjacent ecosystems: provider arguments from the wrong Terraform resource, Helm values keys that the chart never reads, Kubernetes fields from a different API version, Ansible params from the wrong module or collection
+- Compatibility blind spots: using a modern API without checking the repo's runtime/tool version
+- "Fixes" that paper over missing understanding with `try()`, optional chaining, default fallbacks, or broad catches instead of verifying the contract
+
+**Fix:** Check the actual contract first - local types, generated schema, `--help`, provider docs, chart values, API version docs. Delete invented surface area. Prefer loud failure for required config over fantasy defaults.
+
+**Exception:** Compatibility shims for multi-version support are fine when the codebase clearly supports multiple runtimes, provider versions, or API levels.
+
+### 11. Test Theater / Self-Confirming Tests (Lies + Soul)
+
+Tests can be slop too. A green test suite is not evidence if the tests were generated from the implementation and only mirror what already exists.
+
+**Detect:**
+- Tests written after implementation that assert the exact control flow, fixture data, or internal call graph of the current code
+- Mock-heavy tests where every dependency is stubbed and the only assertions are call counts, method names, or log messages
+- Snapshots or golden files used as a substitute for semantic assertions
+- "Happy path only" tests paired with broad catches, default fallbacks, or defensive code that never gets exercised
+- Generated tests with high coverage but no clear link to the spec, acceptance criteria, or boundary behavior
+
+**Fix:** Prefer spec-driven tests, behavior-level assertions, and a real RED phase. Keep mocks at the edges. If the test would still pass when the implementation is wrong in the same way, it is ceremony, not protection.
+
+**Exception:** Adapter tests, logging/metrics assertions, and contract tests may legitimately assert call shapes when that contract is the behavior under test.
+
 ---
 
 ## Language: TypeScript / JavaScript
@@ -270,6 +305,7 @@ Read `references/typescript.md` for the full TS/JS pattern catalog. Key highligh
 - **Stale patterns**: `require()` in ESM, `var`, `React.FC`, class components, `PropTypes` alongside TS, `.then()` chains, `namespace`
 - **Verbose**: `for` loops that should be `.filter().map()`, `Object.keys().forEach()` instead of `for...of`, classes for stateless logic
 - **Dependency creep**: `node-fetch` when `fetch` is global, `uuid` when `crypto.randomUUID()` exists, two libs for the same concern
+- **AI-native tells**: `try/catch` around deterministic local code, `new Promise(async ...)`, fallback defaults for required env/config, tests that only assert mocks or snapshots
 - **Barrel files**: `index.ts` re-exporting everything in small directories
 
 ## Language: Python
@@ -282,6 +318,7 @@ Read `references/python.md` for the full Python pattern catalog. Key highlights:
 - **Type hints**: `Any` used to bypass type errors, redundant hints on obvious assignments, overly complex `TypeVar` gymnastics
 - **Verbose**: manual dict/list building instead of comprehensions, nested `if` instead of early returns, `lambda` assigned to a variable (just use `def`), redundant docstrings restating the function signature
 - **Dependency creep**: `requests` for a single GET when `urllib` works, `python-dotenv` when `os.environ` is fine
+- **AI-native tells**: `dict.get(..., {})` chains laundering missing invariants, catch-log-reraise noise, mock-heavy tests with no behavioral assertion
 
 ## Language: Bash / Shell
 
@@ -292,15 +329,16 @@ Read `references/shell.md` for the full Shell pattern catalog. Key highlights:
 - **Stale patterns**: backticks instead of `$()`, `expr` instead of `$(())`, `[ ]` instead of `[[ ]]` in bash/zsh, parsing `ls` output
 - **Over-defensive**: `if command; then ... fi` on every line instead of `set -e`, manual `$?` checks
 - **Verbose**: `echo "$var" | grep` instead of `[[ "$var" == *pattern* ]]`, external tools for built-in operations
+- **AI-native tells**: hallucinated flags/subcommands copied from adjacent CLIs, `2>/dev/null || true` used to hide uncertainty, heredoc-heavy automation instead of checked files/templates
 
 ## Language: Infrastructure as Code
 
 Read `references/iac.md` for the full IaC pattern catalog covering Terraform, Ansible, Helm, and Kubernetes manifests. Key highlights:
 
-- **Terraform**: over-modularizing (module for a single resource), redundant `depends_on` when implicit deps exist, not using `locals` for repeated expressions, unpinned provider versions, `provisioner` blocks instead of proper config management
-- **Ansible**: `command`/`shell` when a module exists, `ignore_errors: true` everywhere, registering variables never used, not using handlers for service restarts, no YAML anchors for DRY
-- **Helm**: hardcoded values in templates, `tpl` for static strings, `.Values` spaghetti without defaults, chart version not pinned
-- **Kubernetes**: no resource requests/limits, `latest` tags, no namespace, imperative `kubectl run/create` in automation, no readiness/liveness probes
+- **Terraform**: over-modularizing, redundant `depends_on`, not using `locals`, unpinned provider versions, invented resource arguments, provider/version hallucinations
+- **Ansible**: `command`/`shell` when a module exists, `ignore_errors: true` everywhere, registering variables never used, not using handlers, invented module params or wrong collections
+- **Helm**: hardcoded values in templates, `tpl` for static strings, `.Values` spaghetti without defaults, chart version not pinned, values keys that the chart never consumes
+- **Kubernetes**: no resource requests/limits, `latest` tags, no namespace, imperative `kubectl run/create` in automation, no probes, mismatched `apiVersion`/field combinations
 
 ## Language: Rust
 
@@ -325,7 +363,7 @@ Read `references/docker.md` for Dockerfile and Compose pattern catalog. Key high
 
 ## Other Languages
 
-For Go and other languages without dedicated reference files: apply the universal patterns (sections 1-9) only. Note in the report that language-specific checks were skipped. Common cross-language tells still apply - over-abstraction, comment noise, cross-language leakage, and error handling anti-patterns look similar everywhere.
+For Go and other languages without dedicated reference files: apply the universal patterns (sections 1-11) only. Note in the report that language-specific checks were skipped. Common cross-language tells still apply - over-abstraction, comment noise, cross-language leakage, schema drift, and error handling anti-patterns look similar everywhere.
 
 ## Research & Citations
 
@@ -345,6 +383,8 @@ These look like slop but aren't:
 - **Shell verbosity for clarity**: complex pipelines benefit from intermediate variables and comments.
 - **Terraform `count`/`for_each` on single resources**: might be conditional (`count = var.enabled ? 1 : 0`).
 - **Ansible `when` conditions that seem obvious**: often guarding against cross-platform differences.
+- **Compatibility shims**: version- or provider-specific branches may look repetitive because they support multiple real targets.
+- **Contract-level tests**: asserting exact API payloads, SQL, CLI args, or emitted metrics is fine when that contract is the thing being tested.
 
 ---
 
@@ -407,7 +447,9 @@ Keep it concise. Show the diff, not a paragraph explaining it.
 ## Rules
 
 - **Keep correctness out of scope.** If it would actually break behavior, route it to code-review instead of padding this report.
+- **Flag AI-native lies even when they look polished.** Hallucinated APIs, schema drift, and self-confirming tests belong here when the problem is lack of grounding or taste rather than a demonstrated failing behavior.
 - **Keep security out of scope.** Defensive code often looks verbose on purpose. Do not flag it casually.
 - **Read before judging.** A pattern that looks generic in isolation may be justified by framework or project constraints.
+- **Ground hallucination claims.** Use local types, schema, lockfiles, generated docs, or tool help before saying a flag/resource/API is fake.
 - **Prefer concrete rewrites.** If you flag a pattern, show the simpler version.
 - **Run the AI Self-Check.** Verify findings against the checklist before returning the audit.
