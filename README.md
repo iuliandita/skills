@@ -104,7 +104,7 @@ The loop: **Score -> Improve -> Verify -> Keep or Revert -> Repeat.**
 | Skill | What it does |
 |-------|-------------|
 | **code-review** | Bug hunting, logic errors, edge cases, race conditions, resource leaks, convention violations |
-| **anti-slop** | Detects and fixes AI-generated code patterns - hallucinated APIs/flags/resources, test theater, over-abstraction, redundant comments, verbose defensive code |
+| **anti-slop** | Detects and fixes AI-generated code patterns - hallucinated APIs/flags/resources, duplicate code, test theater, over-abstraction, redundant comments, verbose defensive code |
 | **anti-ai-prose** | Audits writing for AI tells - vocabulary (delve, tapestry), syntax (negative parallelism, tricolons), tone (travel-guide voice, vague attribution), formatting (em-dash abuse). Covers docs, READMEs, wikis, PRs, emails, slides, creative writing |
 | **backend-api** | HTTP backend APIs - FastAPI, Express, NestJS, REST/OpenAPI contracts, auth flows, versioning, pagination, idempotency |
 | **testing** | Unit, integration, E2E, accessibility, and performance tests - Vitest, Jest, Playwright, pytest, Go testing, cargo test, TDD workflows, mocking strategies, CI test infrastructure |

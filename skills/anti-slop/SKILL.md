@@ -2,11 +2,11 @@
 name: anti-slop
 description: >
   · Audit code for machine-generated patterns, hallucinated APIs/flags/resources,
-  over-abstraction, test theater, redundant comments, verbose code, and dependency creep.
-  Triggers: 'slop', 'AI-generated code', 'hallucinated API', 'hallucinated flag',
-  'hallucinated resource', 'weird code pattern', 'cleanup', 'clean up',
-  'overengineered', 'mock-heavy tests', 'schema drift'. Not for prose review (use
-  anti-ai-prose). Not for full repo audit (use full-review).
+  over-abstraction, duplicate code, test theater, redundant comments, verbose code,
+  and dependency creep. Triggers: 'slop', 'AI-generated code', 'duplicate code',
+  'copy paste', 'hallucinated API', 'hallucinated flag', 'weird code pattern',
+  'cleanup', 'clean up', 'overengineered', 'mock-heavy tests', 'schema drift'. Not
+  for prose review (use anti-ai-prose). Not for full repo audit (use full-review).
 license: MIT
 compatibility: "None - works on any codebase"
 metadata:
@@ -58,6 +58,7 @@ Before returning any anti-slop audit, verify:
 - [ ] **No hallucinated replacements**: verify that suggested modern alternatives actually exist in the target language version (e.g., `match` requires Python 3.10+, `LazyLock` requires Rust 1.80+)
 - [ ] **Grounding checked**: if flagging a hallucinated API, CLI flag, resource, chart value, or config key, verify it against local types/schema/tool help or official docs before claiming it is fake
 - [ ] **Test theater distinguished from correctness**: implementation-mirroring tests, mock-heavy ceremony, and snapshots with no semantic assertions belong here; actual failing behavior still belongs to code-review
+- [ ] **Structural duplication sweep done**: compare same-role modules/classes across sibling dirs (`providers`, `targets`, `sources`, `clients`, `registry`) and either report near-twins or note why the duplication is intentional
 
 ---
 
@@ -97,6 +98,11 @@ Linters handle syntax issues, unused imports, and known anti-patterns mechanical
 ### Step 4: Scan for patterns
 
 Use Grep, Glob, and Read. Read files before flagging - context matters. A pattern that looks like slop in isolation might be justified.
+
+Before finalizing, do one explicit structural pass:
+- Compare same-role files across sibling directories (`foo/emby.ts` vs `foo/jellyfin.ts`, multiple `registry.ts` files, provider adapters, target wrappers)
+- Look for near-twin modules/classes with the same method set and only renamed nouns, IDs, or client types
+- If you find a repeated pattern across many files, report one representative example and mention the spread instead of silently dropping it
 
 Classify each finding by axis (Noise/Lies/Soul - see above), action, and severity:
 
@@ -227,12 +233,17 @@ Same logic written slightly differently in multiple places - a telltale sign of 
 
 **Detect:**
 - Near-identical helper functions in different files
+- Near-twin modules for adjacent integrations/providers where only names, IDs, or injected client types change
+- Registry classes with the same `Map` + `register/get/all|list/clear` shape repeated across domains
+- Thin wrappers/adapters that repeat the same mapping code for multiple backends
 - Same validation logic in multiple handlers/routes
 - Repeated inline formatting/parsing across modules
 - Terraform `locals` blocks computing the same thing in different modules
 - Ansible tasks doing the same thing with different variable names
 
-**Fix:** Consolidate into a single well-named function/local/variable. But only if truly the same - slight variations might be intentional.
+**Fix:** Consolidate into a shared helper/factory/base module or keep one representative implementation and parameterize the differences. But only if truly the same - slight variations might be intentional.
+
+**Exception:** Sometimes duplication is clearer than a contorted abstraction, especially when integrations are likely to diverge. Still surface it as a **Consider** finding if the files/classes are near-twins today.
 
 ### 7. Stale Patterns (Lies)
 
@@ -451,5 +462,6 @@ Keep it concise. Show the diff, not a paragraph explaining it.
 - **Keep security out of scope.** Defensive code often looks verbose on purpose. Do not flag it casually.
 - **Read before judging.** A pattern that looks generic in isolation may be justified by framework or project constraints.
 - **Ground hallucination claims.** Use local types, schema, lockfiles, generated docs, or tool help before saying a flag/resource/API is fake.
+- **Do not bury structural duplication.** If near-twin modules or repeated registry/wrapper shapes appear, surface at least one representative finding even when higher-severity hallucination findings dominate the report.
 - **Prefer concrete rewrites.** If you flag a pattern, show the simpler version.
 - **Run the AI Self-Check.** Verify findings against the checklist before returning the audit.
