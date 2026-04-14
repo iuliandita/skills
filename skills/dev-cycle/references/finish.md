@@ -165,9 +165,25 @@ This is where quality slips. Address it in three parts.
 
 ### Part 1: Delegate to update-docs
 
-> "Invoke the **update-docs** skill via the Skill tool. Run in update mode (not read-only). Sweep README, CHANGELOG, roadmap, instruction files, and companion files. Address drift caused by the current branch's changes."
+> "Invoke the **update-docs** skill via the Skill tool. Run in update mode (not read-only). Sweep README, CHANGELOG, roadmap, instruction files, companion files, **AND gitignored context files** (`CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, files under `.claude/`, `.codex/`, `.opencode/`, and private `.planning/` directories). Address drift caused by the current branch's changes in all of them."
 
-Review its findings. Accept, modify, or defer each. Defer only with a note in the PR body ("docs for X tracked in #Y, not blocking this merge").
+**Why gitignored files still need updating**: these files are often agent instruction files, developer context notes, or per-AI-tool config. They're gitignored because they're local or personal, not because they're disposable. Stale instruction files mislead the next session just as badly as stale READMEs. Keep them current even though they won't be staged.
+
+**Staging discipline**: after update-docs runs, classify each modified file:
+
+```bash
+# Tracked docs (stage for commit)
+git diff --name-only                              # modified, tracked
+
+# Gitignored docs (leave unstaged; verify they ARE gitignored, not new-untracked)
+git ls-files --others --exclude-standard          # untracked (new files - review before ignoring)
+comm -12 <(git ls-files --others | sort) <(git status --short | awk '{print $2}' | sort)
+# Or simply: for each ??-marked file in `git status`, check with `git check-ignore <file>`
+```
+
+Only `git add` the tracked set. Gitignored edits land locally but are intentionally out of the PR.
+
+Review update-docs findings. Accept, modify, or defer each. Defer only with a note in the PR body ("docs for X tracked in #Y, not blocking this merge").
 
 ### Part 2: Version bumps
 

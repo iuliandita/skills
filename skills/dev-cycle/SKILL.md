@@ -78,7 +78,7 @@ Before declaring finish-mode complete:
 
 - [ ] `$FORGE` detected from `git remote get-url origin` before any push/PR/merge step
 - [ ] All lint/type/test suites green - output inspected, not inferred from "exit code 0". If no toolchain was detectable, user was asked explicitly (not silently skipped)
-- [ ] `update-docs` ran and its findings were addressed (or explicitly deferred with a note)
+- [ ] `update-docs` ran over tracked AND gitignored context files (`CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, `.claude/`, `.codex/`, `.opencode/`, `.planning/`); findings addressed or deferred with a note. Only tracked files were staged for commit; gitignored edits remain local
 - [ ] Current version sourced from primary manifest (or user confirmation) before proposing bumps
 - [ ] Version-bump sites checked: Dockerfile, K8s manifests, Helm Chart.yaml/values, package.json/pyproject.toml/Cargo.toml, CHANGELOG
 - [ ] `git fetch --tags origin` run before release-signal detection (local-only tag check misses remote history)
@@ -222,9 +222,11 @@ Inspect the actual output. "Exit 0" is not verification - tests that didn't run 
 
 ### Step B3: Sync docs and versions
 
-This is the gap you noticed - docs and versions get left behind. Address in two parts:
+Docs and versions get left behind. Address in two parts:
 
 **Part 1 - Delegate to `update-docs`** for README, CHANGELOG, roadmap, instruction files, companion-file drift. Invoke as a review-and-fix pass, not read-only.
+
+**Important: refresh gitignored docs too**, not just tracked ones. Files like `CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, `.claude/`, `.codex/`, `.opencode/`, and private `.planning/` directories are commonly gitignored but are still primary context for the developer and for future AI sessions. Stale gitignored docs cause just as much confusion as stale tracked ones. Only the tracked subset gets staged for commit; gitignored updates stay local but still get made. Ask `update-docs` to sweep both sets.
 
 **Part 2 - Version-bump sites**. First read the current version from the primary source (see `references/version-bump-sites.md` for the detection script - it checks `package.json`, `pyproject.toml`, `Cargo.toml`, then falls back to the latest semver tag). If no primary source exists, ask the user what the current version is before proceeding.
 
