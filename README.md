@@ -8,7 +8,7 @@
 npx skills add iuliandita/skills
 ```
 
-**29 production-tested skills** - Kubernetes, Terraform, Docker, Ansible, CI/CD, HTTP APIs, databases, AI/ML, testing, virtualization, Arch Linux, networking, MCP servers, security audits, pentesting, code review, prose audits, and more.
+**32 production-tested skills** - Kubernetes, Terraform, Docker, Ansible, CI/CD, HTTP APIs, databases, AI/ML, testing, virtualization, Arch Linux, networking, MCP servers, security audits, pentesting, code review, prose audits, dev workflow orchestration, and more.
 
 Built on the [Agent Skills open standard](https://agentskills.io/specification). Works with any tool that supports it.
 
