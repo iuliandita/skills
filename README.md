@@ -241,7 +241,8 @@ Any AI coding tool that supports the [Agent Skills standard](https://agentskills
 
 ## Releases
 
-Releases are automated from conventional commits merged to `main`.
+Releases use release-please in PR mode. Releasable commits merged to `main` open or
+update a release PR, and merging that release PR creates the tag and GitHub Release.
 
 - `feat:` creates a minor release
 - `fix:` creates a patch release
