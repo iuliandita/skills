@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
-# shellcheck disable=SC2016
+# shellcheck disable=SC2016,SC1091
 set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/skill-lib.sh"
 
 # Validate skills against the Agent Skills open standard (agentskills.io/specification).
 # Checks naming conventions, required fields, and structural requirements.
@@ -34,19 +37,13 @@ validate_name() {
 }
 
 validate_description() {
-  local fm="$1" name="$2"
-  # Extract description value (handles multiline YAML)
+  local file="$1" name="$2"
   local desc
-  desc=$(printf '%s\n' "$fm" | sed -n '/^description:/,/^[a-z_-]*:/{ /^description:/{ s/^description: *//; p; }; /^  /p; }' | tr -d '\n' | sed 's/^ *//')
+  desc="$(frontmatter_get "$file" "description" 2>/dev/null || true)"
   if [[ -z "$desc" ]]; then
     error "$name: description is empty"
     return
   fi
-  # Strip YAML quoting for length check
-  desc="${desc#\"}"
-  desc="${desc%\"}"
-  desc="${desc#>}"
-  desc="${desc#"${desc%%[![:space:]]*}"}"
   if [[ ${#desc} -gt 600 ]]; then
     error "$name: description exceeds 600 characters (${#desc})"
   elif [[ ${#desc} -gt 500 ]]; then
@@ -57,13 +54,9 @@ validate_description() {
 validate_compatibility() {
   local file="$1" name="$2"
   local compat
-  compat=$(grep -m1 '^compatibility:' "$file" 2>/dev/null | sed 's/compatibility: *//' || true)
+  compat="$(frontmatter_get "$file" "compatibility" 2>/dev/null || true)"
   if [[ -n "$compat" && ${#compat} -gt 500 ]]; then
     error "$name: compatibility exceeds 500 characters (${#compat})"
-  fi
-  # Values containing colons must be quoted (strict YAML parsers choke otherwise)
-  if [[ -n "$compat" && "$compat" == *:* && "$compat" != \"*\" && "$compat" != \'*\' ]]; then
-    error "$name: compatibility value contains ':' but is not quoted (breaks strict YAML parsers)"
   fi
 }
 
@@ -90,27 +83,30 @@ for skill_dir in "$SKILLS_DIR"/*/; do
     error "$name: SKILL.md must start with YAML frontmatter (---)"
   fi
 
-  # Extract frontmatter block (between first --- and second ---)
-  fm=$(sed -n '2,/^---$/{ /^---$/d; p; }' "$skill_file")
+  if ! frontmatter_valid "$skill_file"; then
+    error "$name: invalid YAML frontmatter"
+    (( skill_count++ )) || true
+    continue
+  fi
 
-  fm_name=$(echo "$fm" | grep -m1 '^name:' 2>/dev/null | sed 's/name: *//' || true)
+  fm_name="$(frontmatter_get "$skill_file" "name" 2>/dev/null || true)"
   if [[ "$fm_name" != "$name" ]]; then
     error "$name: frontmatter name '$fm_name' does not match directory name"
   fi
 
   # Spec: required fields
-  if ! echo "$fm" | grep -q '^name:'; then
+  if ! frontmatter_has "$skill_file" "name"; then
     error "$name: missing required field 'name'"
   fi
-  if ! echo "$fm" | grep -q '^description:'; then
+  if ! frontmatter_has "$skill_file" "description"; then
     error "$name: missing required field 'description'"
   fi
-  if ! echo "$fm" | grep -q '^license:'; then
+  if ! frontmatter_has "$skill_file" "license"; then
     error "$name: missing required field 'license'"
   fi
 
   # Spec: field constraints
-  validate_description "$fm" "$name"
+  validate_description "$skill_file" "$name"
   validate_compatibility "$skill_file" "$name"
 
   # Spec: SKILL.md body recommended under 500 lines (soft target, 600 hard max)

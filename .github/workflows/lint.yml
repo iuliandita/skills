@@ -1,25 +1,35 @@
-name: Lint Skills
+name: Quality Gates
 
 on:
   push:
     branches: [main]
     paths:
-      - 'skills/**'
-      - 'scripts/**'
-      - 'install.sh'
-      - '.github/workflows/lint.yml'
+      - "skills/**"
+      - "scripts/**"
+      - "install.sh"
+      - "README.md"
+      - "SECURITY.md"
+      - "docs/**"
+      - ".markdownlint-cli2.jsonc"
+      - "lychee.toml"
+      - ".github/workflows/**"
   pull_request:
     paths:
-      - 'skills/**'
-      - 'scripts/**'
-      - 'install.sh'
-      - '.github/workflows/lint.yml'
+      - "skills/**"
+      - "scripts/**"
+      - "install.sh"
+      - "README.md"
+      - "SECURITY.md"
+      - "docs/**"
+      - ".markdownlint-cli2.jsonc"
+      - "lychee.toml"
+      - ".github/workflows/**"
 
 permissions:
   contents: read
 
 jobs:
-  lint:
+  collection:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -30,11 +40,92 @@ jobs:
       - name: Validate Agent Skills spec compliance
         run: ./scripts/validate-spec.sh
 
-      - name: Check installer syntax
-        run: bash -n install.sh
+      - name: Check whitespace and merge markers
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          if [[ "$EVENT_NAME" == "pull_request" ]]; then
+            git fetch origin "$BASE_REF" --depth=1
+            git diff --check "origin/$BASE_REF"...HEAD
+          else
+            git diff-tree --check --no-commit-id -r HEAD
+          fi
+
+  shell-and-python:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Check shell syntax
+        run: |
+          bash -n install.sh
+          bash -n scripts/lint-skills.sh
+          bash -n scripts/validate-spec.sh
 
       - name: Shellcheck scripts
-        run: shellcheck scripts/lint-skills.sh scripts/validate-spec.sh install.sh
+        run: shellcheck install.sh scripts/lint-skills.sh scripts/validate-spec.sh scripts/skill-lib.sh
+
+      - name: Check Python helper syntax
+        run: python3 -m py_compile scripts/skill-frontmatter.py
+
+  markdown:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Install markdownlint-cli2
+        run: |
+          npm install --prefix "$RUNNER_TEMP/markdownlint-cli2" markdownlint-cli2@0.22.0
+          echo "$RUNNER_TEMP/markdownlint-cli2/node_modules/.bin" >> "$GITHUB_PATH"
+
+      - name: Lint Markdown
+        run: markdownlint-cli2
+
+  links:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Install lychee
+        env:
+          LYCHEE_VERSION: "0.23.0"
+          LYCHEE_SHA256: "1fcb6ccf10d04c22b8c5873c5b9cb7be32ee7423e12169d6f1a79a6f1962ef81"
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          curl -fsSLo /tmp/lychee.tar.gz "https://github.com/lycheeverse/lychee/releases/download/lychee-v${LYCHEE_VERSION}/lychee-x86_64-unknown-linux-gnu.tar.gz"
+          echo "${LYCHEE_SHA256}  /tmp/lychee.tar.gz" | sha256sum --check
+          tar -xzf /tmp/lychee.tar.gz -C "$HOME/.local/bin" lychee
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Check links
+        run: |
+          mapfile -t markdown_files < <(
+            {
+              printf '%s\n' README.md SECURITY.md
+              find skills docs -type f -name '*.md' 2>/dev/null
+            } | sort -u
+          )
+          lychee --config lychee.toml "${markdown_files[@]}"
+
+  workflow:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Install actionlint
+        env:
+          ACTIONLINT_VERSION: "1.7.12"
+          ACTIONLINT_SHA256: "8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8"
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          curl -fsSLo /tmp/actionlint.tar.gz "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz"
+          echo "${ACTIONLINT_SHA256}  /tmp/actionlint.tar.gz" | sha256sum --check
+          tar -xzf /tmp/actionlint.tar.gz -C "$HOME/.local/bin" actionlint
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Lint GitHub Actions workflows
+        run: actionlint -color
 
   security:
     runs-on: ubuntu-24.04

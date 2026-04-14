@@ -2,6 +2,9 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=./scripts/skill-lib.sh
+source "$SCRIPT_DIR/scripts/skill-lib.sh"
+
 SKILLS_SRC="$SCRIPT_DIR/skills"
 CANONICAL_DIR="${SKILLS_CANONICAL_DIR:-$HOME/.agents/skills}"
 
@@ -34,44 +37,60 @@ SUPPORTED_TOOLS=(
   portable
 )
 
+declare -A TOOL_PATHS=(
+  [claude]="${CLAUDE_SKILLS_DIR:-$HOME/.claude/skills}"
+  [codex]="${CODEX_SKILLS_DIR:-$HOME/.codex/skills}"
+  [cursor]="${CURSOR_SKILLS_DIR:-$HOME/.cursor/skills}"
+  [windsurf]="${WINDSURF_SKILLS_DIR:-$HOME/.windsurf/skills}"
+  [opencode]="${OPENCODE_SKILLS_DIR:-$HOME/.config/opencode/skills}"
+  [copilot]="$HOME/.copilot/skills"
+  [gemini]="$HOME/.gemini/skills"
+  [roo]="$HOME/.roo/skills"
+  [goose]="$HOME/.config/goose/skills"
+  [amp]="$HOME/.amp/skills"
+  [continue]="$HOME/.continue/skills"
+  [kiro]="$HOME/.kiro/skills"
+  [cline]="$HOME/.cline/skills"
+  [warp]="$HOME/.warp/skills"
+  [portable]="${PORTABLE_SKILLS_DIR:-$HOME/.skills}"
+)
+
+supported_tools_text() {
+  local tool
+  local text=""
+  for tool in "${SUPPORTED_TOOLS[@]}"; do
+    if [[ -n "$text" ]]; then
+      text+=", "
+    fi
+    text+="$tool"
+  done
+  printf '%s' "$text"
+}
+
 # ── Agent path resolution ─────────────────────────────────────────────
 resolve_tool_path() {
-  case "$1" in
-    claude)   printf '%s\n' "${CLAUDE_SKILLS_DIR:-$HOME/.claude/skills}" ;;
-    codex)    printf '%s\n' "${CODEX_SKILLS_DIR:-$HOME/.codex/skills}" ;;
-    cursor)   printf '%s\n' "${CURSOR_SKILLS_DIR:-$HOME/.cursor/skills}" ;;
-    windsurf) printf '%s\n' "${WINDSURF_SKILLS_DIR:-$HOME/.windsurf/skills}" ;;
-    opencode) printf '%s\n' "${OPENCODE_SKILLS_DIR:-$HOME/.config/opencode/skills}" ;;
-    copilot)  printf '%s\n' "$HOME/.copilot/skills" ;;
-    gemini)   printf '%s\n' "$HOME/.gemini/skills" ;;
-    roo)      printf '%s\n' "$HOME/.roo/skills" ;;
-    goose)    printf '%s\n' "$HOME/.config/goose/skills" ;;
-    amp)      printf '%s\n' "$HOME/.amp/skills" ;;
-    continue) printf '%s\n' "$HOME/.continue/skills" ;;
-    kiro)     printf '%s\n' "$HOME/.kiro/skills" ;;
-    cline)    printf '%s\n' "$HOME/.cline/skills" ;;
-    warp)     printf '%s\n' "$HOME/.warp/skills" ;;
-    portable) printf '%s\n' "${PORTABLE_SKILLS_DIR:-$HOME/.skills}" ;;
-    *)
-      printf 'Unknown tool: %s\n' "$1" >&2
-      printf 'Supported: %s\n' "${SUPPORTED_TOOLS[*]}" >&2
-      exit 1
-      ;;
-  esac
+  local tool="$1"
+  local path="${TOOL_PATHS[$tool]:-}"
+
+  if [[ -z "$path" ]]; then
+    printf 'Unknown tool: %s\n' "$tool" >&2
+    printf 'Supported: %s\n' "$(supported_tools_text)" >&2
+    exit 1
+  fi
+
+  printf '%s\n' "$path"
 }
 
 # ── Usage ─────────────────────────────────────────────────────────────
 usage() {
-  cat <<'EOF'
+  cat <<EOF
 Usage: install.sh [OPTIONS] [SKILL...]
 
 Install skills for AI coding agents.
 
 Options:
   --tool TOOL         Target tool (repeatable, comma-separated)
-                      Supported: claude, codex, cursor, windsurf, opencode,
-                      copilot, gemini, roo, goose, amp, continue, kiro,
-                      cline, warp, portable
+                      Supported: $(supported_tools_text)
   --dest PATH         Override destination directory (single-tool mode only)
   --link              Symlink mode: install once to canonical dir, symlink per tool
   --list              List available skills and install status
@@ -123,8 +142,8 @@ skill_hash() {
 is_internal() {
   local skill_dir="$1"
   [[ -f "$skill_dir/SKILL.md" ]] || return 1
-  sed -n '2,/^---$/{ /^---$/d; p; }' "$skill_dir/SKILL.md" \
-    | grep -qE '^\s+internal:\s*(true|yes)$'
+  frontmatter_has "$skill_dir/SKILL.md" "metadata.internal" \
+    && [[ "$(frontmatter_get "$skill_dir/SKILL.md" "metadata.internal")" == "true" ]]
 }
 
 # ── Backup ────────────────────────────────────────────────────────────

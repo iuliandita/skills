@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
-# shellcheck disable=SC2016
+# shellcheck disable=SC2016,SC1091
 set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/skill-lib.sh"
 
 # Lint all skills in the collection for common issues.
 # Runs in CI and locally. Exit 0 = clean, exit 1 = issues found.
@@ -34,30 +37,30 @@ check_private_refs() {
 # ── Frontmatter checks ─────────────────────────────────────────────────
 check_frontmatter() {
   local file="$1" name="$2"
-
-  # Extract frontmatter block (between first --- and second ---)
-  local fm
-  fm=$(sed -n '2,/^---$/{ /^---$/d; p; }' "$file")
+  if ! frontmatter_valid "$file"; then
+    error "$name: invalid YAML frontmatter"
+    return
+  fi
 
   # Required top-level fields (Agent Skills spec)
   for field in name description license; do
-    if ! echo "$fm" | grep -q "^${field}:"; then
+    if ! frontmatter_has "$file" "$field"; then
       error "$name: missing frontmatter field '$field'"
     fi
   done
 
   # Required metadata fields (custom, nested under metadata:)
-  if ! echo "$fm" | grep -q '^metadata:'; then
+  if ! frontmatter_has "$file" "metadata"; then
     error "$name: missing 'metadata:' block"
   fi
   for field in source date_added effort; do
-    if ! echo "$fm" | grep -q "^  ${field}:"; then
+    if ! frontmatter_has "$file" "metadata.$field"; then
       error "$name: missing metadata field '$field'"
     fi
   done
 
   local src
-  src=$(echo "$fm" | grep -m1 '^  source:' 2>/dev/null | sed 's/.*source: *//' || true)
+  src="$(frontmatter_get "$file" "metadata.source" 2>/dev/null || true)"
   if [[ -z "$src" ]]; then
     error "$name: metadata.source is empty"
   elif [[ "$src" != "custom" && ! "$src" =~ ^[a-zA-Z0-9._-]+/[a-zA-Z0-9._-]+$ ]]; then
@@ -65,28 +68,28 @@ check_frontmatter() {
   fi
 
   local eff
-  eff=$(echo "$fm" | grep -m1 '^  effort:' 2>/dev/null | sed 's/.*effort: *//' || true)
+  eff="$(frontmatter_get "$file" "metadata.effort" 2>/dev/null || true)"
   if [[ "$eff" != "low" && "$eff" != "medium" && "$eff" != "high" ]]; then
     error "$name: metadata.effort must be low/medium/high, got '$eff'"
   fi
 
   # Optional: metadata.argument_hint (string, max 100 chars)
   local arg_hint
-  arg_hint=$(echo "$fm" | grep -m1 '^  argument_hint:' 2>/dev/null | sed 's/.*argument_hint: *//' || true)
+  arg_hint="$(frontmatter_get "$file" "metadata.argument_hint" 2>/dev/null || true)"
   if [[ -n "$arg_hint" && ${#arg_hint} -gt 100 ]]; then
     error "$name: metadata.argument_hint exceeds 100 characters"
   fi
 
   # Optional: metadata.internal (boolean)
   local internal
-  internal=$(echo "$fm" | grep -m1 '^  internal:' 2>/dev/null | sed 's/.*internal: *//' || true)
+  internal="$(frontmatter_get "$file" "metadata.internal" 2>/dev/null || true)"
   if [[ -n "$internal" && "$internal" != "true" && "$internal" != "false" ]]; then
     error "$name: metadata.internal must be true or false, got '$internal'"
   fi
 
   # Validate name matches directory (Agent Skills spec requirement)
   local fm_name
-  fm_name=$(echo "$fm" | grep -m1 '^name:' 2>/dev/null | sed 's/name: *//' || true)
+  fm_name="$(frontmatter_get "$file" "name" 2>/dev/null || true)"
   if [[ "$fm_name" != "$name" ]]; then
     error "$name: frontmatter name '$fm_name' does not match directory name"
   fi
@@ -183,7 +186,7 @@ check_banned_words() {
 check_ai_self_check() {
   local file="$1" name="$2"
   local effort
-  effort=$(sed -n '2,/^---$/p' "$file" | grep -m1 'effort:' | sed 's/.*effort: *//' || true)
+  effort="$(frontmatter_get "$file" "metadata.effort" 2>/dev/null || true)"
   if [[ "$effort" == "high" ]]; then
     if ! grep -qi '^## .*Self.Check' "$file"; then
       warn "$name: high-effort skill without 'AI Self-Check' section (recommended for skills that generate output)"

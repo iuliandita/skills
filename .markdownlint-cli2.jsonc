@@ -1,0 +1,20 @@
+{
+  "config": {
+    "default": false,
+    "code-block-style": {
+      "style": "fenced"
+    },
+    "code-fence-style": {
+      "style": "backtick"
+    },
+    "no-duplicate-heading": {
+      "siblings_only": true
+    }
+  },
+  "globs": [
+    "README.md",
+    "SECURITY.md",
+    "skills/**/*.md",
+    "docs/**/*.md"
+  ]
+}
