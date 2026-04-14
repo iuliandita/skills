@@ -6,3 +6,4 @@ skills/cluster-health/
 docs/superpowers/
 SECURITY-AUDIT.md
 .codex
+__pycache__/

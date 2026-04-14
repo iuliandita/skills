@@ -1,0 +1,16 @@
+verbose = "info"
+max_concurrency = 8
+max_retries = 2
+retry_wait_time = 2
+timeout = 20
+accept = ["200", "203", "204", "206", "429"]
+
+exclude = [
+  "^http://localhost",
+  "^http://127\\.0\\.0\\.1",
+  "^http://0\\.0\\.0\\.0",
+  "^http://169\\.254\\.169\\.254",
+  "^https?://(?:[A-Za-z0-9-]+\\.)?example\\.(?:com|org)",
+  "^https?://example-store\\.com",
+  "^https?://internal\\.example\\.com"
+]
