@@ -31,7 +31,7 @@ satisfy both engineering needs and compliance requirements (PCI-DSS 4.0).
 **Target versions** (March 2026):
 - **GitHub Actions**: ubuntu-24.04 runners (ubuntu-latest), arm64 GA, artifact v4, attestations GA
 - **GitLab CI/CD**: GitLab 18.10, CI/CD Catalog GA, CI Components with typed `spec: inputs`
-- **Forgejo Actions**: Forgejo v14.0, Runner v12.7.x (multi-connection support since v12.7.0)
+- **Forgejo Actions**: Forgejo v14.0, Runner v11.x (stable; check `data.forgejo.org/forgejo/runner` releases for current major tag before pinning)
 - **Gitea Actions**: Gitea v1.23.x, act runner v0.2.x (GA since Gitea 1.21, March 2024)
 - **Woodpecker CI**: v3.13.x (container-native, Gitea/Forgejo/GitHub/GitLab-compatible)
 - **Supply chain**: cosign v3.x (Sigstore), Syft/Trivy for SBOM, SLSA v1.0

@@ -61,7 +61,7 @@ silently no-op on the wrong tier:
 | Feature | Tier | Behavior on lower tier |
 |---------|------|------------------------|
 | **Merge Trains** (`needs:` + merge strategy) | Premium+ | No merge train; normal merge |
-| **Secure scanning** (`container_scanning`, `sast`, `dast`, `secret_detection`) | Works on CE, results UI limited to Ultimate | Jobs run; findings not in MR widget on CE/Premium |
+| **Secure scanning** (`container_scanning`, `sast`, `dast`, `secret_detection`) | Jobs run on CE; MR widget with findings requires Premium+; full security dashboard + vulnerability management requires Ultimate | On CE, findings appear only in raw job artifacts / reports; no MR widget, no dashboard |
 | **Compliance pipelines** (`compliance_frameworks`) | Ultimate | Ignored silently |
 | **Protected environment approvals (multi-stage)** | Premium+ | Single approval only |
 | **CI/CD for external repos** | Premium+ | Unavailable |

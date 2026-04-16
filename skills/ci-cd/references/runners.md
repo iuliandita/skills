@@ -148,7 +148,7 @@ check_interval = 0
 |----|---------|
 | Binary (Linux) | Download from `code.forgejo.org/forgejo/runner/releases/latest`, verify with `gpg`, `install -m 755 ... /usr/local/bin/forgejo-runner` |
 | Binary (macOS) | Same, pick `darwin-arm64` or `darwin-amd64` |
-| OCI container | `docker pull data.forgejo.org/forgejo/runner:11` (runs as uid 1000) |
+| OCI container | `docker pull data.forgejo.org/forgejo/runner:<major>` (current stable tag is `:11`; check `https://data.forgejo.org/forgejo/-/packages/container/runner/versions` for the latest tag before pinning. Runs as uid 1000.) |
 | Docker Compose | Reference compose file in upstream docs - pairs with a DinD sidecar |
 | Kubernetes | Community Helm charts exist; no official chart yet |
 
@@ -521,8 +521,8 @@ in GitLab's `config.toml`, equivalent settings in other runners. Verify images a
 tagged with `:latest` (which forces re-pull when the registry has a newer digest).
 
 **DinD races on parallel jobs**: two jobs on the same runner both starting a DinD sidecar
-fight over port 2375. Lower concurrency on DinD runners or use kubernetes backend which
-gives each job its own network namespace.
+fight over port 2376 (TLS, default since Docker 20+) or 2375 (no TLS). Lower concurrency
+on DinD runners or use kubernetes backend which gives each job its own network namespace.
 
 ---
 
