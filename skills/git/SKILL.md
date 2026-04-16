@@ -88,6 +88,7 @@ verify against this list:**
 - [ ] **Lock files regenerated after conflict resolution.** After resolving conflicts in dependency files (`package.json`, `Cargo.toml`, `go.mod`, `pyproject.toml`), re-run the package manager to regenerate the lock file. Never manually merge lock files. Then regenerate: `npm install`, `yarn install`, `go mod tidy`, or `cargo generate-lockfile`.
 - [ ] **Force-push safety.** If force-push is needed, always use `--force-with-lease` (refuses if remote has unfetched commits). Plain `--force` requires explicit user approval and team coordination.
 - [ ] **Version info dated.** When citing tool versions, include a date so readers know when to re-check. Stale version numbers cause silent breakage.
+- [ ] **Forge-CLI subcommands verified.** Before scripting `fj`/`gh`/`glab`/`tea` commands in a runbook, hooks, or CI, confirm the subcommand and flags exist on the target version (`<cli> <cmd> --help`). These CLIs add, rename, and remove subcommands across minor versions; docs lag behind the binary.
 
 ---
 
