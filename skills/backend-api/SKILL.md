@@ -232,6 +232,42 @@ Minimal RFC 9457 problem detail response:
 }
 ```
 
+Status code decision matrix (pick the narrowest correct code):
+
+| Scenario | Code | Notes |
+|----------|------|-------|
+| Malformed JSON, missing required field, wrong type | `400` | Client request is syntactically wrong |
+| Well-formed input but fails domain rule (insufficient funds, invalid state) | `422` | Semantic validation |
+| No credentials, expired token | `401` | Include `WWW-Authenticate` header |
+| Authenticated but not permitted | `403` | Do not challenge for credentials |
+| Resource does not exist, or exists but caller must not know | `404` | Pick one policy per resource and keep it |
+| Write conflicts with current state (stale ETag, duplicate unique key) | `409` | Problem detail should name the conflict |
+| Idempotency-Key reused with a different body | `422` | Not `409` - the key contract is broken |
+| Too many requests | `429` | Include `Retry-After` |
+| Unhandled server error | `500` | Never leak stack traces in the body |
+
+FastAPI exception handler wiring for consistent problem+json:
+```python
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
+
+app = FastAPI()
+
+@app.exception_handler(RequestValidationError)
+async def validation_handler(request: Request, exc: RequestValidationError):
+    return JSONResponse(
+        status_code=400,
+        media_type="application/problem+json",
+        content={
+            "type": "https://api.example.com/errors/validation",
+            "title": "Invalid request",
+            "status": 400,
+            "errors": exc.errors(),
+        },
+    )
+```
+
 ### Pagination and filtering
 
 - Offset pagination is fine for small, stable backoffice lists
