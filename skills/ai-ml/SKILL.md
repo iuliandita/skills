@@ -319,6 +319,41 @@ while not done:
    and cost limits.
 5. **Stale context** - long-running agents accumulate context. Summarize or prune periodically.
 
+### Minimal safe agent loop (Anthropic + Python)
+
+Combines the three non-negotiables: iteration cap, cost gate, and tool-error policy.
+
+```python
+MAX_ITERS, BUDGET_USD = 20, 5.00
+TOOL_RETRY_MAX = 2  # transient failures only; retry then abort
+spent = 0.0
+
+for i in range(MAX_ITERS):
+    if spent >= BUDGET_USD:
+        raise BudgetExceeded(f"${spent:.2f} >= ${BUDGET_USD}")
+    resp = client.messages.create(model=MODEL, max_tokens=1024, tools=tools, messages=msgs)
+    spent += cost_of(resp.usage)  # input/output tokens * per-1M price
+    if resp.stop_reason == "end_turn":
+        return resp
+    for block in resp.content:
+        if block.type != "tool_use":
+            continue
+        for attempt in range(TOOL_RETRY_MAX + 1):
+            try:
+                result = dispatch(block.name, block.input); is_error = False; break
+            except TransientToolError:
+                if attempt == TOOL_RETRY_MAX: result, is_error = "tool failed after retries", True
+            except PermanentToolError as e:
+                result, is_error = f"tool aborted: {e}", True; break
+        msgs.append({"role": "assistant", "content": resp.content})
+        msgs.append({"role": "user", "content": [{"type": "tool_result",
+            "tool_use_id": block.id, "content": str(result), "is_error": is_error}]})
+raise IterationLimitExceeded(MAX_ITERS)
+```
+
+Retry transient errors (timeouts, 5xx, rate limits) with backoff; abort on permanent ones
+(auth, bad input) and let the model decide next steps from the `is_error` tool_result.
+
 Read `references/agent-patterns.md` for multi-agent architectures, human-in-the-loop patterns,
 memory management, and production agent deployment.
 

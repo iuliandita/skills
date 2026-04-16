@@ -182,6 +182,7 @@ Use this structure:
 # Full Review: {repo_name} @ {short_sha}
 
 Languages: {detected_languages} | Files: {file_count} | Branch: {branch}
+Scope: {scope}
 
 ---
 
