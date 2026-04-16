@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.22.0](https://github.com/iuliandita/skills/compare/v1.21.0...v1.22.0) (2026-04-16)
+
+
+### Features
+
+* **git, ci-cd:** add forgejo-cli, Gitea/Woodpecker CI, runners, best-practices ([#17](https://github.com/iuliandita/skills/issues/17)) ([4777d3b](https://github.com/iuliandita/skills/commit/4777d3b8d793fb636c5b29d7bc09850b68079c9b))
+
 ## [1.21.0](https://github.com/iuliandita/skills/compare/v1.20.0...v1.21.0) (2026-04-14)
 
 
