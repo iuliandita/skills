@@ -52,10 +52,10 @@ This skill covers five domains depending on context:
 
 ## When NOT to use
 
-- Kubernetes manifests, Helm charts, cluster architecture (use kubernetes)
-- CI/CD pipeline design (use ci-cd)
-- Security audits of application code (use security-audit)
-- Infrastructure provisioning with Terraform (use terraform)
+- Kubernetes manifests, Helm charts, cluster architecture (use **kubernetes**)
+- CI/CD pipeline design (use **ci-cd**)
+- Security audits of application code (use **security-audit**)
+- Infrastructure provisioning with Terraform (use **terraform**)
 
 ---
 

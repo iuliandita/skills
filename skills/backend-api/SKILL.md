@@ -232,6 +232,42 @@ Minimal RFC 9457 problem detail response:
 }
 ```
 
+Status code decision matrix (pick the narrowest correct code):
+
+| Scenario | Code | Notes |
+|----------|------|-------|
+| Malformed JSON, missing required field, wrong type | `400` | Client request is syntactically wrong |
+| Well-formed input but fails domain rule (insufficient funds, invalid state) | `422` | Semantic validation |
+| No credentials, expired token | `401` | Include `WWW-Authenticate` header |
+| Authenticated but not permitted | `403` | Do not challenge for credentials |
+| Resource does not exist, or exists but caller must not know | `404` | Pick one policy per resource and keep it |
+| Write conflicts with current state (stale ETag, duplicate unique key) | `409` | Problem detail should name the conflict |
+| Idempotency-Key reused with a different body | `422` | Not `409` - the key contract is broken |
+| Too many requests | `429` | Include `Retry-After` |
+| Unhandled server error | `500` | Never leak stack traces in the body |
+
+FastAPI exception handler wiring for consistent problem+json:
+```python
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
+
+app = FastAPI()
+
+@app.exception_handler(RequestValidationError)
+async def validation_handler(request: Request, exc: RequestValidationError):
+    return JSONResponse(
+        status_code=400,
+        media_type="application/problem+json",
+        content={
+            "type": "https://api.example.com/errors/validation",
+            "title": "Invalid request",
+            "status": 400,
+            "errors": exc.errors(),
+        },
+    )
+```
+
 ### Pagination and filtering
 
 - Offset pagination is fine for small, stable backoffice lists
@@ -255,6 +291,24 @@ if (key) {
 // ... execute, then store result keyed by idempotency-key before returning
 ```
 
+Idempotency key header pattern (FastAPI):
+```python
+from fastapi import Header, HTTPException
+
+async def create_order(
+    body: OrderCreate,
+    idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
+):
+    if idempotency_key:
+        cached = await cache.get(f"idem:{idempotency_key}")
+        if cached:
+            return JSONResponse(status_code=cached["status"], content=cached["body"])
+    result = await orders.create(body)
+    if idempotency_key:
+        await cache.set(f"idem:{idempotency_key}", {"status": 201, "body": result}, ttl=86400)
+    return result
+```
+
 Cursor pagination response envelope:
 ```json
 {
@@ -264,6 +318,35 @@ Cursor pagination response envelope:
 }
 ```
 Decode the cursor server-side (`WHERE id > :cursor_id ORDER BY id LIMIT :limit`). Never expose raw DB offsets or row numbers in the cursor.
+
+Opaque cursor encode/decode (FastAPI, HMAC-signed to prevent client tampering):
+```python
+import base64, hmac, hashlib, json, os
+
+SECRET = os.environ["CURSOR_SECRET"].encode()
+
+def encode_cursor(payload: dict) -> str:
+    body = base64.urlsafe_b64encode(json.dumps(payload, separators=(",", ":")).encode()).rstrip(b"=")
+    sig = base64.urlsafe_b64encode(hmac.new(SECRET, body, hashlib.sha256).digest()[:8]).rstrip(b"=")
+    return f"{body.decode()}.{sig.decode()}"
+
+def decode_cursor(token: str) -> dict:
+    body, sig = token.split(".", 1)
+    expected = base64.urlsafe_b64encode(hmac.new(SECRET, body.encode(), hashlib.sha256).digest()[:8]).rstrip(b"=").decode()
+    if not hmac.compare_digest(sig, expected):
+        raise ValueError("invalid cursor")
+    return json.loads(base64.urlsafe_b64decode(body + "=="))
+```
+Clients treat `next_cursor` as opaque; the server controls shape and can change it without a breaking contract.
+
+### Graceful shutdown and rolling deploys
+
+Rolling deploys send SIGTERM to old instances while new ones come up. Handle it on the API side or expect 502s under load:
+
+- Trap SIGTERM, stop accepting new connections, drain in-flight requests, then exit. FastAPI/Uvicorn: configure `--timeout-graceful-shutdown` (default 30s); Express 5: `server.close()` then `server.closeAllConnections()` after the drain window; NestJS: `app.enableShutdownHooks()` plus `onApplicationShutdown` handlers
+- Keep the app-side shutdown window shorter than the orchestrator's termination grace (Kubernetes default 30s). `app_shutdown < terminationGracePeriodSeconds` or the kernel kills in-flight work
+- Set HTTP keep-alive timeout shorter than any upstream idle timeout (load balancer, ingress). If the LB holds a connection the server already closed, the next request hits a dead socket. Typical safe pair: server keep-alive 65s behind an LB with 60s idle
+- Add a readiness probe that flips to failing on SIGTERM before the drain starts. The orchestrator stops routing new traffic while in-flight requests finish
 
 ## What NOT to Force
 

@@ -92,8 +92,11 @@ Also check git history for committed-then-removed secrets: `git log --all --diff
 
 Find known CVEs in dependencies and assess supply chain risk.
 
-**Tools by ecosystem**:
-- **Bun/Node**: `bun audit --audit-level=high` (supported levels: `low`, `moderate`, `high`, `critical`)
+**Tools by ecosystem** (pick the one matching the lockfile):
+- **Bun** (`bun.lock`/`bun.lockb`): `bun audit --audit-level=high` (supported levels: `low`, `moderate`, `high`, `critical`)
+- **npm** (`package-lock.json`): `npm audit --audit-level=high --omit=dev`
+- **pnpm** (`pnpm-lock.yaml`): `pnpm audit --audit-level high --prod`
+- **yarn** (`yarn.lock`): `yarn npm audit --severity high` (Berry) or `yarn audit --level high` (Classic)
 - **Python**: `pip-audit --format json` or `safety check --json`
 - **Go**: `govulncheck ./...`
 - **Rust**: `cargo audit --json` - also check for `unsafe` blocks without `// SAFETY:` comments, `transmute` misuse, unvalidated FFI boundaries
@@ -182,8 +185,13 @@ Load grep patterns from `references/grep-patterns.md` (Auth section).
 
 Load grep patterns from `references/grep-patterns.md` (Injection section).
 
-- **SQL injection**: raw queries with string interpolation, `.raw()` calls with user input
-- **Command injection**: `exec()`/`spawn()` with user args, `shell=True` with user input, string interpolation in commands
+- **SQL injection**: raw queries with string interpolation, `.raw()` calls with user input. Remediation is always parameterization, never escaping. Concrete forms:
+  - `node-postgres`: `db.query('SELECT * FROM users WHERE id = $1', [req.params.id])`
+  - `mysql2`: `db.execute('SELECT * FROM users WHERE id = ?', [req.params.id])`
+  - Prisma: `prisma.user.findUnique({ where: { id: req.params.id } })` (tagged-template `$queryRaw` is safe; `$queryRawUnsafe` is not)
+  - Drizzle: `db.select().from(users).where(eq(users.id, req.params.id))`
+  - Python (psycopg/sqlite3): `cur.execute('SELECT * FROM users WHERE id = %s', (user_id,))` - never `%` string-format the SQL
+- **Command injection**: shelling out with user args, `shell=True` with user input, string interpolation in child-process commands
 - **Path traversal**: user paths without containment check, zip extraction without name validation (Zip Slip), recursive delete on user-controlled paths
 - **SSRF**: user URLs passed to HTTP clients, IP allowlist checking hostname string not resolved IP, redirect following to internal hosts, DNS rebinding
 - **XSS**: unsafe HTML rendering with user data, `javascript:` URLs unblocked

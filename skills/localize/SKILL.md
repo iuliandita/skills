@@ -8,6 +8,7 @@ description: >
   'locale', 'hardcoded strings', 'react-i18next', 'vue-i18n', 'next-intl', 'missing
   translations'. Not for prose translation or runtime AI output (use ai-ml).
 license: MIT
+compatibility: "Requires Node.js 20+. Optional: react-i18next, vue-i18n, next-intl, svelte-i18n, ngx-translate, i18next (per framework)"
 metadata:
   source: iuliandita/skills
   date_added: "2026-04-12"
@@ -113,10 +114,16 @@ Before touching code, understand what exists:
    `src/locales/`, `src/i18n/messages/`, `public/locales/`, or inline `<i18n>` blocks.
    Note the format (JSON, YAML, TS objects) and identify the source locale.
 4. **Count the scope** - estimate how many files contain user-facing strings. Adapt
-   the file extension to your framework:
+   the file extension to your framework. The JSX-text regex alone undercounts by a
+   lot (misses attributes, toasts, errors) - combine with attribute and toast patterns:
    ```bash
-   # React: *.tsx/*.jsx | Vue: *.vue | Svelte: *.svelte | Angular: *.html + *.ts
-   grep -rl --include='*.tsx' --include='*.jsx' --include='*.vue' -E '>[A-Z][a-z]' src/ | wc -l
+   # React/JSX: text content + attribute values (placeholder, title, alt, aria-label)
+   grep -rlE '>[A-Z][a-z]|(placeholder|title|alt|aria-label)="[A-Z]' \
+     --include='*.tsx' --include='*.jsx' src/ | wc -l
+   # Toast/validation strings hide in logic (not JSX). Check separately.
+   grep -rlE 'toast\.(success|error|info|warn)|setError\(' \
+     --include='*.ts' --include='*.tsx' src/ | wc -l
+   # Vue: *.vue | Svelte: *.svelte | Angular: *.html + *.ts (see references/audit-patterns.md)
    ```
 5. **Check for partial i18n** - the worst state is partially translated: some strings use
    `t()`, others are hardcoded. Map which areas are done and which are not.
@@ -134,7 +141,7 @@ If no i18n system exists, set one up. If one exists, skip to Step 3.
 | Catalog format | JSON, YAML, TS objects | TS objects give type safety without tooling. JSON works with most libraries |
 | Key structure | flat, nested, dot-notation | Dot-notation (`auth.signIn`) balances readability and grep-ability |
 | Interpolation | positional `{0}`, named `{name}`, ICU | Named for readability. Positional is simpler for machine translation |
-| Pluralization | separate keys, ICU MessageFormat | Separate keys (`countSingular`/`countPlural`) are simpler. ICU handles complex rules |
+| Pluralization | separate keys, ICU MessageFormat | Separate keys work for 2-form languages (English, German). Use ICU for Slavic and Arabic: Russian has 4 forms (one/few/many/other), Polish has 3, Arabic has 6. Picking "singular/plural" keys up front will force a rewrite later |
 | Locale detection | browser, URL path, cookie, header | Browser detection for first visit, persisted preference after |
 | Fallback | source locale, then key | Always. Never return empty or crash on missing key |
 | Voice register | formal, informal | Decide per target language upfront. Document the choice |

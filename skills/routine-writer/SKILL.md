@@ -180,6 +180,33 @@ When the skill finishes, the user should have, depending on triggers chosen:
 
 ---
 
+## Minimal emitted-artifacts example
+
+For a scheduled nightly triage routine on a machine where `claude` is on PATH, the user gets three things back:
+
+1. The routine prompt (from Step 4, drafted and approved in Step 5).
+
+2. The `/schedule` invocation to paste into Claude Code:
+
+   ```
+   /schedule Run every weekday at 07:00 local. Read issues opened in the last 24 hours in myorg/api without the auto-triaged label. Apply area and auto-triaged labels, assign owners from CODEOWNERS, and post a Slack summary in #eng-backlog. If no issues match, exit without output.
+   ```
+
+3. The `/fire` curl template (after the user adds an API trigger in the web UI and stores the token as `$ROUTINE_FIRE_TOKEN`):
+
+   ```bash
+   curl -X POST "$ROUTINE_FIRE_URL" \
+     -H "Authorization: Bearer $ROUTINE_FIRE_TOKEN" \
+     -H "anthropic-version: 2023-06-01" \
+     -H "anthropic-beta: experimental-cc-routine-2026-04-01" \
+     -H "Content-Type: application/json" \
+     -d '{"text": "Manual re-fire after CODEOWNERS refresh"}'
+   ```
+
+API-only and GitHub-only routines skip artifact #2 and emit a web-UI walkthrough instead. See `references/automation.md` for the full emit matrix.
+
+---
+
 ## Related Skills
 
 - **prompt-generator** - structures one-off prompts for chat or documentation. Prompts written with prompt-generator can be refined with user feedback mid-run; routine prompts cannot, which is why this skill exists.

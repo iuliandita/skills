@@ -275,6 +275,35 @@ provider. The correct procedure:
 
 ---
 
+## GPU / PCI Passthrough Quick Reference
+
+Full details (IOMMU groups, ACS override, Terraform patterns) in `references/proxmox.md`.
+The minimum viable path for a Windows 11 + NVIDIA desktop GPU on Proxmox VE 9.x:
+
+1. **Host prereqs.** Enable VT-d / AMD-Vi in BIOS. Add `intel_iommu=on` (or `amd_iommu=on`)
+   plus `iommu=pt` to the kernel command line (`/etc/kernel/cmdline` on PVE with systemd-boot,
+   `/etc/default/grub` on legacy). Run `proxmox-boot-tool refresh` (or `update-grub`) and reboot.
+2. **Bind to vfio-pci.** `lspci -nn | grep -i nvidia` to find vendor:device IDs, then:
+   `echo "options vfio-pci ids=10de:XXXX,10de:YYYY" > /etc/modprobe.d/vfio-pci.conf` (GPU +
+   its audio function). Blacklist `nouveau` and `nvidia`. `update-initramfs -u` and reboot.
+   Verify with `lspci -nnk | grep -A3 NVIDIA` - driver in use must be `vfio-pci`.
+3. **VM settings for Windows 11.** Machine type `q35`, BIOS `ovmf` (add an EFI disk), TPM v2.0
+   state disk, `cpu: host`, `hidden=1` to dodge NVIDIA's Code 43 on older drivers. Example:
+   `qm set 100 --machine q35 --bios ovmf --cpu host,hidden=1 --efidisk0 local-lvm:1,format=raw`
+4. **Attach the GPU.** Prefer hardware mappings (PVE 8.1+) for migration safety:
+   `pvesh create /cluster/mapping/pci --id gpu-rtx4070 --map 'node=pve1,path=0000:01:00.0'`
+   then `qm set 100 --hostpci0 mapping=gpu-rtx4070,pcie=1,x-vga=1`. Legacy form:
+   `--hostpci0 01:00,pcie=1,x-vga=1`. Drop `x-vga` for compute-only passthrough.
+5. **Check IOMMU groups** with `find /sys/kernel/iommu_groups/ -type l | sort -V` before
+   anything else - every device in the target group gets passed through together. Single-GPU
+   hosts need early vfio binding (initramfs) or the host driver claims it first.
+
+**Reset bug:** NVIDIA consumer cards (including RTX 4070) usually reset cleanly, but verify
+with two successive VM restarts before production. AMD RX 5000/6000 series often need the
+`vendor-reset` kernel module or `pcie_port_pm=off`. If the second VM start hangs, you hit it.
+
+---
+
 ## Memory Management
 
 **Ballooning - the short version:** Don't use it unless you've tested it on your exact
@@ -319,6 +348,14 @@ virt-install --name myvm --ram 2048 --vcpus 2 --cpu host \
 
 Build the cloud-init ISO with `cloud-localds cidata.iso user-data.yaml meta-data.yaml` and attach
 it as a second disk, or use the `--cloud-init` flag shown above (virt-install 4.0+).
+
+**Reusable template pattern:** keep the downloaded cloud image as a read-only golden image
+(`/var/lib/libvirt/images/debian-13-template.qcow2`) and create each VM disk as a qcow2
+overlay backed by it - `qemu-img create -f qcow2 -b debian-13-template.qcow2 -F qcow2
+myvm.qcow2`. Overlays only store per-VM changes and boot in seconds. Regenerate the base
+when you need a new OS minor. Validate first boot with `cloud-init status --wait` inside
+the guest. Never set `password:` or `chpasswd:` with plaintext values in user-data - use
+`ssh_authorized_keys` and rely on `lock_passwd: true` (the cloud-image default).
 
 `virsh list --all` to confirm state; `virsh console myvm` to attach. For full XML domain
 definitions, network and storage pool management, and virsh lifecycle commands, see

@@ -322,6 +322,33 @@ Full procedures, extract-changelog function, and per-forge release-watch command
 
 ---
 
+## Concrete end-to-end finish on GitHub
+
+Branch `feat/oauth-login` on a Node repo with `gh` available, Dockerfile, Helm chart, `"version": "1.4.2"` in `package.json`, CHANGELOG present, GitHub Actions release workflow.
+
+```
+B1  git remote get-url origin  -> github.com  -> FORGE=github, FORGE_CLI=gh
+    git log main..HEAD          -> 6 commits; diff 340 lines across 12 files
+B2  bun run lint && bun run typecheck && bun test  -> all green, 184 tests
+B3  update-docs: README badges, CHANGELOG [1.5.0] section dated 2026-04-16
+    Bump: package.json 1.4.2 -> 1.5.0, Dockerfile LABEL, helm/Chart.yaml appVersion, values.yaml image tag
+B4  code-review on main..HEAD   -> 2 nits addressed, re-run tests green
+B5  git push -u origin feat/oauth-login
+    gh pr create --base main --title "feat(auth): OAuth login" --body-file .github/pr-body.md
+B6  gh pr checks --watch --fail-fast     # then:
+    gh pr view --json statusCheckRollup --jq '.statusCheckRollup[].conclusion' | grep -v SUCCESS && exit 1
+B7  gh pr merge --squash --delete-branch
+B8  git fetch --tags origin
+    git rev-parse --verify --quiet refs/tags/v1.5.0 || git tag -a v1.5.0 -m "v1.5.0" && git push origin v1.5.0
+    gh release create v1.5.0 --title v1.5.0 --notes-file <(extract_changelog 1.5.0)
+    RUN_ID=$(gh run list --limit 1 --json databaseId --jq '.[0].databaseId')
+    gh run watch "$RUN_ID" --exit-status
+```
+
+GitLab substitutes `glab mr create`, `glab ci status --live`, `glab mr merge --squash --remove-source-branch`, `glab release create`. Forgejo substitutes `tea pulls create`, `tea pulls merge --style squash`, `tea releases create`. Bitbucket and bare paths skip B5-B8 CLI steps and use web UI / `format-patch` respectively.
+
+---
+
 ## Rules
 
 1. **Read before edit.** Always read files you're about to modify in the current session. No exceptions.

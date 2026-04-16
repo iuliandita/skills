@@ -646,59 +646,340 @@
       "ceiling": "none (100% target)"
     },
     "pool": [
-      "ai-ml", "ansible", "anti-ai-prose", "anti-slop", "arch-btw",
-      "backend-api", "browse", "ci-cd", "code-review", "command-prompt",
-      "databases", "docker", "firewall-appliance", "full-review", "git",
-      "kubernetes", "localize", "lockpick", "mcp", "networking",
-      "prompt-generator", "roadmap", "security-audit", "terraform",
-      "testing", "update-docs", "virtualization", "zero-day"
+      "ai-ml",
+      "ansible",
+      "anti-ai-prose",
+      "anti-slop",
+      "arch-btw",
+      "backend-api",
+      "browse",
+      "ci-cd",
+      "code-review",
+      "command-prompt",
+      "databases",
+      "docker",
+      "firewall-appliance",
+      "full-review",
+      "git",
+      "kubernetes",
+      "localize",
+      "lockpick",
+      "mcp",
+      "networking",
+      "prompt-generator",
+      "roadmap",
+      "security-audit",
+      "terraform",
+      "testing",
+      "update-docs",
+      "virtualization",
+      "zero-day"
     ],
     "extra_pool": [
       "cluster-health (gitignored, local-only)"
     ],
     "termination": "iteration cap (10/10) + all skills at 100%",
     "scores": {
-      "ai-ml": { "before": { "composite": 86.6 }, "after": { "composite": 100 } },
-      "ansible": { "before": { "composite": 89.1 }, "after": { "composite": 100 } },
-      "anti-ai-prose": { "before": { "composite": 91.5 }, "after": { "composite": 100 } },
-      "anti-slop": { "before": { "composite": 82.6 }, "after": { "composite": 100 } },
-      "arch-btw": { "before": { "composite": 93.4 }, "after": { "composite": 100 } },
-      "backend-api": { "before": { "composite": 89.3 }, "after": { "composite": 100 } },
-      "browse": { "before": { "composite": 91.9 }, "after": { "composite": 100 } },
-      "ci-cd": { "before": { "composite": 94.5 }, "after": { "composite": 100 } },
-      "code-review": { "before": { "composite": 93.5 }, "after": { "composite": 100 } },
-      "command-prompt": { "before": { "composite": 88.1 }, "after": { "composite": 100 } },
-      "databases": { "before": { "composite": 93.0 }, "after": { "composite": 100 } },
-      "docker": { "before": { "composite": 93.0 }, "after": { "composite": 100 } },
-      "firewall-appliance": { "before": { "composite": 94.8 }, "after": { "composite": 100 } },
-      "full-review": { "before": { "composite": 94.3 }, "after": { "composite": 100 } },
-      "git": { "before": { "composite": 92.8 }, "after": { "composite": 100 } },
-      "kubernetes": { "before": { "composite": 92.6 }, "after": { "composite": 100 } },
-      "localize": { "before": { "composite": 93.0 }, "after": { "composite": 100 } },
-      "lockpick": { "before": { "composite": 92.0 }, "after": { "composite": 100 } },
-      "mcp": { "before": { "composite": 94.5 }, "after": { "composite": 100 } },
-      "networking": { "before": { "composite": 95.0 }, "after": { "composite": 100 } },
-      "prompt-generator": { "before": { "composite": 88.1 }, "after": { "composite": 100 } },
-      "roadmap": { "before": { "composite": 85.0 }, "after": { "composite": 100 } },
-      "security-audit": { "before": { "composite": 90.6 }, "after": { "composite": 100 } },
-      "terraform": { "before": { "composite": 87.9 }, "after": { "composite": 100 } },
-      "testing": { "before": { "composite": 87.1 }, "after": { "composite": 100 } },
-      "update-docs": { "before": { "composite": 88.5 }, "after": { "composite": 100 } },
-      "virtualization": { "before": { "composite": 89.1 }, "after": { "composite": 100 } },
-      "zero-day": { "before": { "composite": 88.0 }, "after": { "composite": 100 } },
-      "cluster-health": { "before": { "composite": 85.1 }, "after": { "composite": 100 }, "note": "local-only, gitignored" }
+      "ai-ml": {
+        "before": {
+          "composite": 86.6
+        },
+        "after": {
+          "composite": 100
+        }
+      },
+      "ansible": {
+        "before": {
+          "composite": 89.1
+        },
+        "after": {
+          "composite": 100
+        }
+      },
+      "anti-ai-prose": {
+        "before": {
+          "composite": 91.5
+        },
+        "after": {
+          "composite": 100
+        }
+      },
+      "anti-slop": {
+        "before": {
+          "composite": 82.6
+        },
+        "after": {
+          "composite": 100
+        }
+      },
+      "arch-btw": {
+        "before": {
+          "composite": 93.4
+        },
+        "after": {
+          "composite": 100
+        }
+      },
+      "backend-api": {
+        "before": {
+          "composite": 89.3
+        },
+        "after": {
+          "composite": 100
+        }
+      },
+      "browse": {
+        "before": {
+          "composite": 91.9
+        },
+        "after": {
+          "composite": 100
+        }
+      },
+      "ci-cd": {
+        "before": {
+          "composite": 94.5
+        },
+        "after": {
+          "composite": 100
+        }
+      },
+      "code-review": {
+        "before": {
+          "composite": 93.5
+        },
+        "after": {
+          "composite": 100
+        }
+      },
+      "command-prompt": {
+        "before": {
+          "composite": 88.1
+        },
+        "after": {
+          "composite": 100
+        }
+      },
+      "databases": {
+        "before": {
+          "composite": 93.0
+        },
+        "after": {
+          "composite": 100
+        }
+      },
+      "docker": {
+        "before": {
+          "composite": 93.0
+        },
+        "after": {
+          "composite": 100
+        }
+      },
+      "firewall-appliance": {
+        "before": {
+          "composite": 94.8
+        },
+        "after": {
+          "composite": 100
+        }
+      },
+      "full-review": {
+        "before": {
+          "composite": 94.3
+        },
+        "after": {
+          "composite": 100
+        }
+      },
+      "git": {
+        "before": {
+          "composite": 92.8
+        },
+        "after": {
+          "composite": 100
+        }
+      },
+      "kubernetes": {
+        "before": {
+          "composite": 92.6
+        },
+        "after": {
+          "composite": 100
+        }
+      },
+      "localize": {
+        "before": {
+          "composite": 93.0
+        },
+        "after": {
+          "composite": 100
+        }
+      },
+      "lockpick": {
+        "before": {
+          "composite": 92.0
+        },
+        "after": {
+          "composite": 100
+        }
+      },
+      "mcp": {
+        "before": {
+          "composite": 94.5
+        },
+        "after": {
+          "composite": 100
+        }
+      },
+      "networking": {
+        "before": {
+          "composite": 95.0
+        },
+        "after": {
+          "composite": 100
+        }
+      },
+      "prompt-generator": {
+        "before": {
+          "composite": 88.1
+        },
+        "after": {
+          "composite": 100
+        }
+      },
+      "roadmap": {
+        "before": {
+          "composite": 85.0
+        },
+        "after": {
+          "composite": 100
+        }
+      },
+      "security-audit": {
+        "before": {
+          "composite": 90.6
+        },
+        "after": {
+          "composite": 100
+        }
+      },
+      "terraform": {
+        "before": {
+          "composite": 87.9
+        },
+        "after": {
+          "composite": 100
+        }
+      },
+      "testing": {
+        "before": {
+          "composite": 87.1
+        },
+        "after": {
+          "composite": 100
+        }
+      },
+      "update-docs": {
+        "before": {
+          "composite": 88.5
+        },
+        "after": {
+          "composite": 100
+        }
+      },
+      "virtualization": {
+        "before": {
+          "composite": 89.1
+        },
+        "after": {
+          "composite": 100
+        }
+      },
+      "zero-day": {
+        "before": {
+          "composite": 88.0
+        },
+        "after": {
+          "composite": 100
+        }
+      },
+      "cluster-health": {
+        "before": {
+          "composite": 85.1
+        },
+        "after": {
+          "composite": 100
+        },
+        "note": "local-only, gitignored"
+      }
     },
     "iteration_log": [
-      { "iteration": 1, "type": "baseline", "avg": 90.5, "min": 82.6, "max": 95.0 },
-      { "iteration": 2, "max_delta": 16.1, "avg": 95.8, "improved": 16 },
-      { "iteration": 3, "max_delta": 5.5, "avg": 97.2, "improved": 12 },
-      { "iteration": 4, "max_delta": 8.9, "avg": 98.8, "improved": 10 },
-      { "iteration": 5, "max_delta": 3.2, "avg": 99.6, "improved": 6 },
-      { "iteration": 6, "type": "codex-cross-model-review", "flags_major": 2, "flags_minor": 3, "fixed": 4, "disputed": 1 },
-      { "iteration": 7, "type": "forward-test", "tested": 6, "passed": 6, "gaps_fixed": 3 },
-      { "iteration": 8, "type": "forward-test", "tested": 6, "passed": 6, "gaps_fixed": 0 },
-      { "iteration": 9, "type": "forward-test", "tested": 6, "passed": 6, "gaps_fixed": 0 },
-      { "iteration": 10, "type": "summary", "all_at_100": true }
+      {
+        "iteration": 1,
+        "type": "baseline",
+        "avg": 90.5,
+        "min": 82.6,
+        "max": 95.0
+      },
+      {
+        "iteration": 2,
+        "max_delta": 16.1,
+        "avg": 95.8,
+        "improved": 16
+      },
+      {
+        "iteration": 3,
+        "max_delta": 5.5,
+        "avg": 97.2,
+        "improved": 12
+      },
+      {
+        "iteration": 4,
+        "max_delta": 8.9,
+        "avg": 98.8,
+        "improved": 10
+      },
+      {
+        "iteration": 5,
+        "max_delta": 3.2,
+        "avg": 99.6,
+        "improved": 6
+      },
+      {
+        "iteration": 6,
+        "type": "codex-cross-model-review",
+        "flags_major": 2,
+        "flags_minor": 3,
+        "fixed": 4,
+        "disputed": 1
+      },
+      {
+        "iteration": 7,
+        "type": "forward-test",
+        "tested": 6,
+        "passed": 6,
+        "gaps_fixed": 3
+      },
+      {
+        "iteration": 8,
+        "type": "forward-test",
+        "tested": 6,
+        "passed": 6,
+        "gaps_fixed": 0
+      },
+      {
+        "iteration": 9,
+        "type": "forward-test",
+        "tested": 6,
+        "passed": 6,
+        "gaps_fixed": 0
+      },
+      {
+        "iteration": 10,
+        "type": "summary",
+        "all_at_100": true
+      }
     ],
     "reverted": 0,
     "contested": 0,
@@ -713,9 +994,24 @@
       "total_tested": 18,
       "total_passed": 18,
       "skills_tested": [
-        "code-review", "terraform", "anti-ai-prose", "lockpick", "mcp", "virtualization",
-        "databases", "ansible", "docker", "security-audit", "kubernetes", "browse",
-        "git", "anti-slop", "networking", "command-prompt", "full-review", "roadmap"
+        "code-review",
+        "terraform",
+        "anti-ai-prose",
+        "lockpick",
+        "mcp",
+        "virtualization",
+        "databases",
+        "ansible",
+        "docker",
+        "security-audit",
+        "kubernetes",
+        "browse",
+        "git",
+        "anti-slop",
+        "networking",
+        "command-prompt",
+        "full-review",
+        "roadmap"
       ]
     },
     "changes_summary": {
@@ -723,6 +1019,538 @@
       "lines_added": 291,
       "lines_removed": 113,
       "commits": 6
+    }
+  },
+  {
+    "run_id": "2026-04-16-114328",
+    "branch": "skill-refiner/2026-04-16-114328",
+    "date": "2026-04-16",
+    "primary": {
+      "harness": "claude-code",
+      "model": "claude-opus-4-6",
+      "context": "1M",
+      "effort": "high"
+    },
+    "secondary": {
+      "harness": "codex",
+      "version": "codex-cli 0.120.0",
+      "weight": "5%",
+      "note": "used for diff review on iter 2 fixes; agent-based review for content-improvement iterations"
+    },
+    "rubric_change": {
+      "before": "structural 10% / AI 35% / Behavioral 50% / Cross-model 5%",
+      "after": "structural gate (pass/fail) / AI 40% / Behavioral 55% / Cross-model 5%",
+      "committed_as": "phase-0 operator config before iter 1"
+    },
+    "config": {
+      "iterations_max": 10,
+      "iterations_used": 10,
+      "threshold": 100,
+      "mode": "circuit-breaker",
+      "plateau": "suppressed",
+      "no_ceiling": true,
+      "cluster_health_included": true
+    },
+    "pool": [
+      "ai-ml",
+      "ansible",
+      "anti-ai-prose",
+      "anti-slop",
+      "arch-btw",
+      "backend-api",
+      "browse",
+      "ci-cd",
+      "cluster-health",
+      "code-review",
+      "command-prompt",
+      "databases",
+      "deep-audit",
+      "dev-cycle",
+      "docker",
+      "firewall-appliance",
+      "full-review",
+      "git",
+      "kubernetes",
+      "localize",
+      "lockpick",
+      "mcp",
+      "networking",
+      "prompt-generator",
+      "roadmap",
+      "routine-writer",
+      "security-audit",
+      "terraform",
+      "testing",
+      "update-docs",
+      "virtualization",
+      "zero-day"
+    ],
+    "termination": "iteration cap (10/10); plateau observed from iter 5",
+    "scores": {
+      "ai-ml": {
+        "before": {
+          "composite": 97.1
+        },
+        "after": {
+          "A": 100.0,
+          "B": 98.0,
+          "composite": 98.7
+        }
+      },
+      "ansible": {
+        "before": {
+          "composite": 97.1
+        },
+        "after": {
+          "A": 100.0,
+          "B": 95.0,
+          "composite": 97.1
+        }
+      },
+      "anti-ai-prose": {
+        "before": {
+          "composite": 93.0
+        },
+        "after": {
+          "A": 100.0,
+          "B": 92.0,
+          "composite": 95.4
+        }
+      },
+      "anti-slop": {
+        "before": {
+          "composite": 97.7
+        },
+        "after": {
+          "A": 100.0,
+          "B": 96.0,
+          "composite": 97.7
+        }
+      },
+      "arch-btw": {
+        "before": {
+          "composite": 98.3
+        },
+        "after": {
+          "A": 100.0,
+          "B": 97.0,
+          "composite": 98.3
+        }
+      },
+      "backend-api": {
+        "before": {
+          "composite": 91.9
+        },
+        "after": {
+          "A": 100.0,
+          "B": 93.5,
+          "composite": 96.1
+        }
+      },
+      "browse": {
+        "before": {
+          "composite": 94.2
+        },
+        "after": {
+          "A": 100.0,
+          "B": 92.5,
+          "composite": 95.3
+        }
+      },
+      "ci-cd": {
+        "before": {
+          "composite": 95.4
+        },
+        "after": {
+          "A": 100.0,
+          "B": 94.0,
+          "composite": 96.5
+        }
+      },
+      "cluster-health": {
+        "before": {
+          "composite": null
+        },
+        "after": {
+          "A": 100.0,
+          "B": 97.3,
+          "composite": 98.5
+        }
+      },
+      "code-review": {
+        "before": {
+          "composite": 95.9
+        },
+        "after": {
+          "A": 100.0,
+          "B": 94.0,
+          "composite": 96.5
+        }
+      },
+      "command-prompt": {
+        "before": {
+          "composite": 94.2
+        },
+        "after": {
+          "A": 100.0,
+          "B": 93.0,
+          "composite": 95.3
+        }
+      },
+      "databases": {
+        "before": {
+          "composite": 98.6
+        },
+        "after": {
+          "A": 100.0,
+          "B": 97.5,
+          "composite": 98.6
+        }
+      },
+      "deep-audit": {
+        "before": {
+          "composite": 97.9
+        },
+        "after": {
+          "A": 100.0,
+          "B": 97.0,
+          "composite": 98.1
+        }
+      },
+      "dev-cycle": {
+        "before": {
+          "composite": 98.7
+        },
+        "after": {
+          "A": 100.0,
+          "B": 98.3,
+          "composite": 99.0
+        }
+      },
+      "docker": {
+        "before": {
+          "composite": 97.1
+        },
+        "after": {
+          "A": 100.0,
+          "B": 99.0,
+          "composite": 99.4
+        }
+      },
+      "firewall-appliance": {
+        "before": {
+          "composite": 99.4
+        },
+        "after": {
+          "A": 100.0,
+          "B": 99.5,
+          "composite": 99.7
+        }
+      },
+      "full-review": {
+        "before": {
+          "composite": 97.7
+        },
+        "after": {
+          "A": 100.0,
+          "B": 97.0,
+          "composite": 98.3
+        }
+      },
+      "git": {
+        "before": {
+          "composite": 97.7
+        },
+        "after": {
+          "A": 100.0,
+          "B": 96.0,
+          "composite": 97.7
+        }
+      },
+      "kubernetes": {
+        "before": {
+          "composite": 98.8
+        },
+        "after": {
+          "A": 100.0,
+          "B": 98.0,
+          "composite": 98.8
+        }
+      },
+      "localize": {
+        "before": {
+          "composite": 93.2
+        },
+        "after": {
+          "A": 100.0,
+          "B": 93.5,
+          "composite": 96.2
+        }
+      },
+      "lockpick": {
+        "before": {
+          "composite": 98.8
+        },
+        "after": {
+          "A": 100.0,
+          "B": 98.0,
+          "composite": 98.8
+        }
+      },
+      "mcp": {
+        "before": {
+          "composite": 95.9
+        },
+        "after": {
+          "A": 100.0,
+          "B": 97.0,
+          "composite": 98.3
+        }
+      },
+      "networking": {
+        "before": {
+          "composite": 99.7
+        },
+        "after": {
+          "A": 100.0,
+          "B": 99.5,
+          "composite": 99.7
+        }
+      },
+      "prompt-generator": {
+        "before": {
+          "composite": 99.4
+        },
+        "after": {
+          "A": 100.0,
+          "B": 99.0,
+          "composite": 99.4
+        }
+      },
+      "roadmap": {
+        "before": {
+          "composite": 96.5
+        },
+        "after": {
+          "A": 100.0,
+          "B": 94.0,
+          "composite": 96.5
+        }
+      },
+      "routine-writer": {
+        "before": {
+          "composite": 98.6
+        },
+        "after": {
+          "A": 100.0,
+          "B": 98.0,
+          "composite": 99.0
+        }
+      },
+      "security-audit": {
+        "before": {
+          "composite": 98.0
+        },
+        "after": {
+          "A": 100.0,
+          "B": 97.5,
+          "composite": 98.5
+        }
+      },
+      "skill-creator": {
+        "before": {
+          "composite": 94.58
+        },
+        "after": {
+          "A": 100.0,
+          "B": 97.3,
+          "composite": 98.4,
+          "meta": true
+        }
+      },
+      "skill-refiner": {
+        "before": {
+          "composite": 95.49
+        },
+        "after": {
+          "A": 100.0,
+          "B": 97.7,
+          "composite": 98.7,
+          "meta": true
+        }
+      },
+      "terraform": {
+        "before": {
+          "composite": 98.8
+        },
+        "after": {
+          "A": 100.0,
+          "B": 98.3,
+          "composite": 98.9
+        }
+      },
+      "testing": {
+        "before": {
+          "composite": 98.6
+        },
+        "after": {
+          "A": 100.0,
+          "B": 97.5,
+          "composite": 98.6
+        }
+      },
+      "update-docs": {
+        "before": {
+          "composite": 98.3
+        },
+        "after": {
+          "A": 100.0,
+          "B": 97.0,
+          "composite": 98.3
+        }
+      },
+      "virtualization": {
+        "before": {
+          "composite": 96.5
+        },
+        "after": {
+          "A": 100.0,
+          "B": 98.0,
+          "composite": 98.1
+        }
+      },
+      "zero-day": {
+        "before": {
+          "composite": 98.8
+        },
+        "after": {
+          "A": 100.0,
+          "B": 98.0,
+          "composite": 98.8
+        }
+      }
+    },
+    "iteration_log": [
+      {
+        "iteration": 1,
+        "type": "baseline",
+        "applied": 0,
+        "no_op": 0,
+        "note": "31 skills baselined (pre-cluster-health); avg 97.1"
+      },
+      {
+        "iteration": 2,
+        "applied": 3,
+        "no_op": 0,
+        "skills": [
+          "docker",
+          "localize",
+          "mcp"
+        ],
+        "note": "rubric-item fixes (items 6, 5, 14)"
+      },
+      {
+        "iteration": 3,
+        "applied": 5,
+        "no_op": 2,
+        "skills": [
+          "backend-api",
+          "browse",
+          "ci-cd",
+          "code-review",
+          "localize"
+        ],
+        "no_op_skills": [
+          "anti-ai-prose",
+          "command-prompt"
+        ]
+      },
+      {
+        "iteration": 4,
+        "applied": 3,
+        "no_op": 3,
+        "skills": [
+          "virtualization",
+          "ai-ml",
+          "full-review"
+        ]
+      },
+      {
+        "iteration": 5,
+        "applied": 1,
+        "no_op": 4,
+        "skills": [
+          "terraform"
+        ]
+      },
+      {
+        "iteration": 6,
+        "applied": 2,
+        "no_op": 15,
+        "skills": [
+          "command-prompt",
+          "firewall-appliance"
+        ],
+        "note": "cluster-health baselined"
+      },
+      {
+        "iteration": 7,
+        "applied": 6,
+        "no_op": 8,
+        "skills": [
+          "security-audit",
+          "anti-ai-prose",
+          "backend-api",
+          "deep-audit",
+          "dev-cycle",
+          "routine-writer"
+        ]
+      },
+      {
+        "iteration": 8,
+        "applied": 3,
+        "no_op": 5,
+        "skills": [
+          "anti-ai-prose",
+          "backend-api",
+          "virtualization"
+        ]
+      },
+      {
+        "iteration": 9,
+        "applied": 3,
+        "no_op": 5,
+        "skills": [
+          "browse",
+          "backend-api",
+          "localize"
+        ]
+      },
+      {
+        "iteration": 10,
+        "applied": 0,
+        "no_op": 7,
+        "note": "firm plateau"
+      }
+    ],
+    "reverted": 0,
+    "contested": 0,
+    "cross_model_flags": 0,
+    "meta_changes": [
+      "skill-creator: Mode routing table + bold cross-refs + skill-refiner reference (+3.85)",
+      "skill-refiner: harness-detection weight fix + step-13 termination clarification (+3.18)",
+      "lint-skills.sh: added check_desc_prefix enforcing '\u00b7 ' middle-dot convention",
+      "test-cases.md: +16 hand-written prompts across 7 auto-gen skills (anti-ai-prose, backend-api, deep-audit, dev-cycle, localize, roadmap, routine-writer)"
+    ],
+    "aggregate": {
+      "baseline_avg": 97.1,
+      "final_avg": 97.98,
+      "min": 95.3,
+      "max": 99.7,
+      "at_100": 0,
+      "above_99": 6,
+      "above_98": 23,
+      "above_95": 34
     }
   }
 ]

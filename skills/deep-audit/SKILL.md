@@ -129,6 +129,21 @@ Skills that will run:
 Total agents: {count}
 ```
 
+Concrete example for a Node+Postgres+Docker+K8s repo with i18n and GitHub Actions (7 Wave 3 skills matched):
+
+```
+Repo: myorg/api @ a3f91c2 (main)  |  Files: 412  |  Scope: full codebase
+Languages: TypeScript, SQL, YAML
+
+Wave 2 (always): code-review, anti-slop, anti-ai-prose
+Wave 3 (detected): testing, command-prompt, databases, backend-api, localize, docker, kubernetes, ci-cd
+Wave 3 (skipped): terraform, ansible, networking, ai-ml, mcp
+Wave 4 (always): security-audit, zero-day
+Wave 5 (always): update-docs, roadmap, git
+
+Total agents: 3 + 8 + 2 + 3 = 16
+```
+
 ### Step 2: Code Quality (Wave 2)
 
 Dispatch 3 agents in parallel. All three run on every repo.

@@ -9,42 +9,48 @@ thresholds mean, and how the adaptive loop makes decisions.
 
 ## Scoring Model
 
-Each skill receives a composite score (0-100) from four weighted components.
+Structural compliance is a **pass/fail gate**, not a weighted score component. A
+skill that fails lint-skills.sh or validate-spec.sh is excluded from scoring until
+the structural issue is fixed. When the gate passes, the composite score (0-100)
+is the weighted sum of three behavior-oriented components.
 
 ### Component Weights
 
 | Component | Weight | Source |
 |---|---|---|
-| Structural compliance | 10% | lint-skills.sh + validate-spec.sh |
-| AI Self-Check | 35% | skill-creator review mode |
-| Behavioral test | 50% | Synthetic task execution |
+| Structural compliance | **gate** | lint-skills.sh + validate-spec.sh (pass/fail) |
+| AI Self-Check | 40% | skill-creator review mode |
+| Behavioral test | 55% | Synthetic task execution |
 | Cross-model review | 5% | Secondary model flag count |
 
 ### Renormalized Weights (No Secondary Model)
 
-When cross-model review is unavailable, redistribute proportionally:
+When cross-model review is unavailable, redistribute the 5% proportionally:
 
 | Component | Weight |
 |---|---|
-| Structural compliance | 11% |
-| AI Self-Check | 37% |
-| Behavioral test | 52% |
+| Structural compliance | gate |
+| AI Self-Check | 42% |
+| Behavioral test | 58% |
 
 ---
 
 ## Component Scoring
 
-### Structural Compliance (10%)
+### Structural Compliance (gate)
 
-Binary pass/fail per lint and validate check, normalized to 0-100:
+Binary pass/fail per lint and validate check. The skill either passes both or it
+does not participate in scoring this iteration:
 
-- lint-skills.sh: count passing checks / total checks
-- validate-spec.sh: count passing checks / total checks
-- Combined: average of both, scaled to 0-100
+- lint-skills.sh: must exit 0 for the skill directory
+- validate-spec.sh: must exit 0 for the skill directory
+- Any failure: exclude the skill from the composite score, report as `gated` in
+  the iteration log, and surface the failure to the operator
 
-A lint failure on any check that would block CI is an automatic 0 for this component.
+Structural is a floor constraint, not a signal dimension. Skills that validate
+get scored on behavior; skills that don't validate get fixed first.
 
-### AI Self-Check (35%)
+### AI Self-Check (40%)
 
 skill-creator's AI Self-Check checklist, scored individually:
 
@@ -53,7 +59,7 @@ skill-creator's AI Self-Check checklist, scored individually:
 - Items not applicable to a given skill are excluded from the denominator
   (e.g., "AI self-check section" for skills that don't generate code)
 
-### Behavioral Test (50%)
+### Behavioral Test (55%)
 
 Run 2-3 synthetic test prompts per skill from `references/test-cases.md`.
 

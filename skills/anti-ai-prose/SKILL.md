@@ -337,6 +337,12 @@ These look like AI tells but are not:
 - **Bold where it signals a term or path** - bolding a defined term on first use is standard
 - **Em dashes in publications that require them** - some style guides (Chicago, AP) allow or require em dashes. The rule applies to your project's conventions
 
+### Counter-example (prose that looks AI but is fine)
+
+> Nestled in the loss landscape near a sharp minimum, the model's robust features fail to generalize. This underscores a pivotal result from Keskar et al. (2017): flat minima tend to foster better test accuracy than sharp ones.
+
+Looks flagged at a glance: `nestled`, `landscape`, `robust`, `underscores`, `pivotal`, `foster`. But every term is a term of art (ML optimization, statistics), `underscores` has a real referent, and the citation is real. Verdict: **Fine**. Do not flag. Domain context overrides vocabulary match.
+
 ---
 
 ## Output Format
@@ -367,6 +373,41 @@ Rules for the report itself:
 - **Apply these rules to your own audit.** Run the Self-Check on the report before returning it - an audit written in AI-slop voice is not credible
 
 Keep it concise. Show the before/after pair. Do not lecture about why AI writing is bad - the user already knows.
+
+### Worked example (anchor the format)
+
+Input (README snippet, 48 words):
+
+> In today's fast-paced world, our platform empowers developers to seamlessly navigate the complex landscape of modern APIs. Built with a commitment to excellence, it boasts robust features and fosters innovation. Whether you're a beginner or expert, this tool serves as a pivotal resource for your journey toward better software.
+
+Report:
+
+```
+## Anti-AI-Prose Audit: README snippet (48 words)
+
+### Findings
+
+#### Vocabulary Tells (6 items)
+
+**Fix** (High) line 1 - cluster of 6 flagged words in 48 words: far above 4/500 threshold
+> before: empowers / seamlessly / navigate / landscape / commitment to / boasts / fosters / pivotal / journey toward
+> after: (rewrite, see below)
+
+#### Tonal Tells (2 items)
+
+**Fix** (High) line 1 - scaffolding padding and significance padding
+> before: "In today's fast-paced world"
+> after: (cut)
+
+**Fix** (Medium) line 1 - promotional tone
+> before: "Built with a commitment to excellence"
+> after: (cut)
+
+### Summary
+- 8 findings, one paragraph, dominant AI voice
+- Rewrite: "An HTTP API client for Python. Handles auth, retries, and pagination. Works with any OpenAPI 3.x spec."
+- Down from 48 words to 22, with concrete claims instead of posture
+```
 
 ---
 
