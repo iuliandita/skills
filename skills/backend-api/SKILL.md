@@ -319,6 +319,26 @@ Cursor pagination response envelope:
 ```
 Decode the cursor server-side (`WHERE id > :cursor_id ORDER BY id LIMIT :limit`). Never expose raw DB offsets or row numbers in the cursor.
 
+Opaque cursor encode/decode (FastAPI, HMAC-signed to prevent client tampering):
+```python
+import base64, hmac, hashlib, json, os
+
+SECRET = os.environ["CURSOR_SECRET"].encode()
+
+def encode_cursor(payload: dict) -> str:
+    body = base64.urlsafe_b64encode(json.dumps(payload, separators=(",", ":")).encode()).rstrip(b"=")
+    sig = base64.urlsafe_b64encode(hmac.new(SECRET, body, hashlib.sha256).digest()[:8]).rstrip(b"=")
+    return f"{body.decode()}.{sig.decode()}"
+
+def decode_cursor(token: str) -> dict:
+    body, sig = token.split(".", 1)
+    expected = base64.urlsafe_b64encode(hmac.new(SECRET, body.encode(), hashlib.sha256).digest()[:8]).rstrip(b"=").decode()
+    if not hmac.compare_digest(sig, expected):
+        raise ValueError("invalid cursor")
+    return json.loads(base64.urlsafe_b64decode(body + "=="))
+```
+Clients treat `next_cursor` as opaque; the server controls shape and can change it without a breaking contract.
+
 ## What NOT to Force
 
 - Do not force cursor pagination onto every small internal list or backoffice table

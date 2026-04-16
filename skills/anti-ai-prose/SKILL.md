@@ -337,6 +337,12 @@ These look like AI tells but are not:
 - **Bold where it signals a term or path** - bolding a defined term on first use is standard
 - **Em dashes in publications that require them** - some style guides (Chicago, AP) allow or require em dashes. The rule applies to your project's conventions
 
+### Counter-example (prose that looks AI but is fine)
+
+> Nestled in the loss landscape near a sharp minimum, the model's robust features fail to generalize. This underscores a pivotal result from Keskar et al. (2017): flat minima tend to foster better test accuracy than sharp ones.
+
+Looks flagged at a glance: `nestled`, `landscape`, `robust`, `underscores`, `pivotal`, `foster`. But every term is a term of art (ML optimization, statistics), `underscores` has a real referent, and the citation is real. Verdict: **Fine**. Do not flag. Domain context overrides vocabulary match.
+
 ---
 
 ## Output Format

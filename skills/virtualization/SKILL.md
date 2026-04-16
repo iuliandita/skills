@@ -349,6 +349,14 @@ virt-install --name myvm --ram 2048 --vcpus 2 --cpu host \
 Build the cloud-init ISO with `cloud-localds cidata.iso user-data.yaml meta-data.yaml` and attach
 it as a second disk, or use the `--cloud-init` flag shown above (virt-install 4.0+).
 
+**Reusable template pattern:** keep the downloaded cloud image as a read-only golden image
+(`/var/lib/libvirt/images/debian-13-template.qcow2`) and create each VM disk as a qcow2
+overlay backed by it - `qemu-img create -f qcow2 -b debian-13-template.qcow2 -F qcow2
+myvm.qcow2`. Overlays only store per-VM changes and boot in seconds. Regenerate the base
+when you need a new OS minor. Validate first boot with `cloud-init status --wait` inside
+the guest. Never set `password:` or `chpasswd:` with plaintext values in user-data - use
+`ssh_authorized_keys` and rely on `lock_passwd: true` (the cloud-image default).
+
 `virsh list --all` to confirm state; `virsh console myvm` to attach. For full XML domain
 definitions, network and storage pool management, and virsh lifecycle commands, see
 `references/libvirt-qemu-kvm.md`.
