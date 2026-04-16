@@ -91,6 +91,12 @@ every failure with file and line reference.
 - [ ] **Version pinning on tools**: `node:22`, not `node:lts`. `python:3.13`, not `python:3`. Specific versions prevent silent breakage.
 - [ ] **Trigger scoping**: `on: push` without branch/path filters runs on every push to every branch - scope to `branches: [main]` and/or `paths:` filters. Same for GitLab: `rules:` with `if` conditions, not bare `only: [pushes]`.
 - [ ] **No expression injection** (GitHub Actions): `${{ }}` expressions never used directly in `run:` blocks. Assign to `env:` first. `github.event.*` is attacker-controlled. Avoid `github.ref_name` in security-sensitive contexts (injectable via crafted tag/branch names).
+- [ ] **Self-hosted runners ephemeral on public/untrusted repos**: non-ephemeral shell runners on repos that accept outside PRs is the top self-hosted-runner compromise vector. Verify `--ephemeral` (GitHub, Gitea) or capacity-based single-job runners (Forgejo) + approval gates for outside contributors. See `references/runners.md`.
+- [ ] **Docker socket mount scope**: `/var/run/docker.sock` mounted into a job gives it root on the host. Only acceptable for trusted internal pipelines. Public/shared runners need DinD sidecar or rootless buildkit instead.
+- [ ] **Scan gate has a baseline, not a blanket block**: container/IaC/SAST scanners introduced with `exit-code 1` and zero suppression always get disabled. Use the ratchet pattern (non-blocking -> baseline -> block new only) from `references/best-practices.md`.
+- [ ] **Ignore-list entries have expiry dates**: every `.trivyignore`, `.grype.yaml`, Dependabot `ignore`, or Renovate `ignoreDeps` entry includes a comment with revisit date + owner. No dates = zombie tech debt.
+- [ ] **Lockfiles committed**: `package-lock.json`, `bun.lock`, `Cargo.lock`, `go.sum`, `uv.lock` belong in version control for applications. Manifest-only commits break reproducibility.
+- [ ] **Auto-merge gated on tests, not just lint**: Dependabot/Renovate auto-merge without test coverage of the changed area is a supply-chain shortcut.
 
 ---
 
