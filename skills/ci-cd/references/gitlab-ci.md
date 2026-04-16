@@ -16,6 +16,101 @@ CI/CD Catalog GA, Components with typed inputs, rules-based workflows.
 
 ---
 
+## gitlab.com (SaaS) vs Self-Managed
+
+The `.gitlab-ci.yml` syntax is identical. Operational behavior is not. Before writing
+pipeline config, know which deployment you are targeting.
+
+### Compute minutes / runner quotas
+
+| Mode | Runner model | Quota |
+|------|--------------|-------|
+| **gitlab.com Free** | Shared SaaS runners (Linux small) | 400 compute min/month, Linux only |
+| **gitlab.com Premium** | Shared + larger Linux/macOS/Windows | 10,000 compute min/month |
+| **gitlab.com Ultimate** | All of the above | 50,000 compute min/month |
+| **Self-managed CE/EE** | Your runners | Effectively unlimited (your hardware) |
+
+**"Compute minutes"** replaced the old "CI minutes" name in 2024. Linux small = 1x multiplier;
+Linux medium/large = 2x/3x; macOS = 6x; Windows = 1x. SaaS jobs on paid tiers can burn through
+quota fast if you run matrix builds on macOS without realizing the 6x multiplier.
+
+**Self-managed**: quotas can still be imposed per project/group via admin settings, but the
+default is unlimited. If the pipeline hangs with "no runner available," check runner tags and
+registration - it is never a quota problem on self-managed.
+
+### Runner types and tags
+
+| Runner type | Where it lives | Typical tag |
+|-------------|---------------|-------------|
+| **SaaS shared (Linux)** | GitLab-managed | `saas-linux-small-amd64`, `saas-linux-medium-amd64`, `saas-linux-large-amd64` |
+| **SaaS shared (macOS)** | GitLab-managed | `saas-macos-medium-m1` |
+| **SaaS shared (Windows)** | GitLab-managed | `saas-windows-medium-amd64` |
+| **Self-managed shared** | Your infra, group/instance scope | Your tags (e.g. `docker`, `k8s`) |
+| **Project-specific** | Your infra, single project | Your tags |
+
+On gitlab.com, `tags:` picks the SaaS runner class (and cost multiplier). On self-managed,
+`tags:` picks which of your registered runners takes the job. A pipeline written for
+gitlab.com with `tags: [saas-linux-medium-amd64]` will sit pending forever on self-managed
+unless you register a runner with that exact tag.
+
+### Tier-gated features in `.gitlab-ci.yml`
+
+Self-managed EE without a license behaves like CE. Several features parse without error but
+silently no-op on the wrong tier:
+
+| Feature | Tier | Behavior on lower tier |
+|---------|------|------------------------|
+| **Merge Trains** (`needs:` + merge strategy) | Premium+ | No merge train; normal merge |
+| **Secure scanning** (`container_scanning`, `sast`, `dast`, `secret_detection`) | Jobs run on CE; MR widget with findings requires Premium+; full security dashboard + vulnerability management requires Ultimate | On CE, findings appear only in raw job artifacts / reports; no MR widget, no dashboard |
+| **Compliance pipelines** (`compliance_frameworks`) | Ultimate | Ignored silently |
+| **Protected environment approvals (multi-stage)** | Premium+ | Single approval only |
+| **CI/CD for external repos** | Premium+ | Unavailable |
+| **Pipeline subscriptions** (cross-project triggers) | Premium+ | Ignored silently |
+
+**How to detect at runtime**: `$GITLAB_FEATURES` is a predefined CI variable containing a
+comma-separated list of enabled feature flags (e.g. `merge_trains`, `security_dashboard`).
+Check this in `rules:` if you maintain one pipeline across SaaS-Ultimate and self-managed CE.
+
+### Predefined variables that differ
+
+| Variable | gitlab.com | Self-managed |
+|----------|------------|--------------|
+| `CI_SERVER_HOST` | `gitlab.com` | Your hostname (e.g. `gitlab.example.com`) |
+| `CI_SERVER_URL` | `https://gitlab.com` | Your URL |
+| `CI_SERVER_FQDN` | `gitlab.com` | Your FQDN |
+| `CI_API_V4_URL` | `https://gitlab.com/api/v4` | `https://<host>/api/v4` |
+| `GITLAB_FEATURES` | Full list per tier | CE-limited list or EE features from license |
+| `CI_PROJECT_URL` | `https://gitlab.com/group/project` | `https://<host>/group/project` |
+
+Never hardcode `gitlab.com` in a pipeline. Use `$CI_SERVER_HOST` and `$CI_API_V4_URL` so the
+same config works on either deployment. Hardcoded hostnames are a common migration blocker
+when moving a project from SaaS to self-managed or vice versa.
+
+### Auth to the GitLab API from jobs
+
+- **gitlab.com**: `CI_JOB_TOKEN` has scoped access to the project; `GITLAB_TOKEN` (user
+  PAT) still works but is rate-limited per user.
+- **Self-managed**: same primitives, plus admins can configure higher rate limits, disable
+  the instance-level `CI_JOB_TOKEN` scope expansion, or issue longer-lived PATs.
+- **OIDC to cloud providers**: works identically via `id_tokens:` - the JWT's `iss` claim
+  is `CI_SERVER_URL`, which means self-managed needs its own trust configuration in AWS/GCP
+  (can't share the `https://gitlab.com` trust policy).
+
+### Operational differences that bite
+
+- **Upgrade cadence**: gitlab.com is always current; self-managed can lag months. Feature
+  documentation assumes the latest version. Check `/help` on the self-managed instance for
+  actual version before assuming a feature exists.
+- **Runner image pre-warming**: SaaS runners have common images cached. Self-managed
+  runners pull cold unless you warm the image cache or run a pull-through registry.
+- **Artifact storage limits**: gitlab.com caps job artifacts (size and retention per tier);
+  self-managed limits are whatever the admin configured (often higher).
+- **Outbound network**: SaaS jobs have unrestricted egress; self-managed often runs behind
+  a corporate proxy. Configure runner `http_proxy`/`https_proxy` env vars at the runner
+  level, not in every job.
+
+---
+
 ## Pipeline Structure
 
 ### Recommended stage order

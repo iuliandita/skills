@@ -1,16 +1,20 @@
 ---
 name: ci-cd
 description: >
-  · Write, review, or architect CI/CD pipelines - GitHub Actions, GitLab CI, Forgejo.
-  Covers pipeline security, SHA pinning, SBOM, and runner configuration. Triggers: 'ci/cd',
-  'pipeline', 'github actions', 'gitlab ci', 'forgejo', '.github/workflows', 'runner',
-  'sha pinning'.
+  · Write, review, or architect CI/CD pipelines across GitHub Actions, GitLab, Forgejo/Gitea
+  Actions, and Woodpecker. Covers pipeline security (SHA pinning, SBOM), self-hosted runners,
+  dependency updates, linting, scanning, and review gates. Triggers: 'ci/cd', 'pipeline',
+  'github actions', 'gitlab ci', 'forgejo', 'gitea', 'woodpecker', 'runner', 'dependabot',
+  'renovate', 'trivy', 'gitleaks', 'merge queue', 'codeowners'.
 license: MIT
-compatibility: "Optional: gh (GitHub CLI), glab (GitLab CLI)"
+compatibility: "Optional: gh (GitHub CLI), glab (GitLab CLI), fj (Forgejo CLI)"
 paths:
   - ".github/workflows/*.yml"
   - ".gitlab-ci.yml"
   - ".forgejo/workflows/*.yml"
+  - ".gitea/workflows/*.yml"
+  - ".woodpecker/*.yaml"
+  - ".woodpecker.yaml"
 metadata:
   source: iuliandita/skills
   date_added: "2026-03-24"
@@ -20,29 +24,34 @@ metadata:
 
 # CI/CD Pipelines: Multi-Platform Production Infrastructure
 
-Write, review, and architect CI/CD pipelines across GitHub Actions, GitLab CI/CD, and Forgejo
-CI/CD. The goal is secure, fast, auditable pipelines that satisfy both engineering needs and
-compliance requirements (PCI-DSS 4.0).
+Write, review, and architect CI/CD pipelines across GitHub Actions, GitLab CI/CD, Forgejo
+Actions, Gitea Actions, and Woodpecker. The goal is secure, fast, auditable pipelines that
+satisfy both engineering needs and compliance requirements (PCI-DSS 4.0).
 
 **Target versions** (March 2026):
 - **GitHub Actions**: ubuntu-24.04 runners (ubuntu-latest), arm64 GA, artifact v4, attestations GA
 - **GitLab CI/CD**: GitLab 18.10, CI/CD Catalog GA, CI Components with typed `spec: inputs`
-- **Forgejo CI/CD**: Forgejo v14.0, Runner v12.7.x (multi-connection support since v12.7.0)
+- **Forgejo Actions**: Forgejo v14.0, Runner v11.x (stable; check `data.forgejo.org/forgejo/runner` releases for current major tag before pinning)
+- **Gitea Actions**: Gitea v1.23.x, act runner v0.2.x (GA since Gitea 1.21, March 2024)
+- **Woodpecker CI**: v3.13.x (container-native, Gitea/Forgejo/GitHub/GitLab-compatible)
 - **Supply chain**: cosign v3.x (Sigstore), Syft/Trivy for SBOM, SLSA v1.0
 
-This skill covers four domains depending on context:
+This skill covers six domains depending on context:
 - **Workflow design** - stages, jobs, caching, artifacts, parallelism, reusable patterns
 - **Security** - supply chain hardening, SHA pinning, secret management, OIDC, least-privilege
 - **Compliance** - PCI-DSS 4.0 Req 6.x mapping, SBOM generation, signed artifacts, audit trails
-- **Cross-platform** - writing pipelines that work across GitHub/GitLab/Forgejo, migration patterns
+- **Cross-platform** - writing pipelines that work across GitHub/GitLab/Forgejo/Gitea/Woodpecker, migration patterns
+- **Runners** - install, register, executor choice, Linux vs macOS, hardening (see `references/runners.md`)
+- **Best practices** - dependency updates, linting, scanning, review gates, rollout order (see `references/best-practices.md`)
 
 ## When to use
 
-- Writing or reviewing CI/CD pipeline configs (workflows, `.gitlab-ci.yml`, Forgejo actions)
+- Writing or reviewing CI/CD pipeline configs (GitHub/Forgejo/Gitea Actions, `.gitlab-ci.yml`, `.woodpecker/*.yaml`)
 - Designing pipeline architecture (stages, parallelism, caching, deployment strategies)
 - Hardening pipelines against supply chain attacks (SHA pinning, image signing, provenance)
 - Setting up security scanning in CI (SAST, SCA, container scanning, secret detection)
-- Configuring runners, caching strategies, or artifact management
+- Configuring runners (install, register, executor choice, hardening) - see `references/runners.md`
+- Setting up caching strategies or artifact management
 - PCI-DSS 4.0 compliance for CI/CD (Req 6.2.1, 6.2.4, 6.3.2, 6.4.2, 6.5.3)
 - Migrating pipelines between platforms (GitLab -> GitHub, GitHub -> Forgejo)
 - Troubleshooting failed pipelines, flaky jobs, or runner issues
@@ -82,6 +91,12 @@ every failure with file and line reference.
 - [ ] **Version pinning on tools**: `node:22`, not `node:lts`. `python:3.13`, not `python:3`. Specific versions prevent silent breakage.
 - [ ] **Trigger scoping**: `on: push` without branch/path filters runs on every push to every branch - scope to `branches: [main]` and/or `paths:` filters. Same for GitLab: `rules:` with `if` conditions, not bare `only: [pushes]`.
 - [ ] **No expression injection** (GitHub Actions): `${{ }}` expressions never used directly in `run:` blocks. Assign to `env:` first. `github.event.*` is attacker-controlled. Avoid `github.ref_name` in security-sensitive contexts (injectable via crafted tag/branch names).
+- [ ] **Self-hosted runners ephemeral on public/untrusted repos**: non-ephemeral shell runners on repos that accept outside PRs is the top self-hosted-runner compromise vector. Verify `--ephemeral` (GitHub, Gitea) or capacity-based single-job runners (Forgejo) + approval gates for outside contributors. See `references/runners.md`.
+- [ ] **Docker socket mount scope**: `/var/run/docker.sock` mounted into a job gives it root on the host. Only acceptable for trusted internal pipelines. Public/shared runners need DinD sidecar or rootless buildkit instead.
+- [ ] **Scan gate has a baseline, not a blanket block**: container/IaC/SAST scanners introduced with `exit-code 1` and zero suppression always get disabled. Use the ratchet pattern (non-blocking -> baseline -> block new only) from `references/best-practices.md`.
+- [ ] **Ignore-list entries have expiry dates**: every `.trivyignore`, `.grype.yaml`, Dependabot `ignore`, or Renovate `ignoreDeps` entry includes a comment with revisit date + owner. No dates = zombie tech debt.
+- [ ] **Lockfiles committed**: `package-lock.json`, `bun.lock`, `Cargo.lock`, `go.sum`, `uv.lock` belong in version control for applications. Manifest-only commits break reproducibility.
+- [ ] **Auto-merge gated on tests, not just lint**: Dependabot/Renovate auto-merge without test coverage of the changed area is a supply-chain shortcut.
 
 ---
 
@@ -93,9 +108,12 @@ every failure with file and line reference.
 |--------|----------|
 | `.github/workflows/*.yml` | GitHub Actions |
 | `.gitlab-ci.yml` | GitLab CI/CD |
-| `.forgejo/workflows/*.yml` | Forgejo CI/CD |
+| `.forgejo/workflows/*.yml` | Forgejo Actions |
+| `.gitea/workflows/*.yml` | Gitea Actions |
+| `.woodpecker/*.yaml` or `.woodpecker.yaml` | Woodpecker (Gitea/Forgejo) |
 | User says "work" / "gitlab" / `glab` | GitLab CI/CD |
-| User says "home" / "forgejo" / "gitea" | Forgejo CI/CD |
+| User says "home" / "forgejo" / `fj` | Forgejo Actions |
+| User says "gitea" | Gitea Actions (or Woodpecker if 1.20 or older) |
 | User says "github" / "ghcr" / `gh` | GitHub Actions |
 
 If unclear, ask. The platforms have significant differences despite surface similarity.
@@ -122,6 +140,9 @@ Before writing pipeline config:
 Read the appropriate reference file:
 - **GitHub Actions**: `references/github-actions.md`
 - **GitLab CI/CD**: `references/gitlab-ci.md`
+- **Gitea CI/CD** (Gitea Actions + Woodpecker): `references/gitea-ci.md`
+- **Self-hosted runners** (all 5 implementations): `references/runners.md`
+- **Best practices** (deps, linting, scanning, review gates, rollout): `references/best-practices.md`
 - **Supply chain / compliance**: `references/supply-chain.md`
 
 For **Forgejo CI/CD**, see the Forgejo section below (smaller scope, inline).
@@ -296,6 +317,49 @@ git checkout <sha>
   The token always has full read-write access (read-only for fork PRs only). Don't assume
   least-privilege from `permissions:` alone - it has no effect on Forgejo.
 
+### Managing Forgejo Actions with `fj`
+
+The community Forgejo CLI (`fj`, v0.4.1+) covers the day-to-day Actions surface: listing
+runs, dispatching workflows, and managing variables/secrets. It is much faster than the web
+UI for bulk secret updates and scriptable for one-shot runs. Install and auth details live
+in the **git** skill (`references/forge-workflows.md`).
+
+```bash
+# List recent runs (for a quick "is CI green on main?" check)
+fj actions tasks
+
+# Trigger a workflow_dispatch run without opening the browser
+fj actions dispatch publish.yaml main --inputs version=1.2.3
+
+# Bulk variable/secret management (writes to the repo scope)
+fj actions variables create CACHE_BUCKET gs://my-bucket
+fj actions secrets create REGISTRY_TOKEN "$REGISTRY_TOKEN"
+```
+
+**What `fj` does not do yet** (as of 0.4.1): stream runner logs, re-run failed jobs, cancel
+running tasks. For those, use the web UI or hit `/api/v1/repos/{owner}/{repo}/actions/tasks/{id}`
+directly. Log streaming across the fleet still belongs in your observability stack, not `fj`.
+
+**On Gitea instead of Forgejo?** Use `tea` (`gitea.com/gitea/tea`) - the Gitea CLI covers
+a similar surface (issues, PRs, releases) against any Gitea 1.20+ instance. Gitea Actions
+lacks `fj`-equivalent CLI tooling; use the web UI or API. If you're running Forgejo,
+prefer `fj` - it tracks Forgejo-specific behavior (AGit, Forgejo Actions quirks) that
+`tea` does not.
+
+### Gitea CI/CD
+
+Gitea ships two viable CI paths: **Gitea Actions** (same `act`-based engine as Forgejo
+Actions, since Gitea 1.21) and **Woodpecker CI** (separate service, container-native,
+webhook-driven). Drone is legacy - do not start new installs.
+
+Quick rule of thumb: if you are migrating from GitHub or want one service to operate,
+use Gitea Actions. If you need proper matrix builds, caching primitives, or lighter
+resource usage, use Woodpecker. Do not run both against the same repo.
+
+See `references/gitea-ci.md` for: action SHA discovery, Gitea-vs-Forgejo Actions
+differences, Woodpecker YAML examples, plugin vs command steps, OAuth setup, matrix
+patterns, and Drone migration guidance.
+
 ### Forgejo release workflow pattern
 
 ```yaml
@@ -379,7 +443,10 @@ the OWASP Top 10 for Agentic Applications, read `references/supply-chain.md`
 ## Reference Files
 
 - `references/github-actions.md` - GitHub Actions patterns, templates, and security hardening
-- `references/gitlab-ci.md` - GitLab CI/CD 18.x patterns, Catalog, Components, security
+- `references/gitlab-ci.md` - GitLab CI/CD 18.x patterns, SaaS vs self-managed differences, Catalog, Components, security
+- `references/gitea-ci.md` - Gitea Actions + Woodpecker CI patterns, setup, matrix builds, Drone migration
+- `references/runners.md` - Self-hosted runners (actions-runner, gitlab-runner, forgejo-runner, act_runner, woodpecker-agent) - install, register, executor choice, Linux vs macOS, security hardening
+- `references/best-practices.md` - Dependency updates (Dependabot/Renovate), layered linting, scanning matrix (secrets/SCA/container/IaC/SAST), review gates, merge queues, rollout order
 - `references/supply-chain.md` - supply chain security, incident timeline, SHA pinning,
   SBOM/SLSA, PCI-DSS compliance, image signing
 

@@ -98,6 +98,56 @@ Tags trigger release workflows. Ensure:
 
 ## GitLab
 
+GitLab runs in three deployment modes that share a CLI and API but differ operationally:
+
+| Mode | Who runs it | License | CI runners |
+|------|-------------|---------|-----------|
+| **gitlab.com** (SaaS) | GitLab Inc. | Paid tiers (Free, Premium, Ultimate) with seat + compute limits | Shared SaaS runners, metered by "compute minutes" |
+| **Self-managed CE** (FOSS) | You | MIT-licensed Community Edition | Your own runners, effectively unlimited |
+| **Self-managed EE** (with license) | You | EE binary with applied license key | Your own runners, effectively unlimited |
+
+Self-managed CE and EE use the same binary; EE activates additional features only when a
+license key is applied. An unlicensed EE install behaves exactly like CE, so the usual
+pattern for self-hosting is "install EE, license later if needed" to avoid a reinstall.
+
+### `glab` against self-hosted vs `gitlab.com`
+
+`glab` auto-detects the host from the git remote, so most of the time no host flag is needed.
+When it does matter (scripts, cron jobs, repos without remotes yet), these three knobs exist:
+
+```bash
+# One-time interactive login for a self-hosted instance
+glab auth login --hostname gitlab.example.com
+# paste a token or go through OAuth if the instance supports it
+
+# Environment variable - overrides auto-detection for a shell/script
+export GITLAB_HOST=https://gitlab.example.com
+export GITLAB_TOKEN=glpat-xxxxxxxxxxxxxxxxxxxx
+glab mr list
+
+# Per-invocation override via env var (most reliable)
+GITLAB_HOST=https://gitlab.example.com glab mr list
+
+# `glab api` accepts --hostname directly
+glab api "projects/:id/pipelines" --hostname gitlab.example.com
+```
+
+**Config location**: `~/.config/glab-cli/config.yml` globally; `.git/glab-cli/` per-repo
+overrides. Tokens live in the OS secret store (libsecret/kwallet on Linux) unless the user
+opts into the config file.
+
+**CLI provenance**: `glab` was originally `profclems/glab` (community); GitLab Inc. adopted
+it in 2023 and it now lives at `gitlab.com/gitlab-org/cli`. The old `profclems/glab` repo is
+archived. Scripts referencing the old install path still work but point readers to the new
+location.
+
+**Multiple instances** (e.g. `gitlab.com` + work self-hosted): `glab auth login` once per
+host. `glab` picks the right token based on the repo's remote. For repos without a remote
+yet, use `GITLAB_HOST` or `--host`.
+
+**SSH-IP vs hostname mismatch**: if the SSH remote resolves to an IP and the web URL uses
+a hostname, `glab mr list` can fail. Use `glab api` with URL-encoded paths (see `ci-cd/references/gitlab-ci.md`).
+
 ### MR creation with `glab`
 
 ```bash
@@ -186,50 +236,167 @@ rules:
 
 ## Forgejo
 
-### PR creation (no official CLI)
+Forgejo has a Gitea-compatible REST API and a community CLI, **`forgejo-cli`** (binary `fj`),
+maintained under `codeberg.org/forgejo-contrib/forgejo-cli`. `fj` is the right default for
+interactive use; fall back to `curl` against the API for scripting, CI, or anything `fj`
+does not cover yet (e.g. branch protection management).
 
-Forgejo has a REST API compatible with Gitea. No official CLI, but `tea` (community) works
-for basic operations.
+### `fj` install
+
+| Platform | Command |
+|----------|---------|
+| Arch / CachyOS (AUR) | `paru -S forgejo-cli` (or `cargo install forgejo-cli`) |
+| Debian sid / Ubuntu 25.10+ | `sudo apt install forgejo-cli` (not in Debian stable or Ubuntu LTS as of April 2026) |
+| Fedora | `sudo dnf copr enable lihaohong/forgejo-cli && sudo dnf install forgejo-cli` |
+| macOS | `brew install forgejo-cli` |
+| Nix | `nix profile install nixpkgs#forgejo-cli` |
+| Any with Rust | `cargo install forgejo-cli` or `cargo binstall forgejo-cli` |
+| Binaries | Releases tab on Codeberg (x86_64 Linux/Windows) |
+
+Verify: `fj --version` (should report 0.4.1+ as of March 2026; earlier releases have a PKCE
+bug that breaks `fj auth login`).
+
+### `fj` authentication
+
+Two flows. Pick based on whether your instance is in the default OAuth client list
+(Codeberg, `forgejo.org`, Disroot, and ~12 others ship client IDs; self-hosted usually is not).
+
+**OAuth (browser)** - default for supported public instances:
 
 ```bash
-# Create PR via API
-curl -s -X POST "https://git.example.com/api/v1/repos/{owner}/{repo}/pulls" \
-  -H "Authorization: token ${FORGEJO_TOKEN}" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "title": "feat(pipeline): add subscription scheduler",
-    "body": "## Summary\n- Added cron-based subscription scheduling\n\n## Test plan\n- [ ] Scheduler fires on configured cron",
-    "head": "feat/subscription-scheduler",
-    "base": "main"
-  }'
+# Log in to the default host (first run prompts for host)
+fj auth login
 
-# List PRs
-curl -s "https://git.example.com/api/v1/repos/{owner}/{repo}/pulls?state=open" \
-  -H "Authorization: token ${FORGEJO_TOKEN}" | jq '.[].title'
+# Log in to a specific instance
+fj -H codeberg.org auth login
 ```
 
-### Forgejo releases
+**Token (self-hosted / no OAuth)** - generate at
+`https://<instance>/user/settings/applications` with the scopes you actually need
+(`write:repository`, `write:issue`, `write:user` covers normal dev work), then:
 
 ```bash
-# Create release via API
-curl -s -X POST "https://git.example.com/api/v1/repos/{owner}/{repo}/releases" \
-  -H "Authorization: token ${FORGEJO_TOKEN}" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "tag_name": "v1.2.3",
-    "name": "v1.2.3",
-    "body": "## Changes\n- feat: user search\n- fix: auth bypass",
-    "draft": false,
-    "prerelease": false
-  }'
+fj -H git.example.com auth add-key
+# paste the token when prompted
 ```
 
-### Forgejo branch protection
+**Config location (Linux)**: `~/.config/forgejo-cli/client_ids` for custom instance client IDs.
+Credentials live in the OS secret store (libsecret/kwallet on Linux), not plaintext.
 
-Forgejo supports branch protection via web UI and API:
+**Per-repo auto-detection**: when inside a git repo, `fj` resolves the host from the `origin`
+remote. No `-H` flag needed for day-to-day operations.
+
+**Multi-instance setups** (e.g. self-hosted Forgejo + Codeberg mirror): run `fj auth login`
+once per host; `fj` picks the right credential based on the repo's remote or the `-H` override.
+
+### `fj` PR workflow
 
 ```bash
-# Protect branch via API
+# Create a PR from the current branch
+fj pr create "feat(pipeline): add subscription scheduler" \
+  --body-from-file .github/pr-body.md \
+  --base main
+
+# Autofill title and body from commits
+fj pr create --autofill
+
+# AGit flow - push directly to the upstream without forking
+# (Forgejo feature; pushes to refs/for/<base> and opens the PR in one step)
+fj pr create "feat(x): ..." --agit
+
+# Shorthand: --autofill + --agit
+fj pr create -aA
+
+# Open the new-PR page in the browser instead
+fj pr create --web
+
+# View a PR (owner/repo#N, or ^N when cwd is the fork and you want the parent repo)
+fj pr view forgejo-contrib/forgejo-cli#42
+fj pr checkout ^16
+
+# Status with CI check polling (blocks until all checks finish)
+fj pr status --wait
+
+# Merge (rebase + delete source branch)
+fj pr merge --method rebase --delete
+
+# Close with a message
+fj pr close 42 --with-msg "superseded by #45"
+```
+
+Merge methods: `merge`, `rebase`, `rebase-merge`, `squash`, `fast-forward-only`. Match the
+repo's branch protection policy - `fj` will surface the error if the method is not allowed.
+
+### `fj` issues
+
+```bash
+fj issue create "token refresh races on concurrent logins" \
+  --repo org/repo --body-from-file bug.md
+fj issue create --web               # new-issue page in browser
+fj issue create --template bug.md   # use a repo issue template
+fj issue view 16
+fj issue view 16 comments
+fj issue comment 16 "reproduces on v1.2.3 with OIDC enabled"
+fj issue close org/repo#16 --with-msg "fixed in #45"
+fj issue search --state open --label bug
+```
+
+### `fj` releases and tags
+
+`fj` can publish releases (listed as a supported capability in the README), but as of
+v0.4.1 the wiki does not yet document the exact `fj release` subcommand flags. Run
+`fj release --help` on the target version to confirm syntax before scripting.
+
+The reliable pattern is git-side tagging + `fj` for the release object:
+
+```bash
+# Annotated tag + push (fj works alongside git, not instead of it)
+git tag -a v1.2.3 -m "v1.2.3"
+git push origin v1.2.3
+
+# Publish the release for the pushed tag via fj
+# Flags (title, body-from-file, prerelease, asset upload) track closely to `gh release`
+# and `glab release`; verify against `fj release --help` on your installed version.
+fj release --help
+```
+
+When `fj release` is not yet an option in your installed version, fall back to the REST
+API section below - `POST /api/v1/repos/{owner}/{repo}/releases` is stable.
+
+For projects that prefer one command to tag + release, `fj tag` (new in v0.4.0) manages
+git tags on the Forgejo side; keep tag creation in git and the release in `fj` for a
+clean separation.
+
+### `fj` Forgejo Actions
+
+`fj` manages Actions variables, secrets, and manual dispatch. It does not yet expose
+log streaming or re-run controls - use the web UI for those.
+
+```bash
+# List recent action runs
+fj actions tasks
+
+# Manually dispatch a workflow_dispatch workflow
+fj actions dispatch publish.yaml main --inputs version=1.2.3
+
+# Variables (non-secret config)
+fj actions variables list
+fj actions variables create CACHE_BUCKET gs://my-bucket
+fj actions variables delete CACHE_BUCKET
+
+# Secrets (write-only; value never echoed back)
+fj actions secrets list
+fj actions secrets create REGISTRY_TOKEN "$REGISTRY_TOKEN"
+fj actions secrets delete REGISTRY_TOKEN
+```
+
+### Falling back to the REST API
+
+`fj` does not cover branch protection, webhooks, or org/team admin. Use `curl` against
+the Gitea-compatible API:
+
+```bash
+# Protect a branch
 curl -s -X PUT "https://git.example.com/api/v1/repos/{owner}/{repo}/branch_protections" \
   -H "Authorization: token ${FORGEJO_TOKEN}" \
   -H "Content-Type: application/json" \
@@ -242,17 +409,50 @@ curl -s -X PUT "https://git.example.com/api/v1/repos/{owner}/{repo}/branch_prote
     "enable_status_check": true,
     "block_on_rejected_reviews": true
   }'
+
+# Create a PR without fj (CI contexts where installing fj is overkill)
+curl -s -X POST "https://git.example.com/api/v1/repos/{owner}/{repo}/pulls" \
+  -H "Authorization: token ${FORGEJO_TOKEN}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "feat(x): ...",
+    "body": "summary + test plan",
+    "head": "feat/x",
+    "base": "main"
+  }'
 ```
 
 ### Forgejo-specific gotchas
 
-- **No `permissions:` in Actions** - silently ignored (unlike GitHub where it scopes GITHUB_TOKEN)
+- **No `permissions:` in Actions** - silently ignored (unlike GitHub where it scopes GITHUB_TOKEN).
 - **Self-signed certs** - `GIT_SSL_NO_VERIFY=true` may be needed for git operations. Set per-remote:
-  `git config http.https://git.example.com/.sslVerify false`
+  `git config http.https://git.example.com/.sslVerify false`. For `fj`, ensure the CA is in
+  the system trust store; `fj` uses the OS TLS stack and does not expose a skip-verify flag.
 - **Runner availability** - self-hosted runners can be down. Check runner status before relying
   on CI for branch protection checks.
 - **Mirror sync delay** - if Forgejo mirrors from GitHub (or vice versa), there's a sync interval.
   Don't expect immediate consistency across forges.
+- **`fj` version** - `fj auth login` fails with PKCE errors on v0.4.0 and earlier. Use 0.4.1+.
+- **AGit requires Forgejo 7+** - older self-hosted instances reject `refs/for/<branch>` pushes.
+  Fall back to `fj pr create` without `--agit` (push a branch first).
+
+### On Gitea, not Forgejo?
+
+`tea` (`gitea.com/gitea/tea`) is the Gitea community CLI. It predates `fj` and still works
+against Gitea 1.20+ instances. Install: `go install code.gitea.io/tea@latest`, Arch
+`paru -S tea-bin`, macOS `brew install tea-cli`. Auth: `tea login add --name home --url
+https://gitea.example.com --token <token>` (no OAuth flow - token only).
+
+Rough feature parity: `tea pulls create`, `tea issues create`, `tea releases create`,
+`tea repos clone`. No AGit support (Gitea does not ship it), no Actions secret/variable
+CLI (`tea` predates Gitea Actions and has not caught up). If you are still on Gitea for
+infrastructure reasons, `tea` covers the basics; for anything Actions-related, fall back
+to the Gitea-compatible REST API directly.
+
+**Running Forgejo?** Use `fj`, not `tea`. `fj` tracks Forgejo-specific behavior (AGit,
+Forgejo Actions secrets/variables, v14 features) that `tea` does not. `tea` still works
+against Forgejo because the API is Gitea-compatible, but you will miss Forgejo features
+and hit rough edges where the two projects have diverged.
 
 ---
 
