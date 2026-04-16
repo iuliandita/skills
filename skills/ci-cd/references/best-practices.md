@@ -257,6 +257,26 @@ off the next day. The rollout that works:
 Non-blocking forever means nobody fixes anything. Blocking from day 1 means nobody ships.
 The ratchet lets both work.
 
+### How to implement "block on new only" in practice
+
+"Compare against baseline" sounds nice; the mechanic varies per scanner:
+
+- **Trivy**: maintain `.trivyignore` at the repo root. One CVE ID per line with an expiry
+  comment (`CVE-2024-XXXXX  # glibc, upstream fix pending, revisit 2026-Q3 - owner: platform`).
+  Run `trivy image --ignorefile .trivyignore --exit-code 1 --severity CRITICAL ...` in CI.
+  CVEs in the ignore file pass; anything new fails. Trivy has no built-in diff mode;
+  the ignorefile *is* the baseline.
+- **Grype**: similar via `--fail-on critical` + a `.grype.yaml` `ignore:` block keyed by CVE
+  ID. Supports glob-style matching for transient fix windows.
+- **Docker Scout / Snyk / Anchore Enterprise**: these have first-class "baseline" or
+  "policy" objects stored server-side - CI reads the policy rather than a file.
+- **GitHub Secret Scanning, Dependabot**: baseline is implicit - the forge remembers which
+  alerts are open, dismissed, or resolved. CI just blocks on "new alerts" without a file.
+
+Whichever scanner, **expiry dates on ignore entries are the load-bearing bit**. Without
+them, suppressions become zombie tech debt and the baseline grows forever. Put the expiry
+in a comment and run a quarterly sweep to revisit expired entries.
+
 ### SAST: don't block on it
 
 SAST tools (Semgrep, CodeQL, SonarQube) generate false positives. Run them on PRs for
