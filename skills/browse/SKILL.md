@@ -207,8 +207,16 @@ file rather than keeping everything in context:
 lightpanda fetch --dump markdown --strip-mode full <url> > extracted.md
 ```
 
-For binary downloads (PDFs, images), use curl with the session cookie if authenticated, or
-use MCP `evaluate` to trigger the browser's native download.
+For binary downloads (PDFs, images) after auth, extract the session cookie from the browser
+context and hand it to curl. With Playwright MCP or Lightpanda MCP, use `evaluate` to read
+`document.cookie`, then:
+```bash
+curl -L -o report.pdf -b "session=<value>; csrf=<value>" \
+  -H "Referer: https://internal.example.com/reports" <pdf-url>
+```
+Alternative: trigger the browser's native download via `evaluate`
+(`document.querySelector('a.download').click()`) and let the headless session write to its
+download directory - avoids moving the cookie out of the browser entirely.
 
 ---
 

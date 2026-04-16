@@ -114,10 +114,16 @@ Before touching code, understand what exists:
    `src/locales/`, `src/i18n/messages/`, `public/locales/`, or inline `<i18n>` blocks.
    Note the format (JSON, YAML, TS objects) and identify the source locale.
 4. **Count the scope** - estimate how many files contain user-facing strings. Adapt
-   the file extension to your framework:
+   the file extension to your framework. The JSX-text regex alone undercounts by a
+   lot (misses attributes, toasts, errors) - combine with attribute and toast patterns:
    ```bash
-   # React: *.tsx/*.jsx | Vue: *.vue | Svelte: *.svelte | Angular: *.html + *.ts
-   grep -rl --include='*.tsx' --include='*.jsx' --include='*.vue' -E '>[A-Z][a-z]' src/ | wc -l
+   # React/JSX: text content + attribute values (placeholder, title, alt, aria-label)
+   grep -rlE '>[A-Z][a-z]|(placeholder|title|alt|aria-label)="[A-Z]' \
+     --include='*.tsx' --include='*.jsx' src/ | wc -l
+   # Toast/validation strings hide in logic (not JSX). Check separately.
+   grep -rlE 'toast\.(success|error|info|warn)|setError\(' \
+     --include='*.ts' --include='*.tsx' src/ | wc -l
+   # Vue: *.vue | Svelte: *.svelte | Angular: *.html + *.ts (see references/audit-patterns.md)
    ```
 5. **Check for partial i18n** - the worst state is partially translated: some strings use
    `t()`, others are hardcoded. Map which areas are done and which are not.

@@ -255,6 +255,24 @@ if (key) {
 // ... execute, then store result keyed by idempotency-key before returning
 ```
 
+Idempotency key header pattern (FastAPI):
+```python
+from fastapi import Header, HTTPException
+
+async def create_order(
+    body: OrderCreate,
+    idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
+):
+    if idempotency_key:
+        cached = await cache.get(f"idem:{idempotency_key}")
+        if cached:
+            return JSONResponse(status_code=cached["status"], content=cached["body"])
+    result = await orders.create(body)
+    if idempotency_key:
+        await cache.set(f"idem:{idempotency_key}", {"status": 201, "body": result}, ttl=86400)
+    return result
+```
+
 Cursor pagination response envelope:
 ```json
 {
