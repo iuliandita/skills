@@ -83,10 +83,11 @@ contested major flags (non-configurable).
 6. **If no secondary found**: **always fall back to self-review.** Spawn a fresh agent on
    the current harness with the review prompt template from `references/harness-detection.md`.
    Label as "same-model fresh-context review" in scoring, weight at 3% instead of 5%
-   (renormalize: 10/36/51/3). This catches confirmation bias but shares the primary model's
-   blind spots. Skipping review entirely is not an option - a fresh-context self-review is
-   the minimum bar. If the harness doesn't support subagents, run the review prompt as a
-   separate CLI invocation (`claude -p`, `codex exec`, etc.).
+   (composite becomes gate/40/55/3, renormalize the missing 2% proportionally to AI Self-Check
+   and Behavioral). This catches confirmation bias but shares the primary model's blind spots.
+   Skipping review entirely is not an option - a fresh-context self-review is the minimum bar.
+   If the harness doesn't support subagents, run the review prompt as a separate CLI
+   invocation (`claude -p`, `codex exec`, etc.).
 
 ### Phase 1: Regular Iterations
 
@@ -120,9 +121,10 @@ contested major flags (non-configurable).
 12. **Log iteration summary**:
     ```
     --- iteration N / max -------------------------------------------
-    improved:  skill1 (72 > 80 | S:100 A:76 B:78 X:90), skill2 (68 > 73 | S:95 A:70 B:72 X:100)
+    improved:  skill1 (72 > 80 | G:pass A:76 B:78 X:90), skill2 (68 > 73 | G:pass A:70 B:72 X:100)
+    gated:     skillZ (lint/spec failed - excluded from scoring)
     skipped:   M skills above threshold
-    reverted:  skill3 (proposed change scored -2, rolled back | S:100 A:74 B:69 X:100)
+    reverted:  skill3 (proposed change scored -2, rolled back | G:pass A:74 B:69 X:100)
     contested: skill4 (secondary flagged major, primary disagreed)
     plateau:   yes/no (max delta: +X)
     -----------------------------------------------------------------
@@ -173,11 +175,11 @@ contested major flags (non-configurable).
     Terminated: plateau / threshold / cap / user
 
     Score changes:
-      skill1:  62 > 88 (+26)  [S:100 A:84 B:86 X:90]
-      skill2:  71 > 85 (+14)  [S:95 A:82 B:79 X:100]
+      skill1:  62 > 88 (+26)  [G:pass A:84 B:86 X:90]
+      skill2:  71 > 85 (+14)  [G:pass A:82 B:79 X:100]
       ...
-      skill-creator: 80 > 84 (+4)  [S:100 A:82 B:81 X:100] [meta]
-      skill-refiner: 78 > 83 (+5)  [S:100 A:80 B:79 X:100] [meta]
+      skill-creator: 80 > 84 (+4)  [G:pass A:82 B:81 X:100] [meta]
+      skill-refiner: 78 > 83 (+5)  [G:pass A:80 B:79 X:100] [meta]
 
     Aggregate:  avg X.X | min X.X | max X.X
     Reverted:   X changes across Y iterations
