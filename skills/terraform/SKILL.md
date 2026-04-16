@@ -250,7 +250,7 @@ terraform import aws_instance.web i-0abc1234def56789
 # Then add the matching resource block in HCL to avoid drift
 ```
 
-Verify both states with `terraform plan` before and after. `state rm` writes directly to the backend - do not `state push` the backup afterward (that would undo the removal).
+Verify both states with `terraform plan` before and after. `state rm` writes directly to the backend - do not `state push` the backup afterward (that would undo the removal). Ensure no other runs hold the state lock before starting (check `terraform force-unlock` only as a last resort with a known-stale lock ID) and block concurrent `apply` in CI for both source and destination during the migration.
 
 ### What NOT to write
 
