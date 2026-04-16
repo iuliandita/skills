@@ -138,7 +138,7 @@ After every change, confirm the firewall is healthy:
    - OPNsense API: `curl -X POST -u key:secret https://<fw>/api/firewall/alias/addItem -d '{"alias":{"name":"WebServer","type":"host","content":"10.0.1.100"}}'`
    - OPNsense CLI: `configctl template reload OPNsense/Filter` (after editing alias via API or XML). To verify the alias was created: `configctl template list | grep Alias`, then confirm with `pfctl -t WebServer -T show`.
    - pfSense: `easyrule` doesn't support aliases - use GUI or edit `/cf/conf/config.xml` directly
-5. Add a pass rule on that interface: source = alias, destination = server alias, port = 443
+5. Add a pass rule on the **VLAN interface** (not WAN - pf evaluates rules on the interface where traffic enters): source = alias, destination = server alias, port = 443
 6. Place the allow rule above any block-all rule for that interface (rule ordering matters - pf evaluates last match, not first match, so a later block overrides an earlier pass)
 7. Test: `pfctl -n -f /tmp/rules.debug` (OPNsense) to dry-run before applying
 8. Apply: `configctl filter reload` (OPNsense) or `pfSsh.php playback svc restart filter` (pfSense)

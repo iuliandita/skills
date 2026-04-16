@@ -198,6 +198,20 @@ kill_gracefully() {
 }
 ```
 
+**Interactive "kill by name" (zsh)** - covers search, space-safe names, confirm, TERM->KILL escalation:
+
+```zsh
+pk() {                                           # usage: pk <pattern>
+    local pattern=$1 pids
+    pids=(${(f)"$(pgrep -af -- "$pattern")"})    # -f matches full cmdline (spaces ok)
+    (( $#pids )) || { print -u2 "no match"; return 1 }
+    printf '%s\n' "${pids[@]}"                   # show PID + cmdline
+    read -q "?kill these? [y/N] " || { print; return 1 }
+    print
+    for line in $pids; do kill_gracefully ${line%% *} 3; done
+}
+```
+
 ### Quoting rules
 
 | Syntax | Expansion | Use for |
