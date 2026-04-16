@@ -216,7 +216,10 @@ curl -L -o report.pdf -b "session=<value>; csrf=<value>" \
 ```
 Alternative: trigger the browser's native download via `evaluate`
 (`document.querySelector('a.download').click()`) and let the headless session write to its
-download directory - avoids moving the cookie out of the browser entirely.
+download directory - avoids moving the cookie out of the browser entirely. This is the only
+working path for `blob:` URLs and `data:` URIs - they are in-memory browser references with
+no fetchable origin, so curl cannot resolve them; let the page itself resolve the blob via a
+click or read it with `evaluate` and `FileReader.readAsDataURL` to extract the bytes.
 
 ---
 
