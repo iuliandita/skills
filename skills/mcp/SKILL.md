@@ -5,7 +5,7 @@ description: >
   (stdio, streamable HTTP), OAuth 2.1 auth, and tool handler implementation. Triggers: 'mcp',
   'model context protocol', 'mcp server', 'mcp tool', 'tool handler', 'fastmcp',
   '@modelcontextprotocol/sdk', 'mcp inspector', 'elicitation'. Not for Claude API usage
-  (use claude-api) or MCP server security auditing (use security-audit).
+  (use ai-ml) or MCP server security auditing (use security-audit).
 license: MIT
 compatibility: Requires Node.js or Python runtime
 metadata:
@@ -41,7 +41,7 @@ become yet another server with preventable injection vulnerabilities.
 ## When NOT to use
 
 - General REST API development that doesn't use MCP - just write the API
-- Claude API / Anthropic SDK usage - use **claude-api**
+- Claude API / Anthropic SDK usage in an application - use **ai-ml**
 - Security auditing existing servers across a codebase - use **security-audit** (it has an MCP section)
 - Using MCP browsing tools to browse or scrape web pages - use **browse**
 - Writing prompts for LLMs (not MCP prompt resources) - use **prompt-generator**

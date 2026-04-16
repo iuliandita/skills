@@ -7,3 +7,4 @@ docs/superpowers/
 SECURITY-AUDIT.md
 .codex
 __pycache__/
+.refiner-baseline.json

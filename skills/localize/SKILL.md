@@ -8,6 +8,7 @@ description: >
   'locale', 'hardcoded strings', 'react-i18next', 'vue-i18n', 'next-intl', 'missing
   translations'. Not for prose translation or runtime AI output (use ai-ml).
 license: MIT
+compatibility: "Requires Node.js 20+. Optional: react-i18next, vue-i18n, next-intl, svelte-i18n, ngx-translate, i18next (per framework)"
 metadata:
   source: iuliandita/skills
   date_added: "2026-04-12"
