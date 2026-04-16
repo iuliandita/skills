@@ -2,12 +2,13 @@
 name: git
 description: >
   · Git operations - branches, commits, remotes, conflicts, hooks, signing, releases,
-  PR/MR workflows, and multi-forge support (GitHub, GitLab, Forgejo). Also trigger when
+  PR/MR workflows, and multi-forge support (GitHub, GitLab, Forgejo, Gitea). Also trigger when
   the user is clearly doing git work without saying "git" (e.g., "push this", "cut a release").
   Triggers: 'git', 'commit', 'branch', 'merge', 'rebase', 'tag', 'hook', 'signing',
-  'PR', 'MR', 'release', 'changelog', 'conventional commits', 'gh', 'glab'.
+  'PR', 'MR', 'release', 'changelog', 'conventional commits', 'gh', 'glab', 'fj', 'tea',
+  'forgejo', 'gitea'.
 license: MIT
-compatibility: "Requires git. Optional: gh (GitHub CLI), glab (GitLab CLI)"
+compatibility: "Requires git. Optional: gh (GitHub CLI), glab (GitLab CLI), fj (Forgejo CLI)"
 metadata:
   source: iuliandita/skills
   date_added: "2026-03-24"
@@ -26,6 +27,7 @@ compliance requirements (PCI-DSS 4.0).
 - **git**: 2.53.x (current stable). Git 3.0 expected late 2026 (reftable default, SHA-256 default)
 - **GitHub CLI (`gh`)**: 2.89.x
 - **GitLab CLI (`glab`)**: 1.90.x
+- **Forgejo CLI (`fj`)**: 0.4.1 (March 2026). Rust-written, official community CLI at `codeberg.org/forgejo-contrib/forgejo-cli`. Covers PRs (incl. AGit), issues, repos, releases, tags, actions.
 - **Forgejo**: v14.0.3 (current stable). Critical RCE (CVE-2025-68937) patched in v13.0.2+.
 - **prek**: 0.3.x (Rust, recommended) or **pre-commit**: 4.5.x (Python, largest ecosystem)
 - **git-filter-repo**: 2.47.x
