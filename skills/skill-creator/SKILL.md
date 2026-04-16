@@ -35,12 +35,13 @@ patterns activates reliably, reads clearly, and plays well with the rest of the 
 
 ## When NOT to use
 
-- Reviewing application code for correctness or bugs (use code-review)
-- Auditing code for AI-generated patterns or style issues (use anti-slop)
-- Running a full codebase audit across multiple dimensions (use full-review)
-- Creating inline prompts within application code (use prompt-generator)
+- Reviewing application code for correctness or bugs - use **code-review**
+- Auditing code for AI-generated patterns or style issues - use **anti-slop**
+- Running a full codebase audit across multiple dimensions - use **full-review**
+- Creating inline prompts within application code - use **prompt-generator**
+- Batch-improving a whole skill collection via evaluation loops - use **skill-refiner**
 - Syncing or refreshing third-party skills from upstream - handle that directly in the repo workflow
-- Updating project documentation after infrastructure changes (use update-docs)
+- Updating project documentation after infrastructure changes - use **update-docs**
 - Writing application code, even if the code is for a tool a skill might use
 
 ---
@@ -84,6 +85,19 @@ Before returning any generated or modified skill, verify against this list:
 
 Before entering any mode, detect the operating context. This skill works on individual skills
 or collections, whether inside a skill collection repo, a user's own project, or standalone.
+
+**Mode routing** - pick the mode that matches the user's signal:
+
+| User signal | Mode |
+|---|---|
+| "create a skill", "new skill for X", "turn this into a skill" | Mode 1 (Create) |
+| "review my skill", "improve this skill", "is this skill good" | Mode 2 (Review) |
+| "audit the collection", "check all skills", "health check skills" | Mode 3 (Audit) |
+| "fix the description", "skill isn't triggering", "trigger overlap" | Mode 4 (Optimize) |
+
+When the signal is ambiguous (e.g., "look at my skill"), ask before committing - Create and
+Review diverge quickly and re-running wastes context. Modes can chain: Create -> Review,
+Review -> Optimize, Audit -> per-skill Review for flagged items.
 
 1. **Find the collection root** (if one exists): check for a `skills/` directory (common
    convention) or any path the user specifies. Different harnesses store skills in different
