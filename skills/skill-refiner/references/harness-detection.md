@@ -114,8 +114,9 @@ What gets sent to the secondary harness (non-interactive).
 **Known issue**: Codex in `exec` mode may run tools (lint, validate) instead of producing
 text-only review output. If the secondary returns tool output instead of a
 NO_FLAGS/MINOR_FLAG/MAJOR_FLAG response, fall back to self-review: spawn a fresh agent
-on the primary harness with the review prompt template (see Phase 0, Step 5 in SKILL.md).
-Weight self-review at 5% instead of 10% (renormalize: 16/37/42/5).
+on the primary harness with the review prompt template (see Phase 0, Step 6 in SKILL.md).
+Weight self-review at 3% instead of 5% (composite becomes gate/40/55/3, renormalize the
+missing 2% proportionally across AI Self-Check and Behavioral).
 
 **Peer review is mandatory.** Always attempt the secondary harness first (three-step probe).
 If no secondary is available or the secondary fails to produce a valid response, self-review

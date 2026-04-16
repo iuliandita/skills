@@ -129,9 +129,11 @@ contested major flags (non-configurable).
     plateau:   yes/no (max delta: +X)
     -----------------------------------------------------------------
     ```
-13. **Check termination conditions**:
+13. **Check termination conditions** (phase 1 always flows into phase 2 on termination,
+    except on circuit-breaker pauses which wait for user input first):
     - Plateau detected (max delta < plateau threshold)? Terminate phase 1.
-    - All skills above focus threshold? Bump threshold by 5 (max 95) or terminate.
+    - All skills above focus threshold? Bump threshold by 5 and continue. If threshold
+      is already at max (95) and all skills still clear it, terminate phase 1.
     - Iteration cap reached? Terminate phase 1.
     - Circuit breaker triggered? Pause for user input.
 14. **Repeat** from step 9 until terminated
