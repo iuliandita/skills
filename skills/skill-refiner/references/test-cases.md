@@ -534,3 +534,184 @@ Quality signals:
 - Examines unsafe innerHTML usage patterns in React components
 - Tests DOMPurify configuration (ALLOWED_TAGS, RETURN_DOM)
 - Does not limit analysis to standard reflected/stored XSS patterns
+
+### anti-ai-prose
+
+**Test 1: README audit**
+Prompt: "Review this README opener for AI-prose tells:\n\nIn today's fast-paced world, our platform empowers developers to seamlessly navigate the complex landscape of modern APIs. Built with a commitment to excellence, it boasts robust features and fosters innovation. Whether you're a beginner or expert, this tool serves as a pivotal resource for your journey toward better software."
+Quality signals:
+- Flags cluster of banned vocabulary (empowers, seamlessly, navigate, landscape, boasts, fosters, pivotal, journey toward)
+- Identifies scaffolding padding ("In today's fast-paced world") and promotional tone ("commitment to excellence")
+- Flags copula avoidance ("serves as" instead of "is")
+- Applies short-text density rule - assigns High severity for 2+ tells in one paragraph under 100 words
+- Provides a rewrite that is shorter and more specific, not a lateral synonym swap
+- Does not flag quoted material or genre conventions
+
+**Test 2: Domain-term false positive**
+Prompt: "Audit this ML paper paragraph:\n\nNestled in the loss landscape near a sharp minimum, the model's robust features fail to generalize. This underscores a pivotal result from Keskar et al. (2017): flat minima tend to foster better test accuracy than sharp ones."
+Quality signals:
+- Recognizes ML/statistics terms of art (loss landscape, robust features) and does not flag them
+- Recognizes "underscores" has a real referent (the cited Keskar paper)
+- Verdict is "Fine" or "no findings" - domain context overrides vocabulary match
+- Does not fabricate AI-prose findings to pad the report
+- Keeps direct quotations and citations untouched
+
+### backend-api
+
+**Test 1: FastAPI endpoint review**
+Prompt: "Review this FastAPI route:\n\n@app.post('/orders')\nasync def create_order(order: dict, db = Depends(get_db)):\n    result = db.execute(f\"INSERT INTO orders (user_id, amount) VALUES ({order['user_id']}, {order['amount']}) RETURNING *\")\n    return result.fetchone()"
+Quality signals:
+- Flags raw dict input instead of a Pydantic request model (no server-side validation)
+- Flags SQL string interpolation (routes to security-audit but notes the contract bug)
+- Flags ORM/DB row returned directly as response (DTO leakage)
+- Flags missing idempotency handling on a retryable POST /orders
+- Flags missing status code and error model (no RFC 9457 problem details)
+- Suggests explicit request/response DTOs separate from persistence layer
+
+**Test 2: Auth design for browser app**
+Prompt: "I'm building a React SPA that calls our FastAPI backend. Should I use JWT in localStorage for auth?"
+Quality signals:
+- Pushes back on localStorage JWT for a first-party browser app
+- Recommends session cookies or BFF token mediation as the default
+- Mentions cookie flags (HttpOnly, Secure, SameSite) and CSRF handling
+- If OAuth is in scope, specifies authorization code + PKCE, rejects implicit flow and password grant
+- Does not wave hands about "JWT is modern" - grounds the recommendation in client type
+
+**Test 3: Pagination strategy**
+Prompt: "Design pagination for a /notifications endpoint. Expected 10k+ notifications per user, arriving continuously."
+Quality signals:
+- Picks cursor pagination over offset (high-churn collection)
+- Defines stable sort order and documents it
+- Returns an envelope with data, next_cursor, and has_more
+- Cursor is opaque to the client (encoded/signed), not a raw DB offset or row number
+- Handles empty and end-of-cursor states explicitly
+
+### deep-audit
+
+**Test 1: Full repo orchestration**
+Prompt: "Run deep-audit on this repo - it's a TypeScript Next.js app with Postgres, Docker, and GitHub Actions."
+Quality signals:
+- Executes all 5 waves in order (recon, code quality, domain, security, docs & hygiene)
+- Wave 1 presents detected languages and the matched/skipped Wave 3 skills before Wave 2 starts
+- Wave 2 dispatches code-review, anti-slop, anti-ai-prose regardless of repo type
+- Wave 3 dispatches only matched skills (testing, backend-api, databases, docker, ci-cd based on stack)
+- Wave 4 runs security-audit and zero-day sequentially, with zero-day receiving security-audit findings
+- Dispatches agents as general-purpose type, not feature-dev or code-simplifier
+- Preserves each skill's native report format, no cross-report normalization
+- Reminds user to verify SECURITY-AUDIT.md is gitignored after Wave 4
+
+**Test 2: Scoped audit**
+Prompt: "Run deep-audit scoped to src/auth/ only."
+Quality signals:
+- Filters Wave 1 detection to files under src/auth/
+- Passes scope constraint to every dispatched agent
+- Separates scoped matches from root-manifest-only matches in the recon summary
+- Does not reorder waves even if user says "security first" - keeps wave order sacred
+- Skips Wave 3 skills whose files don't exist under the scope
+- Final summary stays within the authentication module's findings
+
+### dev-cycle
+
+**Test 1: Start mode on a large feature**
+Prompt: "Let's start working on OAuth login for the app."
+Quality signals:
+- Runs git status and git pull --ff-only on the base branch before branching
+- Detects base branch via git symbolic-ref, does not guess main vs master
+- Classifies the work as large and states the signals (new public auth flow, multi-module)
+- Creates a feature branch with repo-convention naming (e.g., feat/oauth-login)
+- Invokes a brainstorming skill or falls back to Socratic spec for large work, writes SPEC.md
+- Ends with a handoff naming next-step skills (backend-api for routes, security-audit before merge)
+- Does not write implementation code in start mode
+
+**Test 2: Finish mode with release**
+Prompt: "Wrap up this branch and ship it - feat/oauth-login on a Node.js repo with package.json, Dockerfile, and GitHub Actions."
+Quality signals:
+- Detects $FORGE from git remote get-url origin before any push/PR/merge
+- Runs lint, typecheck, and tests via the testing skill; inspects actual output, not just exit code
+- Delegates to update-docs to sweep tracked AND gitignored docs (CLAUDE.md, AGENTS.md)
+- Proposes version bump across package.json, Dockerfile, and CHANGELOG before editing
+- Runs code-review against BASE_BRANCH..HEAD, not just HEAD
+- Uses gh pr checks --watch --fail-fast then verifies via gh pr view --json statusCheckRollup
+- Runs git fetch --tags origin before release-signal detection
+- No AI attribution in commit messages, PR body, or release notes; no --no-verify or --force-push
+
+### localize
+
+**Test 1: Audit React app for i18n gaps**
+Prompt: "Audit this React component for hardcoded strings that need i18n:\n\nexport function DeleteModal({ item, onConfirm }) {\n  return (\n    <div role='dialog' aria-label='Delete confirmation'>\n      <h2>Delete item?</h2>\n      <p>This cannot be undone.</p>\n      <button title='Cancel and close' onClick={close}>Cancel</button>\n      <button onClick={() => { onConfirm(); toast.success('Item deleted'); }}>\n        Delete\n      </button>\n    </div>\n  );\n}"
+Quality signals:
+- Extracts ALL strings from the file, not just JSX text (aria-label, title, toast message, heading, button labels)
+- Proposes dot-notation keys (e.g., modal.delete.confirm, modal.delete.cancel)
+- Catches the toast.success call in an event handler, not just visible JSX
+- Replaces strings with t() calls, not partial extraction
+- Notes that source locale catalog becomes the type authority
+- Does not flag role='dialog' or onClick handler names as translatable
+
+**Test 2: Machine translation quality**
+Prompt: "Generate German translations for these UI strings from our music discovery app. Source (en.json): {\"auth.signIn\": \"Sign in\", \"player.nowPlaying\": \"Now playing: {0}\", \"error.network\": \"Connection lost\"}"
+Quality signals:
+- Uses proper German orthography (umlauts, not ae/oe/ue ASCII substitution)
+- Preserves the {0} placeholder exactly in the translation
+- Picks a voice register (du vs Sie) and applies it consistently, documents the choice
+- Translations read naturally for the app's domain (music discovery), not mechanical word-for-word
+- Does not translate brand names or technical identifiers
+- Notes a validation step (placeholder check, completeness check) before commit
+
+### roadmap
+
+**Test 1: Add ideas to a fresh roadmap**
+Prompt: "Add these to the roadmap: dark mode toggle, bulk export to CSV, and a public API for third-party integrations."
+Quality signals:
+- Checks for existing ROADMAP.md first; bootstraps if missing
+- Adds ROADMAP.md to .gitignore before writing content
+- Populates Snapshot section from README or package.json context
+- Places items in appropriate priority tier (defaults to P1 when ambiguous, not P0)
+- Preserves user's phrasing without rewriting
+- Does not inflate priorities or invent competitive intel
+
+**Test 2: Competitive scan with strict filter**
+Prompt: "Scan this competitor for feature ideas: github.com/owner/similar-project"
+Quality signals:
+- Uses gh issue list sorted by reactions and caps results, notes coverage limitations
+- States a one-sentence identity assessment before rating findings
+- Applies strong/weak/noise thresholds (3+ commenters or 10+ reactions calibrated to repo size)
+- Presents findings for approval BEFORE writing to ROADMAP.md
+- Attributes every suggestion with source link (owner/repo#issue)
+- Drops noise entirely rather than padding the Competitive Intel section
+- Does not fabricate reaction counts or user demand data
+
+### routine-writer
+
+**Test 1: Nightly triage routine**
+Prompt: "Make a Claude routine that triages new GitHub issues every night - label them by area, assign owners from CODEOWNERS, post a Slack summary."
+Quality signals:
+- Routine prompt is self-contained with no "ask the user" or "clarify" instructions
+- States explicit success criteria (labels applied, owner assigned, Slack message posted)
+- Handles idempotent no-op ("if no issues match, exit without output")
+- Names output destination concretely (#eng-backlog Slack channel)
+- Uses cron interval >= 1 hour (nightly satisfies this)
+- Declares minimum scope: repos, connectors (Slack + GitHub), env vars
+- Detects claude binary on PATH before emitting /schedule invocation
+- Never embeds real API tokens - uses $ROUTINE_FIRE_TOKEN placeholder
+- Beta header pinned with (April 2026) annotation in prose
+
+**Test 2: API-triggered routine from CI**
+Prompt: "I want to fire a Claude routine from our GitHub Actions deploy job to generate release notes. How do I wire it up?"
+Quality signals:
+- Picks API trigger, not schedule or GitHub event
+- Emits curl template for /fire endpoint with anthropic-beta: experimental-cc-routine-2026-04-01 header
+- Uses env var placeholders for $ROUTINE_FIRE_URL and $ROUTINE_FIRE_TOKEN
+- Notes that token is shown once in web UI and cannot be retrieved
+- Provides a GitHub Actions step with failure-hook pattern
+- Routine prompt frames "input is a text payload up to 65,536 chars" trigger context
+- Branch policy stays off by default (PRs over direct pushes)
+- Does not auto-run /schedule - emits for user to paste
+
+**Test 3: Rejecting a non-routine task**
+Prompt: "Make a routine that reviews design decisions in every PR and suggests UX improvements."
+Quality signals:
+- Pushes back - design/UX review needs mid-run human judgment, not a fit for routines
+- Suggests /loop or an interactive session instead
+- Explains why: routines cannot pause to ask clarifying questions
+- Does not draft a routine prompt that papers over the ambiguity
+- Does not recommend enabling unrestricted branch pushes as a workaround
