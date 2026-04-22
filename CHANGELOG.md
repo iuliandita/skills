@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.23.0](https://github.com/iuliandita/skills/compare/v1.22.0...v1.23.0) (2026-04-22)
+
+
+### Features
+
+* **deep-audit:** persist findings and generate phased task list ([#21](https://github.com/iuliandita/skills/issues/21)) ([155e0c0](https://github.com/iuliandita/skills/commit/155e0c0c9e25b72d39e84324121f6128ad4fd793))
+* **skills:** add debian and rpm distro admin skills ([#23](https://github.com/iuliandita/skills/issues/23)) ([087994a](https://github.com/iuliandita/skills/commit/087994a01a787809f2e2bd8f368121699885912a))
+
+
+### Refactoring
+
+* **skill-refiner:** 2026-04-16 run - avg 97.1 &gt; 98.0 across 32 skills ([#19](https://github.com/iuliandita/skills/issues/19)) ([e256d3f](https://github.com/iuliandita/skills/commit/e256d3fe01e12350fe19ceb7b9d55d01634acf02))
+
 ## [1.22.0](https://github.com/iuliandita/skills/compare/v1.21.0...v1.22.0) (2026-04-16)
 
 
