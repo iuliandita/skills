@@ -61,7 +61,7 @@ Debian-derived distro specifics that materially change package, boot, or service
 
 ### Kali
 - Kali is Debian-derived, so apt, dpkg, boot, and kernel basics can still fit this skill.
-- Do not treat Kali like a generic desktop or server distro when the question is really about offensive tooling, lab images, or pentest workflow. That should move to a dedicated Kali skill later.
+- Do not treat Kali like a generic desktop or server distro when the question is really about offensive tooling, lab images, branch-specific behavior, or pentest workflow. Route those cases to **kali-linux**.
 - Be conservative with desktop and hardening assumptions because Kali images, package sets, and intended use differ from stock Debian.
 
 ### Other Debian-based distros

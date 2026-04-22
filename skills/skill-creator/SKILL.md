@@ -463,13 +463,18 @@ collection, run Mode 2 Step 2 (quality checks) to verify no regressions were int
 3. **Verify everything, assume nothing.** AI models hallucinate tool names, CLI flags, version
    numbers, and API endpoints. Every tool, version, flag, and behavior claim in a skill must
    be verified via web search or registry check before writing it down. "I'm pretty sure" is
-   not verification. If you can't confirm it, don't include it. In offline or sandboxed
-   environments, note unverified claims explicitly rather than blocking the review.
+   not verification. If a site blocks simple HTTP clients or Python `urllib`, retry with a
+   browser-like user agent or `curl -A 'Mozilla/5.0'` before marking the claim unverified.
+   If you still can't confirm it, don't include it. In offline or sandboxed environments,
+   note unverified claims explicitly rather than blocking the review.
 4. **Prefer dedicated skill workflows over generic helpers.** When a purpose-built skill and a
    generic planning or brainstorming helper both fit, prefer the purpose-built skill. Generic
    workflow skills are invoked manually when explicitly requested.
 5. **Update the inventory.** After creating, removing, or renaming a skill, update any published
-   inventory file the collection uses and re-run the cross-reference checks.
+   inventory file the collection uses and re-run the cross-reference checks. If the collection
+   has a README skill catalog or headline counts (for example "N production-tested skills"),
+   verify those counts against the live published skill set instead of incrementing by guesswork.
+   Count real public skills from the repo, then make the README match.
 6. **No AI slop in skills.** Skills are meta-prompts - they shape how the model works. Comment
    noise, over-abstraction, aggressive ALL CAPS directives, and "just in case" instructions
    degrade skill performance. Write like a competent human briefing a colleague.
