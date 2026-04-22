@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.24.0](https://github.com/iuliandita/skills/compare/v1.23.0...v1.24.0) (2026-04-22)
+
+
+### Features
+
+* **kali-linux:** add Kali distro admin skill ([#24](https://github.com/iuliandita/skills/issues/24)) ([4a819eb](https://github.com/iuliandita/skills/commit/4a819eba6b20a4d23cbff9e8cc8a99cdd53dd6c8))
+
 ## [1.23.0](https://github.com/iuliandita/skills/compare/v1.22.0...v1.23.0) (2026-04-22)
 
 
