@@ -501,7 +501,7 @@ Use this skill even when the user doesn't explicitly say "git" but is clearly do
 
 ## 9. Skill Inventory (April 2026)
 
-### Published skills (28)
+### Published skills (30)
 
 | Skill | Effort | Date Added | Domain |
 |-------|--------|-----------|--------|
@@ -515,6 +515,7 @@ Use this skill even when the user doesn't explicitly say "git" but is clearly do
 | code-review | high | 2026-03-25 | Correctness audit |
 | command-prompt | medium | 2026-03-25 | Shell scripting and config |
 | databases | high | 2026-03-24 | Database operations |
+| debian-ubuntu | high | 2026-04-22 | Debian / Ubuntu administration |
 | docker | high | 2026-03-24 | Containers |
 | firewall-appliance | high | 2026-03-30 | OPNsense/pfSense firewall management |
 | full-review | high | 2026-03-22 | Orchestrator (4 parallel audits) |
@@ -524,6 +525,7 @@ Use this skill even when the user doesn't explicitly say "git" but is clearly do
 | mcp | high | 2026-03-30 | MCP server development |
 | networking | high | 2026-03-25 | DNS, reverse proxies, VPNs, nftables, HA |
 | prompt-generator | medium | 2026-03-25 | LLM prompt structuring |
+| rhel-fedora | high | 2026-04-22 | Fedora / RHEL-family administration |
 | roadmap | medium | 2026-04-05 | Gitignored roadmap management and competitor scouting |
 | security-audit | high | 2026-03-25 | Application security review |
 | skill-creator | high | 2026-03-25 | Skill lifecycle management |

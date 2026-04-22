@@ -69,7 +69,7 @@ The loop: **Score -> Improve -> Verify -> Keep or Revert -> Repeat.**
 
 ## What's in the box
 
-29 production-tested skills covering:
+31 production-tested skills covering:
 
 ### Infrastructure & Operations
 
@@ -77,6 +77,8 @@ The loop: **Score -> Improve -> Verify -> Keep or Revert -> Repeat.**
 |-------|-------------|
 | **ansible** | Playbooks, roles, collections, Molecule testing, Ansible Vault, CIS benchmarks, compliance hardening |
 | **arch-btw** | Arch Linux and CachyOS administration - pacman, paru, AUR, systemd, bootloader and kernel recovery |
+| **debian-ubuntu** | Debian and Debian-family administration - apt, dpkg, PPAs, snaps, systemd, GRUB, AppArmor, HWE, and distro-specific quirks |
+| **rhel-fedora** | Fedora and RHEL-family administration - dnf, yum, SELinux, firewalld, dracut, subscription-manager, and clone-specific quirks |
 | **docker** | Dockerfiles, Compose, Podman, Buildah, multi-stage builds, image signing, container hardening |
 | **kubernetes** | Manifests, Helm charts, Gateway API, Kustomize, ArgoCD, sealed secrets, PCI-DSS compliance |
 | **terraform** | Terraform/OpenTofu - HCL patterns, module design, state management, policy-as-code, compliance |
