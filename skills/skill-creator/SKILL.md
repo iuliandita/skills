@@ -182,6 +182,11 @@ Run through the AI Self-Check above. Then:
    any that share >50% of trigger keywords.
 3. **Convention check**: compare frontmatter, structure, and style against 2-3 existing custom
    skills in the same `effort` tier.
+4. **Script-runner reality check**: if the collection uses helper scripts like `lint-skills.sh`
+   or `validate-spec.sh`, verify their expected input shape before trusting the result. Some
+   collections expect a parent directory containing many skill subdirectories, not a direct path
+   to one skill. For single-skill validation, stage the skill inside a temporary parent such as
+   `<tmp>/skills/<skill-name>/SKILL.md` and run the scripts against `<tmp>/skills`.
 
 #### Step 5: Write the files
 
@@ -189,6 +194,10 @@ Run through the AI Self-Check above. Then:
   inside a collection, or the user's specified path for standalone skills
 - Write reference files (if any) to `<skill-dir>/references/`
 - If a collection inventory exists, update it and re-run cross-reference checks
+- If `skill_manage` cannot modify the target because the skill lives in an external repo or
+  non-managed directory, fall back to direct file edits with `patch` or `write_file` on the
+  actual repo paths. Do not stop at the tool limitation if the files are writable and the user
+  asked for the change in-place.
 
 #### Step 6: Forward-test
 
