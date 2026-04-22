@@ -8,7 +8,7 @@
 npx skills add iuliandita/skills
 ```
 
-**33 production-tested skills** - Kubernetes, Terraform, Docker, Ansible, CI/CD, HTTP APIs, databases, AI/ML, testing, virtualization, Arch Linux, networking, MCP servers, security audits, pentesting, code review, prose audits, dev workflow orchestration, and more.
+**36 production-tested skills** - Kubernetes, Terraform, Docker, Ansible, CI/CD, HTTP APIs, databases, AI/ML, testing, virtualization, Arch Linux, Debian-family, RPM-family, Kali Linux, networking, localization, browsing, MCP servers, security audits, pentesting, code review, prose audits, dev workflow orchestration, and more.
 
 Built on the [Agent Skills open standard](https://agentskills.io/specification). Works with any tool that supports it.
 
@@ -69,7 +69,7 @@ The loop: **Score -> Improve -> Verify -> Keep or Revert -> Repeat.**
 
 ## What's in the box
 
-31 production-tested skills covering:
+36 production-tested skills covering:
 
 ### Infrastructure & Operations
 
@@ -79,6 +79,7 @@ The loop: **Score -> Improve -> Verify -> Keep or Revert -> Repeat.**
 | **arch-btw** | Arch Linux and CachyOS administration - pacman, paru, AUR, systemd, bootloader and kernel recovery |
 | **debian-ubuntu** | Debian and Debian-family administration - apt, dpkg, PPAs, snaps, systemd, GRUB, AppArmor, HWE, and distro-specific quirks |
 | **rhel-fedora** | Fedora and RHEL-family administration - dnf, yum, SELinux, firewalld, dracut, subscription-manager, and clone-specific quirks |
+| **kali-linux** | Kali Linux administration - branches, metapackages, live USB persistence, offensive tool families, NetHunter, and lab-safe distro workflow |
 | **docker** | Dockerfiles, Compose, Podman, Buildah, multi-stage builds, image signing, container hardening |
 | **kubernetes** | Manifests, Helm charts, Gateway API, Kustomize, ArgoCD, sealed secrets, PCI-DSS compliance |
 | **terraform** | Terraform/OpenTofu - HCL patterns, module design, state management, policy-as-code, compliance |
@@ -110,16 +111,20 @@ The loop: **Score -> Improve -> Verify -> Keep or Revert -> Repeat.**
 | **anti-ai-prose** | Audits writing for AI tells - vocabulary (delve, tapestry), syntax (negative parallelism, tricolons), tone (travel-guide voice, vague attribution), formatting (em-dash abuse). Covers docs, READMEs, wikis, PRs, emails, slides, creative writing |
 | **backend-api** | HTTP backend APIs - FastAPI, Express, NestJS, REST/OpenAPI contracts, auth flows, versioning, pagination, idempotency |
 | **testing** | Unit, integration, E2E, accessibility, and performance tests - Vitest, Jest, Playwright, pytest, Go testing, cargo test, TDD workflows, mocking strategies, CI test infrastructure |
+| **localize** | App localization and i18n audits - find hardcoded strings, translation flow gaps, locale fallback issues, and framework-specific i18n mistakes |
+| **dev-cycle** | Start-to-finish dev workflow - pull, branch, size changes, test, review, and prep work for clean implementation cycles |
 | **git** | Commits, branches, hooks, signing, multi-forge workflows (GitHub, GitLab, Forgejo), release management |
 | **command-prompt** | Shell scripting across zsh, bash, POSIX sh, fish, nushell - dotfiles, completions, one-liners |
 | **mcp** | MCP server development - protocol patterns, transport, auth, input validation, injection prevention |
 | **ai-ml** | LLM integrations, RAG pipelines, agent systems, embeddings, evaluation harnesses, local inference, fine-tuning, structured output, tool use, cost optimization, safety guardrails |
 | **full-review** | Orchestrates code-review + anti-slop + security-audit + update-docs in one pass |
+| **deep-audit** | Five-wave repo audit - recon, code quality, domain skills, sequential security, and docs or git hygiene in one structured pass |
 
 ### Tooling & Meta
 
 | Skill | What it does |
 |-------|-------------|
+| **browse** | Token-efficient web browsing and scraping - lightweight extraction, focused page reads, and link-following without full browser overhead |
 | **prompt-generator** | Turn scattered ideas into structured LLM prompts - system prompts, templates, prompt engineering |
 | **roadmap** | Keep a gitignored `ROADMAP.md` current - capture ideas, shipped work, priorities, and competitor signals |
 | **routine-writer** | Write Claude Code routine prompts - self-contained tasks that run unattended on Anthropic cloud via schedule, API, or GitHub triggers. Emits `/schedule` CLI commands and `/fire` curl templates |

@@ -68,7 +68,7 @@ stale package-version table.
 - RPM-family distros and tooling - use **rhel-fedora**. That includes RHEL, Fedora, Rocky, AlmaLinux, Oracle Linux, and Amazon Linux.
 - Ubuntu Core and snap-only transactional workflows - outside this skill; do not treat them like ordinary apt-managed Ubuntu hosts
 - NixOS or declarative system management - outside this skill; route to a dedicated NixOS skill when one exists
-- Kali offensive tooling, pentest workflow, or training-image specifics - outside this skill; route to a dedicated Kali skill when one exists
+- Kali offensive tooling, pentest workflow, or training-image specifics - use **kali-linux**
 - OPNsense or pfSense appliance work - use **firewall-appliance**
 
 ---
@@ -116,7 +116,7 @@ Before returning Debian or Ubuntu commands, verify:
 | **Linux Mint** | Ubuntu LTS derivative | Cinnamon/XFCE focus. Mint-specific repos and update manager. PPAs from Ubuntu often work. |
 | **Pop!_OS** | Ubuntu derivative with extras | System76 firmware, COSMIC desktop, Pop repos, `system76-power`. NVIDIA ISO available. |
 | **Devuan** | Debian derivative with a major service-model split | Do not assume systemd, `systemctl`, or Ubuntu-style desktop/session plumbing. Verify init and service tooling first. |
-| **Kali** | Debian-derived security distro | Fine for base apt, kernel, boot, or service administration, but not for offensive tooling, training images, or pentest workflow assumptions. A dedicated Kali skill should handle that later. |
+| **Kali** | Debian-derived security distro | Fine for base apt, kernel, boot, or service administration, but use **kali-linux** for Kali-specific branches, images, metapackages, training-image workflow, and offensive-distro context. |
 | **Other Debian-based** | Confirm repo model | Do not assume vanilla Debian or Ubuntu behavior. |
 
 ### Step 2: Gather current system state
