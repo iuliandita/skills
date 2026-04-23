@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.26.1](https://github.com/iuliandita/skills/compare/v1.26.0...v1.26.1) (2026-04-23)
+
+
+### Bug Fixes
+
+* **routing:** wire new distro and routine skills into reference matrix ([#30](https://github.com/iuliandita/skills/issues/30)) ([6739e1f](https://github.com/iuliandita/skills/commit/6739e1f1e770c7409bbd5326548095dec3d2e19d))
+
 ## [1.26.0](https://github.com/iuliandita/skills/compare/v1.25.0...v1.26.0) (2026-04-23)
 
 
