@@ -8,3 +8,4 @@ SECURITY-AUDIT.md
 .codex
 __pycache__/
 .refiner-baseline.json
+test.sh
