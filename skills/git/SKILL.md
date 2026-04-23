@@ -1,12 +1,10 @@
 ---
 name: git
 description: >
-  · Git operations - branches, commits, remotes, conflicts, hooks, signing, releases,
-  PR/MR workflows, and multi-forge support (GitHub, GitLab, Forgejo, Gitea). Also trigger when
-  the user is clearly doing git work without saying "git" (e.g., "push this", "cut a release").
-  Triggers: 'git', 'commit', 'branch', 'merge', 'rebase', 'tag', 'hook', 'signing',
-  'PR', 'MR', 'release', 'changelog', 'conventional commits', 'gh', 'glab', 'fj', 'tea',
-  'forgejo', 'gitea'.
+  · Handle git operations: branches, commits, remotes, conflicts, hooks, signing,
+  releases, PR/MR workflows, GitHub, GitLab, Forgejo, and Gitea. Triggers: 'git',
+  'commit', 'branch', 'merge', 'rebase', 'tag', 'push', 'PR', 'MR', 'release', 'gh',
+  'glab', 'forgejo'.
 license: MIT
 compatibility: "Requires git. Optional: gh (GitHub CLI), glab (GitLab CLI), fj (Forgejo CLI)"
 metadata:

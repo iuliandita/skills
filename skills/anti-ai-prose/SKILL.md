@@ -1,12 +1,10 @@
 ---
 name: anti-ai-prose
 description: >
-  · Audit prose for AI tells - vocabulary (delve, tapestry), syntax (negative parallelism,
-  tricolons, copula avoidance), tone (travel-guide voice, vague attribution), formatting
-  (em-dashes, bullet salads). Covers docs, READMEs, PRs, commits, emails, slides, creative
-  writing, docstrings. Triggers: 'ai writing', 'sounds like chatgpt', 'ai slop prose', 'llm
-  voice', 'ai tells', 'sound human', 'prose review'. Not for code (use anti-slop) or doc
-  drift (use update-docs).
+  · Audit prose for AI tells in docs, READMEs, PRs, commits, emails, slides, and
+  docstrings. Checks vocabulary, syntax, tone, and formatting. Triggers: 'ai writing',
+  'sounds like chatgpt', 'ai slop prose', 'llm voice', 'sound human', 'prose review'.
+  Not for code (use anti-slop).
 license: MIT
 compatibility: "None - works on any prose or text input"
 metadata:

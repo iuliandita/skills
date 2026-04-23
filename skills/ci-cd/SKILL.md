@@ -1,12 +1,10 @@
 ---
 name: ci-cd
 description: >
-  · Write, review, or architect CI/CD pipelines across GitHub Actions, GitLab, Forgejo/Gitea,
-  and Woodpecker. Covers SHA pinning, SBOM, runners, dependency updates, linting, scanning,
-  and review gates. Triggers: 'ci/cd', 'pipeline', 'github actions', 'gitlab ci',
-  'forgejo', 'gitea', 'woodpecker', 'runner', 'dependabot', 'renovate', 'trivy',
-  'gitleaks', 'merge queue', 'codeowners'. Not for routines (**routine-writer**),
-  container image builds outside CI (**docker**), or git workflows (**git**).
+  · Write, review, or architect CI/CD for GitHub Actions, GitLab, Forgejo/Gitea, and
+  Woodpecker. Covers SHA pinning, SBOM, runners, scans, and review gates. Triggers:
+  'ci/cd', 'pipeline', 'github actions', 'gitlab ci', 'runner', 'renovate', 'trivy',
+  'gitleaks'. Not for git workflows (use git).
 license: MIT
 compatibility: "Optional: gh (GitHub CLI), glab (GitLab CLI), fj (Forgejo CLI)"
 paths:

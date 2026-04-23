@@ -1,12 +1,10 @@
 ---
 name: browse
 description: >
-  · Browse, scrape, and interact with web pages using token-efficient strategies. Guides tool
-  selection across Lightpanda, Playwright MCP, agent-browser, and built-in fetch. Covers content
-  extraction, form interaction, SPA handling, and progressive disclosure. Triggers: 'browse',
-  'scrape', 'headless', 'lightpanda', 'open url', 'read website', 'fill form', 'web automation',
-  'crawl', 'playwright'. Not for E2E testing (use testing), MCP servers (use mcp), or network
-  config (use networking).
+  · Browse, scrape, and interact with web pages using token-efficient tools: Lightpanda,
+  Playwright MCP, agent-browser, or fetch. Triggers: 'browse', 'scrape', 'headless',
+  'open url', 'read website', 'fill form', 'web automation', 'crawl', 'playwright'. Not
+  for E2E tests (use testing).
 license: MIT
 compatibility: "Optional: lightpanda, @playwright/mcp, agent-browser. Falls back to WebFetch or curl"
 metadata:

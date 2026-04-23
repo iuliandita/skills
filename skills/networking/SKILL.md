@@ -1,11 +1,10 @@
 ---
 name: networking
 description: >
-  · Configure, troubleshoot, or optimize Linux networking - DNS, reverse proxies, VPNs, VLANs,
-  nftables, load balancing, overlays, dynamic routing, and performance tuning. Triggers: 'dns',
-  'reverse proxy', 'vpn', 'wireguard', 'tailscale', 'vlan', 'nftables', 'caddy', 'nginx',
-  'haproxy', 'traefik', 'mtr', 'tcpdump', 'frr', 'bgp'. Not for OPNsense/pfSense (use
-  firewall-appliance) or K8s networking (use kubernetes).
+  · Configure or troubleshoot Linux networking: DNS, proxies, VPNs, VLANs, nftables,
+  load balancing, overlays, routing, and performance. Triggers: 'dns', 'reverse proxy',
+  'vpn', 'wireguard', 'tailscale', 'vlan', 'nftables', 'nginx', 'mtr', 'tcpdump',
+  'bgp'. Not for OPNsense (use firewall-appliance).
 license: MIT
 compatibility: "Requires Linux. Tools vary by task: nftables, WireGuard, dig, mtr, tcpdump"
 metadata:

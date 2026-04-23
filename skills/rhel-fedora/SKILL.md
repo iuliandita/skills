@@ -1,13 +1,10 @@
 ---
 name: rhel-fedora
 description: >
-  · Administer RHEL, Fedora, CentOS Stream, Rocky, Alma, Oracle, and Amazon Linux
-  - dnf, yum, SELinux, systemd, dracut, firewalld, GPU.
-  Triggers: 'rhel', 'fedora', 'centos stream', 'rocky', 'alma', 'almalinux',
-  'oracle linux', 'amazon linux', 'dnf', 'yum', 'selinux', 'rpm fusion', 'akmods'. Not for Arch
-  (**arch-btw**), Debian/Ubuntu (**debian-ubuntu**), Kali (**kali-linux**), NixOS
-  (**nixos-btw**), image-mode, shell (**command-prompt**),
-  networking (**networking**), or config mgmt (**ansible**).
+  · Administer RHEL, Fedora, CentOS Stream, Rocky, Alma, Oracle, and Amazon Linux: dnf,
+  yum, SELinux, systemd, dracut, firewalld, and GPU. Triggers: 'rhel', 'fedora', 'centos
+  stream', 'rocky', 'alma', 'dnf', 'yum', 'selinux', 'rpm fusion', 'akmods'. Not for
+  other distros.
 license: MIT
 compatibility: Requires Fedora, RHEL, or RHEL-family distro with dnf, yum, or rpm
 metadata:

@@ -1,12 +1,10 @@
 ---
 name: anti-slop
 description: >
-  · Audit code for machine-generated patterns, hallucinated APIs/flags/resources,
-  over-abstraction, duplicate code, test theater, redundant comments, verbose code,
-  and dependency creep. Triggers: 'slop', 'AI-generated code', 'duplicate code',
-  'copy paste', 'hallucinated API', 'hallucinated flag', 'weird code pattern',
-  'cleanup', 'clean up', 'overengineered', 'mock-heavy tests', 'schema drift'. Not
-  for prose review (use anti-ai-prose). Not for full repo audit (use full-review).
+  · Audit code for AI slop: hallucinated APIs, over-abstraction, duplicate code, test
+  theater, redundant comments, and dependency creep. Triggers: 'slop', 'AI-generated
+  code', 'copy paste', 'hallucinated API', 'cleanup', 'overengineered', 'mock-heavy
+  tests'. Not for prose (use anti-ai-prose).
 license: MIT
 compatibility: "None - works on any codebase"
 metadata:

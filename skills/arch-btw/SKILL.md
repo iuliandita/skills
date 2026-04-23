@@ -1,12 +1,10 @@
 ---
 name: arch-btw
 description: >
-  · Administer Arch Linux, CachyOS, and Arch-based distros - pacman, AUR, systemd, boot,
+  · Administer Arch, CachyOS, and Arch-based distros: pacman, AUR, systemd, boot,
   desktop, PipeWire, GPU, gaming, and media. Triggers: 'arch linux', 'cachyos',
-  'pacman', 'paru', 'aur', 'mkinitcpio', 'bootctl', 'hyprland', 'pipewire', 'nvidia',
-  'steam', 'proton', 'obs', 'pacnew'. Not for Debian/Ubuntu (**debian-ubuntu**),
-  Fedora/RHEL (**rhel-fedora**), Kali (**kali-linux**), NixOS (**nixos-btw**), shell
-  (**command-prompt**), networking (**networking**), or config mgmt (**ansible**).
+  'pacman', 'paru', 'aur', 'mkinitcpio', 'bootctl', 'hyprland', 'nvidia', 'pacnew'. Not
+  for Debian/Fedora/NixOS.
 license: MIT
 compatibility: Requires Arch Linux, CachyOS, or Arch-based distro with pacman
 metadata:

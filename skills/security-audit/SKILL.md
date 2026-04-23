@@ -1,12 +1,10 @@
 ---
 name: security-audit
 description: >
-  · Audit code for security issues - OWASP, credential scans, auth review, supply chain
-  hardening, and pre-release checks. Also trigger on self-hosted apps touching authentication
-  or access control. Triggers: 'security audit', 'vulnerability scan', 'secret scan', 'OWASP',
-  'hardening', 'auth review'. Not for offensive use (**lockpick**), vulnerability research
-  (**zero-day**), Kali distro admin (**kali-linux**), or firewall appliance config
-  (**firewall-appliance**).
+  · Audit code for security issues: OWASP, credentials, auth, access control, supply
+  chain, and pre-release checks. Triggers: 'security audit', 'vulnerability scan',
+  'secret scan', 'OWASP', 'hardening', 'auth review'. Not for offensive work (use
+  lockpick).
 license: MIT
 compatibility: "Optional: betterleaks, gitleaks, trivy, semgrep, bandit, checkov, scorecard"
 metadata:

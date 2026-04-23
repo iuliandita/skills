@@ -39,7 +39,7 @@ gotcha with that specific Helm chart version, the compliance requirement that is
 
 | Component | Budget | Why |
 |-----------|--------|-----|
-| Frontmatter (`name` + `description`) | ~100 tokens | always loaded for all skills at startup |
+| Frontmatter (`name` + `description`) | ~60-80 tokens | always loaded for all skills at startup |
 | SKILL.md body | ~500 lines target, 600 hard max, <5k tokens recommended | loaded when the skill activates |
 | Reference files | unlimited per file, but keep individual files focused | loaded on demand |
 
@@ -85,7 +85,7 @@ succeeded" invites the agent to invent checks with wrong paths and service names
 ```yaml
 ---
 name: skill-name              # lowercase a-z, 0-9, hyphens; no leading/trailing/consecutive hyphens; max 64 chars; must match directory name; no reserved words (anthropic, claude)
-description: >                # target <500 chars, 600 hard max in this collection; platform truncates later
+description: >                # target ~300 chars, 600 hard max in this collection; platform truncates later
   Use when... Also use for... Triggers: '...', '...'.
 license: MIT                  # Agent Skills spec field
 metadata:
@@ -130,7 +130,7 @@ user confirmation in steps that could run unattended.
 | Field | Values | Purpose |
 |-------|--------|---------|
 | `name` | `a-z`, `0-9`, hyphens; no leading/trailing/consecutive hyphens; max 64 chars; no reserved words (`anthropic`, `claude`) | identifier, must match directory name |
-| `description` | free text, target <500 chars, 600 hard max in this collection, no XML tags | primary trigger mechanism - the agent scans this |
+| `description` | free text, target ~300 chars, 600 hard max in this collection, no XML tags | primary trigger mechanism - the agent scans this |
 | `license` | license name (e.g., `MIT`) | Agent Skills spec field |
 | `compatibility` | free text, <500 chars | environment requirements (optional) |
 | `metadata.source` | `owner/repo` or `custom` | identifies the publishing collection or an unpublished local skill |

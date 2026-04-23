@@ -1,9 +1,10 @@
 ---
 name: docker
 description: >
-  · Write, review, or debug Dockerfiles, Compose stacks, and OCI workflows. Covers Podman,
-  BuildKit, image signing, container hardening, and multi-stage builds. Triggers: 'docker',
-  'dockerfile', 'compose', 'container', 'podman', 'buildkit', 'distroless', 'OCI', 'cosign'.
+  · Write, review, or debug Dockerfiles, Compose stacks, and OCI workflows. Covers
+  Podman, BuildKit, signing, hardening, and multi-stage builds. Triggers: 'docker',
+  'dockerfile', 'compose', 'container', 'podman', 'buildkit', 'distroless', 'cosign'.
+  Not for Kubernetes manifests.
 license: MIT
 compatibility: "Requires docker or podman. Optional: docker compose, buildkit, cosign, trivy"
 paths:

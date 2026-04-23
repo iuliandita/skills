@@ -1,11 +1,10 @@
 ---
 name: ai-ml
 description: >
-  · Build, review, or architect AI/ML applications - LLM integrations, RAG pipelines, agent
-  systems, embeddings, evals, local inference, structured output, and tool use. Triggers: 'llm',
-  'rag', 'embedding', 'vector store', 'langchain', 'openai sdk', 'anthropic sdk', 'agent loop',
-  'fine-tune', 'ollama', 'vllm', 'evals', 'guardrails', 'chunking', 'reranking'. Not for MCP
-  servers (use mcp), prompt writing (use prompt-generator), or general DB (use databases).
+  · Build, review, or architect AI/ML apps: LLMs, RAG, embeddings, agents, evals, local
+  inference, structured output, and tool use. Triggers: 'llm', 'rag', 'embedding',
+  'vector store', 'openai sdk', 'agent loop', 'fine-tune', 'ollama', 'vllm'. Not for MCP
+  servers (use mcp).
 license: MIT
 compatibility: "Varies by task. Common: Python 3.10+, Node.js 18+. Optional: GPU for local inference"
 metadata:

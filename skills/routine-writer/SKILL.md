@@ -1,12 +1,10 @@
 ---
 name: routine-writer
 description: >
-  · Write Claude Code routine prompts - self-contained tasks that run unattended on Anthropic
-  cloud via schedule, API, or GitHub event triggers. Emits the routine prompt, a /schedule CLI
-  invocation (when claude is on PATH), and curl templates for the /fire endpoint. Triggers:
-  'routine', 'claude routine', 'scheduled claude task', 'unattended claude', '/schedule',
-  'cloud task', 'autopilot'. Not for one-off prompts (use prompt-generator) or in-session
-  /loop polling.
+  · Write Claude Code routine prompts for unattended cloud tasks via schedule, API, or
+  GitHub events. Emits routine text, /schedule commands, and /fire curl templates.
+  Triggers: 'routine', 'claude routine', 'scheduled claude task', 'unattended claude',
+  '/schedule'. Not for one-off prompts.
 license: MIT
 compatibility: "Routines require a Pro, Max, Team, or Enterprise plan with Claude Code on the web. CLI automation requires the claude binary on PATH"
 metadata:
