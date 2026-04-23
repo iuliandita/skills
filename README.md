@@ -141,7 +141,7 @@ Each skill follows the [Agent Skills specification](https://agentskills.io/speci
 - **Compact body** (target under 500 lines, 600 hard max) - the core instructions that load into every conversation. Kept lean so it doesn't eat your context window.
 - **Reference files** (`references/` directory) - detailed pattern libraries, compliance checklists, manifest templates. The agent reads these on-demand when the task requires depth. You get expert-level detail without paying the token cost upfront.
 - **Argument hints** (`metadata.argument_hint`) - tells agents what arguments a skill expects when invoked (e.g., `<file-or-pattern>`, `[iterations]`). Angle brackets for required, square brackets for optional.
-- **Precise trigger descriptions** - optimized so the right tool activates the right skill at the right time. Every trigger keyword is tested and tuned to minimize false positives and missed activations.
+- **Precise trigger descriptions** - optimized so the right tool activates the right skill at the right time. Descriptions target about 300 characters so startup skill lists stay compact in tools with tight context budgets.
 - **Cross-skill awareness** - skills know about each other. The security-audit skill knows not to step on lockpick's territory. Docker knows to defer to Kubernetes for cluster networking. No overlapping, no conflicts.
 
 ## Install
@@ -199,6 +199,12 @@ Override the canonical directory with `SKILLS_CANONICAL_DIR`:
 
 ```bash
 SKILLS_CANONICAL_DIR=~/my-skills ./install.sh --tool claude,roo --link
+```
+
+Local private skills can be installed with `--include-internal` when they exist in your checkout and declare `metadata.internal: true`. This is mainly for personal gitignored skills; public installs only include the tracked skill set.
+
+```bash
+./install.sh --tool claude,codex,opencode --link --include-internal --force
 ```
 
 ### Checking for updates

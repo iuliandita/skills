@@ -8,18 +8,22 @@ source "$SCRIPT_DIR/scripts/skill-lib.sh"
 SKILLS_SRC="$SCRIPT_DIR/skills"
 CANONICAL_DIR="${SKILLS_CANONICAL_DIR:-$HOME/.agents/skills}"
 
-# Discover skills dynamically: scan skills/ for dirs with SKILL.md,
-# exclude gitignored entries (e.g., cluster-health).
+# Discover skills dynamically: scan skills/ for dirs with SKILL.md.
+# Gitignored skills are excluded unless --include-internal is active and the
+# skill declares metadata.internal: true.
 discover_skills() {
+  local include_internal="${1:-false}"
   local skills=()
   for dir in "$SKILLS_SRC"/*/; do
     [[ -f "$dir/SKILL.md" ]] || continue
     local name
     name="$(basename "$dir")"
-    # Skip gitignored skills - if not in a git repo, include everything
+    # Skip gitignored skills - if not in a git repo, include everything.
     if git -C "$SKILLS_SRC" rev-parse --git-dir &>/dev/null; then
       if git -C "$SKILLS_SRC" check-ignore -q "$name" 2>/dev/null; then
-        continue
+        if [[ "$include_internal" != "true" ]] || ! is_internal "$dir"; then
+          continue
+        fi
       fi
     fi
     skills+=("$name")
@@ -29,7 +33,7 @@ discover_skills() {
   printf '%s\n' "${skills[@]}"
 }
 
-mapfile -t ALL_SKILLS < <(discover_skills)
+ALL_SKILLS=()
 
 SUPPORTED_TOOLS=(
   claude codex cursor windsurf opencode
@@ -114,6 +118,7 @@ Examples:
   install.sh --tool codex                       # All skills for Codex
   install.sh --tool cursor kubernetes docker    # Specific skills for Cursor
   install.sh --tool claude,gemini,roo --link    # Canonical + symlinks
+  install.sh --tool claude,codex,opencode --link --include-internal
   install.sh --check                            # Check Claude install for updates
   install.sh --check --tool cursor              # Check Cursor install
   install.sh --tool portable --dest ~/.skills
@@ -359,6 +364,8 @@ main() {
   if (( ${#tools[@]} == 0 )); then
     tools=("${SKILLS_TOOL:-claude}")
   fi
+
+  mapfile -t ALL_SKILLS < <(discover_skills "$include_internal")
 
   # Validate tool names
   for tool in "${tools[@]}"; do
