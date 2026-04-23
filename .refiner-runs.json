@@ -1552,5 +1552,137 @@
       "above_98": 23,
       "above_95": 34
     }
+  },
+  {
+    "run_id": "2026-04-23-iteration-run",
+    "branch": "skill-refiner/2026-04-23-iteration-run",
+    "date": "2026-04-23",
+    "primary": {
+      "harness": "codex-cli",
+      "model": "gpt-5",
+      "effort": "medium"
+    },
+    "secondary": {
+      "harness": "claude-code",
+      "version": "2.1.118",
+      "review": "cross-harness diff review",
+      "result": "NO_FLAGS after ai-ml relocation fix"
+    },
+    "config": {
+      "skill_creator_iterations": 3,
+      "skill_refiner_iterations_min": 5,
+      "skill_refiner_iterations_used": 6,
+      "target": 100,
+      "mode": "circuit-breaker",
+      "plateau": 2
+    },
+    "pool_size": 37,
+    "excluded": [
+      "cluster-health"
+    ],
+    "termination": "target checks clean and peer review no-flags",
+    "scores": {
+      "collection": {
+        "before": {
+          "lint_errors": 0,
+          "lint_warnings": 1,
+          "spec_violations": 0,
+          "spec_warnings": 7,
+          "missing_behavioral_test_groups": 4,
+          "missing_local_reference_targets": 3,
+          "peer_review": "not_run"
+        },
+        "after": {
+          "lint_errors": 0,
+          "lint_warnings": 0,
+          "spec_violations": 0,
+          "spec_warnings": 0,
+          "missing_behavioral_test_groups": 0,
+          "missing_local_reference_targets": 0,
+          "peer_review": "NO_FLAGS"
+        }
+      }
+    },
+    "iteration_log": [
+      {
+        "iteration": "skill-creator-1",
+        "type": "structure",
+        "findings": [
+          "ai-ml SKILL.md over target line count",
+          "six descriptions over 500-character convention target"
+        ]
+      },
+      {
+        "iteration": "skill-creator-2",
+        "type": "cross-reference",
+        "findings": [
+          "local-looking reference paths in ci-cd, databases, and skill-refiner resolved as cross-skill references"
+        ]
+      },
+      {
+        "iteration": "skill-creator-3",
+        "type": "behavioral-coverage",
+        "findings": [
+          "debian-ubuntu, kali-linux, nixos-btw, and rhel-fedora lacked hand-written behavioral test groups"
+        ]
+      },
+      {
+        "iteration": 1,
+        "type": "baseline",
+        "result": "lint pass with 1 warning; spec pass with 7 warnings"
+      },
+      {
+        "iteration": 2,
+        "type": "structural-target-fix",
+        "skills": [
+          "ai-ml",
+          "arch-btw",
+          "ci-cd",
+          "lockpick",
+          "nixos-btw",
+          "rhel-fedora",
+          "zero-day"
+        ]
+      },
+      {
+        "iteration": 3,
+        "type": "behavioral-test-fix",
+        "skills": [
+          "debian-ubuntu",
+          "kali-linux",
+          "nixos-btw",
+          "rhel-fedora"
+        ]
+      },
+      {
+        "iteration": 4,
+        "type": "peer-review",
+        "result": "MAJOR_FLAG on ai-ml content deletion; primary agreed"
+      },
+      {
+        "iteration": 5,
+        "type": "regression-fix",
+        "result": "ai-ml examples relocated into references/agent-patterns.md, references/local-inference.md, and references/evaluation.md"
+      },
+      {
+        "iteration": 6,
+        "type": "final-gate",
+        "result": "lint pass, spec pass, complete test coverage, final claude peer review NO_FLAGS"
+      }
+    ],
+    "reverted": 0,
+    "contested": 0,
+    "cross_model_flags": 1,
+    "changes": [
+      "Shortened over-target descriptions while preserving key routing terms",
+      "Moved ai-ml deep examples from SKILL.md into focused reference files",
+      "Added hand-written behavioral test cases for Debian/Ubuntu, Kali, NixOS, and RHEL/Fedora skills",
+      "Made cross-skill reference wording precise without unresolved local reference paths"
+    ],
+    "aggregate": {
+      "hard_gates": "100%",
+      "behavioral_test_group_coverage": "37/37",
+      "peer_review": "100% after flagged regression fix"
+    }
   }
 ]

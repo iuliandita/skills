@@ -88,6 +88,42 @@ def run_agent(user_query: str, tools: list[dict], max_iterations: int = 15) -> s
     return "Agent reached maximum iterations without completing the task."
 ```
 
+### Cost-bounded loop variant
+
+Use this shape when an agent can call tools repeatedly. It combines the non-negotiables:
+iteration cap, cost gate, transient retry policy, and explicit `is_error` tool results.
+
+```python
+MAX_ITERS, BUDGET_USD = 20, 5.00
+TOOL_RETRY_MAX = 2  # transient failures only; retry then abort
+spent = 0.0
+
+for i in range(MAX_ITERS):
+    if spent >= BUDGET_USD:
+        raise BudgetExceeded(f"${spent:.2f} >= ${BUDGET_USD}")
+    resp = client.messages.create(model=MODEL, max_tokens=1024, tools=tools, messages=msgs)
+    spent += cost_of(resp.usage)  # input/output tokens * per-1M price
+    if resp.stop_reason == "end_turn":
+        return resp
+    for block in resp.content:
+        if block.type != "tool_use":
+            continue
+        for attempt in range(TOOL_RETRY_MAX + 1):
+            try:
+                result = dispatch(block.name, block.input); is_error = False; break
+            except TransientToolError:
+                if attempt == TOOL_RETRY_MAX: result, is_error = "tool failed after retries", True
+            except PermanentToolError as e:
+                result, is_error = f"tool aborted: {e}", True; break
+        msgs.append({"role": "assistant", "content": resp.content})
+        msgs.append({"role": "user", "content": [{"type": "tool_result",
+            "tool_use_id": block.id, "content": str(result), "is_error": is_error}]})
+raise IterationLimitExceeded(MAX_ITERS)
+```
+
+Retry transient errors (timeouts, 5xx, rate limits) with backoff. Abort on permanent errors
+(auth, bad input) and let the model decide next steps from the `is_error` tool result.
+
 ### When to use a custom loop
 
 - Fewer than 5 tools

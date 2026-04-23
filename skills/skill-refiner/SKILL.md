@@ -144,7 +144,7 @@ contested major flags (non-configurable).
 16. **Snapshot evaluation criteria**:
     - Copy **skill-creator**'s AI Self-Check section to a temp location
     - Copy `references/evaluation-criteria.md` to a temp location
-    - Copy **skill-creator**'s `references/conventions.md` to a temp location
+    - Copy **skill-creator**'s `conventions.md` reference to a temp location
     These snapshots are the evaluation baseline for phase 2.
 17. **Improve skill-creator**: run the improvement cycle (steps 10a-10k) using the
     snapshot as the evaluation criteria, not skill-creator's live version

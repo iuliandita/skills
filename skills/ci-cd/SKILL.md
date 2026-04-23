@@ -1,13 +1,12 @@
 ---
 name: ci-cd
 description: >
-  · Write, review, or architect CI/CD pipelines across GitHub Actions, GitLab, Forgejo/Gitea
-  Actions, and Woodpecker. Covers pipeline security (SHA pinning, SBOM), self-hosted runners,
-  dependency updates, linting, scanning, and review gates. Triggers: 'ci/cd', 'pipeline',
-  'github actions', 'gitlab ci', 'forgejo', 'gitea', 'woodpecker', 'runner', 'dependabot',
-  'renovate', 'trivy', 'gitleaks', 'merge queue', 'codeowners'. Not for Claude Code cloud
-  routines (**routine-writer**), container image builds outside CI (**docker**), or git
-  workflows (**git**).
+  · Write, review, or architect CI/CD pipelines across GitHub Actions, GitLab, Forgejo/Gitea,
+  and Woodpecker. Covers SHA pinning, SBOM, runners, dependency updates, linting, scanning,
+  and review gates. Triggers: 'ci/cd', 'pipeline', 'github actions', 'gitlab ci',
+  'forgejo', 'gitea', 'woodpecker', 'runner', 'dependabot', 'renovate', 'trivy',
+  'gitleaks', 'merge queue', 'codeowners'. Not for routines (**routine-writer**),
+  container image builds outside CI (**docker**), or git workflows (**git**).
 license: MIT
 compatibility: "Optional: gh (GitHub CLI), glab (GitLab CLI), fj (Forgejo CLI)"
 paths:
@@ -334,7 +333,7 @@ git checkout <sha>
 The community Forgejo CLI (`fj`, v0.4.1+) covers the day-to-day Actions surface: listing
 runs, dispatching workflows, and managing variables/secrets. It is much faster than the web
 UI for bulk secret updates and scriptable for one-shot runs. Install and auth details live
-in the **git** skill (`references/forge-workflows.md`).
+in the **git** skill's `forge-workflows.md` reference.
 
 ```bash
 # List recent runs (for a quick "is CI green on main?" check)
@@ -464,7 +463,7 @@ the OWASP Top 10 for Agentic Applications, read `references/supply-chain.md`
 
 ## Related Skills
 
-- **code-review** - has `references/cicd-pipelines.md` for CI/CD **bug patterns** (expression
+- **code-review** - has a `cicd-pipelines.md` reference for CI/CD **bug patterns** (expression
   injection, variable scoping, cache gotchas, ArgoCD sync issues)
 - **security-audit** - for auditing application code, not pipeline code
 - **docker** - for Dockerfile and container image optimization

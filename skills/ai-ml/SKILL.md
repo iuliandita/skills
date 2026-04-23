@@ -319,40 +319,11 @@ while not done:
    and cost limits.
 5. **Stale context** - long-running agents accumulate context. Summarize or prune periodically.
 
-### Minimal safe agent loop (Anthropic + Python)
+### Minimal safe agent loop
 
-Combines the three non-negotiables: iteration cap, cost gate, and tool-error policy.
-
-```python
-MAX_ITERS, BUDGET_USD = 20, 5.00
-TOOL_RETRY_MAX = 2  # transient failures only; retry then abort
-spent = 0.0
-
-for i in range(MAX_ITERS):
-    if spent >= BUDGET_USD:
-        raise BudgetExceeded(f"${spent:.2f} >= ${BUDGET_USD}")
-    resp = client.messages.create(model=MODEL, max_tokens=1024, tools=tools, messages=msgs)
-    spent += cost_of(resp.usage)  # input/output tokens * per-1M price
-    if resp.stop_reason == "end_turn":
-        return resp
-    for block in resp.content:
-        if block.type != "tool_use":
-            continue
-        for attempt in range(TOOL_RETRY_MAX + 1):
-            try:
-                result = dispatch(block.name, block.input); is_error = False; break
-            except TransientToolError:
-                if attempt == TOOL_RETRY_MAX: result, is_error = "tool failed after retries", True
-            except PermanentToolError as e:
-                result, is_error = f"tool aborted: {e}", True; break
-        msgs.append({"role": "assistant", "content": resp.content})
-        msgs.append({"role": "user", "content": [{"type": "tool_result",
-            "tool_use_id": block.id, "content": str(result), "is_error": is_error}]})
-raise IterationLimitExceeded(MAX_ITERS)
-```
-
-Retry transient errors (timeouts, 5xx, rate limits) with backoff; abort on permanent ones
-(auth, bad input) and let the model decide next steps from the `is_error` tool_result.
+Every agent loop needs an iteration cap, a cost gate, and a tool-error policy. Retry transient
+errors with backoff, abort on permanent errors, and pass failed tool results back with an error
+marker so the model can choose the next step instead of silently losing state.
 
 Read `references/agent-patterns.md` for multi-agent architectures, human-in-the-loop patterns,
 memory management, and production agent deployment.
@@ -383,30 +354,7 @@ training, and when to use full fine-tuning vs parameter-efficient methods.
 
 ## Local Inference
 
-### Ollama (easiest path)
-
-```bash
-# Install (piping to sh - verify the URL and review the script first)
-curl -fsSL https://ollama.com/install.sh | sh
-ollama pull llama3.1:8b
-ollama run llama3.1:8b
-
-# API compatible with OpenAI SDK
-curl http://localhost:11434/v1/chat/completions \
-  -H "Content-Type: application/json" \
-  -d '{"model": "llama3.1:8b", "messages": [{"role": "user", "content": "hello"}]}'
-```
-
-### vLLM (production serving)
-
-```bash
-# Serve a model with continuous batching
-python -m vllm.entrypoints.openai.api_server \
-  --model meta-llama/Llama-3.1-8B-Instruct \
-  --dtype auto \
-  --max-model-len 8192 \
-  --gpu-memory-utilization 0.9
-```
+### Local serving choices
 
 | Tool | Best for | GPU required |
 |------|----------|-------------|
@@ -515,16 +463,6 @@ PII detection setup, and content policy implementation.
    Models fail in creative ways - handle all of them.
 7. **Budget before you batch.** Calculate cost before running batch operations. A 100k-row
    embedding job at the wrong model can cost thousands.
-
-```python
-# Cost-tracking guard before each LLM call
-BUDGET_USD = 0.50  # per-request ceiling
-input_price, output_price = 3.00, 15.00  # per 1M tokens (claude-sonnet)
-total_tokens = count_tokens(messages)
-estimated = (total_tokens * input_price + max_tokens * output_price) / 1_000_000
-if estimated > BUDGET_USD:
-    raise BudgetExceeded(f"Estimated ${estimated:.4f} exceeds ceiling ${BUDGET_USD}")
-```
 8. **Evaluate with data, not vibes.** Structured evals with datasets and metrics. "It looks
    good" is not a quality gate.
 9. **Cap agent iterations.** Set a max loop count. Runaway agents burn budget and produce

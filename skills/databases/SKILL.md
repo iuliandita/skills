@@ -369,7 +369,7 @@ These are non-negotiable. Violating any of these is a bug.
 
 ## Related Skills
 
-- **code-review** - has `references/databases.md` for application-level database **bug patterns** (transaction misuse, NULL handling, ORM N+1, type coercion). This skill covers engine configuration and operations; code-review covers how the application uses the database.
+- **code-review** - has a `databases.md` reference for application-level database **bug patterns** (transaction misuse, NULL handling, ORM N+1, type coercion). This skill covers engine configuration and operations; code-review covers how the application uses the database.
 - **security-audit** - for SQL injection detection and credential scanning in application code
 - **kubernetes** - for deploying databases on K8s (StatefulSets, operators, PVCs)
 - **terraform** - for provisioning managed databases (RDS, Cloud SQL, Atlas)

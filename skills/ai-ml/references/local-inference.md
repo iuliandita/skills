@@ -86,6 +86,12 @@ response = client.chat.completions.create(
 print(response.choices[0].message.content)
 ```
 
+```bash
+curl http://localhost:11434/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{"model": "llama3.1:8b", "messages": [{"role": "user", "content": "hello"}]}'
+```
+
 ### Embeddings
 
 ```python
