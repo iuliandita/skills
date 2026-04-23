@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.27.0](https://github.com/iuliandita/skills/compare/v1.26.2...v1.27.0) (2026-04-23)
+
+
+### Features
+
+* **installer:** add current agent targets ([8949eda](https://github.com/iuliandita/skills/commit/8949edabf4fcfba80a7e690b223235f5fa51b9ac))
+
+
+### Bug Fixes
+
+* **installer:** include internal skills in linked installs ([ac17dbf](https://github.com/iuliandita/skills/commit/ac17dbfaeefdce270daff7dae64b060537c50e72))
+
 ## [1.26.2](https://github.com/iuliandita/skills/compare/v1.26.1...v1.26.2) (2026-04-23)
 
 
