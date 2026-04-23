@@ -31,9 +31,32 @@ Debian-derived distro specifics that materially change package, boot, or service
 
 ### Ubuntu LTS
 - Current LTS baseline is Ubuntu 26.04 LTS (Resolute Raccoon).
-- Common upgrade sources are Ubuntu 24.04 LTS and Ubuntu 25.10.
+- Typical direct upgrade starting points are Ubuntu 24.04 LTS and Ubuntu 25.10.
 - HWE changes the kernel lane. Check whether the host tracks `linux-generic` or `linux-generic-hwe`.
 - PPAs, snaps, and AppArmor are normal parts of the troubleshooting surface here.
+
+## Ubuntu 24.04 -> 26.04 operational differences
+
+Treat a 24.04 -> 26.04 move as a cumulative upgrade, not a narrow LTS refresh.
+Ubuntu 24.04 LTS users inherit 24.10, 25.04, 25.10, and 26.04 changes.
+
+- **Desktop session baseline changed** - stock Ubuntu Desktop is now Wayland-only. Do not assume the old Ubuntu Xorg session exists by default on fresh 26.04 installs.
+- **`Software & Updates` is no longer installed by default** - GUI instructions for PPAs, repo toggles, and drivers may fail on fresh 26.04 systems because the old tool is absent.
+- **If needed, the old GUI can be restored manually**:
+  ```bash
+  sudo apt install software-properties-gtk
+  software-properties-gtk
+  ```
+- **Additional Drivers GUI expectations changed** - reinstalling `software-properties-gtk` also brings back the older drivers UI. Fresh 26.04 installs may not expose the same driver-management path users remember from 24.04.
+- **Notable app and default swaps on fresh Ubuntu 26.04 Desktop** - support instructions may need to translate old names to new ones:
+  - GNOME Terminal -> Ptyxis
+  - System Monitor / Power Statistics -> Resources
+  - Evince -> Papers
+  - Eye of GNOME -> Loupe
+  - Totem -> Showtime
+  - Tracker Miners -> LocalSearch
+- **Release notes moved** - current Ubuntu release notes now live at `documentation.ubuntu.com/release-notes/`, not the old Discourse-style pages. Prefer the docs site when checking upgrade caveats and known changes.
+- **Do not over-trust 24.04-era blog posts** - GUI paths, screenshots, and desktop-session assumptions can be stale even when the package names still exist.
 
 ### Ubuntu interim
 - Treat interim releases as short-lived stepping stones, not a long-term server baseline.

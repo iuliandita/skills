@@ -2,11 +2,12 @@
 name: debian-ubuntu
 description: >
   · Administer Debian, Ubuntu, and Debian-family distros - apt, dpkg, PPAs, snaps,
-  systemd, GRUB, desktop, PipeWire, GPU, gaming, and firmware. Triggers: 'debian',
-  'ubuntu', 'mint', 'devuan', 'popos', 'pop_os', 'apt', 'dpkg', 'ppa', 'snap',
-  'grub', 'apparmor', 'hwe', 'unattended-upgrades'. Not for Arch/CachyOS
-  (**arch-btw**), shell (**command-prompt**), networking (**networking**), or config
-  management (**ansible**).
+  systemd, GRUB, desktop, PipeWire, GPU, firmware, and release upgrades.
+  Triggers: 'debian', 'ubuntu', 'mint', 'devuan', 'popos', 'system76', 'apt',
+  'dpkg', 'ppa', 'snap', 'grub', 'apparmor', 'hwe', 'linux-generic-hwe',
+  'do-release-upgrade'. Not for Arch/CachyOS (**arch-btw**), shell
+  (**command-prompt**), networking (**networking**), or config management
+  (**ansible**).
 license: MIT
 compatibility: Requires Debian, Ubuntu, or Debian-based distro with apt
 metadata:
@@ -80,6 +81,7 @@ Before returning Debian or Ubuntu commands, verify:
 - [ ] **Distro and release identified**: Debian stable/testing/unstable, Ubuntu LTS/interim, Mint, Pop!_OS, Devuan, Kali, or another derivative. Advice diverges quickly.
 - [ ] **Init system identified**: do not assume systemd on Devuan or other Debian derivatives without checking PID 1, service manager, and boot tooling first.
 - [ ] **Release model respected**: do not suggest `apt upgrade` when `apt full-upgrade` or `apt dist-upgrade` is required for package transitions. Do not suggest `apt dist-upgrade` casually on Ubuntu without context.
+- [ ] **Ubuntu 24.04 -> 26.04 delta accounted for**: Ubuntu 24.04 LTS upgraders inherit 24.10, 25.04, 25.10, and 26.04 changes. Do not treat 26.04 as a small point refresh of 24.04.
 - [ ] **Repository state clean**: no broken apt lists, missing GPG keys, or mixed releases without pinning.
 - [ ] **Boot stack identified**: GRUB vs other loader, EFI vs BIOS, initramfs generator, and kernel metapackage before changing boot files.
 - [ ] **Fallback path exists**: do not remove the only known-good kernel or break the only boot entry on a remote system.
@@ -95,6 +97,7 @@ Before returning Debian or Ubuntu commands, verify:
 - [ ] **Suspend and hibernation claims are real**: hibernation advice matches actual swap layout, initramfs resume hook, and Secure Boot state.
 - [ ] **AppArmor state is considered**: on Ubuntu, AppArmor denials can silently break services, snaps, or custom binaries.
 - [ ] **Snap confinement is not ignored**: when a snap misbehaves, check interfaces and confinement level before reinstalling.
+- [ ] **Ubuntu desktop session assumptions are current**: on Ubuntu 26.04 Desktop, do not assume a stock Xorg session or the old `Software & Updates` GUI are present by default.
 - [ ] **HWE kernel path is understood**: Ubuntu HWE stacks transition kernel metapackages. Know whether the system tracks `generic` or `hwe`.
 - [ ] **Diagnostic errors are not silenced**: do not mask failures with `2>/dev/null` on commands whose error reason matters. Use `2>&1 || true` to surface errors without aborting.
 - [ ] **Firmware updates are not conflated with package updates**: `fwupd` and vendor tools (e.g., `system76-firmware`) are separate from `apt upgrade`.
@@ -111,7 +114,7 @@ Before returning Debian or Ubuntu commands, verify:
 | **Debian stable** | Conservative, pin-oriented | `stable` repo only unless testing/unstable explicitly requested. Backports for select packages. |
 | **Debian testing** | Rolling-ish, with freezes | Closer to Ubuntu but without Ubuntu-specific tooling. |
 | **Debian unstable (sid)** | True rolling | No release, just `sid`. Higher breakage risk. |
-| **Ubuntu LTS** | Default baseline | `do-release-upgrade` for release jumps. HWE kernel optional. Snap presence. |
+| **Ubuntu LTS** | Default baseline | `do-release-upgrade` for release jumps. Treat Ubuntu 26.04 as the current baseline, but remember that 24.04 LTS upgraders also inherit 24.10, 25.04, and 25.10 changes. HWE kernel optional. Snap presence. |
 | **Ubuntu interim** | Short-lived | Common stepping stone into the current LTS. Quick to EOL. |
 | **Linux Mint** | Ubuntu LTS derivative | Cinnamon/XFCE focus. Mint-specific repos and update manager. PPAs from Ubuntu often work. |
 | **Pop!_OS** | Ubuntu derivative with extras | System76 firmware, COSMIC desktop, Pop repos, `system76-power`. NVIDIA ISO available. |
@@ -157,6 +160,11 @@ apt list --upgradable 2>&1 | tail -n +2
 ```
 
 ### Step 3: Load only the relevant reference
+
+If the host is Ubuntu 24.04 LTS or the user is planning a 24.04 -> 26.04 move, load
+`references/derivatives-and-hwe.md` early. That path bundles interim-release churn, desktop-session
+changes, app swaps, and GUI-tool changes that do not show up if you treat 26.04 like a routine
+point upgrade.
 
 | Task type | Reference |
 |-----------|-----------|
@@ -239,7 +247,8 @@ When a bug looks desktop-only, compare one clean baseline:
 ## Default Decisions
 
 - **Debian stable means conservative updates.** Pin when mixing repos. Use backports selectively. Avoid `testing` or `sid` packages on stable without a transition plan.
-- **Ubuntu LTS means predictable cadence.** HWE kernels for newer hardware, but they transition metapackages. Know whether the system tracks `linux-generic` or `linux-generic-hwe`.
+- **Ubuntu LTS means predictable cadence.** Ubuntu 26.04 is the current baseline, but 24.04 -> 26.04 upgrades bundle three interim releases plus the final LTS delta. Expect bigger desktop, app, and workflow changes than the version jump alone suggests.
+- **Ubuntu Desktop assumptions changed in 26.04.** Stock Ubuntu Desktop is Wayland-only, and the old `Software & Updates` GUI is no longer installed by default on new installs. GUI-first troubleshooting advice from 24.04-era blog posts may be wrong on fresh 26.04 systems.
 - **Use systemd-native tools first.** Reach for `systemctl`, `journalctl`, `timedatectl`, and `localectl` before distro wrappers.
 - **Treat PPAs as exceptions, not defaults.** Review maintainer, signing key, freshness, and package origin before adding one. Remove dead PPAs promptly.
 - **Prefer distro packages before third-party repos.** Use Debian backports, Ubuntu official repos, or vendor packages first; escalate to PPAs only when the distro lane is genuinely insufficient.
@@ -262,7 +271,7 @@ When a bug looks desktop-only, compare one clean baseline:
 | Won't boot after kernel work | GRUB menu, fallback kernel, initramfs. From live media, mount root and the ESP, then bind-mount `/dev`, `/proc`, `/sys`, and `/run` before `chroot`; use the boot recovery reference instead of a one-line chroot recipe. |
 | PPA broke the system | `ppa-purge` if available, or manual downgrade + remove after checking package origin with `apt-cache policy` |
 | Snap app misbehaves | `snap connections`, `snap info`, confinement level, interfaces |
-| Desktop weirdness after update | `XDG_SESSION_TYPE`, portal, Xwayland, user services |
+| Desktop weirdness after update | `XDG_SESSION_TYPE`, portal, Xwayland, user services. On Ubuntu 26.04, verify the user is not expecting the old Ubuntu Xorg session to exist by default. |
 | Bluetooth audio issues | BlueZ pairing, PipeWire nodes, card profile |
 | Game blackscreen/crash | GPU driver (proprietary vs Mesa), Vulkan, Steam `i386` libs, Gamescope/MangoHud |
 | Screen share broken | Wayland vs X11, portal backend, PipeWire user units |
@@ -298,6 +307,9 @@ When a bug looks desktop-only, compare one clean baseline:
 - **kubernetes** - cluster and manifest work that sits above host OS administration
 - **ansible** - codifying Linux changes across many machines
 - **security-audit** - hardening and security review rather than normal package/service administration
+- **rhel-fedora** - RPM-family distro administration rather than Debian-family behavior
+- **kali-linux** - Kali-specific branch, image, and offensive-workflow concerns
+- **firewall-appliance** - OPNsense and pfSense appliance work rather than Linux host administration
 - **arch-btw** - Arch Linux and CachyOS administration (the upstream inspiration for this skill)
 - **update-docs** - after substantial system administration changes that introduce new operational gotchas
 
@@ -311,10 +323,11 @@ When a bug looks desktop-only, compare one clean baseline:
 4. **Know the boot chain before touching it.** Confirm GRUB stage, ESP mount, kernel metapackage, initramfs hooks, and EFI fallback path first.
 5. **Never remove the last known-good kernel path casually.** Especially on remote or encrypted systems.
 6. **Prefer systemd-native diagnostics.** `systemctl`, `journalctl`, and `update-grub` usually tell you more than distro wrappers or generic forum folklore.
-7. **Ubuntu HWE is opt-in complexity.** Treat HWE kernels as additions that must be validated, not magic defaults.
-8. **For Wayland issues, inspect the user session first.** Portals, user units, and Xwayland compatibility usually matter more than package reinstall churn.
-9. **For gaming issues, identify the GPU vendor and userspace first.** Driver branch, Vulkan stack, `i386` multilib, and launch wrappers usually explain more than random tweak cargo cults.
-10. **For capture issues, debug portals and PipeWire before app folklore.** OBS, browser WebRTC, Discord, and Teams often fail at the screencast path.
-11. **AppArmor can silently break things.** On Ubuntu, check `aa-status` and AppArmor denials when a service or binary mysteriously fails.
-12. **Do not oversell hibernation or resume.** These depend on exact swap layout, initramfs resume hook, and Secure Boot state.
-13. **Reach for common Debian/Ubuntu failure patterns before exotic explanations.** Mixed repos, stale PPAs, DKMS drift, AppArmor denials, HWE metapackage mismatch, and snap confinement explain a large share of the chaos.
+7. **Ubuntu 26.04 changed some desktop defaults in ways that affect support.** Do not assume a stock Ubuntu Xorg session, the old `Software & Updates` GUI, or 24.04-era desktop app names are still present on fresh installs.
+8. **Ubuntu HWE is opt-in complexity.** Treat HWE kernels as additions that must be validated, not magic defaults.
+9. **For Wayland issues, inspect the user session first.** Portals, user units, and Xwayland compatibility usually matter more than package reinstall churn.
+10. **For gaming issues, identify the GPU vendor and userspace first.** Driver branch, Vulkan stack, `i386` multilib, and launch wrappers usually explain more than random tweak cargo cults.
+11. **For capture issues, debug portals and PipeWire before app folklore.** OBS, browser WebRTC, Discord, and Teams often fail at the screencast path.
+12. **AppArmor can silently break things.** On Ubuntu, check `aa-status` and AppArmor denials when a service or binary mysteriously fails.
+13. **Do not oversell hibernation or resume.** These depend on exact swap layout, initramfs resume hook, and Secure Boot state.
+14. **Reach for common Debian/Ubuntu failure patterns before exotic explanations.** Mixed repos, stale PPAs, DKMS drift, AppArmor denials, HWE metapackage mismatch, and snap confinement explain a large share of the chaos.
