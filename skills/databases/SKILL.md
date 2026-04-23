@@ -1,10 +1,7 @@
 ---
 name: databases
 description: >
-  · Configure, tune, migrate, or review PostgreSQL, MongoDB, MySQL/MariaDB, and MSSQL.
-  Covers schemas, replication, pooling, backups, and performance. Triggers: 'database',
-  'postgres', 'mysql', 'mongodb', 'schema', 'migration', 'pgbouncer', 'EXPLAIN', 'slow
-  query', 'pg_dump'.
+  · Configure/tune/migrate PostgreSQL, MongoDB, MySQL/MariaDB, MSSQL. Triggers: 'database', 'postgres', 'mysql', 'mongodb', 'schema', 'migration', 'pgbouncer', 'EXPLAIN'.
 license: MIT
 compatibility: "Requires one or more of: psql, mongosh, mysql, or sqlcmd"
 metadata:

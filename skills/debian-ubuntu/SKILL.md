@@ -1,10 +1,7 @@
 ---
 name: debian-ubuntu
 description: >
-  · Administer Debian, Ubuntu, and derivatives: apt, dpkg, PPAs, snaps, systemd, GRUB,
-  desktop, PipeWire, GPU, firmware, and upgrades. Triggers: 'debian', 'ubuntu', 'mint',
-  'popos', 'apt', 'dpkg', 'ppa', 'snap', 'grub', 'hwe', 'do-release-upgrade'. Not for
-  Arch/Fedora/NixOS.
+  · Administer Debian/Ubuntu/Mint/Pop: apt, dpkg, PPAs, snaps, systemd, GRUB, HWE, desktop. Triggers: 'debian', 'ubuntu', 'mint', 'popos', 'apt', 'dpkg', 'ppa'. Not for Arch/Fedora/NixOS.
 license: MIT
 compatibility: Requires Debian, Ubuntu, or Debian-based distro with apt
 metadata:

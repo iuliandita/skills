@@ -85,7 +85,7 @@ succeeded" invites the agent to invent checks with wrong paths and service names
 ```yaml
 ---
 name: skill-name              # lowercase a-z, 0-9, hyphens; no leading/trailing/consecutive hyphens; max 64 chars; must match directory name; no reserved words (anthropic, claude)
-description: >                # target ~300 chars, 600 hard max in this collection; platform truncates later
+description: >                # target ~200 chars, warn above 240, 600 hard max; platform truncates later
   Use when... Also use for... Triggers: '...', '...'.
 license: MIT                  # Agent Skills spec field
 metadata:
@@ -130,7 +130,7 @@ user confirmation in steps that could run unattended.
 | Field | Values | Purpose |
 |-------|--------|---------|
 | `name` | `a-z`, `0-9`, hyphens; no leading/trailing/consecutive hyphens; max 64 chars; no reserved words (`anthropic`, `claude`) | identifier, must match directory name |
-| `description` | free text, target ~300 chars, 600 hard max in this collection, no XML tags | primary trigger mechanism - the agent scans this |
+| `description` | free text, target ~200 chars, warn above 240, 600 hard max, no XML tags | primary trigger mechanism - the agent scans this |
 | `license` | license name (e.g., `MIT`) | Agent Skills spec field |
 | `compatibility` | free text, <500 chars | environment requirements (optional) |
 | `metadata.source` | `owner/repo` or `custom` | identifies the publishing collection or an unpublished local skill |

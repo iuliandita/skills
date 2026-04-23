@@ -1,10 +1,7 @@
 ---
 name: localize
 description: >
-  · Localize apps and audit i18n: hardcoded strings, locale catalogs, translations, and
-  completeness. Covers React, Next.js, Vue, Svelte, Angular, and JS/TS. Triggers:
-  'i18n', 'internationalization', 'localization', 'l10n', 'locale', 'hardcoded strings',
-  'next-intl'. Not for prose translation.
+  · Audit app i18n/l10n: hardcoded strings, locale catalogs, translations, fallback gaps. Triggers: 'i18n', 'internationalization', 'localization', 'locale', 'hardcoded strings', 'next-intl'. Not for prose translation.
 license: MIT
 compatibility: "Requires Node.js 20+. Optional: react-i18next, vue-i18n, next-intl, svelte-i18n, ngx-translate, i18next (per framework)"
 metadata:

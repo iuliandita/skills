@@ -1,10 +1,7 @@
 ---
 name: lockpick
 description: >
-  · Handle authorized privesc, CTFs, and post-exploitation on Linux, containers, and
-  K8s. Covers pivoting, credential extraction, and IaC secrets. Triggers: 'privesc',
-  'CTF', 'pentest', 'post-exploitation', 'container escape', 'SUID', 'sudo abuse',
-  'reverse shell', 'GTFOBins'. Not for hardening.
+  · Handle authorized privesc, CTFs, post-exploitation on Linux, containers, K8s. Triggers: 'privesc', 'CTF', 'pentest', 'post-exploitation', 'container escape', 'SUID', 'GTFOBins'. Not for hardening.
 license: MIT
 compatibility: Requires authorized access to target Linux systems and bash/python
 metadata:

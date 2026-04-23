@@ -1,10 +1,7 @@
 ---
 name: skill-creator
 description: >
-  · Create, review, audit, or improve skills: frontmatter, triggers, overlaps,
-  collection consistency, and descriptions. Triggers: 'skill creator', 'new skill',
-  'skill audit', 'skill review', 'skill quality', 'frontmatter', 'skill overlap'. Prefer
-  this for skill-file work.
+  · Create/review skills: frontmatter, triggers, overlaps, collection consistency, descriptions. Triggers: 'skill creator', 'new skill', 'skill audit', 'skill review', 'frontmatter', 'skill overlap'.
 license: MIT
 compatibility: "Optional: git (for freshness and gitignore filtering)"
 metadata:
@@ -54,7 +51,7 @@ Before returning any generated or modified skill, verify against this list:
 - [ ] **Name spec-valid**: lowercase alphanumeric + hyphens only, no leading/trailing/consecutive
   hyphens, no reserved words (`anthropic`, `claude`), matches directory name
 - [ ] **No XML tags** in `name` or `description` fields (Anthropic platform restriction)
-- [ ] **Description is trigger-optimized**: starts with action verbs, includes trigger keywords, mentions related contexts, stays near 300 chars for the collection (600 hard max in `validate-spec.sh`; platform truncation happens later)
+- [ ] **Description is trigger-optimized**: starts with action verbs, includes trigger keywords, mentions related contexts, stays near 200 chars for the collection (240 warn, 600 hard max in `validate-spec.sh`; platform truncation happens later)
 - [ ] **Compatibility field present** (when skill requires specific tools/platforms): quotes values containing colons
 - [ ] **Scope sections present**: "When to use" with concrete scenarios, "When NOT to use"
   cross-referencing related skills by **bold** name (e.g., `use **skill-name**`)
@@ -417,7 +414,7 @@ Follow these patterns from high-performing custom skill descriptions:
 - **Include specific trigger keywords**: list them inline, e.g., "Triggers: 'keyword1', 'keyword2'"
 - **Mention adjacent skills to avoid**: "Not for X (use Y instead)"
 - **Be slightly pushy**: many tools undertrigger skills by default. Include edge cases.
-- **Stay near 300 characters**: the collection warns above 300 and errors above 600. Codex loads every skill description at startup, so concise descriptions prevent startup truncation.
+- **Stay near 200 characters**: the collection warns above 240 and errors above 600. Codex loads every skill description at startup, so concise descriptions prevent startup truncation.
 - **Treat 1024 as the platform ceiling, not the collection target**: truncation happens there, but the repo convention is stricter
 
 #### Step 4: Validate

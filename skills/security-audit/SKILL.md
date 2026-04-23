@@ -1,10 +1,7 @@
 ---
 name: security-audit
 description: >
-  · Audit code for security issues: OWASP, credentials, auth, access control, supply
-  chain, and pre-release checks. Triggers: 'security audit', 'vulnerability scan',
-  'secret scan', 'OWASP', 'hardening', 'auth review'. Not for offensive work (use
-  lockpick).
+  · Audit code security: OWASP, credentials, auth, access control, supply chain, hardening. Triggers: 'security audit', 'vulnerability scan', 'secret scan', 'OWASP', 'auth review'. Not for offensive work.
 license: MIT
 compatibility: "Optional: betterleaks, gitleaks, trivy, semgrep, bandit, checkov, scorecard"
 metadata:

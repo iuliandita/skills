@@ -38,6 +38,7 @@ ALL_SKILLS=()
 SUPPORTED_TOOLS=(
   claude codex cursor windsurf opencode
   copilot gemini roo goose amp continue kiro cline warp
+  openclaw hermes qwen crush antigravity augment openhands trae qoder kimi
   portable
 )
 
@@ -45,18 +46,38 @@ declare -A TOOL_PATHS=(
   [claude]="${CLAUDE_SKILLS_DIR:-$HOME/.claude/skills}"
   [codex]="${CODEX_SKILLS_DIR:-$HOME/.codex/skills}"
   [cursor]="${CURSOR_SKILLS_DIR:-$HOME/.cursor/skills}"
-  [windsurf]="${WINDSURF_SKILLS_DIR:-$HOME/.windsurf/skills}"
+  [windsurf]="${WINDSURF_SKILLS_DIR:-$HOME/.codeium/windsurf/skills}"
   [opencode]="${OPENCODE_SKILLS_DIR:-$HOME/.config/opencode/skills}"
-  [copilot]="$HOME/.copilot/skills"
-  [gemini]="$HOME/.gemini/skills"
-  [roo]="$HOME/.roo/skills"
-  [goose]="$HOME/.config/goose/skills"
-  [amp]="$HOME/.amp/skills"
-  [continue]="$HOME/.continue/skills"
-  [kiro]="$HOME/.kiro/skills"
-  [cline]="$HOME/.cline/skills"
-  [warp]="$HOME/.warp/skills"
+  [copilot]="${COPILOT_SKILLS_DIR:-$HOME/.copilot/skills}"
+  [gemini]="${GEMINI_SKILLS_DIR:-$HOME/.gemini/skills}"
+  [roo]="${ROO_SKILLS_DIR:-$HOME/.roo/skills}"
+  [goose]="${GOOSE_SKILLS_DIR:-$HOME/.config/goose/skills}"
+  [amp]="${AMP_SKILLS_DIR:-$HOME/.config/agents/skills}"
+  [continue]="${CONTINUE_SKILLS_DIR:-$HOME/.continue/skills}"
+  [kiro]="${KIRO_SKILLS_DIR:-$HOME/.kiro/skills}"
+  [cline]="${CLINE_SKILLS_DIR:-$HOME/.agents/skills}"
+  [warp]="${WARP_SKILLS_DIR:-$HOME/.agents/skills}"
+  [openclaw]="${OPENCLAW_SKILLS_DIR:-$HOME/.openclaw/skills}"
+  [hermes]="${HERMES_SKILLS_DIR:-$HOME/.hermes/skills}"
+  [qwen]="${QWEN_SKILLS_DIR:-$HOME/.qwen/skills}"
+  [crush]="${CRUSH_SKILLS_DIR:-$HOME/.config/crush/skills}"
+  [antigravity]="${ANTIGRAVITY_SKILLS_DIR:-$HOME/.gemini/antigravity/skills}"
+  [augment]="${AUGMENT_SKILLS_DIR:-$HOME/.augment/skills}"
+  [openhands]="${OPENHANDS_SKILLS_DIR:-$HOME/.openhands/skills}"
+  [trae]="${TRAE_SKILLS_DIR:-$HOME/.trae/skills}"
+  [qoder]="${QODER_SKILLS_DIR:-$HOME/.qoder/skills}"
+  [kimi]="${KIMI_SKILLS_DIR:-$HOME/.config/agents/skills}"
   [portable]="${PORTABLE_SKILLS_DIR:-$HOME/.skills}"
+)
+
+declare -A TOOL_ALIASES=(
+  [claude-code]=claude
+  [openai-codex]=codex
+  [github-copilot]=copilot
+  [gemini-cli]=gemini
+  [kiro-cli]=kiro
+  [qwen-code]=qwen
+  [kimi-cli]=kimi
 )
 
 supported_tools_text() {
@@ -74,6 +95,7 @@ supported_tools_text() {
 # ── Agent path resolution ─────────────────────────────────────────────
 resolve_tool_path() {
   local tool="$1"
+  tool="${TOOL_ALIASES[$tool]:-$tool}"
   local path="${TOOL_PATHS[$tool]:-}"
 
   if [[ -z "$path" ]]; then
@@ -83,6 +105,11 @@ resolve_tool_path() {
   fi
 
   printf '%s\n' "$path"
+}
+
+canonical_tool_name() {
+  local tool="$1"
+  printf '%s\n' "${TOOL_ALIASES[$tool]:-$tool}"
 }
 
 # ── Usage ─────────────────────────────────────────────────────────────
@@ -368,8 +395,9 @@ main() {
   mapfile -t ALL_SKILLS < <(discover_skills "$include_internal")
 
   # Validate tool names
-  for tool in "${tools[@]}"; do
-    resolve_tool_path "$tool" > /dev/null
+  for i in "${!tools[@]}"; do
+    tools[i]="$(canonical_tool_name "${tools[i]}")"
+    resolve_tool_path "${tools[i]}" > /dev/null
   done
 
   # Build skill list (filter internal unless --include-internal)

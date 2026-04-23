@@ -1,9 +1,7 @@
 ---
 name: firewall-appliance
 description: >
-  · Manage, troubleshoot, or harden OPNsense/pfSense via SSH: pfctl, pf rules, CARP,
-  CrowdSec, pfBlockerNG, and BSD appliances. Triggers: 'opnsense', 'pfsense', 'pfctl',
-  'CARP', 'CrowdSec', 'pfBlockerNG', 'configctl'. Not for Linux firewalls.
+  · Manage OPNsense/pfSense via SSH: pfctl, pf rules, CARP, CrowdSec, pfBlockerNG. Triggers: 'opnsense', 'pfsense', 'pfctl', 'CARP', 'configctl'. Not for Linux firewalls.
 license: MIT
 compatibility: "Requires SSH access to OPNsense or pfSense appliance"
 metadata:

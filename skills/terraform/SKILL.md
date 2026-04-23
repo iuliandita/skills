@@ -1,9 +1,7 @@
 ---
 name: terraform
 description: >
-  · Write, review, or architect Terraform/OpenTofu IaC: HCL patterns, modules, state,
-  and policy-as-code. Triggers: 'terraform', 'opentofu', 'hcl', 'tfvars', 'tfstate',
-  'module', 'terraform plan', 'sentinel', 'checkov', 'tflint'.
+  · Write/review Terraform/OpenTofu HCL, modules, state, policy-as-code. Triggers: 'terraform', 'opentofu', 'hcl', 'tfvars', 'tfstate', 'module', 'terraform plan', 'tflint'.
 license: MIT
 compatibility: "Requires terraform or tofu CLI. Optional: tflint, checkov, conftest"
 metadata:

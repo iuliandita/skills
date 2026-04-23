@@ -1,9 +1,7 @@
 ---
 name: prompt-generator
 description: >
-  · Turn rough notes into structured LLM prompts, or refine existing prompts. Triggers:
-  'write a prompt', 'system prompt', 'prompt template', 'prompt engineering', 'rewrite
-  this prompt', 'improve this prompt'. Not for creating skills or cloud routines.
+  · Turn notes into structured LLM prompts or improve existing prompts. Triggers: 'write a prompt', 'system prompt', 'prompt template', 'prompt engineering', 'rewrite this prompt'. Not for skills or routines.
 license: MIT
 compatibility: "Model-agnostic. Optional: tailor output format to Claude, GPT, or Gemini when target is known"
 metadata:
