@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.26.0](https://github.com/iuliandita/skills/compare/v1.25.0...v1.26.0) (2026-04-23)
+
+
+### Features
+
+* **debian-ubuntu:** emphasize Ubuntu 26.04 upgrade deltas ([#28](https://github.com/iuliandita/skills/issues/28)) ([f54c73e](https://github.com/iuliandita/skills/commit/f54c73ea7eb07948f319d25125098b4e22763b4f))
+
 ## [1.25.0](https://github.com/iuliandita/skills/compare/v1.24.0...v1.25.0) (2026-04-23)
 
 
