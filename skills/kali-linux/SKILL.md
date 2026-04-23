@@ -1,13 +1,10 @@
 ---
 name: kali-linux
 description: >
-  · Administer Kali Linux as a Debian-derived security distro - apt, branches,
-  metapackages, images, live USB persistence, ARM and Purple images, NetHunter,
-  wireless, GPU, and lab hygiene. Triggers: 'kali', 'kali rolling',
-  'kali snapshot', 'kali-tweaks', 'nethunter', 'kali tools',
-  'kali metapackage', 'kali live usb', 'kali arm'. Not for generic Debian hosts
-  (**debian-ubuntu**), exploitation (**lockpick**), vulnerability research
-  (**zero-day**), or defensive review (**security-audit**).
+  · Administer Kali Linux: apt, branches, metapackages, images, live USB persistence,
+  ARM/Purple images, NetHunter, wireless, GPU, and lab hygiene. Triggers: 'kali', 'kali
+  rolling', 'kali snapshot', 'kali-tweaks', 'nethunter', 'kali tools', 'kali live usb'.
+  Not for exploitation.
 license: MIT
 compatibility: Requires Kali Linux or Kali images with apt and Kali repositories
 metadata:

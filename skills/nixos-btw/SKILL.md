@@ -1,13 +1,10 @@
 ---
 name: nixos-btw
 description: >
-  · Administer NixOS, Nix, home-manager, nix-darwin, and flakes - declarative config,
-  generations and rollbacks, channels vs flakes, modules, overlays, nix-store GC, disko,
-  impermanence, nixos-anywhere, Determinate Nix, Lix. Triggers: 'nixos', 'nix', 'flake',
-  'home-manager', 'nix-darwin', 'configuration.nix', 'nixpkgs', 'nixos-rebuild',
-  'nix-shell', 'nix develop', 'overlay', 'disko', 'impermanence', 'determinate nix',
-  'lix'. Not for Arch (**arch-btw**), Debian (**debian-ubuntu**), Fedora
-  (**rhel-fedora**), Kali (**kali-linux**), shell (**command-prompt**).
+  · Administer NixOS, Nix, home-manager, nix-darwin, flakes, generations, rollbacks,
+  overlays, disko, impermanence, Determinate Nix, and Lix. Triggers: 'nixos', 'nix',
+  'flake', 'home-manager', 'configuration.nix', 'nixos-rebuild', 'nix-shell', 'nix
+  develop', 'disko'. Not for other distros.
 license: MIT
 compatibility: "Requires NixOS, or Nix/Determinate Nix/Lix on Linux/macOS/WSL"
 metadata:

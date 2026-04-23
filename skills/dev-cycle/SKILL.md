@@ -1,13 +1,10 @@
 ---
 name: dev-cycle
 description: >
-  · Start-to-finish workflow. Start: pull, branch, size-detect, spec or
-  dive in. Finish: lint/test, review, sync docs/versions, push, PR, watch
-  CI, merge, release (auto-skip if none). Forge-agnostic: GitHub, GitLab,
-  Forgejo/Gitea, Bitbucket, plain git. Delegates to git, testing,
-  code-review, update-docs, brainstorming. Triggers: 'start working',
-  'kick off', 'new branch', 'wrap up', 'ship this', 'finish and merge',
-  'ready to ship', 'close out'. Not for milestones or single git ops.
+  · Run a start-to-finish dev workflow: branch, implement, lint/test, review, docs, PR,
+  CI, merge, and release when needed. Works across GitHub, GitLab, Forgejo/Gitea, and
+  plain git. Triggers: 'start working', 'kick off', 'wrap up', 'ship this', 'ready to
+  ship'. Not for single git ops.
 license: MIT
 compatibility: "Requires git. Optional forge CLIs by host: gh (GitHub), glab (GitLab), tea (Forgejo/Gitea). Bitbucket uses web UI or REST API. Bare git (no remote) works via format-patch/bundle. Delegates to git, testing, code-review, update-docs, and a brainstorming skill if installed."
 metadata:

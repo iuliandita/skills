@@ -1,10 +1,10 @@
 ---
 name: databases
 description: >
-  · Configure, tune, migrate, or review database engines - PostgreSQL, MongoDB, MySQL/MariaDB,
-  MSSQL. Covers schemas, replication, connection pooling, backups, and performance tuning.
-  Triggers: 'database', 'postgres', 'mysql', 'mongodb', 'mssql', 'schema', 'migration',
-  'replication', 'pgbouncer', 'EXPLAIN', 'query plan', 'slow query', 'vacuum', 'pg_dump'.
+  · Configure, tune, migrate, or review PostgreSQL, MongoDB, MySQL/MariaDB, and MSSQL.
+  Covers schemas, replication, pooling, backups, and performance. Triggers: 'database',
+  'postgres', 'mysql', 'mongodb', 'schema', 'migration', 'pgbouncer', 'EXPLAIN', 'slow
+  query', 'pg_dump'.
 license: MIT
 compatibility: "Requires one or more of: psql, mongosh, mysql, or sqlcmd"
 metadata:
@@ -369,7 +369,7 @@ These are non-negotiable. Violating any of these is a bug.
 
 ## Related Skills
 
-- **code-review** - has `references/databases.md` for application-level database **bug patterns** (transaction misuse, NULL handling, ORM N+1, type coercion). This skill covers engine configuration and operations; code-review covers how the application uses the database.
+- **code-review** - has a `databases.md` reference for application-level database **bug patterns** (transaction misuse, NULL handling, ORM N+1, type coercion). This skill covers engine configuration and operations; code-review covers how the application uses the database.
 - **security-audit** - for SQL injection detection and credential scanning in application code
 - **kubernetes** - for deploying databases on K8s (StatefulSets, operators, PVCs)
 - **terraform** - for provisioning managed databases (RDS, Cloud SQL, Atlas)

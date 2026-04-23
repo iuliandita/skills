@@ -715,3 +715,77 @@ Quality signals:
 - Explains why: routines cannot pause to ask clarifying questions
 - Does not draft a routine prompt that papers over the ambiguity
 - Does not recommend enabling unrestricted branch pushes as a workaround
+
+### debian-ubuntu
+
+**Test 1: Apt and release-lane repair**
+Prompt: "Ubuntu 24.04 laptop: apt full-upgrade fails after I added a PPA, and I want to move to 26.04 LTS. How do I triage this safely?"
+Quality signals:
+- Identifies distro and release lane before changing packages
+- Checks apt policy, held packages, broken sources, PPA provenance, and HWE state
+- Separates fixing package health from starting do-release-upgrade
+- Preserves rollback or recovery path before kernel or boot changes
+- Does not suggest blind apt dist-upgrade or deleting package databases
+
+**Test 2: Desktop audio and portal issue**
+Prompt: "On Linux Mint, screen sharing in Firefox is black and Bluetooth audio switches to the wrong profile."
+Quality signals:
+- Treats Mint as Ubuntu-derived but checks desktop/session details
+- Checks PipeWire, WirePlumber, portals, Bluetooth trust/profile, and logs
+- Loads desktop/audio reference before broad package changes
+- Avoids assuming GNOME or stock Ubuntu behavior
+
+### kali-linux
+
+**Test 1: Kali branch and metapackage hygiene**
+Prompt: "My Kali rolling VM is broken after I added Debian testing repos. I also installed kali-linux-everything because one wireless tool was missing."
+Quality signals:
+- Identifies Kali lane and source-list state first
+- Explains why mixing Debian testing with Kali branches is unsafe
+- Separates repo repair from metapackage planning
+- Recommends focused kali-tools-* bundles over kali-linux-everything when appropriate
+- Keeps authorization and lab hygiene distinct from package installation
+
+**Test 2: Live USB persistence and hardware**
+Prompt: "Build a Kali live USB with persistence for wireless testing on a laptop. Monitor mode does not work after boot."
+Quality signals:
+- Distinguishes live ISO, persistence-backed live media, installed system, and VM image
+- Checks persistence layout before assuming package failure
+- Checks chipset, firmware, driver, USB passthrough, rfkill, and monitor-mode support
+- Routes exploitation technique questions away to lockpick
+
+### nixos-btw
+
+**Test 1: Flake rebuild failure**
+Prompt: "My NixOS flake rebuild fails after updating nixpkgs. Home-manager is included as a module, and I want to roll back safely."
+Quality signals:
+- Identifies NixOS lane, flakes vs channels, and home-manager mode
+- Uses generation rollback and preserves known-good generations before GC
+- Checks flake.lock, nix flake metadata, and nixos-rebuild verb choice
+- Avoids recommending nix-env -i or changing system.stateVersion casually
+
+**Test 2: Secrets and disk layout**
+Prompt: "Review this NixOS config idea: put database passwords directly in configuration.nix and use disko plus impermanence for the server install."
+Quality signals:
+- Flags secrets embedded in the Nix store as unsafe
+- Recommends activation-time secrets such as sops-nix or agenix
+- Checks disko, filesystem, subvolume, and impermanence layout before rollback advice
+- Separates Nix build concerns from runtime Docker or Kubernetes deployment concerns
+
+### rhel-fedora
+
+**Test 1: SELinux and firewalld triage**
+Prompt: "A custom web app on Rocky Linux cannot bind to its port after I restored files from backup. Should I disable SELinux?"
+Quality signals:
+- Identifies distro and release lane first
+- Checks AVCs, file contexts, ports, booleans, and firewalld active zone
+- Distinguishes restorecon/semanage from setenforce 0
+- Avoids treating Rocky, Fedora, RHEL, and Amazon Linux as identical
+
+**Test 2: Fedora upgrade and NVIDIA**
+Prompt: "Fedora Workstation upgrade left me with a black screen. I use NVIDIA from RPM Fusion and Secure Boot."
+Quality signals:
+- Checks Fedora lane, kernel, akmods or DKMS state, RPM Fusion repos, and Secure Boot
+- Preserves fallback kernels and boot entries
+- Uses dracut, grubby, journal, and display-manager logs before reinstalling packages
+- Routes rpm-ostree or image-mode systems away instead of treating them as dnf hosts

@@ -1,13 +1,10 @@
 ---
 name: debian-ubuntu
 description: >
-  · Administer Debian, Ubuntu, and Debian-family distros - apt, dpkg, PPAs, snaps,
-  systemd, GRUB, desktop, PipeWire, GPU, firmware, and release upgrades.
-  Triggers: 'debian', 'ubuntu', 'mint', 'devuan', 'popos', 'system76', 'apt',
-  'dpkg', 'ppa', 'snap', 'grub', 'apparmor', 'hwe', 'linux-generic-hwe',
-  'do-release-upgrade'. Not for Arch/CachyOS (**arch-btw**), shell
-  (**command-prompt**), networking (**networking**), or config management
-  (**ansible**).
+  · Administer Debian, Ubuntu, and derivatives: apt, dpkg, PPAs, snaps, systemd, GRUB,
+  desktop, PipeWire, GPU, firmware, and upgrades. Triggers: 'debian', 'ubuntu', 'mint',
+  'popos', 'apt', 'dpkg', 'ppa', 'snap', 'grub', 'hwe', 'do-release-upgrade'. Not for
+  Arch/Fedora/NixOS.
 license: MIT
 compatibility: Requires Debian, Ubuntu, or Debian-based distro with apt
 metadata:

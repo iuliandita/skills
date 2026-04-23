@@ -1,13 +1,10 @@
 ---
 name: lockpick
 description: >
-  · Authorized privilege escalation, CTF challenges, post-exploitation enumeration on Linux,
-  containers, and K8s. Covers lateral movement, pivoting, credential extraction, and IaC
-  secrets exposure. Triggers: 'privesc', 'CTF', 'pentest', 'post-exploitation', 'container
-  escape', 'SUID', 'sudo abuse', 'RBAC abuse', 'reverse shell', 'GTFOBins', 'LinPEAS',
-  'lateral movement'. Not for defensive hardening (**security-audit**), firewall config
-  (**firewall-appliance**), Kali distro admin (**kali-linux**), or vulnerability research
-  (**zero-day**).
+  · Handle authorized privesc, CTFs, and post-exploitation on Linux, containers, and
+  K8s. Covers pivoting, credential extraction, and IaC secrets. Triggers: 'privesc',
+  'CTF', 'pentest', 'post-exploitation', 'container escape', 'SUID', 'sudo abuse',
+  'reverse shell', 'GTFOBins'. Not for hardening.
 license: MIT
 compatibility: Requires authorized access to target Linux systems and bash/python
 metadata:

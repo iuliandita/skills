@@ -1,11 +1,10 @@
 ---
 name: virtualization
 description: >
-  · Create, configure, or troubleshoot VMs and hypervisors - Proxmox VE, libvirt/QEMU/KVM,
-  XCP-ng, VMware vSphere. Covers provisioning, passthrough, storage backends, cloud-init,
-  and Packer builds. Triggers: 'proxmox', 'qemu', 'kvm', 'libvirt', 'virsh', 'vm', 'esxi',
-  'vsphere', 'pci passthrough', 'gpu passthrough', 'cloud-init', 'packer'. Not for containers
-  (use kubernetes/docker), general Terraform (use terraform), or config management (use ansible).
+  · Create, configure, or troubleshoot VMs and hypervisors: Proxmox, libvirt/QEMU/KVM,
+  XCP-ng, and vSphere. Covers passthrough, storage, cloud-init, and Packer. Triggers:
+  'proxmox', 'qemu', 'kvm', 'libvirt', 'virsh', 'vm', 'vsphere', 'pci passthrough',
+  'cloud-init'. Not for containers.
 license: MIT
 compatibility: "Varies by hypervisor. Proxmox: pvesh, qm, pct. Libvirt: virsh, virt-install. Optional: packer, terraform"
 metadata:

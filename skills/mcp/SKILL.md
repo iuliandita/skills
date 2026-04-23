@@ -1,11 +1,10 @@
 ---
 name: mcp
 description: >
-  · Build, review, or debug MCP servers, tools, resources, and prompts. Covers transports
-  (stdio, streamable HTTP), OAuth 2.1 auth, and tool handler implementation. Triggers: 'mcp',
-  'model context protocol', 'mcp server', 'mcp tool', 'tool handler', 'fastmcp',
-  '@modelcontextprotocol/sdk', 'mcp inspector', 'elicitation'. Not for Claude API usage
-  (use ai-ml) or MCP server security auditing (use security-audit).
+  · Build, review, or debug MCP servers, tools, resources, prompts, transports, OAuth
+  2.1 auth, and handlers. Triggers: 'mcp', 'model context protocol', 'mcp server', 'mcp
+  tool', 'tool handler', 'fastmcp', '@modelcontextprotocol/sdk', 'mcp inspector'. Not
+  for general APIs.
 license: MIT
 compatibility: Requires Node.js or Python runtime
 metadata:

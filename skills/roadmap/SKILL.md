@@ -1,11 +1,10 @@
 ---
 name: roadmap
 description: >
-  · Capture project ideas, track progress, and scout competitors in a gitignored ROADMAP.md.
-  Add ideas, check off shipped items after PRs or releases, scan competing repos and issues
-  for what users want, review and prioritize. Triggers: 'roadmap', 'ideas', 'feature ideas',
-  'competitive analysis', 'what should I build', 'feature backlog'. Not for structured project
-  management (phases, milestones), code review (use code-review), or doc updates (use update-docs).
+  · Capture project ideas, track progress, scout competitors, and prioritize a
+  gitignored ROADMAP.md. Triggers: 'roadmap', 'ideas', 'feature ideas', 'competitive
+  analysis', 'what should I build', 'feature backlog'. Not for structured project
+  management or code review.
 license: MIT
 compatibility: "Requires git. Optional: gh (GitHub CLI) or glab (GitLab CLI) for PR tracking and competitive scanning"
 metadata:

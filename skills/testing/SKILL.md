@@ -1,11 +1,10 @@
 ---
 name: testing
 description: >
-  · Write, review, or debug tests - unit, integration, E2E, TDD, mocking, fixtures,
-  accessibility, visual regression, and performance. Triggers: 'test', 'spec', 'TDD',
-  'playwright', 'vitest', 'jest', 'pytest', 'cypress', 'coverage', 'flaky test', 'mock',
-  'fixture', 'a11y', 'benchmark', 'k6', 'load test'. Not for test quality review
-  (use code-review) or security testing (use security-audit).
+  · Write, review, or debug tests: unit, integration, E2E, TDD, mocking, fixtures,
+  accessibility, visual regression, and perf. Triggers: 'test', 'spec', 'TDD',
+  'playwright', 'vitest', 'jest', 'pytest', 'cypress', 'coverage', 'flaky test',
+  'mock', 'a11y'. Not for security tests (use security-audit).
 license: MIT
 compatibility: "Requires one or more of: vitest, jest, pytest, go test, cargo test, playwright"
 metadata:

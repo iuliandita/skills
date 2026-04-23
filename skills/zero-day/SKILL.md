@@ -1,13 +1,10 @@
 ---
 name: zero-day
 description: >
-  · Hunt for novel vulnerabilities in source code, binaries, or live systems - reverse
-  engineering, patch diffing, fuzzing, attack surface mapping, PoC development, and
-  responsible disclosure. Triggers: 'zero-day', '0-day', 'vulnerability research',
-  'variant analysis', 'patch diffing', 'fuzz', 'exploit dev', 'CVE', 'PoC', 'reverse
-  engineering'. Not for SAST scanning (**security-audit**), post-exploitation
-  (**lockpick**), Kali tool administration (**kali-linux**), or code correctness
-  (**code-review**).
+  · Hunt for novel vulnerabilities in source, binaries, or live systems: reversing,
+  patch diffing, fuzzing, attack surface mapping, PoCs, and disclosure. Triggers:
+  'zero-day', '0-day', 'vulnerability research', 'variant analysis', 'patch diffing',
+  'fuzz', 'exploit dev', 'CVE', 'PoC'. Not for SAST.
 license: MIT
 compatibility: "Optional: codeql, semgrep, joern, ghidra, radare2/rizin, afl++, gdb, pwntools, strace, ltrace, checksec"
 metadata:
