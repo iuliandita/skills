@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.25.0](https://github.com/iuliandita/skills/compare/v1.24.0...v1.25.0) (2026-04-23)
+
+
+### Features
+
+* **nixos-btw:** add NixOS, Nix, flakes, and nix-darwin skill ([#26](https://github.com/iuliandita/skills/issues/26)) ([e6362c4](https://github.com/iuliandita/skills/commit/e6362c4afc2a23da4843bb371ffa02c98ffe85f1))
+
 ## [1.24.0](https://github.com/iuliandita/skills/compare/v1.23.0...v1.24.0) (2026-04-22)
 
 
