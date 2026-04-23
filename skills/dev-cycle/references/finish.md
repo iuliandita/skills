@@ -591,6 +591,7 @@ Check all signals. **Require at least 2 independent positive signals** before tr
 | Semver tags exist | any forge | `git tag -l 'v[0-9]*' \| head -1` (after `git fetch --tags`; match `v` + digit, not arbitrary `v*`) |
 | CHANGELOG exists | any forge | `[[ -f CHANGELOG.md ]] \|\| [[ -f CHANGES.md ]] \|\| [[ -f HISTORY.md ]]` |
 | Release workflow file | any forge | `find .github/workflows .gitlab-ci.yml .forgejo/workflows .gitea/workflows .woodpecker.yml .drone.yml 2>/dev/null \| xargs grep -lE "(release\|publish)" 2>/dev/null \| head -1` |
+| Release-automation config | any forge | `[[ -f release-please-config.json ]] \|\| [[ -f .release-please-manifest.json ]] \|\| [[ -f .releaserc ]]` |
 | Published releases (forge-specific) | depends on `$FORGE` | see below |
 | Published package | any forge | `jq -e '.private != true and .version' package.json 2>/dev/null` or `grep -q '^\[project\]' pyproject.toml 2>/dev/null` or a non-empty `[package]` block in `Cargo.toml` |
 
@@ -615,7 +616,27 @@ esac
 - Only one tag exists and it's >6 months old - might be abandoned, might be stable. Ask.
 - CHANGELOG exists but has never had a release section populated - new repo, ask.
 
-If neither threshold met: announce "No release convention detected (signals: N of 5) - skipping release cut. Version-bump work from Step B3 still applies."
+If neither threshold met: announce "No release convention detected (signals: N of 6) - skipping release cut. Version-bump work from Step B3 still applies."
+
+### Release automation in PR mode
+
+If the repo uses `release-please` in PR mode, do **not** hand-cut tags or GitHub Releases after merging the feature PR.
+Treat the bot-generated release PR as the release step.
+
+Detection signals:
+- `release-please-config.json` and `.release-please-manifest.json` exist
+- README or repo docs say releases happen through release-please PRs
+- a branch like `release-please--branches--main` exists remotely
+- an open PR titled like `chore(main): release X.Y.Z` appears right after merging a releasable commit
+
+Workflow for release-please PR mode:
+1. Merge the user-facing feature PR first.
+2. Check for the newly opened release PR.
+3. Review its title/body/version bump briefly instead of editing release files by hand.
+4. Merge that release PR when ready.
+5. Confirm the resulting tag and GitHub Release exist.
+
+In this mode, "cut release" means "merge the release-please PR and verify the tag/release", not "create the tag manually".
 
 ### Determine bump type
 
