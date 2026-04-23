@@ -8,7 +8,7 @@
 npx skills add iuliandita/skills
 ```
 
-**36 production-tested skills** - Kubernetes, Terraform, Docker, Ansible, CI/CD, HTTP APIs, databases, AI/ML, testing, virtualization, Arch Linux, Debian-family, RPM-family, Kali Linux, networking, localization, browsing, MCP servers, security audits, pentesting, code review, prose audits, dev workflow orchestration, and more.
+**37 production-tested skills** - Kubernetes, Terraform, Docker, Ansible, CI/CD, HTTP APIs, databases, AI/ML, testing, virtualization, Arch Linux, Debian-family, RPM-family, Kali Linux, NixOS, networking, localization, browsing, MCP servers, security audits, pentesting, code review, prose audits, dev workflow orchestration, and more.
 
 Built on the [Agent Skills open standard](https://agentskills.io/specification). Works with any tool that supports it.
 
@@ -19,7 +19,7 @@ Built on the [Agent Skills open standard](https://agentskills.io/specification).
 
 ---
 
-`kubernetes` `terraform` `docker` `ansible` `archlinux` `cachyos` `pacman` `paru` `aur` `systemd` `helm` `argocd` `ci-cd` `github-actions` `gitlab-ci` `postgresql` `mongodb` `mysql` `networking` `dns` `wireguard` `tailscale` `vpn` `nftables` `opnsense` `pfsense` `mcp` `model-context-protocol` `security-audit` `owasp` `pentesting` `privilege-escalation` `ctf` `code-review` `git` `shell` `zsh` `bash` `prompt-engineering` `pci-dss` `compliance` `devops` `infrastructure-as-code` `iac` `containers` `podman` `buildah` `sealed-secrets` `haproxy` `caddy` `traefik` `nginx` `autoresearch` `self-improving` `llm` `rag` `embedding` `vector-store` `langchain` `langgraph` `openai-sdk` `anthropic-sdk` `agents` `fine-tuning` `ollama` `vllm` `promptfoo` `vitest` `jest` `playwright` `pytest` `tdd` `e2e` `accessibility` `axe-core` `load-testing` `k6` `proxmox` `qemu` `kvm` `libvirt` `packer` `cloud-init` `gpu-passthrough` `virtualization` `hypervisor`
+`kubernetes` `terraform` `docker` `ansible` `archlinux` `cachyos` `pacman` `paru` `aur` `systemd` `nixos` `nix` `flakes` `home-manager` `nix-darwin` `helm` `argocd` `ci-cd` `github-actions` `gitlab-ci` `postgresql` `mongodb` `mysql` `networking` `dns` `wireguard` `tailscale` `vpn` `nftables` `opnsense` `pfsense` `mcp` `model-context-protocol` `security-audit` `owasp` `pentesting` `privilege-escalation` `ctf` `code-review` `git` `shell` `zsh` `bash` `prompt-engineering` `pci-dss` `compliance` `devops` `infrastructure-as-code` `iac` `containers` `podman` `buildah` `sealed-secrets` `haproxy` `caddy` `traefik` `nginx` `autoresearch` `self-improving` `llm` `rag` `embedding` `vector-store` `langchain` `langgraph` `openai-sdk` `anthropic-sdk` `agents` `fine-tuning` `ollama` `vllm` `promptfoo` `vitest` `jest` `playwright` `pytest` `tdd` `e2e` `accessibility` `axe-core` `load-testing` `k6` `proxmox` `qemu` `kvm` `libvirt` `packer` `cloud-init` `gpu-passthrough` `virtualization` `hypervisor`
 
 ---
 
@@ -69,7 +69,7 @@ The loop: **Score -> Improve -> Verify -> Keep or Revert -> Repeat.**
 
 ## What's in the box
 
-36 production-tested skills covering:
+37 production-tested skills covering:
 
 ### Infrastructure & Operations
 
@@ -80,6 +80,7 @@ The loop: **Score -> Improve -> Verify -> Keep or Revert -> Repeat.**
 | **debian-ubuntu** | Debian and Debian-family administration - apt, dpkg, PPAs, snaps, systemd, GRUB, AppArmor, HWE, and distro-specific quirks |
 | **rhel-fedora** | Fedora and RHEL-family administration - dnf, yum, SELinux, firewalld, dracut, subscription-manager, and clone-specific quirks |
 | **kali-linux** | Kali Linux administration - branches, metapackages, live USB persistence, offensive tool families, NetHunter, and lab-safe distro workflow |
+| **nixos-btw** | NixOS, Nix, home-manager, nix-darwin, and flakes - declarative config, generations and rollbacks, channels vs flakes, modules, overlays, nix-store GC, disko, impermanence, nixos-anywhere, Determinate Nix and Lix |
 | **docker** | Dockerfiles, Compose, Podman, Buildah, multi-stage builds, image signing, container hardening |
 | **kubernetes** | Manifests, Helm charts, Gateway API, Kustomize, ArgoCD, sealed secrets, PCI-DSS compliance |
 | **terraform** | Terraform/OpenTofu - HCL patterns, module design, state management, policy-as-code, compliance |
