@@ -1,10 +1,7 @@
 ---
 name: routine-writer
 description: >
-  · Write Claude Code routine prompts for unattended cloud tasks via schedule, API, or
-  GitHub events. Emits routine text, /schedule commands, and /fire curl templates.
-  Triggers: 'routine', 'claude routine', 'scheduled claude task', 'unattended claude',
-  '/schedule'. Not for one-off prompts.
+  · Write Claude Code routine prompts for unattended schedules, APIs, GitHub events. Triggers: 'routine', 'claude routine', 'scheduled claude task', 'unattended claude', '/schedule', '/fire'. Not for one-off prompts.
 license: MIT
 compatibility: "Routines require a Pro, Max, Team, or Enterprise plan with Claude Code on the web. CLI automation requires the claude binary on PATH"
 metadata:

@@ -1,10 +1,7 @@
 ---
 name: git
 description: >
-  · Handle git operations: branches, commits, remotes, conflicts, hooks, signing,
-  releases, PR/MR workflows, GitHub, GitLab, Forgejo, and Gitea. Triggers: 'git',
-  'commit', 'branch', 'merge', 'rebase', 'tag', 'push', 'PR', 'MR', 'release', 'gh',
-  'glab', 'forgejo'.
+  · Handle git branches, commits, remotes, conflicts, hooks, signing, releases, PR/MR workflows. Triggers: 'git', 'commit', 'branch', 'merge', 'rebase', 'tag', 'push', 'PR', 'MR', 'gh', 'glab'.
 license: MIT
 compatibility: "Requires git. Optional: gh (GitHub CLI), glab (GitLab CLI), fj (Forgejo CLI)"
 metadata:

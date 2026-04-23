@@ -1,9 +1,7 @@
 ---
 name: code-review
 description: >
-  · Review code for bugs, logic errors, edge cases, races, leaks, and convention issues.
-  Triggers: 'review', 'code review', 'find bugs', 'check this', 'spot check', 'what did
-  I miss', 'sanity check'. Not for style/slop audits (use anti-slop).
+  · Review code for bugs, edge cases, races, leaks, regressions, conventions. Triggers: 'review', 'code review', 'find bugs', 'check this', 'spot check', 'sanity check'. Not for style/slop audits (use anti-slop).
 license: MIT
 compatibility: "None - works on any codebase"
 metadata:

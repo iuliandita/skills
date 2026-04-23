@@ -1,10 +1,7 @@
 ---
 name: anti-ai-prose
 description: >
-  · Audit prose for AI tells in docs, READMEs, PRs, commits, emails, slides, and
-  docstrings. Checks vocabulary, syntax, tone, and formatting. Triggers: 'ai writing',
-  'sounds like chatgpt', 'ai slop prose', 'llm voice', 'sound human', 'prose review'.
-  Not for code (use anti-slop).
+  · Audit prose for AI tells in docs, PRs, emails, slides, docstrings. Triggers: 'ai writing', 'sounds like chatgpt', 'ai slop prose', 'llm voice', 'sound human'. Not for code (use anti-slop).
 license: MIT
 compatibility: "None - works on any prose or text input"
 metadata:

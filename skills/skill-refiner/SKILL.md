@@ -1,10 +1,7 @@
 ---
 name: skill-refiner
 description: >
-  · Batch-improve skill collections with adaptive evaluation loops, lint checks,
-  behavioral tests, and peer review. Triggers: 'skill refiner', 'improve skills',
-  'quality sweep', 'batch improve', 'skill loop'. Not for single skill work (use
-  skill-creator).
+  · Batch-improve skill collections with evaluation loops, lint checks, behavioral tests, peer review. Triggers: 'skill refiner', 'improve skills', 'quality sweep', 'batch improve', 'skill loop'. Not for one skill.
 license: MIT
 compatibility: "Requires: skill-creator skill, git. Optional: secondary AI harness (codex, claude, opencode) for cross-model review"
 metadata:

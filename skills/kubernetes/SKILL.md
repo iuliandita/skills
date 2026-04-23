@@ -1,10 +1,7 @@
 ---
 name: kubernetes
 description: >
-  · Write, review, or architect Kubernetes manifests, Helm charts, and cluster
-  infrastructure. Covers Gateway API, Kustomize, ArgoCD, sealed secrets, and supply
-  chain security. Triggers: 'kubernetes', 'k8s', 'helm', 'kubectl', 'deployment', 'pod',
-  'ingress', 'gateway', 'argocd', 'sealed-secrets'.
+  · Write/review Kubernetes manifests, Helm, Kustomize, Gateway API, ArgoCD, sealed secrets. Triggers: 'kubernetes', 'k8s', 'helm', 'kubectl', 'deployment', 'pod', 'ingress', 'gateway'.
 license: MIT
 compatibility: "Requires kubectl. Optional: helm, kustomize, kube-score, cosign"
 metadata:

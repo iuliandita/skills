@@ -46,8 +46,8 @@ validate_description() {
   fi
   if [[ ${#desc} -gt 600 ]]; then
     error "$name: description exceeds 600 characters (${#desc})"
-  elif [[ ${#desc} -gt 300 ]]; then
-    warn "$name: description exceeds Codex-friendly 300 character target (${#desc})"
+  elif [[ ${#desc} -gt 240 ]]; then
+    warn "$name: description exceeds Codex-friendly 240 character target (${#desc})"
   fi
 }
 

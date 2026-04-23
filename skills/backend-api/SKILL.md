@@ -1,10 +1,7 @@
 ---
 name: backend-api
 description: >
-  · Design, review, or implement HTTP APIs for FastAPI, Express, and NestJS. Covers
-  REST/OpenAPI, versioning, pagination, idempotency, OAuth/OIDC, JWT, and BFFs.
-  Triggers: 'fastapi', 'express', 'nestjs', 'openapi', 'pagination', 'idempotency',
-  'oauth', 'jwt'. Not for schemas (use databases).
+  · Design/review HTTP APIs for FastAPI, Express, NestJS: REST, OpenAPI, pagination, OAuth/JWT. Triggers: 'fastapi', 'express', 'nestjs', 'openapi', 'pagination', 'idempotency'. Not for schemas (use databases).
 license: MIT
 compatibility: "Optional: Python or Node.js framework context. Optional: OpenAPI-capable framework/docs tooling"
 metadata:

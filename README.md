@@ -41,6 +41,16 @@ These skills follow the [Agent Skills open standard](https://agentskills.io/spec
 - **Continue** - native support
 - **Kiro CLI** - native support
 - **Warp** - native support
+- **OpenClaw** - native support
+- **Hermes Agent** - native support
+- **Qwen Code** - native support
+- **Crush** - native support
+- **Google Antigravity** - native support
+- **Augment** - native support
+- **OpenHands** - native support
+- **Trae** - native support
+- **Qoder** - native support
+- **Kimi Code CLI** - native support
 - Any other tool that implements the Agent Skills spec
 
 No conversion, no adapters. Drop the skill folder in your tool's skills directory and it works.
@@ -141,7 +151,7 @@ Each skill follows the [Agent Skills specification](https://agentskills.io/speci
 - **Compact body** (target under 500 lines, 600 hard max) - the core instructions that load into every conversation. Kept lean so it doesn't eat your context window.
 - **Reference files** (`references/` directory) - detailed pattern libraries, compliance checklists, manifest templates. The agent reads these on-demand when the task requires depth. You get expert-level detail without paying the token cost upfront.
 - **Argument hints** (`metadata.argument_hint`) - tells agents what arguments a skill expects when invoked (e.g., `<file-or-pattern>`, `[iterations]`). Angle brackets for required, square brackets for optional.
-- **Precise trigger descriptions** - optimized so the right tool activates the right skill at the right time. Descriptions target about 300 characters so startup skill lists stay compact in tools with tight context budgets.
+- **Precise trigger descriptions** - optimized so the right tool activates the right skill at the right time. Descriptions target about 200 characters, with warnings above 240, so startup skill lists stay compact in tools with tight context budgets.
 - **Cross-skill awareness** - skills know about each other. The security-audit skill knows not to step on lockpick's territory. Docker knows to defer to Kubernetes for cluster networking. No overlapping, no conflicts.
 
 ## Install
@@ -227,27 +237,39 @@ cp -r skills/kubernetes ~/.cursor/skills/kubernetes
 
 ### Supported tools
 
-The installer supports 15 targets:
+The installer supports 25 targets:
 
 | Tool | Flag | Default path |
 |------|------|-------------|
 | Claude Code | `claude` | `~/.claude/skills` |
 | OpenAI Codex | `codex` | `~/.codex/skills` |
 | Cursor | `cursor` | `~/.cursor/skills` |
-| Windsurf | `windsurf` | `~/.windsurf/skills` |
+| Windsurf | `windsurf` | `~/.codeium/windsurf/skills` |
 | OpenCode | `opencode` | `~/.config/opencode/skills` |
 | GitHub Copilot | `copilot` | `~/.copilot/skills` |
 | Gemini CLI | `gemini` | `~/.gemini/skills` |
 | Roo Code | `roo` | `~/.roo/skills` |
 | Goose | `goose` | `~/.config/goose/skills` |
-| Amp | `amp` | `~/.amp/skills` |
+| Amp | `amp` | `~/.config/agents/skills` |
 | Continue | `continue` | `~/.continue/skills` |
 | Kiro CLI | `kiro` | `~/.kiro/skills` |
-| Cline | `cline` | `~/.cline/skills` |
-| Warp | `warp` | `~/.warp/skills` |
+| Cline | `cline` | `~/.agents/skills` |
+| Warp | `warp` | `~/.agents/skills` |
+| OpenClaw | `openclaw` | `~/.openclaw/skills` |
+| Hermes Agent | `hermes` | `~/.hermes/skills` |
+| Qwen Code | `qwen` | `~/.qwen/skills` |
+| Crush | `crush` | `~/.config/crush/skills` |
+| Google Antigravity | `antigravity` | `~/.gemini/antigravity/skills` |
+| Augment | `augment` | `~/.augment/skills` |
+| OpenHands | `openhands` | `~/.openhands/skills` |
+| Trae | `trae` | `~/.trae/skills` |
+| Qoder | `qoder` | `~/.qoder/skills` |
+| Kimi Code CLI | `kimi` | `~/.config/agents/skills` |
 | Portable | `portable` | `~/.skills` |
 
-All paths are overridable via `--dest` (single-tool mode) or environment variables (e.g., `CLAUDE_SKILLS_DIR`).
+Common aliases also work: `claude-code`, `openai-codex`, `github-copilot`, `gemini-cli`, `kiro-cli`, `qwen-code`, and `kimi-cli`.
+
+All paths are overridable via `--dest` (single-tool mode) or environment variables (e.g., `CLAUDE_SKILLS_DIR`). Some agent ecosystems prefer shared or project-local skill directories; for example, OpenClaw also scans `~/.agents/skills`, and Hermes can be configured to scan external directories such as `~/.agents/skills`. NanoClaw is intentionally not listed as a normal global target because its docs use project-local `.claude/skills` and `container/skills`; install to a NanoClaw checkout with `--tool portable --dest /path/to/NanoClaw/.claude/skills` or `--dest /path/to/NanoClaw/container/skills` as appropriate.
 
 ## Requirements
 

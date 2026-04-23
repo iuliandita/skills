@@ -1,10 +1,7 @@
 ---
 name: ansible
 description: >
-  · Write, review, or architect Ansible playbooks, roles, collections, and config
-  management. Covers Molecule, Vault, AWX/AAP, CIS, and EEs. Triggers: 'ansible',
-  'playbook', 'role', 'inventory', 'molecule', 'ansible-lint', 'AWX', 'group_vars'. Not
-  for shell scripts (use command-prompt).
+  · Write/review Ansible playbooks, roles, inventories, Vault, Molecule, AWX/AAP. Triggers: 'ansible', 'playbook', 'role', 'inventory', 'group_vars', 'ansible-lint'. Not for shell scripts (use command-prompt).
 license: MIT
 compatibility: "Requires ansible-core and Python 3.9+. Optional: ansible-lint, molecule"
 metadata:
