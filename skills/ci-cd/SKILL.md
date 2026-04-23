@@ -5,7 +5,9 @@ description: >
   Actions, and Woodpecker. Covers pipeline security (SHA pinning, SBOM), self-hosted runners,
   dependency updates, linting, scanning, and review gates. Triggers: 'ci/cd', 'pipeline',
   'github actions', 'gitlab ci', 'forgejo', 'gitea', 'woodpecker', 'runner', 'dependabot',
-  'renovate', 'trivy', 'gitleaks', 'merge queue', 'codeowners'.
+  'renovate', 'trivy', 'gitleaks', 'merge queue', 'codeowners'. Not for Claude Code cloud
+  routines (**routine-writer**), container image builds outside CI (**docker**), or git
+  workflows (**git**).
 license: MIT
 compatibility: "Optional: gh (GitHub CLI), glab (GitLab CLI), fj (Forgejo CLI)"
 paths:

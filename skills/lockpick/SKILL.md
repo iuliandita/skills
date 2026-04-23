@@ -5,8 +5,9 @@ description: >
   containers, and K8s. Covers lateral movement, pivoting, credential extraction, and IaC
   secrets exposure. Triggers: 'privesc', 'CTF', 'pentest', 'post-exploitation', 'container
   escape', 'SUID', 'sudo abuse', 'RBAC abuse', 'reverse shell', 'GTFOBins', 'LinPEAS',
-  'lateral movement'. Not for defensive hardening (use security-audit) or firewall config
-  (use firewall-appliance).
+  'lateral movement'. Not for defensive hardening (**security-audit**), firewall config
+  (**firewall-appliance**), Kali distro admin (**kali-linux**), or vulnerability research
+  (**zero-day**).
 license: MIT
 compatibility: Requires authorized access to target Linux systems and bash/python
 metadata:

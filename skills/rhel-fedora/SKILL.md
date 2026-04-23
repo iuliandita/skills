@@ -5,7 +5,8 @@ description: >
   - dnf, yum, SELinux, systemd, GRUB, dracut, host firewalld, and desktop/GPU work.
   Triggers: 'rhel', 'fedora', 'centos stream', 'rocky', 'alma', 'almalinux',
   'oracle linux', 'amazon linux', 'dnf', 'yum', 'selinux', 'rpm fusion', 'akmods'.
-  Not for Arch/Debian, rpm-ostree/image-mode, containers, shell (**command-prompt**),
+  Not for Arch (**arch-btw**), Debian/Ubuntu (**debian-ubuntu**), Kali (**kali-linux**),
+  NixOS (**nixos-btw**), rpm-ostree/image-mode, containers, shell (**command-prompt**),
   network design (**networking**), or config management (**ansible**).
 license: MIT
 compatibility: Requires Fedora, RHEL, or RHEL-family distro with dnf, yum, or rpm

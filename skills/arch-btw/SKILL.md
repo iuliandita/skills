@@ -5,8 +5,9 @@ description: >
   desktop (Hyprland, GNOME, KDE), PipeWire, GPU drivers, gaming (Steam, Proton), and media
   (OBS, WebRTC). Triggers: 'arch linux', 'cachyos', 'pacman', 'paru', 'aur', 'systemd',
   'mkinitcpio', 'bootctl', 'hyprland', 'pipewire', 'nvidia', 'steam', 'proton', 'obs',
-  'pacnew'. Not for shell syntax (command-prompt), networking (networking), or config
-  management (ansible).
+  'pacnew'. Not for Debian/Ubuntu (**debian-ubuntu**), Fedora/RHEL (**rhel-fedora**),
+  Kali (**kali-linux**), NixOS (**nixos-btw**), shell syntax (**command-prompt**),
+  networking (**networking**), or config management (**ansible**).
 license: MIT
 compatibility: Requires Arch Linux, CachyOS, or Arch-based distro with pacman
 metadata:
