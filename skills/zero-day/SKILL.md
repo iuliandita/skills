@@ -5,8 +5,9 @@ description: >
   engineering, patch diffing, fuzzing, attack surface mapping, PoC development, and
   responsible disclosure. Triggers: 'zero-day', '0-day', 'vulnerability research',
   'variant analysis', 'patch diffing', 'fuzz', 'exploit dev', 'CVE', 'PoC', 'reverse
-  engineering'. Not for SAST scanning (use security-audit), post-exploitation (use lockpick),
-  or code correctness (use code-review).
+  engineering'. Not for SAST scanning (**security-audit**), post-exploitation
+  (**lockpick**), Kali tool administration (**kali-linux**), or code correctness
+  (**code-review**).
 license: MIT
 compatibility: "Optional: codeql, semgrep, joern, ghidra, radare2/rizin, afl++, gdb, pwntools, strace, ltrace, checksec"
 metadata:
