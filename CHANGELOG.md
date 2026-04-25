@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.28.0](https://github.com/iuliandita/skills/compare/v1.27.0...v1.28.0) (2026-04-25)
+
+
+### Features
+
+* **ai-ml:** llama.cpp CPU inference + collection-wide quality sweep ([#37](https://github.com/iuliandita/skills/issues/37)) ([e8a2636](https://github.com/iuliandita/skills/commit/e8a263601254082df4a0e62ca9abae1a45f73d2d))
+
 ## [1.27.0](https://github.com/iuliandita/skills/compare/v1.26.2...v1.27.0) (2026-04-23)
 
 
