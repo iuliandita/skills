@@ -214,9 +214,27 @@ check_ai_self_check() {
   fi
 }
 
+# ── Collection-wide symlink check ──────────────────────────────────────
+# Reject committed symlinks under skills/. install.sh's skill_hash uses
+# `find` without -L so symlinks are no longer followed, but a committed
+# symlink would still confuse downstream tooling. See SECURITY-AUDIT.md
+# SEC-007.
+check_no_symlinks() {
+  local dir="$1"
+  local found
+  found="$(find "$dir" -type l -print 2>/dev/null || true)"
+  if [[ -n "$found" ]]; then
+    while IFS= read -r link; do
+      error "symlink committed under $dir: $link (skills must contain only regular files)"
+    done <<< "$found"
+  fi
+}
+
 # ── Main ────────────────────────────────────────────────────────────────
 echo "Linting skills in $SKILLS_DIR..."
 echo
+
+check_no_symlinks "$SKILLS_DIR"
 
 skill_count=0
 for skill_dir in "$SKILLS_DIR"/*/; do
