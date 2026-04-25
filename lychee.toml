@@ -12,5 +12,6 @@ exclude = [
   "^http://169\\.254\\.169\\.254",
   "^https?://(?:[A-Za-z0-9-]+\\.)?example\\.(?:com|org)",
   "^https?://example-store\\.com",
-  "^https?://internal\\.example\\.com"
+  "^https?://internal\\.example\\.com",
+  "^https?://claude\\.ai"
 ]
