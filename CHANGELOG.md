@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.28.1](https://github.com/iuliandita/skills/compare/v1.28.0...v1.28.1) (2026-04-25)
+
+
+### Bug Fixes
+
+* drop find -L in skill_hash + README narrative refresh ([f932f79](https://github.com/iuliandita/skills/commit/f932f7974114f4ece13bfc5e41807bbcbf3670cf))
+
 ## [1.28.0](https://github.com/iuliandita/skills/compare/v1.27.0...v1.28.0) (2026-04-25)
 
 
