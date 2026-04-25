@@ -176,13 +176,13 @@ Usually no public version bump needed. But:
 Before editing, show the user something like:
 
 ```
-Version bump: 1.4.2 → 1.5.0 (minor)
+Version bump: 1.4.2 -> 1.5.0 (minor)
 
 Proposed edits:
-  package.json                  "version": "1.4.2" → "1.5.0"
-  Dockerfile                    LABEL version="1.4.2" → "1.5.0"
-  helm/myapp/Chart.yaml         appVersion: 1.4.2 → 1.5.0
-  helm/myapp/values.yaml        image.tag: 1.4.2 → 1.5.0
+  package.json                  "version": "1.4.2" -> "1.5.0"
+  Dockerfile                    LABEL version="1.4.2" -> "1.5.0"
+  helm/myapp/Chart.yaml         appVersion: 1.4.2 -> 1.5.0
+  helm/myapp/values.yaml        image.tag: 1.4.2 -> 1.5.0
   CHANGELOG.md                  + new section: ## [1.5.0] - 2026-04-14
 
 Not touching (confirm):
@@ -203,16 +203,16 @@ Some files regenerate on build (e.g., `dist/package.json` in some Node setups). 
 ### Monorepo version coordination
 
 Packages in a monorepo may version independently (Lerna/changesets style) or in lockstep. Check the repo's release tooling:
-- `changeset/` directory → changesets, bump per package
-- `lerna.json` with `"version": "independent"` → per-package
-- `lerna.json` with a fixed version → lockstep
+- `changeset/` directory -> changesets, bump per package
+- `lerna.json` with `"version": "independent"` -> per-package
+- `lerna.json` with a fixed version -> lockstep
 - Nx: check `release.yml` or `nx.json`
 
 Don't manually bump every `package.json` in a changesets repo - the tool does it on release.
 
 ### SemVer pre-releases
 
-Pre-release tags like `1.5.0-rc.1`, `1.5.0-beta.2` sort before `1.5.0`. Bumping from `1.5.0-rc.1` → `1.5.0` is a release-out-of-prerelease, not a new minor.
+Pre-release tags like `1.5.0-rc.1`, `1.5.0-beta.2` sort before `1.5.0`. Bumping from `1.5.0-rc.1` -> `1.5.0` is a release-out-of-prerelease, not a new minor.
 
 ### Calendar versioning
 

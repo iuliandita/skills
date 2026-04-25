@@ -15,8 +15,8 @@ metadata:
 
 Write, review, and architect Ansible automation - from single playbooks to multi-tier, compliance-hardened infrastructure management. The goal is idempotent, auditable, maintainable automation that works the same locally and in CI/CD.
 
-**Target versions** (March 2026):
-- ansible-core 2.20.x (Python 3.12+ controller, 3.9+ target, EOL May 2027)
+**Target versions** (April 2026):
+- ansible-core **2.20.x LTS** (Python 3.12+ controller, 3.9+ target, EOL May 2027)
 - ansible (community package) 13.x (depends on ansible-core 2.20)
 - molecule 26.x (CalVer), ansible-lint 26.x (CalVer), ansible-navigator 26.x (CalVer)
 - ansible-builder 3.1.x (EE definition v3)

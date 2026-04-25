@@ -1,7 +1,7 @@
 ---
 name: lockpick
 description: >
-  · Handle authorized privesc, CTFs, post-exploitation on Linux, containers, K8s. Triggers: 'privesc', 'CTF', 'pentest', 'post-exploitation', 'container escape', 'SUID', 'GTFOBins'. Not for hardening.
+  · Handle authorized privesc, CTFs, post-exploitation on Linux, containers, K8s. Triggers: 'privesc', 'CTF', 'pentest', 'post-exploitation', 'container escape', 'SUID', 'GTFOBins'. Not for hardening (use security-audit).
 license: MIT
 compatibility: Requires authorized access to target Linux systems and bash/python
 metadata:

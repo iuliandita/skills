@@ -24,13 +24,13 @@ Write, review, and architect CI/CD pipelines across GitHub Actions, GitLab CI/CD
 Actions, Gitea Actions, and Woodpecker. The goal is secure, fast, auditable pipelines that
 satisfy both engineering needs and compliance requirements (PCI-DSS 4.0).
 
-**Target versions** (March 2026):
+**Target versions** (April 2026):
 - **GitHub Actions**: ubuntu-24.04 runners (ubuntu-latest), arm64 GA, artifact v4, attestations GA
-- **GitLab CI/CD**: GitLab 18.10, CI/CD Catalog GA, CI Components with typed `spec: inputs`
-- **Forgejo Actions**: Forgejo v14.0, Runner v11.x (stable; check `data.forgejo.org/forgejo/runner` releases for current major tag before pinning)
-- **Gitea Actions**: Gitea v1.23.x, act runner v0.2.x (GA since Gitea 1.21, March 2024)
+- **GitLab CI/CD**: GitLab 18.10.3, CI/CD Catalog GA, CI Components with typed `spec: inputs`
+- **Forgejo Actions**: Forgejo v15.0, Runner v11.x (stable; check `data.forgejo.org/forgejo/runner` releases for current major tag before pinning)
+- **Gitea Actions**: Gitea v1.26.0, act runner v0.2.x (GA since Gitea 1.21, March 2024)
 - **Woodpecker CI**: v3.13.x (container-native, Gitea/Forgejo/GitHub/GitLab-compatible)
-- **Supply chain**: cosign v3.x (Sigstore), Syft/Trivy for SBOM, SLSA v1.0
+- **Supply chain**: cosign v3.x (Sigstore), Syft/Trivy for SBOM, SLSA v1.1
 
 This skill covers six domains depending on context:
 - **Workflow design** - stages, jobs, caching, artifacts, parallelism, reusable patterns

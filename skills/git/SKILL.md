@@ -18,13 +18,13 @@ cut releases, and maintain audit-grade change history across GitHub, GitLab, and
 The goal is clean, signed, traceable history that satisfies both engineering standards and
 compliance requirements (PCI-DSS 4.0).
 
-**Target versions** (March 2026):
+**Target versions** (April 2026):
 - **git**: 2.53.x (current stable). Git 3.0 expected late 2026 (reftable default, SHA-256 default)
-- **GitHub CLI (`gh`)**: 2.89.x
+- **GitHub CLI (`gh`)**: 2.91.0
 - **GitLab CLI (`glab`)**: 1.90.x
 - **Forgejo CLI (`fj`)**: 0.4.1 (March 2026). Rust-written, official community CLI at `codeberg.org/forgejo-contrib/forgejo-cli`. Covers PRs (incl. AGit), issues, repos, releases, tags, actions.
-- **Forgejo**: v14.0.3 (current stable). Critical RCE (CVE-2025-68937) patched in v13.0.2+.
-- **prek**: 0.3.x (Rust, recommended) or **pre-commit**: 4.5.x (Python, largest ecosystem)
+- **Forgejo**: v15.0 (current stable, April 2026). Critical RCE (CVE-2025-68937) patched in v13.0.2+.
+- **prek**: 0.3.x (Rust, recommended) or **pre-commit**: 4.6.0 (Python, largest ecosystem)
 - **git-filter-repo**: 2.47.x
 - **gitleaks**: 8.30.x (secret scanning)
 - **cosign**: 3.x (Sigstore, for tag/release signing context)

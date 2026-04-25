@@ -642,10 +642,10 @@ In this mode, "cut release" means "merge the release-please PR and verify the ta
 
 From conventional commits in the merged branch:
 
-- `feat:` or `feat!:` → minor (or major if breaking)
-- `fix:` → patch
-- `perf:`, `refactor:`, `docs:`, `chore:`, `test:`, `ci:` → patch (usually)
-- `BREAKING CHANGE:` footer anywhere → major
+- `feat:` or `feat!:` -> minor (or major if breaking)
+- `fix:` -> patch
+- `perf:`, `refactor:`, `docs:`, `chore:`, `test:`, `ci:` -> patch (usually)
+- `BREAKING CHANGE:` footer anywhere -> major
 
 If unclear, ask the user. Offer the three options with the current version shown.
 

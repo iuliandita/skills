@@ -1,7 +1,7 @@
 ---
 name: kali-linux
 description: >
-  · Administer Kali: apt, branches, metapackages, images, live USB persistence, NetHunter, wireless/GPU. Triggers: 'kali', 'kali rolling', 'kali snapshot', 'kali-tweaks', 'nethunter'. Not for exploitation.
+  · Administer Kali: apt, branches, metapackages, images, live USB persistence, NetHunter, wireless/GPU. Triggers: 'kali', 'kali rolling', 'kali snapshot', 'kali-tweaks', 'nethunter'. Not for exploitation (use lockpick).
 license: MIT
 compatibility: Requires Kali Linux or Kali images with apt and Kali repositories
 metadata:

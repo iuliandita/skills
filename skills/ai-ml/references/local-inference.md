@@ -1,7 +1,8 @@
 # Local Inference
 
 Running models locally with Ollama, vLLM, llama.cpp, and HF Text Generation Inference.
-Covers model selection, quantization, GPU memory estimation, and production serving.
+Covers model selection, quantization, GPU memory estimation, CPU-only deployments, and
+production serving.
 
 ---
 
@@ -15,6 +16,9 @@ Covers model selection, quantization, GPU memory estimation, and production serv
 6. Model Selection
 7. GPU Memory Estimation
 8. Production Serving
+9. llama.cpp from source (CPU-only)
+10. Benchmarking methodology
+11. NUMA, threading, mlock
 
 ---
 
@@ -308,3 +312,178 @@ curl http://localhost:8000/v1/models
 - **Model caching**: keep models loaded in memory. Cold starts take minutes for large models.
 - **Request routing**: route requests by model to dedicated instances. Don't serve multiple
   models on the same GPU unless they're small.
+
+---
+
+## 9. llama.cpp from source (CPU-only)
+
+When `pip install llama-cpp-python` or `ollama` prebuilts crash with SIGILL, you're hitting
+the AVX2 cliff. Build from source with the right cmake flags for your CPU generation.
+
+### Detect ISA support
+
+```bash
+grep -o 'avx[2]*\|fma\|bmi2\|f16c' /proc/cpuinfo | sort -u
+```
+
+### Build flags by CPU generation
+
+| Generation | AVX | AVX2 | FMA | BMI2 | F16C | AVX-512 |
+|---|---|---|---|---|---|---|
+| Sandy/Ivy Bridge (2011-2013) | yes | NO | NO | NO | yes (Ivy+) | NO |
+| Haswell/Broadwell (2013-2015) | yes | yes | yes | yes | yes | NO |
+| Skylake-X / Cascade Lake (2017+) | yes | yes | yes | yes | yes | yes |
+| Zen 1/2 (2017-2019) | yes | yes | yes | yes | yes | NO |
+| Zen 3+ (2020+) | yes | yes | yes | yes | yes | yes (Zen 4+) |
+
+Set `-DGGML_<feature>=OFF` for any feature your CPU lacks. Setting one wrong produces a
+binary that links cleanly and SIGILLs on the first matrix multiply.
+
+### Full build for pre-Haswell
+
+```bash
+sudo apt install -y build-essential cmake git ccache libcurl4-openssl-dev
+
+git clone https://github.com/ggml-org/llama.cpp.git /opt/llama.cpp
+cd /opt/llama.cpp
+git checkout b8920  # pin a known-good tag
+
+cmake -B build \
+  -DGGML_NATIVE=OFF \
+  -DGGML_AVX=ON -DGGML_AVX2=OFF -DGGML_FMA=OFF \
+  -DGGML_F16C=ON -DGGML_BMI2=OFF \
+  -DGGML_AVX512=OFF -DGGML_AVX512_VBMI=OFF -DGGML_AVX512_VNNI=OFF \
+  -DGGML_AVX_VNNI=OFF -DGGML_CUDA=OFF \
+  -DLLAMA_CURL=ON -DCMAKE_BUILD_TYPE=Release
+
+cmake --build build --config Release -j"$(nproc)"
+sudo cmake --install build --prefix /usr/local
+```
+
+### Pin model files reproducibly
+
+```bash
+# Pin both file and revision (HF commit SHA)
+huggingface-cli download \
+  unsloth/Qwen3-30B-A3B-GGUF Qwen3-30B-A3B-Q4_K_M.gguf \
+  --revision d5b1d57bd0b504ac62ae6c725904e96ef228dc74 \
+  --local-dir /var/lib/llama/models
+```
+
+A bare repo+filename pulls "whatever the author serves now". Author rebases silently change
+runtime behavior.
+
+### Run as a server
+
+```bash
+llama-server \
+  --model /var/lib/llama/models/Qwen3-30B-A3B-Q4_K_M.gguf \
+  --host 0.0.0.0 --port 8080 \
+  --ctx-size 32768 --cache-reuse 256 \
+  --threads 28 --threads-batch 32 \
+  --temp 0.7 --top-k 20 --top-p 0.8 \
+  --mlock --api-key-file /etc/llama/api-key.txt
+```
+
+Endpoint is OpenAI-compatible at `/v1/chat/completions`. Point any OpenAI client at it.
+
+### One systemd unit per model
+
+For multi-model deployment, create one `llama-server-<alias>.service` per model on its own
+port. Independent unit files mean independent restarts, separate logs, and no shared crash
+blast radius. Don't try to multiplex multiple models behind a single llama-server process.
+
+---
+
+## 10. Benchmarking methodology
+
+Establish baseline numbers before tuning anything. Re-bench after every model swap,
+llama.cpp version bump, or cmake flag change.
+
+### Fixed prompt suite
+
+A reusable benchmark needs five prompts at minimum:
+
+| Class | Prompt shape | Why |
+|---|---|---|
+| chat-short | "What is X?" (1 sentence answer) | Pure decode latency, low prefill cost |
+| chat-long | Multi-turn context (~32 tokens prompt) | KV cache reuse behavior |
+| code-simple | "Write a Python function that..." | Short prefill, long decode |
+| code-complex | Diff-style refactor with 50+ tokens of context | Realistic prefill |
+| reasoning | Math word problem requiring chain-of-thought | Tests sustained decode |
+
+For each: warm up once (discard), then record `latency`, `prompt_tokens`, `completion_tokens`,
+and `decode_tok_per_sec` over a fixed `max_tokens` cap (e.g., 400) at fixed temperature
+(e.g., 0.3 - low for reproducibility).
+
+### Output format
+
+Versioned markdown table per run. The header captures host, started-at, max_tokens,
+temperature, and warmup. Diffs across runs become readable.
+
+```markdown
+# AI VM Model Benchmark
+- Host: http://192.168.x.x
+- Started: 2026-04-25T01:19:12+02:00
+- max_tokens: 400, temperature: 0.3, warmup: yes
+
+| model | test | latency (s) | prompt_tok | completion_tok | decode t/s |
+|---|---|---:|---:|---:|---:|
+| qwen3-30b-a3b-q4 | chat-short | 24.37 | 19 | 327 | 13.42 |
+```
+
+### What to actually compare
+
+- **decode t/s** (not latency) - latency conflates prefill cost with decode speed
+- **decode t/s at fixed completion_tokens** - short outputs misleadingly look fast
+- **across model classes**, not just within one - MoE vs dense at the same parameter count is
+  the most informative comparison
+
+### Pitfalls
+
+- Cold cache vs warm cache: always include a discarded warmup
+- Background load: bench on an otherwise-idle host
+- mlock at first run: model paging in inflates the first measurement
+
+---
+
+## 11. NUMA, threading, mlock
+
+### NUMA on multi-socket hosts
+
+Multi-socket servers expose two memory controllers. Inference threads ping-ponging across
+sockets pay a cross-socket latency penalty. Three options:
+
+- **distribute** (default): kernel spreads pages across nodes. Simple, often fine.
+- **isolate** with `numactl --cpunodebind=0 --membind=0`: pin one model to one socket.
+  Better for single-model serving on a dual-socket box where the model fits in one node's RAM.
+- **interleave** with `numactl --interleave=all`: stripe pages across nodes. Helps when the
+  model is bigger than one node's RAM.
+
+Per-model override is the right granularity. Some models prefer isolation, others don't care.
+
+### Thread tuning
+
+```
+total_threads = physical_cores            # don't include SMT siblings for decode
+threads (-t)  = physical_cores - 4        # leave 4 cores for OS, llama-server overhead, OWUI
+threads_batch (-tb) = logical_cores       # prefill scales with all logical cores
+```
+
+Going past `physical_cores` for decode hurts: cache thrashing dominates. Going under
+`logical_cores` for prefill leaves throughput on the table during prompt processing.
+
+### mlock implications
+
+`--mlock` (or `LimitMEMLOCK=infinity` in systemd) page-faults the entire GGUF into RAM at
+service start. Three consequences:
+
+1. **Eager memory accounting.** Sum the GGUF sizes of all `llama-server-*` units running on
+   the host. That's your committed RAM, before KV cache.
+2. **Slow first-request penalty disappears.** Without mlock, the first inference request
+   triggers page-ins that look like a 30-60 second hang on big models.
+3. **OOM killer is the failure mode.** Run `free -h` and verify `available` exceeds the sum
+   of GGUF sizes plus headroom (~10% per model for KV cache at advertised ctx).
+
+Disable mlock on memory-constrained hosts where you're willing to trade first-request
+latency for safer overcommit behavior.

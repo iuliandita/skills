@@ -1,7 +1,9 @@
 ---
 name: deep-audit
 description: >
-  · Orchestrate a 5-wave repo audit across quality, security, docs, and domain skills. Triggers: 'deep audit', 'full audit', 'comprehensive review', 'audit report', 'audit everything'. Not for quick sweeps (use full-review).
+  · Orchestrate a 5-wave repo audit, persist findings, generate phased tasks. Triggers:
+  'deep audit', 'full audit', 'comprehensive review', 'audit report', 'mega review',
+  'deep review'. Not for quick sweeps (use full-review).
 license: MIT
 compatibility: "Requires iuliandita/skills collection installed. Subagent support strongly recommended. Optional: a brainstorming or ideation skill in the host harness (matched by name pattern) for large-audit planning handoff."
 metadata:
@@ -13,7 +15,7 @@ metadata:
 
 # Deep Audit: Wave-Based Repo Orchestrator
 
-Run up to 21 custom skills against a repo in 5 sequential waves, presenting results
+Run up to 27 custom skills against a repo in 5 sequential waves, presenting results
 progressively. Wave 1 detects the tech stack. Waves 2-5 dispatch only the skills that
 match. Each wave completes and reports before the next begins.
 
@@ -21,17 +23,15 @@ The five waves:
 
 1. **Reconnaissance** - detect languages, frameworks, infra, file structure
 2. **Code Quality** (parallel) - code-review, anti-slop, anti-ai-prose
-3. **Domain-Specific** (parallel, conditional) - up to 13 skills based on detection
+3. **Domain-Specific** (parallel, conditional) - up to 19 skills based on detection
 4. **Security** (sequential) - security-audit, then zero-day
 5. **Docs & Hygiene** (parallel) - update-docs, roadmap, git
 
 After the waves, three post-wave phases produce durable artifacts (Workflow Steps 7-9):
-
-- **Persist** - cumulative findings to `docs/local/audits/DEEP-AUDIT.md`
-- **Plan** - phased task list at `docs/local/audits/DEEP-AUDIT-TASKS.md`
-- **Route** - SMALL audit stops at the task list; LARGE audit recommends a
-  brainstorming skill (when one is installed) or generates execution plans directly
-  in `docs/local/specs/` and `docs/local/plans/`
+**Persist** findings to `docs/local/audits/DEEP-AUDIT.md`, **Plan** phased tasks in
+`DEEP-AUDIT-TASKS.md`, **Route** SMALL audits to the task list or LARGE audits to a
+brainstorming skill (when installed) or directly-generated plans in `docs/local/specs/`
+and `docs/local/plans/`.
 
 For a quick 4-skill sweep, use **full-review** instead.
 
@@ -48,7 +48,7 @@ For a quick 4-skill sweep, use **full-review** instead.
 - Single-dimension audit (e.g., only security or only code quality) - use the individual skill directly (**security-audit**, **code-review**, etc.)
 - Auditing the skill collection itself - use **skill-creator** (Mode 3)
 - Offensive security engagement or CTF - use **lockpick** directly
-- OS-level administration - use **arch-btw** directly
+- Live-system OS administration (running `pacman`/`apt`/`dnf`, fixing a NixOS rebuild, configuring SELinux on a host, debugging an OPNsense appliance) - use the matching distro/appliance skill directly (**arch-btw**, **debian-ubuntu**, **rhel-fedora**, **nixos-btw**, **firewall-appliance**). Repo-level audit of OS-related files (PKGBUILDs, `debian/`, `*.spec`, `flake.nix`, `pf.conf`, etc.) belongs in Wave 3 of this skill
 
 ---
 
@@ -105,7 +105,7 @@ If the user specified a scope, pass it as the script's first argument to filter 
 to that subtree (`git ls-files -- path/to/scope` instead of the full repo).
 
 After detection, present the recon summary before proceeding. Compute
-`{unmatched_skills}` as the 13 Wave 3 candidates minus the matched set.
+`{unmatched_skills}` as the 19 Wave 3 candidates minus the matched set.
 Compute `{count}` by summing: 3 (Wave 2) + matched Wave 3 skills + 2 (Wave 4) +
 3 (Wave 5). Example: if 6 Wave 3 skills match, count = 3 + 6 + 2 + 3 = 14.
 
@@ -139,7 +139,7 @@ Skills that will run:
 Total agents: {count}
 ```
 
-Concrete example for a Node+Postgres+Docker+K8s repo with i18n and GitHub Actions (7 Wave 3 skills matched):
+Concrete example for a Node+Postgres+Docker+K8s repo with i18n and GitHub Actions (8 Wave 3 skills matched out of 19):
 
 ```
 Repo: myorg/api @ a3f91c2 (main)  |  Files: 412  |  Scope: full codebase
@@ -147,7 +147,7 @@ Languages: TypeScript, SQL, YAML
 
 Wave 2 (always): code-review, anti-slop, anti-ai-prose
 Wave 3 (detected): testing, command-prompt, databases, backend-api, localize, docker, kubernetes, ci-cd
-Wave 3 (skipped): terraform, ansible, networking, ai-ml, mcp
+Wave 3 (skipped): terraform, ansible, networking, ai-ml, mcp, arch-btw, debian-ubuntu, rhel-fedora, nixos-btw, firewall-appliance, virtualization
 Wave 4 (always): security-audit, zero-day
 Wave 5 (always): update-docs, roadmap, git
 
@@ -230,7 +230,7 @@ All other skills use the generic prompt.
 Present results:
 
 ```markdown
-## Wave 3: Domain-Specific [{N} of 13 skills matched]
+## Wave 3: Domain-Specific [{N} of 19 skills matched]
 
 ### {Skill Display Name}
 {report verbatim}
@@ -461,8 +461,25 @@ but preserves the wave ordering.
 - **code-review**, **anti-slop**, **anti-ai-prose** - Wave 2 participants.
 - **security-audit**, **zero-day** - Wave 4 participants.
 - **update-docs**, **roadmap**, **git** - Wave 5 participants.
-- **testing**, **command-prompt**, **databases**, **backend-api**, **localize**, **ai-ml**, **mcp**, **docker**, **kubernetes**, **terraform**, **ansible**, **ci-cd**, **networking** - Wave 3 candidates (conditional).
+- **testing**, **command-prompt**, **databases**, **backend-api**, **localize**, **ai-ml**, **mcp**, **docker**, **kubernetes**, **terraform**, **ansible**, **ci-cd**, **networking**, **arch-btw**, **debian-ubuntu**, **rhel-fedora**, **nixos-btw**, **firewall-appliance**, **virtualization** - Wave 3 candidates (conditional).
 - **skill-creator** - audits the skill collection. This skill audits application repos.
+
+### Deliberately Excluded Skills
+
+These published skills are intentionally NOT dispatched by deep-audit. Recorded here so future contributors don't re-add them by reflex:
+
+| Skill | Reason for exclusion |
+|---|---|
+| **browse** | Operational tool (fetch a page, fill a form). Not an audit lens. |
+| **dev-cycle** | Workflow orchestrator (start-to-finish dev: branch -> ship). Acts on the repo; doesn't audit it. |
+| **prompt-generator** | Creative authoring of LLM prompts. Produces content; doesn't evaluate code. |
+| **routine-writer** | Creative authoring of cloud-routine prompts. Same shape as prompt-generator. |
+| **skill-creator** | Audits the skill collection itself, not application code. Use Mode 3 of skill-creator separately. |
+| **skill-refiner** | Batch-improves skill collections via eval loops. Same domain as skill-creator. |
+| **lockpick** | Offensive security / CTF / privesc. Different threat model from defensive audit; security-audit + zero-day cover the defensive side. |
+| **kali-linux** | Live-system administration of Kali. Kali is Debian-based, so any repo-side packaging concerns are caught by debian-ubuntu in Wave 3. The skill itself is for running Kali, not auditing repos. |
+| **full-review** | Alternate orchestrator (the smaller 4-skill version). Mutually exclusive with deep-audit by design. |
+| **deep-audit** | This skill. Self-invocation would loop. |
 
 ---
 

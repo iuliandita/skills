@@ -38,9 +38,9 @@ Bias toward large when in doubt. The 5 minutes spent writing a spec is cheap ins
 | **Rollback complexity** | trivial revert | multi-step |
 | **Review cycles expected** | 1 | 2+ |
 
-Match 3+ small signals without large signals → **small**.
-Match 3+ large signals → **large**.
-Mixed signals → **medium/ambiguous** → ask the user.
+Match 3+ small signals without large signals -> **small**.
+Match 3+ large signals -> **large**.
+Mixed signals -> **medium/ambiguous** -> ask the user.
 
 ---
 
@@ -80,7 +80,7 @@ Ask at most two. Default to large if still unclear.
 2. **Public surface**: "Does this change behavior users or API consumers will notice?"
 3. **Reversibility**: "If we ship this and need to back it out, is that a trivial revert or a coordinated rollback?"
 
-One large answer is enough to tip ambiguous → large.
+One large answer is enough to tip ambiguous -> large.
 
 ---
 
