@@ -16,7 +16,7 @@ metadata:
 Reference skill for writing commands, scripts, and configuration across Unix shells. Detects
 the target shell from context and routes to the appropriate reference.
 
-**Target versions** (March 2026):
+**Target versions** (April 2026):
 - Zsh: 5.10
 - Bash: 5.3
 - Fish: 4.6

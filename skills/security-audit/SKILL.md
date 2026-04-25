@@ -1,7 +1,7 @@
 ---
 name: security-audit
 description: >
-  · Audit code security: OWASP, credentials, auth, access control, supply chain, hardening. Triggers: 'security audit', 'vulnerability scan', 'secret scan', 'OWASP', 'auth review'. Not for offensive work.
+  · Audit code security: OWASP, credentials, auth, access control, supply chain, hardening. Triggers: 'security audit', 'vulnerability scan', 'secret scan', 'OWASP', 'auth review'. Not for offensive work (use lockpick).
 license: MIT
 compatibility: "Optional: betterleaks, gitleaks, trivy, semgrep, bandit, checkov, scorecard"
 metadata:
@@ -18,9 +18,9 @@ Structured, multi-pass security audit. Combines automated tooling with manual pa
 Patterns drawn from real OSS incidents (unauthenticated admin endpoints, credential exfiltration, zip slip, auth bypass whitelists, Trivy supply chain compromise) and OpenSSF/SLSA/OWASP standards.
 
 **Target versions** (April 2026):
-- Semgrep 1.157.0, Bandit 1.9.3
-- Gitleaks 8.30.1, Betterleaks 1.1.1 (successor by same author), TruffleHog 3.94.1
-- Trivy 0.69.3 (safe version - 0.69.4-0.69.6 compromised, see known incidents)
+- Semgrep 1.161.0, Bandit 1.9.4
+- Gitleaks 8.30.1, Betterleaks 1.1.1 (successor by same author), TruffleHog 3.95.2
+- Trivy 0.70.0 (0.69.4-0.69.6 was compromised - see known incidents; 0.70.x is the safe upgrade path)
 - OpenSSF Scorecard 5.1.0 (v6 in proposal stage)
 - OWASP Top 10:2025 (confirmed January 2026), OWASP Agentic Top 10:2026 (released December 2025)
 

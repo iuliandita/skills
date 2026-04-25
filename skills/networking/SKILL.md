@@ -1,7 +1,7 @@
 ---
 name: networking
 description: >
-  · Configure/troubleshoot Linux networking: DNS, proxies, VPNs, VLANs, nftables, routing. Triggers: 'dns', 'reverse proxy', 'vpn', 'wireguard', 'tailscale', 'vlan', 'nftables', 'mtr'. Not for OPNsense.
+  · Configure/troubleshoot Linux networking: DNS, proxies, VPNs, VLANs, nftables, routing. Triggers: 'dns', 'reverse proxy', 'vpn', 'wireguard', 'tailscale', 'vlan', 'nftables', 'mtr'. Not for OPNsense (use firewall-appliance).
 license: MIT
 compatibility: "Requires Linux. Tools vary by task: nftables, WireGuard, dig, mtr, tcpdump"
 metadata:
@@ -17,16 +17,16 @@ Configure, troubleshoot, and optimize Linux networking infrastructure. Covers DN
 VPNs, firewalls (nftables), VLANs, subnetting, high availability, dynamic routing, and network
 performance tuning.
 
-**Target versions** (March 2026):
+**Target versions** (April 2026):
 
 | Tool | Version | Notes |
 |------|---------|-------|
 | Caddy | 2.11.2 | Auto-HTTPS, Caddyfile + JSON API |
-| Nginx | 1.28.3 stable / 1.29.7 mainline | Multiple CVEs patched early 2026 - verify current advisories |
-| Traefik | 3.6.12 | Gateway API native, v2 EOL approaching |
-| HAProxy | 3.3.6 stable / 3.2.15 LTS | LTS EOL 2030-Q2 |
+| Nginx | 1.30.0 stable / 1.29.8 mainline | New stable branch released Apr 2026; verify current advisories |
+| Traefik | 3.6.14 | Gateway API native, v2 EOL approaching |
+| HAProxy | 3.3.7 stable / 3.2.16 LTS | LTS EOL 2030-Q2 |
 | WireGuard tools | 1.0.20260223 | Kernel module + userspace tools |
-| strongSwan | 6.0.5 | swanctl config (legacy ipsec.conf deprecated) |
+| strongSwan | 6.0.6 | swanctl config (legacy ipsec.conf deprecated) |
 | nftables | 1.1.6 | iptables successor, default on modern distros |
 | keepalived | 2.3.4 | VRRP + health checks |
 | Unbound | 1.24.2 | CVE-2025-11411 fix (unsolicited NS RRSets) |
@@ -34,7 +34,7 @@ performance tuning.
 | FRRouting | 10.6.0 | BGP, OSPF, IS-IS, PIM |
 | Tailscale / Headscale | Headscale 0.28.0 | Self-hosted control server |
 | cloudflared | 2026.3.0 | Cloudflare Tunnel (outbound-only) |
-| OpenVPN | 2.7.0 / 2.6.19 | 2.7.0: multi-socket, DCO kernel module |
+| OpenVPN | 2.7.2 / 2.6.20 LTS | 2.7.x: multi-socket, DCO; 2.6 is the LTS branch |
 
 ## When to use
 

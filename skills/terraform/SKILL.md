@@ -15,7 +15,7 @@ metadata:
 
 Write, review, and architect Terraform/OpenTofu infrastructure - from individual resources to multi-account, PCI-compliant platform architectures. The goal is reproducible, drift-free, auditable infrastructure that passes both peer review and QSA assessment.
 
-**Target versions**: Terraform 1.13-1.14+ (IBM/HashiCorp, BSL), OpenTofu 1.10-1.11+ (Linux Foundation, MPL). Helm provider v3.1+, K8s provider v3.0+, AWS provider v6.x, Azure v4.x, GCP v7.x.
+**Target versions** (April 2026): Terraform 1.14.9 (IBM/HashiCorp, BSL; 1.15.0-rc2 in progress), OpenTofu 1.11.6 (Linux Foundation, MPL). Helm provider v3.1+, K8s provider v3.0+, AWS provider v6.x, Azure v4.x, GCP v7.x.
 
 This skill covers four domains depending on context:
 - **HCL** - resource configs, variables, outputs, data sources, expressions, lifecycle rules

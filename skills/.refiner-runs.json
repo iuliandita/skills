@@ -22,7 +22,10 @@
       "plateau": 2
     },
     "pool_size": 23,
-    "excluded": ["skill-creator", "skill-refiner"],
+    "excluded": [
+      "skill-creator",
+      "skill-refiner"
+    ],
     "terminated": "iteration-cap",
     "iterations_completed": 5,
     "cross_model_flags": {
@@ -32,7 +35,11 @@
     },
     "scores": {
       "before": {
-        "aggregate": { "avg": 83.5, "min": 76.7, "max": 87.6 },
+        "aggregate": {
+          "avg": 83.5,
+          "min": 76.7,
+          "max": 87.6
+        },
         "per_skill": {
           "ai-ml": 78.8,
           "ansible": 85.2,
@@ -60,7 +67,11 @@
         }
       },
       "after": {
-        "aggregate": { "avg": 85.1, "min": 79.7, "max": 87.6 },
+        "aggregate": {
+          "avg": 85.1,
+          "min": 79.7,
+          "max": 87.6
+        },
         "per_skill": {
           "ai-ml": 81.6,
           "ansible": 85.2,
@@ -101,5 +112,54 @@
       "command-prompt: compatibility field",
       "skill-refiner: Phase 3 summary template with run provenance"
     ]
+  },
+  {
+    "run_id": "2026-04-25-194814",
+    "branch": "chore/skills-quality-sweep",
+    "date": "2026-04-25",
+    "primary": {
+      "harness": "claude-code",
+      "version": "2.1.119",
+      "model": "claude-opus-4-7-1m",
+      "effort": "high"
+    },
+    "secondary": {
+      "harness": "codex-cli",
+      "version": "0.125.0",
+      "model": "gpt-5.4",
+      "effort": "high"
+    },
+    "config": {
+      "iterations": 8,
+      "threshold": 95,
+      "mode": "circuit-breaker",
+      "plateau": 2
+    },
+    "pool_size": 36,
+    "excluded": [
+      "skill-creator",
+      "skill-refiner"
+    ],
+    "terminated": "all-clean",
+    "iterations_completed": 8,
+    "cross_model_flags": {
+      "minor": 0,
+      "major": 1,
+      "contested": 0,
+      "agreed": 1,
+      "disputed": 1
+    },
+    "changes_summary": [
+      "description trims: cluster-health, roadmap, deep-audit, update-docs (length warnings cleared)",
+      "fancy arrow -> ASCII in 4 reference files (CLAUDE.md compliance)",
+      "routing hints added: dev-cycle, docker, kali-linux, lockpick, networking, routine-writer, security-audit, skill-refiner, virtualization, zero-day (10 skills)",
+      "Not for X (use Y) clarifications: mcp, testing",
+      "restored audit report trigger (deep-audit, codex flag agreed)",
+      "version freshness sweep: ci-cd, docker, kubernetes, networking, firewall-appliance, ai-ml, security-audit, git, mcp, terraform, ansible, command-prompt (12 skills, web-verified Apr 2026)",
+      "LTS annotations: kubernetes (1.32 LTS), docker (containerd 2.3 LTS), ansible (2.20.x LTS), networking (OpenVPN 2.6 LTS), helm 3.20.x LTS",
+      "ai-ml: added CPU-only llama.cpp section + benchmarking; expanded references/local-inference.md (179 lines) with build walkthrough, NUMA, mlock"
+    ],
+    "lint_status": "PASSED 0/0",
+    "spec_status": "PASSED 0/0"
   }
 ]

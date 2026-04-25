@@ -1,7 +1,7 @@
 ---
 name: virtualization
 description: >
-  · Create/troubleshoot VMs and hypervisors: Proxmox, QEMU/KVM, libvirt, XCP-ng, vSphere. Triggers: 'proxmox', 'qemu', 'kvm', 'libvirt', 'virsh', 'vm', 'cloud-init'. Not for containers.
+  · Create/troubleshoot VMs and hypervisors: Proxmox, QEMU/KVM, libvirt, XCP-ng, vSphere. Triggers: 'proxmox', 'qemu', 'kvm', 'libvirt', 'virsh', 'vm', 'cloud-init'. Not for containers (use docker).
 license: MIT
 compatibility: "Varies by hypervisor. Proxmox: pvesh, qm, pct. Libvirt: virsh, virt-install. Optional: packer, terraform"
 metadata:

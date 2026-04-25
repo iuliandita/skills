@@ -15,7 +15,7 @@ metadata:
 
 Create, review, and architect Kubernetes infrastructure - from raw manifests to Helm charts to multi-cluster strategy. The goal is production-ready, security-hardened, cost-aware infrastructure that a team can maintain.
 
-**Target versions** (March 2026): Kubernetes 1.33-1.35+ (1.36 due April 22, 2026), Helm 4.1.3, Helm 3.20.x (security fixes until Nov 2026).
+**Target versions** (April 2026): Kubernetes 1.34-1.36 (1.36.0 "Haru" released April 22, 2026; **1.32 is the active LTS branch with patches through April 2028**), Helm 4.1.4, Helm 3.20.x LTS (security fixes until Nov 2026).
 
 This skill covers four domains depending on context:
 - **Manifests** - raw YAML for Deployments, Services, Gateway API routes, ConfigMaps, Secrets, PVCs

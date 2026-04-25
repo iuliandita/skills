@@ -111,7 +111,7 @@ lists become zombie tech debt. Example:
 
 ---
 
-## 2. Linting: Pre-commit → CI → Blocking
+## 2. Linting: Pre-commit -> CI -> Blocking
 
 Linting works when it's fast locally and authoritative in CI. Three layers, each with a
 different job:

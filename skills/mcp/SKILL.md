@@ -1,7 +1,7 @@
 ---
 name: mcp
 description: >
-  · Build/review MCP servers, tools, resources, prompts, transports, OAuth, handlers. Triggers: 'mcp', 'model context protocol', 'mcp server', 'tool handler', 'fastmcp', '@modelcontextprotocol/sdk'. Not for APIs.
+  · Build/review MCP servers, tools, resources, prompts, transports, OAuth, handlers. Triggers: 'mcp', 'model context protocol', 'mcp server', 'tool handler', 'fastmcp', '@modelcontextprotocol/sdk'. Not for HTTP APIs (use backend-api).
 license: MIT
 compatibility: Requires Node.js or Python runtime
 metadata:
@@ -17,10 +17,10 @@ Build, review, and debug MCP servers that expose tools, resources, and prompts t
 assistants. The goal is secure, well-structured servers that follow the protocol spec and don't
 become yet another server with preventable injection vulnerabilities.
 
-**Target versions** (March 2026):
-- MCP specification: 2025-11-25 (current stable)
-- TypeScript SDK: @modelcontextprotocol/sdk 1.x
-- Python SDK: mcp 1.x (v1.26.0+)
+**Target versions** (April 2026):
+- MCP specification: 2025-11-25 (current stable; 2026-03-15 in draft)
+- TypeScript SDK: @modelcontextprotocol/sdk 1.29.0 (1.x stable; 2.0.0-alpha in dev)
+- Python SDK: mcp 1.27.0 (v1.26.0+)
 - Protocol transports: stdio, streamable HTTP (SSE deprecated in spec 2025-03-26)
 
 ## When to use

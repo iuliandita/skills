@@ -26,6 +26,12 @@ its domain isn't actually present.
 | ansible | `ansible.cfg`, `galaxy.yml`, `galaxy.yaml`, `roles/*/tasks/main.yml` | Also: `playbooks/*.yml` containing `hosts:`, or `requirements.yml` containing `roles:` or `collections:` |
 | ci-cd | `.github/workflows/*.yml`, `.github/workflows/*.yaml`, `.gitlab-ci.yml`, `.forgejo/workflows/`, `Jenkinsfile`, `.circleci/config.yml` | - |
 | networking | `nginx.conf`, `Caddyfile`, `haproxy.cfg`, `traefik.yml`, `traefik.yaml`, `traefik.toml`, `*.zone`, `named.conf`, `dnsmasq.conf`, `wg*.conf`, `nftables.conf` | - |
+| arch-btw | `PKGBUILD`, `*.install`, `mkinitcpio.conf*`, `archinstall.json`, `etc/pacman.d/`, `etc/pacman.conf` | - |
+| debian-ubuntu | `debian/control`, `debian/changelog`, `debian/rules`, `debian/copyright`, `*.dsc`, `snapcraft.yaml`, `snap/snapcraft.yaml` | - |
+| rhel-fedora | `*.spec`, `.copr/`, `dracut.conf*`, `selinux/*.te`, `comps.xml*`, `dnf/modules.d/` | - |
+| nixos-btw | `flake.nix`, `flake.lock`, `*.nix`, `configuration.nix`, `home.nix`, `default.nix`, `shell.nix` | - |
+| firewall-appliance | `pf.conf`, `opnsense/`, `pfsense/`, `configctl*`, `pf.anchors/` | - |
+| virtualization | `Vagrantfile`, `*.pkr.hcl`, `packer*.json`, `cloud-init*`, `user-data`, `meta-data`, `libvirt/*.xml`, `proxmox-*.json` | - |
 
 Manifests to check for dependency patterns: `package.json`, `requirements.txt`,
 `pyproject.toml`, `go.mod`, `Cargo.toml`, `Gemfile`, `composer.json`.
@@ -98,6 +104,30 @@ echo "$files" | grep -qE '\.github/workflows/|\.gitlab-ci\.yml$|\.forgejo/workfl
 # networking
 echo "$files" | grep -qE 'nginx\.conf|Caddyfile|haproxy\.cfg|traefik\.(ya?ml|toml)|\.zone$|named\.conf|dnsmasq\.conf|wg[0-9]*\.conf$|nftables\.conf' \
   && matched+=(networking)
+
+# arch-btw
+echo "$files" | grep -qE '(^|/)PKGBUILD$|\.install$|(^|/)mkinitcpio\.conf|(^|/)archinstall\.json$|(^|/)etc/pacman\.(d/|conf)' \
+  && matched+=(arch-btw)
+
+# debian-ubuntu
+echo "$files" | grep -qE '(^|/)debian/(control|changelog|rules|copyright)$|\.dsc$|(^|/)(snap/)?snapcraft\.yaml$' \
+  && matched+=(debian-ubuntu)
+
+# rhel-fedora
+echo "$files" | grep -qE '\.spec$|(^|/)\.copr/|(^|/)dracut\.conf|(^|/)selinux/.*\.te$|(^|/)comps\.xml|(^|/)dnf/modules\.d/' \
+  && matched+=(rhel-fedora)
+
+# nixos-btw (any .nix file is a strong signal; flake.lock is the conclusive one)
+echo "$files" | grep -qE '\.nix$|(^|/)flake\.lock$' \
+  && matched+=(nixos-btw)
+
+# firewall-appliance (OPNsense/pfSense config repos)
+echo "$files" | grep -qE '(^|/)pf\.conf|(^|/)opnsense/|(^|/)pfsense/|(^|/)configctl|(^|/)pf\.anchors/' \
+  && matched+=(firewall-appliance)
+
+# virtualization (Packer, cloud-init, libvirt, Proxmox, Vagrant)
+echo "$files" | grep -qE '(^|/)Vagrantfile|\.pkr\.hcl$|(^|/)packer.*\.json$|(^|/)cloud-init|(^|/)user-data$|(^|/)meta-data$|(^|/)libvirt/.*\.xml$|(^|/)proxmox-.*\.json$' \
+  && matched+=(virtualization)
 
 # --- Dependency-manifest checks (only for skills not yet matched) ---
 

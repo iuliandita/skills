@@ -23,16 +23,16 @@ cost-effective, and don't hallucinate their way into an incident.
 |-----------|---------|-------|
 | Anthropic Python SDK | 0.87.0 | Claude models, streaming, tool use, structured output |
 | Anthropic TS SDK | 0.81.0 | Same capabilities, TypeScript-first |
-| Claude Agent SDK (TS) | 0.2.90 | Programmatic agent building with Claude Code capabilities |
-| OpenAI Python SDK | 2.30.0 | GPT/o-series models, Responses API |
+| Claude Agent SDK (TS) | 0.2.117 | Programmatic agent building with Claude Code capabilities |
+| OpenAI Python SDK | 2.32.0 | GPT/o-series models, Responses API |
 | OpenAI Agents SDK | 0.13.3 | Multi-agent orchestration, tracing, sessions |
 | Vercel AI SDK | 6.0.142 | Unified provider interface, ToolLoopAgent, streaming |
-| LangChain | 1.2.14 | Orchestration framework, langchain-core 1.2.24 |
-| LangGraph | 1.1.0 | Stateful agent graphs, cycles, persistence |
-| LlamaIndex | 0.14.19 | RAG framework, 300+ integrations |
+| LangChain | 1.2.15 | Orchestration framework, langchain-core 1.2.24 |
+| LangGraph | 1.1.8 | Stateful agent graphs, cycles, persistence |
+| LlamaIndex | 0.14.21 | RAG framework, 300+ integrations |
 | Transformers | 5.4.0 | Model inference, fine-tuning, PyTorch 2.4+ required |
 | vLLM | 0.18.1 | High-throughput serving, continuous batching |
-| Ollama | 0.19.0 | Local inference, MLX backend on Apple Silicon |
+| Ollama | 0.20.0 | Local inference, MLX backend on Apple Silicon |
 | pgvector | 0.8.2 | PostgreSQL extension, HNSW + IVFFlat |
 | Qdrant | 1.17.1 | Self-hosted vector DB, hybrid search |
 | Pinecone (Python) | 8.1.0 | Managed vector DB |
@@ -356,11 +356,38 @@ training, and when to use full fine-tuning vs parameter-efficient methods.
 |------|----------|-------------|
 | Ollama | Dev, prototyping, Mac (MLX) | No (CPU/MLX), optional GPU |
 | vLLM | Production serving, high throughput | Yes |
-| llama.cpp / llama-cpp-python | Minimal deps, quantized models | No (CPU), optional GPU |
+| llama.cpp / llama-cpp-python | Minimal deps, quantized models, CPU-only | No (CPU), optional GPU |
 | TGI (HF Text Generation Inference) | HF model hub integration | Yes |
 
-Read `references/local-inference.md` for quantization choices, model selection, GPU memory
-estimation, and production serving configuration.
+### CPU-only inference with llama.cpp
+
+CPU inference is viable - sometimes preferable - for: dense models that fit in RAM (7-13B
+at Q4 hits 5-10 t/s on modern x86), **MoE models with low active params** (Qwen3-30B-A3B
+at Q4 reaches 13+ t/s even on a 2013-era Xeon - active params dominate decode), and
+air-gapped or compliance-bound environments. Key gotchas:
+
+- **ISA cliff**: pre-Haswell CPUs lack AVX2/FMA/BMI2. PyTorch >= 2.1, TF >= 2.8, JAX, and
+  Ollama prebuilts SIGILL. llama.cpp from source with `-DGGML_AVX2=OFF -DGGML_FMA=OFF
+  -DGGML_BMI2=OFF` works.
+- **GGUF quants**: `Q4_K_M` is the default sweet spot. `Q5_K_M` for +25% memory and quality.
+  `IQ4_XS` for tighter budgets. Avoid Q2/Q3 - quality cliff is real.
+- **Reproducible models**: pin both filename and HF commit SHA. Bare repo+filename pulls
+  "whatever the author serves now" - silent runtime changes on rebase.
+- **`--mlock`** page-faults the GGUF into RAM at start. Sum GGUF sizes for capacity planning.
+- **Threading**: `-t = physical_cores - 4` (decode, memory-bandwidth-bound), `-tb = logical`
+  (prefill, compute-bound).
+- **API keys**: `--api-key-file <path>`, never `--api-key <value>` on the command line - leaks
+  into `/proc/<pid>/cmdline` via systemd env expansion.
+
+### Benchmarking
+
+Fixed prompt suite (chat-short, chat-long, code-simple, code-complex, reasoning), warmup pass,
+record latency + decode t/s at fixed `max_tokens` and temperature. Re-run after model swaps,
+llama.cpp version bumps, or build-flag changes. Compare **decode t/s**, not raw latency.
+
+Read `references/local-inference.md` for the full llama.cpp build walkthrough (per-CPU-generation
+flags), HF SHA-pinned model download, systemd-per-model deployment, NUMA tuning, mlock memory
+budgeting, benchmark methodology, and production serving configuration.
 
 ---
 

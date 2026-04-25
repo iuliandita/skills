@@ -1,7 +1,7 @@
 ---
 name: docker
 description: >
-  · Write/review Dockerfiles, Compose, OCI builds, Podman/BuildKit, signing, hardening. Triggers: 'docker', 'dockerfile', 'compose', 'container', 'podman', 'buildkit'. Not for Kubernetes manifests.
+  · Write/review Dockerfiles, Compose, OCI builds, Podman/BuildKit, signing, hardening. Triggers: 'docker', 'dockerfile', 'compose', 'container', 'podman', 'buildkit'. Not for Kubernetes manifests (use kubernetes).
 license: MIT
 compatibility: "Requires docker or podman. Optional: docker compose, buildkit, cosign, trivy"
 paths:
@@ -20,12 +20,12 @@ metadata:
 
 Write, review, and architect Dockerfiles, Compose stacks, and container workflows - from single-service dev setups to multi-arch production pipelines with image signing and compliance gates. The goal is minimal, secure, reproducible images that a team can maintain and a QSA can audit.
 
-**Target versions** (March 2026):
-- Docker Engine 29.3.0, Docker Desktop 4.66.1
-- Docker Compose v5.1.1 (Go SDK, Bake-delegated builds)
-- BuildKit v0.28.1 (bundled with Engine 29.x)
-- containerd 2.2.2 (2.3 LTS ships April 2026)
-- Podman 5.8.1, Buildah 1.43.0
+**Target versions** (April 2026):
+- Docker Engine 29.4.0, Docker Desktop 4.66.1
+- Docker Compose v5.1.3 (Go SDK, Bake-delegated builds)
+- BuildKit v0.29.0 (bundled with Engine 29.x)
+- containerd 2.2.3 / **2.3 LTS** (April 2026, recommended for production)
+- Podman 5.8.2, Buildah 1.43.0
 - runc 1.4.1 (latest; CVE-2025-31133/52565/52881 patched since 1.4.0)
 
 This skill covers five domains depending on context:

@@ -16,10 +16,10 @@ metadata:
 Manage, troubleshoot, and harden OPNsense and pfSense firewalls via SSH. Both are FreeBSD-based,
 pf-powered firewall distributions - most concepts, commands, and patterns apply to both.
 
-**Target versions** (March 2026):
-- OPNsense: 26.1.5 (26.1 "Witty Woodpecker" series)
-- pfSense CE: 2.8.1 / pfSense Plus: 25.11.1
-- CrowdSec: v1.7.6
+**Target versions** (April 2026):
+- OPNsense: 26.4.0 (26.4 series; 26.1.6_2 still supported on the 26.1 stable branch)
+- pfSense CE: 2.8.1 / pfSense Plus: 26.03
+- CrowdSec: v1.7.7
 
 ## When to use
 
