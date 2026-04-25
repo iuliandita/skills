@@ -1,6 +1,6 @@
 # skills.
 
-**Hand-crafted [Agent Skills](https://agentskills.io) for DevOps, security, infrastructure, and software engineering.**
+**Hand-built [Agent Skills](https://agentskills.io). The collection fixes itself.**
 
 <div align="center">
 
@@ -8,9 +8,7 @@
 npx skills add iuliandita/skills
 ```
 
-**37 production-tested skills** - Kubernetes, Terraform, Docker, Ansible, CI/CD, HTTP APIs, databases, AI/ML, testing, virtualization, Arch Linux, Debian-family, RPM-family, Kali Linux, NixOS, networking, localization, browsing, MCP servers, security audits, pentesting, code review, prose audits, dev workflow orchestration, and more.
-
-Built on the [Agent Skills open standard](https://agentskills.io/specification). Works with any tool that supports it.
+37 skills for DevOps, security, infra, and software engineering, wired into a [Karpathy-style autoresearch loop](https://github.com/karpathy/autoresearch) that scores, improves, and verifies each one on every pass.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Agent Skills](https://img.shields.io/badge/Agent_Skills-open_standard-blue.svg)](https://agentskills.io)
@@ -19,326 +17,69 @@ Built on the [Agent Skills open standard](https://agentskills.io/specification).
 
 ---
 
-`kubernetes` `terraform` `docker` `ansible` `archlinux` `cachyos` `pacman` `paru` `aur` `systemd` `nixos` `nix` `flakes` `home-manager` `nix-darwin` `helm` `argocd` `ci-cd` `github-actions` `gitlab-ci` `postgresql` `mongodb` `mysql` `networking` `dns` `wireguard` `tailscale` `vpn` `nftables` `opnsense` `pfsense` `mcp` `model-context-protocol` `security-audit` `owasp` `pentesting` `privilege-escalation` `ctf` `code-review` `git` `shell` `zsh` `bash` `prompt-engineering` `pci-dss` `compliance` `devops` `infrastructure-as-code` `iac` `containers` `podman` `buildah` `sealed-secrets` `haproxy` `caddy` `traefik` `nginx` `autoresearch` `self-improving` `llm` `rag` `embedding` `vector-store` `langchain` `langgraph` `openai-sdk` `anthropic-sdk` `agents` `fine-tuning` `ollama` `vllm` `promptfoo` `vitest` `jest` `playwright` `pytest` `tdd` `e2e` `accessibility` `axe-core` `load-testing` `k6` `proxmox` `qemu` `kvm` `libvirt` `packer` `cloud-init` `gpu-passthrough` `virtualization` `hypervisor`
+## The story
 
----
+AI coding tools used to mean prompts. Prompts don't compose, don't carry between tools, and don't improve unless you rewrite them by hand. Agent Skills replaced that: a directory of markdown plus a description, portable across every conformant tool. Drop a skill folder anywhere the spec is read and the agent gets a new capability.
 
-## Compatibility
+Then Karpathy pointed an agent at a 630-line training script overnight. It edited the code, ran a 5-minute training, kept changes that improved the score, discarded the rest. 700 runs, 20 wins, on one GPU. The pattern works on anything you can score.
 
-These skills follow the [Agent Skills open standard](https://agentskills.io/specification) - the cross-vendor format for portable AI agent capabilities. Any tool that reads `SKILL.md` files can use them directly:
+This repo is both. 37 hand-built skills, with the autoresearch loop wired up to refine them.
 
-- **Claude Code** - native support
-- **OpenAI Codex CLI** - native support
-- **Gemini CLI** - native support
-- **Cursor** - native support
-- **VS Code GitHub Copilot** - native support
-- **Windsurf** - native support
-- **OpenCode** - native support
-- **Cline** - native support
-- **Roo Code** - native support
-- **Goose** - native support
-- **Amp** - native support
-- **Continue** - native support
-- **Kiro CLI** - native support
-- **Warp** - native support
-- **OpenClaw** - native support
-- **Hermes Agent** - native support
-- **Qwen Code** - native support
-- **Crush** - native support
-- **Google Antigravity** - native support
-- **Augment** - native support
-- **OpenHands** - native support
-- **Trae** - native support
-- **Qoder** - native support
-- **Kimi Code CLI** - native support
-- Any other tool that implements the Agent Skills spec
+## The autoresearch loop
 
-No conversion, no adapters. Drop the skill folder in your tool's skills directory and it works.
+`skill-refiner` ports Karpathy's pattern to a skill collection. It loads every skill, scores it across three layers, picks the weakest, lets the agent rewrite it, then keeps the change only if the score moved.
 
-## Why these skills
+The cycle:
 
-These aren't generic prompts copy-pasted from a blog post. Every skill in this collection has been built iteratively, analyzed against real-world usage, cross-checked with official documentation, and refined through multiple passes until it actually works the way you'd expect. Each one is structured with a compact core that triggers fast and loads clean, plus dedicated reference files that get pulled in only when the agent needs the deep stuff - compliance checklists, manifest templates, pattern libraries. No bloat in the main body, no missing context when it matters.
+> **Score → Improve → Verify → Keep or Revert → Repeat.**
 
-Every skill is researched well beyond any model's training cutoff. We're talking current CVEs, recent breaking changes, deprecation notices, and gotchas from *this week* - not whatever the model last saw during pre-training. When Kubernetes drops a beta API, when Terraform changes provider behavior, when Docker deprecates a build flag - these skills already know about it. Models are smart, but their knowledge has a shelf life. These skills keep it current.
+- **Three-layer evaluation.** Lint validation (structural). AI self-check (quality). Behavioral testing against synthetic tasks (does the skill actually work in context?).
+- **Adaptive focus.** First pass scores everything. Subsequent iterations target the lowest-scoring skills until they're brought up.
+- **Cross-model peer review.** If a second AI harness is available (Claude alongside Codex, for example), the second model reviews every change the first one makes. Single-model blind spots get caught.
+- **The Karpathy gate.** Only changes that measurably improve the score survive. Everything else reverts. No drift, no degeneration. Monotonic improvement.
+- **Self-improvement.** `skill-refiner` improves its own evaluation infrastructure (including itself) in a separate meta-phase, with human review checkpoints.
 
-This is a growing collection. New skills get added as they're built, tested, and proven useful. If you're using an AI coding tool without custom skills, you're leaving a lot of capability on the table.
+Run it once and the collection sharpens. Run it ten times overnight and the bottom of the distribution catches up to the top.
 
-## NEW: Self-Improving Skills
+## Why it matters
 
-**skill-refiner** brings [Karpathy's AutoResearch](https://github.com/karpathy/autoresearch) pattern to AI skill collections. Instead of manually reviewing and improving skills one by one, skill-refiner runs an automated loop that scores, improves, and validates every skill in the collection - then does it again.
+- **The collection improves itself.** New skills inherit whatever standard the loop currently enforces. The bar moves up; nothing has to be retrofitted by hand.
+- **One folder, every tool.** Built on the [Agent Skills open standard](https://agentskills.io/specification). Any conformant tool reads them. No conversion, no per-tool forks.
+- **Current beyond the training cutoff.** Skills carry this-week's CVEs, recent breaking changes, deprecation notices. Maintained, not stamped at one point in time.
+- **Skills know about each other.** Routing hints (`Not for X (use Y)`) prevent collisions. The agent picks the right skill on the first call.
 
-The loop: **Score -> Improve -> Verify -> Keep or Revert -> Repeat.**
-
-- **Adaptive focus** - first pass scores everything, then subsequent iterations zero in on the weakest skills until they're brought up to standard
-- **Three-layer evaluation** - lint validation (structural), AI self-check (quality), and behavioral testing against synthetic tasks (does the skill actually work?)
-- **Cross-model peer review** - if you have multiple AI harnesses installed (Claude + Codex, for example), the secondary model reviews every improvement the primary makes. Adversarial evaluation catches single-model blind spots.
-- **Karpathy gate** - only changes that measurably improve a skill's score survive. Everything else gets reverted. No drift, no degeneration, monotonic improvement.
-- **Self-improvement** - skill-refiner improves its own evaluation infrastructure (including itself) in a separate meta-phase with human review checkpoints
-
-10 iterations. 29 skills. One command.
-
-## What's in the box
-
-37 production-tested skills covering:
-
-### Infrastructure & Operations
-
-| Skill | What it does |
-|-------|-------------|
-| **ansible** | Playbooks, roles, collections, Molecule testing, Ansible Vault, CIS benchmarks, compliance hardening |
-| **arch-btw** | Arch Linux and CachyOS administration - pacman, paru, AUR, systemd, bootloader and kernel recovery |
-| **debian-ubuntu** | Debian and Debian-family administration - apt, dpkg, PPAs, snaps, systemd, GRUB, AppArmor, HWE, and distro-specific quirks |
-| **rhel-fedora** | Fedora and RHEL-family administration - dnf, yum, SELinux, firewalld, dracut, subscription-manager, and clone-specific quirks |
-| **kali-linux** | Kali Linux administration - branches, metapackages, live USB persistence, offensive tool families, NetHunter, and lab-safe distro workflow |
-| **nixos-btw** | NixOS, Nix, home-manager, nix-darwin, and flakes - declarative config, generations and rollbacks, channels vs flakes, modules, overlays, nix-store GC, disko, impermanence, nixos-anywhere, Determinate Nix and Lix |
-| **docker** | Dockerfiles, Compose, Podman, Buildah, multi-stage builds, image signing, container hardening |
-| **kubernetes** | Manifests, Helm charts, Gateway API, Kustomize, ArgoCD, sealed secrets, PCI-DSS compliance |
-| **terraform** | Terraform/OpenTofu - HCL patterns, module design, state management, policy-as-code, compliance |
-| **databases** | PostgreSQL, MongoDB, MySQL/MariaDB, MSSQL - tuning, schemas, migrations, replication, connection pooling |
-| **ci-cd** | GitHub Actions, GitLab CI/CD, Forgejo workflows, supply chain security, SHA pinning, SBOM generation |
-| **virtualization** | Proxmox VE, libvirt/QEMU/KVM, XCP-ng, VMware - Terraform provisioning, Packer templates, cloud-init, GPU passthrough, storage backends, clustering, live migration |
-
-### Networking & Firewalls
-
-| Skill | What it does |
-|-------|-------------|
-| **networking** | DNS, reverse proxies, VPNs, VLANs, load balancers, WireGuard, Tailscale, nftables, BGP/OSPF |
-| **firewall-appliance** | OPNsense/pfSense firewall management via SSH - pfctl, CrowdSec, pfBlockerNG, CARP failover, hardening |
-
-### Security & Pentesting
-
-| Skill | What it does |
-|-------|-------------|
-| **security-audit** | Vulnerability scanning, credential detection, auth review, OWASP checks, supply chain security |
-| **lockpick** | Authorized privilege escalation assessments, CTF challenges, post-exploitation, container escape |
-| **zero-day** | Vulnerability research - deep code analysis, binary reverse engineering, patch diffing, fuzzing, variant analysis, PoC development |
-
-### Development & Code Quality
-
-| Skill | What it does |
-|-------|-------------|
-| **code-review** | Bug hunting, logic errors, edge cases, race conditions, resource leaks, convention violations |
-| **anti-slop** | Detects and fixes AI-generated code patterns - hallucinated APIs/flags/resources, duplicate code, test theater, over-abstraction, redundant comments, verbose defensive code |
-| **anti-ai-prose** | Audits writing for AI tells - vocabulary (delve, tapestry), syntax (negative parallelism, tricolons), tone (travel-guide voice, vague attribution), formatting (em-dash abuse). Covers docs, READMEs, wikis, PRs, emails, slides, creative writing |
-| **backend-api** | HTTP backend APIs - FastAPI, Express, NestJS, REST/OpenAPI contracts, auth flows, versioning, pagination, idempotency |
-| **testing** | Unit, integration, E2E, accessibility, and performance tests - Vitest, Jest, Playwright, pytest, Go testing, cargo test, TDD workflows, mocking strategies, CI test infrastructure |
-| **localize** | App localization and i18n audits - find hardcoded strings, translation flow gaps, locale fallback issues, and framework-specific i18n mistakes |
-| **dev-cycle** | Start-to-finish dev workflow - pull, branch, size changes, test, review, and prep work for clean implementation cycles |
-| **git** | Commits, branches, hooks, signing, multi-forge workflows (GitHub, GitLab, Forgejo), release management |
-| **command-prompt** | Shell scripting across zsh, bash, POSIX sh, fish, nushell - dotfiles, completions, one-liners |
-| **mcp** | MCP server development - protocol patterns, transport, auth, input validation, injection prevention |
-| **ai-ml** | LLM integrations, RAG pipelines, agent systems, embeddings, evaluation harnesses, local inference, fine-tuning, structured output, tool use, cost optimization, safety guardrails |
-| **full-review** | Orchestrates code-review + anti-slop + security-audit + update-docs in one pass |
-| **deep-audit** | Five-wave repo audit - recon, code quality, domain skills, sequential security, and docs or git hygiene in one structured pass |
-
-### Tooling & Meta
-
-| Skill | What it does |
-|-------|-------------|
-| **browse** | Token-efficient web browsing and scraping - lightweight extraction, focused page reads, and link-following without full browser overhead |
-| **prompt-generator** | Turn scattered ideas into structured LLM prompts - system prompts, templates, prompt engineering |
-| **roadmap** | Keep a gitignored `ROADMAP.md` current - capture ideas, shipped work, priorities, and competitor signals |
-| **routine-writer** | Write Claude Code routine prompts - self-contained tasks that run unattended on Anthropic cloud via schedule, API, or GitHub triggers. Emits `/schedule` CLI commands and `/fire` curl templates |
-| **skill-creator** | Create, review, audit, and optimize AI tool skills - consistency checks, overlap detection |
-| **skill-refiner** | Self-improving loop - iterative quality sweeps with cross-model review, inspired by Karpathy's AutoResearch |
-| **update-docs** | Post-session documentation sweep - captures gotchas, syncs instruction files, trims bloat |
-
-## How they're built
-
-Each skill follows the [Agent Skills specification](https://agentskills.io/specification):
-
-- **`SKILL.md` with YAML frontmatter** - `name`, `description`, `license`, optional `compatibility` for environment requirements, and `metadata` for custom fields. The frontmatter is what agents read at startup to decide which skills to activate.
-- **Compact body** (target under 500 lines, 600 hard max) - the core instructions that load into every conversation. Kept lean so it doesn't eat your context window.
-- **Reference files** (`references/` directory) - detailed pattern libraries, compliance checklists, manifest templates. The agent reads these on-demand when the task requires depth. You get expert-level detail without paying the token cost upfront.
-- **Argument hints** (`metadata.argument_hint`) - tells agents what arguments a skill expects when invoked (e.g., `<file-or-pattern>`, `[iterations]`). Angle brackets for required, square brackets for optional.
-- **Precise trigger descriptions** - optimized so the right tool activates the right skill at the right time. Descriptions target about 200 characters, with warnings above 240, so startup skill lists stay compact in tools with tight context budgets.
-- **Cross-skill awareness** - skills know about each other. The security-audit skill knows not to step on lockpick's territory. Docker knows to defer to Kubernetes for cluster networking. No overlapping, no conflicts.
-
-## Install
-
-### Quick install (via [skills.sh](https://skills.sh))
+## Quick install
 
 ```bash
-# All skills
 npx skills add iuliandita/skills
+```
 
-# Pick specific ones
-npx skills add iuliandita/skills --skill kubernetes --skill docker --skill terraform
+That's it. For specific skills, alternative tools, the bundled installer, or symlink mode across multiple agents, see [INSTALL.md](INSTALL.md).
 
-# See what's available
+## What's in here
+
+37 skills covering infra (Kubernetes, Terraform, Docker, Ansible), distros (Arch, Debian, Fedora, Kali, NixOS), networking and firewalls, security and pentesting, code review and prose audits, AI/ML and MCP server work, virtualization, dev workflow tooling, and meta-tooling (the skill creator, refiner, and full-review orchestrator).
+
+Browse [`skills/`](skills/) for the full list, or query it:
+
+```bash
 npx skills add iuliandita/skills --list
 ```
 
-### Using the bundled installer
+Each skill description is in its own `SKILL.md` frontmatter. The trigger keywords and routing hints there tell the agent when to load it.
 
-```bash
-# All skills for Claude (default)
-git clone https://github.com/iuliandita/skills.git /tmp/skills-install
-/tmp/skills-install/install.sh
-rm -rf /tmp/skills-install
+## Compatibility
 
-# Install for a specific tool
-git clone https://github.com/iuliandita/skills.git /tmp/skills-install
-/tmp/skills-install/install.sh --tool codex
-rm -rf /tmp/skills-install
-
-# Pick and choose
-git clone https://github.com/iuliandita/skills.git /tmp/skills-install
-/tmp/skills-install/install.sh --tool claude kubernetes docker terraform ansible
-/tmp/skills-install/install.sh --list  # see what's available
-rm -rf /tmp/skills-install
-```
-
-### Multi-tool install with symlinks
-
-Install once, symlink everywhere. Skills go to a single canonical directory (`~/.agents/skills/`), and each tool gets symlinks. Update the canonical copy and all tools see the change.
-
-```bash
-git clone https://github.com/iuliandita/skills.git /tmp/skills-install
-
-# Install for Claude, Cursor, and Gemini in one shot
-/tmp/skills-install/install.sh --tool claude,cursor,gemini --link
-
-# Check for updates later
-/tmp/skills-install/install.sh --check --link
-
-rm -rf /tmp/skills-install
-```
-
-Override the canonical directory with `SKILLS_CANONICAL_DIR`:
-
-```bash
-SKILLS_CANONICAL_DIR=~/my-skills ./install.sh --tool claude,roo --link
-```
-
-Local private skills can be installed with `--include-internal` when they exist in your checkout and declare `metadata.internal: true`. This is mainly for personal gitignored skills; public installs only include the tracked skill set.
-
-```bash
-./install.sh --tool claude,codex,opencode --link --include-internal --force
-```
-
-### Checking for updates
-
-Each install writes a `.skills-lock.json` with content hashes. Compare against the source to see what changed:
-
-```bash
-./install.sh --check                # check default (Claude)
-./install.sh --check --tool cursor  # check a specific tool
-./install.sh --check --link         # check canonical dir
-```
-
-### Manual
-
-```bash
-cp -r skills/kubernetes ~/.claude/skills/kubernetes
-cp -r skills/kubernetes ~/.codex/skills/kubernetes
-cp -r skills/kubernetes ~/.cursor/skills/kubernetes
-```
-
-### Supported tools
-
-The installer supports 25 targets:
-
-| Tool | Flag | Default path |
-|------|------|-------------|
-| Claude Code | `claude` | `~/.claude/skills` |
-| OpenAI Codex | `codex` | `~/.codex/skills` |
-| Cursor | `cursor` | `~/.cursor/skills` |
-| Windsurf | `windsurf` | `~/.codeium/windsurf/skills` |
-| OpenCode | `opencode` | `~/.config/opencode/skills` |
-| GitHub Copilot | `copilot` | `~/.copilot/skills` |
-| Gemini CLI | `gemini` | `~/.gemini/skills` |
-| Roo Code | `roo` | `~/.roo/skills` |
-| Goose | `goose` | `~/.config/goose/skills` |
-| Amp | `amp` | `~/.config/agents/skills` |
-| Continue | `continue` | `~/.continue/skills` |
-| Kiro CLI | `kiro` | `~/.kiro/skills` |
-| Cline | `cline` | `~/.agents/skills` |
-| Warp | `warp` | `~/.agents/skills` |
-| OpenClaw | `openclaw` | `~/.openclaw/skills` |
-| Hermes Agent | `hermes` | `~/.hermes/skills` |
-| Qwen Code | `qwen` | `~/.qwen/skills` |
-| Crush | `crush` | `~/.config/crush/skills` |
-| Google Antigravity | `antigravity` | `~/.gemini/antigravity/skills` |
-| Augment | `augment` | `~/.augment/skills` |
-| OpenHands | `openhands` | `~/.openhands/skills` |
-| Trae | `trae` | `~/.trae/skills` |
-| Qoder | `qoder` | `~/.qoder/skills` |
-| Kimi Code CLI | `kimi` | `~/.config/agents/skills` |
-| Portable | `portable` | `~/.skills` |
-
-Common aliases also work: `claude-code`, `openai-codex`, `github-copilot`, `gemini-cli`, `kiro-cli`, `qwen-code`, and `kimi-cli`.
-
-All paths are overridable via `--dest` (single-tool mode) or environment variables (e.g., `CLAUDE_SKILLS_DIR`). Some agent ecosystems prefer shared or project-local skill directories; for example, OpenClaw also scans `~/.agents/skills`, and Hermes can be configured to scan external directories such as `~/.agents/skills`. NanoClaw is intentionally not listed as a normal global target because its docs use project-local `.claude/skills` and `container/skills`; install to a NanoClaw checkout with `--tool portable --dest /path/to/NanoClaw/.claude/skills` or `--dest /path/to/NanoClaw/container/skills` as appropriate.
-
-## Requirements
-
-Any AI coding tool that supports the [Agent Skills standard](https://agentskills.io). See the [supported tools table](#supported-tools) above for the full list of tested targets.
-
-## Releases
-
-Releases use release-please in PR mode. Releasable commits merged to `main` open or
-update a release PR, and merging that release PR creates the tag and GitHub Release.
-
-- `feat:` creates a minor release
-- `fix:` creates a patch release
-- `deps:` creates a patch release
-- Any releasable commit type marked with `!` or containing `BREAKING CHANGE:` creates a major release
-- `docs:`, `chore:`, `ci:`, `test:`, and `style:` do not trigger a release on their own
-
-This repo uses release-please, which only treats `feat`, `fix`, and `deps` as releasable
-units. If a refactor or performance change should cut a release, use a squash-merge title
-that reflects the user-facing impact, usually `fix:`.
-
-## Updating
-
-Pull the latest and re-run the installer:
-
-```bash
-cd /path/to/skills
-git pull
-./install.sh --force
-```
-
-Or check what changed first:
-
-```bash
-cd /path/to/skills
-git pull
-./install.sh --check   # see what's outdated
-./install.sh --force   # update everything
-```
-
-The installer backs up existing skills before overwriting (unless `--no-backup`), so you won't lose local customizations.
-
-## Structure
-
-```
-skills/
-  ansible/
-    SKILL.md              # Core skill instructions (Agent Skills spec)
-    references/           # Deep-dive reference files
-      compliance.md
-      playbook-patterns.md
-      ...
-  docker/
-    SKILL.md
-    references/
-      dockerfile-patterns.md
-      ...
-  ...
-install.sh                # Installer (15 agents, symlink mode, lock file)
-scripts/
-  lint-skills.sh          # Collection linter
-  validate-spec.sh        # Agent Skills spec validator
-```
+Built on the [Agent Skills open standard](https://agentskills.io/specification). Any conformant tool reads these directly. The bundled installer ships paths for 25 specific targets (Claude Code, Codex, Cursor, Gemini, Copilot, Windsurf, OpenCode, and others); see [INSTALL.md](INSTALL.md) for the full table and overrides.
 
 ## Contributing
 
-Found a bug in a skill? Have a suggestion? Open an issue or PR. If you've built skills of your own and want to share, let's talk.
-
-Skills must pass `./scripts/lint-skills.sh` and follow the [Agent Skills specification](https://agentskills.io/specification).
+Issues and PRs welcome. Skills must pass `./scripts/lint-skills.sh` and follow the [Agent Skills specification](https://agentskills.io/specification).
 
 ## License
 
 [MIT](LICENSE)
+
+---
+
+`kubernetes` `terraform` `docker` `ansible` `archlinux` `cachyos` `pacman` `paru` `aur` `systemd` `nixos` `nix` `flakes` `home-manager` `nix-darwin` `helm` `argocd` `ci-cd` `github-actions` `gitlab-ci` `postgresql` `mongodb` `mysql` `networking` `dns` `wireguard` `tailscale` `vpn` `nftables` `opnsense` `pfsense` `mcp` `model-context-protocol` `security-audit` `owasp` `pentesting` `privilege-escalation` `ctf` `code-review` `git` `shell` `zsh` `bash` `prompt-engineering` `pci-dss` `compliance` `devops` `infrastructure-as-code` `iac` `containers` `podman` `buildah` `sealed-secrets` `haproxy` `caddy` `traefik` `nginx` `autoresearch` `self-improving` `llm` `rag` `embedding` `vector-store` `langchain` `langgraph` `openai-sdk` `anthropic-sdk` `agents` `fine-tuning` `ollama` `vllm` `promptfoo` `vitest` `jest` `playwright` `pytest` `tdd` `e2e` `accessibility` `axe-core` `load-testing` `k6` `proxmox` `qemu` `kvm` `libvirt` `packer` `cloud-init` `gpu-passthrough` `virtualization` `hypervisor`
