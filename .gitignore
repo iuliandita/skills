@@ -7,5 +7,8 @@ docs/superpowers/
 SECURITY-AUDIT.md
 .codex
 __pycache__/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
 .refiner-baseline.json
 test.sh
