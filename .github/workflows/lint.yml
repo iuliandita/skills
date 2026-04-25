@@ -142,7 +142,7 @@ jobs:
       - name: Install semgrep
         run: |
           python3 -m venv "$RUNNER_TEMP/semgrep-venv"
-          "$RUNNER_TEMP/semgrep-venv/bin/pip" install --quiet semgrep==1.157.0
+          "$RUNNER_TEMP/semgrep-venv/bin/pip" install --quiet semgrep==1.161.0
           echo "$RUNNER_TEMP/semgrep-venv/bin" >> "$GITHUB_PATH"
 
       - name: Secret scan

@@ -167,7 +167,10 @@ hash_tool() {
 
 skill_hash() {
   local dir="$1"
-  find -L "$dir" -type f -print0 | sort -z | xargs -0 cat 2>/dev/null | hash_tool
+  # No -L: symlinks under skills/ are listed but not followed, so a malicious
+  # symlink committed to a skill dir cannot leak external file contents into
+  # the lock-file hash or into install reads. See SECURITY-AUDIT.md SEC-007.
+  find "$dir" -type f -print0 | sort -z | xargs -0 cat 2>/dev/null | hash_tool
 }
 
 # ── Internal skill detection ──────────────────────────────────────────
