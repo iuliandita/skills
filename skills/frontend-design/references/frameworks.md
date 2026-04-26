@@ -218,8 +218,8 @@ bun run build
 bun run check
 bun run build
 
-# Next.js
-bun run lint
+# Next.js (next lint was removed in Next 16; run ESLint or Biome directly)
+bunx eslint .
 bun run build
 
 # Vite

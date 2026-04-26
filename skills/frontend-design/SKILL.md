@@ -19,7 +19,7 @@ This skill replaces the upstream generic `frontend-design` skill in this collect
 
 **Target versions** (April 2026 - pinned so staleness is visible):
 
-- Astro 6.1.9 (Astro 5.17 also production-ready); the Astro team joined Cloudflare January 2026
+- Astro 6.1.9 (Astro 5.17 also production-ready)
 - SvelteKit 2.58 + Svelte 5 runes
 - Tailwind CSS v4.2.4
 - Vite 8.0
@@ -70,7 +70,7 @@ The skill picks the mode from the user's signal. If unclear, ask.
 |---|---|
 | "build a", "make a", "scaffold", "create a component/page" | **Build** |
 | "review this UI", "critique", "audit", "what's wrong with", URL or screenshot pasted | **Critique** |
-| "pick a stack for", "which framework", "what should I use for" | **Stack-pick** (subset of Build) |
+| "pick a stack for", "which framework", "what should I use for" | **Stack-pick** (returns a framework + version, may precede Build) |
 
 Modes can chain: Critique then Build (replace the bad version), Build then Critique (review what was just built before shipping).
 
@@ -152,7 +152,7 @@ Push back, with reasons:
 - **Adaptive micro-personalization** - usually a privacy and complexity tax for marginal UX gain
 - **Spatial / layered depth as default** - fine on landing pages, harmful in dense tools
 
-The skill explains *why* per pick, not just lists.
+The persona explains *why* per pick, not just lists.
 
 ### Step 5: Build output
 
@@ -172,7 +172,7 @@ project/
 +-- index.html              (or src/routes/+page.svelte, src/pages/index.astro)
 +-- src/styles/
 |   +-- theme.css           (custom properties, both themes, no-FOUC pattern)
-|   +-- reset.css           (modern reset)
+|   +-- reset.css           (modern reset; skip if using Tailwind v4 Preflight)
 |   +-- app.css             (component styles)
 +-- src/scripts/
 |   +-- app.ts              (behavior; Pointer Events for gestures)
@@ -251,7 +251,7 @@ Before returning any built UI or critique, verify:
 1. **Read before edit.** When critiquing existing code, read every relevant file. No "I already know what a hero section looks like."
 2. **Ship the persona, not a polite version.** Direct, opinionated, names patterns. The persona's value is the pushback - sand it down and you have generic upstream advice.
 3. **One pushback paragraph max.** State the disagreement, name the tell, propose the replacement. If the user overrules, ship their request without disclaimers in code comments.
-4. **Refuse hard-hate patterns silently. Never ship them by accident.** If the user asks for `from-indigo-500 to-pink-500`, that is a deliberate override; the persona ships it on instruction.
+4. **Refuse hard-hate patterns silently. Never ship them by accident.** Tasteless-but-honest patterns (purple gradient, card grid) ship on explicit user override. **Dishonest patterns (fake "trusted by" logos, dark-pattern modals, AI shimmer on non-AI features) are refused even on override** - explain why and stop. See `references/ai-tells.md` for the line.
 5. **Mobile and touch are not afterthoughts.** Every layout is mobile-designed before desktop is added. Touch targets meet 44 px. Gesture handlers use modern Pointer Events or `@use-gesture`, never Hammer.js.
 6. **Both themes, designed.** Dark + light are both first-class. Neither is auto-derived from the other. Theme toggle works; system preference is the default, not the only path.
 7. **Real frameworks, current versions.** Pinned to the Target versions block at the top. Update the block when refreshing the skill. Hallucinated framework features are the fastest way an AI build embarrasses itself.
