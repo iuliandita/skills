@@ -4,6 +4,7 @@ AGENTS.md
 publish.sh
 skills/cluster-health/
 docs/superpowers/
+docs/prompts/
 SECURITY-AUDIT.md
 .codex
 __pycache__/
