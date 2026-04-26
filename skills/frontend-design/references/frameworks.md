@@ -1,6 +1,6 @@
 # Framework Picker
 
-Pinned to April 2026. Update versions when refreshing the skill. Hallucinating "Next.js 14" or "Astro 4" in build output is the fastest way to embarrass an AI build.
+Pinned to April 2026. Update versions when refreshing the skill. Hallucinating "Next.js 15" or "Astro 5" in build output is the fastest way to embarrass an AI build.
 
 The persona's bias: minimalist first. Reach for a heavier framework only when the minimalist option starts producing inline code soup.
 
@@ -9,16 +9,16 @@ The persona's bias: minimalist first. Reach for a heavier framework only when th
 ## Decision tree
 
 1. **No-build, single HTML file demo, codepen-style?** -> Plain HTML + CSS + JS, no framework. State the constraint at the top of the file.
-2. **Static content, marketing site, blog, docs?** -> **Astro 6.1.8** (or **Astro 5.17** if Astro 6 hasn't shipped a feature you need)
-3. **Interactive app, bundle size matters, you want runes?** -> **SvelteKit 2.55** + Svelte 5
-4. **Small app, no SSR needed, want Vite directly?** -> **Vite 6.2** + plain TypeScript or a thin layer (Lit, Solid, vanilla)
-5. **Team is React-locked or you genuinely need React's ecosystem?** -> **Next.js 15** + **React 19**
+2. **Static content, marketing site, blog, docs?** -> **Astro 6.1.9** (or **Astro 5.17** if Astro 6 hasn't shipped a feature you need)
+3. **Interactive app, bundle size matters, you want runes?** -> **SvelteKit 2.58** + Svelte 5
+4. **Small app, no SSR needed, want Vite directly?** -> **Vite 8.0** + plain TypeScript or a thin layer (Lit, Solid, vanilla)
+5. **Team is React-locked or you genuinely need React's ecosystem?** -> **Next.js 16** + **React 19.2**
 
 The persona pushes back on Next.js as a default. It's a fine framework; it is also the heaviest option in the list and gets reached for reflexively. If the answer to "why Next" is "because everyone uses it", that's not a reason.
 
 ---
 
-## Astro 6.1.8 (Cloudflare-stewarded since January 2026)
+## Astro 6.1.9 (Cloudflare-owned since January 16, 2026)
 
 **When.** Content-heavy: marketing pages, docs, blogs, portfolios, landing sites, hybrid sites with islands of interactivity.
 
@@ -30,13 +30,15 @@ The persona pushes back on Next.js as a default. It's a fine framework; it is al
 - Islands architecture - hydrate Svelte / React / Vue / Solid components only where needed
 - Built-in image optimization (`astro:assets`)
 - Server actions for forms
+- Astro 6 dev server runs on `workerd` (Cloudflare's open-source Workers runtime), so local dev matches production
+- Live Content Collections, stable CSP API, Node 22+ minimum
 
 **When NOT.**
 
 - Highly interactive single-page apps (use SvelteKit or Next)
 - App with heavy client state across many routes (use SvelteKit)
 
-**Note.** Astro 5.17 is also production-ready as of April 2026; Astro 6 was released after the Cloudflare acquisition and adds features around Cloudflare Workers integration. Pick 5 if 6's new features aren't relevant.
+**Note.** Astro 5.17 (January 29, 2026) is the latest 5.x and remains production-ready. Astro 6 stable shipped in March 2026 after the Astro team joined Cloudflare; the framework stays MIT-licensed and open-governed. Pick 5 if you don't need Astro 6's new features (workerd dev server, Live Content Collections stable, CSP API stable) or if you're still on Node 18/20.
 
 ```bash
 # Bun-first (preferred per repo convention)
@@ -45,7 +47,7 @@ bun create astro@latest
 
 ---
 
-## SvelteKit 2.55 + Svelte 5
+## SvelteKit 2.58 + Svelte 5
 
 **When.** Interactive apps where bundle size and runtime cost matter. Apps where the team wants explicit reactivity.
 
@@ -84,7 +86,7 @@ bun create svelte@latest
 
 ---
 
-## Vite 6.2 + plain TS
+## Vite 8.0 + plain TS
 
 **When.** Small apps, demos, tools where you want a build but no framework opinions. Single-page tools, internal dashboards with one or two views.
 
@@ -111,7 +113,7 @@ bun create vite@latest
 
 ---
 
-## Next.js 15 + React 19
+## Next.js 16 + React 19.2
 
 **When.** Team is React-locked, ecosystem dependencies (specific React libraries with no equivalent), or app needs Server Components and Server Actions for a specific reason.
 
@@ -119,7 +121,9 @@ bun create vite@latest
 
 **Strengths.**
 
-- React Server Components, Server Actions
+- Turbopack stable (default bundler in Next 16) - dev startup ~50% faster
+- React Server Components, Server Actions; React 19.2 features (View Transitions, useEffectEvent, Activity)
+- Cache Components with Partial Pre-Rendering and the `"use cache"` directive
 - Largest ecosystem of components, hooks, libraries
 - Vercel-tier hosting integration
 
@@ -129,6 +133,8 @@ bun create vite@latest
 - Static content site (Astro is faster, ships less JS)
 - You want explicit reactivity (Svelte 5 runes are clearer)
 - Bundle size matters (Next is the heaviest in this list)
+
+**Note.** Next.js 15 is still maintained but Next.js 16 stable shipped October 21, 2025; 16.2 (March 18, 2026) is the latest. Use 16 for new projects. Middleware was renamed to `proxy.ts` in 16 to clarify the network boundary.
 
 The persona's pushback when Next is suggested as default: "Why Next over Astro for a marketing site, or SvelteKit for an app? If the answer is 'we always use Next', the answer is wrong."
 
@@ -140,9 +146,9 @@ bun create next-app@latest
 
 ## Styling: Tailwind v4 by default
 
-**Tailwind CSS v4.2.4** (April 2026) is the default styling layer.
+**Tailwind CSS v4.2.4** (April 21, 2026) is the default styling layer.
 
-**Why this version matters.** v4 rewrote the engine in Rust (Lightning CSS), 5x faster builds, CSS-first config (no `tailwind.config.js`). The 4.2 release added the `@tailwindcss/webpack` package, four new palettes (mauve, olive, mist, taupe), expanded logical property utilities, and 3.8x recompilation speedup.
+**Why this version matters.** v4 rewrote the engine (Oxide, with Lightning CSS for parsing), 5x faster full builds and 100x+ faster incremental builds, CSS-first config (no `tailwind.config.js`). The 4.2 release added the `@tailwindcss/webpack` package, four new palettes (mauve, olive, mist, taupe), expanded logical property utilities, and a 3.8x recompilation speedup.
 
 ```css
 /* CSS-first config in v4 */

@@ -1,14 +1,14 @@
 ---
 name: frontend-design
 description: >
-  · Build or critique UIs as opinionated UI/UX persona. Mobile-first, dark+light, touch-aware. Refuses AI design tells. Triggers: 'frontend', 'ui', 'ux', 'design review', 'mobile gesture'. Not for code logic (code-review).
+  · Build/critique UIs with opinionated taste, refusing AI design tells. Mobile-first, dark+light, touch-aware. Triggers: 'frontend', 'ui', 'ux', 'css', 'tailwind', 'landing page', 'design review', 'theme'. Not for code logic (code-review).
 license: MIT
 compatibility: "None - works on any frontend stack"
 metadata:
   source: iuliandita/skills
   date_added: "2026-04-26"
-  effort: medium
-  argument_hint: "<file-or-url-or-description>"
+  effort: high
+  argument_hint: "[file-or-url-or-description]"
 ---
 
 # Frontend-Design: Opinionated UI/UX Persona
@@ -19,11 +19,11 @@ This skill replaces the upstream generic `frontend-design` skill in this collect
 
 **Target versions** (April 2026 - pinned so staleness is visible):
 
-- Astro 6.1.8 (Astro 5.17 also production-ready)
-- SvelteKit 2.55 + Svelte 5 runes
+- Astro 6.1.9 (Astro 5.17 also production-ready); the Astro team joined Cloudflare January 2026
+- SvelteKit 2.58 + Svelte 5 runes
 - Tailwind CSS v4.2.4
-- Vite 6.2
-- React 19 + Next.js 15 (heavier option, only when team is React-locked)
+- Vite 8.0
+- React 19.2 + Next.js 16 (heavier option, only when team is React-locked)
 - @use-gesture/react (modern; Hammer.js considered legacy)
 
 ## When to use
@@ -221,7 +221,7 @@ Before returning any built UI or critique, verify:
 - [ ] **Reduced-motion fallback** - animations and glitch effects degrade to static under `prefers-reduced-motion: reduce`
 - [ ] **Focus-visible styles defined** - never `outline: none` alone; replacement focus ring present
 - [ ] **Contrast meets WCAG AA on both themes** - body text and interactive elements. AAA on body where feasible
-- [ ] **Real framework verified** - Astro / SvelteKit / Vite / Next versions match the Target versions block. No "Next 13" or "Astro 3" in build output unless the user explicitly asked for legacy
+- [ ] **Real framework verified** - Astro / SvelteKit / Vite / Next versions match the Target versions block. No "Next 14" or "Astro 4" in build output unless the user explicitly asked for legacy
 - [ ] **Files separated** - HTML / CSS / JS in their own files unless an explicit single-file constraint is stated in a code comment
 - [ ] **No invented CSS properties or framework APIs** - only verified Tailwind v4 utilities, real Svelte 5 runes (`$state`, `$derived`, `$effect`, `$props`), real Astro directives. AI invents `.bg-glass-700` and `$reactive` constantly
 - [ ] **Critique mode: max 10 tickets** - RED + GREEN priority. Rant is filtered, not shipped raw
