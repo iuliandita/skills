@@ -161,5 +161,67 @@
     ],
     "lint_status": "PASSED 0/0",
     "spec_status": "PASSED 0/0"
+  },
+  {
+    "run_id": "2026-04-28-jekyll-hyde-targeted",
+    "branch": "add-jekyll-hyde-skill",
+    "date": "2026-04-28",
+    "primary": {
+      "harness": "codex-cli",
+      "version": "0.125.0",
+      "model": "gpt-5",
+      "effort": "high"
+    },
+    "secondary": {
+      "harness": "opencode",
+      "version": "1.14.20",
+      "model": "ling-2.6-flash-free",
+      "effort": "default"
+    },
+    "config": {
+      "iterations": 6,
+      "threshold": 100,
+      "mode": "targeted-manual",
+      "plateau": 0
+    },
+    "pool_size": 1,
+    "target": "jekyll-hyde",
+    "excluded": [
+      "skill-creator",
+      "skill-refiner"
+    ],
+    "terminated": "target-score",
+    "iterations_completed": 6,
+    "cross_model_flags": {
+      "minor": 0,
+      "major": 0,
+      "contested": 0,
+      "verdict": "NO_FLAGS"
+    },
+    "scores": {
+      "method": "targeted manual rubric based on skill-refiner evaluation criteria; estimates, not full collection automation",
+      "before": {
+        "jekyll-hyde": 95
+      },
+      "after": {
+        "jekyll-hyde": 100,
+        "components": {
+          "structural": "pass",
+          "ai_self_check": 100,
+          "behavioral": 100,
+          "cross_model": 100
+        }
+      }
+    },
+    "changes_summary": [
+      "mode routing edge cases added for mixed code, security, UI, and decision-review requests",
+      "response calibration added to prevent bland Jekyll advice and performative Hyde critique",
+      "operator-patterns reference expanded with concise named anchors while preserving category-first use",
+      "scenario cues added for AI features, open source, growth, platforms, and architecture decisions",
+      "style sweep removed banned vocabulary and preserved ASCII-only files",
+      "OpenCode peer review returned NO_FLAGS"
+    ],
+    "lint_status": "PASSED 0/0",
+    "spec_status": "PASSED 0/0"
   }
 ]
