@@ -81,6 +81,15 @@ cp -r skills/kubernetes ~/.cursor/skills/kubernetes
 
 The installer ships paths for 25 targets. All paths are overridable via `--dest` (single-tool mode) or per-tool environment variables (e.g., `CLAUDE_SKILLS_DIR`).
 
+Support in this table means **path support**: the installer knows where to copy or symlink the skill folders for that target. Runtime behavior is owned by the consuming tool. Activation rules, trigger matching, context limits, subagent support, and reference-file loading can differ between agents, even when they all read the same skill directory.
+
+For important workflows, smoke-test the target tool after install:
+
+```bash
+# Example: install one skill, then ask the target agent to use it on a small task
+./install.sh --tool codex kubernetes
+```
+
 | Tool | Flag | Default path |
 |------|------|-------------|
 | Claude Code | `claude` | `~/.claude/skills` |
@@ -191,4 +200,4 @@ If a refactor or perf change should cut a release, use a squash-merge title that
 
 ## Requirements
 
-Any AI coding tool that supports the [Agent Skills standard](https://agentskills.io). See [Supported targets](#supported-targets) for the tested list.
+Any AI coding tool that supports the [Agent Skills standard](https://agentskills.io). See [Supported targets](#supported-targets) for installer path targets. Treat new or less common agents as path-supported until you verify that the tool activates and applies the skills as expected.
