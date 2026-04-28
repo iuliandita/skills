@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.29.0](https://github.com/iuliandita/skills/compare/v1.28.1...v1.29.0) (2026-04-28)
+
+
+### Features
+
+* **frontend-design:** add opinionated UI/UX persona skill ([#41](https://github.com/iuliandita/skills/issues/41)) ([d00cd77](https://github.com/iuliandita/skills/commit/d00cd77877dc4083f8a473ffc4489bec126c9eab))
+* **jekyll-hyde:** add dual-lens advisor skill ([#43](https://github.com/iuliandita/skills/issues/43)) ([8192e5f](https://github.com/iuliandita/skills/commit/8192e5f306569de5835f17fe5eae8632d93c7c65))
+
 ## [1.28.1](https://github.com/iuliandita/skills/compare/v1.28.0...v1.28.1) (2026-04-25)
 
 
