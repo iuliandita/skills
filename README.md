@@ -8,7 +8,7 @@
 npx skills add iuliandita/skills
 ```
 
-38 skills for DevOps, security, infra, and software engineering, wired into a [Karpathy-style autoresearch loop](https://github.com/karpathy/autoresearch) that scores, improves, and verifies each one on every pass.
+39 skills for DevOps, security, infra, and software engineering, wired into a [Karpathy-style autoresearch loop](https://github.com/karpathy/autoresearch) that scores, improves, and verifies each one on every pass.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Agent Skills](https://img.shields.io/badge/Agent_Skills-open_standard-blue.svg)](https://agentskills.io)
@@ -23,7 +23,7 @@ AI coding tools used to mean prompts. Prompts don't compose, don't carry between
 
 Then Karpathy pointed an agent at a 630-line training script overnight. It edited the code, ran a 5-minute training, kept changes that improved the score, discarded the rest. 700 runs, 20 wins, on one GPU. The pattern works on anything you can score.
 
-This repo is both. 38 hand-built skills, with the autoresearch loop wired up to refine them.
+This repo is both. 39 hand-built skills, with the autoresearch loop wired up to refine them.
 
 ## The autoresearch loop
 
@@ -58,7 +58,7 @@ That's it. For specific skills, alternative tools, the bundled installer, or sym
 
 ## What's in here
 
-38 skills covering infra (Kubernetes, Terraform, Docker, Ansible), distros (Arch, Debian, Fedora, Kali, NixOS), networking and firewalls, security and pentesting, code review and prose audits, frontend and UI design, AI/ML and MCP server work, virtualization, dev workflow tooling, and meta-tooling (the skill creator, refiner, and full-review orchestrator).
+39 skills covering infra (Kubernetes, Terraform, Docker, Ansible), distros (Arch, Debian, Fedora, Kali, NixOS), networking and firewalls, security and pentesting, code review and prose audits, frontend and UI design, AI/ML and MCP server work, virtualization, dev workflow tooling, and meta-tooling (the skill creator, refiner, and full-review orchestrator).
 
 Browse [`skills/`](skills/) for the full list, or query it:
 
