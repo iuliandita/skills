@@ -17,7 +17,7 @@ Turn an unattended, repeatable task into a Claude Code routine: a saved prompt p
 
 **Why routines differ from chat prompts.** A routine runs as a full autonomous Claude Code cloud session. There is no permission-mode picker, no approval prompts, and no human to answer clarifying questions mid-run. A prompt that works fine in a conversation can stall or misfire silently inside a routine because the model has no one to ask. Every routine prompt must be self-contained, state its success criteria, and declare where output goes.
 
-**Research preview context** (April 2026): routines ship under the beta header `experimental-cc-routine-2026-04-01`. Behavior, limits, and the API surface can change. Pin any beta header references to that value and date so staleness is detectable.
+**Research preview context** (May 2026 recheck): routines ship under the beta header `experimental-cc-routine-2026-04-01`. Behavior, limits, and the API surface can change. Pin any beta header references to that value and date so staleness is detectable.
 
 ## When to use
 
@@ -56,10 +56,33 @@ Routines are high-stakes: they run unattended, consume daily allowance, and can 
 - [ ] **Safety rail present**: what the routine should NOT do (no force-push, no protected-branch changes, no destructive ops, no new connectors, no credential exfil).
 - [ ] **No injected slop**: no "certainly", "I'd be happy to", "great question", no ALL CAPS emphasis, no filler preamble. Calm imperatives only.
 - [ ] **Cron interval >= 1 hour**: scheduled triggers under one hour are rejected by the platform.
-- [ ] **Beta header pinned with date**: prose mentions of `experimental-cc-routine-2026-04-01` carry "(April 2026)" so future readers can scan for staleness. Inside code blocks the header string itself carries the date, so no parenthetical is needed.
+- [ ] **Beta header pinned with date**: prose mentions of `experimental-cc-routine-2026-04-01` carry the header date so future readers can scan for staleness. Inside code blocks the header string itself carries the date, so no parenthetical is needed.
 - [ ] **No tokens in output**: environment variable placeholders only. Never paste a real `sk-ant-oat01-...` value.
 
 ---
+- [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
+- [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
+- [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
+- [ ] **API surface checked**: routine headers, beta names, schedule syntax, and event payloads match current official docs
+- [ ] **Unattended risk bounded**: permissions, spending, mutation scope, and notification paths are explicit
+
+---
+
+## Performance
+
+- Keep scheduled jobs narrow; split broad routines into independently observable tasks.
+- Set output contracts so downstream automation reads small structured results instead of transcripts.
+- Throttle polling and retries to avoid unnecessary API or CI load.
+
+
+---
+
+## Best Practices
+
+- Use least-privilege tokens and separate credentials per routine.
+- Make failure modes visible with logs, alerts, and idempotent retry behavior.
+- Pin beta headers with dates and revisit them during maintenance refreshes.
+
 
 ## Workflow
 
@@ -221,6 +244,6 @@ API-only and GitHub-only routines skip artifact #2 and emit a web-UI walkthrough
 5. **Branch policy off by default.** Do not recommend enabling **Allow unrestricted branch pushes** unless the prompt genuinely needs to write outside `claude/*`. Prefer opening PRs.
 6. **Never embed tokens.** Every `Authorization: Bearer` in emitted artifacts uses an env var placeholder (`$ROUTINE_FIRE_TOKEN`). Tokens are shown once in the web UI and cannot be retrieved - emitting a real one in the conversation exposes it.
 7. **Never auto-run `/schedule`.** Emit the command for the user to paste or confirm. Routines count against the daily allowance; the skill never consumes that allowance autonomously.
-8. **Pin the beta header with its date in prose.** Prose mentions of `experimental-cc-routine-2026-04-01` carry "(April 2026)" so a reader scanning the docs can spot staleness without parsing the header string. In code blocks the header string itself contains `2026-04-01`, so no extra annotation is needed. The two most recent prior header versions keep working for migration.
+8. **Pin the beta header with its date in prose.** Prose mentions of `experimental-cc-routine-2026-04-01` carry the header date so a reader scanning the docs can spot staleness without parsing the header string. In code blocks the header string itself contains `2026-04-01`, so no extra annotation is needed. The two most recent prior header versions keep working for migration.
 9. **Detect before emitting.** Before printing `/schedule` instructions, verify `claude` is on PATH. If not, emit the web-UI walkthrough instead.
 10. **Run the AI Self-Check.** Every routine prompt returned to the user passes the checklist above first.

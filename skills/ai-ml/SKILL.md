@@ -17,7 +17,7 @@ Build, review, and architect applications that use AI models - from single-API c
 multi-agent systems with RAG pipelines. The goal is production-grade AI apps that are reliable,
 cost-effective, and don't hallucinate their way into an incident.
 
-**Target versions** (April 2026):
+**Target versions** (May 2026):
 
 | Component | Version | Notes |
 |-----------|---------|-------|
@@ -86,6 +86,29 @@ AI tools consistently produce the same mistakes when generating AI application c
 - [ ] Temperature set intentionally (0 for deterministic tasks, higher for creative)
 
 ---
+- [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
+- [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
+- [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
+- [ ] **Provider drift checked**: Responses/Agents/SDK examples use current provider surfaces, not deprecated Assistants-era or chat-only patterns
+- [ ] **RAG evidence bounded**: retrieval thresholds, citations, and empty-result behavior are defined before generation
+
+---
+
+## Performance
+
+- Batch embeddings and eval runs; avoid one request per row when the provider offers batch or bulk APIs.
+- Cache deterministic retrieval, tool metadata, and prompt templates, but never cache tenant-specific model outputs without a data-retention decision.
+- Track token, latency, and retry budgets separately for interactive, background, and eval traffic.
+
+
+---
+
+## Best Practices
+
+- Prefer raw provider SDKs until orchestration complexity justifies LangGraph, LlamaIndex, or LangChain.
+- Keep model, tool, retrieval, and safety decisions configurable per environment; avoid hardcoding preview model names in application logic.
+- Treat model output as untrusted input: validate structure, refusal states, tool arguments, and downstream side effects.
+
 
 ## Workflow
 

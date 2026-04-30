@@ -16,7 +16,7 @@ metadata:
 Design and review HTTP APIs that stay coherent as they grow. Focus on contracts, auth
 boundaries, error models, and framework structure for Python and Node.js services.
 
-**Target versions** (April 2026):
+**Target versions** (May 2026):
 - FastAPI **0.135.3** (released 2026-04-01)
 - Express **5.2.1** (published 2025-12-01)
 - NestJS **11.1.18** (published 2026-04-03)
@@ -77,6 +77,29 @@ Before returning API code, route design, or OpenAPI output, verify:
 - [ ] Sensitive defaults are explicit: cookie flags, token TTLs, scope boundaries, and rate limits are not hand-waved
 
 ---
+- [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
+- [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
+- [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
+- [ ] **Framework version checked**: FastAPI, Express, NestJS, and OpenAPI examples match current APIs and migration notes
+- [ ] **Contract compatibility checked**: response codes, pagination, errors, and auth behavior preserve existing clients unless a version bump is explicit
+
+---
+
+## Performance
+
+- Paginate and filter at the data store; never load full collections just to slice in the handler.
+- Set timeouts and body limits at the framework, proxy, and client layers.
+- Measure p95/p99 latency and error rates for changed endpoints before optimizing internals.
+
+
+---
+
+## Best Practices
+
+- Design idempotency for retries on create, payment, provisioning, and webhook endpoints.
+- Generate or validate OpenAPI from the implementation contract and keep examples executable.
+- Use explicit auth scopes and tenancy checks in handlers, not only in route grouping or UI state.
+
 
 ## Workflow
 

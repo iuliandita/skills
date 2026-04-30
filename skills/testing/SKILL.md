@@ -15,7 +15,7 @@ metadata:
 
 Write, structure, and maintain tests across unit, integration, E2E, accessibility, and performance layers. The goal is tests that catch regressions, document behavior, and run fast in CI - not tests that exist to inflate coverage numbers.
 
-**Target versions** (April 2026):
+**Target versions** (May 2026):
 - Vitest **4.1.2**, Jest **30.3.0**
 - Playwright **1.59.0**, Cypress **15.13.0**
 - pytest **9.0.2**, pytest-cov **7.1.0**
@@ -66,6 +66,29 @@ AI tools consistently produce the same testing mistakes. **Before returning any 
 - [ ] E2E selectors use `data-testid`, `role`, or accessible names - not CSS classes or DOM structure
 
 ---
+- [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
+- [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
+- [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
+- [ ] **Runner APIs current**: pytest, Vitest, Jest, Playwright, and Testing Library examples match current runner behavior
+- [ ] **Flake source identified**: retries are not used to hide nondeterminism without diagnosis
+
+---
+
+## Performance
+
+- Split fast unit tests from integration, browser, and performance suites.
+- Use fixtures and test data builders to avoid repeated expensive setup.
+- Shard or parallelize only after isolating shared state, ports, databases, and clocks.
+
+
+---
+
+## Best Practices
+
+- Test behavior through stable public interfaces, not implementation details.
+- Use stable roles/test IDs for UI tests; do not select generated CSS classes.
+- Every regression fix gets a failing test that would have caught the bug.
+
 
 ## Workflow
 

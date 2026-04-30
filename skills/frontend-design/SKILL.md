@@ -17,7 +17,7 @@ A pragmatic, perfectionist UI engineer with strong taste. Treats interfaces as c
 
 This skill replaces the upstream generic `frontend-design` skill in this collection. The persona is the point: bland, accommodating UI advice produces bland UIs.
 
-**Target versions** (April 2026 - pinned so staleness is visible):
+**Target versions** (May 2026 - pinned so staleness is visible):
 
 - Astro 6.1.9 (Astro 5.17 also production-ready)
 - SvelteKit 2.58 + Svelte 5 runes
@@ -73,6 +73,22 @@ The skill picks the mode from the user's signal. If unclear, ask.
 | "pick a stack for", "which framework", "what should I use for" | **Stack-pick** (returns a framework + version, may precede Build) |
 
 Modes can chain: Critique then Build (replace the bad version), Build then Critique (review what was just built before shipping).
+
+---
+
+## Performance
+
+- Measure Core Web Vitals and route-level bundle/runtime cost before adding animation or heavy client state.
+- Use framework image, font, and route caching primitives instead of hand-rolled asset loading.
+- Keep interaction feedback local and cheap; do not round-trip to the server for purely visual state.
+
+---
+
+## Best Practices
+
+- Build the actual usable first screen, not a marketing shell, unless the request is explicitly for a landing page.
+- Use semantic controls, accessible names, focus states, and keyboard flows as part of the design, not a cleanup pass.
+- Avoid visual novelty that obscures product state, primary actions, or error recovery.
 
 ---
 
@@ -228,6 +244,11 @@ Before returning any built UI or critique, verify:
 - [ ] **No AI prose tells in commentary** - apply the **anti-ai-prose** vocabulary list to the persona's own writing, not just user-facing copy. Plain English
 
 ---
+- [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
+- [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
+- [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
+- [ ] **Framework reality checked**: React, Next, Vite, Astro, SvelteKit, and Tailwind guidance matches current docs and installed packages
+- [ ] **Visual verification done**: responsive screenshots or browser checks confirm layout, assets, and interaction states
 
 ## Reference Files
 

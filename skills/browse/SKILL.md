@@ -16,7 +16,7 @@ Guide AI agents through web browsing tasks using the cheapest tool that gets the
 Every browsing action has a token cost - this skill minimizes it through progressive disclosure,
 smart format selection, and backend-aware strategies.
 
-**Target versions** (April 2026):
+**Target versions** (May 2026):
 - Lightpanda: 0.2.8
 - @playwright/mcp: 0.0.70
 - agent-browser: 0.24.0
@@ -66,6 +66,22 @@ don't use interactive tools. Escalate only when the cheaper option fails.
 
 **Tool availability check**: before starting, verify what's available. If the best tool for
 the task isn't present, skip straight to the next tier rather than failing mid-workflow.
+
+---
+
+## Performance
+
+- Prefer official APIs, sitemaps, or static fetches before launching a browser.
+- Extract only required page regions; avoid dumping full DOMs, screenshots, or network logs into context.
+- Reuse browser sessions for multi-step flows, but clear cookies/storage between unrelated accounts or tenants.
+
+---
+
+## Best Practices
+
+- Use stable selectors and semantic roles before brittle CSS paths.
+- Record source URLs and timestamps for facts likely to change.
+- Do not automate destructive account actions unless the user explicitly requested the exact action and target.
 
 ---
 
@@ -396,6 +412,11 @@ Before returning any browsing result, verify:
 - [ ] Escalated to the next tool tier on failure rather than retrying the same tool
 
 ---
+- [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
+- [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
+- [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
+- [ ] **Robots and terms considered**: scraping or automation respects access rules, auth boundaries, and rate limits
+- [ ] **Dynamic content verified**: browser-rendered pages are checked with the real tool when static HTML may be incomplete
 
 ## Rules
 
