@@ -15,7 +15,7 @@ metadata:
 
 Write, review, and architect Ansible automation - from single playbooks to multi-tier, compliance-hardened infrastructure management. The goal is idempotent, auditable, maintainable automation that works the same locally and in CI/CD.
 
-**Target versions** (April 2026):
+**Target versions** (May 2026):
 - ansible-core **2.20.x LTS** (Python 3.12+ controller, 3.9+ target, EOL May 2027)
 - ansible (community package) 13.x (depends on ansible-core 2.20)
 - molecule 26.x (CalVer), ansible-lint 26.x (CalVer), ansible-navigator 26.x (CalVer)
@@ -77,6 +77,29 @@ AI tools consistently produce the same Ansible mistakes. **Before returning any 
 Run generated playbooks through `ansible-lint` (production profile) when available.
 
 ---
+- [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
+- [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
+- [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
+- [ ] **Collection docs checked**: module arguments and return values match the installed collection version
+- [ ] **Idempotence proven**: changed/ok behavior is verified with check mode or a second run where practical
+
+---
+
+## Performance
+
+- Use targeted inventories, tags, and `--limit` for large fleets; avoid full-fleet runs while iterating on a single role.
+- Gather only required facts and cache facts where supported for slow or high-latency environments.
+- Prefer native modules over shell loops so Ansible can batch work, diff safely, and report idempotence.
+
+
+---
+
+## Best Practices
+
+- Pin collection versions in `requirements.yml` for production automation.
+- Run destructive playbooks with `--check --diff` first and require a human-reviewed limit for production hosts.
+- Keep Vault values out of diffs, logs, callback output, and generated examples.
+
 
 ## Workflow
 

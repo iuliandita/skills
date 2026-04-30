@@ -15,7 +15,7 @@ metadata:
 
 Create, review, and architect Kubernetes infrastructure - from raw manifests to Helm charts to multi-cluster strategy. The goal is production-ready, security-hardened, cost-aware infrastructure that a team can maintain.
 
-**Target versions** (April 2026): Kubernetes 1.34-1.36 (1.36.0 "Haru" released April 22, 2026; **1.32 is the active LTS branch with patches through April 2028**), Helm 4.1.4, Helm 3.20.x LTS (security fixes until Nov 2026).
+**Target versions** (May 2026): Kubernetes 1.34-1.36 (1.36.0 "Haru" released April 22, 2026; **1.32 is the active LTS branch with patches through April 2028**), Helm 4.1.4, Helm 3.20.x LTS (security fixes until Nov 2026).
 
 This skill covers four domains depending on context:
 - **Manifests** - raw YAML for Deployments, Services, Gateway API routes, ConfigMaps, Secrets, PVCs
@@ -65,6 +65,29 @@ This skill runs inside an AI agent. AI tools consistently produce the same K8s s
 Run generated manifests through `kube-score`, `kubelinter`, or `checkov` when available.
 
 ---
+- [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
+- [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
+- [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
+- [ ] **API versions checked**: manifests, Helm templates, and Gateway resources match the target cluster version
+- [ ] **Cluster context verified**: namespace, context, and kubeconfig identity are shown before mutating commands
+
+---
+
+## Performance
+
+- Set requests and limits from measured workload behavior; missing requests damage scheduling and autoscaling.
+- Use server-side dry-run and diff before apply; avoid repeated full-cluster renders during tight loops.
+- Scope watches, logs, and `kubectl get` calls by namespace/labels in large clusters.
+
+
+---
+
+## Best Practices
+
+- Prefer declarative GitOps or reviewed manifests over live imperative changes for production.
+- Back up CRDs and custom resources before upgrades or operator changes.
+- Use policy gates for privileged pods, hostPath, broad RBAC, and mutable image tags.
+
 
 ## Workflow
 

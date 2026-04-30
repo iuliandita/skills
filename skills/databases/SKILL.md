@@ -15,7 +15,7 @@ metadata:
 
 Configure, tune, design schemas, migrate, back up, and review database engines - from single-node dev setups to PCI-compliant production clusters. The goal is correct, performant, durable databases that survive failures, pass audits, and don't wake you up at 3am.
 
-**Target versions** (April 2026):
+**Target versions** (May 2026):
 - PostgreSQL **18.3** (EOL 2030-11), previous: 17.9, 16.13
 - MongoDB **8.0.20** (GA), 8.2.6 (rapid release, EOL 2026-07)
 - MariaDB **11.8.6** (LTS, EOL 2028-06), 12.2.2 (rolling GA, EOL 2026-05)
@@ -106,6 +106,29 @@ AI tools consistently produce the same database mistakes. **Before returning any
 - [ ] Secrets (passwords, connection strings) injected via env vars or secret managers, not config files
 
 ---
+- [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
+- [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
+- [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
+- [ ] **Engine/version checked**: SQL syntax, index options, and replication advice match the named engine and major version
+- [ ] **Data-loss path gated**: migrations, deletes, reindexes, and failovers include backup, dry-run, rollback, or maintenance-window guidance
+
+---
+
+## Performance
+
+- Use `EXPLAIN`/`EXPLAIN ANALYZE` with realistic parameters before adding indexes.
+- Tune connection pools to database capacity; more app connections can reduce throughput.
+- Batch writes and migrations in bounded chunks to avoid lock escalation, replication lag, and runaway transactions.
+
+
+---
+
+## Best Practices
+
+- Take restorable backups before schema changes and verify restore procedures periodically.
+- Separate online, background, and analytical workloads where query shape or latency differs.
+- Prefer additive migrations with backfills and compatibility windows for zero-downtime services.
+
 
 ## Workflow
 
