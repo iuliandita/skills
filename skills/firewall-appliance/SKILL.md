@@ -16,7 +16,7 @@ metadata:
 Manage, troubleshoot, and harden OPNsense and pfSense firewalls via SSH. Both are FreeBSD-based,
 pf-powered firewall distributions - most concepts, commands, and patterns apply to both.
 
-**Target versions** (April 2026):
+**Target versions** (May 2026):
 - OPNsense: 26.4.0 (26.4 series; 26.1.6_2 still supported on the 26.1 stable branch)
 - pfSense CE: 2.8.1 / pfSense Plus: 26.03
 - CrowdSec: v1.7.7
@@ -59,6 +59,29 @@ Before returning any firewall commands, verify:
   the firewall even if the trunk is tagged correctly
 
 ---
+- [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
+- [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
+- [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
+- [ ] **Platform/version checked**: OPNsense, pfSense, FreeBSD, pf, and plugin commands match the appliance version
+- [ ] **Lockout path prevented**: remote firewall changes preserve management access and rollback
+
+---
+
+## Performance
+
+- Prefer rule ordering that rejects high-volume unwanted traffic early and keeps expensive inspection scoped.
+- Use aliases/tables for large address sets instead of expanding repetitive rules.
+- Check state table, DNSBL, IDS/IPS, and plugin load before blaming WAN latency.
+
+
+---
+
+## Best Practices
+
+- Export configuration before rule, NAT, VPN, CARP, or package changes.
+- Make HA changes one node at a time and verify CARP state before touching the peer.
+- Keep emergency console or out-of-band access available for management-plane changes.
+
 
 ## Workflow
 

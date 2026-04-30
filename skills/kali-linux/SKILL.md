@@ -21,7 +21,7 @@ Kali is Debian-shaped, but the places where it goes wrong are usually Kali-speci
 mixing, metapackage sprawl, stale images, persistence mistakes, hardware edge cases, or people
 using the wrong tool family for the job.
 
-**Versions worth pinning** (verified April 2026):
+**Versions worth pinning** (verified May 2026):
 
 Only pin versions or dated anchors here when they materially affect compatibility or
 troubleshooting shape. For ordinary package work, prefer the live branch and repo state over a
@@ -84,6 +84,29 @@ Before returning Kali commands or tool recommendations, verify:
 - [ ] **Diagnostic errors are not silenced**: do not hide useful failure output with `2>/dev/null` on commands whose error reason matters. Use `2>&1 || true` when gathering.
 
 ---
+- [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
+- [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
+- [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
+- [ ] **Channel checked**: kali-rolling, snapshots, metapackages, and NetHunter advice matches official docs
+- [ ] **Lab boundary explicit**: offensive tooling stays in authorized labs, CTFs, or owned systems
+
+---
+
+## Performance
+
+- Install task-specific metapackages instead of full tool collections when disk, bandwidth, or update time matters.
+- Use snapshots or pinned images for repeatable labs rather than debugging rolling drift mid-exercise.
+- Keep wordlists, captures, and VM disks outside small root partitions.
+
+
+---
+
+## Best Practices
+
+- Do not treat Kali as a hardened daily-driver server by default.
+- Snapshot before major upgrades, GPU/wireless driver work, or live persistence changes.
+- Separate client data, lab artifacts, and exploit tooling with clear storage boundaries.
+
 
 ## Workflow
 

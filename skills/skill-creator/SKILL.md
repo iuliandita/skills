@@ -77,6 +77,29 @@ Before returning any generated or modified skill, verify against this list:
 - [ ] **Forward-tested** (high-effort skills, when feasible): during review, a subagent used the skill on a realistic task without leaked context. This is a process check on the reviewer, not a content requirement on the skill - the skill does not need a "forward-test" section. The reviewer notes what was tested or skipped and why.
 
 ---
+- [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
+- [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
+- [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
+- [ ] **Routing overlap checked**: new or edited skills do not steal triggers from better-matched existing skills
+- [ ] **Spec claims verified**: frontmatter, metadata, and compatibility guidance match the current Agent Skills specification
+
+---
+
+## Performance
+
+- Keep `SKILL.md` compact; move deep examples into references loaded on demand.
+- Prefer precise triggers over broad keyword lists that cause unnecessary skill loading.
+- Run lint/spec checks before prose polishing so structural failures surface early.
+
+
+---
+
+## Best Practices
+
+- Write skills as operational instructions, not essays about a domain.
+- Include clear When to use/When NOT to use routing and realistic AI self-checks.
+- Keep public skills tool-agnostic unless a tool is intrinsic to the skill.
+
 
 ## Workflow
 

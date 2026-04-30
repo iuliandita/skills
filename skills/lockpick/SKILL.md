@@ -58,6 +58,29 @@ Before executing any technique or generating exploitation commands, verify:
 - [ ] **Reverse shells use authorized ports**: listener IP and port match the engagement plan
 
 ---
+- [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
+- [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
+- [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
+- [ ] **Authorization confirmed**: scope, target, time window, and rules of engagement are explicit before privesc work
+- [ ] **Destructive paths avoided**: exploit attempts preserve evidence and avoid persistence, data damage, or lateral movement unless explicitly authorized
+
+---
+
+## Performance
+
+- Run low-noise enumeration first; expensive scanners and brute-force tools require scope and rate limits.
+- Capture command output as you go so repeated enumeration is unnecessary.
+- Prioritize likely local privesc paths from kernel, sudo, SUID, services, containers, and writable paths before broad tool dumps.
+
+
+---
+
+## Best Practices
+
+- Keep CTF shortcuts out of real pentest guidance unless the user says it is a CTF.
+- Document exact preconditions and proof for every privilege boundary crossed.
+- Do not install persistence or cleanup evidence unless the engagement explicitly requires and authorizes it.
+
 
 ## Workflow
 

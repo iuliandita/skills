@@ -12,7 +12,7 @@ metadata:
 
 # Localize: App Internationalization Workflow
 
-**Target versions (April 2026):** react-i18next 15.x, vue-i18n 11.x, next-intl 4.x, i18next 25.x
+**Target versions (May 2026):** react-i18next 15.x, vue-i18n 11.x, next-intl 4.x, i18next 25.x
 
 Systematic approach to internationalizing applications. Covers two scenarios: adding
 multilingual support from scratch and auditing existing i18n for gaps. Built from real
@@ -87,6 +87,29 @@ code, catalogs, or translations, verify against this list:**
   or user preference stored and respected
 
 ---
+- [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
+- [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
+- [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
+- [ ] **Locale data checked**: ICU message syntax, plural categories, and CLDR assumptions match the target locales
+- [ ] **Fallback behavior tested**: missing keys, pseudo-locales, RTL, and long strings are exercised
+
+---
+
+## Performance
+
+- Load locale bundles per route or language instead of shipping every catalog to every user.
+- Cache compiled ICU messages where the framework supports it.
+- Detect hardcoded strings with static scans before manual review.
+
+
+---
+
+## Best Practices
+
+- Keep source strings stable and meaningful; do not use English copy as an implicit key if text changes often.
+- Use translators' notes for placeholders, gender, tone, and domain-specific terms.
+- Never concatenate translated fragments where grammar can change by language.
+
 
 ## Workflow
 

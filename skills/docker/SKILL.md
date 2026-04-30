@@ -20,11 +20,11 @@ metadata:
 
 Write, review, and architect Dockerfiles, Compose stacks, and container workflows - from single-service dev setups to multi-arch production pipelines with image signing and compliance gates. The goal is minimal, secure, reproducible images that a team can maintain and a QSA can audit.
 
-**Target versions** (April 2026):
+**Target versions** (May 2026):
 - Docker Engine 29.4.0, Docker Desktop 4.66.1
 - Docker Compose v5.1.3 (Go SDK, Bake-delegated builds)
 - BuildKit v0.29.0 (bundled with Engine 29.x)
-- containerd 2.2.3 / **2.3 LTS** (April 2026, recommended for production)
+- containerd 2.2.3 / **2.3 LTS** (recommended for production after checking release notes)
 - Podman 5.8.2, Buildah 1.43.0
 - runc 1.4.1 (latest; CVE-2025-31133/52565/52881 patched since 1.4.0)
 
@@ -78,6 +78,29 @@ AI tools consistently produce the same Docker mistakes. **Before returning any g
 - [ ] **HEALTHCHECK uses available tools**: probe command uses a binary present in the final image (wget in Alpine, curl in Debian, none in scratch/distroless - use the app's own health endpoint)
 
 ---
+- [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
+- [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
+- [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
+- [ ] **Engine/Compose syntax checked**: Dockerfile, Compose, BuildKit, and runtime flags match the installed versions
+- [ ] **Image provenance considered**: base images, registries, tags, SBOMs, and signatures are handled where risk warrants
+
+---
+
+## Performance
+
+- Order Dockerfile layers from stable to volatile and use cache mounts for package-manager caches where BuildKit is available.
+- Keep build contexts small with `.dockerignore`; accidental monorepo contexts dominate build time.
+- Use multi-stage builds and slim runtime images, but measure startup and debug needs before stripping tools aggressively.
+
+
+---
+
+## Best Practices
+
+- Pin base image digests for sensitive workloads and track rebuild cadence for security updates.
+- Run as non-root and drop capabilities unless the workload genuinely needs them.
+- Preview prune and volume-removal commands; persistent data must never be collateral cleanup.
+
 
 ## Workflow
 

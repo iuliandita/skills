@@ -58,10 +58,33 @@ Before presenting documentation updates, verify:
 - [ ] When private and public roadmaps both exist, both are updated, with the public one carrying user-visible highlights only and the private one carrying internal detail
 
 ---
+- [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
+- [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
+- [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
+- [ ] **Docs match code**: commands, flags, config names, screenshots, and API examples are checked against the changed implementation
+- [ ] **Audience path checked**: README, changelog, API docs, runbooks, and migration notes are updated only where users need them
 
 ## Core Principle
 
 **Document what you can't grep, in the file readers will actually check.** If it's in the source code, config files, or manifests, it usually doesn't belong in docs. Document: gotchas, decisions, failure modes, workarounds, implicit dependencies, release-facing deltas, and "the thing that took 30 minutes to figure out."
+
+---
+
+## Performance
+
+- Diff the code first, then update affected docs; avoid broad rewrites unrelated to the change.
+- Prefer generated API/schema docs where the project already has generation tooling.
+- Keep examples minimal but runnable so future verification is cheap.
+
+
+---
+
+## Best Practices
+
+- Document behavior changes, deprecations, migration steps, and rollback notes in the place users will look.
+- Remove stale instructions instead of appending contradictory notes.
+- Keep changelog entries user-facing and avoid internal implementation noise.
+
 
 ## Workflow
 

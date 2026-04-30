@@ -30,7 +30,7 @@ disposable dev shells, fleet-wide configuration without a separate config-manage
 and a single language for a workstation, a server, a container image, a NixOS VM, and a
 macOS laptop via nix-darwin.
 
-**Versions worth pinning** (verified April 2026):
+**Versions worth pinning** (verified May 2026):
 
 Pin versions only when they shape compatibility or troubleshooting. For ordinary package
 work, trust the live channel or flake lock over a stale table.
@@ -112,6 +112,29 @@ Before returning NixOS or Nix commands, verify:
 - [ ] **Version pins justified**: if a pinned `system.stateVersion` is suggested, explain why; do not change `stateVersion` on an existing system casually - it controls migration semantics.
 
 ---
+- [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
+- [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
+- [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
+- [ ] **Channel/flake checked**: advice matches stable, unstable, flake, home-manager, or nix-darwin context
+- [ ] **Rollback identified**: generation rollback, boot entries, and store/cache state are understood before changes
+
+---
+
+## Performance
+
+- Use binary caches and substituters deliberately; local source builds can dominate iteration time.
+- Evaluate and build targeted attributes before rebuilding entire systems where possible.
+- Garbage-collect only after confirming new generations boot and required roots are preserved.
+
+
+---
+
+## Best Practices
+
+- Keep hardware, secrets, user packages, and service modules separated enough to review changes safely.
+- Commit flake lock and configuration changes together for reproducible rebuilds.
+- Do not delete old generations or store paths until rollback is no longer needed.
+
 
 ## Workflow
 

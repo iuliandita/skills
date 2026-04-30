@@ -48,6 +48,29 @@ Before returning any generated or modified prompt file, verify:
 - [ ] **Model-appropriate syntax**: avoid model-specific features (assistant prefills, `\n\nHuman:` formatting) in model-agnostic prompts. XML delimiters and markdown headers are both fine for structure across models
 
 ---
+- [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
+- [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
+- [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
+- [ ] **Injection boundary set**: untrusted source text is delimited and never treated as instructions
+- [ ] **Model lock-in avoided**: provider-specific syntax appears only when the user named that provider
+
+---
+
+## Performance
+
+- Keep prompts as short as the task allows; remove redundant role prose and repeated constraints.
+- Use variables for repeated dynamic content instead of duplicating long blocks.
+- Prefer explicit output schemas over long narrative instructions when structure matters.
+
+
+---
+
+## Best Practices
+
+- Preserve the user's intent; do not add hidden policy, tone, or scope changes.
+- Name variables consistently and define every required input.
+- Include success criteria for complex prompts so outputs can be evaluated.
+
 
 ## Workflow
 

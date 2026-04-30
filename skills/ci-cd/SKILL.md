@@ -24,7 +24,7 @@ Write, review, and architect CI/CD pipelines across GitHub Actions, GitLab CI/CD
 Actions, Gitea Actions, and Woodpecker. The goal is secure, fast, auditable pipelines that
 satisfy both engineering needs and compliance requirements (PCI-DSS 4.0).
 
-**Target versions** (April 2026):
+**Target versions** (May 2026):
 - **GitHub Actions**: ubuntu-24.04 runners (ubuntu-latest), arm64 GA, artifact v4, attestations GA
 - **GitLab CI/CD**: GitLab 18.10.3, CI/CD Catalog GA, CI Components with typed `spec: inputs`
 - **Forgejo Actions**: Forgejo v15.0, Runner v11.x (stable; check `data.forgejo.org/forgejo/runner` releases for current major tag before pinning)
@@ -95,6 +95,29 @@ every failure with file and line reference.
 - [ ] **Auto-merge gated on tests, not just lint**: Dependabot/Renovate auto-merge without test coverage of the changed area is a supply-chain shortcut.
 
 ---
+- [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
+- [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
+- [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
+- [ ] **Runner trust checked**: workflow advice distinguishes hosted, self-hosted, fork, and protected-branch execution
+- [ ] **Mutable references controlled**: actions, images, includes, and templates are pinned where supply-chain risk matters
+
+---
+
+## Performance
+
+- Key caches by lockfiles and toolchain versions; avoid broad caches that restore stale dependencies.
+- Split quick lint/unit gates from slow integration, image, and deployment jobs.
+- Use path filters and matrix limits to keep monorepo pipelines proportional to the change.
+
+
+---
+
+## Best Practices
+
+- Use OIDC or short-lived federation for cloud deploys instead of long-lived static secrets.
+- Keep pull-request workflows from forks read-only unless explicitly isolated.
+- Generate provenance or attestations for release artifacts where the forge supports it.
+
 
 ## Workflow
 

@@ -19,7 +19,7 @@ fast-moving Fedora lane from the conservative enterprise lane, then account for 
 such as subscription-manager, CentOS Stream drift, Oracle UEK, Amazon's cloud-first defaults,
 and SELinux or firewalld behavior that people love to blame on the wrong layer.
 
-**Versions worth pinning** (verified April 2026):
+**Versions worth pinning** (verified May 2026):
 
 Only pin versions here when they materially affect compatibility or troubleshooting shape. For
 ordinary package work, prefer the live distro lane and repo state over a stale package table.
@@ -99,6 +99,29 @@ Before returning Fedora or RHEL-family commands, verify:
 - [ ] **Version table treated as a hint, not gospel**: if the pinned table is getting old, verify distro release and key package versions live before leaning on it.
 
 ---
+- [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
+- [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
+- [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
+- [ ] **Lifecycle checked**: RHEL, Fedora, Rocky, Alma, CentOS Stream, and Amazon Linux guidance matches the target release
+- [ ] **SELinux/firewalld context preserved**: fixes do not disable enforcement permanently as a shortcut
+
+---
+
+## Performance
+
+- Use `dnf repoquery`, `dnf history`, and targeted transactions before broad package churn.
+- Keep metadata/cache refresh intentional; repeated full refreshes slow automation.
+- For service issues, inspect journal, SELinux AVCs, and firewalld zones before reinstalling packages.
+
+
+---
+
+## Best Practices
+
+- Snapshot or back up before release upgrades, bootloader work, storage changes, or major SELinux relabels.
+- Prefer policy modules or correct labels over `setenforce 0` as a permanent fix.
+- Do not mix clone/vendor repositories without explicit priority and compatibility decisions.
+
 
 ## Workflow
 

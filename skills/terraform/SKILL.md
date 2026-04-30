@@ -15,7 +15,7 @@ metadata:
 
 Write, review, and architect Terraform/OpenTofu infrastructure - from individual resources to multi-account, PCI-compliant platform architectures. The goal is reproducible, drift-free, auditable infrastructure that passes both peer review and QSA assessment.
 
-**Target versions** (April 2026): Terraform 1.14.9 (IBM/HashiCorp, BSL; 1.15.0-rc2 in progress), OpenTofu 1.11.6 (Linux Foundation, MPL). Helm provider v3.1+, K8s provider v3.0+, AWS provider v6.x, Azure v4.x, GCP v7.x.
+**Target versions** (May 2026): Terraform 1.14.9 (IBM/HashiCorp, BSL; 1.15.0-rc2 in progress), OpenTofu 1.11.6 (Linux Foundation, MPL). Helm provider v3.1+, K8s provider v3.0+, AWS provider v6.x, Azure v4.x, GCP v7.x.
 
 This skill covers four domains depending on context:
 - **HCL** - resource configs, variables, outputs, data sources, expressions, lifecycle rules
@@ -78,6 +78,29 @@ AI tools consistently produce the same Terraform mistakes. **Before returning an
 **AI should never own `terraform apply`.** In March 2026, an AI-assisted Terraform workflow deleted production infrastructure through escalating cleanup logic. Plan output is reviewed by a human. Always.
 
 ---
+- [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
+- [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
+- [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
+- [ ] **Provider docs checked**: resource arguments, defaults, and deprecations match pinned provider versions
+- [ ] **State impact reviewed**: imports, moves, destroys, and replacements are visible in plan output before apply
+
+---
+
+## Performance
+
+- Scope plans to changed stacks/modules during iteration, then run full plans before merge.
+- Use remote state and data sources sparingly; excessive cross-stack reads slow plans and create hidden coupling.
+- Cache providers in CI and pin versions to avoid repeated downloads and surprise upgrades.
+
+
+---
+
+## Best Practices
+
+- Never let automation apply production plans without a reviewed plan artifact and human approval.
+- Use `moved` blocks for refactors instead of delete/recreate churn.
+- Protect stateful resources with backups, `prevent_destroy`, and explicit migration steps.
+
 
 ## Workflow
 

@@ -18,12 +18,12 @@ cut releases, and maintain audit-grade change history across GitHub, GitLab, and
 The goal is clean, signed, traceable history that satisfies both engineering standards and
 compliance requirements (PCI-DSS 4.0).
 
-**Target versions** (April 2026):
+**Target versions** (May 2026):
 - **git**: 2.53.x (current stable). Git 3.0 expected late 2026 (reftable default, SHA-256 default)
 - **GitHub CLI (`gh`)**: 2.91.0
 - **GitLab CLI (`glab`)**: 1.90.x
 - **Forgejo CLI (`fj`)**: 0.4.1 (March 2026). Rust-written, official community CLI at `codeberg.org/forgejo-contrib/forgejo-cli`. Covers PRs (incl. AGit), issues, repos, releases, tags, actions.
-- **Forgejo**: v15.0 (current stable, April 2026). Critical RCE (CVE-2025-68937) patched in v13.0.2+.
+- **Forgejo**: v15.0 line current at May 2026 recheck; verify the stable branch before upgrade advice. Critical RCE (CVE-2025-68937) patched in v13.0.2+.
 - **prek**: 0.3.x (Rust, recommended) or **pre-commit**: 4.6.0 (Python, largest ecosystem)
 - **git-filter-repo**: 2.47.x
 - **gitleaks**: 8.30.x (secret scanning)
@@ -86,6 +86,29 @@ verify against this list:**
 - [ ] **Forge-CLI subcommands verified.** Before scripting `fj`/`gh`/`glab`/`tea` commands in a runbook, hooks, or CI, confirm the subcommand and flags exist on the target version (`<cli> <cmd> --help`). These CLIs add, rename, and remove subcommands across minor versions; docs lag behind the binary.
 
 ---
+- [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
+- [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
+- [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
+- [ ] **Ref safety checked**: branch, remote, upstream, and worktree path are verified before history edits
+- [ ] **Recovery path known**: reflog, backup branch, or bundle exists before destructive history operations
+
+---
+
+## Performance
+
+- Use path-limited `git log`, `git diff`, and `git grep` before whole-history scans.
+- Fetch only needed remotes/branches in large repos when full prune is unnecessary.
+- Keep commits small enough for review and bisect, but not so small that they split one behavior across many commits.
+
+
+---
+
+## Best Practices
+
+- Prefer revert over history rewrite on shared branches.
+- Use signed commits/tags where the project or release process requires provenance.
+- Never run cleanup commands that delete branches, tags, or ignored files without showing the target set first.
+
 
 ## Workflow
 

@@ -17,7 +17,7 @@ Structured, multi-pass security audit. Combines automated tooling with manual pa
 
 Patterns drawn from real OSS incidents (unauthenticated admin endpoints, credential exfiltration, zip slip, auth bypass whitelists, Trivy supply chain compromise) and OpenSSF/SLSA/OWASP standards.
 
-**Target versions** (April 2026):
+**Target versions** (May 2026):
 - Semgrep 1.161.0, Bandit 1.9.4
 - Gitleaks 8.30.1, Betterleaks 1.1.1 (successor by same author), TruffleHog 3.95.2
 - Trivy 0.70.0 (0.69.4-0.69.6 was compromised - see known incidents; 0.70.x is the safe upgrade path)
@@ -60,6 +60,29 @@ Before returning any security audit report, verify:
 - [ ] **Scope respected**: no external service probing, no DAST, repo-only analysis
 
 ---
+- [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
+- [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
+- [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
+- [ ] **Threat model matched**: findings map to the app's actual assets, actors, trust boundaries, and deployment
+- [ ] **Exploitability stated carefully**: severity is based on reachable paths and impact, not scanner labels alone
+
+---
+
+## Performance
+
+- Run secret and dependency checks early; they are cheap and often high impact.
+- Prioritize auth, authorization, input handling, deserialization, and supply-chain paths before low-risk headers.
+- Use targeted dynamic tests for risky flows instead of broad unauthenticated crawling only.
+
+
+---
+
+## Best Practices
+
+- Separate confirmed vulnerabilities, hardening recommendations, and open questions.
+- Protect sensitive findings and reproduction data in reports.
+- Include concrete remediation and verification steps for each material finding.
+
 
 ## Workflow
 

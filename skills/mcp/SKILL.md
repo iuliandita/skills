@@ -17,7 +17,7 @@ Build, review, and debug MCP servers that expose tools, resources, and prompts t
 assistants. The goal is secure, well-structured servers that follow the protocol spec and don't
 become yet another server with preventable injection vulnerabilities.
 
-**Target versions** (April 2026):
+**Target versions** (May 2026):
 - MCP specification: 2025-11-25 (current stable; 2026-03-15 in draft)
 - TypeScript SDK: @modelcontextprotocol/sdk 1.29.0 (1.x stable; 2.0.0-alpha in dev)
 - Python SDK: mcp 1.27.0 (v1.26.0+)
@@ -64,6 +64,29 @@ When generating or reviewing MCP server code, verify each item before presenting
 - [ ] Elicitation does not request passwords, tokens, or secrets
 
 ---
+- [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
+- [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
+- [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
+- [ ] **Spec version checked**: transports, auth, resources, tools, and prompts match current MCP docs and SDK behavior
+- [ ] **Tool poisoning considered**: tool descriptions, dynamic metadata, and server updates cannot silently expand authority
+
+---
+
+## Performance
+
+- Keep tool schemas tight and responses small; large unstructured tool outputs waste model context.
+- Use resources for reusable context instead of returning the same large payload from every tool call.
+- Batch read-only lookups where latency matters, but keep side-effecting tools separate and auditable.
+
+
+---
+
+## Best Practices
+
+- Treat MCP servers as security boundaries: authenticate, authorize, and log side effects explicitly.
+- Make tool names and schemas stable; version breaking changes instead of changing semantics in place.
+- Require user confirmation for tools that spend money, mutate infrastructure, delete data, or expose secrets.
+
 
 ## Workflow
 

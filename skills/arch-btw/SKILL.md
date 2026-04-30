@@ -17,7 +17,7 @@ Administer Arch Linux and Arch-style systems without falling into rolling-releas
 Focus on vanilla Arch first, then layer in CachyOS behavior, `paru` workflow, systemd-native
 service management, boot recovery, kernel handling, and derivative-specific cautions.
 
-**Versions worth pinning** (April 2026):
+**Versions worth pinning** (May 2026):
 
 Only pin versions here when they materially affect compatibility or troubleshooting shape. For
 ordinary rolling packages, prefer the current repo state over stale version tables.
@@ -90,6 +90,29 @@ Before returning Arch or CachyOS commands, verify:
 - [ ] **Conflicting files use exact path**: `--overwrite` uses the specific file path from pacman error output, never a blanket `'*'` glob
 
 ---
+- [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
+- [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
+- [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
+- [ ] **Mirror and repo state checked**: package advice matches current Arch/CachyOS repos and local mirror sync status
+- [ ] **AUR trust handled**: PKGBUILDs, install scripts, and maintainer changes are reviewed before build/install
+
+---
+
+## Performance
+
+- Use `pacman -Syu` before large installs to avoid partial-upgrade churn and repeated dependency resolution.
+- Keep package cache cleanup deliberate; retain at least one known-good package version when rollback may matter.
+- For slow mirrors, rank mirrors before troubleshooting package-manager performance.
+
+
+---
+
+## Best Practices
+
+- Never recommend partial upgrades on Arch-family systems.
+- Snapshot or otherwise preserve rollback paths before kernel, bootloader, filesystem, or GPU driver changes.
+- Read pacman hooks and `.pacnew` files after major updates; do not assume config merges happened automatically.
+
 
 ## Workflow
 

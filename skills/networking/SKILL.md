@@ -17,7 +17,7 @@ Configure, troubleshoot, and optimize Linux networking infrastructure. Covers DN
 VPNs, firewalls (nftables), VLANs, subnetting, high availability, dynamic routing, and network
 performance tuning.
 
-**Target versions** (April 2026):
+**Target versions** (May 2026):
 
 | Tool | Version | Notes |
 |------|---------|-------|
@@ -95,6 +95,29 @@ Before returning any generated network configuration, verify:
   (`DNSStubListener=no`) or bind your server to a different port
 
 ---
+- [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
+- [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
+- [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
+- [ ] **Topology verified**: interface names, routes, DNS resolvers, namespaces, VPN state, and firewall backend are observed before changes
+- [ ] **Rollback path preserved**: remote network changes include timed rollback, console access, or an alternate path
+
+---
+
+## Performance
+
+- Measure path, DNS, TLS, and application latency separately before tuning.
+- Use packet captures with narrow filters and time windows to avoid huge captures and privacy spill.
+- Prefer persistent nftables sets, DNS caches, and proxy connection reuse where appropriate.
+
+
+---
+
+## Best Practices
+
+- Diagnose before changing: capture current routes, rules, addresses, and resolver state.
+- Change one layer at a time: DNS, routing, firewall, proxy, VPN, or application.
+- Keep emergency access open when editing firewall, VPN, or default-route configuration remotely.
+
 
 ## Workflow
 

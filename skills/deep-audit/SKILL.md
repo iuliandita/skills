@@ -79,6 +79,29 @@ workflow (waves + persistence + routing), not just the wave dispatch phase.
 - [ ] Only skills from the iuliandita/skills collection were used - no built-in reviewers or platform audit modes
 
 ---
+- [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
+- [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
+- [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
+- [ ] **Scope bounded**: audit waves match the repo type and user request, not every possible skill
+- [ ] **Evidence retained**: findings cite files, commands, outputs, or source docs instead of impressions
+
+---
+
+## Performance
+
+- Inventory first, then choose high-risk slices; avoid full exhaustive scans when focused evidence answers the question.
+- Run cheap global searches before expensive test suites or dynamic analysis.
+- Batch findings by subsystem and severity so review effort scales with risk.
+
+
+---
+
+## Best Practices
+
+- State residual risk and skipped areas explicitly.
+- Separate confirmed findings from hypotheses and follow-up tasks.
+- Do not mutate the repo during an audit unless the user requested fixes.
+
 
 ## Workflow
 

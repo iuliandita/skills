@@ -56,6 +56,29 @@ Before returning any anti-slop audit, verify:
 - [ ] **Structural duplication sweep done**: compare same-role modules/classes across sibling dirs (`providers`, `targets`, `sources`, `clients`, `registry`) and either report near-twins or note why the duplication is intentional
 
 ---
+- [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
+- [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
+- [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
+- [ ] **API reality checked**: suspicious helpers, flags, imports, and config keys are verified before being called hallucinations
+- [ ] **Test theater separated**: tests that assert mocks or snapshots only are distinguished from tests proving behavior
+
+---
+
+## Performance
+
+- Focus review on changed files and shared abstractions before scanning unrelated code.
+- Collapse repeated slop patterns into one finding with examples, not one finding per occurrence.
+- Use cheap static checks first, then run expensive tests only where they can confirm a real risk.
+
+
+---
+
+## Best Practices
+
+- Prefer deleting unnecessary abstraction over adding a new abstraction to hide it.
+- Treat duplicate code as a finding only when it creates real divergence or maintenance risk.
+- Require concrete failure modes; style dislike is not slop.
+
 
 ## Workflow
 

@@ -56,6 +56,29 @@ Verify:
 - [ ] Scope held in output: each agent's findings reference only files/modules within the requested scope. If any agent's output references out-of-scope paths, flag it in that report's header (see Step 3 scope verification)
 
 ---
+- [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
+- [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
+- [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
+- [ ] **Routing explicit**: code-review, anti-slop, security-audit, and update-docs findings stay in their lanes
+- [ ] **No false coverage**: unrun tests, skipped directories, and unavailable tools are reported
+
+---
+
+## Performance
+
+- Run inventory and changed-file analysis before invoking every review mode.
+- Deduplicate cross-skill findings so the final report is readable.
+- Escalate only confirmed high-risk areas to deeper sweeps.
+
+
+---
+
+## Best Practices
+
+- Lead with actionable findings and severity; keep summaries secondary.
+- Separate code bugs, security issues, slop, and docs drift so owners can act.
+- Do not claim a full audit if the pass was sampled or tool-limited.
+
 
 ## Workflow
 
