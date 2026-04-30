@@ -61,6 +61,24 @@ contested major flags (non-configurable).
 
 **step**: pauses after every iteration for manual review. Best for first run or learning.
 
+---
+
+## Performance
+
+- Batch similar edits and validations to reduce repeated full-collection scans.
+- Prioritize low-scoring or recently changed skills before polishing already-healthy ones.
+- Use focused diffs and line-count checks after each batch to avoid late cleanup churn.
+
+
+---
+
+## Best Practices
+
+- Snapshot evaluation criteria before editing the skills that define the criteria.
+- Revert changes that add complexity without improving behavior.
+- Keep run history factual and free of unverifiable score inflation.
+
+
 ## Workflow
 
 ### Phase 0: Setup
@@ -208,6 +226,11 @@ Before committing any skill modification, verify:
 - [ ] **ASCII only**: no non-ASCII characters introduced (except allowed emoji indicators)
 - [ ] **Immutability respected**: no phase-1 modification to evaluation criteria,
   test cases, lint scripts, skill-creator, or skill-refiner
+- [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
+- [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
+- [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
+- [ ] **Score discipline kept**: changes are kept only when they improve measured quality or fix a verified defect
+- [ ] **Local-only scope respected**: public and private skills are separated before commits or release notes
 
 ## Rules
 

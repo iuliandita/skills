@@ -56,6 +56,29 @@ Before reporting any finding at >= 80% confidence, verify:
 - [ ] **Boundary values on numeric inputs flagged**: zero, negative, and overflow values on page numbers, sizes, counts, and indices are high-confidence findings - do not suppress with the 80% threshold
 
 ---
+- [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
+- [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
+- [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
+- [ ] **Line references verified**: every finding points to code that exists in the reviewed diff
+- [ ] **Behavioral claim proven**: findings describe a plausible failing input, race, leak, or regression
+
+---
+
+## Performance
+
+- Start with changed public interfaces, shared utilities, migrations, and concurrency boundaries.
+- Use tests and static analysis to validate suspected issues instead of reading the entire repo linearly.
+- Merge duplicate findings into one high-signal comment with affected locations.
+
+
+---
+
+## Best Practices
+
+- Lead with bugs and risks, not style preferences.
+- Do not request rewrites unless the current structure blocks correctness or maintainability.
+- Call out missing tests only when a specific behavior or risk needs coverage.
+
 
 ## Workflow
 

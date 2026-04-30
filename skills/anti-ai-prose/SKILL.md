@@ -56,6 +56,29 @@ Before returning any audit, verify:
 - [ ] **Density threshold applied** before assigning severity level
 
 ---
+- [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
+- [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
+- [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
+- [ ] **Overflagging avoided**: plain but valid technical prose is not labeled AI-written without concrete evidence
+- [ ] **Audience preserved**: edits keep the author's domain vocabulary, intent, and required formality
+
+---
+
+## Performance
+
+- Review a representative sample first, then expand only if the same pattern repeats across the document.
+- Group repeated prose issues by pattern instead of leaving near-duplicate comments on every paragraph.
+- Prioritize high-visibility text: titles, summaries, intros, conclusions, and user-facing docs.
+
+
+---
+
+## Best Practices
+
+- Flag exact phrases and structural patterns, not vibes.
+- Offer replacement copy when the fix is obvious; otherwise describe the problem and let the author decide.
+- Do not erase necessary caveats, compliance language, or domain-specific precision to make prose sound casual.
+
 
 ## Workflow
 

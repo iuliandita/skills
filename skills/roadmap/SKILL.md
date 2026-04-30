@@ -58,6 +58,11 @@ Before writing or modifying ROADMAP.md, verify:
 - [ ] **No priority inflation**: P0 items are genuine blockers, not aspirational wishes
 
 ---
+- [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
+- [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
+- [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
+- [ ] **Evidence quality marked**: competitive intel, user feedback, and assumptions are labeled with source and confidence
+- [ ] **Backlog hygiene kept**: stale ideas are parked or deleted instead of endlessly reprioritized
 
 ## Roadmap Format
 
@@ -169,6 +174,22 @@ Read the existing structure first. If it doesn't match this format:
 - In **add** or **update** modes: work within the existing structure, don't restructure
 - In **review** mode: suggest migrating to this format if the current one is disorganized
 - If the user asks to restructure: migrate section by section, preserving all content
+
+---
+
+## Performance
+
+- Keep roadmap edits small and frequent; avoid rewriting the whole backlog for one new idea.
+- Limit active P0/P1 items so prioritization remains meaningful.
+- Group duplicate ideas and link evidence instead of copying long notes repeatedly.
+
+---
+
+## Best Practices
+
+- Tie each near-term item to a clear user, business, or technical outcome.
+- Record exit criteria before implementation starts.
+- Separate commitments from experiments so speculative work does not crowd delivery.
 
 ---
 
