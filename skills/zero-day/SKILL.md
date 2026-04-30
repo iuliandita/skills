@@ -21,7 +21,7 @@ This is the *discovery* skill - it finds vulnerabilities nobody has catalogued y
 exploiting known weaknesses on live systems, use **lockpick**. For scanning code against known
 vulnerability patterns, use **security-audit**.
 
-**Target versions** (April 2026):
+**Target versions** (May 2026):
 - CodeQL CLI: v2.25.1
 - Semgrep: v1.157.0
 - Joern: v4.0.x
@@ -69,6 +69,29 @@ Before reporting any vulnerability or generating exploit code, verify:
 - [ ] **Complexity honest**: if exploitation requires unlikely conditions (specific config, race window, chained bugs), state that clearly - don't inflate impact
 
 ---
+- [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
+- [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
+- [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
+- [ ] **Authorization and disclosure scope checked**: targets, reproduction, and reporting stay within authorized research boundaries
+- [ ] **PoC safety reviewed**: proof code demonstrates impact without avoidable persistence, exfiltration, or wormable behavior
+
+---
+
+## Performance
+
+- Minimize repro cases before deep fuzzing so crashes triage quickly.
+- Deduplicate crashes by stack, root cause, and patch reachability before reporting counts.
+- Use coverage and corpus metrics to guide fuzzing time instead of running blind indefinitely.
+
+
+---
+
+## Best Practices
+
+- Capture exact versions, build flags, inputs, logs, and debugger state for every candidate finding.
+- Separate exploitability analysis from speculation; mark uncertainty clearly.
+- Follow the target project's disclosure policy and avoid publishing operational exploit detail prematurely.
+
 
 ## Workflow
 

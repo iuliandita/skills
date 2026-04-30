@@ -54,6 +54,29 @@ Before returning advice, verify:
 - [ ] **Final recommendation included**: even after Hyde, end with an actionable path or decision frame.
 
 ---
+- [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
+- [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
+- [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
+- [ ] **Decision scope held**: critique targets the decision, constraints, and tradeoffs, not unrelated strategy
+- [ ] **Evidence separated**: facts, assumptions, risks, and opinions are labeled distinctly
+
+---
+
+## Performance
+
+- Timebox adversarial review; stop once risks repeat or no longer change the decision.
+- Focus first on irreversible, expensive, regulated, or reputation-impacting choices.
+- Use short decision records for small calls and deeper matrices only for high-stakes options.
+
+
+---
+
+## Best Practices
+
+- Give the strongest constructive case before the adversarial case so tradeoffs are visible.
+- Name the condition that would change the recommendation.
+- Avoid dark-pattern advice; adversarial review should improve decisions without exploiting users.
+
 
 ## Workflow
 
