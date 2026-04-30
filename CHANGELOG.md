@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.30.1](https://github.com/iuliandita/skills/compare/v1.30.0...v1.30.1) (2026-04-30)
+
+
+### Refactoring
+
+* refresh collection quality checks ([275a775](https://github.com/iuliandita/skills/commit/275a775b564c581a5142465399ededc033214f88))
+
 ## [1.30.0](https://github.com/iuliandita/skills/compare/v1.29.0...v1.30.0) (2026-04-30)
 
 
