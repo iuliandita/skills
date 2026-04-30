@@ -19,19 +19,14 @@ Run up to 27 custom skills against a repo in 5 sequential waves, presenting resu
 progressively. Wave 1 detects the tech stack. Waves 2-5 dispatch only the skills that
 match. Each wave completes and reports before the next begins.
 
-The five waves:
+The five waves are: Reconnaissance; Code Quality (code-review, anti-slop,
+anti-ai-prose); Domain-Specific (detected skills only); Security (security-audit
+then zero-day); and Docs & Hygiene (update-docs, roadmap, git).
 
-1. **Reconnaissance** - detect languages, frameworks, infra, file structure
-2. **Code Quality** (parallel) - code-review, anti-slop, anti-ai-prose
-3. **Domain-Specific** (parallel, conditional) - up to 19 skills based on detection
-4. **Security** (sequential) - security-audit, then zero-day
-5. **Docs & Hygiene** (parallel) - update-docs, roadmap, git
-
-After the waves, three post-wave phases produce durable artifacts (Workflow Steps 7-9):
-**Persist** findings to `docs/local/audits/DEEP-AUDIT.md`, **Plan** phased tasks in
-`DEEP-AUDIT-TASKS.md`, **Route** SMALL audits to the task list or LARGE audits to a
-brainstorming skill (when installed) or directly-generated plans in `docs/local/specs/`
-and `docs/local/plans/`.
+After the waves, Steps 7-9 persist findings to `docs/local/audits/DEEP-AUDIT.md`,
+write `DEEP-AUDIT-TASKS.md`, and route SMALL audits to the task list or LARGE audits
+to a brainstorming skill or generated plans under `docs/local/specs/` and
+`docs/local/plans/`.
 
 For a quick 4-skill sweep, use **full-review** instead.
 
@@ -49,7 +44,6 @@ For a quick 4-skill sweep, use **full-review** instead.
 - Auditing the skill collection itself - use **skill-creator** (Mode 3)
 - Offensive security engagement or CTF - use **lockpick** directly
 - Live-system OS administration (running `pacman`/`apt`/`dnf`, fixing a NixOS rebuild, configuring SELinux on a host, debugging an OPNsense appliance) - use the matching distro/appliance skill directly (**arch-btw**, **debian-ubuntu**, **rhel-fedora**, **nixos-btw**, **firewall-appliance**). Repo-level audit of OS-related files (PKGBUILDs, `debian/`, `*.spec`, `flake.nix`, `pf.conf`, etc.) belongs in Wave 3 of this skill
-
 ---
 
 ## AI Self-Check
@@ -77,7 +71,6 @@ workflow (waves + persistence + routing), not just the wave dispatch phase.
 - [ ] If LARGE and no brainstorming skill is available, execution-plan files written to `docs/local/specs/` and `docs/local/plans/` using the standard naming convention
 - [ ] When user specified a scope, all agents received that scope constraint and detection was filtered to the scoped file tree
 - [ ] Only skills from the iuliandita/skills collection were used - no built-in reviewers or platform audit modes
-
 ---
 - [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
 - [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
@@ -93,15 +86,11 @@ workflow (waves + persistence + routing), not just the wave dispatch phase.
 - Run cheap global searches before expensive test suites or dynamic analysis.
 - Batch findings by subsystem and severity so review effort scales with risk.
 
-
----
-
 ## Best Practices
 
 - State residual risk and skipped areas explicitly.
 - Separate confirmed findings from hypotheses and follow-up tasks.
 - Do not mutate the repo during an audit unless the user requested fixes.
-
 
 ## Workflow
 
@@ -471,12 +460,9 @@ but preserves the wave ordering.
 
 ## Reference Files
 
-- `references/detection-patterns.md` - file-pattern matching table and bash detection
-  script for Wave 3 skill activation. Read this before running Step 1 (Reconnaissance).
-  Contains the full pattern table, the runnable script, and edge case documentation.
-- `references/report-templates.md` - templates for `DEEP-AUDIT.md`, `DEEP-AUDIT-TASKS.md`,
-  and the Step 9b vanilla-harness fallback plan files (master spec + per-phase plans).
-  Read this before running Steps 7, 8, or 9b.
+- `references/detection-patterns.md` - Wave 3 file-pattern table, runnable detection script, and edge cases. Read before Step 1.
+- `references/report-templates.md` - templates for `DEEP-AUDIT.md`, `DEEP-AUDIT-TASKS.md`, and Step 9b plan files.
+- `references/exclusions.md` - skills deliberately excluded from wave dispatch and why.
 
 ## Related Skills
 
@@ -487,22 +473,7 @@ but preserves the wave ordering.
 - **testing**, **command-prompt**, **databases**, **backend-api**, **localize**, **ai-ml**, **mcp**, **docker**, **kubernetes**, **terraform**, **ansible**, **ci-cd**, **networking**, **arch-btw**, **debian-ubuntu**, **rhel-fedora**, **nixos-btw**, **firewall-appliance**, **virtualization** - Wave 3 candidates (conditional).
 - **skill-creator** - audits the skill collection. This skill audits application repos.
 
-### Deliberately Excluded Skills
-
-These published skills are intentionally NOT dispatched by deep-audit. Recorded here so future contributors don't re-add them by reflex:
-
-| Skill | Reason for exclusion |
-|---|---|
-| **browse** | Operational tool (fetch a page, fill a form). Not an audit lens. |
-| **dev-cycle** | Workflow orchestrator (start-to-finish dev: branch -> ship). Acts on the repo; doesn't audit it. |
-| **prompt-generator** | Creative authoring of LLM prompts. Produces content; doesn't evaluate code. |
-| **routine-writer** | Creative authoring of cloud-routine prompts. Same shape as prompt-generator. |
-| **skill-creator** | Audits the skill collection itself, not application code. Use Mode 3 of skill-creator separately. |
-| **skill-refiner** | Batch-improves skill collections via eval loops. Same domain as skill-creator. |
-| **lockpick** | Offensive security / CTF / privesc. Different threat model from defensive audit; security-audit + zero-day cover the defensive side. |
-| **kali-linux** | Live-system administration of Kali. Kali is Debian-based, so any repo-side packaging concerns are caught by debian-ubuntu in Wave 3. The skill itself is for running Kali, not auditing repos. |
-| **full-review** | Alternate orchestrator (the smaller 4-skill version). Mutually exclusive with deep-audit by design. |
-| **deep-audit** | This skill. Self-invocation would loop. |
+Read `references/exclusions.md` before changing Wave 3 routing.
 
 ---
 

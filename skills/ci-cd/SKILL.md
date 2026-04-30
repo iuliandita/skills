@@ -24,21 +24,11 @@ Write, review, and architect CI/CD pipelines across GitHub Actions, GitLab CI/CD
 Actions, Gitea Actions, and Woodpecker. The goal is secure, fast, auditable pipelines that
 satisfy both engineering needs and compliance requirements (PCI-DSS 4.0).
 
-**Target versions** (May 2026):
-- **GitHub Actions**: ubuntu-24.04 runners (ubuntu-latest), arm64 GA, artifact v4, attestations GA
-- **GitLab CI/CD**: GitLab 18.10.3, CI/CD Catalog GA, CI Components with typed `spec: inputs`
-- **Forgejo Actions**: Forgejo v15.0, Runner v11.x (stable; check `data.forgejo.org/forgejo/runner` releases for current major tag before pinning)
-- **Gitea Actions**: Gitea v1.26.0, act runner v0.2.x (GA since Gitea 1.21, March 2024)
-- **Woodpecker CI**: v3.13.x (container-native, Gitea/Forgejo/GitHub/GitLab-compatible)
-- **Supply chain**: cosign v3.x (Sigstore), Syft/Trivy for SBOM, SLSA v1.1
+**Target versions**: May 2026 snapshot. Read `references/target-versions.md` before
+pinning forge, runner, CI, or supply-chain tool versions.
 
-This skill covers six domains depending on context:
-- **Workflow design** - stages, jobs, caching, artifacts, parallelism, reusable patterns
-- **Security** - supply chain hardening, SHA pinning, secret management, OIDC, least-privilege
-- **Compliance** - PCI-DSS 4.0 Req 6.x mapping, SBOM generation, signed artifacts, audit trails
-- **Cross-platform** - writing pipelines that work across GitHub/GitLab/Forgejo/Gitea/Woodpecker, migration patterns
-- **Runners** - install, register, executor choice, Linux vs macOS, hardening (see `references/runners.md`)
-- **Best practices** - dependency updates, linting, scanning, review gates, rollout order (see `references/best-practices.md`)
+This skill covers workflow design, security, compliance, cross-platform migration,
+runners, dependency updates, scanning, review gates, and rollout order.
 
 ## When to use
 
@@ -62,7 +52,6 @@ This skill covers six domains depending on context:
 - Code review of pipeline-adjacent code (the app itself) - use **code-review**
 - The code-review skill has a `cicd-pipelines.md` reference for **bug patterns** in existing
   pipelines. This skill is for **writing and architecting** pipelines.
-
 ---
 
 ## AI Self-Check
@@ -93,7 +82,6 @@ every failure with file and line reference.
 - [ ] **Ignore-list entries have expiry dates**: every `.trivyignore`, `.grype.yaml`, Dependabot `ignore`, or Renovate `ignoreDeps` entry includes a comment with revisit date + owner. No dates = zombie tech debt.
 - [ ] **Lockfiles committed**: `package-lock.json`, `bun.lock`, `Cargo.lock`, `go.sum`, `uv.lock` belong in version control for applications. Manifest-only commits break reproducibility.
 - [ ] **Auto-merge gated on tests, not just lint**: Dependabot/Renovate auto-merge without test coverage of the changed area is a supply-chain shortcut.
-
 ---
 - [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
 - [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
@@ -478,6 +466,7 @@ the OWASP Top 10 for Agentic Applications, read `references/supply-chain.md`
 - `references/best-practices.md` - Dependency updates (Dependabot/Renovate), layered linting, scanning matrix (secrets/SCA/container/IaC/SAST), review gates, merge queues, rollout order
 - `references/supply-chain.md` - supply chain security, incident timeline, SHA pinning,
   SBOM/SLSA, PCI-DSS compliance, image signing
+- `references/target-versions.md` - May 2026 version snapshot for forges, runners, CI systems, and supply-chain tools
 
 ## Related Skills
 

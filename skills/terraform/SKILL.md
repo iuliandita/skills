@@ -17,23 +17,16 @@ Write, review, and architect Terraform/OpenTofu infrastructure - from individual
 
 **Target versions** (May 2026): Terraform 1.14.9 (IBM/HashiCorp, BSL; 1.15.0-rc2 in progress), OpenTofu 1.11.6 (Linux Foundation, MPL). Helm provider v3.1+, K8s provider v3.0+, AWS provider v6.x, Azure v4.x, GCP v7.x.
 
-This skill covers four domains depending on context:
-- **HCL** - resource configs, variables, outputs, data sources, expressions, lifecycle rules
-- **Modules** - structure, versioning, testing, registry patterns, reusable components
-- **Operations** - state management, backends, workspaces, import, migration, CI/CD
-- **Compliance** - PCI-DSS 4.0 controls, policy-as-code, audit trails, drift detection, CDE isolation
+This skill covers HCL, modules, operations, state, CI/CD, policy-as-code, audit trails,
+PCI-DSS 4.0 controls, drift detection, and CDE isolation.
 
 ## Terraform vs OpenTofu (2026)
 
-IBM acquired HashiCorp for $6.4B (closed Feb 2025). Terraform stays BSL 1.1. The codebases have meaningfully diverged.
-
-**Choose Terraform** if: already on HCP Terraform/TFE, need Stacks for multi-component orchestration, want vendor support.
-
-**Choose OpenTofu** if: need client-side state encryption (Terraform never shipped this), BSL is a legal concern, want `enabled` meta-argument on resources, want OCI registry for providers/modules, need Linux Foundation governance.
-
-**Both share the provider plugin protocol** - most providers work on both. For now.
-
-**CDKTF is dead.** Deprecated Dec 2025, archived. Migrate to HCL or AWS CDK.
+IBM acquired HashiCorp for $6.4B (closed Feb 2025). Terraform stays BSL 1.1; OpenTofu is Linux Foundation/MPL.
+- **Choose Terraform**: HCP/TFE, Stacks, or vendor support.
+- **Choose OpenTofu**: client-side state encryption, BSL concerns, `enabled`, OCI registries, or Linux Foundation governance.
+- **Shared protocol**: most providers still work on both, for now.
+- **CDKTF**: deprecated Dec 2025 and archived; migrate to HCL or AWS CDK.
 
 ## When to use
 
@@ -54,7 +47,6 @@ IBM acquired HashiCorp for $6.4B (closed Feb 2025). Terraform stays BSL 1.1. The
 - CI/CD pipeline design (use **ci-cd**)
 - Database engine configuration, schema design, or migrations (use **databases**)
 - Security auditing application code (use **security-audit**)
-
 ---
 
 ## AI Self-Check
@@ -76,7 +68,6 @@ AI tools consistently produce the same Terraform mistakes. **Before returning an
 - [ ] `terraform fmt` and `terraform validate` pass
 
 **AI should never own `terraform apply`.** In March 2026, an AI-assisted Terraform workflow deleted production infrastructure through escalating cleanup logic. Plan output is reviewed by a human. Always.
-
 ---
 - [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
 - [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
@@ -92,7 +83,6 @@ AI tools consistently produce the same Terraform mistakes. **Before returning an
 - Use remote state and data sources sparingly; excessive cross-stack reads slow plans and create hidden coupling.
 - Cache providers in CI and pin versions to avoid repeated downloads and surprise upgrades.
 
-
 ---
 
 ## Best Practices
@@ -100,7 +90,6 @@ AI tools consistently produce the same Terraform mistakes. **Before returning an
 - Never let automation apply production plans without a reviewed plan artifact and human approval.
 - Use `moved` blocks for refactors instead of delete/recreate churn.
 - Protect stateful resources with backups, `prevent_destroy`, and explicit migration steps.
-
 
 ## Workflow
 
@@ -492,8 +481,6 @@ Read `references/production-checklist.md` for the full pre-deploy checklist cove
 ---
 
 ## Rules
-
-These are non-negotiable. Violating any of these is a bug.
 
 1. **`terraform fmt` + `terraform validate` on every change.** Non-negotiable.
 2. **Pin provider versions.** `required_providers` with `~>` constraints. Commit the lock file.

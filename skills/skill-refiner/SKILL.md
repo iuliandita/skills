@@ -83,7 +83,9 @@ contested major flags (non-configurable).
 
 ### Phase 0: Setup
 
-1. **Create feature branch**: `skill-refiner/YYYY-MM-DD-HHMMSS` from current HEAD
+1. **Create feature branch**: `skill-refiner/YYYY-MM-DD-HHMMSS` from current HEAD.
+   Preserve dirty worktrees; branching isolates the run, it does not imply cleanup. If already
+   on a run branch for this sweep, record it instead of nesting another branch.
 2. **Load run history**: read `.refiner-runs.json` from the collection root (if it exists).
    Use previous run data for: baseline score comparison (detect regressions from external
    changes), model/harness change detection (flag if the primary or secondary model changed
@@ -179,7 +181,10 @@ contested major flags (non-configurable).
 
 ### Phase 3: Summary
 
-22. **Final report**:
+22. **Final report**: write a human-readable report first, then machine-readable run history.
+    Include branch, pool, config, every changed skill, score before/after, delta, files changed,
+    verification commands, peer-review flags, reverted changes, private-skill handling, and
+    skipped checks. Do not output only JSON.
     ```
     === skill-refiner run complete ===================================
     Branch:     skill-refiner/YYYY-MM-DD-HHMMSS
@@ -249,7 +254,9 @@ Before committing any skill modification, verify:
    maintain score are preferred over additions that marginally improve it.
 8. **One commit per iteration**: bundle improvements, include score deltas in message.
 9. **Branch isolation**: all work on a feature branch. Never modify main directly.
-10. **Read before edit**: always read the full skill before proposing changes.
+10. **Human-readable report required**: every run ends with a report that names changes,
+    before/after scores, verification, peer-review flags, skipped checks, and next action.
+11. **Read before edit**: always read the full skill before proposing changes.
     Never edit from memory or assumption.
 
 ## Related Skills

@@ -83,23 +83,17 @@ Before returning any generated or modified skill, verify against this list:
 - [ ] **Routing overlap checked**: new or edited skills do not steal triggers from better-matched existing skills
 - [ ] **Spec claims verified**: frontmatter, metadata, and compatibility guidance match the current Agent Skills specification
 
----
-
 ## Performance
 
 - Keep `SKILL.md` compact; move deep examples into references loaded on demand.
 - Prefer precise triggers over broad keyword lists that cause unnecessary skill loading.
 - Run lint/spec checks before prose polishing so structural failures surface early.
 
-
----
-
 ## Best Practices
 
 - Write skills as operational instructions, not essays about a domain.
 - Include clear When to use/When NOT to use routing and realistic AI self-checks.
 - Keep public skills tool-agnostic unless a tool is intrinsic to the skill.
-
 
 ## Workflow
 
@@ -124,9 +118,11 @@ Review -> Optimize, Audit -> per-skill Review for flagged items.
    locations - if the default doesn't match, ask or accept a user-supplied path. If no
    collection is found, skip collection-wide checks (cross-references, trigger overlap, audit
    mode) and note what was skipped.
-2. **Check git availability**: run `git rev-parse --git-dir` in the skill's directory. Features
-   that depend on git (freshness via commit history, gitignore filtering for private skills)
-   need this. Without git, fall back to file modification dates and skip gitignore filtering.
+2. **Check git and create a run branch**: run `git rev-parse --git-dir`. If inside git,
+   create `skill-creator/YYYY-MM-DD-HHMMSS` from current HEAD before checks or edits unless
+   already on a task branch created for this run. Preserve dirty worktrees; branching is for
+   isolation, not cleanup. Without git, state "branch unavailable" in the final report and
+   fall back to file modification dates.
 3. **Single skill vs collection**: Modes 1 (Create) and 2 (Review) work on individual skills
    with or without a collection - collection-dependent steps become best-effort. Mode 3
    (Audit) requires a collection. Mode 4 (Optimize) works standalone but benefits from
@@ -231,14 +227,11 @@ instructions, missing context, steps that only work when you already know the an
 - Skip for low-effort skills unless they're tricky
 
 **How to forward-test:**
-1. Pick 2-3 realistic tasks the skill should handle (include at least one edge case)
-2. Launch a subagent for each task. The prompt should look like a real user request:
-   - Good: "Use the kubernetes skill to review this deployment manifest for production readiness"
-   - Bad: "Test whether the kubernetes skill correctly catches missing resource limits"
-3. Pass raw artifacts (files, configs, code), not your diagnosis or expected output
-4. Don't leak the skill's intended behavior, your prior conclusions, or the "right answer"
-5. Review the subagent's output: did it follow the workflow? Miss steps? Hallucinate?
-6. Clean up artifacts between iterations to avoid context contamination
+1. Pick 2-3 realistic tasks the skill should handle, including one edge case.
+2. Launch a subagent with a real-user prompt, not a diagnostic prompt that leaks expected findings.
+3. Pass raw artifacts, not your diagnosis or expected output.
+4. Review whether the agent followed the workflow, missed steps, or hallucinated.
+5. Clean up artifacts between iterations to avoid context contamination.
 
 **Decision rule:** if forward-testing only succeeds when subagents see leaked context, the skill
 needs tightening - not the test setup.
@@ -454,6 +447,21 @@ collection, run Mode 2 Step 2 (quality checks) to verify no regressions were int
 
 ---
 
+## Run Report
+
+End every run with a human-readable report, even for report-only checks:
+
+```text
+Branch: <branch or unavailable>; Mode: <create|review|audit|optimize>; Scope: <target>
+Score: <before> -> <after> (<delta>) or "not scored - report only"
+Changes: <files changed or none>; Findings: <critical/important/minor counts and top items>
+Verification: <lint/spec/forward-test/source checks with pass/fail>; Skipped: <what and why>
+Next: <recommended action>
+```
+
+For edited skills, score the checklist pass rate plus behavioral or forward-test results. For
+audit-only runs, report structural gate and finding counts instead of inventing a composite.
+
 ## Reference Files
 
 - `references/conventions.md` - the complete convention guide: frontmatter fields, structural
@@ -475,31 +483,16 @@ collection, run Mode 2 Step 2 (quality checks) to verify no regressions were int
 ## Rules
 
 1. **Read before edit.** Always read a skill's SKILL.md and reference files before modifying.
-   No exceptions, no "I already know the content."
-2. **Conventions are non-negotiable.** Every custom skill must have: `metadata.source`
-   (`owner/repo` for published collections or `custom` for unpublished skills), `date_added`,
-   `effort`, "When to use", "When NOT to use", Workflow, and Rules sections. These aren't
-   suggestions - they're what makes skills consistent and predictable.
-3. **Verify everything, assume nothing.** AI models hallucinate tool names, CLI flags, version
-   numbers, and API endpoints. Every tool, version, flag, and behavior claim in a skill must
-   be verified via web search or registry check before writing it down. "I'm pretty sure" is
-   not verification. If a site blocks simple HTTP clients or Python `urllib`, retry with a
-   browser-like user agent or `curl -A 'Mozilla/5.0'` before marking the claim unverified.
-   If you still can't confirm it, don't include it. In offline or sandboxed environments,
-   note unverified claims explicitly rather than blocking the review.
-4. **Prefer dedicated skill workflows over generic helpers.** When a purpose-built skill and a
-   generic planning or brainstorming helper both fit, prefer the purpose-built skill. Generic
-   workflow skills are invoked manually when explicitly requested.
-5. **Update the inventory.** After creating, removing, or renaming a skill, update any published
-   inventory file the collection uses and re-run the cross-reference checks. If the collection
-   has a README skill catalog or headline counts (for example "N production-tested skills"),
-   verify those counts against the live published skill set instead of incrementing by guesswork.
-   Count real public skills from the repo, then make the README match.
-6. **No AI slop in skills.** Skills are meta-prompts - they shape how the model works. Comment
-   noise, over-abstraction, aggressive ALL CAPS directives, and "just in case" instructions
-   degrade skill performance. Write like a competent human briefing a colleague.
-7. **Plain ASCII only.** No em-dashes, curly quotes, or ligatures in skill files. Use a single
-   `-` where you would reach for an em dash, never `--`. Use straight quotes and plain
-   punctuation. This matches the global instruction-file rule.
-8. **Run the AI Self-Check.** Every generated or modified skill gets verified against the
-   checklist before returning to the user.
+2. **Conventions are non-negotiable.** Custom skills need `metadata.source`, `date_added`,
+   `effort`, "When to use", "When NOT to use", Workflow, and Rules sections.
+3. **Verify everything, assume nothing.** Confirm tools, versions, flags, APIs, and behavior via
+   source docs, `--help`, registries, or explicit "unverified" notes. Do not guess.
+4. **Prefer dedicated skill workflows over generic helpers.**
+5. **Update the inventory.** After creating, removing, or renaming a skill, update published
+   inventories and verify counts from live public skills.
+6. **No AI slop in skills.** Avoid comment noise, over-abstraction, ALL CAPS theater, and
+   "just in case" instructions.
+7. **Plain ASCII only.** No em dashes, curly quotes, ligatures, or `--` dash substitutes.
+8. **Run the AI Self-Check.** Every generated or modified skill gets checked before return.
+9. **Branch every run.** In git-backed collections, create or record a run branch before checks.
+10. **Report every run.** Finish with the Run Report format and score before/after or "not scored."
