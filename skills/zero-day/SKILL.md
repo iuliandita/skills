@@ -21,13 +21,8 @@ This is the *discovery* skill - it finds vulnerabilities nobody has catalogued y
 exploiting known weaknesses on live systems, use **lockpick**. For scanning code against known
 vulnerability patterns, use **security-audit**.
 
-**Target versions** (May 2026):
-- CodeQL CLI: v2.25.1
-- Semgrep: v1.157.0
-- Joern: v4.0.x
-- Ghidra: 12.0.4
-- AFL++: v4.40c
-- Rizin: v0.8.2
+**Target versions**: May 2026 snapshot. Read `references/target-versions.md` before
+pinning static analysis, reversing, fuzzing, or debugger tooling.
 
 ## When to use
 
@@ -50,7 +45,6 @@ vulnerability patterns, use **security-audit**.
 - Hardening containers, Kubernetes, or infrastructure (use **kubernetes**, **docker**, **terraform**)
 - Network firewall configuration or tuning (use **firewall-appliance**)
 - Without authorization from the target owner (own repos, bug bounty scope, or written permission)
-
 ---
 
 ## AI Self-Check
@@ -67,7 +61,6 @@ Before reporting any vulnerability or generating exploit code, verify:
 - [ ] **Disclosure plan**: findings destined for responsible disclosure, not public dump
 - [ ] **Evidence preserved**: all analysis steps documented for reproducibility
 - [ ] **Complexity honest**: if exploitation requires unlikely conditions (specific config, race window, chained bugs), state that clearly - don't inflate impact
-
 ---
 - [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
 - [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
@@ -483,6 +476,7 @@ and when to reach for each tool during source, binary, or live-system analysis.
 - `references/binary-analysis.md` - binary reverse engineering workflow, patch diffing, fuzzing harness development, dynamic analysis
 - `references/exploit-patterns.md` - proof-of-concept development templates by vulnerability class, with safety guidelines
 - `references/tooling-quick-reference.md` - tool catalog with install paths and best-fit usage notes
+- `references/target-versions.md` - May 2026 version snapshot for static analysis, reversing, fuzzing, and debugger tools
 
 ---
 
@@ -492,8 +486,6 @@ and when to reach for each tool during source, binary, or live-system analysis.
 - **lockpick** - exploits vulnerabilities on *live systems* for privilege escalation and lateral movement. Zero-day *discovers* the vulnerabilities. Use zero-day to find the bug, lockpick to demonstrate exploitation on a live target. Zero-day's system mode hands off to lockpick once a vulnerability is confirmed.
 - **code-review** - finds correctness bugs (logic errors, race conditions). Zero-day finds *security-relevant* logic flaws. Overlap: a race condition is both a bug and potentially a vulnerability. Zero-day owns it when exploitability is the question.
 - **networking** - configures and troubleshoots network services. Zero-day may analyze these services for vulnerabilities but doesn't configure them.
-
----
 
 ## Rules
 

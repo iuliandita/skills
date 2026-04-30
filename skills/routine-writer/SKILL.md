@@ -225,6 +225,14 @@ API-only and GitHub-only routines skip artifact #2 and emit a web-UI walkthrough
 
 ---
 
+## Reference Files
+
+- `references/trigger-guide.md` - schedule, API, and GitHub trigger rules, filters, limits, and payload shapes.
+- `references/prompt-anatomy.md` - six-block prompt template, idempotency patterns, and worked examples.
+- `references/automation.md` - `/schedule`, `/fire`, GitHub Actions, and web-UI artifact patterns.
+
+---
+
 ## Related Skills
 
 - **prompt-generator** - structures one-off prompts for chat or documentation. Prompts written with prompt-generator can be refined with user feedback mid-run; routine prompts cannot, which is why this skill exists.

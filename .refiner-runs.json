@@ -1684,5 +1684,188 @@
       "behavioral_test_group_coverage": "37/37",
       "peer_review": "100% after flagged regression fix"
     }
+  },
+  {
+    "run_id": "2026-04-30-full-private-sweep",
+    "branch": "skill-refiner/2026-04-30-174157",
+    "date": "2026-04-30",
+    "primary": {
+      "harness": "codex",
+      "model": "GPT-5",
+      "effort": "medium"
+    },
+    "secondary": {
+      "harness": "claude",
+      "probe": "PATH + config + PONG smoke test",
+      "result": "available"
+    },
+    "config": {
+      "iterations_minimum": 5,
+      "iterations_used": 6,
+      "threshold": 99,
+      "mode": "circuit-breaker",
+      "plateau": 2,
+      "scope": "repo skills only; upstream/system skills excluded"
+    },
+    "pool_size": {
+      "public_skills": 39,
+      "phase1_pool_excluding_meta": 37,
+      "private_skills": 1
+    },
+    "extra_pool": [
+      "cluster-health (gitignored, local-only)"
+    ],
+    "termination": "minimum iterations complete + final peer review NO_FLAGS",
+    "scores": {
+      "collection": {
+        "before": {
+          "structural_gate": "pass",
+          "public_behavioral_test_coverage": "37/39 explicit groups",
+          "public_inventory_accuracy": "30/39 in skill-creator conventions snapshot",
+          "private_structural_gate": "pass",
+          "composite_estimate": 96
+        },
+        "after": {
+          "structural_gate": "pass",
+          "public_behavioral_test_coverage": "39/39 explicit groups",
+          "public_inventory_accuracy": "39/39 in skill-creator conventions snapshot",
+          "private_structural_gate": "pass",
+          "peer_review": "NO_FLAGS",
+          "composite_estimate": 99
+        }
+      },
+      "deep-audit": {
+        "before": {
+          "line_count": 500,
+          "composite_estimate": 98
+        },
+        "after": {
+          "line_count": 494,
+          "composite_estimate": 99
+        }
+      },
+      "terraform": {
+        "before": {
+          "line_count": 500,
+          "composite_estimate": 98
+        },
+        "after": {
+          "line_count": 497,
+          "composite_estimate": 99
+        }
+      },
+      "routine-writer": {
+        "before": {
+          "reference_section": "missing",
+          "composite_estimate": 97
+        },
+        "after": {
+          "reference_section": "present",
+          "composite_estimate": 99
+        }
+      },
+      "skill-refiner": {
+        "before": {
+          "behavioral_test_groups": "37/39 public skills",
+          "branch_policy": "feature branch already required in Phase 0",
+          "report_contract": "final report existed but did not explicitly require human-readable output before JSON or skipped-check reporting",
+          "composite_estimate": 97
+        },
+        "after": {
+          "behavioral_test_groups": "39/39 public skills",
+          "branch_policy": "feature branch created or recorded; dirty worktrees preserved",
+          "report_contract": "human-readable report required before run history; includes changes, scores, verification, flags, skipped checks, and next action",
+          "composite_estimate": 99
+        },
+        "meta": true
+      },
+      "skill-creator": {
+        "before": {
+          "inventory": "30 published skills listed",
+          "branch_policy": "git availability checked, but review/check modes did not require a run branch",
+          "report_contract": "findings reported per mode, but no common score/change/verification report contract",
+          "composite_estimate": 97
+        },
+        "after": {
+          "inventory": "39 published skills listed, matched to live metadata",
+          "branch_policy": "git-backed runs create or record skill-creator/YYYY-MM-DD-HHMMSS before checks",
+          "report_contract": "every run ends with Branch/Mode/Scope/Score/Changes/Findings/Verification/Skipped/Next",
+          "composite_estimate": 99
+        },
+        "meta": true
+      },
+      "cluster-health": {
+        "before": {
+          "structural_gate": "pass"
+        },
+        "after": {
+          "structural_gate": "pass"
+        },
+        "private": true
+      }
+    },
+    "iteration_log": [
+      {
+        "iteration": 1,
+        "type": "baseline",
+        "result": "public lint/spec pass; private cluster-health temp-copy lint/spec pass; Claude secondary probe passed"
+      },
+      {
+        "iteration": 2,
+        "type": "structural-and-reference-fix",
+        "result": "routine-writer Reference Files section added; deep-audit and terraform trimmed below 500-line soft target"
+      },
+      {
+        "iteration": 3,
+        "type": "behavioral-coverage",
+        "result": "added hand-written frontend-design and jekyll-hyde behavioral tests; public coverage 39/39"
+      },
+      {
+        "iteration": 4,
+        "type": "meta-inventory",
+        "result": "skill-creator conventions inventory updated from 30 to 39 live public skills"
+      },
+      {
+        "iteration": 5,
+        "type": "private-skill-pass",
+        "result": "cluster-health SKILL.md and references reviewed; temp-copy lint/spec pass; no public references to private skill added"
+      },
+      {
+        "iteration": 6,
+        "type": "peer-review-and-fix",
+        "result": "Claude minor flag on scannability accepted and fixed; post-fix peer review NO_FLAGS"
+      },
+      {
+        "iteration": 7,
+        "type": "meta-followup",
+        "result": "skill-creator now branches every git-backed run and emits a standard human-readable run report; skill-refiner report contract made explicit; Claude peer review NO_FLAGS"
+      }
+    ],
+    "reverted": 0,
+    "contested": 0,
+    "cross_model_flags": {
+      "minor": 1,
+      "major": 0,
+      "resolved": 1
+    },
+    "changes": [
+      "Added routine-writer Reference Files section for all three references",
+      "Added behavioral tests for frontend-design and jekyll-hyde",
+      "Updated skill-creator convention inventory to match the 39 public skills in this repo",
+      "Compressed deep-audit and terraform while preserving peer-reviewed scannability",
+      "Validated private cluster-health through a temp-copy gate so public scripts remain gitignore-aware"
+      ,
+      "Added explicit branch and human-readable report contracts to skill-creator and skill-refiner"
+    ],
+    "verification": [
+      "scripts/lint-skills.sh skills: PASSED",
+      "scripts/validate-spec.sh skills: PASSED",
+      "cluster-health temp-copy lint/spec: PASSED",
+      "behavioral test coverage script: 39/39 public skills",
+      "skill-creator inventory script: 39/39 live metadata match",
+      "Claude post-fix peer review: NO_FLAGS",
+      "Meta-followup public lint/spec: PASSED with 0 warnings",
+      "Meta-followup Claude peer review: NO_FLAGS"
+    ]
   }
 ]

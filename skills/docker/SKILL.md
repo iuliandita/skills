@@ -20,20 +20,11 @@ metadata:
 
 Write, review, and architect Dockerfiles, Compose stacks, and container workflows - from single-service dev setups to multi-arch production pipelines with image signing and compliance gates. The goal is minimal, secure, reproducible images that a team can maintain and a QSA can audit.
 
-**Target versions** (May 2026):
-- Docker Engine 29.4.0, Docker Desktop 4.66.1
-- Docker Compose v5.1.3 (Go SDK, Bake-delegated builds)
-- BuildKit v0.29.0 (bundled with Engine 29.x)
-- containerd 2.2.3 / **2.3 LTS** (recommended for production after checking release notes)
-- Podman 5.8.2, Buildah 1.43.0
-- runc 1.4.1 (latest; CVE-2025-31133/52565/52881 patched since 1.4.0)
+**Target versions**: May 2026 snapshot. Read `references/target-versions.md` before
+pinning Docker, Compose, BuildKit, containerd, Podman, Buildah, or runc.
 
-This skill covers five domains depending on context:
-- **Dockerfile** - multi-stage builds, BuildKit syntax, base image selection, layer optimization
-- **Compose** - Compose v5 orchestration, service wiring, dev/prod patterns, networking
-- **Security** - hardening, supply chain, image scanning, secrets, runtime controls, PCI-DSS 4.0
-- **Registry & CI** - OCI registries, image signing (cosign), SBOM generation, CI pipelines
-- **Runtimes** - Podman, Buildah, Skopeo, containerd, Docker-to-Podman migration
+This skill covers Dockerfiles, Compose, container hardening, supply chain, registry/CI
+patterns, and runtime migration across Docker, Podman, Buildah, Skopeo, and containerd.
 
 ## When to use
 
@@ -54,7 +45,6 @@ This skill covers five domains depending on context:
 - CI/CD pipeline design (use **ci-cd**)
 - Security audits of application code (use **security-audit**)
 - Infrastructure provisioning with Terraform (use **terraform**)
-
 ---
 
 ## AI Self-Check
@@ -76,7 +66,6 @@ AI tools consistently produce the same Docker mistakes. **Before returning any g
 - [ ] Package caches cleaned in same layer: `--no-cache` (apk), `rm -rf /var/lib/apt/lists/*` (apt). For pip: use `--mount=type=cache` OR `--no-cache-dir`, not both.
 - [ ] CMD uses exec form (JSON array), not shell form: `CMD ["node", "app.js"]` not `CMD node app.js`
 - [ ] **HEALTHCHECK uses available tools**: probe command uses a binary present in the final image (wget in Alpine, curl in Debian, none in scratch/distroless - use the app's own health endpoint)
-
 ---
 - [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
 - [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
@@ -405,16 +394,6 @@ GPU containers: use `deploy.resources.reservations.devices` with `capabilities: 
 
 ---
 
-## Alternative Runtimes
-
-Read `references/alternative-runtimes.md` for Podman, Buildah, Skopeo, and containerd patterns, migration guides, and Quadlet systemd integration.
-
-- Podman is the main Docker alternative here: rootless-native, daemonless, and better aligned with systemd via Quadlet.
-- Buildah is the lower-level builder when you want scripting control without a long-running daemon.
-- The main migration gotcha is socket compatibility: many tools still assume `/var/run/docker.sock`.
-
----
-
 ## Production Checklist
 
 ### Dockerfile
@@ -480,6 +459,7 @@ Read `references/alternative-runtimes.md` for Podman, Buildah, Skopeo, and conta
 - `references/compose-patterns.md` - Compose patterns and common stack layouts
 - `references/security-and-compliance.md` - container hardening and compliance guidance
 - `references/alternative-runtimes.md` - Podman, Buildah, Skopeo, and related runtime patterns
+- `references/target-versions.md` - May 2026 version snapshot for Docker, Compose, BuildKit, containerd, Podman, Buildah, and runc
 
 ---
 
@@ -501,8 +481,6 @@ Read `references/alternative-runtimes.md` for Podman, Buildah, Skopeo, and conta
 ---
 
 ## Rules
-
-These are non-negotiable. Violating any of these is a bug.
 
 1. **No `:latest` tags in production.** Pin images to a specific version or SHA256 digest.
 2. **Multi-stage builds for compiled/transpiled languages.** Build tools do not belong in production images.

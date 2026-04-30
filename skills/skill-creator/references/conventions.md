@@ -501,12 +501,13 @@ Use this skill even when the user doesn't explicitly say "git" but is clearly do
 
 ## 9. Skill Inventory (April 2026)
 
-### Published skills (30)
+### Published skills (39)
 
 | Skill | Effort | Date Added | Domain |
 |-------|--------|-----------|--------|
 | ai-ml | high | 2026-04-02 | AI/ML applications, RAG, agents |
 | ansible | high | 2026-03-24 | Configuration management |
+| anti-ai-prose | medium | 2026-04-09 | AI prose audit |
 | anti-slop | medium | 2026-03-25 | Code quality audit |
 | arch-btw | high | 2026-03-26 | Arch Linux / CachyOS administration |
 | backend-api | high | 2026-04-06 | HTTP API design and implementation |
@@ -516,24 +517,32 @@ Use this skill even when the user doesn't explicitly say "git" but is clearly do
 | command-prompt | medium | 2026-03-25 | Shell scripting and config |
 | databases | high | 2026-03-24 | Database operations |
 | debian-ubuntu | high | 2026-04-22 | Debian / Ubuntu administration |
+| deep-audit | high | 2026-04-14 | Wave-based repo audit orchestrator |
+| dev-cycle | high | 2026-04-14 | Start-to-finish development workflow |
 | docker | high | 2026-03-24 | Containers |
 | firewall-appliance | high | 2026-03-30 | OPNsense/pfSense firewall management |
+| frontend-design | high | 2026-04-26 | Opinionated UI/UX build and critique |
 | full-review | high | 2026-03-22 | Orchestrator (4 parallel audits) |
 | git | high | 2026-03-24 | Version control, multi-forge |
+| jekyll-hyde | medium | 2026-04-28 | Dual-lens decision review |
+| kali-linux | high | 2026-04-22 | Kali Linux administration |
 | kubernetes | high | 2026-03-24 | K8s manifests, Helm, architecture |
+| localize | high | 2026-04-12 | i18n/l10n audit |
 | lockpick | high | 2026-03-25 | Post-exploitation, CTF, pivoting |
 | mcp | high | 2026-03-30 | MCP server development |
 | networking | high | 2026-03-25 | DNS, reverse proxies, VPNs, nftables, HA |
+| nixos-btw | high | 2026-04-23 | NixOS / Nix administration |
 | prompt-generator | medium | 2026-03-25 | LLM prompt structuring |
 | rhel-fedora | high | 2026-04-22 | Fedora / RHEL-family administration |
 | roadmap | medium | 2026-04-05 | Gitignored roadmap management and competitor scouting |
+| routine-writer | medium | 2026-04-14 | Claude Code routine prompt authoring |
 | security-audit | high | 2026-03-25 | Application security review |
 | skill-creator | high | 2026-03-25 | Skill lifecycle management |
 | skill-refiner | high | 2026-03-31 | Iterative self-improvement loop |
 | terraform | high | 2026-03-24 | Infrastructure-as-code |
-| testing | high | 2026-03-25 | Test design, debugging, infrastructure |
+| testing | high | 2026-04-02 | Test design, debugging, infrastructure |
 | update-docs | low | 2026-03-25 | Documentation sweep |
-| virtualization | high | 2026-03-25 | Proxmox, libvirt, VM operations |
+| virtualization | high | 2026-04-02 | Proxmox, libvirt, VM operations |
 | zero-day | high | 2026-04-03 | Vulnerability research and discovery |
 
 This inventory is a snapshot of the upstream iuliandita/skills collection. Treat it as a

@@ -224,6 +224,26 @@ Quality signals:
 - Suggests using OPNsense packet capture or ping diagnostics to isolate the layer
 - Does not assume a single root cause without evidence
 
+### frontend-design
+
+**Test 1: Build a product UI**
+Prompt: "Build a responsive SaaS dashboard for support agents triaging tickets. It needs dark and light themes, a ticket queue, filters, and keyboard-friendly actions."
+Quality signals:
+- Builds the actual usable dashboard first, not a marketing landing page
+- Uses dense, scannable operational layout rather than oversized hero sections or card-grid filler
+- Ships mobile and desktop layouts, both themes, focus-visible states, and 44 px touch targets
+- Defines realistic controls and states for filters, queue rows, selected ticket, loading, empty, and error cases
+- Avoids purple gradient CTAs, generic feature cards, fake "trusted by" sections, and decorative blobs
+
+**Test 2: Critique an AI-looking landing page**
+Prompt: "Critique this landing page: centered headline 'Build workflows effortlessly', purple-pink gradient CTA, three feature cards with lucide icons, fake partner logos, glassmorphism panels, and no visible product state."
+Quality signals:
+- Names concrete AI design tells instead of giving generic polish advice
+- Refuses or removes dishonest patterns such as fake partner logos
+- Produces a short rant/filter/ticket style critique with actionable severity
+- Replaces generic visuals with product-state-first recommendations
+- Checks accessibility, mobile, contrast, and motion risk, not only taste
+
 ### full-review
 
 **Test 1: Orchestration**
@@ -260,6 +280,26 @@ Quality signals:
 - Suggests keeping both dependencies (if compatible)
 - Mentions running install after resolution
 - Does not suggest --force or --ours/--theirs blindly
+
+### jekyll-hyde
+
+**Test 1: Dual-lens product decision**
+Prompt: "Decision review: we want to add an AI assistant that reads all customer tickets and suggests replies. Ship fast or slow down?"
+Quality signals:
+- Defaults to dual mode unless the user explicitly asks for Jekyll or Hyde only
+- Separates facts, assumptions, risks, and recommendation
+- Hyde names privacy, false-confidence, support-quality, and responsibility failure paths
+- Jekyll converts the upside into constraints such as evals, disclosure, human review, and rollback
+- Ends with a concrete next step or decision frame, not a lecture
+
+**Test 2: Hyde mode red-team**
+Prompt: "Act as Hyde. Red-team this plan: make cancellation harder so users contact sales before leaving."
+Quality signals:
+- Identifies the dark pattern and who pays the cost
+- Distinguishes legitimate retention learning from coercive friction
+- Names reputational, regulatory, support, and trust risks
+- Converts critique into safer mitigations such as exit interviews, downgrade paths, and value fixes
+- Does not provide manipulative implementation tactics
 
 ### kubernetes
 
