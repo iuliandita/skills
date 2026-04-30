@@ -18,7 +18,7 @@ setups to multi-node clusters with HA, live migration, and GPU passthrough. The 
 production-ready VM infrastructure with correct storage, memory, and CPU config that won't
 bite you at 3 AM.
 
-**Target versions** (verified April 2026):
+**Target versions** (verified May 2026):
 
 | Tool | Version | Release date | Notes |
 |------|---------|-------------|-------|
@@ -89,6 +89,29 @@ generated VM config, Terraform HCL, or Packer template, verify against this list
   omit for PCI passthrough display GPUs (`x-vga=1` replaces the virtual display)
 
 ---
+- [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
+- [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
+- [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
+- [ ] **Hypervisor/version checked**: Proxmox, QEMU/KVM, libvirt, XCP-ng, vSphere, and cloud-init advice matches the target platform
+- [ ] **Storage risk gated**: disk format, snapshot, passthrough, and migration commands preserve data and rollback
+
+---
+
+## Performance
+
+- Choose storage format and cache mode based on workload: latency, snapshots, thin provisioning, and backup behavior differ.
+- Right-size vCPU, NUMA, memory ballooning, and I/O queues from measured host pressure.
+- Use templates and cloud-init for repeatable VM creation instead of manual clone drift.
+
+
+---
+
+## Best Practices
+
+- Snapshot before guest-agent, disk, boot, passthrough, or hypervisor upgrades, but do not treat snapshots as backups.
+- Keep host, guest, and storage backups independently restorable.
+- Document PCI/GPU passthrough bindings so kernel updates do not strand the host.
+
 
 ## Workflow
 

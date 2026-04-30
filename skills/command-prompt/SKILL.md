@@ -16,7 +16,7 @@ metadata:
 Reference skill for writing commands, scripts, and configuration across Unix shells. Detects
 the target shell from context and routes to the appropriate reference.
 
-**Target versions** (April 2026):
+**Target versions** (May 2026):
 - Zsh: 5.10
 - Bash: 5.3
 - Fish: 4.6
@@ -60,6 +60,29 @@ Before returning any generated shell script or command, verify:
 - [ ] No secrets in command history (use `read -s` or environment variables)
 
 ---
+- [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
+- [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
+- [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
+- [ ] **Shell identified**: examples match POSIX sh, Bash, Zsh, or Fish semantics intentionally
+- [ ] **Quoting tested**: paths with spaces, empty variables, and glob characters behave safely
+
+---
+
+## Performance
+
+- Use builtins and stream processing for large inputs; avoid command substitution that buffers entire files.
+- Prefer `rg`, `fd`, and targeted file lists when available, with portable fallbacks noted.
+- Avoid spawning subshells inside tight loops when `xargs`, arrays, or shell builtins fit.
+
+
+---
+
+## Best Practices
+
+- Default to `set -euo pipefail` only when the script is written to handle those semantics.
+- Use `--` before user-controlled paths for commands that support it.
+- Preview destructive expansions before `rm`, `mv`, `chmod`, `chown`, or recursive edits.
+
 
 ## Workflow
 

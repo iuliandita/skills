@@ -19,7 +19,7 @@ security-distro workflow. Focus on Debian stable and Ubuntu LTS first, then laye
 derivative-specific behavior, PPA workflows, snap confinement, Ubuntu HWE, and explicit checks
 for derivatives that diverge on init, packaging defaults, or intended use.
 
-**Versions worth pinning** (verified April 2026):
+**Versions worth pinning** (verified May 2026):
 
 Only pin versions here when they materially affect compatibility or troubleshooting shape. For
 ordinary Debian and Ubuntu package work, prefer the live distro lane and package policy over a
@@ -98,6 +98,29 @@ Before returning Debian or Ubuntu commands, verify:
 - [ ] **Debian alternatives are checked**: when a command behaves oddly, verify `update-alternatives` for that binary.
 
 ---
+- [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
+- [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
+- [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
+- [ ] **Release support checked**: Debian/Ubuntu/Mint/Pop advice matches current lifecycle and enabled repositories
+- [ ] **Third-party repo risk handled**: PPAs, snaps, vendor repos, and pin priorities are explicit
+
+---
+
+## Performance
+
+- Use `apt-cache policy`, `apt list --upgradable`, and targeted installs before broad reinstall attempts.
+- Keep package index updates scoped; repeated `apt update` in scripts wastes time and load.
+- For slow upgrades, identify held packages and phased updates before forcing resolver choices.
+
+
+---
+
+## Best Practices
+
+- Do not mix Debian releases or Ubuntu series unless apt pinning is deliberate and documented.
+- Snapshot or back up before release upgrades, kernel changes, filesystem work, or bootloader repair.
+- Prefer distro packages for core system components; isolate vendor repos to the packages they own.
+
 
 ## Workflow
 
