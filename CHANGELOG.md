@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.30.0](https://github.com/iuliandita/skills/compare/v1.29.0...v1.30.0) (2026-04-30)
+
+
+### Features
+
+* refresh skills for May 2026 ([6f524bc](https://github.com/iuliandita/skills/commit/6f524bc81bf44072309f306c30a2b95f02c348e5))
+
 ## [1.29.0](https://github.com/iuliandita/skills/compare/v1.28.1...v1.29.0) (2026-04-28)
 
 
