@@ -210,6 +210,23 @@ backup_skill() {
   fi
 }
 
+migrate_legacy_backups() {
+  local dest_dir="$1"
+  local legacy_dir="$dest_dir/.backups"
+  [[ -d "$legacy_dir" || -L "$legacy_dir" ]] || return 0
+
+  local backup_parent backup_name backup_base ts dest
+  backup_parent="$(dirname "$dest_dir")"
+  backup_name="$(basename "$dest_dir")"
+  backup_base="${SKILLS_BACKUP_DIR:-$backup_parent/.skills-backups/$backup_name}"
+  ts="$(date +%Y%m%d-%H%M%S)"
+  dest="$backup_base/.legacy/$ts"
+
+  mkdir -p "$(dirname "$dest")"
+  mv "$legacy_dir" "$dest"
+  printf '  [>] legacy .backups moved to %s\n' "$dest"
+}
+
 # ── Lock file ─────────────────────────────────────────────────────────
 write_lock() {
   local lock_dir="$1"
@@ -522,6 +539,7 @@ main() {
     printf 'Installing %d skill(s) via symlink\n' "${#skills[@]}"
     printf 'Canonical: %s\n\n' "$CANONICAL_DIR"
     mkdir -p "$CANONICAL_DIR"
+    migrate_legacy_backups "$CANONICAL_DIR"
 
     # Copy all skills to canonical dir first
     local failed=0
@@ -544,6 +562,7 @@ main() {
       local tool_dir
       tool_dir="$(resolve_tool_path "$tool")"
       mkdir -p "$tool_dir"
+      migrate_legacy_backups "$tool_dir"
       printf '[%s] -> %s\n' "$tool" "$tool_dir"
       for skill in "${skills[@]}"; do
         validate_skill_name "$skill" || continue
@@ -576,6 +595,7 @@ main() {
         dest="$(resolve_tool_path "$tool")"
       fi
       mkdir -p "$dest"
+      migrate_legacy_backups "$dest"
 
       printf '[%s] -> %s\n' "$tool" "$dest"
       for skill in "${skills[@]}"; do
