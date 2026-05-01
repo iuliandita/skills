@@ -59,13 +59,31 @@ Before running checks or reporting results, verify:
 
 This public skill has no built-in private cluster registry.
 
-1. If `protected/registry.md` exists, read it and use its alias, context, CWD pattern, and reference
-   mappings.
-2. If no protected registry exists, require an explicit kube context or ask before using the current
+Users may create local-only overlays under `skills/cluster-health/protected/` for private lab,
+homelab, work, or customer cluster details. The directory is gitignored by this collection. If it
+exists in the installed skill, read it while using this skill. A user can ask their agent to create
+or update these files.
+
+Suggested local layout:
+
+```text
+protected/
+  registry.md            # aliases, kube contexts, CWD patterns, profile mappings
+  private-patterns.txt   # terms that must never appear in public files
+  <cluster-or-env>.md    # local namespaces, runbooks, dashboards, thresholds
+```
+
+1. If `protected/registry.md` exists, read it first and use its alias, context, CWD pattern, and
+   reference mappings.
+2. If the registry maps the target to `protected/<cluster-or-env>.md`, read that profile before
+   running checks.
+3. If no protected registry exists, require an explicit kube context or ask before using the current
    context.
-3. Never guess a cluster from a vague request.
-4. Never print protected registry contents in public reports unless the user asks for those exact
+4. Never guess a cluster from a vague request.
+5. Never print protected registry contents in public reports unless the user asks for those exact
    details.
+6. Treat gitignored as local privacy, not encryption. Do not put protected overlays in shared logs,
+   issues, PR comments, or public reports.
 
 ## Usage
 

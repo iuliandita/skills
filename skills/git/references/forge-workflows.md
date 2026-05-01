@@ -246,7 +246,7 @@ does not cover yet (e.g. branch protection management).
 | Platform | Command |
 |----------|---------|
 | Arch / CachyOS (AUR) | `paru -S forgejo-cli` (or `cargo install forgejo-cli`) |
-| Debian sid / Ubuntu 25.10+ | `sudo apt install forgejo-cli` (not in Debian stable or Ubuntu LTS as of April 2026) |
+| Debian sid / Ubuntu 25.10+ | `sudo apt install forgejo-cli` (not in Debian stable or Ubuntu LTS as of May 2026 recheck) |
 | Fedora | `sudo dnf copr enable lihaohong/forgejo-cli && sudo dnf install forgejo-cli` |
 | macOS | `brew install forgejo-cli` |
 | Nix | `nix profile install nixpkgs#forgejo-cli` |

@@ -6,7 +6,7 @@ How to emit `/schedule` invocations, `/fire` curl templates, and GitHub Actions 
 
 ## What is automatable, and what is not
 
-The routines API surface, as of April 2026, is asymmetric:
+The routines API surface, as of May 2026 recheck, is asymmetric:
 
 | Action | Automatable? | How |
 |---|---|---|

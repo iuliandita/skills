@@ -2,7 +2,7 @@
 
 Per-trigger specifics: cron rules, API fire semantics, GitHub event catalogue, filter fields, and how triggers combine.
 
-All details below reflect the research preview as of April 2026. The beta header is `experimental-cc-routine-2026-04-01`. Shapes, limits, and behavior can change; pin the beta header date so staleness is detectable.
+All details below reflect the research preview as of May 2026 recheck. The beta header is `experimental-cc-routine-2026-04-01`. Shapes, limits, and behavior can change; pin the beta header date so staleness is detectable.
 
 ---
 
@@ -60,7 +60,7 @@ The `routine_id` in the URL is prefixed `trig_`, not `routine_`. The full URL an
 | Header | Value |
 |---|---|
 | `Authorization` | `Bearer sk-ant-oat01-...` (per-routine token) |
-| `anthropic-beta` | `experimental-cc-routine-2026-04-01` (April 2026) |
+| `anthropic-beta` | `experimental-cc-routine-2026-04-01` (header dated 2026-04-01; verified May 2026) |
 | `anthropic-version` | `2023-06-01` |
 | `Content-Type` | `application/json` (when body is present) |
 

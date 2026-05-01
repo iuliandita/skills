@@ -61,13 +61,29 @@ Override the canonical directory with `SKILLS_CANONICAL_DIR`:
 SKILLS_CANONICAL_DIR=~/my-skills ./install.sh --tool claude,roo --link
 ```
 
-### Local private skills
+### Local private overlays
 
 Skills declaring `metadata.internal: true` and gitignored locally are skipped by default. Pass `--include-internal` to install them too.
 
 ```bash
 ./install.sh --tool claude,codex,opencode --link --include-internal --force
 ```
+
+The public `cluster-health` skill can also have a local protected overlay at `skills/cluster-health/protected/`. That directory is gitignored and must stay untracked. Use it for private lab, homelab, work, or customer cluster aliases, kube contexts, CWD mappings, namespaces, dashboards, runbooks, and local thresholds. You can ask an agent to create or update files there, typically `registry.md`, `private-patterns.txt`, and one `<cluster-or-env>.md` profile per environment.
+
+When present in a local checkout, normal copy installs and `--link` installs copy the overlay into the installed `cluster-health` skill. In symlink mode, tool-specific skill directories point at the canonical copy, so Claude, Codex, OpenCode, and other linked tools all see the same protected overlay. Public GitHub installs do not include the overlay because it is not tracked.
+
+`cluster-health` is public, so it no longer needs `--include-internal`; that flag is only for separate gitignored skills with `metadata.internal: true`.
+
+Before committing local changes, install the repository hooks with either `prek` or `pre-commit`:
+
+```bash
+prek install --hook-type pre-commit --hook-type pre-push
+# or:
+pre-commit install --hook-type pre-commit --hook-type pre-push
+```
+
+The hooks enforce that `skills/cluster-health/protected/` remains ignored and untracked, and they scan public files for protected private patterns when the local overlay is present.
 
 ### Manual
 

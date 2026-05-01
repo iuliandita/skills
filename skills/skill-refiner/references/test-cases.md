@@ -733,7 +733,7 @@ Quality signals:
 - Declares minimum scope: repos, connectors (Slack + GitHub), env vars
 - Detects claude binary on PATH before emitting /schedule invocation
 - Never embeds real API tokens - uses $ROUTINE_FIRE_TOKEN placeholder
-- Beta header pinned with (April 2026) annotation in prose
+- Beta header pinned with header date and May 2026 verification annotation in prose
 
 **Test 2: API-triggered routine from CI**
 Prompt: "I want to fire a Claude routine from our GitHub Actions deploy job to generate release notes. How do I wire it up?"
