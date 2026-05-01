@@ -45,6 +45,9 @@ jobs:
       - name: Check freshness date markers
         run: ./scripts/check-freshness-dates.sh
 
+      - name: Check deep-audit skill coverage
+        run: ./scripts/check-deep-audit-coverage.sh
+
       - name: Lint skill collection
         run: ./scripts/lint-skills.sh
 

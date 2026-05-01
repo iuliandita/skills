@@ -17,6 +17,7 @@ its domain isn't actually present.
 | command-prompt | `*.sh`, `*.bash`, `*.zsh`, `Makefile`, `justfile`, `.envrc`, `scripts/` | Shebang detection (`#!/bin/bash` in extensionless files) is not implemented in the script - file-extension and directory patterns cover the common cases |
 | databases | `*.sql`, `migrations/`, `*.prisma`, `schema.prisma`, `knexfile.*`, `alembic/`, `alembic.ini`, `flyway/`, `drizzle.config.*`, `mongod.conf`, `my.cnf`, `pg_hba.conf`, `pgbouncer.ini` | `sequelize`, `typeorm`, `prisma`, `knex`, `drizzle-orm`, `mongoose`, `pg`, `mysql2` |
 | backend-api | `openapi.*`, `swagger.*` | `fastapi`, `flask`, `django`, `express`, `@nestjs/core`, `hono`, `elysia`, `@hono/node-server` |
+| frontend-design | `astro.config.*`, `svelte.config.*`, `next.config.*`, `vite.config.*`, `tailwind.config.*`, `src/app/`, `src/pages/`, `src/routes/`, `app/`, `pages/`, `components/`, `*.css`, `*.scss`, `*.sass`, `*.tsx`, `*.jsx`, `*.svelte`, `*.astro`, `*.vue` | `astro`, `@sveltejs/kit`, `svelte`, `next`, `react`, `vue`, `vite`, `tailwindcss`, `@vitejs/plugin-react`, `@astrojs/*` |
 | localize | `locales/`, `i18n/`, `*.po`, `*.pot`, `*.xliff`, `*.xlf`, `messages.*.json`, `messages.*.yaml` | `react-i18next`, `vue-i18n`, `next-intl`, `@formatjs/intl`, `i18next` |
 | ai-ml | - | `anthropic`, `openai`, `langchain`, `llama-index`, `llama_index`, `transformers`, `torch`, `tensorflow`, `ollama`, `chromadb`, `pinecone-client`, `weaviate-client`, `qdrant-client` |
 | mcp | `.mcp.json`, `mcp.json` | `@modelcontextprotocol/sdk`, `fastmcp` |
@@ -72,6 +73,10 @@ echo "$files" | grep -qE '\.sql$|migrations/|\.prisma$|knexfile\.|alembic|flyway
 # backend-api (file patterns)
 echo "$files" | grep -qE 'openapi\.|swagger\.' \
   && matched+=(backend-api)
+
+# frontend-design
+echo "$files" | grep -qE 'astro\.config|svelte\.config|next\.config|vite\.config|tailwind\.config|(^|/)(src/)?(app|pages|routes)/|(^|/)components/|\.(css|scss|sass|tsx|jsx|svelte|astro|vue)$' \
+  && matched+=(frontend-design)
 
 # localize
 echo "$files" | grep -qE 'locales/|i18n/|\.po$|\.pot$|\.xliff$|\.xlf$|messages\.[a-z].*\.json$|messages\.[a-z].*\.yaml$' \
@@ -153,6 +158,7 @@ check_manifest() {
 }
 
 check_manifest backend-api 'fastapi|flask|django|"express"|@nestjs/core|"hono"|"elysia"'
+check_manifest frontend-design 'astro|@sveltejs/kit|"svelte"|next|react|vue|vite|tailwindcss|@vitejs/plugin-react|@astrojs/'
 check_manifest databases 'sequelize|typeorm|prisma|"knex"|drizzle-orm|mongoose|"pg"|mysql2'
 check_manifest localize 'react-i18next|vue-i18n|next-intl|@formatjs|i18next'
 check_manifest ai-ml 'anthropic|openai|langchain|llama[-_]index|transformers|torch|tensorflow|ollama|chromadb|pinecone|weaviate|qdrant'

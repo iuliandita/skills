@@ -22,6 +22,13 @@ repos:
         pass_filenames: false
         stages: [pre-commit, pre-push]
 
+      - id: deep-audit-coverage-check
+        name: deep-audit accounts for public skills
+        entry: ./scripts/check-deep-audit-coverage.sh
+        language: system
+        pass_filenames: false
+        stages: [pre-commit, pre-push]
+
       - id: skill-collection-lint
         name: lint skill collection
         entry: ./scripts/lint-skills.sh
