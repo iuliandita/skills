@@ -9,11 +9,10 @@ block into a forced abstraction.
 
 ## Background
 
-The motivating example was an external bot PR that centralized repeated Svelte route/query
-boilerplate and reduced the codebase by a small net amount. The PR was mergeable after local
-validation, but the marketing-driven bot framing was not the useful part. The useful part was a
-focused review lens: where can a repository be smaller and easier to maintain without changing
-behavior?
+The motivating example was an external bot PR that centralized repeated route/query boilerplate and
+reduced the codebase by a small net amount. The PR was mergeable after local validation, but the
+marketing-driven bot framing was not the useful part. The useful part was a focused review lens:
+where can a repository be smaller and easier to maintain without changing behavior?
 
 Existing skills partially overlap:
 
@@ -24,8 +23,9 @@ Existing skills partially overlap:
 - `deep-audit` is the comprehensive repo audit orchestrator.
 
 `code-slimming` should cover maintainability opportunities that are not necessarily AI-related and
-not necessarily correctness bugs. Human-written code drifts into duplicated loaders, parallel helper
-types, repeated adapter shapes, stale wrappers, and oversized helper modules too.
+not necessarily correctness bugs. Human-written code drifts into duplicated handlers, parallel
+helper types, repeated service or adapter shapes, stale wrappers, oversized helper modules, and
+copy-pasted control flow too.
 
 ## Skill Boundary
 
@@ -57,16 +57,16 @@ The skill should follow this read-only workflow:
 
 1. Determine scope: current diff, target directory, specific files, or whole repo.
 2. Gather context: project instructions, language/framework manifests, test scripts, existing shared
-   modules, route/component patterns, helper directories, and recent related commits when useful.
+   modules, framework conventions, helper directories, and recent related commits when useful.
 3. Run or identify available validation commands when practical: lint, typecheck, build, unit tests,
    targeted tests, and any project-specific check scripts.
 4. Search mechanically for candidates:
-   - near-duplicate files, classes, functions, hooks, loaders, or components
-   - repeated type/interface shapes
-   - repeated route/load/query/pagination boilerplate
+   - near-duplicate files, classes, structs, functions, methods, hooks, handlers, or components
+   - repeated type/interface/schema/data-transfer shapes
+   - repeated request, query, pagination, validation, parsing, mapping, or serialization boilerplate
    - wrappers with little behavior beyond forwarding
    - oversized `utils`, `helpers`, `common`, or `shared` modules
-   - parallel provider/client/adapter implementations with the same skeleton
+   - parallel provider, client, repository, service, or adapter implementations with the same skeleton
    - dependency or helper usage that duplicates platform/framework functionality
 5. Read surrounding code before judging. A similar shape can be intentional when integrations are
    likely to diverge or when duplication is clearer than abstraction.
@@ -109,9 +109,11 @@ For proposed future work, the skill should identify the validation that an imple
 If test coverage is missing, classify the opportunity as `Do with tests` and name the specific tests
 to add or inspect. The skill should not write those tests itself.
 
-For route/component/query centralization, validation should cover the differences being unified, not
-only the shared happy path. Example: pinned-vs-picker route href generation needs direct tests or
-credible existing coverage before the refactor should be treated as low risk.
+For centralization work, validation should cover the differences being unified, not only the shared
+happy path. Examples: API handlers with different authorization rules need focused auth tests;
+provider adapters with different retry behavior need failure-path tests; UI navigation helpers with
+different link generation need path-specific assertions before the refactor should be treated as
+low risk.
 
 ## Output Format
 
@@ -126,17 +128,18 @@ Validation:
 
 ### High-Value Opportunities
 
-**Do with tests** `src/routes/*/+page.ts` - Centralize repeated route loader query construction.
-Affected files: `src/routes/a/+page.ts`, `src/routes/b/+page.ts`
-Current duplication: both loaders build the same paging and filter query object.
-Refactor shape: extract a shared query builder with route-specific inputs.
-Why better: one behavior path for paging defaults and fewer divergent call sites.
+**Do with tests** `services/*/list-items.*` - Centralize repeated pagination and filter parsing.
+Affected files: `services/users/list-items.*`, `services/projects/list-items.*`
+Current duplication: both modules parse the same page, limit, sort, and filter parameters.
+Refactor shape: extract a shared parser with endpoint-specific allowlists.
+Why better: one behavior path for defaults and validation, with fewer divergent call sites.
 Risk: medium
-Validation needed: add/inspect pinned-vs-picker href tests, run `bun run check`, `bun run test`.
+Validation needed: add/inspect boundary tests for page and limit values, then run the project's
+lint/type/build/test commands.
 
 ### Low-Value Or Risky Opportunities
 
-**Leave alone** `src/providers/*` - Duplication is likely to diverge per provider.
+**Leave alone** `integrations/*` - Duplication is likely to diverge per provider.
 Why not: each provider already has different retry, auth, and pagination semantics.
 ```
 
@@ -165,6 +168,8 @@ security, and prose findings.
 
 - A new `skills/code-slimming/SKILL.md` exists and follows collection conventions.
 - The skill is read-only and clearly says it does not edit code or write tests.
+- The skill is language-generic first, with optional targeted guidance for common ecosystems such as
+  Python, JavaScript/TypeScript, Java, Rust, C/C++, shell, and infrastructure code when useful.
 - Routing references are accurate for `anti-slop`, `code-review`, `testing`, `security-audit`,
   `full-review`, and `deep-audit`.
 - `deep-audit` includes the new skill in the appropriate wave.
