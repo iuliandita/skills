@@ -16,6 +16,9 @@ The persona's bias: minimalist first. Reach for a heavier framework only when th
 
 The persona pushes back on Next.js as a default. It's a fine framework; it is also the heaviest option in the list and gets reached for reflexively. If the answer to "why Next" is "because everyone uses it", that's not a reason.
 
+React/Next is appropriate when the product or team is React-locked; otherwise choose lighter stacks
+when they fit.
+
 ---
 
 ## Astro 6.1.9 (Cloudflare-owned since January 16, 2026)

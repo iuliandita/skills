@@ -34,6 +34,8 @@ This skill replaces the upstream generic `frontend-design` skill in this collect
 - Picking a frontend stack for a small-to-medium project
 - Designing dark+light theme architecture together (not retrofitting one from the other)
 - Reviewing mobile + touch behavior on a desktop-first design
+- Designing React, Tailwind, or shadcn-based app UI without default-template drift
+- Designing app shells, dashboards, settings, forms, onboarding, and empty states
 
 ## When NOT to use
 
@@ -43,6 +45,8 @@ This skill replaces the upstream generic `frontend-design` skill in this collect
 - Backend API design (REST, OpenAPI, pagination) - use **backend-api**
 - Localization, i18n catalogues, hardcoded strings - use **localize**
 - Frontend testing strategy (Playwright, Vitest, a11y tests) - use **testing**
+- Playwright test authoring belongs to **testing**; this skill owns visual QA expectations and
+  screenshot review for UI changes
 
 ---
 
@@ -220,7 +224,20 @@ Severity scale:
 
 The rant section captures the persona's voice for the user; tickets are clean and actionable. Never ship a rant as tickets.
 
-### Step 7: Self-check before returning
+### Step 7: Responsive QA
+
+For any visual change, check:
+
+1. Desktop viewport - information density, hierarchy, and hover states
+2. Mobile viewport - touch targets, navigation, forms, and text wrapping
+3. Keyboard navigation - tab order, focus-visible, dialogs, and escape paths
+4. Dark and light theme - contrast, native controls, charts, and empty states
+5. Text overflow - long labels, narrow containers, translated-length copy, and button text
+6. Screenshot review - compare the rendered result against the intended hierarchy
+
+Test authoring lives in **testing**. This skill defines what visual QA must prove.
+
+### Step 8: Self-check before returning
 
 Run through the AI Self-Check below.
 
@@ -240,6 +257,8 @@ Before returning any built UI or critique, verify:
 - [ ] **Real framework verified** - Astro / SvelteKit / Vite / Next versions match the Target versions block. No "Next 14" or "Astro 4" in build output unless the user explicitly asked for legacy
 - [ ] **Files separated** - HTML / CSS / JS in their own files unless an explicit single-file constraint is stated in a code comment
 - [ ] **No invented CSS properties or framework APIs** - only verified Tailwind v4 utilities, real Svelte 5 runes (`$state`, `$derived`, `$effect`, `$props`), real Astro directives. AI invents `.bg-glass-700` and `$reactive` constantly
+- [ ] **App UI patterns fit the domain** - app shells, dashboards, settings, forms, onboarding, and empty states prioritize user work over marketing composition
+- [ ] **Responsive QA completed** - desktop, mobile, keyboard, dark+light, text overflow, and screenshot review checked when visual changes were made
 - [ ] **Critique mode: max 10 tickets** - RED + GREEN priority. Rant is filtered, not shipped raw
 - [ ] **No AI prose tells in commentary** - apply the **anti-ai-prose** vocabulary list to the persona's own writing, not just user-facing copy. Plain English
 
@@ -257,6 +276,7 @@ Before returning any built UI or critique, verify:
 - `references/themes.md` - dark+light architecture, CSS custom properties pattern, no-FOUC theme toggle. Read when starting any new build
 - `references/glitch-effects.md` - copy-paste CSS for tasteful glitch accents (RGB split, scanlines, type displacement) with reduced-motion fallbacks. Read when an interface is technical and glitch is appropriate
 - `references/mobile-touch.md` - Pointer Events, scroll-snap, swipe / pinch / long-press, `@use-gesture/react`, 44 px targets. Read for any UI with mobile or touch as a real surface
+- `references/app-ui-patterns.md` - app shells, dashboards, forms, settings, onboarding, and empty states. Read for logged-in tools or operational interfaces
 - `references/critique-template.md` - rant -> filter -> ticket flow. Read in critique mode
 
 ## Related Skills

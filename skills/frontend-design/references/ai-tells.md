@@ -132,6 +132,17 @@ Each entry has: the tell, why it's a tell, and the specific replacement.
 
 **Replacement.** Skeleton loaders for content shape, spinner for unknown duration, progress bar for known duration. No sparkles unless an LLM is actually generating.
 
+### 12.5. shadcn default stack
+
+**Tell.** Every app becomes the same default shadcn cards, muted text, tables, and dropdowns with no
+domain-specific hierarchy.
+
+**Why.** shadcn is a component starting point, not a product direction. Unedited defaults make
+operations tools feel interchangeable.
+
+**Replacement.** Keep the accessible primitives, then redesign hierarchy, density, spacing, and
+state treatment around the actual domain.
+
 ---
 
 ## Iconography Tells
