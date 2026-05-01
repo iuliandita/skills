@@ -109,7 +109,7 @@ spec:
 - Multi-source Applications (mature since ArgoCD 2.6) for separating chart version from env values.
 - `ignoreMissingValueFiles: true` for default/override patterns with ApplicationSets.
 - OCI charts: omit `oci://` prefix in ArgoCD's `repoURL`.
-- Wildcard valueFiles (ArgoCD v3.4+, RC as of March 2026): `valueFiles: ["values/*.yaml"]`.
+- Wildcard valueFiles (documented in current Argo CD docs as of May 2026 recheck): `valueFiles: ["values/*.yaml"]`.
 - **Anti-pattern**: `randAlphaNum` or other random functions in Helm templates - causes perpetual OutOfSync.
 
 ### Promotion Strategy

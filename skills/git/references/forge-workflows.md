@@ -253,8 +253,8 @@ does not cover yet (e.g. branch protection management).
 | Any with Rust | `cargo install forgejo-cli` or `cargo binstall forgejo-cli` |
 | Binaries | Releases tab on Codeberg (x86_64 Linux/Windows) |
 
-Verify: `fj --version` (should report 0.4.1+ as of March 2026; earlier releases have a PKCE
-bug that breaks `fj auth login`).
+Verify: `fj --version` (prefer 0.5.x or newer as of May 2026 recheck; releases before 0.4.1
+have a PKCE bug that breaks `fj auth login`).
 
 ### `fj` authentication
 

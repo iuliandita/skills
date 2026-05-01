@@ -117,7 +117,7 @@ Attestations are stored in the registry alongside the image. Requires `--push`.
 
 \* Chainguard dev variants include shell; prod variants don't.
 
-**Choose Chainguard** for: zero-CVE at build time, built-in SBOM + Sigstore, nightly rebuilds, glibc compat, PCI/regulatory compliance. 2000+ images available as of Feb 2026.
+**Choose Chainguard** for: zero-CVE at build time, built-in SBOM + Sigstore, nightly rebuilds, glibc compat, PCI/regulatory compliance. 2000+ images available as of May 2026 recheck.
 
 **Choose Alpine** when: you need a shell, all deps work with musl, image size is top priority.
 

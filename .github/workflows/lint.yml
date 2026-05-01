@@ -42,6 +42,9 @@ jobs:
       - name: Check private cluster-health leak patterns
         run: ./scripts/check-private-skill-leaks.sh
 
+      - name: Check freshness date markers
+        run: ./scripts/check-freshness-dates.sh
+
       - name: Lint skill collection
         run: ./scripts/lint-skills.sh
 
