@@ -13,15 +13,15 @@ Headless browser built from scratch in Zig with V8. Single static binary, no dep
 
 ```bash
 # Linux x86_64
-curl -L -o lightpanda https://github.com/lightpanda-io/browser/releases/download/0.2.8/lightpanda-x86_64-linux
+curl -L -o lightpanda https://github.com/lightpanda-io/browser/releases/download/0.2.9/lightpanda-x86_64-linux
 chmod +x lightpanda && sudo mv lightpanda /usr/local/bin/
 
 # Linux aarch64
-curl -L -o lightpanda https://github.com/lightpanda-io/browser/releases/download/0.2.8/lightpanda-aarch64-linux
+curl -L -o lightpanda https://github.com/lightpanda-io/browser/releases/download/0.2.9/lightpanda-aarch64-linux
 chmod +x lightpanda && sudo mv lightpanda /usr/local/bin/
 
 # macOS (Apple Silicon)
-curl -L -o lightpanda https://github.com/lightpanda-io/browser/releases/download/0.2.8/lightpanda-aarch64-macos
+curl -L -o lightpanda https://github.com/lightpanda-io/browser/releases/download/0.2.9/lightpanda-aarch64-macos
 chmod +x lightpanda && sudo mv lightpanda /usr/local/bin/
 
 # Docker
@@ -109,6 +109,10 @@ Resources: `mcp://page/html`, `mcp://page/markdown`
 - AGPL-3.0 license - share source if running as a modified service
 - Telemetry enabled by default (`LIGHTPANDA_DISABLE_TELEMETRY=true` to disable)
 
+For authenticated work, prefer the MCP or CDP server modes over one-shot `fetch` so cookies,
+local storage, redirects, and CSRF tokens stay in one browser context. Clear storage between
+unrelated tenants or accounts.
+
 ---
 
 ## Playwright MCP
@@ -121,7 +125,7 @@ or WebKit. Higher token cost than Lightpanda but complete Web API coverage.
 ```bash
 # As Claude Code plugin (if available in your plugin marketplace)
 # Or standalone:
-npx @playwright/mcp@0.0.70
+npx @playwright/mcp@0.0.72
 ```
 
 ### Key Tools
@@ -154,6 +158,9 @@ npx @playwright/mcp@0.0.70
 - Dialog handling (alert, confirm, prompt)
 - Sites that block non-standard user agents
 
+For screenshots, take a DOM or accessibility snapshot first and screenshot only the page or
+element that needs visual evidence. Avoid base64 screenshots when text extraction is enough.
+
 ### Token cost comparison
 
 | Action | Playwright MCP | Lightpanda |
@@ -173,7 +180,7 @@ built-in reasoning.
 ### Installation
 
 ```bash
-npx agent-browser@0.24.0
+npx agent-browser@0.26.0
 # or: npm install -g agent-browser
 ```
 

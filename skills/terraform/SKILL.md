@@ -42,6 +42,7 @@ IBM acquired HashiCorp for $6.4B (closed Feb 2025). Terraform stays BSL 1.1; Ope
 ## When NOT to use
 
 - Kubernetes manifests or Helm charts (use **kubernetes**)
+- Read-only Kubernetes cluster health checks after provisioning or maintenance (use **cluster-health**)
 - Ansible playbooks or configuration management (use **ansible**)
 - Docker/container optimization (use **docker**)
 - CI/CD pipeline design (use **ci-cd**)
@@ -474,6 +475,8 @@ Read `references/production-checklist.md` for the full pre-deploy checklist cove
 - **ansible** - for day-2 configuration of provisioned resources. Terraform provisions the VM;
   Ansible configures what runs on it. No `provisioner` blocks - use Ansible instead.
 - **kubernetes** - K8s manifests and Helm charts. Terraform provisions the cluster; kubernetes configures what runs on it.
+- **cluster-health** - read-only cluster diagnostics after provisioning, upgrades, or maintenance.
+  Terraform changes infrastructure; cluster-health checks the running cluster state.
 - **databases** - engine tuning and operations. Terraform provisions managed databases; databases skill tunes the engine.
 - **ci-cd** - pipeline design that runs `terraform plan/apply`. Terraform covers HCL; ci-cd covers the pipeline stages.
 - **docker** - container image patterns. Terraform provisions container infrastructure but Dockerfile design belongs in docker.

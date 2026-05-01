@@ -1,0 +1,44 @@
+repos:
+  - repo: local
+    hooks:
+      - id: protected-cluster-health-overlay
+        name: protected cluster-health overlay stays private
+        entry: ./scripts/check-protected-overlay.sh
+        language: system
+        pass_filenames: false
+        stages: [pre-commit, pre-push]
+
+      - id: private-cluster-health-leak-check
+        name: private cluster-health pattern leak check
+        entry: ./scripts/check-private-skill-leaks.sh
+        language: system
+        pass_filenames: false
+        stages: [pre-commit, pre-push]
+
+      - id: freshness-date-check
+        name: freshness markers use current collection month
+        entry: ./scripts/check-freshness-dates.sh
+        language: system
+        pass_filenames: false
+        stages: [pre-commit, pre-push]
+
+      - id: deep-audit-coverage-check
+        name: deep-audit accounts for public skills
+        entry: ./scripts/check-deep-audit-coverage.sh
+        language: system
+        pass_filenames: false
+        stages: [pre-commit, pre-push]
+
+      - id: skill-collection-lint
+        name: lint skill collection
+        entry: ./scripts/lint-skills.sh
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
+
+      - id: agent-skills-spec-validation
+        name: validate Agent Skills spec
+        entry: ./scripts/validate-spec.sh
+        language: system
+        pass_filenames: false
+        stages: [pre-push]

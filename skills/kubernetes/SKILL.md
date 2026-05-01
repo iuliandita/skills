@@ -41,6 +41,7 @@ This skill covers four domains depending on context:
 - Security audits of application code (use security-audit)
 - Provisioning the cluster itself via IaC (use terraform)
 - Database engine configuration running on K8s (use databases)
+- Broad read-only cluster health checks, status reports, and post-maintenance diagnostics (use **cluster-health**)
 
 ---
 
@@ -459,6 +460,8 @@ PCI-DSS 4.0 is the only active version (3.2.1 retired March 2024). 51 future-dat
   and Helm charts; ci-cd covers the pipeline stages that apply them.
 - **terraform** - for provisioning the cluster itself (EKS, GKE, AKS, bare-metal node pools).
   Terraform creates the cluster; kubernetes configures what runs on it.
+- **cluster-health** - for read-only cluster status checks, node/workload diagnostics, events,
+  ingress/storage/log sweeps, and post-maintenance reports.
 - **databases** - for deploying databases on K8s (StatefulSets, operators, PVCs). Kubernetes
   owns the manifest pattern; databases owns the engine configuration within.
 - **ansible** - can deploy to K8s via `kubernetes.core` collection, but manifest and Helm

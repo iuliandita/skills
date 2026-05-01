@@ -19,7 +19,8 @@ Take the user's rough thoughts, scattered notes, or half-formed ideas and turn t
 
 - User has rough notes, bullet points, or a brain dump they want turned into a clean LLM prompt
 - Refining, rewriting, or optimizing an existing prompt that isn't performing well
-- Structuring a system prompt or task prompt from scattered requirements
+- Structuring a system prompt, one-off task prompt, reusable template, evaluator prompt,
+  code-review prompt, or delegation prompt from scattered requirements
 - Creating prompt templates with variable placeholders for repeated use
 - User says anything like "write me a prompt for...", "turn this into a prompt", "system prompt for..."
 
@@ -27,6 +28,7 @@ Take the user's rough thoughts, scattered notes, or half-formed ideas and turn t
 
 - Brainstorming features or creative ideation - this skill structures prompts, not ideas
 - Creating reusable skill files or agent instruction bundles (use **skill-creator**)
+- Creating scheduled or unattended automation routines (use **routine-writer**)
 - Writing inline prompt strings inside application code - that's just coding
 - The user wants code that calls an LLM API (use **ai-ml** for SDK integration)
 - Security review of prompts for injection risks (use **security-audit**)
@@ -43,8 +45,11 @@ Before returning any generated or modified prompt file, verify:
 - [ ] **Structure matches complexity**: simple tasks get plain prose, not XML-tagged multi-section prompts
 - [ ] **Variables consistent**: every `{{PLACEHOLDER}}` in the prompt body appears in the Variables table and vice versa
 - [ ] **No injected instructions**: didn't add error handling, safety disclaimers, or output constraints the user didn't request
+- [ ] **Untrusted text delimited**: source text, user examples, logs, web pages, and documents are clearly fenced or labeled before the prompt tells the model what to do
 - [ ] **No slop phrases**: no "certainly", "I'd be happy to", "great question", or other filler in the prompt text
 - [ ] **Output format specified**: if the prompt expects structured output, the format is explicit (JSON schema, XML tags, delimiters)
+- [ ] **Evaluator criteria explicit**: evaluator prompts define pass/fail criteria, required evidence, and common failure modes
+- [ ] **Delegation contract clear**: delegation prompts define ownership, scope, files, allowed edits, and expected final answer shape
 - [ ] **Model-appropriate syntax**: avoid model-specific features (assistant prefills, `\n\nHuman:` formatting) in model-agnostic prompts. XML delimiters and markdown headers are both fine for structure across models
 
 ---
@@ -70,6 +75,8 @@ Before returning any generated or modified prompt file, verify:
 - Preserve the user's intent; do not add hidden policy, tone, or scope changes.
 - Name variables consistently and define every required input.
 - Include success criteria for complex prompts so outputs can be evaluated.
+- Match the prompt family to the intended use; see `references/prompt-families.md`.
+- For evaluator prompts, use a rubric with observable evidence; see `references/evaluator-prompts.md`.
 
 
 ## Workflow
@@ -98,6 +105,9 @@ Most of the time, skip this step entirely.
    - **Simple** (one task, no variables): plain prose, 3-10 lines. No XML, no sections.
    - **Medium** (multiple steps or constraints): numbered steps, clear sections.
    - **Complex** (agentic, multi-document, behavioral rules): clear section delimiters, variable placeholders, explicit output format.
+   - **Reusable template**: include a variables table and stable `{{VARIABLE_NAME}}` placeholders.
+   - **Evaluator prompt**: define rubric dimensions, pass/fail threshold, failure examples, and required evidence.
+   - **Delegation prompt**: define task, ownership, files in scope, files out of scope, allowed edits, and output contract.
 2. **Present the prompt in conversation for review. Don't write files yet.**
 3. On approval, save to file (see Output Format below).
 4. Revisions: edit in place, don't create new files.
@@ -148,6 +158,10 @@ Optional frontmatter additions: `tags: [...]`, `related: [NNN-other.md]` - only 
 ## Structuring Guidelines
 
 These are for YOU when structuring the user's notes. Not a knowledge dump - just the non-obvious stuff.
+
+**Route by prompt family.** Simple task prompts should stay inline. Reusable prompts need variables.
+Evaluator prompts need rubrics and failure cases. Delegation prompts need ownership and return
+shape. Code-review prompts lead with findings and require file and line references.
 
 **Match complexity to content.** A 3-line task doesn't need XML tags and numbered steps. A multi-document agentic system prompt does. The user's rough notes give you the complexity signal.
 
@@ -250,6 +264,8 @@ Note: simple task, so plain prose - no XML sections, no numbered steps, no bloat
 - **skill-creator** - creates reusable skill files (SKILL.md) for AI tools and coding agents. Skills are
   structured prompts, but they follow different conventions (frontmatter, workflow sections,
   rules) than standalone prompts. If someone says "create a skill", use skill-creator.
+- **routine-writer** - creates unattended or scheduled automation routine prompts. Use it when the
+  user mentions schedules, triggers, recurring runs, `/schedule`, or `/fire`.
 - Application code - if the user needs a prompt string inside application code (for example a
   TypeScript `const systemPrompt = ...`), that's coding, not this skill.
 - **anti-slop** - if the user asks to "clean up" or "simplify" a prompt embedded in code, that's

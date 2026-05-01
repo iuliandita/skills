@@ -16,7 +16,7 @@ when creating or reviewing skills to ensure consistency.
 7. AI Self-Check Patterns
 7.5. Diagnostic Skill Pitfalls
 8. Trigger Description Patterns
-9. Skill Inventory (April 2026)
+9. Skill Inventory (May 2026)
 
 ---
 
@@ -499,7 +499,7 @@ Use this skill even when the user doesn't explicitly say "git" but is clearly do
 
 ---
 
-## 9. Skill Inventory (April 2026)
+## 9. Skill Inventory (May 2026)
 
 ### Published skills (39)
 

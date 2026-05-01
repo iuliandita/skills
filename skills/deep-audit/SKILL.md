@@ -15,7 +15,7 @@ metadata:
 
 # Deep Audit: Wave-Based Repo Orchestrator
 
-Run up to 27 custom skills against a repo in 5 sequential waves, presenting results
+Run up to 28 custom skills against a repo in 5 sequential waves, presenting results
 progressively. Wave 1 detects the tech stack. Waves 2-5 dispatch only the skills that
 match. Each wave completes and reports before the next begins.
 
@@ -117,7 +117,7 @@ If the user specified a scope, pass it as the script's first argument to filter 
 to that subtree (`git ls-files -- path/to/scope` instead of the full repo).
 
 After detection, present the recon summary before proceeding. Compute
-`{unmatched_skills}` as the 19 Wave 3 candidates minus the matched set.
+`{unmatched_skills}` as the 20 Wave 3 candidates minus the matched set.
 Compute `{count}` by summing: 3 (Wave 2) + matched Wave 3 skills + 2 (Wave 4) +
 3 (Wave 5). Example: if 6 Wave 3 skills match, count = 3 + 6 + 2 + 3 = 14.
 
@@ -151,19 +151,19 @@ Skills that will run:
 Total agents: {count}
 ```
 
-Concrete example for a Node+Postgres+Docker+K8s repo with i18n and GitHub Actions (8 Wave 3 skills matched out of 19):
+Concrete example for a Node+Postgres+Docker+K8s repo with i18n, frontend code, and GitHub Actions (9 Wave 3 skills matched out of 20):
 
 ```
 Repo: myorg/api @ a3f91c2 (main)  |  Files: 412  |  Scope: full codebase
 Languages: TypeScript, SQL, YAML
 
 Wave 2 (always): code-review, anti-slop, anti-ai-prose
-Wave 3 (detected): testing, command-prompt, databases, backend-api, localize, docker, kubernetes, ci-cd
+Wave 3 (detected): testing, command-prompt, databases, backend-api, frontend-design, localize, docker, kubernetes, ci-cd
 Wave 3 (skipped): terraform, ansible, networking, ai-ml, mcp, arch-btw, debian-ubuntu, rhel-fedora, nixos-btw, firewall-appliance, virtualization
 Wave 4 (always): security-audit, zero-day
 Wave 5 (always): update-docs, roadmap, git
 
-Total agents: 3 + 8 + 2 + 3 = 16
+Total agents: 3 + 9 + 2 + 3 = 17
 ```
 
 ### Step 2: Code Quality (Wave 2)
@@ -234,6 +234,7 @@ Scope: {scope}. Return the complete report.
 |-------|---------|
 | `testing` | Audit test quality, coverage gaps, flaky test patterns, and missing test scenarios. Do not write new tests - report only. |
 | `command-prompt` | Audit shell scripts, dotfile config, and .env patterns for correctness, portability, and security. |
+| `frontend-design` | Audit frontend UI/UX implementation, visual hierarchy, accessibility, responsive behavior, framework drift, and AI design tells. Do not redesign or edit - report only. |
 | `localize` | Audit i18n completeness. Find hardcoded user-facing strings, validate locale catalogs, check for missing translations. |
 | `ci-cd` | Audit pipeline config for security (SHA pinning, secret exposure), efficiency, and correctness. |
 
@@ -242,7 +243,7 @@ All other skills use the generic prompt.
 Present results:
 
 ```markdown
-## Wave 3: Domain-Specific [{N} of 19 skills matched]
+## Wave 3: Domain-Specific [{N} of 20 skills matched]
 
 ### {Skill Display Name}
 {report verbatim}
@@ -470,7 +471,7 @@ but preserves the wave ordering.
 - **code-review**, **anti-slop**, **anti-ai-prose** - Wave 2 participants.
 - **security-audit**, **zero-day** - Wave 4 participants.
 - **update-docs**, **roadmap**, **git** - Wave 5 participants.
-- **testing**, **command-prompt**, **databases**, **backend-api**, **localize**, **ai-ml**, **mcp**, **docker**, **kubernetes**, **terraform**, **ansible**, **ci-cd**, **networking**, **arch-btw**, **debian-ubuntu**, **rhel-fedora**, **nixos-btw**, **firewall-appliance**, **virtualization** - Wave 3 candidates (conditional).
+- **testing**, **command-prompt**, **databases**, **backend-api**, **frontend-design**, **localize**, **ai-ml**, **mcp**, **docker**, **kubernetes**, **terraform**, **ansible**, **ci-cd**, **networking**, **arch-btw**, **debian-ubuntu**, **rhel-fedora**, **nixos-btw**, **firewall-appliance**, **virtualization** - Wave 3 candidates (conditional).
 - **skill-creator** - audits the skill collection. This skill audits application repos.
 
 Read `references/exclusions.md` before changing Wave 3 routing.

@@ -245,10 +245,10 @@ skopeo list-tags docker://ghcr.io/org/myapp
 
 Low-level container runtime. Kubernetes uses it directly. Docker Engine uses it under the hood.
 
-### Key facts (March 2026)
+### Key facts (May 2026)
 
-- **containerd 2.2.2** is the latest stable release (March 2026)
-- **containerd 2.3** (April 2026) will be the first annual LTS release, supported for 2+ years
+- **containerd 2.3.0** was released in April 2026 as the first annual LTS release, supported for 2+ years
+- **containerd 2.2.3** remains a supported 2.2 patch release through November 2026
 - **K8s 1.36+** will require containerd 2.0+ (1.x support dropped)
 - containerd 2.0 removed Docker-schemaV1 image support, CRI v1alpha2, and several deprecated APIs
 - Migration from 1.6/1.7 to 2.0 is supported with built-in migration tools

@@ -55,6 +55,7 @@ performance tuning.
 - OPNsense/pfSense firewall appliance management (use **firewall-appliance**)
 - Web browsing, scraping, or headless page interaction - use **browse**
 - Kubernetes networking: NetworkPolicy, Gateway API, service mesh, CNI (use **kubernetes**)
+- Broad Kubernetes cluster health checks, node status, and post-maintenance diagnostics (use **cluster-health**)
 - Docker/container networking: bridge, overlay, Compose networks (use **docker**)
 - Cloud VPCs, security groups, managed load balancers (use **terraform**)
 - Network config management at scale via playbooks (use **ansible**)
@@ -373,6 +374,8 @@ Network configuration touches several PCI-DSS requirements:
   mentions pfctl, CARP, or OPNsense/pfSense hostnames, route to firewall-appliance.
 - **kubernetes** - owns K8s networking (NetworkPolicy, Gateway API, service mesh, CNI). This
   skill covers general DNS and proxy config; K8s-specific networking goes to kubernetes.
+- **cluster-health** - owns read-only Kubernetes cluster diagnostics. If the request is
+  "is the cluster healthy?" rather than "configure DNS/proxy/routing", route there.
 - **docker** - owns container networking (bridge, Compose networks, port mapping). This skill
   covers host-level Linux networking.
 - **terraform** - owns cloud infrastructure (VPCs, security groups, cloud LBs, Route53). This
