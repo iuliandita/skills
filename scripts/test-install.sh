@@ -30,6 +30,30 @@ test_backups_stay_outside_skill_root() {
   trap - RETURN
 }
 
+test_legacy_backups_are_migrated_outside_skill_root() {
+  local tmp dest migrated_root
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  dest="$tmp/agent/skills"
+  mkdir -p "$dest/.backups/docker/legacy"
+  printf '%s\n' 'legacy backup' > "$dest/.backups/docker/legacy/SKILL.md"
+
+  "$ROOT/install.sh" --tool portable --dest "$dest" --no-backup docker >/dev/null
+
+  if [[ -e "$dest/.backups" ]]; then
+    fail "legacy .backups directory still exists under discovery root $dest"
+  fi
+
+  migrated_root="$tmp/agent/.skills-backups/skills/.legacy"
+  if ! find "$migrated_root" -path '*/docker/legacy/SKILL.md' -type f -print -quit 2>/dev/null | grep -q .; then
+    fail "expected migrated legacy backup under $migrated_root"
+  fi
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
 test_opencode_install_allows_installed_skills() {
   local tmp config
   tmp="$(mktemp -d)"
@@ -60,5 +84,6 @@ PY
 }
 
 test_backups_stay_outside_skill_root
+test_legacy_backups_are_migrated_outside_skill_root
 test_opencode_install_allows_installed_skills
 printf 'install tests passed\n'
