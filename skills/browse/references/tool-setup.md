@@ -109,6 +109,10 @@ Resources: `mcp://page/html`, `mcp://page/markdown`
 - AGPL-3.0 license - share source if running as a modified service
 - Telemetry enabled by default (`LIGHTPANDA_DISABLE_TELEMETRY=true` to disable)
 
+For authenticated work, prefer the MCP or CDP server modes over one-shot `fetch` so cookies,
+local storage, redirects, and CSRF tokens stay in one browser context. Clear storage between
+unrelated tenants or accounts.
+
 ---
 
 ## Playwright MCP
@@ -153,6 +157,9 @@ npx @playwright/mcp@0.0.70
 - File upload/download
 - Dialog handling (alert, confirm, prompt)
 - Sites that block non-standard user agents
+
+For screenshots, take a DOM or accessibility snapshot first and screenshot only the page or
+element that needs visual evidence. Avoid base64 screenshots when text extraction is enough.
 
 ### Token cost comparison
 

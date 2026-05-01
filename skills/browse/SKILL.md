@@ -64,6 +64,17 @@ Detect what's available and pick the cheapest tool that handles the task.
 If the page works without JavaScript, don't use a browser. If you only need to read content,
 don't use interactive tools. Escalate only when the cheaper option fails.
 
+### Task modes
+
+| Mode | Use when | First tool |
+|---|---|---|
+| Static fetch | Content is in HTML | WebFetch, curl, or Lightpanda fetch |
+| JS read-only | Content requires rendering | Lightpanda or Playwright markdown |
+| Interactive | Click, fill, or navigate statefully | MCP browser tools |
+| Authenticated | User-approved account context is required | Existing authenticated browser session |
+| Screenshot | Visual layout matters | Browser screenshot after DOM snapshot |
+| Structured extraction | Tables, JSON-LD, prices, metadata | API, JSON-LD, DOM selectors, then browser |
+
 **Tool availability check**: before starting, verify what's available. If the best tool for
 the task isn't present, skip straight to the next tier rather than failing mid-workflow.
 
@@ -74,14 +85,17 @@ the task isn't present, skip straight to the next tier rather than failing mid-w
 - Prefer official APIs, sitemaps, or static fetches before launching a browser.
 - Extract only required page regions; avoid dumping full DOMs, screenshots, or network logs into context.
 - Reuse browser sessions for multi-step flows, but clear cookies/storage between unrelated accounts or tenants.
+- Use screenshots only when visual layout or rendered state matters.
 
 ---
 
 ## Best Practices
 
 - Use stable selectors and semantic roles before brittle CSS paths.
-- Record source URLs and timestamps for facts likely to change.
-- Do not automate destructive account actions unless the user explicitly requested the exact action and target.
+- Record URL and access date for facts likely to change.
+- Clear cookies/storage between unrelated accounts or tenants.
+- Do not automate destructive account actions unless the user names the exact action and target.
+- Use semantic roles before CSS selectors.
 
 ---
 
@@ -346,6 +360,9 @@ periodically by verifying a known authenticated-only element is still visible.
 - **Lightpanda CLI fetch**: no persistence between calls (use `serve` mode for multi-step auth)
 - **agent-browser**: session-based with `--session` flag
 
+For session isolation, CSRF-sensitive actions, and multi-tenant account handling, read
+`references/authenticated-browsing.md`.
+
 ---
 
 ## Missing Tools
@@ -388,6 +405,12 @@ MCP tool parameter details (full tool tables with token costs), engine-specific 
 or known limitations of a backend. The main SKILL.md covers workflow and strategy; the
 reference file covers tool-specific depth.
 
+Read `references/extraction-patterns.md` for static, JavaScript-rendered, screenshot, table,
+pagination, and attribution patterns.
+
+Read `references/authenticated-browsing.md` before using saved sessions, cookies, or
+account-specific pages.
+
 ## Related Skills
 
 - **testing** - E2E test automation with Playwright. This skill handles ad-hoc browsing and
@@ -408,6 +431,11 @@ Before returning any browsing result, verify:
 - [ ] Stripped boilerplate (nav, ads, footers) before returning content to the user
 - [ ] Scoped extraction to the relevant section, not the whole page
 - [ ] Did not hardcode credentials - used env vars, secret manager, or user prompt
+- [ ] Cleared or isolated cookies/storage between unrelated accounts or tenants
+- [ ] Used semantic roles before CSS selectors for interaction targets
+- [ ] Used screenshots only when visual layout or rendered state mattered
+- [ ] Recorded URL and access date for facts likely to change
+- [ ] Did not automate destructive account actions unless the user named the exact action and target
 - [ ] Re-extracted page state after any click or form submission before making decisions
 - [ ] Escalated to the next tool tier on failure rather than retrying the same tool
 
@@ -432,6 +460,10 @@ Before returning any browsing result, verify:
    or user prompts.
 6. **Re-extract after interaction.** Page state changes after clicks and form submissions.
    Always get a fresh view before making decisions based on page content.
-7. **Respect robots.txt and rate limits.** Use `--obey-robots` with Lightpanda when scraping.
+7. **Semantic selectors first.** Use roles, accessible names, labels, and stable text before
+   brittle CSS selectors.
+8. **Screenshots are for visuals.** Take screenshots only when layout, rendered state, or
+   visual evidence matters.
+9. **Respect robots.txt and rate limits.** Use `--obey-robots` with Lightpanda when scraping.
    Add a 1-2 second delay between requests when batch-fetching multiple pages from the same
    domain. Don't hammer sites with rapid sequential requests.
