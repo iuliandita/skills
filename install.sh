@@ -70,6 +70,8 @@ declare -A TOOL_PATHS=(
   [portable]="${PORTABLE_SKILLS_DIR:-$HOME/.skills}"
 )
 
+OPENCODE_CONFIG_FILE="${OPENCODE_CONFIG_FILE:-$HOME/.config/opencode/opencode.json}"
+
 declare -A TOOL_ALIASES=(
   [claude-code]=claude
   [openai-codex]=codex
@@ -184,7 +186,10 @@ is_internal() {
 # ── Backup ────────────────────────────────────────────────────────────
 backup_skill() {
   local skill="$1" dest_dir="$2"
-  local backup_base="$dest_dir/.backups"
+  local backup_parent backup_name backup_base
+  backup_parent="$(dirname "$dest_dir")"
+  backup_name="$(basename "$dest_dir")"
+  backup_base="${SKILLS_BACKUP_DIR:-$backup_parent/.skills-backups/$backup_name}"
   local ts
   ts="$(date +%Y%m%d-%H%M%S)"
   local dest="$backup_base/$skill/$ts"
@@ -300,6 +305,75 @@ create_link() {
 
   ln -sfn "$CANONICAL_DIR/$skill" "$tool_dir/$skill"
   printf '  [+] %s linked\n' "$skill"
+}
+
+sync_opencode_permissions() {
+  local config_file="$1"
+  shift
+  local skills=("$@")
+  local synced_skills=()
+
+  for skill in "${skills[@]}"; do
+    validate_skill_name "$skill" || continue
+    [[ -d "$SKILLS_SRC/$skill" ]] || continue
+    synced_skills+=("$skill")
+  done
+
+  (( ${#synced_skills[@]} > 0 )) || return 0
+
+  if ! command -v python3 &>/dev/null; then
+    printf '  [!] OpenCode permission sync skipped: python3 not found\n'
+    return 0
+  fi
+
+  mkdir -p "$(dirname "$config_file")"
+
+  if ! python3 - "$config_file" "${synced_skills[@]}" <<'PY'
+import json
+import os
+import sys
+
+config_path = sys.argv[1]
+skills = sys.argv[2:]
+
+if os.path.exists(config_path) and os.path.getsize(config_path) > 0:
+    with open(config_path, encoding="utf-8") as f:
+        config = json.load(f)
+else:
+    config = {}
+
+if not isinstance(config, dict):
+    raise ValueError("OpenCode config root must be a JSON object")
+
+permission = config.get("permission")
+if not isinstance(permission, dict):
+    permission = {}
+    config["permission"] = permission
+
+skill_permission = permission.get("skill")
+if not isinstance(skill_permission, dict):
+    skill_permission = {}
+    permission["skill"] = skill_permission
+
+changed = False
+for skill in skills:
+    if skill_permission.get(skill) == "deny":
+        continue
+    if skill_permission.get(skill) != "allow":
+        skill_permission[skill] = "allow"
+        changed = True
+
+if changed or not os.path.exists(config_path):
+    with open(config_path, "w", encoding="utf-8") as f:
+        json.dump(config, f, indent=2)
+        f.write("\n")
+PY
+  then
+    printf '  [!] OpenCode permission sync skipped: could not parse %s as JSON\n' "$config_file"
+    return 0
+  fi
+
+  printf '  [=] OpenCode permissions synced\n'
 }
 
 # ── Check mode ────────────────────────────────────────────────────────
@@ -476,6 +550,9 @@ main() {
         [[ -d "$SKILLS_SRC/$skill" ]] || continue
         create_link "$skill" "$tool_dir" "$force" "$no_backup"
       done
+      if [[ "$tool" == "opencode" ]]; then
+        sync_opencode_permissions "$OPENCODE_CONFIG_FILE" "${skills[@]}"
+      fi
       printf '\n'
     done
 
@@ -514,6 +591,10 @@ main() {
         fi
         install_copy "$skill" "$dest" "$force" "$no_backup" || (( failed++ )) || true
       done
+
+      if [[ "$tool" == "opencode" ]]; then
+        sync_opencode_permissions "$OPENCODE_CONFIG_FILE" "${skills[@]}"
+      fi
 
       write_lock "$dest" "${skills[@]}"
       printf '\n'

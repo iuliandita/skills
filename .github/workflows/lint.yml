@@ -75,6 +75,9 @@ jobs:
         run: |
           bash -n install.sh scripts/*.sh
 
+      - name: Test installer behavior
+        run: ./scripts/test-install.sh
+
       - name: Shellcheck scripts
         run: shellcheck install.sh scripts/*.sh
 
