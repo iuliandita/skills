@@ -13,15 +13,15 @@ Headless browser built from scratch in Zig with V8. Single static binary, no dep
 
 ```bash
 # Linux x86_64
-curl -L -o lightpanda https://github.com/lightpanda-io/browser/releases/download/0.2.8/lightpanda-x86_64-linux
+curl -L -o lightpanda https://github.com/lightpanda-io/browser/releases/download/0.2.9/lightpanda-x86_64-linux
 chmod +x lightpanda && sudo mv lightpanda /usr/local/bin/
 
 # Linux aarch64
-curl -L -o lightpanda https://github.com/lightpanda-io/browser/releases/download/0.2.8/lightpanda-aarch64-linux
+curl -L -o lightpanda https://github.com/lightpanda-io/browser/releases/download/0.2.9/lightpanda-aarch64-linux
 chmod +x lightpanda && sudo mv lightpanda /usr/local/bin/
 
 # macOS (Apple Silicon)
-curl -L -o lightpanda https://github.com/lightpanda-io/browser/releases/download/0.2.8/lightpanda-aarch64-macos
+curl -L -o lightpanda https://github.com/lightpanda-io/browser/releases/download/0.2.9/lightpanda-aarch64-macos
 chmod +x lightpanda && sudo mv lightpanda /usr/local/bin/
 
 # Docker
@@ -125,7 +125,7 @@ or WebKit. Higher token cost than Lightpanda but complete Web API coverage.
 ```bash
 # As Claude Code plugin (if available in your plugin marketplace)
 # Or standalone:
-npx @playwright/mcp@0.0.70
+npx @playwright/mcp@0.0.72
 ```
 
 ### Key Tools
@@ -180,7 +180,7 @@ built-in reasoning.
 ### Installation
 
 ```bash
-npx agent-browser@0.24.0
+npx agent-browser@0.26.0
 # or: npm install -g agent-browser
 ```
 

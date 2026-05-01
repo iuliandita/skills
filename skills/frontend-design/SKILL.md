@@ -19,12 +19,12 @@ This skill replaces the upstream generic `frontend-design` skill in this collect
 
 **Target versions** (May 2026 - pinned so staleness is visible):
 
-- Astro 6.1.9 (Astro 5.17 also production-ready)
-- SvelteKit 2.58 + Svelte 5 runes
+- Astro 6.2.1 (Astro 5.17 also production-ready)
+- SvelteKit 2.58.0 + Svelte 5.55.5 runes
 - Tailwind CSS v4.2.4
-- Vite 8.0
-- React 19.2 + Next.js 16 (heavier option, only when team is React-locked)
-- @use-gesture/react (modern; Hammer.js considered legacy)
+- Vite 8.0.10
+- React 19.2.5 + Next.js 16.2.4 (heavier option, only when team is React-locked)
+- @use-gesture/react 10.3.1 (modern; Hammer.js considered legacy)
 
 ## When to use
 
@@ -44,9 +44,8 @@ This skill replaces the upstream generic `frontend-design` skill in this collect
 - Prose tells in copy and docs - use **anti-ai-prose**
 - Backend API design (REST, OpenAPI, pagination) - use **backend-api**
 - Localization, i18n catalogues, hardcoded strings - use **localize**
-- Frontend testing strategy (Playwright, Vitest, a11y tests) - use **testing**
-- Playwright test authoring belongs to **testing**; this skill owns visual QA expectations and
-  screenshot review for UI changes
+- Frontend testing strategy and Playwright test authoring - use **testing**. This skill owns
+  visual QA expectations and screenshot review for UI changes
 
 ---
 

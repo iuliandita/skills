@@ -1,6 +1,6 @@
 # Framework Picker
 
-Pinned to April 2026. Update versions when refreshing the skill. Hallucinating "Next.js 15" or "Astro 5" in build output is the fastest way to embarrass an AI build.
+Pinned to May 2026. Update versions when refreshing the skill. Hallucinating "Next.js 15" or "Astro 5" in build output is the fastest way to embarrass an AI build.
 
 The persona's bias: minimalist first. Reach for a heavier framework only when the minimalist option starts producing inline code soup.
 
@@ -9,10 +9,10 @@ The persona's bias: minimalist first. Reach for a heavier framework only when th
 ## Decision tree
 
 1. **No-build, single HTML file demo, codepen-style?** -> Plain HTML + CSS + JS, no framework. State the constraint at the top of the file.
-2. **Static content, marketing site, blog, docs?** -> **Astro 6.1.9** (or **Astro 5.17** if Astro 6 hasn't shipped a feature you need)
-3. **Interactive app, bundle size matters, you want runes?** -> **SvelteKit 2.58** + Svelte 5
-4. **Small app, no SSR needed, want Vite directly?** -> **Vite 8.0** + plain TypeScript or a thin layer (Lit, Solid, vanilla)
-5. **Team is React-locked or you genuinely need React's ecosystem?** -> **Next.js 16** + **React 19.2**
+2. **Static content, marketing site, blog, docs?** -> **Astro 6.2.1** (or **Astro 5.17** if Astro 6 hasn't shipped a feature you need)
+3. **Interactive app, bundle size matters, you want runes?** -> **SvelteKit 2.58.0** + Svelte 5.55.5
+4. **Small app, no SSR needed, want Vite directly?** -> **Vite 8.0.10** + plain TypeScript or a thin layer (Lit, Solid, vanilla)
+5. **Team is React-locked or you genuinely need React's ecosystem?** -> **Next.js 16.2.4** + **React 19.2.5**
 
 The persona pushes back on Next.js as a default. It's a fine framework; it is also the heaviest option in the list and gets reached for reflexively. If the answer to "why Next" is "because everyone uses it", that's not a reason.
 
@@ -21,7 +21,7 @@ when they fit.
 
 ---
 
-## Astro 6.1.9 (Cloudflare-owned since January 16, 2026)
+## Astro 6.2.1 (Cloudflare-owned since January 16, 2026)
 
 **When.** Content-heavy: marketing pages, docs, blogs, portfolios, landing sites, hybrid sites with islands of interactivity.
 
@@ -50,7 +50,7 @@ bun create astro@latest
 
 ---
 
-## SvelteKit 2.58 + Svelte 5
+## SvelteKit 2.58.0 + Svelte 5.55.5
 
 **When.** Interactive apps where bundle size and runtime cost matter. Apps where the team wants explicit reactivity.
 
@@ -89,7 +89,7 @@ bun create svelte@latest
 
 ---
 
-## Vite 8.0 + plain TS
+## Vite 8.0.10 + plain TS
 
 **When.** Small apps, demos, tools where you want a build but no framework opinions. Single-page tools, internal dashboards with one or two views.
 
@@ -116,7 +116,7 @@ bun create vite@latest
 
 ---
 
-## Next.js 16 + React 19.2
+## Next.js 16.2.4 + React 19.2.5
 
 **When.** Team is React-locked, ecosystem dependencies (specific React libraries with no equivalent), or app needs Server Components and Server Actions for a specific reason.
 
@@ -125,7 +125,7 @@ bun create vite@latest
 **Strengths.**
 
 - Turbopack stable (default bundler in Next 16) - dev startup ~50% faster
-- React Server Components, Server Actions; React 19.2 features (View Transitions, useEffectEvent, Activity)
+- React Server Components, Server Actions; React 19.2.5 features (View Transitions, useEffectEvent, Activity)
 - Cache Components with Partial Pre-Rendering and the `"use cache"` directive
 - Largest ecosystem of components, hooks, libraries
 - Vercel-tier hosting integration
@@ -137,7 +137,7 @@ bun create vite@latest
 - You want explicit reactivity (Svelte 5 runes are clearer)
 - Bundle size matters (Next is the heaviest in this list)
 
-**Note.** Next.js 15 is still maintained but Next.js 16 stable shipped October 21, 2025; 16.2 (March 18, 2026) is the latest. Use 16 for new projects. Middleware was renamed to `proxy.ts` in 16 to clarify the network boundary.
+**Note.** Next.js 15 is still maintained but Next.js 16 stable shipped October 21, 2025. Use 16.2.4 for new projects. Middleware was renamed to `proxy.ts` in 16 to clarify the network boundary.
 
 The persona's pushback when Next is suggested as default: "Why Next over Astro for a marketing site, or SvelteKit for an app? If the answer is 'we always use Next', the answer is wrong."
 

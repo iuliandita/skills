@@ -17,9 +17,9 @@ Every browsing action has a token cost - this skill minimizes it through progres
 smart format selection, and backend-aware strategies.
 
 **Target versions** (May 2026):
-- Lightpanda: 0.2.8
-- @playwright/mcp: 0.0.70
-- agent-browser: 0.24.0
+- Lightpanda: 0.2.9
+- @playwright/mcp: 0.0.72
+- agent-browser: 0.26.0
 
 ## When to use
 
@@ -95,7 +95,6 @@ the task isn't present, skip straight to the next tier rather than failing mid-w
 - Record URL and access date for facts likely to change.
 - Clear cookies/storage between unrelated accounts or tenants.
 - Do not automate destructive account actions unless the user names the exact action and target.
-- Use semantic roles before CSS selectors.
 
 ---
 
@@ -358,7 +357,7 @@ periodically by verifying a known authenticated-only element is still visible.
 **Session persistence by backend:**
 - **Lightpanda MCP / Playwright MCP**: session persists within the MCP connection
 - **Lightpanda CLI fetch**: no persistence between calls (use `serve` mode for multi-step auth)
-- **agent-browser**: session-based with `--session` flag
+- `agent-browser`: session-based with `--session` flag
 
 For session isolation, CSRF-sensitive actions, and multi-tenant account handling, read
 `references/authenticated-browsing.md`.
@@ -373,7 +372,7 @@ fastest path to full browsing capability with minimal overhead.
 **Lightpanda MCP setup** (one-time, ~30 seconds):
 ```bash
 # Install the binary (see references/tool-setup.md for other architectures)
-curl -L -o lightpanda https://github.com/lightpanda-io/browser/releases/download/0.2.8/lightpanda-x86_64-linux
+curl -L -o lightpanda https://github.com/lightpanda-io/browser/releases/download/0.2.9/lightpanda-x86_64-linux
 chmod +x lightpanda && mv lightpanda ~/.local/bin/
 ```
 
