@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.31.1](https://github.com/iuliandita/skills/compare/v1.31.0...v1.31.1) (2026-05-01)
+
+
+### Documentation
+
+* **skills:** salvage workflow guidance ([a57c933](https://github.com/iuliandita/skills/commit/a57c9333f69eb7d4b73ed1294b367989ac05cc03))
+
 ## [1.31.0](https://github.com/iuliandita/skills/compare/v1.30.1...v1.31.0) (2026-05-01)
 
 
