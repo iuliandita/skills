@@ -39,6 +39,11 @@ git clone https://github.com/iuliandita/skills.git /tmp/skills-install
 rm -rf /tmp/skills-install
 ```
 
+For OpenCode, the installer also updates `~/.config/opencode/opencode.json` so every installed
+skill has `permission.skill.<name>: "allow"`. This keeps installs visible when the user's config
+uses a deny-by-default policy such as `"permission": { "skill": { "*": "deny" } }`. Existing
+explicit `deny` entries are left alone.
+
 ### Multi-tool with symlinks
 
 Install once to a canonical directory, symlink everywhere. Update the canonical copy and every tool sees the change.
@@ -158,6 +163,9 @@ Or check what changed first:
 ```
 
 The installer backs up existing skills before overwriting (unless `--no-backup`), so local customizations are preserved.
+Backups are stored next to the target skill directory under `.skills-backups/`, not inside the
+skill discovery root. This prevents tools such as OpenCode from indexing old backup `SKILL.md`
+files as duplicate skills.
 
 ## Checking for updates
 
