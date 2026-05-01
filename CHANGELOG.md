@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.31.0](https://github.com/iuliandita/skills/compare/v1.30.1...v1.31.0) (2026-05-01)
+
+
+### Features
+
+* **skills:** grow discovery and publish cluster health ([ada8247](https://github.com/iuliandita/skills/commit/ada8247bd8312d73add0437784fa704fcbc36dd0))
+
 ## [1.30.1](https://github.com/iuliandita/skills/compare/v1.30.0...v1.30.1) (2026-04-30)
 
 
