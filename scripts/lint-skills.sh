@@ -18,7 +18,7 @@ warn()  { echo "  WARN:  $1"; (( warnings++ )) || true; }
 
 # Private skills: present locally (gitignored) but must not be referenced
 # by public skills. They can reference public skills freely.
-PRIVATE_SKILLS=(cluster-health)
+PRIVATE_SKILLS=()
 
 # ── Private skill reference check ──────────────────────────────────────
 check_private_refs() {
