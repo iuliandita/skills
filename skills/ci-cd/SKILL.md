@@ -460,6 +460,7 @@ the OWASP Top 10 for Agentic Applications, read `references/supply-chain.md`
 ## Reference Files
 
 - `references/github-actions.md` - GitHub Actions patterns, templates, and security hardening
+- `references/forgejo-ansible-deployments.md` - Forgejo/Gitea Actions fan-out patterns for Ansible playbook deployments
 - `references/gitlab-ci.md` - GitLab CI/CD 18.x patterns, SaaS vs self-managed differences, Catalog, Components, security
 - `references/gitea-ci.md` - Gitea Actions + Woodpecker CI patterns, setup, matrix builds, Drone migration
 - `references/runners.md` - Self-hosted runners (actions-runner, gitlab-runner, forgejo-runner, act_runner, woodpecker-agent) - install, register, executor choice, Linux vs macOS, security hardening

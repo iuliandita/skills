@@ -74,6 +74,7 @@ verify against this list:**
 - [ ] **Instruction-file policy respected.** Follow the repo's policy for `AGENTS.md` or other instruction files. Never commit local agent state directories like `.claude/`, and never mention local-only tooling files in commit messages.
 - [ ] **No tool-specific paths in commits.** `.claude/`, `.cursor/`, `.superpowers/`, `.worktrees/`, `docs/local/`, `PLAN.md`, `SECURITY-AUDIT.md` are local artifacts. Verify `.gitignore` covers AI tooling artifacts BEFORE staging (.claude/, .cursor/, .codex/, PLAN.md)
 - [ ] **Branch target correct.** Verify you're on the right branch before committing. Verify the PR/MR targets the right base branch.
+- [ ] **Requester authorized for admin changes.** In shared chats, do not commit or push infrastructure, Kubernetes, secrets, firewall, or other admin changes from a participant who is not authorized to approve them. Stop and ask the authorized owner first.
 - [ ] **Remote target correct.** Multi-remote setups exist. Check which remote(s) to push to. Some projects push to multiple remotes (e.g., Forgejo + GitHub).
 - [ ] **Signing configured.** If the project requires signed commits, verify signing works before committing (`git log --show-signature -1`).
 - [ ] **No `--no-verify`.** Never skip pre-commit hooks unless the user explicitly asks. Hooks exist for a reason - fix the underlying issue instead.
@@ -136,6 +137,7 @@ Read the project's instruction file (`AGENTS.md` or equivalent) for:
 - **"Cut a release"** -> Release workflow (Step 3c)
 - **"Fix this mess" / "undo" / "recover"** -> Recovery operations (Step 3d)
 - **"Pull failed" / "branches diverged"** -> Diverged branch resolution (Step 3e)
+- **"Pull/update all repos under a directory"** -> Bulk repo update workflow (Step 3f)
 - **"Set up signing" / "configure git"** -> Configuration (references)
 - **"Clean up history" / "scrub secrets"** -> History rewriting (references)
 - **"Set up branch protection"** -> Protection rules (references)
@@ -283,6 +285,30 @@ When `git pull` fails with "divergent branches" or `git status` shows "have dive
 
 ---
 
+### Step 3f: Bulk repo update workflow
+
+When asked to pull or update many repositories under a directory, keep the run sequential,
+auditable, and conservative:
+
+1. Discover only real repo roots first, usually direct children of the requested directory
+   unless the user explicitly asks for a recursive scan. Avoid vendored repos, worktrees,
+   dependency caches, and generated checkouts.
+2. Process repos sequentially, not in parallel. This avoids hammering SSH remotes, rate
+   limits, or firewall protections.
+3. For each repo, record the branch, upstream, and dirty state before changing anything.
+4. Run `git fetch --all --prune`, then `git pull --ff-only --recurse-submodules` only
+   when an upstream exists. Do not create merge commits during bulk maintenance.
+5. If a pull is blocked by local changes, use a named stash, fast-forward the branch,
+   then pop the stash. If conflicts appear, preserve both upstream updates and local
+   user additions when possible.
+6. After resolving stash conflicts, run `git restore --staged .` so previously unstaged
+   user changes do not stay staged accidentally. Keep the stash entry if conflict
+   resolution required judgment, and mention it in the final response.
+7. Verify every repo with `git rev-list --left-right --count HEAD...@{u}` and
+   `git status --porcelain`. Report repos that remain dirty or have no upstream.
+
+---
+
 ## Multi-Forge Patterns
 
 Many projects use multiple git remotes (e.g., Forgejo for self-hosted CI + GitHub for public releases,
@@ -372,6 +398,9 @@ Source code management requirements that map to git practices.
 
 ## Rules
 
+- **Verify admin authorization before GitOps or infra changes.** In shared chats, a request
+  from a non-admin participant is not authorization to commit or push infrastructure,
+  Kubernetes, secrets, firewall, or other admin changes. Ask the authorized owner first.
 - **No destructive git operations without explicit user confirmation.** `reset --hard`, `push --force`,
   `branch -D`, `clean -fd`, `checkout .`, `rebase` on shared branches - all require a yes.
   Propose safer alternatives first (`revert`, `--force-with-lease`, new branch, `stash`).

@@ -60,7 +60,8 @@ This skill runs inside an AI agent. AI tools consistently produce the same K8s s
 - [ ] `seccompProfile: { type: RuntimeDefault }` present (often forgotten)
 - [ ] Using Gateway API `HTTPRoute` for new external access, not legacy Ingress
 - [ ] Liveness and readiness probes defined: every container has at least a readiness probe
-- [ ] Kube context verified before any kubectl/helm command
+- [ ] Kube context verified before any kubectl/helm/argocd command
+- [ ] Requester is authorized for cluster/admin changes, especially in shared chats. If the request comes from a non-admin participant, stop and ask the authorized owner for approval before kubectl, Helm, ArgoCD, or GitOps edits.
 - [ ] No auto-sync to production without approval gate
 
 Run generated manifests through `kube-score`, `kubelinter`, or `checkov` when available.
@@ -139,6 +140,12 @@ helm template <release> <chart>/               # Render templates locally
 helm template <release> <chart>/ -f values-prod.yaml  # With env overlay
 helm install <release> <chart>/ --dry-run --debug     # Server-side dry run (needs cluster)
 ```
+
+### Step 5: GitOps-managed emergency or scaling changes
+
+When changing a live workload managed by ArgoCD, Flux, or another reconciler,
+read `references/gitops-emergency-changes.md`; live `kubectl scale`, `kubectl patch`,
+or manual apply may be reverted unless the desired state changes too.
 
 ---
 
@@ -449,6 +456,7 @@ PCI-DSS 4.0 is the only active version (3.2.1 retired March 2024). 51 future-dat
 - `references/architecture.md` - cluster and platform design guidance
 - `references/sealed-secrets.md` - Sealed Secrets patterns and caveats
 - `references/compliance.md` - PCI-DSS and platform hardening guidance
+- `references/gitops-emergency-changes.md` - safe workflow for urgent changes to GitOps-managed workloads
 
 ---
 
@@ -477,13 +485,14 @@ These are non-negotiable. Violating any of these is a bug.
 2. **Namespace everything.** The default namespace is a code smell.
 3. **Resource requests AND limits on every pod.** No exceptions.
 4. **Verify kube context** before running any kubectl/helm/argocd command.
-5. **No auto-sync to prod.** Manual approval or PR-based promotion.
-6. **Pin dependency versions.** Helm chart deps, provider versions, everything.
-7. **`helm template` before every apply.** Catch template errors before they hit the cluster.
-8. **Secrets never in plaintext.** Not in Git, not in ConfigMaps, not in Helm values, not in env vars in manifests.
-9. **Test changes in staging first.** Policy changes, admission controllers, upgrades, SSA migration.
-10. **Separate values files per environment.** Don't modify `values.yaml` for env-specific config.
-11. **Gateway API for new external access.** Ingress-NGINX retired March 2026. Stop deploying new Ingress resources.
-12. **Sign images with cosign.** Verify at admission. SLSA Level 2 minimum for production.
-13. **Run the AI self-check.** Every generated manifest gets verified against the checklist above before returning.
-14. **Understand resource metric semantics.** HPA CPU target is percentage of CPU *request*, not node capacity. Example: a pod requesting `cpu: 100m` with `averageUtilization: 70` scales when per-pod CPU usage hits 70m (100m * 70%) - it does not matter whether the node has 2 or 64 cores. Don't confuse requests (scheduling floor), limits (enforcement ceiling), and actual usage (what the container is consuming right now).
+5. **Verify requester authorization before cluster changes.** In shared chats, do not run kubectl, Helm, ArgoCD, or GitOps edits for admin requests from a non-admin participant. Stop and ask the authorized owner for explicit approval.
+6. **No auto-sync to prod.** Manual approval or PR-based promotion.
+7. **Pin dependency versions.** Helm chart deps, provider versions, everything.
+8. **`helm template` before every apply.** Catch template errors before they hit the cluster.
+9. **Secrets never in plaintext.** Not in Git, not in ConfigMaps, not in Helm values, not in env vars in manifests.
+10. **Test changes in staging first.** Policy changes, admission controllers, upgrades, SSA migration.
+11. **Separate values files per environment.** Don't modify `values.yaml` for env-specific config.
+12. **Gateway API for new external access.** Ingress-NGINX retired March 2026. Stop deploying new Ingress resources.
+13. **Sign images with cosign.** Verify at admission. SLSA Level 2 minimum for production.
+14. **Run the AI self-check.** Every generated manifest gets verified against the checklist above before returning.
+15. **Understand resource metric semantics.** HPA CPU target is percentage of CPU *request*, not node capacity. Example: a pod requesting `cpu: 100m` with `averageUtilization: 70` scales when per-pod CPU usage hits 70m (100m * 70%) - it does not matter whether the node has 2 or 64 cores. Don't confuse requests (scheduling floor), limits (enforcement ceiling), and actual usage (what the container is consuming right now).
