@@ -51,7 +51,7 @@ Current repository gates pass for all 41 public skills:
 ./scripts/validate-spec.sh
 ```
 
-The latest tracked refiner run in [`.refiner-runs.json`](.refiner-runs.json) is dated 2026-04-23. It ended with lint/spec warnings cleared, behavioral test groups present for 37/37 public non-internal skills in that run, and cross-harness peer review returning no flags after a major regression was caught and fixed.
+The latest tracked refiner run in [`.refiner-runs.json`](.refiner-runs.json) is dated 2026-04-30. It ended with lint/spec warnings cleared, behavioral test groups present for the then-current 39/39 public skills in that run, inventory snapshots refreshed, and cross-harness peer review returning no flags after a major regression was caught and fixed.
 
 That evidence is a maintenance signal, not a permanent guarantee. Skill behavior still depends on the consuming agent, model, tool limits, and whether the task matches the skill's intended scope.
 
