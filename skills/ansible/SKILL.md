@@ -226,6 +226,13 @@ Read `references/playbook-patterns.md` for complete, copy-pasteable task example
 
 **Service management**: use `ansible.builtin.service` (generic) for cross-distro roles - it auto-detects systemd, OpenRC, SysV via `ansible_service_mgr`. Only use `ansible.builtin.systemd` when you need systemd-specific features (`daemon_reload`, `scope`). See `playbook-patterns.md` for OpenRC patterns.
 
+**Shell profile changes**: when converting a manual shell profile tweak into Ansible,
+prefer a dedicated reusable role with `ansible.builtin.blockinfile`, role-prefixed
+defaults, and a dedicated rollout playbook. For SSH tmux autostart, use
+`references/ssh-tmux-autostart.md`; the block must guard on SSH, not already inside
+tmux, real TTY on stdin/stdout, and usable `TERM`, so automation, `scp`, `rsync`,
+and remote SSH commands are not hijacked.
+
 **Registering results**: `register: result_var` stores task output. Use `when: result_var.stat.exists`, `result_var.rc == 0`, etc. See `playbook-patterns.md` for patterns.
 
 ### Vault Quick Reference
@@ -415,6 +422,7 @@ All Ansible DevTools projects (molecule, ansible-lint, ansible-navigator, tox-an
 - `references/operations-and-execution.md` - inventory layout, ansible.cfg, execution environments, CI/CD integration, and navigator usage
 - `references/vault-and-secrets.md` - Vault usage, secret handling, and external secret-manager integration
 - `references/compliance.md` - PCI-DSS and CIS-oriented hardening guidance
+- `references/ssh-tmux-autostart.md` - reusable role pattern for safe interactive SSH tmux autostart across mixed fleets
 
 ---
 

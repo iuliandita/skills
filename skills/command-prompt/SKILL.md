@@ -348,6 +348,7 @@ Before returning any shell script, check:
 - `references/bash.md` - Bash 5.3 patterns, parameter expansion, arrays, conditionals, process substitution, error handling, traps, heredocs, coprocesses, bash 5.x features (non-forking `${ cmd; }`, GLOBSORT, SRANDOM), script template
 - `references/posix-sh.md` - Portable POSIX sh patterns, what's POSIX and what's not, bashism avoidance checklist, which-sh-am-I, arithmetic, parameter expansion, portable conditionals
 - `references/alt-shells.md` - Fish 4.6 (syntax, functions, completions, config, 4.6 additions), tcsh/csh 6.24 (syntax, when you'll encounter it), nushell 0.111 (structured pipelines, types), elvish 0.22/oils 0.37 (brief)
+- `references/ssh-tmux-autostart.md` - safe shell startup pattern for interactive SSH sessions that attach to tmux without breaking non-interactive commands
 
 ## Related Skills
 

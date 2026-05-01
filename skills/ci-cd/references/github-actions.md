@@ -447,6 +447,44 @@ jobs:
 
 ---
 
+### Native multi-arch container publishing without QEMU
+
+For compile-heavy images, do not default to QEMU cross-builds. They can be slow
+or stall. Prefer native hosted runners and merge manifests after each architecture
+is pushed:
+
+```yaml
+strategy:
+  fail-fast: false
+  matrix:
+    include:
+      - arch: amd64
+        platform: linux/amd64
+        runner: ubuntu-24.04
+      - arch: arm64
+        platform: linux/arm64
+        runner: ubuntu-24.04-arm
+runs-on: ${{ matrix.runner }}
+```
+
+Build each architecture with `docker/build-push-action` and architecture-specific
+tags such as `org/image:1.2.3-amd64` and `org/image:1.2.3-arm64`. Then create
+the public tag:
+
+```bash
+docker buildx imagetools create \
+  -t "org/image:1.2.3" \
+  "org/image:1.2.3-amd64" \
+  "org/image:1.2.3-arm64"
+```
+
+When `sbom: true` or `provenance: true` is enabled, `docker manifest inspect`
+may show extra `unknown/unknown` entries. These are BuildKit attestation manifests.
+Verify the required platforms are present instead of treating attestation entries
+as broken platforms.
+
+---
+
 ## Concurrency Control
 
 ```yaml
