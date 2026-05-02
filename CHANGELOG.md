@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.32.0](https://github.com/iuliandita/skills/compare/v1.31.1...v1.32.0) (2026-05-02)
+
+
+### Features
+
+* add code slimming skill ([65da7df](https://github.com/iuliandita/skills/commit/65da7dfa1344a0184d1547f5ff77d41b5f1e944a))
+
 ## [1.31.1](https://github.com/iuliandita/skills/compare/v1.31.0...v1.31.1) (2026-05-01)
 
 
