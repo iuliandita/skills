@@ -12,6 +12,8 @@
     }
   },
   "globs": [
+    "CHANGELOG.md",
+    "INSTALL.md",
     "README.md",
     "SECURITY.md",
     "skills/**/*.md",

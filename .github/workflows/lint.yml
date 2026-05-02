@@ -7,6 +7,8 @@ on:
       - "skills/**"
       - "scripts/**"
       - "install.sh"
+      - "CHANGELOG.md"
+      - "INSTALL.md"
       - "README.md"
       - "SECURITY.md"
       - "docs/**"
@@ -19,6 +21,8 @@ on:
       - "skills/**"
       - "scripts/**"
       - "install.sh"
+      - "CHANGELOG.md"
+      - "INSTALL.md"
       - "README.md"
       - "SECURITY.md"
       - "docs/**"
@@ -118,6 +122,7 @@ jobs:
           mapfile -t markdown_files < <(
             {
               printf '%s\n' README.md SECURITY.md
+              printf '%s\n' CHANGELOG.md INSTALL.md
               find skills docs -type f -name '*.md' 2>/dev/null
             } | sort -u
           )
