@@ -501,7 +501,7 @@ Use this skill even when the user doesn't explicitly say "git" but is clearly do
 
 ## 9. Skill Inventory (May 2026)
 
-### Published skills (39)
+### Published skills (42)
 
 | Skill | Effort | Date Added | Domain |
 |-------|--------|-----------|--------|
@@ -514,6 +514,7 @@ Use this skill even when the user doesn't explicitly say "git" but is clearly do
 | browse | medium | 2026-04-04 | Web browsing, scraping, token-efficient extraction |
 | ci-cd | high | 2026-03-24 | CI/CD pipelines |
 | code-review | high | 2026-03-25 | Correctness audit |
+| code-slimming | medium | 2026-05-02 | Read-only refactor opportunity audit |
 | command-prompt | medium | 2026-03-25 | Shell scripting and config |
 | databases | high | 2026-03-24 | Database operations |
 | debian-ubuntu | high | 2026-04-22 | Debian / Ubuntu administration |

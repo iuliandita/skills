@@ -8,7 +8,7 @@
 npx skills add iuliandita/skills
 ```
 
-41 skills for DevOps, security, infra, and software engineering, maintained with lint/spec checks, behavioral test coverage, and a [Karpathy-style autoresearch loop](https://github.com/karpathy/autoresearch).
+42 skills for DevOps, security, infra, and software engineering, maintained with lint/spec checks, behavioral test coverage, and a [Karpathy-style autoresearch loop](https://github.com/karpathy/autoresearch).
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Agent Skills](https://img.shields.io/badge/Agent_Skills-open_standard-blue.svg)](https://agentskills.io)
@@ -23,7 +23,7 @@ AI coding tools used to mean prompts. Prompts don't compose, don't carry between
 
 Then Karpathy pointed an agent at a 630-line training script overnight. It edited the code, ran a 5-minute training, kept changes that improved the score, discarded the rest. 700 runs, 20 wins, on one GPU. The pattern works on anything you can score.
 
-This repo applies that pattern conservatively to 41 hand-built skills. The loop helps find weak spots and propose improvements; the gates and review discipline decide what survives.
+This repo applies that pattern conservatively to 42 hand-built skills. The loop helps find weak spots and propose improvements; the gates and review discipline decide what survives.
 
 ## The autoresearch loop
 
@@ -44,7 +44,7 @@ The goal is not magic self-repair. The goal is a repeatable maintenance loop wit
 
 ## Quality evidence
 
-Current repository gates pass for all 41 public skills:
+Current repository gates pass for all 42 public skills:
 
 ```bash
 ./scripts/lint-skills.sh
@@ -72,7 +72,7 @@ That's it. For specific skills, alternative tools, the bundled installer, or sym
 
 ## What's in here
 
-41 skills covering infra (Kubernetes, Terraform, Docker, Ansible), cluster health diagnostics, distros (Arch, Debian, Fedora, Kali, NixOS), networking and firewalls, security and pentesting, code review and prose audits, frontend and UI design, AI/ML and MCP server work, virtualization, dev workflow tooling, and meta-tooling (the skill creator, refiner, router, and full-review orchestrator).
+42 skills covering infra (Kubernetes, Terraform, Docker, Ansible), cluster health diagnostics, distros (Arch, Debian, Fedora, Kali, NixOS), networking and firewalls, security and pentesting, code review, code slimming, and prose audits, frontend and UI design, AI/ML and MCP server work, virtualization, dev workflow tooling, and meta-tooling (the skill creator, refiner, router, and full-review orchestrator).
 
 Browse [`skills/`](skills/) for the full list, or query it:
 
