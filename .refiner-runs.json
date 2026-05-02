@@ -1867,5 +1867,78 @@
       "Meta-followup public lint/spec: PASSED with 0 warnings",
       "Meta-followup Claude peer review: NO_FLAGS"
     ]
+  },
+  {
+    "run_id": "2026-05-02-code-slimming-targeted-refiner",
+    "branch": "feat/code-slimming-skill",
+    "date": "2026-05-02",
+    "primary": {
+      "harness": "codex",
+      "model": "gpt-5.5",
+      "effort": "high"
+    },
+    "secondary": {
+      "harness": "same-model fresh-context delegate review",
+      "result": "NO_FLAGS"
+    },
+    "config": {
+      "scope": "single skill: code-slimming",
+      "iterations_minimum": 5,
+      "iterations_used": 8,
+      "threshold": 99,
+      "mode": "targeted circuit-breaker",
+      "plateau": "stopped after final 99/100 review and NO_FLAGS peer review"
+    },
+    "pool_size": {
+      "targeted_skills": 1,
+      "phase1_pool": [
+        "code-slimming"
+      ]
+    },
+    "termination": "target score reached: final review 99/100, behavioral forward-test 99/100, peer review NO_FLAGS",
+    "scores": {
+      "code-slimming": {
+        "before": {
+          "structural_gate": "pass",
+          "composite_estimate": 93,
+          "notes": "baseline fresh-context reviews ranged 82-98; main gaps were routing precision, validation discipline, wrapper safety, and cleanup PR deletion review"
+        },
+        "after": {
+          "structural_gate": "pass",
+          "composite_estimate": 99,
+          "ai_self_check": 99,
+          "behavioral": 99,
+          "peer_review": "NO_FLAGS"
+        }
+      }
+    },
+    "changes": {
+      "skills/code-slimming/SKILL.md": [
+        "tightened trigger routing and routing boundary table",
+        "added lane-holding AI self-check",
+        "clarified validation phases and behavior-specific evidence requirements",
+        "added concrete discovery recipe for duplicates, wrappers, and same-role trees",
+        "strengthened guardrails for defensive duplication, generated files, public contracts, and trust-boundary DTOs",
+        "added optional removed-code safety review and no-findings/search-coverage template",
+        "tightened final rules and scanability"
+      ]
+    },
+    "verification": [
+      "./scripts/lint-skills.sh skills",
+      "./scripts/validate-spec.sh skills",
+      "./scripts/test-install.sh",
+      "./scripts/check-protected-overlay.sh",
+      "./scripts/check-private-skill-leaks.sh",
+      "./scripts/check-freshness-dates.sh",
+      "git diff --check",
+      "fresh-context final review: 99/100",
+      "fresh-context peer review: NO_FLAGS",
+      "fresh-context behavioral forward-test: 99/100"
+    ],
+    "reverted": [],
+    "contested": [],
+    "skipped": [
+      "phase 2 meta-improvement: out of scope for targeted single-skill refinement"
+    ]
   }
 ]
