@@ -228,8 +228,8 @@ Read `references/playbook-patterns.md` for complete, copy-pasteable task example
 
 **Shell profile changes**: when converting a manual shell profile tweak into Ansible,
 prefer a dedicated reusable role with `ansible.builtin.blockinfile`, role-prefixed
-defaults, and a dedicated rollout playbook. For SSH tmux autostart, use
-`references/ssh-tmux-autostart.md`; the block must guard on SSH, not already inside
+defaults, and a dedicated rollout playbook. See `references/operations-and-execution.md`;
+the block must guard on SSH, not already inside
 tmux, real TTY on stdin/stdout, and usable `TERM`, so automation, `scp`, `rsync`,
 and remote SSH commands are not hijacked.
 
@@ -422,7 +422,6 @@ All Ansible DevTools projects (molecule, ansible-lint, ansible-navigator, tox-an
 - `references/operations-and-execution.md` - inventory layout, ansible.cfg, execution environments, CI/CD integration, and navigator usage
 - `references/vault-and-secrets.md` - Vault usage, secret handling, and external secret-manager integration
 - `references/compliance.md` - PCI-DSS and CIS-oriented hardening guidance
-- `references/ssh-tmux-autostart.md` - reusable role pattern for safe interactive SSH tmux autostart across mixed fleets
 
 ---
 

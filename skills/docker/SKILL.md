@@ -457,10 +457,9 @@ GPU containers: use `deploy.resources.reservations.devices` with `capabilities: 
 
 - `references/dockerfile-patterns.md` - Dockerfile templates and build patterns
 - `references/compose-patterns.md` - Compose patterns and common stack layouts
-- `references/security-and-compliance.md` - container hardening and compliance guidance
+- `references/security-and-compliance.md` - container hardening, compliance guidance, and safe public custom image publishing
 - `references/alternative-runtimes.md` - Podman, Buildah, Skopeo, and related runtime patterns
 - `references/target-versions.md` - May 2026 version snapshot for Docker, Compose, BuildKit, containerd, Podman, Buildah, and runc
-- `references/public-custom-image-publishing.md` - evaluate public equivalents and publish custom images to GHCR/Docker Hub without exposing private infra repos
 
 ---
 

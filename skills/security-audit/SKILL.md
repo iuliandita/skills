@@ -131,7 +131,9 @@ Find known CVEs in dependencies and assess supply chain risk.
 - `polyfill.io` (2024 domain takeover, malicious CDN injection)
 - `xz-utils` 5.6.0-5.6.1 (2024 backdoor in compression library)
 - `trivy` 0.69.4-0.69.6 / `aquasecurity/trivy` Docker tags 0.69.5-0.69.6 / `aquasecurity/trivy-action` + `aquasecurity/setup-trivy` force-pushed tags (2026-03 TeamPCP supply chain compromise - credential-stealing malware in CI/CD pipelines)
-Any match on package name + version range is Critical severity regardless of `audit` output. For active incident triage, use `references/supply-chain-incident-triage.md` for repo-wide package, IOC, local-runtime, and remote-repo checks.
+Any match on package name + version range is Critical severity regardless of `audit` output.
+For active incident triage, use `references/hardening-checklists.md` for repo-wide package,
+IOC, local-runtime, and remote-repo checks.
 
 ### Step 4: Agentic AI & Supply Chain (Pass 3 - Manual)
 
@@ -262,7 +264,6 @@ These look like security issues but aren't (or are acceptable):
 - `references/grep-patterns.md` - fallback search patterns for secrets, auth, injection, and config review
 - `references/hardening-checklists.md` - host, container, deployment, and self-hosted app hardening checklists
 - `references/report-guide.md` - reporting format, severity mapping, and OWASP alignment
-- `references/supply-chain-incident-triage.md` - active package-compromise triage: affected versions, repo-wide searches, IOCs, local runtime checks, and remote repo propagation checks
 
 ---
 

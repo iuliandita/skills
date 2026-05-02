@@ -530,5 +530,5 @@ on DinD runners or use kubernetes backend which gives each job its own network n
 
 - GitHub Actions security patterns: `references/github-actions.md`
 - GitLab CI/CD (tags, compute minutes, SaaS vs self-managed): `references/gitlab-ci.md`
-- Gitea Actions / Woodpecker pipeline patterns: `references/gitea-ci.md`
+- Forgejo/Gitea Actions and Woodpecker pipeline patterns: `references/forgejo-gitea-actions.md`
 - Supply chain / SHA pinning for runner images: `references/supply-chain.md`

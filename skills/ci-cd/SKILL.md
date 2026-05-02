@@ -147,7 +147,7 @@ Before writing pipeline config:
 Read the appropriate reference file:
 - **GitHub Actions**: `references/github-actions.md`
 - **GitLab CI/CD**: `references/gitlab-ci.md`
-- **Gitea CI/CD** (Gitea Actions + Woodpecker): `references/gitea-ci.md`
+- **Forgejo/Gitea Actions and Woodpecker**: `references/forgejo-gitea-actions.md`
 - **Self-hosted runners** (all 5 implementations): `references/runners.md`
 - **Best practices** (deps, linting, scanning, review gates, rollout): `references/best-practices.md`
 - **Supply chain / compliance**: `references/supply-chain.md`
@@ -373,7 +373,7 @@ Quick rule of thumb: if you are migrating from GitHub or want one service to ope
 use Gitea Actions. If you need proper matrix builds, caching primitives, or lighter
 resource usage, use Woodpecker. Do not run both against the same repo.
 
-See `references/gitea-ci.md` for: action SHA discovery, Gitea-vs-Forgejo Actions
+See `references/forgejo-gitea-actions.md` for: action SHA discovery, Gitea-vs-Forgejo Actions
 differences, Woodpecker YAML examples, plugin vs command steps, OAuth setup, matrix
 patterns, and Drone migration guidance.
 
@@ -460,10 +460,8 @@ the OWASP Top 10 for Agentic Applications, read `references/supply-chain.md`
 ## Reference Files
 
 - `references/github-actions.md` - GitHub Actions patterns, templates, and security hardening
-- `references/forgejo-actions-troubleshooting.md` - Forgejo Actions failure triage, `fj actions tasks`, missing logs caveats, local Docker build/Trivy reproduction, private registry auth pitfalls
-- `references/forgejo-ansible-deployments.md` - Forgejo/Gitea Actions fan-out patterns for Ansible playbook deployments
+- `references/forgejo-gitea-actions.md` - Forgejo/Gitea Actions differences, troubleshooting, Woodpecker patterns, and Drone migration guidance
 - `references/gitlab-ci.md` - GitLab CI/CD 18.x patterns, SaaS vs self-managed differences, Catalog, Components, security
-- `references/gitea-ci.md` - Gitea Actions + Woodpecker CI patterns, setup, matrix builds, Drone migration
 - `references/runners.md` - Self-hosted runners (actions-runner, gitlab-runner, forgejo-runner, act_runner, woodpecker-agent) - install, register, executor choice, Linux vs macOS, security hardening
 - `references/best-practices.md` - Dependency updates (Dependabot/Renovate), layered linting, scanning matrix (secrets/SCA/container/IaC/SAST), review gates, merge queues, rollout order
 - `references/supply-chain.md` - supply chain security, incident timeline, SHA pinning, SBOM/SLSA, PCI-DSS compliance, image signing
