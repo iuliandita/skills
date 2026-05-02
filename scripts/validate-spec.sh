@@ -67,6 +67,7 @@ skill_count=0
 for skill_dir in "$SKILLS_DIR"/*/; do
   name=$(basename "$skill_dir")
   [[ "$name" == ".backups" || "$name" == ".cook" ]] && continue
+  [[ "$name" == _* ]] && continue
   git check-ignore -q "$skill_dir" 2>/dev/null && continue
 
   skill_file="$skill_dir/SKILL.md"
