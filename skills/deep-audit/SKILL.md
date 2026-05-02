@@ -15,12 +15,12 @@ metadata:
 
 # Deep Audit: Wave-Based Repo Orchestrator
 
-Run up to 28 custom skills against a repo in 5 sequential waves, presenting results
+Run up to 29 custom skills against a repo in 5 sequential waves, presenting results
 progressively. Wave 1 detects the tech stack. Waves 2-5 dispatch only the skills that
 match. Each wave completes and reports before the next begins.
 
 The five waves are: Reconnaissance; Code Quality (code-review, anti-slop,
-anti-ai-prose); Domain-Specific (detected skills only); Security (security-audit
+anti-ai-prose, code-slimming); Domain-Specific (detected skills only); Security (security-audit
 then zero-day); and Docs & Hygiene (update-docs, roadmap, git).
 
 After the waves, Steps 7-9 persist findings to `docs/local/audits/DEEP-AUDIT.md`,
@@ -54,7 +54,7 @@ workflow (waves + persistence + routing), not just the wave dispatch phase.
 - [ ] All agents dispatched as `general-purpose` type (not `feature-dev:*`, `code-simplifier:*`, or other restricted types - these lack Skill tool access)
 - [ ] Each agent invoked its assigned custom skill via the Skill tool as its first action
 - [ ] Recon summary (Wave 1) was presented to the user before Wave 2 agents were dispatched
-- [ ] Wave 2 (code quality) ran all 3 skills regardless of repo type
+- [ ] Wave 2 (code quality) ran all 4 skills regardless of repo type
 - [ ] Wave 3 (domain) ran only skills whose detection patterns matched - no false activations
 - [ ] Wave 3 skills that were skipped are listed by name in the recon summary
 - [ ] Wave 4 ran sequentially: security-audit completed before zero-day started
@@ -118,8 +118,8 @@ to that subtree (`git ls-files -- path/to/scope` instead of the full repo).
 
 After detection, present the recon summary before proceeding. Compute
 `{unmatched_skills}` as the 20 Wave 3 candidates minus the matched set.
-Compute `{count}` by summing: 3 (Wave 2) + matched Wave 3 skills + 2 (Wave 4) +
-3 (Wave 5). Example: if 6 Wave 3 skills match, count = 3 + 6 + 2 + 3 = 14.
+Compute `{count}` by summing: 4 (Wave 2) + matched Wave 3 skills + 2 (Wave 4) +
+3 (Wave 5). Example: if 6 Wave 3 skills match, count = 4 + 6 + 2 + 3 = 15.
 
 In scoped mode, separate Wave 3 matches into two lines: skills matched by files
 within the scoped subtree, and skills matched only by repo-root manifests
@@ -141,7 +141,7 @@ Scope: {scope}
 Languages: {detected}
 
 Skills that will run:
-  Wave 2 (always): code-review, anti-slop, anti-ai-prose
+  Wave 2 (always): code-review, anti-slop, anti-ai-prose, code-slimming
   Wave 3 (detected): {scoped_matched_skills}
   Wave 3 (root-manifest only): {root_manifest_only_skills}    # scoped mode only; omit line if empty
   Wave 3 (skipped): {unmatched_skills}
@@ -157,18 +157,18 @@ Concrete example for a Node+Postgres+Docker+K8s repo with i18n, frontend code, a
 Repo: myorg/api @ a3f91c2 (main)  |  Files: 412  |  Scope: full codebase
 Languages: TypeScript, SQL, YAML
 
-Wave 2 (always): code-review, anti-slop, anti-ai-prose
+Wave 2 (always): code-review, anti-slop, anti-ai-prose, code-slimming
 Wave 3 (detected): testing, command-prompt, databases, backend-api, frontend-design, localize, docker, kubernetes, ci-cd
 Wave 3 (skipped): terraform, ansible, networking, ai-ml, mcp, arch-btw, debian-ubuntu, rhel-fedora, nixos-btw, firewall-appliance, virtualization
 Wave 4 (always): security-audit, zero-day
 Wave 5 (always): update-docs, roadmap, git
 
-Total agents: 3 + 9 + 2 + 3 = 17
+Total agents: 4 + 9 + 2 + 3 = 18
 ```
 
 ### Step 2: Code Quality (Wave 2)
 
-Dispatch 3 agents in parallel. All three run on every repo.
+Dispatch 4 agents in parallel. All four run on every repo.
 
 **Agent type (critical for all waves):** every agent MUST be dispatched as `general-purpose`
 (or equivalent full-access type). Do NOT use `feature-dev:*`, `code-simplifier:*`, or other
@@ -198,6 +198,7 @@ Replace `{N}` with the current wave number (2, 3, 4, or 5).
 | 1 | `code-review` | Invoke the `code-review` skill via the Skill tool. Run a full code review on the codebase. Scope: {scope}. Return the complete report. |
 | 2 | `anti-slop` | Invoke the `anti-slop` skill via the Skill tool. Audit the codebase for machine-generated patterns, over-abstraction, and code quality issues. Scope: {scope}. Return the complete report. |
 | 3 | `anti-ai-prose` | Invoke the `anti-ai-prose` skill via the Skill tool. Audit all prose (docs, README, comments, docstrings, commit messages) for AI tells. Scope: {scope}. Return the complete report. |
+| 4 | `code-slimming` | Invoke the `code-slimming` skill via the Skill tool. Audit the codebase for behavior-preserving code slimming, deduplication, and centralization opportunities. Scope: {scope}. Return the complete report. |
 
 Present Wave 2 results under:
 
@@ -212,6 +213,9 @@ Present Wave 2 results under:
 
 ### Prose Check
 {agent 3 report verbatim}
+
+### Slimming Check
+{agent 4 report verbatim}
 ```
 
 ### Step 3: Domain-Specific (Wave 3)
@@ -307,7 +311,7 @@ entry). Users do not need to add a separate gitignore rule for the root-level fi
 
 ### Step 5: Docs & Hygiene (Wave 5)
 
-Dispatch 3 agents in parallel.
+Dispatch three agents in parallel.
 
 | # | Skill | Prompt |
 |---|-------|--------|
@@ -353,7 +357,7 @@ Waves completed: {N}/5 | Skills run: {N}/{total_matched} | Failed: {N}
 ```
 
 Priority order: security fixes > correctness bugs > test gaps > slop/prose cleanup >
-domain-specific issues > doc updates > hygiene.
+code-slimming opportunities > domain-specific issues > doc updates > hygiene.
 
 ### Step 7: Persist DEEP-AUDIT.md
 
@@ -468,10 +472,11 @@ but preserves the wave ordering.
 ## Related Skills
 
 - **full-review** - the quick 4-skill version (code-review, anti-slop, security-audit, update-docs). Use when speed matters more than depth.
-- **code-review**, **anti-slop**, **anti-ai-prose** - Wave 2 participants.
+- **code-review**, **anti-slop**, **anti-ai-prose**, **code-slimming** - Wave 2 participants.
 - **security-audit**, **zero-day** - Wave 4 participants.
 - **update-docs**, **roadmap**, **git** - Wave 5 participants.
 - **testing**, **command-prompt**, **databases**, **backend-api**, **frontend-design**, **localize**, **ai-ml**, **mcp**, **docker**, **kubernetes**, **terraform**, **ansible**, **ci-cd**, **networking**, **arch-btw**, **debian-ubuntu**, **rhel-fedora**, **nixos-btw**, **firewall-appliance**, **virtualization** - Wave 3 candidates (conditional).
+- **code-slimming** - Wave 2 maintainability pass for behavior-preserving simplification, deduplication, and centralization opportunities.
 - **skill-creator** - audits the skill collection. This skill audits application repos.
 
 Read `references/exclusions.md` before changing Wave 3 routing.
