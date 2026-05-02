@@ -196,7 +196,7 @@ backup_skill() {
   mkdir -p "$dest"
 
   if [[ -L "$dest_dir/$skill" ]]; then
-    cp -rL "$dest_dir/$skill/." "$dest/"
+    cp -P "$dest_dir/$skill" "$dest/"
   else
     cp -r "$dest_dir/$skill/." "$dest/"
   fi
