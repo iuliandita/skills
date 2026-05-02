@@ -501,7 +501,7 @@ Use this skill even when the user doesn't explicitly say "git" but is clearly do
 
 ## 9. Skill Inventory (May 2026)
 
-### Published skills (39)
+### Published skills (42)
 
 | Skill | Effort | Date Added | Domain |
 |-------|--------|-----------|--------|
@@ -513,7 +513,9 @@ Use this skill even when the user doesn't explicitly say "git" but is clearly do
 | backend-api | high | 2026-04-06 | HTTP API design and implementation |
 | browse | medium | 2026-04-04 | Web browsing, scraping, token-efficient extraction |
 | ci-cd | high | 2026-03-24 | CI/CD pipelines |
+| cluster-health | high | 2026-03-30 | Kubernetes read-only diagnostics |
 | code-review | high | 2026-03-25 | Correctness audit |
+| code-slimming | medium | 2026-05-02 | Read-only refactor opportunity audit |
 | command-prompt | medium | 2026-03-25 | Shell scripting and config |
 | databases | high | 2026-03-24 | Database operations |
 | debian-ubuntu | high | 2026-04-22 | Debian / Ubuntu administration |
@@ -539,6 +541,7 @@ Use this skill even when the user doesn't explicitly say "git" but is clearly do
 | security-audit | high | 2026-03-25 | Application security review |
 | skill-creator | high | 2026-03-25 | Skill lifecycle management |
 | skill-refiner | high | 2026-03-31 | Iterative self-improvement loop |
+| skill-router | medium | 2026-05-01 | Skill routing and trigger conflict analysis |
 | terraform | high | 2026-03-24 | Infrastructure-as-code |
 | testing | high | 2026-04-02 | Test design, debugging, infrastructure |
 | update-docs | low | 2026-03-25 | Documentation sweep |

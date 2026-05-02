@@ -18,6 +18,7 @@ wave_skills=(
   backend-api
   ci-cd
   code-review
+  code-slimming
   command-prompt
   databases
   debian-ubuntu
