@@ -267,6 +267,18 @@ These look like security issues but aren't (or are acceptable):
 
 ---
 
+## Output Contract
+
+> **Severity migration:** The prior scale (`Critical | High | Medium | Low | Informational`) is replaced by `P0 | P1 | P2 | P3 | info`. Mapping: `Critical` -> `P0`, `High` -> `P1`, `Medium` -> `P2`, `Low` -> `P3`, `Informational` -> `info`. Inline severity references elsewhere in this file (and in `references/report-guide.md`) should be updated in a follow-up pass -- out of scope for this contract retrofit.
+
+See `skills/_shared/output-contract.md` for the full contract.
+
+- **Skill name:** SECURITY-AUDIT
+- **Deliverable bucket:** `audits`
+- **Mode:** always-on. Every invocation emits the full contract -- boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table.
+- **Deliverable path:** `docs/local/audits/security-audit/<YYYY-MM-DD>-<slug>.md`
+- **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract).
+
 ## Related Skills
 
 - **code-review** - finds correctness bugs (logic errors, race conditions, resource leaks).

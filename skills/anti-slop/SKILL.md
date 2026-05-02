@@ -417,6 +417,18 @@ These look like slop but aren't:
 
 ---
 
+## Output Contract
+
+> **Severity migration:** The prior scale (`High | Medium | Low`) is replaced by `P0 | P1 | P2 | P3 | info`. Mapping: `High` -> `P1`, `Medium` -> `P2`, `Low` -> `P3`. Inline severity references elsewhere in this file should be updated in a follow-up pass -- out of scope for this contract retrofit.
+
+See `skills/_shared/output-contract.md` for the full contract.
+
+- **Skill name:** ANTI-SLOP
+- **Deliverable bucket:** `audits`
+- **Mode:** always-on. Every invocation emits the full contract -- boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table.
+- **Deliverable path:** `docs/local/audits/anti-slop/<YYYY-MM-DD>-<slug>.md`
+- **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract).
+
 ## Related Skills
 
 - **code-review** - finds bugs and correctness issues. Anti-slop finds quality and style issues.
