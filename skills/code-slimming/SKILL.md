@@ -1,7 +1,7 @@
 ---
 name: code-slimming
 description: >
-  · Audit code for behavior-preserving slimming: duplicate logic, oversized helpers, redundant wrappers, shared types. Triggers: 'simplify code', 'slim codebase', 'deduplicate', 'centralize logic'. Not for bugs (use code-review).
+  · Audit behavior-preserving code slimming: safe deletions, deduplication, thin-wrapper removal, shared contracts. Triggers: 'slim codebase', 'deduplicate safely', 'centralize repeated logic'. Not for bugs/slop (use code-review/anti-slop).
 license: MIT
 compatibility: "None - works on any codebase"
 metadata:
@@ -22,6 +22,7 @@ performance, readability, and validation made explicit.
 ## When to use
 
 - Finding opportunities to simplify a repository, package, module, or PR
+- Finding behavior-preserving refactor opportunities without implementing them
 - Auditing duplicated logic, classes, structs, helpers, types, schemas, handlers, or adapters
 - Looking for safe centralization candidates before a cleanup/refactor PR
 - Reviewing a bot or human cleanup PR that claims to reduce code size
@@ -30,9 +31,9 @@ performance, readability, and validation made explicit.
 ## When NOT to use
 
 - Bug-focused reviews, regressions, races, edge cases, or crashes - use **code-review**
-- AI-generated code tells, noisy comments, hallucinated APIs, or overengineered slop - use **anti-slop**
+- General cleanup, naming, comments, AI tells, dependency creep, or overengineering without a deduplication/sizing goal - use **anti-slop**
 - Security vulnerabilities, secret scanning, auth flaws, or exploitability - use **security-audit**
-- Writing tests or debugging failing tests - use **testing**
+- Writing, debugging, or adding validation tests for a slimming recommendation - use **testing**
 - Broad quick merge checks - use **full-review**
 - Comprehensive repo audits across all applicable dimensions - use **deep-audit**
 - Direct implementation work - use the relevant language, framework, or domain skill
@@ -80,6 +81,21 @@ Pick the narrowest useful scope:
 - **Specific path** - use when the user names files or directories
 - **Whole repo** - use when the user asks for a repo-wide slimming audit
 
+For git repos, gather cheap preflight context before deciding:
+
+- repo root and branch: `git rev-parse --show-toplevel`, `git branch --show-current`
+- uncommitted files: `git diff --name-only`, `git diff --cached --name-only`
+- branch base when available: `git merge-base HEAD @{upstream}` or `git merge-base HEAD origin/main`
+- changed files and size: `git diff --name-only <base>...HEAD`, `git diff --stat <base>...HEAD`
+
+Scope precedence:
+
+1. User-provided diff or path
+2. Uncommitted changes
+3. Current branch against upstream
+4. Current branch against the default branch
+5. Whole repo, or ask one concise question when interactive
+
 If the scope is unclear and no diff exists, ask one concise question. In headless contexts, default
 to whole repo and state the assumption.
 
@@ -108,6 +124,15 @@ For an existing PR or diff, run available local checks when practical:
 If a command is missing, noisy, slow, unavailable, or exits zero while printing warnings, report that
 as a validation gap. Do not call an opportunity safe when validation is absent.
 
+Separate three kinds of validation:
+
+- **Baseline validation** - current repo or diff health before any proposed slimming
+- **Coverage evidence** - existing tests that exercise the behavior to preserve
+- **Implementation validation** - commands or tests required if someone performs the slimming change
+
+Passing current checks does not by itself make a proposed slimming safe. `Do now` requires exact
+coverage evidence, or a trivial mechanical change whose invariant is directly verifiable.
+
 For future work, identify the validation an implementation must pass. Do not write tests in this
 skill.
 
@@ -124,6 +149,17 @@ Use structural and textual searches to find:
 - dependencies or helpers duplicating standard library or framework features
 - generated-looking copy-paste that survived human maintenance
 
+Useful search tactics:
+
+- list changed files, then read full files plus sibling files in the same role
+- search repeated function, class, type, schema, route, and option names across the repo
+- compare same-role directories such as `providers/*`, `clients/*`, `services/*`, and `repositories/*`
+- find large generic modules named `utils`, `helpers`, `common`, `shared`, or `misc`
+- inspect nearby tests to see whether the behavior contract is already captured
+
+Skip or de-prioritize generated files, vendored dependencies, lockfiles, snapshots, fixtures,
+minified bundles, protobuf/OpenAPI generated clients, and build artifacts unless the user scopes them.
+
 Read surrounding code before judging. Similar shape is not enough. The question is whether one
 shared behavior path would be clearer, safer, and easier to validate.
 
@@ -137,6 +173,10 @@ Use these labels:
 - **Leave alone** - duplication is clearer, faster, intentional, or likely to diverge
 
 Most findings are not merge blockers. Say so clearly.
+
+For `Do now`, cite the exact validation evidence: test files or cases, commands run, or why the
+change is purely local and mechanical. If you cannot cite that evidence, classify as `Do with tests`
+or `Defer`.
 
 ### Step 6: Evaluate tradeoffs
 
@@ -168,8 +208,10 @@ Context:
 
 **Do with tests** `services/*/list-items.*` - Centralize repeated pagination and filter parsing.
 Affected files: `services/users/list-items.*`, `services/projects/list-items.*`
+Evidence: `services/users/list-items.ts:24-58`, `services/projects/list-items.ts:19-55`
 Current duplication: both modules parse the same page, limit, sort, and filter parameters.
 Refactor shape: extract a shared parser with endpoint-specific allowlists.
+Behavior invariant: page and limit defaults, max-limit handling, sort allowlists, and error messages stay identical.
 Why better: one behavior path for defaults and validation, with fewer divergent call sites.
 Tradeoffs: one shared helper couples list endpoints to a common pagination contract.
 Risk: medium
@@ -185,6 +227,23 @@ Why not: each provider already has different retry, auth, pagination, and error 
 - High-value opportunities: 1
 - Low-value or risky opportunities: 1
 - Merge blockers: none from this audit lens
+- Residual risk / skipped areas: [large dirs, generated files, expensive checks, external services]
+```
+
+If no useful slimming opportunities are found, say so explicitly:
+
+```markdown
+### High-Value Opportunities
+None found within scope.
+
+### Low-Value Or Risky Opportunities
+[optional leave-alone observations]
+
+### Summary
+- High-value opportunities: 0
+- Low-value or risky opportunities: N
+- Merge blockers: none from this audit lens
+- Residual risk: [what was not inspected]
 ```
 
 Keep the report concise. Show the refactor shape, not a lecture.
