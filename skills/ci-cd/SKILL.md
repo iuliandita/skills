@@ -467,6 +467,15 @@ the OWASP Top 10 for Agentic Applications, read `references/supply-chain.md`
 - `references/supply-chain.md` - supply chain security, incident timeline, SHA pinning, SBOM/SLSA, PCI-DSS compliance, image signing
 - `references/target-versions.md` - May 2026 version snapshot for forges, runners, CI systems, and supply-chain tools
 
+## Output Contract
+
+See `skills/_shared/output-contract.md` for the full contract.
+
+- **Skill name:** CI-CD
+- **Deliverable bucket:** `audits`
+- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract -- boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table -- and write the deliverable to `docs/local/audits/ci-cd/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
+- **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
+
 ## Related Skills
 
 - **code-review** - has a `cicd-pipelines.md` reference for CI/CD **bug patterns** (expression

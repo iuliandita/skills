@@ -460,6 +460,15 @@ PCI-DSS 4.0 is the only active version (3.2.1 retired March 2024). 51 future-dat
 
 ---
 
+## Output Contract
+
+See `skills/_shared/output-contract.md` for the full contract.
+
+- **Skill name:** KUBERNETES
+- **Deliverable bucket:** `audits`
+- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract -- boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table -- and write the deliverable to `docs/local/audits/kubernetes/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
+- **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
+
 ## Related Skills
 
 - **docker** - for Dockerfile and Compose patterns. Kubernetes deploys the images Docker

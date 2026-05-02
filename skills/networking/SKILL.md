@@ -367,6 +367,15 @@ Network configuration touches several PCI-DSS requirements:
 - `references/ha.md` - keepalived/VRRP, floating IPs, HAProxy + keepalived
   HA, health check patterns
 
+## Output Contract
+
+See `skills/_shared/output-contract.md` for the full contract.
+
+- **Skill name:** NETWORKING
+- **Deliverable bucket:** `audits`
+- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract -- boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table -- and write the deliverable to `docs/local/audits/networking/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
+- **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
+
 ## Related Skills
 
 - **firewall-appliance** - manages BSD-based firewall appliances (OPNsense, pfSense). This skill
