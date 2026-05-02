@@ -196,7 +196,7 @@ backup_skill() {
   mkdir -p "$dest"
 
   if [[ -L "$dest_dir/$skill" ]]; then
-    cp -rL "$dest_dir/$skill/." "$dest/"
+    cp -P "$dest_dir/$skill" "$dest/"
   else
     cp -r "$dest_dir/$skill/." "$dest/"
   fi
@@ -569,6 +569,7 @@ main() {
         [[ -d "$SKILLS_SRC/$skill" ]] || continue
         create_link "$skill" "$tool_dir" "$force" "$no_backup"
       done
+      write_lock "$tool_dir" "${skills[@]}"
       if [[ "$tool" == "opencode" ]]; then
         sync_opencode_permissions "$OPENCODE_CONFIG_FILE" "${skills[@]}"
       fi

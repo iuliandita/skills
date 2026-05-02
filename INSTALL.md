@@ -57,6 +57,9 @@ git clone https://github.com/iuliandita/skills.git /tmp/skills-install
 # Check for updates later
 /tmp/skills-install/install.sh --check --link
 
+# Or check one linked tool directory directly
+/tmp/skills-install/install.sh --check --tool codex
+
 rm -rf /tmp/skills-install
 ```
 
@@ -169,7 +172,9 @@ files as duplicate skills.
 
 ## Checking for updates
 
-Each install writes a `.skills-lock.json` with content hashes. Compare against the source:
+Each install writes a `.skills-lock.json` with content hashes. In `--link` mode, the installer
+writes the lock file to both the canonical directory and each selected tool directory, so either
+canonical or tool-specific checks work after install. Compare against the source:
 
 ```bash
 ./install.sh --check                  # check default (Claude)
@@ -208,6 +213,8 @@ install.sh                # installer (25 targets, symlink mode, lock file)
 scripts/
   lint-skills.sh          # collection linter
   validate-spec.sh        # Agent Skills spec validator
+  test-install.sh         # installer regression tests
+  check-*.sh              # repository-specific safety and freshness checks
   skill-frontmatter.py    # frontmatter parser used by linters
   skill-lib.sh            # shared shell helpers
 ```

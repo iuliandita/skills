@@ -1,7 +1,7 @@
 ---
 name: terraform
 description: >
-  · Write/review Terraform/OpenTofu HCL, modules, state, policy-as-code. Triggers: 'terraform', 'opentofu', 'hcl', 'tfvars', 'tfstate', 'module', 'terraform plan', 'tflint'.
+  · Write/review Terraform/OpenTofu HCL, modules, state, policy-as-code. Triggers: 'terraform', 'opentofu', 'hcl', 'tfvars', 'tfstate', 'module', 'terraform plan', 'tflint'. Not for Kubernetes manifests (use kubernetes).
 license: MIT
 compatibility: "Requires terraform or tofu CLI. Optional: tflint, checkov, conftest"
 metadata:

@@ -42,3 +42,10 @@ repos:
         language: system
         pass_filenames: false
         stages: [pre-push]
+
+      - id: installer-regression-tests
+        name: test installer behavior
+        entry: ./scripts/test-install.sh
+        language: system
+        pass_filenames: false
+        stages: [pre-push]

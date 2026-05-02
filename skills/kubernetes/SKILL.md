@@ -1,7 +1,7 @@
 ---
 name: kubernetes
 description: >
-  · Write/review Kubernetes manifests, Helm, Kustomize, Gateway API, ArgoCD, sealed secrets. Triggers: 'kubernetes', 'k8s', 'helm', 'kubectl', 'deployment', 'pod', 'ingress', 'gateway'.
+  · Write/review Kubernetes manifests, Helm, Kustomize, Gateway API, ArgoCD, sealed secrets. Triggers: 'kubernetes', 'k8s', 'helm', 'kubectl', 'deployment', 'pod', 'ingress', 'gateway'. Not for Dockerfiles (use docker).
 license: MIT
 compatibility: "Requires kubectl. Optional: helm, kustomize, kube-score, cosign"
 metadata:

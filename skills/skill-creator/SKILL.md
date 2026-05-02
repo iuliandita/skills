@@ -223,32 +223,18 @@ Run through the AI Self-Check above. Then:
 
 #### Step 6: Forward-test
 
-Forward-testing is stress-testing a skill by having a subagent use it on a realistic task without
-knowing it's being evaluated. This catches issues that static review misses - confusing
-instructions, missing context, steps that only work when you already know the answer.
+Forward-testing has a subagent use the skill on realistic tasks without seeing your diagnosis.
+Use it for high-effort skills and for medium-effort skills with multi-step or scripted workflows.
+Skip it for low-effort wrappers, unavailable subagents, production-only access, long-running
+infra, missing credentials, or explicit user opt-out; note the skip reason.
 
-**When to forward-test:**
-- Always for high-effort skills
-- For medium-effort skills if the workflow has >3 steps or uses scripts
-- Skip for low-effort skills unless they're tricky
+1. Pick 2-3 realistic tasks, including one edge case.
+2. Launch with a real-user prompt and raw artifacts only.
+3. Check whether the agent followed the workflow, missed steps, or hallucinated.
+4. Clean up artifacts between iterations.
 
-**How to forward-test:**
-1. Pick 2-3 realistic tasks the skill should handle, including one edge case.
-2. Launch a subagent with a real-user prompt, not a diagnostic prompt that leaks expected findings.
-3. Pass raw artifacts, not your diagnosis or expected output.
-4. Review whether the agent followed the workflow, missed steps, or hallucinated.
-5. Clean up artifacts between iterations to avoid context contamination.
-
-**Decision rule:** if forward-testing only succeeds when subagents see leaked context, the skill
-needs tightening - not the test setup.
-
-**Skip forward-testing when:**
-- It would require live production access, long-running infra, or user credentials
-- The harness disallows subagent delegation (e.g., Codex `exec`, restricted sandboxes)
-- The user explicitly asks to skip it
-- The skill is a trivial wrapper or meta-skill (e.g., full-review orchestrator)
-
-In these cases, note what was skipped and why so the user can test manually.
+If forward-testing only succeeds with leaked context, tighten the skill instead of weakening
+the test.
 
 ---
 
@@ -467,15 +453,9 @@ collection, run Mode 2 Step 2 (quality checks) to verify no regressions were int
 
 ## Run Report
 
-End every run with a human-readable report, even for report-only checks:
-
-```text
-Branch: <branch or unavailable>; Mode: <create|review|audit|optimize|retrospective>; Scope: <target>
-Score: <before> -> <after> (<delta>) or "not scored - report only"
-Changes: <files changed or none>; Findings: <critical/important/minor counts and top items>
-Verification: <lint/spec/forward-test/source checks with pass/fail>; Skipped: <what and why>
-Next: <recommended action>
-```
+End every run with a human-readable report, even for report-only checks. Include branch, mode,
+scope, score or "not scored - report only", changed files, finding counts, verification results,
+skipped checks, and recommended next action.
 
 For edited skills, score the checklist pass rate plus behavioral or forward-test results. For
 audit-only runs, report structural gate and finding counts instead of inventing a composite.
