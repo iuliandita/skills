@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.32.1](https://github.com/iuliandita/skills/compare/v1.32.0...v1.32.1) (2026-05-02)
+
+
+### Refactoring
+
+* **skills:** consolidate narrow references ([b4745e8](https://github.com/iuliandita/skills/commit/b4745e86989567ee581d69d410c7fe06fc0853b1))
+
 ## [1.32.0](https://github.com/iuliandita/skills/compare/v1.31.1...v1.32.0) (2026-05-02)
 
 
