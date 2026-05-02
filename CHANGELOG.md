@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.32.2](https://github.com/iuliandita/skills/compare/v1.32.1...v1.32.2) (2026-05-02)
+
+
+### Bug Fixes
+
+* **installer:** harden skill audit workflow ([2c9ed53](https://github.com/iuliandita/skills/commit/2c9ed538229935483f47ed9c6ec24beaddfb1f3f))
+
 ## [1.32.1](https://github.com/iuliandita/skills/compare/v1.32.0...v1.32.1) (2026-05-02)
 
 
