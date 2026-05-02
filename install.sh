@@ -569,6 +569,7 @@ main() {
         [[ -d "$SKILLS_SRC/$skill" ]] || continue
         create_link "$skill" "$tool_dir" "$force" "$no_backup"
       done
+      write_lock "$tool_dir" "${skills[@]}"
       if [[ "$tool" == "opencode" ]]; then
         sync_opencode_permissions "$OPENCODE_CONFIG_FILE" "${skills[@]}"
       fi

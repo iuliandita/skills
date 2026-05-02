@@ -83,7 +83,20 @@ PY
   trap - RETURN
 }
 
+test_link_mode_writes_tool_lock() {
+  local tmp
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  HOME="$tmp" "$ROOT/install.sh" --tool codex --link --no-backup >/dev/null
+  HOME="$tmp" "$ROOT/install.sh" --check --tool codex >/dev/null
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
 test_backups_stay_outside_skill_root
 test_legacy_backups_are_migrated_outside_skill_root
 test_opencode_install_allows_installed_skills
+test_link_mode_writes_tool_lock
 printf 'install tests passed\n'

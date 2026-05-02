@@ -1,7 +1,7 @@
 ---
 name: git
 description: >
-  · Handle git branches, commits, remotes, conflicts, hooks, signing, releases, PR/MR workflows. Triggers: 'git', 'commit', 'branch', 'merge', 'rebase', 'tag', 'push', 'PR', 'MR', 'gh', 'glab'.
+  · Handle git branches, commits, remotes, conflicts, hooks, signing, releases, PR/MR workflows. Triggers: 'git', 'commit', 'branch', 'merge', 'rebase', 'tag', 'push', 'PR', 'MR', 'gh', 'glab'. Not for CI pipelines (use ci-cd).
 license: MIT
 compatibility: "Requires git. Optional: gh (GitHub CLI), glab (GitLab CLI), fj (Forgejo CLI)"
 metadata:

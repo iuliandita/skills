@@ -1,7 +1,7 @@
 ---
 name: databases
 description: >
-  · Configure/tune/migrate PostgreSQL, MongoDB, MySQL/MariaDB, MSSQL. Triggers: 'database', 'postgres', 'mysql', 'mongodb', 'schema', 'migration', 'pgbouncer', 'EXPLAIN'.
+  · Configure/tune/migrate PostgreSQL, MongoDB, MySQL/MariaDB, MSSQL. Triggers: 'database', 'postgres', 'mysql', 'mongodb', 'schema', 'migration', 'pgbouncer', 'EXPLAIN'. Not for HTTP APIs (use backend-api).
 license: MIT
 compatibility: "Requires one or more of: psql, mongosh, mysql, or sqlcmd"
 metadata:
