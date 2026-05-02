@@ -1,7 +1,7 @@
 ---
 name: skill-refiner
 description: >
-  · Batch-improve skill collections with evaluation loops, lint checks, behavioral tests, peer review. Triggers: 'skill refiner', 'improve skills', 'quality sweep', 'batch improve', 'skill loop'. Not for one skill (use skill-creator).
+  · Improve skill collections or a named skill with iterative scoring, lint checks, behavioral tests, peer review. Triggers: 'skill refiner', 'improve skills', 'quality sweep', 'batch improve', 'skill loop', 'target 99%'.
 license: MIT
 compatibility: "Requires: skill-creator skill, git. Optional: secondary AI harness (codex, claude, opencode) for cross-model review"
 metadata:
@@ -21,6 +21,8 @@ is available, fresh-context self-review as the minimum fallback).
 ## When to use
 
 - Batch-improving the entire skill collection after a period of manual edits
+- Targeted improvement of one named skill when the user explicitly asks for skill-refiner,
+  multiple iterations, a score target, or "no ceiling" polish
 - Running quality sweeps before a release or publish
 - Triggering a self-improvement cycle where skills bootstrap each other
 - After adding several new skills that need polish and consistency alignment
@@ -29,8 +31,8 @@ is available, fresh-context self-review as the minimum fallback).
 
 ## When NOT to use
 
-- Single skill review or improvement - use **skill-creator** (Mode 2)
 - Creating a new skill from scratch - use **skill-creator** (Mode 1)
+- Single-pass review of one skill without iteration, scoring, or peer review - use **skill-creator** (Mode 2)
 - One-off collection audit without iteration - use **skill-creator** (Mode 3)
 - Full codebase review (code, not skills) - use **full-review**
 - Style/slop audit on application code - use **anti-slop**
@@ -85,7 +87,9 @@ contested major flags (non-configurable).
 
 1. **Create feature branch**: `skill-refiner/YYYY-MM-DD-HHMMSS` from current HEAD.
    Preserve dirty worktrees; branching isolates the run, it does not imply cleanup. If already
-   on a run branch for this sweep, record it instead of nesting another branch.
+   on a run branch for this sweep, record it instead of nesting another branch. Do not mix
+   unrelated dirty files into refiner commits; isolate them with a path-limited stash only
+   when authorized.
 2. **Load run history**: read `.refiner-runs.json` from the collection root (if it exists).
    Use previous run data for: baseline score comparison (detect regressions from external
    changes), model/harness change detection (flag if the primary or secondary model changed
@@ -119,7 +123,10 @@ contested major flags (non-configurable).
      test-cases-local.md file alongside test-cases.md so they accumulate across runs.
    - Cross-model: skip on first iteration (no diff to review yet)
 7. **Log baseline scores**: record per-skill and aggregate scores
-8. **Iteration 2+**: enter adaptive focus mode
+8. **Iteration 2+**: enter adaptive focus mode. For a user-requested single-skill run,
+   treat that skill as the whole phase-1 pool, run at least the requested iteration count,
+   and keep iterating until the explicit score target is reached, quality plateaus, or a
+   circuit breaker fires.
 9. **Select targets**: identify skills scoring below the focus threshold
 10. **For each targeted skill**, run the improvement cycle:
     a. Read current SKILL.md and all reference files
@@ -212,8 +219,10 @@ contested major flags (non-configurable).
     collection root. Include: run_id, branch, date, primary/secondary harness+model+effort,
     config, pool size, termination reason, cross-model flag counts, before/after per-skill
     scores (component breakdown + composite, or clearly labeled estimates if the run used a
-    targeted manual rubric instead of the full automated sweep), and a changes summary.
-    Commit with the phase 3 summary.
+    targeted manual rubric instead of the full automated sweep), and a changes summary. When
+    updating an existing history file, append the new object without reserializing the whole
+    file; do not normalize or rewrite old entries just because a JSON writer changes escaping,
+    commas, or whitespace. Commit with the phase 3 summary.
 24. **Announce branch**: remind user to review and merge when ready
 
 ## AI Self-Check

@@ -1,7 +1,7 @@
 ---
 name: skill-creator
 description: >
-  · Create/review skills: frontmatter, triggers, overlaps, collection consistency, descriptions. Triggers: 'skill creator', 'new skill', 'skill audit', 'skill review', 'frontmatter', 'skill overlap'.
+  · Create/review skills: frontmatter, triggers, overlaps, collection consistency, retrospective updates. Triggers: 'skill creator', 'new skill', 'skill audit', 'skill review', 'update skill library'.
 license: MIT
 compatibility: "Optional: git (for freshness and gitignore filtering)"
 metadata:
@@ -94,13 +94,16 @@ Before returning any generated or modified skill, verify against this list:
 - Write skills as operational instructions, not essays about a domain.
 - Include clear When to use/When NOT to use routing and realistic AI self-checks.
 - Keep public skills tool-agnostic unless a tool is intrinsic to the skill.
+- Treat install/copy/link steps as environment-specific. If skills are sourced directly from a
+  repo, edit and verify there instead of distributing to tool dirs unless asked.
 
 ## Workflow
 
 Before entering any mode, detect the operating context. This skill works on individual skills
 or collections, whether inside a skill collection repo, a user's own project, or standalone.
 
-**Mode routing** - pick the mode that matches the user's signal:
+**Mode routing** - pick the mode that matches the user's signal. Retrospective-update
+requests are explicit permission to edit the library, so do not stop at a report-only pass:
 
 | User signal | Mode |
 |---|---|
@@ -108,10 +111,13 @@ or collections, whether inside a skill collection repo, a user's own project, or
 | "review my skill", "improve this skill", "is this skill good" | Mode 2 (Review) |
 | "audit the collection", "check all skills", "health check skills" | Mode 3 (Audit) |
 | "fix the description", "skill isn't triggering", "trigger overlap" | Mode 4 (Optimize) |
+| "review the conversation", "update the skill library", "what did we learn" | Mode 5 (Retrospective Update) |
 
 When the signal is ambiguous (e.g., "look at my skill"), ask before committing - Create and
 Review diverge quickly and re-running wastes context. Modes can chain: Create -> Review,
 Review -> Optimize, Audit -> per-skill Review for flagged items.
+For explicit retrospective-update requests, act without asking for confirmation unless the only
+possible update is destructive or would create a new class-level skill with uncertain scope.
 
 1. **Find the collection root** (if one exists): check for a `skills/` directory (common
    convention) or any path the user specifies. Different harnesses store skills in different
@@ -297,6 +303,8 @@ Read the SKILL.md and all reference files. No skipping - the whole point is catc
 - All future-dated requirements (mandatory since March 31, 2025) reflected?
 - No hardcoded secrets in examples?
 
+**Script-runner reality check:** verify helper script input shape. If a single-skill run reports zero skills or odd output, re-run against the collection root and filter for the target.
+
 #### Step 3: Report findings
 
 Use severity ratings:
@@ -405,6 +413,12 @@ Present findings grouped by severity. Include actionable fixes for each finding.
 
 ---
 
+### Mode 5: Retrospective Update
+
+When the user asks to review a completed conversation and update the skill library, capture reusable class-level learning, not a session log. Prefer patching a loaded or existing umbrella skill; create a new skill only when no class-level fit exists. See `references/session-retrospective-updates.md`.
+
+---
+
 ### Mode 4: Optimize Skill Description
 
 The `description` field in frontmatter is the primary triggering mechanism. Optimize it for
@@ -452,7 +466,7 @@ collection, run Mode 2 Step 2 (quality checks) to verify no regressions were int
 End every run with a human-readable report, even for report-only checks:
 
 ```text
-Branch: <branch or unavailable>; Mode: <create|review|audit|optimize>; Scope: <target>
+Branch: <branch or unavailable>; Mode: <create|review|audit|optimize|retrospective>; Scope: <target>
 Score: <before> -> <after> (<delta>) or "not scored - report only"
 Changes: <files changed or none>; Findings: <critical/important/minor counts and top items>
 Verification: <lint/spec/forward-test/source checks with pass/fail>; Skipped: <what and why>
@@ -468,6 +482,8 @@ audit-only runs, report structural gate and finding counts instead of inventing 
   patterns by effort tier, style rules (ASCII, banned words), reference file organization,
   cross-skill patterns, AI Self-Check patterns, and a snapshot inventory of the upstream
   collection (useful as a reference, not an authoritative list for other repos)
+- `references/session-retrospective-updates.md` - compact workflow for reviewing a completed
+  conversation and updating the right class-level skill or reference file.
 
 ## Related Skills
 
