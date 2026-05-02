@@ -8,7 +8,7 @@ Scope: dependency updates, linting, scanning, review gates, and rollout. For too
 usage, see:
 
 - SHA pinning, SBOM, cosign: `supply-chain.md`
-- Platform-specific syntax: `github-actions.md`, `gitlab-ci.md`, `gitea-ci.md`
+- Platform-specific syntax: `github-actions.md`, `gitlab-ci.md`, `forgejo-gitea-actions.md`
 - Self-hosted runners: `runners.md`
 - Code-level security findings and OWASP-style audits: the **security-audit** skill
 - PR review mechanics: the **code-review** skill
@@ -328,6 +328,38 @@ maintainable:
 Pair with **required review from CODEOWNERS** in branch protection. Without the "required
 review" bit, CODEOWNERS is suggestion-only.
 
+### Changed-path deployment fan-out
+
+For infra repos that deploy by changed path, inspect the workflow before assuming one
+top-level deploy command runs on every push. Many Forgejo/Gitea/GitHub workflows use a
+detect-changes job that emits booleans for specific roles, playbooks, services, or
+inventory areas.
+
+When adding a new deployable path, update all required pieces together:
+
+- workflow `on.push.paths` / `on.pull_request.paths` entries when path filtering is used
+- detect-change outputs, such as `baseline: ${{ steps.changes.outputs.baseline }}`
+- deploy jobs that actually run the new playbook, service deploy, or image build
+- manual `workflow_dispatch` inputs for one-shot reruns when production operations need them
+
+Validation:
+
+```bash
+python3 - <<'PY'
+from pathlib import Path
+import yaml
+yaml.safe_load(Path('.forgejo/workflows/deploy.yml').read_text())
+print('yaml-ok')
+PY
+
+git diff --check
+```
+
+After pushing, verify with the forge's Actions task view or CLI. A broad path filter
+like `infra/**` can trigger the workflow while every fan-out job skips if no
+detect-change output matches the new path. Include the workflow file itself in
+path filters if workflow edits should trigger a verification run.
+
 ### Required status checks
 
 On protected branches, require:
@@ -440,7 +472,7 @@ order that works in practice:
 ## Cross-references
 
 - SHA pinning, image signing, SBOM attestations: `supply-chain.md`
-- Platform-specific pipeline syntax: `github-actions.md`, `gitlab-ci.md`, `gitea-ci.md`
+- Platform-specific pipeline syntax: `github-actions.md`, `gitlab-ci.md`, `forgejo-gitea-actions.md`
 - Self-hosted runner hardening: `runners.md`
 - Tool-level security audits (CVE triage, exploit chains): **security-audit** skill
 - PR-level code review practices: **code-review** skill

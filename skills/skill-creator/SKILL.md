@@ -415,7 +415,11 @@ Present findings grouped by severity. Include actionable fixes for each finding.
 
 ### Mode 5: Retrospective Update
 
-When the user asks to review a completed conversation and update the skill library, capture reusable class-level learning, not a session log. Prefer patching a loaded or existing umbrella skill; create a new skill only when no class-level fit exists. See `references/session-retrospective-updates.md`.
+When the user asks to review a completed conversation and update the skill library, capture
+reusable class-level learning, not a session log. Patch a loaded or umbrella skill for
+reusable workflow, routing, preference, or pitfall changes; create a new skill only when no
+class-level fit exists. In the public skills repo, read gitignored instruction files such as
+`AGENTS.md`, but do not force-add them; stage only intended public skill paths and validate.
 
 ---
 
@@ -482,8 +486,6 @@ audit-only runs, report structural gate and finding counts instead of inventing 
   patterns by effort tier, style rules (ASCII, banned words), reference file organization,
   cross-skill patterns, AI Self-Check patterns, and a snapshot inventory of the upstream
   collection (useful as a reference, not an authoritative list for other repos)
-- `references/session-retrospective-updates.md` - compact workflow for reviewing a completed
-  conversation and updating the right class-level skill or reference file.
 
 ## Related Skills
 
