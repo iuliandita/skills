@@ -246,6 +246,15 @@ Before committing any skill modification, verify:
 - [ ] **Score discipline kept**: changes are kept only when they improve measured quality or fix a verified defect
 - [ ] **Local-only scope respected**: public and private skills are separated before commits or release notes
 
+## Output Contract
+
+See `skills/_shared/output-contract.md` for the full contract.
+
+- **Skill name:** SKILL-REFINER
+- **Deliverable bucket:** `audits`
+- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content outside the refiner workflow, emit the full contract -- boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table -- and write the deliverable to `docs/local/audits/skill-refiner/<YYYY-MM-DD>-<slug>.md`. When invoked to **run the refiner workflow** (its primary mode), use the existing Phase 3 "Final report" format described in the workflow; that build-mode output is unchanged by this contract.
+- **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
+
 ## Rules
 
 1. **Immutability in phase 1**: never modify `references/evaluation-criteria.md`,
