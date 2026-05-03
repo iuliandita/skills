@@ -44,14 +44,14 @@ The goal is not magic self-repair. The goal is a repeatable maintenance loop wit
 
 ## Quality evidence
 
-Current repository gates pass for all 42 public skills:
+Current repository gates pass for the public skill collection:
 
 ```bash
 ./scripts/lint-skills.sh
 ./scripts/validate-spec.sh
 ```
 
-The latest tracked refiner run in [`.refiner-runs.json`](.refiner-runs.json) is dated 2026-04-30. It ended with lint/spec warnings cleared, behavioral test groups present for the then-current 39/39 public skills in that run, inventory snapshots refreshed, and cross-harness peer review returning no flags after a major regression was caught and fixed.
+The latest tracked refiner run in [`.refiner-runs.json`](.refiner-runs.json) is a targeted 2026-05-02 `code-slimming` run. It ended with structural gates passing, a 99/100 final review, a 99/100 behavioral forward-test, and peer review returning `NO_FLAGS`.
 
 That evidence is a maintenance signal, not a permanent guarantee. Skill behavior still depends on the consuming agent, model, tool limits, and whether the task matches the skill's intended scope.
 
