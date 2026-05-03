@@ -114,7 +114,7 @@ Most of the time, skip this step entirely.
 
 ### Step 4: Save
 
-1. Resolve output directory: user-specified path > `docs/prompts/` > `docs/` > ask
+1. Resolve output directory: user-specified path > `docs/local/prompts/` > `docs/` > ask
 2. Scan for `NNN-*.md` files, increment highest number, zero-pad to 3 digits
 3. Infer a slug from the topic (e.g., `code-review`, `data-extraction`)
 4. Write to `<output-dir>/NNN-slug.md`
@@ -258,6 +258,15 @@ Return only the improved email. No commentary, no explanations, no "Here's your 
 Note: simple task, so plain prose - no XML sections, no numbered steps, no bloated preamble.
 
 ---
+
+## Output Contract
+
+See `skills/_shared/output-contract.md` for the full contract.
+
+- **Skill name:** PROMPT-GENERATOR
+- **Deliverable bucket:** `prompts`
+- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content (e.g., review an existing prompt for quality), emit the full contract -- boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table -- and write the deliverable to `docs/local/prompts/prompt-generator/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content** (its primary mode -- producing a prompt for the user), respond freely without the contract.
+- **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
 
 ## Related Skills
 

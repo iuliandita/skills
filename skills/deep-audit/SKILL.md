@@ -469,6 +469,16 @@ but preserves the wave ordering.
 - `references/report-templates.md` - templates for `DEEP-AUDIT.md`, `DEEP-AUDIT-TASKS.md`, and Step 9b plan files.
 - `references/exclusions.md` - skills deliberately excluded from wave dispatch and why.
 
+## Output Contract
+
+See `skills/_shared/output-contract.md` for the full contract.
+
+- **Skill name:** DEEP-AUDIT
+- **Deliverable bucket:** `audits`
+- **Mode:** always-on. Every invocation emits the full contract -- boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table.
+- **Deliverable path:** `docs/local/audits/deep-audit/<YYYY-MM-DD>-<slug>.md`
+- **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract).
+
 ## Related Skills
 
 - **full-review** - the quick 4-skill version (code-review, anti-slop, security-audit, update-docs). Use when speed matters more than depth.

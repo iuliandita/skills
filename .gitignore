@@ -3,8 +3,7 @@ CLAUDE.md
 AGENTS.md
 publish.sh
 skills/cluster-health/protected/
-docs/superpowers/
-docs/prompts/
+docs/local/
 SECURITY-AUDIT.md
 .codex
 .env

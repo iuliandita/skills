@@ -381,6 +381,15 @@ Rolling deploys send SIGTERM to old instances while new ones come up. Handle it 
 - `references/http-api-patterns.md` - resource design, method semantics, status codes, versioning, pagination, filtering, idempotency
 - `references/auth-and-session-patterns.md` - sessions vs bearer tokens, OAuth/OIDC, BFF, refresh tokens, machine clients
 
+## Output Contract
+
+See `skills/_shared/output-contract.md` for the full contract.
+
+- **Skill name:** BACKEND-API
+- **Deliverable bucket:** `audits`
+- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract -- boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table -- and write the deliverable to `docs/local/audits/backend-api/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
+- **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
+
 ## Related Skills
 
 - **databases** - schema design, query tuning, migrations, and persistence concerns behind the API

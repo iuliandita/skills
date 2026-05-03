@@ -363,6 +363,16 @@ Once i18n is set up, the workflow for new features is:
 - `references/translation-quality.md` - context-aware translation prompting, voice consistency
   rules, protected term handling, and validation script implementations. Use during Steps 4-5.
 
+## Output Contract
+
+See `skills/_shared/output-contract.md` for the full contract.
+
+- **Skill name:** LOCALIZE
+- **Deliverable bucket:** `audits`
+- **Mode:** always-on. Every invocation emits the full contract -- boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table.
+- **Deliverable path:** `docs/local/audits/localize/<YYYY-MM-DD>-<slug>.md`
+- **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract).
+
 ## Related Skills
 
 - **testing** - write tests for i18n behavior (locale switching, fallbacks, formatting).

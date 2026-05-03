@@ -376,6 +376,16 @@ When a feature, service, or API is deprecated during a session:
 - **Remove deprecated entries** after 2 release cycles or when confirmed no longer referenced anywhere
 - **Breaking changes** deserve their own bullet: what broke, what replaces it, any migration steps
 
+## Output Contract
+
+See `skills/_shared/output-contract.md` for the full contract.
+
+- **Skill name:** UPDATE-DOCS
+- **Deliverable bucket:** `audits`
+- **Mode:** always-on. Every invocation emits the full contract -- boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table.
+- **Deliverable path:** `docs/local/audits/update-docs/<YYYY-MM-DD>-<slug>.md`
+- **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract).
+
 ## Related Skills
 
 - **full-review** - orchestrates code-review, anti-slop, security-audit, and update-docs in

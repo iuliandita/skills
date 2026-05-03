@@ -350,6 +350,15 @@ Before returning any shell script, check:
 - `references/alt-shells.md` - Fish 4.6 (syntax, functions, completions, config, 4.6 additions), tcsh/csh 6.24 (syntax, when you'll encounter it), nushell 0.111 (structured pipelines, types), elvish 0.22/oils 0.37 (brief)
 - `references/ssh-tmux-autostart.md` - safe shell startup pattern for interactive SSH sessions that attach to tmux without breaking non-interactive commands
 
+## Output Contract
+
+See `skills/_shared/output-contract.md` for the full contract.
+
+- **Skill name:** COMMAND-PROMPT
+- **Deliverable bucket:** `audits`
+- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract -- boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table -- and write the deliverable to `docs/local/audits/command-prompt/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
+- **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
+
 ## Related Skills
 
 - **firewall-appliance** - OPNsense/pfSense uses tcsh/csh on FreeBSD. That skill handles the BSD firewall context; this skill covers tcsh syntax in general.

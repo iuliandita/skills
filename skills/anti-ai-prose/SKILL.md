@@ -429,6 +429,18 @@ Report:
 
 ---
 
+## Output Contract
+
+> **Severity migration:** The prior scale (`High | Medium | Low`) is replaced by `P0 | P1 | P2 | P3 | info`. Mapping: `High` -> `P1`, `Medium` -> `P2`, `Low` -> `P3`. Inline severity references elsewhere in this file should be updated in a follow-up pass -- out of scope for this contract retrofit.
+
+See `skills/_shared/output-contract.md` for the full contract.
+
+- **Skill name:** ANTI-AI-PROSE
+- **Deliverable bucket:** `audits`
+- **Mode:** always-on. Every invocation emits the full contract -- boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table.
+- **Deliverable path:** `docs/local/audits/anti-ai-prose/<YYYY-MM-DD>-<slug>.md`
+- **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract).
+
 ## Related Skills
 
 - **anti-slop** - code quality audit. When auditing a repo, run anti-slop for code and anti-ai-prose for docs. The two are deliberately complementary.
