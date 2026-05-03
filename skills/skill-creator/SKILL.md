@@ -41,8 +41,6 @@ patterns activates reliably, reads clearly, and plays well with the rest of the 
 - Updating project documentation after infrastructure changes - use **update-docs**
 - Writing application code, even if the code is for a tool a skill might use
 
----
-
 ## AI Self-Check
 
 Before returning any generated or modified skill, verify against this list:
@@ -76,7 +74,6 @@ Before returning any generated or modified skill, verify against this list:
 - [ ] **Context budget justified**: every section earns its token cost (see `references/conventions.md`)
 - [ ] **Forward-tested** (high-effort skills, when feasible): during review, a subagent used the skill on a realistic task without leaked context. This is a process check on the reviewer, not a content requirement on the skill - the skill does not need a "forward-test" section. The reviewer notes what was tested or skipped and why.
 
----
 - [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
 - [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
 - [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
@@ -236,8 +233,6 @@ infra, missing credentials, or explicit user opt-out; note the skip reason.
 If forward-testing only succeeds with leaked context, tighten the skill instead of weakening
 the test.
 
----
-
 ### Mode 2: Review / Improve an Existing Skill
 
 #### Step 1: Read the skill thoroughly
@@ -321,8 +316,6 @@ Especially valuable when:
 - New reference files were added and need discovery testing
 - Trigger description was rewritten (test activation, not just content)
 
----
-
 ### Mode 3: Audit the Skill Collection
 
 Run a health check across all skills. Useful periodically or after adding/removing skills.
@@ -397,8 +390,6 @@ For each stale high-effort skill, search the web for:
 
 Present findings grouped by severity. Include actionable fixes for each finding.
 
----
-
 ### Mode 5: Retrospective Update
 
 When the user asks to review a completed conversation and update the skill library, capture
@@ -406,8 +397,6 @@ reusable class-level learning, not a session log. Patch a loaded or umbrella ski
 reusable workflow, routing, preference, or pitfall changes; create a new skill only when no
 class-level fit exists. In the public skills repo, read gitignored instruction files such as
 `AGENTS.md`, but do not force-add them; stage only intended public skill paths and validate.
-
----
 
 ### Mode 4: Optimize Skill Description
 
@@ -448,8 +437,6 @@ The goal is catching obvious gaps and false-positive magnets, not deterministic 
 
 Edit the skill's frontmatter with the rewritten description. If the skill is part of a
 collection, run Mode 2 Step 2 (quality checks) to verify no regressions were introduced.
-
----
 
 ## Run Report
 

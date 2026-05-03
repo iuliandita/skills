@@ -23,10 +23,7 @@ The five waves are: Reconnaissance; Code Quality (code-review, anti-slop,
 anti-ai-prose, code-slimming); Domain-Specific (detected skills only); Security (security-audit
 then zero-day); and Docs & Hygiene (update-docs, roadmap, git).
 
-After the waves, Steps 7-9 persist findings to `docs/local/audits/DEEP-AUDIT.md`,
-write `DEEP-AUDIT-TASKS.md`, and route SMALL audits to the task list or LARGE audits
-to a brainstorming skill or generated plans under `docs/local/specs/` and
-`docs/local/plans/`.
+After the waves, Steps 7-9 persist findings to `docs/local/audits/DEEP-AUDIT.md`, write `DEEP-AUDIT-TASKS.md`, and route SMALL audits to the task list or LARGE audits to a brainstorming skill or generated plans under `docs/local/specs/` and `docs/local/plans/`.
 
 For a quick 4-skill sweep, use **full-review** instead.
 
@@ -44,7 +41,6 @@ For a quick 4-skill sweep, use **full-review** instead.
 - Auditing the skill collection itself - use **skill-creator** (Mode 3)
 - Offensive security engagement or CTF - use **lockpick** directly
 - Live-system OS administration (running `pacman`/`apt`/`dnf`, fixing a NixOS rebuild, configuring SELinux on a host, debugging an OPNsense appliance) - use the matching distro/appliance skill directly (**arch-btw**, **debian-ubuntu**, **rhel-fedora**, **nixos-btw**, **firewall-appliance**). Repo-level audit of OS-related files (PKGBUILDs, `debian/`, `*.spec`, `flake.nix`, `pf.conf`, etc.) belongs in Wave 3 of this skill
----
 
 ## AI Self-Check
 
@@ -71,14 +67,11 @@ workflow (waves + persistence + routing), not just the wave dispatch phase.
 - [ ] If LARGE and no brainstorming skill is available, execution-plan files written to `docs/local/specs/` and `docs/local/plans/` using the standard naming convention
 - [ ] When user specified a scope, all agents received that scope constraint and detection was filtered to the scoped file tree
 - [ ] Only skills from the iuliandita/skills collection were used - no built-in reviewers or platform audit modes
----
 - [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
 - [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
 - [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
 - [ ] **Scope bounded**: audit waves match the repo type and user request, not every possible skill
 - [ ] **Evidence retained**: findings cite files, commands, outputs, or source docs instead of impressions
-
----
 
 ## Performance
 
@@ -340,7 +333,6 @@ After Wave 5 - before the persistence work in Step 7 - present a brief
 priority-ordered summary to the user:
 
 ```markdown
----
 
 ## Summary
 
@@ -490,8 +482,6 @@ See `skills/_shared/output-contract.md` for the full contract.
 - **skill-creator** - audits the skill collection. This skill audits application repos.
 
 Read `references/exclusions.md` before changing Wave 3 routing.
-
----
 
 ## Rules
 

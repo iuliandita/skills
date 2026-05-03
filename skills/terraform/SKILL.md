@@ -48,7 +48,6 @@ IBM acquired HashiCorp for $6.4B (closed Feb 2025). Terraform stays BSL 1.1; Ope
 - CI/CD pipeline design (use **ci-cd**)
 - Database engine configuration, schema design, or migrations (use **databases**)
 - Security auditing application code (use **security-audit**)
----
 
 ## AI Self-Check
 
@@ -69,22 +68,17 @@ AI tools consistently produce the same Terraform mistakes. **Before returning an
 - [ ] `terraform fmt` and `terraform validate` pass
 
 **AI should never own `terraform apply`.** In March 2026, an AI-assisted Terraform workflow deleted production infrastructure through escalating cleanup logic. Plan output is reviewed by a human. Always.
----
 - [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
 - [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
 - [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
 - [ ] **Provider docs checked**: resource arguments, defaults, and deprecations match pinned provider versions
 - [ ] **State impact reviewed**: imports, moves, destroys, and replacements are visible in plan output before apply
 
----
-
 ## Performance
 
 - Scope plans to changed stacks/modules during iteration, then run full plans before merge.
 - Use remote state and data sources sparingly; excessive cross-stack reads slow plans and create hidden coupling.
 - Cache providers in CI and pin versions to avoid repeated downloads and surprise upgrades.
-
----
 
 ## Best Practices
 
@@ -129,8 +123,6 @@ checkov -d . --framework terraform           # Security/compliance scan
 terraform plan -out=plan.tfplan              # Review the plan
 terraform show -json plan.tfplan | conftest test -  # Policy-as-code gate (OPA)
 ```
-
----
 
 ## HCL Patterns
 
@@ -292,8 +284,6 @@ For PCI CDE buckets, add `aws_s3_bucket_object_lock_configuration` with COMPLIAN
 
 See `references/compliance.md` for full S3 hardening HCL examples including account-level blocks and object lock.
 
----
-
 ## Modules
 
 Read `references/module-patterns.md` for detailed module structure, testing patterns, and registry strategies.
@@ -331,8 +321,6 @@ modules/<provider>/<resource-type>/
 - `module "vpc"` that just passes through all variables to `aws_vpc`
 - Not pinning module versions in production
 - Using Git refs for module sources in production (use a registry or exact tags)
-
----
 
 ## Operations
 
@@ -383,8 +371,6 @@ The Terraform ecosystem has real supply chain risks (March 2026):
 - **Trivy IaC scanning**: pin to a verified version in CI. Check release notes before updating - supply chain attacks on CI tools are real. Pin to SHA digest, not mutable tag.
 - **CDKTF: dead.** Deprecated Dec 2025, archived. Migrate to HCL.
 
----
-
 ## Architecture
 
 ### Multi-account strategy
@@ -432,8 +418,6 @@ provider "aws" {
 
 **Recommended CI pipeline**: `terraform fmt` -> `terraform validate` -> `tflint` -> `checkov` -> `terraform plan` -> `conftest test` (OPA) -> human review -> `terraform apply`
 
----
-
 ## Compliance
 
 Read `references/compliance.md` for the full PCI-DSS 4.0 requirements mapping, drift detection strategy, audit trail architecture, and OIDC patterns.
@@ -453,13 +437,9 @@ See `references/compliance.md` for full Req 1/3/7 mapping, drift detection strat
 
 **QSA expectations (2026)**: operational proof, not policy intent. Git history showing reviewed PRs, archived plan outputs, policy scan results per deployment, drift reports proving continuous compliance.
 
----
-
 ## Production Checklist
 
 Read `references/production-checklist.md` for the full pre-deploy checklist covering HCL quality, module standards, operations, PCI-DSS 4.0, and PCI MPoC compliance.
-
----
 
 ## Reference Files
 
@@ -467,8 +447,6 @@ Read `references/production-checklist.md` for the full pre-deploy checklist cove
 - `references/state-and-security.md` - state backend, locking, encryption, OIDC patterns, and state surgery (cross-state migration)
 - `references/compliance.md` - compliance and audit-oriented Terraform guidance
 - `references/production-checklist.md` - pre-deploy verification checklist (HCL, modules, operations, PCI-DSS, MPoC)
-
----
 
 ## Output Contract
 
@@ -489,8 +467,6 @@ See `skills/_shared/output-contract.md` for the full contract.
 - **databases** - engine tuning and operations. Terraform provisions managed databases; databases skill tunes the engine.
 - **ci-cd** - pipeline design that runs `terraform plan/apply`. Terraform covers HCL; ci-cd covers the pipeline stages.
 - **docker** - container image patterns. Terraform provisions container infrastructure but Dockerfile design belongs in docker.
-
----
 
 ## Rules
 

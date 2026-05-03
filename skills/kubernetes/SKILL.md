@@ -43,8 +43,6 @@ This skill covers four domains depending on context:
 - Database engine configuration running on K8s (use databases)
 - Broad read-only cluster health checks, status reports, and post-maintenance diagnostics (use **cluster-health**)
 
----
-
 ## AI Self-Check
 
 This skill runs inside an AI agent. AI tools consistently produce the same K8s security mistakes. **Before returning any generated manifest, verify against this list:**
@@ -66,14 +64,11 @@ This skill runs inside an AI agent. AI tools consistently produce the same K8s s
 
 Run generated manifests through `kube-score`, `kubelinter`, or `checkov` when available.
 
----
 - [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
 - [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
 - [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
 - [ ] **API versions checked**: manifests, Helm templates, and Gateway resources match the target cluster version
 - [ ] **Cluster context verified**: namespace, context, and kubeconfig identity are shown before mutating commands
-
----
 
 ## Performance
 
@@ -81,15 +76,11 @@ Run generated manifests through `kube-score`, `kubelinter`, or `checkov` when av
 - Use server-side dry-run and diff before apply; avoid repeated full-cluster renders during tight loops.
 - Scope watches, logs, and `kubectl get` calls by namespace/labels in large clusters.
 
-
----
-
 ## Best Practices
 
 - Prefer declarative GitOps or reviewed manifests over live imperative changes for production.
 - Back up CRDs and custom resources before upgrades or operator changes.
 - Use policy gates for privileged pods, hostPath, broad RBAC, and mutable image tags.
-
 
 ## Workflow
 
@@ -147,8 +138,6 @@ When changing a live workload managed by ArgoCD, Flux, or another reconciler,
 read `references/gitops-emergency-changes.md`; live `kubectl scale`, `kubectl patch`,
 or manual apply may be reverted unless the desired state changes too.
 
----
-
 ## Manifests
 
 Read `references/manifest-templates.md` for complete, copy-pasteable YAML templates (Deployment, Service, Gateway API HTTPRoute, ConfigMap, PVC, StatefulSet, native sidecar).
@@ -181,8 +170,6 @@ Read `references/manifest-templates.md` for complete, copy-pasteable YAML templa
 **In-place pod resize** (GA in K8s 1.35): CPU and memory can be updated on running pods without restart. VPA can now resize without disruption using `InPlaceOrRecreate` mode.
 
 **Config/secrets**: ConfigMap for non-sensitive data. For secrets, use External Secrets Operator syncing from a vault/cloud KMS, or Sealed Secrets for encrypted-in-git workflows (see `references/sealed-secrets.md`). Never commit plaintext secrets anywhere.
-
----
 
 ## Helm Charts
 
@@ -289,8 +276,6 @@ Key Go template patterns:
 - Multi-source Applications (ArgoCD 2.6+) for separating chart version from environment values.
 - OCI charts: omit the `oci://` prefix in ArgoCD's `repoURL` field.
 
----
-
 ## Architecture
 
 Read `references/architecture.md` for the full architecture decision framework. Key patterns:
@@ -355,8 +340,6 @@ The Trivy supply chain attack (CVE-2026-33634) is the defining security event of
 - **User namespaces** (`hostUsers: false`) enabled by default since K8s 1.33. Maps container UID 0 to unprivileged host UID. Huge for PCI multi-tenancy - container breakout doesn't yield host root.
 - **Pod-level mTLS** (KEP-4317) beta in 1.35, feature gate `PodCertificates` must be manually enabled. Native X.509 certs for pods without service mesh. Future alternative to Istio/Cilium for Req 4 compliance.
 
----
-
 ## Compliance
 
 Read `references/compliance.md` for the full PCI-DSS 4.0 requirements mapping to Kubernetes controls.
@@ -378,8 +361,6 @@ PCI-DSS 4.0 is the only active version (3.2.1 retired March 2024). 51 future-dat
 **CDE isolation**: dedicated cluster strongly preferred. Shared cluster puts the entire cluster in PCI scope and requires dedicated node pools + taints, gVisor/Kata for CDE pods, separate DNS, separate audit streams, and extensive QSA documentation. Most QSAs push back on shared clusters.
 
 **PCI MPoC**: MPoC backends (attestation/monitoring for tap-to-pay) fall under full PCI-DSS scope. No K8s-specific addenda - standard PCI-DSS 4.0 controls apply.
-
----
 
 ## Production Checklist
 
@@ -448,8 +429,6 @@ PCI-DSS 4.0 is the only active version (3.2.1 retired March 2024). 51 future-dat
 - [ ] Certificate inventory maintained (Req 4.2.1.1)
 - [ ] Quarterly authenticated internal vulnerability scans (Req 11.3.1.2) - application-level, not just image scanning
 
----
-
 ## Reference Files
 
 - `references/manifest-templates.md` - manifest templates and reusable workload patterns
@@ -457,8 +436,6 @@ PCI-DSS 4.0 is the only active version (3.2.1 retired March 2024). 51 future-dat
 - `references/sealed-secrets.md` - Sealed Secrets patterns and caveats
 - `references/compliance.md` - PCI-DSS and platform hardening guidance
 - `references/gitops-emergency-changes.md` - safe workflow for urgent changes to GitOps-managed workloads
-
----
 
 ## Output Contract
 
@@ -483,8 +460,6 @@ See `skills/_shared/output-contract.md` for the full contract.
   owns the manifest pattern; databases owns the engine configuration within.
 - **ansible** - can deploy to K8s via `kubernetes.core` collection, but manifest and Helm
   chart design belong here.
-
----
 
 ## Rules
 
