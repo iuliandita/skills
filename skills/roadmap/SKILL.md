@@ -372,6 +372,15 @@ silently - move to **Parked** with a reason, or confirm deletion explicitly.
 - `references/competitive-scan.md` - competitor/repo scan workflow, evidence thresholds,
   and ROADMAP.md Competitive Intel formatting.
 
+## Output Contract
+
+See `skills/_shared/output-contract.md` for the full contract.
+
+- **Skill name:** ROADMAP
+- **Deliverable bucket:** `deliverables`
+- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** an existing roadmap (e.g., "review my ROADMAP.md"), emit the full contract -- boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table -- and write the deliverable to `docs/local/deliverables/roadmap/<YYYY-MM-DD>-<slug>.md`. When invoked to **build or update a roadmap** (its primary mode -- writing to the user's working-directory `ROADMAP.md`), respond freely without the contract; build-mode output goes to `ROADMAP.md` in the working directory, not to `docs/local/`.
+- **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
+
 ## Related Skills
 
 - **browse** - competitive scan (Mode 3) may use browse for reading competitor repos

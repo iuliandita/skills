@@ -278,6 +278,15 @@ Before returning any built UI or critique, verify:
 - `references/app-ui-patterns.md` - app shells, dashboards, forms, settings, onboarding, and empty states. Read for logged-in tools or operational interfaces
 - `references/critique-template.md` - rant -> filter -> ticket flow. Read in critique mode
 
+## Output Contract
+
+See `skills/_shared/output-contract.md` for the full contract.
+
+- **Skill name:** FRONTEND-DESIGN
+- **Deliverable bucket:** `deliverables`
+- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing UI/UX (e.g., "review my landing page"), emit the full contract -- boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table -- and write the deliverable to `docs/local/deliverables/frontend-design/<YYYY-MM-DD>-<slug>.md`. When invoked to **build a new artifact or generate content** (its primary mode -- producing UI code in chat), respond freely without the contract; build-mode behavior is unchanged.
+- **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
+
 ## Related Skills
 
 - **anti-slop** - AI slop in code (over-abstraction, hallucinated APIs, comment noise). This skill is its visual counterpart; pair on PRs that touch UI code
