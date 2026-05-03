@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.33.0](https://github.com/iuliandita/skills/compare/v1.32.2...v1.33.0) (2026-05-03)
+
+
+### Features
+
+* **skills:** standardize output contract across all 42 skills ([16aaf12](https://github.com/iuliandita/skills/commit/16aaf12030fc0b609a06a1461c3d0e5337f3a5e0))
+
 ## [1.32.2](https://github.com/iuliandita/skills/compare/v1.32.1...v1.32.2) (2026-05-02)
 
 
