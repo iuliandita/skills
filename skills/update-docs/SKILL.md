@@ -53,6 +53,7 @@ Before presenting documentation updates, verify:
 - [ ] `.env.example` updated if env vars or runtime config changed
 - [ ] If repo docs are too thin, a minimal docs bootstrap was offered to the user as a suggestion, not forced
 - [ ] Size check run (`wc -c`) - instruction files under 40,000 chars
+- [ ] README / quality-evidence sections checked for stale dates, stale counts, and old run references
 - [ ] All roadmap files (committed AND gitignored) checked - their stated version/date matches current HEAD or latest tag
 - [ ] `[planned]` / `[exploring]` items that actually shipped have moved to Shipped Highlights, not left in the in-progress list
 - [ ] When private and public roadmaps both exist, both are updated, with the public one carrying user-visible highlights only and the private one carrying internal detail
@@ -92,6 +93,7 @@ Before presenting documentation updates, verify:
 
 1. Identify changes
 1.5. Roadmap freshness check
+1.6. Evidence freshness check
 2. Categorize doc impact
 3. Check whether the repo's docs surface is missing or too thin
 4. Update affected docs (or report what needs updating in audit-only mode)
@@ -201,6 +203,39 @@ done
 ```
 
 Do NOT fabricate refreshed content. The user wants staleness called out so they can decide whether to refresh manually, not invented data.
+
+### 1.6. Evidence Freshness Check
+
+README files often contain "quality evidence" paragraphs that rot quietly: old benchmark dates,
+old run IDs, stale skill counts, stale test counts, old release versions, or claims like
+"latest run" that no longer match repository state. Run this check whenever touching README,
+CHANGELOG, release docs, project status docs, or any doc with evidence/quality/status wording.
+
+```bash
+# Find brittle evidence claims in common docs.
+rg -n '([0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]+/[0-9]+|latest|current|quality evidence|refiner|benchmark|score|pass|passed)' \
+  README.md CHANGELOG.md docs 2>/dev/null
+
+# Compare public skill count claims against the actual tracked collection.
+ACTUAL_SKILLS=$(find skills -mindepth 2 -maxdepth 2 -name SKILL.md -not -path '*/_*/*' | wc -l | tr -d ' ')
+rg -n '[0-9]+ public skills|[0-9]+ skills|[0-9]+/[0-9]+' README.md docs 2>/dev/null
+printf 'Actual tracked public skills: %s\n' "$ACTUAL_SKILLS"
+
+# If .refiner-runs.json exists, identify the latest recorded run before restating it.
+python3 - <<'PY' 2>/dev/null
+import json
+from pathlib import Path
+p = Path(".refiner-runs.json")
+if p.exists():
+    data = json.loads(p.read_text())
+    run = data[-1] if isinstance(data, list) and data else data
+    print(json.dumps(run, indent=2)[:2000])
+PY
+```
+
+When a stale evidence claim is found, either update it from the source artifact or rewrite it to
+avoid brittle counts. Good: "Current repository gates pass for the public skill collection."
+Risky: "Current gates pass for all 42 skills" unless you verified the count in the same run.
 
 ### 2. Categorize Doc Impact
 
@@ -399,6 +434,7 @@ See `skills/_shared/output-contract.md` for the full contract.
 
 - **Documenting everything**: If it's in config files, don't repeat the default value in the instruction file. Document the gotcha around it.
 - **Stale counts**: "13 dashboards" becomes wrong when you add one. Use "N dashboards" or keep the count accurate.
+- **Stale quality evidence**: README claims like "latest run", "current score", or "39/39 skills" must be checked against the source artifact in the same session.
 - **Orphaned gotchas**: A gotcha about a bug that was fixed 3 months ago is noise. Prune regularly.
 - **Assuming every merge needs docs**: A merged PR is a strong hint, not an automatic docs task. Check for actual drift.
 - **Forgetting non-README surfaces**: API changes belong in `API.md`; release deltas belong in `CHANGELOG.md`; feature drift belongs in feature docs.
