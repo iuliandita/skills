@@ -55,6 +55,39 @@ The latest tracked refiner run in [`.refiner-runs.json`](.refiner-runs.json) is 
 
 That evidence is a maintenance signal, not a permanent guarantee. Skill behavior still depends on the consuming agent, model, tool limits, and whether the task matches the skill's intended scope.
 
+## Report output
+
+Audit and review skills use a shared output contract. In chat they keep results compact; when a durable report is useful, they write markdown under `docs/local/`, which is gitignored by default so local audit notes do not leak into published commits.
+
+Example report excerpt:
+
+```markdown
+# CODE-REVIEW - src/auth/ - 2026-05-03
+
+- **Skill:** code-review
+- **Mode:** audit
+- **Target:** `src/auth/`
+- **Findings:** 2 (P0:1, P2:1)
+
+## P0 - Must fix
+
+- [ ] **#1 Missing CSRF check on POST /api/posts**
+  - **File:** `src/auth/routes.ts:42`
+  - **Description:** State-changing requests accept browser-originated traffic without verifying a CSRF token.
+  - **Suggested action:** Add `requireCsrf()` before the route handler.
+  - **Fix applied:** _to be filled by implementer_
+
+## P2 - Nice to fix
+
+- [x] **#2 Duplicate auth cookie parsing**
+  - **File:** `src/auth/cookie.ts:12`
+  - **Description:** Three handlers repeated the same cookie decode branch.
+  - **Suggested action:** Extract a shared `decodeAuthCookie()` helper.
+  - **Fix applied:** Added `decodeAuthCookie()` and updated the repeated handlers.
+```
+
+Report checkboxes are intentionally editable. As fixes land, flip `- [ ]` to `- [x]` and replace the `Fix applied` placeholder with the actual change.
+
 ## Why it matters
 
 - **The collection is easier to improve safely.** New skills inherit the current lint, spec, routing, and behavioral standards. The bar moves through explicit checks instead of memory.
