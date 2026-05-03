@@ -483,7 +483,7 @@ See `skills/_shared/output-contract.md` for the full contract.
 - **full-review** - orchestrates four parallel audits. This skill audits the skill collection
   itself, not application code.
 - **prompt-generator** - structures prompts for LLM consumption. Skills ARE prompts, but
-  prompt-generator targets one-off prompts saved to `docs/prompts/`, not reusable skill files.
+  prompt-generator targets one-off prompts saved to `docs/local/prompts/`, not reusable skill files.
 - **code-review** - reviews application code for correctness. This skill reviews skill files
   for convention compliance, not code correctness.
 

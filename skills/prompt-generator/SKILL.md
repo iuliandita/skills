@@ -114,7 +114,7 @@ Most of the time, skip this step entirely.
 
 ### Step 4: Save
 
-1. Resolve output directory: user-specified path > `docs/prompts/` > `docs/` > ask
+1. Resolve output directory: user-specified path > `docs/local/prompts/` > `docs/` > ask
 2. Scan for `NNN-*.md` files, increment highest number, zero-pad to 3 digits
 3. Infer a slug from the topic (e.g., `code-review`, `data-extraction`)
 4. Write to `<output-dir>/NNN-slug.md`
