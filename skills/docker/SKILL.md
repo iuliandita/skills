@@ -45,7 +45,6 @@ patterns, and runtime migration across Docker, Podman, Buildah, Skopeo, and cont
 - CI/CD pipeline design (use **ci-cd**)
 - Security audits of application code (use **security-audit**)
 - Infrastructure provisioning with Terraform (use **terraform**)
----
 
 ## AI Self-Check
 
@@ -66,14 +65,11 @@ AI tools consistently produce the same Docker mistakes. **Before returning any g
 - [ ] Package caches cleaned in same layer: `--no-cache` (apk), `rm -rf /var/lib/apt/lists/*` (apt). For pip: use `--mount=type=cache` OR `--no-cache-dir`, not both.
 - [ ] CMD uses exec form (JSON array), not shell form: `CMD ["node", "app.js"]` not `CMD node app.js`
 - [ ] **HEALTHCHECK uses available tools**: probe command uses a binary present in the final image (wget in Alpine, curl in Debian, none in scratch/distroless - use the app's own health endpoint)
----
 - [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
 - [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
 - [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
 - [ ] **Engine/Compose syntax checked**: Dockerfile, Compose, BuildKit, and runtime flags match the installed versions
 - [ ] **Image provenance considered**: base images, registries, tags, SBOMs, and signatures are handled where risk warrants
-
----
 
 ## Performance
 
@@ -81,15 +77,11 @@ AI tools consistently produce the same Docker mistakes. **Before returning any g
 - Keep build contexts small with `.dockerignore`; accidental monorepo contexts dominate build time.
 - Use multi-stage builds and slim runtime images, but measure startup and debug needs before stripping tools aggressively.
 
-
----
-
 ## Best Practices
 
 - Pin base image digests for sensitive workloads and track rebuild cadence for security updates.
 - Run as non-root and drop capabilities unless the workload genuinely needs them.
 - Preview prune and volume-removal commands; persistent data must never be collateral cleanup.
-
 
 ## Workflow
 
@@ -139,8 +131,6 @@ syft <image> -o spdx-json             # generate SBOM
 grype <image>                         # vulnerability scan (alternative to Scout)
 trivy image <image>                   # use v0.69.3 ONLY (v0.69.4-6 COMPROMISED)
 ```
-
----
 
 ## Dockerfile
 
@@ -212,8 +202,6 @@ EOF
 - `FROM node:latest` or `FROM python` (unpinned)
 - `ENTRYPOINT` + `CMD` together unless ENTRYPOINT is the binary and CMD is overridable default args (e.g., `ENTRYPOINT ["/app"]` + `CMD ["--config", "/etc/app.yaml"]`)
 
----
-
 ## Compose
 
 Read `references/compose-patterns.md` for complete Compose v5 templates (web+db, dev override, production hardened, AI/ML stack) and network/volume patterns.
@@ -269,8 +257,6 @@ services:
 - `volumes:` mounting entire project dir in production (dev pattern leak)
 - `privileged: true` on a compose service instead of the host LXC
 - 20+ inline `environment:` entries (use `env_file:`)
-
----
 
 ## Security
 
@@ -362,8 +348,6 @@ PCI-DSS 4.0 is the only active version. Key container-specific requirements:
 
 Full mapping in `references/security-and-compliance.md`.
 
----
-
 ## Registry & CI
 
 ### CI pipeline pattern
@@ -391,8 +375,6 @@ services:
 ```
 
 GPU containers: use `deploy.resources.reservations.devices` with `capabilities: [gpu]`. Start `shm_size` at `16gb` for single GPU, `32gb` for multi-GPU (vLLM needs shared memory for tensor ops). See `references/compose-patterns.md` for the full AI/ML stack template.
-
----
 
 ## Production Checklist
 
@@ -451,8 +433,6 @@ GPU containers: use `deploy.resources.reservations.devices` with `capabilities: 
 - [ ] Registry access audit-logged (Req 10.4.1.1)
 - [ ] Base images from trusted, verified sources (Req 6.2.1)
 
----
-
 ## Reference Files
 
 - `references/dockerfile-patterns.md` - Dockerfile templates and build patterns
@@ -460,8 +440,6 @@ GPU containers: use `deploy.resources.reservations.devices` with `capabilities: 
 - `references/security-and-compliance.md` - container hardening, compliance guidance, and safe public custom image publishing
 - `references/alternative-runtimes.md` - Podman, Buildah, Skopeo, and related runtime patterns
 - `references/target-versions.md` - May 2026 version snapshot for Docker, Compose, BuildKit, containerd, Podman, Buildah, and runc
-
----
 
 ## Output Contract
 
@@ -486,8 +464,6 @@ See `skills/_shared/output-contract.md` for the full contract.
   pattern; databases skill owns the engine tuning within the container.
 - **git** - for git tags and version control. Docker skill handles container image tagging;
   git handles git tags and release workflows.
-
----
 
 ## Rules
 

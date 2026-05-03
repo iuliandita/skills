@@ -45,7 +45,6 @@ pinning static analysis, reversing, fuzzing, or debugger tooling.
 - Hardening containers, Kubernetes, or infrastructure (use **kubernetes**, **docker**, **terraform**)
 - Network firewall configuration or tuning (use **firewall-appliance**)
 - Without authorization from the target owner (own repos, bug bounty scope, or written permission)
----
 
 ## AI Self-Check
 
@@ -61,14 +60,11 @@ Before reporting any vulnerability or generating exploit code, verify:
 - [ ] **Disclosure plan**: findings destined for responsible disclosure, not public dump
 - [ ] **Evidence preserved**: all analysis steps documented for reproducibility
 - [ ] **Complexity honest**: if exploitation requires unlikely conditions (specific config, race window, chained bugs), state that clearly - don't inflate impact
----
 - [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
 - [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
 - [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
 - [ ] **Authorization and disclosure scope checked**: targets, reproduction, and reporting stay within authorized research boundaries
 - [ ] **PoC safety reviewed**: proof code demonstrates impact without avoidable persistence, exfiltration, or wormable behavior
-
----
 
 ## Performance
 
@@ -76,15 +72,11 @@ Before reporting any vulnerability or generating exploit code, verify:
 - Deduplicate crashes by stack, root cause, and patch reachability before reporting counts.
 - Use coverage and corpus metrics to guide fuzzing time instead of running blind indefinitely.
 
-
----
-
 ## Best Practices
 
 - Capture exact versions, build flags, inputs, logs, and debugger state for every candidate finding.
 - Separate exploitability analysis from speculation; mark uncertainty clearly.
 - Follow the target project's disclosure policy and avoid publishing operational exploit detail prematurely.
-
 
 ## Workflow
 
@@ -460,14 +452,10 @@ Use the FIRST CVSS calculator: https://www.first.org/cvss/calculator/4.0
 - If vendor is unresponsive after 90 days: disclose with full details
 - Always check if the project has a `SECURITY.md` or security policy first
 
----
-
 ## Tooling Quick Reference
 
 Read `references/tooling-quick-reference.md` for the tool catalog, install paths,
 and when to reach for each tool during source, binary, or live-system analysis.
-
----
 
 ## Reference Files
 
@@ -477,8 +465,6 @@ and when to reach for each tool during source, binary, or live-system analysis.
 - `references/exploit-patterns.md` - proof-of-concept development templates by vulnerability class, with safety guidelines
 - `references/tooling-quick-reference.md` - tool catalog with install paths and best-fit usage notes
 - `references/target-versions.md` - May 2026 version snapshot for static analysis, reversing, fuzzing, and debugger tools
-
----
 
 ## Output Contract
 

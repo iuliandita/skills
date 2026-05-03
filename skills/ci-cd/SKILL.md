@@ -52,7 +52,6 @@ runners, dependency updates, scanning, review gates, and rollout order.
 - Code review of pipeline-adjacent code (the app itself) - use **code-review**
 - The code-review skill has a `cicd-pipelines.md` reference for **bug patterns** in existing
   pipelines. This skill is for **writing and architecting** pipelines.
----
 
 ## AI Self-Check
 
@@ -82,14 +81,11 @@ every failure with file and line reference.
 - [ ] **Ignore-list entries have expiry dates**: every `.trivyignore`, `.grype.yaml`, Dependabot `ignore`, or Renovate `ignoreDeps` entry includes a comment with revisit date + owner. No dates = zombie tech debt.
 - [ ] **Lockfiles committed**: `package-lock.json`, `bun.lock`, `Cargo.lock`, `go.sum`, `uv.lock` belong in version control for applications. Manifest-only commits break reproducibility.
 - [ ] **Auto-merge gated on tests, not just lint**: Dependabot/Renovate auto-merge without test coverage of the changed area is a supply-chain shortcut.
----
 - [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
 - [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
 - [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
 - [ ] **Runner trust checked**: workflow advice distinguishes hosted, self-hosted, fork, and protected-branch execution
 - [ ] **Mutable references controlled**: actions, images, includes, and templates are pinned where supply-chain risk matters
-
----
 
 ## Performance
 
@@ -97,15 +93,11 @@ every failure with file and line reference.
 - Split quick lint/unit gates from slow integration, image, and deployment jobs.
 - Use path filters and matrix limits to keep monorepo pipelines proportional to the change.
 
-
----
-
 ## Best Practices
 
 - Use OIDC or short-lived federation for cloud deploys instead of long-lived static secrets.
 - Keep pull-request workflows from forks read-only unless explicitly isolated.
 - Generate provenance or attestations for release artifacts where the forge supports it.
-
 
 ## Workflow
 
@@ -158,8 +150,6 @@ For **Forgejo CI/CD**, see the Forgejo section below (smaller scope, inline).
 
 Run through the checklist above before returning any generated config.
 
----
-
 ## Cross-Platform Patterns
 
 ### Stage ordering (all platforms)
@@ -210,8 +200,6 @@ to artifacts. Use environment variables or file-based injection.
 GitLab: `when: manual` + `environment:`. GitHub: `environment:` with protection rules.
 Forgejo: manual dispatch (`workflow_dispatch`).
 
----
-
 ## Monorepo Patterns
 
 When a repo contains multiple services sharing a common library:
@@ -242,8 +230,6 @@ For Python monorepos with multiple services sharing a common library (`libs/comm
 - **YAML anchors (GitLab) / reusable workflows (GitHub) for the per-service job template.** Three near-identical blocks for `api`, `worker`, `scheduler` is a maintenance trap.
 
 See `references/gitlab-ci.md` for a full monorepo `.gitlab-ci.yml` (YAML anchors, `compare_to`, per-service change rules, shared-lib detection).
-
----
 
 ## Forgejo CI/CD
 
@@ -412,8 +398,6 @@ jobs:
 
 **Note**: use secrets for registry host/image to avoid hardcoding private domains in git history.
 
----
-
 ## PCI-DSS 4.0: CI/CD Compliance Mapping
 
 All future-dated requirements became **mandatory March 31, 2025**.
@@ -432,8 +416,6 @@ code review for QSA assessment.
 
 Read `references/supply-chain.md` for detailed PCI-DSS compliance patterns.
 
----
-
 ## AI-Age Considerations
 
 AI tools consistently generate insecure CI/CD configs: unpinned actions, missing `permissions:`
@@ -444,8 +426,6 @@ For detailed coverage of slopsquatting, AI agents in CI/CD, prompt injection in 
 the OWASP Top 10 for Agentic Applications, read `references/supply-chain.md`
 (AI-Age Supply Chain Risks section).
 
----
-
 ## Template Conventions
 
 - **`@<sha>`** in GitHub Actions templates is a placeholder. Replace with the real 40-character
@@ -454,8 +434,6 @@ the OWASP Top 10 for Agentic Applications, read `references/supply-chain.md`
 - **Image tags** in templates use floating minor versions (e.g., `oven/bun:1.2`, `docker:27.5`)
   for readability. For production, pin to a specific patch version or SHA256 digest. The templates
   show the minimum acceptable granularity, not the ideal.
-
----
 
 ## Reference Files
 

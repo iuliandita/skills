@@ -40,7 +40,6 @@ pinning SDKs, runtimes, vector stores, or evaluation tools.
 - General database configuration, schema design, or migrations (use **databases**)
 - Security auditing AI application code (use **security-audit**)
 - Reviewing code quality unrelated to AI/ML patterns (use **code-review**)
----
 
 ## AI Self-Check
 
@@ -64,14 +63,11 @@ AI tools consistently produce the same mistakes when generating AI application c
 - [ ] No synchronous LLM calls in request handlers - always async with timeouts
 - [ ] PII stripped or masked before sending to external model APIs
 - [ ] Temperature set intentionally (0 for deterministic tasks, higher for creative)
----
 - [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
 - [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
 - [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
 - [ ] **Provider drift checked**: Responses/Agents/SDK examples use current provider surfaces, not deprecated Assistants-era or chat-only patterns
 - [ ] **RAG evidence bounded**: retrieval thresholds, citations, and empty-result behavior are defined before generation
-
----
 
 ## Performance
 
@@ -79,15 +75,11 @@ AI tools consistently produce the same mistakes when generating AI application c
 - Cache deterministic retrieval, tool metadata, and prompt templates, but never cache tenant-specific model outputs without a data-retention decision.
 - Track token, latency, and retry budgets separately for interactive, background, and eval traffic.
 
-
----
-
 ## Best Practices
 
 - Prefer raw provider SDKs until orchestration complexity justifies LangGraph, LlamaIndex, or LangChain.
 - Keep model, tool, retrieval, and safety decisions configurable per environment; avoid hardcoding preview model names in application logic.
 - Treat model output as untrusted input: validate structure, refusal states, tool arguments, and downstream side effects.
-
 
 ## Workflow
 
@@ -135,8 +127,6 @@ prompts. Track pass rate over time - any regression blocks the merge.
 
 Read `references/evaluation.md` for promptfoo setup, assertion types, CI integration (GitHub
 Actions example), RAG-specific evals, agent evals, and red teaming patterns.
-
----
 
 ## LLM Integration Patterns
 
@@ -188,8 +178,6 @@ tools = [{
 
 Read `references/llm-patterns.md` for multi-turn tool use, parallel tool calls, error
 recovery, and provider-specific gotchas.
-
----
 
 ## RAG Architecture
 
@@ -277,8 +265,6 @@ Key patterns: relevance threshold (0.7), same embedding model for index/query, c
 Read `references/rag-patterns.md` for indexing pipelines, metadata filtering, multi-index
 strategies, and production RAG architecture.
 
----
-
 ## Agent Systems
 
 ### The agent loop
@@ -326,8 +312,6 @@ marker so the model can choose the next step instead of silently losing state.
 Read `references/agent-patterns.md` for multi-agent architectures, human-in-the-loop patterns,
 memory management, and production agent deployment.
 
----
-
 ## Fine-Tuning vs RAG vs Prompt Engineering
 
 Pick the cheapest approach that meets your quality bar:
@@ -347,8 +331,6 @@ high-quality examples, or prompt engineering already works (you're just cargo-cu
 
 Read `references/fine-tuning.md` for data preparation, PEFT/LoRA patterns, evaluation during
 training, and when to use full fine-tuning vs parameter-efficient methods.
-
----
 
 ## Local Inference
 
@@ -391,8 +373,6 @@ Read `references/local-inference.md` for the full llama.cpp build walkthrough (p
 flags), HF SHA-pinned model download, systemd-per-model deployment, NUMA tuning, mlock memory
 budgeting, benchmark methodology, and production serving configuration.
 
----
-
 ## Cost Optimization
 
 ### Token budgeting
@@ -416,8 +396,6 @@ monthly_cost = cost_per_request * requests_per_day * 30
 6. **Context pruning** - for multi-turn conversations, summarize history instead of sending
    the full transcript.
 
----
-
 ## Safety and Guardrails
 
 Input validation (prompt injection), output validation (schema + content policy), PII handling
@@ -426,8 +404,6 @@ audit logging (redact PII). These are non-negotiable for production AI apps.
 
 Read `references/safety.md` for prompt injection defense patterns, output validation schemas,
 PII detection setup, and content policy implementation.
-
----
 
 ## Production Checklist
 
@@ -445,8 +421,6 @@ PII detection setup, and content policy implementation.
 - [ ] Max token limits set per request type
 - [ ] Health checks on model endpoints (especially self-hosted)
 - [ ] A/B testing infrastructure for prompt and model changes
-
----
 
 ## Reference Files
 
@@ -481,8 +455,6 @@ See `skills/_shared/output-contract.md` for the full contract.
 - **security-audit** - for security review of AI application code. This skill provides
   guardrail patterns; security-audit provides the audit methodology.
 - **code-review** - for reviewing AI application code quality beyond AI-specific patterns.
-
----
 
 ## Rules
 

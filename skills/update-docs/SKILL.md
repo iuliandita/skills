@@ -212,13 +212,24 @@ old run IDs, stale skill counts, stale test counts, old release versions, or cla
 CHANGELOG, release docs, project status docs, or any doc with evidence/quality/status wording.
 
 ```bash
-# Find brittle evidence claims in common docs.
-rg -n '([0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]+/[0-9]+|latest|current|quality evidence|refiner|benchmark|score|pass|passed)' \
-  README.md CHANGELOG.md docs 2>/dev/null
+# Find brittle evidence claims in tracked docs.
+DOCS=$(git ls-files '*.md' 'docs/**/*.md' 2>/dev/null)
+if [[ -n "$DOCS" ]]; then
+  printf '%s\n' "$DOCS" | while IFS= read -r doc; do
+    git grep -n -E '([0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]+/[0-9]+|quality evidence|refiner run|refiner-runs|benchmark|latest (run|score|evidence|benchmark)|current (run|score|evidence|gates|version)|score[: ]|passed (for|in|on))' -- "$doc" 2>/dev/null || true
+  done
+fi
 
 # Compare public skill count claims against the actual tracked collection.
-ACTUAL_SKILLS=$(find skills -mindepth 2 -maxdepth 2 -name SKILL.md -not -path '*/_*/*' | wc -l | tr -d ' ')
-rg -n '[0-9]+ public skills|[0-9]+ skills|[0-9]+/[0-9]+' README.md docs 2>/dev/null
+ACTUAL_SKILLS=$(git ls-files 'skills/*/SKILL.md' 2>/dev/null | wc -l | tr -d ' ')
+if [[ "$ACTUAL_SKILLS" -eq 0 ]]; then
+  ACTUAL_SKILLS=$(find skills -mindepth 2 -maxdepth 2 -name SKILL.md -not -path '*/_*/*' | wc -l | tr -d ' ')
+fi
+if [[ -n "$DOCS" ]]; then
+  printf '%s\n' "$DOCS" | while IFS= read -r doc; do
+    git grep -n -E '[0-9]+ public skills|[0-9]+ skills|[0-9]+/[0-9]+' -- "$doc" 2>/dev/null || true
+  done
+fi
 printf 'Actual tracked public skills: %s\n' "$ACTUAL_SKILLS"
 
 # If .refiner-runs.json exists, identify the latest recorded run before restating it.
