@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.33.1](https://github.com/iuliandita/skills/compare/v1.33.0...v1.33.1) (2026-05-03)
+
+
+### Bug Fixes
+
+* **update-docs:** check stale evidence claims ([27f787b](https://github.com/iuliandita/skills/commit/27f787bd88b7c34e9af5e4b2e860aae92d8f78e4))
+
+
+### Refactoring
+
+* **skills:** polish audit quality gates ([62a6324](https://github.com/iuliandita/skills/commit/62a632479f35c3652f1222d52d211dd6db3d084f))
+
 ## [1.33.0](https://github.com/iuliandita/skills/compare/v1.32.2...v1.33.0) (2026-05-03)
 
 
