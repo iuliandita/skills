@@ -102,6 +102,13 @@ See `skills/_shared/output-contract.md` for the full contract.
 - **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content (e.g., a routing-conflict audit across the installed skill set), emit the full contract -- boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table -- and write the deliverable to `docs/local/audits/skill-router/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content** (its primary routing-decision mode), respond freely without the contract.
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
 
+## Related Skills
+
+- **skill-creator** - create, review, or optimize skill files after routing identifies skill-library work.
+- **skill-refiner** - batch-improve a skill collection with scoring and iteration; this skill only chooses routes.
+- **full-review** and **deep-audit** - orchestrate repo audits after routing identifies broad review intent.
+- **roadmap** - capture product or feature ideas; route there when the request is backlog shaping rather than skill selection.
+
 ## Rules
 
 1. Prefer one primary skill.
