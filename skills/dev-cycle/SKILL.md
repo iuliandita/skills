@@ -82,7 +82,6 @@ Before declaring finish-mode complete:
 - [ ] CI watched to completion with forge-appropriate verification (e.g., `gh pr view --json statusCheckRollup`, `glab ci status --output json`, manual confirmation for Bitbucket/bare) - not merged on "probably fine"
 - [ ] For releases: tag matches the bumped version; CHANGELOG has a new section dated today; release-workflow watch used forge-appropriate exit-status flag (`gh run watch --exit-status` etc.)
 - [ ] No `--no-verify`, no `--force-push`, no destructive reset - if blocked, fix the root cause
-
 - [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
 - [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
 - [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths

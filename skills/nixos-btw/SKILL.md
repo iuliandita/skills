@@ -110,7 +110,6 @@ Before returning NixOS or Nix commands, verify:
 - [ ] **Determinate / Lix advice scoped**: Determinate's `determinate-nixd` and Lix's CLI diverge from upstream in subtle places. Name the lane before suggesting daemon or CLI flags.
 - [ ] **Diagnostic errors are not silenced**: do not hide useful output with `2>/dev/null` when the error text is the evidence. Use `2>&1 || true` when gathering.
 - [ ] **Version pins justified**: if a pinned `system.stateVersion` is suggested, explain why; do not change `stateVersion` on an existing system casually - it controls migration semantics.
-
 - [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
 - [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
 - [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths

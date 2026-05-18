@@ -96,7 +96,6 @@ Before returning Debian or Ubuntu commands, verify:
 - [ ] **Diagnostic errors are not silenced**: do not mask failures with `2>/dev/null` on commands whose error reason matters. Use `2>&1 || true` to surface errors without aborting.
 - [ ] **Firmware updates are not conflated with package updates**: `fwupd` and vendor tools (e.g., `system76-firmware`) are separate from `apt upgrade`.
 - [ ] **Debian alternatives are checked**: when a command behaves oddly, verify `update-alternatives` for that binary.
-
 - [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
 - [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
 - [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths

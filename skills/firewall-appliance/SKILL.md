@@ -57,7 +57,6 @@ Before returning any firewall commands, verify:
   drops from the client side
 - [ ] VLAN interface assigned before adding rules - unassigned VLANs pass no traffic through
   the firewall even if the trunk is tagged correctly
-
 - [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
 - [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
 - [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths

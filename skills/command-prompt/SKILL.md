@@ -58,7 +58,6 @@ Before returning any generated shell script or command, verify:
 - [ ] No hardcoded paths for tools (`/usr/bin/git`) - use `command -v` or bare command names
 - [ ] Temp files use `mktemp` with cleanup traps, not hardcoded `/tmp/foo`
 - [ ] No secrets in command history (use `read -s` or environment variables)
-
 - [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
 - [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
 - [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths

@@ -94,7 +94,6 @@ Before returning any generated network configuration, verify:
 - [ ] **systemd-resolved conflict**: if deploying a local DNS server (Unbound, CoreDNS,
   dnsmasq), check whether systemd-resolved is binding port 53. Disable its stub listener
   (`DNSStubListener=no`) or bind your server to a different port
-
 - [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
 - [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
 - [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths

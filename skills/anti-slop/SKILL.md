@@ -54,7 +54,6 @@ Before returning any anti-slop audit, verify:
 - [ ] **Grounding checked**: if flagging a hallucinated API, CLI flag, resource, chart value, or config key, verify it against local types/schema/tool help or official docs before claiming it is fake
 - [ ] **Test theater distinguished from correctness**: implementation-mirroring tests, mock-heavy ceremony, and snapshots with no semantic assertions belong here; actual failing behavior still belongs to code-review
 - [ ] **Structural duplication sweep done**: compare same-role modules/classes across sibling dirs (`providers`, `targets`, `sources`, `clients`, `registry`) and either report near-twins or note why the duplication is intentional
-
 - [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
 - [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
 - [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths

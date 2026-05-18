@@ -75,7 +75,6 @@ Before returning API code, route design, or OpenAPI output, verify:
 - [ ] Cookie-based browser auth accounts for cookie scope and CSRF behavior instead of assuming cookies are automatically safe
 - [ ] OAuth guidance is current: authorization code + PKCE, no implicit flow, no resource owner password credentials
 - [ ] Sensitive defaults are explicit: cookie flags, token TTLs, scope boundaries, and rate limits are not hand-waved
-
 - [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
 - [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
 - [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths

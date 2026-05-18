@@ -56,7 +56,6 @@ Before executing any technique or generating exploitation commands, verify:
 - [ ] **No destructive actions**: kernel exploits tested in lab first, no `rm -rf`, no disk writes to critical paths
 - [ ] **Architecture matched**: exploit/payload matches target arch (`uname -m`). x86_64 exploits don't work on ARM, 32-bit payloads fail on 64-bit-only systems
 - [ ] **Reverse shells use authorized ports**: listener IP and port match the engagement plan
-
 - [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
 - [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
 - [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths

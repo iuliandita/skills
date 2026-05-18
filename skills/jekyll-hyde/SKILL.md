@@ -52,7 +52,6 @@ Before returning advice, verify:
 - [ ] **Sharp strategy separated from abuse**: do not label every strong moat, opinionated default, or growth loop as a dark pattern.
 - [ ] **Domain routed correctly**: if the user needs code bugs, security findings, UI craft, or roadmap capture, route to the adjacent skill.
 - [ ] **Final recommendation included**: even after Hyde, end with an actionable path or decision frame.
-
 - [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
 - [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
 - [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths

@@ -58,7 +58,6 @@ Before returning any security audit report, verify:
 - [ ] **Known incidents checked**: dependency audit verified against known supply chain incidents (event-stream, colors, ua-parser-js, polyfill.io, xz-utils, trivy, active package compromises), not just CVE databases
 - [ ] **Agentic risks covered** (when applicable): MCP servers, AI tool handlers, prompt injection surfaces audited if present
 - [ ] **Scope respected**: no external service probing, no DAST, repo-only analysis
-
 - [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
 - [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
 - [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths

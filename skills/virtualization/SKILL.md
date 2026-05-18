@@ -87,7 +87,6 @@ generated VM config, Terraform HCL, or Packer template, verify against this list
   `i440fx` + `ovmf` causes boot failures. `q35` + `seabios` works but wastes q35 features.
 - [ ] VGA type matches use case: `serial0` for headless cloud images, `virtio` for GUI VMs,
   omit for PCI passthrough display GPUs (`x-vga=1` replaces the virtual display)
-
 - [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
 - [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
 - [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths

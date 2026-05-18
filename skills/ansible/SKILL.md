@@ -75,7 +75,6 @@ AI tools consistently produce the same Ansible mistakes. **Before returning any 
 - [ ] Tags present on logical task groups for selective execution
 
 Run generated playbooks through `ansible-lint` (production profile) when available.
-
 - [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
 - [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
 - [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths

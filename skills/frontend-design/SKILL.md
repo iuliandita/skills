@@ -260,7 +260,6 @@ Before returning any built UI or critique, verify:
 - [ ] **Responsive QA completed** - desktop, mobile, keyboard, dark+light, text overflow, and screenshot review checked when visual changes were made
 - [ ] **Critique mode: max 10 tickets** - RED + GREEN priority. Rant is filtered, not shipped raw
 - [ ] **No AI prose tells in commentary** - apply the **anti-ai-prose** vocabulary list to the persona's own writing, not just user-facing copy. Plain English
-
 - [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
 - [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
 - [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths

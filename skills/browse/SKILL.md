@@ -446,7 +446,6 @@ Before returning any browsing result, verify:
 - [ ] Did not automate destructive account actions unless the user named the exact action and target
 - [ ] Re-extracted page state after any click or form submission before making decisions
 - [ ] Escalated to the next tool tier on failure rather than retrying the same tool
-
 - [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
 - [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
 - [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
