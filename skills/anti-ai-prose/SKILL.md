@@ -54,6 +54,7 @@ Before returning any audit, verify:
 - [ ] **Short text rule applied**: under 100 words, 2+ tells in one paragraph = High severity
 - [ ] **Audit output itself uses no AI-prose tells** (apply these rules to your own output)
 - [ ] **Density threshold applied** before assigning severity level
+- [ ] **AI fallback names checked (fiction)**: protagonist and major-character names compared against the documented fallback set (Elara, Lyra, Aurora, Kael, Vale, Cassius, etc.) and the phonetic tell (2 soft syllables, A/L/R/N consonants, no demographic anchor); fallback-set names allowed only when the setting and population organically produce them
 
 ---
 - [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
@@ -137,6 +138,14 @@ Classify each finding by category, action, and severity:
 
 Present findings grouped by category. For each Fix-level item, show the concrete rewrite. Rewrites should be **shorter** or **more specific** - never longer.
 
+**Plan first, apply that plan only.** Produce the audit report as the improvement plan before any
+rewrites are merged. If the user then asks for the fixes to be applied, change only what the plan
+flagged. Do not freelance edits outside the plan, do not "while we're here" rewrite adjacent
+prose, and do not chain a second pass of new fixes on top of the applied ones in the same step.
+This keeps the work auditable and prevents a cheap model from re-drafting the piece worse than
+the original. If new findings emerge while applying, surface them as a second audit, not as
+silent edits.
+
 ---
 
 ## The Four Categories of AI Prose Slop
@@ -192,6 +201,46 @@ Specific words that LLMs overuse far beyond their natural English frequency.
 
 See "What NOT to Flag" below for domain exceptions (horticulture `landscape`, child welfare `foster`, networking `realm`, etc.).
 
+#### AI fallback character names (fiction)
+
+A documented tell across Claude, ChatGPT, Gemini, DeepSeek, and most open-source models: when asked to invent character names without strong setting constraints, models converge on a small "no-baggage" set. The 2025 Name of the Year (per Namerology) is **Elara** specifically because of AI saturation. A high-school teacher's grading rubric now docks 99 points for protagonist=Elara. The phenomenon is well enough documented that the name from the fallback set is itself the tell.
+
+**The fallback set** (incomplete; the phonetic pattern below is more reliable than the list):
+
+| Slot | Common picks |
+|---|---|
+| Female / femme-coded | Elara, Elena, Elana, Lena, Lyra, Aria, Aurora, Nova, Luna, Selene, Althea, Anya, Mira, Clara, Evelyn, Isabella, Seraphina, Isolde, Lily |
+| Male / masc-coded | Kael, Kaelan, Kaleb, Vale, Vance, Cassius, Caspian, Adrian, Orion, Atlas, Phoenix, Rylan, Theron, Damon, Silas, Ezra, Malachi, Jax, Dax, Rook |
+| Surnames | Voss, Vasquez, Thorne, Vale, Vance, Black, Hart, Cross, Reed, Knox, Stone, Hawk, Rourke |
+| Composite sci-fi | Elara Voss (DeepSeek), Elena Vasquez / Elana Vasquez (Claude Opus 4), Dr. Thorne / Dr. Aris Thorne (Gemini 2.5 Pro; 204 instances across 26 books in the 10,000-title Kaggle sci-fi corpus) |
+
+**The phonetic tell** (more reliable than memorizing the list):
+
+- 2 syllables, soft, vowel-heavy
+- A / L / R / N consonants, often clustered
+- no cultural, class, regional, ethnic, religious, or period anchor
+- one-syllable curt variants (`Jax`, `Rook`) for "tough" types
+- Latin / Greek roots (`Cassius`, `Orion`, `Aurora`) for "noble" types
+- biblical roots (`Silas`, `Malachi`, `Ezra`) for "serious" types
+- `Dr. <single-syllable>` for sci-fi authority figures
+
+**Why it happens:** models filter names with demographic baggage to avoid offense or distraction. Brittany sounds millennial; Karen carries political residue; Mohammed signals Muslim; Mihai signals Romanian. What's left is the no-baggage set -- names so unfamiliar that they cannot insult anyone, which is exactly why they keep recurring. Per the ChuckMcSneed HuggingFace experiment, instruct models showed up to 77% skew toward their top 10 names while base models stayed near 4% -- the phenomenon is an artifact of alignment, not raw capability.
+
+**Detect:**
+
+- generated character names that match the fallback set OR the phonetic pattern
+- multiple invented characters in the same piece with names from the same phonological family
+- proper names that resist being placed in any real demographic, period, region, or culture
+- the composite sci-fi patterns (`<female fallback> <sharp surname>`, `Dr. <single-syllable>`)
+
+**Fix:** anchor names to the setting's actual population -- culture, class, region, period, religion, ethnicity. For invented worlds, build a coherent in-world linguistic system (consistent phonetic rules, prefix/suffix patterns) rather than grabbing soft phonemes. For sci-fi authority figures, let the role carry the slot (`the medic`, `the supervisor`) rather than reaching for `Dr. Thorne`.
+
+**Exception:** these names are not banned, only suspect. A setting whose population organically produces Aurora or Cassius can use them. The failure is the model reaching for these names because it had no other ideas, not the names themselves. For prior-draft characters whose names were chosen deliberately, do not rename without explicit permission.
+
+For fiction-specific handling with mechanism and fix detail, see the `short-form-fiction` skill's `ai-slop-fiction.md` reference (section: AI fallback character names).
+
+Sources: Namerology (2025 Name of the Year is Elara); ChuckMcSneed, "Name Diversity in LLMs Experiment" (HuggingFace); Guillaume Laforge, "The Sci-Fi Naming Problem" (glaforge.dev, 2025).
+
 ### 2. Syntax Tells (Noise + Soul)
 
 Sentence structures LLMs reach for to sound balanced or significant.
@@ -228,6 +277,20 @@ LLMs avoid plain `is` / `are` / `has` / `have` in favor of elaborate constructio
 - `marks` used to inflate: `this marks the first time` -> `this is the first time`
 
 **Fix:** Use the plain copula. Elaborate verbs should carry weight - do not spend them on simple identity claims.
+
+#### Adverb crutch (-ly modifiers)
+
+LLMs reach for `-ly` adverbs to inflate description and dodge precise verb choice: `said softly`, `ran quickly`, `smiled warmly`, `walked slowly`, `whispered quietly`. Each one in isolation is acceptable English. Density is the tell. The classical fiction-editing test (Stephen King and most line editors): if dropping the adverb does not change the meaning, the verb is the problem.
+
+**Detect:**
+- `-ly` adverbs modifying speech tags: `said softly`, `whispered quietly`, `shouted loudly`, `replied curtly`
+- Adverbs that restate the verb: `whispered quietly`, `shouted loudly`, `ran quickly`, `mumbled under his breath`
+- Multiple `-ly` adverbs in adjacent sentences (a passage sprinkled with them rather than one used for emphasis)
+- Stacking with hedges: `gently`, `slightly`, `rather`, `somewhat` modifying the same verb or following each other across a paragraph (cross-references "Hedging and qualifier stacking" in Tonal Tells)
+
+**Fix:** Prefer a stronger verb. `said softly` -> `whispered`. `ran quickly` -> `sprinted`. `smiled warmly` -> `beamed`. `looked carefully at` -> `studied`. Delete adverbs that restate the verb outright.
+
+**Exception:** Keep the adverb when it carries information the verb cannot. `said reluctantly`, `answered honestly`, `arrived late`, `she nodded slowly` (when the slowness is the point) all earn their place. The test: drop the adverb. If meaning shifts, keep it. If only rhythm shifts, the verb was weak.
 
 #### Elegant variation
 
@@ -457,6 +520,7 @@ See `skills/_shared/output-contract.md` for the full contract.
 2. **Never edit quoted material.** Original words from other authors stay as written.
 3. **Respect genre conventions.** Travel writing, marketing, fiction, and academic prose have legitimate conventions that overlap with AI tells. Flag only when the writing is worse for the device, not because it matches a pattern.
 4. **Every rewrite must be shorter or more specific.** Lateral synonym swaps are not improvements. If the rewrite is longer, the original was fine.
-5. **Keep the voice of the author.** The goal is prose that sounds like a specific human, not a generic "good writing" rewrite. If you do not know the author's voice, leave stylistic calls alone and only flag the mechanical tells.
-6. **Do not pad the report.** If there are three findings, list three. Not five. Not one inflated to three.
-7. **Run the AI Self-Check** before returning any audit.
+5. **Plan first, apply that plan only.** When applying fixes after the audit, change only what the report flagged. Do not freelance edits, do not rewrite adjacent prose, and do not chain a second pass of new fixes on top of the applied ones. New findings during application become a follow-up audit, not silent edits.
+6. **Keep the voice of the author.** The goal is prose that sounds like a specific human, not a generic "good writing" rewrite. If you do not know the author's voice, leave stylistic calls alone and only flag the mechanical tells.
+7. **Do not pad the report.** If there are three findings, list three. Not five. Not one inflated to three.
+8. **Run the AI Self-Check** before returning any audit.
