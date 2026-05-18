@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.34.0](https://github.com/iuliandita/skills/compare/v1.33.1...v1.34.0) (2026-05-18)
+
+
+### Features
+
+* **anti-ai-prose:** add adverb crutch, AI fallback names, plan-first rule ([3486ddf](https://github.com/iuliandita/skills/commit/3486ddf3aab5c569eba58a40b4d2478124b0266b))
+
+
+### Bug Fixes
+
+* **skills:** refresh audit and supply-chain guidance ([3e92070](https://github.com/iuliandita/skills/commit/3e92070bd330ed55692f799a91a47c4576d24ea5))
+
 ## [1.33.1](https://github.com/iuliandita/skills/compare/v1.33.0...v1.33.1) (2026-05-03)
 
 
