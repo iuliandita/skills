@@ -87,7 +87,7 @@ Cloud provider responsibility for managed K8s (EKS, GKE, AKS). Document the shar
 
 | Sub-req | K8s implementation |
 |---------|-------------------|
-| 11.3.1 (quarterly vuln scans) | **Trivy Operator** (v0.69.3 - see supply chain warning below) continuous in-cluster scanning; registry scanning on schedule. |
+| 11.3.1 (quarterly vuln scans) | **Trivy Operator** pinned to a current verified release (see supply chain warning below) for continuous in-cluster scanning; registry scanning on schedule. |
 | 11.3.1.2 (authenticated internal scans) | **Application-level** scans with credentials (Nessus, Qualys, OpenVAS) from within the cluster network. This is NOT the same as image scanning - PCI requires scanning the running application endpoints with authenticated plugins. Trivy/Grype scan images; Nessus/Qualys scan the live app. You need both. |
 | 11.5/11.5.2 (FIM, change detection) | **Falco** rules for critical file writes; **ArgoCD/Flux** drift detection (Git as source of truth); admission controllers blocking non-compliant changes. |
 

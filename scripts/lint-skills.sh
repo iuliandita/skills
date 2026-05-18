@@ -137,23 +137,30 @@ check_length() {
 # ── Reference file checks ──────────────────────────────────────────────
 check_references() {
   local file="$1" name="$2" dir="$3"
-  # Check that referenced files exist (only in own references/ dir)
-  # Skip template examples (e.g., references/<topic-file>) and
-  # cross-skill references (lines mentioning other skill names)
-  local refs
-  refs=$(grep -oP '`references/[^`]+`' "$file" | sed "s/\`//g" || true)
-  for ref in $refs; do
-    # Skip template placeholders
-    [[ "$ref" == *"<"* ]] && continue
-    if [[ ! -f "$dir/$ref" ]]; then
-      # Check if this line mentions another skill (cross-reference)
-      local line
-      line=$(grep -F "$ref" "$file" | head -1)
-      if echo "$line" | grep -qP '\*\*[a-z][-a-z0-9]+\*\*'; then
-        continue  # cross-skill reference, not a local file
-      fi
-      error "$name: referenced file '$ref' does not exist"
-    fi
+  # Check that referenced files exist (only in own references/ dir).
+  # Scan SKILL.md and references/*.md, but ignore fenced examples.
+  local source_files=("$file")
+  for ref_file in "$dir"/references/*.md; do
+    [[ -f "$ref_file" ]] && source_files+=("$ref_file")
+  done
+
+  local source line_no line refs ref rel_source
+  for source in "${source_files[@]}"; do
+    rel_source="${source#"$dir"/}"
+    while IFS=$'\t' read -r line_no line; do
+      refs=$(grep -oP '`references/[^`]+`' <<< "$line" | sed "s/\`//g" || true)
+      for ref in $refs; do
+        # Skip template placeholders.
+        [[ "$ref" == *"<"* ]] && continue
+        if [[ ! -f "$dir/$ref" ]]; then
+          # Cross-skill references should name the other skill in bold.
+          if grep -qP '\*\*[a-z][-a-z0-9]+\*\*' <<< "$line"; then
+            continue
+          fi
+          error "$name: referenced file '$ref' does not exist in $rel_source:$line_no"
+        fi
+      done
+    done < <(awk '/^```/{skip=!skip; next} !skip{print NR "\t" $0}' "$source")
   done
 }
 
