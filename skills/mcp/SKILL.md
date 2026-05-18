@@ -63,10 +63,11 @@ When generating or reviewing MCP server code, verify each item before presenting
 - [ ] Tool annotations treated as untrusted by client-side code
 - [ ] Elicitation does not request passwords, tokens, or secrets
 
----
 - [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
 - [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
 - [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
+- [ ] **Routing overlap checked**: overlapping skills, trigger terms, and "When NOT to use" boundaries are checked before returning guidance
+- [ ] **Spec claims verified**: claims about tool behavior, output contracts, or repo conventions are checked against current docs, scripts, or skill files
 - [ ] **Spec version checked**: transports, auth, resources, tools, and prompts match current MCP docs and SDK behavior
 - [ ] **Tool poisoning considered**: tool descriptions, dynamic metadata, and server updates cannot silently expand authority
 

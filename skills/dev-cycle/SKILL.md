@@ -83,10 +83,11 @@ Before declaring finish-mode complete:
 - [ ] For releases: tag matches the bumped version; CHANGELOG has a new section dated today; release-workflow watch used forge-appropriate exit-status flag (`gh run watch --exit-status` etc.)
 - [ ] No `--no-verify`, no `--force-push`, no destructive reset - if blocked, fix the root cause
 
----
 - [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
 - [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
 - [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
+- [ ] **Routing overlap checked**: overlapping skills, trigger terms, and "When NOT to use" boundaries are checked before returning guidance
+- [ ] **Spec claims verified**: claims about tool behavior, output contracts, or repo conventions are checked against current docs, scripts, or skill files
 - [ ] **Dirty tree protected**: unrelated user changes are identified and left intact
 - [ ] **Remote/branch target checked**: base branch, upstream, and PR target are verified before push, merge, or release
 

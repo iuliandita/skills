@@ -75,6 +75,11 @@ Before returning a code-slimming audit, verify:
 - [ ] **Correctness and security routed**: bugs go to code-review; vulnerabilities go to security-audit
 - [ ] **Routing lane held**: generic cleanup, slop, correctness, security, test-writing,
   broad-review, and implementation work were routed instead of reported as code-slimming findings
+- [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
+- [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
+- [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
+- [ ] **Routing overlap checked**: recommendations do not duplicate anti-slop, code-review, testing, full-review, or deep-audit responsibilities
+- [ ] **Spec claims verified**: any statement about skill behavior, output contracts, or repo conventions is checked against current skill files and scripts
 
 ---
 

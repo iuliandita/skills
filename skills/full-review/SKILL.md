@@ -55,10 +55,11 @@ Verify:
 - [ ] When user specified a scope, the `Scope:` line in every agent's context block reflects that scope (not "full codebase review")
 - [ ] Scope held in output: each agent's findings reference only files/modules within the requested scope. If any agent's output references out-of-scope paths, flag it in that report's header (see Step 3 scope verification)
 
----
 - [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
 - [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
 - [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
+- [ ] **Routing overlap checked**: overlapping skills, trigger terms, and "When NOT to use" boundaries are checked before returning guidance
+- [ ] **Spec claims verified**: claims about tool behavior, output contracts, or repo conventions are checked against current docs, scripts, or skill files
 - [ ] **Routing explicit**: code-review, anti-slop, security-audit, and update-docs findings stay in their lanes
 - [ ] **No false coverage**: unrun tests, skipped directories, and unavailable tools are reported
 

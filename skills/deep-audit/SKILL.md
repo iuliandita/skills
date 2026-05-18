@@ -15,13 +15,10 @@ metadata:
 
 # Deep Audit: Wave-Based Repo Orchestrator
 
-Run up to 29 custom skills against a repo in 5 sequential waves, presenting results
-progressively. Wave 1 detects the tech stack. Waves 2-5 dispatch only the skills that
-match. Each wave completes and reports before the next begins.
+Run up to 29 audit agents against a repo in 5 sequential waves. This is the broadest application-repo dispatch plan (4 Wave 2 + up to 20 conditional Wave 3 lenses + 2 Wave 4 + 3 Wave 5), not the total skill count. Wave 1 detects the tech stack, Waves 2-5 dispatch only matching audit skills, and each wave reports before the next begins.
 
-The five waves are: Reconnaissance; Code Quality (code-review, anti-slop,
-anti-ai-prose, code-slimming); Domain-Specific (detected skills only); Security (security-audit
-then zero-day); and Docs & Hygiene (update-docs, roadmap, git).
+The five waves are: Reconnaissance; Code Quality (code-review, anti-slop, anti-ai-prose,
+code-slimming); Domain-Specific (detected skills only); Security (security-audit then zero-day); and Docs & Hygiene (update-docs, roadmap, git).
 
 After the waves, Steps 7-9 persist findings to `docs/local/audits/DEEP-AUDIT.md`, write `DEEP-AUDIT-TASKS.md`, and route SMALL audits to the task list or LARGE audits to a brainstorming skill or generated plans under `docs/local/specs/` and `docs/local/plans/`.
 
@@ -70,6 +67,8 @@ workflow (waves + persistence + routing), not just the wave dispatch phase.
 - [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
 - [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
 - [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
+- [ ] **Routing overlap checked**: overlapping skills, trigger terms, and "When NOT to use" boundaries are checked before returning guidance
+- [ ] **Spec claims verified**: claims about tool behavior, output contracts, or repo conventions are checked against current docs, scripts, or skill files
 - [ ] **Scope bounded**: audit waves match the repo type and user request, not every possible skill
 - [ ] **Evidence retained**: findings cite files, commands, outputs, or source docs instead of impressions
 
@@ -112,7 +111,7 @@ to that subtree (`git ls-files -- path/to/scope` instead of the full repo).
 After detection, present the recon summary before proceeding. Compute
 `{unmatched_skills}` as the 20 Wave 3 candidates minus the matched set.
 Compute `{count}` by summing: 4 (Wave 2) + matched Wave 3 skills + 2 (Wave 4) +
-3 (Wave 5). Example: if 6 Wave 3 skills match, count = 4 + 6 + 2 + 3 = 15.
+3 (Wave 5). Example: if 6 Wave 3 skills match, count = 4 + 6 + 2 + 3 = 15. If the matched Wave 3 set is too broad for the user's goal, recommend a scoped deep-audit or **full-review** instead of pretending every lens is equally valuable.
 
 In scoped mode, separate Wave 3 matches into two lines: skills matched by files
 within the scoped subtree, and skills matched only by repo-root manifests

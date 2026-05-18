@@ -105,10 +105,11 @@ AI tools consistently produce the same database mistakes. **Before returning any
 - [ ] Backup strategy tested by actually restoring (backup without restore test = hope, not a strategy)
 - [ ] Secrets (passwords, connection strings) injected via env vars or secret managers, not config files
 
----
 - [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
 - [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
 - [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
+- [ ] **Routing overlap checked**: overlapping skills, trigger terms, and "When NOT to use" boundaries are checked before returning guidance
+- [ ] **Spec claims verified**: claims about tool behavior, output contracts, or repo conventions are checked against current docs, scripts, or skill files
 - [ ] **Engine/version checked**: SQL syntax, index options, and replication advice match the named engine and major version
 - [ ] **Data-loss path gated**: migrations, deletes, reindexes, and failovers include backup, dry-run, rollback, or maintenance-window guidance
 

@@ -261,10 +261,11 @@ Before returning any built UI or critique, verify:
 - [ ] **Critique mode: max 10 tickets** - RED + GREEN priority. Rant is filtered, not shipped raw
 - [ ] **No AI prose tells in commentary** - apply the **anti-ai-prose** vocabulary list to the persona's own writing, not just user-facing copy. Plain English
 
----
 - [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
 - [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
 - [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
+- [ ] **Routing overlap checked**: overlapping skills, trigger terms, and "When NOT to use" boundaries are checked before returning guidance
+- [ ] **Spec claims verified**: claims about tool behavior, output contracts, or repo conventions are checked against current docs, scripts, or skill files
 - [ ] **Framework reality checked**: React, Next, Vite, Astro, SvelteKit, and Tailwind guidance matches current docs and installed packages
 - [ ] **Visual verification done**: responsive screenshots or browser checks confirm layout, assets, and interaction states
 

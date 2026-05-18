@@ -57,10 +57,11 @@ Before executing any technique or generating exploitation commands, verify:
 - [ ] **Architecture matched**: exploit/payload matches target arch (`uname -m`). x86_64 exploits don't work on ARM, 32-bit payloads fail on 64-bit-only systems
 - [ ] **Reverse shells use authorized ports**: listener IP and port match the engagement plan
 
----
 - [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
 - [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
 - [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
+- [ ] **Routing overlap checked**: overlapping skills, trigger terms, and "When NOT to use" boundaries are checked before returning guidance
+- [ ] **Spec claims verified**: claims about tool behavior, output contracts, or repo conventions are checked against current docs, scripts, or skill files
 - [ ] **Authorization confirmed**: scope, target, time window, and rules of engagement are explicit before privesc work
 - [ ] **Destructive paths avoided**: exploit attempts preserve evidence and avoid persistence, data damage, or lateral movement unless explicitly authorized
 

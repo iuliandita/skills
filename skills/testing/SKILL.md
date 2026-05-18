@@ -65,10 +65,11 @@ AI tools consistently produce the same testing mistakes. **Before returning any 
 - [ ] Snapshot tests have been reviewed manually before committing (blind `--update` is a bug factory)
 - [ ] E2E selectors use `data-testid`, `role`, or accessible names - not CSS classes or DOM structure
 
----
 - [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
 - [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
 - [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
+- [ ] **Routing overlap checked**: overlapping skills, trigger terms, and "When NOT to use" boundaries are checked before returning guidance
+- [ ] **Spec claims verified**: claims about tool behavior, output contracts, or repo conventions are checked against current docs, scripts, or skill files
 - [ ] **Runner APIs current**: pytest, Vitest, Jest, Playwright, and Testing Library examples match current runner behavior
 - [ ] **Flake source identified**: retries are not used to hide nondeterminism without diagnosis
 
