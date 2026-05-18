@@ -1,5 +1,6 @@
 .claude/
 CLAUDE.md
+GEMINI.md
 AGENTS.md
 publish.sh
 skills/cluster-health/protected/
