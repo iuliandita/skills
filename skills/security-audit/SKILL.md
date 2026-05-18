@@ -131,7 +131,7 @@ Find known CVEs in dependencies and assess supply chain risk.
 - `polyfill.io` (2024 domain takeover, malicious CDN injection)
 - `xz-utils` 5.6.0-5.6.1 (2024 backdoor in compression library)
 - `trivy` 0.69.4-0.69.6 / `aquasecurity/trivy` Docker tags 0.69.5-0.69.6 / `aquasecurity/trivy-action` + `aquasecurity/setup-trivy` force-pushed tags (2026-03 TeamPCP supply chain compromise - credential-stealing malware in CI/CD pipelines)
-Any match on package name + version range is Critical severity regardless of `audit` output.
+Any match on package name + version range is P0 severity regardless of `audit` output.
 For active incident triage, use `references/hardening-checklists.md` for repo-wide package,
 IOC, local-runtime, and remote-repo checks.
 
@@ -268,8 +268,6 @@ These look like security issues but aren't (or are acceptable):
 ---
 
 ## Output Contract
-
-> **Severity migration:** The prior scale (`Critical | High | Medium | Low | Informational`) is replaced by `P0 | P1 | P2 | P3 | info`. Mapping: `Critical` -> `P0`, `High` -> `P1`, `Medium` -> `P2`, `Low` -> `P3`, `Informational` -> `info`. Inline severity references elsewhere in this file (and in `references/report-guide.md`) should be updated in a follow-up pass -- out of scope for this contract retrofit.
 
 See `skills/_shared/output-contract.md` for the full contract.
 

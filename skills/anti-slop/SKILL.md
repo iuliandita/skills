@@ -49,7 +49,7 @@ Before returning any anti-slop audit, verify:
 - [ ] **Security patterns not flagged**: auth, CORS, input validation, rate limiting, TLS - these are correct even if verbose (check the "What NOT to Flag" list)
 - [ ] **Framework idioms respected**: what looks like over-abstraction might be the framework's expected pattern (e.g., Next.js layouts, Django class-based views, Terraform module structure)
 - [ ] **Existing project conventions preserved**: the repo's naming style, comment density, and abstraction level take precedence over generic "clean code" preferences
-- [ ] **Severity is honest**: don't inflate Low findings to Medium to pad the report
+- [ ] **Severity is honest**: don't inflate P3 findings to P2 to pad the report
 - [ ] **No hallucinated replacements**: verify that suggested modern alternatives actually exist in the target language version (e.g., `match` requires Python 3.10+, `LazyLock` requires Rust 1.80+)
 - [ ] **Grounding checked**: if flagging a hallucinated API, CLI flag, resource, chart value, or config key, verify it against local types/schema/tool help or official docs before claiming it is fake
 - [ ] **Test theater distinguished from correctness**: implementation-mirroring tests, mock-heavy ceremony, and snapshots with no semantic assertions belong here; actual failing behavior still belongs to code-review
@@ -130,9 +130,9 @@ Classify each finding by axis (Noise/Lies/Soul - see above), action, and severit
 - **Fine** - looks like slop but is justified (note why and move on)
 
 **Severity** (determines report ordering - high first):
-- **High** - strongly suggests fabricated or ungrounded code (hallucinated APIs, schema drift, silent swallowing used to hide uncertainty, fallback laundering)
-- **Medium** - maintainability (over-abstraction, generic naming, missing error context, logic duplication)
-- **Low** - style (verbose patterns, comment noise, redundant annotations, barrel files)
+- **P1** - strongly suggests fabricated or ungrounded code (hallucinated APIs, schema drift, silent swallowing used to hide uncertainty, fallback laundering)
+- **P2** - maintainability (over-abstraction, generic naming, missing error context, logic duplication)
+- **P3** - style (verbose patterns, comment noise, redundant annotations, barrel files)
 
 ### Step 5: Report and fix
 
@@ -418,8 +418,6 @@ These look like slop but aren't:
 ---
 
 ## Output Contract
-
-> **Severity migration:** The prior scale (`High | Medium | Low`) is replaced by `P0 | P1 | P2 | P3 | info`. Mapping: `High` -> `P1`, `Medium` -> `P2`, `Low` -> `P3`. Inline severity references elsewhere in this file should be updated in a follow-up pass -- out of scope for this contract retrofit.
 
 See `skills/_shared/output-contract.md` for the full contract.
 

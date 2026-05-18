@@ -50,8 +50,8 @@ Before returning any audit, verify:
 - [ ] **Domain terms kept**: `pivotal` in hinge hardware specs, `landscape` in horticulture, `foster` as a verb in child welfare, `realm` in fantasy fiction - these are not tells in context
 - [ ] **Code blocks untouched**: do not flag identifiers, strings, or code comments that contain banned words as part of functional code
 - [ ] **Rewrites are real improvements**: every "after" is shorter, clearer, or more specific than the "before". No lateral rewrites that just swap synonyms
-- [ ] **Severity is honest**: do not inflate Low findings to Medium to pad the report
-- [ ] **Short text rule applied**: under 100 words, 2+ tells in one paragraph = High severity
+- [ ] **Severity is honest**: do not inflate P3 findings to P2 to pad the report
+- [ ] **Short text rule applied**: under 100 words, 2+ tells in one paragraph = P1 severity
 - [ ] **Audit output itself uses no AI-prose tells** (apply these rules to your own output)
 - [ ] **Density threshold applied** before assigning severity level
 - [ ] **AI fallback names checked (fiction)**: protagonist and major-character names compared against the documented fallback set (Elara, Lyra, Aurora, Kael, Vale, Cassius, etc.) and the phonetic tell (2 soft syllables, A/L/R/N consonants, no demographic anchor); fallback-set names allowed only when the setting and population organically produce them
@@ -115,12 +115,12 @@ Apply the four categories (see below). For each match, read the surrounding cont
 
 **Density heuristic** (rough guide, not a hard rule):
 - **Under 1 flagged item per 500 words** - noise, usually do not flag
-- **2-3 per 500 words** - a pattern, flag the cluster with Medium severity
-- **4+ per 500 words** - dominant voice, High severity, recommend structural rewrite
+- **2-3 per 500 words** - a pattern, flag the cluster as P2
+- **4+ per 500 words** - dominant voice, P1 severity, recommend structural rewrite
 
-**Short text scaling:** for text under 100 words, any 2+ tells in a single paragraph is High severity regardless of the per-500-words threshold. A single sentence crammed with AI vocabulary is worse than a long doc with scattered instances.
+**Short text scaling:** for text under 100 words, any 2+ tells in a single paragraph is P1 severity regardless of the per-500-words threshold. A single sentence crammed with AI vocabulary is worse than a long doc with scattered instances.
 
-Density only applies to vocabulary and syntax tells. A single travel-guide paragraph is enough to flag on its own. One fabricated citation is always High.
+Density only applies to vocabulary and syntax tells. A single travel-guide paragraph is enough to flag on its own. One fabricated citation is always P1.
 
 Classify each finding by category, action, and severity:
 
@@ -130,9 +130,9 @@ Classify each finding by category, action, and severity:
 - **Fine** - matches the pattern but is justified (note why, move on)
 
 **Severity:**
-- **High** - cluster of tells that makes the piece sound unmistakably AI-written; vague attribution passing opinion as fact; fabricated citations or broken references
-- **Medium** - vocabulary or syntax tells that dull the voice without breaking trust; formulaic structures ("Despite its X, faces challenges..."); travel-guide voice in non-travel writing
-- **Low** - single instances of banned vocabulary; formatting nits (em-dash usage, unnecessary bold); tricolon overuse
+- **P1** - cluster of tells that makes the piece sound unmistakably AI-written; vague attribution passing opinion as fact; fabricated citations or broken references
+- **P2** - vocabulary or syntax tells that dull the voice without breaking trust; formulaic structures ("Despite its X, faces challenges..."); travel-guide voice in non-travel writing
+- **P3** - single instances of banned vocabulary; formatting nits (em-dash usage, unnecessary bold); tricolon overuse
 
 ### Step 4: Report and fix
 
@@ -415,7 +415,7 @@ Looks flagged at a glance: `nestled`, `landscape`, `robust`, `underscores`, `piv
 
 Rules for the report itself:
 - **Omit empty categories.** If there are no formatting tells, do not write an empty "Formatting Tells (0 items)" heading
-- **Order within a category** High > Medium > Low
+- **Order within a category** P1 > P2 > P3
 - **Deletion fixes have no "after"** - write `> after: (cut)` or just state the delete in the description
 - **Apply these rules to your own audit.** Run the Self-Check on the report before returning it - an audit written in AI-slop voice is not credible
 
@@ -436,17 +436,17 @@ Report:
 
 #### Vocabulary Tells (6 items)
 
-**Fix** (High) line 1 - cluster of 6 flagged words in 48 words: far above 4/500 threshold
+**Fix** (P1) line 1 - cluster of 6 flagged words in 48 words: far above 4/500 threshold
 > before: empowers / seamlessly / navigate / landscape / commitment to / boasts / fosters / pivotal / journey toward
 > after: (rewrite, see below)
 
 #### Tonal Tells (2 items)
 
-**Fix** (High) line 1 - scaffolding padding and significance padding
+**Fix** (P1) line 1 - scaffolding padding and significance padding
 > before: "In today's fast-paced world"
 > after: (cut)
 
-**Fix** (Medium) line 1 - promotional tone
+**Fix** (P2) line 1 - promotional tone
 > before: "Built with a commitment to excellence"
 > after: (cut)
 
@@ -459,8 +459,6 @@ Report:
 ---
 
 ## Output Contract
-
-> **Severity migration:** The prior scale (`High | Medium | Low`) is replaced by `P0 | P1 | P2 | P3 | info`. Mapping: `High` -> `P1`, `Medium` -> `P2`, `Low` -> `P3`. Inline severity references elsewhere in this file should be updated in a follow-up pass -- out of scope for this contract retrofit.
 
 See `skills/_shared/output-contract.md` for the full contract.
 

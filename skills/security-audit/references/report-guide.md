@@ -6,11 +6,11 @@ Reference material for generating the final audit report. Includes severity clas
 
 | Severity | Criteria | Examples |
 |----------|----------|----------|
-| **Critical** | Unauthenticated RCE, credential exfiltration, full auth bypass, arbitrary file write | Unauthed admin endpoint returns all API keys; zip slip with root container |
-| **High** | Authenticated RCE, privilege escalation, SSRF to internal services, path traversal with write | Non-admin can access admin routes; SSRF bypasses IP allowlist |
-| **Medium** | Stored XSS, CSRF, information disclosure (stack traces, internal paths), weak crypto | SHA-256 password hashing; verbose error responses in production |
-| **Low** | Reflected XSS (limited), verbose errors in dev mode, missing security headers, TLS config issues | Missing HSTS header; `rejectUnauthorized: false` with opt-in flag |
-| **Informational** | Best practice deviations, missing governance files, unpinned actions | No SECURITY.md; actions pinned to tags not SHAs; no SBOM |
+| **P0** | Unauthenticated RCE, credential exfiltration, full auth bypass, arbitrary file write | Unauthed admin endpoint returns all API keys; zip slip with root container |
+| **P1** | Authenticated RCE, privilege escalation, SSRF to internal services, path traversal with write | Non-admin can access admin routes; SSRF bypasses IP allowlist |
+| **P2** | Stored XSS, CSRF, information disclosure (stack traces, internal paths), weak crypto | SHA-256 password hashing; verbose error responses in production |
+| **P3** | Reflected XSS (limited), verbose errors in dev mode, missing security headers, TLS config issues | Missing HSTS header; `rejectUnauthorized: false` with opt-in flag |
+| **info** | Best practice deviations, missing governance files, unpinned actions | No SECURITY.md; actions pinned to tags not SHAs; no SBOM |
 
 ## OWASP Top 10:2025 Quick Reference
 
@@ -44,12 +44,12 @@ Save to `SECURITY-AUDIT.md` in the repo root. Warn the user this file MUST be gi
 
 ## Executive Summary
 
-X findings: N critical, N high, N medium, N low, N informational.
+X findings: N P0, N P1, N P2, N P3, N info.
 [1-3 sentence overall assessment]
 
 ## Findings
 
-### [SEV-NNN] [CRITICAL|HIGH|MEDIUM|LOW|INFO]: [Title]
+### [SEV-NNN] [P0|P1|P2|P3|info]: [Title]
 
 **OWASP**: [A01:2025 - Category Name]
 **CWE**: [CWE-NNN if applicable]
