@@ -124,7 +124,7 @@ For important workflows, smoke-test the target tool after install:
 | Windsurf | `windsurf` | `~/.codeium/windsurf/skills` |
 | OpenCode | `opencode` | `~/.config/opencode/skills` |
 | GitHub Copilot | `copilot` | `~/.copilot/skills` |
-| Gemini CLI | `gemini` | `~/.gemini/skills` |
+| Gemini CLI | `gemini` | `~/.agents/skills` |
 | Roo Code | `roo` | `~/.roo/skills` |
 | Goose | `goose` | `~/.config/goose/skills` |
 | Amp | `amp` | `~/.config/agents/skills` |

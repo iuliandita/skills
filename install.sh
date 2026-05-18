@@ -49,7 +49,7 @@ declare -A TOOL_PATHS=(
   [windsurf]="${WINDSURF_SKILLS_DIR:-$HOME/.codeium/windsurf/skills}"
   [opencode]="${OPENCODE_SKILLS_DIR:-$HOME/.config/opencode/skills}"
   [copilot]="${COPILOT_SKILLS_DIR:-$HOME/.copilot/skills}"
-  [gemini]="${GEMINI_SKILLS_DIR:-$HOME/.gemini/skills}"
+  [gemini]="${GEMINI_SKILLS_DIR:-$HOME/.agents/skills}"
   [roo]="${ROO_SKILLS_DIR:-$HOME/.roo/skills}"
   [goose]="${GOOSE_SKILLS_DIR:-$HOME/.config/goose/skills}"
   [amp]="${AMP_SKILLS_DIR:-$HOME/.config/agents/skills}"
@@ -561,6 +561,10 @@ main() {
     for tool in "${tools[@]}"; do
       local tool_dir
       tool_dir="$(resolve_tool_path "$tool")"
+      if [[ "$tool_dir" == "$CANONICAL_DIR" ]]; then
+        printf '[%s] -> %s (matches canonical, skipping links)\n' "$tool" "$tool_dir"
+        continue
+      fi
       mkdir -p "$tool_dir"
       migrate_legacy_backups "$tool_dir"
       printf '[%s] -> %s\n' "$tool" "$tool_dir"
