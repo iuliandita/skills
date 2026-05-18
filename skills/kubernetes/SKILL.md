@@ -328,7 +328,7 @@ The Trivy supply chain attack (CVE-2026-33634) is the defining security event of
 - **Monitor for force-push events** on action repos you depend on. GitHub's audit log and StepSecurity Harden-Runner can detect this.
 - **Vendor critical CI tools** or use pre-built, verified binaries instead of pulling from upstream on every run.
 - **Rotate secrets** if any CI pipeline ran compromised Trivy (v0.69.4/5/6) between March 19-23, 2026. The infostealer malware exfiltrated SSH keys, cloud creds, Docker configs, and k8s tokens.
-- **Trivy safe version: v0.69.3.** Actions: `trivy-action@v0.35.0`, `setup-trivy@v0.2.6` (verify SHAs against GitHub security advisory GHSA-69fq-xp46-6x23).
+- **Trivy safe version: v0.70.0+ for new pins.** v0.69.3 was the March 2026 rollback version. Actions such as `trivy-action@v0.35.0` and `setup-trivy@v0.2.6` still need verified commit SHAs, not mutable tags.
 
 ### Platform awareness
 

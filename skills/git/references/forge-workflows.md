@@ -146,7 +146,8 @@ host. `glab` picks the right token based on the repo's remote. For repos without
 yet, use `GITLAB_HOST` or `--host`.
 
 **SSH-IP vs hostname mismatch**: if the SSH remote resolves to an IP and the web URL uses
-a hostname, `glab mr list` can fail. Use `glab api` with URL-encoded paths (see `ci-cd/references/gitlab-ci.md`).
+a hostname, `glab mr list` can fail. Use `glab api` with URL-encoded paths (see the
+**ci-cd** skill's `references/gitlab-ci.md`).
 
 ### MR creation with `glab`
 

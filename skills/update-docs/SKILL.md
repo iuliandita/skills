@@ -9,7 +9,7 @@ compatibility: "Requires git. Optional: wc (for size audits)"
 metadata:
   source: iuliandita/skills
   date_added: "2026-03-25"
-  effort: low
+  effort: medium
   argument_hint: "[doc-or-path] (e.g., CLAUDE.md, docs/runbook.md)"
 ---
 

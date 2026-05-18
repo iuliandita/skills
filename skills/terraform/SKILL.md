@@ -408,7 +408,7 @@ provider "aws" {
 | Tool | Role | Status |
 |------|------|--------|
 | **Checkov** | Static HCL + plan analysis, 750+ checks, PCI/CIS/NIST frameworks | 🟢 Active, recommended |
-| **Trivy** (absorbed tfsec) | IaC + container + repo scanning, single binary | 🟢 Active (v0.69.3 safe, v0.69.4-6 COMPROMISED) |
+| **Trivy** (absorbed tfsec) | IaC + container + repo scanning, single binary | 🟢 Active (use v0.70.0+ for new pins; v0.69.4-6 COMPROMISED) |
 | **TFLint** | Provider-specific linting, catches misconfigs linters miss | 🟢 Active |
 | **OPA / Conftest** | Custom policy-as-code on JSON plan output | 🟢 Active (CNCF) |
 | **Sentinel** | Native TFC/TFE policy engine | 🟢 Active (proprietary) |

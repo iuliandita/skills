@@ -491,7 +491,7 @@ include:
 trivy-scan:
   stage: scan
   image:
-    name: aquasec/trivy:0.69.3    # known safe - do NOT use 0.69.4/5/6
+    name: aquasec/trivy:0.70.0@sha256:<digest>    # pin digest; do NOT use 0.69.4/5/6
   script:
     - trivy image --exit-code 1 --severity HIGH,CRITICAL $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
   allow_failure: true    # non-blocking for dev/staging; set to false for release pipelines (PCI 6.2.1)
@@ -840,7 +840,7 @@ build-worker:
 scan:
   stage: scan
   image:
-    name: aquasec/trivy:0.69.3
+    name: aquasec/trivy:0.70.0@sha256:<digest>
   script:
     - |
       for svc in api web worker; do

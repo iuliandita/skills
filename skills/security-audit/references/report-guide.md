@@ -85,7 +85,7 @@ X findings: N critical, N high, N medium, N low, N informational.
 - semgrep: `pip install semgrep` or `brew install semgrep`
 - gitleaks: `brew install gitleaks` or `go install github.com/gitleaks/gitleaks/v8@latest`
 - trufflehog: `brew install trufflehog` or `go install github.com/trufflesecurity/trufflehog/v3@latest`
-- trivy: `brew install trivy` or see https://aquasecurity.github.io/trivy (use v0.69.3 - versions 0.69.4-0.69.6 are compromised)
+- trivy: `brew install trivy` or see https://aquasecurity.github.io/trivy (use v0.70.0+ from official releases; v0.69.3 was the March 2026 incident rollback; never use v0.69.4-0.69.6)
 - scorecard: `go install github.com/ossf/scorecard/v5/cmd/scorecard@latest`
 - checkov: `pip install checkov`
 

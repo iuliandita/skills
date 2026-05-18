@@ -131,7 +131,7 @@ Typical pattern:
 
 ```http
 POST /payments
-Idempotency-Key: 77a5e517-0b63-42c2-8fb7-d4df0f1e30e6
+Idempotency-Key: <uuid>
 ```
 
 Rules:

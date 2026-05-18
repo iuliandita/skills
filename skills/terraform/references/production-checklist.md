@@ -35,7 +35,7 @@ Pre-deploy verification for Terraform configurations. Run through every section 
 - [ ] Separate IAM roles for plan (read-only) and apply (write)
 - [ ] CDE state files in separate backend with separate IAM role
 - [ ] GitHub Actions pinned to commit SHAs (post tj-actions compromise)
-- [ ] Trivy/Checkov pinned to safe versions (Trivy v0.69.3, NOT v0.69.4-6)
+- [ ] Trivy/Checkov pinned to safe versions (Trivy v0.70.0+ for new pins, NOT v0.69.4-6)
 
 ## Compliance (PCI-DSS 4.0)
 

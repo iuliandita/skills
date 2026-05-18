@@ -120,7 +120,7 @@ Find known CVEs in dependencies and assess supply chain risk.
 - **Python**: `pip-audit --format json` or `safety check --json`
 - **Go**: `govulncheck ./...`
 - **Rust**: `cargo audit --json` - also check for `unsafe` blocks without `// SAFETY:` comments, `transmute` misuse, unvalidated FFI boundaries
-- **General**: `trivy fs --scanners vuln .` (verify trivy version is 0.69.3 or earlier - 0.69.4-0.69.6 are compromised)
+- **General**: `trivy fs --scanners vuln .` (use Trivy 0.70.0+ from official releases, or 0.69.3 only as a March 2026 incident rollback; never use 0.69.4-0.69.6)
 
 **Flag**: HIGH/CRITICAL CVEs with fixes available, deps unmaintained 2+ years, lockfile out of sync with manifest, non-standard registries.
 

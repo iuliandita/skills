@@ -241,7 +241,10 @@ Overview.
 ### Text
 
 - **Imperative form**: "Check the config", not "You should check the config"
-- **Plain ASCII**: no em-dashes, no `--` double-dash substitute, no curly quotes, no ligatures. Use a single `-` where you would reach for an em dash.
+- **ASCII by default**: skill prose should stay ASCII except collection-approved markers such
+  as the public-description `· ` prefix and shared output-contract box glyphs. No em-dashes,
+  no `--` double-dash substitute, no curly quotes, no ligatures. Use a single `-` where you
+  would reach for an em dash.
 - **Explain why**: "Pin images to SHA256 digests because mutable tags are a proven attack vector
   (Trivy March 2026, tj-actions March 2025)" beats "Always pin images"
 - **Calm directives**: "Do X" outperforms "YOU MUST ALWAYS DO X" on most modern coding agents. Use ALL CAPS

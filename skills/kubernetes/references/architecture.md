@@ -223,7 +223,7 @@ The Trivy supply chain attack (CVE-2026-33634) demonstrated that **mutable Git t
 - **Separate CI secrets by environment**: staging pipeline should NOT have access to production credentials.
 - **Monitor action repos for force-push events**: subscribe to security advisories for all actions you use.
 
-**Trivy safe versions (as of 2026-03-24):** binary v0.69.3, `trivy-action@v0.35.0`, `setup-trivy@v0.2.6`. Do NOT use v0.69.4/5/6.
+**Trivy safe versions (May 2026):** use binary v0.70.0+ from official releases for new pins. The March 2026 rollback set was binary v0.69.3, `trivy-action@v0.35.0`, and `setup-trivy@v0.2.6`. Do NOT use v0.69.4/5/6.
 
 ### Secrets Management
 

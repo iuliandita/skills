@@ -55,9 +55,11 @@ Before returning any generated or modified skill, verify against this list:
   cross-referencing related skills by **bold** name (e.g., `use **skill-name**`)
 - [ ] **Workflow section with numbered steps**: clear, sequential, actionable
 - [ ] **Rules section at the end**: non-negotiable constraints in imperative form
-- [ ] **Style compliant**: no banned words (per `CLAUDE.md`/`AGENTS.md`), plain ASCII only
-  (no em-dashes, curly quotes, ligatures - use a single `-` where you would reach for an em
-  dash, never `--`). Check both SKILL.md AND reference files - banned words in references count
+- [ ] **Style compliant**: no banned words (per `CLAUDE.md`/`AGENTS.md`), ASCII by default
+  except collection-approved markers such as the public-description `· ` prefix and shared
+  output-contract box glyphs. No em-dashes, curly quotes, ligatures, or `--` dash substitutes.
+  Use a single `-` where you would reach for an em dash. Check both SKILL.md AND reference files
+  - banned words in references count
 - [ ] **Target ~500 lines**: if over 500, extract to `references/` with clear pointers. Hard max 600
 - [ ] **Reference files use `references/` relative paths**: not hardcoded or tool-specific paths
 - [ ] **All references verified**: every tool, CLI flag, IaC resource, config snippet, and
@@ -486,7 +488,9 @@ See `skills/_shared/output-contract.md` for the full contract.
    inventories and verify counts from live public skills.
 6. **No AI slop in skills.** Avoid comment noise, over-abstraction, ALL CAPS theater, and
    "just in case" instructions.
-7. **Plain ASCII only.** No em dashes, curly quotes, ligatures, or `--` dash substitutes.
+7. **ASCII by default.** Keep skill prose ASCII except collection-approved markers such as the
+   public-description `· ` prefix and shared output-contract box glyphs. No em dashes, curly
+   quotes, ligatures, or `--` dash substitutes.
 8. **Run the AI Self-Check.** Every generated or modified skill gets checked before return.
 9. **Branch every run.** In git-backed collections, create or record a run branch before checks.
 10. **Report every run.** Finish with the Run Report format and score before/after or "not scored."

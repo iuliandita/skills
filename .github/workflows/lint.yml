@@ -82,6 +82,9 @@ jobs:
       - name: Test installer behavior
         run: ./scripts/test-install.sh
 
+      - name: Test lint behavior
+        run: ./scripts/test-lint-skills.sh
+
       - name: Shellcheck scripts
         run: shellcheck install.sh scripts/*.sh
 
