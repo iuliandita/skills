@@ -55,6 +55,18 @@ Before running checks or reporting results, verify:
 - [ ] **Cluster target explicit**: kubeconfig context, namespace, and environment are named before any query
 - [ ] **Read-only posture kept**: health checks do not mutate resources or restart workloads unless the user explicitly escalates
 
+## Performance
+
+- Start with cluster-wide signals before loading symptom-specific references.
+- Bound logs, events, and object listings by namespace, time window, or selectors.
+- Prefer summarized evidence over dumping raw Kubernetes output into context.
+
+## Best Practices
+
+- Treat the current kube context as hidden state until it is explicitly named.
+- Separate health evidence from remediation; fixes require a separate escalation.
+- Report permission gaps and missing CRDs as diagnostic findings, not silent skips.
+
 ## Cluster Registry
 
 This public skill has no built-in private cluster registry.
