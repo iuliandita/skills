@@ -120,6 +120,7 @@ Skills may run in headless contexts where no interactive user is available:
 - Claude Code `--bare` flag (no hooks, no skill directory walk)
 - Cursor Automations (event-triggered, no user prompt)
 - Codex `exec` mode (non-interactive)
+- Gemini CLI `-p`/`--prompt` flag (non-interactive headless mode)
 
 Skills should not assume interactive prompting is always available. If a skill needs user input
 at a decision point, provide a sensible default or document the assumption. Avoid blocking on

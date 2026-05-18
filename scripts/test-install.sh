@@ -95,6 +95,18 @@ test_link_mode_writes_tool_lock() {
   trap - RETURN
 }
 
+test_link_mode_writes_tool_lock_gemini() {
+  local tmp
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  HOME="$tmp" "$ROOT/install.sh" --tool gemini --link --no-backup >/dev/null
+  HOME="$tmp" "$ROOT/install.sh" --check --tool gemini >/dev/null
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
 test_backup_preserves_top_level_symlink() {
   local tmp dest private backup_root
   tmp="$(mktemp -d)"
@@ -125,5 +137,6 @@ test_backups_stay_outside_skill_root
 test_legacy_backups_are_migrated_outside_skill_root
 test_opencode_install_allows_installed_skills
 test_link_mode_writes_tool_lock
+test_link_mode_writes_tool_lock_gemini
 test_backup_preserves_top_level_symlink
 printf 'install tests passed\n'

@@ -3,7 +3,7 @@ name: skill-refiner
 description: >
   · Improve skill collections or a named skill with iterative scoring, lint checks, behavioral tests, peer review. Triggers: 'skill refiner', 'improve skills', 'quality sweep', 'batch improve', 'skill loop', 'target 99%'.
 license: MIT
-compatibility: "Requires: skill-creator skill, git. Optional: secondary AI harness (codex, claude, opencode) for cross-model review"
+compatibility: "Requires: skill-creator skill, git. Optional: secondary AI harness (codex, claude, gemini, opencode) for cross-model review"
 metadata:
   source: iuliandita/skills
   date_added: "2026-03-31"
@@ -108,7 +108,7 @@ contested major flags (non-configurable).
    and Behavioral). This catches confirmation bias but shares the primary model's blind spots.
    Skipping review entirely is not an option - a fresh-context self-review is the minimum bar.
    If the harness doesn't support subagents, run the review prompt as a separate CLI
-   invocation (`claude -p`, `codex exec`, etc.).
+   invocation (`claude -p`, `codex exec`, `gemini -p`, etc.).
 
 ### Phase 1: Regular Iterations
 

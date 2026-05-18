@@ -10,6 +10,7 @@ How skill-refiner detects and validates AI CLI harnesses for cross-model peer re
 |---------|--------|-------------|----------|------------|
 | Claude Code | `claude` | `~/.claude/settings.json` | `ANTHROPIC_API_KEY` | `claude -p "respond with PONG"` |
 | Codex | `codex` | `~/.codex/config.toml` | `OPENAI_API_KEY` | `codex exec "respond with PONG"` |
+| Gemini CLI | `gemini` | `~/.gemini/settings.json` | `GEMINI_API_KEY` or `GOOGLE_API_KEY` | `gemini -p "respond with PONG"` |
 | OpenCode | `opencode` | project-level `.opencode/` (verify) | varies by provider | check `opencode --help` |
 | Aider | `aider` | `~/.aider.conf.yml` | `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` | `aider --message "respond with PONG" --no-git --yes` |
 | Goose | `goose` | `~/.config/goose/config.yaml` | varies by provider | check `goose --help` |
@@ -65,9 +66,10 @@ If no match, error, or timeout, skip to next harness.
 ```
 1. claude
 2. codex
-3. opencode
-4. aider
-5. goose
+3. gemini
+4. opencode
+5. aider
+6. goose
 ```
 
 The primary harness (the one running the current session) is always excluded from
@@ -78,8 +80,9 @@ secondary selection.
 Check in order (env var names are approximate - verify against current CLI versions):
 1. Claude Code env var (e.g., `CLAUDE_CODE` or similar) - primary is claude
 2. Parent process name contains `codex` - primary is codex
-3. OpenCode env var (e.g., `OPENCODE_SESSION` or similar) - primary is opencode
-4. If ambiguous, prompt user once at run start
+3. Gemini CLI env var (e.g., `GEMINI_CLI` or session marker) or parent process name contains `gemini` - primary is gemini
+4. OpenCode env var (e.g., `OPENCODE_SESSION` or similar) - primary is opencode
+5. If ambiguous, prompt user once at run start
 
 ### Multi-Model Harnesses
 
