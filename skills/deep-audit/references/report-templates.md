@@ -30,10 +30,11 @@ it themselves before re-running.
 ## Scorecard
 | Severity | Count |
 |---|---|
-| Critical | {n} |
-| High | {n} |
-| Medium | {n} |
-| Low / Info | {n} |
+| P0 | {n} |
+| P1 | {n} |
+| P2 | {n} |
+| P3 | {n} |
+| info | {n} |
 
 ## Wave 1 - Reconnaissance
 {matched/skipped skills, languages, file count}
@@ -64,13 +65,13 @@ one task entry.
 ### Task entry format
 
 ```markdown
-- [ ] **{phase}.{index} {short title}** {priority_marker} ({finding_id}) - {effort}
+- [ ] **{phase}.{index} {short title}** {priority} {priority_marker} ({finding_id}) - {effort}
   - File: `{path}:{line_range}` (or Files: bulleted list if multiple)
   - {1-2 line rationale or fix sketch}
 ```
 
-- **Priority markers**: `🔴` Critical (blocks release or creates unauthenticated compromise),
-  `🟡` Important (correctness or exposed attack surface), `🔵` Minor (polish, stale docs, style).
+- **Priority**: exact `P0`, `P1`, `P2`, `P3`, or `info`; do not collapse adjacent labels.
+- **Priority markers**: visual grouping only - `🔴` P0, `🟡` P1/P2, `🔵` P3/info.
 - **Effort**: rough human estimate (`15m`, `1-2h`, `1 day`). Err toward calibrated estimates,
   not optimistic ones.
 - **Finding ID**: reference the origin wave/section (e.g., `Z1` from zero-day, `M3` from
@@ -99,7 +100,7 @@ End the file with:
 
 - **Rough effort total** - per-phase time estimates rolled up.
 - **Suggested minimum for next release** - task IDs forming the smallest defensible cut
-  (all Critical + enough High to close exposed chains).
+  (all P0 + enough P1 to close exposed chains).
 
 ---
 

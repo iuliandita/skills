@@ -335,14 +335,14 @@ priority-ordered summary to the user:
 
 ## Summary
 
-**Critical** (act now):
+**P0** (must fix):
 - {highest severity findings across all waves}
 
-**Important** (act soon):
-- {medium severity findings}
+**P1/P2** (should fix / nice to fix):
+- {significant and lower-urgency findings}
 
-**Minor** (when convenient):
-- {low severity findings}
+**P3/info** (backlog / informational):
+- {polish, stale docs, style, or informational findings}
 
 Waves completed: {N}/5 | Skills run: {N}/{total_matched} | Failed: {N}
 ```
@@ -397,14 +397,14 @@ and the trailing effort-rollup / minimum-release-cut sections.
 Assess the size and severity of `DEEP-AUDIT-TASKS.md` and announce the chosen path
 before acting.
 
-**SMALL** (all three must hold): `<=10 tasks` AND `<=2 phases` AND zero Critical findings.
+**SMALL** (all three must hold): `<=10 tasks` AND `<=2 phases` AND zero P0 findings.
 - No execution plan needed.
 - Present the final summary + path to `DEEP-AUDIT-TASKS.md`. Work can start directly
   from the checkboxes.
 - Stop here.
 
 **LARGE** (anything that fails the SMALL criteria - i.e., `>10 tasks`, OR `>2 phases`,
-OR any Critical finding):
+OR any P0 finding):
 - An execution plan is warranted. Choose one of three strategies, in preference order:
 
   **9a. Brainstorming skill handoff (preferred when available).** Scan the harness's
