@@ -70,7 +70,6 @@ Before returning any anti-slop audit, verify:
 - Collapse repeated slop patterns into one finding with examples, not one finding per occurrence.
 - Use cheap static checks first, then run expensive tests only where they can confirm a real risk.
 
-
 ---
 
 ## Best Practices
@@ -78,7 +77,6 @@ Before returning any anti-slop audit, verify:
 - Prefer deleting unnecessary abstraction over adding a new abstraction to hide it.
 - Treat duplicate code as a finding only when it creates real divergence or maintenance risk.
 - Require concrete failure modes; style dislike is not slop.
-
 
 ## Workflow
 

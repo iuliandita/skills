@@ -71,7 +71,6 @@ Before returning any audit, verify:
 - Group repeated prose issues by pattern instead of leaving near-duplicate comments on every paragraph.
 - Prioritize high-visibility text: titles, summaries, intros, conclusions, and user-facing docs.
 
-
 ---
 
 ## Best Practices
@@ -79,7 +78,6 @@ Before returning any audit, verify:
 - Flag exact phrases and structural patterns, not vibes.
 - Offer replacement copy when the fix is obvious; otherwise describe the problem and let the author decide.
 - Do not erase necessary caveats, compliance language, or domain-specific precision to make prose sound casual.
-
 
 ## Workflow
 

@@ -70,7 +70,6 @@ Before reporting any finding at >= 80% confidence, verify:
 - Use tests and static analysis to validate suspected issues instead of reading the entire repo linearly.
 - Merge duplicate findings into one high-signal comment with affected locations.
 
-
 ---
 
 ## Best Practices
@@ -78,7 +77,6 @@ Before reporting any finding at >= 80% confidence, verify:
 - Lead with bugs and risks, not style preferences.
 - Do not request rewrites unless the current structure blocks correctness or maintainability.
 - Call out missing tests only when a specific behavior or risk needs coverage.
-
 
 ## Workflow
 
