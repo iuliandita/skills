@@ -265,8 +265,8 @@ Scope: {scope}. Return the complete report including SECURITY-AUDIT.md content.
 Wait for Agent 1 to complete. Extract the top findings (up to 10, one line each,
 highest severity first) for Agent 2's context. Include: severity, affected file/area,
 and a one-sentence description. Do not pass the full verbatim report. If
-security-audit returned zero findings, pass the string "No critical findings from
-security-audit - hunt broadly" so the zero-day agent has non-empty context.
+security-audit returned zero findings, pass the string "security-audit returned
+zero findings - hunt broadly" so the zero-day agent has non-empty context.
 
 **Agent 2: Zero-Day Hunt**
 
