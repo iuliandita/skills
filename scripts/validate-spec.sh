@@ -44,6 +44,11 @@ validate_description() {
     error "$name: description is empty"
     return
   fi
+  local desc_no_code
+  desc_no_code="$(perl -pe 's/`[^`]*`//g' <<< "$desc")"
+  if grep -Eq '</?[A-Za-z][A-Za-z0-9_-]*([[:space:]][^<>]*)?/?>' <<< "$desc_no_code"; then
+    error "$name: description must not contain XML/HTML-like tags; use backticks for literal tag names or generic notation"
+  fi
   if [[ ${#desc} -gt 600 ]]; then
     error "$name: description exceeds 600 characters (${#desc})"
   elif [[ ${#desc} -gt 240 ]]; then
