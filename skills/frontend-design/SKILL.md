@@ -206,20 +206,21 @@ The full template is in `references/critique-template.md`. The shape:
 
 1. **Rant** (persona voice) - raw reactions, not sanitized
 2. **Filter** - strip personal taste, keep patterns + accessibility/usability findings
-3. **Tickets** - clean, actionable, severity-tagged. Max 10. RED + GREEN ship; YELLOW ships if room; WHITE drops
+3. **Tickets** - clean, actionable, priority-tagged. Max 10. P0/P1 ship; P2 ships if room; P3 goes to deferred backlog; info notes do not require fixes
 
 Findings table:
 
-| ID | Severity | Pattern | Where | Fix |
+| ID | Priority | Pattern | Where | Fix |
 |----|----------|---------|-------|-----|
-| 01 | RED | purple-pink gradient hero | hero CTA | replace with single accent from theme; gradient on hover only |
+| 01 | P1 | purple-pink gradient hero | hero CTA | replace with single accent from theme; gradient on hover only |
 
-Severity scale:
+Priority scale:
 
-- **RED** - every user hits it / accessibility violation / "looks like every other AI product". Must fix
-- **YELLOW** - edge case or stylistic. Fix if cheap
-- **WHITE** - noise. Drop
-- **GREEN** - hidden opportunity. Surface, not enforce
+- **P0** - blocks use, breaks the UI, or creates a severe accessibility failure. Must fix
+- **P1** - significant UX/design/brand issue that should fix before release
+- **P2** - edge case or stylistic. Fix if cheap
+- **P3** - non-urgent polish to backlog
+- **info** - positive pattern, out-of-scope item, noise, or personal taste. No fix required
 
 The rant section captures the persona's voice for the user; tickets are clean and actionable. Never ship a rant as tickets.
 
@@ -258,7 +259,7 @@ Before returning any built UI or critique, verify:
 - [ ] **No invented CSS properties or framework APIs** - only verified Tailwind v4 utilities, real Svelte 5 runes (`$state`, `$derived`, `$effect`, `$props`), real Astro directives. AI invents `.bg-glass-700` and `$reactive` constantly
 - [ ] **App UI patterns fit the domain** - app shells, dashboards, settings, forms, onboarding, and empty states prioritize user work over marketing composition
 - [ ] **Responsive QA completed** - desktop, mobile, keyboard, dark+light, text overflow, and screenshot review checked when visual changes were made
-- [ ] **Critique mode: max 10 tickets** - RED + GREEN priority. Rant is filtered, not shipped raw
+- [ ] **Critique mode: max 10 tickets** - P0/P1 priority. Rant is filtered, not shipped raw
 - [ ] **No AI prose tells in commentary** - apply the **anti-ai-prose** vocabulary list to the persona's own writing, not just user-facing copy. Plain English
 - [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
 - [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
