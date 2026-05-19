@@ -1,7 +1,7 @@
 ---
 name: roadmap
 description: >
-  · Capture, track, and prioritize ideas in a gitignored ROADMAP.md. Triggers: 'roadmap',
+  · Capture, track, and prioritize ideas in gitignored ROADMAP.md. Triggers: 'roadmap',
   'ideas', 'feature ideas', 'competitive analysis', 'what should I build', 'feature backlog'.
   Not for project management or code review.
 license: MIT

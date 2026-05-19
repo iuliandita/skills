@@ -1,7 +1,7 @@
 ---
 name: jekyll-hyde
 description: >
-  · Advise on product, engineering, design, and business decisions with constructive and adversarial lenses. Triggers: 'jekyll', 'hyde', 'decision review', 'strategy review', 'red-team', 'dark pattern'. Not for code bugs (use code-review).
+  · Review product, engineering, design, and business decisions with Jekyll/Hyde lenses. Triggers: 'jekyll', 'hyde', 'decision review', 'strategy review', 'red-team', 'dark pattern'. Not for code bugs (use code-review).
 license: MIT
 compatibility: "None - works on any decision context"
 metadata:

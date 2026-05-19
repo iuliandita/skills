@@ -1,7 +1,7 @@
 ---
 name: code-slimming
 description: >
-  · Audit read-only code slimming: safe deletion, deduplication, wrapper removal, shared contracts. Triggers: 'slim codebase', 'LOC deletion review', 'dedupe safely'. Not for style cleanup/slop, bugs, tests, or broad reviews.
+  · Audit read-only code slimming: safe deletion, deduplication, wrapper removal, shared contracts. Triggers: 'slim codebase', 'LOC deletion review', 'dedupe safely'. Not for style/slop, bugs, tests, or broad reviews.
 license: MIT
 compatibility: "None - works on any codebase"
 metadata:

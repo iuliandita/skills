@@ -2,8 +2,8 @@
 name: cluster-health
 description: >
   · Check Kubernetes cluster health with read-only diagnostics. Triggers: 'cluster health',
-  'health check', 'cluster status', 'diagnostics', 'post-maintenance check', 'node status'.
-  Not for manifests or IaC (use kubernetes).
+  'health check', 'cluster status', 'diagnostics', 'post-maintenance', 'node status'.
+  Not for manifests/IaC (use kubernetes).
 license: MIT
 compatibility: "Requires kubectl. Optional: helm, jq, openssl, dig, ssh"
 metadata:

@@ -1,7 +1,7 @@
 ---
 name: deep-audit
 description: >
-  · Orchestrate a 5-wave repo audit, persist findings, generate phased tasks. Triggers:
+  · Run 5-wave repo audits, persist findings, and generate phased tasks. Triggers:
   'deep audit', 'full audit', 'comprehensive review', 'audit report', 'mega review',
   'deep review'. Not for quick sweeps (use full-review).
 license: MIT

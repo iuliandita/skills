@@ -1,7 +1,7 @@
 ---
 name: frontend-design
 description: >
-  · Build/critique UIs with opinionated taste, refusing AI design tells. Mobile-first, dark+light, touch-aware. Triggers: 'frontend', 'ui', 'ux', 'css', 'tailwind', 'landing page', 'design review', 'theme'. Not for code logic (code-review).
+  · Build/critique frontend UIs with taste, rejecting AI design tells. Mobile-first, touch-aware, dark+light. Triggers: 'frontend', 'ui', 'ux', 'css', 'tailwind', 'landing page', 'design review', 'theme'. Not for code logic (code-review).
 license: MIT
 compatibility: "None - works on any frontend stack"
 metadata:
