@@ -225,7 +225,7 @@ If the user gives you an existing prompt to improve (not rough notes):
 
 Before: `You are a helpful assistant that reviews code.`
 
-After: `You are a senior code reviewer. For each file, check for: bugs, edge cases, security issues, and performance problems. Report findings as a list with severity (critical/warning/info), file:line, and a one-line description. Skip style nitpicks. If nothing is wrong, say "No issues found."` - added: scope, output format, severity scale, constraint against noise.
+After: `You are a senior code reviewer. For each file, check for: bugs, edge cases, security issues, and performance problems. Report findings as a list with priority (P0/P1/P2/P3/info), file:line, and a one-line description. Skip style nitpicks. If nothing is wrong, say "No issues found."` - added: scope, output format, priority scale, constraint against noise.
 
 ## Example: Creation from Scratch
 
