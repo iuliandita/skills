@@ -56,10 +56,8 @@ Before returning any generated or modified skill, verify against this list:
 - [ ] **Workflow section with numbered steps**: clear, sequential, actionable
 - [ ] **Rules section at the end**: non-negotiable constraints in imperative form
 - [ ] **Style compliant**: no banned words (per `CLAUDE.md`/`AGENTS.md`), ASCII by default
-  except collection-approved markers such as the public-description `· ` prefix and shared
-  output-contract box glyphs. No em-dashes, curly quotes, ligatures, or `--` dash substitutes.
-  Use a single `-` where you would reach for an em dash. Check both SKILL.md AND reference files
-  - banned words in references count
+  except approved markers such as `· ` and output-contract box glyphs. No em-dashes, curly
+  quotes, ligatures, or `--`; use `-`. Check SKILL.md and references for banned words
 - [ ] **Target ~500 lines**: if over 500, extract to `references/` with clear pointers. Hard max 600
 - [ ] **Reference files use `references/` relative paths**: not hardcoded or tool-specific paths
 - [ ] **All references verified**: every tool, CLI flag, IaC resource, config snippet, and
@@ -291,15 +289,18 @@ Read the SKILL.md and all reference files. No skipping - the whole point is catc
 #### Step 3: Report findings
 
 Use severity ratings:
-- **Critical**: wrong information, security risk, broken cross-references
-- **Important**: stale versions, missing sections, trigger overlap unhandled
-- **Minor**: style inconsistency, missing "Related Skills", could-be-better wording
+- **P0**: wrong information, security risk, broken cross-references, or harmful generated instructions
+- **P1**: stale versions, missing required sections, trigger overlap unhandled, or invalid output contracts
+- **P2**: incomplete verification, weak behavioral coverage, or ambiguous workflow ordering
+- **P3**: style inconsistency, missing "Related Skills", or wording that could be clearer
+- **info**: confirmed strengths or scoped notes; note skipped checks in the report's skipped-checks field
 
 #### Step 4: Confirm scope
 
 Present findings to the user and wait for confirmation before editing. The user may want a
 report only, or may want to fix a subset. In headless mode (no interactive user), report
-findings and stop - do not apply fixes unless the invocation explicitly requests them.
+findings and stop unless the original user request explicitly authorized edits. Programmatic
+callers must pass that authorization through or stop after reporting findings.
 
 #### Step 5: Apply fixes
 
@@ -446,8 +447,9 @@ End every run with a human-readable report, even for report-only checks. Include
 scope, score or "not scored - report only", changed files, finding counts, verification results,
 skipped checks, and recommended next action.
 
-For edited skills, score the checklist pass rate plus behavioral or forward-test results. For
-audit-only runs, report structural gate and finding counts instead of inventing a composite.
+For edited skills, report before/after checklist pass rate and behavioral or forward-test scores
+plus keep/reject decisions. For audit-only runs, report structural gate and finding counts
+instead of inventing a composite.
 
 ## Reference Files
 
@@ -494,3 +496,4 @@ See `skills/_shared/output-contract.md` for the full contract.
 8. **Run the AI Self-Check.** Every generated or modified skill gets checked before return.
 9. **Branch every run.** In git-backed collections, create or record a run branch before checks.
 10. **Report every run.** Finish with the Run Report format and score before/after or "not scored."
+    Do not substitute lint/spec status for behavioral scoring.
