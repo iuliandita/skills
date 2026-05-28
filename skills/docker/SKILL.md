@@ -276,6 +276,8 @@ Read `references/security-and-compliance.md` for the full PCI-DSS 4.0 container 
 | CVE-2026-2664 | Docker Desktop | Medium | gRPC-FUSE kernel module OOB read | Desktop 4.62.0+ |
 | CVE-2025-13743 | Docker Desktop | Low | Expired Hub PATs leaked in diagnostics bundles | Desktop 4.54.0 |
 | CVE-2026-28400 | Model Runner | 7.5 High | Runtime flag injection - arbitrary file overwrite, container escape | Desktop 4.61.0+ |
+| CVE-2026-5843 | Model Runner (MLX) | 8.8 High | Container-to-host code execution via MLX-LM `model_file` importlib load from untrusted models | Desktop 4.71.0+ |
+| CVE-2026-5817 | Model Runner (vllm-metal) | 8.8 High | Container-to-host RCE via unsandboxed `trust_remote_code` tokenizer load | Desktop 4.68.0+ |
 | CVE-2026-33747 | BuildKit | High | Malicious frontend file escape outside storage root | BuildKit v0.28.1 |
 | CVE-2026-33748 | BuildKit | High | Git URL validation bypass - restricted file access | BuildKit v0.28.1 |
 
@@ -413,7 +415,7 @@ GPU containers: use `deploy.resources.reservations.devices` with `capabilities: 
 
 - [ ] runc >= 1.4.0 (CVE-2025-31133/52565/52881 patched)
 - [ ] BuildKit >= 0.28.1 (CVE-2026-33747/33748 patched)
-- [ ] Docker Desktop >= 4.66.1 (CVE-2025-9074/CVE-2026-28400 patched)
+- [ ] Docker Desktop >= 4.71.0 (adds CVE-2026-5817/5843 Model Runner container-to-host RCE fixes; floor was 4.66.1 for CVE-2025-9074/CVE-2026-28400)
 - [ ] Trivy v0.70.0+ from official releases (v0.69.4-6 COMPROMISED)
 - [ ] Images signed with cosign, verified at deploy
 - [ ] SBOM generated for every production image
@@ -449,7 +451,7 @@ See `skills/_shared/output-contract.md` for the full contract.
 
 - **Skill name:** DOCKER
 - **Deliverable bucket:** `audits`
-- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract -- boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table -- and write the deliverable to `docs/local/audits/docker/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
+- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract - boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table - and write the deliverable to `docs/local/audits/docker/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
 
 ## Related Skills

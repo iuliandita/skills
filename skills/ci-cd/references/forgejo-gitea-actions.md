@@ -132,7 +132,7 @@ jobs:
 
 Architecturally different from Actions-based CI: a separate server-plus-agents service
 that Gitea/Forgejo talks to via webhook. Smaller surface, container-native, Raspberry-Pi
-friendly. Written in Go, MIT-licensed. Current stable: 3.13.x (2026).
+friendly. Written in Go, MIT-licensed. Current stable: 3.14.x (2026).
 
 ### Config layout
 

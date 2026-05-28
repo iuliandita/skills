@@ -628,12 +628,12 @@ ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name;
 ```sql
 -- PostgreSQL: real booleans
 SELECT * FROM users WHERE is_active = TRUE;
-SELECT * FROM users WHERE is_active;  - implicit TRUE check
+SELECT * FROM users WHERE is_active;  -- implicit TRUE check
 SELECT * FROM users WHERE NOT is_active;
 
 -- MySQL: TINYINT(1) pretending to be boolean
 SELECT * FROM users WHERE is_active = 1;
-SELECT * FROM users WHERE is_active;  - works (truthy: non-zero)
+SELECT * FROM users WHERE is_active;  -- works (truthy: non-zero)
 -- TRUE and FALSE keywords exist but are just aliases for 1 and 0.
 
 -- MSSQL: BIT type
@@ -750,9 +750,9 @@ MySQL 8.0+ supports many DDL operations as online (INPLACE or INSTANT algorithm)
 
 ```sql
 -- INSTANT operations (metadata-only, PG 16+ equivalent):
-ALTER TABLE t ADD COLUMN c INT, ALGORITHM=INSTANT;               - 8.0.12+
+ALTER TABLE t ADD COLUMN c INT, ALGORITHM=INSTANT;               -- 8.0.12+
 ALTER TABLE t ALTER COLUMN c SET DEFAULT 42, ALGORITHM=INSTANT;
-ALTER TABLE t RENAME COLUMN old TO new, ALGORITHM=INSTANT;        - 8.0.28+
+ALTER TABLE t RENAME COLUMN old TO new, ALGORITHM=INSTANT;        -- 8.0.28+
 
 -- INPLACE operations (no table copy, allows concurrent DML):
 ALTER TABLE t ADD INDEX idx_col (col), ALGORITHM=INPLACE, LOCK=NONE;

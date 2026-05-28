@@ -1,13 +1,13 @@
 # GitLab CI/CD: Patterns & Templates
 
-Production-ready patterns for GitLab CI/CD pipelines. Updated for GitLab 18.10 (March 2026):
+Production-ready patterns for GitLab CI/CD pipelines. Updated for GitLab 19.0 (May 2026):
 CI/CD Catalog GA, Components with typed inputs, rules-based workflows.
 
 ---
 
 ## Current State (2026)
 
-- **GitLab 18.10** (released March 19, 2026). Monthly releases on the third Thursday.
+- **GitLab 19.0** (released May 21, 2026; 19.0.1 current patch). Monthly releases on the third Thursday; majors land each May. 19.0 is a major with breaking changes - notably Redis 6 support removed (migrate to Redis 7.2 / Valkey 7.2), no more Ubuntu 20.04 packages, and Gateway API + Envoy Gateway replaces NGINX Ingress as the Helm chart default. 18.11.x / 18.10.x remain on backports.
 - **CI/CD Catalog** GA since GitLab 17.0 (May 2024). Max 100 components per project (raised in 18.5).
 - **CI Components** are the endorsed path for reusable pipeline logic. `include:` templates still work
   but components have versioning, typed inputs, and discoverability.

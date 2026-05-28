@@ -15,7 +15,7 @@ metadata:
 
 Create, review, and architect Kubernetes infrastructure - from raw manifests to Helm charts to multi-cluster strategy. The goal is production-ready, security-hardened, cost-aware infrastructure that a team can maintain.
 
-**Target versions** (May 2026): Kubernetes 1.34-1.36 (1.36.0 "Haru" released April 22, 2026; **1.32 is the active LTS branch with patches through April 2028**), Helm 4.1.4, Helm 3.20.x LTS (security fixes until Nov 2026).
+**Target versions** (May 2026): Kubernetes 1.34-1.36 (1.36.0 "Haru" released April 22, 2026). Upstream Kubernetes has no LTS; community support per minor is ~14 months, so 1.32 reaches upstream EOL ~April 2026. Managed **vendor extended support** (AKS/EKS) carries 1.32 patches roughly 2 more years - attribute it to the platform, not upstream. Helm 4.2.0, Helm 3.21.x (parallel v3 maintenance, security fixes until Nov 2026).
 
 This skill covers four domains depending on context:
 - **Manifests** - raw YAML for Deployments, Services, Gateway API routes, ConfigMaps, Secrets, PVCs
@@ -181,7 +181,7 @@ Read `references/manifest-templates.md` for complete, copy-pasteable YAML templa
 - **Server-side apply (SSA) is the default** for new releases. Better conflict detection when multiple controllers touch the same resources.
 - **OCI digest installation**: `helm install myapp oci://registry/chart@sha256:abc...` - immutable, tamper-proof.
 - **WASM plugin system** - post-renderers must reference plugin names, not raw executables (breaking change).
-- **CLI flag renames**: `--atomic` -> `--rollback-on-failure`, `--force` -> `--force-replace` (old flags still work with deprecation warnings).
+- **CLI flag renames**: `--atomic` -> `--rollback-on-failure`, `--force` -> `--force-replace`. On `helm upgrade` the old flags still work as deprecated aliases, but `helm install --atomic` was removed and now errors - use `--rollback-on-failure`.
 - **`helm registry login` takes domain only** (e.g., `ghcr.io`, not full URL).
 - **OCI registries are the recommended distribution method.** Traditional `index.yaml` repos still work but are no longer the default path.
 
@@ -444,7 +444,7 @@ See `skills/_shared/output-contract.md` for the full contract.
 
 - **Skill name:** KUBERNETES
 - **Deliverable bucket:** `audits`
-- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract -- boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table -- and write the deliverable to `docs/local/audits/kubernetes/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
+- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract - boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table - and write the deliverable to `docs/local/audits/kubernetes/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
 
 ## Related Skills

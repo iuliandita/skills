@@ -380,7 +380,7 @@ MSSQL doesn't use a config file like the others. Most settings are applied via T
 -- ============================================================
 
 -- Max memory (leave 4-8GB for OS)
-EXEC sp_configure 'max server memory (MB)', 12288;  - 12GB on a 16GB server
+EXEC sp_configure 'max server memory (MB)', 12288;  -- 12GB on a 16GB server
 RECONFIGURE;
 
 -- MAXDOP (CPU cores per NUMA node, max 8 for OLTP)

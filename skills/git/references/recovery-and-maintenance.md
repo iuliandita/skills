@@ -84,7 +84,7 @@ git bisect run ./scripts/bisect-check.sh
 # Example bisect-check.sh:
 #   #!/usr/bin/env bash
 #   set -euo pipefail
-#   npm ci --silent 2>/dev/null && npm test - --filter="auth" 2>/dev/null
+#   npm ci --silent 2>/dev/null && npm test -- --filter="auth" 2>/dev/null
 #   # Exit code 0 = good commit, non-zero = bad commit
 
 # Bisect with make target

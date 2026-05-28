@@ -254,8 +254,9 @@ does not cover yet (e.g. branch protection management).
 | Any with Rust | `cargo install forgejo-cli` or `cargo binstall forgejo-cli` |
 | Binaries | Releases tab on Codeberg (x86_64 Linux/Windows) |
 
-Verify: `fj --version` (prefer 0.5.x or newer as of May 2026 recheck; releases before 0.4.1
-have a PKCE bug that breaks `fj auth login`).
+Verify: `fj --version` and prefer the latest release - the project iterates quickly and some
+early releases had a PKCE bug that broke `fj auth login`. If `fj auth login` fails with a PKCE
+error, upgrade to the current release.
 
 ### `fj` authentication
 
@@ -344,8 +345,8 @@ fj issue search --state open --label bug
 
 ### `fj` releases and tags
 
-`fj` can publish releases (listed as a supported capability in the README), but as of
-v0.4.1 the wiki does not yet document the exact `fj release` subcommand flags. Run
+`fj` can publish releases (listed as a supported capability in the README), but the wiki
+does not yet reliably document the exact `fj release` subcommand flags. Run
 `fj release --help` on the target version to confirm syntax before scripting.
 
 The reliable pattern is git-side tagging + `fj` for the release object:
@@ -433,7 +434,7 @@ curl -s -X POST "https://git.example.com/api/v1/repos/{owner}/{repo}/pulls" \
   on CI for branch protection checks.
 - **Mirror sync delay** - if Forgejo mirrors from GitHub (or vice versa), there's a sync interval.
   Don't expect immediate consistency across forges.
-- **`fj` version** - `fj auth login` fails with PKCE errors on v0.4.0 and earlier. Use 0.4.1+.
+- **`fj` version** - some early releases fail `fj auth login` with PKCE errors. If you hit this, upgrade to the current release.
 - **AGit requires Forgejo 7+** - older self-hosted instances reject `refs/for/<branch>` pushes.
   Fall back to `fj pr create` without `--agit` (push a branch first).
 

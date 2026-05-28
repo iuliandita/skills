@@ -39,6 +39,7 @@ Patterns drawn from real OSS incidents (unauthenticated admin endpoints, credent
 - Style, slop, or maintainability cleanup - use **anti-slop**
 - CI/CD pipeline design, runner architecture, or pipeline hardening strategy - use **ci-cd**
 - Offensive testing, privilege escalation, or post-exploitation work - use **lockpick**
+- Novel vulnerability research, fuzzing, patch diffing, or exploit development - use **zero-day**
 - Network appliance administration or firewall tuning - use **firewall-appliance**
 - Linux networking setup and troubleshooting - use **networking**
 
@@ -130,6 +131,7 @@ Find known CVEs in dependencies and assess supply chain risk.
 - `colors` 1.4.1+ / `faker` 6.6.6 (2022 maintainer sabotage)
 - `polyfill.io` (2024 domain takeover, malicious CDN injection)
 - `xz-utils` 5.6.0-5.6.1 (2024 backdoor in compression library)
+- TrapDoor (2026-05 multi-registry campaign: 34+ malicious npm/PyPI/crates packages stealing SSH keys and cloud/crypto credentials; notably hides zero-width-Unicode prompt injection in `.cursorrules` / `CLAUDE.md` to subvert AI coding agents - check agent rule files, not just dependencies)
 - `trivy` 0.69.4-0.69.6 / `aquasecurity/trivy` Docker tags 0.69.5-0.69.6 / `aquasecurity/trivy-action` + `aquasecurity/setup-trivy` force-pushed tags (2026-03 TeamPCP supply chain compromise - credential-stealing malware in CI/CD pipelines)
 Any match on package name + version range is P0 severity regardless of `audit` output.
 For active incident triage, use `references/hardening-checklists.md` for repo-wide package,
@@ -273,7 +275,7 @@ See `skills/_shared/output-contract.md` for the full contract.
 
 - **Skill name:** SECURITY-AUDIT
 - **Deliverable bucket:** `audits`
-- **Mode:** always-on. Every invocation emits the full contract -- boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table.
+- **Mode:** always-on. Every invocation emits the full contract - boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table.
 - **Deliverable path:** `docs/local/audits/security-audit/<YYYY-MM-DD>-<slug>.md`
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract).
 

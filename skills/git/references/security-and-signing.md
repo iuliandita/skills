@@ -169,7 +169,7 @@ git config --global credential.https://gitlab.example.com.helper libsecret
 
 | Tool | Scope | Speed | False positive rate |
 |------|-------|-------|-------------------|
-| `gitleaks` 9.x | Current + history | Fast | Low |
+| `gitleaks` 8.30.x | Current + history | Fast | Low |
 | `trufflehog` 3.x | Current + history | Medium | Very low (verified) |
 | `detect-secrets` | Current only | Fast | Medium |
 | GitHub secret scanning | Push-time | Real-time | Low (pattern-based) |

@@ -20,14 +20,14 @@ Tag each finding to the correct category.
 |----|----------|------------|
 | A01 | Broken Access Control | Auth bypass, IDOR, privilege escalation, missing function-level auth |
 | A02 | Security Misconfiguration | Default creds, verbose errors, CORS *, unnecessary features enabled, permissive headers |
-| A03 | Supply Chain Failures | Unpinned deps, no lockfile integrity, compromised packages, no SBOM, mutable CI actions |
-| A04 | Injection | SQL, NoSQL, OS command, LDAP, XSS, template injection, header injection |
-| A05 | Insecure Design | Missing rate limiting, no abuse case analysis, client-controlled security state |
-| A06 | Vulnerable Components | Known CVEs in deps, abandoned deps, no update automation |
-| A07 | Auth & Session Failures | Weak passwords, broken session management, missing MFA, credential stuffing exposure |
-| A08 | Data Integrity Failures | Unsigned updates, insecure deserialization, CI/CD pipeline manipulation |
-| A09 | Logging & Monitoring Failures | No audit trail, unmonitored auth failures, sensitive data in logs |
-| A10 | Mishandling Exceptional Conditions | Fail-open behavior, unhandled errors exposing state, silent error swallowing |
+| A03 | Software Supply Chain Failures | Unpinned deps, no lockfile integrity, compromised/known-CVE packages, abandoned deps, no update automation, no SBOM, mutable CI actions |
+| A04 | Cryptographic Failures | Weak/legacy ciphers, hardcoded keys, missing encryption in transit/at rest, weak hashing, predictable randomness |
+| A05 | Injection | SQL, NoSQL, OS command, LDAP, XSS, template injection, header injection |
+| A06 | Insecure Design | Missing rate limiting, no abuse case analysis, client-controlled security state |
+| A07 | Authentication Failures | Weak passwords, broken session management, missing MFA, credential stuffing exposure |
+| A08 | Software or Data Integrity Failures | Unsigned updates, insecure deserialization, CI/CD pipeline manipulation |
+| A09 | Security Logging and Alerting Failures | No audit trail, unmonitored auth failures, no alerting, sensitive data in logs |
+| A10 | Mishandling of Exceptional Conditions | Fail-open behavior, unhandled errors exposing state, silent error swallowing |
 
 ## Report Template
 

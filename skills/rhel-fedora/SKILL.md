@@ -26,8 +26,8 @@ ordinary package work, prefer the live distro lane and repo state over a stale p
 
 | Component | Version | Why it matters |
 |-----------|---------|----------------|
-| Fedora stable | 42 | current mainstream Fedora baseline |
-| Fedora next branch | 43 / verify live | useful when a bug is really Fedora-next behavior |
+| Fedora stable | 44 / verify live | current mainstream baseline (Fedora ships ~every 6 months and EOLs ~13 months, faster than this table is bumped - confirm live) |
+| Fedora next branch | 45 / verify live | useful when a bug is really Fedora-next behavior |
 | RHEL enterprise lane | 10.x | current enterprise baseline in the new major lane |
 | RHEL previous major | 9.x | still widely deployed and behaviorally different from 10 |
 | Rocky Linux | verify live major lane | close to RHEL, but current docs and vault state still matter |
@@ -37,6 +37,7 @@ ordinary package work, prefer the live distro lane and repo state over a stale p
 | SELinux | verify live | policy package and mode matter more than memorized version strings |
 | DNF | verify live | Fedora moves faster than enterprise lanes; DNF 5 vs legacy expectations matter |
 | Podman | verify live | rootless and quadlet behavior depend on the shipped distro lane |
+| Kernel security | verify live via RHSA/FEDORA tracker | patch high-severity privesc CVEs promptly; mid-2026 examples to confirm fixed: Copy Fail CVE-2026-31431 (CISA KEV, exploited), Dirty Frag CVE-2026-43284/43500, ptrace CVE-2026-46333 |
 
 ## When to use
 
@@ -335,7 +336,7 @@ See `skills/_shared/output-contract.md` for the full contract.
 
 - **Skill name:** RHEL-FEDORA
 - **Deliverable bucket:** `audits`
-- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract -- boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table -- and write the deliverable to `docs/local/audits/rhel-fedora/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
+- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract - boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table - and write the deliverable to `docs/local/audits/rhel-fedora/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
 
 ## Related Skills

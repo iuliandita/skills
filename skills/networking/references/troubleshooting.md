@@ -377,6 +377,19 @@ Patched in OpenSSL 3.6.1 / 3.5.5 / 3.4.4 / 3.3.6 / 3.0.19 (Jan 2026). **Upgrade 
 
 Check your version: `openssl version` - anything below the patched versions is vulnerable.
 
+### Critical: nginx CVE-2026-42945 "NGINX Rift" (CVSS 9.2)
+
+Heap buffer overflow in `ngx_http_rewrite_module` via a crafted URI - worker DoS and potential
+unauthenticated RCE. Affects nginx OSS 0.6.27-1.30.0 (and Plus R32-R36). Fixed first in
+1.30.1 / 1.31.0; current patched releases are 1.30.2 (stable) / 1.31.1 (mainline). Actively
+exploited in the wild (added to CISA KEV) - patch now.
+
+### Critical: OpenSSH CVE-2026-35414 (cert principal bypass)
+
+A comma in a certificate principal was treated as a list separator, so a CA-signed certificate
+could authenticate as an unintended principal (potentially root). Fixed in OpenSSH 10.3. Upgrade
+and audit `authorized_keys`/CA-signed cert principals.
+
 ### Let's Encrypt with certbot
 
 **45-day certificate rollout timeline:**

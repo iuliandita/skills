@@ -112,6 +112,8 @@ import { z } from "zod";
 
 const server = new McpServer({ name: "my-server", version: "1.0.0" });
 
+// Current SDK docs lead with `server.registerTool(name, { description, inputSchema }, handler)`.
+// The `server.tool(name, desc, schema, handler)` shorthand below still works in v1.x.
 server.tool(
   "search_docs",
   "Search documentation by keyword",
@@ -232,8 +234,9 @@ Client Registration (DCR is a fallback, not a requirement).
 - Validate `Origin` header on all requests (DNS rebinding prevention)
 - If using stateful sessions: `MCP-Session-Id` must be cryptographically random (UUID v4+)
 - Client sends `MCP-Protocol-Version` header (e.g., `2025-11-25`)
-- Consider using `createMcpExpressApp()` / `createMcpHonoApp()` from the TS SDK for built-in
-  DNS rebinding protection
+- Consider using `createMcpExpressApp()` / `createMcpHonoApp()` for built-in DNS rebinding
+  protection - these ship from the separate `@modelcontextprotocol/express` and
+  `@modelcontextprotocol/hono` packages, not the core `@modelcontextprotocol/sdk`
 
 ### Step 5: Handle elicitation safely
 
@@ -326,7 +329,7 @@ See `skills/_shared/output-contract.md` for the full contract.
 
 - **Skill name:** MCP
 - **Deliverable bucket:** `audits`
-- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract -- boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table -- and write the deliverable to `docs/local/audits/mcp/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
+- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract - boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table - and write the deliverable to `docs/local/audits/mcp/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
 
 ## Related Skills

@@ -464,7 +464,7 @@ See `skills/_shared/output-contract.md` for the full contract.
 
 - **Skill name:** SKILL-CREATOR
 - **Deliverable bucket:** `audits`
-- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content (e.g., Mode 2 review or Mode 3 audit), emit the full contract -- boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table -- and write the deliverable to `docs/local/audits/skill-creator/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content** (e.g., Mode 1 create), respond freely without the contract; the existing `## Run Report` guidance applies to that build path.
+- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content (e.g., Mode 2 review or Mode 3 audit), emit the full contract - boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table - and write the deliverable to `docs/local/audits/skill-creator/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content** (e.g., Mode 1 create), respond freely without the contract; the existing `## Run Report` guidance applies to that build path.
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
 
 ## Related Skills
@@ -492,7 +492,8 @@ See `skills/_shared/output-contract.md` for the full contract.
    "just in case" instructions.
 7. **ASCII by default.** Keep skill prose ASCII except collection-approved markers such as the
    public-description `· ` prefix and shared output-contract box glyphs. No em dashes, curly
-   quotes, ligatures, or `--` dash substitutes.
+   quotes, ligatures, or `--` dash substitutes. Prose only: never rewrite `--` inside code or
+   fenced blocks - there it is real syntax (SQL comments, CLI `--` separators) and must stay.
 8. **Run the AI Self-Check.** Every generated or modified skill gets checked before return.
 9. **Branch every run.** In git-backed collections, create or record a run branch before checks.
 10. **Report every run.** Finish with the Run Report format and score before/after or "not scored."

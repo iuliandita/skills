@@ -53,6 +53,13 @@ exfiltration mechanism was triggered.
 - Exploited Microsoft/symphony, Google/ai-ml-recipes, Nvidia/nvrc
 - Modified build/deploy scripts via PRs to exfiltrate service principals, API keys, IMDS tokens
 
+### TrapDoor multi-registry campaign - May 2026
+
+- Coordinated malware across npm, PyPI, and crates.io (34+ packages, 384+ artifacts)
+- Steals SSH keys and cloud/crypto credentials; PyPI import-time exec, Rust `build.rs` abuse
+- Hides zero-width-Unicode prompt injection in `.cursorrules` / `CLAUDE.md` to subvert AI coding
+  agents in the pipeline - scan committed agent rule files, not just dependencies
+
 ---
 
 ## SHA Pinning

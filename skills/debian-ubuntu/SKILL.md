@@ -33,6 +33,7 @@ stale package-version table.
 | Ubuntu HWE lane | verify live | kernel metapackage and hardware-enablement behavior matter more than one exact kernel number |
 | NVIDIA driver branch | verify live | proprietary branch choice affects Wayland, gaming, and DKMS behavior |
 | Mesa stack | verify live | AMD and Intel graphics behavior tracks the shipped Mesa lane |
+| Kernel security | verify live via USN tracker | patch high-severity privesc CVEs promptly; mid-2026 examples to confirm fixed: Copy Fail CVE-2026-31431 (CISA KEV, exploited), Dirty Frag CVE-2026-43284/43500, ptrace CVE-2026-46333 |
 
 ## When to use
 
@@ -322,7 +323,7 @@ See `skills/_shared/output-contract.md` for the full contract.
 
 - **Skill name:** DEBIAN-UBUNTU
 - **Deliverable bucket:** `audits`
-- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract -- boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table -- and write the deliverable to `docs/local/audits/debian-ubuntu/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
+- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract - boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table - and write the deliverable to `docs/local/audits/debian-ubuntu/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
 
 ## Related Skills

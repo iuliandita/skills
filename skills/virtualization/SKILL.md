@@ -25,7 +25,7 @@ bite you at 3 AM.
 | Proxmox VE | 9.1 | Nov 2025 | Debian 13.2 (trixie), kernel 6.17.2, QEMU 10.1.2 |
 | Proxmox Backup Server | 4.1 | Nov 2025 | Dedup, incremental, prune policies |
 | bpg/proxmox (Terraform) | 0.100.0 | Apr 2026 | Primary Proxmox IaC provider |
-| QEMU | 10.2.2 | Mar 2026 | Stable (11.0-rc2 in progress) |
+| QEMU | 11.0.1 | Apr 2026 | Stable (11.0 series; GA Apr 22, 2026) |
 | libvirt | 12.0.0 | Jan 2026 | Hypervisor abstraction layer |
 | XCP-ng | 8.3 LTS | Oct 2024 | Xen-based, LTS since Jun 2025, EOL Nov 2028 |
 | VMware ESXi | 8.0 U3i | Feb 2026 | Broadcom-owned, licensing upheaval |
@@ -420,7 +420,7 @@ See `skills/_shared/output-contract.md` for the full contract.
 
 - **Skill name:** VIRTUALIZATION
 - **Deliverable bucket:** `audits`
-- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract -- boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table -- and write the deliverable to `docs/local/audits/virtualization/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
+- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract - boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table - and write the deliverable to `docs/local/audits/virtualization/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
 
 ## Related Skills

@@ -130,7 +130,7 @@ covering:
 3. **SUID/SGID binaries** - find + exploit via GTFOBins
 4. **Linux capabilities** - `getcap`, cap_setuid, cap_dac_read_search
 5. **Cron jobs** - writable scripts, PATH hijacking in cron context
-6. **Kernel exploits** - version-matched CVEs (Dirty Pipe, nf_tables, io_uring, OverlayFS)
+6. **Kernel exploits** - version-matched CVEs (Dirty Pipe, nf_tables, io_uring, OverlayFS; 2026: Copy Fail CVE-2026-31431 [CISA KEV, exploited], Dirty Frag CVE-2026-43284/43500, ptrace CVE-2026-46333)
 7. **PATH hijacking** - SUID binaries calling relative commands
 8. **NFS** - no_root_squash exploitation
 9. **Writable files** - /etc/passwd, /etc/shadow, authorized_keys, systemd units
@@ -365,7 +365,7 @@ See `skills/_shared/output-contract.md` for the full contract.
 
 - **Skill name:** LOCKPICK
 - **Deliverable bucket:** `audits`
-- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract -- boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table -- and write the deliverable to `docs/local/audits/lockpick/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
+- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract - boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table - and write the deliverable to `docs/local/audits/lockpick/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
 
 ## Related Skills

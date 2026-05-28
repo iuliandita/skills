@@ -22,7 +22,7 @@ compliance requirements (PCI-DSS 4.0).
 - **git**: 2.53.x (current stable). Git 3.0 expected late 2026 (reftable default, SHA-256 default)
 - **GitHub CLI (`gh`)**: 2.91.0
 - **GitLab CLI (`glab`)**: 1.90.x
-- **Forgejo CLI (`fj`)**: 0.4.1 (March 2026). Rust-written, official community CLI at `codeberg.org/forgejo-contrib/forgejo-cli`. Covers PRs (incl. AGit), issues, repos, releases, tags, actions.
+- **Forgejo CLI (`fj`)**: 0.4.0 (latest verified, Jan 2026; the project moves fast - verify the current release at `codeberg.org/forgejo-contrib/forgejo-cli`). Rust-written, official community CLI. Covers PRs (incl. AGit), issues, repos, releases, tags, actions.
 - **Forgejo**: v15.0 line current at May 2026 recheck; verify the stable branch before upgrade advice. Critical RCE (CVE-2025-68937) patched in v13.0.2+.
 - **prek**: 0.3.x (Rust, recommended) or **pre-commit**: 4.6.0 (Python, largest ecosystem)
 - **git-filter-repo**: 2.47.x
@@ -53,10 +53,10 @@ This skill covers five domains depending on context:
 
 ## When NOT to use
 
-- CI/CD pipeline design (use ci-cd) - this skill handles git operations *within* pipelines, not pipeline architecture
-- PR/MR code review (use code-review) - this skill creates PRs, doesn't review code in them
-- Full application security audit (use security-audit) - this skill covers secrets *in git history* and git-specific security, not application-level vulnerability assessment
-- Docker image tagging strategy (use docker) - this skill handles git tags, not container tags
+- CI/CD pipeline design - use **ci-cd**; this skill handles git operations *within* pipelines, not pipeline architecture
+- PR/MR code review - use **code-review**; this skill creates PRs, doesn't review code in them
+- Full application security audit - use **security-audit**; this skill covers secrets *in git history* and git-specific security, not application-level vulnerability assessment
+- Docker image tagging strategy - use **docker**; this skill handles git tags, not container tags
 
 ---
 
@@ -395,7 +395,7 @@ See `skills/_shared/output-contract.md` for the full contract.
 
 - **Skill name:** GIT
 - **Deliverable bucket:** `audits`
-- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract -- boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table -- and write the deliverable to `docs/local/audits/git/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
+- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract - boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table - and write the deliverable to `docs/local/audits/git/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
 
 ## Related Skills

@@ -12,7 +12,7 @@ The official metapackage docs and `kali-meta` page are the map.
 | `kali-linux-default` | tools included in normal desktop images | most general-purpose Kali installs |
 | `kali-linux-arm` | ARM-suitable tool mix | SBCs and ARM devices |
 | `kali-linux-nethunter` | NetHunter-related tooling | mobile and Android-adjacent workflows |
-| `kali-linux-large` | older larger desktop bundle | legacy expectations |
+| `kali-linux-large` | extended default tool selection (more than `default`, less than `everything`) | want a broad toolset without going all-in on `everything` |
 | `kali-linux-everything` | every metapackage and tool bundle | only when disk, bandwidth, and patience are cheap |
 | `kali-linux-labs` | intentionally vulnerable practice environments | controlled training only |
 
