@@ -309,6 +309,7 @@ Read `references/migration-patterns.md` for cross-engine type mapping, ORM migra
 - [ ] Foreign key columns have indexes
 - [ ] pgAudit installed and configured (if PCI scope)
 - [ ] Patched against CVE-2026-2005 (pgcrypto heap buffer overflow, RCE) - 18.2+ / 17.8+ / 16.12+
+- [ ] On the May 2026 PostgreSQL update (CVE-2026-6473/6475/6477/6637, up to CVSS 8.8: integer-overflow allocations, libpq client stack overwrite, refint stack overflow, MD5 timing leak) - 18.4+ / 17.10+ / 16.14+ / 15.18+ / 14.23+
 
 ### MySQL/MariaDB-Specific
 
