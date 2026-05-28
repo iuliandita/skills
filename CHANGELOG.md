@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.34.1](https://github.com/iuliandita/skills/compare/v1.34.0...v1.34.1) (2026-05-28)
+
+
+### Refactoring
+
+* **skills:** finish severity migration and harden self-checks ([9793e1c](https://github.com/iuliandita/skills/commit/9793e1cb0b4b4d8b508b1553aecaeb38408937a1))
+
 ## [1.34.0](https://github.com/iuliandita/skills/compare/v1.33.1...v1.34.0) (2026-05-18)
 
 
