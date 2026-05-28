@@ -1,7 +1,7 @@
 ---
 name: roadmap
 description: >
-  · Capture, track, and prioritize ideas in a gitignored ROADMAP.md. Triggers: 'roadmap',
+  · Capture, track, and prioritize ideas in gitignored ROADMAP.md. Triggers: 'roadmap',
   'ideas', 'feature ideas', 'competitive analysis', 'what should I build', 'feature backlog'.
   Not for project management or code review.
 license: MIT
@@ -56,11 +56,11 @@ Before writing or modifying ROADMAP.md, verify:
 - [ ] **No hallucinated competitive data**: every feature, issue count, or user demand claim
       from a competitor repo is backed by an actual link or quote - not inferred
 - [ ] **No priority inflation**: P0 items are genuine blockers, not aspirational wishes
-
----
 - [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
 - [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
 - [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
+- [ ] **Routing overlap checked**: overlapping skills, trigger terms, and "When NOT to use" boundaries are checked before returning guidance
+- [ ] **Spec claims verified**: claims about tool behavior, output contracts, or repo conventions are checked against current docs, scripts, or skill files
 - [ ] **Evidence quality marked**: competitive intel, user feedback, and assumptions are labeled with source and confidence
 - [ ] **Backlog hygiene kept**: stale ideas are parked or deleted instead of endlessly reprioritized
 

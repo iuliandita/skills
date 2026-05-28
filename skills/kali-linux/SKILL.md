@@ -82,11 +82,11 @@ Before returning Kali commands or tool recommendations, verify:
 - [ ] **NetHunter is not treated like normal desktop Kali**: mobile kernels, Android host constraints, rootless vs full chroot shape, and missing systemd-style tooling can change which checks even make sense.
 - [ ] **Correct handoff chosen**: once the question becomes exploitation methodology, route to **lockpick**. Once it becomes original vulnerability discovery, route to **zero-day**.
 - [ ] **Diagnostic errors are not silenced**: do not hide useful failure output with `2>/dev/null` on commands whose error reason matters. Use `2>&1 || true` when gathering.
-
----
 - [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
 - [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
 - [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
+- [ ] **Routing overlap checked**: overlapping skills, trigger terms, and "When NOT to use" boundaries are checked before returning guidance
+- [ ] **Spec claims verified**: claims about tool behavior, output contracts, or repo conventions are checked against current docs, scripts, or skill files
 - [ ] **Channel checked**: kali-rolling, snapshots, metapackages, and NetHunter advice matches official docs
 - [ ] **Lab boundary explicit**: offensive tooling stays in authorized labs, CTFs, or owned systems
 

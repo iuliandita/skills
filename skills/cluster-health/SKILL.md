@@ -2,8 +2,8 @@
 name: cluster-health
 description: >
   · Check Kubernetes cluster health with read-only diagnostics. Triggers: 'cluster health',
-  'health check', 'cluster status', 'diagnostics', 'post-maintenance check', 'node status'.
-  Not for manifests or IaC (use kubernetes).
+  'health check', 'cluster status', 'diagnostics', 'post-maintenance', 'node status'.
+  Not for manifests/IaC (use kubernetes).
 license: MIT
 compatibility: "Requires kubectl. Optional: helm, jq, openssl, dig, ssh"
 metadata:
@@ -47,13 +47,25 @@ Before running checks or reporting results, verify:
 - [ ] Time window is bounded and stated in the report
 - [ ] Protected registry contents are not printed unless the user asks for those exact details
 - [ ] Findings include evidence, impact, and next action
-
----
 - [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
 - [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
 - [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
+- [ ] **Routing overlap checked**: overlapping skills, trigger terms, and "When NOT to use" boundaries are checked before returning guidance
+- [ ] **Spec claims verified**: claims about tool behavior, output contracts, or repo conventions are checked against current docs, scripts, or skill files
 - [ ] **Cluster target explicit**: kubeconfig context, namespace, and environment are named before any query
 - [ ] **Read-only posture kept**: health checks do not mutate resources or restart workloads unless the user explicitly escalates
+
+## Performance
+
+- Start with cluster-wide signals before loading symptom-specific references.
+- Bound logs, events, and object listings by namespace, time window, or selectors.
+- Prefer summarized evidence over dumping raw Kubernetes output into context.
+
+## Best Practices
+
+- Treat the current kube context as hidden state until it is explicitly named.
+- Separate health evidence from remediation; fixes require a separate escalation.
+- Report permission gaps and missing CRDs as diagnostic findings, not silent skips.
 
 ## Cluster Registry
 

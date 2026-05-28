@@ -46,60 +46,69 @@ The rant is the persona's first reading. Honest, opinionated, in-character. Capt
 
 ## Phase 2: Filter
 
-The filter strips the rant down to tickets. Three categories, each with a rule.
+The filter strips the rant down to prioritized tickets and notes. Five categories, each with a rule.
 
-| Category | Rule |
+| Priority | Rule |
 |---|---|
-| **RED** - must fix | Every user hits it / accessibility violation / "looks like every other AI product" pattern that erodes brand identity |
-| **YELLOW** - fix if cheap | Edge case or stylistic. Worth flagging, not worth blocking |
-| **WHITE** - drop | Personal taste, hypothetical, "I would have done it differently" |
-| **GREEN** - hidden opportunity | Something the team didn't know about. Surface it without mandating it |
+| **P0** - must fix | Blocks use, breaks the UI, or creates a severe accessibility failure |
+| **P1** - should fix | Significant UX/design/brand issue that should be fixed before release |
+| **P2** - fix if cheap | Edge case or stylistic. Worth flagging, not worth blocking |
+| **P3** - backlog | Non-urgent polish worth tracking, not blocking |
+| **info** - no fix | Positive pattern to preserve, out-of-scope item, personal taste, or hypothetical |
 
-**Filter pass.** For each rant item, assign a category. WHITE items are dropped; they don't ship.
+**Filter pass.** For each rant item, assign a priority. `info` items can be surfaced as notes but do not become fix tickets.
 
 **Example mapping (from the rant above):**
 
-| Rant item | Category | Reasoning |
+| Rant item | Priority | Reasoning |
 |---|---|---|
-| Centered-hero-with-two-buttons template | RED | Erodes brand - looks like every other AI product |
-| Three-column features section | RED | Same template-ness; primary above-fold real estate |
-| Tailwind default indigo | RED | Unmodified default = "shipped before picking brand" |
-| Purple-pink gradient on CTA | RED | AI-product tell, accessibility variable |
-| Inter on everything, same weight | YELLOW | Not breaking anything but no personality |
-| Mobile tap targets 28-32 px on footer/nav | RED | WCAG 2.5.5 violation |
-| Glass-morphism without blur subject | YELLOW | Pattern misuse; not breaking |
-| No dark theme toggle on marketing | WHITE | Marketing site is light-themed deliberately; not in scope |
-| `clamp()` fluid type | GREEN | Surface as a working pattern |
-| Specific CTA copy | GREEN | Working pattern; surface so it propagates |
+| Centered-hero-with-two-buttons template | P1 | Erodes brand - looks like every other AI product |
+| Three-column features section | P1 | Same template-ness; primary above-fold real estate |
+| Tailwind default indigo | P1 | Unmodified default = "shipped before picking brand" |
+| Purple-pink gradient on CTA | P1 | AI-product tell, accessibility variable |
+| Inter on everything, same weight | P2 | Not breaking anything but no personality |
+| Mobile tap targets 28-32 px on footer/nav | P1 | WCAG 2.5.5 violation; should fix before release |
+| Glass-morphism without blur subject | P2 | Pattern misuse; not breaking |
+| No dark theme toggle on marketing | info | Marketing site is light-themed deliberately; not in scope |
+| `clamp()` fluid type | info | Working pattern; surface so it propagates without creating a fix ticket |
+| Specific CTA copy | info | Working pattern; surface so it propagates without creating a fix ticket |
 
 ---
 
 ## Phase 3: Tickets
 
-What the team sees. Clean, actionable, severity-tagged. Max 10. RED + GREEN ship; YELLOW ships if there is room.
+What the team sees. Clean, actionable, priority-tagged. Max 10. P0/P1 ship; P2 ships if there is room. P3 items sit in a deferred backlog section after the table. Info notes sit outside the ticket table.
 
 **Format.** Markdown table.
 
 ```markdown
-| ID | Severity | Pattern | Where | Fix |
+| ID | Priority | Pattern | Where | Fix |
 |----|----------|---------|-------|-----|
-| 01 | RED | centered-hero-with-two-buttons | hero section | Replace centered layout with off-center grid; one CTA, no tilted browser frame; consider live demo or static screenshot at full opacity |
-| 02 | RED | three-column features section | below hero | Replace with one feature shown working (loop or annotated screenshot). Three-column features are a generic template marker |
-| 03 | RED | Tailwind default indigo as accent | hero CTA, links | Override `--color-accent` in theme. Pick one brand color and commit. Suggested: warm orange `#d97706` or muted lime - move away from indigo |
-| 04 | RED | purple-pink gradient on CTA | hero CTA button | Replace with solid accent. Gradient on hover only, or two-stop in analogous colors |
-| 05 | RED | mobile tap targets below 44 px | footer links, nav | Add `min-height: 44px` to interactive elements; use pseudo-element padding for visually small icons |
-| 06 | YELLOW | Inter on every text, no weight contrast | typography | Pair Inter with a distinctive display font for headings; introduce 300/700 weight contrast |
-| 07 | YELLOW | glass-morphism without spatial reason | testimonial cards | Replace with solid panels or remove entirely; reserve blur for layered surfaces |
-| 08 | GREEN | `clamp()` fluid type | type scale | Working well; surface as the convention for the rest of the site |
-| 09 | GREEN | specific CTA copy | hero CTA | Specific ("Start free trial - no card required") outperforms generic. Use this style for secondary CTAs too |
+| 01 | P1 | centered-hero-with-two-buttons | hero section | Replace centered layout with off-center grid; one CTA, no tilted browser frame; consider live demo or static screenshot at full opacity |
+| 02 | P1 | three-column features section | below hero | Replace with one feature shown working (loop or annotated screenshot). Three-column features are a generic template marker |
+| 03 | P1 | Tailwind default indigo as accent | hero CTA, links | Override `--color-accent` in theme. Pick one brand color and commit. Suggested: warm orange `#d97706` or muted lime - move away from indigo |
+| 04 | P1 | purple-pink gradient on CTA | hero CTA button | Replace with solid accent. Gradient on hover only, or two-stop in analogous colors |
+| 05 | P1 | mobile tap targets below 44 px | footer links, nav | Add `min-height: 44px` to interactive elements; use pseudo-element padding for visually small icons |
+| 06 | P2 | Inter on every text, no weight contrast | typography | Pair Inter with a distinctive display font for headings; introduce 300/700 weight contrast |
+| 07 | P2 | glass-morphism without spatial reason | testimonial cards | Replace with solid panels or remove entirely; reserve blur for layered surfaces |
 ```
+
+Optional info notes outside the ticket cap:
+
+- `clamp()` fluid type is working well; keep it as the convention for the rest of the site.
+- Specific CTA copy ("Start free trial - no card required") is stronger than generic CTA language.
+
+Deferred backlog (P3):
+
+- Low-priority polish that should be tracked but not fixed in this pass.
 
 **Cap rules.**
 
 - Hard cap at 10 tickets total
-- RED + GREEN priority
-- If RED count > 8, drop YELLOWs entirely
-- If RED + GREEN > 10, surface the most actionable; the rest goes in a "deferred" appendix
+- P0/P1 priority
+- If P0 count > 8, drop P2/P3 rows entirely
+- If P0 + P1 > 10, surface the most actionable; the rest goes in a "deferred" appendix
+- P3 never blocks shipping; list it only in the deferred backlog
 
 ---
 
@@ -119,17 +128,22 @@ What the team sees. Clean, actionable, severity-tagged. Max 10. RED + GREEN ship
 ### Deferred
 
 [Anything that didn't make the cut, listed as one-liners]
+
+### Notes
+
+[Optional info items: positive patterns to preserve, scoped-out observations, or no-fix context]
 ```
 
-The rant is the persona's voice; the tickets are what the team will track. Both ship.
+The rant is the persona's voice; the tickets are what the team will track. Deferred items
+are backlog. Notes are optional context, not required work. All sections can ship when non-empty.
 
 ---
 
 ## What NOT to do in critique
 
 1. **Ship the rant as tickets.** Tickets need to be actionable; rants are reactions.
-2. **Pad the table with WHITE-tier items.** A 30-row table with 25 trivial nits trains the team to ignore tickets.
+2. **Pad the table with info-tier items.** A 30-row table with 25 trivial nits trains the team to ignore tickets.
 3. **Blame instead of fix.** "Whoever designed this didn't think about mobile" is unhelpful. "Mobile tap targets violate WCAG 2.5.5; fix with min-height: 44px" is.
 4. **Use jargon without referencing.** When you call something "card-grid-of-nothing", link or refer to `references/ai-tells.md` so the team knows what the term means.
-5. **Skip the GREEN entries.** Surfacing what works prevents teams from regressing on it during a refactor.
+5. **Turn positive info into fix tickets.** Surface good patterns as concise notes when useful; do not make them required work.
 6. **Critique without a target.** If the user paste isn't enough to assess, ask for the missing piece (live URL, mobile screenshot, code) instead of guessing.

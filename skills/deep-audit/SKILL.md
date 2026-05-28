@@ -1,9 +1,7 @@
 ---
 name: deep-audit
 description: >
-  · Orchestrate a 5-wave repo audit, persist findings, generate phased tasks. Triggers:
-  'deep audit', 'full audit', 'comprehensive review', 'audit report', 'mega review',
-  'deep review'. Not for quick sweeps (use full-review).
+  · Run 5-wave repo audits, persist findings, and generate phased tasks. Triggers: 'deep audit', 'full audit', 'comprehensive review', 'audit report', 'mega review', 'deep review'. Not for quick sweeps (use full-review).
 license: MIT
 compatibility: "Requires iuliandita/skills collection installed. Subagent support strongly recommended. Optional: a brainstorming or ideation skill in the host harness (matched by name pattern) for large-audit planning handoff."
 metadata:
@@ -15,13 +13,10 @@ metadata:
 
 # Deep Audit: Wave-Based Repo Orchestrator
 
-Run up to 29 custom skills against a repo in 5 sequential waves, presenting results
-progressively. Wave 1 detects the tech stack. Waves 2-5 dispatch only the skills that
-match. Each wave completes and reports before the next begins.
+Run up to 29 audit agents against a repo in 5 sequential waves. This is the broadest application-repo dispatch plan (4 Wave 2 + up to 20 conditional Wave 3 lenses + 2 Wave 4 + 3 Wave 5), not the total skill count. Wave 1 detects the tech stack, Waves 2-5 dispatch only matching audit skills, and each wave reports before the next begins.
 
-The five waves are: Reconnaissance; Code Quality (code-review, anti-slop,
-anti-ai-prose, code-slimming); Domain-Specific (detected skills only); Security (security-audit
-then zero-day); and Docs & Hygiene (update-docs, roadmap, git).
+The five waves are: Reconnaissance; Code Quality (code-review, anti-slop, anti-ai-prose,
+code-slimming); Domain-Specific (detected skills only); Security (security-audit then zero-day); and Docs & Hygiene (update-docs, roadmap, git).
 
 After the waves, Steps 7-9 persist findings to `docs/local/audits/DEEP-AUDIT.md`, write `DEEP-AUDIT-TASKS.md`, and route SMALL audits to the task list or LARGE audits to a brainstorming skill or generated plans under `docs/local/specs/` and `docs/local/plans/`.
 
@@ -70,6 +65,8 @@ workflow (waves + persistence + routing), not just the wave dispatch phase.
 - [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
 - [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
 - [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
+- [ ] **Routing overlap checked**: overlapping skills, trigger terms, and "When NOT to use" boundaries are checked before returning guidance
+- [ ] **Spec claims verified**: claims about tool behavior, output contracts, or repo conventions are checked against current docs, scripts, or skill files
 - [ ] **Scope bounded**: audit waves match the repo type and user request, not every possible skill
 - [ ] **Evidence retained**: findings cite files, commands, outputs, or source docs instead of impressions
 
@@ -112,7 +109,7 @@ to that subtree (`git ls-files -- path/to/scope` instead of the full repo).
 After detection, present the recon summary before proceeding. Compute
 `{unmatched_skills}` as the 20 Wave 3 candidates minus the matched set.
 Compute `{count}` by summing: 4 (Wave 2) + matched Wave 3 skills + 2 (Wave 4) +
-3 (Wave 5). Example: if 6 Wave 3 skills match, count = 4 + 6 + 2 + 3 = 15.
+3 (Wave 5). Example: if 6 Wave 3 skills match, count = 4 + 6 + 2 + 3 = 15. If the matched Wave 3 set is too broad for the user's goal, recommend a scoped deep-audit or **full-review** instead of pretending every lens is equally valuable.
 
 In scoped mode, separate Wave 3 matches into two lines: skills matched by files
 within the scoped subtree, and skills matched only by repo-root manifests
@@ -266,8 +263,8 @@ Scope: {scope}. Return the complete report including SECURITY-AUDIT.md content.
 Wait for Agent 1 to complete. Extract the top findings (up to 10, one line each,
 highest severity first) for Agent 2's context. Include: severity, affected file/area,
 and a one-sentence description. Do not pass the full verbatim report. If
-security-audit returned zero findings, pass the string "No critical findings from
-security-audit - hunt broadly" so the zero-day agent has non-empty context.
+security-audit returned zero findings, pass the string "security-audit returned
+zero findings - hunt broadly" so the zero-day agent has non-empty context.
 
 **Agent 2: Zero-Day Hunt**
 
@@ -336,14 +333,14 @@ priority-ordered summary to the user:
 
 ## Summary
 
-**Critical** (act now):
+**P0** (must fix):
 - {highest severity findings across all waves}
 
-**Important** (act soon):
-- {medium severity findings}
+**P1/P2** (should fix / nice to fix):
+- {significant and lower-urgency findings}
 
-**Minor** (when convenient):
-- {low severity findings}
+**P3/info** (backlog / informational):
+- {polish, stale docs, style, or informational findings}
 
 Waves completed: {N}/5 | Skills run: {N}/{total_matched} | Failed: {N}
 ```
@@ -398,14 +395,14 @@ and the trailing effort-rollup / minimum-release-cut sections.
 Assess the size and severity of `DEEP-AUDIT-TASKS.md` and announce the chosen path
 before acting.
 
-**SMALL** (all three must hold): `<=10 tasks` AND `<=2 phases` AND zero Critical findings.
+**SMALL** (all three must hold): `<=10 tasks` AND `<=2 phases` AND zero P0 findings.
 - No execution plan needed.
 - Present the final summary + path to `DEEP-AUDIT-TASKS.md`. Work can start directly
   from the checkboxes.
 - Stop here.
 
 **LARGE** (anything that fails the SMALL criteria - i.e., `>10 tasks`, OR `>2 phases`,
-OR any Critical finding):
+OR any P0 finding):
 - An execution plan is warranted. Choose one of three strategies, in preference order:
 
   **9a. Brainstorming skill handoff (preferred when available).** Scan the harness's

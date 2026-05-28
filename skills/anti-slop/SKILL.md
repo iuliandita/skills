@@ -49,16 +49,16 @@ Before returning any anti-slop audit, verify:
 - [ ] **Security patterns not flagged**: auth, CORS, input validation, rate limiting, TLS - these are correct even if verbose (check the "What NOT to Flag" list)
 - [ ] **Framework idioms respected**: what looks like over-abstraction might be the framework's expected pattern (e.g., Next.js layouts, Django class-based views, Terraform module structure)
 - [ ] **Existing project conventions preserved**: the repo's naming style, comment density, and abstraction level take precedence over generic "clean code" preferences
-- [ ] **Severity is honest**: don't inflate Low findings to Medium to pad the report
+- [ ] **Severity is honest**: don't inflate P3 findings to P2 to pad the report
 - [ ] **No hallucinated replacements**: verify that suggested modern alternatives actually exist in the target language version (e.g., `match` requires Python 3.10+, `LazyLock` requires Rust 1.80+)
 - [ ] **Grounding checked**: if flagging a hallucinated API, CLI flag, resource, chart value, or config key, verify it against local types/schema/tool help or official docs before claiming it is fake
 - [ ] **Test theater distinguished from correctness**: implementation-mirroring tests, mock-heavy ceremony, and snapshots with no semantic assertions belong here; actual failing behavior still belongs to code-review
 - [ ] **Structural duplication sweep done**: compare same-role modules/classes across sibling dirs (`providers`, `targets`, `sources`, `clients`, `registry`) and either report near-twins or note why the duplication is intentional
-
----
 - [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
 - [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
 - [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
+- [ ] **Routing overlap checked**: overlapping skills, trigger terms, and "When NOT to use" boundaries are checked before returning guidance
+- [ ] **Spec claims verified**: claims about tool behavior, output contracts, or repo conventions are checked against current docs, scripts, or skill files
 - [ ] **API reality checked**: suspicious helpers, flags, imports, and config keys are verified before being called hallucinations
 - [ ] **Test theater separated**: tests that assert mocks or snapshots only are distinguished from tests proving behavior
 
@@ -70,7 +70,6 @@ Before returning any anti-slop audit, verify:
 - Collapse repeated slop patterns into one finding with examples, not one finding per occurrence.
 - Use cheap static checks first, then run expensive tests only where they can confirm a real risk.
 
-
 ---
 
 ## Best Practices
@@ -78,7 +77,6 @@ Before returning any anti-slop audit, verify:
 - Prefer deleting unnecessary abstraction over adding a new abstraction to hide it.
 - Treat duplicate code as a finding only when it creates real divergence or maintenance risk.
 - Require concrete failure modes; style dislike is not slop.
-
 
 ## Workflow
 
@@ -130,9 +128,9 @@ Classify each finding by axis (Noise/Lies/Soul - see above), action, and severit
 - **Fine** - looks like slop but is justified (note why and move on)
 
 **Severity** (determines report ordering - high first):
-- **High** - strongly suggests fabricated or ungrounded code (hallucinated APIs, schema drift, silent swallowing used to hide uncertainty, fallback laundering)
-- **Medium** - maintainability (over-abstraction, generic naming, missing error context, logic duplication)
-- **Low** - style (verbose patterns, comment noise, redundant annotations, barrel files)
+- **P1** - strongly suggests fabricated or ungrounded code (hallucinated APIs, schema drift, silent swallowing used to hide uncertainty, fallback laundering)
+- **P2** - maintainability (over-abstraction, generic naming, missing error context, logic duplication)
+- **P3** - style (verbose patterns, comment noise, redundant annotations, barrel files)
 
 ### Step 5: Report and fix
 
@@ -418,8 +416,6 @@ These look like slop but aren't:
 ---
 
 ## Output Contract
-
-> **Severity migration:** The prior scale (`High | Medium | Low`) is replaced by `P0 | P1 | P2 | P3 | info`. Mapping: `High` -> `P1`, `Medium` -> `P2`, `Low` -> `P3`. Inline severity references elsewhere in this file should be updated in a follow-up pass -- out of scope for this contract retrofit.
 
 See `skills/_shared/output-contract.md` for the full contract.
 

@@ -75,11 +75,11 @@ Before returning API code, route design, or OpenAPI output, verify:
 - [ ] Cookie-based browser auth accounts for cookie scope and CSRF behavior instead of assuming cookies are automatically safe
 - [ ] OAuth guidance is current: authorization code + PKCE, no implicit flow, no resource owner password credentials
 - [ ] Sensitive defaults are explicit: cookie flags, token TTLs, scope boundaries, and rate limits are not hand-waved
-
----
 - [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
 - [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
 - [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
+- [ ] **Routing overlap checked**: overlapping skills, trigger terms, and "When NOT to use" boundaries are checked before returning guidance
+- [ ] **Spec claims verified**: claims about tool behavior, output contracts, or repo conventions are checked against current docs, scripts, or skill files
 - [ ] **Framework version checked**: FastAPI, Express, NestJS, and OpenAPI examples match current APIs and migration notes
 - [ ] **Contract compatibility checked**: response codes, pagination, errors, and auth behavior preserve existing clients unless a version bump is explicit
 

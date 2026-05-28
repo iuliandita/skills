@@ -51,14 +51,14 @@ Before reporting any finding at >= 80% confidence, verify:
 - [ ] **Check for explaining comments**: a comment explaining the pattern means someone already considered it
 - [ ] **Cite the evidence**: exact file, line, and code that proves the issue. No citation = no finding
 - [ ] **Adversarial self-check**: argue against each finding. If the counter-argument is convincing, drop it
-- [ ] **Construct a failing case**: for Critical findings, describe the specific input or sequence that triggers the bug
+- [ ] **Construct a failing case**: for P0 findings, describe the specific input or sequence that triggers the bug
 - [ ] **Verify API/stdlib claims**: AI code review suggestions frequently contain factual errors about framework behavior. If unsure, look it up
 - [ ] **Boundary values on numeric inputs flagged**: zero, negative, and overflow values on page numbers, sizes, counts, and indices are high-confidence findings - do not suppress with the 80% threshold
-
----
 - [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
 - [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
 - [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
+- [ ] **Routing overlap checked**: overlapping skills, trigger terms, and "When NOT to use" boundaries are checked before returning guidance
+- [ ] **Spec claims verified**: claims about tool behavior, output contracts, or repo conventions are checked against current docs, scripts, or skill files
 - [ ] **Line references verified**: every finding points to code that exists in the reviewed diff
 - [ ] **Behavioral claim proven**: findings describe a plausible failing input, race, leak, or regression
 
@@ -70,7 +70,6 @@ Before reporting any finding at >= 80% confidence, verify:
 - Use tests and static analysis to validate suspected issues instead of reading the entire repo linearly.
 - Merge duplicate findings into one high-signal comment with affected locations.
 
-
 ---
 
 ## Best Practices
@@ -78,7 +77,6 @@ Before reporting any finding at >= 80% confidence, verify:
 - Lead with bugs and risks, not style preferences.
 - Do not request rewrites unless the current structure blocks correctness or maintainability.
 - Call out missing tests only when a specific behavior or risk needs coverage.
-
 
 ## Workflow
 
@@ -188,7 +186,7 @@ Before assigning a score, verify:
 - Look for comments explaining why something looks odd (if a comment explains the pattern, it's not a bug)
 - **Cite the evidence.** Every >= 80% finding must reference the exact file, line, and code that proves the issue. If you can't cite it, go find it. If you can't find evidence, downgrade the score.
 - **Adversarial self-check.** Before finalizing each finding, argue *against* it. Try to explain why the code is actually correct. If the counter-argument is convincing, drop the finding.
-- **Construct a failing case.** For critical findings, describe the specific input or sequence that triggers the bug. If you can't construct one, it's not critical.
+- **Construct a failing case.** For P0 findings, describe the specific input or sequence that triggers the bug. If you can't construct one, it's not P0.
 - **Never claim API/stdlib behavior without verifying.** 18% of "high-confidence" AI code review suggestions contain factual errors about framework behavior. If unsure whether a function is stable-sorted, returns a view, or handles null - look it up first.
 
 ### Step 6: Report
@@ -356,12 +354,15 @@ For Rust and other languages without dedicated reference files: apply the univer
 
 ## Severity Classification
 
-Each reported finding (confidence >= 80) gets a severity:
+Each reported finding (confidence >= 80) uses the shared severity scale:
 
-- **Critical** - will crash, corrupt data, or produce wrong results in normal usage. Includes: null derefs on common paths, data loss, race conditions that affect correctness, broken error propagation that hides failures, security-adjacent logic errors (auth bypass through logic bug).
-- **Important** - will cause problems under specific conditions or degrade reliability over time. Includes: edge case crashes, resource leaks, performance traps that will eventually hit, missing error handling on external operations, convention violations that cause bugs in this codebase.
+- **P0** - must fix: will crash, corrupt data, or produce wrong results in normal usage. Includes null derefs on common paths, data loss, race conditions that affect correctness, broken error propagation that hides failures, and security-adjacent logic errors such as auth bypass through a logic bug.
+- **P1** - should fix: will cause problems under specific realistic conditions or degrade reliability over time. Includes edge case crashes, resource leaks, performance traps that will eventually hit, missing error handling on external operations, and convention violations that cause bugs in this codebase.
+- **P2** - nice to fix: lower-urgency correctness risk, missing focused regression coverage for a confirmed bug, or maintainability issue with a plausible future failure mode.
+- **P3** - backlog: real but non-urgent follow-up that should not block the reviewed change.
+- **info** - informational: verified observation with no immediate action.
 
-Rule of thumb: if you'd wake someone up at 2am over it, it's Critical. If it can wait for the next sprint, it's Important.
+Rule of thumb: if you'd wake someone up at 2am over it, it's P0. If it can wait for the next sprint, it's P1. If it belongs in a backlog but still has a plausible failure mode, it's P2/P3.
 
 ---
 
@@ -374,7 +375,7 @@ Rule of thumb: if you'd wake someone up at 2am over it, it's Critical. If it can
 
 ### Findings
 
-#### Critical ([count] issues)
+#### P0 - Must Fix ([count] issues)
 
 🔴 **[confidence]%** `path/to/file:line` - [description]
 
@@ -389,7 +390,7 @@ Rule of thumb: if you'd wake someone up at 2am over it, it's Critical. If it can
 [fixed code snippet]
 ```
 
-#### Important ([count] issues)
+#### P1 - Should Fix ([count] issues)
 
 🟡 **[confidence]%** `path/to/file:line` - [description]
 
@@ -403,12 +404,27 @@ Rule of thumb: if you'd wake someone up at 2am over it, it's Critical. If it can
 [fixed code snippet]
 ```
 
+#### P2 - Nice to Fix ([count] issues)
+🟡 **[confidence]%** `path/to/file:line` - [description]
+
+[Explanation]
+
+#### P3 - Backlog ([count] issues)
+🔵 **[confidence]%** `path/to/file:line` - [description]
+
+[Explanation]
+
+#### Info ([count] notes)
+🔵 **[confidence]%** `path/to/file:line` - [description]
+
+[Non-actionable observation]
+
 ### Observations
 
 [Patterns noticed below the 80% threshold but worth mentioning as a group. This is where higher-level insights go - "error handling is inconsistent across the API handlers", "no input validation on any of the CLI commands", "the test suite mocks the database everywhere so nothing tests actual queries." These aggregate observations are often more valuable than individual findings.]
 
 ### Summary
-- X findings across Y files (Z critical, W important)
+- X findings across Y files (P0: Z, P1: W, P2: V, P3: U, info: T)
 - [1-2 sentences on overall code health as it relates to correctness]
 ````
 

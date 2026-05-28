@@ -57,11 +57,11 @@ Before presenting documentation updates, verify:
 - [ ] All roadmap files (committed AND gitignored) checked - their stated version/date matches current HEAD or latest tag
 - [ ] `[planned]` / `[exploring]` items that actually shipped have moved to Shipped Highlights, not left in the in-progress list
 - [ ] When private and public roadmaps both exist, both are updated, with the public one carrying user-visible highlights only and the private one carrying internal detail
-
----
 - [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
 - [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
 - [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
+- [ ] **Routing overlap checked**: overlapping skills, trigger terms, and "When NOT to use" boundaries are checked before returning guidance
+- [ ] **Spec claims verified**: claims about tool behavior, output contracts, or repo conventions are checked against current docs, scripts, or skill files
 - [ ] **Docs match code**: commands, flags, config names, screenshots, and API examples are checked against the changed implementation
 - [ ] **Audience path checked**: README, changelog, API docs, runbooks, and migration notes are updated only where users need them
 

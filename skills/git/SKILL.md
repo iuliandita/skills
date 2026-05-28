@@ -1,7 +1,7 @@
 ---
 name: git
 description: >
-  · Handle git branches, commits, remotes, conflicts, hooks, signing, releases, PR/MR workflows. Triggers: 'git', 'commit', 'branch', 'merge', 'rebase', 'tag', 'push', 'PR', 'MR', 'gh', 'glab'. Not for CI pipelines (use ci-cd).
+  · Handle git branches, commits, remotes, conflicts, hooks, signing, releases, PR/MR workflows. Triggers: 'git', 'commit', 'branch', 'merge', 'rebase', 'tag', 'push', 'PR', 'MR', 'gh', 'glab'. Not for CI (use ci-cd).
 license: MIT
 compatibility: "Requires git. Optional: gh (GitHub CLI), glab (GitLab CLI), fj (Forgejo CLI)"
 metadata:
@@ -85,11 +85,11 @@ verify against this list:**
 - [ ] **Force-push safety.** If force-push is needed, always use `--force-with-lease` (refuses if remote has unfetched commits). Plain `--force` requires explicit user approval and team coordination.
 - [ ] **Version info dated.** When citing tool versions, include a date so readers know when to re-check. Stale version numbers cause silent breakage.
 - [ ] **Forge-CLI subcommands verified.** Before scripting `fj`/`gh`/`glab`/`tea` commands in a runbook, hooks, or CI, confirm the subcommand and flags exist on the target version (`<cli> <cmd> --help`). These CLIs add, rename, and remove subcommands across minor versions; docs lag behind the binary.
-
----
 - [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
 - [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
 - [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
+- [ ] **Routing overlap checked**: overlapping skills, trigger terms, and "When NOT to use" boundaries are checked before returning guidance
+- [ ] **Spec claims verified**: claims about tool behavior, output contracts, or repo conventions are checked against current docs, scripts, or skill files
 - [ ] **Ref safety checked**: branch, remote, upstream, and worktree path are verified before history edits
 - [ ] **Recovery path known**: reflog, backup branch, or bundle exists before destructive history operations
 

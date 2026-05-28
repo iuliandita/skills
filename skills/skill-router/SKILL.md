@@ -43,6 +43,11 @@ Before returning a routing decision, verify:
 - [ ] One primary skill is selected unless the task truly spans multiple domains
 - [ ] Near misses are explained only when useful
 - [ ] The next action is clear: invoke a skill, ask a question, or proceed without a skill
+- [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
+- [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
+- [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
+- [ ] **Routing overlap checked**: close matches are checked for trigger theft, missing exclusions, and process-skill precedence before the final route
+- [ ] **Spec claims verified**: claims about installed skills, trigger descriptions, or routing metadata are checked against the current collection
 
 ---
 
@@ -96,6 +101,13 @@ See `skills/_shared/output-contract.md` for the full contract.
 - **Deliverable bucket:** `audits`
 - **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content (e.g., a routing-conflict audit across the installed skill set), emit the full contract -- boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table -- and write the deliverable to `docs/local/audits/skill-router/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content** (its primary routing-decision mode), respond freely without the contract.
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
+
+## Related Skills
+
+- **skill-creator** - create, review, or optimize skill files after routing identifies skill-library work.
+- **skill-refiner** - batch-improve a skill collection with scoring and iteration; this skill only chooses routes.
+- **full-review** and **deep-audit** - orchestrate repo audits after routing identifies broad review intent.
+- **roadmap** - capture product or feature ideas; route there when the request is backlog shaping rather than skill selection.
 
 ## Rules
 

@@ -123,6 +123,11 @@ contested major flags (non-configurable).
      test-cases-local.md file alongside test-cases.md so they accumulate across runs.
    - Cross-model: skip on first iteration (no diff to review yet)
 7. **Log baseline scores**: record per-skill and aggregate scores
+   in a score ledger before any edits. The ledger must include structural gate (G),
+   AI Self-Check (A), behavioral score (B), cross-model review (X), composite score,
+   test source, reviewer source, and timestamp. After this step, if the ledger is
+   missing, incomplete, or only records lint/spec status, pause and backfill scoring before
+   applying changes. In headless mode, halt the run and report the missing score data.
 8. **Iteration 2+**: enter adaptive focus mode. For a user-requested single-skill run,
    treat that skill as the whole phase-1 pool, run at least the requested iteration count,
    and keep iterating until the explicit score target is reached, quality plateaus, or a
@@ -153,6 +158,8 @@ contested major flags (non-configurable).
     plateau:   yes/no (max delta: +X)
     -----------------------------------------------------------------
     ```
+    Also append the same data to the score ledger. Keep/reject decisions must point to
+    numeric before/after scores, not reviewer impressions or passing lint/spec checks.
 13. **Check termination conditions** (phase 1 always flows into phase 2 on termination,
     except on circuit-breaker pauses which wait for user input first):
     - Plateau detected (max delta < plateau threshold)? Terminate phase 1.
@@ -191,7 +198,8 @@ contested major flags (non-configurable).
 22. **Final report**: write a human-readable report first, then machine-readable run history.
     Include branch, pool, config, every changed skill, score before/after, delta, files changed,
     verification commands, peer-review flags, reverted changes, private-skill handling, and
-    skipped checks. Do not output only JSON.
+    skipped checks. If scoring was reconstructed after the fact, label it retroactive and state
+    which components were not captured during the live loop. Do not output only JSON.
     ```
     === skill-refiner run complete ===================================
     Branch:     skill-refiner/YYYY-MM-DD-HHMMSS
@@ -244,6 +252,7 @@ Before committing any skill modification, verify:
 - [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
 - [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
 - [ ] **Score discipline kept**: changes are kept only when they improve measured quality or fix a verified defect
+- [ ] **Score ledger present**: baseline, iteration, and final component scores exist before reporting completion
 - [ ] **Local-only scope respected**: public and private skills are separated before commits or release notes
 
 ## Output Contract
@@ -276,6 +285,8 @@ See `skills/_shared/output-contract.md` for the full contract.
     before/after scores, verification, peer-review flags, skipped checks, and next action.
 11. **Read before edit**: always read the full skill before proposing changes.
     Never edit from memory or assumption.
+12. **No score laundering**: do not call a run scored unless component scores were recorded.
+    Retroactive scoring is allowed only when clearly labeled.
 
 ## Related Skills
 

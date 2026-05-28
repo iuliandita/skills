@@ -1,7 +1,7 @@
 ---
 name: routine-writer
 description: >
-  · Write Claude Code routine prompts for unattended schedules, APIs, GitHub events. Triggers: 'routine', 'claude routine', 'scheduled claude task', 'unattended claude', '/schedule', '/fire'. Not for one-off prompts (use prompt-generator).
+  · Write Claude Code routine prompts for schedules, APIs, and GitHub events. Triggers: 'routine', 'claude routine', 'scheduled claude task', 'unattended claude', '/schedule', '/fire'. Not one-off prompts: prompt-generator.
 license: MIT
 compatibility: "Routines require a Pro, Max, Team, or Enterprise plan with Claude Code on the web. CLI automation requires the claude binary on PATH"
 metadata:
@@ -58,11 +58,11 @@ Routines are high-stakes: they run unattended, consume daily allowance, and can 
 - [ ] **Cron interval >= 1 hour**: scheduled triggers under one hour are rejected by the platform.
 - [ ] **Beta header pinned with date**: prose mentions of `experimental-cc-routine-2026-04-01` carry the header date so future readers can scan for staleness. Inside code blocks the header string itself carries the date, so no parenthetical is needed.
 - [ ] **No tokens in output**: environment variable placeholders only. Never paste a real `sk-ant-oat01-...` value.
-
----
 - [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
 - [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
 - [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
+- [ ] **Routing overlap checked**: overlapping skills, trigger terms, and "When NOT to use" boundaries are checked before returning guidance
+- [ ] **Spec claims verified**: claims about tool behavior, output contracts, or repo conventions are checked against current docs, scripts, or skill files
 - [ ] **API surface checked**: routine headers, beta names, schedule syntax, and event payloads match current official docs
 - [ ] **Unattended risk bounded**: permissions, spending, mutation scope, and notification paths are explicit
 
