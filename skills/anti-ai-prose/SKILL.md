@@ -462,7 +462,7 @@ See `skills/_shared/output-contract.md` for the full contract.
 
 - **Skill name:** ANTI-AI-PROSE
 - **Deliverable bucket:** `audits`
-- **Mode:** always-on. Every invocation emits the full contract -- boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table.
+- **Mode:** always-on. Every invocation emits the full contract - boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table.
 - **Deliverable path:** `docs/local/audits/anti-ai-prose/<YYYY-MM-DD>-<slug>.md`
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract).
 

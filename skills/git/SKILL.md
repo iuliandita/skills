@@ -53,10 +53,10 @@ This skill covers five domains depending on context:
 
 ## When NOT to use
 
-- CI/CD pipeline design (use ci-cd) - this skill handles git operations *within* pipelines, not pipeline architecture
-- PR/MR code review (use code-review) - this skill creates PRs, doesn't review code in them
-- Full application security audit (use security-audit) - this skill covers secrets *in git history* and git-specific security, not application-level vulnerability assessment
-- Docker image tagging strategy (use docker) - this skill handles git tags, not container tags
+- CI/CD pipeline design - use **ci-cd**; this skill handles git operations *within* pipelines, not pipeline architecture
+- PR/MR code review - use **code-review**; this skill creates PRs, doesn't review code in them
+- Full application security audit - use **security-audit**; this skill covers secrets *in git history* and git-specific security, not application-level vulnerability assessment
+- Docker image tagging strategy - use **docker**; this skill handles git tags, not container tags
 
 ---
 
@@ -395,7 +395,7 @@ See `skills/_shared/output-contract.md` for the full contract.
 
 - **Skill name:** GIT
 - **Deliverable bucket:** `audits`
-- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract -- boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table -- and write the deliverable to `docs/local/audits/git/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
+- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract - boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table - and write the deliverable to `docs/local/audits/git/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
 
 ## Related Skills
