@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.35.0](https://github.com/iuliandita/skills/compare/v1.34.1...v1.35.0) (2026-05-28)
+
+
+### Features
+
+* **skills:** deep-audit remediation - model/version/CVE refresh and contract fixes ([#71](https://github.com/iuliandita/skills/issues/71)) ([3d87ef9](https://github.com/iuliandita/skills/commit/3d87ef9561e37dae62810261aff375da019d530b))
+
 ## [1.34.1](https://github.com/iuliandita/skills/compare/v1.34.0...v1.34.1) (2026-05-28)
 
 
