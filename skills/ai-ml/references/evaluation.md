@@ -58,7 +58,7 @@ comparison, assertions, and red teaming in a single tool.
 description: "Customer support bot evaluation"
 
 providers:
-  - id: anthropic:messages:claude-sonnet-4-6-20250514
+  - id: anthropic:messages:claude-sonnet-4-6
     config:
       max_tokens: 1024
       temperature: 0
@@ -101,8 +101,8 @@ npx promptfoo eval
 
 # Compare models
 npx promptfoo eval --providers \
-  anthropic:messages:claude-sonnet-4-6-20250514 \
-  openai:chat:gpt-4o
+  anthropic:messages:claude-sonnet-4-6 \
+  openai:chat:gpt-5.5
 
 # View results
 npx promptfoo view
@@ -189,7 +189,7 @@ Supplement manual datasets with LLM-generated test cases:
 ```python
 # Generate test cases from your documentation
 response = client.messages.create(
-    model="claude-sonnet-4-6-20250514",
+    model="claude-sonnet-4-6",
     max_tokens=4096,
     messages=[{
         "role": "user",

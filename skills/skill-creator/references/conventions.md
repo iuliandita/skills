@@ -142,8 +142,8 @@ user confirmation in steps that could run unattended.
 
 | Tier | Token usage | Typical skills | Structure depth |
 |------|-------------|---------------|-----------------|
-| **low** | <5k tokens | update-docs | Minimal workflow, few rules |
-| **medium** | 5-15k tokens | anti-slop, prompt-generator, command-prompt | Moderate workflow, reference files |
+| **low** | <5k tokens | (none in collection; reserved for minimal single-purpose wrappers) | Minimal workflow, few rules |
+| **medium** | 5-15k tokens | anti-slop, prompt-generator, command-prompt, update-docs | Moderate workflow, reference files |
 | **high** | 15k+ tokens | ansible, docker, kubernetes, terraform, etc. (see Skill Inventory) | Full workflow, AI self-check, checklists, multiple references |
 
 ### Upstream skills (for reference)
@@ -244,7 +244,10 @@ Overview.
 - **ASCII by default**: skill prose should stay ASCII except collection-approved markers such
   as the public-description `· ` prefix and shared output-contract box glyphs. No em-dashes,
   no `--` double-dash substitute, no curly quotes, no ligatures. Use a single `-` where you
-  would reach for an em dash.
+  would reach for an em dash. **This is a prose rule only: never rewrite `--` inside code,
+  command examples, or fenced blocks** - `--` is real syntax there (SQL/Lua comments, CLI
+  long-flag separators like `npm test -- --filter`, `git ... --`), and stripping it to `-`
+  produces broken, non-runnable examples.
 - **Explain why**: "Pin images to SHA256 digests because mutable tags are a proven attack vector
   (Trivy March 2026, tj-actions March 2025)" beats "Always pin images"
 - **Calm directives**: "Do X" outperforms "YOU MUST ALWAYS DO X" on most modern coding agents. Use ALL CAPS
@@ -548,7 +551,7 @@ Use this skill even when the user doesn't explicitly say "git" but is clearly do
 | skill-router | medium | 2026-05-01 | Skill routing and trigger conflict analysis |
 | terraform | high | 2026-03-24 | Infrastructure-as-code |
 | testing | high | 2026-04-02 | Test design, debugging, infrastructure |
-| update-docs | low | 2026-03-25 | Documentation sweep |
+| update-docs | medium | 2026-03-25 | Documentation sweep |
 | virtualization | high | 2026-04-02 | Proxmox, libvirt, VM operations |
 | zero-day | high | 2026-04-03 | Vulnerability research and discovery |
 

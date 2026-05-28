@@ -3,6 +3,26 @@
 May 2026 snapshot. Verified 2026-05-19 against PyPI, npm, and upstream GitHub release APIs.
 Verify current releases before pinning.
 
+## Model families
+
+Model IDs move faster than SDK versions and are not covered by routine minor-version bumps.
+Verify against provider docs before pinning. Current as of May 2026:
+
+| Provider | Tier | Model ID | Notes |
+|----------|------|----------|-------|
+| Anthropic | Flagship | `claude-opus-4-8` | Most capable: complex reasoning, long-horizon agentic coding (GA 2026-05-28) |
+| Anthropic | Balanced | `claude-sonnet-4-6` | Default coding model. 4.6+ dropped dated snapshots: the bare ID IS the pinned snapshot |
+| Anthropic | Fast | `claude-haiku-4-5` | Low cost/latency. Dated snapshot: `claude-haiku-4-5-20251001` |
+| OpenAI | Flagship | `gpt-5.5` | Current frontier chat model; recommended replacement for `gpt-4o` |
+| OpenAI | Cost tier | `gpt-5.4-mini`, `gpt-5.4-nano` | Smaller/cheaper tiers |
+
+`gpt-4o` is retired from ChatGPT (2026-04-03) but still API-available; new code should default to
+`gpt-5.5`. Do not append a dated suffix to Claude 4.6+ IDs - the bare ID is the snapshot, and a
+guessed suffix like `claude-sonnet-4-6-20250514` is invalid (that date belonged to the original
+Sonnet 4) and returns a 404.
+
+## SDKs, runtimes, and tooling
+
 | Component | Version | Notes |
 |-----------|---------|-------|
 | Anthropic Python SDK | 0.102.0 | Claude models, streaming, tool use, structured output |

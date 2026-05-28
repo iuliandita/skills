@@ -52,7 +52,7 @@ def run_agent(user_query: str, tools: list[dict], max_iterations: int = 15) -> s
     while iterations < max_iterations:
         iterations += 1
         response = client.messages.create(
-            model="claude-sonnet-4-6-20250514",
+            model="claude-sonnet-4-6",
             max_tokens=4096,
             tools=tools,
             messages=messages,
@@ -208,7 +208,7 @@ support_agent = Agent(
     name="Support Agent",
     instructions="Help users with technical issues. Use the knowledge base.",
     tools=[search_knowledge_base],
-    model="gpt-4o",
+    model="gpt-5.5",
 )
 
 # Run the agent

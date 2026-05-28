@@ -323,7 +323,7 @@ When a problem looks "flake-only," compare one clean baseline:
 | `nixos-rebuild` evaluation error | `--show-trace`, check option name against the current nixpkgs tag, check `imports` paths |
 | Build fails mid-derivation | `--print-build-logs`, check sandbox violations, check unfree or insecure gates |
 | Boot drops to emergency shell | previous generation from bootloader menu, check `hardware-configuration.nix`, LUKS, kernel modules |
-| Flake input won't update | `nix flake lock --update-input <name>`, check `inputs.<x>.follows`, check registry override |
+| Flake input won't update | `nix flake update <name>` (the `nix flake lock --update-input` form is deprecated on Nix 2.30+), check `inputs.<x>.follows`, check registry override |
 | System is huge, `/nix/store` fills disk | `nix-collect-garbage -d`, `nix-store --optimise`, prune generations, check direnv GC roots |
 | `nix-env -i` installed something that won't stick | user profile vs system config; move to `environment.systemPackages` or `home.packages` |
 | home-manager drift vs NixOS | standalone vs module mode, which one owns the file, `home-manager switch` vs `nixos-rebuild switch` |

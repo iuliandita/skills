@@ -31,7 +31,7 @@ client = anthropic.Anthropic()
 async_client = anthropic.AsyncAnthropic()
 
 response = client.messages.create(
-    model="claude-sonnet-4-6-20250514",
+    model="claude-sonnet-4-6",
     max_tokens=1024,
     system="You are a helpful assistant.",
     messages=[{"role": "user", "content": "Hello"}],
@@ -47,7 +47,7 @@ import Anthropic from "@anthropic-ai/sdk";
 const client = new Anthropic(); // reads ANTHROPIC_API_KEY
 
 const response = await client.messages.create({
-  model: "claude-sonnet-4-6-20250514",
+  model: "claude-sonnet-4-6",
   max_tokens: 1024,
   messages: [{ role: "user", content: "Hello" }],
 });
@@ -62,7 +62,7 @@ from openai import OpenAI
 client = OpenAI()  # reads OPENAI_API_KEY
 
 response = client.chat.completions.create(
-    model="gpt-4o",
+    model="gpt-5.5",
     messages=[{"role": "user", "content": "Hello"}],
     max_tokens=1024,
 )
@@ -76,7 +76,7 @@ import { generateText } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
 
 const { text } = await generateText({
-  model: anthropic("claude-sonnet-4-6-20250514"),
+  model: anthropic("claude-sonnet-4-6"),
   prompt: "Hello",
   maxTokens: 1024,
 });
@@ -96,7 +96,7 @@ const { text } = await generateText({
 
 ```python
 with client.messages.stream(
-    model="claude-sonnet-4-6-20250514",
+    model="claude-sonnet-4-6",
     max_tokens=2048,
     messages=[{"role": "user", "content": prompt}],
 ) as stream:
@@ -112,7 +112,7 @@ print(f"\nTokens: {final_message.usage.input_tokens} in, {final_message.usage.ou
 
 ```typescript
 const stream = client.messages.stream({
-  model: "claude-sonnet-4-6-20250514",
+  model: "claude-sonnet-4-6",
   max_tokens: 2048,
   messages: [{ role: "user", content: prompt }],
 });
@@ -130,7 +130,7 @@ const finalMessage = await stream.finalMessage();
 
 ```python
 stream = client.chat.completions.create(
-    model="gpt-4o",
+    model="gpt-5.5",
     messages=[{"role": "user", "content": prompt}],
     stream=True,
 )
@@ -148,7 +148,7 @@ export async function POST(req: Request) {
   const { prompt } = await req.json();
 
   const stream = client.messages.stream({
-    model: "claude-sonnet-4-6-20250514",
+    model: "claude-sonnet-4-6",
     max_tokens: 2048,
     messages: [{ role: "user", content: prompt }],
   });
@@ -169,7 +169,7 @@ Force the model to return structured data by defining a "tool" that captures the
 
 ```python
 response = client.messages.create(
-    model="claude-sonnet-4-6-20250514",
+    model="claude-sonnet-4-6",
     max_tokens=1024,
     tools=[{
         "name": "extract_info",
@@ -202,7 +202,7 @@ data = tool_block.input  # already parsed dict
 
 ```python
 response = client.chat.completions.create(
-    model="gpt-4o",
+    model="gpt-5.5",
     messages=[{"role": "user", "content": f"Extract info from: {text}"}],
     response_format={
         "type": "json_schema",
@@ -234,7 +234,7 @@ import { anthropic } from "@ai-sdk/anthropic";
 import { z } from "zod";
 
 const { object } = await generateObject({
-  model: anthropic("claude-sonnet-4-6-20250514"),
+  model: anthropic("claude-sonnet-4-6"),
   schema: z.object({
     name: z.string(),
     age: z.number().int().min(0).max(150).optional(),
@@ -264,7 +264,7 @@ messages = [{"role": "user", "content": user_query}]
 
 while True:
     response = client.messages.create(
-        model="claude-sonnet-4-6-20250514",
+        model="claude-sonnet-4-6",
         max_tokens=4096,
         tools=tools,
         messages=messages,
@@ -320,7 +320,7 @@ class Conversation:
         self._maybe_summarize()
 
         response = client.messages.create(
-            model="claude-sonnet-4-6-20250514",
+            model="claude-sonnet-4-6",
             system=self.system,
             max_tokens=2048,
             messages=self.messages,
@@ -346,7 +346,7 @@ For repeated system prompts or large static contexts, use prompt caching to redu
 
 ```python
 response = client.messages.create(
-    model="claude-sonnet-4-6-20250514",
+    model="claude-sonnet-4-6",
     max_tokens=1024,
     system=[
         {

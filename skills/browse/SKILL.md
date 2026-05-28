@@ -17,9 +17,9 @@ Every browsing action has a token cost - this skill minimizes it through progres
 smart format selection, and backend-aware strategies.
 
 **Target versions** (May 2026):
-- Lightpanda: 0.2.9
-- @playwright/mcp: 0.0.72
-- agent-browser: 0.26.0
+- Lightpanda: 0.3.1
+- @playwright/mcp: 0.0.75
+- agent-browser: 0.27.0
 
 ## When to use
 
@@ -372,7 +372,7 @@ fastest path to full browsing capability with minimal overhead.
 **Lightpanda MCP setup** (one-time, ~30 seconds):
 ```bash
 # Install the binary (see references/tool-setup.md for other architectures)
-curl -L -o lightpanda https://github.com/lightpanda-io/browser/releases/download/0.2.9/lightpanda-x86_64-linux
+curl -L -o lightpanda https://github.com/lightpanda-io/browser/releases/download/0.3.1/lightpanda-x86_64-linux
 chmod +x lightpanda && mv lightpanda ~/.local/bin/
 ```
 

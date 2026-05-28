@@ -441,7 +441,7 @@ the OWASP Top 10 for Agentic Applications, read `references/supply-chain.md`
 
 - `references/github-actions.md` - GitHub Actions patterns, templates, and security hardening
 - `references/forgejo-gitea-actions.md` - Forgejo/Gitea Actions differences, troubleshooting, Woodpecker patterns, and Drone migration guidance
-- `references/gitlab-ci.md` - GitLab CI/CD 18.x patterns, SaaS vs self-managed differences, Catalog, Components, security
+- `references/gitlab-ci.md` - GitLab CI/CD 19.x patterns, SaaS vs self-managed differences, Catalog, Components, security
 - `references/runners.md` - Self-hosted runners (actions-runner, gitlab-runner, forgejo-runner, act_runner, woodpecker-agent) - install, register, executor choice, Linux vs macOS, security hardening
 - `references/best-practices.md` - Dependency updates (Dependabot/Renovate), layered linting, scanning matrix (secrets/SCA/container/IaC/SAST), review gates, merge queues, rollout order
 - `references/supply-chain.md` - supply chain security, incident timeline, SHA pinning, SBOM/SLSA, PCI-DSS compliance, image signing

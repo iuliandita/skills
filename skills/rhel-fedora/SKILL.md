@@ -26,8 +26,8 @@ ordinary package work, prefer the live distro lane and repo state over a stale p
 
 | Component | Version | Why it matters |
 |-----------|---------|----------------|
-| Fedora stable | 42 | current mainstream Fedora baseline |
-| Fedora next branch | 43 / verify live | useful when a bug is really Fedora-next behavior |
+| Fedora stable | 44 / verify live | current mainstream baseline (Fedora ships ~every 6 months and EOLs ~13 months, faster than this table is bumped - confirm live) |
+| Fedora next branch | 45 / verify live | useful when a bug is really Fedora-next behavior |
 | RHEL enterprise lane | 10.x | current enterprise baseline in the new major lane |
 | RHEL previous major | 9.x | still widely deployed and behaviorally different from 10 |
 | Rocky Linux | verify live major lane | close to RHEL, but current docs and vault state still matter |

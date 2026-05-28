@@ -12,7 +12,7 @@ metadata:
 
 # Localize: App Internationalization Workflow
 
-**Target versions (May 2026):** react-i18next 15.x, vue-i18n 11.x, next-intl 4.x, i18next 25.x
+**Target versions (May 2026):** react-i18next 17.x, vue-i18n 11.x, next-intl 4.x, i18next 26.x
 
 Systematic approach to internationalizing applications. Covers two scenarios: adding
 multilingual support from scratch and auditing existing i18n for gaps. Built from real
@@ -159,7 +159,7 @@ If no i18n system exists, set one up. If one exists, skip to Step 3.
 | Catalog format | JSON, YAML, TS objects | TS objects give type safety without tooling. JSON works with most libraries |
 | Key structure | flat, nested, dot-notation | Dot-notation (`auth.signIn`) balances readability and grep-ability |
 | Interpolation | positional `{0}`, named `{name}`, ICU | Named for readability. Positional is simpler for machine translation |
-| Pluralization | separate keys, ICU MessageFormat | Separate keys work for 2-form languages (English, German). Use ICU for Slavic and Arabic: Russian has 4 forms (one/few/many/other), Polish has 3, Arabic has 6. Picking "singular/plural" keys up front will force a rewrite later |
+| Pluralization | separate keys, ICU MessageFormat | Separate keys work for 2-form languages (English, German). Use ICU for Slavic and Arabic: Russian and Polish each have 4 CLDR plural categories (one/few/many/other), Arabic has 6. Picking "singular/plural" keys up front will force a rewrite later |
 | Locale detection | browser, URL path, cookie, header | Browser detection for first visit, persisted preference after |
 | Fallback | source locale, then key | Always. Never return empty or crash on missing key |
 | Voice register | formal, informal | Decide per target language upfront. Document the choice |

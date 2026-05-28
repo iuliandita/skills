@@ -39,6 +39,7 @@ Patterns drawn from real OSS incidents (unauthenticated admin endpoints, credent
 - Style, slop, or maintainability cleanup - use **anti-slop**
 - CI/CD pipeline design, runner architecture, or pipeline hardening strategy - use **ci-cd**
 - Offensive testing, privilege escalation, or post-exploitation work - use **lockpick**
+- Novel vulnerability research, fuzzing, patch diffing, or exploit development - use **zero-day**
 - Network appliance administration or firewall tuning - use **firewall-appliance**
 - Linux networking setup and troubleshooting - use **networking**
 

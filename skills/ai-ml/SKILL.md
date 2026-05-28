@@ -18,7 +18,7 @@ multi-agent systems with RAG pipelines. The goal is production-grade AI apps tha
 cost-effective, and don't hallucinate their way into an incident.
 
 **Target versions**: May 2026 snapshot. Read `references/target-versions.md` before
-pinning SDKs, runtimes, vector stores, or evaluation tools.
+pinning model IDs (Claude/OpenAI families), SDKs, runtimes, vector stores, or evaluation tools.
 
 ## When to use
 
@@ -143,7 +143,7 @@ import anthropic
 client = anthropic.Anthropic()
 
 with client.messages.stream(
-    model="claude-sonnet-4-6-20250514",
+    model="claude-sonnet-4-6",
     max_tokens=1024,
     messages=[{"role": "user", "content": prompt}],
 ) as stream:
@@ -251,7 +251,7 @@ def ask(question: str) -> str:
     if not context:
         return "No relevant documents found."
     response = client.messages.create(
-        model="claude-sonnet-4-6-20250514",
+        model="claude-sonnet-4-6",
         max_tokens=1024,
         messages=[{"role": "user", "content": (
             f"Answer based on these documents:\n\n"
@@ -433,7 +433,7 @@ PII detection setup, and content policy implementation.
 - `references/fine-tuning.md` - data prep, PEFT/LoRA, training evaluation, full vs parameter-efficient methods
 - `references/local-inference.md` - quantization, model selection, GPU memory, production serving config
 - `references/safety.md` - prompt injection defense, output validation, PII handling, content filtering, audit logging
-- `references/target-versions.md` - May 2026 version snapshot for AI SDKs, runtimes, vector stores, and eval tools
+- `references/target-versions.md` - May 2026 snapshot: Claude/OpenAI model families, AI SDKs, runtimes, vector stores, and eval tools
 
 ## Output Contract
 

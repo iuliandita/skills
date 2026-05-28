@@ -492,7 +492,8 @@ See `skills/_shared/output-contract.md` for the full contract.
    "just in case" instructions.
 7. **ASCII by default.** Keep skill prose ASCII except collection-approved markers such as the
    public-description `· ` prefix and shared output-contract box glyphs. No em dashes, curly
-   quotes, ligatures, or `--` dash substitutes.
+   quotes, ligatures, or `--` dash substitutes. Prose only: never rewrite `--` inside code or
+   fenced blocks - there it is real syntax (SQL comments, CLI `--` separators) and must stay.
 8. **Run the AI Self-Check.** Every generated or modified skill gets checked before return.
 9. **Branch every run.** In git-backed collections, create or record a run branch before checks.
 10. **Report every run.** Finish with the Run Report format and score before/after or "not scored."

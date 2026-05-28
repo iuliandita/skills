@@ -148,7 +148,7 @@ check_interval = 0
 |----|---------|
 | Binary (Linux) | Download from `code.forgejo.org/forgejo/runner/releases/latest`, verify with `gpg`, `install -m 755 ... /usr/local/bin/forgejo-runner` |
 | Binary (macOS) | Same, pick `darwin-arm64` or `darwin-amd64` |
-| OCI container | `docker pull data.forgejo.org/forgejo/runner:<major>` (current stable tag is `:11`; check `https://data.forgejo.org/forgejo/-/packages/container/runner/versions` for the latest tag before pinning. Runs as uid 1000.) |
+| OCI container | `docker pull data.forgejo.org/forgejo/runner:<major>` (current stable tag is `:12`, matching runner v12.x; check `https://data.forgejo.org/forgejo/-/packages/container/runner/versions` for the latest tag before pinning. Runs as uid 1000.) |
 | Docker Compose | Reference compose file in upstream docs - pairs with a DinD sidecar |
 | Kubernetes | Community Helm charts exist; no official chart yet |
 
