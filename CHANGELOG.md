@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.36.0](https://github.com/iuliandita/skills/compare/v1.35.0...v1.36.0) (2026-05-29)
+
+
+### Features
+
+* **skills:** skill-refiner sweep 2026-05-29 (bug fixes, routing, content, lint guard) ([#77](https://github.com/iuliandita/skills/issues/77)) ([a643ede](https://github.com/iuliandita/skills/commit/a643ede7780b80887705250bd1032ab93e40d7a9))
+
+
+### Bug Fixes
+
+* **skills:** correct technical errors found in full content review ([#75](https://github.com/iuliandita/skills/issues/75)) ([61a8bce](https://github.com/iuliandita/skills/commit/61a8bcec234a9097068428ff94cb26a1b7b22b7a))
+* **skills:** refresh CVE/advisory references with recent 2026 incidents ([#76](https://github.com/iuliandita/skills/issues/76)) ([09a8254](https://github.com/iuliandita/skills/commit/09a82548bac517998ddd4de435a89a50435ad546))
+* **skills:** refresh stale version pins in databases, ansible, git ([#73](https://github.com/iuliandita/skills/issues/73)) ([3add86a](https://github.com/iuliandita/skills/commit/3add86a5bcbcc598e3e310e5e08c48cedb3f7313))
+
 ## [1.35.0](https://github.com/iuliandita/skills/compare/v1.34.1...v1.35.0) (2026-05-28)
 
 
