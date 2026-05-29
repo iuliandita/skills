@@ -1,7 +1,7 @@
 # CI/CD Supply Chain Security
 
 Cross-platform supply chain hardening patterns, incident timeline, and PCI-DSS 4.0 compliance.
-Updated March 2026 - post-Trivy compromise.
+Updated May 2026 - post-Trivy compromise and the TeamPCP npm/PyPI worm wave.
 
 ---
 
@@ -46,6 +46,13 @@ they inform every recommendation in this document.
 
 **IOC**: check for a repo named `tpcp-docs` in your org - its presence indicates the fallback
 exfiltration mechanism was triggered.
+
+### TeamPCP npm/PyPI wave - "Mini Shai-Hulud" (April-May 2026)
+
+- TeamPCP's follow-up to the Trivy compromise: a self-propagating worm across npm and PyPI.
+- April 29: four official SAP `@sap/*` npm packages poisoned (09:55-12:14 UTC). April 30: PyTorch `lightning` PyPI 2.6.2/2.6.3. May 11: 84 malicious versions across 42 `@tanstack/*` packages (19:20-19:26 UTC). Mistral AI, UiPath, OpenSearch also hit.
+- Harvests GitHub/npm tokens, CI/CD secrets, cloud creds, and API keys; ~1,800 developers across npm + PyPI (and PHP).
+- **Lesson**: a single compromised maintainer namespace fans out to a whole package family within minutes. Pin by digest, enable npm trusted publishing / provenance, and scope CI tokens narrowly.
 
 ### HackerBot-Claw (February 2026)
 

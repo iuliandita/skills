@@ -130,7 +130,7 @@ covering:
 3. **SUID/SGID binaries** - find + exploit via GTFOBins
 4. **Linux capabilities** - `getcap`, cap_setuid, cap_dac_read_search
 5. **Cron jobs** - writable scripts, PATH hijacking in cron context
-6. **Kernel exploits** - version-matched CVEs (Dirty Pipe, nf_tables, io_uring, OverlayFS; 2026: Copy Fail CVE-2026-31431 [CISA KEV, exploited], Dirty Frag CVE-2026-43284/43500, ptrace CVE-2026-46333)
+6. **Kernel exploits** - version-matched CVEs (Dirty Pipe, nf_tables, io_uring, OverlayFS; 2026: Copy Fail CVE-2026-31431 [CISA KEV, exploited], Dirty Frag CVE-2026-43284/43500, Fragnesia CVE-2026-46300 [ESP-in-TCP, exploited], ptrace CVE-2026-46333)
 7. **PATH hijacking** - SUID binaries calling relative commands
 8. **NFS** - no_root_squash exploitation
 9. **Writable files** - /etc/passwd, /etc/shadow, authorized_keys, systemd units

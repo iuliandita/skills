@@ -16,7 +16,7 @@ metadata:
 Configure, tune, design schemas, migrate, back up, and review database engines - from single-node dev setups to PCI-compliant production clusters. The goal is correct, performant, durable databases that survive failures, pass audits, and don't wake you up at 3am.
 
 **Target versions** (May 2026):
-- PostgreSQL **18.3** (EOL 2030-11), previous: 17.9, 16.13
+- PostgreSQL **18.4** (EOL 2030-11; May 2026 security release), previous: 17.10, 16.14
 - MongoDB **8.0.20** (GA, EOL 2029-10); rapid lane (8.3 latest) is Atlas-only with a short window - verify live before pinning
 - MariaDB **11.8.7** (LTS, EOL 2028-06); 12.x rolling GA is quarterly and EOLs at each successor (12.2 reached EOL 2026-05), with 12.3 the next yearly LTS - verify live
 - MySQL **8.4.8** (LTS); innovation lane (9.x) has a short support window - verify live

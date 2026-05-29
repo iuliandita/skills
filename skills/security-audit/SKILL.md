@@ -133,6 +133,7 @@ Find known CVEs in dependencies and assess supply chain risk.
 - `xz-utils` 5.6.0-5.6.1 (2024 backdoor in compression library)
 - TrapDoor (2026-05 multi-registry campaign: 34+ malicious npm/PyPI/crates packages stealing SSH keys and cloud/crypto credentials; notably hides zero-width-Unicode prompt injection in `.cursorrules` / `CLAUDE.md` to subvert AI coding agents - check agent rule files, not just dependencies)
 - `trivy` 0.69.4-0.69.6 / `aquasecurity/trivy` Docker tags 0.69.5-0.69.6 / `aquasecurity/trivy-action` + `aquasecurity/setup-trivy` force-pushed tags (2026-03 TeamPCP supply chain compromise - credential-stealing malware in CI/CD pipelines)
+- Mini Shai-Hulud worm (2026-04/05 TeamPCP npm/PyPI follow-up: SAP `@sap/*` npm Apr 29, PyTorch `lightning` PyPI 2.6.2/2.6.3 Apr 30, 84 malicious versions across 42 `@tanstack/*` May 11 - self-propagating, steals GitHub/npm tokens, CI/CD secrets, and cloud creds; ~1,800 developers across npm + PyPI)
 Any match on package name + version range is P0 severity regardless of `audit` output.
 For active incident triage, use `references/hardening-checklists.md` for repo-wide package,
 IOC, local-runtime, and remote-repo checks.

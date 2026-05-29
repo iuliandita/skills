@@ -152,7 +152,7 @@ Read `references/manifest-templates.md` for complete, copy-pasteable YAML templa
 - `app.kubernetes.io/part-of` - parent system
 
 **External access** (new clusters must use Gateway API, not legacy Ingress):
-- **Gateway API** `HTTPRoute` (GA v1.5): role-oriented, expressive routing, no annotation hell. Ingress-NGINX retired March 2026.
+- **Gateway API** `HTTPRoute` (GA v1.5): role-oriented, expressive routing, no annotation hell. Ingress-NGINX retired March 2026 (its Feb 2026 RCE set CVE-2026-24512/24513/24514, CVSS 8.8, is a further reason to migrate off; fixed in ingress-nginx 1.13.7 / 1.14.3 if you must stay).
 - **ClusterIP** (default): internal-only
 - **LoadBalancer**: cloud LB without HTTP routing
 - **Headless** (`clusterIP: None`): StatefulSet pod discovery
