@@ -20,7 +20,7 @@ Write, review, and architect Ansible automation - from single playbooks to multi
 - ansible (community package) 13.x (depends on ansible-core 2.20)
 - molecule 26.x (CalVer), ansible-lint 26.x (CalVer), ansible-navigator 26.x (CalVer)
 - ansible-builder 3.1.x (EE definition v3)
-- AWX 24.6.1 (stale since Jul 2024 - verify current status before recommending)
+- AWX 24.6.1 (last formal release Jul 2024; upstream AWX releases paused for a major refactor, devel branch active - track ansible/awx; awx-operator ~2.12.x still ships for K8s deploys)
 - AAP 2.6 (Oct 2025 - last RPM-installable release; AAP 2.7+ containerized-only)
 
 This skill covers four domains depending on context:

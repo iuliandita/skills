@@ -22,7 +22,7 @@ compliance requirements (PCI-DSS 4.0).
 - **git**: 2.53.x (current stable). Git 3.0 expected late 2026 (reftable default, SHA-256 default)
 - **GitHub CLI (`gh`)**: 2.91.0
 - **GitLab CLI (`glab`)**: 1.90.x
-- **Forgejo CLI (`fj`)**: 0.4.0 (latest verified, Jan 2026; the project moves fast - verify the current release at `codeberg.org/forgejo-contrib/forgejo-cli`). Rust-written, official community CLI. Covers PRs (incl. AGit), issues, repos, releases, tags, actions.
+- **Forgejo CLI (`fj`)**: 0.5.0 (latest verified May 2026, released 2026-04-16; the project moves fast - verify the current release at `codeberg.org/forgejo-contrib/forgejo-cli`). Rust-written, official community CLI. Covers PRs (incl. AGit), issues, repos, releases, tags, actions.
 - **Forgejo**: v15.0 line current at May 2026 recheck; verify the stable branch before upgrade advice. Critical RCE (CVE-2025-68937) patched in v13.0.2+.
 - **prek**: 0.3.x (Rust, recommended) or **pre-commit**: 4.6.0 (Python, largest ecosystem)
 - **git-filter-repo**: 2.47.x
