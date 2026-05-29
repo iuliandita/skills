@@ -38,6 +38,7 @@ Each audit runs in its own parallel agent/subprocess with a fresh context window
 - A documentation-only maintenance sweep - use **update-docs**
 - A comprehensive audit across all applicable lenses (up to 29 audit agents, including 20 conditional Wave 3 domain lenses) - use **deep-audit**
 - Auditing the skill collection for consistency or quality - use **skill-creator**
+- CI/CD pipeline design or pipeline-config review - use **ci-cd**
 
 ## AI Self-Check
 
@@ -67,7 +68,6 @@ Verify:
 ## Performance
 
 - Run inventory and changed-file analysis before invoking every review mode.
-- Deduplicate cross-skill findings so the final report is readable.
 - Escalate only confirmed high-risk areas to deeper sweeps.
 
 
@@ -144,7 +144,8 @@ Each agent receives the context block above plus a task prompt. Use these templa
 {context_block}
 
 Invoke the `code-review` skill via the Skill tool, then run a full code review on the codebase.
-Scope: {scope}. Return the complete report.
+Scope: {scope}. ({scope} defaults to "full codebase" if the user did not specify a narrower target.)
+Return the complete report.
 ```
 
 #### Agent 2: Slop Check
@@ -153,7 +154,9 @@ Scope: {scope}. Return the complete report.
 {context_block}
 
 Invoke the `anti-slop` skill via the Skill tool, then audit the codebase for machine-generated
-patterns, over-abstraction, and code quality issues. Scope: {scope}. Return the complete report.
+patterns, over-abstraction, and code quality issues.
+Scope: {scope}. ({scope} defaults to "full codebase" if the user did not specify a narrower target.)
+Return the complete report.
 ```
 
 #### Agent 3: Security Audit
@@ -162,7 +165,8 @@ patterns, over-abstraction, and code quality issues. Scope: {scope}. Return the 
 {context_block}
 
 Invoke the `security-audit` skill via the Skill tool, then run a security audit on the codebase.
-Scope: {scope}. Return the complete report including SECURITY-AUDIT.md content.
+Scope: {scope}. ({scope} defaults to "full codebase" if the user did not specify a narrower target.)
+Return the complete report including SECURITY-AUDIT.md content.
 ```
 
 #### Agent 4: Docs Sweep
@@ -170,7 +174,8 @@ Scope: {scope}. Return the complete report including SECURITY-AUDIT.md content.
 ```
 {context_block}
 
-Invoke the `update-docs` skill via the Skill tool as a read-only audit. Scope: {scope}.
+Invoke the `update-docs` skill via the Skill tool as a read-only audit.
+Scope: {scope}. ({scope} defaults to "full codebase" if the user did not specify a narrower target.)
 Focus on: stale docs, instruction-file bloat (40,000 char limit), companion-file drift, broken
 links, orphaned gotchas, missing docs on recent changes. Do NOT make changes or commit anything.
 Return the complete report.
@@ -265,6 +270,7 @@ See `skills/_shared/output-contract.md` for the full contract.
 - **security-audit** - one of the four parallel audits. Finds vulnerabilities, secrets, dependency risks.
 - **update-docs** - one of the four parallel audits. Finds stale docs, bloated instruction files, and missing gotchas.
 - **skill-creator** - audits the skill collection itself. Full-review audits application code.
+- **ci-cd** - pipeline design and pipeline-config review. Full-review audits application code, not the pipelines that run it.
 
 ---
 

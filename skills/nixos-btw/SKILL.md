@@ -81,6 +81,7 @@ work, trust the live channel or flake lock over a stale table.
 - Kubernetes cluster or manifest work - use **kubernetes**
 - Fleet-wide non-Nix Linux configuration via playbooks - use **ansible**
 - Terraform or OpenTofu infrastructure code - use **terraform**
+- CI/CD pipeline design for Nix-based builds (cachix push, build farm, pipeline stages) - use **ci-cd**
 - Offensive or privesc testing - use **lockpick**
 - Defensive hardening and vuln review - use **security-audit**
 - OPNsense or pfSense appliance work - use **firewall-appliance**
@@ -373,6 +374,9 @@ See `skills/_shared/output-contract.md` for the full contract.
 - **ansible** - fleet config management when Nix is not the chosen tool for the job.
 - **terraform** - IaC for cloud resources that host NixOS VMs; this skill owns the guest.
 - **security-audit** - defensive review of a Nix-built artifact.
+- **ci-cd** - pipeline design when the CI side of a Nix build (cachix push, remote builders, pipeline stages) is the primary concern.
+- **lockpick** - offensive and privesc testing; this skill covers NixOS administration, not exploitation.
+- **firewall-appliance** - OPNsense/pfSense appliance work; this skill covers NixOS-based hosts, not BSD appliances.
 - **update-docs** - sync docs after substantial module or flake restructuring.
 
 ---

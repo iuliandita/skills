@@ -60,8 +60,10 @@ ordinary rolling packages, prefer the current repo state over stale version tabl
 - Fleet-wide Linux configuration via playbooks or roles - use **ansible**
 - Security review, vulnerability triage, or offensive testing - use **security-audit** or **lockpick**
 - OPNsense or pfSense appliance work - use **firewall-appliance**
-
----
+- Nix/NixOS questions - use **nixos-btw**
+- Debian, Ubuntu, Mint, or Pop!_OS administration - use **debian-ubuntu**
+- RHEL, Fedora, CentOS, or AlmaLinux administration - use **rhel-fedora**
+- Kali Linux and offensive-security tooling - use **kali-linux**
 
 ## AI Self-Check
 
@@ -104,8 +106,6 @@ Before returning Arch or CachyOS commands, verify:
 - Keep package cache cleanup deliberate; retain at least one known-good package version when rollback may matter.
 - For slow mirrors, rank mirrors before troubleshooting package-manager performance.
 
-
----
 
 ## Best Practices
 
@@ -239,8 +239,6 @@ When a bug looks "desktop-only," compare one clean baseline:
 - plain game launch vs Gamescope or MangoHud
 - known-good kernel vs newly changed kernel
 
----
-
 ## Default Decisions
 
 - **Arch means full upgrades.** Package skew is often self-inflicted. Resolve sync state first.
@@ -250,8 +248,6 @@ When a bug looks "desktop-only," compare one clean baseline:
 - **CachyOS advice is branch-sensitive.** Optimized repos and kernel variants can improve performance, but they add another compatibility layer to reason about.
 - **Desktop failures are often session failures.** On Hyprland and other Wayland compositors, user units, portals, and session env matter as much as the package list.
 - **Gaming failures are often stack mismatches.** Wrong GPU driver branch, missing multilib userspace, absent firmware, or a broken Proton path is more common than "Linux gaming is bad."
-
----
 
 ## Quick Triage Checklist
 
@@ -308,8 +304,10 @@ See `skills/_shared/output-contract.md` for the full contract.
 - **ansible** - use it when the real task is codifying Linux changes across many machines
 - **security-audit** - use it for hardening and security review rather than normal package or service administration
 - **update-docs** - use it after substantial system administration changes that introduce new operational gotchas
-
----
+- **nixos-btw** - use it for Nix/NixOS systems; the declarative model and tooling are fundamentally different from Arch
+- **debian-ubuntu** - use it for Debian, Ubuntu, Mint, and Pop!_OS administration
+- **rhel-fedora** - use it for RHEL, Fedora, CentOS, and AlmaLinux administration
+- **kali-linux** - use it for Kali Linux and offensive-security tooling
 
 ## Rules
 

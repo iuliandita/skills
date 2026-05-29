@@ -186,7 +186,7 @@ See `references/automation.md` for a fuller detection pattern that also checks f
 
 ---
 
-## Output contract
+## Skill Output
 
 When the skill finishes, the user should have, depending on triggers chosen:
 

@@ -40,6 +40,8 @@ pinning model IDs (Claude/OpenAI families), SDKs, runtimes, vector stores, or ev
 - General database configuration, schema design, or migrations (use **databases**)
 - Security auditing AI application code (use **security-audit**)
 - Reviewing code quality unrelated to AI/ML patterns (use **code-review**)
+- Building AI-powered HTTP APIs (use **backend-api** for the API layer; return here for the LLM integration within it)
+- Reviewing AI-generated application code for slop, hallucinated APIs, or over-abstraction (use **anti-slop**)
 
 ## AI Self-Check
 
@@ -68,7 +70,7 @@ AI tools consistently produce the same mistakes when generating AI application c
 - [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
 - [ ] **Routing overlap checked**: overlapping skills, trigger terms, and "When NOT to use" boundaries are checked before returning guidance
 - [ ] **Spec claims verified**: claims about tool behavior, output contracts, or repo conventions are checked against current docs, scripts, or skill files
-- [ ] **Provider drift checked**: Responses/Agents/SDK examples use current provider surfaces, not deprecated Assistants-era or chat-only patterns
+- [ ] **Provider drift checked**: Responses/Agents/SDK examples use current provider surfaces, not deprecated patterns - specifically verify no use of `openai.beta.assistants.create` (Assistants API, superseded by Responses/Agents API) or other Assistants-era surfaces
 - [ ] **RAG evidence bounded**: retrieval thresholds, citations, and empty-result behavior are defined before generation
 
 ## Performance
@@ -292,7 +294,7 @@ while not done:
 | Custom loop | Simple agents, maximum control | No dependencies |
 | LangGraph | Complex state machines, cycles, persistence | Graph-based, checkpointing |
 | OpenAI Agents SDK | OpenAI-native, multi-agent handoffs | Sessions, tracing |
-| Claude Agent SDK | Claude-native, code/file operations | Claude Code capabilities |
+| Claude Agent SDK | Claude-native agentic loops in code | Programmatic SDK for building custom agents with Claude; use when you need fine-grained control over Claude agent behavior in your own application |
 | Vercel AI SDK | TypeScript agents with UI streaming | ToolLoopAgent, React hooks |
 
 ### Common pitfalls
@@ -457,6 +459,8 @@ See `skills/_shared/output-contract.md` for the full contract.
 - **security-audit** - for security review of AI application code. This skill provides
   guardrail patterns; security-audit provides the audit methodology.
 - **code-review** - for reviewing AI application code quality beyond AI-specific patterns.
+- **backend-api** - for the HTTP API layer wrapping AI features. Use backend-api for contract design, auth, and route structure; use this skill for the LLM integration within those handlers.
+- **anti-slop** - for auditing AI-generated application code for hallucinated APIs, over-abstraction, and slop patterns introduced by AI generation tools.
 
 ## Rules
 

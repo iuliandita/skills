@@ -1,7 +1,7 @@
 ---
 name: kubernetes
 description: >
-  · Write/review Kubernetes manifests, Helm, Kustomize, Gateway API, ArgoCD, sealed secrets. Triggers: 'kubernetes', 'k8s', 'helm', 'kubectl', 'deployment', 'pod', 'ingress', 'gateway'. Not for Dockerfiles (use docker).
+  · Write/review Kubernetes manifests, Helm, Kustomize, Gateway API, ArgoCD, sealed secrets. Triggers: 'kubernetes', 'k8s', 'helm', 'kubectl', 'deployment', 'pod', 'ingress', 'gateway'.
 license: MIT
 compatibility: "Requires kubectl. Optional: helm, kustomize, kube-score, cosign"
 metadata:
@@ -70,6 +70,7 @@ Run generated manifests through `kube-score`, `kubelinter`, or `checkov` when av
 - [ ] **Spec claims verified**: claims about tool behavior, output contracts, or repo conventions are checked against current docs, scripts, or skill files
 - [ ] **API versions checked**: manifests, Helm templates, and Gateway resources match the target cluster version
 - [ ] **Cluster context verified**: namespace, context, and kubeconfig identity are shown before mutating commands
+- [ ] **kube-proxy mode checked on 1.35+ clusters**: IPVS mode is deprecated in 1.35 (removal targeted for a future release); recommend nftables mode for new clusters and flag IPVS in reviews
 
 ## Performance
 
@@ -276,6 +277,46 @@ Key Go template patterns:
 - `test` hooks are unsupported in ArgoCD.
 - Multi-source Applications (ArgoCD 2.6+) for separating chart version from environment values.
 - OCI charts: omit the `oci://` prefix in ArgoCD's `repoURL` field.
+
+## Kustomize
+
+Kustomize is built into kubectl (`kubectl apply -k`) and available as a standalone CLI.
+
+### Overlay pattern (base + environments)
+
+```
+app/
++-- base/
+|   +-- kustomization.yaml   # references resources
+|   +-- deployment.yaml
+|   +-- service.yaml
++-- overlays/
+    +-- dev/
+    |   +-- kustomization.yaml   # bases: [../../base]
+    +-- staging/
+    |   +-- kustomization.yaml
+    +-- prod/
+        +-- kustomization.yaml
+```
+
+Each overlay's `kustomization.yaml` sets `bases`, then adds `patches`, `images`, and
+`configMapGenerator`/`secretGenerator` overrides for that environment.
+
+### Components
+
+Reusable cross-cutting patches (monitoring, security context, sidecar injection) that any
+overlay can opt into with `components: [../../components/monitoring]`. Prefer components
+over duplicating patches across overlays.
+
+### secretGenerator / name-suffix-hash pitfall
+
+`secretGenerator` and `configMapGenerator` append a content hash suffix to the resource name
+(e.g., `app-config-abc12345`). Deployments that reference the generated name by a fixed name
+break because the hash changes on every edit. Always reference generated resources by the
+base name and let Kustomize resolve the suffix, or set `options.disableNameSuffixHash: true`
+if the hash-based rolling update is not desired.
+
+---
 
 ## Architecture
 

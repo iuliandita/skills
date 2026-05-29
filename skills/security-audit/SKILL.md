@@ -56,7 +56,7 @@ Before returning any security audit report, verify:
 - [ ] **Remediation is specific**: concrete fix per finding, not generic advice ("validate input" is insufficient)
 - [ ] **Commit SHA recorded**: report anchored to a specific point in time
 - [ ] **Report gitignored**: warned user and checked `.gitignore` for `SECURITY-AUDIT.md`
-- [ ] **Known incidents checked**: dependency audit verified against known supply chain incidents (event-stream, colors, ua-parser-js, polyfill.io, xz-utils, trivy, active package compromises), not just CVE databases
+- [ ] **Known incidents checked**: dependency audit verified against the known supply chain incidents listed in Step 3 (event-stream, ua-parser-js, colors any version, faker, polyfill.io, xz-utils, trivy 0.69.4-0.69.6, TrapDoor, Mini Shai-Hulud worm, outdated lodash), not just CVE databases
 - [ ] **Agentic risks covered** (when applicable): MCP servers, AI tool handlers, prompt injection surfaces audited if present
 - [ ] **Scope respected**: no external service probing, no DAST, repo-only analysis
 - [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
@@ -128,7 +128,8 @@ Find known CVEs in dependencies and assess supply chain risk.
 **Known supply chain incidents** - flag these by name, not just by CVE:
 - `event-stream` 3.3.6 (2018 backdoor targeting bitcoin wallets)
 - `ua-parser-js` 0.7.29/0.8.0/1.0.0 (2021 cryptominer injection)
-- `colors` 1.4.1+ / `faker` 6.6.6 (2022 maintainer sabotage)
+- `colors` any version / `faker` 6.6.6 (2022 maintainer sabotage - the `colors` package carries ongoing maintainer-sabotage risk regardless of version; prefer `chalk` or `picocolors`)
+- `lodash` <=2.x or any very outdated lodash (prototype pollution chain - high-risk for aged lockfiles; pin to 4.17.21+)
 - `polyfill.io` (2024 domain takeover, malicious CDN injection)
 - `xz-utils` 5.6.0-5.6.1 (2024 backdoor in compression library)
 - TrapDoor (2026-05 multi-registry campaign: 34+ malicious npm/PyPI/crates packages stealing SSH keys and cloud/crypto credentials; notably hides zero-width-Unicode prompt injection in `.cursorrules` / `CLAUDE.md` to subvert AI coding agents - check agent rule files, not just dependencies)
@@ -210,7 +211,7 @@ Load grep patterns from `references/grep-patterns.md` (Auth section).
 
 Load grep patterns from `references/grep-patterns.md` (Injection section).
 
-- **SQL injection**: raw queries with string interpolation, `.raw()` calls with user input. Remediation is always parameterization, never escaping. Concrete forms:
+- **SQL injection**: raw queries with string interpolation, `.raw()` calls with user input. Remediation is always parameterization, never escaping. Also flag `SELECT *` in application queries as information-disclosure-adjacent (over-fetching exposes columns added later; use explicit column lists). Flag unhandled callback errors in Node.js database calls (bare `err` parameter never checked) as a security-adjacent gap (unhandled errors can mask injection attempts or expose stack traces). Concrete forms:
   - `node-postgres`: `db.query('SELECT * FROM users WHERE id = $1', [req.params.id])`
   - `mysql2`: `db.execute('SELECT * FROM users WHERE id = ?', [req.params.id])`
   - Prisma: `prisma.user.findUnique({ where: { id: req.params.id } })` (tagged-template `$queryRaw` is safe; `$queryRawUnsafe` is not)

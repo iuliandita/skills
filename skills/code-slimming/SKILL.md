@@ -47,6 +47,7 @@ performance, readability, and validation made explicit.
 |---|---|
 | "Slim this codebase", "find safe deletions", "review LOC deletion" | **code-slimming** |
 | "Clean this up", "does this look AI-written?", "overengineered/verbose" | **anti-slop** |
+| "This prose/comments read AI-written, clean them up" | **anti-ai-prose** |
 | "Review this", "find bugs", "sanity check", "will this break?" | **code-review** |
 | "Write/add/debug tests for this refactor" | **testing** |
 | "Run all checks", "full review", "audit this repo" | **full-review** or **deep-audit** |
@@ -191,24 +192,17 @@ Use structural and textual searches to find:
 - generated-looking copy-paste that survived human maintenance, after checking whether a generator,
   schema, template, or vendored source owns it
 
-Useful search tactics:
-
-- list changed files, then read full files plus sibling files in the same role
-- search repeated function, class, type, schema, route, and option names across the repo
-- compare same-role directories such as `providers/*`, `clients/*`, `services/*`, and `repositories/*`
-- find large generic modules named `utils`, `helpers`, `common`, `shared`, or `misc`
-- inspect nearby tests to see whether the behavior contract is already captured
-
-Concrete discovery recipe:
+Discovery recipe:
 
 1. Build a candidate map from changed files, same-role siblings, repeated basenames, large generic
    modules, and repeated exported symbols, routes, schemas, DTOs, handlers, parsers, validators,
    mappers, and serializers.
 2. Use cheap searches before manual reading: compare same-role trees such as `providers/*`,
    `clients/*`, `services/*`, `repositories/*`, `handlers/*`, `routes/*`, and `adapters/*`; search
-   repeated declarations and one-line wrappers that only forward to another call.
-3. For each candidate, read the full candidate files and at least one nearby caller or test before
-   classifying.
+   repeated declarations and one-line wrappers that only forward to another call; find large generic
+   modules named `utils`, `helpers`, `common`, `shared`, or `misc`.
+3. For each candidate, read the full candidate files, at least one nearby caller, and nearby tests
+   to see whether the behavior contract is already captured, before classifying.
 
 Skip or de-prioritize generated files, vendored dependencies, lockfiles, snapshots, fixtures,
 minified bundles, protobuf/OpenAPI generated clients, and build artifacts unless the user scopes them.
@@ -397,7 +391,7 @@ See `skills/_shared/output-contract.md` for the full contract.
 
 - **Skill name:** CODE-SLIMMING
 - **Deliverable bucket:** `audits`
-- **Mode:** always-on. Every invocation emits the full contract - boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table.
+- **Mode:** always-on for audit and review invocations. Every invocation that analyses existing code emits the full contract - boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table. For a quick factual question (e.g., "what is wrapper removal?") respond freely without the contract.
 - **Deliverable path:** `docs/local/audits/code-slimming/<YYYY-MM-DD>-<slug>.md`
 - **Severity scale:** not the shared P0-P3 scale. Findings are classified by action - `Do now | Do with tests | Defer | Leave alone` - plus a `Risk: low | medium | high` field per finding (see the Workflow). This skill proposes deletions, not severity-ranked defects.
 
@@ -405,6 +399,8 @@ See `skills/_shared/output-contract.md` for the full contract.
 
 - **anti-slop** - code quality audit for AI-like patterns, over-abstraction, noisy comments,
   hallucinated APIs, and test theater.
+- **anti-ai-prose** - prose-slimming for AI voice in docs, comments, and docstrings. Use when the
+  goal is removing AI-written prose patterns rather than reducing code size.
 - **code-review** - correctness audit for bugs, regressions, races, edge cases, and broken contracts.
 - **testing** - writes and debugs tests required before implementing a slimming recommendation.
 - **security-audit** - reviews security-sensitive code where "defensive" duplication may be necessary.

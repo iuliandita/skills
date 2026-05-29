@@ -1,7 +1,7 @@
 ---
 name: virtualization
 description: >
-  · Create/troubleshoot VMs and hypervisors: Proxmox, QEMU/KVM, libvirt, XCP-ng, vSphere. Triggers: 'proxmox', 'qemu', 'kvm', 'libvirt', 'virsh', 'vm', 'cloud-init'. Not for containers (use docker).
+  · Create/troubleshoot VMs and hypervisors: Proxmox, QEMU/KVM, libvirt, XCP-ng, vSphere. Triggers: 'proxmox', 'qemu', 'kvm', 'libvirt', 'virsh', 'vm', 'hypervisor', 'cloud-init'. Not for containers (use docker).
 license: MIT
 compatibility: "Varies by hypervisor. Proxmox: pvesh, qm, pct. Libvirt: virsh, virt-install. Optional: packer, terraform"
 metadata:
@@ -69,6 +69,7 @@ generated VM config, Terraform HCL, or Packer template, verify against this list
 - [ ] `discard = on` on QEMU disk config for thin-provisioned storage (fstrim passthrough)
 - [ ] Memory ballooning disabled unless tested on the specific guest OS (Alpine, some BSDs can't
   hotplug DIMMs - balloon changes need full power-cycle, not reboot)
+- [ ] In bpg/proxmox Terraform: ballooning is disabled by setting the provider's minimum-memory/balloon field to 0 (verify exact key in the bpg/proxmox docs - commonly `memory_min_mb` or `balloon`; do not invent a field name without checking)
 - [ ] CPU type is `host` for production (full feature passthrough), not `kvm64`/`qemu64`
 - [ ] NUMA enabled for multi-socket or large-memory VMs
 - [ ] QEMU guest agent enabled (cloud-init installs it, but verify)
@@ -174,7 +175,7 @@ Follow the domain-specific reference file. Key principles:
 
 The fastest path to a production-ready VM. Skip Packer and ISO installs for standard setups.
 
-1. Download a cloud image to the Proxmox node:
+1. Download a cloud image to the Proxmox node (note: the URL below points to a daily/testing image; prefer a stable release image - daily images may have cloud-init metadata gaps causing first-boot surprises):
    `wget -P /var/lib/vz/template/iso/ https://cloud.debian.org/images/cloud/trixie/daily/latest/debian-13-generic-amd64.qcow2`
 2. Create the VM shell:
    `qm create 100 --name myvm --memory 2048 --cores 2 --cpu host --net0 virtio,bridge=vmbr0 --agent enabled=1 --scsihw virtio-scsi-pci`

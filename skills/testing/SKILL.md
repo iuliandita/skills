@@ -45,6 +45,8 @@ Write, structure, and maintain tests across unit, integration, E2E, accessibilit
 - Database testing patterns at the engine level - use **databases**
 - Writing or refining LLM prompts (use **prompt-generator**)
 - Infrastructure or configuration validation outside tests (use **terraform**, **ansible**, or **kubernetes**)
+- AI/ML model evaluation or LLM output scoring - use **ai-ml**
+- Infrastructure-level load or chaos testing beyond application tests (use **kubernetes** for cluster-level chaos, or **ci-cd** for pipeline-integrated load test orchestration)
 
 ---
 
@@ -338,6 +340,8 @@ See `skills/_shared/output-contract.md` for the full contract.
 - **anti-slop** - cleans up verbose, over-abstracted, or AI-generated test code. If the test works but reads like a novel, route to anti-slop.
 - **ci-cd** - designs the pipeline that runs tests. This skill writes the tests and configures test runners; ci-cd handles the pipeline structure around them.
 - **databases** - covers database engine testing and configuration. This skill handles application-level database test patterns (transactions, fixtures, test data).
+- **ai-ml** - AI/ML model evaluation, LLM output scoring, and benchmark harnesses. This skill handles functional application testing; ai-ml handles model-level evaluation.
+- **kubernetes** - cluster-level chaos, resilience, and infrastructure-layer load testing. This skill handles application test code; kubernetes handles cluster-level fault injection.
 
 ---
 

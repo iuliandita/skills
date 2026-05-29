@@ -356,7 +356,7 @@ See `skills/_shared/output-contract.md` for the full contract.
 
 - **Skill name:** COMMAND-PROMPT
 - **Deliverable bucket:** `audits`
-- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract - boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table - and write the deliverable to `docs/local/audits/command-prompt/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
+- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract - boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table - and write the deliverable to `docs/local/audits/command-prompt/<YYYY-MM-DD>-<slug>.md`. When invoked to **write a script, dotfile, or completion / answer a question / teach a concept**, respond freely: deliver the artifact or explanation inline without the contract, deliverable file, or conclusion table.
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
 
 ## Related Skills
@@ -364,6 +364,9 @@ See `skills/_shared/output-contract.md` for the full contract.
 - **firewall-appliance** - OPNsense/pfSense uses tcsh/csh on FreeBSD. That skill handles the BSD firewall context; this skill covers tcsh syntax in general.
 - **ansible** - Ansible `shell`/`command` modules have their own idiosyncrasies beyond raw shell scripting. Use ansible for playbook work.
 - **ci-cd** - CI shell blocks run in restricted environments (no interactive features, possibly no bash). Use ci-cd for pipeline design; use this skill for the shell syntax within them.
+- **networking** - Linux network configuration (interfaces, routes, firewalls, DNS). Use networking for service and protocol administration; use this skill for the shell scripts that wrap or automate those tasks.
+- **debian-ubuntu** - Debian/Ubuntu system administration (packages, services, cloud-init). Use debian-ubuntu for distro-level operations; use this skill for the shell scripting patterns within those tasks.
+- **rhel-fedora** - RHEL/Fedora system administration (dnf, systemd, SELinux, subscription-manager). Use rhel-fedora for distro-level operations; use this skill for the shell scripting patterns within those tasks.
 
 ## Rules
 

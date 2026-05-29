@@ -92,7 +92,7 @@ Gather context. Run in parallel (guard each with `; true`):
 2. **Branch**: `git branch --show-current`
 3. **File count**: `git ls-files | wc -l`
 
-**If not a git repo**: stop. The audits rely on git context.
+**If not a git repo**: stop. Tell the user: "deep-audit requires a git repository - the wave agents use git context for file discovery, diff scope, and commit anchoring. Initialize a repo with `git init` and commit the files, then re-run."
 
 Record preflight values. Default `{scope}` to "full codebase" unless the user specifies
 a narrower target.
@@ -465,7 +465,7 @@ See `skills/_shared/output-contract.md` for the full contract.
 - **Skill name:** DEEP-AUDIT
 - **Deliverable bucket:** `audits`
 - **Mode:** always-on. Every invocation emits the full contract - boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table.
-- **Deliverable path:** `docs/local/audits/deep-audit/<YYYY-MM-DD>-<slug>.md`
+- **Deliverable path:** `docs/local/audits/DEEP-AUDIT.md` (consolidated findings) and `docs/local/audits/DEEP-AUDIT-TASKS.md` (phased task list). Step 9b also writes `docs/local/specs/` and `docs/local/plans/` files when a full execution plan is generated.
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract).
 
 ## Related Skills
@@ -475,7 +475,6 @@ See `skills/_shared/output-contract.md` for the full contract.
 - **security-audit**, **zero-day** - Wave 4 participants.
 - **update-docs**, **roadmap**, **git** - Wave 5 participants.
 - **testing**, **command-prompt**, **databases**, **backend-api**, **frontend-design**, **localize**, **ai-ml**, **mcp**, **docker**, **kubernetes**, **terraform**, **ansible**, **ci-cd**, **networking**, **arch-btw**, **debian-ubuntu**, **rhel-fedora**, **nixos-btw**, **firewall-appliance**, **virtualization** - Wave 3 candidates (conditional).
-- **code-slimming** - Wave 2 maintainability pass for behavior-preserving simplification, deduplication, and centralization opportunities.
 - **skill-creator** - audits the skill collection. This skill audits application repos.
 
 Read `references/exclusions.md` before changing Wave 3 routing.

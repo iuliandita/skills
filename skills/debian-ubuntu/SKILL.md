@@ -63,7 +63,7 @@ stale package-version table.
 - Security review, vulnerability triage, or offensive testing - use **security-audit** or **lockpick**
 - RPM-family distros and tooling - use **rhel-fedora**. That includes RHEL, Fedora, Rocky, AlmaLinux, Oracle Linux, and Amazon Linux.
 - Ubuntu Core and snap-only transactional workflows - outside this skill; do not treat them like ordinary apt-managed Ubuntu hosts
-- NixOS or declarative system management - outside this skill; route to a dedicated NixOS skill when one exists
+- NixOS or declarative system management - use **nixos-btw**
 - Kali offensive tooling, pentest workflow, or training-image specifics - use **kali-linux**
 - OPNsense or pfSense appliance work - use **firewall-appliance**
 
@@ -335,6 +335,7 @@ See `skills/_shared/output-contract.md` for the full contract.
 - **ansible** - codifying Linux changes across many machines
 - **security-audit** - hardening and security review rather than normal package/service administration
 - **rhel-fedora** - RPM-family distro administration rather than Debian-family behavior
+- **nixos-btw** - NixOS and declarative Nix system management rather than apt-based administration
 - **kali-linux** - Kali-specific branch, image, and offensive-workflow concerns
 - **firewall-appliance** - OPNsense and pfSense appliance work rather than Linux host administration
 - **arch-btw** - Arch Linux and CachyOS administration (the upstream inspiration for this skill)

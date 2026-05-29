@@ -1,7 +1,7 @@
 ---
 name: networking
 description: >
-  · Configure/troubleshoot Linux networking: DNS, proxies, VPNs, VLANs, nftables, routing. Triggers: 'dns', 'reverse proxy', 'vpn', 'wireguard', 'tailscale', 'vlan', 'nftables', 'mtr'. Not OPNsense: firewall-appliance.
+  · Configure/troubleshoot Linux networking: DNS, proxies, VPNs, VLANs, nftables, routing. Triggers: 'dns', 'reverse proxy', 'vpn', 'wireguard', 'tailscale', 'vlan', 'nftables', 'bgp', 'ospf', 'frrouting'. Not OPNsense: firewall-appliance.
 license: MIT
 compatibility: "Requires Linux. Tools vary by task: nftables, WireGuard, dig, mtr, tcpdump"
 metadata:
@@ -61,6 +61,7 @@ performance tuning.
 - Network config management at scale via playbooks (use **ansible**)
 - Offensive pentesting, exploitation, lateral movement (use **lockpick**)
 - Application-level security review, SSRF, header injection (use **security-audit**)
+- CI/CD-automated network configuration management at pipeline scale (use **ci-cd**)
 
 ---
 
@@ -397,6 +398,7 @@ See `skills/_shared/output-contract.md` for the full contract.
   covers network-layer security (firewalls, TLS, segmentation).
 - **browse** - web browsing, scraping, headless page interaction. This skill covers network
   infrastructure, not web content retrieval.
+- **ci-cd** - pipeline design for automated network config management. This skill provides the networking knowledge; ci-cd handles pipeline orchestration around it.
 
 ## Rules
 

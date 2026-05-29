@@ -339,7 +339,7 @@ After editing docs, check that internal references still resolve:
 
 ```bash
 # Check tracked and new markdown files
-{ git ls-files '*.md'; git ls-files --others --exclude-standard - '*.md'; } 2>/dev/null | sort -u | while read -r file; do
+{ git ls-files '*.md'; git ls-files --others --exclude-standard -- '*.md'; } 2>/dev/null | sort -u | while read -r file; do
   grep -oEh '\[[^]]*\]\([^)#]+' "$file"
 done | sed 's/.*](//' | grep -v '^https\?://' | sort -u | while read -r path; do
   [[ -e "$path" ]] || echo "BROKEN LINK: $path"
@@ -392,9 +392,9 @@ Only commit changes to tracked docs (inventory, runbooks, ADRs, changelogs, feat
 
 ```bash
 # Stage specific changed docs (don't blindly add everything)
-{ git diff --name-only - '*.md' '.env.example'; git ls-files --others --exclude-standard - '*.md' '.env.example'; } 2>/dev/null | sort -u | \
+{ git diff --name-only -- '*.md' '.env.example'; git ls-files --others --exclude-standard -- '*.md' '.env.example'; } 2>/dev/null | sort -u | \
   while read -r path; do
-    [[ -n "$path" ]] && git add - "$path"
+    [[ -n "$path" ]] && git add -- "$path"
   done
 # Only if docs changed:
 git diff --cached --quiet || git commit -m "docs: update [target] after [what changed]"

@@ -378,9 +378,8 @@ jobs:
     runs-on: docker
     container:
       image: catthehacker/ubuntu:act-24.04    # heavier image for multi-tool needs
-    env:
-      # Prefer GIT_SSL_CAINFO with your CA cert; this bypass is a last resort
-      GIT_SSL_NO_VERIFY: "true"               # if cert is periodically expired
+    # Private-forge TLS: mount your CA and set GIT_SSL_CAINFO=/path/to/ca.crt.
+    # GIT_SSL_NO_VERIFY is a dev/test-only last resort - never commit it to a release pipeline.
     steps:
       - uses: actions/checkout@<sha>  # pin to SHA; resolves from Forgejo mirror
       - name: Login to registry

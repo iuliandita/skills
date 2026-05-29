@@ -40,6 +40,7 @@ Every finding falls into one of three categories:
 - One-off prompt authoring or prompt templates - use **prompt-generator**
 - Session-end documentation maintenance - use **update-docs**
 - Prose audit of docs, READMEs, wikis, emails, or creative writing - use **anti-ai-prose**
+- Safe-deletion or LOC-slimming requests (removing dead code, shrinking file count) - use **code-slimming**
 
 ## AI Self-Check
 
@@ -51,7 +52,6 @@ Before returning any anti-slop audit, verify:
 - [ ] **Existing project conventions preserved**: the repo's naming style, comment density, and abstraction level take precedence over generic "clean code" preferences
 - [ ] **Severity is honest**: don't inflate P3 findings to P2 to pad the report
 - [ ] **No hallucinated replacements**: verify that suggested modern alternatives actually exist in the target language version (e.g., `match` requires Python 3.10+, `LazyLock` requires Rust 1.80+)
-- [ ] **Grounding checked**: if flagging a hallucinated API, CLI flag, resource, chart value, or config key, verify it against local types/schema/tool help or official docs before claiming it is fake
 - [ ] **Test theater distinguished from correctness**: implementation-mirroring tests, mock-heavy ceremony, and snapshots with no semantic assertions belong here; actual failing behavior still belongs to code-review
 - [ ] **Structural duplication sweep done**: compare same-role modules/classes across sibling dirs (`providers`, `targets`, `sources`, `clients`, `registry`) and either report near-twins or note why the duplication is intentional
 - [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
@@ -59,7 +59,7 @@ Before returning any anti-slop audit, verify:
 - [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
 - [ ] **Routing overlap checked**: overlapping skills, trigger terms, and "When NOT to use" boundaries are checked before returning guidance
 - [ ] **Spec claims verified**: claims about tool behavior, output contracts, or repo conventions are checked against current docs, scripts, or skill files
-- [ ] **API reality checked**: suspicious helpers, flags, imports, and config keys are verified before being called hallucinations
+- [ ] **API/grounding verified**: suspicious helpers, flags, imports, config keys, and schema claims are checked against local types, generated schema, lockfiles, `--help` output, or official docs before being called hallucinations
 - [ ] **Test theater separated**: tests that assert mocks or snapshots only are distinguished from tests proving behavior
 
 ---
@@ -439,6 +439,8 @@ See `skills/_shared/output-contract.md` for the full contract.
 - **anti-ai-prose** - audits prose for AI writing tells (vocabulary, syntax, tone, formatting).
   Anti-slop audits code. Together they cover "does this repo read as machine-generated" across
   both code and documentation.
+- **code-slimming** - handles safe-deletion and LOC-slimming passes (removing dead code, shrinking
+  file count). Use it when the goal is reducing volume; use anti-slop when the goal is quality.
 
 ---
 
