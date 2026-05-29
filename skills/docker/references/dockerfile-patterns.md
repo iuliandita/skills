@@ -232,7 +232,7 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
 CMD ["gunicorn", "app:app", "--bind", "0.0.0.0:8000"]
 ```
 
-Always use a venv in the container (Python 3.12+ externally managed). `--no-cache-dir` avoids storing wheels.
+Always use a venv in the container (Python 3.12+ externally managed). Use either a `--mount=type=cache` pip cache OR `--no-cache-dir`, never both.
 
 ### Rust
 

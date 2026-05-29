@@ -659,7 +659,7 @@ SELECT * FROM t WHERE col IS NOT DISTINCT FROM NULL;
 -- MSSQL-specific: ISNULL() vs COALESCE() - ISNULL is faster but only takes 2 args.
 
 -- String concatenation with NULL:
--- MySQL CONCAT('a', NULL, 'b') = 'ab' (NULL is skipped)
+-- MySQL CONCAT('a', NULL, 'b') = NULL (NULL propagates; use CONCAT_WS() to skip NULLs)
 -- PostgreSQL 'a' || NULL || 'b' = NULL (NULL propagates)
 -- MSSQL 'a' + NULL + 'b' = NULL (NULL propagates, unless SET CONCAT_NULL_YIELDS_NULL OFF)
 

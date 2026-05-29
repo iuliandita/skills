@@ -105,7 +105,7 @@ if let Some(v) = maybe_value {
 ## Supply Chain Risk (Lies)
 
 **High-risk crates** (active CVEs, March 2026):
-- `tar`, `async-tar`, `tokio-tar` - CVE-2026-33056 (symlink-following RCE during `cargo build`). Pin `tar >= 0.4.45`. Fix shipped in Rust 1.94.0 (released March 5, 2026). Affects uv, testcontainers, wasmCloud.
+- `tar`, `async-tar`, `tokio-tar` - CVE-2026-33056 (symlink-following RCE during `cargo build`). Pin `tar >= 0.4.45` (the actionable mitigation). Fix also shipped in the Cargo bundled with Rust 1.94.x. Affects uv, testcontainers, wasmCloud.
 - Rust supply chain attacks up 130% in 2025. Crates.io deploying TUF (The Update Framework) in 2026.
 
 **Detect:**

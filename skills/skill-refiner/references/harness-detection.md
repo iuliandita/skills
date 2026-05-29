@@ -12,7 +12,7 @@ How skill-refiner detects and validates AI CLI harnesses for cross-model peer re
 | Codex | `codex` | `~/.codex/config.toml` | `OPENAI_API_KEY` | `codex exec "respond with PONG"` |
 | Gemini CLI | `gemini` | `~/.gemini/settings.json` | `GEMINI_API_KEY` or `GOOGLE_API_KEY` | `gemini -p "respond with PONG"` |
 | OpenCode | `opencode` | project-level `.opencode/` (verify) | varies by provider | check `opencode --help` |
-| Aider | `aider` | `~/.aider.conf.yml` | `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` | `aider --message "respond with PONG" --no-git --yes` |
+| Aider | `aider` | `~/.aider.conf.yml` | `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` | `aider --message "respond with PONG" --no-git --yes-always` |
 | Goose | `goose` | `~/.config/goose/config.yaml` | varies by provider | check `goose --help` |
 
 **Important:** Smoke test commands are approximate. Verify against current CLI versions

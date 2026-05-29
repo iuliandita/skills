@@ -234,7 +234,7 @@ import {
 }
 ```
 
-**Moved blocks** (TF 1.8+): declarative intra-state refactoring. Rename resources or move into/out of modules within the same state file. Reviewed in PRs, applied automatically on `terraform apply`. Does NOT work across state files.
+**Moved blocks** (TF 1.1+): declarative intra-state refactoring. Rename resources or move into/out of modules within the same state file. Reviewed in PRs, applied automatically on `terraform apply`. Does NOT work across state files.
 
 ```hcl
 moved {
@@ -332,7 +332,7 @@ Read `references/state-and-security.md` for state backends, locking, encryption,
 
 See `references/state-and-security.md` for full backend config examples, OIDC federation patterns, CI/CD pipeline flows, and cross-state migration workflows.
 
-**S3 + native locking** (TF 1.10+): DynamoDB-based locking is deprecated. Use `use_lockfile = true`. Encrypt with KMS. Enable versioning and CloudTrail data events on the bucket.
+**S3 + native locking** (TF 1.10+): native `use_lockfile = true` replaces DynamoDB locking (DynamoDB still works and is slated for deprecation in a future release). Encrypt with KMS. Enable versioning and CloudTrail data events on the bucket.
 
 **OpenTofu**: add client-side state encryption on top (AES-GCM, AWS KMS, GCP KMS, or OpenBao) - encrypts before upload, even a compromised backend can't read state.
 

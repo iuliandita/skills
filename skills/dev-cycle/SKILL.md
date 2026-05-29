@@ -79,7 +79,7 @@ Before declaring finish-mode complete:
 - [ ] Release convention detected via 2+ independent signals before attempting a release
 - [ ] `code-review` ran on the diff against base, not against HEAD alone
 - [ ] PR/MR body includes summary + test plan; no AI attribution trailers
-- [ ] CI watched to completion with forge-appropriate verification (e.g., `gh pr view --json statusCheckRollup`, `glab ci status --output json`, manual confirmation for Bitbucket/bare) - not merged on "probably fine"
+- [ ] CI watched to completion with forge-appropriate verification (e.g., `gh pr view --json statusCheckRollup`, `glab ci status`, manual confirmation for Bitbucket/bare) - not merged on "probably fine"
 - [ ] For releases: tag matches the bumped version; CHANGELOG has a new section dated today; release-workflow watch used forge-appropriate exit-status flag (`gh run watch --exit-status` etc.)
 - [ ] No `--no-verify`, no `--force-push`, no destructive reset - if blocked, fix the root cause
 - [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them

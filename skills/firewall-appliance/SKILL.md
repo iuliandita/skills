@@ -159,7 +159,7 @@ After every change, confirm the firewall is healthy:
    - OPNsense CLI: `configctl template reload OPNsense/Filter` (after editing alias via API or XML). To verify the alias was created: `configctl template list | grep Alias`, then confirm with `pfctl -t WebServer -T show`.
    - pfSense: `easyrule` doesn't support aliases - use GUI or edit `/cf/conf/config.xml` directly
 5. Add a pass rule on the **VLAN interface** (not WAN - pf evaluates rules on the interface where traffic enters): source = alias, destination = server alias, port = 443
-6. Place the allow rule above any block-all rule for that interface (rule ordering matters - pf evaluates last match, not first match, so a later block overrides an earlier pass)
+6. Place the allow rule above any block-all rule for that interface (OPNsense/pfSense interface rules use `quick` by default, so the FIRST matching rule wins - put the specific allow above the broad block)
 7. Test: `pfctl -n -f /tmp/rules.debug` (OPNsense) to dry-run before applying
 8. Apply: `configctl filter reload` (OPNsense) or `pfSsh.php playback svc restart filter` (pfSense)
 9. Verify: `pfctl -sr | grep <alias>` to confirm the rule is active
@@ -172,7 +172,7 @@ Block IoT devices from reaching internal networks while allowing internet access
 2. Create an alias for RFC1918 ranges: name `RFC1918`, type `Network`, content `10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16`
 3. Add a **block** rule on the IoT interface: source = IoT subnet, destination = `RFC1918` alias, action = block. This prevents IoT from reaching any internal network.
 4. Add a **pass** rule below it: source = IoT subnet, destination = any, ports = 53 (DNS), 443 (HTTPS). This allows internet access for the permitted services.
-5. Rule order matters: the block rule for RFC1918 must come before the pass rule for any, since pf uses last-match semantics - the block must not be overridden by a later pass.
+5. Rule order matters: with `quick` (the OPNsense/pfSense default) the FIRST matching rule wins, so the RFC1918 block must come before the broad pass rule - otherwise the pass matches first and lets the traffic through.
 6. Test and apply as above: `pfctl -n -f /tmp/rules.debug`, then `configctl filter reload`
 
 ### Troubleshooting connectivity after VLAN changes

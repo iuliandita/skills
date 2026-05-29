@@ -155,9 +155,8 @@ roles:
 # Managed by Ansible - do not edit manually
 # PCI-DSS 4.0: Req 2.2.7 (encrypted non-console admin), Req 8 (authentication)
 
-# Protocol 2 is the only option since OpenSSH 7.6+ (directive removed).
-# Kept for: compliance scanners that grep for it, and older SSH versions.
-Protocol 2
+# SSHv2 is the only protocol; SSHv1 and the `Protocol` directive were removed in OpenSSH 7.6.
+# Do not set `Protocol` on modern sshd - it triggers a deprecation/parse warning.
 
 # Authentication
 PermitRootLogin no

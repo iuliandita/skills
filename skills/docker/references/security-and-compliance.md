@@ -66,7 +66,7 @@ The attackers are a cloud-native threat group active 2025-2026, known for Docker
 1. **Pin images to SHA256 digests**, not tags:
    ```dockerfile
    # BAD: mutable tag
-   FROM aquasec/trivy:0.70.0@sha256:<digest>
+   FROM aquasec/trivy:0.70.0
 
    # GOOD: immutable digest
    FROM aquasec/trivy@sha256:abc123def456...
