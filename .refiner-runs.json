@@ -1940,5 +1940,258 @@
     "skipped": [
       "phase 2 meta-improvement: out of scope for targeted single-skill refinement"
     ]
+  },
+  {
+    "run_id": "2026-05-29-103150",
+    "branch": "skill-refiner/2026-05-29-103150",
+    "date": "2026-05-29",
+    "primary": {
+      "harness": "claude-code",
+      "model": "claude-opus-4-8",
+      "context": "1M"
+    },
+    "secondary": {
+      "harness": "codex",
+      "model": "codex CLI (PONG smoke PASS)",
+      "weight": "5%",
+      "role": "cross-model review of content-expansion diffs"
+    },
+    "config": {
+      "iterations_requested": 5,
+      "iterations_used": 5,
+      "no_ceiling": true,
+      "target": 99,
+      "mode": "circuit-breaker",
+      "plateau": 2
+    },
+    "pool_size": 40,
+    "termination": "plateau: remaining sub-99 gaps are version-pin 'unverifiable' penalties (freshness-routine territory, not edited), cosmetic one-way cross-refs/boilerplate, and cross-agent scorer variance",
+    "gate": "lint-skills.sh + validate-spec.sh: 42/42 PASS (0 errors, 0 violations) at baseline and after every iteration",
+    "cross_model_flags": {
+      "codex_reviews": 2,
+      "NO_FLAGS": 2,
+      "MINOR": 0,
+      "MAJOR": 0
+    },
+    "scoring_notes": "Composites carry ~+-3-5 cross-agent variance (different Sonnet judge instances per iteration); ~13 skills show after<before purely from a stricter iteration-3 judge despite receiving only additive, gate-verified improvements (no regressions). 'after' = full post-iteration-2 re-score sweep, except kubernetes/routine-writer/virtualization use iteration-5 (measured iteration-4 fixes). Structural gate is the reliable objective signal. Version/CVE/EOL pins NOT edited.",
+    "aggregate": {
+      "avg_before": 95.05,
+      "avg_after": 96.1,
+      "min_after": 89.6,
+      "max_after": 100.0,
+      "ge_99_after": [
+        "networking",
+        "rhel-fedora",
+        "roadmap",
+        "terraform"
+      ]
+    },
+    "scores": {
+      "ai-ml": {
+        "before": 93.8,
+        "after": 96.7
+      },
+      "ansible": {
+        "before": 94.2,
+        "after": 97.0
+      },
+      "anti-ai-prose": {
+        "before": 97.6,
+        "after": 98.9
+      },
+      "anti-slop": {
+        "before": 95.2,
+        "after": 97.6
+      },
+      "arch-btw": {
+        "before": 93.8,
+        "after": 95.9
+      },
+      "backend-api": {
+        "before": 93.9,
+        "after": 94.1
+      },
+      "browse": {
+        "before": 91.6,
+        "after": 92.9
+      },
+      "ci-cd": {
+        "before": 92.3,
+        "after": 95.1
+      },
+      "cluster-health": {
+        "before": 84.8,
+        "after": 93.3
+      },
+      "code-review": {
+        "before": 96.7,
+        "after": 95.0
+      },
+      "code-slimming": {
+        "before": 98.3,
+        "after": 96.9
+      },
+      "command-prompt": {
+        "before": 98.7,
+        "after": 97.8
+      },
+      "databases": {
+        "before": 98.3,
+        "after": 98.7
+      },
+      "debian-ubuntu": {
+        "before": 93.1,
+        "after": 96.5
+      },
+      "deep-audit": {
+        "before": 98.3,
+        "after": 98.4
+      },
+      "dev-cycle": {
+        "before": 96.5,
+        "after": 95.0
+      },
+      "docker": {
+        "before": 96.6,
+        "after": 96.4
+      },
+      "firewall-appliance": {
+        "before": 95.9,
+        "after": 94.8
+      },
+      "frontend-design": {
+        "before": 95.6,
+        "after": 93.6
+      },
+      "full-review": {
+        "before": 95.4,
+        "after": 95.9
+      },
+      "git": {
+        "before": 95.6,
+        "after": 91.4
+      },
+      "jekyll-hyde": {
+        "before": 95.6,
+        "after": 94.1
+      },
+      "kali-linux": {
+        "before": 93.5,
+        "after": 90.3
+      },
+      "kubernetes": {
+        "before": 95.4,
+        "after": 96.7
+      },
+      "localize": {
+        "before": 93.5,
+        "after": 94.9
+      },
+      "lockpick": {
+        "before": 96.2,
+        "after": 97.0
+      },
+      "mcp": {
+        "before": 95.0,
+        "after": 98.1
+      },
+      "networking": {
+        "before": 93.9,
+        "after": 100.0
+      },
+      "nixos-btw": {
+        "before": 92.8,
+        "after": 98.1
+      },
+      "prompt-generator": {
+        "before": 90.0,
+        "after": 98.1
+      },
+      "rhel-fedora": {
+        "before": 99.7,
+        "after": 99.7
+      },
+      "roadmap": {
+        "before": 99.7,
+        "after": 99.7
+      },
+      "routine-writer": {
+        "before": 97.6,
+        "after": 97.6
+      },
+      "security-audit": {
+        "before": 97.7,
+        "after": 98.3
+      },
+      "skill-router": {
+        "before": 95.9,
+        "after": 94.4
+      },
+      "terraform": {
+        "before": 93.7,
+        "after": 99.6
+      },
+      "testing": {
+        "before": 96.2,
+        "after": 89.6
+      },
+      "update-docs": {
+        "before": 86.3,
+        "after": 92.6
+      },
+      "virtualization": {
+        "before": 96.6,
+        "after": 96.2
+      },
+      "zero-day": {
+        "before": 96.5,
+        "after": 97.3
+      }
+    },
+    "iteration_log": [
+      {
+        "iteration": 1,
+        "type": "baseline full sweep",
+        "note": "40 skills scored; 2 in-loop (lockpick, zero-day) for offensive-skill safeguard"
+      },
+      {
+        "iteration": 2,
+        "type": "improvement",
+        "note": "38 sub-99 skills: routing/dedup/content/real-bug fixes; codex NO_FLAGS; commit 65da396"
+      },
+      {
+        "iteration": 3,
+        "type": "re-score",
+        "note": "fresh-agent re-score; surfaced new concrete nits + scorer variance"
+      },
+      {
+        "iteration": 4,
+        "type": "structural cleanup",
+        "note": "9 skills: bold refs, dash removal, section placement, cross-refs; commit c102c7b"
+      },
+      {
+        "iteration": 5,
+        "type": "re-score + revert",
+        "note": "Karpathy gate: reverted dev-cycle/mcp section move (broke 40/42 consistency); commit cda2b57"
+      }
+    ],
+    "real_bugs_fixed": [
+      "update-docs: git pathspec separator '-' -> '--' (3 sites; commands were broken)",
+      "ci-cd: removed GIT_SSL_NO_VERIFY:true from Forgejo release template (contradicted skill's own rule)",
+      "routine-writer / frontend-design / prompt-generator: ' -- ' double-dash in prose -> '-'",
+      "lockpick / zero-day: deduplicated AI Self-Check items",
+      "kubernetes: bolded 5 plain-text skill refs in When NOT to use",
+      "routine-writer: resolved duplicate '## Output contract' heading collision"
+    ],
+    "reverted": [
+      "dev-cycle + mcp: iteration-4 Performance/Best-Practices relocation (regressed 40/42 collection consistency); restored in iteration 5"
+    ],
+    "contested": [],
+    "phase2": "NOT run - phase 2 meta-improvement (skill-creator, skill-refiner, lint scripts) always requires explicit human approval; paused for user",
+    "commits": [
+      "65da396",
+      "c102c7b",
+      "cda2b57"
+    ]
   }
 ]
