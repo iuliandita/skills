@@ -94,19 +94,6 @@ Before declaring finish-mode complete:
 
 ---
 
-## Performance
-
-- Run the narrowest meaningful checks (e.g., `--testPathPattern` or `go test ./pkg/...`) during iteration, then the full required gate (`lint + typecheck + test`) once before finishing. Running the full suite on every edit wastes minutes per cycle.
-- Keep commits batch-sized by review concern - one logical change per commit - so bisect, revert, and blame stay useful on a branch with many commits.
-- Invoke existing project scripts (`Makefile`, `justfile`, `scripts/`) instead of reconstructing ad hoc command sequences; those scripts encode project conventions that ad hoc commands silently skip.
-
-## Best Practices
-
-- Create the feature branch before any implementation edits; untracked local changes that predate the branch are easy to accidentally bundle into the wrong commit.
-- Do not force-push, squash, or merge without explicit user intent - each has a different history rewrite consequence that's hard to undo after others have pulled.
-- Put concrete verification evidence (test counts, lint output, CI run URL) in PRs and final summaries rather than vague "tests pass" claims; reviewers cannot approve what they cannot verify.
-
-
 ## Workflow
 
 ### Step 0: Detect mode
@@ -362,6 +349,20 @@ B8  git fetch --tags origin
 ```
 
 GitLab substitutes `glab mr create`, `glab ci status --live`, `glab mr merge --squash --remove-source-branch`, `glab release create`. Forgejo substitutes `tea pulls create`, `tea pulls merge --style squash`, `tea releases create`. Bitbucket and bare paths skip B5-B8 CLI steps and use web UI / `format-patch` respectively.
+
+---
+
+## Performance
+
+- Run the narrowest meaningful checks (e.g., `--testPathPattern` or `go test ./pkg/...`) during iteration, then the full required gate (`lint + typecheck + test`) once before finishing. Running the full suite on every edit wastes minutes per cycle.
+- Keep commits batch-sized by review concern - one logical change per commit - so bisect, revert, and blame stay useful on a branch with many commits.
+- Invoke existing project scripts (`Makefile`, `justfile`, `scripts/`) instead of reconstructing ad hoc command sequences; those scripts encode project conventions that ad hoc commands silently skip.
+
+## Best Practices
+
+- Create the feature branch before any implementation edits; untracked local changes that predate the branch are easy to accidentally bundle into the wrong commit.
+- Do not force-push, squash, or merge without explicit user intent - each has a different history rewrite consequence that's hard to undo after others have pulled.
+- Put concrete verification evidence (test counts, lint output, CI run URL) in PRs and final summaries rather than vague "tests pass" claims; reviewers cannot approve what they cannot verify.
 
 ---
 

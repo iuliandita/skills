@@ -73,22 +73,6 @@ When generating or reviewing MCP server code, verify each item before presenting
 
 ---
 
-## Performance
-
-- Keep tool schemas tight and responses small; large unstructured tool outputs waste model context.
-- Use resources for reusable context instead of returning the same large payload from every tool call.
-- Batch read-only lookups where latency matters, but keep side-effecting tools separate and auditable.
-
-
----
-
-## Best Practices
-
-- Treat MCP servers as security boundaries: authenticate, authorize, and log side effects explicitly.
-- Make tool names and schemas stable; version breaking changes instead of changing semantics in place.
-- Require user confirmation for tools that spend money, mutate infrastructure, delete data, or expose secrets.
-
-
 ## Workflow
 
 **Build vs. Review:** Steps 1-6 are for building new servers. When reviewing existing MCP server code: (1) scope using Step 1 questions - what tools, transport, and auth does the server use; (2) audit each tool handler against Step 3 injection vectors and the AI Self-Check; (3) cross-reference the Common Mistakes section for patterns AI models frequently introduce.
@@ -273,6 +257,20 @@ Test each tool handler with: valid inputs (happy path), missing required fields,
 malicious inputs (injection, path traversal, oversized payloads), concurrent requests.
 
 Read `references/security.md` for specific injection test payloads.
+
+---
+
+## Performance
+
+- Keep tool schemas tight and responses small; large unstructured tool outputs waste model context.
+- Use resources for reusable context instead of returning the same large payload from every tool call.
+- Batch read-only lookups where latency matters, but keep side-effecting tools separate and auditable.
+
+## Best Practices
+
+- Treat MCP servers as security boundaries: authenticate, authorize, and log side effects explicitly.
+- Make tool names and schemas stable; version breaking changes instead of changing semantics in place.
+- Require user confirmation for tools that spend money, mutate infrastructure, delete data, or expose secrets.
 
 ---
 

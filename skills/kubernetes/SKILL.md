@@ -36,11 +36,11 @@ This skill covers four domains depending on context:
 
 ## When NOT to use
 
-- Configuring CI/CD pipelines (use ci-cd)
-- Docker/container image optimization (use docker)
-- Security audits of application code (use security-audit)
-- Provisioning the cluster itself via IaC (use terraform)
-- Database engine configuration running on K8s (use databases)
+- Configuring CI/CD pipelines (use **ci-cd**)
+- Docker/container image optimization (use **docker**)
+- Security audits of application code (use **security-audit**)
+- Provisioning the cluster itself via IaC (use **terraform**)
+- Database engine configuration running on K8s (use **databases**)
 - Broad read-only cluster health checks, status reports, and post-maintenance diagnostics (use **cluster-health**)
 
 ## AI Self-Check
@@ -61,8 +61,6 @@ This skill runs inside an AI agent. AI tools consistently produce the same K8s s
 - [ ] Kube context verified before any kubectl/helm/argocd command
 - [ ] Requester is authorized for cluster/admin changes, especially in shared chats. If the request comes from a non-admin participant, stop and ask the authorized owner for approval before kubectl, Helm, ArgoCD, or GitOps edits.
 - [ ] No auto-sync to production without approval gate
-
-Run generated manifests through `kube-score`, `kubelinter`, or `checkov` when available.
 - [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
 - [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
 - [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
@@ -71,6 +69,8 @@ Run generated manifests through `kube-score`, `kubelinter`, or `checkov` when av
 - [ ] **API versions checked**: manifests, Helm templates, and Gateway resources match the target cluster version
 - [ ] **Cluster context verified**: namespace, context, and kubeconfig identity are shown before mutating commands
 - [ ] **kube-proxy mode checked on 1.35+ clusters**: IPVS mode is deprecated in 1.35 (removal targeted for a future release); recommend nftables mode for new clusters and flag IPVS in reviews
+
+Run generated manifests through `kube-score`, `kubelinter`, or `checkov` when available.
 
 ## Performance
 
@@ -136,9 +136,7 @@ helm install <release> <chart>/ --dry-run --debug     # Server-side dry run (nee
 
 ### Step 5: GitOps-managed emergency or scaling changes
 
-When changing a live workload managed by ArgoCD, Flux, or another reconciler,
-read `references/gitops-emergency-changes.md`; live `kubectl scale`, `kubectl patch`,
-or manual apply may be reverted unless the desired state changes too.
+When changing a live workload managed by ArgoCD, Flux, or another reconciler, read `references/gitops-emergency-changes.md`; live `kubectl scale`, `kubectl patch`, or manual apply may be reverted unless the desired state changes too.
 
 ## Manifests
 
@@ -290,31 +288,18 @@ app/
 |   +-- kustomization.yaml   # references resources
 |   +-- deployment.yaml
 |   +-- service.yaml
-+-- overlays/
-    +-- dev/
-    |   +-- kustomization.yaml   # bases: [../../base]
-    +-- staging/
-    |   +-- kustomization.yaml
-    +-- prod/
-        +-- kustomization.yaml
++-- overlays/               # dev/ staging/ prod/, each a kustomization.yaml with bases: [../../base]
 ```
 
-Each overlay's `kustomization.yaml` sets `bases`, then adds `patches`, `images`, and
-`configMapGenerator`/`secretGenerator` overrides for that environment.
+Each overlay's `kustomization.yaml` sets `bases`, then adds `patches`, `images`, and `configMapGenerator`/`secretGenerator` overrides for that environment.
 
 ### Components
 
-Reusable cross-cutting patches (monitoring, security context, sidecar injection) that any
-overlay can opt into with `components: [../../components/monitoring]`. Prefer components
-over duplicating patches across overlays.
+Reusable cross-cutting patches (monitoring, security context, sidecar injection) that any overlay can opt into with `components: [../../components/monitoring]`. Prefer components over duplicating patches across overlays.
 
 ### secretGenerator / name-suffix-hash pitfall
 
-`secretGenerator` and `configMapGenerator` append a content hash suffix to the resource name
-(e.g., `app-config-abc12345`). Deployments that reference the generated name by a fixed name
-break because the hash changes on every edit. Always reference generated resources by the
-base name and let Kustomize resolve the suffix, or set `options.disableNameSuffixHash: true`
-if the hash-based rolling update is not desired.
+`secretGenerator` and `configMapGenerator` append a content hash suffix to the resource name (e.g., `app-config-abc12345`). Deployments referencing the generated name by a fixed name break because the hash changes on every edit. Always reference generated resources by the base name and let Kustomize resolve the suffix, or set `options.disableNameSuffixHash: true` if the hash-based rolling update is not desired.
 
 ---
 
@@ -365,11 +350,11 @@ Promotion: dev -> staging -> prod via PR-based promotion. No auto-sync to prod.
 
 The Trivy supply chain attack (CVE-2026-33634) is the defining security event of 2026 so far. Attackers force-pushed all GitHub Action tags to credential-stealing malware and published malicious binaries to Docker Hub. Key takeaways:
 
-- **Pin GitHub Actions to commit SHAs, never mutable tags.** `uses: aquasecurity/trivy-action@<sha>`, not `@v0.35.0`. This applies to ALL actions, not just Trivy. See also: reviewdog/action-setup (CVE-2025-30154), the upstream cause of the tj-actions compromise.
-- **Pin container images to SHA256 digests in CI/CD.** Tags can be overwritten. Digests cannot.
+- **Pin GitHub Actions to commit SHAs, never mutable tags.** `uses: aquasecurity/trivy-action@<sha>`, not `@v0.35.0`. Applies to ALL actions, not just Trivy. See also reviewdog/action-setup (CVE-2025-30154), the upstream cause of the tj-actions compromise.
+- **Pin container images to SHA256 digests in CI/CD.** Tags can be overwritten; digests cannot.
 - **Monitor for force-push events** on action repos you depend on. GitHub's audit log and StepSecurity Harden-Runner can detect this.
 - **Vendor critical CI tools** or use pre-built, verified binaries instead of pulling from upstream on every run.
-- **Rotate secrets** if any CI pipeline ran compromised Trivy (v0.69.4/5/6) between March 19-23, 2026. The infostealer malware exfiltrated SSH keys, cloud creds, Docker configs, and k8s tokens.
+- **Rotate secrets** if any CI pipeline ran compromised Trivy (v0.69.4/5/6) between March 19-23, 2026. The infostealer exfiltrated SSH keys, cloud creds, Docker configs, and k8s tokens.
 - **Trivy safe version: v0.70.0+ for new pins.** v0.69.3 was the March 2026 rollback version. Actions such as `trivy-action@v0.35.0` and `setup-trivy@v0.2.6` still need verified commit SHAs, not mutable tags.
 
 ### Platform awareness
@@ -490,18 +475,12 @@ See `skills/_shared/output-contract.md` for the full contract.
 
 ## Related Skills
 
-- **docker** - for Dockerfile and Compose patterns. Kubernetes deploys the images Docker
-  builds. Image optimization belongs in docker; manifest design belongs here.
-- **ci-cd** - for pipeline design that deploys to K8s. Kubernetes skill covers manifests
-  and Helm charts; ci-cd covers the pipeline stages that apply them.
-- **terraform** - for provisioning the cluster itself (EKS, GKE, AKS, bare-metal node pools).
-  Terraform creates the cluster; kubernetes configures what runs on it.
-- **cluster-health** - for read-only cluster status checks, node/workload diagnostics, events,
-  ingress/storage/log sweeps, and post-maintenance reports.
-- **databases** - for deploying databases on K8s (StatefulSets, operators, PVCs). Kubernetes
-  owns the manifest pattern; databases owns the engine configuration within.
-- **ansible** - can deploy to K8s via `kubernetes.core` collection, but manifest and Helm
-  chart design belong here.
+- **docker** - for Dockerfile and Compose patterns. Kubernetes deploys the images Docker builds. Image optimization belongs in docker; manifest design belongs here.
+- **ci-cd** - for pipeline design that deploys to K8s. Kubernetes skill covers manifests and Helm charts; ci-cd covers the pipeline stages that apply them.
+- **terraform** - for provisioning the cluster itself (EKS, GKE, AKS, bare-metal node pools). Terraform creates the cluster; kubernetes configures what runs on it.
+- **cluster-health** - for read-only cluster status checks, node/workload diagnostics, events, ingress/storage/log sweeps, and post-maintenance reports.
+- **databases** - for deploying databases on K8s (StatefulSets, operators, PVCs). Kubernetes owns the manifest pattern; databases owns the engine configuration within.
+- **ansible** - can deploy to K8s via `kubernetes.core` collection, but manifest and Helm chart design belong here.
 
 ## Rules
 

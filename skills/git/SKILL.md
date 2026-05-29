@@ -57,6 +57,7 @@ This skill covers five domains depending on context:
 - PR/MR code review - use **code-review**; this skill creates PRs, doesn't review code in them
 - Full application security audit - use **security-audit**; this skill covers secrets *in git history* and git-specific security, not application-level vulnerability assessment
 - Docker image tagging strategy - use **docker**; this skill handles git tags, not container tags
+- Post-session or post-merge documentation sweeps (README, changelog, runbooks) - use **update-docs**
 
 ---
 

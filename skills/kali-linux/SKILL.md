@@ -3,7 +3,7 @@ name: kali-linux
 description: >
   · Administer Kali: apt, branches, metapackages, images, live USB persistence, NetHunter, wireless/GPU. Triggers: 'kali', 'kali rolling', 'kali snapshot', 'kali-tweaks', 'nethunter'.
 license: MIT
-compatibility: Requires Kali Linux or Kali images with apt and Kali repositories
+compatibility: "Requires Kali Linux or Kali images with apt and Kali repositories"
 metadata:
   source: iuliandita/skills
   date_added: "2026-04-22"
@@ -21,7 +21,7 @@ Kali is Debian-shaped, but the places where it goes wrong are usually Kali-speci
 mixing, metapackage sprawl, stale images, persistence mistakes, hardware edge cases, or people
 using the wrong tool family for the job.
 
-**Versions worth pinning** (verified May 2026):
+**Target versions** (verified May 2026):
 
 Only pin versions or dated anchors here when they materially affect compatibility or
 troubleshooting shape. For ordinary package work, prefer the live branch and repo state over a
