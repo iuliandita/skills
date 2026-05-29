@@ -157,6 +157,8 @@ roles:
 
 # SSHv2 is the only protocol; SSHv1 and the `Protocol` directive were removed in OpenSSH 7.6.
 # Do not set `Protocol` on modern sshd - it triggers a deprecation/parse warning.
+# Keep OpenSSH patched: CVE-2026-35414 (Apr 2026, fixed in 10.3) let a comma in a trusted-CA
+# certificate principal bypass authorized_keys principal matching and authenticate as root.
 
 # Authentication
 PermitRootLogin no

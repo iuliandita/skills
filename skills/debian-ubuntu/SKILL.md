@@ -33,7 +33,7 @@ stale package-version table.
 | Ubuntu HWE lane | verify live | kernel metapackage and hardware-enablement behavior matter more than one exact kernel number |
 | NVIDIA driver branch | verify live | proprietary branch choice affects Wayland, gaming, and DKMS behavior |
 | Mesa stack | verify live | AMD and Intel graphics behavior tracks the shipped Mesa lane |
-| Kernel security | verify live via USN tracker | patch high-severity privesc CVEs promptly; mid-2026 examples to confirm fixed: Copy Fail CVE-2026-31431 (CISA KEV, exploited), Dirty Frag CVE-2026-43284/43500, ptrace CVE-2026-46333 |
+| Kernel security | verify live via USN tracker | patch high-severity privesc CVEs promptly; mid-2026 examples to confirm fixed: Copy Fail CVE-2026-31431 (CISA KEV, exploited), Dirty Frag CVE-2026-43284/43500, Fragnesia CVE-2026-46300 (ESP-in-TCP, exploited), ptrace CVE-2026-46333 |
 
 ## When to use
 
