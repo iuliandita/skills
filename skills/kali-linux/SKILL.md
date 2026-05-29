@@ -1,9 +1,9 @@
 ---
 name: kali-linux
 description: >
-  · Administer Kali: apt, branches, metapackages, images, live USB persistence, NetHunter, wireless/GPU. Triggers: 'kali', 'kali rolling', 'kali snapshot', 'kali-tweaks', 'nethunter'. Not for exploitation (use lockpick).
+  · Administer Kali: apt, branches, metapackages, images, live USB persistence, NetHunter, wireless/GPU. Triggers: 'kali', 'kali rolling', 'kali snapshot', 'kali-tweaks', 'nethunter'.
 license: MIT
-compatibility: Requires Kali Linux or Kali images with apt and Kali repositories
+compatibility: "Requires Kali Linux or Kali images with apt and Kali repositories"
 metadata:
   source: iuliandita/skills
   date_added: "2026-04-22"
@@ -21,7 +21,7 @@ Kali is Debian-shaped, but the places where it goes wrong are usually Kali-speci
 mixing, metapackage sprawl, stale images, persistence mistakes, hardware edge cases, or people
 using the wrong tool family for the job.
 
-**Versions worth pinning** (verified May 2026):
+**Target versions** (verified May 2026):
 
 Only pin versions or dated anchors here when they materially affect compatibility or
 troubleshooting shape. For ordinary package work, prefer the live branch and repo state over a
@@ -296,7 +296,7 @@ When the problem smells like "Kali is broken," check the boring causes first:
 ## Reference Files
 
 - `references/packages-branches-and-repos.md` - Kali branch model, source lists, keyrings, updates, and package-state recovery
-- `references/metapackages-and-tool-families.md` - what the main Kali metapackages install, how the tool families map to real workflows, and when to hand off to lockpick or zero-day
+- `references/metapackages-and-tool-families.md` - what the main Kali metapackages install, how the tool families map to real workflows, the `kali-tweaks` configuration menu, and when to hand off to lockpick or zero-day
 - `references/images-live-persistence-and-recovery.md` - installer ISOs, netinst, live images, Purple images, VM images, persistence, and recovery flow
 - `references/wireless-gpu-hardware-and-nethunter.md` - Wi-Fi, Bluetooth, RFID, SDR, GPU, USB passthrough, and NetHunter-specific hardware realities
 - `references/lab-safety-and-scope.md` - disposable lab setup, intentionally vulnerable targets, snapshots, and authorization boundaries

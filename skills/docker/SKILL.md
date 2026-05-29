@@ -1,7 +1,7 @@
 ---
 name: docker
 description: >
-  · Write/review Dockerfiles, Compose, OCI builds, Podman/BuildKit, signing, hardening. Triggers: 'docker', 'dockerfile', 'compose', 'container', 'podman', 'buildkit'. Not for Kubernetes manifests (use kubernetes).
+  · Write/review Dockerfiles, Compose, OCI/Podman/BuildKit builds, signing, hardening. Triggers: 'docker', 'dockerfile', 'podman', 'buildkit', 'buildah', 'skopeo', 'containerd'. Not for K8s manifests (use kubernetes).
 license: MIT
 compatibility: "Requires docker or podman. Optional: docker compose, buildkit, cosign, trivy"
 paths:
@@ -382,36 +382,9 @@ GPU containers: use `deploy.resources.reservations.devices` with `capabilities: 
 
 ## Production Checklist
 
-### Dockerfile
+See AI Self-Check above for the full build-time checklist (Dockerfile correctness, Compose structure, layer caching, secrets, non-root user, healthchecks, base image pinning). The items below cover deploy-time and operational additions only.
 
-- [ ] Multi-stage build separating build and runtime stages
-- [ ] Dependencies installed before source code (layer caching)
-- [ ] Base image pinned to specific version or SHA256 digest
-- [ ] Final image is slim/distroless/Chainguard (no build tools, no caches)
-- [ ] Non-root `USER` directive (numeric UID preferred for K8s compat)
-- [ ] `HEALTHCHECK` present
-- [ ] `.dockerignore` excludes `.git`, `node_modules`, `.env`, `__pycache__`, etc.
-- [ ] No secrets in `ENV`, `ARG`, or layers (use `--mount=type=secret`)
-- [ ] `WORKDIR` set (not relying on default `/`)
-- [ ] No `ADD` for local files (use `COPY`)
-- [ ] Package manager caches cleaned in same `RUN` layer
-- [ ] `# syntax=docker/dockerfile:1` for BuildKit features
-
-### Compose
-
-- [ ] No `version:` field
-- [ ] `depends_on` with `condition: service_healthy`
-- [ ] Healthchecks on every service
-- [ ] Resource limits on production services
-- [ ] Secrets via `secrets:` or `env_file:`, not inline `environment:`
-- [ ] Separate override files for dev/prod
-- [ ] Logging config with rotation (`max-size`, `max-file`)
-- [ ] No `container_name` unless needed for external references
-- [ ] `restart: unless-stopped` (or `on-failure`) with healthcheck (never `always` without healthcheck)
-- [ ] Images pinned (no `:latest`)
-- [ ] `read_only: true` + `no-new-privileges` + `cap_drop: ALL` on production services
-
-### Security
+### Deploy-time additions
 
 - [ ] runc >= 1.4.0 (CVE-2025-31133/52565/52881 patched)
 - [ ] BuildKit >= 0.28.1 (CVE-2026-33747/33748 patched)
@@ -420,9 +393,11 @@ GPU containers: use `deploy.resources.reservations.devices` with `capabilities: 
 - [ ] Images signed with cosign, verified at deploy
 - [ ] SBOM generated for every production image
 - [ ] Vulnerability scanning in CI (Docker Scout, Grype, or Trivy v0.70.0+)
-- [ ] No `:latest` tags in production (pin version or SHA256 digest)
 - [ ] CI tools pinned to SHA256 digests (not mutable tags)
 - [ ] Base images rebuilt/updated regularly (weekly minimum)
+- [ ] Separate override files for dev/prod
+- [ ] Logging config with rotation (`max-size`, `max-file`)
+- [ ] `read_only: true` + `no-new-privileges` + `cap_drop: ALL` on production services
 
 ### Compliance (PCI-DSS 4.0)
 

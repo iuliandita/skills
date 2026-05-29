@@ -30,6 +30,7 @@ ordered set only when the request genuinely spans independent domains.
 - Batch improving a collection - use **skill-refiner**
 - Capturing feature ideas or competitive backlog items - use **roadmap**
 - Implementing domain work after routing - use the selected domain skill
+- Routing requests to understand or optimize a skill's own trigger text - use **skill-creator** (Mode 4)
 
 ---
 
@@ -62,6 +63,7 @@ Before returning a routing decision, verify:
 - Route by the user's intended work, not by incidental keywords.
 - Respect explicit user skill requests even if another skill might also apply.
 - Use ordered skill sets when process skills must precede domain skills.
+- **Ordered vs Parallel:** use `Ordered` when output of the first skill is input to the second (e.g., a review/reframe step that shapes the domain work). Use `Parallel` when the subtasks are independent and neither depends on the other's output. A process skill is one whose primary purpose is shaping, evaluating, or transforming intent rather than producing a domain artifact - examples in the installed collection: **jekyll-hyde** (critical reframing), **code-review** (evaluation before fixes). See `references/routing-patterns.md` for examples.
 
 ## Workflow
 

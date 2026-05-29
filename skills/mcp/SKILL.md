@@ -1,7 +1,7 @@
 ---
 name: mcp
 description: >
-  · Build/review MCP servers, tools, resources, prompts, transports, OAuth, handlers. Triggers: 'mcp', 'model context protocol', 'mcp server', 'tool handler', 'fastmcp', '@modelcontextprotocol/sdk'. Not for HTTP APIs (use backend-api).
+  · Build/review MCP servers, tools, resources, prompts, transports, OAuth, elicitation. Triggers: 'mcp', 'model context protocol', 'mcp server', 'tool handler', 'fastmcp', '@modelcontextprotocol/sdk'. Not for HTTP APIs (use backend-api).
 license: MIT
 compatibility: Requires Node.js or Python runtime
 metadata:
@@ -69,6 +69,7 @@ When generating or reviewing MCP server code, verify each item before presenting
 - [ ] **Spec claims verified**: claims about tool behavior, output contracts, or repo conventions are checked against current docs, scripts, or skill files
 - [ ] **Spec version checked**: transports, auth, resources, tools, and prompts match current MCP docs and SDK behavior
 - [ ] **Tool poisoning considered**: tool descriptions, dynamic metadata, and server updates cannot silently expand authority
+- [ ] **SDK methods verified**: see Common Mistakes #8 - verify every API call against actual SDK docs rather than inventing method names
 
 ---
 
@@ -314,8 +315,7 @@ AI models consistently make these errors when generating MCP server code:
 6. **Leaking error details** - stack traces, file paths, or DB errors in tool responses.
 7. **Token passthrough** - accepting OAuth tokens meant for other services without
    audience validation.
-8. **Hallucinating SDK methods** - inventing API calls that don't exist. Verify every
-   method against the actual SDK docs.
+8. **Hallucinating SDK methods** - inventing API calls that don't exist. See AI Self-Check for the verification checklist item.
 9. **Ignoring elicitation actions** - handling `accept` but crashing on `decline`/`cancel`.
 10. **No graceful shutdown** - missing SIGINT/SIGTERM handlers on stdio servers.
 
@@ -342,6 +342,10 @@ See `skills/_shared/output-contract.md` for the full contract.
   building servers correctly from the start.
 - **code-review** - for reviewing MCP server code for correctness beyond security.
 - **docker** - for containerizing MCP servers with minimal capabilities.
+- **ai-ml** - for Claude API / Anthropic SDK usage in the application that calls MCP tools. Use ai-ml, not this skill, for Anthropic SDK integration code.
+- **backend-api** - for general REST/GraphQL API development that does not use the MCP protocol.
+- **browse** - for using MCP browsing tools to scrape or interact with web pages; this skill builds the server, browse operates it.
+- **prompt-generator** - for writing LLM prompts (not MCP prompt resources); route there when the request is about prompt engineering rather than MCP server construction.
 
 ---
 

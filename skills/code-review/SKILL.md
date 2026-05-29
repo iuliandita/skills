@@ -1,7 +1,7 @@
 ---
 name: code-review
 description: >
-  · Review code for bugs, edge cases, races, leaks, regressions, conventions. Triggers: 'review', 'code review', 'find bugs', 'check this', 'spot check', 'sanity check'. Not for style/slop audits (use anti-slop).
+  · Review code for correctness: bugs, edge cases, races, leaks, regressions. Triggers: 'review', 'code review', 'find bugs', 'check this', 'spot check', 'sanity check'. Not for style/slop (anti-slop) or vulnerabilities (security-audit).
 license: MIT
 compatibility: "None - works on any codebase"
 metadata:
@@ -26,7 +26,7 @@ Covers: **TypeScript/JavaScript**, **Python**, **Go**, **Java**, **Bash/Shell**,
 - Looking for logic errors that static tooling may miss
 - Doing a focused correctness review where style and security are secondary
 
-## The Three Questions
+### The Three Questions
 
 Every finding answers one of:
 

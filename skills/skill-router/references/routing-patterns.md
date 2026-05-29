@@ -9,9 +9,10 @@ AI-generated code quality.
 
 ## Ordered Skills
 
-Request: "Design and build a new dashboard."
-Route: `superpowers:brainstorming` -> `frontend-design`
-Reason: Creative feature work needs design shaping before frontend implementation.
+Request: "Review this decision, then redesign the dashboard."
+Route: **jekyll-hyde** -> **frontend-design**
+Reason: A process skill (critical review/reframing) must complete before domain work begins.
+If no process skill is installed that fits the request, the route is: `No skill -> <domain skill>`.
 
 ## Parallel Skills
 

@@ -1,5 +1,7 @@
 # Kali Metapackages and Tool Families
 
+Research date: May 2026
+
 Kali is easier to manage when you think in bundles and workflows instead of one giant package dump.
 The official metapackage docs and `kali-meta` page are the map.
 
@@ -119,6 +121,38 @@ If the request moves from installing fuzzing tools to designing fuzzing strategy
 novel vulnerability discovery, hand off to **zero-day**.
 
 These are better than shotgun-installing random packages when the user already knows the workflow.
+
+## kali-tweaks
+
+`kali-tweaks` is the menu-driven configuration tool that ships with Kali. It is a text-based
+(whiptail/dialog) TUI that wraps common Kali setup tasks so you do not hand-edit config by hand.
+
+Invoke it as:
+
+```bash
+kali-tweaks
+```
+
+Some changes (network repositories, system-wide hardening) need root; run `sudo kali-tweaks` when a
+menu reports it cannot apply a change as a normal user.
+
+It groups its options into menus that line up with the rest of this skill:
+
+- **Metapackages** - install or remove the `kali-linux-*` and `kali-tools-*` bundles described
+  above, without memorizing exact package names.
+- **Network Repositories** - enable or disable extra repository components such as the
+  bleeding-edge and experimental branches. Treat this with the same caution as the branch-mixing
+  warnings: it edits your effective source list.
+- **Shell** - switch the default interactive shell (for example between bash and zsh) and related
+  prompt behavior.
+- **Virtualization** - pull in guest tooling and tweaks for common hypervisors when Kali runs as a
+  VM guest.
+- **Hardening** - opt into hardening choices such as managing SSH default behavior.
+
+Because the Network Repositories and Metapackages menus change branch and package state, anything
+you do in `kali-tweaks` can surface later as the same apt, branch, and metapackage issues covered in
+`references/packages-branches-and-repos.md` and the gotchas reference. When a user says "I changed
+something in kali-tweaks and now apt is unhappy," check branch state and source lists first.
 
 ## Tool pages worth remembering
 

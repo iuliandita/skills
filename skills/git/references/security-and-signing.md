@@ -2,7 +2,7 @@
 
 Credential management, commit signing setup, secret scanning, CVE reference, and hardening.
 
-Research date: March 2026.
+Research date: May 2026.
 
 ---
 

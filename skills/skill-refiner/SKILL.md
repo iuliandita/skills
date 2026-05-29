@@ -79,6 +79,18 @@ contested major flags (non-configurable).
 - Snapshot evaluation criteria before editing the skills that define the criteria.
 - Revert changes that add complexity without improving behavior.
 - Keep run history factual and free of unverifiable score inflation.
+- Treat composite deltas as noisy when different scorer instances run across
+  iterations: a few points of swing is judge variance, not real change. Anchor
+  keep/revert decisions on the structural gate, on whether the specific targeted
+  weakness was fixed, and on cross-model NO_FLAGS - not on small composite moves.
+  Use a consistent scoring approach within a single before/after comparison.
+- Leave externally-maintained version, CVE, and EOL pins out of scope. When a
+  collection has a freshness routine (or equivalent) that owns version currency,
+  do not edit those pins during a run and do not score them as "unverifiable"
+  failures; flag only internal contradictions.
+- Audit offensive or security skills (privilege escalation, exploit research)
+  in-loop rather than through web-researching subagents, which can trip platform
+  safeguards. Keep their scoring and edits in the main session.
 
 
 ## Workflow

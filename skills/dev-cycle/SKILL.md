@@ -53,7 +53,9 @@ skill is the glue, not the engine.
 - **kubernetes** - when the work touches K8s manifests, Kustomize overlays, or Helm charts. Version-bump step touches `Chart.yaml` and image references.
 - **ci-cd** - when the change modifies pipeline config. The CI-watch step in finish mode depends on working pipelines; if CI itself changed, exercise caution.
 - **roadmap** - if the repo has a gitignored ROADMAP.md, finish mode checks off shipped items.
-- **superpowers:brainstorming** (optional, external to this collection) - start mode uses it for large work if installed. Falls back to other brainstorming skills (e.g., `gsd-explore`), then inline Socratic questioning. See start.md Step A4 for the full fallback chain.
+
+**External dependencies (not in this collection):**
+- `superpowers:brainstorming` (optional) - start mode uses it for large work if installed. Falls back to other brainstorming skills (e.g., `gsd-explore`), then inline Socratic questioning. See start.md Step A4 for the full fallback chain.
 
 ---
 
@@ -94,18 +96,15 @@ Before declaring finish-mode complete:
 
 ## Performance
 
-- Run the narrowest meaningful checks during iteration, then the full required gate before finishing.
-- Keep commits batch-sized by review concern so bisect and revert stay cheap.
-- Use existing project scripts instead of reconstructing ad hoc command sequences.
-
-
----
+- Run the narrowest meaningful checks (e.g., `--testPathPattern` or `go test ./pkg/...`) during iteration, then the full required gate (`lint + typecheck + test`) once before finishing. Running the full suite on every edit wastes minutes per cycle.
+- Keep commits batch-sized by review concern - one logical change per commit - so bisect, revert, and blame stay useful on a branch with many commits.
+- Invoke existing project scripts (`Makefile`, `justfile`, `scripts/`) instead of reconstructing ad hoc command sequences; those scripts encode project conventions that ad hoc commands silently skip.
 
 ## Best Practices
 
-- Create branches before implementation edits and keep public commits free of unrelated local changes.
-- Do not force-push, squash, or merge without clear user intent.
-- Put verification evidence in PRs and final summaries, not vague claims.
+- Create the feature branch before any implementation edits; untracked local changes that predate the branch are easy to accidentally bundle into the wrong commit.
+- Do not force-push, squash, or merge without explicit user intent - each has a different history rewrite consequence that's hard to undo after others have pulled.
+- Put concrete verification evidence (test counts, lint output, CI run URL) in PRs and final summaries rather than vague "tests pass" claims; reviewers cannot approve what they cannot verify.
 
 
 ## Workflow

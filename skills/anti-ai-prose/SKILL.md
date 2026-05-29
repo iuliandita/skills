@@ -51,15 +51,15 @@ Before returning any audit, verify:
 - [ ] **Code blocks untouched**: do not flag identifiers, strings, or code comments that contain banned words as part of functional code
 - [ ] **Rewrites are real improvements**: every "after" is shorter, clearer, or more specific than the "before". No lateral rewrites that just swap synonyms
 - [ ] **Severity is honest**: do not inflate P3 findings to P2 to pad the report
-- [ ] **Short text rule applied**: under 100 words, 2+ tells in one paragraph = P1 severity
+- [ ] **Density and short-text rule applied**: density heuristic applied before assigning severity; for text under 100 words, 2+ tells in one paragraph = P1 regardless of per-500-word threshold
 - [ ] **Audit output itself uses no AI-prose tells** (apply these rules to your own output)
-- [ ] **Density threshold applied** before assigning severity level
 - [ ] **AI fallback names checked (fiction)**: protagonist and major-character names compared against the documented fallback set (Elara, Lyra, Aurora, Kael, Vale, Cassius, etc.) and the phonetic tell (2 soft syllables, A/L/R/N consonants, no demographic anchor); fallback-set names allowed only when the setting and population organically produce them
 - [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
 - [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
 - [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
 - [ ] **Routing overlap checked**: overlapping skills, trigger terms, and "When NOT to use" boundaries are checked before returning guidance
 - [ ] **Spec claims verified**: claims about tool behavior, output contracts, or repo conventions are checked against current docs, scripts, or skill files
+- [ ] **Adverb stacking checked**: `-ly` adverb density scanned; passages with multiple adverb-modified speech tags or adjacent adverb clusters flagged at the same density threshold as vocabulary tells
 - [ ] **Overflagging avoided**: plain but valid technical prose is not labeled AI-written without concrete evidence
 - [ ] **Audience preserved**: edits keep the author's domain vocabulary, intent, and required formality
 
@@ -432,9 +432,9 @@ Report:
 
 ### Findings
 
-#### Vocabulary Tells (6 items)
+#### Vocabulary Tells (9 items)
 
-**Fix** (P1) line 1 - cluster of 6 flagged words in 48 words: far above 4/500 threshold
+**Fix** (P1) line 1 - cluster of 9 flagged words in 48 words: far above 4/500 threshold
 > before: empowers / seamlessly / navigate / landscape / commitment to / boasts / fosters / pivotal / journey toward
 > after: (rewrite, see below)
 
@@ -449,7 +449,7 @@ Report:
 > after: (cut)
 
 ### Summary
-- 8 findings, one paragraph, dominant AI voice
+- 11 findings, one paragraph, dominant AI voice
 - Rewrite: "An HTTP API client for Python. Handles auth, retries, and pagination. Works with any OpenAPI 3.x spec."
 - Down from 48 words to 22, with concrete claims instead of posture
 ```

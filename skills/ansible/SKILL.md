@@ -1,7 +1,7 @@
 ---
 name: ansible
 description: >
-  · Write/review Ansible playbooks, roles, inventories, Vault, Molecule, AWX/AAP. Triggers: 'ansible', 'playbook', 'role', 'inventory', 'group_vars', 'ansible-lint'. Not for shell scripts (use command-prompt).
+  · Write/review Ansible playbooks, roles, inventories, Vault, Molecule, AWX/AAP. Triggers: 'ansible', 'playbook', 'role', 'inventory', 'group_vars', 'ansible-lint'.
 license: MIT
 compatibility: "Requires ansible-core and Python 3.9+. Optional: ansible-lint, molecule"
 metadata:
@@ -20,7 +20,7 @@ Write, review, and architect Ansible automation - from single playbooks to multi
 - ansible (community package) 13.x (depends on ansible-core 2.20)
 - molecule 26.x (CalVer), ansible-lint 26.x (CalVer), ansible-navigator 26.x (CalVer)
 - ansible-builder 3.1.x (EE definition v3)
-- AWX 24.6.1 (last formal release Jul 2024; upstream AWX releases paused for a major refactor, devel branch active - track ansible/awx; awx-operator ~2.12.x still ships for K8s deploys)
+- AWX 24.6.1 (last formal release Jul 2024; upstream AWX releases paused for a major refactor, devel branch active - track ansible/awx; awx-operator ~2.12.x still ships for K8s deploys). Verify current AWX/AAP release status before recommending a specific version or install path.
 - AAP 2.6 (Oct 2025 - last RPM-installable release; AAP 2.7+ containerized-only)
 
 This skill covers four domains depending on context:
@@ -51,6 +51,7 @@ This skill covers four domains depending on context:
 - Security audits of application code (SAST, dependency scanning) - use **security-audit**
 - Shell scripting or one-off commands - use **command-prompt**
 - Firewall appliance management (OPNsense/pfSense) - use **firewall-appliance**
+- Single-machine OS-level admin questions (package setup, user management, service config without automation context) - use the appropriate distro skill: **debian-ubuntu**, **rhel-fedora**, **kali-linux**, or **arch-btw**
 
 ---
 
@@ -448,6 +449,10 @@ See `skills/_shared/output-contract.md` for the full contract.
   structure (stages, jobs, caching) belongs in the ci-cd skill.
 - **security-audit** - for auditing Ansible playbooks for credential exposure, vault misuse,
   or supply chain risks in Galaxy dependencies.
+- **debian-ubuntu** - for Debian/Ubuntu/Mint OS-level admin questions outside an automation context.
+- **rhel-fedora** - for RHEL/Fedora/CentOS OS-level admin questions outside an automation context.
+- **kali-linux** - for Kali Linux administration outside an automation context.
+- **arch-btw** - for Arch Linux / CachyOS OS-level admin questions outside an automation context.
 
 ---
 

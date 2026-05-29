@@ -1,13 +1,14 @@
 ---
 name: localize
 description: >
-  · Audit app i18n/l10n: hardcoded strings, locale catalogs, translations, fallback gaps. Triggers: 'i18n', 'internationalization', 'localization', 'locale', 'hardcoded strings', 'next-intl'. Not for prose translation.
+  · Audit app i18n/l10n: hardcoded strings, locale catalogs, translations, fallback gaps. Triggers: 'i18n', 'internationalization', 'localization', 'locale', 'hardcoded strings', 'next-intl'.
 license: MIT
 compatibility: "Requires Node.js 20+. Optional: react-i18next, vue-i18n, next-intl, svelte-i18n, ngx-translate, i18next (per framework)"
 metadata:
   source: iuliandita/skills
   date_added: "2026-04-12"
   effort: high
+  argument_hint: "[component-or-catalog]"
 ---
 
 # Localize: App Internationalization Workflow
@@ -369,9 +370,9 @@ See `skills/_shared/output-contract.md` for the full contract.
 
 - **Skill name:** LOCALIZE
 - **Deliverable bucket:** `audits`
-- **Mode:** always-on. Every invocation emits the full contract - boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table.
+- **Mode:** conditional. When invoked to **audit, review, or improve** existing i18n (hardcoded-string audit, catalog completeness check, translation quality review), emit the full contract - boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table - and write the deliverable to `docs/local/audits/localize/<YYYY-MM-DD>-<slug>.md`. When invoked to **set up i18n from scratch, generate translations for new keys, or answer a question**, respond freely without the contract.
 - **Deliverable path:** `docs/local/audits/localize/<YYYY-MM-DD>-<slug>.md`
-- **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract).
+- **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
 
 ## Related Skills
 

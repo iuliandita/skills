@@ -1,7 +1,7 @@
 ---
 name: frontend-design
 description: >
-  · Build/critique frontend UIs with taste, rejecting AI design tells. Mobile-first, touch-aware, dark+light. Triggers: 'frontend', 'ui', 'ux', 'css', 'tailwind', 'landing page', 'design review', 'theme'. Not for code logic (code-review).
+  · Build/critique frontend UIs with taste, rejecting AI design tells. Mobile-first, touch-aware, dark+light. Triggers: 'frontend', 'ui', 'ux', 'css', 'tailwind', 'landing page', 'design review'. Not for code logic (code-review).
 license: MIT
 compatibility: "None - works on any frontend stack"
 metadata:
@@ -46,6 +46,34 @@ This skill replaces the upstream generic `frontend-design` skill in this collect
 - Localization, i18n catalogues, hardcoded strings - use **localize**
 - Frontend testing strategy and Playwright test authoring - use **testing**. This skill owns
   visual QA expectations and screenshot review for UI changes
+
+---
+
+## AI Self-Check
+
+Before returning any built UI or critique, verify:
+
+- [ ] **Mobile and desktop both visible in markup** - not "TODO mobile". Container queries or min-width media queries used, never max-width-first
+- [ ] **Both themes defined** - dark and light, both as CSS custom properties at `:root` (or via `[data-theme]` selectors). System preference is the default, but a manual toggle works
+- [ ] **No hard-hate patterns shipped silently** - if the user asked for a card grid or purple gradient, the persona pushed back once and the build either avoids it or implements it on explicit override
+- [ ] **Touch targets >= 44 x 44 px on mobile** - buttons, links, nav items, form fields
+- [ ] **Reduced-motion fallback** - animations and glitch effects degrade to static under `prefers-reduced-motion: reduce`
+- [ ] **Focus-visible styles defined** - never `outline: none` alone; replacement focus ring present
+- [ ] **Contrast meets WCAG AA on both themes** - body text and interactive elements. AAA on body where feasible
+- [ ] **Real framework verified** - Astro / SvelteKit / Vite / Next versions match the Target versions block. No "Next 14" or "Astro 4" in build output unless the user explicitly asked for legacy
+- [ ] **Files separated** - HTML / CSS / JS in their own files unless an explicit single-file constraint is stated in a code comment
+- [ ] **No invented CSS properties or framework APIs** - only verified Tailwind v4 utilities, real Svelte 5 runes (`$state`, `$derived`, `$effect`, `$props`), real Astro directives. AI invents `.bg-glass-700` and `$reactive` constantly
+- [ ] **App UI patterns fit the domain** - app shells, dashboards, settings, forms, onboarding, and empty states prioritize user work over marketing composition
+- [ ] **Responsive QA completed** - desktop, mobile, keyboard, dark+light, text overflow, and screenshot review checked when visual changes were made
+- [ ] **Critique mode: max 10 tickets** - P0/P1 priority. Rant is filtered, not shipped raw
+- [ ] **No AI prose tells in commentary** - apply the **anti-ai-prose** vocabulary list to the persona's own writing, not just user-facing copy. Plain English
+- [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
+- [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
+- [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
+- [ ] **Routing overlap checked**: overlapping skills, trigger terms, and "When NOT to use" boundaries are checked before returning guidance
+- [ ] **Spec claims verified**: claims about tool behavior, output contracts, or repo conventions are checked against current docs, scripts, or skill files
+- [ ] **Framework reality checked**: React, Next, Vite, Astro, SvelteKit, and Tailwind guidance matches current docs and installed packages
+- [ ] **Visual verification done**: responsive screenshots or browser checks confirm layout, assets, and interaction states
 
 ---
 
@@ -239,35 +267,9 @@ Test authoring lives in **testing**. This skill defines what visual QA must prov
 
 ### Step 8: Self-check before returning
 
-Run through the AI Self-Check below.
+Run through the AI Self-Check above.
 
 ---
-
-## AI Self-Check
-
-Before returning any built UI or critique, verify:
-
-- [ ] **Mobile and desktop both visible in markup** - not "TODO mobile". Container queries or min-width media queries used, never max-width-first
-- [ ] **Both themes defined** - dark and light, both as CSS custom properties at `:root` (or via `[data-theme]` selectors). System preference is the default, but a manual toggle works
-- [ ] **No hard-hate patterns shipped silently** - if the user asked for a card grid or purple gradient, the persona pushed back once and the build either avoids it or implements it on explicit override
-- [ ] **Touch targets >= 44 x 44 px on mobile** - buttons, links, nav items, form fields
-- [ ] **Reduced-motion fallback** - animations and glitch effects degrade to static under `prefers-reduced-motion: reduce`
-- [ ] **Focus-visible styles defined** - never `outline: none` alone; replacement focus ring present
-- [ ] **Contrast meets WCAG AA on both themes** - body text and interactive elements. AAA on body where feasible
-- [ ] **Real framework verified** - Astro / SvelteKit / Vite / Next versions match the Target versions block. No "Next 14" or "Astro 4" in build output unless the user explicitly asked for legacy
-- [ ] **Files separated** - HTML / CSS / JS in their own files unless an explicit single-file constraint is stated in a code comment
-- [ ] **No invented CSS properties or framework APIs** - only verified Tailwind v4 utilities, real Svelte 5 runes (`$state`, `$derived`, `$effect`, `$props`), real Astro directives. AI invents `.bg-glass-700` and `$reactive` constantly
-- [ ] **App UI patterns fit the domain** - app shells, dashboards, settings, forms, onboarding, and empty states prioritize user work over marketing composition
-- [ ] **Responsive QA completed** - desktop, mobile, keyboard, dark+light, text overflow, and screenshot review checked when visual changes were made
-- [ ] **Critique mode: max 10 tickets** - P0/P1 priority. Rant is filtered, not shipped raw
-- [ ] **No AI prose tells in commentary** - apply the **anti-ai-prose** vocabulary list to the persona's own writing, not just user-facing copy. Plain English
-- [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
-- [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
-- [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
-- [ ] **Routing overlap checked**: overlapping skills, trigger terms, and "When NOT to use" boundaries are checked before returning guidance
-- [ ] **Spec claims verified**: claims about tool behavior, output contracts, or repo conventions are checked against current docs, scripts, or skill files
-- [ ] **Framework reality checked**: React, Next, Vite, Astro, SvelteKit, and Tailwind guidance matches current docs and installed packages
-- [ ] **Visual verification done**: responsive screenshots or browser checks confirm layout, assets, and interaction states
 
 ## Reference Files
 
@@ -285,7 +287,7 @@ See `skills/_shared/output-contract.md` for the full contract.
 
 - **Skill name:** FRONTEND-DESIGN
 - **Deliverable bucket:** `deliverables`
-- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing UI/UX (e.g., "review my landing page"), emit the full contract - boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table - and write the deliverable to `docs/local/deliverables/frontend-design/<YYYY-MM-DD>-<slug>.md`. When invoked to **build a new artifact or generate content** (its primary mode -- producing UI code in chat), respond freely without the contract; build-mode behavior is unchanged.
+- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing UI/UX (e.g., "review my landing page"), emit the full contract - boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table - and write the deliverable to `docs/local/deliverables/frontend-design/<YYYY-MM-DD>-<slug>.md`. When invoked to **build a new artifact or generate content** (its primary mode - producing UI code in chat), respond freely without the contract; build-mode behavior is unchanged.
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
 
 ## Related Skills

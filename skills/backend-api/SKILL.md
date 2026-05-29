@@ -1,7 +1,7 @@
 ---
 name: backend-api
 description: >
-  · Design/review HTTP APIs for FastAPI, Express, NestJS: REST, OpenAPI, pagination, OAuth/JWT. Triggers: 'fastapi', 'express', 'nestjs', 'openapi', 'pagination', 'idempotency'. Not for schemas (use databases).
+  · Design/review HTTP APIs for FastAPI, Express, NestJS: REST, OpenAPI, pagination, OAuth/JWT. Triggers: 'fastapi', 'express', 'nestjs', 'openapi', 'pagination', 'idempotency', 'rest api', 'endpoint'. Not for schemas (use databases).
 license: MIT
 compatibility: "Optional: Python or Node.js framework context. Optional: OpenAPI-capable framework/docs tooling"
 metadata:
@@ -82,6 +82,7 @@ Before returning API code, route design, or OpenAPI output, verify:
 - [ ] **Spec claims verified**: claims about tool behavior, output contracts, or repo conventions are checked against current docs, scripts, or skill files
 - [ ] **Framework version checked**: FastAPI, Express, NestJS, and OpenAPI examples match current APIs and migration notes
 - [ ] **Contract compatibility checked**: response codes, pagination, errors, and auth behavior preserve existing clients unless a version bump is explicit
+- [ ] **Injection in handler body flagged as contract defect**: if injection (SQL, command, header, path traversal) is found inside a route handler, flag it as a missing validation-boundary defect at the contract layer and recommend fixing it there; route to **security-audit** for a full injection audit if the pattern is widespread
 
 ---
 

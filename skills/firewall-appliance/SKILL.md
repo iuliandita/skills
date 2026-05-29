@@ -32,6 +32,7 @@ pf-powered firewall distributions - most concepts, commands, and patterns apply 
 ## When NOT to use
 
 - Linux networking, reverse proxies, VPN setup, or nftables work outside firewall appliances - use **networking**
+- Cloud firewall rules, WAF configuration, or AWS/GCP/Azure network ACLs - use **networking** or the relevant IaC skill (**terraform**, **ansible**)
 - General shell scripting or local shell behavior outside the BSD firewall context - use **command-prompt**
 - Fleet-wide configuration management via playbooks - use **ansible**
 - Offensive testing, exploitation, or post-exploitation - use **lockpick**
@@ -182,13 +183,14 @@ Work through these steps in order. **Do not skip ahead or assume the root cause*
 **Prerequisite**: the VLAN must be assigned to a firewall interface before it can have rules, DHCP, or NAT. In OPNsense: Interfaces > Assignments > add the VLAN, then enable it and set its IP. In pfSense: Interfaces > Interface Assignments. An unassigned VLAN passes no traffic through the firewall even if the parent trunk is tagged correctly.
 
 1. **Interface assigned and UP?** `ifconfig` - is the VLAN interface listed and UP? If not: assign it (see prerequisite above). If listed but DOWN: enable it in the GUI or check the parent interface.
-2. **Services running?** `configctl service list` (OPNsense) or `service -e` (pfSense) - confirm DHCP, DNS (Unbound), and the packet filter are running. A stopped DHCP server on the new VLAN means clients never get an IP.
-3. **Rules present?** `pfctl -sr` - any pass rules on the new VLAN interface? New interfaces have no rules by default (deny all).
-4. **NAT configured?** Check outbound NAT rules include the new VLAN subnet. On OPNsense: Firewall > NAT > Outbound. Missing outbound NAT is the #1 cause of "VLAN can't reach internet."
-5. **DNS working?** `drill google.com @<firewall-ip>` from a VLAN client. If this fails but ping to 8.8.8.8 works, it's a DNS issue, not a firewall rule.
-6. **Packet capture**: `tcpdump -ni <vlan-iface> host <client-ip>` - are packets arriving at the firewall?
+2. **Blocklist check**: `cscli decisions list` (OPNsense CrowdSec) or check pfBlockerNG deny logs (pfSense) - CrowdSec and pfBlockerNG bans look identical to firewall drops from the client side. Clear false positives before digging into rules.
+3. **Services running?** `configctl service list` (OPNsense) or `service -e` (pfSense) - confirm DHCP, DNS (Unbound), and the packet filter are running. A stopped DHCP server on the new VLAN means clients never get an IP.
+4. **Rules present?** `pfctl -sr` - any pass rules on the new VLAN interface? New interfaces have no rules by default (deny all).
+5. **NAT configured?** Check outbound NAT rules include the new VLAN subnet. On OPNsense: Firewall > NAT > Outbound. Missing outbound NAT is the #1 cause of "VLAN can't reach internet."
+6. **DNS working?** `drill google.com @<firewall-ip>` from a VLAN client. If this fails but ping to 8.8.8.8 works, it's a DNS issue, not a firewall rule.
+7. **Packet capture**: `tcpdump -ni <vlan-iface> host <client-ip>` - are packets arriving at the firewall?
    - **Reading tcpdump output**: each line shows `timestamp src > dst: proto`. Look for: (a) request packets from the client arriving on the VLAN interface, (b) reply packets going back. If you see requests but no replies, the firewall is blocking or NAT is missing. If you see no packets at all, the issue is below the firewall - check VLAN tagging, trunk config, and switch ports. Use `-v` for header details or `-X` for payload hex when deeper inspection is needed.
-7. If packets arrive but no response: the rule or NAT is the problem. If no packets: the VLAN trunk, switch tagging, or interface assignment is wrong - check the physical/virtual layer before touching firewall config.
+8. If packets arrive but no response: the rule or NAT is the problem. If no packets: the VLAN trunk, switch tagging, or interface assignment is wrong - check the physical/virtual layer before touching firewall config.
 
 ---
 
@@ -232,11 +234,12 @@ See `skills/_shared/output-contract.md` for the full contract.
 
 ## Related Skills
 
-- **networking** - for Linux reverse proxies, VPNs, DNS, and nftables work outside BSD firewall appliances
+- **networking** - for Linux reverse proxies, VPNs, DNS, nftables, and cloud network ACLs (AWS/GCP/Azure security groups, WAF rules) outside BSD firewall appliances
+- **terraform** - for provisioning and managing cloud firewall rules, WAF policies, and network ACLs as infrastructure-as-code
+- **ansible** - for fleet-wide firewall automation or playbook-based configuration management
 - **command-prompt** - for general shell scripting and local shell behavior; this skill covers the FreeBSD firewall context
 - **security-audit** - for defensive security review of application code and supply chain, rather than firewall administration
 - **lockpick** - for authorized offensive testing and post-exploitation, not defensive firewall operations
-- **ansible** - for fleet-wide firewall automation or playbook-based configuration management
 
 ---
 

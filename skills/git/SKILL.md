@@ -1,7 +1,7 @@
 ---
 name: git
 description: >
-  · Handle git branches, commits, remotes, conflicts, hooks, signing, releases, PR/MR workflows. Triggers: 'git', 'commit', 'branch', 'merge', 'rebase', 'tag', 'push', 'PR', 'MR', 'gh', 'glab'. Not for CI (use ci-cd).
+  · Handle git branches, commits, remotes, conflicts, hooks, signing, releases, PR/MR workflows. Triggers: 'git', 'commit', 'branch', 'merge', 'rebase', 'tag', 'push', 'PR', 'MR', 'gh', 'glab'.
 license: MIT
 compatibility: "Requires git. Optional: gh (GitHub CLI), glab (GitLab CLI), fj (Forgejo CLI)"
 metadata:
@@ -57,6 +57,7 @@ This skill covers five domains depending on context:
 - PR/MR code review - use **code-review**; this skill creates PRs, doesn't review code in them
 - Full application security audit - use **security-audit**; this skill covers secrets *in git history* and git-specific security, not application-level vulnerability assessment
 - Docker image tagging strategy - use **docker**; this skill handles git tags, not container tags
+- Post-session or post-merge documentation sweeps (README, changelog, runbooks) - use **update-docs**
 
 ---
 
@@ -302,6 +303,9 @@ auditable, and conservative:
 3. For each repo, record the branch, upstream, and dirty state before changing anything.
 4. Run `git fetch --all --prune`, then `git pull --ff-only --recurse-submodules` only
    when an upstream exists. Do not create merge commits during bulk maintenance.
+   When submodules are present, also run `git submodule update --init --recursive` after
+   the pull - `--recurse-submodules` updates existing submodule checkouts but does not
+   initialize new submodules added since the last pull.
 5. If a pull is blocked by local changes, use a named stash, fast-forward the branch,
    then pop the stash. If conflicts appear, preserve both upstream updates and local
    user additions when possible.

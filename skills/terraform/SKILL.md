@@ -1,7 +1,7 @@
 ---
 name: terraform
 description: >
-  · Write/review Terraform/OpenTofu HCL, modules, state, policy-as-code. Triggers: 'terraform', 'opentofu', 'hcl', 'tfvars', 'tfstate', 'module', 'terraform plan', 'tflint'. Not for Kubernetes manifests (use kubernetes).
+  · Write/review Terraform/OpenTofu HCL, modules, state, policy-as-code. Triggers: 'terraform', 'opentofu', 'hcl', 'tfvars', 'tfstate', 'tflint', 'terragrunt', 'checkov', 'CDKTF'. Not for Kubernetes manifests (use kubernetes).
 license: MIT
 compatibility: "Requires terraform or tofu CLI. Optional: tflint, checkov, conftest"
 metadata:
@@ -242,6 +242,8 @@ moved {
   to   = module.compute.aws_instance.web
 }
 ```
+
+**Intra-state resource rename or move** (when source and destination are in the same state file): use `terraform state mv <old-address> <new-address>` to rename or reposition a resource without destroy/recreate. Prefer a `moved` block for tracked refactors; `state mv` is appropriate for quick one-off renames or pre-1.1 workflows.
 
 **Cross-state resource move** (state surgery - when `moved` blocks can't help):
 

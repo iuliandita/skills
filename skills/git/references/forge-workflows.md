@@ -2,7 +2,7 @@
 
 Patterns for GitHub, GitLab, and Forgejo - PRs/MRs, releases, branch protection, CLI usage.
 
-Research date: March 2026.
+Research date: May 2026.
 
 ---
 

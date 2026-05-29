@@ -39,6 +39,31 @@ smart format selection, and backend-aware strategies.
 - Static file downloads - use curl or wget
 - Web scraping specifically for RAG pipelines or training data - use **ai-ml** for the pipeline
 
+## AI Self-Check
+
+Before returning any browsing result, verify:
+
+- [ ] Used the cheapest tool available for the task - no Playwright when WebFetch would have worked
+- [ ] Did not dump full HTML into context when markdown or structured data was sufficient
+- [ ] Waited for dynamic content before extracting from SPAs (`networkidle` or `--wait-selector`)
+- [ ] Stripped boilerplate (nav, ads, footers) before returning content to the user
+- [ ] Scoped extraction to the relevant section, not the whole page
+- [ ] Did not hardcode credentials - used env vars, secret manager, or user prompt
+- [ ] Cleared or isolated cookies/storage between unrelated accounts or tenants
+- [ ] Used semantic roles before CSS selectors for interaction targets
+- [ ] Used screenshots only when visual layout or rendered state mattered
+- [ ] Recorded URL and access date for facts likely to change
+- [ ] Did not automate destructive account actions unless the user named the exact action and target
+- [ ] Re-extracted page state after any click or form submission before making decisions
+- [ ] Escalated to the next tool tier on failure rather than retrying the same tool
+- [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
+- [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
+- [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
+- [ ] **Routing overlap checked**: overlapping skills, trigger terms, and "When NOT to use" boundaries are checked before returning guidance
+- [ ] **Spec claims verified**: claims about tool behavior, output contracts, or repo conventions are checked against current docs, scripts, or skill files
+- [ ] **Robots and terms considered**: scraping or automation respects access rules, auth boundaries, and rate limits
+- [ ] **Dynamic content verified**: browser-rendered pages are checked with the real tool when static HTML may be incomplete
+
 ---
 
 ## Tool Selection
@@ -428,31 +453,6 @@ See `skills/_shared/output-contract.md` for the full contract.
   configures it.
 - **ai-ml** - RAG pipelines and web data collection. When scraping content specifically for
   embeddings or training data, ai-ml covers the pipeline; this skill covers the extraction.
-
-## AI Self-Check
-
-Before returning any browsing result, verify:
-
-- [ ] Used the cheapest tool available for the task - no Playwright when WebFetch would have worked
-- [ ] Did not dump full HTML into context when markdown or structured data was sufficient
-- [ ] Waited for dynamic content before extracting from SPAs (`networkidle` or `--wait-selector`)
-- [ ] Stripped boilerplate (nav, ads, footers) before returning content to the user
-- [ ] Scoped extraction to the relevant section, not the whole page
-- [ ] Did not hardcode credentials - used env vars, secret manager, or user prompt
-- [ ] Cleared or isolated cookies/storage between unrelated accounts or tenants
-- [ ] Used semantic roles before CSS selectors for interaction targets
-- [ ] Used screenshots only when visual layout or rendered state mattered
-- [ ] Recorded URL and access date for facts likely to change
-- [ ] Did not automate destructive account actions unless the user named the exact action and target
-- [ ] Re-extracted page state after any click or form submission before making decisions
-- [ ] Escalated to the next tool tier on failure rather than retrying the same tool
-- [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
-- [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
-- [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
-- [ ] **Routing overlap checked**: overlapping skills, trigger terms, and "When NOT to use" boundaries are checked before returning guidance
-- [ ] **Spec claims verified**: claims about tool behavior, output contracts, or repo conventions are checked against current docs, scripts, or skill files
-- [ ] **Robots and terms considered**: scraping or automation respects access rules, auth boundaries, and rate limits
-- [ ] **Dynamic content verified**: browser-rendered pages are checked with the real tool when static HTML may be incomplete
 
 ## Rules
 

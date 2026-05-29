@@ -53,6 +53,7 @@ This skill covers six domains depending on context:
 - Application-level database bugs (N+1, transaction misuse, ORM pitfalls) - use **code-review**
 - SQL injection detection, connection string secrets in code - use **security-audit**
 - CI/CD pipelines that run migrations - use **ci-cd**
+- Redis/Valkey (cache/KV stores) and other non-relational engines (Cassandra, DynamoDB, ClickHouse, etc.) - outside this skill's four primary engines; use the relevant platform skill or general guidance
 
 ---
 
@@ -405,3 +406,4 @@ See `skills/_shared/output-contract.md` for the full contract.
 - **terraform** - for provisioning managed databases (RDS, Cloud SQL, Atlas)
 - **docker** - for database containers in Docker Compose
 - **ansible** - for database server configuration management
+- **ci-cd** - for CI/CD pipelines that run migrations (schema execution in CI, migration gating, rollback automation)

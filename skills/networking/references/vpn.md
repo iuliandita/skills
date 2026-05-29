@@ -311,66 +311,21 @@ tailscale up --login-server https://headscale.example.com --authkey <key>
 ### Nebula
 
 Nebula (by Defined Networking, originally Slack) is a certificate-based overlay for large meshes.
-No central relay - nodes connect directly with NAT hole-punching.
+No central relay; nodes connect directly via NAT hole-punching through a lightweight lighthouse.
 
-```yaml
-# /etc/nebula/config.yml
-pki:
-  ca: /etc/nebula/ca.crt
-  cert: /etc/nebula/host.crt
-  key: /etc/nebula/host.key
-
-static_host_map:
-  "10.42.0.1": ["lighthouse.example.com:4242"]
-
-lighthouse:
-  am_lighthouse: false
-  hosts:
-    - "10.42.0.1"
-
-listen:
-  host: 0.0.0.0
-  port: 4242
-
-firewall:
-  outbound:
-    - port: any
-      proto: any
-      host: any
-  inbound:
-    - port: 22
-      proto: tcp
-      groups:
-        - admin
-    - port: 443
-      proto: tcp
-      cidr: any
-```
+Key config sections: `pki` (ca/cert/key paths), `static_host_map` (lighthouse address),
+`lighthouse.hosts`, `listen.port` (default 4242), and `firewall` (inbound/outbound rules by group).
 
 **Certificate management:**
 ```bash
-# Create CA
 nebula-cert ca -name "My Org"
-
-# Issue node cert with group membership
 nebula-cert sign -name "web1" -ip "10.42.0.10/24" -groups "web,prod"
-
-# Issue lighthouse cert
 nebula-cert sign -name "lighthouse" -ip "10.42.0.1/24" -groups "lighthouse"
 ```
 
 ### ZeroTier
 
-ZeroTier is another overlay network. Simpler setup than Nebula but requires a controller
-(self-hosted or managed).
-
-```bash
-# Join a network
-zerotier-cli join <network-id>
-
-# Self-hosted controller: ztncui or ZeroTierOne controller API
-# Planet/moon: custom root servers for private deployments
-```
+ZeroTier is an overlay network with a simpler setup than Nebula. Requires a controller (self-hosted `ztncui` or managed). Join with `zerotier-cli join <network-id>`; custom root servers via planet/moon config.
 
 ### Overlay Comparison
 
