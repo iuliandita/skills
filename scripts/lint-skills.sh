@@ -189,6 +189,30 @@ check_banned_words() {
   done
 }
 
+# ── Prose double-dash check ────────────────────────────────────────────
+# Enforces an existing convention (skill-creator Rules / conventions Section 4):
+# ' -- ' must not be used as an em-dash substitute in prose. It IS allowed inside
+# code - fenced blocks and inline-code spans (shell end-of-options separators like
+# `git ls-files -- path` or `npm test -- --filter`). This rule had no automated
+# guard, so the dash substitute kept slipping into prose across skills.
+check_prose_double_dash() {
+  local dir="$1" name="$2"
+  local f basename_f matches m
+  for f in "$dir"/SKILL.md "$dir"/references/*.md; do
+    [[ -f "$f" ]] || continue
+    basename_f=$(basename "$f")
+    # Skip fenced code blocks; strip inline-code spans; then look for ' -- '.
+    matches=$(awk '/^```/{skip=!skip; next} !skip{print NR": "$0}' "$f" \
+      | sed 's/`[^`]*`//g' \
+      | grep -E ' -- ' || true)
+    if [[ -n "$matches" ]]; then
+      while IFS= read -r m; do
+        [[ -n "$m" ]] && error "$name: ' -- ' double-dash in prose in $basename_f (use '-' or rephrase): $m"
+      done <<< "$matches"
+    fi
+  done
+}
+
 # ── Description prefix check ───────────────────────────────────────────
 # Collection convention (CLAUDE.md): every public skill description starts
 # with '·' (U+00B7 MIDDLE DOT) for visual identification in skill lists.
@@ -266,6 +290,7 @@ for skill_dir in "$SKILLS_DIR"/*/; do
   check_private_refs "$skill_dir" "$name"
   check_ai_self_check "$skill_file" "$name"
   check_banned_words "$skill_dir" "$name"
+  check_prose_double_dash "$skill_dir" "$name"
   (( skill_count++ )) || true
 done
 
