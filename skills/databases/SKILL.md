@@ -17,9 +17,9 @@ Configure, tune, design schemas, migrate, back up, and review database engines -
 
 **Target versions** (May 2026):
 - PostgreSQL **18.3** (EOL 2030-11), previous: 17.9, 16.13
-- MongoDB **8.0.20** (GA), 8.2.6 (rapid release, EOL 2026-07)
-- MariaDB **11.8.6** (LTS, EOL 2028-06), 12.2.2 (rolling GA, EOL 2026-05)
-- MySQL **8.4.8** (LTS), 9.6.0 (innovation)
+- MongoDB **8.0.20** (GA, EOL 2029-10); rapid lane (8.3 latest) is Atlas-only with a short window - verify live before pinning
+- MariaDB **11.8.7** (LTS, EOL 2028-06); 12.x rolling GA is quarterly and EOLs at each successor (12.2 reached EOL 2026-05), with 12.3 the next yearly LTS - verify live
+- MySQL **8.4.8** (LTS); innovation lane (9.x) has a short support window - verify live
 - SQL Server **2025 RTM + CU3** (GA 2025-11-18)
 - PgBouncer **1.25.1**, Pgpool-II **4.7.1**, ProxySQL **3.0.6**
 
