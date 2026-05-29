@@ -267,7 +267,7 @@ Quick reference:
 - **Revert a pushed commit**: `git revert <sha>` (creates a new commit, safe for shared branches)
 - **Find lost commits**: `git reflog` - shows every HEAD movement for 90 days
 - **Find which commit broke something**: `git bisect start && git bisect bad && git bisect good <sha>`
-- **Automated bisect with test script**: `git bisect start HEAD v1.0.0 && git bisect run bun test - src/auth.test.ts` - runs the test at each bisect step automatically. Any command that exits 0 (good) or 1-124/128-255 (bad) works. Exit 125 means "skip this commit". Ideal for CI integration: `git bisect run ./scripts/ci-check.sh`
+- **Automated bisect with test script**: `git bisect start HEAD v1.0.0 && git bisect run bun test - src/auth.test.ts` - runs the test at each bisect step automatically. Exit codes: 0 = good, 1-127 except 125 = bad, 125 = skip this commit, 128-255 = abort the bisect immediately. Ideal for CI integration: `git bisect run ./scripts/ci-check.sh`
 - **Squash last N commits (no interactive rebase)**: `git reset --soft HEAD~N && git commit -m "feat: combined change"` - resets N commits but keeps all changes staged, then commits them as one. Safer than `git rebase -i` in automated contexts.
 - **Recover deleted branch**: `git reflog`, find the SHA, `git checkout -b branch-name <sha>`
 - **Scrub secrets from history**: `git filter-repo --replace-text <(echo 'SECRET==>REDACTED')` - then force-push ALL branches and tags. Coordinate with team. See references.

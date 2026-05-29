@@ -70,7 +70,7 @@ AI tools consistently produce the same database mistakes. **Before returning any
 - [ ] No `DROP TABLE` or `DROP DATABASE` without explicit user confirmation
 - [ ] Migration is idempotent - can be run twice without error
 - [ ] Rollback/down migration exists and is tested
-- [ ] PG enum changes use `ALTER TYPE ... ADD VALUE` outside a transaction (cannot run inside BEGIN/COMMIT, fails silently in some ORMs)
+- [ ] PG enum changes use `ALTER TYPE ... ADD VALUE` outside a transaction (PG 12+ allows it inside a transaction, but the new value cannot be used until that transaction commits - run it standalone to use the value immediately)
 
 ### Schema
 
@@ -179,7 +179,7 @@ Follow the domain-specific section below. Always apply the production checklist 
 1. Determine backend budget: `max_connections` minus superuser_reserved minus replication slots = available.
 2. PgBouncer `default_pool_size` per user/db pair: start at `available / number_of_app_instances`, round down.
 3. Set `max_client_conn` to the total connections your app fleet will open (all instances combined).
-4. Use `transaction` pool mode for web apps (stateless requests). Use `session` mode only if the app uses prepared statements without PgBouncer 1.21+ `max_prepared_statements`, temp tables, or `SET` commands.
+4. Use `transaction` pool mode for stateless web apps. Switch to `session` mode (which supports all PostgreSQL features) when the app needs session-level state: temp tables, advisory locks, `SET`, or prepared statements on PgBouncer older than 1.21 (1.21+ supports prepared statements in transaction mode via `max_prepared_statements`).
 5. Validate: `psql -h pgbouncer-host -p 6432 pgbouncer -c "SHOW POOLS;"` - watch `sv_active` vs `sv_idle` under load.
 
 **Migration safety check** (before running any DDL in production):
@@ -299,7 +299,7 @@ Read `references/migration-patterns.md` for cross-engine type mapping, ORM migra
 
 - [ ] `pg_hba.conf`: `hostssl` only, `scram-sha-256` only, CIDR-restricted
 - [ ] `shared_buffers` = 25% RAM, `effective_cache_size` = 75% RAM
-- [ ] `work_mem` sized for concurrency (default 64MB is high for OLTP with many connections - per-sort, not per-connection)
+- [ ] `work_mem` sized for concurrency (PG default is 4MB; allocated per sort/hash operation, not per connection - multiply by concurrent queries x operations to estimate peak memory)
 - [ ] `random_page_cost = 1.1` for SSD storage
 - [ ] `statement_timeout` set per-role (not globally - migrations need longer)
 - [ ] `idle_in_transaction_session_timeout` set (60s default)

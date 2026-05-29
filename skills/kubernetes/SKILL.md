@@ -181,7 +181,7 @@ Read `references/manifest-templates.md` for complete, copy-pasteable YAML templa
 - **Server-side apply (SSA) is the default** for new releases. Better conflict detection when multiple controllers touch the same resources.
 - **OCI digest installation**: `helm install myapp oci://registry/chart@sha256:abc...` - immutable, tamper-proof.
 - **WASM plugin system** - post-renderers must reference plugin names, not raw executables (breaking change).
-- **CLI flag renames**: `--atomic` -> `--rollback-on-failure`, `--force` -> `--force-replace`. On `helm upgrade` the old flags still work as deprecated aliases, but `helm install --atomic` was removed and now errors - use `--rollback-on-failure`.
+- **CLI flag renames**: `--atomic` -> `--rollback-on-failure`, `--force` -> `--force-replace`. The old flags still work as deprecated aliases on both install and upgrade (a brief Helm 4.0 regression that broke `helm install --atomic` was fixed in v4.1.3); prefer `--rollback-on-failure` for new scripts.
 - **`helm registry login` takes domain only** (e.g., `ghcr.io`, not full URL).
 - **OCI registries are the recommended distribution method.** Traditional `index.yaml` repos still work but are no longer the default path.
 

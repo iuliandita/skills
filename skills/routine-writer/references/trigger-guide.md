@@ -133,28 +133,16 @@ GitHub triggers require the **Claude GitHub App** installed on the target reposi
 
 ### Supported events
 
+The research preview currently supports only **two** GitHub trigger events (pull request and
+release). More are expected as the feature matures - verify the current list in the web UI
+before relying on any other event.
+
 | Event | Triggers when |
 |---|---|
 | Pull request | A PR is opened, closed, assigned, labeled, synchronized, or otherwise updated |
-| Pull request review | A PR review is submitted, edited, or dismissed |
-| Pull request review comment | A comment on a PR diff is created, edited, or deleted |
-| Push | Commits are pushed to a branch |
 | Release | A release is created, published, edited, or deleted |
-| Issues | An issue is opened, edited, closed, labeled, or otherwise updated |
-| Issue comment | A comment on an issue or PR is created, edited, or deleted |
-| Sub issues | A sub-issue or parent issue is added or removed |
-| Commit comment | A commit or diff is commented on |
-| Discussion | A discussion is created, edited, answered, or otherwise updated |
-| Discussion comment | A discussion comment is created, edited, or deleted |
-| Check run | A check run is created, requested, rerequested, or completed |
-| Check suite | A check suite completes or is requested |
-| Merge queue entry | A PR enters or leaves the merge queue |
-| Workflow run | A GitHub Actions workflow run starts or completes |
-| Workflow job | A GitHub Actions job is queued or completes |
-| Workflow dispatch | A workflow is manually triggered |
-| Repository dispatch | A custom `repository_dispatch` event is sent |
 
-Each category can be filtered to a single action (e.g., `pull_request.opened`) or left to match all actions.
+Each can be filtered to a single action (e.g., `pull_request.opened`) or left to match all actions.
 
 ### Pull request filters
 

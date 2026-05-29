@@ -21,7 +21,7 @@ become yet another server with preventable injection vulnerabilities.
 - MCP specification: 2025-11-25 (current stable; 2026-03-15 in draft)
 - TypeScript SDK: @modelcontextprotocol/sdk 1.29.0 (1.x stable; 2.0.0-alpha in dev)
 - Python SDK: mcp 1.27.0 (v1.26.0+)
-- Protocol transports: stdio, streamable HTTP (SSE deprecated in spec 2025-03-26)
+- Protocol transports: stdio, Streamable HTTP (the standalone HTTP+SSE transport was deprecated in spec 2025-03-26; SSE still streams inside Streamable HTTP)
 
 ## When to use
 
@@ -112,12 +112,15 @@ import { z } from "zod";
 
 const server = new McpServer({ name: "my-server", version: "1.0.0" });
 
-// Current SDK docs lead with `server.registerTool(name, { description, inputSchema }, handler)`.
-// The `server.tool(name, desc, schema, handler)` shorthand below still works in v1.x.
-server.tool(
+// Current SDK API: `server.registerTool(name, { title, description, inputSchema }, handler)`.
+// The older `server.tool(name, desc, schema, handler)` shorthand still works in v1.x.
+server.registerTool(
   "search_docs",
-  "Search documentation by keyword",
-  { query: z.string().max(200).describe("Search query"), limit: z.number().int().min(1).max(100).default(10) },
+  {
+    title: "Search docs",
+    description: "Search documentation by keyword",
+    inputSchema: { query: z.string().max(200).describe("Search query"), limit: z.number().int().min(1).max(100).default(10) },
+  },
   async ({ query, limit }) => {
     // If this tool reads files, apply path validation from Step 3 before any fs access.
     const sanitized = query.replace(/[^\w\s-]/g, "");
@@ -224,7 +227,7 @@ server.tool("read_file", "Read a project file",
 | **stdio** | Local tools, CLI integration | No | Runs as user's process. Most secure. |
 | **Streamable HTTP** | Remote/multi-client servers | Recommended | Single endpoint, POST for messages, optional SSE streaming. |
 
-SSE transport was deprecated in spec 2025-03-26. Use streamable HTTP for all remote servers.
+The standalone HTTP+SSE transport (spec 2024-11-05) was deprecated in spec 2025-03-26; use Streamable HTTP for all remote servers (it still uses SSE internally for optional response streaming).
 Auth is optional per spec but strongly recommended for servers handling user data. When
 implementing auth, use OAuth 2.1 with PKCE. Prefer Client ID Metadata Documents over Dynamic
 Client Registration (DCR is a fallback, not a requirement).

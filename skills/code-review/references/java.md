@@ -177,8 +177,8 @@ return configs.collect(Collectors.toList()); // exception thrown HERE, uncaught
 ### Virtual Threads (Project Loom)
 
 **Detect:**
-- `synchronized` blocks in code called from virtual threads - pins the carrier thread, defeating scalability (use `ReentrantLock` instead)
-- `ThreadLocal` with virtual threads - 1M virtual threads = 1M ThreadLocal instances (use `ScopedValue` in Java 25+)
+- `synchronized` blocks called from virtual threads on Java 21-23 - pins the carrier thread, defeating scalability (use `ReentrantLock`). Java 24+ fixes this via JEP 491, so do not flag `synchronized` as a pinning bug on 24+
+- `ThreadLocal` with virtual threads - 1M virtual threads = 1M ThreadLocal instances (use `ScopedValue`; preview in Java 21-24, stable in 25)
 - Assuming virtual threads increase DB throughput (HikariCP has 10 connections regardless - 9,990 virtual threads just block waiting)
 - `StructuredTaskScope` without try-with-resources (thread leak on exception)
 

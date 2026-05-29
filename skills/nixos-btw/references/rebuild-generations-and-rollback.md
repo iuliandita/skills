@@ -31,7 +31,7 @@ sudo nixos-rebuild switch --flake .#box --build-host builder.lan
 ### nixos-rebuild-ng
 
 NixOS 25.11 made **`nixos-rebuild-ng`** the default. It is a Python rewrite of
-`nixos-rebuild` with the same verbs and flags. Older guides reference the Perl version; the
+`nixos-rebuild` with the same verbs and flags. Older guides reference the Bash version; the
 behavior is the same for 95% of workflows, but internal tracing and some edge flags differ.
 
 ## Useful flags
