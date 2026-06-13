@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.37.0](https://github.com/iuliandita/skills/compare/v1.36.0...v1.37.0) (2026-06-13)
+
+
+### Features
+
+* **skills:** add deep-grill plan interrogator skill ([#79](https://github.com/iuliandita/skills/issues/79)) ([bd5a9f7](https://github.com/iuliandita/skills/commit/bd5a9f7e1658292164d27aaa58216b75041278d0))
+
 ## [1.36.0](https://github.com/iuliandita/skills/compare/v1.35.0...v1.36.0) (2026-05-29)
 
 
