@@ -39,6 +39,7 @@ measure, or cut.
 - Capturing ideas into a project backlog - use **roadmap**
 - Turning notes into an LLM prompt - use **prompt-generator**
 - Running a full repository audit or merge gate - use **full-review** or **deep-audit**
+- Resolving a vague plan into a buildable spec before red-teaming it - use **deep-grill**
 
 ---
 
@@ -254,6 +255,7 @@ See `skills/_shared/output-contract.md` for the full contract.
 - **deep-audit** - runs a comprehensive repo audit. This skill stays at the advisor layer.
 - **roadmap** - records and prioritizes ideas. This skill advises on which decision path is healthier.
 - **prompt-generator** - turns notes into prompts. This skill is itself an advisor, not a prompt formatter.
+- **deep-grill** - interrogates a plan into a resolved spec, then red-teams it and writes a decision record. This skill red-teams a decision standalone; deep-grill clarifies first, then attacks.
 
 ## Rules
 

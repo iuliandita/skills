@@ -14,6 +14,7 @@ so future contributors do not re-add them by reflex.
 | **skill-refiner** | Batch-improves skill collections via eval loops. Same domain as skill-creator. |
 | **skill-router** | Meta routing helper for choosing skills. Deep-audit already owns dispatch routing. |
 | **jekyll-hyde** | Strategic decision review. Useful after audit results exist, but not a file-pattern audit lens. |
+| **deep-grill** | Interrogates a plan before it becomes code. Operates pre-implementation on a design, not on repo files. |
 | **lockpick** | Offensive security / CTF / privesc. Different threat model from defensive audit; security-audit + zero-day cover the defensive side. |
 | **kali-linux** | Live-system administration of Kali. Kali is Debian-based, so repo-side packaging concerns are caught by debian-ubuntu in Wave 3. The skill itself is for running Kali, not auditing repos. |
 | **full-review** | Alternate orchestrator (the smaller 4-skill version). Mutually exclusive with deep-audit by design. |
