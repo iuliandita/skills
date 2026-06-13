@@ -2193,5 +2193,61 @@
       "c102c7b",
       "cda2b57"
     ]
+  },
+  {
+    "run_id": "2026-06-13-deep-grill",
+    "branch": "feat/deep-grill",
+    "date": "2026-06-13",
+    "primary": {
+      "harness": "claude-code",
+      "model": "claude-opus-4-8",
+      "context": "1M"
+    },
+    "secondary": {
+      "harness": "codex",
+      "model": "codex-cli (cross-model review)",
+      "weight": "5%"
+    },
+    "config": {
+      "iterations_max": null,
+      "iterations_used": 6,
+      "threshold": 85,
+      "mode": "circuit-breaker",
+      "note": "targeted single-skill run, min 5 iterations, no ceiling"
+    },
+    "pool": [
+      "deep-grill"
+    ],
+    "termination": "plateau - all forward-test findings resolved, cross-model NO_FLAGS",
+    "scoring_method": "targeted manual rubric (gate/AI-self-check/behavioral/cross-model), not full automated sweep",
+    "score_changes": {
+      "deep-grill": {
+        "before": 96.5,
+        "after": 99.5,
+        "delta": 3.0,
+        "G": "pass",
+        "A": "94>100",
+        "B": "98>99",
+        "X": "NO_FLAGS"
+      }
+    },
+    "real_bugs_fixed": [
+      "description 245>240 -> 'stress-test it'->'attack it' (spec-compliant, matches Phase 2 vocab)",
+      "AI Self-Check headless carve-out moved onto checklist items as (interactive only) tags - removes literal contradiction",
+      "decision-record template: added optional headless-note slot + Notes convention",
+      "Step 2: headless records a flagged assumption instead of 'then ask' (no-codebase + no-user case)",
+      "Output Contract: clarified slug-per-subject vs shared -N suffix",
+      "Step 1: headless trigger names 'any invoking context that tells you no user is there'"
+    ],
+    "forward_tests": [
+      "baseline: infra+decision lens (CI hosted-runner cutover) - correct lens, no false route-out, correct path",
+      "post-change: fiction lens (lighthouse radio story) - used new headless template slot near-verbatim; confirmed headless guidance now consistent"
+    ],
+    "reverted": [],
+    "contested": [],
+    "phase2": "NOT run - targeted single-skill run; meta-improvement out of scope and requires explicit human approval",
+    "commits": [
+      "squashed into PR #79"
+    ]
   }
 ]

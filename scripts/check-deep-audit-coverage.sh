@@ -45,6 +45,7 @@ excluded_skills=(
   browse
   cluster-health
   deep-audit
+  deep-grill
   dev-cycle
   full-review
   jekyll-hyde

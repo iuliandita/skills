@@ -8,7 +8,7 @@
 npx skills add iuliandita/skills
 ```
 
-42 skills for DevOps, security, infra, and software engineering, maintained with lint/spec checks, behavioral test coverage, and a [Karpathy-style autoresearch loop](https://github.com/karpathy/autoresearch).
+43 skills for DevOps, security, infra, and software engineering, maintained with lint/spec checks, behavioral test coverage, and a [Karpathy-style autoresearch loop](https://github.com/karpathy/autoresearch).
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Agent Skills](https://img.shields.io/badge/Agent_Skills-open_standard-blue.svg)](https://agentskills.io)
@@ -105,7 +105,7 @@ That's it. For specific skills, alternative tools, the bundled installer, or sym
 
 ## What's in here
 
-42 skills covering infra (Kubernetes, Terraform, Docker, Ansible), cluster health diagnostics, distros (Arch, Debian, Fedora, Kali, NixOS), networking and firewalls, security and pentesting, code review, code slimming, and prose audits, frontend and UI design, AI/ML and MCP server work, virtualization, dev workflow tooling, and meta-tooling (the skill creator, refiner, router, and full-review orchestrator).
+43 skills covering infra (Kubernetes, Terraform, Docker, Ansible), cluster health diagnostics, distros (Arch, Debian, Fedora, Kali, NixOS), networking and firewalls, security and pentesting, code review, code slimming, and prose audits, frontend and UI design, AI/ML and MCP server work, virtualization, dev workflow tooling, plan interrogation (deep-grill, inspired by Matt Pocock's grill-me), and meta-tooling (the skill creator, refiner, router, and full-review orchestrator).
 
 Browse [`skills/`](skills/) for the full list, or query it:
 
