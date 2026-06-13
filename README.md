@@ -105,7 +105,7 @@ That's it. For specific skills, alternative tools, the bundled installer, or sym
 
 ## What's in here
 
-43 skills covering infra (Kubernetes, Terraform, Docker, Ansible), cluster health diagnostics, distros (Arch, Debian, Fedora, Kali, NixOS), networking and firewalls, security and pentesting, code review, code slimming, and prose audits, frontend and UI design, AI/ML and MCP server work, virtualization, dev workflow tooling, plan interrogation (deep-grill, inspired by Matt Pocock's grill-me), and meta-tooling (the skill creator, refiner, router, and full-review orchestrator).
+44 skills covering infra (Kubernetes, Terraform, Docker, Ansible), cluster health diagnostics, distros (Arch, Debian, Fedora, Kali, NixOS), networking and firewalls, security and pentesting, code review, code slimming, and prose audits, frontend and UI design, AI/ML and MCP server work, virtualization, dev workflow tooling, plan interrogation and session handoff (deep-grill and handoff, inspired by Matt Pocock's grill-me and handoff skills), and meta-tooling (the skill creator, refiner, router, and full-review orchestrator).
 
 Browse [`skills/`](skills/) for the full list, or query it:
 
