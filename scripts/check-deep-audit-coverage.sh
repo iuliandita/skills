@@ -41,22 +41,25 @@ wave_skills=(
   zero-day
 )
 
-excluded_skills=(
-  browse
-  cluster-health
-  deep-audit
-  deep-grill
-  dev-cycle
-  full-review
-  jekyll-hyde
-  kali-linux
-  lockpick
-  prompt-generator
-  routine-writer
-  skill-creator
-  skill-refiner
-  skill-router
+# Single source of truth: the exclusion table in deep-audit's references.
+# Each excluded skill is the first column of a table row, wrapped in **bold**.
+# Add a skill there (and nowhere else) to exclude it from deep-audit coverage.
+exclusions_file="$ROOT/skills/deep-audit/references/exclusions.md"
+if [[ ! -f "$exclusions_file" ]]; then
+  echo "ERROR: exclusions file not found: $exclusions_file" >&2
+  exit 1
+fi
+
+mapfile -t excluded_skills < <(
+  grep -oE '^\| \*\*[a-z0-9-]+\*\* \|' "$exclusions_file" \
+    | sed -E 's/^\| \*\*([a-z0-9-]+)\*\* \|/\1/' \
+    | sort
 )
+
+if (( ${#excluded_skills[@]} == 0 )); then
+  echo "ERROR: parsed no excluded skills from $exclusions_file (table format changed?)" >&2
+  exit 1
+fi
 
 errors=0
 
