@@ -1,9 +1,9 @@
 ---
 name: handoff
 description: >
-  · Compress the current session into a handoff doc another agent can continue from. Triggers:
-  'handoff', 'hand off', 'context handoff', 'fresh session', 'AFK run', 'fan out'. Not for idea
-  capture (roadmap) or full dev workflow (dev-cycle).
+  · Compress the current session into a handoff doc another agent continues from. Triggers:
+  'handoff', 'hand off', 'context handoff', 'fresh session', 'AFK run'. Not for idea capture
+  (use roadmap) or full dev workflow (use dev-cycle).
 license: MIT
 compatibility: "None - writes a markdown file. Optional: git for gitignoring the .handoff/ directory"
 metadata:
@@ -78,7 +78,7 @@ genuinely empty.
 ```markdown
 # Handoff: {one-line purpose}
 
-> Written: {date} | Disposable working doc | From: {short note on the source session}
+> Written: {date} | {Disposable working doc | Committed for review} | From: {short note on the source session}
 
 ## Purpose
 
@@ -92,10 +92,16 @@ Settled. Do NOT reopen these.
 - {Decision} - because {rationale}
 - {Decision} - because {rationale}
 
+## Deferred
+
+Deliberately not doing now. Recorded so the next session does not relitigate them. Omit if empty.
+
+- {Ruled out for now} - because {rationale}; revisit when {trigger}
+
 ## Current state
 
 - [verified] {Done and confirmed} - confirmed by {test, command, or observation}
-- [assumed] {Believed true but unchecked} - next session should verify before trusting
+- [assumed] {Believed true but unchecked} - verify by {command or check} before relying on it
 - [blocked] {Stuck} - waiting on {what}
 
 ## Next steps
@@ -161,7 +167,8 @@ rationale is not optional - it is the specific thing that stops the next session
 Summarize where things stand. Tag each item:
 
 - `verified` - done and confirmed, with how it was confirmed
-- `assumed` - believed true but not checked; the next session should verify before relying on it
+- `assumed` - believed true but not checked; name the command or check that would verify it, so
+  the next session can confirm before relying on it
 - `blocked` - stuck, and on what
 
 Do not present assumptions as facts. A mistagged assumption is how the next session inherits a
@@ -175,13 +182,19 @@ rather than trusting a remembered location, because a stale line number sends th
 to the wrong place. Do not paste file contents.
 
 While collecting, strip any secrets: API keys, passwords, tokens, PII, internal URLs,
-connection strings. Redact by reference, not by partial value - point at where the secret lives
-so the next session can resolve it, and never write a fragment that is itself sensitive (a host,
-a port, half a token):
+connection strings. This includes secrets that surfaced in the session itself - a value the user
+pasted into the chat or that printed to a log is just as sensitive as one read from a file.
+Redact by reference, not by partial value - point at where the secret lives so the next session
+can resolve it, and never write a fragment that is itself sensitive (a host, a port, half a
+token):
 
 - `REDIS_URL` env var
 - credentials loaded from `.env.local`
 - `{REDACTED}` when there is nowhere to point
+
+If the secret's only source is volatile - shell history, a pasted chat message, console output -
+there is no durable place to point at. Tell the next session to re-provision it from the real
+secret store, not to recover the leaked value.
 
 #### Step 5: Suggest skills and next steps
 
@@ -193,7 +206,8 @@ instead of rediscovering it.
 
 #### Step 6: Write the file
 
-Default location: `.handoff/YYYY-MM-DD-{slug}.md` in the working directory.
+**Disposable (default).** Write to `.handoff/YYYY-MM-DD-{slug}.md` in the working directory and
+keep it out of version control:
 
 1. Ensure `.handoff/` is gitignored. If `.handoff/` (or a covering entry) is not in
    `.gitignore`, add it:
@@ -203,10 +217,16 @@ Default location: `.handoff/YYYY-MM-DD-{slug}.md` in the working directory.
    ```
    Inform the user: "Added .handoff/ to .gitignore. Tell me if you want this handoff committed
    instead."
-2. Write the doc. Report the path so the user can pass it to the next session.
+2. Set the header's middle field to `Disposable working doc`.
+3. Write the doc and report the path so the user can pass it to the next session.
 
-If the user explicitly wants the handoff durable and tracked, skip the gitignore step and write
-it where they ask (commit it via **git**).
+**Committed (when the user wants it tracked - e.g. visible in a PR).** Do not write into the
+gitignored `.handoff/`; that only forces a `git add -f` fight. Instead:
+
+1. Write to a tracked path. Default to `docs/handoffs/YYYY-MM-DD-{slug}.md`; use the location
+   the user named if they gave one, or follow an existing repo handoff convention if there is one.
+2. Set the header's middle field to `Committed for review`.
+3. Write the doc, then commit it via **git**. Report the path.
 
 ### Mode 2: Resume from a handoff
 
@@ -220,8 +240,8 @@ Trigger: user points at an existing handoff doc ("resume <path>", "continue from
 4. Re-check anything tagged `assumed` before building on it.
 5. Invoke the suggested skills and start on the next steps.
 
-The handoff doc is disposable. Once the next session is underway, it has served its purpose and
-can be deleted.
+A disposable handoff has served its purpose once the next session is underway and can be
+deleted; a committed one stays in the repo as a record of the PR it shipped with.
 
 ## Output Contract
 
