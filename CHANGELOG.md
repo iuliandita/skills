@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.38.1](https://github.com/iuliandita/skills/compare/v1.38.0...v1.38.1) (2026-06-14)
+
+
+### Bug Fixes
+
+* **scripts:** verify cross-skill references instead of trusting bold text ([6c6e8a1](https://github.com/iuliandita/skills/commit/6c6e8a11ce10bd94126488154af705c24a2af436))
+
+
+### Refactoring
+
+* **scripts:** share name and length checks via skill-lib ([d370ab9](https://github.com/iuliandita/skills/commit/d370ab9acd99a8617d58951ff9bb7ea2d4cf3636))
+
 ## [1.38.0](https://github.com/iuliandita/skills/compare/v1.37.0...v1.38.0) (2026-06-14)
 
 
