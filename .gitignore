@@ -23,3 +23,6 @@ test.sh
 
 # Disposable agent handoff docs
 .handoff/
+
+# Disposable improve-skill audit plans
+plans/
