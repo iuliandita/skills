@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.38.0](https://github.com/iuliandita/skills/compare/v1.37.0...v1.38.0) (2026-06-14)
+
+
+### Features
+
+* **skills:** add handoff session-handoff skill ([#82](https://github.com/iuliandita/skills/issues/82)) ([a295e55](https://github.com/iuliandita/skills/commit/a295e5595401046045a1e9811eaccaae27898120))
+
+
+### Bug Fixes
+
+* **skills:** make output contract self-contained per skill ([#85](https://github.com/iuliandita/skills/issues/85)) ([4a94e9c](https://github.com/iuliandita/skills/commit/4a94e9ce34db1ab66d4884987815199099d0b6cf))
+* **skills:** refine handoff after review (commit path, deferred slot, secrets) ([#84](https://github.com/iuliandita/skills/issues/84)) ([4306da3](https://github.com/iuliandita/skills/commit/4306da3ca67457b6ec45073cd94a6425048ecc49))
+* **skills:** sharpen full-review vs deep-audit routing separation ([#86](https://github.com/iuliandita/skills/issues/86)) ([9602e91](https://github.com/iuliandita/skills/commit/9602e91d6fa35544d4d4052d19f6ae06a0664abb))
+
 ## [1.37.0](https://github.com/iuliandita/skills/compare/v1.36.0...v1.37.0) (2026-06-13)
 
 
