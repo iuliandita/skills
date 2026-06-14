@@ -1,7 +1,7 @@
 ---
 name: full-review
 description: >
-  · Run combined code-review, anti-slop, security-audit, and update-docs pass. Triggers: 'full review', 'review everything', 'audit this repo', 'full check', 'run all checks'. Not for single-dimension audits.
+  · Run 4 fixed audits in parallel (code-review, anti-slop, security-audit, update-docs) as a quick quality gate. Triggers: 'full review', 'run all checks', 'full check', 'quad audit', 'review before merge'. Not for exhaustive/wave audits (use deep-audit) or single-dimension checks.
 license: MIT
 compatibility: "Requires code-review, anti-slop, security-audit, update-docs skills installed"
 metadata:
