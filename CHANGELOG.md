@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.39.0](https://github.com/iuliandita/skills/compare/v1.38.1...v1.39.0) (2026-06-14)
+
+
+### Features
+
+* **debug-triage:** add live-incident layer-localization skill ([#96](https://github.com/iuliandita/skills/issues/96)) ([e08b95d](https://github.com/iuliandita/skills/commit/e08b95d102200305012eeda6583f3a012b667b9e))
+* **observability:** add observability/SRE skill as deep-audit Wave 3 lens ([#93](https://github.com/iuliandita/skills/issues/93)) ([839928d](https://github.com/iuliandita/skills/commit/839928d7ea6eeebb46ca2ff4081574fbc7a6dbda))
+
 ## [1.38.1](https://github.com/iuliandita/skills/compare/v1.38.0...v1.38.1) (2026-06-14)
 
 
