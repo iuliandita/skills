@@ -2249,5 +2249,83 @@
     "commits": [
       "squashed into PR #79"
     ]
+  },
+  {
+    "run_id": "2026-06-14-refiner-observability-debug-triage",
+    "branch": "skill-creator/observability-2026-06-14 (PR #93), skill-creator/debug-triage-2026-06-14 (PR #96, was #94)",
+    "date": "2026-06-14",
+    "primary": {
+      "harness": "claude-code",
+      "model": "claude-opus-4-8",
+      "context": "1M"
+    },
+    "secondary": {
+      "harness": "gemini",
+      "mode": "cross-model diff review",
+      "result": "NO_FLAGS"
+    },
+    "config": {
+      "pool": 2,
+      "iterations_run": 5,
+      "ceiling": "none",
+      "target": 99,
+      "mode": "targeted"
+    },
+    "pool": [
+      "observability",
+      "debug-triage"
+    ],
+    "termination": "target reached + plateau (residuals rejected by simplicity criterion)",
+    "cross_model_flags": {
+      "major": 0,
+      "minor": 0,
+      "contested": 0
+    },
+    "scoring_note": "Targeted manual rubric per evaluation-criteria.md (gate + AI 40% + behavioral 55% + cross-model 5%). Baseline: 2 skill-creator Mode-2 reviews + 2 clean-context forward-tests. Final: 2 forward-test re-runs (all 8 gaps closed) + gemini NO_FLAGS.",
+    "scores": {
+      "observability": {
+        "baseline": {
+          "G": "pass",
+          "A": 94,
+          "B": 96
+        },
+        "final": {
+          "G": "pass",
+          "A": 99,
+          "B": 99,
+          "X": "NO_FLAGS",
+          "composite": 99.05
+        }
+      },
+      "debug-triage": {
+        "baseline": {
+          "G": "pass",
+          "A": 96,
+          "B": 94
+        },
+        "final": {
+          "G": "pass",
+          "A": 99,
+          "B": 99,
+          "X": "NO_FLAGS",
+          "composite": 99.05
+        }
+      }
+    },
+    "real_improvements": [
+      "Added ## Output Contract section to both (were the only 2 of 46 public skills missing it; CI-required output-contract.md shipped unreferenced)",
+      "observability: burn-rate threshold formula burn_rate*(1-SLO) vs error-ratio SLI + 14.4x/6x/3x tiers + and-join; per-entity IDs to trace/log not metric label; exported-vs-provisioned dashboard distinction",
+      "debug-triage: degradation discriminator row (percentiles/throttle/pool-wait/cache) + cheapest-first ordering; 502/503/504 differentiation; kubectl get endpoints row; network-vantage caveat; pg_isready in compatibility"
+    ],
+    "out_of_scope": [
+      "version-major pins (freshness routine owns)",
+      "phase 2 meta (needs human approval)"
+    ],
+    "reverted": [],
+    "contested": [],
+    "commits": [
+      "PR #93 squash: 839928d",
+      "PR #96 squash: e08b95d (debug-triage, was PR #94)"
+    ]
   }
 ]
