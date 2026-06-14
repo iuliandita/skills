@@ -7,6 +7,7 @@ so future contributors do not re-add them by reflex.
 |---|---|
 | **browse** | Operational tool (fetch a page, fill a form). Not an audit lens. |
 | **cluster-health** | Live Kubernetes diagnostics. Requires an explicit cluster context and may load local protected overlays; repo-side K8s files are covered by kubernetes in Wave 3. |
+| **debug-triage** | Live-incident layer localization. Requires a running, broken system; observes runtime state and routes to a domain skill. Not a file-pattern audit lens. |
 | **dev-cycle** | Workflow orchestrator (start-to-finish dev: branch -> ship). Acts on the repo; does not audit it. |
 | **prompt-generator** | Creative authoring of LLM prompts. Produces content; does not evaluate code. |
 | **routine-writer** | Creative authoring of cloud-routine prompts. Same shape as prompt-generator. |
