@@ -133,7 +133,9 @@ in config. Use direct Prometheus scrape where pull and existing exporters alread
 - Naming: `unit`-suffixed, base units (seconds, bytes), `_total` for counters. Follow Prometheus
   and OpenTelemetry semantic conventions; do not invent metric names where a convention exists.
 - Cardinality is the budget. Series count = product of label-value sets. Keep label values bounded
-  and finite. Exemplars link a metric sample to a trace - enable them for latency histograms.
+  and finite. Per-entity detail (user, request, order, full path) belongs on a trace attribute or
+  log field, never a metric label. Exemplars link a metric sample to a trace - enable them for
+  latency histograms.
 - Recording rules precompute heavy expressions; alerting rules fire on conditions. Keep them in
   version control and unit-test them with `promtool test rules`.
 
@@ -157,6 +159,11 @@ in config. Use direct Prometheus scrape where pull and existing exporters alread
 
 - An SLO is a target on an SLI (e.g. 99.9% of requests < 300ms over 30 days). Error budget is the
   allowed failure: `1 - SLO`. Alert on **budget burn rate**, not on every breach.
+- The burn-rate alert threshold is `burn_rate * (1 - SLO)` compared against the error-*ratio* SLI -
+  not the raw error rate against a bare multiplier (a common off-by-budget bug). Standard tiers for
+  a 99.9% SLO: fast-burn 14.4x (1h + 5m windows, page), slow-burn 6x (6h + 30m, page), erosion 3x
+  (24h + 2h, ticket). Both windows in a tier must breach together before the alert fires - express
+  as an `and`: `ratio_rate1h > 14.4*(1-SLO) and ratio_rate5m > 14.4*(1-SLO)`.
 - Multi-window multi-burn-rate alerting (fast-burn + slow-burn windows) catches both acute
   outages and slow erosion while suppressing flapping. A single static threshold does neither.
 - Alert hygiene: page only on user-impacting symptoms with a runbook; everything else is a ticket
@@ -166,6 +173,9 @@ in config. Use direct Prometheus scrape where pull and existing exporters alread
 
 - Provision dashboards from version-controlled JSON or generate them with grafonnet/Grizzly. A
   click-built dashboard is an undiffable, unreviewable, un-restorable artifact.
+- Committed-in-git is necessary but not sufficient: an *exported* JSON blob (regenerated on each
+  export, never hand-edited) still drifts from the running dashboard and diffs unreadably. The
+  source of truth is authored or generated config that flows file -> Grafana, not the reverse.
 
 ---
 
@@ -189,6 +199,15 @@ Report only what the repo files show. Do not assume a running backend exists; fl
 but no evidence it is collected" as a gap, not a pass.
 
 ---
+
+## Output Contract
+
+See `references/output-contract.md` for the full contract.
+
+- **Skill name:** OBSERVABILITY
+- **Deliverable bucket:** `audits`
+- **Mode:** conditional. When invoked to **audit a repo for observability gaps** (the Wave 3 lens), emit the full contract - boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table - and write the deliverable to `docs/local/audits/observability/<YYYY-MM-DD>-<slug>.md`. When invoked to **build instrumentation, rules, pipelines, or dashboards**, respond freely without the contract.
+- **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit mode).
 
 ## Related Skills
 
