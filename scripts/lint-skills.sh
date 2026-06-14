@@ -153,11 +153,21 @@ check_references() {
         # Skip template placeholders.
         [[ "$ref" == *"<"* ]] && continue
         if [[ ! -f "$dir/$ref" ]]; then
-          # Cross-skill references should name the other skill in bold.
-          if grep -qP '\*\*[a-z][-a-z0-9]+\*\*' <<< "$line"; then
-            continue
+          # Cross-skill reference escape hatch: accept the missing path only if a
+          # bolded token on this line names a sibling skill that DOES contain the
+          # referenced file. A bare bold word no longer suppresses the error.
+          local skills_root resolved=false bold
+          skills_root="$(dirname "$dir")"
+          while IFS= read -r bold; do
+            [[ -z "$bold" ]] && continue
+            if [[ -f "$skills_root/$bold/$ref" ]]; then
+              resolved=true
+              break
+            fi
+          done < <(grep -oP '\*\*\K[a-z][-a-z0-9]+(?=\*\*)' <<< "$line" || true)
+          if [[ "$resolved" != true ]]; then
+            error "$name: referenced file '$ref' does not exist in $rel_source:$line_no"
           fi
-          error "$name: referenced file '$ref' does not exist in $rel_source:$line_no"
         fi
       done
     done < <(awk '/^```/{skip=!skip; next} !skip{print NR "\t" $0}' "$source")
