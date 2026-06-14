@@ -183,4 +183,7 @@ jobs:
       - name: Static analysis
         # Limit semgrep to executable/config files. The Markdown corpus contains
         # intentional security examples that would create noisy false positives.
-        run: semgrep scan --config auto --error install.sh scripts .github/workflows
+        run: >
+          semgrep scan --metrics off --error
+          --config p/ci --config p/github-actions
+          install.sh scripts .github/workflows
