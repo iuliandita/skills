@@ -1,10 +1,9 @@
 ---
 name: debug-triage
 description: >
-  · Triage a live incident across layers to localize an unknown failure, then route to the
-  domain skill. Triggers: 'incident', 'outage', 'triage', 'production down', 'crashloop',
-  '502', 'which layer'. Not for known-component app debugging (systematic-debugging) or repo
-  audits (use deep-audit).
+  · Triage a live incident to localize an unknown failing layer, then route. Triggers:
+  incident, outage, triage, production down, crashloop, 502. Not for known-component debugging
+  (systematic-debugging) or repo audits (deep-audit).
 license: MIT
 compatibility: "Optional, stack-dependent: kubectl, dig, curl, openssl, ss, journalctl, jq"
 metadata:
