@@ -5,7 +5,7 @@ description: >
   incident, outage, triage, production down, crashloop, 502. Not for known-component debugging
   (systematic-debugging) or repo audits (deep-audit).
 license: MIT
-compatibility: "Optional, stack-dependent: kubectl, dig, curl, openssl, ss, journalctl, jq"
+compatibility: "Optional, stack-dependent: kubectl, dig, curl, openssl, ss, journalctl, pg_isready, jq"
 metadata:
   source: iuliandita/skills
   date_added: "2026-06-14"
@@ -108,7 +108,7 @@ Work outside-in along the request path. Each layer is owned by a domain skill fo
 | DNS resolution | NXDOMAIN, wrong IP, intermittent name failures | **networking** |
 | Network / routing (L3-L4) | timeouts, no route, connection refused | **networking** |
 | TLS / certificates | cert expired, SAN mismatch, handshake failure | **networking** (or the distro/appliance skill) |
-| Load balancer / ingress | 502/503/504, backend not found, routing rule miss | **kubernetes** (ingress/Gateway) or **firewall-appliance** |
+| Load balancer / ingress | 502 (upstream sent an invalid/no reply), 503 (no healthy backend), 504 (upstream timed out) | **kubernetes** (ingress/Gateway) or **firewall-appliance** |
 | Service / pod | CrashLoopBackOff, OOMKilled, readiness failing | **kubernetes**, then **cluster-health** for the broad sweep |
 | App runtime | 500s, exceptions, deadlocks in one component | host `systematic-debugging`, then the language/domain skill |
 | Dependency (DB/cache/queue) | slow queries, connection pool exhaustion, broker lag | **databases** |
@@ -119,7 +119,12 @@ Work outside-in along the request path. Each layer is owned by a domain skill fo
 ## Discriminating-signal table
 
 Pick the check that splits the candidate set fastest. These are starting points - adapt the
-service names and paths to the actual stack, and surface errors rather than masking them.
+service names and paths to the actual stack, and surface errors rather than masking them. Run
+reachability checks from the right network vantage point - inside the cluster or namespace for
+ClusterIP services and split-horizon DNS, not from a laptop - or a wrong exclusion follows. For a
+*degraded* symptom (slow, no errors) the discriminators shift from up/down to fast/slow and
+which-fraction; see the last row - read its percentiles first (uniform vs tail vs one slow
+replica), then chase only the resource that split implicates.
 
 | Question | Check (adapt to stack) | A pass rules out | A fail implicates |
 |---|---|---|---|
@@ -127,9 +132,11 @@ service names and paths to the actual stack, and surface errors rather than mask
 | Is the port reachable? | `curl -sS -o /dev/null -w '%{http_code}' <url>`; `ss -tnp` | network/routing | network, LB, or the listener |
 | Is TLS valid? | `openssl s_client -connect <host:port> -servername <host> </dev/null` | TLS/cert | cert expiry / SAN / chain |
 | Is the pod actually up? | `kubectl get pods -o wide`; `kubectl describe pod` | service/pod | scheduling, image, probes, OOM |
+| Does the ingress have backends? | `kubectl get endpoints <svc>` (empty = nothing to route to) | ingress wiring | empty endpoints (selector mismatch or all pods unready) -> 502 |
 | Is the dependency answering? | dependency ping/health (e.g. `pg_isready`, broker health) | data layer | DB/cache/queue or its credentials |
 | Did something just change? | `kubectl rollout history` / git log of the manifests / deploy log | config/deploy | the last change (roll back to test) |
 | Is the host healthy? | `df -h`, `journalctl -p err -b`, unit status (surface errors) | host/node | disk, memory, a failed unit |
+| Slow, not down (no errors)? | latency percentiles per endpoint/pod (p50 vs p99); CPU throttle ratio; pool-wait (`pg_stat_activity`); cache hit/miss ratio | a flat, healthy distribution rules out saturation | tail latency or one slow replica: CPU throttle, pool exhaustion, slow query, cache-miss shift |
 
 Read metrics for what they measure, not what they seem to say (e.g. K8s HPA `targetCPU` is a
 percentage of the CPU *request*, not raw CPU; `df` is allocation, not live content). When a
@@ -142,6 +149,15 @@ resource is on a schedule (backups, rotations), judge freshness against that sch
   name them as actions and get explicit confirmation.
 - Do not mask command failures with `2>/dev/null`; a failed check is a finding.
 - Do not invent service names, namespaces, or paths; if coverage is missing, ask.
+
+## Output Contract
+
+See `references/output-contract.md` for the full contract.
+
+- **Skill name:** DEBUG-TRIAGE
+- **Deliverable bucket:** `audits`
+- **Mode:** conditional. Live triage is conversational - walk the layers, localize, and route inline without the contract. When invoked to **write up a triage or post-incident summary** as a durable artifact, emit the full contract - boxed inline header, per-layer detail in the deliverable file, boxed conclusion, conclusion table - and write it to `docs/local/audits/debug-triage/<YYYY-MM-DD>-<slug>.md`.
+- **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; used only in the written-summary mode).
 
 ## Related Skills
 
