@@ -15,7 +15,7 @@ metadata:
 
 Create, review, and architect Kubernetes infrastructure - from raw manifests to Helm charts to multi-cluster strategy. The goal is production-ready, security-hardened, cost-aware infrastructure that a team can maintain.
 
-**Target versions** (May 2026): Kubernetes 1.34-1.36 (1.36.0 "Haru" released April 22, 2026). Upstream Kubernetes has no LTS; community support per minor is ~14 months, so 1.32 reaches upstream EOL ~April 2026. Managed **vendor extended support** (AKS/EKS) carries 1.32 patches roughly 2 more years - attribute it to the platform, not upstream. Helm 4.2.0, Helm 3.21.x (parallel v3 maintenance, security fixes until Nov 2026).
+**Target versions** (June 2026): Kubernetes 1.34-1.36 supported (1.36 "Haru" released April 22, 2026; 1.36.1 / 1.35.5 / 1.34.8 are the current patches). Upstream Kubernetes has no LTS; community support per minor is ~14 months. 1.33 entered maintenance April 28, 2026 and reaches upstream EOL June 28, 2026; 1.32 already hit upstream EOL February 28, 2026. Managed **vendor extended support** (AKS/EKS) carries older minors patches roughly 2 more years - attribute it to the platform, not upstream. Helm 4.2.1, Helm 3.21.x (parallel v3 maintenance, security fixes until Nov 2026).
 
 This skill covers four domains depending on context:
 - **Manifests** - raw YAML for Deployments, Services, Gateway API routes, ConfigMaps, Secrets, PVCs
@@ -173,7 +173,7 @@ Read `references/manifest-templates.md` for complete, copy-pasteable YAML templa
 
 ## Helm Charts
 
-**Helm 4** (released Nov 2025) is current. Helm 3.20.x gets security fixes until Nov 2026.
+**Helm 4** (4.0.0 released Nov 12, 2025; 4.2.1 current) is current. Helm 3.21.x gets security fixes until Nov 2026.
 
 ### What changed in Helm 4
 
@@ -359,7 +359,7 @@ The Trivy supply chain attack (CVE-2026-33634) is the defining security event of
 
 ### Platform awareness
 
-- **cgroup v2 required** on K8s 1.35+. Nodes on cgroup v1 (CentOS 7, RHEL 7, Ubuntu 18.04) will fail.
+- **cgroup v2 required** on K8s 1.36+ (`FailCgroupV1` defaults to true; kubelet won't start on cgroup v1 unless `failCgroupV1: false`). Nodes on cgroup v1 (CentOS 7, RHEL 7, Ubuntu 18.04) will fail.
 - **containerd 2.0 required** on K8s 1.36+. Last release supporting containerd 1.x is 1.35.
 - **K8s 1.36 launches April 22, 2026** - containerd 2.0 required on all nodes. IPVS kube-proxy mode removal not yet committed to a specific version (nftables is the replacement).
 - **AppArmor annotation auto-population stopped** in 1.34; full removal in 1.36. Use `securityContext.appArmorProfile` field.

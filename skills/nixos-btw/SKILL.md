@@ -30,22 +30,23 @@ disposable dev shells, fleet-wide configuration without a separate config-manage
 and a single language for a workstation, a server, a container image, a NixOS VM, and a
 macOS laptop via nix-darwin.
 
-**Versions worth pinning** (verified May 2026):
+**Versions worth pinning** (verified June 2026):
 
 Pin versions only when they shape compatibility or troubleshooting. For ordinary package
 work, trust the live channel or flake lock over a stale table.
 
 | Component | Version or date | Why it matters |
 |-----------|-----------------|----------------|
-| NixOS stable | 25.11 "Xantusia" (Nov 2025) | current stable, maintained until 2026-06-30 |
-| NixOS upcoming | 26.05 "Yarara" (May 2026) | next release; do not target yet for production |
+| NixOS stable | 26.05 "Yarara" (May 2026) | current stable, released 2026-05-30, maintained until 2026-12-31 |
+| NixOS previous stable | 25.11 "Xantusia" (Nov 2025) | EOL 2026-06-30; upgrade off it now |
+| NixOS upcoming | 26.11 (~Nov 2026) | next release; do not target yet for production |
 | Nix (CLI / daemon) | 2.33 (Dec 2025) | stable upstream; 2.32 introduced skip-substitutable-downloads |
-| `nixos-rebuild-ng` | default in 25.11 | Python rewrite of nixos-rebuild, default for new installs |
-| home-manager | release-25.11 (Nov 2025) | matches NixOS 25.11; unstable tracks nixos-unstable |
-| nix-darwin | tracks nixpkgs 25.11 and master | active macOS module system (Intel + Apple Silicon) |
+| `nixos-rebuild-ng` | default in 25.11+ | Python rewrite of nixos-rebuild, default for new installs |
+| home-manager | release-26.05 (May 2026) | matches NixOS 26.05; unstable tracks nixos-unstable |
+| nix-darwin | tracks nixpkgs 26.05 and master | active macOS module system (Intel + Apple Silicon) |
 | Determinate Nix | downstream, flakes-on by default | validated distribution; parallel eval, lazy trees |
 | Lix | fork of Nix | compatibility-focused fork; Meson build, improved errors |
-| Kernel default for 25.11 | Linux 6.12 LTS | default `linuxPackages`; `linuxPackages_latest` tracks mainline (6.17 at 25.11 release, not LTS) |
+| Kernel default for 26.05 | Linux 6.12 LTS | default `linuxPackages`; `linuxPackages_latest` tracks mainline, not LTS |
 
 ## When to use
 
@@ -103,7 +104,7 @@ Before returning NixOS or Nix commands, verify:
 - [ ] **Unfree / insecure gates named explicitly**: set `nixpkgs.config.allowUnfree = true;` or `allowUnfreePredicate`, and list insecure packages under `permittedInsecurePackages`. Do not default to `NIXPKGS_ALLOW_UNFREE=1` as the permanent answer.
 - [ ] **Hardware module present**: for fresh installs, `hardware-configuration.nix` must be regenerated with `nixos-generate-config` and not hand-edited for filesystem UUIDs. For laptops, check nixos-hardware profile.
 - [ ] **Kernel and initrd coherence**: `boot.kernelPackages`, initrd modules, filesystems, and bootloader agree. Do not casually swap kernels on a system with ZFS, NVIDIA, or custom out-of-tree modules.
-- [ ] **Module fields real**: options named in advice exist in the version of nixpkgs the user has. `options` graveyards drift between 23.11, 24.05, 24.11, 25.05, and 25.11 - verify against the `nixpkgs` tag the user pinned.
+- [ ] **Module fields real**: options named in advice exist in the version of nixpkgs the user has. `options` graveyards drift between 24.05, 24.11, 25.05, 25.11, and 26.05 - verify against the `nixpkgs` tag the user pinned.
 - [ ] **Secrets not put in the store**: anything under `./secret.age`, `./sops.yaml`, or similar must be decrypted at activation time by sops-nix or agenix, not embedded directly in a Nix string that ends up world-readable in `/nix/store`.
 - [ ] **disko / impermanence claims match the install**: declarative disk layouts change the recovery story. Confirm partition, filesystem, and subvolume layout before prescribing rollback or wipe steps.
 - [ ] **home-manager mode identified**: standalone, NixOS module, or nix-darwin module. `home-manager switch` vs `nixos-rebuild switch` vs `darwin-rebuild switch` is not interchangeable.
@@ -143,8 +144,8 @@ Before returning NixOS or Nix commands, verify:
 
 | Lane | Default stance | What changes |
 |------|----------------|--------------|
-| **NixOS installed (stable 25.11)** | configuration.nix or flake.nix drives everything | full system is Nix-managed; rollbacks via bootloader |
-| **NixOS unstable / 26.05 pre-release** | treat as rolling-ish | expect breakage; verify options still exist |
+| **NixOS installed (stable 26.05)** | configuration.nix or flake.nix drives everything | full system is Nix-managed; rollbacks via bootloader |
+| **NixOS unstable / 26.11 pre-release** | treat as rolling-ish | expect breakage; verify options still exist |
 | **Nix on non-NixOS Linux** | user-level only | host distro still owns services and boot; no `nixos-rebuild` |
 | **nix-darwin on macOS** | declarative macOS config | `darwin-rebuild switch`; host owns kernel and firmware |
 | **Plain Nix on macOS (no darwin)** | package manager only | `nix profile` or `nix shell` for user tooling |
@@ -390,7 +391,7 @@ See `references/output-contract.md` for the full contract.
 5. **Flakes are intentional.** Enable `nix-command flakes` where the user already uses them; do not push migration during troubleshooting.
 6. **GC roots are real state.** Dev shells, direnv caches, and CI pins hold them. Check before mass deletion.
 7. **Secrets never in the store.** Use sops-nix or agenix with activation-time decryption; anything else ends up world-readable in `/nix/store`.
-8. **Module options must exist in the user's nixpkgs tag.** 23.11/24.05/24.11/25.05/25.11 drift is real; confirm with `nix repl` or the options search before recommending.
+8. **Module options must exist in the user's nixpkgs tag.** 24.05/24.11/25.05/25.11/26.05 drift is real; confirm with `nix repl` or the options search before recommending.
 9. **Overlays compose, not mutate.** `final: prev: { ... }` scope. Do not recommend global profile-level overlays on flake systems.
 10. **Kernel and initrd agree.** Do not flip `boot.kernelPackages` on ZFS, NVIDIA, or custom-module systems without a fallback.
 11. **Do not touch `system.stateVersion` casually.** It controls migration semantics and is not a "version bump" field.

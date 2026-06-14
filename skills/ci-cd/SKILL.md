@@ -24,7 +24,7 @@ Write, review, and architect CI/CD pipelines across GitHub Actions, GitLab CI/CD
 Actions, Gitea Actions, and Woodpecker. The goal is secure, fast, auditable pipelines that
 satisfy both engineering needs and compliance requirements (PCI-DSS 4.0).
 
-**Target versions**: May 2026 snapshot. Read `references/target-versions.md` before
+**Target versions**: June 2026 snapshot. Read `references/target-versions.md` before
 pinning forge, runner, CI, or supply-chain tool versions.
 
 This skill covers workflow design, security, compliance, cross-platform migration,
@@ -444,7 +444,7 @@ the OWASP Top 10 for Agentic Applications, read `references/supply-chain.md`
 - `references/runners.md` - Self-hosted runners (actions-runner, gitlab-runner, forgejo-runner, act_runner, woodpecker-agent) - install, register, executor choice, Linux vs macOS, security hardening
 - `references/best-practices.md` - Dependency updates (Dependabot/Renovate), layered linting, scanning matrix (secrets/SCA/container/IaC/SAST), review gates, merge queues, rollout order
 - `references/supply-chain.md` - supply chain security, incident timeline, SHA pinning, SBOM/SLSA, PCI-DSS compliance, image signing
-- `references/target-versions.md` - May 2026 version snapshot for forges, runners, CI systems, and supply-chain tools
+- `references/target-versions.md` - June 2026 version snapshot for forges, runners, CI systems, and supply-chain tools
 
 ## Output Contract
 

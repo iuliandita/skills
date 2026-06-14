@@ -16,9 +16,9 @@ Guide AI agents through web browsing tasks using the cheapest tool that gets the
 Every browsing action has a token cost - this skill minimizes it through progressive disclosure,
 smart format selection, and backend-aware strategies.
 
-**Target versions** (May 2026):
+**Target versions** (June 2026):
 - Lightpanda: 0.3.1
-- @playwright/mcp: 0.0.75
+- @playwright/mcp: 0.0.76
 - agent-browser: 0.27.0
 
 ## When to use

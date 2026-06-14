@@ -15,13 +15,13 @@ metadata:
 
 Configure, tune, design schemas, migrate, back up, and review database engines - from single-node dev setups to PCI-compliant production clusters. The goal is correct, performant, durable databases that survive failures, pass audits, and don't wake you up at 3am.
 
-**Target versions** (May 2026):
-- PostgreSQL **18.4** (EOL 2030-11; May 2026 security release), previous: 17.10, 16.14
-- MongoDB **8.0.20** (GA, EOL 2029-10); rapid lane (8.3 latest) is Atlas-only with a short window - verify live before pinning
-- MariaDB **11.8.7** (LTS, EOL 2028-06); 12.x rolling GA is quarterly and EOLs at each successor (12.2 reached EOL 2026-05), with 12.3 the next yearly LTS - verify live
-- MySQL **8.4.8** (LTS); innovation lane (9.x) has a short support window - verify live
-- SQL Server **2025 RTM + CU3** (GA 2025-11-18)
-- PgBouncer **1.25.1**, Pgpool-II **4.7.1**, ProxySQL **3.0.6**
+**Target versions** (June 2026):
+- PostgreSQL **18.4** (EOL 2030-11; May 14, 2026 security release), back-branches: 17.10, 16.14, 15.18, 14.23 (no June stable release; PG 19 in beta)
+- MongoDB **8.0.26** (GA, EOL 2029-10; June 11, 2026 security release fixing CVE-2026-11933); rapid lane (8.2+) is Atlas-only with a short window - verify live before pinning
+- MariaDB **11.8.8** (LTS, EOL 2028-06); 12.x rolling GA is quarterly and EOLs at each successor, with 12.3 the next yearly LTS - verify live
+- MySQL **8.4.9** (LTS); innovation lane (9.6) has a short support window - verify live
+- SQL Server **2025 RTM + CU5** (CU5 KB5084896, 2026-05-20)
+- PgBouncer **1.25.2**, Pgpool-II **4.7.2**, ProxySQL **3.0.8**
 
 This skill covers six domains depending on context:
 - **Configuration** - engine settings, authentication, TLS, tuning parameters
@@ -310,7 +310,7 @@ Read `references/migration-patterns.md` for cross-engine type mapping, ORM migra
 - [ ] Foreign key columns have indexes
 - [ ] pgAudit installed and configured (if PCI scope)
 - [ ] Patched against CVE-2026-2005 (pgcrypto heap buffer overflow, RCE) - 18.2+ / 17.8+ / 16.12+
-- [ ] On the May 2026 PostgreSQL update (CVE-2026-6473/6475/6477/6637, up to CVSS 8.8: integer-overflow allocations, libpq client stack overwrite, refint stack overflow, MD5 timing leak) - 18.4+ / 17.10+ / 16.14+ / 15.18+ / 14.23+
+- [ ] On the May 14, 2026 PostgreSQL update (CVE-2026-6473/6475/6476/6477/6478: integer-wraparound under-sized allocation, intarray/ltree field overflow, pg_createsubscriber SQL injection, libpq lo_*/path traversal, MD5 password timing leak) - 18.4+ / 17.10+ / 16.14+ / 15.18+ / 14.23+
 
 ### MySQL/MariaDB-Specific
 
@@ -330,7 +330,8 @@ Read `references/migration-patterns.md` for cross-engine type mapping, ORM migra
 - [ ] Write concern `w: "majority"` (default in 8.0+)
 - [ ] Schema validation (`$jsonSchema`) on critical collections
 - [ ] Patched against MongoBleed (CVE-2025-14847) - 8.0.17+
-- [ ] Patched against CVE-2026-25611 (pre-auth DoS via compression) - 8.0.18+ / 8.2.4+
+- [ ] Patched against CVE-2026-25611 (pre-auth DoS via compression) - 8.0.18+ / 8.2.4+ / 7.0.29+
+- [ ] On the June 11, 2026 MongoDB security release (CVE-2026-11933) - 8.0.26+
 - [ ] TLS enabled (`net.tls.mode: requireTLS`)
 
 ### MSSQL-Specific
@@ -383,7 +384,7 @@ These are non-negotiable. Violating any of these is a bug.
 10. **Disk-level encryption is insufficient for PCI-DSS 4.0.** Req 3.5.1.2 requires TDE, column-level, or application-layer encryption.
 11. **Patch MongoBleed (CVE-2025-14847).** Self-hosted MongoDB < 8.0.17 / 7.0.28 / 6.0.27 is actively exploitable with no authentication required.
 12. **Patch MongoDB compression DoS (CVE-2026-25611).** Pre-auth DoS via crafted OP_COMPRESSED messages. Default config affected (compression enabled since 3.6). Fixed in 8.0.18+ / 8.2.4+ / 7.0.29+.
-13. **Patch PgBouncer (CVE-2025-12819).** PgBouncer < 1.25.1 can allow unauthenticated SQL execution when `track_extra_parameters` includes `search_path` AND `auth_user` is set (both non-default). Upgrade regardless - the fix is low-risk.
+13. **Patch PgBouncer.** PgBouncer < 1.25.1 (CVE-2025-12819) can allow unauthenticated SQL execution when `track_extra_parameters` includes `search_path` AND `auth_user` is set (both non-default). The May 2026 1.25.2 release adds further fixes (CVE-2026-6664/6665/6666/6667: integer overflow, SCRAM, null-deref, KILL_CLIENT authz). Upgrade to 1.25.2+ - the fixes are low-risk.
 14. **Chunk bulk inserts.** Never build a single `INSERT ... VALUES` with an unbounded row list. Compute batch size from the lowest host-parameter ceiling across supported backends (`floor(limit / columns_per_row)`). Wrap chunks in one transaction when atomicity matters.
 15. **Run the AI self-check.** Every generated migration, schema, or config gets verified against the checklist above before returning.
 

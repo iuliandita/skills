@@ -245,7 +245,7 @@ skopeo list-tags docker://ghcr.io/org/myapp
 
 Low-level container runtime. Kubernetes uses it directly. Docker Engine uses it under the hood.
 
-### Key facts (May 2026)
+### Key facts (June 2026)
 
 - **containerd 2.3.0** was released in April 2026 as the first annual LTS release, supported for 2+ years
 - **containerd 2.2.3** remains a supported 2.2 patch release through November 2026

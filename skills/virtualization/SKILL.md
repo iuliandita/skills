@@ -18,15 +18,15 @@ setups to multi-node clusters with HA, live migration, and GPU passthrough. The 
 production-ready VM infrastructure with correct storage, memory, and CPU config that won't
 bite you at 3 AM.
 
-**Target versions** (verified May 2026):
+**Target versions** (verified June 2026):
 
 | Tool | Version | Release date | Notes |
 |------|---------|-------------|-------|
 | Proxmox VE | 9.1 | Nov 2025 | Debian 13.2 (trixie), kernel 6.17.2, QEMU 10.1.2 |
 | Proxmox Backup Server | 4.1 | Nov 2025 | Dedup, incremental, prune policies |
-| bpg/proxmox (Terraform) | 0.100.0 | Apr 2026 | Primary Proxmox IaC provider |
+| bpg/proxmox (Terraform) | 0.109.0 | Jun 2026 | Primary Proxmox IaC provider |
 | QEMU | 11.0.1 | Apr 2026 | Stable (11.0 series; GA Apr 22, 2026) |
-| libvirt | 12.0.0 | Jan 2026 | Hypervisor abstraction layer |
+| libvirt | 12.4.0 | Jun 2026 | Hypervisor abstraction layer |
 | XCP-ng | 8.3 LTS | Oct 2024 | Xen-based, LTS since Jun 2025, EOL Nov 2028 |
 | VMware ESXi | 8.0 U3i | Feb 2026 | Broadcom-owned, licensing upheaval |
 | VirtualBox | 7.2.6 | Jan 2026 | Dev/testing only |

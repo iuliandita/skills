@@ -6,7 +6,7 @@ inspect via `pkg info <name>` and check `/usr/local/etc/` for their configs.
 ## Security
 
 ### os-crowdsec (CrowdSec)
-Local LAPI + bouncer (verify OPNsense package with `pkg info os-crowdsec`; upstream CrowdSec v1.7.7 as of May 2026 recheck). Parses logs locally, applies local bans + crowd-sourced blocklists.
+Local LAPI + bouncer (verify OPNsense package with `pkg info os-crowdsec`; upstream CrowdSec v1.7.8 as of June 2026 recheck). Parses logs locally, applies local bans + crowd-sourced blocklists.
 
 **Two separate enforcement layers:**
 - **Local decisions** (`crowdsec_blacklists` pf table): IPs your firewall detected and banned

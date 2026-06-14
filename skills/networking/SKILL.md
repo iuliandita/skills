@@ -17,7 +17,7 @@ Configure, troubleshoot, and optimize Linux networking infrastructure. Covers DN
 VPNs, firewalls (nftables), VLANs, subnetting, high availability, dynamic routing, and network
 performance tuning.
 
-**Target versions** (May 2026):
+**Target versions** (June 2026):
 
 | Tool | Version | Notes |
 |------|---------|-------|

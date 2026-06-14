@@ -2,7 +2,7 @@
 
 Reflog, bisect, rerere, filter-repo, stash, worktree, submodules, large repo optimization.
 
-Research date: May 2026.
+Research date: June 2026.
 
 ---
 

@@ -21,7 +21,7 @@ This is the *discovery* skill - it finds vulnerabilities nobody has catalogued y
 exploiting known weaknesses on live systems, use **lockpick**. For scanning code against known
 vulnerability patterns, use **security-audit**.
 
-**Target versions**: May 2026 snapshot. Read `references/target-versions.md` before
+**Target versions**: June 2026 snapshot. Read `references/target-versions.md` before
 pinning static analysis, reversing, fuzzing, or debugger tooling.
 
 ## When to use
@@ -465,7 +465,7 @@ and when to reach for each tool during source, binary, or live-system analysis.
 - `references/binary-analysis.md` - binary reverse engineering workflow, patch diffing, fuzzing harness development, dynamic analysis
 - `references/exploit-patterns.md` - proof-of-concept development templates by vulnerability class, with safety guidelines
 - `references/tooling-quick-reference.md` - tool catalog with install paths and best-fit usage notes
-- `references/target-versions.md` - May 2026 version snapshot for static analysis, reversing, fuzzing, and debugger tools
+- `references/target-versions.md` - June 2026 version snapshot for static analysis, reversing, fuzzing, and debugger tools
 
 ## Output Contract
 

@@ -17,7 +17,7 @@ Build, review, and architect applications that use AI models - from single-API c
 multi-agent systems with RAG pipelines. The goal is production-grade AI apps that are reliable,
 cost-effective, and don't hallucinate their way into an incident.
 
-**Target versions**: May 2026 snapshot. Read `references/target-versions.md` before
+**Target versions**: June 2026 snapshot. Read `references/target-versions.md` before
 pinning model IDs (Claude/OpenAI families), SDKs, runtimes, vector stores, or evaluation tools.
 
 ## When to use
@@ -435,7 +435,7 @@ PII detection setup, and content policy implementation.
 - `references/fine-tuning.md` - data prep, PEFT/LoRA, training evaluation, full vs parameter-efficient methods
 - `references/local-inference.md` - quantization, model selection, GPU memory, production serving config
 - `references/safety.md` - prompt injection defense, output validation, PII handling, content filtering, audit logging
-- `references/target-versions.md` - May 2026 snapshot: Claude/OpenAI model families, AI SDKs, runtimes, vector stores, and eval tools
+- `references/target-versions.md` - June 2026 snapshot: Claude/OpenAI model families, AI SDKs, runtimes, vector stores, and eval tools
 
 ## Output Contract
 

@@ -17,7 +17,7 @@ Turn an unattended, repeatable task into a Claude Code routine: a saved prompt p
 
 **Why routines differ from chat prompts.** A routine runs as a full autonomous Claude Code cloud session. There is no permission-mode picker, no approval prompts, and no human to answer clarifying questions mid-run. A prompt that works fine in a conversation can stall or misfire silently inside a routine because the model has no one to ask. Every routine prompt must be self-contained, state its success criteria, and declare where output goes.
 
-**Research preview context** (May 2026 recheck): routines ship under the beta header `experimental-cc-routine-2026-04-01`. Behavior, limits, and the API surface can change. Pin any beta header references to that value and date so staleness is detectable.
+**Research preview context** (June 2026 recheck): routines ship under the beta header `experimental-cc-routine-2026-04-01`. Behavior, limits, and the API surface can change. Pin any beta header references to that value and date so staleness is detectable.
 
 ## When to use
 
