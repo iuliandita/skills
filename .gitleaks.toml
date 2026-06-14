@@ -8,3 +8,8 @@
   description = "Non-secret placeholder used in documentation examples"
   regexTarget = "match"
   regexes = ['''key:secret''']
+
+[[allowlists]]
+  description = "Example Idempotency-Key UUID in backend-api HTTP docs, not a credential"
+  regexTarget = "match"
+  regexes = ['''77a5e517-0b63-42c2-8fb7-d4df0f1e30e6''']
