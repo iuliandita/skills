@@ -1,7 +1,7 @@
 ---
 name: deep-audit
 description: >
-  · Run an exhaustive 5-wave repo audit (every applicable lens, up to 29 agents), persist findings, generate phased tasks. Triggers: 'deep audit', 'comprehensive audit', 'full audit', 'mega review', 'deep review', 'audit report'. Not for a quick fixed 4-skill sweep (use full-review).
+  · Run an exhaustive 5-wave repo audit (every applicable lens, up to 30 agents), persist findings, generate phased tasks. Triggers: 'deep audit', 'comprehensive audit', 'full audit', 'mega review', 'deep review', 'audit report'. Not for a quick fixed 4-skill sweep (use full-review).
 license: MIT
 compatibility: "Requires iuliandita/skills collection installed. Subagent support strongly recommended. Optional: a brainstorming or ideation skill in the host harness (matched by name pattern) for large-audit planning handoff."
 metadata:
@@ -13,7 +13,7 @@ metadata:
 
 # Deep Audit: Wave-Based Repo Orchestrator
 
-Run up to 29 audit agents against a repo in 5 sequential waves. This is the broadest application-repo dispatch plan (4 Wave 2 + up to 20 conditional Wave 3 lenses + 2 Wave 4 + 3 Wave 5), not the total skill count. Wave 1 detects the tech stack, Waves 2-5 dispatch only matching audit skills, and each wave reports before the next begins.
+Run up to 30 audit agents against a repo in 5 sequential waves. This is the broadest application-repo dispatch plan (4 Wave 2 + up to 21 conditional Wave 3 lenses + 2 Wave 4 + 3 Wave 5), not the total skill count. Wave 1 detects the tech stack, Waves 2-5 dispatch only matching audit skills, and each wave reports before the next begins.
 
 The five waves are: Reconnaissance; Code Quality (code-review, anti-slop, anti-ai-prose,
 code-slimming); Domain-Specific (detected skills only); Security (security-audit then zero-day); and Docs & Hygiene (update-docs, roadmap, git).
@@ -107,7 +107,7 @@ If the user specified a scope, pass it as the script's first argument to filter 
 to that subtree (`git ls-files -- path/to/scope` instead of the full repo).
 
 After detection, present the recon summary before proceeding. Compute
-`{unmatched_skills}` as the 20 Wave 3 candidates minus the matched set.
+`{unmatched_skills}` as the 21 Wave 3 candidates minus the matched set.
 Compute `{count}` by summing: 4 (Wave 2) + matched Wave 3 skills + 2 (Wave 4) +
 3 (Wave 5). Example: if 6 Wave 3 skills match, count = 4 + 6 + 2 + 3 = 15. If the matched Wave 3 set is too broad for the user's goal, recommend a scoped deep-audit or **full-review** instead of pretending every lens is equally valuable.
 
@@ -141,7 +141,7 @@ Skills that will run:
 Total agents: {count}
 ```
 
-Concrete example for a Node+Postgres+Docker+K8s repo with i18n, frontend code, and GitHub Actions (9 Wave 3 skills matched out of 20):
+Concrete example for a Node+Postgres+Docker+K8s repo with i18n, frontend code, and GitHub Actions (9 Wave 3 skills matched out of 21):
 
 ```
 Repo: myorg/api @ a3f91c2 (main)  |  Files: 412  |  Scope: full codebase
@@ -149,7 +149,7 @@ Languages: TypeScript, SQL, YAML
 
 Wave 2 (always): code-review, anti-slop, anti-ai-prose, code-slimming
 Wave 3 (detected): testing, command-prompt, databases, backend-api, frontend-design, localize, docker, kubernetes, ci-cd
-Wave 3 (skipped): terraform, ansible, networking, ai-ml, mcp, arch-btw, debian-ubuntu, rhel-fedora, nixos-btw, firewall-appliance, virtualization
+Wave 3 (skipped): terraform, ansible, networking, observability, ai-ml, mcp, arch-btw, debian-ubuntu, rhel-fedora, nixos-btw, firewall-appliance, virtualization
 Wave 4 (always): security-audit, zero-day
 Wave 5 (always): update-docs, roadmap, git
 
@@ -231,13 +231,14 @@ Scope: {scope}. Return the complete report.
 | `frontend-design` | Audit frontend UI/UX implementation, visual hierarchy, accessibility, responsive behavior, framework drift, and AI design tells. Do not redesign or edit - report only. |
 | `localize` | Audit i18n completeness. Find hardcoded user-facing strings, validate locale catalogs, check for missing translations. |
 | `ci-cd` | Audit pipeline config for security (SHA pinning, secret exposure), efficiency, and correctness. |
+| `observability` | Audit signal coverage: uninstrumented services, missing SLOs/error budgets, alert anti-patterns, metric cardinality risk, broken trace/log correlation. Do not add instrumentation - report only. |
 
 All other skills use the generic prompt.
 
 Present results:
 
 ```markdown
-## Wave 3: Domain-Specific [{N} of 20 skills matched]
+## Wave 3: Domain-Specific [{N} of 21 skills matched]
 
 ### {Skill Display Name}
 {report verbatim}

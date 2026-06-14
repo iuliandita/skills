@@ -27,6 +27,7 @@ its domain isn't actually present.
 | ansible | `ansible.cfg`, `galaxy.yml`, `galaxy.yaml`, `roles/*/tasks/main.yml` | Also: `playbooks/*.yml` containing `hosts:`, or `requirements.yml` containing `roles:` or `collections:` |
 | ci-cd | `.github/workflows/*.yml`, `.github/workflows/*.yaml`, `.gitlab-ci.yml`, `.forgejo/workflows/`, `Jenkinsfile`, `.circleci/config.yml` | - |
 | networking | `nginx.conf`, `Caddyfile`, `haproxy.cfg`, `traefik.yml`, `traefik.yaml`, `traefik.toml`, `*.zone`, `named.conf`, `dnsmasq.conf`, `wg*.conf`, `nftables.conf` | - |
+| observability | `prometheus.yml`, `prometheus.yaml`, `*.rules.yml`, `*.rules.yaml`, `alertmanager.yml`, `alertmanager.yaml`, `otel-collector*.yaml`, `otelcol*.yaml`, `loki*.yaml`, `tempo*.yaml`, `grafana/provisioning/`, `grafana/dashboards/` | - |
 | arch-btw | `PKGBUILD`, `*.install`, `mkinitcpio.conf*`, `archinstall.json`, `etc/pacman.d/`, `etc/pacman.conf` | - |
 | debian-ubuntu | `debian/control`, `debian/changelog`, `debian/rules`, `debian/copyright`, `*.dsc`, `snapcraft.yaml`, `snap/snapcraft.yaml` | - |
 | rhel-fedora | `*.spec`, `.copr/`, `dracut.conf*`, `selinux/*.te`, `comps.xml*`, `dnf/modules.d/` | - |
@@ -109,6 +110,10 @@ echo "$files" | grep -qE '\.github/workflows/|\.gitlab-ci\.yml$|\.forgejo/workfl
 # networking
 echo "$files" | grep -qE 'nginx\.conf|Caddyfile|haproxy\.cfg|traefik\.(ya?ml|toml)|\.zone$|named\.conf|dnsmasq\.conf|wg[0-9]*\.conf$|nftables\.conf' \
   && matched+=(networking)
+
+# observability (Prometheus/Alertmanager/OTel/Loki/Tempo config, Grafana provisioning)
+echo "$files" | grep -qE '(^|/)prometheus\.ya?ml$|\.rules\.ya?ml$|(^|/)alertmanager\.ya?ml$|(^|/)otel-collector.*\.ya?ml$|(^|/)otelcol.*\.ya?ml$|(^|/)loki.*\.ya?ml$|(^|/)tempo.*\.ya?ml$|(^|/)grafana/(provisioning|dashboards)/' \
+  && matched+=(observability)
 
 # arch-btw
 echo "$files" | grep -qE '(^|/)PKGBUILD$|\.install$|(^|/)mkinitcpio\.conf|(^|/)archinstall\.json$|(^|/)etc/pacman\.(d/|conf)' \
