@@ -88,11 +88,7 @@ check_frontmatter() {
   fi
 
   # Validate name matches directory (Agent Skills spec requirement)
-  local fm_name
-  fm_name="$(frontmatter_get "$file" "name" 2>/dev/null || true)"
-  if [[ "$fm_name" != "$name" ]]; then
-    error "$name: frontmatter name '$fm_name' does not match directory name"
-  fi
+  frontmatter_name_matches_dir "$file" "$name" error
 }
 
 # ── Section checks ──────────────────────────────────────────────────────
@@ -127,11 +123,8 @@ check_length() {
   local file="$1" name="$2"
   local lines
   lines=$(wc -l < "$file")
-  if (( lines > 600 )); then
-    error "$name: SKILL.md is $lines lines (hard max 600)"
-  elif (( lines > 500 )); then
-    warn "$name: SKILL.md is $lines lines (target <500, extract to references/ if possible)"
-  fi
+  local warn_msg="$name: SKILL.md is $lines lines (target <500, extract to references/ if possible)"
+  skill_length_check "$file" "$name" error warn "$warn_msg"
 }
 
 # ── Reference file checks ──────────────────────────────────────────────

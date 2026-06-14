@@ -95,10 +95,7 @@ for skill_dir in "$SKILLS_DIR"/*/; do
     continue
   fi
 
-  fm_name="$(frontmatter_get "$skill_file" "name" 2>/dev/null || true)"
-  if [[ "$fm_name" != "$name" ]]; then
-    error "$name: frontmatter name '$fm_name' does not match directory name"
-  fi
+  frontmatter_name_matches_dir "$skill_file" "$name" error
 
   # Spec: required fields
   if ! frontmatter_has "$skill_file" "name"; then
@@ -117,11 +114,8 @@ for skill_dir in "$SKILLS_DIR"/*/; do
 
   # Spec: SKILL.md body recommended under 500 lines (soft target, 600 hard max)
   lines=$(wc -l < "$skill_file")
-  if (( lines > 600 )); then
-    error "$name: SKILL.md is $lines lines (hard max 600)"
-  elif (( lines > 500 )); then
-    warn "$name: SKILL.md is $lines lines (spec recommends < 500)"
-  fi
+  warn_msg="$name: SKILL.md is $lines lines (spec recommends < 500)"
+  skill_length_check "$skill_file" "$name" error warn "$warn_msg"
 
   if [[ $errors -eq $prev_errors ]]; then
     pass "spec-compliant"
