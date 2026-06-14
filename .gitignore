@@ -20,3 +20,6 @@ __pycache__/
 .pytest_cache/
 .refiner-baseline.json
 test.sh
+
+# Disposable agent handoff docs
+.handoff/
