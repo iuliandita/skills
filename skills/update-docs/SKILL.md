@@ -424,7 +424,7 @@ When a feature, service, or API is deprecated during a session:
 
 ## Output Contract
 
-See `skills/_shared/output-contract.md` for the full contract.
+See `references/output-contract.md` for the full contract.
 
 - **Skill name:** UPDATE-DOCS
 - **Deliverable bucket:** `audits`

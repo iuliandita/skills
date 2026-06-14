@@ -326,7 +326,7 @@ Enforce via `vitest --coverage --coverage.thresholds.lines=80`, `pytest --cov --
 
 ## Output Contract
 
-See `skills/_shared/output-contract.md` for the full contract.
+See `references/output-contract.md` for the full contract.
 
 - **Skill name:** TESTING
 - **Deliverable bucket:** `audits`

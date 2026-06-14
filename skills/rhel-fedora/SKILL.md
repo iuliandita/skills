@@ -332,7 +332,7 @@ When a bug looks desktop-only, compare one clean baseline:
 
 ## Output Contract
 
-See `skills/_shared/output-contract.md` for the full contract.
+See `references/output-contract.md` for the full contract.
 
 - **Skill name:** RHEL-FEDORA
 - **Deliverable bucket:** `audits`

@@ -235,7 +235,7 @@ API-only and GitHub-only routines skip artifact #2 and emit a web-UI walkthrough
 
 ## Output Contract
 
-See `skills/_shared/output-contract.md` for the full contract.
+See `references/output-contract.md` for the full contract.
 
 - **Skill name:** ROUTINE-WRITER
 - **Deliverable bucket:** `deliverables`

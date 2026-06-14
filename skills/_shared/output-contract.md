@@ -1,8 +1,6 @@
-# Output Contract — Single Source of Truth
+# Output Contract
 
-This file is the canonical output contract for every public skill in iuliandita/skills. Each `skills/<name>/SKILL.md` references this file from a `## Output Contract` section and declares its mode (always-on or conditional) and deliverable bucket.
-
-This directory has no `SKILL.md`, so `install.sh`, `scripts/lint-skills.sh`, and `scripts/validate-spec.sh` skip it. Do not add a `SKILL.md` here.
+How a skill reports its findings: an inline surface in the transcript and a written deliverable file. The two shapes below are intentionally different.
 
 ## Two surfaces
 
@@ -218,3 +216,13 @@ After:
 4. After the loop, emits an updated inline conclusion table reflecting the new `Type` (`fixed`) and `Action` (`applied`) values.
 
 Layer 3 (a dedicated `apply-report` skill that takes a report path and runs the loop without re-running the auditor) is a future follow-up — not part of this contract.
+
+<!-- maintainer-notes:not-shipped
+Everything above this marker is the portable output contract. It is the single source
+of truth and is copied verbatim into each skill's own references/output-contract.md by
+scripts/gen-contract-refs.sh (drift-guarded by scripts/check-contract-sync.sh). This
+marker and everything below it are stripped before copying, so installed skills never
+see repo-internal build notes. _shared/ has no SKILL.md, so install.sh,
+scripts/lint-skills.sh, and scripts/validate-spec.sh skip it; do not add one. Edit the
+contract above, then re-run the generator.
+-->

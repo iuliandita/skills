@@ -255,7 +255,7 @@ If a skill is not available, perform a manual review in the same `general-purpos
 
 ## Output Contract
 
-See `skills/_shared/output-contract.md` for the full contract.
+See `references/output-contract.md` for the full contract.
 
 - **Skill name:** FULL-REVIEW
 - **Deliverable bucket:** `audits`

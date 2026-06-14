@@ -29,6 +29,13 @@ repos:
         pass_filenames: false
         stages: [pre-commit, pre-push]
 
+      - id: contract-sync-check
+        name: skills carry in-sync output-contract, no runtime _shared refs
+        entry: ./scripts/check-contract-sync.sh
+        language: system
+        pass_filenames: false
+        stages: [pre-commit, pre-push]
+
       - id: skill-collection-lint
         name: lint skill collection
         entry: ./scripts/lint-skills.sh

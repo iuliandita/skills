@@ -454,7 +454,7 @@ Read `references/production-checklist.md` for the full pre-deploy checklist cove
 
 ## Output Contract
 
-See `skills/_shared/output-contract.md` for the full contract.
+See `references/output-contract.md` for the full contract.
 
 - **Skill name:** TERRAFORM
 - **Deliverable bucket:** `audits`

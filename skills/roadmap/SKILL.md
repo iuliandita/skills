@@ -374,7 +374,7 @@ silently - move to **Parked** with a reason, or confirm deletion explicitly.
 
 ## Output Contract
 
-See `skills/_shared/output-contract.md` for the full contract.
+See `references/output-contract.md` for the full contract.
 
 - **Skill name:** ROADMAP
 - **Deliverable bucket:** `deliverables`

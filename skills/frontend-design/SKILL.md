@@ -283,7 +283,7 @@ Run through the AI Self-Check above.
 
 ## Output Contract
 
-See `skills/_shared/output-contract.md` for the full contract.
+See `references/output-contract.md` for the full contract.
 
 - **Skill name:** FRONTEND-DESIGN
 - **Deliverable bucket:** `deliverables`

@@ -273,7 +273,7 @@ These look like security issues but aren't (or are acceptable):
 
 ## Output Contract
 
-See `skills/_shared/output-contract.md` for the full contract.
+See `references/output-contract.md` for the full contract.
 
 - **Skill name:** SECURITY-AUDIT
 - **Deliverable bucket:** `audits`

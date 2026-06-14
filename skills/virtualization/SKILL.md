@@ -417,7 +417,7 @@ but non-trivial for large estates.
 
 ## Output Contract
 
-See `skills/_shared/output-contract.md` for the full contract.
+See `references/output-contract.md` for the full contract.
 
 - **Skill name:** VIRTUALIZATION
 - **Deliverable bucket:** `audits`

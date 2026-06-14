@@ -355,7 +355,7 @@ When a problem looks "flake-only," compare one clean baseline:
 
 ## Output Contract
 
-See `skills/_shared/output-contract.md` for the full contract.
+See `references/output-contract.md` for the full contract.
 
 - **Skill name:** NIXOS-BTW
 - **Deliverable bucket:** `audits`

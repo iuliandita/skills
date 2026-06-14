@@ -225,7 +225,7 @@ config system, REST API, IPv6 gotchas, SOPs, and recovery procedures.
 
 ## Output Contract
 
-See `skills/_shared/output-contract.md` for the full contract.
+See `references/output-contract.md` for the full contract.
 
 - **Skill name:** FIREWALL-APPLIANCE
 - **Deliverable bucket:** `audits`

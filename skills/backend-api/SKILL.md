@@ -384,7 +384,7 @@ Rolling deploys send SIGTERM to old instances while new ones come up. Handle it 
 
 ## Output Contract
 
-See `skills/_shared/output-contract.md` for the full contract.
+See `references/output-contract.md` for the full contract.
 
 - **Skill name:** BACKEND-API
 - **Deliverable bucket:** `audits`

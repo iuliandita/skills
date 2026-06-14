@@ -352,7 +352,7 @@ Before returning any shell script, check:
 
 ## Output Contract
 
-See `skills/_shared/output-contract.md` for the full contract.
+See `references/output-contract.md` for the full contract.
 
 - **Skill name:** COMMAND-PROMPT
 - **Deliverable bucket:** `audits`

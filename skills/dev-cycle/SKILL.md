@@ -367,7 +367,7 @@ GitLab substitutes `glab mr create`, `glab ci status --live`, `glab mr merge --s
 
 ## Output Contract
 
-See `skills/_shared/output-contract.md` for the full contract.
+See `references/output-contract.md` for the full contract.
 
 - **Skill name:** DEV-CYCLE
 - **Deliverable bucket:** `audits`

@@ -460,7 +460,7 @@ instead of inventing a composite.
 
 ## Output Contract
 
-See `skills/_shared/output-contract.md` for the full contract.
+See `references/output-contract.md` for the full contract.
 
 - **Skill name:** SKILL-CREATOR
 - **Deliverable bucket:** `audits`
