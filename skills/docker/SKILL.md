@@ -422,7 +422,7 @@ See AI Self-Check above for the full build-time checklist (Dockerfile correctnes
 
 ## Output Contract
 
-See `skills/_shared/output-contract.md` for the full contract.
+See `references/output-contract.md` for the full contract.
 
 - **Skill name:** DOCKER
 - **Deliverable bucket:** `audits`

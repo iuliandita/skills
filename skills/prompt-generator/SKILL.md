@@ -261,7 +261,7 @@ Note: simple task, so plain prose - no XML sections, no numbered steps, no bloat
 
 ## Output Contract
 
-See `skills/_shared/output-contract.md` for the full contract.
+See `references/output-contract.md` for the full contract.
 
 - **Skill name:** PROMPT-GENERATOR
 - **Deliverable bucket:** `prompts`

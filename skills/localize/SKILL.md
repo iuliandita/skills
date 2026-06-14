@@ -366,7 +366,7 @@ Once i18n is set up, the workflow for new features is:
 
 ## Output Contract
 
-See `skills/_shared/output-contract.md` for the full contract.
+See `references/output-contract.md` for the full contract.
 
 - **Skill name:** LOCALIZE
 - **Deliverable bucket:** `audits`

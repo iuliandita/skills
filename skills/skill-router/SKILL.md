@@ -97,7 +97,7 @@ For examples, see `references/routing-patterns.md`.
 
 ## Output Contract
 
-See `skills/_shared/output-contract.md` for the full contract.
+See `references/output-contract.md` for the full contract.
 
 - **Skill name:** SKILL-ROUTER
 - **Deliverable bucket:** `audits`

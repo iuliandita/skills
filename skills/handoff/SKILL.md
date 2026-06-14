@@ -245,7 +245,7 @@ deleted; a committed one stays in the repo as a record of the PR it shipped with
 
 ## Output Contract
 
-See `skills/_shared/output-contract.md` for the full contract.
+See `references/output-contract.md` for the full contract.
 
 - **Skill name:** HANDOFF
 - **Deliverable bucket:** `deliverables`

@@ -462,7 +462,7 @@ Keep it tight. Show the bug, show the fix, move on. Long explanations only when 
 
 ## Output Contract
 
-See `skills/_shared/output-contract.md` for the full contract.
+See `references/output-contract.md` for the full contract.
 
 - **Skill name:** CODE-REVIEW
 - **Deliverable bucket:** `audits`

@@ -437,7 +437,7 @@ account-specific pages.
 
 ## Output Contract
 
-See `skills/_shared/output-contract.md` for the full contract.
+See `references/output-contract.md` for the full contract.
 
 - **Skill name:** BROWSE
 - **Deliverable bucket:** `audits`

@@ -448,7 +448,7 @@ the OWASP Top 10 for Agentic Applications, read `references/supply-chain.md`
 
 ## Output Contract
 
-See `skills/_shared/output-contract.md` for the full contract.
+See `references/output-contract.md` for the full contract.
 
 - **Skill name:** CI-CD
 - **Deliverable bucket:** `audits`

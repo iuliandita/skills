@@ -182,7 +182,7 @@ The mechanics are not optional - they are what separates a real grill from a cha
 
 ## Output Contract
 
-See `skills/_shared/output-contract.md` for the full contract.
+See `references/output-contract.md` for the full contract.
 
 - **Skill name:** DEEP-GRILL
 - **Deliverable bucket:** `deliverables`

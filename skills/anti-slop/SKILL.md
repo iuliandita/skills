@@ -417,7 +417,7 @@ These look like slop but aren't:
 
 ## Output Contract
 
-See `skills/_shared/output-contract.md` for the full contract.
+See `references/output-contract.md` for the full contract.
 
 - **Skill name:** ANTI-SLOP
 - **Deliverable bucket:** `audits`

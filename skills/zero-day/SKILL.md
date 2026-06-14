@@ -469,7 +469,7 @@ and when to reach for each tool during source, binary, or live-system analysis.
 
 ## Output Contract
 
-See `skills/_shared/output-contract.md` for the full contract.
+See `references/output-contract.md` for the full contract.
 
 - **Skill name:** ZERO-DAY
 - **Deliverable bucket:** `audits`

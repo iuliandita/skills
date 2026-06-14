@@ -52,6 +52,9 @@ jobs:
       - name: Check deep-audit skill coverage
         run: ./scripts/check-deep-audit-coverage.sh
 
+      - name: Check output-contract sync
+        run: ./scripts/check-contract-sync.sh
+
       - name: Lint skill collection
         run: ./scripts/lint-skills.sh
 

@@ -439,7 +439,7 @@ PII detection setup, and content policy implementation.
 
 ## Output Contract
 
-See `skills/_shared/output-contract.md` for the full contract.
+See `references/output-contract.md` for the full contract.
 
 - **Skill name:** AI-ML
 - **Deliverable bucket:** `audits`

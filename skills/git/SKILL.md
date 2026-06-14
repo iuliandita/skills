@@ -395,7 +395,7 @@ Source code management requirements that map to git practices.
 
 ## Output Contract
 
-See `skills/_shared/output-contract.md` for the full contract.
+See `references/output-contract.md` for the full contract.
 
 - **Skill name:** GIT
 - **Deliverable bucket:** `audits`

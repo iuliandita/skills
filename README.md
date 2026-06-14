@@ -125,6 +125,8 @@ Installer support means the repo knows where to copy or symlink the skills. It i
 
 Issues and PRs welcome. Skills must pass `./scripts/lint-skills.sh` and follow the [Agent Skills specification](https://agentskills.io/specification).
 
+Skills are self-contained: each one references only files inside its own directory, so it works when installed individually. The shared output contract lives at `skills/_shared/output-contract.md` as a build input and is copied into every skill's `references/output-contract.md` by `./scripts/gen-contract-refs.sh`. Edit the contract there, re-run the generator, and commit the result; `./scripts/check-contract-sync.sh` (wired into CI and pre-commit) fails on drift or any runtime `skills/_shared/` reference.
+
 ## License
 
 [MIT](LICENSE)
