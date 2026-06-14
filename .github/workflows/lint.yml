@@ -157,6 +157,8 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
 
       - name: Install gitleaks
         env:
@@ -176,7 +178,7 @@ jobs:
           echo "$RUNNER_TEMP/semgrep-venv/bin" >> "$GITHUB_PATH"
 
       - name: Secret scan
-        run: gitleaks detect --source . --no-git --redact
+        run: gitleaks git --redact .
 
       - name: Static analysis
         # Limit semgrep to executable/config files. The Markdown corpus contains
