@@ -2,9 +2,8 @@
 name: observability
 description: >
   · Instrument and audit observability: metrics, traces, logs, alerts, SLOs, dashboards.
-  Triggers: 'observability', 'metrics', 'tracing', 'prometheus', 'opentelemetry', 'grafana',
-  'slo', 'alerting'. Not for live diagnostics (use cluster-health) or manifests (use
-  kubernetes).
+  Triggers: observability, metrics, tracing, prometheus, opentelemetry, grafana, slo. Not for
+  live diagnostics (cluster-health) or manifests (kubernetes).
 license: MIT
 compatibility: "Optional: prometheus, otelcol, grafana, promtool, amtool, jq"
 metadata:
