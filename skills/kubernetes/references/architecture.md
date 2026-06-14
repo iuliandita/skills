@@ -1,6 +1,6 @@
 # Kubernetes Architecture Decision Framework
 
-Deep-dive reference for cluster design, GitOps strategy, security architecture, and operational patterns. Updated for K8s 1.33-1.35+ and Helm 4.
+Deep-dive reference for cluster design, GitOps strategy, security architecture, and operational patterns. Updated for K8s 1.34-1.36 and Helm 4.
 
 ---
 
@@ -109,7 +109,7 @@ spec:
 - Multi-source Applications (mature since ArgoCD 2.6) for separating chart version from env values.
 - `ignoreMissingValueFiles: true` for default/override patterns with ApplicationSets.
 - OCI charts: omit `oci://` prefix in ArgoCD's `repoURL`.
-- Wildcard valueFiles (documented in current Argo CD docs as of May 2026 recheck): `valueFiles: ["values/*.yaml"]`.
+- Wildcard valueFiles (documented in current Argo CD docs as of June 2026 recheck): `valueFiles: ["values/*.yaml"]`.
 - **Anti-pattern**: `randAlphaNum` or other random functions in Helm templates - causes perpetual OutOfSync.
 
 ### Promotion Strategy
@@ -223,7 +223,7 @@ The Trivy supply chain attack (CVE-2026-33634) demonstrated that **mutable Git t
 - **Separate CI secrets by environment**: staging pipeline should NOT have access to production credentials.
 - **Monitor action repos for force-push events**: subscribe to security advisories for all actions you use.
 
-**Trivy safe versions (May 2026):** use binary v0.70.0+ from official releases for new pins. The March 2026 rollback set was binary v0.69.3, `trivy-action@v0.35.0`, and `setup-trivy@v0.2.6`. Do NOT use v0.69.4/5/6.
+**Trivy safe versions (June 2026):** use binary v0.70.0+ from official releases for new pins. The March 2026 rollback set was binary v0.69.3, `trivy-action@v0.35.0`, and `setup-trivy@v0.2.6`. Do NOT use v0.69.4/5/6.
 
 ### Secrets Management
 
@@ -392,7 +392,7 @@ Keep these in mind when upgrading:
 
 | Requirement | Version | Impact |
 |-------------|---------|--------|
-| **cgroup v2** | 1.35+ | Kubelet fails to start on cgroup v1 nodes. CentOS 7, RHEL 7, Ubuntu 18.04 affected. |
+| **cgroup v2** | 1.36+ | `FailCgroupV1` defaults to true; kubelet fails to start on cgroup v1 nodes unless `failCgroupV1: false`. CentOS 7, RHEL 7, Ubuntu 18.04 affected. |
 | **containerd 2.0+** | 1.36+ | Last release supporting containerd 1.x is 1.35. |
 | **AppArmor via securityContext** | 1.34+ | Annotations removed. Use `securityContext.appArmorProfile` field. |
 | **KMS v2** | Now | KMS v1 disabled by default since 1.29. Migrate to v2. |

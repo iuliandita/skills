@@ -2,7 +2,7 @@
 
 Credential management, commit signing setup, secret scanning, CVE reference, and hardening.
 
-Research date: May 2026.
+Research date: June 2026.
 
 ---
 
@@ -254,7 +254,7 @@ git push origin --force --tags
 | CVE-2024-50349 | < 2.48.1 | Medium | Credential leak via terminal escape in URL (Clone2Leak disclosure) |
 | CVE-2024-52006 | < 2.48.1 | Medium | Carriage return smuggling in credential protocol (same Clone2Leak disclosure as CVE-2024-50349) |
 
-**Action**: ensure git >= 2.50.1 (ideally 2.53.x). CVE-2025-48384 is **actively exploited in the
+**Action**: ensure git >= 2.50.1 (ideally 2.54.x). CVE-2025-48384 is **actively exploited in the
 wild** - a weaponized `.gitmodules` file can overwrite hook scripts to achieve RCE on `git clone
 --recursive`. Patched in v2.50.1, v2.49.1, v2.48.2, v2.47.3, and backports. Linux and macOS
 affected; Windows is not.

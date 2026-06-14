@@ -13,7 +13,7 @@ metadata:
 
 # Localize: App Internationalization Workflow
 
-**Target versions (May 2026):** react-i18next 17.x, vue-i18n 11.x, next-intl 4.x, i18next 26.x
+**Target versions (June 2026):** react-i18next 17.x, vue-i18n 11.x, next-intl 4.x, i18next 26.x
 
 Systematic approach to internationalizing applications. Covers two scenarios: adding
 multilingual support from scratch and auditing existing i18n for gaps. Built from real

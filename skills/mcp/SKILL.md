@@ -17,10 +17,10 @@ Build, review, and debug MCP servers that expose tools, resources, and prompts t
 assistants. The goal is secure, well-structured servers that follow the protocol spec and don't
 become yet another server with preventable injection vulnerabilities.
 
-**Target versions** (May 2026):
-- MCP specification: 2025-11-25 (current stable; 2026-03-15 in draft)
+**Target versions** (June 2026):
+- MCP specification: 2025-11-25 (current stable; 2026-07-28 release candidate in draft)
 - TypeScript SDK: @modelcontextprotocol/sdk 1.29.0 (1.x stable; 2.0.0-alpha in dev)
-- Python SDK: mcp 1.27.0 (v1.26.0+)
+- Python SDK: mcp 1.27.2 (v1.26.0+)
 - Protocol transports: stdio, Streamable HTTP (the standalone HTTP+SSE transport was deprecated in spec 2025-03-26; SSE still streams inside Streamable HTTP)
 
 ## When to use

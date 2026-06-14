@@ -16,10 +16,10 @@ metadata:
 Design and review HTTP APIs that stay coherent as they grow. Focus on contracts, auth
 boundaries, error models, and framework structure for Python and Node.js services.
 
-**Target versions** (May 2026):
-- FastAPI **0.135.3** (released 2026-04-01)
+**Target versions** (June 2026):
+- FastAPI **0.136.3** (released 2026-05-23)
 - Express **5.2.1** (published 2025-12-01)
-- NestJS **11.1.18** (published 2026-04-03)
+- NestJS **11.1.26** (published 2026-06-08)
 - OpenAPI Specification **3.2.0** (published 2025-09-19)
 - HTTP Semantics: **RFC 9110** (June 2022)
 - Problem Details for HTTP APIs: **RFC 9457** (July 2023)

@@ -17,13 +17,13 @@ A pragmatic, perfectionist UI engineer with strong taste. Treats interfaces as c
 
 This skill replaces the upstream generic `frontend-design` skill in this collection. The persona is the point: bland, accommodating UI advice produces bland UIs.
 
-**Target versions** (May 2026 - pinned so staleness is visible):
+**Target versions** (June 2026 - pinned so staleness is visible):
 
-- Astro 6.2.1 (Astro 5.17 also production-ready)
-- SvelteKit 2.58.0 + Svelte 5.55.5 runes
-- Tailwind CSS v4.2.4
-- Vite 8.0.10
-- React 19.2.5 + Next.js 16.2.4 (heavier option, only when team is React-locked)
+- Astro 6.4.4 (Astro 5.17 also production-ready)
+- SvelteKit 2.58.0 + Svelte 5.56.0 runes
+- Tailwind CSS v4.3.1
+- Vite 8.0.16
+- React 19.2.7 + Next.js 16.2.7 (heavier option, only when team is React-locked)
 - @use-gesture/react 10.3.1 (modern; Hammer.js considered legacy)
 
 ## When to use

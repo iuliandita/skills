@@ -16,7 +16,7 @@ when creating or reviewing skills to ensure consistency.
 7. AI Self-Check Patterns
 7.5. Diagnostic Skill Pitfalls
 8. Trigger Description Patterns
-9. Skill Inventory (May 2026)
+9. Skill Inventory (June 2026)
 
 ---
 
@@ -506,9 +506,9 @@ Use this skill even when the user doesn't explicitly say "git" but is clearly do
 
 ---
 
-## 9. Skill Inventory (May 2026)
+## 9. Skill Inventory (June 2026)
 
-### Published skills (42)
+### Published skills (44)
 
 | Skill | Effort | Date Added | Domain |
 |-------|--------|-----------|--------|
@@ -527,12 +527,14 @@ Use this skill even when the user doesn't explicitly say "git" but is clearly do
 | databases | high | 2026-03-24 | Database operations |
 | debian-ubuntu | high | 2026-04-22 | Debian / Ubuntu administration |
 | deep-audit | high | 2026-04-14 | Wave-based repo audit orchestrator |
+| deep-grill | high | 2026-06-13 | Plan stress-testing and red-team interrogation |
 | dev-cycle | high | 2026-04-14 | Start-to-finish development workflow |
 | docker | high | 2026-03-24 | Containers |
 | firewall-appliance | high | 2026-03-30 | OPNsense/pfSense firewall management |
 | frontend-design | high | 2026-04-26 | Opinionated UI/UX build and critique |
 | full-review | high | 2026-03-22 | Orchestrator (4 parallel audits) |
 | git | high | 2026-03-24 | Version control, multi-forge |
+| handoff | medium | 2026-06-13 | Session handoff document authoring |
 | jekyll-hyde | medium | 2026-04-28 | Dual-lens decision review |
 | kali-linux | high | 2026-04-22 | Kali Linux administration |
 | kubernetes | high | 2026-03-24 | K8s manifests, Helm, architecture |

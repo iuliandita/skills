@@ -20,7 +20,7 @@ metadata:
 
 Write, review, and architect Dockerfiles, Compose stacks, and container workflows - from single-service dev setups to multi-arch production pipelines with image signing and compliance gates. The goal is minimal, secure, reproducible images that a team can maintain and a QSA can audit.
 
-**Target versions**: May 2026 snapshot. Read `references/target-versions.md` before
+**Target versions**: June 2026 snapshot. Read `references/target-versions.md` before
 pinning Docker, Compose, BuildKit, containerd, Podman, Buildah, or runc.
 
 This skill covers Dockerfiles, Compose, container hardening, supply chain, registry/CI
@@ -418,7 +418,7 @@ See AI Self-Check above for the full build-time checklist (Dockerfile correctnes
 - `references/compose-patterns.md` - Compose patterns and common stack layouts
 - `references/security-and-compliance.md` - container hardening, compliance guidance, and safe public custom image publishing
 - `references/alternative-runtimes.md` - Podman, Buildah, Skopeo, and related runtime patterns
-- `references/target-versions.md` - May 2026 version snapshot for Docker, Compose, BuildKit, containerd, Podman, Buildah, and runc
+- `references/target-versions.md` - June 2026 version snapshot for Docker, Compose, BuildKit, containerd, Podman, Buildah, and runc
 
 ## Output Contract
 

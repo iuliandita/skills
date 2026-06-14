@@ -393,9 +393,8 @@ and audit `authorized_keys`/CA-signed cert principals.
 ### Let's Encrypt with certbot
 
 **45-day certificate rollout timeline:**
-- Now: 90-day certs (default), 6-day short-lived certs available
-- May 2026: opt-in to 45-day certs
-- Feb 2027: default changes to 64-day certs
+- Now: 90-day certs (default), 6-day short-lived certs available; opt-in 45-day `tlsserver` profile live since May 13, 2026
+- Feb 2027: default changes to 64-day certs (10-day authorization reuse)
 - Feb 2028: default changes to 45-day certs
 
 Certbot 5.4.0 supports IP address certificates (`--ip-address`) and ARI (ACME Renewal

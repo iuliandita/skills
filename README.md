@@ -8,7 +8,7 @@
 npx skills add iuliandita/skills
 ```
 
-43 skills for DevOps, security, infra, and software engineering, maintained with lint/spec checks, behavioral test coverage, and a [Karpathy-style autoresearch loop](https://github.com/karpathy/autoresearch).
+44 skills for DevOps, security, infra, and software engineering, maintained with lint/spec checks, behavioral test coverage, and a [Karpathy-style autoresearch loop](https://github.com/karpathy/autoresearch).
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Agent Skills](https://img.shields.io/badge/Agent_Skills-open_standard-blue.svg)](https://agentskills.io)
@@ -23,7 +23,7 @@ AI coding tools used to mean prompts. Prompts don't compose, don't carry between
 
 Then Karpathy pointed an agent at a 630-line training script overnight. It edited the code, ran a 5-minute training, kept changes that improved the score, discarded the rest. 700 runs, 20 wins, on one GPU. The pattern works on anything you can score.
 
-This repo applies that pattern conservatively to 42 hand-built skills. The loop helps find weak spots and propose improvements; the gates and review discipline decide what survives.
+This repo applies that pattern conservatively to 44 hand-built skills. The loop helps find weak spots and propose improvements; the gates and review discipline decide what survives.
 
 ## The autoresearch loop
 

@@ -17,7 +17,7 @@ Administer Arch Linux and Arch-style systems without falling into rolling-releas
 Focus on vanilla Arch first, then layer in CachyOS behavior, `paru` workflow, systemd-native
 service management, boot recovery, kernel handling, and derivative-specific cautions.
 
-**Versions worth pinning** (May 2026):
+**Versions worth pinning** (June 2026):
 
 Only pin versions here when they materially affect compatibility or troubleshooting shape. For
 ordinary rolling packages, prefer the current repo state over stale version tables.

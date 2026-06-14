@@ -15,13 +15,13 @@ metadata:
 
 Write, review, and architect Ansible automation - from single playbooks to multi-tier, compliance-hardened infrastructure management. The goal is idempotent, auditable, maintainable automation that works the same locally and in CI/CD.
 
-**Target versions** (May 2026):
-- ansible-core **2.20.x LTS** (Python 3.12+ controller, 3.9+ target, EOL May 2027)
-- ansible (community package) 13.x (depends on ansible-core 2.20)
+**Target versions** (June 2026):
+- ansible-core **2.21.x** (current stable, Python 3.12+ controller, 3.9+ target, EOL Nov 2027); 2.20.x still maintained (2.20.6, EOL May 2027)
+- ansible (community package) 14.x (depends on ansible-core 2.21)
 - molecule 26.x (CalVer), ansible-lint 26.x (CalVer), ansible-navigator 26.x (CalVer)
 - ansible-builder 3.1.x (EE definition v3)
-- AWX 24.6.1 (last formal release Jul 2024; upstream AWX releases paused for a major refactor, devel branch active - track ansible/awx; awx-operator ~2.12.x still ships for K8s deploys). Verify current AWX/AAP release status before recommending a specific version or install path.
-- AAP 2.6 (Oct 2025 - last RPM-installable release; AAP 2.7+ containerized-only)
+- AWX 24.6.1 (last formal release Jul 2024; upstream AWX releases paused for a major refactor, devel branch active - track ansible/awx; awx-operator ~2.19.x still ships for K8s deploys). Verify current AWX/AAP release status before recommending a specific version or install path.
+- AAP 2.7 (GA June 3, 2026 - containerized/Operator only; 2.6 was the last RPM-installable release, still patched)
 
 This skill covers four domains depending on context:
 - **Playbooks** - tasks, handlers, variables, conditions, loops, blocks, templates, Jinja2
@@ -364,7 +364,7 @@ Read `references/compliance.md` for the full PCI-DSS 4.0 requirements mapping to
 
 ## Deprecations and Breaking Changes
 
-### ansible-core 2.20 (current)
+### ansible-core 2.20
 
 **Removals (already removed)**:
 - `smart` transport value - choose `ssh` or `paramiko` explicitly

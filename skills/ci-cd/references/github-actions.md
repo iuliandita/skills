@@ -530,7 +530,7 @@ security:
         sarif_file: trivy.sarif
 ```
 
-**Trivy safe versions (May 2026)**: use binary v0.70.0+ from official releases and pin
+**Trivy safe versions (June 2026)**: use binary v0.71.0+ from official releases and pin
 actions to full commit SHAs. The March 2026 rollback set was binary v0.69.3,
 `trivy-action@v0.35.0`, and `setup-trivy@v0.2.6`. Do NOT use v0.69.4/5/6
 (compromised by TeamPCP).

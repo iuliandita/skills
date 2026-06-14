@@ -19,7 +19,7 @@ fast-moving Fedora lane from the conservative enterprise lane, then account for 
 such as subscription-manager, CentOS Stream drift, Oracle UEK, Amazon's cloud-first defaults,
 and SELinux or firewalld behavior that people love to blame on the wrong layer.
 
-**Versions worth pinning** (verified May 2026):
+**Versions worth pinning** (verified June 2026):
 
 Only pin versions here when they materially affect compatibility or troubleshooting shape. For
 ordinary package work, prefer the live distro lane and repo state over a stale package table.
