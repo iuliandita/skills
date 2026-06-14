@@ -31,6 +31,7 @@ wave_skills=(
   mcp
   networking
   nixos-btw
+  observability
   rhel-fedora
   roadmap
   security-audit
