@@ -1,7 +1,7 @@
 ---
 name: code-slimming
 description: >
-  · Audit read-only code slimming: dead code, unused files, duplicate blocks, wrapper removal, comment-wall trimming. Triggers: 'slim codebase', 'dead code', 'unused functions', 'dedupe safely'. Not for bugs, tests, or broad reviews.
+  · Audit read-only code slimming: dead code, unused files, duplicate blocks, wrapper removal, commented-out code. Triggers: 'slim codebase', 'dead code', 'unused functions', 'dedupe'. Not for bugs or broad reviews.
 license: MIT
 compatibility: "None - works on any codebase"
 metadata:
@@ -31,24 +31,25 @@ performance, readability, and validation made explicit.
 
 ## When to use
 
-- Finding opportunities to simplify a repository, package, module, or PR
-- Finding behavior-preserving refactor opportunities without implementing them
-- Hunting dead code: unused functions, methods, variables, parameters, imports, types, exports,
-  constants, unreachable branches, orphan files never imported, and unused dependencies
-- Auditing duplicated logic, classes, structs, helpers, types, schemas, handlers, or adapters
-- Finding redundant blocks repeated across the repo or inside a single file, including exact clones
+- Finding behavior-preserving opportunities to simplify a repository, package, module, or PR
+  without implementing them
+- Hunting dead code: unused functions, variables, imports, types, exports, unreachable branches,
+  orphan files, and unused dependencies (Step 4 enumerates the full set)
+- Auditing duplicated logic, schemas, handlers, or adapters, and redundant blocks repeated across
+  the repo or inside a single file, including exact clones
 - Trimming comment volume: commented-out code, comments that restate the code, and banner walls
-- Looking for safe centralization candidates before a cleanup/refactor PR
-- Reviewing a bot or human cleanup PR that claims to reduce code size
-- Ranking maintainability refactors by value, risk, and validation needs
-- Handling duplicate code only when the main goal is smaller behavior-preserving structure,
-  not general cleanliness or AI-slop detection
+- Finding safe centralization candidates before a cleanup/refactor PR, or reviewing a bot or human
+  cleanup PR that claims to reduce code size
+- Ranking maintainability refactors by value, risk, and validation needs, when the goal is smaller
+  behavior-preserving structure rather than general cleanliness or AI-slop detection
 
 ## When NOT to use
 
 - Bug-focused reviews, regressions, races, edge cases, or crashes - use **code-review**
 - General cleanup, naming, AI tells, dependency creep, overengineering, comment noise as a
-  quality smell, or duplicate-code-as-slop without an explicit slimming goal - use **anti-slop**
+  quality smell, or duplicate-code-as-slop without an explicit slimming goal - use **anti-slop**.
+  (Comment lane: code-slimming deletes commented-out code, restating comments, and banner walls;
+  anti-slop judges comment noise as a smell; anti-ai-prose rewrites AI-voiced comment text.)
 - Rewriting comments or docstrings for tone and AI voice (not deleting them) - use **anti-ai-prose**
 - Security vulnerabilities, secret scanning, auth flaws, or exploitability - use **security-audit**
 - Writing, debugging, or adding validation tests for a slimming recommendation - use **testing**
@@ -63,6 +64,7 @@ performance, readability, and validation made explicit.
 | "Slim this codebase", "find safe deletions", "review LOC deletion" | **code-slimming** |
 | "Find dead/unused code", "unused functions/files", "remove duplicates" | **code-slimming** |
 | "Delete commented-out code", "cut these comment walls down" | **code-slimming** |
+| "Remove this wrapper/indirection layer", "inline this passthrough" | **code-slimming** |
 | "Clean this up", "does this look AI-written?", "overengineered/verbose" | **anti-slop** |
 | "These comments are noisy/AI-slop, clean them up" | **anti-slop** |
 | "This prose/comments read AI-written, rewrite the voice" | **anti-ai-prose** |
@@ -91,10 +93,12 @@ Before returning a code-slimming audit, verify:
   without the proposed shape
 - [ ] **Duplication judged in context**: likely divergence, framework conventions, and explicitness
   were considered before recommending centralization
+- [ ] **Defensive duplication preserved**: repeated guards across trust, process, persistence, or
+  public-API boundaries were not flagged for removal solely because an upstream layer validates the
+  same condition
 - [ ] **Dead code proven, not guessed**: every "unused" claim cites a no-reference search and rules
-  out dynamic dispatch, reflection, DI/IoC wiring, serialization, plugin/CLI/route registration,
-  framework entry points, public/exported API, conditional compilation, build tooling, and
-  test-only or fixture use before recommending deletion
+  out reflection, dynamic dispatch, DI, serialization, plugin/CLI/route registration, public API,
+  conditional compilation, and test discovery before recommending deletion
 - [ ] **Comment trimming is deletion, not rewriting**: only commented-out code, comments that
   restate the code, and dead banner walls are flagged; tone and AI-voice rewrites are routed to
   anti-ai-prose, and load-bearing comments (why, invariants, links, license, lint pragmas) are kept
@@ -121,9 +125,9 @@ Before returning a code-slimming audit, verify:
 
 - Treat smaller code as a hypothesis, not a win.
 - Treat "unused" as a claim that must be proven by search, not assumed from local reading. A symbol
-  with zero static references can still be live through reflection, dynamic dispatch, DI containers,
-  serialization, plugin/CLI/route registration, framework conventions, public API, conditional
-  compilation, code generation, or test discovery. Prove no-reference before recommending deletion.
+  with zero static references can still be live through reflection, dynamic dispatch, DI,
+  serialization, plugin/CLI/route registration, public API, conditional compilation, or test
+  discovery. Prove no-reference before recommending deletion.
 - Keep dead-looking code that is a stable public/exported API, a documented extension point, or
   guarded behind a feature flag, build target, or platform; deleting these changes a contract.
 - Treat commented-out code as dead code: recommend deleting it, since version control already
@@ -258,13 +262,14 @@ Discovery recipe:
 
    | Concern | Common language-agnostic or per-language tools |
    |---|---|
-   | Unused symbols/exports | `knip`, `ts-prune` (TS/JS); `vulture`, `ruff` F401/F841 (Python); `staticcheck`, `deadcode` (Go); `cargo` `dead_code` warnings (Rust); compiler `-Wunused` (C/C++) |
+   | Unused symbols/exports | `knip` (TS/JS; supersedes the archived `ts-prune`); `vulture`, `ruff` F401/F841 (Python); `staticcheck`, `deadcode` (Go); `cargo` `dead_code` warnings (Rust); compiler `-Wunused` (C/C++) |
    | Unused dependencies | `knip`, `depcheck` (JS); `deptry` (Python); `cargo-machete` (Rust) |
    | Copy-paste clones | `jscpd` (multi-language), `PMD CPD` (multi-language) |
 
    Treat tool output as a candidate list, not a verdict: confirm each hit by reading, and discount
-   known false positives (reflection, DI, serialization, plugin/CLI/route registration, public API,
-   conditional compilation, test discovery). When no tooling is available, say so as a coverage gap.
+   known false positives (reflection, dynamic dispatch, DI, serialization, plugin/CLI/route
+   registration, public API, conditional compilation, test discovery). When no tooling is available,
+   say so as a coverage gap.
 4. For each candidate, read the full candidate files, at least one nearby caller, and nearby tests
    to see whether the behavior contract is already captured, before classifying.
 
@@ -332,6 +337,13 @@ before classifying it as `Do now`.
 It is acceptable and often correct to return zero high-value opportunities. Do not manufacture a
 slimming recommendation to fill the report. Prefer a well-justified `Leave alone` finding over a
 low-confidence abstraction.
+
+The markdown template below is the body of the written deliverable. It is a read-only set of
+proposals: it groups findings by action label and intentionally opts out of the checkbox Fix
+protocol in the Output Contract (there is nothing for an implementer to flip here). Wrap it with the
+boxed inline header and boxed conclusion table when emitting to the transcript; the conclusion table
+remaps the shared columns exactly as defined in the Output Contract section below (`Type` =
+`rec`/`found`, `Priority` carries `Risk`, `Action` = `proposed`/`recommend`).
 
 Use this format:
 
@@ -425,68 +437,10 @@ Keep the report concise. Show the refactor shape, not a lecture.
 
 ## Common Patterns
 
-### Dead code and unused symbols
-
-Functions, methods, variables, constants, types, and exports that nothing references are pure
-maintenance cost. So are unused imports, orphan files nothing imports, unreachable branches, and
-removed-flag code paths. The deletion is safe only once no-reference is proven. The recurring false
-positives are entry points reached through indirection (see the no-reference paths in Best Practices
-and Step 5); treat any of those as "not dead" until proven otherwise.
-
-### Exact and intra-file clones
-
-Copy-paste blocks repeated across files, or repeated within one file, collapse cleanly when they are
-truly identical and share one contract. Same-file repetition (a loop body pasted three times, two
-near-identical switch arms) is often the easiest and safest win because the call sites are all
-visible at once. Confirm the blocks are exact or differ only in clearly parameterizable values
-before proposing a single shared form.
-
-### Commented-out code and comment walls
-
-Commented-out code is dead code in disguise: version control already preserves it, so recommend
-deletion. Comment walls - ASCII banners, section dividers, and comments that restate the next line
-of code - add bytes without signal. Keep comments that carry intent (the why), invariants,
-non-obvious constraints, links to issues or specs, license headers, and lint/type pragmas. This is a
-deletion lane only; rewriting AI-voiced prose belongs to anti-ai-prose.
-
-### Repeated boundary parsing
-
-Request parsing, CLI argument normalization, env var parsing, and config loading often duplicate
-defaulting and validation rules. Centralize only when the same boundary contract really applies.
-
-### Near-twin adapters
-
-Provider/client/repository adapters often start identical and then diverge. Recommend
-centralization only when the shared part is stable and the provider-specific differences stay
-explicit.
-
-### Duplicate data shapes
-
-Repeated DTOs, schemas, records, structs, or interfaces can be centralized when they represent the
-same contract. Keep separate shapes when they describe different lifecycle stages or trust
-boundaries. Do not merge inbound untrusted request shapes, internal/domain shapes, persistence
-entities, queue/event payloads, and outbound response shapes merely because fields overlap. Shared
-field lists are not shared contracts; centralize only the truly common validated subset, or keep
-explicit mappers.
-
-### Wrapper layers
-
-Thin wrappers that only forward calls usually add concept count without value. Prefer deleting or
-inlining them unless they isolate an external dependency, provide a stable public contract, or make
-testing materially easier. Leave them alone when they enforce validation, auth/authorization,
-tenant isolation, retries, idempotency, transactions, caching, rate limits, logging, tracing,
-metrics, feature flags, compatibility shims, dependency inversion, or fault isolation.
-
-### Oversized helper modules
-
-Large `utils`, `helpers`, `common`, `shared`, or `misc` modules are often junk drawers. Recommend
-splitting by domain concern or moving helpers closer to their only caller.
-
-### Performance-sensitive slimming
-
-Shorter code can be slower. Centralized generic code can add allocation, dynamic dispatch, reflection,
-bundle weight, cache misses, or indirect calls. In hot paths, require measurement or classify as
-`Defer`.
+Pattern-by-pattern recognition aids - dead code and unused symbols, exact and intra-file clones,
+commented-out code and comment walls, repeated boundary parsing, near-twin adapters, duplicate data
+shapes, wrapper layers, oversized helper modules, and performance-sensitive slimming - live in
+`references/patterns.md`. Consult it when a candidate's category or safe-collapse shape is unclear.
 
 ## Output Contract
 
@@ -496,7 +450,8 @@ See `references/output-contract.md` for the full contract.
 - **Deliverable bucket:** `audits`
 - **Mode:** always-on for audit and review invocations. Every invocation that analyses existing code emits the full contract - boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table. For a quick factual question (e.g., "what is wrapper removal?") respond freely without the contract.
 - **Deliverable path:** `docs/local/audits/code-slimming/<YYYY-MM-DD>-<slug>.md`
-- **Severity scale:** not the shared P0-P3 scale. Findings are classified by action - `Do now | Do with tests | Defer | Leave alone` - plus a `Risk: low | medium | high` field per finding (see the Workflow). This skill proposes deletions, not severity-ranked defects.
+- **Severity scale:** this skill overrides the shared P0-P3 scale, which the contract permits via its scale-migration note. Findings are classified by action - `Do now | Do with tests | Defer | Leave alone` - plus a `Risk: low | medium | high` field per finding (see the Workflow). This skill proposes deletions, not severity-ranked defects. Old -> new: P0-P3 priority is not used; `Risk` replaces the `Priority` column (see Conclusion-table columns below).
+- **Conclusion-table columns** (the shared table in `references/output-contract.md` is code-review-flavored; map it for this skill): `Type` is `rec` for opportunities or `found` when reviewing removed code; the `Priority` column carries this skill's `Risk` value (`low | medium | high`), not a P-level; `Action` is `proposed` for opportunities and `recommend` for removed-code safety findings. The file-deliverable groups findings by action label (`Do now`, `Do with tests`, `Defer`, `Leave alone`), not by `## P0`-style headings.
 
 ## Related Skills
 

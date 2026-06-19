@@ -2327,5 +2327,92 @@
       "PR #93 squash: 839928d",
       "PR #96 squash: e08b95d (debug-triage, was PR #94)"
     ]
+  },
+  {
+    "run_id": "2026-06-19-223207-code-slimming",
+    "branch": "skill-refiner/2026-06-19-223207",
+    "date": "2026-06-19",
+    "primary": {
+      "harness": "claude-code",
+      "model": "claude-opus-4-8",
+      "context": "1M",
+      "effort": "default"
+    },
+    "secondary": {
+      "harness": "codex",
+      "model": "codex (PONG smoke PASS)",
+      "weight": "5%",
+      "result": "NO_FLAGS on iter2 and iter3 diffs"
+    },
+    "config": {
+      "iterations_min": 3,
+      "ceiling": "none",
+      "threshold": "ignored (push to target)",
+      "target": 99,
+      "mode": "circuit-breaker"
+    },
+    "pool": [
+      "code-slimming"
+    ],
+    "scope": "targeted single-skill polish on the PR #100 'updated code-slimming' (branched off skill-creator/2026-06-19-code-slimming-review)",
+    "gate": "lint-skills.sh 0 err, validate-spec.sh 0 violations (all iters)",
+    "composite_formula": "baseline 0.42*A + 0.58*B; improvement iters 0.40*A + 0.55*B + 0.05*X",
+    "iterations": [
+      {
+        "n": 1,
+        "kind": "baseline",
+        "A": 93,
+        "B": 99,
+        "X": null,
+        "composite": 96.5,
+        "note": "A dragged solely by 550-line soft-target miss; B nailed all 4 false-positive traps; routing test clean"
+      },
+      {
+        "n": 2,
+        "kind": "improve",
+        "change": "extract Common Patterns (9 subsections) to references/patterns.md + pointer; SKILL.md 550->492",
+        "A": 100,
+        "B": 98.5,
+        "X": 100,
+        "composite": 99.2,
+        "gate": "kept",
+        "test": "behavioral re-test held; codex NO_FLAGS"
+      },
+      {
+        "n": 3,
+        "kind": "improve",
+        "change": "trim When-to-use sub-enumerations owned by Step 4 (keywords preserved); SKILL.md 492->491",
+        "A": 100,
+        "B": 99,
+        "X": 100,
+        "composite": 99.45,
+        "gate": "kept (simplicity: score-neutral dedup, B confirmed)",
+        "test": "both scenarios at ceiling; codex NO_FLAGS"
+      }
+    ],
+    "termination": "target reached (99.45 >= 99); A maxed, B at ceiling, no score-improving change remains (plateau)",
+    "score_before_after": {
+      "code-slimming": {
+        "before": 96.5,
+        "after": 99.45,
+        "delta": 2.95
+      }
+    },
+    "changes": [
+      "code-slimming: extract 9-pattern recall layer to references/patterns.md (loaded on demand)",
+      "code-slimming: dedupe When-to-use enumerations against Step 4 (all trigger keywords kept)"
+    ],
+    "test_source": "test-cases-local.md (code-slimming) + synthetic /tmp/slim-rf fixture exercising 4 axes and 4 false-positive traps",
+    "out_of_scope": [
+      "version pins / CVE / EOL (freshness routine owns)",
+      "phase 2 meta-improvement (full-collection sweep only; single-skill run)",
+      "shared output-contract Priority/Risk column awkwardness (byte-identical across 45 skills; documented override)"
+    ],
+    "reverted": [],
+    "contested": [],
+    "commits": [
+      "e2efea0 (iter2 extract)",
+      "0cca4bd (iter3 dedupe)"
+    ]
   }
 ]
