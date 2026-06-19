@@ -268,8 +268,9 @@ Discovery recipe:
    | Copy-paste clones | `jscpd` (multi-language), `PMD CPD` (multi-language) |
 
    Treat tool output as a candidate list, not a verdict: confirm each hit by reading, and discount
-   known false positives (reflection, DI, serialization, plugin/CLI/route registration, public API,
-   conditional compilation, test discovery). When no tooling is available, say so as a coverage gap.
+   known false positives (reflection, dynamic dispatch, DI, serialization, plugin/CLI/route
+   registration, public API, conditional compilation, test discovery). When no tooling is available,
+   say so as a coverage gap.
 4. For each candidate, read the full candidate files, at least one nearby caller, and nearby tests
    to see whether the behavior contract is already captured, before classifying.
 
