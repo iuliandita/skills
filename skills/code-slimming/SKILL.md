@@ -1,7 +1,7 @@
 ---
 name: code-slimming
 description: >
-  · Audit read-only code slimming: safe deletion, deduplication, wrapper removal, shared contracts. Triggers: 'slim codebase', 'LOC deletion review', 'dedupe safely'. Not for style/slop, bugs, tests, or broad reviews.
+  · Audit read-only code slimming: dead code, unused files, duplicate blocks, wrapper removal, comment-wall trimming. Triggers: 'slim codebase', 'dead code', 'unused functions', 'dedupe safely'. Not for bugs, tests, or broad reviews.
 license: MIT
 compatibility: "None - works on any codebase"
 metadata:
@@ -16,6 +16,16 @@ metadata:
 Find behavior-preserving opportunities to make a codebase smaller, clearer, and less repetitive.
 This skill reports opportunities only. It does not edit code and does not write tests.
 
+It works on four slimming axes:
+
+1. **Dead code** - unused functions, methods, variables, parameters, imports, types, exports,
+   constants, branches, files, and dependencies that nothing reaches.
+2. **Redundant code** - duplicate or near-duplicate blocks, whether across the repo or repeated
+   inside a single file, including exact copy-paste clones.
+3. **Wrapper and indirection removal** - thin layers that forward without adding a real role.
+4. **Comment volume** - commented-out code, comments that restate the code, and banner walls that
+   add bytes without signal. Comments should be minimal and earn their place.
+
 The goal is not fewer lines at any cost. The goal is lower maintenance burden with behavior,
 performance, readability, and validation made explicit.
 
@@ -23,7 +33,11 @@ performance, readability, and validation made explicit.
 
 - Finding opportunities to simplify a repository, package, module, or PR
 - Finding behavior-preserving refactor opportunities without implementing them
+- Hunting dead code: unused functions, methods, variables, parameters, imports, types, exports,
+  constants, unreachable branches, orphan files never imported, and unused dependencies
 - Auditing duplicated logic, classes, structs, helpers, types, schemas, handlers, or adapters
+- Finding redundant blocks repeated across the repo or inside a single file, including exact clones
+- Trimming comment volume: commented-out code, comments that restate the code, and banner walls
 - Looking for safe centralization candidates before a cleanup/refactor PR
 - Reviewing a bot or human cleanup PR that claims to reduce code size
 - Ranking maintainability refactors by value, risk, and validation needs
@@ -33,8 +47,9 @@ performance, readability, and validation made explicit.
 ## When NOT to use
 
 - Bug-focused reviews, regressions, races, edge cases, or crashes - use **code-review**
-- General cleanup, naming, comments, AI tells, dependency creep, overengineering, or
-  duplicate-code-as-slop without an explicit slimming goal - use **anti-slop**
+- General cleanup, naming, AI tells, dependency creep, overengineering, comment noise as a
+  quality smell, or duplicate-code-as-slop without an explicit slimming goal - use **anti-slop**
+- Rewriting comments or docstrings for tone and AI voice (not deleting them) - use **anti-ai-prose**
 - Security vulnerabilities, secret scanning, auth flaws, or exploitability - use **security-audit**
 - Writing, debugging, or adding validation tests for a slimming recommendation - use **testing**
 - Broad quick merge checks - use **full-review**
@@ -46,8 +61,11 @@ performance, readability, and validation made explicit.
 | User intent | Use |
 |---|---|
 | "Slim this codebase", "find safe deletions", "review LOC deletion" | **code-slimming** |
+| "Find dead/unused code", "unused functions/files", "remove duplicates" | **code-slimming** |
+| "Delete commented-out code", "cut these comment walls down" | **code-slimming** |
 | "Clean this up", "does this look AI-written?", "overengineered/verbose" | **anti-slop** |
-| "This prose/comments read AI-written, clean them up" | **anti-ai-prose** |
+| "These comments are noisy/AI-slop, clean them up" | **anti-slop** |
+| "This prose/comments read AI-written, rewrite the voice" | **anti-ai-prose** |
 | "Review this", "find bugs", "sanity check", "will this break?" | **code-review** |
 | "Write/add/debug tests for this refactor" | **testing** |
 | "Run all checks", "full review", "audit this repo" | **full-review** or **deep-audit** |
@@ -73,6 +91,13 @@ Before returning a code-slimming audit, verify:
   without the proposed shape
 - [ ] **Duplication judged in context**: likely divergence, framework conventions, and explicitness
   were considered before recommending centralization
+- [ ] **Dead code proven, not guessed**: every "unused" claim cites a no-reference search and rules
+  out dynamic dispatch, reflection, DI/IoC wiring, serialization, plugin/CLI/route registration,
+  framework entry points, public/exported API, conditional compilation, build tooling, and
+  test-only or fixture use before recommending deletion
+- [ ] **Comment trimming is deletion, not rewriting**: only commented-out code, comments that
+  restate the code, and dead banner walls are flagged; tone and AI-voice rewrites are routed to
+  anti-ai-prose, and load-bearing comments (why, invariants, links, license, lint pragmas) are kept
 - [ ] **Correctness and security routed**: bugs go to code-review; vulnerabilities go to security-audit
 - [ ] **Routing lane held**: generic cleanup, slop, correctness, security, test-writing,
   broad-review, and implementation work were routed instead of reported as code-slimming findings
@@ -95,6 +120,14 @@ Before returning a code-slimming audit, verify:
 ## Best Practices
 
 - Treat smaller code as a hypothesis, not a win.
+- Treat "unused" as a claim that must be proven by search, not assumed from local reading. A symbol
+  with zero static references can still be live through reflection, dynamic dispatch, DI containers,
+  serialization, plugin/CLI/route registration, framework conventions, public API, conditional
+  compilation, code generation, or test discovery. Prove no-reference before recommending deletion.
+- Keep dead-looking code that is a stable public/exported API, a documented extension point, or
+  guarded behind a feature flag, build target, or platform; deleting these changes a contract.
+- Treat commented-out code as dead code: recommend deleting it, since version control already
+  preserves history. Keep comments that carry intent, invariants, links, license, or lint pragmas.
 - Prefer deleting wrappers over adding a new abstraction layer only after proving the wrapper has no
   boundary, policy, observability, compatibility, or lifecycle role.
 - Prefer a small well-named helper over a framework-shaped base class.
@@ -180,17 +213,34 @@ skill.
 
 ### Step 4: Search for candidates
 
-Use structural and textual searches to find:
+Run the searches for all four axes. Use structural and textual searches to find:
+
+**Dead code (unused / unreachable):**
+
+- functions, methods, classes, variables, parameters, constants, types, and exports with no
+  references anywhere in scope
+- imports that are never used and dependencies in the manifest that nothing imports
+- files and modules that nothing imports, requires, includes, or registers (orphans)
+- unreachable code: statements after `return`/`throw`/`break`, `if (false)` branches, dead
+  `case` arms, conditions that cannot be true, and feature-flag branches for removed flags
+- commented-out code blocks left behind from past edits
+
+**Redundant / duplicate code:**
 
 - near-duplicate files, classes, structs, functions, methods, hooks, handlers, or components
+- exact copy-paste clones repeated across files or repeated inside a single file
 - repeated type, interface, schema, DTO, record, enum, or data container shapes
 - repeated request parsing, query construction, pagination, validation, mapping, serialization, or error handling
-- wrappers with little behavior beyond forwarding to another object or function
-- oversized `utils`, `helpers`, `common`, `shared`, or `misc` modules
 - parallel provider, client, repository, service, or adapter implementations with the same skeleton
 - dependencies or helpers duplicating standard library or framework features
 - generated-looking copy-paste that survived human maintenance, after checking whether a generator,
   schema, template, or vendored source owns it
+
+**Wrappers and bloat:**
+
+- wrappers with little behavior beyond forwarding to another object or function
+- oversized `utils`, `helpers`, `common`, `shared`, or `misc` modules
+- comment walls: banner art, comments that restate the next line, and stale doc blocks
 
 Discovery recipe:
 
@@ -201,7 +251,21 @@ Discovery recipe:
    `clients/*`, `services/*`, `repositories/*`, `handlers/*`, `routes/*`, and `adapters/*`; search
    repeated declarations and one-line wrappers that only forward to another call; find large generic
    modules named `utils`, `helpers`, `common`, `shared`, or `misc`.
-3. For each candidate, read the full candidate files, at least one nearby caller, and nearby tests
+3. For dead-code candidates, search for every reference to the symbol (definition site, call sites,
+   re-exports, string-keyed lookups, config/route tables, DI registrations) before classifying it
+   unused. Lean on the repo's own dead-code and clone tooling when present - it scopes the search
+   and reduces both misses and false positives:
+
+   | Concern | Common language-agnostic or per-language tools |
+   |---|---|
+   | Unused symbols/exports | `knip`, `ts-prune` (TS/JS); `vulture`, `ruff` F401/F841 (Python); `staticcheck`, `deadcode` (Go); `cargo` `dead_code` warnings (Rust); compiler `-Wunused` (C/C++) |
+   | Unused dependencies | `knip`, `depcheck` (JS); `deptry` (Python); `cargo-machete` (Rust) |
+   | Copy-paste clones | `jscpd` (multi-language), `PMD CPD` (multi-language) |
+
+   Treat tool output as a candidate list, not a verdict: confirm each hit by reading, and discount
+   known false positives (reflection, DI, serialization, plugin/CLI/route registration, public API,
+   conditional compilation, test discovery). When no tooling is available, say so as a coverage gap.
+4. For each candidate, read the full candidate files, at least one nearby caller, and nearby tests
    to see whether the behavior contract is already captured, before classifying.
 
 Skip or de-prioritize generated files, vendored dependencies, lockfiles, snapshots, fixtures,
@@ -236,9 +300,14 @@ Most findings are not merge blockers. Say so clearly.
 
 For `Do now`, cite behavior-specific validation evidence: exact test files or cases that exercise
 the preserved behavior, or explain why the change is purely local, mechanical, and directly
-inspectable. Generic lint, type, and build commands alone are not enough for behavioral
-deduplication or centralization. If you cannot cite behavior-specific evidence, classify as
-`Do with tests` or `Defer`.
+inspectable. If you cannot cite behavior-specific evidence, classify as `Do with tests` or `Defer`.
+
+For dead-code and commented-out-code deletions, the evidence is the no-reference proof: the search
+that found zero live references and the indirection paths ruled out (reflection, dynamic dispatch,
+DI, serialization, plugin/CLI/route registration, public API, conditional compilation, test
+discovery). A symbol unreferenced and unreachable through any of those paths is a valid `Do now`. If
+it is exported or reachable through an unproven path, classify as `Do with tests` or `Defer` and say
+which path you could not rule out.
 
 ### Step 6: Evaluate tradeoffs
 
@@ -288,6 +357,16 @@ Tradeoffs: one shared helper couples list endpoints to a common pagination contr
 Risk: medium
 Validation needed: add boundary tests for page and limit values, then run lint/type/build/test commands.
 
+**Do now** `src/legacy/format.ts` - Delete unused module.
+Evidence: `src/legacy/format.ts:1-120` defines `formatLegacy`; no imports of `legacy/format` or
+references to `formatLegacy` in `src/`, `test/`, config, or route tables (`rg -n "legacy/format|formatLegacy"`).
+No-reference proof: not exported from the package index, not referenced by string key, not a DI/CLI/route registration.
+Behavior invariant: none; nothing reaches this code.
+Why better: removes a whole dead module and its transitive imports.
+Tradeoffs: none if the no-reference proof holds.
+Risk: low
+Validation needed: type and build pass after deletion; grep confirms zero references.
+
 ### Removed-Code Safety Review
 
 Include this section only when reviewing a diff or PR that removed code.
@@ -322,7 +401,7 @@ None found within scope.
 
 ### Search Coverage
 - Scope inspected: [diff/path/repo areas]
-- Patterns checked: [wrappers, duplicate schemas, repeated parsers, adapters, utils]
+- Patterns checked: [dead code/unused symbols, orphan files, clones, wrappers, duplicate schemas, repeated parsers, adapters, utils, comment walls]
 - Files/directories skipped: [generated/vendor/tests/etc.]
 - Validation checked: [commands/tests found or unavailable]
 
@@ -345,6 +424,30 @@ None found within scope.
 Keep the report concise. Show the refactor shape, not a lecture.
 
 ## Common Patterns
+
+### Dead code and unused symbols
+
+Functions, methods, variables, constants, types, and exports that nothing references are pure
+maintenance cost. So are unused imports, orphan files nothing imports, unreachable branches, and
+removed-flag code paths. The deletion is safe only once no-reference is proven. The recurring false
+positives are entry points reached through indirection (see the no-reference paths in Best Practices
+and Step 5); treat any of those as "not dead" until proven otherwise.
+
+### Exact and intra-file clones
+
+Copy-paste blocks repeated across files, or repeated within one file, collapse cleanly when they are
+truly identical and share one contract. Same-file repetition (a loop body pasted three times, two
+near-identical switch arms) is often the easiest and safest win because the call sites are all
+visible at once. Confirm the blocks are exact or differ only in clearly parameterizable values
+before proposing a single shared form.
+
+### Commented-out code and comment walls
+
+Commented-out code is dead code in disguise: version control already preserves it, so recommend
+deletion. Comment walls - ASCII banners, section dividers, and comments that restate the next line
+of code - add bytes without signal. Keep comments that carry intent (the why), invariants,
+non-obvious constraints, links to issues or specs, license headers, and lint/type pragmas. This is a
+deletion lane only; rewriting AI-voiced prose belongs to anti-ai-prose.
 
 ### Repeated boundary parsing
 
@@ -424,3 +527,10 @@ See `references/output-contract.md` for the full contract.
    shell, and infrastructure code.
 8. **Keep bugs and vulnerabilities in their lanes.** Route correctness findings to code-review and
    security findings to security-audit.
+9. **Prove dead before deleting.** Never recommend deleting a symbol, file, or dependency as unused
+   without a no-reference search and an explicit list of indirection paths ruled out (reflection,
+   dynamic dispatch, DI, serialization, plugin/CLI/route registration, public API, conditional
+   compilation, test discovery).
+10. **Trim comments by deletion, not rewriting.** Flag only commented-out code, comments that
+    restate the code, and dead banner walls. Keep intent, invariants, links, license, and pragmas.
+    Route AI-voice prose rewrites to anti-ai-prose.
