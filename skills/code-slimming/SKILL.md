@@ -48,7 +48,9 @@ performance, readability, and validation made explicit.
 
 - Bug-focused reviews, regressions, races, edge cases, or crashes - use **code-review**
 - General cleanup, naming, AI tells, dependency creep, overengineering, comment noise as a
-  quality smell, or duplicate-code-as-slop without an explicit slimming goal - use **anti-slop**
+  quality smell, or duplicate-code-as-slop without an explicit slimming goal - use **anti-slop**.
+  (Comment lane: code-slimming deletes commented-out code, restating comments, and banner walls;
+  anti-slop judges comment noise as a smell; anti-ai-prose rewrites AI-voiced comment text.)
 - Rewriting comments or docstrings for tone and AI voice (not deleting them) - use **anti-ai-prose**
 - Security vulnerabilities, secret scanning, auth flaws, or exploitability - use **security-audit**
 - Writing, debugging, or adding validation tests for a slimming recommendation - use **testing**
@@ -63,6 +65,7 @@ performance, readability, and validation made explicit.
 | "Slim this codebase", "find safe deletions", "review LOC deletion" | **code-slimming** |
 | "Find dead/unused code", "unused functions/files", "remove duplicates" | **code-slimming** |
 | "Delete commented-out code", "cut these comment walls down" | **code-slimming** |
+| "Remove this wrapper/indirection layer", "inline this passthrough" | **code-slimming** |
 | "Clean this up", "does this look AI-written?", "overengineered/verbose" | **anti-slop** |
 | "These comments are noisy/AI-slop, clean them up" | **anti-slop** |
 | "This prose/comments read AI-written, rewrite the voice" | **anti-ai-prose** |
@@ -91,10 +94,12 @@ Before returning a code-slimming audit, verify:
   without the proposed shape
 - [ ] **Duplication judged in context**: likely divergence, framework conventions, and explicitness
   were considered before recommending centralization
+- [ ] **Defensive duplication preserved**: repeated guards across trust, process, persistence, or
+  public-API boundaries were not flagged for removal solely because an upstream layer validates the
+  same condition
 - [ ] **Dead code proven, not guessed**: every "unused" claim cites a no-reference search and rules
-  out dynamic dispatch, reflection, DI/IoC wiring, serialization, plugin/CLI/route registration,
-  framework entry points, public/exported API, conditional compilation, build tooling, and
-  test-only or fixture use before recommending deletion
+  out reflection, dynamic dispatch, DI, serialization, plugin/CLI/route registration, public API,
+  conditional compilation, and test discovery before recommending deletion
 - [ ] **Comment trimming is deletion, not rewriting**: only commented-out code, comments that
   restate the code, and dead banner walls are flagged; tone and AI-voice rewrites are routed to
   anti-ai-prose, and load-bearing comments (why, invariants, links, license, lint pragmas) are kept
@@ -121,9 +126,9 @@ Before returning a code-slimming audit, verify:
 
 - Treat smaller code as a hypothesis, not a win.
 - Treat "unused" as a claim that must be proven by search, not assumed from local reading. A symbol
-  with zero static references can still be live through reflection, dynamic dispatch, DI containers,
-  serialization, plugin/CLI/route registration, framework conventions, public API, conditional
-  compilation, code generation, or test discovery. Prove no-reference before recommending deletion.
+  with zero static references can still be live through reflection, dynamic dispatch, DI,
+  serialization, plugin/CLI/route registration, public API, conditional compilation, or test
+  discovery. Prove no-reference before recommending deletion.
 - Keep dead-looking code that is a stable public/exported API, a documented extension point, or
   guarded behind a feature flag, build target, or platform; deleting these changes a contract.
 - Treat commented-out code as dead code: recommend deleting it, since version control already
@@ -333,10 +338,12 @@ It is acceptable and often correct to return zero high-value opportunities. Do n
 slimming recommendation to fill the report. Prefer a well-justified `Leave alone` finding over a
 low-confidence abstraction.
 
-The markdown template below is the body of the written deliverable. Wrap it with the boxed inline
-header and boxed conclusion table from the Output Contract when emitting to the transcript; the
-conclusion table uses the column mapping noted in the Output Contract section (action in `Type`,
-`Risk` in the `Priority` column).
+The markdown template below is the body of the written deliverable. It is a read-only set of
+proposals: it groups findings by action label and intentionally opts out of the checkbox Fix
+protocol in the Output Contract (there is nothing for an implementer to flip here). Wrap it with the
+boxed inline header and boxed conclusion table when emitting to the transcript; the conclusion table
+remaps the shared columns exactly as defined in the Output Contract section below (`Type` =
+`rec`/`found`, `Priority` carries `Risk`, `Action` = `proposed`/`recommend`).
 
 Use this format:
 
@@ -501,7 +508,7 @@ See `references/output-contract.md` for the full contract.
 - **Deliverable bucket:** `audits`
 - **Mode:** always-on for audit and review invocations. Every invocation that analyses existing code emits the full contract - boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table. For a quick factual question (e.g., "what is wrapper removal?") respond freely without the contract.
 - **Deliverable path:** `docs/local/audits/code-slimming/<YYYY-MM-DD>-<slug>.md`
-- **Severity scale:** not the shared P0-P3 scale. Findings are classified by action - `Do now | Do with tests | Defer | Leave alone` - plus a `Risk: low | medium | high` field per finding (see the Workflow). This skill proposes deletions, not severity-ranked defects.
+- **Severity scale:** this skill overrides the shared P0-P3 scale, which the contract permits via its scale-migration note. Findings are classified by action - `Do now | Do with tests | Defer | Leave alone` - plus a `Risk: low | medium | high` field per finding (see the Workflow). This skill proposes deletions, not severity-ranked defects. Old -> new: P0-P3 priority is not used; `Risk` replaces the `Priority` column (see Conclusion-table columns below).
 - **Conclusion-table columns** (the shared table in `references/output-contract.md` is code-review-flavored; map it for this skill): `Type` is `rec` for opportunities or `found` when reviewing removed code; the `Priority` column carries this skill's `Risk` value (`low | medium | high`), not a P-level; `Action` is `proposed` for opportunities and `recommend` for removed-code safety findings. The file-deliverable groups findings by action label (`Do now`, `Do with tests`, `Defer`, `Leave alone`), not by `## P0`-style headings.
 
 ## Related Skills
