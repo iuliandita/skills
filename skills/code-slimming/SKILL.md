@@ -1,7 +1,7 @@
 ---
 name: code-slimming
 description: >
-  · Audit read-only code slimming: dead code, unused files, duplicate blocks, wrapper removal, comment-wall trimming. Triggers: 'slim codebase', 'dead code', 'unused functions', 'dedupe safely'. Not for bugs, tests, or broad reviews.
+  · Audit read-only code slimming: dead code, unused files, duplicate blocks, wrapper removal, commented-out code. Triggers: 'slim codebase', 'dead code', 'unused functions', 'dedupe'. Not for bugs or broad reviews.
 license: MIT
 compatibility: "None - works on any codebase"
 metadata:
@@ -258,7 +258,7 @@ Discovery recipe:
 
    | Concern | Common language-agnostic or per-language tools |
    |---|---|
-   | Unused symbols/exports | `knip`, `ts-prune` (TS/JS); `vulture`, `ruff` F401/F841 (Python); `staticcheck`, `deadcode` (Go); `cargo` `dead_code` warnings (Rust); compiler `-Wunused` (C/C++) |
+   | Unused symbols/exports | `knip` (TS/JS; supersedes the archived `ts-prune`); `vulture`, `ruff` F401/F841 (Python); `staticcheck`, `deadcode` (Go); `cargo` `dead_code` warnings (Rust); compiler `-Wunused` (C/C++) |
    | Unused dependencies | `knip`, `depcheck` (JS); `deptry` (Python); `cargo-machete` (Rust) |
    | Copy-paste clones | `jscpd` (multi-language), `PMD CPD` (multi-language) |
 
@@ -332,6 +332,11 @@ before classifying it as `Do now`.
 It is acceptable and often correct to return zero high-value opportunities. Do not manufacture a
 slimming recommendation to fill the report. Prefer a well-justified `Leave alone` finding over a
 low-confidence abstraction.
+
+The markdown template below is the body of the written deliverable. Wrap it with the boxed inline
+header and boxed conclusion table from the Output Contract when emitting to the transcript; the
+conclusion table uses the column mapping noted in the Output Contract section (action in `Type`,
+`Risk` in the `Priority` column).
 
 Use this format:
 
@@ -497,6 +502,7 @@ See `references/output-contract.md` for the full contract.
 - **Mode:** always-on for audit and review invocations. Every invocation that analyses existing code emits the full contract - boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table. For a quick factual question (e.g., "what is wrapper removal?") respond freely without the contract.
 - **Deliverable path:** `docs/local/audits/code-slimming/<YYYY-MM-DD>-<slug>.md`
 - **Severity scale:** not the shared P0-P3 scale. Findings are classified by action - `Do now | Do with tests | Defer | Leave alone` - plus a `Risk: low | medium | high` field per finding (see the Workflow). This skill proposes deletions, not severity-ranked defects.
+- **Conclusion-table columns** (the shared table in `references/output-contract.md` is code-review-flavored; map it for this skill): `Type` is `rec` for opportunities or `found` when reviewing removed code; the `Priority` column carries this skill's `Risk` value (`low | medium | high`), not a P-level; `Action` is `proposed` for opportunities and `recommend` for removed-code safety findings. The file-deliverable groups findings by action label (`Do now`, `Do with tests`, `Defer`, `Leave alone`), not by `## P0`-style headings.
 
 ## Related Skills
 
