@@ -393,7 +393,7 @@ These look like AI tells but are not:
 - **Lists that are actually lists** - a three-item list is only suspicious if the items are padded. An enumeration of three real things is fine
 - **Bold where it signals a term or path** - bolding a defined term on first use is standard
 - **Em dashes in publications that require them** - some style guides (Chicago, AP) allow or require em dashes. The rule applies to your project's conventions
-- **A genuine rhetorical question or single hard fragment** - one "What if X?" that the piece actually answers, or one deliberate "That's it." landing a point, is voice. Flag the pattern (stacked setups, repeated faux-profundity fragments), not the isolated use.
+- **A genuine rhetorical question or single hard fragment** - one "What if X?" that the piece actually answers, or one deliberate "That's it." landing a point, is voice. Flag the pattern (stacked setups, repeated faux-profundity fragments), not the isolated use. An earned single use is not a tell, so it does not count toward the short-text density threshold or escalate to P1 on its own - it is the stacking that carries the severity.
 
 ### Counter-example (prose that looks AI but is fine)
 
