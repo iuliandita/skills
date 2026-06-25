@@ -223,5 +223,26 @@
     ],
     "lint_status": "PASSED 0/0",
     "spec_status": "PASSED 0/0"
-  }
+  },
+  {
+  "run_id": "2026-06-25-antiaiprose",
+  "branch": "skill-creator/2026-06-25-antiaiprose",
+  "date": "2026-06-25",
+  "primary": {"harness": "claude-code", "model": "claude-opus-4-8", "effort": "high"},
+  "secondary": {"harness": "none", "note": "same-model fresh-context review (subagents), weighted 3%"},
+  "config": {"iterations": 4, "threshold": 99, "mode": "single-skill", "plateau": 2},
+  "pool_size": 1,
+  "pool": ["anti-ai-prose"],
+  "excluded": ["skill-creator", "skill-refiner"],
+  "terminated": "target-reached",
+  "iterations_completed": 4,
+  "cross_model_flags": {"minor": 1, "major": 0, "contested": 0, "note": "minor verified+fixed in iter2"},
+  "scores": {
+   "before": {"anti-ai-prose": {"G": "pass", "A": 96, "B": 97, "X": 100, "composite": 96.7}},
+   "after": {"anti-ai-prose": {"G": "pass", "A": 99, "B": 99.5, "X": 100, "composite": 99.3}}
+  },
+  "scoring_note": "Targeted manual rubric (A42/B58 renormalized, fresh self-review X at 3%); behavioral run as fresh-context subagents on hand-written + 2 generated tests. Labeled estimates, not full automated sweep.",
+  "changes": "iter2: precise stop-slop attribution + count-once cross-ref (fixes README double-flag 13>11). iter3: broaden faux-profundity Detect to fragment family. iter4: reconcile confident-filler exception with short-text density rule (fixes false P1 on earned rhetorical question).",
+  "phase2": "not entered (single-skill scope; meta-improvement requires explicit human approval)"
+ }
 ]
