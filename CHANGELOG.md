@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.40.0](https://github.com/iuliandita/skills/compare/v1.39.0...v1.40.0) (2026-06-25)
+
+
+### Features
+
+* **anti-ai-prose:** add confident-filler, rhetorical-setup, and faux-profundity buckets ([#101](https://github.com/iuliandita/skills/issues/101)) ([cffb928](https://github.com/iuliandita/skills/commit/cffb928))
+* **code-slimming:** add dead-code and comment-wall slimming axes ([#98](https://github.com/iuliandita/skills/issues/98)) ([876d7af](https://github.com/iuliandita/skills/commit/876d7af705a0645496be60acddc9da6f05f539f6))
+
+
+### Bug Fixes
+
+* **code-slimming:** reconcile review inconsistencies + refiner polish ([#100](https://github.com/iuliandita/skills/issues/100)) ([57a61ae](https://github.com/iuliandita/skills/commit/57a61aec67facbfb98b4086d1ff55fa087dacef1))
+
 ## [1.39.0](https://github.com/iuliandita/skills/compare/v1.38.1...v1.39.0) (2026-06-14)
 
 
