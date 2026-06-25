@@ -347,7 +347,7 @@ LLMs punctuate with manufactured confidence and rhetorical scaffolding that anno
 **Detect:**
 - Emphasis crutches: `Full stop.`, `Period.` (as standalone emphasis), `let that sink in`, `make no mistake`, `here's why that matters`
 - Rhetorical setups: `What if...`, `Imagine...`, `Think about it:`, `Picture this`
-- Faux-profundity fragment: `<short sentence>. That's it.`
+- Faux-profundity fragment: a curt closer that asserts depth instead of earning it - `<short sentence>. That's it.`, `Simple as that.`, `Nothing more.`
 
 **Fix:** Cut the wrapper; make the claim carry its own weight. Density is the tell: one earned `that's it` is voice, three is a tic. Overlaps significance padding (`serves as a reminder that`) and scaffolding padding (`let's dive into`); when a phrase fits more than one bucket, count it once under the densest cluster, not in every bucket it touches.
 
