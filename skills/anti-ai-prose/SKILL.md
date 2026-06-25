@@ -17,7 +17,7 @@ Detect and fix the linguistic tells that make written English read as machine-ge
 
 This skill applies to any text: **documentation**, **READMEs**, **wikis** (Confluence, Notion, internal), **pull request descriptions**, **commit messages**, **release notes**, **blog posts**, **emails**, **slide copy**, **creative writing**, and **code comments / docstrings**. The vocabulary, syntax, tone, and formatting checks are language-domain, not platform-domain.
 
-Based in part on [Wikipedia: Signs of AI writing](https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing) - a field guide compiled by editors who have read enormous volumes of LLM-generated text and know what it actually looks like.
+Based in part on [Wikipedia: Signs of AI writing](https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing) - a field guide compiled by editors who have read enormous volumes of LLM-generated text and know what it actually looks like - and on [stop-slop](https://github.com/hardikpandya/stop-slop) (MIT), which contributed the confident-filler check: emphasis crutches, rhetorical setups, and the faux-profundity fragment.
 
 ## When to use
 
@@ -60,6 +60,7 @@ Before returning any audit, verify:
 - [ ] **Routing overlap checked**: overlapping skills, trigger terms, and "When NOT to use" boundaries are checked before returning guidance
 - [ ] **Spec claims verified**: claims about tool behavior, output contracts, or repo conventions are checked against current docs, scripts, or skill files
 - [ ] **Adverb stacking checked**: `-ly` adverb density scanned; passages with multiple adverb-modified speech tags or adjacent adverb clusters flagged at the same density threshold as vocabulary tells
+- [ ] **Confident filler checked**: emphasis crutches, rhetorical setups, and faux-profundity fragments flagged by pattern/density, not on isolated earned uses
 - [ ] **Overflagging avoided**: plain but valid technical prose is not labeled AI-written without concrete evidence
 - [ ] **Audience preserved**: edits keep the author's domain vocabulary, intent, and required formality
 
@@ -339,6 +340,17 @@ Phrases that wrap around the actual content without adding information. LLMs lea
 
 **Fix:** Cut the wrapper and keep the content. `It's worth noting that X` becomes `X`. `In this article, we'll explore Y` becomes a first sentence that is about Y.
 
+#### Confident filler and false emphasis
+
+LLMs punctuate with manufactured confidence and rhetorical scaffolding that announces insight instead of delivering it.
+
+**Detect:**
+- Emphasis crutches: `Full stop.`, `Period.` (as standalone emphasis), `let that sink in`, `make no mistake`, `here's why that matters`
+- Rhetorical setups: `What if...`, `Imagine...`, `Think about it:`, `Picture this`
+- Faux-profundity fragment: `<short sentence>. That's it.`
+
+**Fix:** Cut the wrapper; make the claim carry its own weight. Density is the tell: one earned `that's it` is voice, three is a tic. Overlaps significance padding (`serves as a reminder that`) and scaffolding padding (`let's dive into`); when a phrase fits more than one bucket, count it once under the densest cluster, not in every bucket it touches.
+
 #### "Despite its X, faces challenges"
 
 LLMs reach for a formula when asked to describe any organization or project: positives first, then a "however" paragraph listing challenges, often ending with a "future outlook" paragraph.
@@ -381,6 +393,7 @@ These look like AI tells but are not:
 - **Lists that are actually lists** - a three-item list is only suspicious if the items are padded. An enumeration of three real things is fine
 - **Bold where it signals a term or path** - bolding a defined term on first use is standard
 - **Em dashes in publications that require them** - some style guides (Chicago, AP) allow or require em dashes. The rule applies to your project's conventions
+- **A genuine rhetorical question or single hard fragment** - one "What if X?" that the piece actually answers, or one deliberate "That's it." landing a point, is voice. Flag the pattern (stacked setups, repeated faux-profundity fragments), not the isolated use.
 
 ### Counter-example (prose that looks AI but is fine)
 
