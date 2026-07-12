@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.41.0](https://github.com/iuliandita/skills/compare/v1.40.0...v1.41.0) (2026-07-12)
+
+
+### Features
+
+* **code-slimming:** superseded code, leftover files, and AI-bloat shapes ([#102](https://github.com/iuliandita/skills/issues/102)) ([c5fbd94](https://github.com/iuliandita/skills/commit/c5fbd94))
+
 ## [1.40.0](https://github.com/iuliandita/skills/compare/v1.39.0...v1.40.0) (2026-06-25)
 
 
