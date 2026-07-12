@@ -40,7 +40,8 @@ Every finding falls into one of three categories:
 - One-off prompt authoring or prompt templates - use **prompt-generator**
 - Session-end documentation maintenance - use **update-docs**
 - Prose audit of docs, READMEs, wikis, emails, or creative writing - use **anti-ai-prose**
-- Safe-deletion or LOC-slimming requests (removing dead code, shrinking file count) - use **code-slimming**
+- Safe-deletion or LOC-slimming requests (removing dead/superseded code and leftover files,
+  collapsing inert try/catch or per-element function copies) - use **code-slimming**
 
 ## AI Self-Check
 
@@ -439,8 +440,10 @@ See `references/output-contract.md` for the full contract.
 - **anti-ai-prose** - audits prose for AI writing tells (vocabulary, syntax, tone, formatting).
   Anti-slop audits code. Together they cover "does this repo read as machine-generated" across
   both code and documentation.
-- **code-slimming** - handles safe-deletion and LOC-slimming passes (removing dead code, shrinking
-  file count). Use it when the goal is reducing volume; use anti-slop when the goal is quality.
+- **code-slimming** - handles safe-deletion and LOC-slimming passes (dead/superseded code, leftover
+  files, inert try/catch, per-element function copies). Use it when the goal is reducing volume;
+  use anti-slop when the goal is quality. AI-bloat shapes overlap: code-slimming proposes the
+  behavior-preserving collapse; anti-slop judges them as style/quality smells.
 
 ---
 

@@ -42,9 +42,9 @@ performance, readability, and validation made explicit.
 - Hunting superseded code and leftover files: old implementations replaced by a rewrite, legacy
   paths after a completed migration, versioned leftovers (`*_old`, `*_v1`, `*.bak`, `*copy*`),
   scratch/debug scripts, and files nothing loads
-- Flagging AI-bloat shapes for behavior-preserving collapse: try/catch that only rethrows or wraps
-  code that cannot throw, and N near-identical functions repeated per element where a loop, map, or
-  lookup table would do
+- Flagging AI-bloat shapes for behavior-preserving collapse: inert try/catch (only rethrows, or
+  try around code that cannot throw) and N near-identical functions repeated per element where a
+  loop, map, or lookup table would do
 - Auditing duplicated logic, schemas, handlers, or adapters, and redundant blocks repeated across
   the repo or inside a single file, including exact clones
 - Trimming comment volume: commented-out code, comments that restate the code, and banner walls
@@ -271,9 +271,10 @@ Run the searches for all four axes. Use structural and textual searches to find:
 
 - wrappers with little behavior beyond forwarding to another object or function
 - inert error handling: try/catch that only rethrows, catch-log-rethrow adding no context, try
-  around code that cannot throw, and blanket per-function try/catch added mechanically; a catch
-  that swallows or converts errors is behavior-changing to remove - classify `Do with tests` and
-  route any swallowed-bug concern to code-review
+  around code that cannot throw, blanket per-function try/catch added mechanically, and defensive
+  null checks on values a type system or upstream contract already guarantees (cite the guarantee);
+  a catch that swallows or converts errors is behavior-changing to remove - at best `Do with
+  tests`, and route any swallowed-bug concern to code-review
 - oversized `utils`, `helpers`, `common`, `shared`, or `misc` modules
 - comment walls: banner art, comments that restate the next line, and stale doc blocks
 
@@ -371,109 +372,25 @@ It is acceptable and often correct to return zero high-value opportunities. Do n
 slimming recommendation to fill the report. Prefer a well-justified `Leave alone` finding over a
 low-confidence abstraction.
 
-The markdown template below is the body of the written deliverable. It is a read-only set of
-proposals: it groups findings by action label and intentionally opts out of the checkbox Fix
-protocol in the Output Contract (there is nothing for an implementer to flip here). Wrap it with the
-boxed inline header and boxed conclusion table when emitting to the transcript; the conclusion table
-remaps the shared columns exactly as defined in the Output Contract section below (`Type` =
-`rec`/`found`, `Priority` carries `Risk`, `Action` = `proposed`/`recommend`).
-
-Use this format:
-
-```markdown
-## Code Slimming Audit: [scope]
-
-Context:
-- Languages/frameworks: [detected]
-- Baseline validation run: [commands and results; implementation validation not run because this audit is read-only]
-- Validation gaps: [missing, noisy, skipped, or unavailable checks]
-
-### High-Value Opportunities
-
-**Do with tests** `services/*/list-items.*` - Centralize repeated pagination and filter parsing.
-Affected files: `services/users/list-items.*`, `services/projects/list-items.*`
-Evidence: `services/users/list-items.ts:24-58`, `services/projects/list-items.ts:19-55`
-Current duplication: both modules parse the same page, limit, sort, and filter parameters.
-Refactor shape: extract a shared parser with endpoint-specific allowlists.
-Behavior invariant: page and limit defaults, max-limit handling, sort allowlists, and error messages stay identical.
-Call-site impact: 2 endpoint handlers, no public import path changes.
-Why better: one behavior path for defaults and validation, with fewer divergent call sites.
-Tradeoffs: one shared helper couples list endpoints to a common pagination contract.
-Risk: medium
-Validation needed: add boundary tests for page and limit values, then run lint/type/build/test commands.
-
-**Do now** `src/legacy/format.ts` - Delete unused module.
-Evidence: `src/legacy/format.ts:1-120` defines `formatLegacy`; no imports of `legacy/format` or
-references to `formatLegacy` in `src/`, `test/`, config, or route tables (`rg -n "legacy/format|formatLegacy"`).
-No-reference proof: not exported from the package index, not referenced by string key, not a DI/CLI/route registration.
-Behavior invariant: none; nothing reaches this code.
-Why better: removes a whole dead module and its transitive imports.
-Tradeoffs: none if the no-reference proof holds.
-Risk: low
-Validation needed: type and build pass after deletion; grep confirms zero references.
-
-### Removed-Code Safety Review
-
-Include this section only when reviewing a diff or PR that removed code.
-
-**Needs evidence** `[area]`
-Removed behavior: [code path, wrapper, branch, fallback, type, validation, or dependency removed]
-Replacement path: [what now handles it]
-Behavior invariant: [what must still happen]
-Evidence checked: [diff lines, call sites, tests, type checks]
-Risk: [low/medium/high]
-Validation needed: [specific command/test/case]
-
-### Low-Value Or Risky Opportunities
-
-**Leave alone** `integrations/*` - Duplication is likely to diverge per provider.
-Why not: each provider already has different retry, auth, pagination, and error semantics.
-
-### Summary
-
-- High-value opportunities: 1
-- Low-value or risky opportunities: 1
-- Merge blockers: none from this audit lens
-- Residual risk / skipped areas: [large dirs, generated files, expensive checks, external services]
-- Net recommendation: [slim / defer / leave mostly unchanged], based on risk-adjusted maintenance value, not LOC delta
-```
-
-If no useful slimming opportunities are found, say so explicitly:
-
-```markdown
-### High-Value Opportunities
-None found within scope.
-
-### Search Coverage
-- Scope inspected: [diff/path/repo areas]
-- Patterns checked: [dead code/unused symbols, orphan files, clones, wrappers, duplicate schemas, repeated parsers, adapters, utils, comment walls]
-- Files/directories skipped: [generated/vendor/tests/etc.]
-- Validation checked: [commands/tests found or unavailable]
-
-### Why no action is recommended
-- Existing duplication appears intentional because: [...]
-- Thin wrappers are retained because: [...]
-- Shared abstraction would likely worsen: [...]
-
-### Low-Value Or Risky Opportunities
-[optional leave-alone observations]
-
-### Summary
-- High-value opportunities: 0
-- Low-value or risky opportunities: N
-- Merge blockers: none from this audit lens
-- Residual risk: [what was not inspected]
-- Net recommendation: leave mostly unchanged
-```
+The written deliverable follows `references/report-templates.md`: one template for audits with
+findings (grouped by action label, plus a Removed-Code Safety Review section when the reviewed
+diff removed code) and one for the zero-findings case (explicit search coverage and why-no-action
+sections). The report is a read-only set of proposals: it intentionally opts out of the checkbox
+Fix protocol in the Output Contract (there is nothing for an implementer to flip here). Wrap the
+body with the boxed inline header and boxed conclusion table when emitting to the transcript; the
+conclusion table remaps the shared columns exactly as defined in the Output Contract section below
+(`Type` = `rec`/`found`, `Priority` carries `Risk`, `Action` = `proposed`/`recommend`).
 
 Keep the report concise. Show the refactor shape, not a lecture.
 
 ## Common Patterns
 
-Pattern-by-pattern recognition aids - dead code and unused symbols, exact and intra-file clones,
-commented-out code and comment walls, repeated boundary parsing, near-twin adapters, duplicate data
-shapes, wrapper layers, oversized helper modules, and performance-sensitive slimming - live in
-`references/patterns.md`. Consult it when a candidate's category or safe-collapse shape is unclear.
+Pattern-by-pattern recognition aids - dead code and unused symbols, superseded and replaced code,
+leftover files, exact and intra-file clones, commented-out code and comment walls, per-element
+function copies, inert try/catch and defensive scaffolding, repeated boundary parsing, near-twin
+adapters, duplicate data shapes, wrapper layers, oversized helper modules, and performance-sensitive
+slimming - live in `references/patterns.md`. Consult it when a candidate's category or safe-collapse
+shape is unclear.
 
 ## Output Contract
 
