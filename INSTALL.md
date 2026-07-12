@@ -221,7 +221,8 @@ scripts/
 
 ## Releases
 
-Releases use [release-please](https://github.com/googleapis/release-please) in PR mode. Releasable commits merged to `main` open or update a release PR; merging that release PR creates the tag and GitHub Release.
+Releases are cut manually from `main`. Version bump follows the squash-merge titles since the
+last tag:
 
 - `feat:` - minor release
 - `fix:` - patch release
@@ -229,7 +230,18 @@ Releases use [release-please](https://github.com/googleapis/release-please) in P
 - Any releasable type marked with `!` or containing `BREAKING CHANGE:` - major release
 - `docs:`, `chore:`, `ci:`, `test:`, `style:` - no release on their own
 
-If a refactor or perf change should cut a release, use a squash-merge title that reflects the user-facing impact, usually `fix:`.
+If a refactor or perf change should cut a release, use a squash-merge title that reflects the
+user-facing impact, usually `fix:`.
+
+Release steps (on a clean, up-to-date `main`):
+
+1. Prepend a `## [X.Y.Z](https://github.com/iuliandita/skills/compare/vPREV...vX.Y.Z) (YYYY-MM-DD)`
+   section to `CHANGELOG.md` listing the releasable squash commits since `vPREV`, grouped under
+   `### Features`, `### Bug Fixes`, `### Refactoring`, `### Performance Improvements`, and
+   `### Dependencies` as applicable.
+2. Commit: `chore(main): release X.Y.Z` and push `main`.
+3. Tag and push: `git tag -a vX.Y.Z -m "vX.Y.Z" && git push origin vX.Y.Z`.
+4. Publish: `gh release create vX.Y.Z --title "vX.Y.Z" --notes "<changelog section>"`.
 
 ## Requirements
 
