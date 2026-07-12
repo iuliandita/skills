@@ -12,6 +12,24 @@ removed-flag code paths. The deletion is safe only once no-reference is proven. 
 positives are entry points reached through indirection (see the no-reference paths in SKILL.md Best
 Practices and Step 5); treat any of those as "not dead" until proven otherwise.
 
+## Superseded and replaced code
+
+An old implementation lingers after a rewrite: callers moved to the replacement, but the original
+unit stayed. Recognize it by parallel old/new versions of the same concept (`parser.ts` next to
+`parser_v2.ts`), legacy branches after a migration marked complete, and modules whose only
+remaining references are from other dead code. A "replaced" claim needs three proofs: the
+replacement is named, every caller migrated, and the old path is not a kept fallback, rollback
+target, or feature-flag branch. Dead code reachable only from other dead code counts as dead -
+report the whole cluster together so the deletion is coherent.
+
+## Leftover files
+
+Files the project no longer needs: one-off scripts written for a finished task, scratch/debug
+files, backup copies (`.bak`, `.orig`, `copy`, date suffixes), fixtures and assets nothing loads,
+configs for removed tools or services, disabled or permanently skipped test files, and docs
+describing removed features. Check build configs, CI workflows, scripts in manifests, and doc
+links before calling a file orphaned - loaders are often string-keyed or glob-based.
+
 ## Exact and intra-file clones
 
 Copy-paste blocks repeated across files, or repeated within one file, collapse cleanly when they are
@@ -27,6 +45,27 @@ deletion. Comment walls - ASCII banners, section dividers, and comments that res
 of code - add bytes without signal. Keep comments that carry intent (the why), invariants,
 non-obvious constraints, links to issues or specs, license headers, and lint/type pragmas. This is a
 deletion lane only; rewriting AI-voiced prose belongs to anti-ai-prose.
+
+## Per-element function copies
+
+A common AI-generated shape: one function per element where the elements differ only in a literal -
+`handleRed`/`handleBlue`/`handleGreen`, a getter per field, a near-identical handler per route or
+entity, switch arms that map one-to-one onto data. Collapse to a loop, map, or lookup table keyed by
+the varying literal. Require identical contracts: same signature shape, same error behavior, same
+ordering guarantees. Leave alone when variants are expected to diverge (per-provider semantics) or
+when the explicit form is a framework convention (route tables, codegen targets).
+
+## Inert try/catch and defensive scaffolding
+
+Another AI-generated shape: mechanical try/catch around code that needs none. Inert forms are safe
+to flag - a catch that only rethrows unchanged, catch-log-rethrow that adds no context the logger
+lacks, try around code that cannot throw, and blanket per-function wrapping applied uniformly.
+Distinguish these from behavior-carrying catches: swallow-and-continue, error conversion or
+wrapping into typed errors, retries, fallbacks, and cleanup in `finally`. Removing a swallowing
+catch changes propagation - that is `Do with tests` at best, and a swallowed error that hides a bug
+is a code-review finding, not a slimming one. The same discipline applies to needless defensive
+null checks on values a type system or upstream contract already guarantees - flag only with the
+guarantee cited.
 
 ## Repeated boundary parsing
 
