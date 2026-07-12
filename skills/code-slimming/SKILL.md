@@ -1,7 +1,7 @@
 ---
 name: code-slimming
 description: >
-  · Audit read-only code slimming: dead code, unused files, duplicate blocks, wrapper removal, commented-out code. Triggers: 'slim codebase', 'dead code', 'unused functions', 'dedupe'. Not for bugs or broad reviews.
+  · Audit read-only code slimming: dead/superseded code, unused files, duplicates, wrappers, inert try/catch, copy-per-element functions. Triggers: 'slim codebase', 'dead code', 'unused files', 'dedupe'. Not for bugs or broad reviews.
 license: MIT
 compatibility: "None - works on any codebase"
 metadata:
@@ -19,10 +19,14 @@ This skill reports opportunities only. It does not edit code and does not write 
 It works on four slimming axes:
 
 1. **Dead code** - unused functions, methods, variables, parameters, imports, types, exports,
-   constants, branches, files, and dependencies that nothing reaches.
+   constants, branches, files, and dependencies that nothing reaches. Includes superseded code
+   (an old implementation whose callers all moved to a replacement) and leftover files (backups,
+   one-off scripts, stale fixtures/configs/assets, docs for removed features).
 2. **Redundant code** - duplicate or near-duplicate blocks, whether across the repo or repeated
-   inside a single file, including exact copy-paste clones.
-3. **Wrapper and indirection removal** - thin layers that forward without adding a real role.
+   inside a single file, including exact copy-paste clones and per-element function copies that
+   differ only in a literal where one loop or lookup table would do.
+3. **Wrapper and indirection removal** - thin layers that forward without adding a real role,
+   including inert try/catch scaffolding that adds no handling, context, or recovery.
 4. **Comment volume** - commented-out code, comments that restate the code, and banner walls that
    add bytes without signal. Comments should be minimal and earn their place.
 
@@ -35,6 +39,12 @@ performance, readability, and validation made explicit.
   without implementing them
 - Hunting dead code: unused functions, variables, imports, types, exports, unreachable branches,
   orphan files, and unused dependencies (Step 4 enumerates the full set)
+- Hunting superseded code and leftover files: old implementations replaced by a rewrite, legacy
+  paths after a completed migration, versioned leftovers (`*_old`, `*_v1`, `*.bak`, `*copy*`),
+  scratch/debug scripts, and files nothing loads
+- Flagging AI-bloat shapes for behavior-preserving collapse: inert try/catch (only rethrows, or
+  try around code that cannot throw) and N near-identical functions repeated per element where a
+  loop, map, or lookup table would do
 - Auditing duplicated logic, schemas, handlers, or adapters, and redundant blocks repeated across
   the repo or inside a single file, including exact clones
 - Trimming comment volume: commented-out code, comments that restate the code, and banner walls
@@ -50,6 +60,8 @@ performance, readability, and validation made explicit.
   quality smell, or duplicate-code-as-slop without an explicit slimming goal - use **anti-slop**.
   (Comment lane: code-slimming deletes commented-out code, restating comments, and banner walls;
   anti-slop judges comment noise as a smell; anti-ai-prose rewrites AI-voiced comment text.)
+  (AI-bloat lane: code-slimming flags the deletable/collapsible subset - inert try/catch and
+  copy-per-element functions - with a concrete refactor shape; anti-slop judges AI style broadly.)
 - Rewriting comments or docstrings for tone and AI voice (not deleting them) - use **anti-ai-prose**
 - Security vulnerabilities, secret scanning, auth flaws, or exploitability - use **security-audit**
 - Writing, debugging, or adding validation tests for a slimming recommendation - use **testing**
@@ -63,8 +75,10 @@ performance, readability, and validation made explicit.
 |---|---|
 | "Slim this codebase", "find safe deletions", "review LOC deletion" | **code-slimming** |
 | "Find dead/unused code", "unused functions/files", "remove duplicates" | **code-slimming** |
+| "Find replaced/superseded code", "leftover files", "old version still in tree" | **code-slimming** |
 | "Delete commented-out code", "cut these comment walls down" | **code-slimming** |
 | "Remove this wrapper/indirection layer", "inline this passthrough" | **code-slimming** |
+| "Useless try/catch everywhere", "collapse these repeated per-X functions into a loop" | **code-slimming** |
 | "Clean this up", "does this look AI-written?", "overengineered/verbose" | **anti-slop** |
 | "These comments are noisy/AI-slop, clean them up" | **anti-slop** |
 | "This prose/comments read AI-written, rewrite the voice" | **anti-ai-prose** |
@@ -99,6 +113,11 @@ Before returning a code-slimming audit, verify:
 - [ ] **Dead code proven, not guessed**: every "unused" claim cites a no-reference search and rules
   out reflection, dynamic dispatch, DI, serialization, plugin/CLI/route registration, public API,
   conditional compilation, and test discovery before recommending deletion
+- [ ] **Superseded claims paired**: every "replaced by X" claim names the replacement, shows callers
+  migrated, and confirms the old path is not a kept fallback, rollback target, or flag branch
+- [ ] **Error-handling removal behavior-checked**: every inert try/catch flag proves the catch adds
+  nothing (rethrows unchanged, or the wrapped code cannot throw); a catch that swallows or converts
+  errors changes behavior when removed and is never `Do now`
 - [ ] **Comment trimming is deletion, not rewriting**: only commented-out code, comments that
   restate the code, and dead banner walls are flagged; tone and AI-voice rewrites are routed to
   anti-ai-prose, and load-bearing comments (why, invariants, links, license, lint pragmas) are kept
@@ -227,12 +246,20 @@ Run the searches for all four axes. Use structural and textual searches to find:
 - files and modules that nothing imports, requires, includes, or registers (orphans)
 - unreachable code: statements after `return`/`throw`/`break`, `if (false)` branches, dead
   `case` arms, conditions that cannot be true, and feature-flag branches for removed flags
+- superseded implementations: an old code path whose callers all moved to a replacement, legacy
+  branches after a completed migration, parallel old/new versions of the same unit
+  (`*_old`, `*_v1`, `*_new`, `*.bak`, `*copy*`, date-suffixed files)
+- leftover files: one-off or scratch/debug scripts, stale fixtures, configs, and assets nothing
+  loads, disabled or permanently skipped test files, docs describing removed features
 - commented-out code blocks left behind from past edits
 
 **Redundant / duplicate code:**
 
 - near-duplicate files, classes, structs, functions, methods, hooks, handlers, or components
 - exact copy-paste clones repeated across files or repeated inside a single file
+- per-element function copies: N functions identical except one literal (an element name, field,
+  color, route, entity) - collapse to a loop, map, or lookup table only when the contracts are
+  identical and likely to stay identical
 - repeated type, interface, schema, DTO, record, enum, or data container shapes
 - repeated request parsing, query construction, pagination, validation, mapping, serialization, or error handling
 - parallel provider, client, repository, service, or adapter implementations with the same skeleton
@@ -243,6 +270,11 @@ Run the searches for all four axes. Use structural and textual searches to find:
 **Wrappers and bloat:**
 
 - wrappers with little behavior beyond forwarding to another object or function
+- inert error handling: try/catch that only rethrows, catch-log-rethrow adding no context, try
+  around code that cannot throw, blanket per-function try/catch added mechanically, and defensive
+  null checks on values a type system or upstream contract already guarantees (cite the guarantee);
+  a catch that swallows or converts errors is behavior-changing to remove - at best `Do with
+  tests`, and route any swallowed-bug concern to code-review
 - oversized `utils`, `helpers`, `common`, `shared`, or `misc` modules
 - comment walls: banner art, comments that restate the next line, and stale doc blocks
 
@@ -254,7 +286,9 @@ Discovery recipe:
 2. Use cheap searches before manual reading: compare same-role trees such as `providers/*`,
    `clients/*`, `services/*`, `repositories/*`, `handlers/*`, `routes/*`, and `adapters/*`; search
    repeated declarations and one-line wrappers that only forward to another call; find large generic
-   modules named `utils`, `helpers`, `common`, `shared`, or `misc`.
+   modules named `utils`, `helpers`, `common`, `shared`, or `misc`; search versioned/backup
+   basenames (`_old`, `_v1`, `.bak`, `copy`, date suffixes) and catch blocks that only rethrow
+   or log-and-rethrow.
 3. For dead-code candidates, search for every reference to the symbol (definition site, call sites,
    re-exports, string-keyed lookups, config/route tables, DI registrations) before classifying it
    unused. Lean on the repo's own dead-code and clone tooling when present - it scopes the search
@@ -338,109 +372,25 @@ It is acceptable and often correct to return zero high-value opportunities. Do n
 slimming recommendation to fill the report. Prefer a well-justified `Leave alone` finding over a
 low-confidence abstraction.
 
-The markdown template below is the body of the written deliverable. It is a read-only set of
-proposals: it groups findings by action label and intentionally opts out of the checkbox Fix
-protocol in the Output Contract (there is nothing for an implementer to flip here). Wrap it with the
-boxed inline header and boxed conclusion table when emitting to the transcript; the conclusion table
-remaps the shared columns exactly as defined in the Output Contract section below (`Type` =
-`rec`/`found`, `Priority` carries `Risk`, `Action` = `proposed`/`recommend`).
-
-Use this format:
-
-```markdown
-## Code Slimming Audit: [scope]
-
-Context:
-- Languages/frameworks: [detected]
-- Baseline validation run: [commands and results; implementation validation not run because this audit is read-only]
-- Validation gaps: [missing, noisy, skipped, or unavailable checks]
-
-### High-Value Opportunities
-
-**Do with tests** `services/*/list-items.*` - Centralize repeated pagination and filter parsing.
-Affected files: `services/users/list-items.*`, `services/projects/list-items.*`
-Evidence: `services/users/list-items.ts:24-58`, `services/projects/list-items.ts:19-55`
-Current duplication: both modules parse the same page, limit, sort, and filter parameters.
-Refactor shape: extract a shared parser with endpoint-specific allowlists.
-Behavior invariant: page and limit defaults, max-limit handling, sort allowlists, and error messages stay identical.
-Call-site impact: 2 endpoint handlers, no public import path changes.
-Why better: one behavior path for defaults and validation, with fewer divergent call sites.
-Tradeoffs: one shared helper couples list endpoints to a common pagination contract.
-Risk: medium
-Validation needed: add boundary tests for page and limit values, then run lint/type/build/test commands.
-
-**Do now** `src/legacy/format.ts` - Delete unused module.
-Evidence: `src/legacy/format.ts:1-120` defines `formatLegacy`; no imports of `legacy/format` or
-references to `formatLegacy` in `src/`, `test/`, config, or route tables (`rg -n "legacy/format|formatLegacy"`).
-No-reference proof: not exported from the package index, not referenced by string key, not a DI/CLI/route registration.
-Behavior invariant: none; nothing reaches this code.
-Why better: removes a whole dead module and its transitive imports.
-Tradeoffs: none if the no-reference proof holds.
-Risk: low
-Validation needed: type and build pass after deletion; grep confirms zero references.
-
-### Removed-Code Safety Review
-
-Include this section only when reviewing a diff or PR that removed code.
-
-**Needs evidence** `[area]`
-Removed behavior: [code path, wrapper, branch, fallback, type, validation, or dependency removed]
-Replacement path: [what now handles it]
-Behavior invariant: [what must still happen]
-Evidence checked: [diff lines, call sites, tests, type checks]
-Risk: [low/medium/high]
-Validation needed: [specific command/test/case]
-
-### Low-Value Or Risky Opportunities
-
-**Leave alone** `integrations/*` - Duplication is likely to diverge per provider.
-Why not: each provider already has different retry, auth, pagination, and error semantics.
-
-### Summary
-
-- High-value opportunities: 1
-- Low-value or risky opportunities: 1
-- Merge blockers: none from this audit lens
-- Residual risk / skipped areas: [large dirs, generated files, expensive checks, external services]
-- Net recommendation: [slim / defer / leave mostly unchanged], based on risk-adjusted maintenance value, not LOC delta
-```
-
-If no useful slimming opportunities are found, say so explicitly:
-
-```markdown
-### High-Value Opportunities
-None found within scope.
-
-### Search Coverage
-- Scope inspected: [diff/path/repo areas]
-- Patterns checked: [dead code/unused symbols, orphan files, clones, wrappers, duplicate schemas, repeated parsers, adapters, utils, comment walls]
-- Files/directories skipped: [generated/vendor/tests/etc.]
-- Validation checked: [commands/tests found or unavailable]
-
-### Why no action is recommended
-- Existing duplication appears intentional because: [...]
-- Thin wrappers are retained because: [...]
-- Shared abstraction would likely worsen: [...]
-
-### Low-Value Or Risky Opportunities
-[optional leave-alone observations]
-
-### Summary
-- High-value opportunities: 0
-- Low-value or risky opportunities: N
-- Merge blockers: none from this audit lens
-- Residual risk: [what was not inspected]
-- Net recommendation: leave mostly unchanged
-```
+The written deliverable follows `references/report-templates.md`: one template for audits with
+findings (grouped by action label, plus a Removed-Code Safety Review section when the reviewed
+diff removed code) and one for the zero-findings case (explicit search coverage and why-no-action
+sections). The report is a read-only set of proposals: it intentionally opts out of the checkbox
+Fix protocol in the Output Contract (there is nothing for an implementer to flip here). Wrap the
+body with the boxed inline header and boxed conclusion table when emitting to the transcript; the
+conclusion table remaps the shared columns exactly as defined in the Output Contract section below
+(`Type` = `rec`/`found`, `Priority` carries `Risk`, `Action` = `proposed`/`recommend`).
 
 Keep the report concise. Show the refactor shape, not a lecture.
 
 ## Common Patterns
 
-Pattern-by-pattern recognition aids - dead code and unused symbols, exact and intra-file clones,
-commented-out code and comment walls, repeated boundary parsing, near-twin adapters, duplicate data
-shapes, wrapper layers, oversized helper modules, and performance-sensitive slimming - live in
-`references/patterns.md`. Consult it when a candidate's category or safe-collapse shape is unclear.
+Pattern-by-pattern recognition aids - dead code and unused symbols, superseded and replaced code,
+leftover files, exact and intra-file clones, commented-out code and comment walls, per-element
+function copies, inert try/catch and defensive scaffolding, repeated boundary parsing, near-twin
+adapters, duplicate data shapes, wrapper layers, oversized helper modules, and performance-sensitive
+slimming - live in `references/patterns.md`. Consult it when a candidate's category or safe-collapse
+shape is unclear.
 
 ## Output Contract
 
@@ -449,7 +399,8 @@ See `references/output-contract.md` for the full contract.
 - **Skill name:** CODE-SLIMMING
 - **Deliverable bucket:** `audits`
 - **Mode:** always-on for audit and review invocations. Every invocation that analyses existing code emits the full contract - boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table. For a quick factual question (e.g., "what is wrapper removal?") respond freely without the contract.
-- **Deliverable path:** `docs/local/audits/code-slimming/<YYYY-MM-DD>-<slug>.md`
+- **Deliverable path:** `docs/local/audits/code-slimming/<YYYY-MM-DD>-<slug>.md`, resolved against
+  the audited repo's root (use the session cwd only when the audit target is not a repo)
 - **Severity scale:** this skill overrides the shared P0-P3 scale, which the contract permits via its scale-migration note. Findings are classified by action - `Do now | Do with tests | Defer | Leave alone` - plus a `Risk: low | medium | high` field per finding (see the Workflow). This skill proposes deletions, not severity-ranked defects. Old -> new: P0-P3 priority is not used; `Risk` replaces the `Priority` column (see Conclusion-table columns below).
 - **Conclusion-table columns** (the shared table in `references/output-contract.md` is code-review-flavored; map it for this skill): `Type` is `rec` for opportunities or `found` when reviewing removed code; the `Priority` column carries this skill's `Risk` value (`low | medium | high`), not a P-level; `Action` is `proposed` for opportunities and `recommend` for removed-code safety findings. The file-deliverable groups findings by action label (`Do now`, `Do with tests`, `Defer`, `Leave alone`), not by `## P0`-style headings.
 

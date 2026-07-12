@@ -2414,5 +2414,59 @@
       "e2efea0 (iter2 extract)",
       "0cca4bd (iter3 dedupe)"
     ]
+  },
+{
+ "run_id": "2026-07-12-121500-code-slimming",
+ "branch": "skill-refiner/2026-07-12-121500",
+ "date": "2026-07-12",
+ "primary": {
+  "harness": "claude-code",
+  "model": "claude-fable-5",
+  "effort": "default"
+ },
+ "secondary": {
+  "harness": "codex",
+  "model": "codex (PONG smoke PASS)",
+  "weight": "5%",
+  "result": "NO_FLAGS on iter2 diff"
+ },
+ "config": {
+  "iterations_max": 10,
+  "ceiling": "none",
+  "threshold": "ignored (push to target)",
+  "target": 99,
+  "mode": "circuit-breaker"
+ },
+ "pool": [
+  "code-slimming"
+ ],
+ "scope": "targeted single-skill run on code-slimming after f383fb5 (new-shape additions) + a8ceeec (skill-creator review fixes); model changed since 2026-06-19 run - new baseline, deltas not comparable",
+ "gate": "lint-skills.sh 0 err, validate-spec.sh 0 violations (all iters)",
+ "composite_formula": "baseline 0.42*A + 0.58*B; improvement iters 0.40*A + 0.55*B + 0.05*X",
+ "iterations": [
+  {
+   "n": 1,
+   "kind": "baseline",
+   "A": 100,
+   "B": 91.7,
+   "X": null,
+   "composite": 95.2,
+   "note": "A 26/26 post skill-creator review; B tests: fixture-audit 100 (6/6 planted shapes), routing trap 97, zero-findings 78 (agent audited session cwd instead of named path; later attributed to ambiguous generated test prompt)"
+  },
+  {
+   "n": 2,
+   "kind": "improve",
+   "change": "anchor output-contract deliverable path to audited repo root (kept); scope-precedence wording (tested, reverted - no measured gain, failure was test-prompt ambiguity)",
+   "A": 100,
+   "B": 99,
+   "X": 100,
+   "composite": 99.45,
+   "gate": "kept",
+   "test": "revised unambiguous zero-findings test 100 (correct target, no manufactured findings, public-API leave-alone, deliverable anchored to audited repo); codex NO_FLAGS"
   }
+ ],
+ "termination": "target reached (99.45 >= 99); residual B deduction router-side, not skill content; phase 2 skipped (single-skill scope, per 2026-06-19 precedent)",
+ "changes_summary": "SKILL.md +2/-1 (deliverable path anchor); test-cases-local.md gained code-slimming Test 3 (zero-findings trap) with prompt-authoring note",
+ "notes": "generated test flagged lower-quality per protocol; forward-test from same-session skill-creator review reused as behavioral T1"
+}
 ]
