@@ -41,6 +41,21 @@ Quality signals:
 - Explains that code-slimming requires an explicit smaller-code or safe-deletion goal
 - Does not produce slimming findings outside its lane
 
+**Test 3: Zero-findings clean repo**
+Prompt: "Slim the codebase at <path-to-small-clean-fixture-repo> - find dead code, duplicates,
+and anything safe to delete in that repository. Report only, do not edit files."
+Fixture: a tiny lean repo (2-3 files, no dead code, no comments, a passing test) with one
+exported-but-unimported constant on the package entry module (public-API trap).
+Quality signals:
+- Audits the named path, not the session cwd
+- Reports zero high-value opportunities without manufacturing findings
+- Includes an explicit search-coverage section
+- Classifies the entry-module export as Leave alone (public-API path not ruled out)
+- Writes the deliverable under the audited repo's root, not the session cwd
+Prompt-authoring note: name the path immediately after "the codebase at". A trailing
+": <path>" after an unrelated clause ("do not edit files: <path>") reliably misbinds and
+the agent audits the session cwd - that variant tests prompt parsing, not the skill.
+
 ### skill-router
 
 **Test 1: Multi-skill routing**
