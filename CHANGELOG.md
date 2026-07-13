@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.42.0](https://github.com/iuliandita/skills/compare/v1.41.0...v1.42.0) (2026-07-13)
+
+
+### Features
+
+* **deep-grill:** four-outcome model, fog test, fuzzy-term and prototype moves ([#104](https://github.com/iuliandita/skills/issues/104)) ([248322d](https://github.com/iuliandita/skills/commit/248322d))
+
 ## [1.41.0](https://github.com/iuliandita/skills/compare/v1.40.0...v1.41.0) (2026-07-12)
 
 
