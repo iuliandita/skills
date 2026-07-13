@@ -2468,5 +2468,66 @@
  "termination": "target reached (99.45 >= 99); residual B deduction router-side, not skill content; phase 2 skipped (single-skill scope, per 2026-06-19 precedent)",
  "changes_summary": "SKILL.md +2/-1 (deliverable path anchor); test-cases-local.md gained code-slimming Test 3 (zero-findings trap) with prompt-authoring note",
  "notes": "generated test flagged lower-quality per protocol; forward-test from same-session skill-creator review reused as behavioral T1"
-}
+},
+  {
+    "run_id": "2026-07-13-deep-grill",
+    "branch": "skill-creator/2026-07-13-220745",
+    "date": "2026-07-13",
+    "primary": {
+      "harness": "claude-code",
+      "model": "claude-opus-4-8",
+      "context": "1M",
+      "effort": "default"
+    },
+    "secondary": {
+      "harness": "none",
+      "reason": "codex/gemini absent from PATH",
+      "fallback": "same-model fresh-context review",
+      "weight": "renormalized AI 42% / Behavioral 58%"
+    },
+    "config": {
+      "iterations_min": 5,
+      "iterations_run": 6,
+      "threshold": "target 99",
+      "mode": "circuit-breaker",
+      "commits": "deferred per user (pre-commit run)"
+    },
+    "pool": [
+      "deep-grill"
+    ],
+    "scope": "single-skill; wayfinder-inspired mechanics (four-outcome model, fog-of-war test, fuzzy-term challenge, prototype-as-resolution)",
+    "gate": "PASS (lint clean, validate-spec spec-compliant)",
+    "composite_formula": "gate + AI 42% + Behavioral 58% (no secondary)",
+    "scores": {
+      "baseline": {
+        "gate": "pass",
+        "ai": 100,
+        "behavioral": 92,
+        "composite": 95
+      },
+      "final": {
+        "gate": "pass",
+        "ai": 100,
+        "behavioral": 99,
+        "composite": 99
+      },
+      "labeled": "targeted-rubric estimates, not full automated per-iteration sweep"
+    },
+    "behavioral_tests": [
+      "code/infra + headless (save-for-later): all four mechanics fire, buckets sorted, fog gated on prerequisite - PASS",
+      "decision/strategy + interactive discipline (GitHub->GitLab): premise-gating Q1, upstream-first order, one-at-a-time, recommended answers, fuzzy-term challenge, phase-2 gate via four outcomes - PASS",
+      "fiction + headless (lighthouse keeper): fiction lens, prototype move generalized to throwaway scenes, fog gated on phraseability, all buckets, owner/trigger format - PASS"
+    ],
+    "iterations": [
+      "1: fog gate precision (A1)",
+      "2: prototype-decision seam (A3) + Phase-2 routing (A2)",
+      "3: trim Step 4 taxonomy re-definition (B3)",
+      "4: delete duplicate Interrogation-rules section (B1)",
+      "5: Rule 6 headless carve-out (B2) + Output-Contract collapse (B4)",
+      "6: final-review nits - severity-scope + fog/prereq note"
+    ],
+    "termination": "target reached + plateau - final fresh-context review NO MAJOR FLAGS; 3 cross-domain/cross-mode forward-tests all PASS with zero new defects. Verified ~99.",
+    "changes_summary": "SKILL.md 258->240 lines (net -18 dedup); precision at 3 seams; forward-tested clean - all four mechanics fire, buckets sorted.",
+    "notes": "Deployed copy synced. Commits deferred per user. Phase 2 skipped (out of scope). Prior 2026-06-13 run plateaued opus+codex; re-refined after wayfinder edits with opus + fresh-context self-review."
+  }
 ]
