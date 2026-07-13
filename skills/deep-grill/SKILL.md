@@ -63,8 +63,9 @@ and fold both phases into the record. Everything else still holds.
 - [ ] **Tree walked top-down**: upstream decisions resolved before the downstream ones that depend on them.
 - [ ] **Phase switch announced** *(interactive only)*: Phase 2 starts only after the tree is resolved, and the switch is stated out loud.
 - [ ] **Phase 2 attacks, not restates**: adversarial questions hit assumptions, failure modes, and premises - they do not re-ask Phase 1.
-- [ ] **Vague answers forced concrete**: "we'll handle it later" is pushed to a real decision or logged as an explicit open question.
-- [ ] **Decision record written**: resolved decisions, surviving risks, open questions, and a next step land in the deliverable file.
+- [ ] **Fuzzy terms pinned**: overloaded words were challenged and disambiguated before the plan built on them.
+- [ ] **Vague answers forced concrete**: every hand-wave resolved to a decision, a sharp open question, a flagged fog patch, or a do-first prerequisite - never a silent gap.
+- [ ] **Decision record written**: resolved decisions, surviving risks, open questions, fog, prerequisites, and a next step land in the deliverable file.
 - [ ] **Domain detected and routed**: correct lens applied; if the real task is code review, security, or a repo audit, routed to the right skill instead.
 - [ ] **Hidden state identified**: existing code, config, prior decisions, and constraints are surfaced before grilling, not assumed.
 - [ ] **Routing overlap checked**: overlap with jekyll-hyde and code-review handled per "When NOT to use" before proceeding.
@@ -108,7 +109,7 @@ Run the core grill mechanics. They are the load-bearing part, and apply in every
 
 - Build the decision tree for the plan. **Resolve upstream choices before downstream ones** -
   a downstream answer is worthless if its parent decision flips.
-- Ask **one question at a time**.
+- Ask **one question at a time**. Batching collapses the decision tree into a survey and loses the dependency order.
 - For **every** question, provide your own recommended answer and a one-line reason. You are a
   collaborator with opinions, not a form.
 - If a question can be answered by **exploring the codebase, files, or docs, go look** instead of
@@ -116,8 +117,24 @@ Run the core grill mechanics. They are the load-bearing part, and apply in every
   would normally have checked, then ask - or, in headless mode where no one can answer, record it
   as a flagged assumption instead of asking.
 - Pull domain-specific questions from `references/domains.md`.
-- Force vague answers into concrete ones. "We'll figure out caching later" becomes a decision now
-  or an explicit logged open question - never a silent gap.
+- **Challenge fuzzy terms on the spot.** When an overloaded word carries weight, pin it before
+  building on it: "You said 'account' - the Customer or the User? Those are different things." A
+  plan resolved on an ambiguous term resolves the wrong tree.
+- **When a branch is a feel question, prototype - do not grind.** "How should this state model
+  behave?" or "what should it look like?" does not resolve by more questions. Recommend a cheap,
+  throwaway prototype to react to; concrete fidelity settles taste faster than abstract debate. If
+  it cannot be settled in the conversation, the prototype becomes the **prerequisite** that unblocks
+  the decision - log it as one, and log the feel decision it gates as an **open question** so the
+  decision itself is tracked, not just the prototype. Do not build the prototype here.
+- Force every vague answer to one of four outcomes - never a silent gap:
+  - **Decision** - settle it now.
+  - **Open question** - a sharp question with no answer yet; log it with an owner or a trigger.
+  - **Not yet specified (fog)** - you cannot even phrase the question sharply yet, because it hangs
+    on an open decision or an undone prerequisite above. Phraseability is the only test: if you can
+    *state* the question precisely now - even while it stays blocked - it is an **Open question**,
+    not fog. Record the area to revisit; do not fake-resolve it.
+  - **Prerequisite** - nothing to decide: a do-first action must happen before the decision can be
+    made (provision access, move data so its shape is visible, sign up so an API can be judged).
 
 End Phase 1 when no unresolved upstream decision remains and no unspecified requirement would
 change what gets built.
@@ -139,7 +156,9 @@ Attack the *finished* plan:
 
 For each surfaced risk, resolve it one of three ways: **accept** it (and record why), **mitigate**
 it (and record how), or recognize it **reopens a Phase 1 decision** - in which case go back,
-re-resolve that branch, and return.
+re-resolve that branch, and return. If what Phase 2 surfaces is not a risk to carry but an unknown -
+something to decide, investigate, or do first - route it through the four-outcome model (open
+question / fog / prerequisite) instead of forcing it into accept or mitigate.
 
 Timebox it. Stop when new attacks stop changing the plan. Do not grind out risks that no longer
 move the decision.
@@ -152,26 +171,22 @@ Write one file to `docs/local/deliverables/deep-grill/<YYYY-MM-DD>-<slug>.md` us
 - **Context** - what is being built and why.
 - **Resolved decisions** - the design and the spec: what to build, with the reasoning for each choice.
 - **Surviving risks** - what Phase 2 surfaced and you accepted, each with its mitigation or acceptance rationale.
-- **Open questions** - anything deferred, stated explicitly so it cannot hide.
+- **Open questions** - sharp questions deferred, each stated explicitly with an owner or a trigger.
+- **Not yet specified** - fog: areas you can tell are coming but cannot phrase sharply yet, recorded
+  so they cannot hide as false resolution.
+- **Prerequisites** - do-first actions that unblock a decision (access, data, signup), each naming
+  the decision it blocks.
 - **Recommended next step** - the concrete first action.
+
+**Sort every deferred item into its bucket - do not collapse everything into Open questions.** The
+three deferral sections (Open questions, Not yet specified, Prerequisites) use the four-outcome model
+from Step 2; emit each whenever it has any entry. Headless one-pass grills are the most likely to
+collapse them - do not. A decision of the form "inspect X before deciding Y" is not one resolved
+decision: it is a **prerequisite** (inspect X) plus **fog** (the shape of Y, unphraseable until X is
+known).
 
 This file is the deliverable. It is both the design (resolved choices) and the spec (what to
 build and what to watch).
-
----
-
-## Interrogation rules
-
-The mechanics are not optional - they are what separates a real grill from a chat:
-
-- **One question at a time.** Batching collapses the decision tree into a survey and loses the dependency order.
-- **Recommend an answer to everything.** Your recommendation gives the user something to push against; silence makes them do all the work.
-- **Explore, do not ask, when the answer is in the repo.** Asking what you could have checked wastes the user and erodes trust.
-- **Upstream before downstream.** Always.
-- **Phase discipline.** Clarify fully, then attack. Announce the transition.
-- **Opinions, not "it depends."** If it depends, say on what, then give your default.
-- **No vague survivors.** Every hand-wave becomes a decision or a logged open question.
-- **Timebox the adversary.** Diminishing returns are real; stop when the plan stops moving.
 
 ---
 
@@ -190,15 +205,13 @@ See `references/output-contract.md` for the full contract.
   is short kebab-case derived from the plan's subject (e.g. `redis-read-through-cache`), so two
   different plans on the same day get two different slugs - the shared contract's `-N` suffix is
   only for re-grilling the same subject twice.
-- **Mode:** conditional. The primary path is the two-phase grill of a forming plan: respond
-  conversationally during the interview (no boxed contract mid-interview), and at the end always
-  write the decision record to the deliverable path using `references/decision-record.md`.
-  Headless / non-interactive runs follow this same primary path - the one-pass decision record at
-  the deliverable path, no boxed contract. When
-  invoked instead to **stress-test an existing artifact** as a pure audit (Phase 2 only, surfacing
-  a findings list against a spec or design doc that already exists), emit the full boxed contract -
-  inline header, per-finding detail in the deliverable, boxed conclusion, conclusion table.
-- **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; used only in the audit path).
+- **Mode:** conditional. Primary path (interactive and headless alike): no boxed contract - respond
+  conversationally (headless: one pass), always ending with the decision record written to the
+  deliverable path using `references/decision-record.md`. Only when invoked to **stress-test an
+  existing artifact** as a pure Phase-2 audit (a findings list against a spec or design doc that
+  already exists) do you emit the full boxed contract - inline header, per-finding detail in the
+  deliverable, boxed conclusion, conclusion table.
+- **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract). The decision record uses the `P0-P3` subset for risk priority; the full scale with `info` is used only in the audit path.
 
 ## Related Skills
 
@@ -215,12 +228,13 @@ See `references/output-contract.md` for the full contract.
 ## Rules
 
 1. One question at a time. Never batch. Exception: headless / non-interactive mode emits the whole tree in one pass (Step 1).
-2. Every question carries your recommended answer and a one-line reason.
+2. Every question carries your recommended answer and a one-line reason - an opinion, not "it depends" without a default.
 3. Explore the codebase, files, and docs for anything answerable there; do not ask what you can check.
 4. Resolve upstream decisions before the downstream ones that depend on them.
-5. Do not start Phase 2 until the tree is resolved, and announce the switch.
-6. Phase 2 attacks the plan; it does not restate Phase 1.
-7. Force vague answers into a concrete decision or a logged open question before moving on.
-8. Always write the decision record. It is the design and the spec.
-9. Timebox the adversarial phase; stop when attacks stop changing the plan.
-10. Route out if the real task is code review, security, or a repo audit.
+5. Challenge overloaded terms before building on them; a wrong term resolves the wrong tree.
+6. Do not start Phase 2 until the tree is resolved, and announce the switch (the announcement is interactive-only; headless folds Phase 2 into the record).
+7. Phase 2 attacks the plan; it does not restate Phase 1.
+8. Force vague answers to one of four outcomes - decision, open question, fog (not yet specifiable), or prerequisite (do-first action) - before moving on.
+9. Always write the decision record. It is the design and the spec.
+10. Timebox the adversarial phase; stop when attacks stop changing the plan.
+11. Route out if the real task is code review, security, or a repo audit.
