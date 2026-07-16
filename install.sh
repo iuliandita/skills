@@ -66,7 +66,7 @@ declare -A TOOL_PATHS=(
   [openhands]="${OPENHANDS_SKILLS_DIR:-$HOME/.openhands/skills}"
   [trae]="${TRAE_SKILLS_DIR:-$HOME/.trae/skills}"
   [qoder]="${QODER_SKILLS_DIR:-$HOME/.qoder/skills}"
-  [kimi]="${KIMI_SKILLS_DIR:-$HOME/.config/agents/skills}"
+  [kimi]="${KIMI_SKILLS_DIR:-$HOME/.agents/skills}"
   [portable]="${PORTABLE_SKILLS_DIR:-$HOME/.skills}"
 )
 

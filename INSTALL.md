@@ -141,7 +141,7 @@ For important workflows, smoke-test the target tool after install:
 | OpenHands | `openhands` | `~/.openhands/skills` |
 | Trae | `trae` | `~/.trae/skills` |
 | Qoder | `qoder` | `~/.qoder/skills` |
-| Kimi Code CLI | `kimi` | `~/.config/agents/skills` |
+| Kimi Code CLI | `kimi` | `~/.agents/skills` |
 | Portable | `portable` | `~/.skills` |
 
 Common aliases also work: `claude-code`, `openai-codex`, `github-copilot`, `gemini-cli`, `kiro-cli`, `qwen-code`, `kimi-cli`.
