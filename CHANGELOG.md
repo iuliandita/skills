@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.42.2](https://github.com/iuliandita/skills/compare/v1.42.1...v1.42.2) (2026-07-22)
+
+
+### Bug Fixes
+
+* **virtualization:** validate Packer examples ([#116](https://github.com/iuliandita/skills/issues/116)) ([6d2eabc](https://github.com/iuliandita/skills/commit/6d2eabca54c9a8581c4ba0fd1d5297dde6aaf454))
+
 ## [1.42.1](https://github.com/iuliandita/skills/compare/v1.42.0...v1.42.1) (2026-07-22)
 
 
