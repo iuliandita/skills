@@ -109,7 +109,7 @@ spec:
 - Multi-source Applications (mature since ArgoCD 2.6) for separating chart version from env values.
 - `ignoreMissingValueFiles: true` for default/override patterns with ApplicationSets.
 - OCI charts: omit `oci://` prefix in ArgoCD's `repoURL`.
-- Wildcard valueFiles (documented in current Argo CD docs as of June 2026 recheck): `valueFiles: ["values/*.yaml"]`.
+- Wildcard valueFiles (documented in current Argo CD docs as of July 2026 recheck): `valueFiles: ["values/*.yaml"]`.
 - **Anti-pattern**: `randAlphaNum` or other random functions in Helm templates - causes perpetual OutOfSync.
 
 ### Promotion Strategy
@@ -223,7 +223,7 @@ The Trivy supply chain attack (CVE-2026-33634) demonstrated that **mutable Git t
 - **Separate CI secrets by environment**: staging pipeline should NOT have access to production credentials.
 - **Monitor action repos for force-push events**: subscribe to security advisories for all actions you use.
 
-**Trivy safe versions (June 2026):** use binary v0.70.0+ from official releases for new pins. The March 2026 rollback set was binary v0.69.3, `trivy-action@v0.35.0`, and `setup-trivy@v0.2.6`. Do NOT use v0.69.4/5/6.
+**Trivy safe versions (July 2026):** use binary v0.72.0+ from official releases for new pins. The March 2026 rollback set was binary v0.69.3, `trivy-action@v0.35.0`, and `setup-trivy@v0.2.6`. Do NOT use v0.69.4/5/6.
 
 ### Secrets Management
 

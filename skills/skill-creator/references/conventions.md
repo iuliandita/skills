@@ -16,7 +16,7 @@ when creating or reviewing skills to ensure consistency.
 7. AI Self-Check Patterns
 7.5. Diagnostic Skill Pitfalls
 8. Trigger Description Patterns
-9. Skill Inventory (June 2026)
+9. Skill Inventory (July 2026)
 
 ---
 
@@ -506,9 +506,9 @@ Use this skill even when the user doesn't explicitly say "git" but is clearly do
 
 ---
 
-## 9. Skill Inventory (June 2026)
+## 9. Skill Inventory (July 2026)
 
-### Published skills (44)
+### Published skills (46)
 
 | Skill | Effort | Date Added | Domain |
 |-------|--------|-----------|--------|
@@ -526,6 +526,7 @@ Use this skill even when the user doesn't explicitly say "git" but is clearly do
 | command-prompt | medium | 2026-03-25 | Shell scripting and config |
 | databases | high | 2026-03-24 | Database operations |
 | debian-ubuntu | high | 2026-04-22 | Debian / Ubuntu administration |
+| debug-triage | high | 2026-06-14 | Live incident localization and routing |
 | deep-audit | high | 2026-04-14 | Wave-based repo audit orchestrator |
 | deep-grill | high | 2026-06-13 | Plan stress-testing and red-team interrogation |
 | dev-cycle | high | 2026-04-14 | Start-to-finish development workflow |
@@ -543,6 +544,7 @@ Use this skill even when the user doesn't explicitly say "git" but is clearly do
 | mcp | high | 2026-03-30 | MCP server development |
 | networking | high | 2026-03-25 | DNS, reverse proxies, VPNs, nftables, HA |
 | nixos-btw | high | 2026-04-23 | NixOS / Nix administration |
+| observability | high | 2026-06-14 | Metrics, traces, logs, alerts, SLOs, dashboards |
 | prompt-generator | medium | 2026-03-25 | LLM prompt structuring |
 | rhel-fedora | high | 2026-04-22 | Fedora / RHEL-family administration |
 | roadmap | medium | 2026-04-05 | Gitignored roadmap management and competitor scouting |

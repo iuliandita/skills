@@ -1,7 +1,7 @@
 # CI/CD Supply Chain Security
 
 Cross-platform supply chain hardening patterns, incident timeline, and PCI-DSS 4.0 compliance.
-Updated June 2026 - post-Trivy compromise and the TeamPCP npm/PyPI worm wave.
+Reviewed July 2026 - post-Trivy compromise and the TeamPCP npm/PyPI worm wave.
 
 ---
 
@@ -38,7 +38,7 @@ they inform every recommendation in this document.
 - **Lesson**: even security tools' own CI is a target. "We trust our scanning tool" is circular reasoning.
 
 **Known safe Trivy versions**:
-- Current new pins (June 2026): binary v0.71.0+ from official releases, pinned by checksum or image digest
+- Current new pins (July 2026): binary v0.72.0+ from official releases, pinned by checksum or image digest
 - March 2026 rollback: binary v0.69.2 or v0.69.3
 - `trivy-action`: **v0.35.0** was the March rollback tag; pin the verified commit SHA, not the tag
 - `setup-trivy`: v0.2.6 was the March rollback tag; pin the verified commit SHA, not the tag

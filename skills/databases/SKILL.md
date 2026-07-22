@@ -15,13 +15,13 @@ metadata:
 
 Configure, tune, design schemas, migrate, back up, and review database engines - from single-node dev setups to PCI-compliant production clusters. The goal is correct, performant, durable databases that survive failures, pass audits, and don't wake you up at 3am.
 
-**Target versions** (June 2026):
-- PostgreSQL **18.4** (EOL 2030-11; May 14, 2026 security release), back-branches: 17.10, 16.14, 15.18, 14.23 (no June stable release; PG 19 in beta)
+**Target versions** (July 2026):
+- PostgreSQL **18.4** (EOL 2030-11; May 14, 2026 security release), back-branches: 17.10, 16.14, 15.18, 14.23; PostgreSQL 19 Beta 2 is for testing only
 - MongoDB **8.0.26** (GA, EOL 2029-10; June 11, 2026 security release fixing CVE-2026-11933); rapid lane (8.2+) is Atlas-only with a short window - verify live before pinning
 - MariaDB **11.8.8** (LTS, EOL 2028-06); 12.x rolling GA is quarterly and EOLs at each successor, with 12.3 the next yearly LTS - verify live
-- MySQL **8.4.9** (LTS); innovation lane (9.6) has a short support window - verify live
-- SQL Server **2025 RTM + CU5** (CU5 KB5084896, 2026-05-20)
-- PgBouncer **1.25.2**, Pgpool-II **4.7.2**, ProxySQL **3.0.8**
+- MySQL **8.4.10** (LTS; June 2026 Critical Security Patch); innovation lane has a short support window - verify live
+- SQL Server **2025 RTM + CU7** (released 2026-07-16)
+- PgBouncer **1.25.2**, Pgpool-II **4.7.2**, ProxySQL **3.0.9** (fixes CVE-2026-48772/48773/48774)
 
 This skill covers six domains depending on context:
 - **Configuration** - engine settings, authentication, TLS, tuning parameters

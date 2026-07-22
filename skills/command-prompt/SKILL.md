@@ -16,11 +16,11 @@ metadata:
 Reference skill for writing commands, scripts, and configuration across Unix shells. Detects
 the target shell from context and routes to the appropriate reference.
 
-**Target versions** (June 2026):
+**Target versions** (July 2026):
 - Zsh: 5.10
 - Bash: 5.3
-- Fish: 4.6
-- Nushell: 0.113.1
+- Fish: 4.8.1
+- Nushell: 0.114.1
 - Tcsh: 6.24
 - Dash: 0.5.13
 
@@ -347,7 +347,7 @@ Before returning any shell script, check:
 - `references/zsh.md` - Zsh 5.9/5.10 patterns, glob qualifiers, arrays, parameter expansion, completions, autoloading, dotfile config, prompt hooks, zsh-only features, 5.10 additions (non-forking `${ }`, namerefs, SRANDOM), bash porting matrix
 - `references/bash.md` - Bash 5.3 patterns, parameter expansion, arrays, conditionals, process substitution, error handling, traps, heredocs, coprocesses, bash 5.x features (non-forking `${ cmd; }`, GLOBSORT, SRANDOM), script template
 - `references/posix-sh.md` - Portable POSIX sh patterns, what's POSIX and what's not, bashism avoidance checklist, which-sh-am-I, arithmetic, parameter expansion, portable conditionals
-- `references/alt-shells.md` - Fish 4.6 (syntax, functions, completions, config, 4.6 additions), tcsh/csh 6.24 (syntax, when you'll encounter it), nushell 0.111 (structured pipelines, types), elvish 0.22/oils 0.37 (brief)
+- `references/alt-shells.md` - Fish 4.8 (syntax, functions, completions, config), tcsh/csh 6.24 (syntax, when you'll encounter it), Nushell 0.114 (structured pipelines, types), Elvish/Oils (brief)
 - `references/ssh-tmux-autostart.md` - safe shell startup pattern for interactive SSH sessions that attach to tmux without breaking non-interactive commands
 
 ## Output Contract

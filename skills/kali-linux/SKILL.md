@@ -21,7 +21,7 @@ Kali is Debian-shaped, but the places where it goes wrong are usually Kali-speci
 mixing, metapackage sprawl, stale images, persistence mistakes, hardware edge cases, or people
 using the wrong tool family for the job.
 
-**Target versions** (verified June 2026):
+**Target versions** (verified July 2026):
 
 Only pin versions or dated anchors here when they materially affect compatibility or
 troubleshooting shape. For ordinary package work, prefer the live branch and repo state over a
@@ -29,10 +29,10 @@ stale package table.
 
 | Component | Version or date | Why it matters |
 |-----------|-----------------|----------------|
-| **Current dated Kali image release** | 2026.1 | current image baseline and release notes |
-| Branch docs | June 2026 recheck / verify live | branch behavior and safe lane selection matter more than a single package version |
+| **Current dated Kali image release** | 2026.2 | current image baseline and release notes |
+| Branch docs | July 2026 recheck / verify live | branch behavior and safe lane selection matter more than a single package version |
 | Metapackage docs | 2025-07 / verify live | tool-family grouping and install scope matter more than memorizing one package list |
-| Kali 2026.1 kernel lane | 6.18 | release-image baseline for hardware and driver expectations |
+| Kali 2026.2 kernel lane | 6.19 | release-image baseline for hardware and driver expectations |
 
 ## When to use
 

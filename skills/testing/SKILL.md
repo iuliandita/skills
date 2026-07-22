@@ -15,15 +15,15 @@ metadata:
 
 Write, structure, and maintain tests across unit, integration, E2E, accessibility, and performance layers. The goal is tests that catch regressions, document behavior, and run fast in CI - not tests that exist to inflate coverage numbers.
 
-**Target versions** (June 2026):
-- Vitest **4.1.8**, Jest **30.4.2**
-- Playwright **1.60.0**, Cypress **15.13.0**
-- pytest **9.1.0**, pytest-cov **7.1.0**
-- Go **1.26.1** (testing stdlib, `testing/synctest` GA)
-- Rust **1.94.1** (`cargo test`, cargo-nextest **0.9.132**)
+**Target versions** (July 2026):
+- Vitest **4.1.10**, Jest **30.4.2**
+- Playwright **1.61.1**, Cypress **15.19.0**
+- pytest **9.1.1**, pytest-cov **7.1.0**
+- Go **1.26.5** (testing stdlib, `testing/synctest` GA)
+- Rust **1.97.1** (`cargo test`, cargo-nextest **0.9.140**)
 - Testing Library **16.3.2** (`@testing-library/react`)
-- axe-core **4.11.2** (`@axe-core/playwright`)
-- Grafana k6 **1.7.1** (load testing)
+- axe-core **4.12.1** (`@axe-core/playwright`)
+- Grafana k6 **2.1.0** (major release; review migration notes before upgrading load tests)
 
 ## When to use
 

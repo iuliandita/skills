@@ -1,6 +1,6 @@
 # Kali Gotchas and Special Situations
 
-Research date: June 2026
+Research date: July 2026
 
 The boring failures win a lot.
 

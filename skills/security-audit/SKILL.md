@@ -17,10 +17,10 @@ Structured, multi-pass security audit. Combines automated tooling with manual pa
 
 Patterns drawn from real OSS incidents (unauthenticated admin endpoints, credential exfiltration, zip slip, auth bypass whitelists, Trivy supply chain compromise) and OpenSSF/SLSA/OWASP standards.
 
-**Target versions** (June 2026):
-- Semgrep 1.166.0, Bandit 1.9.4
-- Gitleaks 8.30.1, Betterleaks 1.1.1 (successor by same author), TruffleHog 3.95.5
-- Trivy 0.71.0 (0.69.4-0.69.6 was compromised - see known incidents; upgrade past the 0.69.x window)
+**Target versions** (July 2026):
+- Semgrep 1.170.1, Bandit 1.9.4
+- Gitleaks 8.30.1, Betterleaks 1.1.1 (successor by same author), TruffleHog 3.95.9
+- Trivy 0.72.0 (0.69.4-0.69.6 was compromised - see known incidents; upgrade past the 0.69.x window)
 - OpenSSF Scorecard 5.5.0 (v6 in proposal stage)
 - OWASP Top 10:2025 (confirmed January 2026), OWASP Agentic Top 10:2026 (released December 2025)
 
@@ -121,7 +121,7 @@ Find known CVEs in dependencies and assess supply chain risk.
 - **Python**: `pip-audit --format json` or `safety check --json`
 - **Go**: `govulncheck ./...`
 - **Rust**: `cargo audit --json` - also check for `unsafe` blocks without `// SAFETY:` comments, `transmute` misuse, unvalidated FFI boundaries
-- **General**: `trivy fs --scanners vuln .` (use Trivy 0.70.0+ from official releases, or 0.69.3 only as a March 2026 incident rollback; never use 0.69.4-0.69.6)
+- **General**: `trivy fs --scanners vuln .` (use Trivy 0.72.0+ from official releases, or 0.69.3 only as a March 2026 incident rollback; never use 0.69.4-0.69.6)
 
 **Flag**: HIGH/CRITICAL CVEs with fixes available, deps unmaintained 2+ years, lockfile out of sync with manifest, non-standard registries.
 

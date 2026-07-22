@@ -291,7 +291,7 @@ tailscale up --advertise-exit-node     # on the exit node
 tailscale up --exit-node=<hostname>    # on the client
 ```
 
-**Headscale** (self-hosted, v0.28.0):
+**Headscale** (self-hosted, v0.29.2):
 ```bash
 # Create user and pre-auth key
 headscale users create myuser
@@ -344,7 +344,7 @@ ZeroTier is an overlay network with a simpler setup than Nebula. Requires a cont
 
 ## Cloudflare Tunnels
 
-Cloudflare Tunnel (`cloudflared`, v2026.3.0) creates outbound-only encrypted connections from
+Cloudflare Tunnel (`cloudflared`, v2026.7.2) creates outbound-only encrypted connections from
 your origin to Cloudflare's edge. No inbound ports needed - the tunnel connects out to
 Cloudflare, which proxies traffic back through it.
 

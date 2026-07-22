@@ -1,6 +1,6 @@
 # GitHub Actions: Patterns & Templates
 
-Production-ready patterns for GitHub Actions workflows. Updated for March 2026: ubuntu-24.04
+Production-ready patterns for GitHub Actions workflows. Updated for July 2026: ubuntu-24.04
 runners, arm64 GA, artifact v4, attestations, SHA pinning enforcement.
 
 ---
@@ -19,7 +19,7 @@ runners, arm64 GA, artifact v4, attestations, SHA pinning enforcement.
 
 **No `ubuntu-latest-arm` label exists.** Use explicit `ubuntu-24.04-arm`.
 
-**Pricing (March 2026)**: hosted runner prices dropped up to 39% on Jan 1, 2026. A planned
+**Pricing (verified July 2026)**: hosted runner prices dropped up to 39% on Jan 1, 2026. A planned
 $0.002/min self-hosted runner fee was announced but **postponed indefinitely** after community
 backlash. Public repo usage remains free.
 
@@ -530,7 +530,7 @@ security:
         sarif_file: trivy.sarif
 ```
 
-**Trivy safe versions (June 2026)**: use binary v0.71.0+ from official releases and pin
+**Trivy safe versions (July 2026)**: use binary v0.72.0+ from official releases and pin
 actions to full commit SHAs. The March 2026 rollback set was binary v0.69.3,
 `trivy-action@v0.35.0`, and `setup-trivy@v0.2.6`. Do NOT use v0.69.4/5/6
 (compromised by TeamPCP).

@@ -18,19 +18,19 @@ setups to multi-node clusters with HA, live migration, and GPU passthrough. The 
 production-ready VM infrastructure with correct storage, memory, and CPU config that won't
 bite you at 3 AM.
 
-**Target versions** (verified June 2026):
+**Target versions** (verified July 2026):
 
 | Tool | Version | Release date | Notes |
 |------|---------|-------------|-------|
-| Proxmox VE | 9.1 | Nov 2025 | Debian 13.2 (trixie), kernel 6.17.2, QEMU 10.1.2 |
-| Proxmox Backup Server | 4.1 | Nov 2025 | Dedup, incremental, prune policies |
-| bpg/proxmox (Terraform) | 0.109.0 | Jun 2026 | Primary Proxmox IaC provider |
-| QEMU | 11.0.1 | Apr 2026 | Stable (11.0 series; GA Apr 22, 2026) |
-| libvirt | 12.4.0 | Jun 2026 | Hypervisor abstraction layer |
+| Proxmox VE | 9.2 | May 2026 | Current production lane; review upgrade notes from 9.1 |
+| Proxmox Backup Server | 4.2 | Apr 2026 | Dedup, incremental, prune policies |
+| bpg/proxmox (Terraform) | 0.111.1 | Jul 2026 | Primary Proxmox IaC provider |
+| QEMU | 11.0.2 | Jun 2026 | Stable 11.0 maintenance release |
+| libvirt | 12.5.0 | Jul 2026 | Hypervisor abstraction layer |
 | XCP-ng | 8.3 LTS | Oct 2024 | Xen-based, LTS since Jun 2025, EOL Nov 2028 |
 | VMware ESXi | 8.0 U3i | Feb 2026 | Broadcom-owned, licensing upheaval |
-| VirtualBox | 7.2.6 | Jan 2026 | Dev/testing only |
-| Packer | 1.15.1 | Mar 2026 | Image builder, multi-platform |
+| VirtualBox | 7.2.14 | Jul 2026 | Dev/testing only |
+| Packer | 1.15.4 | Jul 2026 | Image builder, multi-platform |
 | cloud-init | 26.1 | Feb 2026 | Instance initialization standard |
 
 ## When to use

@@ -85,7 +85,7 @@ X findings: N P0, N P1, N P2, N P3, N info.
 - semgrep: `pip install semgrep` or `brew install semgrep`
 - gitleaks: `brew install gitleaks` or `go install github.com/gitleaks/gitleaks/v8@latest`
 - trufflehog: `brew install trufflehog` or `go install github.com/trufflesecurity/trufflehog/v3@latest`
-- trivy: `brew install trivy` or see https://aquasecurity.github.io/trivy (use v0.70.0+ from official releases; v0.69.3 was the March 2026 incident rollback; never use v0.69.4-0.69.6)
+- trivy: `brew install trivy` or see https://aquasecurity.github.io/trivy (use v0.72.0+ from official releases; v0.69.3 was the March 2026 incident rollback; never use v0.69.4-0.69.6)
 - scorecard: `go install github.com/ossf/scorecard/v5/cmd/scorecard@latest`
 - checkov: `pip install checkov`
 

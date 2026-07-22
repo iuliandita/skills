@@ -18,16 +18,16 @@ cut releases, and maintain audit-grade change history across GitHub, GitLab, and
 The goal is clean, signed, traceable history that satisfies both engineering standards and
 compliance requirements (PCI-DSS 4.0).
 
-**Target versions** (June 2026):
-- **git**: 2.54.x (current stable). Git 3.0 expected late 2026 (reftable default, SHA-256 default)
-- **GitHub CLI (`gh`)**: 2.94.0
-- **GitLab CLI (`glab`)**: 1.90.x
-- **Forgejo CLI (`fj`)**: 0.5.0 (latest verified June 2026, released 2026-04-16; the project moves fast - verify the current release at `codeberg.org/forgejo-contrib/forgejo-cli`). Rust-written, official community CLI. Covers PRs (incl. AGit), issues, repos, releases, tags, actions.
-- **Forgejo**: v15.0 line current at June 2026 recheck; verify the stable branch before upgrade advice. Critical RCE (CVE-2025-68937) patched in v13.0.2+.
-- **prek**: 0.3.x (Rust, recommended) or **pre-commit**: 4.6.0 (Python, largest ecosystem)
+**Target versions** (July 2026):
+- **git**: 2.55.0 (current stable). Major additions include Linux fsmonitor, remote-group push, and parallel compatible hooks. Git 3.0 remains expected later in 2026.
+- **GitHub CLI (`gh`)**: 2.96.0
+- **GitLab CLI (`glab`)**: 1.109.0
+- **Forgejo CLI (`fj`)**: 0.6.0 (verify the current release at `codeberg.org/forgejo-contrib/forgejo-cli`). Rust-written, official community CLI. Covers PRs (incl. AGit), issues, repos, releases, tags, actions.
+- **Forgejo**: v16.0.1 current; v15.0.5 is the current LTS. Critical RCE (CVE-2025-68937) patched in v13.0.2+.
+- **prek**: 0.4.10 (Rust, recommended) or **pre-commit**: 4.6.1 (Python, largest ecosystem)
 - **git-filter-repo**: 2.47.x
 - **gitleaks**: 8.30.x (secret scanning)
-- **cosign**: 3.x (Sigstore, for tag/release signing context)
+- **cosign**: 3.1.2 (Sigstore, for tag/release signing context)
 
 This skill covers five domains depending on context:
 - **Operations** - commits, branches, merges, rebases, stashing, bisect, reflog, recovery

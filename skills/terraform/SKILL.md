@@ -15,7 +15,7 @@ metadata:
 
 Write, review, and architect Terraform/OpenTofu infrastructure - from individual resources to multi-account, PCI-compliant platform architectures. The goal is reproducible, drift-free, auditable infrastructure that passes both peer review and QSA assessment.
 
-**Target versions** (June 2026): Terraform 1.15.6 (IBM/HashiCorp, BSL; 1.15.x GA, 1.16.0 in alpha), OpenTofu 1.12.2 (Linux Foundation, MPL; 1.11.9 still maintained). Helm provider v3.1+, K8s provider v3.0+, AWS provider v6.x, Azure v4.x, GCP v7.x.
+**Target versions** (July 2026): Terraform 1.15.8 (IBM/HashiCorp, BSL; 1.15.x GA, 1.16 prereleases underway), OpenTofu 1.12.5 (Linux Foundation, MPL; 1.11 still maintained). Helm provider v3.1+, K8s provider v3.0+, AWS provider v6.x, Azure v4.x, GCP v7.x.
 
 This skill covers HCL, modules, operations, state, CI/CD, policy-as-code, audit trails,
 PCI-DSS 4.0 controls, drift detection, and CDE isolation.
@@ -412,7 +412,7 @@ provider "aws" {
 | Tool | Role | Status |
 |------|------|--------|
 | **Checkov** | Static HCL + plan analysis, 750+ checks, PCI/CIS/NIST frameworks | 🟢 Active, recommended |
-| **Trivy** (absorbed tfsec) | IaC + container + repo scanning, single binary | 🟢 Active (use v0.70.0+ for new pins; v0.69.4-6 COMPROMISED) |
+| **Trivy** (absorbed tfsec) | IaC + container + repo scanning, single binary | 🟢 Active (use v0.72.0+ for new pins; v0.69.4-6 COMPROMISED) |
 | **TFLint** | Provider-specific linting, catches misconfigs linters miss | 🟢 Active |
 | **OPA / Conftest** | Custom policy-as-code on JSON plan output | 🟢 Active (CNCF) |
 | **Sentinel** | Native TFC/TFE policy engine | 🟢 Active (proprietary) |
