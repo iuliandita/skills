@@ -195,11 +195,11 @@ The right answer for new code. Secret is read at plan/apply time, never written 
 ephemeral "aws_secretsmanager_secret_version" "db_password" {
   secret_id = "prod/db/master-password"
 }
-
-resource "aws_db_instance" "main" {
-  password = ephemeral.aws_secretsmanager_secret_version.db_password.secret_string
-}
 ```
+
+Feed this value only to an argument that the exact installed provider schema documents as
+write-only. If the target resource has no such argument, do not route the value into its ordinary
+password field; use a provider-supported runtime injection path instead.
 
 ### Vault dynamic secrets
 

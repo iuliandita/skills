@@ -62,7 +62,8 @@ code, catalogs, or translations, verify against this list:**
 - [ ] **Source catalog is the type authority**: types for message keys derive from the source
   locale (usually English), not from a union of all locales
 - [ ] **Placeholders preserved**: every `{0}`, `{name}`, `{{var}}`, `%s`, `%d` in source
-  strings appears identically in translated strings - same count, same order, same syntax
+  strings appears identically in translated strings - same identifiers, counts, and syntax;
+  language-driven reordering is allowed
 - [ ] **Brand names protected**: product names, service names, and proper nouns are preserved
   exactly in all locales
 - [ ] **No partial extraction**: if auditing a file, every user-facing string in that file
@@ -192,8 +193,17 @@ catalog setup - plan for it in the infrastructure, not as an afterthought.
 import i18n from 'i18next'
 import { initReactI18next } from 'react-i18next'
 import en from './locales/en.json'
-i18n.use(initReactI18next).init({ lng: 'en', fallbackLng: 'en',
+const savedLocale = localStorage.getItem('locale')
+// A saved localStorage preference wins; otherwise use navigator.language.
+const initialLocale = savedLocale ?? navigator.language
+i18n.use(initReactI18next).init({ lng: initialLocale, fallbackLng: 'en',
   resources: { en: { translation: en } } })
+
+export async function setLocale(locale: string): Promise<void> {
+  localStorage.setItem('locale', locale)
+  await i18n.changeLanguage(locale)
+  document.documentElement.lang = locale
+}
 export default i18n
 
 // 3. src/main.tsx - import side-effect before <App />

@@ -239,6 +239,13 @@ Scope: {scope}
 ---
 ```
 
+### Step 3b: Write the full-review deliverable
+
+Write the same preflight block and four unedited report sections to
+`docs/local/audits/full-review/<YYYY-MM-DD>-<slug>.md`. Emit the shared contract's boxed header, boxed conclusion, and conclusion table. This mechanical wrapper is not cross-report synthesis:
+preserve every native report verbatim, record failed or partial status, and do not deduplicate,
+editorialize, or rank findings across reports.
+
 ### Step 4: Handle Failures
 
 If an agent fails or times out:

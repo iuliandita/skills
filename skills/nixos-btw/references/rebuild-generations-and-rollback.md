@@ -16,8 +16,8 @@ the whole safety model.
 | `build-vm` | yes | no | no | build a QEMU VM you can `run` to test |
 | `build-vm-with-bootloader` | yes | no | no | same, with bootloader |
 
-`test` is the underused verb. A bad login manager config in `test` mode survives a reboot;
-in `switch` mode it does not.
+`test` is the underused verb. A bad login manager config activated with `test` does not survive
+a reboot; one activated with `switch` does because `switch` also updates the boot entry.
 
 ### Flake forms
 

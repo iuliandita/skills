@@ -15,7 +15,7 @@ Start here before touching launch options:
 ```bash
 lspci -k | grep -Ei 'vga|3d|display'
 uname -r
-pacman -Q mesa vulkan-radeon vulkan-intel nvidia-utils nvidia-open linux-firmware steam gamescope mangohud gamemode 2>/dev/null
+pacman -Q mesa vulkan-radeon vulkan-intel nvidia-utils nvidia-open linux-firmware steam gamescope mangohud gamemode 2>&1 || true
 journalctl -b | grep -Ei 'nvrm|nvidia|amdgpu|i915|xe|drm|vulkan'
 ```
 

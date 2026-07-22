@@ -8,6 +8,10 @@ takes over the VIP within seconds.
 
 ### Basic VRRP (two nodes, one VIP)
 
+`__VRRP_AUTH_PASS__` is a render token, not a usable credential. Populate it from a protected
+secret file or no-echo stdin, write the final keepalived config as root with mode 0600, and never
+put the value in argv or shell history.
+
 **Primary node:**
 ```
 # /etc/keepalived/keepalived.conf
@@ -26,7 +30,7 @@ vrrp_instance VI_1 {
 
   authentication {
     auth_type PASS
-    auth_pass secret123  # Must match on all nodes (max 8 chars)
+    auth_pass __VRRP_AUTH_PASS__  # Must match on all nodes (max 8 chars)
   }
 
   virtual_ipaddress {
@@ -56,7 +60,7 @@ vrrp_instance VI_1 {
 
   authentication {
     auth_type PASS
-    auth_pass secret123
+    auth_pass __VRRP_AUTH_PASS__
   }
 
   virtual_ipaddress {
@@ -98,7 +102,7 @@ vrrp_instance VI_1 {
 
   authentication {
     auth_type PASS
-    auth_pass secret123
+    auth_pass __VRRP_AUTH_PASS__
   }
 
   virtual_ipaddress {
@@ -355,8 +359,12 @@ pcs constraint colocation add HAProxy with VIP
 pcs constraint order VIP then HAProxy
 
 # STONITH (fencing) - required for production
-pcs stonith create fence_node1 fence_ipmilan ipaddr=10.0.0.1 login=admin passwd=secret
+pcs stonith describe fence_ipmilan
 ```
+
+Inspect the fencing agent metadata before creating the resource. Use only a credential
+file, script, or environment interface listed by that metadata; if none exists, stop rather
+than placing a password in the `pcs` command line or shell history.
 
 **When to use Pacemaker over keepalived:**
 - Multiple interdependent services (DB + app + VIP)

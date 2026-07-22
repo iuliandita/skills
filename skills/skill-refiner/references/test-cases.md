@@ -436,6 +436,15 @@ Quality signals:
 - Describes what gets sent to the secondary model for review
 - Notes that secondary flags are verified, not taken at face value
 
+**Test 3: Meta-improvement after generated tests**
+Prompt: "Enter meta-improvement after a collection run where several skills used generated behavioral tests."
+Quality signals:
+- Snapshots the creator self-check, evaluation criteria, and conventions before any meta edit
+- Compares every public skill directory with the canonical test headings instead of relying on a remembered list
+- Promotes stable generated or local cases for every gap only during phase 2
+- Rejects duplicate and orphan headings and preserves the phase-1 immutability rule
+- Runs lint and spec regressions, commits by meta target, and pauses for mandatory human review
+
 ### skill-creator
 
 **Test 1: Skill review**
@@ -829,3 +838,148 @@ Quality signals:
 - Preserves fallback kernels and boot entries
 - Uses dracut, grubby, journal, and display-manager logs before reinstalling packages
 - Routes rpm-ostree or image-mode systems away instead of treating them as dnf hosts
+
+### debug-triage
+
+**Test 1: Intermittent ingress failure after deploy**
+Prompt: "Production started returning intermittent 502s after a Kubernetes deploy. Triage it, but do not change or restart anything."
+Quality signals:
+- Scopes the symptom, time window, recent change, blast radius, and correct network vantage point
+- Lists plausible layers before selecting the cheapest check that separates them
+- Walks ingress, service endpoints, pod readiness, app errors, and dependency health with evidence
+- States what each pass or failure rules out instead of collecting an undirected command dump
+- Does not roll back, restart, scale, or apply changes during triage
+- Ends with the implicated layer, observed evidence, and the exact owning skill for the deep dive
+
+**Test 2: Slow API with no errors**
+Prompt: "Our API has no errors, but p99 latency tripled while p50 stayed flat. We do not know whether it is the app, database, or cluster. Localize the failing layer."
+Quality signals:
+- Treats p50 versus p99 as a tail-latency discriminator rather than an availability incident
+- Compares endpoint or replica percentiles, CPU throttling, pool wait, query latency, and cache behavior
+- Uses read-only checks and keeps failed or empty diagnostics visible
+- Narrows one layer at a time and distinguishes evidence from inference
+- Routes the localized component to the matching domain skill or systematic debugging method
+
+### deep-grill
+
+**Test 1: Interactive infrastructure plan**
+Prompt: "Grill this plan before we build it: migrate a stateful service to a new region with near-zero downtime."
+Quality signals:
+- Detects the infrastructure lens and explores available repo or config facts before asking
+- Builds the decision tree top-down and asks one question at a time in interactive mode
+- Gives a recommended answer and one-line reason with every question
+- Separates decisions, open questions, fog, and prerequisites instead of treating all unknowns alike
+- Announces the adversarial phase only after upstream decisions are resolved
+- Writes the final decision record with resolved choices, surviving risks, deferrals, and next step
+
+**Test 2: Pure Phase-2 spec audit**
+Prompt: "Stress-test this existing rollout spec as a pure Phase-2 audit. Do not reopen basic requirements unless a finding proves they are inconsistent."
+Quality signals:
+- Keeps the request in deep-grill instead of routing a plan artifact to a standalone decision review
+- Attacks load-bearing assumptions, rollback, failure modes, and second-order effects without restating the spec
+- Reopens a Phase-1 decision only when a surfaced risk invalidates it
+- Timeboxes attacks when new findings stop changing the plan
+- Uses the full audit output contract and preserves evidence for each finding
+
+### handoff
+
+**Test 1: Author a disposable implementation handoff**
+Prompt: "Hand this session off to a fresh implementer. The next session should finish the API migration and run the remaining tests."
+Quality signals:
+- Writes one short purpose-driven file under `.handoff/` and ensures the directory is gitignored
+- Records locked decisions with rationale and deferred work with revisit triggers
+- Tags current state as verified, assumed, or blocked and names the evidence or next check
+- Uses resolving file, line, branch, PR, and document pointers instead of pasting source content
+- Redacts secrets, private endpoints, tokens, credentials, and PII before writing
+- Lists concrete next steps plus the smallest relevant skill set for the fresh session
+
+**Test 2: Resume from a handoff**
+Prompt: "Resume from .handoff/2026-07-22-api-migration.md and continue the next steps."
+Quality signals:
+- Reads the handoff before acting and treats locked decisions as settled
+- Verifies file, line, branch, and PR pointers before relying on them
+- Rechecks every item tagged assumed and reports stale pointers or blockers
+- Invokes the suggested skills that match the next action
+- Flags a questionable locked decision to the user instead of silently relitigating it
+
+### observability
+
+**Test 1: Build a service signal pipeline**
+Prompt: "Add vendor-neutral observability for a request-driven API: metrics, traces, structured logs, a 99.9% availability SLO, alerts, and a dashboard."
+Quality signals:
+- Defines the user-facing questions and minimum RED or golden signals before choosing tools
+- Uses bounded metric labels, propagated trace context, `service.name`, and correlated log IDs
+- Produces runnable Collector, Prometheus rule-test, and dashboard artifacts with parameterized endpoints
+- Uses correct error-budget math and paired multi-window burn-rate alerts with actionable metadata
+- Names and runs the relevant validators; clearly marks any unavailable runtime check as skipped
+- Keeps credentials and request bodies out of telemetry
+
+**Test 2: Repository observability audit**
+Prompt: "Audit this repository for observability gaps. It has application metrics and dashboard JSON, but no running backend is available to inspect."
+Quality signals:
+- Reports only evidence in repository files and does not assume signals reach a backend
+- Checks coverage, SLOs, alert actionability, cardinality, correlation, rule tests, and dashboard drift
+- Distinguishes signal definition from proof of collection and querying
+- Writes the audit deliverable to the documented local path with the full output contract
+- Routes live incident localization to debug-triage and manifest mechanics to kubernetes
+
+### cluster-health
+
+**Test 1: Vague cluster request with hidden context**
+Prompt: "Check whether the cluster is healthy after maintenance."
+Quality signals:
+- Refuses to guess the target and resolves an explicit kube context or confirms current context first
+- States the bounded time window before running any query
+- Runs no cluster command until context is resolved
+- Keeps the health pass read-only and does not restart, drain, cordon, scale, exec, or apply
+- Reports missing permissions, tools, or CRDs as findings instead of treating them as healthy
+
+**Test 2: Broad post-maintenance sweep**
+Prompt: "Run a two-hour post-reboot health sweep on context production-eu and give me a traffic-light report."
+Quality signals:
+- Includes the context on every cluster command and the matching context flag on package-manager commands
+- Covers nodes, workloads, events, releases or reconciliation, ingress, storage, metrics, and bounded logs
+- Caps high-volume output and keeps diagnostic stderr visible
+- Classifies evidence as green, yellow, or red while separating transient rollout noise
+- Produces a concise report with scope, observed evidence, and read-only follow-ups or explicit escalation
+
+### code-slimming
+
+**Test 1: Dead-code audit with dynamic reachability**
+Prompt: "Audit this plugin package for dead files, unused exports, and superseded implementations. Report only; do not edit anything."
+Quality signals:
+- Searches definitions, callers, re-exports, string-keyed lookups, registration, reflection, and public API reachability
+- Treats dead-code tool output as candidates rather than deletion proof
+- Pairs every superseded claim with its replacement and proves callers migrated
+- Classifies uncertain exported or dynamically reachable candidates as Do with tests or Defer
+- Names the behavior invariant and concrete validation for every Do now recommendation
+- Does not modify source or write tests
+
+**Test 2: Duplicate wrappers and comments**
+Prompt: "Slim this module: it has forwarding wrappers, repeated per-status functions, catch-log-rethrow blocks, and large comment banners."
+Quality signals:
+- Gives a concrete loop, lookup-table, inline, or deletion shape rather than vague abstraction advice
+- Preserves wrappers that own policy, compatibility, observability, lifecycle, or another real boundary
+- Proves a catch is inert before recommending removal and preserves behavior-changing catches
+- Deletes only commented-out code, restating comments, and dead banners while keeping intent and pragmas
+- Evaluates coupling, performance, readability, and validation before assigning an action label
+- Routes correctness or security discoveries to their owning skills instead of mixing lanes
+
+### skill-router
+
+**Test 1: One primary skill from overlapping terms**
+Prompt: "Which skill should I use to find unused files and duplicate wrappers in this repo? I only want a report, not fixes."
+Quality signals:
+- Restates the intent as a read-only behavior-preserving slimming audit
+- Returns `Primary: code-slimming`
+- Applies exclusions before choosing and explains anti-slop or code-review only as useful near misses
+- Does not load unrelated reference files or return a broad bundle of skills
+- Stops routing after giving the next action
+
+**Test 2: Ordered process and domain route**
+Prompt: "Choose skills for this task: stress-test my regional cutover plan, then turn the resolved decisions into infrastructure configuration."
+Quality signals:
+- Returns an ordered route with deep-grill before the relevant infrastructure skill
+- Explains that the first output shapes the second task, so the skills are not parallel
+- Uses the installed skill inventory and does not invent a generic planning or infrastructure skill
+- Keeps the explanation to one or two sentences and makes the next invocation clear

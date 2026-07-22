@@ -4,7 +4,7 @@ Podman, Buildah, Skopeo, and containerd patterns. Reviewed July 2026.
 
 ---
 
-## Podman (v5.8.1)
+## Podman (v6.0.2)
 
 Daemonless, rootless container engine. CLI-compatible with Docker. `alias docker=podman` works for most commands. Adopted by 40% of Fortune 500 (2025 survey).
 
@@ -59,7 +59,7 @@ alias docker=podman
 
 ### Quadlet (systemd integration)
 
-Podman 5.x includes Quadlet for managing containers as systemd services. Drop `.container` files in `~/.config/containers/systemd/` (user) or `/etc/containers/systemd/` (system).
+Podman 6.x retains Quadlet for managing containers as systemd services. Drop `.container` files in `~/.config/containers/systemd/` (user) or `/etc/containers/systemd/` (system).
 
 ```ini
 # ~/.config/containers/systemd/webapp.container
@@ -151,7 +151,7 @@ docker compose up -d
 
 ---
 
-## Buildah (v1.43.0)
+## Buildah (v1.44.0)
 
 Build OCI images without a daemon. Can build from Dockerfiles or programmatically via CLI commands.
 
@@ -241,7 +241,7 @@ skopeo list-tags docker://ghcr.io/org/myapp
 
 ---
 
-## containerd (v2.2.2)
+## containerd (v2.3.3)
 
 Low-level container runtime. Kubernetes uses it directly. Docker Engine uses it under the hood.
 

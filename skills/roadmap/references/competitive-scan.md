@@ -38,15 +38,19 @@ Detect the forge and use the matching CLI:
 # GitHub (gh)
 gh issue list -R owner/repo --state all \
   --search "sort:reactions-+1-desc" \
-  --limit 50 --json number,title,reactionGroups,comments,labels 2>/dev/null
+  --limit 50 --json number,title,reactionGroups,comments,labels
 # Filter for feature/enhancement labels client-side; label names vary per repo.
 gh pr list -R owner/repo --state merged \
-  --limit 20 --json number,title,mergedAt 2>/dev/null
+  --limit 20 --json number,title,mergedAt
 
 # GitLab (glab)
-glab issue list -R owner/repo --sort popularity --per-page 50 2>/dev/null
-glab mr list -R owner/repo --state merged --per-page 20 2>/dev/null
+glab issue list -R owner/repo --sort popularity --per-page 50
+glab mr list -R owner/repo --state merged --per-page 20
 ```
+
+A non-zero exit is source failure: report it, then use the documented web or browse fallback. An
+exit-0 empty result is valid empty evidence; do not confuse it with authentication, rate-limit,
+network, or CLI failure.
 
 If neither `gh` nor `glab` is available, fall back to web fetch or the browse skill.
 As a last resort, ask the user to paste relevant sections.

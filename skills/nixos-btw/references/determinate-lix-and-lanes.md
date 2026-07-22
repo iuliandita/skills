@@ -10,7 +10,7 @@ service names, or CLI behaviors that differ.
 - Repo: [NixOS/nix](https://github.com/NixOS/nix)
 - Maintainers: NixOS Foundation contributors
 - Flakes: behind `experimental-features = nix-command flakes`
-- Latest stable: 2.33 (Dec 2025), 2.32 (Oct 2025)
+- Latest stable: 2.34 (reviewed July 2026)
 - Release cadence: roughly 6 weeks
 
 This is what ships in `nixos` for every standard NixOS release.
@@ -149,7 +149,7 @@ Switching to Determinate on NixOS is less common - Determinate targets non-NixOS
 
 ```bash
 nix --version
-# upstream prints "nix (Nix) 2.33.x"
+# upstream prints "nix (Nix) 2.34.x"
 # Lix prints "nix (Lix, like Nix) 2.93.x" (Lix versioning is independent)
 # Determinate prints a Determinate-specific version string
 

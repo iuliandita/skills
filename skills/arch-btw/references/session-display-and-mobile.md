@@ -7,9 +7,9 @@ GPU drivers, identify how the session is started and what owns the environment.
 
 ```bash
 echo "$XDG_SESSION_TYPE $XDG_CURRENT_DESKTOP $DESKTOP_SESSION"
-systemctl status display-manager 2>/dev/null || true
-loginctl list-sessions 2>/dev/null || true
-systemctl status power-profiles-daemon 2>/dev/null || true
+systemctl status display-manager 2>&1 || true
+loginctl list-sessions 2>&1 || true
+systemctl status power-profiles-daemon 2>&1 || true
 journalctl -b | grep -Ei 'gdm|sddm|greetd|seat|logind|suspend|resume|acpi|power'
 ```
 
@@ -17,7 +17,7 @@ For laptop or hybrid-GPU machines, add:
 
 ```bash
 lspci -k | grep -Ei 'vga|3d|display'
-cat /sys/power/mem_sleep 2>/dev/null
+cat /sys/power/mem_sleep 2>&1 || true
 journalctl -b | grep -Ei 'nvrm|nvidia|amdgpu|i915|xe|suspend|resume'
 ```
 
@@ -81,7 +81,7 @@ Useful checks:
 ```bash
 journalctl -b | grep -Ei 'suspend|resume|sleep|acpi'
 journalctl -b | grep -Ei 'nvrm|nvidia|amdgpu|i915|xe|drm'
-systemctl status power-profiles-daemon 2>/dev/null || true
+systemctl status power-profiles-daemon 2>&1 || true
 ```
 
 On Hyprland, do not assume a post-resume black screen means Hyprland itself is at fault. `hyprlock`,

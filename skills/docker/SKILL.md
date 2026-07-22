@@ -281,7 +281,7 @@ Read `references/security-and-compliance.md` for the full PCI-DSS 4.0 container 
 | CVE-2026-33747 | BuildKit | High | Malicious frontend file escape outside storage root | BuildKit v0.28.1 |
 | CVE-2026-33748 | BuildKit | High | Git URL validation bypass - restricted file access | BuildKit v0.28.1 |
 
-**Action items**: upgrade runc to >= 1.4.0, BuildKit to >= 0.28.1, Docker Desktop to >= 4.66.1, never pull Trivy v0.69.4/5/6. Pin ALL CI tool images to SHA256 digests.
+**Action items**: upgrade runc to >= 1.4.0, BuildKit to >= 0.28.1, Docker Desktop to >= 4.71.0 (prefer the current 4.83.0 snapshot), never pull Trivy v0.69.4/5/6. Pin ALL CI tool images to SHA256 digests.
 
 ### Hardened Compose baseline
 

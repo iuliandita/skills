@@ -44,8 +44,8 @@ Useful first checks:
 
 ```bash
 echo "$XDG_SESSION_TYPE $XDG_CURRENT_DESKTOP"
-pacman -Q hyprland hyprpaper hyprlock hypridle waybar xdg-desktop-portal xdg-desktop-portal-hyprland xorg-xwayland 2>/dev/null
-systemctl --user status pipewire pipewire-pulse wireplumber 2>/dev/null
+pacman -Q hyprland hyprpaper hyprlock hypridle waybar xdg-desktop-portal xdg-desktop-portal-hyprland xorg-xwayland 2>&1 || true
+systemctl --user status pipewire pipewire-pulse wireplumber 2>&1 || true
 journalctl --user -b | grep -Ei 'hypr|portal|pipewire'
 ```
 
@@ -72,8 +72,8 @@ Useful first checks:
 ```bash
 echo "$XDG_SESSION_TYPE $XDG_CURRENT_DESKTOP"
 systemctl --user --failed
-systemctl --user status pipewire pipewire-pulse wireplumber 2>/dev/null
-gsettings get org.gnome.desktop.interface color-scheme 2>/dev/null
+systemctl --user status pipewire pipewire-pulse wireplumber 2>&1 || true
+gsettings get org.gnome.desktop.interface color-scheme 2>&1 || true
 journalctl --user -b | grep -Ei 'gnome-shell|mutter|portal|pipewire'
 ```
 
@@ -98,7 +98,7 @@ Useful first checks:
 ```bash
 echo "$XDG_SESSION_TYPE $XDG_CURRENT_DESKTOP"
 systemctl --user --failed
-systemctl --user status pipewire pipewire-pulse wireplumber 2>/dev/null
+systemctl --user status pipewire pipewire-pulse wireplumber 2>&1 || true
 journalctl --user -b | grep -Ei 'kwin|plasma|xdg-desktop-portal|pipewire'
 ```
 

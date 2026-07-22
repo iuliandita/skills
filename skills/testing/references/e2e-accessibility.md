@@ -400,8 +400,8 @@ jobs:
   e2e:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
         with:
           node-version: "22"
 
@@ -418,7 +418,7 @@ jobs:
 
       - name: Upload test results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: playwright-report
           path: playwright-report/
@@ -441,7 +441,7 @@ jobs:
 
 ```yaml
 e2e:
-  image: mcr.microsoft.com/playwright:v1.59.0-noble
+  image: mcr.microsoft.com/playwright:v1.61.1-noble
   stage: test
   script:
     - npm ci
@@ -488,7 +488,7 @@ for (const path of pages) {
 ### Docker for consistent test environments
 
 ```dockerfile
-FROM mcr.microsoft.com/playwright:v1.59.0-noble
+FROM mcr.microsoft.com/playwright:v1.61.1-noble
 
 WORKDIR /app
 COPY package*.json ./

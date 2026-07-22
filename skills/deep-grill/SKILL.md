@@ -41,7 +41,8 @@ risks in one file.
 - AI-generated code quality, over-abstraction, or test theater - use **anti-slop**
 - Security vulnerabilities, auth flaws, secrets, or OWASP issues - use **security-audit**
 - A full repository audit or merge gate over code that exists - use **deep-audit** or **full-review**
-- A standalone adversarial decision review or dark-pattern lens, with no plan to resolve - use **jekyll-hyde**
+- A standalone adversarial decision review with no build plan or existing plan/spec artifact to
+  stress-test - use **jekyll-hyde**. Pure Phase-2 audit of an existing plan/spec remains a deep-grill mode
 - Capturing or prioritizing ideas in a backlog - use **roadmap**
 - Turning notes into a reusable LLM prompt - use **prompt-generator**
 - Writing the plan or implementation plan *for* the user. Deep-grill interrogates a plan; it

@@ -192,6 +192,10 @@ contested major flags (non-configurable).
 17. **Improve skill-creator**: run the improvement cycle (steps 10a-10k) using the
     snapshot as the evaluation criteria, not skill-creator's live version
 18. **Improve skill-refiner**: same process, using the snapshot
+    - Compare every public `skills/*/SKILL.md` directory with the canonical `### <skill-name>`
+      headings in `references/test-cases.md`. Exclude the format-template heading.
+    - Promote stable generated or local cases into the canonical catalog for every gap, then
+      verify there are no missing, duplicate, or orphan headings. This edit is phase-2-only.
 19. **Improve lint scripts** (lint-skills.sh, validate-spec.sh):
     - Capture baseline: run both scripts, save full output
     - Propose improvements
@@ -265,6 +269,8 @@ Before committing any skill modification, verify:
 - [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
 - [ ] **Score discipline kept**: changes are kept only when they improve measured quality or fix a verified defect
 - [ ] **Score ledger present**: baseline, iteration, and final component scores exist before reporting completion
+- [ ] **Canonical test coverage complete**: phase 2 compares public skill directories with the
+  canonical test headings and leaves no missing, duplicate, or orphan skill section
 - [ ] **Local-only scope respected**: public and private skills are separated before commits or release notes
 
 ## Output Contract

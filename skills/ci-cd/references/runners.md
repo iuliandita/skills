@@ -68,6 +68,9 @@ When jobs need to build images or run containers themselves:
 
 ### Install
 
+For container installs, set `GITLAB_RUNNER_IMAGE` to a reviewed version tag plus
+manifest digest from the official registry. Do not use a mutable tag.
+
 | OS | Command |
 |----|---------|
 | Debian/Ubuntu | `curl -L "https://packages.gitlab.com/install/repositories/runner/gitlab-runner/script.deb.sh" \| sudo bash && sudo apt install gitlab-runner` |
@@ -75,7 +78,7 @@ When jobs need to build images or run containers themselves:
 | Arch | `paru -S gitlab-runner` |
 | macOS (Intel + Apple Silicon) | `brew install gitlab-runner && brew services start gitlab-runner` |
 | Binary (any Linux) | Download from `gitlab-runner-linux-<arch>` release, `install -m 755 ... /usr/local/bin/gitlab-runner` |
-| Docker | `docker run -d --name gitlab-runner --restart always -v /srv/gitlab-runner/config:/etc/gitlab-runner -v /var/run/docker.sock:/var/run/docker.sock gitlab/gitlab-runner:latest` |
+| Docker | `docker run -d --name gitlab-runner --restart always -v /srv/gitlab-runner/config:/etc/gitlab-runner -v /var/run/docker.sock:/var/run/docker.sock "${GITLAB_RUNNER_IMAGE:?set to a reviewed tag@sha256 digest}"` |
 | Kubernetes | Official Helm chart `gitlab/gitlab-runner` |
 
 Linux packages register a `gitlab-runner` user and a systemd service. macOS `brew services`
@@ -232,10 +235,13 @@ when you want kernel-level isolation without the cost of a full VM.
 
 ### Install
 
+Set `GITEA_RUNNER_IMAGE` to a reviewed version tag plus manifest digest from the
+official registry before using either container example.
+
 | OS | Command |
 |----|---------|
 | Binary | Download from `gitea.com/gitea/act_runner/releases`, nightly from `dl.gitea.com/act_runner/` |
-| Docker | `docker pull docker.io/gitea/act_runner:latest` |
+| Docker | `docker pull "${GITEA_RUNNER_IMAGE:?set to a reviewed tag@sha256 digest}"` |
 | Docker Compose | Example in upstream docs |
 
 ### Register
@@ -278,7 +284,7 @@ images, use docker socket mount (trusted pipelines only) or a DinD sidecar.
 ```yaml
 services:
   runner:
-    image: docker.io/gitea/act_runner:latest
+    image: ${GITEA_RUNNER_IMAGE:?set to a reviewed tag@sha256 digest}
     environment:
       GITEA_INSTANCE_URL: https://gitea.example.com
       GITEA_RUNNER_REGISTRATION_TOKEN: ${TOKEN}
@@ -367,9 +373,12 @@ Do not autoscale persistent runners - GitHub explicitly documents this as unsupp
 Woodpecker splits into `woodpecker-server` (one instance) and `woodpecker-agent` (many,
 does the work).
 
+Set `WOODPECKER_AGENT_IMAGE` to a reviewed version tag plus manifest digest from
+the official registry before using the container install.
+
 | Method | Command |
 |--------|---------|
-| Docker | `docker pull woodpeckerci/woodpecker-agent:latest` |
+| Docker | `docker pull "${WOODPECKER_AGENT_IMAGE:?set to a reviewed tag@sha256 digest}"` |
 | Docker Compose | Pair with the server compose file; reference in upstream docs |
 | Binary | Download from GitHub releases, binary + env file |
 | Kubernetes | Official Helm chart `woodpecker-ci/woodpecker` |

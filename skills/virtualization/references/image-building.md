@@ -162,6 +162,16 @@ packer {
   }
 }
 
+variable "proxmox_token" {
+  type      = string
+  sensitive = true
+}
+
+variable "ssh_password" {
+  type      = string
+  sensitive = true
+}
+
 source "proxmox-iso" "debian" {
   # Connection
   proxmox_url              = "https://pve1.example.com:8006/api2/json"
@@ -226,7 +236,7 @@ source "proxmox-iso" "debian" {
 
   # SSH
   ssh_username = "root"
-  ssh_password = "packer"
+  ssh_password = var.ssh_password
   ssh_timeout  = "20m"
 
   # QEMU agent
@@ -247,10 +257,22 @@ build {
       "apt-get clean",
       "truncate -s 0 /etc/machine-id",
       "rm -f /var/lib/dbus/machine-id",
+      "rm -f /etc/ssh/ssh_host_*",
+      "passwd -l root",
       "sync"
     ]
   }
 }
+```
+
+Load the temporary credentials from protected files into Packer's environment, never argv or
+shell history, and clear them after the build:
+
+```bash
+export PKR_VAR_proxmox_token="$(< /run/secrets/proxmox_token)"
+export PKR_VAR_ssh_password="$(< /run/secrets/packer_ssh_password)"
+packer build proxmox-debian.pkr.hcl
+unset PKR_VAR_proxmox_token PKR_VAR_ssh_password
 ```
 
 ### Proxmox clone builder (faster)
@@ -293,6 +315,11 @@ packer {
   }
 }
 
+variable "ssh_password" {
+  type      = string
+  sensitive = true
+}
+
 source "qemu" "debian" {
   iso_url      = "https://cdimage.debian.org/debian-cd/current/amd64/iso-cd/debian-13.0.0-amd64-netinst.iso"
   iso_checksum = "sha256:CHECKSUM_HERE"
@@ -312,7 +339,7 @@ source "qemu" "debian" {
   headless = true
 
   ssh_username = "root"
-  ssh_password = "packer"
+  ssh_password = var.ssh_password
   ssh_timeout  = "20m"
 
   boot_command = [
@@ -334,6 +361,8 @@ build {
       "cloud-init clean",
       "apt-get clean",
       "truncate -s 0 /etc/machine-id",
+      "rm -f /etc/ssh/ssh_host_*",
+      "passwd -l root",
       "sync"
     ]
   }

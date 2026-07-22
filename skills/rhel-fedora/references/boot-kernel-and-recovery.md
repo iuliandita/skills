@@ -31,7 +31,7 @@ Only rebuild after mountpoints and target kernel are known.
 uname -r
 rpm -qa | grep '^kernel' | sort
 TARGET_KVER='set-the-kernel-version-you-actually-need'
-dracut -f --kver "$TARGET_KVER" 2>&1 || true
+dracut -f --kver "$TARGET_KVER"
 grubby --default-kernel 2>&1 || true
 ```
 

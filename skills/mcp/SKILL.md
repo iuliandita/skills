@@ -112,6 +112,8 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { z } from "zod";
 
 const server = new McpServer({ name: "my-server", version: "1.0.0" });
+const docs = [{ title: "Getting started", body: "Install the server and connect over stdio." }];
+const config = { mode: "read-only" };
 
 // Current SDK API: `server.registerTool(name, { title, description, inputSchema }, handler)`.
 // The older `server.tool(name, desc, schema, handler)` shorthand still works in v1.x.
@@ -125,7 +127,10 @@ server.registerTool(
   async ({ query, limit }) => {
     // If this tool reads files, apply path validation from Step 3 before any fs access.
     const sanitized = query.replace(/[^\w\s-]/g, "");
-    const results = await searchIndex(sanitized, limit);
+    const needle = sanitized.toLowerCase();
+    const results = docs
+      .filter(({ title, body }) => `${title}\n${body}`.toLowerCase().includes(needle))
+      .slice(0, limit);
     return { content: [{ type: "text", text: JSON.stringify(results) }] };
   }
 );
@@ -145,12 +150,16 @@ import json, re
 from mcp.server.fastmcp import FastMCP
 
 mcp = FastMCP("my-server")
+docs = [{"title": "Getting started", "body": "Install the server and connect over stdio."}]
+config = {"mode": "read-only"}
 
 @mcp.tool()
 def search_docs(query: str, limit: int = 10) -> str:
     """Search documentation by keyword."""
     sanitized = re.sub(r"[^\w\s-]", "", query[:200])
-    return str(search_index(sanitized, min(limit, 100)))
+    needle = sanitized.casefold()
+    matches = [doc for doc in docs if needle in f"{doc['title']}\n{doc['body']}".casefold()]
+    return json.dumps(matches[:max(1, min(limit, 100))])
 
 @mcp.resource("config://app/settings")
 def get_config() -> str:
@@ -181,17 +190,20 @@ Injection is the top MCP vulnerability class. Every tool handler is an attack su
 
 ```typescript
 import path from "node:path";
+import { readFile, realpath } from "node:fs/promises";
 
-function safePath(base: string, userInput: string): string {
-  const resolved = path.resolve(base, userInput);
-  if (!resolved.startsWith(path.resolve(base) + path.sep)) {
+async function safeExistingPath(base: string, userInput: string): Promise<string> {
+  const baseReal = await realpath(base);
+  const targetReal = await realpath(path.resolve(baseReal, userInput));
+  const relative = path.relative(baseReal, targetReal);
+  if (relative === ".." || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative)) {
     throw new Error("Path traversal detected");
   }
-  return resolved;
+  return targetReal;
 }
 ```
 
-**Before/after - applying safePath() to a vulnerable tool handler:**
+**Before/after - applying safeExistingPath() to a vulnerable tool handler:**
 
 ```typescript
 // BEFORE (vulnerable - user controls path directly)
@@ -207,7 +219,7 @@ server.tool("read_file", "Read a project file",
 server.tool("read_file", "Read a project file",
   { path: z.string().max(500) },
   async ({ path: filePath }) => {
-    const safe = safePath("/srv/project", filePath);
+    const safe = await safeExistingPath("/srv/project", filePath);
     const data = await readFile(safe, "utf-8");
     return { content: [{ type: "text", text: data }] };
   }

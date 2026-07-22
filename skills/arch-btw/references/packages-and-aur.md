@@ -102,7 +102,7 @@ Arch does not silently merge your config changes for you.
 Typical pattern:
 
 ```bash
-ls /etc/*.pacnew /etc/*.pacsave 2>/dev/null
+find /etc -maxdepth 1 -type f \( -name '*.pacnew' -o -name '*.pacsave' \) -print
 ```
 
 If `pacman-contrib` is installed, use `pacdiff` to review and merge safely.
