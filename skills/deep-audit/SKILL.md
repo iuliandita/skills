@@ -1,7 +1,7 @@
 ---
 name: deep-audit
 description: >
-  · Run an exhaustive 5-wave repo audit (every applicable lens, up to 30 agents), persist findings, generate phased tasks. Triggers: 'deep audit', 'comprehensive audit', 'full audit', 'mega review', 'deep review', 'audit report'. Not for a quick fixed 4-skill sweep (use full-review).
+  · Run exhaustive 5-wave repo audits, persist findings, and generate phased tasks. Triggers: 'deep audit', 'comprehensive audit', 'full audit', 'mega review', 'deep review', 'audit report'. For quick sweeps, use full-review.
 license: MIT
 compatibility: "Requires iuliandita/skills collection installed. Subagent support strongly recommended. Optional: a brainstorming or ideation skill in the host harness (matched by name pattern) for large-audit planning handoff."
 metadata:

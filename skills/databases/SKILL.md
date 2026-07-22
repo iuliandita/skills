@@ -368,6 +368,27 @@ Read `references/migration-patterns.md` for cross-engine type mapping, ORM migra
 
 ---
 
+## Output Contract
+
+See `references/output-contract.md` for the full contract.
+
+- **Skill name:** DATABASES
+- **Deliverable bucket:** `audits`
+- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract - boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table - and write the deliverable to `docs/local/audits/databases/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
+- **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
+
+## Related Skills
+
+- **code-review** - has a `databases.md` reference for application-level database **bug patterns** (transaction misuse, NULL handling, ORM N+1, type coercion). This skill covers engine configuration and operations; code-review covers how the application uses the database.
+- **security-audit** - for SQL injection detection and credential scanning in application code
+- **kubernetes** - for deploying databases on K8s (StatefulSets, operators, PVCs)
+- **terraform** - for provisioning managed databases (RDS, Cloud SQL, Atlas)
+- **docker** - for database containers in Docker Compose
+- **ansible** - for database server configuration management
+- **ci-cd** - for CI/CD pipelines that run migrations (schema execution in CI, migration gating, rollback automation)
+
+---
+
 ## Rules
 
 These are non-negotiable. Violating any of these is a bug.
@@ -387,24 +408,3 @@ These are non-negotiable. Violating any of these is a bug.
 13. **Patch PgBouncer.** PgBouncer < 1.25.1 (CVE-2025-12819) can allow unauthenticated SQL execution when `track_extra_parameters` includes `search_path` AND `auth_user` is set (both non-default). The May 2026 1.25.2 release adds further fixes (CVE-2026-6664/6665/6666/6667: integer overflow, SCRAM, null-deref, KILL_CLIENT authz). Upgrade to 1.25.2+ - the fixes are low-risk.
 14. **Chunk bulk inserts.** Never build a single `INSERT ... VALUES` with an unbounded row list. Compute batch size from the lowest host-parameter ceiling across supported backends (`floor(limit / columns_per_row)`). Wrap chunks in one transaction when atomicity matters.
 15. **Run the AI self-check.** Every generated migration, schema, or config gets verified against the checklist above before returning.
-
----
-
-## Output Contract
-
-See `references/output-contract.md` for the full contract.
-
-- **Skill name:** DATABASES
-- **Deliverable bucket:** `audits`
-- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract - boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table - and write the deliverable to `docs/local/audits/databases/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
-- **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
-
-## Related Skills
-
-- **code-review** - has a `databases.md` reference for application-level database **bug patterns** (transaction misuse, NULL handling, ORM N+1, type coercion). This skill covers engine configuration and operations; code-review covers how the application uses the database.
-- **security-audit** - for SQL injection detection and credential scanning in application code
-- **kubernetes** - for deploying databases on K8s (StatefulSets, operators, PVCs)
-- **terraform** - for provisioning managed databases (RDS, Cloud SQL, Atlas)
-- **docker** - for database containers in Docker Compose
-- **ansible** - for database server configuration management
-- **ci-cd** - for CI/CD pipelines that run migrations (schema execution in CI, migration gating, rollback automation)

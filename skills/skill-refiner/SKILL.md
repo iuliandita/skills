@@ -132,7 +132,7 @@ contested major flags (non-configurable).
      pre-written test cases, auto-generate 2-3 test prompts from the skill's "When to use"
      section and quality signals from its AI Self-Check. Log a warning that generated tests
      are lower quality than hand-written ones. Optionally save generated tests to a
-     test-cases-local.md file alongside test-cases.md so they accumulate across runs.
+     `references/test-cases-local.md` file alongside `references/test-cases.md` so they accumulate across runs.
    - Cross-model: skip on first iteration (no diff to review yet)
 7. **Log baseline scores**: record per-skill and aggregate scores
    in a score ledger before any edits. The ledger must include structural gate (G),
@@ -276,6 +276,20 @@ See `references/output-contract.md` for the full contract.
 - **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content outside the refiner workflow, emit the full contract - boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table - and write the deliverable to `docs/local/audits/skill-refiner/<YYYY-MM-DD>-<slug>.md`. When invoked to **run the refiner workflow** (its primary mode), use the existing Phase 3 "Final report" format described in the workflow; that build-mode output is unchanged by this contract.
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
 
+## Related Skills
+
+- **skill-creator** - the evaluation and improvement engine. skill-refiner invokes
+  skill-creator's review mode (Mode 2) for scoring and its improve mode for
+  generating changes. skill-creator handles individual skill quality; skill-refiner
+  handles iteration, prioritization, and orchestration. Primary dependency.
+- **full-review** - one-off collection audit across code-review, anti-slop,
+  security-audit, and update-docs. Use **full-review** for a single pass over
+  application code; use skill-refiner for iterative improvement of skill files.
+- **anti-slop** - code quality patterns. skill-refiner may invoke anti-slop
+  principles through skill-creator during improvement, but does not call anti-slop
+  directly. Different domain: anti-slop audits application code, skill-refiner
+  audits skill files.
+
 ## Rules
 
 1. **Immutability in phase 1**: never modify `references/evaluation-criteria.md`,
@@ -299,17 +313,3 @@ See `references/output-contract.md` for the full contract.
     Never edit from memory or assumption.
 12. **No score laundering**: do not call a run scored unless component scores were recorded.
     Retroactive scoring is allowed only when clearly labeled.
-
-## Related Skills
-
-- **skill-creator** - the evaluation and improvement engine. skill-refiner invokes
-  skill-creator's review mode (Mode 2) for scoring and its improve mode for
-  generating changes. skill-creator handles individual skill quality; skill-refiner
-  handles iteration, prioritization, and orchestration. Primary dependency.
-- **full-review** - one-off collection audit across code-review, anti-slop,
-  security-audit, and update-docs. Use **full-review** for a single pass over
-  application code; use skill-refiner for iterative improvement of skill files.
-- **anti-slop** - code quality patterns. skill-refiner may invoke anti-slop
-  principles through skill-creator during improvement, but does not call anti-slop
-  directly. Different domain: anti-slop audits application code, skill-refiner
-  audits skill files.

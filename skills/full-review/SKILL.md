@@ -1,7 +1,7 @@
 ---
 name: full-review
 description: >
-  · Run 4 fixed audits in parallel (code-review, anti-slop, security-audit, update-docs) as a quick quality gate. Triggers: 'full review', 'run all checks', 'full check', 'quad audit', 'review before merge'. Not for exhaustive/wave audits (use deep-audit) or single-dimension checks.
+  · Run 4 fixed audits in parallel (code-review, anti-slop, security-audit, update-docs) as a quick quality gate. Triggers: 'full review', 'run all checks', 'full check', 'quad audit', 'review before merge'. For deep coverage, use deep-audit.
 license: MIT
 compatibility: "Requires code-review, anti-slop, security-audit, update-docs skills installed"
 metadata:

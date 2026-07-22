@@ -467,8 +467,6 @@ Report:
 - Down from 48 words to 22, with concrete claims instead of posture
 ```
 
----
-
 ## Output Contract
 
 See `references/output-contract.md` for the full contract.

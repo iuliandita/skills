@@ -374,6 +374,13 @@ See `references/output-contract.md` for the full contract.
 - **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract - boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table - and write the deliverable to `docs/local/audits/dev-cycle/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
 
+## Reference Files
+
+- `references/start.md` - detailed start-mode workflow, branch naming conventions, spec file template, brainstorming fallback chain (including headless-mode behavior)
+- `references/finish.md` - detailed finish-mode workflow with per-forge commands (GitHub/GitLab/Forgejo/Gitea/Bitbucket) and bare-git paths (format-patch, bundle, local merge). Covers forge detection, toolchain detection with custom-script fallback, CI watch traps, release cutting, and rollback
+- `references/size-heuristics.md` - complete size-classification table with concrete signals, edge cases, and the ambiguity-resolution questions
+- `references/version-bump-sites.md` - grep patterns and locations for version strings across common ecosystems (Docker, K8s, Helm, package managers)
+
 ## Rules
 
 1. **Read before edit.** Always read files you're about to modify in the current session. No exceptions.
@@ -386,10 +393,3 @@ See `references/output-contract.md` for the full contract.
 8. **Don't bundle unrelated work.** If mid-finish you notice a bug outside the branch's scope, file it (roadmap skill or an issue) - don't sneak it into the PR.
 9. **Plain ASCII only.** No em-dashes, no `--` substitutes, no curly quotes, no decorative emoji. Functional status markers (`[OK]`, `[FAIL]`, severity emoji in reports from delegated skills) are fine.
 10. **Mode boundaries are sacred.** Start mode ends with a handoff, not implementation. Finish mode starts with verification, not committing new code. Don't blur them.
-
-## Reference Files
-
-- `references/start.md` - detailed start-mode workflow, branch naming conventions, spec file template, brainstorming fallback chain (including headless-mode behavior)
-- `references/finish.md` - detailed finish-mode workflow with per-forge commands (GitHub/GitLab/Forgejo/Gitea/Bitbucket) and bare-git paths (format-patch, bundle, local merge). Covers forge detection, toolchain detection with custom-script fallback, CI watch traps, release cutting, and rollback
-- `references/size-heuristics.md` - complete size-classification table with concrete signals, edge cases, and the ambiguity-resolution questions
-- `references/version-bump-sites.md` - grep patterns and locations for version strings across common ecosystems (Docker, K8s, Helm, package managers)

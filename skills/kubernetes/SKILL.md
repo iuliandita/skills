@@ -16,7 +16,6 @@ metadata:
 Create, review, and architect Kubernetes infrastructure - from raw manifests to Helm charts to multi-cluster strategy. The goal is production-ready, security-hardened, cost-aware infrastructure that a team can maintain.
 
 **Target versions** (July 2026): Kubernetes 1.34-1.36 supported (1.36 "Haru" released April 22, 2026; 1.36.2 / 1.35.6 / 1.34.9 are the current patches). Upstream Kubernetes has no LTS; community support per minor is ~14 months. 1.33 reached upstream EOL June 28, 2026; 1.32 reached EOL February 28, 2026. Managed **vendor extended support** (AKS/EKS) carries older minors patches roughly 2 more years - attribute it to the platform, not upstream. Helm 4.2.3, Helm 3.21.3 (parallel v3 maintenance, security fixes until Nov 2026).
-
 This skill covers four domains depending on context:
 - **Manifests** - raw YAML for Deployments, Services, Gateway API routes, ConfigMaps, Secrets, PVCs
 - **Helm** - Helm 4 chart scaffolding, OCI registries, templating, multi-environment values
@@ -300,8 +299,6 @@ Reusable cross-cutting patches (monitoring, security context, sidecar injection)
 ### secretGenerator / name-suffix-hash pitfall
 
 `secretGenerator` and `configMapGenerator` append a content hash suffix to the resource name (e.g., `app-config-abc12345`). Deployments referencing the generated name by a fixed name break because the hash changes on every edit. Always reference generated resources by the base name and let Kustomize resolve the suffix, or set `options.disableNameSuffixHash: true` if the hash-based rolling update is not desired.
-
----
 
 ## Architecture
 
