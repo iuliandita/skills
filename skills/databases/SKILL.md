@@ -15,13 +15,13 @@ metadata:
 
 Configure, tune, design schemas, migrate, back up, and review database engines - from single-node dev setups to PCI-compliant production clusters. The goal is correct, performant, durable databases that survive failures, pass audits, and don't wake you up at 3am.
 
-**Target versions** (June 2026):
-- PostgreSQL **18.4** (EOL 2030-11; May 14, 2026 security release), back-branches: 17.10, 16.14, 15.18, 14.23 (no June stable release; PG 19 in beta)
+**Target versions** (July 2026):
+- PostgreSQL **18.4** (EOL 2030-11; May 14, 2026 security release), back-branches: 17.10, 16.14, 15.18, 14.23; PostgreSQL 19 Beta 2 is for testing only
 - MongoDB **8.0.26** (GA, EOL 2029-10; June 11, 2026 security release fixing CVE-2026-11933); rapid lane (8.2+) is Atlas-only with a short window - verify live before pinning
 - MariaDB **11.8.8** (LTS, EOL 2028-06); 12.x rolling GA is quarterly and EOLs at each successor, with 12.3 the next yearly LTS - verify live
-- MySQL **8.4.9** (LTS); innovation lane (9.6) has a short support window - verify live
-- SQL Server **2025 RTM + CU5** (CU5 KB5084896, 2026-05-20)
-- PgBouncer **1.25.2**, Pgpool-II **4.7.2**, ProxySQL **3.0.8**
+- MySQL **8.4.10** (LTS; June 2026 Critical Security Patch); innovation lane has a short support window - verify live
+- SQL Server **2025 RTM + CU7** (released 2026-07-16)
+- PgBouncer **1.25.2**, Pgpool-II **4.7.2**, ProxySQL **3.0.9** (fixes CVE-2026-48772/48773/48774)
 
 This skill covers six domains depending on context:
 - **Configuration** - engine settings, authentication, TLS, tuning parameters
@@ -368,6 +368,27 @@ Read `references/migration-patterns.md` for cross-engine type mapping, ORM migra
 
 ---
 
+## Output Contract
+
+See `references/output-contract.md` for the full contract.
+
+- **Skill name:** DATABASES
+- **Deliverable bucket:** `audits`
+- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract - boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table - and write the deliverable to `docs/local/audits/databases/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
+- **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
+
+## Related Skills
+
+- **code-review** - has a `databases.md` reference for application-level database **bug patterns** (transaction misuse, NULL handling, ORM N+1, type coercion). This skill covers engine configuration and operations; code-review covers how the application uses the database.
+- **security-audit** - for SQL injection detection and credential scanning in application code
+- **kubernetes** - for deploying databases on K8s (StatefulSets, operators, PVCs)
+- **terraform** - for provisioning managed databases (RDS, Cloud SQL, Atlas)
+- **docker** - for database containers in Docker Compose
+- **ansible** - for database server configuration management
+- **ci-cd** - for CI/CD pipelines that run migrations (schema execution in CI, migration gating, rollback automation)
+
+---
+
 ## Rules
 
 These are non-negotiable. Violating any of these is a bug.
@@ -387,24 +408,3 @@ These are non-negotiable. Violating any of these is a bug.
 13. **Patch PgBouncer.** PgBouncer < 1.25.1 (CVE-2025-12819) can allow unauthenticated SQL execution when `track_extra_parameters` includes `search_path` AND `auth_user` is set (both non-default). The May 2026 1.25.2 release adds further fixes (CVE-2026-6664/6665/6666/6667: integer overflow, SCRAM, null-deref, KILL_CLIENT authz). Upgrade to 1.25.2+ - the fixes are low-risk.
 14. **Chunk bulk inserts.** Never build a single `INSERT ... VALUES` with an unbounded row list. Compute batch size from the lowest host-parameter ceiling across supported backends (`floor(limit / columns_per_row)`). Wrap chunks in one transaction when atomicity matters.
 15. **Run the AI self-check.** Every generated migration, schema, or config gets verified against the checklist above before returning.
-
----
-
-## Output Contract
-
-See `references/output-contract.md` for the full contract.
-
-- **Skill name:** DATABASES
-- **Deliverable bucket:** `audits`
-- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract - boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table - and write the deliverable to `docs/local/audits/databases/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
-- **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
-
-## Related Skills
-
-- **code-review** - has a `databases.md` reference for application-level database **bug patterns** (transaction misuse, NULL handling, ORM N+1, type coercion). This skill covers engine configuration and operations; code-review covers how the application uses the database.
-- **security-audit** - for SQL injection detection and credential scanning in application code
-- **kubernetes** - for deploying databases on K8s (StatefulSets, operators, PVCs)
-- **terraform** - for provisioning managed databases (RDS, Cloud SQL, Atlas)
-- **docker** - for database containers in Docker Compose
-- **ansible** - for database server configuration management
-- **ci-cd** - for CI/CD pipelines that run migrations (schema execution in CI, migration gating, rollback automation)

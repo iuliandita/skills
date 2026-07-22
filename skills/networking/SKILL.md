@@ -17,24 +17,24 @@ Configure, troubleshoot, and optimize Linux networking infrastructure. Covers DN
 VPNs, firewalls (nftables), VLANs, subnetting, high availability, dynamic routing, and network
 performance tuning.
 
-**Target versions** (June 2026):
+**Target versions** (July 2026):
 
 | Tool | Version | Notes |
 |------|---------|-------|
-| Caddy | 2.11.2 | Auto-HTTPS, Caddyfile + JSON API |
-| Nginx | 1.30.0 stable / 1.29.8 mainline | New stable branch released Apr 2026; verify current advisories |
-| Traefik | 3.6.14 | Gateway API native, v2 EOL approaching |
-| HAProxy | 3.3.7 stable / 3.2.16 LTS | LTS EOL 2030-Q2 |
+| Caddy | 2.11.4 | Auto-HTTPS, Caddyfile + JSON API |
+| Nginx | 1.30.4 stable / 1.31.3 mainline | July security releases fix CVE-2026-42533/60005/56434 |
+| Traefik | 3.7.8 | Gateway API native, v2 EOL approaching |
+| HAProxy | 3.4.2 LTS / 3.3.12 stable / 3.2.21 LTS | 3.4 LTS EOL 2031-Q2 |
 | WireGuard tools | 1.0.20260223 | Kernel module + userspace tools |
-| strongSwan | 6.0.6 | swanctl config (legacy ipsec.conf deprecated) |
+| strongSwan | 6.0.7 | swanctl config (legacy ipsec.conf deprecated) |
 | nftables | 1.1.6 | iptables successor, default on modern distros |
-| keepalived | 2.3.4 | VRRP + health checks |
-| Unbound | 1.24.2 | CVE-2025-11411 fix (unsolicited NS RRSets) |
-| CoreDNS | 1.14.2 | K8s default DNS, plugin-based |
-| FRRouting | 10.6.0 | BGP, OSPF, IS-IS, PIM |
-| Tailscale / Headscale | Headscale 0.28.0 | Self-hosted control server |
-| cloudflared | 2026.3.0 | Cloudflare Tunnel (outbound-only) |
-| OpenVPN | 2.7.2 / 2.6.20 LTS | 2.7.x: multi-socket, DCO; 2.6 is the LTS branch |
+| keepalived | 2.4.3 | VRRP + health checks |
+| Unbound | 1.25.1 | CVE-2025-11411 fix (unsolicited NS RRSets) |
+| CoreDNS | 1.14.6 | K8s default DNS, plugin-based |
+| FRRouting | 10.7.0 | BGP, OSPF, IS-IS, PIM |
+| Tailscale / Headscale | Headscale 0.29.2 | Self-hosted control server |
+| cloudflared | 2026.7.2 | Cloudflare Tunnel (outbound-only) |
+| OpenVPN | 2.7.5 / 2.6.21 LTS | 2.7.x: multi-socket, DCO; 2.6 is the LTS branch |
 
 ## When to use
 

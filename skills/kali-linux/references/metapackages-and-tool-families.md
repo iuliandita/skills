@@ -1,6 +1,6 @@
 # Kali Metapackages and Tool Families
 
-Research date: June 2026
+Research date: July 2026
 
 Kali is easier to manage when you think in bundles and workflows instead of one giant package dump.
 The official metapackage docs and `kali-meta` page are the map.

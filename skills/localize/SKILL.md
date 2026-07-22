@@ -13,7 +13,9 @@ metadata:
 
 # Localize: App Internationalization Workflow
 
-**Target versions (June 2026):** react-i18next 17.x, vue-i18n 11.x, next-intl 4.x, i18next 26.x
+**Target versions (July 2026):** react-i18next 17.0.10, vue-i18n 11.4.7, next-intl 4.13.3,
+i18next 26.3.6. For missing-key persistence, require i18next-http-middleware 3.9.7+ and
+i18next-fs-backend 2.6.6+ to fix critical prototype pollution (CVE-2026-48714).
 
 Systematic approach to internationalizing applications. Covers two scenarios: adding
 multilingual support from scratch and auditing existing i18n for gaps. Built from real

@@ -30,7 +30,7 @@ disposable dev shells, fleet-wide configuration without a separate config-manage
 and a single language for a workstation, a server, a container image, a NixOS VM, and a
 macOS laptop via nix-darwin.
 
-**Versions worth pinning** (verified June 2026):
+**Versions worth pinning** (verified July 2026):
 
 Pin versions only when they shape compatibility or troubleshooting. For ordinary package
 work, trust the live channel or flake lock over a stale table.
@@ -40,7 +40,7 @@ work, trust the live channel or flake lock over a stale table.
 | NixOS stable | 26.05 "Yarara" (May 2026) | current stable, released 2026-05-30, maintained until 2026-12-31 |
 | NixOS previous stable | 25.11 "Xantusia" (Nov 2025) | EOL 2026-06-30; upgrade off it now |
 | NixOS upcoming | 26.11 (~Nov 2026) | next release; do not target yet for production |
-| Nix (CLI / daemon) | 2.33 (Dec 2025) | stable upstream; 2.32 introduced skip-substitutable-downloads |
+| Nix (CLI / daemon) | 2.34 | stable upstream; verify the packaged distro lane before upgrading |
 | `nixos-rebuild-ng` | default in 25.11+ | Python rewrite of nixos-rebuild, default for new installs |
 | home-manager | release-26.05 (May 2026) | matches NixOS 26.05; unstable tracks nixos-unstable |
 | nix-darwin | tracks nixpkgs 26.05 and master | active macOS module system (Intel + Apple Silicon) |

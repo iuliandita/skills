@@ -15,8 +15,7 @@ metadata:
 
 Create, review, and architect Kubernetes infrastructure - from raw manifests to Helm charts to multi-cluster strategy. The goal is production-ready, security-hardened, cost-aware infrastructure that a team can maintain.
 
-**Target versions** (June 2026): Kubernetes 1.34-1.36 supported (1.36 "Haru" released April 22, 2026; 1.36.1 / 1.35.5 / 1.34.8 are the current patches). Upstream Kubernetes has no LTS; community support per minor is ~14 months. 1.33 entered maintenance April 28, 2026 and reaches upstream EOL June 28, 2026; 1.32 already hit upstream EOL February 28, 2026. Managed **vendor extended support** (AKS/EKS) carries older minors patches roughly 2 more years - attribute it to the platform, not upstream. Helm 4.2.1, Helm 3.21.x (parallel v3 maintenance, security fixes until Nov 2026).
-
+**Target versions** (July 2026): Kubernetes 1.34-1.36 supported (1.36 "Haru" released April 22, 2026; 1.36.2 / 1.35.6 / 1.34.9 are the current patches). Upstream Kubernetes has no LTS; community support per minor is ~14 months. 1.33 reached upstream EOL June 28, 2026; 1.32 reached EOL February 28, 2026. Managed **vendor extended support** (AKS/EKS) carries older minors patches roughly 2 more years - attribute it to the platform, not upstream. Helm 4.2.3, Helm 3.21.3 (parallel v3 maintenance, security fixes until Nov 2026).
 This skill covers four domains depending on context:
 - **Manifests** - raw YAML for Deployments, Services, Gateway API routes, ConfigMaps, Secrets, PVCs
 - **Helm** - Helm 4 chart scaffolding, OCI registries, templating, multi-environment values
@@ -173,7 +172,7 @@ Read `references/manifest-templates.md` for complete, copy-pasteable YAML templa
 
 ## Helm Charts
 
-**Helm 4** (4.0.0 released Nov 12, 2025; 4.2.1 current) is current. Helm 3.21.x gets security fixes until Nov 2026.
+**Helm 4** (4.0.0 released Nov 12, 2025; 4.2.3 current) is current. Helm 3.21.3 gets security fixes until Nov 2026.
 
 ### What changed in Helm 4
 
@@ -301,8 +300,6 @@ Reusable cross-cutting patches (monitoring, security context, sidecar injection)
 
 `secretGenerator` and `configMapGenerator` append a content hash suffix to the resource name (e.g., `app-config-abc12345`). Deployments referencing the generated name by a fixed name break because the hash changes on every edit. Always reference generated resources by the base name and let Kustomize resolve the suffix, or set `options.disableNameSuffixHash: true` if the hash-based rolling update is not desired.
 
----
-
 ## Architecture
 
 Read `references/architecture.md` for the full architecture decision framework. Key patterns:
@@ -355,7 +352,7 @@ The Trivy supply chain attack (CVE-2026-33634) is the defining security event of
 - **Monitor for force-push events** on action repos you depend on. GitHub's audit log and StepSecurity Harden-Runner can detect this.
 - **Vendor critical CI tools** or use pre-built, verified binaries instead of pulling from upstream on every run.
 - **Rotate secrets** if any CI pipeline ran compromised Trivy (v0.69.4/5/6) between March 19-23, 2026. The infostealer exfiltrated SSH keys, cloud creds, Docker configs, and k8s tokens.
-- **Trivy safe version: v0.70.0+ for new pins.** v0.69.3 was the March 2026 rollback version. Actions such as `trivy-action@v0.35.0` and `setup-trivy@v0.2.6` still need verified commit SHAs, not mutable tags.
+- **Trivy safe version: v0.72.0+ for new pins.** v0.69.3 was the March 2026 rollback version. Actions such as `trivy-action@v0.35.0` and `setup-trivy@v0.2.6` still need verified commit SHAs, not mutable tags.
 
 ### Platform awareness
 

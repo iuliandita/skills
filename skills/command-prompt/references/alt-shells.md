@@ -5,7 +5,7 @@
 
 ---
 
-## Fish (4.6)
+## Fish (4.8)
 
 Fish is a modern, user-friendly shell that intentionally breaks POSIX compatibility for a
 better interactive experience. You'll encounter it when users have it as their login shell or
@@ -268,7 +268,7 @@ bash (`pkg install bash`) or write POSIX sh.
 
 ---
 
-## Nushell (0.111)
+## Nushell (0.114)
 
 Nushell is a modern shell that treats data as structured tables instead of text streams. It's
 gaining traction among developers who work with JSON/YAML/CSV regularly.

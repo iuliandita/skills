@@ -180,7 +180,7 @@ built-in reasoning.
 ### Installation
 
 ```bash
-npx agent-browser@0.27.0
+npx agent-browser@0.32.3
 # or: npm install -g agent-browser
 ```
 

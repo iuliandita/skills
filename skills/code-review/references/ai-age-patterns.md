@@ -2,7 +2,7 @@
 
 Bug patterns specific to AI-generated code, LLM API integrations, agentic AI systems, and MCP (Model Context Protocol) implementations. As of 2025-2026, AI-generated code is present in most codebases - these patterns catch what traditional review misses.
 
-Research date: March 2026.
+Research date: July 2026.
 
 ---
 
@@ -270,6 +270,7 @@ MCP is still maturing in security. As of March 2026: 43% of MCP servers contain 
 - Grafana MCP binding to `0.0.0.0:8000` by default - accessible from any network, not just localhost
 - DNS rebinding attacks on localhost-bound SSE servers - multiple SDKs lack protection
 - Cross-client data leaks in TypeScript SDK (CVE-2026-25536)
+- Python SDK WebSocket servers without Host/Origin validation (CVE-2026-59950; fixed in mcp 1.28.1)
 
 ### Data Exposure
 

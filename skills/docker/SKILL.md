@@ -20,7 +20,7 @@ metadata:
 
 Write, review, and architect Dockerfiles, Compose stacks, and container workflows - from single-service dev setups to multi-arch production pipelines with image signing and compliance gates. The goal is minimal, secure, reproducible images that a team can maintain and a QSA can audit.
 
-**Target versions**: June 2026 snapshot. Read `references/target-versions.md` before
+**Target versions**: July 2026 snapshot. Read `references/target-versions.md` before
 pinning Docker, Compose, BuildKit, containerd, Podman, Buildah, or runc.
 
 This skill covers Dockerfiles, Compose, container hardening, supply chain, registry/CI
@@ -131,7 +131,7 @@ docker scout cves --only-severity critical,high <image>
 cosign verify --key <key> <image>     # verify signature
 syft <image> -o spdx-json             # generate SBOM
 grype <image>                         # vulnerability scan (alternative to Scout)
-trivy image <image>                   # use v0.70.0+; never v0.69.4-6
+trivy image <image>                   # use v0.72.0+; never v0.69.4-6
 ```
 
 ## Dockerfile
@@ -272,7 +272,7 @@ Read `references/security-and-compliance.md` for the full PCI-DSS 4.0 container 
 | CVE-2025-31133 | runc | High | Container escape via /dev/null symlink race | runc 1.2.8, 1.3.3, 1.4.0-rc.3 |
 | CVE-2025-52565 | runc | High | Container escape via /dev/console mount race | runc 1.2.8, 1.3.3, 1.4.0-rc.3 |
 | CVE-2025-52881 | runc | High | Host procfs writes via /proc redirect (DoS/escape) | runc 1.2.8, 1.3.3, 1.4.0-rc.3 |
-| CVE-2026-33634 | Trivy | Critical | Supply chain - malware in Docker Hub images (v0.69.4-6) | Trivy v0.70.0+ for new pins; v0.69.3 only as rollback |
+| CVE-2026-33634 | Trivy | Critical | Supply chain - malware in Docker Hub images (v0.69.4-6) | Trivy v0.72.0+ for new pins; v0.69.3 only as rollback |
 | CVE-2026-2664 | Docker Desktop | Medium | gRPC-FUSE kernel module OOB read | Desktop 4.62.0+ |
 | CVE-2025-13743 | Docker Desktop | Low | Expired Hub PATs leaked in diagnostics bundles | Desktop 4.54.0 |
 | CVE-2026-28400 | Model Runner | 7.5 High | Runtime flag injection - arbitrary file overwrite, container escape | Desktop 4.61.0+ |
@@ -334,7 +334,7 @@ For a hardened Dockerfile pattern, see `references/dockerfile-patterns.md` (Lang
 - **Verify at deploy**: `cosign verify --key cosign.pub <image>@<digest>`
 - **Pin CI tool images to SHA256 digests.** Mutable tags are a proven attack vector (Trivy March 2026, tj-actions/reviewdog March 2025).
 - **Use Docker Scout** or Grype for continuous vulnerability monitoring.
-- **Trivy**: use v0.70.0+ from official releases for new pins. v0.69.3 was the March 2026 rollback version. v0.69.4-6 contained credential-stealing malware. If any CI pipeline ran compromised Trivy between March 19-23, 2026, rotate ALL secrets.
+- **Trivy**: use v0.72.0+ from official releases for new pins. v0.69.3 was the March 2026 rollback version. v0.69.4-6 contained credential-stealing malware. If any CI pipeline ran compromised Trivy between March 19-23, 2026, rotate ALL secrets.
 
 ### PCI-DSS 4.0 container requirements (summary)
 
@@ -344,7 +344,7 @@ PCI-DSS 4.0 is the only active version. Key container-specific requirements:
 - **Req 2.2**: Harden containers - non-root, drop caps, read-only rootfs, one process per container
 - **Req 4**: Encrypt transmissions - TLS between CDE containers in Compose (mount certs, use TLS-enabled images, or front with a TLS-terminating reverse proxy)
 - **Req 5.2/5.3**: Immutable images (deploy by digest), Falco for runtime detection
-- **Req 6.3**: Vulnerability scanning on every image before deployment (Docker Scout, Grype, Trivy v0.70.0+)
+- **Req 6.3**: Vulnerability scanning on every image before deployment (Docker Scout, Grype, Trivy v0.72.0+)
 - **Req 6.3.2**: SBOM for every production image
 - **Req 8.6.2**: No hardcoded secrets in images, compose files, or env vars
 - **Req 10**: Audit logging - container stdout/stderr to immutable log store
@@ -389,10 +389,10 @@ See AI Self-Check above for the full build-time checklist (Dockerfile correctnes
 - [ ] runc >= 1.4.0 (CVE-2025-31133/52565/52881 patched)
 - [ ] BuildKit >= 0.28.1 (CVE-2026-33747/33748 patched)
 - [ ] Docker Desktop >= 4.71.0 (adds CVE-2026-5817/5843 Model Runner container-to-host RCE fixes; floor was 4.66.1 for CVE-2025-9074/CVE-2026-28400)
-- [ ] Trivy v0.70.0+ from official releases (v0.69.4-6 COMPROMISED)
+- [ ] Trivy v0.72.0+ from official releases (v0.69.4-6 COMPROMISED)
 - [ ] Images signed with cosign, verified at deploy
 - [ ] SBOM generated for every production image
-- [ ] Vulnerability scanning in CI (Docker Scout, Grype, or Trivy v0.70.0+)
+- [ ] Vulnerability scanning in CI (Docker Scout, Grype, or Trivy v0.72.0+)
 - [ ] CI tools pinned to SHA256 digests (not mutable tags)
 - [ ] Base images rebuilt/updated regularly (weekly minimum)
 - [ ] Separate override files for dev/prod
@@ -418,7 +418,7 @@ See AI Self-Check above for the full build-time checklist (Dockerfile correctnes
 - `references/compose-patterns.md` - Compose patterns and common stack layouts
 - `references/security-and-compliance.md` - container hardening, compliance guidance, and safe public custom image publishing
 - `references/alternative-runtimes.md` - Podman, Buildah, Skopeo, and related runtime patterns
-- `references/target-versions.md` - June 2026 version snapshot for Docker, Compose, BuildKit, containerd, Podman, Buildah, and runc
+- `references/target-versions.md` - July 2026 version snapshot for Docker, Compose, BuildKit, containerd, Podman, Buildah, and runc
 
 ## Output Contract
 
@@ -453,7 +453,7 @@ See `references/output-contract.md` for the full contract.
 5. **Deps before source.** Copy dependency manifests first, install, then copy source. Layer cache depends on it.
 6. **Healthchecks on everything.** Dockerfile `HEALTHCHECK` and Compose `healthcheck:`.
 7. **Pin CI tools to SHA256 digests.** Mutable tags are compromised supply chain vectors (Trivy CVE-2026-33634 March 2026, tj-actions CVE-2025-30066 (upstream: reviewdog CVE-2025-30154) March 2025).
-8. **Trivy v0.70.0+ for new pins.** v0.69.3 was the March 2026 rollback version; v0.69.4-6 contained credential-stealing malware. If you ran it, rotate secrets.
+8. **Trivy v0.72.0+ for new pins.** v0.69.3 was the March 2026 rollback version; v0.69.4-6 contained credential-stealing malware. If you ran it, rotate secrets.
 9. **Compose: no `version:` field.** It's deprecated and removed. Just delete it.
 10. **Clean apt cache in the same RUN layer.** `apt-get update && apt-get install -y ... && rm -rf /var/lib/apt/lists/*` - all one `RUN`.
 11. **`.dockerignore` is not optional.** `.git`, `node_modules`, `.env`, secrets, test fixtures, docs - all excluded.
