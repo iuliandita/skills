@@ -138,8 +138,9 @@ pveam download local debian-12-standard_12.7-1_amd64.tar.zst
 - Hugepages: configure on host first, then enable per-VM
 
 **Disk:**
-- Interface: `scsi0` with `virtio-scsi-pci` or `virtio-scsi-single` controller
-- `iothread=1` on each disk when using virtio-scsi (dedicated I/O thread per disk)
+- Interface: `scsi0` with `virtio-scsi-single` when using per-disk I/O threads;
+  `virtio-scsi-pci` is the shared-controller option without them
+- `iothread=1` on each SCSI disk only with `virtio-scsi-single`
 - `ssd=1` when the backing store is SSD (enables TRIM support in guest)
 - `discard=on` for thin-provisioned storage (passes UNMAP to storage backend)
 - Format: `raw` on LVM-thin (no overhead), `qcow2` on directory storage (snapshots)
@@ -197,7 +198,7 @@ qm create 9000 --name debian-13-template --memory 2048 --cores 2 \
   --net0 virtio,bridge=vmbr0 --agent enabled=1
 qm importdisk 9000 debian-13-generic-amd64.qcow2 local-lvm
 qm set 9000 --scsi0 local-lvm:vm-9000-disk-0,discard=on,iothread=1,ssd=1 \
-  --scsihw virtio-scsi-pci --boot order=scsi0
+  --scsihw virtio-scsi-single --boot order=scsi0
 
 # 3. Add cloud-init drive
 qm set 9000 --ide2 local-lvm:cloudinit
@@ -564,14 +565,15 @@ resource "proxmox_virtual_environment_vm" "vm" {
   name      = var.name
   vm_id     = var.vm_id
 
-  bios       = var.bios          # "seabios" or "ovmf"
-  machine    = var.machine        # "q35" for PCIe, null for default
-  on_boot    = true
-  boot_order = ["scsi0"]
+  bios          = var.bios    # "seabios" or "ovmf"
+  machine       = var.machine # "q35" for PCIe, null for default
+  scsi_hardware = "virtio-scsi-single"
+  on_boot       = true
+  boot_order    = ["scsi0"]
 
   agent {
     enabled = true
-    timeout = "2m"               # First boot timeout (cloud-init installs agent)
+    timeout = "2m" # First boot timeout (cloud-init installs agent)
   }
 
   cpu {
@@ -582,7 +584,7 @@ resource "proxmox_virtual_environment_vm" "vm" {
 
   memory {
     dedicated = var.memory_mb
-    floating  = 0                # 0 = balloon disabled
+    floating  = 0 # 0 = balloon disabled
   }
 
   disk {
@@ -602,7 +604,7 @@ resource "proxmox_virtual_environment_vm" "vm" {
 
   initialization {
     datastore_id = var.datastore
-    interface    = null           # null defaults to ide2
+    interface    = null # null defaults to ide2
 
     user_account {
       username = var.cloud_init_user
@@ -625,9 +627,9 @@ resource "proxmox_virtual_environment_vm" "vm" {
   lifecycle {
     prevent_destroy = true
     ignore_changes = [
-      disk,                      # Disk resized via qm, not Terraform
-      network_device[0].mac_address,  # Auto-generated
-      node_name,                 # Changes after live migration
+      disk,                          # Disk resized via qm, not Terraform
+      network_device[0].mac_address, # Auto-generated
+      node_name,                     # Changes after live migration
     ]
   }
 }

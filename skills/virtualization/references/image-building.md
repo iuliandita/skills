@@ -172,6 +172,10 @@ variable "ssh_password" {
   sensitive = true
 }
 
+variable "iso_checksum" {
+  type = string
+}
+
 source "proxmox-iso" "debian" {
   # Connection
   proxmox_url              = "https://pve1.example.com:8006/api2/json"
@@ -197,16 +201,16 @@ source "proxmox-iso" "debian" {
 
   # Disk
   disks {
-    type              = "scsi"
-    disk_size         = "20G"
-    storage_pool      = "local-lvm"
-    format            = "raw"
-    io_thread         = true
-    ssd               = true
-    discard           = true
+    type         = "scsi"
+    disk_size    = "20G"
+    storage_pool = "local-lvm"
+    format       = "raw"
+    io_thread    = true
+    ssd          = true
+    discard      = true
   }
 
-  scsi_controller = "virtio-scsi-pci"
+  scsi_controller = "virtio-scsi-single"
 
   # Network
   network_adapters {
@@ -216,10 +220,13 @@ source "proxmox-iso" "debian" {
   }
 
   # ISO
-  iso_url          = "https://cdimage.debian.org/debian-cd/current/amd64/iso-cd/debian-13.0.0-amd64-netinst.iso"
-  iso_checksum     = "sha256:CHECKSUM_HERE"
-  iso_storage_pool = "local"
-  unmount_iso      = true
+  boot_iso {
+    type             = "scsi"
+    iso_url          = "https://cdimage.debian.org/debian-cd/current/amd64/iso-cd/debian-13.6.0-amd64-netinst.iso"
+    iso_checksum     = var.iso_checksum
+    iso_storage_pool = "local"
+    unmount          = true
+  }
 
   # Cloud-init
   cloud_init              = true
@@ -265,14 +272,19 @@ build {
 }
 ```
 
-Load the temporary credentials from protected files into Packer's environment, never argv or
-shell history, and clear them after the build:
+Store only the verified 64-hex SHA-256 digest in `debian-13.6.0-amd64.sha256`. Load it and the
+temporary credentials from files into Packer's environment, never argv or shell history.
+Initialize and validate before building, then clear the variables:
 
 ```bash
 export PKR_VAR_proxmox_token="$(< /run/secrets/proxmox_token)"
 export PKR_VAR_ssh_password="$(< /run/secrets/packer_ssh_password)"
+export PKR_VAR_iso_checksum="sha256:$(< debian-13.6.0-amd64.sha256)"
+packer init proxmox-debian.pkr.hcl
+packer fmt -check proxmox-debian.pkr.hcl
+packer validate proxmox-debian.pkr.hcl
 packer build proxmox-debian.pkr.hcl
-unset PKR_VAR_proxmox_token PKR_VAR_ssh_password
+unset PKR_VAR_proxmox_token PKR_VAR_ssh_password PKR_VAR_iso_checksum
 ```
 
 ### Proxmox clone builder (faster)
@@ -320,20 +332,24 @@ variable "ssh_password" {
   sensitive = true
 }
 
+variable "iso_checksum" {
+  type = string
+}
+
 source "qemu" "debian" {
-  iso_url      = "https://cdimage.debian.org/debian-cd/current/amd64/iso-cd/debian-13.0.0-amd64-netinst.iso"
-  iso_checksum = "sha256:CHECKSUM_HERE"
+  iso_url      = "https://cdimage.debian.org/debian-cd/current/amd64/iso-cd/debian-13.6.0-amd64-netinst.iso"
+  iso_checksum = var.iso_checksum
 
   output_directory = "output-debian"
   vm_name          = "debian-13.qcow2"
 
-  format       = "qcow2"
-  disk_size    = "20G"
-  memory       = 2048
-  cpus         = 2
-  accelerator  = "kvm"
+  format      = "qcow2"
+  disk_size   = "20G"
+  memory      = 2048
+  cpus        = 2
+  accelerator = "kvm"
 
-  net_device   = "virtio-net"
+  net_device     = "virtio-net"
   disk_interface = "virtio-scsi"
 
   headless = true
@@ -367,6 +383,18 @@ build {
     ]
   }
 }
+```
+
+Validate the QEMU template with the same verified checksum input before building it:
+
+```bash
+export PKR_VAR_ssh_password="$(< /run/secrets/packer_ssh_password)"
+export PKR_VAR_iso_checksum="sha256:$(< debian-13.6.0-amd64.sha256)"
+packer init qemu-debian.pkr.hcl
+packer fmt -check qemu-debian.pkr.hcl
+packer validate qemu-debian.pkr.hcl
+packer build qemu-debian.pkr.hcl
+unset PKR_VAR_ssh_password PKR_VAR_iso_checksum
 ```
 
 ---
@@ -417,7 +445,7 @@ wget https://cloud.debian.org/images/cloud/trixie/daily/latest/debian-13-generic
 # Create template VM
 qm create 9000 --name debian-13-template --memory 2048 --cores 2 \
   --net0 virtio,bridge=vmbr0 --agent enabled=1 \
-  --scsihw virtio-scsi-pci
+  --scsihw virtio-scsi-single
 
 # Import disk
 qm importdisk 9000 debian-13-generic-amd64.qcow2 local-lvm
