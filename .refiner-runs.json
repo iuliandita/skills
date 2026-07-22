@@ -2669,5 +2669,37 @@
       "65ab2658ea7003a4411afef8fcd872dafe1c1e14"
     ],
     "notes": "Phase 2 completed after the non-configurable human checkpoint was explicitly approved. Generated phase-1 cases for four skills were promoted into the canonical catalog in phase 2. Detailed working evidence remains in ignored docs/local/."
+  },
+  {
+    "run_id": "2026-07-22-runtime-validator-recheck",
+    "kind": "verification_followup",
+    "date": "2026-07-22",
+    "branch": "fix/115-packer-runtime-validation",
+    "scored": false,
+    "scope": ["observability", "virtualization"],
+    "tools": {
+      "promtool": "3.13.1",
+      "otelcol": "0.119.0-dev",
+      "packer": "1.15.4",
+      "packer-plugin-proxmox": "1.2.4",
+      "packer-plugin-qemu": "1.1.6"
+    },
+    "findings": [
+      "Proxmox Packer template paired io_thread with an incompatible virtio-scsi-pci controller",
+      "Proxmox Packer template used deprecated top-level ISO fields",
+      "Packer examples used non-parseable checksum placeholders",
+      "Packer examples referenced the obsolete Debian 13.0.0 filename under the rolling current path"
+    ],
+    "verification": [
+      "promtool check rules PASS",
+      "promtool test rules PASS",
+      "otelcol validate PASS",
+      "Packer Proxmox template full validation PASS",
+      "Packer QEMU template full validation PASS",
+      "Debian 13.6.0 installer URL resolved with HTTP 200",
+      "focused fresh-context rereview NO_FLAGS"
+    ],
+    "issue": 115,
+    "notes": "Verification-only follow-up to the completed three-iteration collection run; no new composite score is claimed. The prior skipped-check record remains unchanged as historical fact."
   }
 ]

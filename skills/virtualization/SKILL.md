@@ -64,7 +64,7 @@ generated VM config, Terraform HCL, or Packer template, verify against this list
 
 - [ ] No hardcoded IPs, passwords, or SSH keys - use variables or cloud-init injection
 - [ ] Disk interface is virtio (scsi0 with virtio-scsi controller), not IDE, unless legacy OS
-- [ ] `iothread = true` on virtio-scsi disks for SSD-backed storage
+- [ ] `iothread = true` on SCSI disks only with the `virtio-scsi-single` controller
 - [ ] `ssd = true` emulation enabled when backing store is SSD (enables guest TRIM)
 - [ ] `discard = on` on QEMU disk config for thin-provisioned storage (fstrim passthrough)
 - [ ] Memory ballooning disabled unless tested on the specific guest OS (Alpine, some BSDs can't
@@ -84,7 +84,8 @@ generated VM config, Terraform HCL, or Packer template, verify against this list
 - [ ] Backup retention configured (not unlimited snapshots eating storage)
 - [ ] Network device uses `virtio` model, not `e1000` or `rtl8139`
 - [ ] `fstrim.timer` enabled in guest for thin-provisioned storage (completes the discard chain)
-- [ ] SCSI controller explicitly set (`virtio-scsi-single` for high IOPS, `virtio-scsi-pci` default)
+- [ ] SCSI controller explicitly set (`virtio-scsi-single` when using per-disk I/O threads;
+  `virtio-scsi-pci` only when they are disabled)
 - [ ] Machine type matches BIOS: `i440fx` with `seabios`, `q35` with `ovmf` (UEFI). Mixing
   `i440fx` + `ovmf` causes boot failures. `q35` + `seabios` works but wastes q35 features.
 - [ ] VGA type matches use case: `serial0` for headless cloud images, `virtio` for GUI VMs,
@@ -179,7 +180,7 @@ The fastest path to a production-ready VM. Skip Packer and ISO installs for stan
 1. Download a cloud image to the Proxmox node (note: the URL below points to a daily/testing image; prefer a stable release image - daily images may have cloud-init metadata gaps causing first-boot surprises):
    `wget -P /var/lib/vz/template/iso/ https://cloud.debian.org/images/cloud/trixie/daily/latest/debian-13-generic-amd64.qcow2`
 2. Create the VM shell:
-   `qm create 100 --name myvm --memory 2048 --cores 2 --cpu host --net0 virtio,bridge=vmbr0 --agent enabled=1 --scsihw virtio-scsi-pci`
+   `qm create 100 --name myvm --memory 2048 --cores 2 --cpu host --net0 virtio,bridge=vmbr0 --agent enabled=1 --scsihw virtio-scsi-single`
 3. Import and attach the disk with SSD optimizations:
    `qm importdisk 100 debian-13-generic-amd64.qcow2 local-lvm`
    `qm set 100 --scsi0 local-lvm:vm-100-disk-0,discard=on,iothread=1,ssd=1 --boot order=scsi0`
@@ -278,7 +279,7 @@ updates; disabling doesn't.
 
 **Disk interface hierarchy** (fastest to slowest):
 1. **virtio-scsi-single** + iothread - one controller per disk, best IOPS
-2. **virtio-scsi-pci** + iothread - shared controller, good for most workloads
+2. **virtio-scsi-pci** without per-disk iothreads - shared controller, good for moderate I/O
 3. **virtio-blk** - legacy virtio, good performance but fewer features
 4. **IDE** - legacy only, needed for some old OSes
 
