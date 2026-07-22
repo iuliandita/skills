@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.42.1](https://github.com/iuliandita/skills/compare/v1.42.0...v1.42.1) (2026-07-22)
+
+
+### Bug Fixes
+
+* **skills:** refresh July versions and advisories ([#107](https://github.com/iuliandita/skills/issues/107)) ([99f7e84](https://github.com/iuliandita/skills/commit/99f7e84))
+* **skills:** resolve collection-wide safety and behavioral gaps ([#112](https://github.com/iuliandita/skills/issues/112)) ([d313b9e](https://github.com/iuliandita/skills/commit/d313b9e))
+
 ## [1.42.0](https://github.com/iuliandita/skills/compare/v1.41.0...v1.42.0) (2026-07-13)
 
 
