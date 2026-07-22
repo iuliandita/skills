@@ -578,9 +578,9 @@ fi
 **First, fetch remote tags.** Local-only `git tag -l` can miss tags that exist on the remote but haven't been pulled - false-negative release detection is the worst outcome of this step. Do this before any tag-based signal check:
 
 ```bash
-# Fetch tags if a remote exists; let errors print but don't block on offline/auth failure
+# Fetch tags if a remote exists; any fetch/auth/network failure stops release detection
 if git remote get-url origin >/dev/null 2>&1; then
-  git fetch --tags origin 2>&1 | grep -vE '^(From |$)' || true
+  git fetch --tags origin
 fi
 ```
 

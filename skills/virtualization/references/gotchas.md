@@ -107,9 +107,9 @@ reliably on:
 **Symptoms:** VM becomes unresponsive, OOM kills inside guest, guest hangs when balloon
 deflates (host trying to reclaim memory).
 
-**Fix:** Disable ballooning (`balloon: 0` in Proxmox, `memory_min_mb = 0` in Terraform).
-Provision VMs with the memory they actually need. Overcommitment via ballooning is a
-false economy.
+**Fix:** Disable ballooning (`balloon: 0` in native Proxmox config, or `floating = 0` in the
+bpg/proxmox Terraform `memory` block). Provision VMs with the memory they actually need.
+Overcommitment via ballooning is a false economy.
 
 ### Memory hotplug limitations
 

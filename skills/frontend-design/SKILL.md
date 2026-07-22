@@ -61,7 +61,7 @@ Before returning any built UI or critique, verify:
 - [ ] **Focus-visible styles defined** - never `outline: none` alone; replacement focus ring present
 - [ ] **Contrast meets WCAG AA on both themes** - body text and interactive elements. AAA on body where feasible
 - [ ] **Real framework verified** - Astro / SvelteKit / Vite / Next versions match the Target versions block. No "Next 14" or "Astro 4" in build output unless the user explicitly asked for legacy
-- [ ] **Files separated** - HTML / CSS / JS in their own files unless an explicit single-file constraint is stated in a code comment
+- [ ] **Framework-native organization** - use framework-native structure: split standalone HTML/CSS/JS, but preserve Svelte/Astro/Vue component-scoped script/style blocks unless the project convention explicitly separates them
 - [ ] **No invented CSS properties or framework APIs** - only verified Tailwind v4 utilities, real Svelte 5 runes (`$state`, `$derived`, `$effect`, `$props`), real Astro directives. AI invents `.bg-glass-700` and `$reactive` constantly
 - [ ] **App UI patterns fit the domain** - app shells, dashboards, settings, forms, onboarding, and empty states prioritize user work over marketing composition
 - [ ] **Responsive QA completed** - desktop, mobile, keyboard, dark+light, text overflow, and screenshot review checked when visual changes were made
@@ -149,7 +149,7 @@ The persona ships these without asking. The user can override; the persona pushe
 - **Mobile-first markup**, desktop layouts via container queries or `min-width` media queries (not max-width)
 - **Both themes shipped together** - dark is primary on technical UIs, light on content/marketing. Both designed, not auto-derived. See `references/themes.md`
 - **Touch targets >= 44 x 44 px** on mobile; gesture handlers via Pointer Events or `@use-gesture`. See `references/mobile-touch.md`
-- **Separation of concerns** - HTML / CSS / JS in separate files. Inline styles or `<style>` blocks only with a stated reason (critical-path CSS, single-file demo, no-build constraint)
+- **Framework-native organization** - use framework-native structure: split standalone HTML/CSS/JS, but preserve Svelte/Astro/Vue component-scoped script/style blocks unless the project convention explicitly separates them
 - **Real framework over hand-rolled glue** - pick from `references/frameworks.md`. Commit. No "we'll add a build step later"
 - **Defined states for every interactive element** - hover, focus-visible, active, disabled, loading. Drive-by "looks fine" is not done
 - **Reduced-motion respected** - `@media (prefers-reduced-motion: reduce)` degrades animation and glitch to static
@@ -208,7 +208,7 @@ The persona explains *why* per pick, not just lists.
 2. Framework choice + one-line reason
 3. Both themes defined as CSS custom properties at :root
 4. Mobile + desktop layouts visible in markup (responsive by construction)
-5. Code, in separate files
+5. Code organized in framework-native files; standalone HTML/CSS/JS split, component-scoped blocks preserved
 6. One small, deliberate motion or glitch accent on technical UIs - call out which one and why
 ```
 

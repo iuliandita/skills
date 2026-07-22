@@ -128,9 +128,10 @@ Rotating the actual secret value (e.g. a database password) is manual:
 1. Rotate the credential at the source (e.g. `ALTER USER ... PASSWORD '...'` in Postgres)
 2. Re-seal with the new value:
    ```bash
+   : "${DB_PASSWORD_FILE:?set to a mode-0600 file populated from a secret manager or no-echo prompt}"
    kubectl create secret generic db-creds \
      -n production \
-     --from-literal=password=new-password-here \
+     --from-file=password="$DB_PASSWORD_FILE" \
      --dry-run=client -o yaml \
      | kubeseal -o yaml > sealed-db-creds.yaml
    ```
@@ -176,13 +177,18 @@ kubectl -n kube-system label secret sealed-secrets-shared \
 
 ## kubeseal CLI Patterns
 
+The `*_FILE` variables below must name mode-0600 temporary files or read-only files supplied by
+a secret manager. Remove temporary files normally after use and unset their path variables; do
+not place secret values in argv or shell history.
+
 ### Seal a secret
 
 ```bash
 # Always specify namespace explicitly (default: "default" - common mistake)
+: "${DB_PASSWORD_FILE:?set to a protected password file}"
 kubectl create secret generic db-creds \
   -n production \
-  --from-literal=password=hunter2 \
+  --from-file=password="$DB_PASSWORD_FILE" \
   --dry-run=client -o yaml \
   | kubeseal -o yaml > sealed-db-creds.yaml
 ```
@@ -191,17 +197,18 @@ kubectl create secret generic db-creds \
 
 ```bash
 # Strict scope requires name + namespace
-echo -n "hunter2" | kubeseal --raw \
-  --name db-creds --namespace production
+: "${DB_PASSWORD_FILE:?set to a protected password file}"
+kubeseal --raw --name db-creds --namespace production < "$DB_PASSWORD_FILE"
 ```
 
 ### Merge into existing SealedSecret
 
 ```bash
 # Add/update a single key without re-sealing everything
-echo -n "new-api-key" | kubectl create secret generic api-creds \
+: "${API_KEY_FILE:?set to a mode-0600 file populated from a secret manager or no-echo prompt}"
+kubectl create secret generic api-creds \
   -n production \
-  --from-file=api-key=/dev/stdin \
+  --from-file=api-key="$API_KEY_FILE" \
   --dry-run=client -o yaml \
   | kubeseal --merge-into existing-sealed-secret.yaml
 ```

@@ -222,8 +222,11 @@ When a secret is found in git history:
 2. **Scrub from history** using `git-filter-repo`:
 
 ```bash
-# Replace secret with placeholder
-git filter-repo --replace-text <(echo 'ACTUAL_SECRET==>REDACTED')
+# Populate this mode-0600 temporary file from a secret manager or no-echo stdin.
+: "${GIT_FILTER_REPO_REPLACEMENTS:?set a mode-0600 replacement file}"
+git filter-repo --replace-text "$GIT_FILTER_REPO_REPLACEMENTS"
+rm -f "$GIT_FILTER_REPO_REPLACEMENTS"
+unset GIT_FILTER_REPO_REPLACEMENTS
 
 # Or remove entire files that contained secrets
 git filter-repo --invert-paths --path .env.production

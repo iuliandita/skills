@@ -284,7 +284,7 @@ See `references/output-contract.md` for the full contract.
 
 ## Rules
 
-1. **Faithful structuring.** Organize what the user said, not what you think they should have said. If they didn't mention error handling, don't add error handling instructions. If they didn't mention output format, ask or leave it open.
+1. **Faithful structuring.** Preserve the user's facts and intent. If output structure is unstated, infer only the minimum structure made necessary by the stated downstream use; when that choice could change semantics or no use makes it evident, ask or leave it open. During refinement, flag a missing output contract when it prevents reliable evaluation.
 2. **Never write files without approval.** Always present in conversation first.
 3. **Scale structure to complexity.** Simple = lean. Complex = structured. Never the reverse.
 4. **Respect their voice.** If the rough notes have a specific tone or personality, preserve it in the structured version.

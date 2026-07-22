@@ -156,10 +156,18 @@ After every change, confirm the firewall is healthy:
 2. **Confirm the VLAN interface is assigned**: `ifconfig` must show the VLAN interface UP. If the VLAN is not assigned to an OPNsense/pfSense interface yet (Interfaces > Assignments), it cannot have rules - assign it first.
 3. **Check existing rules**: `pfctl -sr | grep <iface>` - new interfaces have no rules (implicit deny all). Confirm the baseline before adding anything so you know exactly what you're changing.
 4. Create aliases for source subnet and destination server (keeps rules readable):
-   - OPNsense API: `curl -X POST -u key:secret https://<fw>/api/firewall/alias/addItem -d '{"alias":{"name":"WebServer","type":"host","content":"10.0.1.100"}}'`
+   - OPNsense API (the config file holds credentials; no secret appears in argv or shell history):
+     ```bash
+     : "${FW_API_CURL_CONFIG:?set to a mode-0600 curl config populated from an approved secret store or no-echo prompt}"
+     curl --config "$FW_API_CURL_CONFIG" -X POST https://<fw>/api/firewall/alias/addItem \
+       -d '{"alias":{"name":"SourceVLAN","type":"network","content":"10.0.50.0/24"}}'
+     curl --config "$FW_API_CURL_CONFIG" -X POST https://<fw>/api/firewall/alias/addItem \
+       -d '{"alias":{"name":"WebServer","type":"host","content":"10.0.1.100"}}'
+     ```
    - OPNsense CLI: `configctl template reload OPNsense/Filter` (after editing alias via API or XML). To verify the alias was created: `configctl template list | grep Alias`, then confirm with `pfctl -t WebServer -T show`.
    - pfSense: `easyrule` doesn't support aliases - use GUI or edit `/cf/conf/config.xml` directly
-5. Add a pass rule on the **VLAN interface** (not WAN - pf evaluates rules on the interface where traffic enters): source = alias, destination = server alias, port = 443
+   - Verify both aliases: `pfctl -t SourceVLAN -T show && pfctl -t WebServer -T show`.
+5. Add a pass rule on the **VLAN interface** (not WAN - pf evaluates rules on the interface where traffic enters): source = SourceVLAN, destination = WebServer, port = 443
 6. Place the allow rule above any block-all rule for that interface (OPNsense/pfSense interface rules use `quick` by default, so the FIRST matching rule wins - put the specific allow above the broad block)
 7. Test: `pfctl -n -f /tmp/rules.debug` (OPNsense) to dry-run before applying
 8. Apply: `configctl filter reload` (OPNsense) or `pfSsh.php playback svc restart filter` (pfSense)

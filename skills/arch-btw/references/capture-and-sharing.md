@@ -16,8 +16,8 @@ Start with session facts and portal health:
 
 ```bash
 echo "$XDG_SESSION_TYPE $XDG_CURRENT_DESKTOP"
-pacman -Q obs-studio xdg-desktop-portal xdg-desktop-portal-hyprland discord v4l2loopback-dkms 2>/dev/null
-systemctl --user status xdg-desktop-portal pipewire pipewire-pulse wireplumber 2>/dev/null
+pacman -Q obs-studio xdg-desktop-portal xdg-desktop-portal-hyprland discord v4l2loopback-dkms 2>&1 || true
+systemctl --user status xdg-desktop-portal pipewire pipewire-pulse wireplumber 2>&1 || true
 journalctl --user -b | grep -Ei 'portal|pipewire|webrtc|obs'
 lsmod | grep '^v4l2loopback'
 ```
@@ -99,7 +99,7 @@ Useful checks:
 
 ```bash
 pacman -Q obs-studio
-systemctl --user status xdg-desktop-portal pipewire wireplumber 2>/dev/null
+systemctl --user status xdg-desktop-portal pipewire wireplumber 2>&1 || true
 journalctl --user -b | grep -Ei 'portal|pipewire|obs'
 ```
 
@@ -140,9 +140,9 @@ What matters:
 First checks:
 
 ```bash
-pacman -Q v4l2loopback-dkms 2>/dev/null
+pacman -Q v4l2loopback-dkms 2>&1 || true
 lsmod | grep '^v4l2loopback'
-find /usr/lib/modules -name 'v4l2loopback*.ko*' 2>/dev/null
+find /usr/lib/modules -name 'v4l2loopback*.ko*' 2>&1 || true
 ```
 
 On custom kernels, including CachyOS kernels, virtual camera issues are often simple module-build or module-load issues, not OBS issues.

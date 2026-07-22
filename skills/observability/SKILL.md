@@ -123,6 +123,8 @@ in config. Use direct Prometheus scrape where pull and existing exporters alread
 - `amtool config routes test` / `amtool check-config` for Alertmanager routing
 - Confirm a test signal traverses the full path (emit -> collect -> store -> query -> alert) on at
   least one service before declaring coverage
+- Start with `references/runnable-examples.md` when a task needs compact Collector, SLO-rule,
+  rule-test, or dashboard artifacts that can be passed to the validators above.
 
 ---
 

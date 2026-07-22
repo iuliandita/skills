@@ -61,8 +61,6 @@ Before returning any anti-slop audit, verify:
 - [ ] **Routing overlap checked**: overlapping skills, trigger terms, and "When NOT to use" boundaries are checked before returning guidance
 - [ ] **Spec claims verified**: claims about tool behavior, output contracts, or repo conventions are checked against current docs, scripts, or skill files
 - [ ] **API/grounding verified**: suspicious helpers, flags, imports, config keys, and schema claims are checked against local types, generated schema, lockfiles, `--help` output, or official docs before being called hallucinations
-- [ ] **Test theater separated**: tests that assert mocks or snapshots only are distinguished from tests proving behavior
-
 ---
 
 ## Performance

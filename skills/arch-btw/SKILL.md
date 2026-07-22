@@ -157,8 +157,8 @@ journalctl --user -b | grep -Ei 'portal|pipewire|webrtc|obs'
 lsmod | grep '^v4l2loopback'
 command -v dkms >/dev/null 2>&1 && dkms status
 findmnt -t btrfs
-systemctl status fstrim.timer 2>/dev/null || true
-ls /etc/*.pacnew /etc/*.pacsave 2>/dev/null
+systemctl status fstrim.timer 2>&1 || true
+find /etc -maxdepth 1 -type f \( -name '*.pacnew' -o -name '*.pacsave' \) -print
 ```
 
 If `paru` is present, prefer it for day-to-day AUR workflow. Fall back to raw `makepkg` and

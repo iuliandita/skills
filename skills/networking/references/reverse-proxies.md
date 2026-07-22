@@ -44,6 +44,9 @@ grpc.example.com {
 
 ### Rate limiting
 
+`rate_limit` is not a stock Caddy directive. Use this block only when the deployed Caddy build
+contains a verified rate-limit module; otherwise enforce the limit at a verified upstream or edge.
+
 ```
 api.example.com {
   rate_limit {
@@ -199,7 +202,7 @@ Best for Docker/K8s environments with dynamic service discovery.
 ```yaml
 services:
   app:
-    image: myapp:latest
+    image: registry.example.com/myapp@sha256:<verified-digest>
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.app.rule=Host(`app.example.com`)"

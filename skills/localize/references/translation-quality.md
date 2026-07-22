@@ -41,7 +41,8 @@ Return a JSON object with the exact same keys. No markdown fences, no commentary
 explanation. JSON only.
 
 Preserve exactly as-is:
-- Placeholders: {0}, {1}, {name}, {{var}}, %s, %d - same count, same order, same syntax
+- Placeholders: {0}, {1}, {name}, {{var}}, %s, %d - same identifiers, counts, and syntax;
+  language-driven reordering is allowed
 - Line breaks within values
 - Brand and product names: [LIST OF PROTECTED TERMS]
 
@@ -224,10 +225,12 @@ function validatePlaceholders(
     const translated = translatedCatalog[key]
     if (!source || !translated) continue
 
-    // Placeholder count and order
+    // Placeholder identifiers and counts; grammatical order may differ by language
     const sourcePH = source.match(PLACEHOLDER_PATTERN) ?? []
     const translatedPH = translated.match(PLACEHOLDER_PATTERN) ?? []
-    if (sourcePH.join(',') !== translatedPH.join(',')) {
+    const sortedSourcePH = [...sourcePH].sort()
+    const sortedTranslatedPH = [...translatedPH].sort()
+    if (sortedSourcePH.join(',') !== sortedTranslatedPH.join(',')) {
       errors.push(`${key}: placeholder mismatch - source [${sourcePH}] vs translated [${translatedPH}]`)
     }
 

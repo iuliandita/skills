@@ -144,7 +144,7 @@ if [[ -n "$ROADMAPS" ]]; then
   HEAD_DATE=$(git log -1 --format=%cs HEAD 2>/dev/null)
 
   # For each roadmap, parse the stated Current/Updated/Version header and compare
-  echo "$ROADMAPS" | while read -r rm; do
+  while read -r rm; do
     [[ -f "$rm" ]] || continue
     STATED=$(grep -hE '^>.*(Current|Updated|Version)' "$rm" 2>/dev/null | head -3)
     RM_VER=$(printf '%s' "$STATED"  | grep -oE 'v?[0-9]+\.[0-9]+\.[0-9]+' | head -1)
@@ -185,9 +185,9 @@ if [[ -n "$ROADMAPS" ]]; then
     if [[ "$DRIFT" -eq 1 ]]; then
       echo "ROADMAP DRIFT: $rm states ${RM_VER:-?} / ${RM_DATE:-?}; HEAD is ${LAST_TAG:-v$REPO_VER} / $HEAD_DATE; $COMMITS commits, $TAGS tags between, $NEW_TAG_COUNT releases since header date, ${DAYS_BEHIND}d calendar gap."
       # Feed the drift range into Step 2 - widens the diff window beyond `git log -10`
-      [[ -n "$RM_VER" ]] && export RANGE="${RM_VER}..HEAD"
+      [[ -n "$RM_VER" ]] && RANGE="${RM_VER}..HEAD"
     fi
-  done
+  done <<< "$ROADMAPS"
 fi
 ```
 

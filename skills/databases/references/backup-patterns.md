@@ -334,20 +334,28 @@ gpg --decrypt /backup/mydb_20260324.dump.gpg \
 
 ### Logical Backup
 
+MongoDB Database Tools 100.3+ supports `--config` YAML files containing `uri`,
+`password`, and `sslPEMKeyPassword`. This is the recommended non-interactive
+credential path because values do not enter argv. Populate the file from an
+approved secret store, mount it read-only with mode 0600 or stricter, and never
+combine `--config` with command-line `--uri` or `--password` overrides.
+
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
+: "${MONGODB_BACKUP_CONFIG:?set MONGODB_BACKUP_CONFIG to a secured Database Tools config file}"
+[[ -r "$MONGODB_BACKUP_CONFIG" ]] || { printf 'Unreadable MongoDB backup config\n' >&2; exit 1; }
 
 # Full dump with oplog capture (replica set only)
 mongodump \
-  --uri="mongodb://backup_user:password@mongo1:27017,mongo2:27017,mongo3:27017/mydb?replicaSet=rs0&authSource=admin" \
+  --config="$MONGODB_BACKUP_CONFIG" \
   --oplog \
   --gzip \
   --out="/backup/mongodump_$(date +%Y%m%d_%H%M%S)"
 
 # Single collection dump
 mongodump \
-  --uri="mongodb://backup_user:password@mongo1:27017/mydb?authSource=admin" \
+  --config="$MONGODB_BACKUP_CONFIG" \
   --db=mydb \
   --collection=orders \
   --gzip \
@@ -355,7 +363,7 @@ mongodump \
 
 # Dump with query filter (partial backup)
 mongodump \
-  --uri="mongodb://backup_user:password@mongo1:27017/mydb?authSource=admin" \
+  --config="$MONGODB_BACKUP_CONFIG" \
   --db=mydb \
   --collection=orders \
   --query='{"created_at": {"$gte": {"$date": "2026-01-01T00:00:00Z"}}}' \
@@ -374,10 +382,12 @@ mongodump \
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
+: "${MONGODB_RESTORE_CONFIG:?set MONGODB_RESTORE_CONFIG to a secured Database Tools config file}"
+[[ -r "$MONGODB_RESTORE_CONFIG" ]] || { printf 'Unreadable MongoDB restore config\n' >&2; exit 1; }
 
 # Full restore with oplog replay
 mongorestore \
-  --uri="mongodb://admin:password@mongo1:27017/?authSource=admin" \
+  --config="$MONGODB_RESTORE_CONFIG" \
   --oplogReplay \
   --gzip \
   --drop \
@@ -385,7 +395,7 @@ mongorestore \
 
 # Single collection restore
 mongorestore \
-  --uri="mongodb://admin:password@mongo1:27017/?authSource=admin" \
+  --config="$MONGODB_RESTORE_CONFIG" \
   --db=mydb \
   --collection=orders \
   --gzip \
@@ -406,11 +416,13 @@ MongoDB PITR requires oplog-based continuous backup. Three approaches:
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
+: "${MONGODB_BACKUP_CONFIG:?set MONGODB_BACKUP_CONFIG to a secured Database Tools config file}"
+[[ -r "$MONGODB_BACKUP_CONFIG" ]] || { printf 'Unreadable MongoDB backup config\n' >&2; exit 1; }
 
 # Capture oplog continuously (run as a service)
 # Start from a known timestamp (from your last full backup)
 mongodump \
-  --uri="mongodb://backup_user:password@mongo1:27017/local?authSource=admin" \
+  --config="$MONGODB_BACKUP_CONFIG" \
   --collection=oplog.rs \
   --query='{"ts": {"$gt": {"$timestamp": {"t": 1711324800, "i": 1}}}}' \
   --gzip \
@@ -442,10 +454,12 @@ pbm list
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
+: "${MONGODB_VERIFY_CONFIG:?set MONGODB_VERIFY_CONFIG to a secured Database Tools config file}"
+[[ -r "$MONGODB_VERIFY_CONFIG" ]] || { printf 'Unreadable MongoDB verification config\n' >&2; exit 1; }
 
 # Restore to a separate instance and verify
 mongorestore \
-  --uri="mongodb://admin:password@verify-host:27017/?authSource=admin" \
+  --config="$MONGODB_VERIFY_CONFIG" \
   --oplogReplay \
   --gzip \
   --drop \

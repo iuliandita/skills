@@ -141,7 +141,8 @@ Run these, stopping on any failure:
 
 ```bash
 git rev-parse --is-inside-work-tree  # must be inside a git repo
-git status --porcelain               # must be empty; if not, stash or commit first
+git diff --quiet && git diff --cached --quiet  # tracked worktree and index must be clean
+git status --porcelain               # inspect untracked files; allowed, but report them and never auto-stash or auto-commit
 git fetch origin --prune
 git checkout "$BASE_BRANCH"          # usually main or master
 git pull --ff-only                   # refuse non-fast-forward

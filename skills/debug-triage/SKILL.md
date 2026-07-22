@@ -134,7 +134,7 @@ replica), then chase only the resource that split implicates.
 | Is the pod actually up? | `kubectl get pods -o wide`; `kubectl describe pod` | service/pod | scheduling, image, probes, OOM |
 | Does the ingress have backends? | `kubectl get endpoints <svc>` (empty = nothing to route to) | ingress wiring | empty endpoints (selector mismatch or all pods unready) -> 502 |
 | Is the dependency answering? | dependency ping/health (e.g. `pg_isready`, broker health) | data layer | DB/cache/queue or its credentials |
-| Did something just change? | `kubectl rollout history` / git log of the manifests / deploy log | config/deploy | the last change (roll back to test) |
+| Did something just change? | `kubectl rollout history` / git log of the manifests / deploy log | config/deploy | the last change; hand off rollback or canary verification to the owning skill, with explicit approval |
 | Is the host healthy? | `df -h`, `journalctl -p err -b`, unit status (surface errors) | host/node | disk, memory, a failed unit |
 | Slow, not down (no errors)? | latency percentiles per endpoint/pod (p50 vs p99); CPU throttle ratio; pool-wait (`pg_stat_activity`); cache hit/miss ratio | a flat, healthy distribution rules out saturation | tail latency or one slow replica: CPU throttle, pool exhaustion, slow query, cache-miss shift |
 

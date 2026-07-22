@@ -10,7 +10,7 @@ lsblk -f
 findmnt -t btrfs
 findmnt /boot
 findmnt /efi
-systemctl status fstrim.timer 2>/dev/null || true
+systemctl status fstrim.timer 2>&1 || true
 ```
 
 If Btrfs is involved, these help:

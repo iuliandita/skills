@@ -69,7 +69,8 @@ generated VM config, Terraform HCL, or Packer template, verify against this list
 - [ ] `discard = on` on QEMU disk config for thin-provisioned storage (fstrim passthrough)
 - [ ] Memory ballooning disabled unless tested on the specific guest OS (Alpine, some BSDs can't
   hotplug DIMMs - balloon changes need full power-cycle, not reboot)
-- [ ] In bpg/proxmox Terraform: ballooning is disabled by setting the provider's minimum-memory/balloon field to 0 (verify exact key in the bpg/proxmox docs - commonly `memory_min_mb` or `balloon`; do not invent a field name without checking)
+- [ ] In bpg/proxmox Terraform, disable ballooning in the `memory` block with
+  `floating = 0`; keep native Proxmox `balloon: 0` syntax separate
 - [ ] CPU type is `host` for production (full feature passthrough), not `kvm64`/`qemu64`
 - [ ] NUMA enabled for multi-socket or large-memory VMs
 - [ ] QEMU guest agent enabled (cloud-init installs it, but verify)
@@ -252,8 +253,9 @@ Migration is abort-safe: source VM stays running on failure, target LVs are clea
 **KVM ballooning:** The balloon device lets the host reclaim unused guest memory. Sounds
 great, causes pain. Alpine Linux (and some BSDs) can't hotplug DIMMs - balloon changes
 need full power-cycle (stop/start, not reboot). Even on Debian, balloon behavior is
-unpredictable under memory pressure. Recommendation: disable ballooning (`memory_min_mb = 0`
-in Terraform, or set balloon to 0 in qm) and provision VMs with the memory they actually need.
+unpredictable under memory pressure. Recommendation: use `floating = 0` in the bpg/proxmox
+Terraform `memory` block, or set `balloon: 0` in native Proxmox config, and provision VMs with the
+memory they actually need.
 
 **fail2ban on Proxmox (Debian 13):** `/var/log/daemon.log` doesn't exist under journald.
 Use `backend = systemd` with `journalmatch = _COMM=pvedaemon` in the jail config.

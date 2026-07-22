@@ -28,15 +28,19 @@ an API call. The `pvesh` CLI wraps the API for shell use.
 ### Authentication
 
 ```bash
-# API token (preferred for automation - no 2FA, no session expiry)
-pvesh get /version --token 'user@pam!tokenid=TOKEN_SECRET'
+# Local API call on a Proxmox VE node; pvesh uses the caller's local privileges
+sudo pvesh get /version
 
 # Ticket-based (interactive, short-lived)
-curl -k -d 'username=root@pam&password=SECRET' \
-  https://pve:8006/api2/json/access/ticket
+test -r "$PVE_PASSWORD_FILE"
+curl --fail --show-error --silent --cacert "$PVE_CA_FILE" \
+  --data-urlencode 'username=root@pam' \
+  --data-urlencode "password@$PVE_PASSWORD_FILE" \
+  "$PVE_API_URL/api2/json/access/ticket"
 # Returns CSRFPreventionToken + ticket cookie
 
-# Terraform / API clients: use API tokens with least-privilege
+# Remote automation and API clients: use API tokens with least privilege, loaded from a
+# protected file or secret store rather than placed in argv
 # Create: Datacenter > Permissions > API Tokens
 # Assign per-resource permissions, not root
 ```
@@ -477,9 +481,10 @@ variable "hostpci" {
 Dedicated backup solution with deduplication, incremental backups, and encryption.
 
 ```bash
-# Configure PBS storage in Proxmox
+# Interactive operator path on a Proxmox VE node. The documented value-less --password form
+# prompts for the secret without exposing it in the process list or shell history.
 pvesm add pbs pbs-storage --server 10.10.10.5 --datastore store1 \
-  --username backup@pbs --password SECRET --fingerprint FINGERPRINT
+  --username backup@pbs --fingerprint FINGERPRINT --password
 
 # Manual backup
 vzdump 100 --storage pbs-storage --mode snapshot --compress zstd
@@ -487,6 +492,10 @@ vzdump 100 --storage pbs-storage --mode snapshot --compress zstd
 # Schedule via GUI or /etc/cron.d/vzdump
 # Recommended: daily with 7-day retention, weekly with 4-week retention
 ```
+
+For unattended setup, use the Proxmox VE API through a client that reads its API token or password
+from a protected file, file descriptor, or secret store. Do not pass the secret as the value of
+`pvesm --password`; that exposes it in process arguments.
 
 ### VZDump (built-in backups)
 

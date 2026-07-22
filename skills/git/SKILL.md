@@ -208,7 +208,7 @@ General flow:
    If upstream tracking is missing or odd, push the exact refspec explicitly and re-check the
    PR/MR head before claiming the update landed.
 5. **Create PR/MR**: with a clear title (under 70 chars), body with summary + test plan.
-6. **Review cycle**: address feedback, rebase and force-push with `--force-with-lease` (never plain `--force` on shared branches). Squash fixup commits before pushing.
+6. **Review cycle**: address feedback with follow-up commits by default. Rebase and push with `--force-with-lease` only on a private feature branch after explicit user confirmation and a fresh fetch. Never rewrite a shared branch.
 7. **Merge**: squash-merge for clean history (default), or rebase-merge if commit history is meaningful.
 8. **Cleanup**: delete the remote branch after merge. `git branch -d feat/short-description` locally.
 
@@ -271,7 +271,7 @@ Quick reference:
 - **Automated bisect with test script**: `git bisect start HEAD v1.0.0 && git bisect run bun test - src/auth.test.ts` - runs the test at each bisect step automatically. Exit codes: 0 = good, 1-127 except 125 = bad, 125 = skip this commit, 128-255 = abort the bisect immediately. Ideal for CI integration: `git bisect run ./scripts/ci-check.sh`
 - **Squash last N commits (no interactive rebase)**: `git reset --soft HEAD~N && git commit -m "feat: combined change"` - resets N commits but keeps all changes staged, then commits them as one. Safer than `git rebase -i` in automated contexts.
 - **Recover deleted branch**: `git reflog`, find the SHA, `git checkout -b branch-name <sha>`
-- **Scrub secrets from history**: `git filter-repo --replace-text <(echo 'SECRET==>REDACTED')` - then force-push ALL branches and tags. Coordinate with team. See references.
+- **Scrub secrets from history**: set `GIT_FILTER_REPO_REPLACEMENTS` to a mode-0600 temporary replacement file populated from a secret manager or no-echo stdin, then run `: "${GIT_FILTER_REPO_REPLACEMENTS:?set a mode-0600 replacement file}"` followed by `git filter-repo --replace-text "$GIT_FILTER_REPO_REPLACEMENTS"`. Remove the temporary file normally after use. Never put the leaked value in argv, command text, or shell history. Then force-push ALL branches and tags, coordinated with the team. See references.
 
 ---
 

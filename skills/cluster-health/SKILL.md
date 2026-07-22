@@ -124,8 +124,12 @@ this skill.
 
 ### Step 3: Run the generic sweep
 
-Start with the cluster-wide checks in `references/kubernetes-core.md`, then load additional
-references based on the symptom:
+Treat generic health, cluster-wide, and post-maintenance requests as broad sweeps: run
+`references/kubernetes-core.md`, `references/helm-gitops.md`,
+`references/networking-ingress.md`, `references/storage.md`, and
+`references/monitoring-logs.md`. For a narrower symptom-scoped request, start with
+`references/kubernetes-core.md` and load only the matching references below. Load
+`references/security.md` when policy, RBAC, or image risk is in scope or the core sweep exposes it.
 
 - networking or certificate symptoms -> `references/networking-ingress.md`
 - release or reconciliation symptoms -> `references/helm-gitops.md`

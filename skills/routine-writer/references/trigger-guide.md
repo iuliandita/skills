@@ -167,7 +167,10 @@ Useful combinations:
 - **Label-gated action**: labels include `needs-backport`. Fires only when a maintainer tags the PR.
 - **Scoped review**: base branch `main`, head branch contains `auth-provider`. Sends auth-touching PRs to a focused reviewer.
 
-For other event types (issues, pushes, workflow runs) without structured filters, the routine prompt itself must check the event metadata and exit early when out of scope.
+Issues, pushes, and workflow runs are not native GitHub trigger choices in this preview. Route
+those requests to a scheduled or API-fired routine that polls the GitHub API, and put action
+filtering in that polling prompt. Do not describe prompt-side filtering as enabling an unsupported
+webhook event.
 
 ### Session mapping
 

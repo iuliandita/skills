@@ -287,10 +287,10 @@ app/
 |   +-- kustomization.yaml   # references resources
 |   +-- deployment.yaml
 |   +-- service.yaml
-+-- overlays/               # dev/ staging/ prod/, each a kustomization.yaml with bases: [../../base]
++-- overlays/               # dev/ staging/ prod/, each a kustomization.yaml with resources: [../../base]
 ```
 
-Each overlay's `kustomization.yaml` sets `bases`, then adds `patches`, `images`, and `configMapGenerator`/`secretGenerator` overrides for that environment.
+Each overlay's `kustomization.yaml` sets `resources`, then adds `patches`, `images`, and `configMapGenerator`/`secretGenerator` overrides for that environment.
 
 ### Components
 

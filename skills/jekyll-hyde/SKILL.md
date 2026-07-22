@@ -74,7 +74,7 @@ Before returning advice, verify:
 
 ## Best Practices
 
-- Give the strongest constructive case before the adversarial case so tradeoffs are visible.
+- In dual mode, surface the adversarial case first, then give the strongest constructive case that preserves the upside under those constraints.
 - Name the condition that would change the recommendation.
 - Avoid dark-pattern advice; adversarial review should improve decisions without exploiting users.
 

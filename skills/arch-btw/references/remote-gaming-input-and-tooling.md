@@ -25,7 +25,7 @@ Operational stance:
 Useful checks:
 
 ```bash
-pacman -Q moonlight-qt steam 2>/dev/null
+pacman -Q moonlight-qt steam 2>&1 || true
 journalctl -b | grep -Ei 'gamescope|nvrm|nvidia|amdgpu|i915|xe|drm'
 command -v ffmpeg >/dev/null 2>&1 && ffmpeg -hide_banner -encoders | grep -E 'nvenc|vaapi|amf|qsv'
 ```

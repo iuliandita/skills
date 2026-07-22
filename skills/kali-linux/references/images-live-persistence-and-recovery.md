@@ -4,7 +4,7 @@ Kali ships in several shapes. The recovery path depends on which shape the user 
 
 ## Official image types
 
-Kali 2026.1 image directories include:
+Kali 2026.2 image directories include:
 - installer ISOs
 - netinst ISOs
 - prebuilt VM images

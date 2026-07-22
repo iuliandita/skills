@@ -213,11 +213,11 @@ data "aws_ami" "al2023" {
 ephemeral "aws_secretsmanager_secret_version" "db_password" {
   secret_id = "prod/db/master-password"
 }
-
-resource "aws_db_instance" "main" {
-  password = ephemeral.aws_secretsmanager_secret_version.db_password.secret_string  # must be write_only in provider
-}
 ```
+
+Feed this value only to an argument that the exact installed provider schema documents as
+write-only. If the target resource has no such argument, do not route the value into its ordinary
+password field; use a provider-supported runtime injection path instead.
 
 **Lifecycle rules**: use deliberately, not defensively.
 - `create_before_destroy` - for zero-downtime replacements (LBs, ASGs, DNS)

@@ -3,7 +3,7 @@ name: deep-audit
 description: >
   · Run exhaustive 5-wave repo audits, persist findings, and generate phased tasks. Triggers: 'deep audit', 'comprehensive audit', 'full audit', 'mega review', 'deep review', 'audit report'. For quick sweeps, use full-review.
 license: MIT
-compatibility: "Requires iuliandita/skills collection installed. Subagent support strongly recommended. Optional: a brainstorming or ideation skill in the host harness (matched by name pattern) for large-audit planning handoff."
+compatibility: "Requires iuliandita/skills collection installed and a harness capable of dispatching full-access agents/subagents. Optional: a brainstorming or ideation skill in the host harness (matched by name pattern) for large-audit planning handoff."
 metadata:
   source: iuliandita/skills
   date_added: "2026-04-14"
@@ -87,6 +87,9 @@ workflow (waves + persistence + routing), not just the wave dispatch phase.
 ### Step 0: Preflight
 
 Gather context. Run in parallel (guard each with `; true`):
+
+If full-access agent dispatch is unavailable, stop and report the compatibility requirement
+instead of starting a partial five-wave audit.
 
 1. **Repo state**: `git rev-parse --show-toplevel` and `git rev-parse --short HEAD`
 2. **Branch**: `git branch --show-current`
