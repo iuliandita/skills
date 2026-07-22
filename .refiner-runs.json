@@ -2529,5 +2529,145 @@
     "termination": "target reached + plateau - final fresh-context review NO MAJOR FLAGS; 3 cross-domain/cross-mode forward-tests all PASS with zero new defects. Verified ~99.",
     "changes_summary": "SKILL.md 258->240 lines (net -18 dedup); precision at 3 seams; forward-tested clean - all four mechanics fire, buckets sorted.",
     "notes": "Deployed copy synced. Commits deferred per user. Phase 2 skipped (out of scope). Prior 2026-06-13 run plateaued opus+codex; re-refined after wayfinder edits with opus + fresh-context self-review."
+  },
+  {
+    "run_id": "2026-07-22-124224-full-collection",
+    "branch": "skill-refiner/111-2026-07-22-124224",
+    "date": "2026-07-22",
+    "issue": 111,
+    "baseline_commit": "726c223ceca71dc23b43ba54aa703c8fa3582d5e",
+    "primary": {
+      "harness": "codex-cli",
+      "version": "0.145.0",
+      "model": "gpt-5.6-sol",
+      "effort": "inherited"
+    },
+    "secondary": {
+      "harness": "opencode",
+      "version": "1.17.20",
+      "model": "deepseek-v4-flash",
+      "effort": "default",
+      "result": "smoke PASS; exact-diff review NO_FLAGS after three minor flags were fixed"
+    },
+    "config": {
+      "iterations_min": 3,
+      "iterations_max": null,
+      "ceiling": "none",
+      "threshold": 99,
+      "target": 99,
+      "mode": "circuit-breaker",
+      "plateau": 2
+    },
+    "pool_size": 44,
+    "excluded_from_phase1": [
+      "skill-creator",
+      "skill-refiner"
+    ],
+    "iterations": [
+      {
+        "n": 1,
+        "kind": "full baseline",
+        "aggregate": {"avg": 97.9, "min": 94.1, "max": 100.0, "at_or_above_target": 14}
+      },
+      {
+        "n": 2,
+        "kind": "targeted improvement",
+        "skills_changed": 30,
+        "aggregate": {"avg": 100.0, "min": 100.0, "max": 100.0, "at_or_above_target": 44}
+      },
+      {
+        "n": 3,
+        "kind": "full confirmation",
+        "skills_changed": 0,
+        "aggregate": {"avg": 100.0, "min": 100.0, "max": 100.0, "at_or_above_target": 44}
+      }
+    ],
+    "termination": "target reached after requested minimum of three phase-1 iterations",
+    "cross_model_flags": {
+      "minor_raised": 3,
+      "minor_unresolved": 0,
+      "major": 0,
+      "contested": 0
+    },
+    "scores": {
+      "ai-ml": {"before": {"G": "pass", "A": 100.0, "B": 100.0, "X": null, "composite": 100.0}, "after": {"G": "pass", "A": 100.0, "B": 100.0, "X": 100.0, "composite": 100.0}},
+      "ansible": {"before": {"G": "pass", "A": 100.0, "B": 100.0, "X": null, "composite": 100.0}, "after": {"G": "pass", "A": 100.0, "B": 100.0, "X": 100.0, "composite": 100.0}},
+      "anti-ai-prose": {"before": {"G": "pass", "A": 100.0, "B": 100.0, "X": null, "composite": 100.0}, "after": {"G": "pass", "A": 100.0, "B": 100.0, "X": 100.0, "composite": 100.0}},
+      "anti-slop": {"before": {"G": "pass", "A": 95.2, "B": 100.0, "X": null, "composite": 98.0}, "after": {"G": "pass", "A": 100.0, "B": 100.0, "X": 100.0, "composite": 100.0}},
+      "arch-btw": {"before": {"G": "pass", "A": 95.5, "B": 100.0, "X": null, "composite": 98.1}, "after": {"G": "pass", "A": 100.0, "B": 100.0, "X": 100.0, "composite": 100.0}},
+      "backend-api": {"before": {"G": "pass", "A": 100.0, "B": 100.0, "X": null, "composite": 100.0}, "after": {"G": "pass", "A": 100.0, "B": 100.0, "X": 100.0, "composite": 100.0}},
+      "browse": {"before": {"G": "pass", "A": 100.0, "B": 100.0, "X": null, "composite": 100.0}, "after": {"G": "pass", "A": 100.0, "B": 100.0, "X": 100.0, "composite": 100.0}},
+      "ci-cd": {"before": {"G": "pass", "A": 95.5, "B": 100.0, "X": null, "composite": 98.1}, "after": {"G": "pass", "A": 100.0, "B": 100.0, "X": 100.0, "composite": 100.0}},
+      "cluster-health": {"before": {"G": "pass", "A": 100.0, "B": 96.0, "X": null, "composite": 97.7}, "after": {"G": "pass", "A": 100.0, "B": 100.0, "X": 100.0, "composite": 100.0}},
+      "code-review": {"before": {"G": "pass", "A": 100.0, "B": 100.0, "X": null, "composite": 100.0}, "after": {"G": "pass", "A": 100.0, "B": 100.0, "X": 100.0, "composite": 100.0}},
+      "code-slimming": {"before": {"G": "pass", "A": 100.0, "B": 100.0, "X": null, "composite": 100.0}, "after": {"G": "pass", "A": 100.0, "B": 100.0, "X": 100.0, "composite": 100.0}},
+      "command-prompt": {"before": {"G": "pass", "A": 100.0, "B": 100.0, "X": null, "composite": 100.0}, "after": {"G": "pass", "A": 100.0, "B": 100.0, "X": 100.0, "composite": 100.0}},
+      "databases": {"before": {"G": "pass", "A": 95.5, "B": 100.0, "X": null, "composite": 98.1}, "after": {"G": "pass", "A": 100.0, "B": 100.0, "X": 100.0, "composite": 100.0}},
+      "debian-ubuntu": {"before": {"G": "pass", "A": 100.0, "B": 100.0, "X": null, "composite": 100.0}, "after": {"G": "pass", "A": 100.0, "B": 100.0, "X": 100.0, "composite": 100.0}},
+      "debug-triage": {"before": {"G": "pass", "A": 95.5, "B": 100.0, "X": null, "composite": 98.1}, "after": {"G": "pass", "A": 100.0, "B": 100.0, "X": 100.0, "composite": 100.0}},
+      "deep-audit": {"before": {"G": "pass", "A": 95.5, "B": 100.0, "X": null, "composite": 98.1}, "after": {"G": "pass", "A": 100.0, "B": 100.0, "X": 100.0, "composite": 100.0}},
+      "deep-grill": {"before": {"G": "pass", "A": 95.5, "B": 100.0, "X": null, "composite": 98.1}, "after": {"G": "pass", "A": 100.0, "B": 100.0, "X": 100.0, "composite": 100.0}},
+      "dev-cycle": {"before": {"G": "pass", "A": 90.9, "B": 100.0, "X": null, "composite": 96.2}, "after": {"G": "pass", "A": 100.0, "B": 100.0, "X": 100.0, "composite": 100.0}},
+      "docker": {"before": {"G": "pass", "A": 90.9, "B": 100.0, "X": null, "composite": 96.2}, "after": {"G": "pass", "A": 100.0, "B": 100.0, "X": 100.0, "composite": 100.0}},
+      "firewall-appliance": {"before": {"G": "pass", "A": 90.9, "B": 96.5, "X": null, "composite": 94.1}, "after": {"G": "pass", "A": 100.0, "B": 100.0, "X": 100.0, "composite": 100.0}},
+      "frontend-design": {"before": {"G": "pass", "A": 95.5, "B": 100.0, "X": null, "composite": 98.1}, "after": {"G": "pass", "A": 100.0, "B": 100.0, "X": 100.0, "composite": 100.0}},
+      "full-review": {"before": {"G": "pass", "A": 95.5, "B": 96.0, "X": null, "composite": 95.8}, "after": {"G": "pass", "A": 100.0, "B": 100.0, "X": 100.0, "composite": 100.0}},
+      "git": {"before": {"G": "pass", "A": 90.9, "B": 100.0, "X": null, "composite": 96.2}, "after": {"G": "pass", "A": 100.0, "B": 100.0, "X": 100.0, "composite": 100.0}},
+      "handoff": {"before": {"G": "pass", "A": 100.0, "B": 100.0, "X": null, "composite": 100.0}, "after": {"G": "pass", "A": 100.0, "B": 100.0, "X": 100.0, "composite": 100.0}},
+      "jekyll-hyde": {"before": {"G": "pass", "A": 95.5, "B": 100.0, "X": null, "composite": 98.1}, "after": {"G": "pass", "A": 100.0, "B": 100.0, "X": 100.0, "composite": 100.0}},
+      "kali-linux": {"before": {"G": "pass", "A": 95.5, "B": 100.0, "X": null, "composite": 98.1}, "after": {"G": "pass", "A": 100.0, "B": 100.0, "X": 100.0, "composite": 100.0}},
+      "kubernetes": {"before": {"G": "pass", "A": 90.9, "B": 100.0, "X": null, "composite": 96.2}, "after": {"G": "pass", "A": 100.0, "B": 100.0, "X": 100.0, "composite": 100.0}},
+      "localize": {"before": {"G": "pass", "A": 90.9, "B": 100.0, "X": null, "composite": 96.2}, "after": {"G": "pass", "A": 100.0, "B": 100.0, "X": 100.0, "composite": 100.0}},
+      "lockpick": {"before": {"G": "pass", "A": 100.0, "B": 100.0, "X": null, "composite": 100.0}, "after": {"G": "pass", "A": 100.0, "B": 100.0, "X": 100.0, "composite": 100.0}},
+      "mcp": {"before": {"G": "pass", "A": 100.0, "B": 96.0, "X": null, "composite": 97.7}, "after": {"G": "pass", "A": 100.0, "B": 100.0, "X": 100.0, "composite": 100.0}},
+      "networking": {"before": {"G": "pass", "A": 95.5, "B": 100.0, "X": null, "composite": 98.1}, "after": {"G": "pass", "A": 100.0, "B": 100.0, "X": 100.0, "composite": 100.0}},
+      "nixos-btw": {"before": {"G": "pass", "A": 90.9, "B": 99.0, "X": null, "composite": 95.6}, "after": {"G": "pass", "A": 100.0, "B": 100.0, "X": 100.0, "composite": 100.0}},
+      "observability": {"before": {"G": "pass", "A": 100.0, "B": 91.7, "X": null, "composite": 95.2}, "after": {"G": "pass", "A": 100.0, "B": 100.0, "X": 100.0, "composite": 100.0}},
+      "prompt-generator": {"before": {"G": "pass", "A": 95.2, "B": 100.0, "X": null, "composite": 98.0}, "after": {"G": "pass", "A": 100.0, "B": 100.0, "X": 100.0, "composite": 100.0}},
+      "rhel-fedora": {"before": {"G": "pass", "A": 95.5, "B": 95.0, "X": null, "composite": 95.2}, "after": {"G": "pass", "A": 100.0, "B": 100.0, "X": 100.0, "composite": 100.0}},
+      "roadmap": {"before": {"G": "pass", "A": 95.2, "B": 99.5, "X": null, "composite": 97.7}, "after": {"G": "pass", "A": 100.0, "B": 100.0, "X": 100.0, "composite": 100.0}},
+      "routine-writer": {"before": {"G": "pass", "A": 95.5, "B": 100.0, "X": null, "composite": 98.1}, "after": {"G": "pass", "A": 100.0, "B": 100.0, "X": 100.0, "composite": 100.0}},
+      "security-audit": {"before": {"G": "pass", "A": 100.0, "B": 100.0, "X": null, "composite": 100.0}, "after": {"G": "pass", "A": 100.0, "B": 100.0, "X": 100.0, "composite": 100.0}},
+      "skill-router": {"before": {"G": "pass", "A": 100.0, "B": 100.0, "X": null, "composite": 100.0}, "after": {"G": "pass", "A": 100.0, "B": 100.0, "X": 100.0, "composite": 100.0}},
+      "terraform": {"before": {"G": "pass", "A": 90.9, "B": 100.0, "X": null, "composite": 96.2}, "after": {"G": "pass", "A": 100.0, "B": 100.0, "X": 100.0, "composite": 100.0}},
+      "testing": {"before": {"G": "pass", "A": 90.9, "B": 98.0, "X": null, "composite": 95.0}, "after": {"G": "pass", "A": 100.0, "B": 100.0, "X": 100.0, "composite": 100.0}},
+      "update-docs": {"before": {"G": "pass", "A": 95.2, "B": 98.0, "X": null, "composite": 96.8}, "after": {"G": "pass", "A": 100.0, "B": 100.0, "X": 100.0, "composite": 100.0}},
+      "virtualization": {"before": {"G": "pass", "A": 86.4, "B": 100.0, "X": null, "composite": 94.3}, "after": {"G": "pass", "A": 100.0, "B": 100.0, "X": 100.0, "composite": 100.0}},
+      "zero-day": {"before": {"G": "pass", "A": 100.0, "B": 100.0, "X": null, "composite": 100.0}, "after": {"G": "pass", "A": 100.0, "B": 100.0, "X": 100.0, "composite": 100.0}}
+    },
+    "meta_scores": {
+      "label": "targeted manual rubric against immutable phase-2 snapshot",
+      "skill-creator": {"before": {"G": "pass", "A": 100.0, "B": 100.0, "X": null, "composite": 100.0}, "after": {"G": "pass", "A": 100.0, "B": 100.0, "X": 100.0, "composite": 100.0}, "changed": false},
+      "skill-refiner": {"before": {"G": "pass", "A": 100.0, "B": 84.8, "X": null, "composite": 91.2}, "after": {"G": "pass", "A": 100.0, "B": 100.0, "X": 100.0, "composite": 100.0}, "changed": true}
+    },
+    "changes_summary": [
+      "Resolved correctness, safety, consistency, and behavioral gaps in 30 phase-1 skills across 50 files",
+      "Added runnable observability collector, alert, and dashboard examples",
+      "Removed unsafe command-line and hardcoded credential patterns",
+      "Completed canonical behavioral coverage for all 46 public skills and added the phase-2 catalog regression check"
+    ],
+    "verification": [
+      "lint-skills.sh: 46 checked, 0 errors, 0 warnings",
+      "validate-spec.sh: 46 validated, 0 violations, 0 warnings",
+      "focused regression suite: 34/34 PASS",
+      "canonical catalog: 46/46 with no missing, duplicate, or orphan headings",
+      "contract sync PASS",
+      "deep-audit coverage PASS",
+      "diff whitespace check PASS",
+      "three observability YAML documents and one JSON document parsed"
+    ],
+    "skipped_checks": [
+      "promtool unavailable",
+      "otelcol unavailable",
+      "packer unavailable"
+    ],
+    "private_skill_handling": "none; all 44 phase-1 pool members were public skills",
+    "reverted": [],
+    "contested": [],
+    "commits": [
+      "e78bf0de3fcea2ee5ad998b556e9cc9511ba6c70",
+      "65ab2658ea7003a4411afef8fcd872dafe1c1e14"
+    ],
+    "notes": "Phase 2 completed after the non-configurable human checkpoint was explicitly approved. Generated phase-1 cases for four skills were promoted into the canonical catalog in phase 2. Detailed working evidence remains in ignored docs/local/."
   }
 ]
