@@ -128,19 +128,34 @@ test_real_cross_skill_reference_is_accepted() {
   trap - RETURN
 }
 
+# Full canonical item text - must match scripts/lint-skills.sh's
+# GENERIC_SELF_CHECK_ITEMS exactly, since the lint rule matches on the
+# complete item, not the bold label.
+CANONICAL_GENERIC_ITEMS=(
+  '- [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them'
+  '- [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting'
+  '- [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths'
+  '- [ ] **Routing overlap checked**: overlapping skills, trigger terms, and "When NOT to use" boundaries are checked before returning guidance'
+  '- [ ] **Spec claims verified**: claims about tool behavior, output contracts, or repo conventions are checked against current docs, scripts, or skill files'
+)
+
+# Bold labels reused with a skill-specific, non-canonical body - must NOT be
+# flagged as generic even though the label matches.
+CUSTOM_BODY_LABELED_ITEMS=(
+  '- [ ] **Current source checked**: fixture-specific CLI flags are verified against the fixture docs'
+  '- [ ] **Hidden state identified**: fixture caches and prior fixture runs are made explicit'
+  '- [ ] **Verification is real**: fixture checks exercise the actual fixture runtime'
+  '- [ ] **Routing overlap checked**: overlap with other fixture skills is checked'
+  '- [ ] **Spec claims verified**: fixture claims are checked against the fixture spec'
+)
+
 append_self_check_section() {
   local skill_file="$1" generic_count="$2" total_count="$3"
   local i
   {
     printf '\n## AI Self-Check\n\n'
     for ((i = 1; i <= generic_count; i++)); do
-      case "$i" in
-        1) printf -- '- [ ] **Current source checked**: dated versions verified\n' ;;
-        2) printf -- '- [ ] **Hidden state identified**: local config made explicit\n' ;;
-        3) printf -- '- [ ] **Verification is real**: final checks exercise the runtime\n' ;;
-        4) printf -- '- [ ] **Routing overlap checked**: overlapping skills checked\n' ;;
-        5) printf -- '- [ ] **Spec claims verified**: claims checked against docs\n' ;;
-      esac
+      printf -- '%s\n' "${CANONICAL_GENERIC_ITEMS[$((i - 1))]}"
     done
     for ((i = generic_count + 1; i <= total_count; i++)); do
       printf -- '- [ ] Skill-specific check item %d\n' "$i"
@@ -187,6 +202,24 @@ test_generic_self_check_ratio_over_cap_fails() {
   trap - RETURN
 }
 
+test_generic_self_check_ratio_ignores_custom_body_with_generic_label() {
+  local tmp skill_dir
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  skill_dir="$tmp/skills/lint-fixture"
+  write_minimal_skill "$skill_dir" "lint-fixture"
+  {
+    printf '\n## AI Self-Check\n\n'
+    printf '%s\n' "${CUSTOM_BODY_LABELED_ITEMS[@]}"
+  } >> "$skill_dir/SKILL.md"
+
+  "$ROOT/scripts/lint-skills.sh" "$tmp/skills" >/dev/null
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
 test_generic_self_check_ratio_exempts_skill_creator() {
   local tmp skill_dir
   tmp="$(mktemp -d)"
@@ -208,5 +241,6 @@ test_unrelated_bold_does_not_mask_missing_reference
 test_real_cross_skill_reference_is_accepted
 test_generic_self_check_ratio_within_cap_passes
 test_generic_self_check_ratio_over_cap_fails
+test_generic_self_check_ratio_ignores_custom_body_with_generic_label
 test_generic_self_check_ratio_exempts_skill_creator
 printf 'lint tests passed\n'

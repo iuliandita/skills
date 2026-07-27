@@ -123,8 +123,10 @@ Before returning a code-slimming audit, verify:
   anti-ai-prose, and load-bearing comments (why, invariants, links, license, lint pragmas) are kept
 - [ ] **Correctness and security routed**: bugs go to code-review; vulnerabilities go to security-audit
 - [ ] **Routing lane held**: generic cleanup, slop, correctness, security, test-writing,
-- [ ] Cross-cutting agent hygiene applied - see `references/agent-hygiene.md`
   broad-review, and implementation work were routed instead of reported as code-slimming findings
+- [ ] **Routing overlap checked**: recommendations do not duplicate anti-slop, code-review, testing, full-review, or deep-audit responsibilities
+- [ ] **Spec claims verified**: any statement about skill behavior, output contracts, or repo conventions is checked against current skill files and scripts
+- [ ] Cross-cutting agent hygiene applied - see `references/agent-hygiene.md`
 
 ---
 

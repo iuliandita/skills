@@ -68,7 +68,8 @@ and fold both phases into the record. Everything else still holds.
 - [ ] **Vague answers forced concrete**: every hand-wave resolved to a decision, a sharp open question, a flagged fog patch, or a do-first prerequisite - never a silent gap.
 - [ ] **Decision record written**: resolved decisions, surviving risks, open questions, fog, prerequisites, and a next step land in the deliverable file.
 - [ ] **Domain detected and routed**: correct lens applied; if the real task is code review, security, or a repo audit, routed to the right skill instead.
-- [ ] Cross-cutting agent hygiene applied - see `references/agent-hygiene.md`
+- [ ] **Hidden state identified**: existing code, config, prior decisions, and constraints are surfaced before grilling, not assumed.
+- [ ] **Routing overlap checked**: overlap with jekyll-hyde and code-review handled per "When NOT to use" before proceeding.
 
 ---
 

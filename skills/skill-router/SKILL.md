@@ -44,6 +44,8 @@ Before returning a routing decision, verify:
 - [ ] One primary skill is selected unless the task truly spans multiple domains
 - [ ] Near misses are explained only when useful
 - [ ] The next action is clear: invoke a skill, ask a question, or proceed without a skill
+- [ ] **Routing overlap checked**: close matches are checked for trigger theft, missing exclusions, and process-skill precedence before the final route
+- [ ] **Spec claims verified**: claims about installed skills, trigger descriptions, or routing metadata are checked against the current collection
 - [ ] Cross-cutting agent hygiene applied - see `references/agent-hygiene.md`
 
 ---
