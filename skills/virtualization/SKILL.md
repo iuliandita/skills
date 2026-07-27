@@ -182,7 +182,7 @@ The fastest path to a production-ready VM. Skip Packer and ISO installs for stan
    `qm set 100 --scsi0 local-lvm:vm-100-disk-0,discard=on,iothread=1,ssd=1 --boot order=scsi0`
 4. Add cloud-init drive and configure:
    `qm set 100 --ide2 local-lvm:cloudinit`
-   `qm set 100 --ciuser admin --sshkeys ~/.ssh/id_ed25519.pub --ipconfig0 ip=10.10.10.100/24,gw=10.10.10.1`
+   `qm set 100 --ciuser admin --sshkeys ~/.ssh/id_ed25519.pub --ipconfig0 ip=10.0.0.100/24,gw=10.0.0.1`
 5. Start: `qm start 100`
 6. Verify: `qm agent 100 ping` (may take 1-2 min on first boot while cloud-init runs)
 

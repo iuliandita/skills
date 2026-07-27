@@ -48,7 +48,7 @@ tailor recommendations to the device's role and hardware constraints.
 
 ## WireGuard VPN
 
-- [ ] **Tunnel addressing** - use CIDR notation (e.g., 10.10.10.1/24), never /32.
+- [ ] **Tunnel addressing** - use CIDR notation (e.g., 10.0.0.1/24), never /32.
       Use RFC1918 ranges distinct from existing LAN subnets
 - [ ] **MTU** - 1420 default, 1412 for PPPoE. 80 bytes less than WAN MTU
 - [ ] **MSS clamping** - create normalization rules: 1380 IPv4 (1372 PPPoE),

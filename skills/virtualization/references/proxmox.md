@@ -205,15 +205,15 @@ qm set 9000 --ide2 local-lvm:cloudinit
 
 # 4. Configure cloud-init
 qm set 9000 --ciuser admin --sshkeys ~/.ssh/id_rsa.pub \
-  --ipconfig0 ip=10.10.10.100/24,gw=10.10.10.1 \
-  --nameserver 10.10.10.1 --searchdomain example.com
+  --ipconfig0 ip=10.0.0.100/24,gw=10.0.0.1 \
+  --nameserver 10.0.0.1 --searchdomain example.com
 
 # 5. Convert to template
 qm template 9000
 
 # 6. Clone for new VMs
 qm clone 9000 100 --name prod-web-01 --full
-qm set 100 --ipconfig0 ip=10.10.10.101/24,gw=10.10.10.1
+qm set 100 --ipconfig0 ip=10.0.0.101/24,gw=10.0.0.1
 qm start 100
 ```
 
@@ -307,7 +307,7 @@ Setup requires 3+ nodes, dedicated network for Ceph traffic (10Gbps+ recommended
 Good for ISOs, templates, backups, and VZDump storage. Not ideal for VM disks (latency).
 
 ```bash
-pvesm add nfs nfs-storage --server 10.10.10.4 --export /volume1/pve \
+pvesm add nfs nfs-storage --server 10.0.0.4 --export /volume1/pve \
   --content iso,vztmpl,backup
 ```
 
@@ -324,7 +324,7 @@ Minimum 3 nodes for quorum. Dedicated cluster network recommended (corosync).
 pvecm create mycluster
 
 # On additional nodes
-pvecm add 10.10.10.1    # IP of existing cluster node
+pvecm add 10.0.0.1    # IP of existing cluster node
 
 # Status
 pvecm status             # Cluster status, quorum info
@@ -484,7 +484,7 @@ Dedicated backup solution with deduplication, incremental backups, and encryptio
 ```bash
 # Interactive operator path on a Proxmox VE node. The documented value-less --password form
 # prompts for the secret without exposing it in the process list or shell history.
-pvesm add pbs pbs-storage --server 10.10.10.5 --datastore store1 \
+pvesm add pbs pbs-storage --server 10.0.0.5 --datastore store1 \
   --username backup@pbs --fingerprint FINGERPRINT --password
 
 # Manual backup
@@ -551,7 +551,7 @@ provider "proxmox" {
     agent = true
     node {
       name    = "pve1"
-      address = "10.10.10.1"
+      address = "10.0.0.1"
     }
   }
 }

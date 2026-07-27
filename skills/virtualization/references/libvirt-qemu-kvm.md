@@ -336,8 +336,8 @@ Kind=bridge
 [Match]
 Name=br0
 [Network]
-Address=10.10.10.1/24
-Gateway=10.10.10.1
+Address=10.0.0.1/24
+Gateway=10.0.0.1
 
 # /etc/systemd/network/en.network
 [Match]

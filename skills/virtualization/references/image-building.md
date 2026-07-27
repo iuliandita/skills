@@ -79,12 +79,12 @@ version: 2
 ethernets:
   eth0:
     addresses:
-      - 10.10.10.100/24
+      - 10.0.0.100/24
     routes:
       - to: default
-        via: 10.10.10.1
+        via: 10.0.0.1
     nameservers:
-      addresses: [10.10.10.11, 10.10.10.12]
+      addresses: [10.0.0.11, 10.0.0.12]
       search: [example.com]
 ```
 
