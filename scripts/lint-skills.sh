@@ -250,11 +250,11 @@ check_ai_self_check() {
 
 # ── Generic self-check ratio check ──────────────────────────────────────
 # The five items below (full canonical text, not just the bold label) were
-# bulk-injected by the skill-refiner scoring loop into nearly every skill
-# (see plans/008). They now live once, shared, at
-# skills/_shared/agent-hygiene.md. A skill's own '## AI Self-Check' section
-# should be dominated by hand-written, skill-specific checks; cap how much of
-# it can still be this generic boilerplate.
+# bulk-injected by an automated skill-scoring pass into nearly every skill.
+# They now live once, shared, at skills/_shared/agent-hygiene.md. A skill's
+# own '## AI Self-Check' section should be dominated by hand-written,
+# skill-specific checks; cap how much of it can still be this generic
+# boilerplate.
 #
 # Match on the full item text, not the bold label: an item that reuses a
 # label like "Routing overlap checked" with its own hand-written body (e.g.
