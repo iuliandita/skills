@@ -49,6 +49,9 @@ jobs:
       - name: Check freshness date markers
         run: ./scripts/check-freshness-dates.sh
 
+      - name: Check version receipts
+        run: ./scripts/check-version-receipts.sh
+
       - name: Check deep-audit skill coverage
         run: ./scripts/check-deep-audit-coverage.sh
 
@@ -87,6 +90,9 @@ jobs:
 
       - name: Test lint behavior
         run: ./scripts/test-lint-skills.sh
+
+      - name: Test version receipt behavior
+        run: ./scripts/test-version-receipts.sh
 
       - name: Shellcheck scripts
         run: shellcheck install.sh scripts/*.sh

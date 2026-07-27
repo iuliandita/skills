@@ -21,13 +21,8 @@ logs, alert rules, SLOs, and dashboards-as-code - and audits a repo for the gaps
 service blind. It produces config (exporters, recording/alerting rules, OTLP pipelines,
 dashboard JSON), so the AI Self-Check applies.
 
-**Target versions** (July 2026):
-- Prometheus: 3.13.1
-- OpenTelemetry Collector: v0.156.0
-- Grafana: 13.1.1
-- Grafana Loki: 3.7.3
-- Grafana Tempo: 3.0.2
-- Alertmanager: 0.33.1
+**Target versions**: see `references/versions.md` (verified per the receipt date
+in that file). Do not restate version numbers here.
 
 ## When to use
 
