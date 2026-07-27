@@ -19,5 +19,6 @@ so future contributors do not re-add them by reflex.
 | **handoff** | Carries session context to another agent (writes a disposable .handoff/ doc). Moves work between sessions; does not audit repo files. |
 | **lockpick** | Offensive security / CTF / privesc. Different threat model from defensive audit; security-audit + zero-day cover the defensive side. |
 | **kali-linux** | Live-system administration of Kali. Kali is Debian-based, so repo-side packaging concerns are caught by debian-ubuntu in Wave 3. The skill itself is for running Kali, not auditing repos. |
+| **synology-dsm** | Live-appliance administration and btrfs recovery over SSH. Requires a running NAS; repos rarely contain DSM state, and DSM's storage stack is not a file-pattern audit lens. |
 | **full-review** | Alternate orchestrator (the smaller 4-skill version). Mutually exclusive with deep-audit by design. |
 | **deep-audit** | This skill. Self-invocation would loop. |

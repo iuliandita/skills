@@ -35,7 +35,7 @@ For a quick 4-skill sweep, use **full-review** instead.
 - Single-dimension audit (e.g., only security or only code quality) - use the individual skill directly (**security-audit**, **code-review**, etc.)
 - Auditing the skill collection itself - use **skill-creator** (Mode 3)
 - Offensive security engagement or CTF - use **lockpick** directly
-- Live-system OS administration (running `pacman`/`apt`/`dnf`, fixing a NixOS rebuild, configuring SELinux on a host, debugging an OPNsense appliance) - use the matching distro/appliance skill directly (**arch-btw**, **debian-ubuntu**, **rhel-fedora**, **nixos-btw**, **firewall-appliance**). Repo-level audit of OS-related files (PKGBUILDs, `debian/`, `*.spec`, `flake.nix`, `pf.conf`, etc.) belongs in Wave 3 of this skill
+- Live-system OS administration (running `pacman`/`apt`/`dnf`, fixing a NixOS rebuild, configuring SELinux on a host, debugging an OPNsense appliance, recovering a Synology volume) - use the matching distro/appliance skill directly (**arch-btw**, **debian-ubuntu**, **rhel-fedora**, **nixos-btw**, **firewall-appliance**, **synology-dsm**). Repo-level audit of OS-related files (PKGBUILDs, `debian/`, `*.spec`, `flake.nix`, `pf.conf`, etc.) belongs in Wave 3 of this skill
 
 ## AI Self-Check
 
