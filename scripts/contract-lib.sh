@@ -7,8 +7,6 @@
 # each skill's references/<name>.md; the marker and everything below it are
 # maintainer/build notes that must never reach an installed skill.
 
-CONTRACT_LIB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CONTRACT_ROOT="$(cd "$CONTRACT_LIB_DIR/.." && pwd)"
 CONTRACT_MARKER='<!-- maintainer-notes:not-shipped'
 
 # Every shared file that gets copied into each skill's references/ dir.
@@ -17,10 +15,6 @@ SHARED_FILE_NAMES=(
   "output-contract.md"
   "agent-hygiene.md"
 )
-
-# Back-compat single-file variables, still used by callers that only care
-# about the output contract.
-CONTRACT_SRC="$CONTRACT_ROOT/skills/_shared/output-contract.md"
 
 # Emit the portable content of a shared file: every line before the marker,
 # with trailing blank lines trimmed so the shipped copy ends in exactly one
@@ -35,9 +29,4 @@ render_shipped_file() {
       for (i = 0; i < n; i++) print lines[i]
     }
   ' "$src"
-}
-
-# Back-compat wrapper: render the output contract specifically.
-render_shipped_contract() {
-  render_shipped_file "$CONTRACT_SRC"
 }
