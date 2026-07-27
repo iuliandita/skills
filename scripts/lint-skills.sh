@@ -248,6 +248,56 @@ check_ai_self_check() {
   fi
 }
 
+# ── Generic self-check ratio check ──────────────────────────────────────
+# The five phrases below were bulk-injected by the skill-refiner scoring loop
+# into nearly every skill (see plans/008). They now live once, shared, at
+# skills/_shared/agent-hygiene.md. A skill's own '## AI Self-Check' section
+# should be dominated by hand-written, skill-specific checks; cap how much of
+# it can still be this generic boilerplate.
+#
+# skill-refiner and skill-creator are exempt: routing overlap and spec-claim
+# verification are literally their domain, not injected filler.
+GENERIC_SELF_CHECK_PHRASES=(
+  "Current source checked"
+  "Hidden state identified"
+  "Verification is real"
+  "Routing overlap checked"
+  "Spec claims verified"
+)
+GENERIC_SELF_CHECK_EXEMPT=("skill-refiner" "skill-creator")
+GENERIC_SELF_CHECK_MAX_RATIO=10  # percent
+
+check_generic_self_check_ratio() {
+  local file="$1" name="$2"
+  local exempt
+  for exempt in "${GENERIC_SELF_CHECK_EXEMPT[@]}"; do
+    [[ "$name" == "$exempt" ]] && return
+  done
+
+  local section
+  section="$(awk '/^## AI Self-Check/{f=1; next} /^## /{f=0} f' "$file")"
+  [[ -z "$section" ]] && return
+
+  local total generic phrase
+  total=$(grep -c '^- \[ \]' <<< "$section" || true)
+  (( total == 0 )) && return
+
+  generic=0
+  while IFS= read -r line; do
+    for phrase in "${GENERIC_SELF_CHECK_PHRASES[@]}"; do
+      if [[ "$line" == *"$phrase"* ]]; then
+        (( generic++ )) || true
+        break
+      fi
+    done
+  done <<< "$(grep '^- \[ \]' <<< "$section")"
+
+  local ratio=$(( generic * 100 / total ))
+  if (( ratio > GENERIC_SELF_CHECK_MAX_RATIO )); then
+    error "$name: AI Self-Check section is ${ratio}% generic boilerplate ($generic/$total items) - exceeds ${GENERIC_SELF_CHECK_MAX_RATIO}% cap, replace with skill-specific checks"
+  fi
+}
+
 # ── Collection-wide symlink check ──────────────────────────────────────
 # Reject committed symlinks under skills/. install.sh's skill_hash uses
 # `find` without -L so symlinks are no longer followed, but a committed
@@ -292,6 +342,7 @@ for skill_dir in "$SKILLS_DIR"/*/; do
   check_references "$skill_file" "$name" "$skill_dir"
   check_private_refs "$skill_dir" "$name"
   check_ai_self_check "$skill_file" "$name"
+  check_generic_self_check_ratio "$skill_file" "$name"
   check_banned_words "$skill_dir" "$name"
   check_prose_double_dash "$skill_dir" "$name"
   (( skill_count++ )) || true
