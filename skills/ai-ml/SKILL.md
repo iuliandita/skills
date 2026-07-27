@@ -65,13 +65,9 @@ AI tools consistently produce the same mistakes when generating AI application c
 - [ ] No synchronous LLM calls in request handlers - always async with timeouts
 - [ ] PII stripped or masked before sending to external model APIs
 - [ ] Temperature set intentionally (0 for deterministic tasks, higher for creative)
-- [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
-- [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
-- [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
-- [ ] **Routing overlap checked**: overlapping skills, trigger terms, and "When NOT to use" boundaries are checked before returning guidance
-- [ ] **Spec claims verified**: claims about tool behavior, output contracts, or repo conventions are checked against current docs, scripts, or skill files
 - [ ] **Provider drift checked**: Responses/Agents/SDK examples use current provider surfaces, not deprecated patterns - specifically verify no use of `openai.beta.assistants.create` (Assistants API, superseded by Responses/Agents API) or other Assistants-era surfaces
 - [ ] **RAG evidence bounded**: retrieval thresholds, citations, and empty-result behavior are defined before generation
+- [ ] Cross-cutting agent hygiene applied - see `references/agent-hygiene.md`
 
 ## Performance
 

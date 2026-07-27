@@ -65,13 +65,9 @@ AI tools consistently produce the same Docker mistakes. **Before returning any g
 - [ ] Package caches cleaned in same layer: `--no-cache` (apk), `rm -rf /var/lib/apt/lists/*` (apt). For pip: use `--mount=type=cache` OR `--no-cache-dir`, not both.
 - [ ] CMD uses exec form (JSON array), not shell form: `CMD ["node", "app.js"]` not `CMD node app.js`
 - [ ] **HEALTHCHECK uses available tools**: probe command uses a binary present in the final image (wget in Alpine, curl in Debian, none in scratch/distroless - use the app's own health endpoint)
-- [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
-- [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
-- [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
-- [ ] **Routing overlap checked**: overlapping skills, trigger terms, and "When NOT to use" boundaries are checked before returning guidance
-- [ ] **Spec claims verified**: claims about tool behavior, output contracts, or repo conventions are checked against current docs, scripts, or skill files
 - [ ] **Engine/Compose syntax checked**: Dockerfile, Compose, BuildKit, and runtime flags match the installed versions
 - [ ] **Image provenance considered**: base images, registries, tags, SBOMs, and signatures are handled where risk warrants
+- [ ] Cross-cutting agent hygiene applied - see `references/agent-hygiene.md`
 
 ## Performance
 

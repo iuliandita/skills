@@ -68,13 +68,9 @@ AI tools consistently produce the same Terraform mistakes. **Before returning an
 - [ ] `terraform fmt` and `terraform validate` pass
 
 **AI should never own `terraform apply`.** In March 2026, an AI-assisted Terraform workflow deleted production infrastructure through escalating cleanup logic. Plan output is reviewed by a human. Always.
-- [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
-- [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
-- [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
-- [ ] **Routing overlap checked**: overlapping skills, trigger terms, and "When NOT to use" boundaries are checked before returning guidance
-- [ ] **Spec claims verified**: claims about tool behavior, output contracts, or repo conventions are checked against current docs, scripts, or skill files
 - [ ] **Provider docs checked**: resource arguments, defaults, and deprecations match pinned provider versions
 - [ ] **State impact reviewed**: imports, moves, destroys, and replacements are visible in plan output before apply
+- [ ] Cross-cutting agent hygiene applied - see `references/agent-hygiene.md`
 
 ## Performance
 

@@ -54,15 +54,11 @@ Before returning any audit, verify:
 - [ ] **Density and short-text rule applied**: density heuristic applied before assigning severity; for text under 100 words, 2+ tells in one paragraph = P1 regardless of per-500-word threshold
 - [ ] **Audit output itself uses no AI-prose tells** (apply these rules to your own output)
 - [ ] **AI fallback names checked (fiction)**: protagonist and major-character names compared against the documented fallback set (Elara, Lyra, Aurora, Kael, Vale, Cassius, etc.) and the phonetic tell (2 soft syllables, A/L/R/N consonants, no demographic anchor); fallback-set names allowed only when the setting and population organically produce them
-- [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
-- [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
-- [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
-- [ ] **Routing overlap checked**: overlapping skills, trigger terms, and "When NOT to use" boundaries are checked before returning guidance
-- [ ] **Spec claims verified**: claims about tool behavior, output contracts, or repo conventions are checked against current docs, scripts, or skill files
 - [ ] **Adverb stacking checked**: `-ly` adverb density scanned; passages with multiple adverb-modified speech tags or adjacent adverb clusters flagged at the same density threshold as vocabulary tells
 - [ ] **Confident filler checked**: emphasis crutches, rhetorical setups, and faux-profundity fragments flagged by pattern/density, not on isolated earned uses
 - [ ] **Overflagging avoided**: plain but valid technical prose is not labeled AI-written without concrete evidence
 - [ ] **Audience preserved**: edits keep the author's domain vocabulary, intent, and required formality
+- [ ] Cross-cutting agent hygiene applied - see `references/agent-hygiene.md`
 
 ---
 
