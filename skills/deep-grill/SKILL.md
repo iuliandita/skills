@@ -13,6 +13,8 @@ metadata:
 
 # Deep Grill: Two-Phase Plan Interrogator
 
+Deep-grill ends with a written decision record, so a resolved requirement stays settled instead of getting relitigated in a later session.
+
 Most build failures are not the model failing to write code - they are requirements that were
 never specified. Deep-grill kills that failure before anything exists, in two phases:
 

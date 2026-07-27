@@ -15,9 +15,11 @@ metadata:
 
 Administer Debian, Ubuntu, Linux Mint, Pop!_OS, Devuan, and other Debian-derived systems,
 with partial coverage for Kali when the question is about base OS administration rather than
-security-distro workflow. Focus on Debian stable and Ubuntu LTS first, then layer in
-derivative-specific behavior, PPA workflows, snap confinement, Ubuntu HWE, and explicit checks
-for derivatives that diverge on init, packaging defaults, or intended use.
+security-distro workflow.
+
+Focus on Debian stable and Ubuntu LTS first, then layer in derivative-specific behavior, PPA
+workflows, snap confinement, Ubuntu HWE, and explicit checks for derivatives that diverge on
+init, packaging defaults, or intended use.
 
 **Versions worth pinning** (verified July 2026):
 

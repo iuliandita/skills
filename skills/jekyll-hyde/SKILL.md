@@ -13,6 +13,8 @@ metadata:
 
 # Jekyll-Hyde: Dual-Lens Decision Advisor
 
+Jekyll-Hyde applies to any decision before it ships, from a one-line copy change to a company-wide policy call, letting both advisors weigh in before either one wins.
+
 Review product, engineering, design, and business decisions through two opposing advisor modes:
 
 - **Dr Jekyll** turns ambition into durable usefulness, trust, changeability, and clear next steps.

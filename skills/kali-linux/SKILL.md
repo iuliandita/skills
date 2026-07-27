@@ -13,13 +13,14 @@ metadata:
 
 # Kali Linux: Kali Administration, Tooling, and Lab Workflow
 
+Kali is Debian-shaped, but the places where it goes wrong are usually Kali-specific: branch
+mixing, metapackage sprawl, stale images, persistence mistakes, hardware edge cases, or people
+using the wrong tool family for the job.
+
 Administer Kali Linux without flattening it into plain Debian or into a bag of offensive tools.
 Start by identifying which Kali lane you are actually on - rolling install, last-snapshot,
 live USB, VM image, Purple image, NetHunter, or a throwaway lab box - then separate base OS
 health from tool-selection questions, branch hygiene, hardware support, and engagement scope.
-Kali is Debian-shaped, but the places where it goes wrong are usually Kali-specific: branch
-mixing, metapackage sprawl, stale images, persistence mistakes, hardware edge cases, or people
-using the wrong tool family for the job.
 
 **Target versions** (verified July 2026):
 

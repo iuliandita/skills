@@ -17,8 +17,10 @@ metadata:
 
 Compress the current session into a small markdown document another agent session can continue
 from. A handoff is a one-way, lossy carry: whatever the next session needs has to be written
-down explicitly, because everything else is gone. The point is to keep each session focused and
-inside its high-attention context window instead of dragging one bloated thread forward.
+down explicitly, because everything else is gone.
+
+The point is to keep each session focused and inside its high-attention context window
+instead of dragging one bloated thread forward.
 
 Inspired by Matt Pocock's `/handoff` skill. The failure mode it exists to prevent is
 **relitigation**: the next session reopens a decision the current one had already settled,

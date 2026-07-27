@@ -13,7 +13,9 @@ metadata:
 
 # Routine Writer
 
-Turn an unattended, repeatable task into a Claude Code routine: a saved prompt plus repositories, connectors, and triggers that runs on Anthropic cloud infrastructure without needing a local machine. Output is a self-contained prompt plus the artifacts to wire it up (a `/schedule` CLI command when available, a `curl` template for the `/fire` endpoint, or a web-UI walkthrough).
+Turn an unattended, repeatable task into a Claude Code routine: a saved prompt plus repositories, connectors, and triggers that runs on Anthropic cloud infrastructure without needing a local machine.
+
+Output is a self-contained prompt plus the artifacts to wire it up (a `/schedule` CLI command when available, a `curl` template for the `/fire` endpoint, or a web-UI walkthrough).
 
 **Why routines differ from chat prompts.** A routine runs as a full autonomous Claude Code cloud session. There is no permission-mode picker, no approval prompts, and no human to answer clarifying questions mid-run. A prompt that works fine in a conversation can stall or misfire silently inside a routine because the model has no one to ask. Every routine prompt must be self-contained, state its success criteria, and declare where output goes.
 
