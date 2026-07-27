@@ -97,7 +97,7 @@ wg show <iface> dump             # machine-readable output
   misconfigured. Check: endpoint IP, allowed IPs, firewall pass rules on the `wg` interface.
 - **NAT alignment**: allowed-IPs in WireGuard config must match firewall pass rules on the
   tunnel interface. Mismatch = traffic silently dropped.
-- **Tunnel addressing**: use CIDR notation (e.g., 10.10.10.1/24), never /32. Use RFC1918
+- **Tunnel addressing**: use CIDR notation (e.g., 10.0.0.1/24), never /32. Use RFC1918
   ranges distinct from existing LAN subnets.
 - **MTU**: 1420 default, 1412 for PPPoE (80 bytes less than WAN MTU).
 - **MSS clamping**: create normalization rules to prevent TCP fragmentation through the tunnel.
