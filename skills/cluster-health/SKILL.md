@@ -47,15 +47,11 @@ Before running checks or reporting results, verify:
 - [ ] Time window is bounded and stated in the report
 - [ ] Protected registry contents are not printed unless the user asks for those exact details
 - [ ] Findings include evidence, impact, and next action
-- [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
-- [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
-- [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
-- [ ] **Routing overlap checked**: overlapping skills, trigger terms, and "When NOT to use" boundaries are checked before returning guidance
-- [ ] **Spec claims verified**: claims about tool behavior, output contracts, or repo conventions are checked against current docs, scripts, or skill files
 - [ ] **Cluster target explicit**: kubeconfig context, namespace, and environment are named before any query
 - [ ] **Read-only posture kept**: health checks do not mutate resources or restart workloads unless the user explicitly escalates
 - [ ] **No improvisation**: only the read-only commands in the reference files were run; missing coverage was noted as a suggestion, not freelanced with guessed service names, paths, or flags
 - [ ] **Stderr is visible**: diagnostic commands surface their failure reason instead of masking it with `2>/dev/null`; a missing tool, permission gap, or wrong context is reported, not silently treated as a clean result
+- [ ] Cross-cutting agent hygiene applied - see `references/agent-hygiene.md`
 
 ## Performance
 

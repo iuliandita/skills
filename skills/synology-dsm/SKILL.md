@@ -80,11 +80,7 @@ in this order, rather than being skipped:
 - [ ] Tool presence checked, not assumed - `lsof`, `fuser`, `mountpoint`, `modinfo` are absent
 - [ ] Config edits target files DSM does not regenerate, or the regeneration is accounted for
 - [ ] Backup or snapshot state verified before any repair, not after
-- [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
-- [ ] **Hidden state identified**: DSM version, model, package dependencies, mounted volumes, and prior repair attempts are made explicit before acting
-- [ ] **Verification is real**: checks exercise the actual mount, service, or filesystem rather than reading a DSM banner
-- [ ] **Routing overlap checked**: generic Linux, container, and network tasks are routed to the matching skill
-- [ ] **Spec claims verified**: claims about DSM behavior are checked against the appliance or Synology's GPL kernel source, not recalled
+- [ ] Cross-cutting agent hygiene applied - see `references/agent-hygiene.md`
 
 ---
 

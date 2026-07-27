@@ -59,13 +59,9 @@ Before returning any security audit report, verify:
 - [ ] **Known incidents checked**: dependency audit verified against the known supply chain incidents listed in Step 3 (event-stream, ua-parser-js, colors any version, faker, polyfill.io, xz-utils, trivy 0.69.4-0.69.6, TrapDoor, Mini Shai-Hulud worm, outdated lodash), not just CVE databases
 - [ ] **Agentic risks covered** (when applicable): MCP servers, AI tool handlers, prompt injection surfaces audited if present
 - [ ] **Scope respected**: no external service probing, no DAST, repo-only analysis
-- [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
-- [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
-- [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
-- [ ] **Routing overlap checked**: overlapping skills, trigger terms, and "When NOT to use" boundaries are checked before returning guidance
-- [ ] **Spec claims verified**: claims about tool behavior, output contracts, or repo conventions are checked against current docs, scripts, or skill files
 - [ ] **Threat model matched**: findings map to the app's actual assets, actors, trust boundaries, and deployment
 - [ ] **Exploitability stated carefully**: severity is based on reachable paths and impact, not scanner labels alone
+- [ ] Cross-cutting agent hygiene applied - see `references/agent-hygiene.md`
 
 ---
 
