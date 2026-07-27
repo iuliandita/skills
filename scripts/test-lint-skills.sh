@@ -128,8 +128,85 @@ test_real_cross_skill_reference_is_accepted() {
   trap - RETURN
 }
 
+append_self_check_section() {
+  local skill_file="$1" generic_count="$2" total_count="$3"
+  local i
+  {
+    printf '\n## AI Self-Check\n\n'
+    for ((i = 1; i <= generic_count; i++)); do
+      case "$i" in
+        1) printf -- '- [ ] **Current source checked**: dated versions verified\n' ;;
+        2) printf -- '- [ ] **Hidden state identified**: local config made explicit\n' ;;
+        3) printf -- '- [ ] **Verification is real**: final checks exercise the runtime\n' ;;
+        4) printf -- '- [ ] **Routing overlap checked**: overlapping skills checked\n' ;;
+        5) printf -- '- [ ] **Spec claims verified**: claims checked against docs\n' ;;
+      esac
+    done
+    for ((i = generic_count + 1; i <= total_count; i++)); do
+      printf -- '- [ ] Skill-specific check item %d\n' "$i"
+    done
+  } >> "$skill_file"
+}
+
+test_generic_self_check_ratio_within_cap_passes() {
+  local tmp skill_dir
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  skill_dir="$tmp/skills/lint-fixture"
+  write_minimal_skill "$skill_dir" "lint-fixture"
+  append_self_check_section "$skill_dir/SKILL.md" 1 10
+
+  "$ROOT/scripts/lint-skills.sh" "$tmp/skills" >/dev/null
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_generic_self_check_ratio_over_cap_fails() {
+  local tmp skill_dir output status
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  skill_dir="$tmp/skills/lint-fixture"
+  write_minimal_skill "$skill_dir" "lint-fixture"
+  append_self_check_section "$skill_dir/SKILL.md" 5 10
+
+  status=0
+  output="$("$ROOT/scripts/lint-skills.sh" "$tmp/skills" 2>&1)" || status=$?
+  if (( status == 0 )); then
+    printf '%s\n' "$output" >&2
+    fail "lint-skills.sh passed despite a 50% generic AI Self-Check section"
+  fi
+  if [[ "$output" != *"lint-fixture"* || "$output" != *"50%"* ]]; then
+    printf '%s\n' "$output" >&2
+    fail "lint-skills.sh did not name the skill and ratio for the generic self-check overage"
+  fi
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_generic_self_check_ratio_exempts_skill_creator() {
+  local tmp skill_dir
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  skill_dir="$tmp/skills/skill-creator"
+  write_minimal_skill "$skill_dir" "skill-creator"
+  append_self_check_section "$skill_dir/SKILL.md" 5 5
+
+  "$ROOT/scripts/lint-skills.sh" "$tmp/skills" >/dev/null
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
 test_reference_files_are_scanned
 test_reference_examples_are_ignored
 test_unrelated_bold_does_not_mask_missing_reference
 test_real_cross_skill_reference_is_accepted
+test_generic_self_check_ratio_within_cap_passes
+test_generic_self_check_ratio_over_cap_fails
+test_generic_self_check_ratio_exempts_skill_creator
 printf 'lint tests passed\n'
