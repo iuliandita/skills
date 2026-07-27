@@ -249,20 +249,26 @@ check_ai_self_check() {
 }
 
 # ── Generic self-check ratio check ──────────────────────────────────────
-# The five phrases below were bulk-injected by the skill-refiner scoring loop
-# into nearly every skill (see plans/008). They now live once, shared, at
+# The five items below (full canonical text, not just the bold label) were
+# bulk-injected by the skill-refiner scoring loop into nearly every skill
+# (see plans/008). They now live once, shared, at
 # skills/_shared/agent-hygiene.md. A skill's own '## AI Self-Check' section
 # should be dominated by hand-written, skill-specific checks; cap how much of
 # it can still be this generic boilerplate.
 #
+# Match on the full item text, not the bold label: an item that reuses a
+# label like "Routing overlap checked" with its own hand-written body (e.g.
+# skill-router's overlap check, or synology-dsm's DSM-specific checks) is
+# authored content, not injected filler, and must not be flagged.
+#
 # skill-refiner and skill-creator are exempt: routing overlap and spec-claim
 # verification are literally their domain, not injected filler.
-GENERIC_SELF_CHECK_PHRASES=(
-  "Current source checked"
-  "Hidden state identified"
-  "Verification is real"
-  "Routing overlap checked"
-  "Spec claims verified"
+GENERIC_SELF_CHECK_ITEMS=(
+  '- [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them'
+  '- [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting'
+  '- [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths'
+  '- [ ] **Routing overlap checked**: overlapping skills, trigger terms, and "When NOT to use" boundaries are checked before returning guidance'
+  '- [ ] **Spec claims verified**: claims about tool behavior, output contracts, or repo conventions are checked against current docs, scripts, or skill files'
 )
 GENERIC_SELF_CHECK_EXEMPT=("skill-refiner" "skill-creator")
 GENERIC_SELF_CHECK_MAX_RATIO=10  # percent
@@ -278,14 +284,16 @@ check_generic_self_check_ratio() {
   section="$(awk '/^## AI Self-Check/{f=1; next} /^## /{f=0} f' "$file")"
   [[ -z "$section" ]] && return
 
-  local total generic phrase
+  local total generic canonical_item line
   total=$(grep -c '^- \[ \]' <<< "$section" || true)
   (( total == 0 )) && return
 
   generic=0
   while IFS= read -r line; do
-    for phrase in "${GENERIC_SELF_CHECK_PHRASES[@]}"; do
-      if [[ "$line" == *"$phrase"* ]]; then
+    # Normalize leading/trailing whitespace only - no other fuzzy matching.
+    line="$(sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' <<< "$line")"
+    for canonical_item in "${GENERIC_SELF_CHECK_ITEMS[@]}"; do
+      if [[ "$line" == "$canonical_item" ]]; then
         (( generic++ )) || true
         break
       fi

@@ -62,6 +62,7 @@ Before writing or returning a handoff doc, verify:
 - [ ] **Small enough to fit**: the doc is short enough to sit in the next session's
       high-attention zone - if it is long, cut detail and lean harder on pointers
 - [ ] **Gitignored**: `.handoff/` is in .gitignore unless the user asked to commit the doc
+- [ ] **Spec claims verified**: pointers (paths, line numbers, PR numbers, branches) are confirmed to exist at write time, not assumed
 - [ ] Cross-cutting agent hygiene applied - see `references/agent-hygiene.md`
 
 ---
