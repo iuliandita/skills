@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.43.0](https://github.com/iuliandita/skills/compare/v1.42.2...v1.43.0) (2026-07-27)
+
+
+### Features
+
+* **synology-dsm:** add Synology DSM administration and btrfs recovery skill ([#118](https://github.com/iuliandita/skills/issues/118)) ([8857174](https://github.com/iuliandita/skills/commit/8857174))
+
 ## [1.42.2](https://github.com/iuliandita/skills/compare/v1.42.1...v1.42.2) (2026-07-22)
 
 
