@@ -16,9 +16,11 @@ metadata:
 Administer NixOS without falling back into imperative distro muscle memory. NixOS is
 declarative, functional, and atomic: the system is a value computed from a configuration,
 every change becomes a new immutable generation in `/nix/store`, and rollbacks are a
-bootloader entry away. This skill keeps that model intact, then layers in the practical
-stack: channels vs flakes, `nixos-rebuild` vs `nix` CLI, home-manager, nix-darwin, store
-hygiene, overlays, module writing, secrets, and the Determinate Nix and Lix lanes.
+bootloader entry away.
+
+This skill keeps that model intact, then layers in the practical stack: channels vs
+flakes, `nixos-rebuild` vs `nix` CLI, home-manager, nix-darwin, store hygiene, overlays,
+module writing, secrets, and the Determinate Nix and Lix lanes.
 
 The places NixOS breaks are NixOS-shaped: channel drift, flake input staleness, garbage
 collection that nukes a needed derivation, overlays fighting, `nix-env -i` poisoning the

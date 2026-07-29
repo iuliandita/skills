@@ -52,6 +52,9 @@ jobs:
       - name: Check version receipts
         run: ./scripts/check-version-receipts.sh
 
+      - name: Check first-paragraph storefront copy
+        run: ./scripts/check-first-paragraph.sh
+
       - name: Check deep-audit skill coverage
         run: ./scripts/check-deep-audit-coverage.sh
 

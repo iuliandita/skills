@@ -13,6 +13,8 @@ metadata:
 
 # Dev Cycle: Start-to-Finish Workflow
 
+Dev Cycle gets invoked once to start a task and again later to ship it, keeping git, testing, and review calls out of a single freeform session.
+
 Orchestrates a unit of work from branch creation to merge and release. Runs in
 two modes that typically span different sessions:
 

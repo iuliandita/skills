@@ -14,10 +14,12 @@ metadata:
 # RHEL-Fedora: Fedora and RHEL-Family Administration
 
 Administer Fedora, RHEL, Rocky Linux, AlmaLinux, Oracle Linux, Amazon Linux, and nearby
-RPM-family systems without flattening their important differences. Start by separating the
-fast-moving Fedora lane from the conservative enterprise lane, then account for vendor quirks
-such as subscription-manager, CentOS Stream drift, Oracle UEK, Amazon's cloud-first defaults,
-and SELinux or firewalld behavior that people love to blame on the wrong layer.
+RPM-family systems without flattening their important differences.
+
+Start by separating the fast-moving Fedora lane from the conservative enterprise lane, then
+account for vendor quirks such as subscription-manager, CentOS Stream drift, Oracle UEK,
+Amazon's cloud-first defaults, and SELinux or firewalld behavior that people love to blame on
+the wrong layer.
 
 **Versions worth pinning** (verified July 2026):
 

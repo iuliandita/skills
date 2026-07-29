@@ -18,8 +18,10 @@ metadata:
 Design and audit the signals a running system emits so failures are visible before users report
 them. This skill builds the standing pipeline - instrumentation, metrics, traces, structured
 logs, alert rules, SLOs, and dashboards-as-code - and audits a repo for the gaps that leave a
-service blind. It produces config (exporters, recording/alerting rules, OTLP pipelines,
-dashboard JSON), so the AI Self-Check applies.
+service blind.
+
+It produces config (exporters, recording/alerting rules, OTLP pipelines, dashboard JSON), so
+the AI Self-Check applies.
 
 **Target versions**: see `references/versions.md` (verified per the receipt date
 in that file). Do not restate version numbers here.

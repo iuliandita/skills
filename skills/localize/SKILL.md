@@ -13,15 +13,16 @@ metadata:
 
 # Localize: App Internationalization Workflow
 
+Systematic approach to internationalizing applications. Covers two scenarios: adding
+multilingual support from scratch and auditing existing i18n for gaps.
+
+Built from real production pain - the hardest part of i18n is not translation but finding
+every string that needs it, and making sure translations read naturally in context rather
+than as mechanical word-by-word output.
+
 **Target versions (July 2026):** react-i18next 17.0.10, vue-i18n 11.4.7, next-intl 4.13.3,
 i18next 26.3.6. For missing-key persistence, require i18next-http-middleware 3.9.7+ and
 i18next-fs-backend 2.6.6+ to fix critical prototype pollution (CVE-2026-48714).
-
-Systematic approach to internationalizing applications. Covers two scenarios: adding
-multilingual support from scratch and auditing existing i18n for gaps. Built from real
-production pain - the hardest part of i18n is not translation but finding every string
-that needs it, and making sure translations read naturally in context rather than as
-mechanical word-by-word output.
 
 ## When to use
 
