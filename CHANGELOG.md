@@ -2,6 +2,32 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.44.0](https://github.com/iuliandita/skills/compare/v1.43.0...v1.44.0) (2026-07-29)
+
+
+### Features
+
+* **freshness:** verify version pins by receipt age, not month label ([#119](https://github.com/iuliandita/skills/issues/119)) ([f49c1da](https://github.com/iuliandita/skills/commit/f49c1daf29aa4eaff4d9f91902a2a855e939610b))
+* **skills:** add shared agent-hygiene reference ([#120](https://github.com/iuliandita/skills/issues/120)) ([11b64f0](https://github.com/iuliandita/skills/commit/11b64f07dca140feb583331ac63721bdfdeb16fe))
+* **lint:** cap generic self-check ratio ([6410b38](https://github.com/iuliandita/skills/commit/6410b386908507c1c388d32cf4f0b4a1374f3cc0))
+
+
+### Bug Fixes
+
+* **skills:** restore hand-written self-check items removed by label match ([8454716](https://github.com/iuliandita/skills/commit/845471674cfd4585278cdb39f200ba2f844efc7a))
+
+
+### Documentation
+
+* **skills:** fix first body paragraph as marketplace storefront copy ([#122](https://github.com/iuliandita/skills/issues/122)) ([3bd7d08](https://github.com/iuliandita/skills/commit/3bd7d0835a62fc71a30d8f79290290834a31730e))
+* **skills:** use neutral example subnet in networking examples ([2419d79](https://github.com/iuliandita/skills/commit/2419d7974de562f0e418b860bc8276bb88676d22))
+
+
+### Refactoring
+
+* **skills:** drop injected generic self-check items ([4786b50](https://github.com/iuliandita/skills/commit/4786b50f74724e1cb31be86343f88723838e475b))
+* **scripts:** drop unused output-contract back-compat wrappers ([286529b](https://github.com/iuliandita/skills/commit/286529b332e715748a1f1d5a3e2c5d553978acea))
+
 ## [1.43.0](https://github.com/iuliandita/skills/compare/v1.42.2...v1.43.0) (2026-07-27)
 
 
