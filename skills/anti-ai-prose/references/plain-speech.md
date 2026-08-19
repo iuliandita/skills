@@ -1,12 +1,14 @@
 # Plain speech: concreteness, actor, sentence load, voice
 
-Deep-dive reference for the plain-speech checks in `SKILL.md`. These four patterns
-are structural rather than lexical: no wordlist catches them, and each one needs a
-rewrite rather than a substitution.
+Deep-dive reference for the plain-speech checks in `SKILL.md`: abstract metaphor nouns,
+the concreteness test, the actor test, sentence load, and voice restoration. The last four
+are structural rather than lexical - no wordlist catches them, and each needs a rewrite
+rather than a substitution. Two further plain-speech checks, superficial participle tails
+and false ranges, are fully covered in `SKILL.md` and have no deep dive here.
 
 Folded in from [poteto/plugins](https://github.com/poteto/plugins) `pstack/skills/unslop`
-(MIT), which contributed the concreteness test, the actor test, and the voice-restoration
-guidance.
+(MIT), which contributed the abstract-metaphor-noun list, the concreteness test, the actor
+test, the sentence-load test, and the voice-restoration guidance.
 
 ---
 
@@ -146,5 +148,5 @@ removing AI tells.
 - **Deliberate passive** where the actor is unknown, irrelevant, or withheld on purpose
 - **Long sentences that parse on first read.** Length is not the tell; backtracking is
 - **Stated intent** in a motivation paragraph, when the mechanism follows it
-- **A single abstract sentence** in an otherwise concrete piece. All four patterns here
-  are density findings, subject to the same thresholds as the vocabulary tells
+- **A single abstract sentence** in an otherwise concrete piece. The patterns here are
+  density findings, subject to the same thresholds as the vocabulary tells
