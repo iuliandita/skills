@@ -1,7 +1,7 @@
 ---
 name: anti-ai-prose
 description: >
-  · Audit prose for AI tells in docs, PRs, emails, slides, docstrings. Triggers: 'ai writing', 'sounds like chatgpt', 'ai slop prose', 'llm voice', 'sound human'. Not for code (use anti-slop).
+  · Strip AI tells from prose in docs, PRs, emails, and your own replies. Apply to every response by default; full audit on request. Triggers: 'unslop', 'ai writing', 'sounds like chatgpt', 'llm voice'. Not for code (use anti-slop).
 license: MIT
 compatibility: "None - works on any prose or text input"
 metadata:
@@ -17,7 +17,7 @@ Detect and fix the linguistic tells that make written English read as machine-ge
 
 This skill applies to any text: **documentation**, **READMEs**, **wikis** (Confluence, Notion, internal), **pull request descriptions**, **commit messages**, **release notes**, **blog posts**, **emails**, **slide copy**, **creative writing**, and **code comments / docstrings**. The vocabulary, syntax, tone, and formatting checks are language-domain, not platform-domain.
 
-Based in part on [Wikipedia: Signs of AI writing](https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing) - a field guide compiled by editors who have read enormous volumes of LLM-generated text and know what it actually looks like - and on [stop-slop](https://github.com/hardikpandya/stop-slop) (MIT), which contributed the confident-filler check: emphasis crutches, rhetorical setups, and the faux-profundity fragment.
+Based in part on [Wikipedia: Signs of AI writing](https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing) - a field guide compiled by editors who have read enormous volumes of LLM-generated text and know what it actually looks like - on [stop-slop](https://github.com/hardikpandya/stop-slop) (MIT), which contributed the confident-filler check: emphasis crutches, rhetorical setups, and the faux-profundity fragment - and on [poteto/plugins](https://github.com/poteto/plugins) `pstack/skills/unslop` (MIT), which contributed the plain-speech checks, the abstract-metaphor-noun list, chat artifacts, and the voice-restoration guidance.
 
 ## When to use
 
@@ -28,6 +28,7 @@ Based in part on [Wikipedia: Signs of AI writing](https://en.wikipedia.org/wiki/
 - Reviewing docstrings and code comments for the same prose patterns
 - Any time someone says "this sounds like ChatGPT wrote it"
 - Self-check after a heavy LLM-drafting session
+- Filtering your own replies, explanations, and drafts as you write them (inline mode, see below)
 
 ## When NOT to use
 
@@ -37,6 +38,44 @@ Based in part on [Wikipedia: Signs of AI writing](https://en.wikipedia.org/wiki/
 - Correctness bugs, logic errors, edge cases - use **code-review**
 - Security review of auth, secrets, or attack surface - use **security-audit**
 - Full multi-dimensional repo audit - use **full-review**
+
+---
+
+## Two modes
+
+This skill runs in one of two modes. Pick the mode from the trigger, not from the content.
+
+### Inline mode (default, always on)
+
+Applies to your own conversational output: chat replies, explanations, summaries, commit bodies,
+PR descriptions, and any prose you draft for the user. Runs on every response without being asked.
+
+- Apply the pattern rules silently while writing. This filters drafting, it does not review a
+  finished draft.
+- Emit **no report, no findings, no severity ratings, no deliverable file**, and no note that the
+  skill ran.
+- Do not restructure the user's own words when quoting them back.
+- Density thresholds do not apply. Fix every tell you catch in your own output.
+- Ask before sending: "what in this reply reads as machine generated?" Fix what that surfaces.
+
+### Audit mode (explicit)
+
+Applies to text the user hands over: a file, a paste, a diff, a directory. Triggered by an
+explicit request ("audit this", "does this sound like AI", "unslop this doc") or by invoking the
+skill against a target. Run the full Workflow below, emit the full output contract, and apply the
+density thresholds so isolated instances in long documents are not flagged.
+
+### Precedence
+
+When rules conflict, later entries lose:
+
+1. The user's explicit instruction in this conversation
+2. Project instruction files (`CLAUDE.md`, `AGENTS.md`, repo style guide)
+3. Genre convention of the text being written (see "What NOT to Flag")
+4. This skill's pattern rules
+
+A house style that mandates em dashes, title-case headings, or a formal register is not a finding.
+Inline mode adapts to it rather than overriding it.
 
 ---
 
@@ -56,6 +95,11 @@ Before returning any audit, verify:
 - [ ] **AI fallback names checked (fiction)**: protagonist and major-character names compared against the documented fallback set (Elara, Lyra, Aurora, Kael, Vale, Cassius, etc.) and the phonetic tell (2 soft syllables, A/L/R/N consonants, no demographic anchor); fallback-set names allowed only when the setting and population organically produce them
 - [ ] **Adverb stacking checked**: `-ly` adverb density scanned; passages with multiple adverb-modified speech tags or adjacent adverb clusters flagged at the same density threshold as vocabulary tells
 - [ ] **Confident filler checked**: emphasis crutches, rhetorical setups, and faux-profundity fragments flagged by pattern/density, not on isolated earned uses
+- [ ] **Mode picked correctly**: inline mode emitted no report, no findings list, and no deliverable file; audit mode emitted the full contract. The two were not mixed in one response
+- [ ] **House style respected**: project instruction files and explicit user instructions took precedence over this skill's pattern rules; a mandated em dash or title-case convention was not reported as a finding
+- [ ] **Plain-speech checks run**: participle tails, false ranges, unnamed-actor passives, dense sentence stacking, and feeling-instead-of-mechanism scanned alongside the vocabulary tells
+- [ ] **Chat artifacts cleared**: no `Great question!`, `I hope this helps!`, `Certainly!`, or cutoff disclaimer survived into the output, in either mode
+- [ ] **Voice restored, not imposed**: rewrites carry a position, varied rhythm, and specifics; voice suggestions are marked `Consider`, never `Fix`
 - [ ] **Overflagging avoided**: plain but valid technical prose is not labeled AI-written without concrete evidence
 - [ ] **Audience preserved**: edits keep the author's domain vocabulary, intent, and required formality
 - [ ] Cross-cutting agent hygiene applied - see `references/agent-hygiene.md`
@@ -78,68 +122,21 @@ Before returning any audit, verify:
 
 ## Workflow
 
-### Step 1: Scope the audit
+Audit mode only. Full detail in `references/audit-mode.md`: scoping rules, the text-kind table,
+the density heuristic, the action and severity scales, and the report template with a worked
+example.
 
-Default scope based on context:
-- If invoked on a specific file or paste - audit that text
-- If invoked with no target and there are uncommitted changes to `.md` / `.txt` / doc files - audit those
-- If invoked in a code repo with recent commits - audit the docstrings and comments in changed files
-- Otherwise - ask the user for a target
-
-Available scopes:
-- **Single file** - one doc, README, draft, or source file
-- **Directory** - all `.md` / `.rst` / `.txt` under a path
-- **Pasted text** - inline block the user supplies
-- **Recent changes** - git diff against a base
-- **Comments and docstrings only** - scan code files but audit only prose regions
-
-### Step 2: Detect text kind
-
-Different text types have different conventions. Before flagging, identify which applies:
-- **Technical docs** - formal is OK, but vocabulary bans still apply
-- **README / PR / commit** - concise is expected, significance padding is especially jarring
-- **Marketing / product copy** - tonal tells (`boast`, `showcase`) may be intentional but still weaken the writing
-- **Creative fiction** - many tells (tricolons, elegant variation) are legitimate devices; flag only when they read as mechanical
-- **Wiki article** - neutral voice required, promotional language is always a finding
-- **Email** - conversational is expected, formality inflation is a tell
-- **Slides / presentation** - fragments are fine, but vocabulary and tonal tells still apply
-
-### Step 3: Scan for patterns
-
-Apply the four categories (see below). For each match, read the surrounding context - a single instance of an AI word in a 5000-word document is probably noise, but three instances in three paragraphs is a pattern.
-
-**Density heuristic** (rough guide, not a hard rule):
-- **Under 1 flagged item per 500 words** - noise, usually do not flag
-- **2-3 per 500 words** - a pattern, flag the cluster as P2
-- **4+ per 500 words** - dominant voice, P1 severity, recommend structural rewrite
-
-**Short text scaling:** for text under 100 words, any 2+ tells in a single paragraph is P1 severity regardless of the per-500-words threshold. A single sentence crammed with AI vocabulary is worse than a long doc with scattered instances.
-
-Density only applies to vocabulary and syntax tells. A single travel-guide paragraph is enough to flag on its own. One fabricated citation is always P1.
-
-Classify each finding by category, action, and severity:
-
-**Action:**
-- **Fix** - clearly a tell, should change
-- **Consider** - judgment call, present it and let the user decide
-- **Fine** - matches the pattern but is justified (note why, move on)
-
-**Severity:**
-- **P1** - cluster of tells that makes the piece sound unmistakably AI-written; vague attribution passing opinion as fact; fabricated citations or broken references
-- **P2** - vocabulary or syntax tells that dull the voice without breaking trust; formulaic structures ("Despite its X, faces challenges..."); travel-guide voice in non-travel writing
-- **P3** - single instances of banned vocabulary; formatting nits (em-dash usage, unnecessary bold); tricolon overuse
-
-### Step 4: Report and fix
-
-Present findings grouped by category. For each Fix-level item, show the concrete rewrite. Rewrites should be **shorter** or **more specific** - never longer.
-
-**Plan first, apply that plan only.** Produce the audit report as the improvement plan before any
-rewrites are merged. If the user then asks for the fixes to be applied, change only what the plan
-flagged. Do not freelance edits outside the plan, do not "while we're here" rewrite adjacent
-prose, and do not chain a second pass of new fixes on top of the applied ones in the same step.
-This keeps the work auditable and prevents a cheap model from re-drafting the piece worse than
-the original. If new findings emerge while applying, surface them as a second audit, not as
-silent edits.
+1. **Scope.** Audit the file or paste given. With no target, fall back to uncommitted doc changes,
+   then to docstrings in changed files, then ask.
+2. **Detect text kind.** Technical docs, README/PR/commit, marketing, fiction, wiki, email, and
+   slides each carry conventions that change what counts as a tell.
+3. **Scan.** Apply the four categories below. Read surrounding context before flagging: one AI word
+   in 5000 words is noise, three in three paragraphs is a pattern. Density sets severity, and text
+   under 100 words with 2+ tells in a paragraph is P1 regardless.
+4. **Report and fix.** Group by category, show the concrete rewrite, keep every rewrite shorter or
+   more specific than the original. **Plan first, apply that plan only:** when the user asks for
+   fixes, change only what the report flagged. New findings during application become a second
+   audit, never silent edits.
 
 ---
 
@@ -186,6 +183,12 @@ Specific words that LLMs overuse far beyond their natural English frequency.
 | commence | start, begin |
 | journey toward | work toward, move toward, aim for (or drop) |
 | moving forward | from now on, next, going forward (or drop) |
+| additionally | also, and (or start the sentence with the content) |
+| enhance | improve, speed up, extend (or name the change) |
+| interplay | how X and Y interact (or drop) |
+| intricate | detailed, complex (or drop - usually padding) |
+| numerous | many |
+| ensure | make sure, guarantee (or name the mechanism) |
 
 **Detect:**
 - Multiple flagged words in the same paragraph
@@ -201,6 +204,19 @@ See "What NOT to Flag" below for domain exceptions (horticulture `landscape`, ch
 Generated fiction often converges on soft, no-baggage names such as `Elara`, `Kael`, or
 `Voss`. If a prose audit includes invented character names, read
 `references/fiction-name-tells.md` for the fallback-name pattern, exceptions, and fix guidance.
+
+#### Abstract metaphor nouns
+
+Nouns that read as technical but stand in for a plainer word: `substrate`, `wedge`, `vector`,
+`locus`, `vantage`, `nexus`, `primitive` (as noun), `harness` (as metaphor), `surface` (as in
+"API surface"), `bedrock`, `scaffolding` (as metaphor), `modality`, `paradigm`, `gold-plating`.
+
+**Detect:** the noun carries no measurement, no referent, and no consequence.
+
+**Fix:** name the concrete thing. `substrate` -> `base`, `wedge in` -> `add`, `vector` -> `way`.
+
+**Exception:** each is a term of art somewhere (`vector` in linear algebra, `locus` in
+genetics). Full table and per-term exceptions in `references/plain-speech.md`.
 
 ### 2. Syntax Tells (Noise + Soul)
 
@@ -263,6 +279,47 @@ LLMs avoid repeating a noun within a paragraph, substituting increasingly strain
 - Different technical terms for the same concept within one document
 
 **Fix:** Use the name, or a pronoun. Repetition is fine. Forced variation is worse than repetition.
+
+#### Superficial participle tails
+
+A sentence ending in a comma plus an `-ing` clause that restates what the sentence already
+said. Implies consequence without asserting one.
+
+**Detect:** `..., highlighting the need for X`, `..., ensuring reliability`, `..., reflecting
+a broader shift`, `..., showcasing the team's expertise`, `..., underscoring its importance`.
+Test: cut the clause. If nothing is lost, it was decoration.
+
+**Fix:** Delete the tail. If the consequence is real, promote it to its own sentence with a
+stated mechanism: `..., ensuring reliability` -> `Retries cover the transient failures.`
+
+#### False ranges
+
+`from X to Y` where X and Y do not sit on a shared scale, used to imply comprehensive coverage
+of what is really two examples.
+
+**Detect:** `everything from authentication to deployment`, `from startups to enterprises` with
+no middle named. Test for a meaningful midpoint: `from 10ms to 2s` is a real range, `from CI to
+observability` is not.
+
+**Fix:** List the items directly. `covers authentication and deployment`.
+
+#### Passive voice with an unnamed actor
+
+`is/are/was/were + past participle` that drops the actor: `queries are validated`, `errors are
+logged`. Ask who does it; if the answer is in the document but not the sentence, name it.
+
+**Fix:** Promote the actor to subject. `the compiler validates queries`.
+
+**Exception:** correct when the actor is unknown, irrelevant, or withheld on purpose (incident
+writeups, scientific method sections). See `references/plain-speech.md`.
+
+#### Dense sentence stacking
+
+Three or more clauses chained with commas, `and`, `which`, and `while`. Length is not the tell,
+backtracking is: flag sentences needing a second pass to locate the verb.
+
+**Fix:** Split at the clause boundary, or drop the clause carrying the least. One idea per
+sentence. Worked before/after in `references/plain-speech.md`.
 
 ### 3. Tonal Tells (Soul)
 
@@ -333,6 +390,7 @@ Phrases that wrap around the actual content without adding information. LLMs lea
 - `here's the thing:` / `the fact is:` / `the truth is:`
 - `at the end of the day` / `when all is said and done`
 - `as we've seen` / `as mentioned earlier` / `as previously discussed` (when the reader just read it)
+- Wordy connectives with a one-word equivalent: `in order to` -> `to`, `due to the fact that` -> `because`, `in the event that` -> `if`, `for the purpose of` -> `to`, `with regard to` -> `about`, `a large number of` -> `many`, `at this point in time` -> `now`
 
 **Fix:** Cut the wrapper and keep the content. `It's worth noting that X` becomes `X`. `In this article, we'll explore Y` becomes a first sentence that is about Y.
 
@@ -355,12 +413,51 @@ LLMs reach for a formula when asked to describe any organization or project: pos
 
 **Fix:** Reorganize around the actual story. If there is no story, the piece probably should not exist.
 
+#### Chat artifacts and sycophancy
+
+Assistant-voice residue that survives a copy-paste out of a chat window into a doc, PR, or
+email. Also the highest-value check in inline mode, where it applies to the reply itself.
+
+**Detect:** openers (`Great question!`, `Certainly!`, `You're absolutely right!`), closers
+(`I hope this helps!`, `Let me know if you have any questions`), progress theater (`Found the
+smoking gun!`, `Perfect!` as a standalone reaction), and restating the request before answering it.
+
+**Fix:** Delete. Open with the answer, close when the answer ends. In inline mode this is a hard
+rule with no density threshold: one `Great question!` is one too many.
+
+#### Cutoff and knowledge disclaimers
+
+Hedges about the model's own limits, left in text a human is supposed to have written:
+`While specific details are limited`, `As of my last update`, `I don't have access to
+real-time data`, `Based on available information`.
+
+**Fix:** Find the fact and state it, or cut the sentence. If the uncertainty is real, name what
+is unknown and why: `The 2026 figures are not published yet`.
+
+#### Feeling instead of mechanism
+
+Prose naming an impression rather than a fact the reader can act on. Ask what the sentence tells
+the reader to do or know: `the database stays close at hand`, `SQL you can read`, `types that
+follow your schema` all fail that test.
+
+**Fix:** Replace with the mechanism, a number, or an instruction. `.toSQL() returns the exact
+string sent to the database.` If no concrete restatement exists, cut the sentence. Table and
+exceptions in `references/plain-speech.md`.
+
+#### Generic forward-looking conclusions
+
+A closing paragraph gesturing at the future without committing: `The future looks bright`,
+`Only time will tell`, `As the space continues to evolve`, `The possibilities are endless`.
+
+**Fix:** State a specific plan, date, or fact, or end on the last real point. A piece does not
+need a conclusion paragraph to be finished.
+
 ### 4. Formatting Tells (Noise)
 
 Layout and punctuation patterns that LLMs default to.
 
 **Detect:**
-- **Em dashes** (Unicode U+2014, or the `--` double-dash substitute) used as sentence breaks. LLMs overuse them to imitate journalistic cadence. Replace with single `-` or restructure the sentence.
+- **Em dashes** (Unicode U+2014, or the `--` double-dash substitute) used as sentence breaks. LLMs overuse them to imitate journalistic cadence. Replace with single `-` or restructure the sentence. Do not swap in parentheses or en dashes instead: that trades one tell for another. If the thought needs separation, end the sentence or use a comma.
 - **Title Case in section headings** (`Understanding the Core Concepts` vs `Understanding the core concepts`). AI defaults to title case even in sentence-case conventions. Match the project's style.
 - **Excessive bold** - every third noun bolded for no reason. Bold earns its use by signaling a term or path.
 - **Bullet salad** - prose turned into bullets when a paragraph would read better. Lists are for enumerations, not for every idea.
@@ -372,6 +469,39 @@ Layout and punctuation patterns that LLMs default to.
 - **LLM output bugs** - `turn0search0`, `contentReference`, `oaicite`, `+1`, `attached_file`, hallucinated wiki-style shortcuts
 
 **Fix:** Match the surrounding project's conventions. If there is no convention, default to plain ASCII, sentence case, minimal bold, paragraph prose.
+
+#### Colon as a mid-sentence connector
+
+A colon whose right side is a full clause that would read the same as its own sentence, adding
+a beat of false setup: `If you're coming from traditional automation: instead of registering
+event handlers, you describe conditions.`
+
+**Fix:** End the sentence, or rewrite so the point stands without the comparison framing.
+
+**Exception:** colons before lists, definitions, quotes, and code blocks are correct, as is one
+introducing a real specification (`One rule: never force-push shared branches`).
+
+#### Inline-header lists that restate themselves
+
+A bold label followed by a colon whose text repeats the label:
+`**Performance:** Performance improved by 12%.`
+
+**Fix:** Convert to prose, or drop the label. `Performance improved by 12%.`
+
+**Exception:** a bold lead-in ending in a period that names the item and is followed by new
+detail is a definition list, not a tell: `**Schema in TypeScript.** Tables live in one file.`
+
+---
+
+## Restoring Voice
+
+Removing tells is half the work. Prose stripped of every pattern and given nothing back reads as
+sterile, which is its own tell. Rewrites should carry a position, varied rhythm, acknowledged
+complexity, first person where it fits, and specifics. Long form in `references/plain-speech.md`.
+
+In **audit mode**, voice notes are `Consider`-level, never `Fix`. Voice belongs to the author.
+Never rewrite a piece into your own voice under the banner of removing AI tells. In **inline
+mode**, apply this to your own drafting rather than reporting on it.
 
 ---
 
@@ -389,6 +519,12 @@ These look like AI tells but are not:
 - **Lists that are actually lists** - a three-item list is only suspicious if the items are padded. An enumeration of three real things is fine
 - **Bold where it signals a term or path** - bolding a defined term on first use is standard
 - **Em dashes in publications that require them** - some style guides (Chicago, AP) allow or require em dashes. The rule applies to your project's conventions
+- **Deliberate passive voice** - when the actor is unknown, irrelevant, or withheld on purpose. Incident writeups keep blame off individuals by design. Scientific method sections use passive by convention
+- **Colons before lists, definitions, quotes, or code blocks** - that is what colons are for. Only the mid-sentence clause joint is a tell
+- **Definition-list bold lead-ins** - `**Term.** New detail follows.` is a real pattern. The tell is only the label that restates itself: `**Performance:** Performance improved...`
+- **Real ranges** - `from 10ms to 2s`, `from v1 to v4` sit on a shared scale. Only ranges with no meaningful midpoint are false ranges
+- **Long sentences that parse on first read** - length is not the tell, backtracking is
+- **Terms of art among the abstract metaphor nouns** - `vector` in linear algebra, `primitive` in cryptography, `locus` in genetics, `harness` in test tooling
 - **A genuine rhetorical question or single hard fragment** - one "What if X?" that the piece actually answers, or one deliberate "That's it." landing a point, is voice. Flag the pattern (stacked setups, repeated faux-profundity fragments), not the isolated use. An earned single use is not a tell, so it does not count toward the short-text density threshold or escalate to P1 on its own - it is the stacking that carries the severity.
 
 ### Counter-example (prose that looks AI but is fine)
@@ -401,67 +537,21 @@ Looks flagged at a glance: `nestled`, `landscape`, `robust`, `underscores`, `piv
 
 ## Output Format
 
-````markdown
-## Anti-AI-Prose Audit: [scope]
+Audit mode only. See `references/audit-mode.md` for the report template, the rules for the
+report itself, and a worked example anchoring the format.
 
-### Findings
+Inline mode has no output format: the cleaned prose is the output.
 
-#### [Category Name] ([count] items)
+## Reference Files
 
-**[action]** ([severity]) `path/to/file:line` - [description]
-
-> before: [quoted text from the source]
-
-> after: [suggested rewrite]
-
-### Summary
-- X findings across Y files / sections
-- [overall read: does the piece sound human?]
-- [top-level observation: e.g., "vocabulary is mostly fine but the structure is formulaic"]
-````
-
-Rules for the report itself:
-- **Omit empty categories.** If there are no formatting tells, do not write an empty "Formatting Tells (0 items)" heading
-- **Order within a category** P1 > P2 > P3
-- **Deletion fixes have no "after"** - write `> after: (cut)` or just state the delete in the description
-- **Apply these rules to your own audit.** Run the Self-Check on the report before returning it - an audit written in AI-slop voice is not credible
-
-Keep it concise. Show the before/after pair. Do not lecture about why AI writing is bad - the user already knows.
-
-### Worked example (anchor the format)
-
-Input (README snippet, 48 words):
-
-> In today's fast-paced world, our platform empowers developers to seamlessly navigate the complex landscape of modern APIs. Built with a commitment to excellence, it boasts robust features and fosters innovation. Whether you're a beginner or expert, this tool serves as a pivotal resource for your journey toward better software.
-
-Report:
-
-```
-## Anti-AI-Prose Audit: README snippet (48 words)
-
-### Findings
-
-#### Vocabulary Tells (9 items)
-
-**Fix** (P1) line 1 - cluster of 9 flagged words in 48 words: far above 4/500 threshold
-> before: empowers / seamlessly / navigate / landscape / commitment to / boasts / fosters / pivotal / journey toward
-> after: (rewrite, see below)
-
-#### Tonal Tells (2 items)
-
-**Fix** (P1) line 1 - scaffolding padding and significance padding
-> before: "In today's fast-paced world"
-> after: (cut)
-
-**Fix** (P2) line 1 - promotional tone
-> before: "Built with a commitment to excellence"
-> after: (cut)
-
-### Summary
-- 11 findings, one paragraph, dominant AI voice
-- Rewrite: "An HTTP API client for Python. Handles auth, retries, and pagination. Works with any OpenAPI 3.x spec."
-- Down from 48 words to 22, with concrete claims instead of posture
-```
+- `references/audit-mode.md` - audit-mode workflow, scoping, density and severity scales, the
+  report template, and a worked example
+- `references/plain-speech.md` - abstract metaphor nouns, the concreteness test, the actor
+  test, sentence splitting, and voice restoration in long form with worked examples
+- `references/fiction-name-tells.md` - AI fallback character names, the phonetic pattern, and
+  when a fallback-set name is legitimate
+- `references/agent-hygiene.md` - cross-cutting agent hygiene checks shared across the collection
+- `references/output-contract.md` - the shared output contract
 
 ## Output Contract
 
@@ -469,7 +559,7 @@ See `references/output-contract.md` for the full contract.
 
 - **Skill name:** ANTI-AI-PROSE
 - **Deliverable bucket:** `audits`
-- **Mode:** always-on. Every invocation emits the full contract - boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table.
+- **Mode:** conditional, split on the two modes above. **Audit mode** (a file, paste, diff, or directory handed over for review) emits the full contract - boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table. **Inline mode** (filtering your own conversational output as you write it) emits nothing: no header, no findings, no deliverable, no announcement that the skill ran.
 - **Deliverable path:** `docs/local/audits/anti-ai-prose/<YYYY-MM-DD>-<slug>.md`
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract).
 
@@ -493,3 +583,6 @@ See `references/output-contract.md` for the full contract.
 6. **Keep the voice of the author.** The goal is prose that sounds like a specific human, not a generic "good writing" rewrite. If you do not know the author's voice, leave stylistic calls alone and only flag the mechanical tells.
 7. **Do not pad the report.** If there are three findings, list three. Not five. Not one inflated to three.
 8. **Run the AI Self-Check** before returning any audit.
+9. **Inline mode is silent.** Applying these rules to your own output produces cleaner prose and nothing else. No report, no findings, no deliverable, no note that the skill ran. A user who wanted an audit will ask for one.
+10. **The user's style outranks these rules.** Explicit instructions, then project instruction files, then genre convention, then this skill. A house style that mandates em dashes or title case is not a finding.
+11. **In your own output, drop the density thresholds.** They exist to stop overflagging someone else's long document. One chat artifact in your own reply is one too many.

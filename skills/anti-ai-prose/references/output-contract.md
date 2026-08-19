@@ -182,11 +182,16 @@ docs/local/
 
 Each skill declares one of two modes in its `## Output Contract` section:
 
-- **Always-on:** every invocation emits the full contract. Used by audit/report skills (code-review, anti-slop, security-audit, deep-audit, full-review, update-docs, code-slimming, anti-ai-prose, localize).
+- **Always-on:** every invocation emits the full contract. Used by audit/report skills (code-review, anti-slop, security-audit, deep-audit, full-review, update-docs, code-slimming, localize).
 
 - **Conditional:** the agent applies this rule per invocation:
 
   > When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract and write a deliverable file to the declared bucket. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
+
+  A conditional skill may also run as a background filter on the agent's own output, with no
+  target artifact at all (anti-ai-prose does this). That path emits no contract, no deliverable,
+  and no announcement: there is nothing to report on, so reporting would be noise. Only an
+  invocation against a real target produces a deliverable.
 
 ## Fix protocol
 
