@@ -217,7 +217,13 @@ scripts/
   check-*.sh              # repository-specific safety and freshness checks
   skill-frontmatter.py    # frontmatter parser used by linters
   skill-lib.sh            # shared shell helpers
+.refiner-runs.json        # skill-refiner run history (repo root, single file)
+.refiner-ledger.md        # skill-refiner score ledger
 ```
+
+`.refiner-runs.json` and `.refiner-ledger.md` live at the repository root and nowhere
+else. `scripts/check-refiner-state.sh` fails the build if a second run-history file
+appears under `skills/`, which is how the log silently split before.
 
 ## Releases
 
