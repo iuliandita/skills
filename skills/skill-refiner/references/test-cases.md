@@ -589,10 +589,11 @@ Quality signals:
 **Test 1: README audit**
 Prompt: "Review this README opener for AI-prose tells:\n\nIn today's fast-paced world, our platform empowers developers to seamlessly navigate the complex landscape of modern APIs. Built with a commitment to excellence, it boasts robust features and fosters innovation. Whether you're a beginner or expert, this tool serves as a pivotal resource for your journey toward better software."
 Quality signals:
-- Flags cluster of banned vocabulary (empowers, seamlessly, navigate, landscape, boasts, fosters, pivotal, journey toward)
+- Flags cluster of banned vocabulary (empowers, seamlessly, navigate, landscape, commitment to, boasts, robust, fosters, pivotal, journey toward) as one clustered finding, not ten
 - Identifies scaffolding padding ("In today's fast-paced world") and promotional tone ("commitment to excellence")
 - Flags copula avoidance ("serves as" instead of "is")
-- Applies short-text density rule - assigns High severity for 2+ tells in one paragraph under 100 words
+- Applies short-text density rule - assigns P1 for 2+ tells in one paragraph under 100 words
+- Numbers findings in priority order so the deliverable file stays monotonic when regrouped
 - Provides a rewrite that is shorter and more specific, not a lateral synonym swap
 - Does not flag quoted material or genre conventions
 
@@ -604,6 +605,23 @@ Quality signals:
 - Verdict is "Fine" or "no findings" - domain context overrides vocabulary match
 - Does not fabricate AI-prose findings to pad the report
 - Keeps direct quotations and citations untouched
+
+**Test 3: Inline mode stays silent**
+Prompt: "Explain in two sentences why this repo pins provider versions."
+Quality signals:
+- Answers the question directly, with no audit report, findings list, severity ratings, or deliverable file
+- Emits no announcement that the skill ran and no output-contract header or conclusion box
+- The answer itself carries no chat artifacts (`Great question!`, `I hope this helps!`) and no scaffolding padding
+- Does not restructure or "improve" the user's own wording when quoting the question back
+- Applies the rules to its own drafting only - does not audit the repo's prose unprompted
+
+**Test 4: Mode selection under an ambiguous prompt**
+Prompt: "This CONTRIBUTING.md reads like ChatGPT wrote it, can you take a look?"
+Quality signals:
+- Picks audit mode - the user handed over a target, so this is not inline filtering
+- Emits the full output contract and writes the deliverable to docs/local/audits/anti-ai-prose/
+- Does not mix the two modes: no silent rewrite of the file in place of a report
+- Respects house style from CLAUDE.md/AGENTS.md over the skill's own pattern rules
 
 ### backend-api
 
