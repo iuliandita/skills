@@ -589,10 +589,11 @@ Quality signals:
 **Test 1: README audit**
 Prompt: "Review this README opener for AI-prose tells:\n\nIn today's fast-paced world, our platform empowers developers to seamlessly navigate the complex landscape of modern APIs. Built with a commitment to excellence, it boasts robust features and fosters innovation. Whether you're a beginner or expert, this tool serves as a pivotal resource for your journey toward better software."
 Quality signals:
-- Flags cluster of banned vocabulary (empowers, seamlessly, navigate, landscape, boasts, fosters, pivotal, journey toward)
+- Flags cluster of banned vocabulary (empowers, seamlessly, navigate, landscape, commitment to, boasts, robust, fosters, pivotal, journey toward) as one clustered finding, not ten
 - Identifies scaffolding padding ("In today's fast-paced world") and promotional tone ("commitment to excellence")
 - Flags copula avoidance ("serves as" instead of "is")
 - Applies short-text density rule - assigns P1 for 2+ tells in one paragraph under 100 words
+- Numbers findings in priority order so the deliverable file stays monotonic when regrouped
 - Provides a rewrite that is shorter and more specific, not a lateral synonym swap
 - Does not flag quoted material or genre conventions
 

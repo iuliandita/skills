@@ -341,11 +341,15 @@
     },
     "scoring_note": "Model changed since the prior run (opus-4-8 -> opus-5), so this is a new baseline, not a comparable delta. Baseline was taken after the unslop merge landed. A = fresh-context skill-creator Mode 2 review (checklist pass rate). B = 6 behavioral runs as fresh-context subagents on hand-written test cases plus 2 harder generated ones (docstring scope, 520-word mixed doc). X = codex round-4 residual flag count, not re-measured after the final fix round; it is the most conservative component and is labeled an estimate. Composite uses gate/A40/B55/X5.",
     "changes": "iter1 (skill-creator Mode 2): SKILL.md 588 -> 496 lines via vocabulary regrouping and two reference extractions, clearing the repo's only lint warning; inline-mode scope corrected; dead cross-collection pointer removed. iter2: P0/info defined for prose; audit-mode template reconciled with the output contract; density scope reconciled across files; self-check rescoped to both modes. iter3: single authoritative gated/not-gated density list; worked-example taxonomy and counts fixed; docstring-vs-code scope disambiguated; short-text rule vs formatting-nit cap resolved. iter4: findings numbered in priority order for deliverable monotonicity; '+1' removed from generator residue (false positive); counter-example term-of-art overclaim corrected; '(or cut)' convention applied consistently.",
-    "deferred": [
-      "skills/_shared/output-contract.md uses em dashes and Unicode arrows in prose; generated verbatim into all skills, so it is a collection-wide decision, not an anti-ai-prose defect. Notable because this skill's job is flagging em dashes.",
-      "skill-refiner/references/test-cases.md anti-ai-prose expected signals omit 'robust' from the vocabulary cluster and expect 'serves as' inside it rather than as a separate copula finding. Left unedited on purpose: changing evaluation fixtures mid-run to match the artifact would invalidate the scoring. Phase-2 item.",
-      "fiction-tells.md carries three high-specificity external statistics that could not be verified offline this run."
-    ],
-    "phase2": "not run - single-skill scope, no meta-improvement to skill-creator or skill-refiner"
+    "deferred": [],
+    "phase2": "not run - single-skill scope, no meta-improvement to skill-creator or skill-refiner",
+    "deferred_resolved": {
+      "date": "2026-08-19",
+      "items": [
+        "_shared/output-contract.md converted to ASCII (em dashes, en dash, Unicode arrows, ellipsis) in both prose and the emitted heading spec; this aligns it with README.md, which already documented the ASCII form. Regenerated into all 47 skills; box art still exactly 80 columns. Collection-wide non-ASCII sweep now returns zero.",
+        "skill-refiner/references/test-cases.md anti-ai-prose Test 1 corrected: added the missing 'robust' and 'commitment to' to the vocabulary cluster, stated it should be one clustered finding rather than ten, and added a priority-order numbering signal. Edited post-run, not mid-run.",
+        "fiction-tells.md statistics verified against primary sources with web access. Namerology/Elara confirmed exactly. Laforge confirmed (Kaggle sci-fi dataset ~10,000 books; 'Dr Thorne' in 26 book descriptions, 204 appearances) - wording corrected from '26 books' to '26 book descriptions'. ChuckMcSneed claim was WRONG and is now fixed: it compared 77% of top-10 names against 4% of top pick, and omitted base Qwen2.5 at 28%. All three sources now carry URLs and a verification date."
+      ]
+    }
   }
 ]
