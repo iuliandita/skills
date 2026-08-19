@@ -102,7 +102,9 @@ contested major flags (non-configurable).
    on a run branch for this sweep, record it instead of nesting another branch. Do not mix
    unrelated dirty files into refiner commits; isolate them with a path-limited stash only
    when authorized.
-2. **Load run history**: read `.refiner-runs.json` from the collection root (if it exists).
+2. **Load run history**: read `.refiner-runs.json` from the repository root, beside
+   `.refiner-ledger.md` (if it exists). Repository root, not the `skills/` directory: a
+   second history file in `skills/` splits the log and hides prior baselines.
    Use previous run data for: baseline score comparison (detect regressions from external
    changes), model/harness change detection (flag if the primary or secondary model changed
    since last run - new model = new baseline, not a comparable delta), and skip analysis
@@ -239,8 +241,8 @@ contested major flags (non-configurable).
     Contested:  Z flags escalated to human
     =================================================================
     ```
-23. **Write run history**: append this run's metadata to `.refiner-runs.json` in the
-    collection root. Include: run_id, branch, date, primary/secondary harness+model+effort,
+23. **Write run history**: append this run's metadata to `.refiner-runs.json` at the
+    repository root, the same file read in Phase 0 step 2. Include: run_id, branch, date, primary/secondary harness+model+effort,
     config, pool size, termination reason, cross-model flag counts, before/after per-skill
     scores (component breakdown + composite, or clearly labeled estimates if the run used a
     targeted manual rubric instead of the full automated sweep), and a changes summary. When
