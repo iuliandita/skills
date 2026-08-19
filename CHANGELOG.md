@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.45.1](https://github.com/iuliandita/skills/compare/v1.45.0...v1.45.1) (2026-08-19)
+
+
+### Bug Fixes
+
+* **skill-refiner:** consolidate split run history, harden CI ([#127](https://github.com/iuliandita/skills/issues/127)) ([aae1ce6](https://github.com/iuliandita/skills/commit/aae1ce6335d11829bc696043e9e28a6484057791))
+
 ## [1.45.0](https://github.com/iuliandita/skills/compare/v1.44.0...v1.45.0) (2026-08-19)
 
 
