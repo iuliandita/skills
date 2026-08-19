@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.45.0](https://github.com/iuliandita/skills/compare/v1.44.0...v1.45.0) (2026-08-19)
+
+
+### Features
+
+* **anti-ai-prose:** add inline mode and fold in unslop rules ([#126](https://github.com/iuliandita/skills/issues/126)) ([d3b3be3](https://github.com/iuliandita/skills/commit/d3b3be36fe64f594beb186495ab671f1cdf5c7f0))
+
 ## [1.44.0](https://github.com/iuliandita/skills/compare/v1.43.0...v1.44.0) (2026-07-29)
 
 
