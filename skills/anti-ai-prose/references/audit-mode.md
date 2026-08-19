@@ -187,4 +187,3 @@ Report:
   neither says more than the rewrite already does. Ask the author for the missing specifics;
   inventing them would be a P0 trust breach, whoever writes it.
 ```
-
