@@ -1,7 +1,7 @@
 ---
 name: mcp
 description: >
-  · Build/review MCP servers, tools, resources, prompts, transports, OAuth, elicitation. Triggers: 'mcp', 'model context protocol', 'mcp server', 'tool handler', 'fastmcp', '@modelcontextprotocol/sdk'. Not for HTTP APIs (use backend-api).
+  · Build/review MCP servers, clients, tools, resources, OAuth. Triggers: 'mcp', 'model context protocol', 'mcp server', 'mcp client', 'fastmcp', '@modelcontextprotocol/server', '@modelcontextprotocol/sdk'. Not HTTP APIs (backend-api).
 license: MIT
 compatibility: Requires Node.js or Python runtime
 metadata:
@@ -36,7 +36,7 @@ become yet another server with preventable injection vulnerabilities.
 
 ## When NOT to use
 
-- General REST API development that doesn't use MCP - just write the API
+- General REST API development that doesn't use MCP - use **backend-api**
 - Claude API / Anthropic SDK usage in an application - use **ai-ml**
 - Security auditing existing servers across a codebase - use **security-audit** (it has an MCP section)
 - Using MCP browsing tools to browse or scrape web pages - use **browse**
@@ -145,8 +145,34 @@ function createServer(): McpServer {
   return server;
 }
 
-void serveStdio(createServer);
+async function main(): Promise<void> {
+  const handle = await serveStdio(createServer);
+  let closing = false;
+
+  const shutdown = async (signal: NodeJS.Signals): Promise<void> => {
+    if (closing) return;
+    closing = true;
+    try {
+      await handle.close();
+    } catch (error: unknown) {
+      console.error(`Failed to shut down after ${signal}:`, error);
+      process.exitCode = 1;
+    }
+  };
+
+  process.once("SIGINT", () => void shutdown("SIGINT"));
+  process.once("SIGTERM", () => void shutdown("SIGTERM"));
+}
+
+void main().catch((error: unknown) => {
+  console.error(error);
+  process.exitCode = 1;
+});
 ```
+
+`serveStdio` owns the stdio transport and returns a handle whose `close()` shuts down both the
+pinned server instance and transport. Keep all stdio diagnostics on stderr; stdout is the protocol
+channel.
 
 **Python** (FastMCP for quick prototyping):
 
