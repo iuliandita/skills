@@ -239,7 +239,7 @@ See `references/output-contract.md` for the full contract.
 
 - **Skill name:** JEKYLL-HYDE
 - **Deliverable bucket:** `deliverables`
-- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** an existing artifact (e.g., adversarial review of a strategy doc, design, or PR), emit the full contract - boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table - and write the deliverable to `docs/local/deliverables/jekyll-hyde/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content** (its primary advisor mode - delivering perspectives in chat), respond freely without the contract.
+- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** an existing artifact (e.g., adversarial review of a strategy doc, design, or PR), emit the full contract - monospace inline header, severity-grouped inline summary, linked Markdown deliverable, and concise monospace conclusion - and write the deliverable to `docs/local/deliverables/jekyll-hyde/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content** (its primary advisor mode - delivering perspectives in chat), respond freely without the contract.
 - **Deliverable path:** `docs/local/deliverables/jekyll-hyde/<YYYY-MM-DD>-<slug>.md`
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
 

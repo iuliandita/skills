@@ -464,7 +464,7 @@ See `references/output-contract.md` for the full contract.
 
 - **Skill name:** DEEP-AUDIT
 - **Deliverable bucket:** `audits`
-- **Mode:** always-on. Every invocation emits the full contract - boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table.
+- **Mode:** always-on. Every invocation emits the full contract - monospace inline header, severity-grouped inline summary, linked Markdown deliverable, and concise monospace conclusion.
 - **Deliverable path:** `docs/local/audits/DEEP-AUDIT.md` (consolidated findings) and `docs/local/audits/DEEP-AUDIT-TASKS.md` (phased task list). Step 9b also writes `docs/local/specs/` and `docs/local/plans/` files when a full execution plan is generated.
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract).
 

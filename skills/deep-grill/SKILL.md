@@ -212,8 +212,8 @@ See `references/output-contract.md` for the full contract.
   conversationally (headless: one pass), always ending with the decision record written to the
   deliverable path using `references/decision-record.md`. Only when invoked to **stress-test an
   existing artifact** as a pure Phase-2 audit (a findings list against a spec or design doc that
-  already exists) do you emit the full boxed contract - inline header, per-finding detail in the
-  deliverable, boxed conclusion, conclusion table.
+  already exists) do you emit the full contract - monospace inline header, severity-grouped inline
+  summary, linked Markdown deliverable, and concise monospace conclusion.
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract). The decision record uses the `P0-P3` subset for risk priority; the full scale with `info` is used only in the audit path.
 
 ## Related Skills

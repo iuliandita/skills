@@ -2,7 +2,8 @@
 
 Deliverable body templates for Workflow Step 7. Field semantics (behavior invariant, validation
 evidence, action labels, `Risk`) are defined in `SKILL.md` Steps 5-6; the Output Contract wrapper
-(boxed header, conclusion table) is defined in the `SKILL.md` Output Contract section.
+(monospace header, severity-grouped summary, concise conclusion) is defined in the `SKILL.md`
+Output Contract section.
 
 ## Audit with findings
 

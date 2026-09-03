@@ -238,7 +238,8 @@ Scope: {scope}
 ### Step 3b: Write the full-review deliverable
 
 Write the same preflight block and four unedited report sections to
-`docs/local/audits/full-review/<YYYY-MM-DD>-<slug>.md`. Emit the shared contract's boxed header, boxed conclusion, and conclusion table. This mechanical wrapper is not cross-report synthesis:
+`docs/local/audits/full-review/<YYYY-MM-DD>-<slug>.md`. Emit the shared contract's monospace
+header, severity-grouped summary, and concise monospace conclusion. This mechanical wrapper is not cross-report synthesis:
 preserve every native report verbatim, record failed or partial status, and do not deduplicate,
 editorialize, or rank findings across reports.
 
@@ -264,7 +265,7 @@ See `references/output-contract.md` for the full contract.
 
 - **Skill name:** FULL-REVIEW
 - **Deliverable bucket:** `audits`
-- **Mode:** always-on. Every invocation emits the full contract - boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table.
+- **Mode:** always-on. Every invocation emits the full contract - monospace inline header, severity-grouped inline summary, linked Markdown deliverable, and concise monospace conclusion.
 - **Deliverable path:** `docs/local/audits/full-review/<YYYY-MM-DD>-<slug>.md`
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract).
 

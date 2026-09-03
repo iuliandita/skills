@@ -6,70 +6,73 @@ How a skill reports its findings: an inline surface in the transcript and a writ
 
 The contract has two intentionally divergent shapes:
 
-- **Inline (transcript):** boxed Unicode-art header -> compact body summary -> boxed conclusion header -> boxed conclusion table. Visual identity, scan-friendly, transient.
+- **Inline (transcript):** monospace metadata header -> severity-grouped summary -> concise monospace conclusion. Scan-friendly, transient, and stable across desktop Markdown renderers and terminals.
 - **File (deliverable):** pure markdown - H1/H2 grouped by priority, native `- [ ]` checkboxes per finding, full per-finding detail, "Fix applied" placeholder for the implementer. Renders properly in GitHub, GitLab, VS Code, Obsidian.
 
 ## Inline format
 
-### Header box
+### Monospace header
 
-Double-line, exactly 80 characters wide, variable height. No figlet/toilet runtime detection - boxes are static text the model emits directly.
+Use a fenced `text` block so desktop apps and terminals render the metadata with a monospace font. Do not pad fields to a fixed width.
 
-Minimum form (3 lines):
-
-```
-╔══════════════════════════════════════════════════════════════════════════════╗
-║  CODE-REVIEW  ->  docs/local/audits/code-review/2026-05-03-auth-review.md    ║
-╚══════════════════════════════════════════════════════════════════════════════╝
-```
-
-Extended form (when surfacing mode/target/started):
-
-```
-╔══════════════════════════════════════════════════════════════════════════════╗
-║  CODE-REVIEW                                                                 ║
-║  Mode: audit  ·  Target: src/auth/  ·  Started: 2026-05-03T14:22Z            ║
-║  Deliverable: docs/local/audits/code-review/2026-05-03-auth-review.md        ║
-╚══════════════════════════════════════════════════════════════════════════════╝
+```text
+SKILL         CODE-REVIEW
+STATUS        complete
+TARGET        src/auth/
+FINDINGS      5 (P0:2, P1:1, P2:1, P3:0, info:1)
+VERIFICATION  passed
+DELIVERABLE   docs/local/audits/code-review/2026-05-03-auth-review.md
 ```
 
-Conclusion header (same shape, name suffixed `· CONCLUSION`):
+Skill name is the directory name uppercased (`code-review` -> `CODE-REVIEW`). Omit optional metadata fields only when no meaningful value exists; always include skill, status, findings, verification, and deliverable.
 
-```
-╔══════════════════════════════════════════════════════════════════════════════╗
-║  CODE-REVIEW · CONCLUSION                                                    ║
-╚══════════════════════════════════════════════════════════════════════════════╝
-```
+### Severity summary
 
-Skill name is the directory name uppercased (`code-review` -> `CODE-REVIEW`).
+Use literal labels plus color markers. The text carries the meaning; color is supplemental:
 
-### Conclusion table
+P0 🔴  P1 🟠  P2 🟡  P3 🔵  info ⚪
 
-All-double Unicode box-drawing, fixed 80 chars wide, fixed 5 columns:
+Group findings by severity and omit empty groups. Put the marker in the Markdown heading, outside the aligned text block:
 
-```
-╔════╦══════════╦══════════╦══════════════════════════════════════╦════════════╗
-║ #  ║ Type     ║ Priority ║ Summary                              ║ Action     ║
-╠════╬══════════╬══════════╬══════════════════════════════════════╬════════════╣
-║ 1  ║ found    ║ P0       ║ Missing CSRF check on /api/posts     ║ recommend  ║
-║ 2  ║ found    ║ P0       ║ SQL injection via search param       ║ recommend  ║
-║ 3  ║ found    ║ P1       ║ Race condition in worker pool        ║ recommend  ║
-║ 4  ║ rec      ║ P2       ║ Extract repeated auth helper         ║ proposed   ║
-║ 5  ║ rec      ║ info     ║ Naming convention drift in /utils    ║ proposed   ║
-╚════╩══════════╩══════════╩══════════════════════════════════════╩════════════╝
+### P0 🔴
+
+```text
+1  Missing CSRF check on POST /api/posts
+2  SQL injection through the search parameter
 ```
 
-Column widths (cell content + 1 char padding either side):
+### P1 🟠
 
-| Column   | Width | Allowed values                                          |
-|----------|-------|---------------------------------------------------------|
-| #        | 4     | numeric, padded                                         |
-| Type     | 10    | `found` / `fixed` / `rec` / `skipped` / `error`         |
-| Priority | 10    | `P0` / `P1` / `P2` / `P3` / `info`                      |
-| Summary  | 38    | one-liner; truncate with `...` if it exceeds 36 chars     |
-| Action   | 12    | `applied` / `proposed` / `recommend` / `open` / `n/a`   |
+```text
+3  Race condition in the worker reconnect path
+```
 
-Outer walls + 4 inner separators = 80 chars total. Long summaries are tightened to fit; the unabridged description lives in the deliverable file's body.
+### P2 🟡
+
+```text
+4  Repeated authentication helper should be extracted
+```
+
+### info ⚪
+
+```text
+5  Filename convention drift under src/utils/
+```
+
+Each line contains only the report number and a concise summary. Full evidence and actions belong in the linked deliverable.
+
+### Monospace conclusion
+
+Do not repeat every finding in an inline table. End with a compact fenced block:
+
+```text
+CONCLUSION    5 findings; 2 must-fix, 1 should-fix, 1 improvement, 1 info
+VERIFICATION  passed
+DELIVERABLE   docs/local/audits/code-review/2026-05-03-auth-review.md
+NEXT          address P0 findings before merge
+```
+
+Do not emit ANSI escape sequences, HTML styling, Unicode box-drawing borders, or aligned emoji columns. These forms render inconsistently across desktop and terminal clients.
 
 ## File format (deliverable)
 
@@ -143,7 +146,7 @@ Notes:
 - Findings grouped by priority section. Sections with zero findings are omitted.
 - Each finding is a top-level `- [ ]` checkbox with bolded `#N Title`. Sub-bullets carry `File`, `Description`, `Suggested action`, `Fix applied`.
 - Numbering (`#1`, `#2`, ...) is monotonic across the whole report, not per-section. The conclusion table at the bottom uses the same numbers.
-- Conclusion is a standard markdown table in the file, not box-drawing - that style is reserved for inline.
+- Conclusion is a standard markdown table in the file. The inline surface uses the concise monospace conclusion instead.
 
 ### Deliverable filename
 
@@ -218,7 +221,7 @@ After:
 1. Runs the audit skill, writes the report to `docs/local/audits/<skill>/<date>-<slug>.md`.
 2. Iterates findings in priority order (P0 first).
 3. For each finding: implements the fix, updates the report file in place (checkbox -> `[x]`, placeholder -> one-line fix description), optionally commits the change atomically.
-4. After the loop, emits an updated inline conclusion table reflecting the new `Type` (`fixed`) and `Action` (`applied`) values.
+4. After the loop, updates the saved Markdown conclusion table and emits a concise inline conclusion with the new fixed/open totals and verification state.
 
 Layer 3 (a dedicated `apply-report` skill that takes a report path and runs the loop without re-running the auditor) is a future follow-up, not part of this contract.
 

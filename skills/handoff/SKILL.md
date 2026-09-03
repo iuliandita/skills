@@ -252,8 +252,8 @@ See `references/output-contract.md` for the full contract.
   respond freely without the contract; the handoff doc is written to `.handoff/` in the working
   directory, not to `docs/local/`. When invoked to **review or audit** existing handoff docs
   (e.g., "check whether these handoffs are leaking secrets or relitigating"), emit the full
-  contract - boxed inline header, body summary inline plus per-finding detail in the deliverable
-  file, boxed conclusion, conclusion table - and write the deliverable to
+  contract - monospace inline header, severity-grouped inline summary, linked Markdown
+  deliverable, and concise monospace conclusion - and write the deliverable to
   `docs/local/deliverables/handoff/<YYYY-MM-DD>-<slug>.md`.
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
 

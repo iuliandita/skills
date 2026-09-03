@@ -468,7 +468,7 @@ See `references/output-contract.md` for the full contract.
 
 - **Skill name:** ANTI-AI-PROSE
 - **Deliverable bucket:** `audits`
-- **Mode:** conditional, split on the two modes above. **Audit mode** (a file, paste, diff, or directory handed over for review) emits the full contract - boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table. **Inline mode** (filtering your own conversational output as you write it) emits nothing: no header, no findings, no deliverable, no announcement that the skill ran.
+- **Mode:** conditional, split on the two modes above. **Audit mode** (a file, paste, diff, or directory handed over for review) emits the full contract - monospace inline header, severity-grouped inline summary, linked Markdown deliverable, and concise monospace conclusion. **Inline mode** (filtering your own conversational output as you write it) emits nothing: no header, no findings, no deliverable, no announcement that the skill ran.
 - **Deliverable path:** `docs/local/audits/anti-ai-prose/<YYYY-MM-DD>-<slug>.md`
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract).
 

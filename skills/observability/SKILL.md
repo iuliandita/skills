@@ -205,7 +205,7 @@ See `references/output-contract.md` for the full contract.
 
 - **Skill name:** OBSERVABILITY
 - **Deliverable bucket:** `audits`
-- **Mode:** conditional. When invoked to **audit a repo for observability gaps** (the Wave 3 lens), emit the full contract - boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table - and write the deliverable to `docs/local/audits/observability/<YYYY-MM-DD>-<slug>.md`. When invoked to **build instrumentation, rules, pipelines, or dashboards**, respond freely without the contract.
+- **Mode:** conditional. When invoked to **audit a repo for observability gaps** (the Wave 3 lens), emit the full contract - monospace inline header, severity-grouped inline summary, linked Markdown deliverable, and concise monospace conclusion - and write the deliverable to `docs/local/audits/observability/<YYYY-MM-DD>-<slug>.md`. When invoked to **build instrumentation, rules, pipelines, or dashboards**, respond freely without the contract.
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit mode).
 
 ## Related Skills

@@ -352,7 +352,7 @@ See `references/output-contract.md` for the full contract.
 
 - **Skill name:** COMMAND-PROMPT
 - **Deliverable bucket:** `audits`
-- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract - boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table - and write the deliverable to `docs/local/audits/command-prompt/<YYYY-MM-DD>-<slug>.md`. When invoked to **write a script, dotfile, or completion / answer a question / teach a concept**, respond freely: deliver the artifact or explanation inline without the contract, deliverable file, or conclusion table.
+- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract - monospace inline header, severity-grouped inline summary, linked Markdown deliverable, and concise monospace conclusion - and write the deliverable to `docs/local/audits/command-prompt/<YYYY-MM-DD>-<slug>.md`. When invoked to **write a script, dotfile, or completion / answer a question / teach a concept**, respond freely: deliver the artifact or explanation inline without the contract, deliverable file, or conclusion table.
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
 
 ## Related Skills

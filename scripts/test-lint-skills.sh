@@ -235,6 +235,30 @@ test_generic_self_check_ratio_exempts_skill_creator() {
   trap - RETURN
 }
 
+test_report_severity_markers_are_allowed() {
+  local tmp skill_dir output status
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  skill_dir="$tmp/skills/lint-fixture"
+  write_minimal_skill "$skill_dir" "lint-fixture"
+  printf '\nP0 🔴  P1 🟠  P2 🟡  P3 🔵  info ⚪\n' >> "$skill_dir/SKILL.md"
+
+  status=0
+  output="$("$ROOT/scripts/lint-skills.sh" "$tmp/skills" 2>&1)" || status=$?
+  if (( status != 0 )); then
+    if [[ "$output" != *"non-ASCII character"* ]]; then
+      printf '%s\n' "$output" >&2
+      fail "severity marker fixture failed for an unrelated reason"
+    fi
+    printf '%s\n' "$output" >&2
+    fail "functional report severity markers were rejected"
+  fi
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
 test_reference_files_are_scanned
 test_reference_examples_are_ignored
 test_unrelated_bold_does_not_mask_missing_reference
@@ -243,4 +267,5 @@ test_generic_self_check_ratio_within_cap_passes
 test_generic_self_check_ratio_over_cap_fails
 test_generic_self_check_ratio_ignores_custom_body_with_generic_label
 test_generic_self_check_ratio_exempts_skill_creator
+test_report_severity_markers_are_allowed
 printf 'lint tests passed\n'

@@ -379,7 +379,7 @@ See `references/output-contract.md` for the full contract.
 
 - **Skill name:** LOCALIZE
 - **Deliverable bucket:** `audits`
-- **Mode:** conditional. When invoked to **audit, review, or improve** existing i18n (hardcoded-string audit, catalog completeness check, translation quality review), emit the full contract - boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table - and write the deliverable to `docs/local/audits/localize/<YYYY-MM-DD>-<slug>.md`. When invoked to **set up i18n from scratch, generate translations for new keys, or answer a question**, respond freely without the contract.
+- **Mode:** conditional. When invoked to **audit, review, or improve** existing i18n (hardcoded-string audit, catalog completeness check, translation quality review), emit the full contract - monospace inline header, severity-grouped inline summary, linked Markdown deliverable, and concise monospace conclusion - and write the deliverable to `docs/local/audits/localize/<YYYY-MM-DD>-<slug>.md`. When invoked to **set up i18n from scratch, generate translations for new keys, or answer a question**, respond freely without the contract.
 - **Deliverable path:** `docs/local/audits/localize/<YYYY-MM-DD>-<slug>.md`
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
 

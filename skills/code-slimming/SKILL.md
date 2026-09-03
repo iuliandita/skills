@@ -375,9 +375,10 @@ findings (grouped by action label, plus a Removed-Code Safety Review section whe
 diff removed code) and one for the zero-findings case (explicit search coverage and why-no-action
 sections). The report is a read-only set of proposals: it intentionally opts out of the checkbox
 Fix protocol in the Output Contract (there is nothing for an implementer to flip here). Wrap the
-body with the boxed inline header and boxed conclusion table when emitting to the transcript; the
-conclusion table remaps the shared columns exactly as defined in the Output Contract section below
-(`Type` = `rec`/`found`, `Priority` carries `Risk`, `Action` = `proposed`/`recommend`).
+body with the monospace inline header, severity-grouped summary, and concise monospace conclusion
+when emitting to the transcript. The saved Markdown conclusion table remaps the shared columns
+exactly as defined in the Output Contract section below (`Type` = `rec`/`found`, `Priority` carries
+`Risk`, `Action` = `proposed`/`recommend`).
 
 Keep the report concise. Show the refactor shape, not a lecture.
 
@@ -396,7 +397,7 @@ See `references/output-contract.md` for the full contract.
 
 - **Skill name:** CODE-SLIMMING
 - **Deliverable bucket:** `audits`
-- **Mode:** always-on for audit and review invocations. Every invocation that analyses existing code emits the full contract - boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table. For a quick factual question (e.g., "what is wrapper removal?") respond freely without the contract.
+- **Mode:** always-on for audit and review invocations. Every invocation that analyses existing code emits the full contract - monospace inline header, severity-grouped inline summary, linked Markdown deliverable, and concise monospace conclusion. For a quick factual question (e.g., "what is wrapper removal?") respond freely without the contract.
 - **Deliverable path:** `docs/local/audits/code-slimming/<YYYY-MM-DD>-<slug>.md`, resolved against
   the audited repo's root (use the session cwd only when the audit target is not a repo)
 - **Severity scale:** this skill overrides the shared P0-P3 scale, which the contract permits via its scale-migration note. Findings are classified by action - `Do now | Do with tests | Defer | Leave alone` - plus a `Risk: low | medium | high` field per finding (see the Workflow). This skill proposes deletions, not severity-ranked defects. Old -> new: P0-P3 priority is not used; `Risk` replaces the `Priority` column (see Conclusion-table columns below).
