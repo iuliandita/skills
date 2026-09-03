@@ -48,11 +48,11 @@ Run this checklist after all agents return but before presenting the combined re
 
 Verify:
 
-- [ ] All 4 agents dispatched as `general-purpose` type (NOT `feature-dev:*`, `code-simplifier:*`, or other restricted types)
-- [ ] Each agent invoked its assigned custom skill (`code-review`, `anti-slop`, `security-audit`, `update-docs`) via the Skill tool
+- [ ] All 4 workers had independent context, repository read access, the tools needed by their audit, and the assigned skill's instructions
+- [ ] Each worker loaded its assigned custom skill (`code-review`, `anti-slop`, `security-audit`, `update-docs`) through the harness's native skill-loading mechanism, or received those instructions in its prompt
 - [ ] Each report presented under its own header, unedited
 - [ ] No cross-report merging or editorializing (findings from different audits stay separate)
-- [ ] SECURITY-AUDIT.md gitignore reminder included
+- [ ] The security report used its dated `docs/local/audits/security-audit/` path and `docs/local/` ignore coverage was verified
 - [ ] Failed agents noted with reason (don't silently drop a missing audit)
 - [ ] Preflight context block was passed to all agents
 - [ ] When user specified a scope, the `Scope:` line in every agent's context block reflects that scope (not "full codebase review")
@@ -103,17 +103,13 @@ Default is **full codebase** since the user is running this as a quality gate. A
 
 ### Step 2: Dispatch Four Parallel Agents
 
-Spawn all four agents concurrently. Each agent invokes one of the four custom skills and runs a full codebase audit.
+Spawn four workers concurrently. Each worker runs one custom skill against the same scoped snapshot.
 
-**Agent type selection (critical):** Each agent MUST be dispatched as a `general-purpose` agent (or equivalent full-access agent type). Do NOT use specialized agent types like `feature-dev:code-reviewer`, `feature-dev:code-explorer`, `code-simplifier:*`, or any other restricted-toolset agent - these lack access to the Skill tool and cannot invoke custom skills. The agent type name should reflect its capabilities (full tool access), not the audit it performs.
+**Worker capability selection (critical):** Each worker needs independent context, repository read access, the tools required by its assigned audit, and the native ability to load the target skill or receive its full instructions. Prefer a specialized read-only reviewer role when it meets those requirements. Exact role names are harness-specific examples, never requirements.
 
-**Skill invocation:** Each `general-purpose` agent MUST invoke the named custom skill via the Skill tool (or equivalent skill-loading mechanism) as its first action. Custom skills from the user's installed collection take priority over built-in reviewers or platform-provided audit modes. Specifically:
-- Agent 1 invokes `code-review` via Skill tool, not a built-in code-review mode
-- Agent 2 invokes `anti-slop` via Skill tool, not a built-in code simplifier
-- Agent 3 invokes `security-audit` via Skill tool, not a built-in security scanner
-- Agent 4 invokes `update-docs` via Skill tool, not a built-in documentation reviewer
+**Skill invocation:** Each worker loads the named custom skill through the harness's native skill-loading mechanism as its first action. Custom skills from the user's installed collection take priority over built-in reviewers or platform-provided audit modes. Assign one lens per worker: `code-review`, `anti-slop`, `security-audit`, and `update-docs`.
 
-**Fallback:** If a custom skill is not available (skill lookup/load returns "not found" or similar), THEN fall back to the best available alternative (manual review following the skill's principles) and note which skill was unavailable in the output header.
+**Fallback:** If native skill loading is unavailable, include the target skill's instructions in that worker's prompt. If the skill itself is unavailable, perform the corresponding manual review and note the substitution in the output header.
 
 **If parallel execution is unavailable** (restricted sandbox, no subagent support): run
 sequentially in this order: Security Audit, Code Review, Slop Check, Docs Sweep. Security
@@ -141,7 +137,7 @@ Each agent receives the context block above plus a task prompt. Use these templa
 ```
 {context_block}
 
-Invoke the `code-review` skill via the Skill tool, then run a full code review on the codebase.
+Load the `code-review` skill through the harness's native skill-loading mechanism, then run a full code review on the codebase.
 Scope: {scope}. ({scope} defaults to "full codebase" if the user did not specify a narrower target.)
 Return the complete report.
 ```
@@ -151,7 +147,7 @@ Return the complete report.
 ```
 {context_block}
 
-Invoke the `anti-slop` skill via the Skill tool, then audit the codebase for machine-generated
+Load the `anti-slop` skill through the harness's native skill-loading mechanism, then audit the codebase for machine-generated
 patterns, over-abstraction, and code quality issues.
 Scope: {scope}. ({scope} defaults to "full codebase" if the user did not specify a narrower target.)
 Return the complete report.
@@ -162,9 +158,9 @@ Return the complete report.
 ```
 {context_block}
 
-Invoke the `security-audit` skill via the Skill tool, then run a security audit on the codebase.
+Load the `security-audit` skill through the harness's native skill-loading mechanism, then run a security audit on the codebase.
 Scope: {scope}. ({scope} defaults to "full codebase" if the user did not specify a narrower target.)
-Return the complete report including SECURITY-AUDIT.md content.
+Return the complete report, including the dated `docs/local/audits/security-audit/` deliverable content.
 ```
 
 #### Agent 4: Docs Sweep
@@ -172,7 +168,7 @@ Return the complete report including SECURITY-AUDIT.md content.
 ```
 {context_block}
 
-Invoke the `update-docs` skill via the Skill tool as a read-only audit.
+Load the `update-docs` skill through the harness's native skill-loading mechanism as a read-only audit.
 Scope: {scope}. ({scope} defaults to "full codebase" if the user did not specify a narrower target.)
 Focus on: stale docs, instruction-file bloat (40,000 char limit), companion-file drift, broken
 links, orphaned gotchas, missing docs on recent changes. Do NOT make changes or commit anything.
@@ -198,7 +194,7 @@ For scopes not in the table, apply each skill's standard checklist narrowed to t
 
 **User requests synthesis**: if the user asks for a combined summary after seeing the reports, prioritize: security fixes > correctness bugs > slop cleanup > doc updates. Keep synthesis brief - the individual reports are the source of truth.
 
-After presenting results, remind the user: "Check that `SECURITY-AUDIT.md` is in `.gitignore` - it contains vulnerability details that shouldn't be committed."
+After presenting results, confirm that the security report stayed under `docs/local/audits/security-audit/` and that `docs/local/` is gitignored.
 
 Use this structure:
 
@@ -250,13 +246,13 @@ If an agent fails or times out:
 - Present whatever completed successfully
 - Do not re-run failed agents unless the user asks
 
-If a skill is not available, perform a manual review in the same `general-purpose` agent. Note the substitution in the output header so the user knows a fallback was used. Partial results are still useful.
+If a skill is not available, perform a manual review in a worker with the required repository access and audit tools. Note the substitution in the output header so the user knows a fallback was used. Partial results are still useful.
 
 | Unavailable skill | Fallback approach |
 |-------------------|-------------------|
 | `code-review` | Manually review for bugs, logic errors, edge cases, and resource leaks. Focus on high-confidence findings only. |
 | `anti-slop` | Scan for verbose code, redundant comments, over-abstraction, and dead code manually. No structured slop taxonomy - report what you find. |
-| `security-audit` | Manually check for hardcoded secrets, injection points, missing auth checks, and dependency CVEs. Skip SECURITY-AUDIT.md generation. |
+| `security-audit` | Manually check for hardcoded secrets, injection points, missing auth checks, and dependency CVEs. Save the result to the canonical dated security-audit path. |
 | `update-docs` | Review README, CLAUDE.md, AGENTS.md, and inline doc comments for staleness. Check that recent code changes have corresponding doc updates. |
 
 ## Output Contract
@@ -282,13 +278,13 @@ See `references/output-contract.md` for the full contract.
 
 ## Rules
 
-- **General-purpose agents only.** Every subagent MUST be a `general-purpose` (full-access) agent type. Never use `feature-dev:*`, `code-simplifier:*`, or other restricted agent types - they cannot invoke custom skills. The agent type controls tool access, not the audit topic.
-- **Custom skills first.** Each agent invokes its assigned custom skill (`code-review`, `anti-slop`, `security-audit`, `update-docs`) via the Skill tool as its first action. Fall back to manual review only if the skill is not installed.
+- **Capability-based workers.** Every worker needs independent context, repository read access, the audit's required tools, and the assigned instructions. Prefer specialized read-only reviewers that meet those requirements; do not hardcode a harness role name.
+- **Custom skills first.** Each worker loads its assigned custom skill (`code-review`, `anti-slop`, `security-audit`, `update-docs`) through the native skill-loading mechanism as its first action. Include the skill instructions in the prompt when native loading is unavailable; fall back to manual review only if the skill is not installed.
 - **Parallel dispatch is strongly preferred.** Run all four agents concurrently when the environment supports it. If parallel execution is unavailable, run sequentially (security first - see Step 2).
 - **Don't editorialize.** Present each report as the skill produced it. No unsolicited synthesis across reports.
-- **Respect each skill's output format.** The anti-slop skill has its own format. The security audit writes SECURITY-AUDIT.md. The code reviewer and docs sweep have their formats. Don't normalize them into a single style.
+- **Respect each skill's output format.** The anti-slop skill has its own format. The security audit writes its dated local deliverable. The code reviewer and docs sweep have their formats. Don't normalize them into a single style.
 - **Don't duplicate work.** If a finding appears in multiple reports (e.g., dead code in both slop check and code review), that's fine - independent auditors catching the same thing is signal, not noise.
 - **Preflight is fast.** The parallel git commands in Step 0 should take under 2 seconds. Don't skip them - the agent prompts are much better with context.
 - **Large repos.** If file count exceeds 1000, mention to the user that this will take a while. Don't reduce scope unless asked.
-- **SECURITY-AUDIT.md gitignore.** The security audit writes a report file containing vulnerability details to the repo root. After presenting results, remind the user to check that `SECURITY-AUDIT.md` is in `.gitignore` - the sub-skill warns too, but it's easy to miss buried in output.
+- **Security report privacy.** The security audit writes vulnerability details under `docs/local/audits/security-audit/`. Verify the enclosing `docs/local/` directory is gitignored before the report is written.
 - **Docs sweep is read-only.** The update-docs agent must not make changes or commit anything during a full review. It reports what needs updating; the user decides when to act on it.

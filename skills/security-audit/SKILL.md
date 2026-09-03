@@ -55,7 +55,7 @@ Before returning any security audit report, verify:
 - [ ] **OWASP mapping present**: each finding maps to the relevant OWASP Top 10:2025 category
 - [ ] **Remediation is specific**: concrete fix per finding, not generic advice ("validate input" is insufficient)
 - [ ] **Commit SHA recorded**: report anchored to a specific point in time
-- [ ] **Report gitignored**: warned user and checked `.gitignore` for `SECURITY-AUDIT.md`
+- [ ] **Report kept local**: wrote the dated report under `docs/local/audits/security-audit/` and verified `docs/local/` is gitignored
 - [ ] **Known incidents checked**: dependency audit verified against the known supply chain incidents listed in Step 3 (event-stream, ua-parser-js, colors any version, faker, polyfill.io, xz-utils, trivy 0.69.4-0.69.6, TrapDoor, Mini Shai-Hulud worm, outdated lodash), not just CVE databases
 - [ ] **Agentic risks covered** (when applicable): MCP servers, AI tool handlers, prompt injection surfaces audited if present
 - [ ] **Scope respected**: no external service probing, no DAST, repo-only analysis
@@ -235,7 +235,7 @@ Read `references/hardening-checklists.md` (CI/CD section) and `references/grep-p
 
 Read `references/report-guide.md` for the severity classification, OWASP mapping table, and report template.
 
-Save to `SECURITY-AUDIT.md` in repo root. Warn the user this file contains vulnerability details and must be gitignored. Check `.gitignore` and offer to add it if missing.
+Save to `docs/local/audits/security-audit/<YYYY-MM-DD>-<slug>.md`. The report contains vulnerability details, so verify `docs/local/` is gitignored before writing it and offer to add that directory rule if missing.
 
 ---
 
