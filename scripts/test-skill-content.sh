@@ -61,7 +61,8 @@ done
 version_ref="skills/dev-cycle/references/version-bump-sites.md"
 require_text "$version_ref" '.version // empty' "dev-cycle does not convert a missing package version to empty"
 require_text "$version_ref" 'No valid version source found' "dev-cycle does not fail clearly when no version exists"
-require_text "$version_ref" 'rg --fixed-strings -- "$CURRENT_VERSION"' "dev-cycle does not terminate rg options before the version"
+require_text "$version_ref" 'rg --fixed-strings --hidden --no-ignore' "dev-cycle does not configure the fixed-string repository search"
+require_text "$version_ref" '-- "$CURRENT_VERSION"' "dev-cycle does not terminate rg options before the version"
 
 kubernetes="skills/kubernetes/SKILL.md"
 require_text "$kubernetes" 'KUBE_CONTEXT="$(kubectl config current-context)"' "kubernetes does not capture the current context"

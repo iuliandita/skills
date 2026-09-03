@@ -1,7 +1,7 @@
 ---
 name: kubernetes
 description: >
-  · Write/review Kubernetes manifests, Helm, Kustomize, Gateway API, ArgoCD, sealed secrets. Triggers: 'kubernetes', 'k8s', 'helm', 'kubectl', 'deployment', 'pod', 'ingress', 'gateway'.
+  · Write/review Kubernetes manifests, Helm, Kustomize, Gateway API, ArgoCD, sealed secrets. Triggers: 'kubernetes', 'k8s', 'helm', 'kubectl', 'kubernetes deployment', 'pod', 'ingress', 'gateway api'.
 license: MIT
 compatibility: "Requires kubectl. Optional: helm, kustomize, kube-score, cosign"
 metadata:
@@ -115,10 +115,11 @@ Follow the domain-specific section below. Always apply the production checklist 
 
 ```bash
 # Always verify kube context first
-kubectl config current-context
+KUBE_CONTEXT="$(kubectl config current-context)"
+printf 'Using kube context: %s\n' "$KUBE_CONTEXT"
 
 # Manifests
-kubectl apply -f <manifest> --dry-run=server    # Server-side validation
+kubectl --context "$KUBE_CONTEXT" apply -f <manifest> --dry-run=server  # Server-side validation
 kube-score score <manifest>                     # Best practice scoring
 checkov -d . --framework kubernetes             # Security/compliance scan
 
@@ -126,7 +127,7 @@ checkov -d . --framework kubernetes             # Security/compliance scan
 helm lint <chart>/                              # Lint chart
 helm template <release> <chart>/               # Render templates locally
 helm template <release> <chart>/ -f values-prod.yaml  # With env overlay
-helm install <release> <chart>/ --dry-run --debug     # Server-side dry run (needs cluster)
+helm --kube-context "$KUBE_CONTEXT" install <release> <chart>/ --dry-run --debug  # Server-side dry run
 ```
 
 ### Step 5: GitOps-managed emergency or scaling changes
