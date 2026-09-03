@@ -21,7 +21,7 @@ Focus on Debian stable and Ubuntu LTS first, then layer in derivative-specific b
 workflows, snap confinement, Ubuntu HWE, and explicit checks for derivatives that diverge on
 init, packaging defaults, or intended use.
 
-**Versions worth pinning** (verified July 2026):
+**Versions worth pinning** (verified September 2026):
 
 Only pin versions here when they materially affect compatibility or troubleshooting shape. For
 ordinary Debian and Ubuntu package work, prefer the live distro lane and package policy over a

@@ -17,11 +17,11 @@ Build, review, and debug MCP servers that expose tools, resources, and prompts t
 assistants. The goal is secure, well-structured servers that follow the protocol spec and don't
 become yet another server with preventable injection vulnerabilities.
 
-**Target versions** (July 2026):
-- MCP specification: 2025-11-25 (current stable; 2026-07-28 release candidate in draft)
-- TypeScript SDK: @modelcontextprotocol/sdk 1.29.0 (1.x stable; 2.0.0-alpha in dev)
-- Python SDK: mcp 1.28.1 (minimum secure version for WebSocket Host/Origin validation; CVE-2026-59950)
-- Protocol transports: stdio, Streamable HTTP (the standalone HTTP+SSE transport was deprecated in spec 2025-03-26; SSE still streams inside Streamable HTTP)
+**Target versions** (September 2026):
+- MCP specification: 2026-07-28 (current stable; stateless core, extensions framework, and no initialize/session handshake)
+- TypeScript SDK: `@modelcontextprotocol/server`, `@modelcontextprotocol/client`, and `@modelcontextprotocol/core` 2.0.0 (the monolithic `@modelcontextprotocol/sdk` 1.30.0 is the legacy line)
+- Python SDK: mcp 2.1.1 (2.x stable; review the v1-to-v2 migration guide)
+- Protocol transports: stdio and Streamable HTTP. The standalone HTTP+SSE transport is deprecated and available only as a temporary legacy bridge
 
 ## When to use
 
@@ -103,40 +103,49 @@ Before writing code, clarify:
 **TypeScript** (recommended for production):
 
 ```typescript
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { z } from "zod";
+import { McpServer } from "@modelcontextprotocol/server";
+import { serveStdio } from "@modelcontextprotocol/server/stdio";
+import * as z from "zod/v4";
 
-const server = new McpServer({ name: "my-server", version: "1.0.0" });
 const docs = [{ title: "Getting started", body: "Install the server and connect over stdio." }];
 const config = { mode: "read-only" };
 
-// Current SDK API: `server.registerTool(name, { title, description, inputSchema }, handler)`.
-// The older `server.tool(name, desc, schema, handler)` shorthand still works in v1.x.
-server.registerTool(
-  "search_docs",
-  {
-    title: "Search docs",
-    description: "Search documentation by keyword",
-    inputSchema: { query: z.string().max(200).describe("Search query"), limit: z.number().int().min(1).max(100).default(10) },
-  },
-  async ({ query, limit }) => {
-    // If this tool reads files, apply path validation from Step 3 before any fs access.
-    const sanitized = query.replace(/[^\w\s-]/g, "");
-    const needle = sanitized.toLowerCase();
-    const results = docs
-      .filter(({ title, body }) => `${title}\n${body}`.toLowerCase().includes(needle))
-      .slice(0, limit);
-    return { content: [{ type: "text", text: JSON.stringify(results) }] };
-  }
-);
+function createServer(): McpServer {
+  const server = new McpServer({ name: "my-server", version: "1.0.0" });
 
-server.resource("config", "config://app/settings", async (uri) => ({
-  contents: [{ uri: uri.href, mimeType: "application/json", text: JSON.stringify(config) }],
-}));
+  server.registerTool(
+    "search_docs",
+    {
+      title: "Search docs",
+      description: "Search documentation by keyword",
+      inputSchema: z.object({
+        query: z.string().max(200).describe("Search query"),
+        limit: z.number().int().min(1).max(100).default(10),
+      }),
+    },
+    async ({ query, limit }) => {
+      const sanitized = query.replace(/[^\w\s-]/g, "");
+      const needle = sanitized.toLowerCase();
+      const results = docs
+        .filter(({ title, body }) => `${title}\n${body}`.toLowerCase().includes(needle))
+        .slice(0, limit);
+      return { content: [{ type: "text", text: JSON.stringify(results) }] };
+    }
+  );
 
-const transport = new StdioServerTransport();
-await server.connect(transport);
+  server.registerResource(
+    "config",
+    "config://app/settings",
+    { title: "Application config", mimeType: "application/json" },
+    async (uri) => ({
+      contents: [{ uri: uri.href, mimeType: "application/json", text: JSON.stringify(config) }],
+    })
+  );
+
+  return server;
+}
+
+void serveStdio(createServer);
 ```
 
 **Python** (FastMCP for quick prototyping):
@@ -236,7 +245,9 @@ server.tool("read_file", "Read a project file",
 | **stdio** | Local tools, CLI integration | No | Runs as user's process. Most secure. |
 | **Streamable HTTP** | Remote/multi-client servers | Recommended | Single endpoint, POST for messages, optional SSE streaming. |
 
-The standalone HTTP+SSE transport (spec 2024-11-05) was deprecated in spec 2025-03-26; use Streamable HTTP for all remote servers (it still uses SSE internally for optional response streaming).
+The standalone HTTP+SSE transport (spec 2024-11-05) is deprecated; use Streamable HTTP for
+remote servers. MCP 2026-07-28 removes the initialize/session handshake from the core protocol.
+Use the SDK migration helpers when one endpoint must also serve legacy 2025 clients.
 Auth is optional per spec but strongly recommended for servers handling user data. When
 implementing auth, use OAuth 2.1 with PKCE. Prefer Client ID Metadata Documents over Dynamic
 Client Registration (DCR is a fallback, not a requirement).
@@ -244,11 +255,11 @@ Client Registration (DCR is a fallback, not a requirement).
 **Streamable HTTP security:**
 - Bind to `127.0.0.1` for local servers (never `0.0.0.0`)
 - Validate `Origin` header on all requests (DNS rebinding prevention)
-- If using stateful sessions: `MCP-Session-Id` must be cryptographically random (UUID v4+)
-- Client sends `MCP-Protocol-Version` header (e.g., `2025-11-25`)
+- Treat every 2026-07-28 request as self-contained; do not require `MCP-Session-Id`
+- Client sends `MCP-Protocol-Version: 2026-07-28` plus identity and capabilities in `_meta`
 - Consider using `createMcpExpressApp()` / `createMcpHonoApp()` for built-in DNS rebinding
   protection - these ship from the separate `@modelcontextprotocol/express` and
-  `@modelcontextprotocol/hono` packages, not the core `@modelcontextprotocol/sdk`
+  `@modelcontextprotocol/hono` packages, not the runtime-neutral core package
 
 ### Step 5: Handle elicitation safely
 

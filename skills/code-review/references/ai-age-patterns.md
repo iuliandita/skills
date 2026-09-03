@@ -2,7 +2,7 @@
 
 Bug patterns specific to AI-generated code, LLM API integrations, agentic AI systems, and MCP (Model Context Protocol) implementations. As of 2025-2026, AI-generated code is present in most codebases - these patterns catch what traditional review misses.
 
-Research date: July 2026.
+Research date: September 2026.
 
 ---
 

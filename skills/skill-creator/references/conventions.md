@@ -16,7 +16,7 @@ when creating or reviewing skills to ensure consistency.
 7. AI Self-Check Patterns
 7.5. Diagnostic Skill Pitfalls
 8. Trigger Description Patterns
-9. Skill Inventory (July 2026)
+9. Skill Inventory (September 2026)
 
 ---
 
@@ -506,9 +506,9 @@ Use this skill even when the user doesn't explicitly say "git" but is clearly do
 
 ---
 
-## 9. Skill Inventory (July 2026)
+## 9. Skill Inventory (September 2026)
 
-### Published skills (46)
+### Published skills (47)
 
 | Skill | Effort | Date Added | Domain |
 |-------|--------|-----------|--------|
@@ -553,6 +553,7 @@ Use this skill even when the user doesn't explicitly say "git" but is clearly do
 | skill-creator | high | 2026-03-25 | Skill lifecycle management |
 | skill-refiner | high | 2026-03-31 | Iterative self-improvement loop |
 | skill-router | medium | 2026-05-01 | Skill routing and trigger conflict analysis |
+| synology-dsm | high | 2026-07-27 | Synology DSM administration and btrfs recovery |
 | terraform | high | 2026-03-24 | Infrastructure-as-code |
 | testing | high | 2026-04-02 | Test design, debugging, infrastructure |
 | update-docs | medium | 2026-03-25 | Documentation sweep |

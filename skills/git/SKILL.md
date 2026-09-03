@@ -18,16 +18,16 @@ cut releases, and maintain audit-grade change history across GitHub, GitLab, and
 The goal is clean, signed, traceable history that satisfies both engineering standards and
 compliance requirements (PCI-DSS 4.0).
 
-**Target versions** (July 2026):
+**Target versions** (September 2026):
 - **git**: 2.55.0 (current stable). Major additions include Linux fsmonitor, remote-group push, and parallel compatible hooks. Git 3.0 remains expected later in 2026.
-- **GitHub CLI (`gh`)**: 2.96.0
-- **GitLab CLI (`glab`)**: 1.109.0
+- **GitHub CLI (`gh`)**: 2.100.0
+- **GitLab CLI (`glab`)**: 1.116.0
 - **Forgejo CLI (`fj`)**: 0.6.0 (verify the current release at `codeberg.org/forgejo-contrib/forgejo-cli`). Rust-written, official community CLI. Covers PRs (incl. AGit), issues, repos, releases, tags, actions.
-- **Forgejo**: v16.0.1 current; v15.0.5 is the current LTS. Critical RCE (CVE-2025-68937) patched in v13.0.2+.
-- **prek**: 0.4.10 (Rust, recommended) or **pre-commit**: 4.6.1 (Python, largest ecosystem)
+- **Forgejo**: v16.0.3 current; v15.0.7 is the current LTS. Critical RCE (CVE-2025-68937) patched in v13.0.2+.
+- **prek**: 0.5.2 (Rust, recommended) or **pre-commit**: 4.6.2 (Python, largest ecosystem)
 - **git-filter-repo**: 2.47.x
 - **gitleaks**: 8.30.x (secret scanning)
-- **cosign**: 3.1.2 (Sigstore, for tag/release signing context)
+- **cosign**: 3.1.3 (Sigstore, for tag/release signing context)
 
 This skill covers five domains depending on context:
 - **Operations** - commits, branches, merges, rebases, stashing, bisect, reflog, recovery

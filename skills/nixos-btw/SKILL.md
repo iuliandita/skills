@@ -32,7 +32,7 @@ disposable dev shells, fleet-wide configuration without a separate config-manage
 and a single language for a workstation, a server, a container image, a NixOS VM, and a
 macOS laptop via nix-darwin.
 
-**Versions worth pinning** (verified July 2026):
+**Versions worth pinning** (verified September 2026):
 
 Pin versions only when they shape compatibility or troubleshooting. For ordinary package
 work, trust the live channel or flake lock over a stale table.

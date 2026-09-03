@@ -20,9 +20,9 @@ Built from real production pain - the hardest part of i18n is not translation bu
 every string that needs it, and making sure translations read naturally in context rather
 than as mechanical word-by-word output.
 
-**Target versions (July 2026):** react-i18next 17.0.10, vue-i18n 11.4.7, next-intl 4.13.3,
-i18next 26.3.6. For missing-key persistence, require i18next-http-middleware 3.9.7+ and
-i18next-fs-backend 2.6.6+ to fix critical prototype pollution (CVE-2026-48714).
+**Target versions (September 2026):** react-i18next 17.0.13, vue-i18n 11.4.10, next-intl 4.14.2,
+i18next 26.4.2. For missing-key persistence, require i18next-http-middleware 3.9.8+ and
+i18next-fs-backend 2.6.7+ to fix critical prototype pollution (CVE-2026-48714).
 
 ## When to use
 

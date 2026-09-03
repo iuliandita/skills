@@ -21,7 +21,7 @@ account for vendor quirks such as subscription-manager, CentOS Stream drift, Ora
 Amazon's cloud-first defaults, and SELinux or firewalld behavior that people love to blame on
 the wrong layer.
 
-**Versions worth pinning** (verified July 2026):
+**Versions worth pinning** (verified September 2026):
 
 Only pin versions here when they materially affect compatibility or troubleshooting shape. For
 ordinary package work, prefer the live distro lane and repo state over a stale package table.

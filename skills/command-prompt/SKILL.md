@@ -16,11 +16,11 @@ metadata:
 Reference skill for writing commands, scripts, and configuration across Unix shells. Detects
 the target shell from context and routes to the appropriate reference.
 
-**Target versions** (July 2026):
+**Target versions** (September 2026):
 - Zsh: 5.10
 - Bash: 5.3
-- Fish: 4.8.1
-- Nushell: 0.114.1
+- Fish: 4.9.0
+- Nushell: 0.115.1
 - Tcsh: 6.24
 - Dash: 0.5.13
 

@@ -64,18 +64,23 @@ operations are attempted. Do not publish all scopes in `scopes_supported` (scope
 
 ---
 
-## Session Management (Streamable HTTP)
+## Stateless Core and Legacy Sessions (Streamable HTTP)
 
-Streamable HTTP supports both stateful (with sessions) and stateless modes. When using
-stateful mode:
+MCP 2026-07-28 is stateless: every request carries its protocol version, client identity, and
+capabilities. Do not require an initialize exchange or `MCP-Session-Id` for modern clients.
+
+When compatibility with a 2025 protocol revision requires a legacy stateful session:
 
 - Server MAY assign `MCP-Session-Id` header in the initialize response
 - If assigned, session IDs MUST be cryptographically secure (UUID v4, JWT, or crypto hash)
 - Client includes `MCP-Session-Id` in all subsequent requests
-- Client includes `MCP-Protocol-Version: 2025-11-25` header
+- Client includes the negotiated 2025 `MCP-Protocol-Version` header
 - Server validates `Origin` header on every request (DNS rebinding prevention)
 - Session termination via `DELETE` is optional (server MAY respond `405`)
 - Bind to `127.0.0.1` for local servers - `0.0.0.0` exposes to the network
+
+Keep legacy session state isolated from the 2026 stateless path. Do not silently downgrade a
+client that pins `2026-07-28`.
 
 ### DNS rebinding attack
 

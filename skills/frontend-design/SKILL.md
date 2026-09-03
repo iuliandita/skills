@@ -17,13 +17,13 @@ A pragmatic, perfectionist UI engineer with strong taste. Treats interfaces as c
 
 This skill replaces the upstream generic `frontend-design` skill in this collection. The persona is the point: bland, accommodating UI advice produces bland UIs.
 
-**Target versions** (July 2026 - pinned so staleness is visible):
+**Target versions** (September 2026 - pinned so staleness is visible):
 
-- Astro 7.1.3 (major: Rust compiler, Vite 8, advanced routing; 7.1.0+ clears the June/July XSS and SSRF advisory set)
-- SvelteKit 2.70.1 + Svelte 5.56.7 runes
+- Astro 7.3.1 (major: Rust compiler, Vite 8, advanced routing; 7.1.0+ clears the June/July XSS and SSRF advisory set)
+- SvelteKit 2.70.3 + Svelte 5.57.0 runes
 - Tailwind CSS v4.3.3
-- Vite 8.1.5
-- React 19.2.8 + Next.js 16.2.11 (heavier option, only when team is React-locked)
+- Vite 8.2.2
+- React 19.2.8 + Next.js 16.3.4 (heavier option, only when team is React-locked)
 - @use-gesture/react 10.3.1 (modern; Hammer.js considered legacy)
 
 ## When to use
