@@ -42,6 +42,9 @@ Patterns drawn from real OSS incidents (unauthenticated admin endpoints, credent
 - Novel vulnerability research, fuzzing, patch diffing, or exploit development - use **zero-day**
 - Network appliance administration or firewall tuning - use **firewall-appliance**
 - Linux networking setup and troubleshooting - use **networking**
+- Secure construction or hardening of a known domain artifact without repository-wide audit intent
+  - use that domain skill. Security-audit owns vulnerability discovery, exploitability, severity,
+  and repository-wide reporting.
 
 ---
 

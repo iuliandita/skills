@@ -2,7 +2,7 @@
 name: skill-router
 description: >
   · Route user requests to the right installed skill with minimal loading. Triggers: 'which skill',
-  'skill routing', 'choose skill', 'skill overlap', 'trigger conflict'. Not for creating skills (use skill-creator).
+  'skill routing', 'choose skill', 'route this request', 'skill match'. Not for creating or editing skills (use skill-creator).
 license: MIT
 compatibility: "None - works with any Agent Skills collection"
 metadata:
@@ -21,7 +21,7 @@ ordered set only when the request genuinely spans independent domains.
 
 - User asks which skill applies to a request
 - A request appears to match multiple skill descriptions
-- A skill description or trigger list is causing routing confusion
+- A concrete request routes ambiguously and you need to select the best installed skill
 - You need to explain why one adjacent skill is a better fit than another
 
 ## When NOT to use
@@ -30,7 +30,7 @@ ordered set only when the request genuinely spans independent domains.
 - Batch improving a collection - use **skill-refiner**
 - Capturing feature ideas or competitive backlog items - use **roadmap**
 - Implementing domain work after routing - use the selected domain skill
-- Routing requests to understand or optimize a skill's own trigger text - use **skill-creator** (Mode 4)
+- Diagnosing or editing a skill's trigger text, or auditing collection-wide overlaps - use **skill-creator** (Modes 3-4)
 
 ---
 
@@ -104,7 +104,8 @@ See `references/output-contract.md` for the full contract.
 
 ## Related Skills
 
-- **skill-creator** - create, review, or optimize skill files after routing identifies skill-library work.
+- **skill-creator** - create, review, or optimize skill files and audit collection-wide overlaps.
+  This skill stops after selecting a route for the concrete request.
 - **skill-refiner** - batch-improve a skill collection with scoring and iteration; this skill only chooses routes.
 - **full-review** and **deep-audit** - orchestrate repo audits after routing identifies broad review intent.
 - **roadmap** - capture product or feature ideas; route there when the request is backlog shaping rather than skill selection.

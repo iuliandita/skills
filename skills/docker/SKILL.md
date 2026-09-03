@@ -4,11 +4,6 @@ description: >
   · Write/review Dockerfiles, Compose, OCI/Podman/BuildKit builds, signing, hardening. Triggers: 'docker', 'dockerfile', 'podman', 'buildkit', 'buildah', 'skopeo', 'containerd'. Not for K8s manifests (use kubernetes).
 license: MIT
 compatibility: "Requires docker or podman. Optional: docker compose, buildkit, cosign, trivy"
-paths:
-  - "Dockerfile*"
-  - "compose*.y*ml"
-  - "docker-compose*.y*ml"
-  - ".dockerignore"
 metadata:
   source: iuliandita/skills
   date_added: "2026-03-24"
@@ -22,6 +17,10 @@ Write, review, and architect Dockerfiles, Compose stacks, and container workflow
 
 **Target versions**: September 2026 snapshot. Read `references/target-versions.md` before
 pinning Docker, Compose, BuildKit, containerd, Podman, Buildah, or runc.
+
+**Portable metadata:** keep file-routing patterns in the description and scope sections. `paths`
+is a Claude Code-local extension, not portable Agent Skills metadata, and can make claude.ai uploads
+or Skills API packages fail validation.
 
 This skill covers Dockerfiles, Compose, container hardening, supply chain, registry/CI
 patterns, and runtime migration across Docker, Podman, Buildah, Skopeo, and containerd.

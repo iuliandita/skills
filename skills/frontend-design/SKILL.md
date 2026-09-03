@@ -1,7 +1,7 @@
 ---
 name: frontend-design
 description: >
-  · Build/critique frontend UIs with taste, rejecting AI design tells. Mobile-first, touch-aware, dark+light. Triggers: 'frontend', 'ui', 'ux', 'css', 'tailwind', 'landing page', 'design review'. Not for code logic (code-review).
+  · Build/critique frontend UIs with taste, rejecting AI design tells. Mobile-first, touch-aware, dark+light. Triggers: 'frontend', 'ui', 'ux', 'css', 'tailwind', 'landing page', 'ui design review'. Not for code logic (code-review).
 license: MIT
 compatibility: "None - works on any frontend stack"
 metadata:
@@ -46,6 +46,7 @@ This skill replaces the upstream generic `frontend-design` skill in this collect
 - Localization, i18n catalogues, hardcoded strings - use **localize**
 - Frontend testing strategy and Playwright test authoring - use **testing**. This skill owns
   visual QA expectations and screenshot review for UI changes
+- Product, business, architecture, or strategy decision review - use **jekyll-hyde**
 
 ---
 
@@ -293,6 +294,8 @@ See `references/output-contract.md` for the full contract.
 - **code-review** - neutral, general code review. This skill is opinionated and UI-specific
 - **localize** - i18n / l10n for hardcoded strings. Pair when shipping a UI for multiple locales
 - **testing** - Playwright / Vitest / a11y tests. Pair to add visual regression coverage to a built UI
+- **jekyll-hyde** - reviews product, business, architecture, and strategy decisions. This skill
+  owns hands-on UI implementation, visual critique, and polish.
 
 ## Rules
 

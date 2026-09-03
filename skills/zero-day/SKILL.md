@@ -1,7 +1,7 @@
 ---
 name: zero-day
 description: >
-  · Hunt novel vulnerabilities: reversing, patch diffing, fuzzing, attack surface, PoCs. Triggers: 'zero-day', '0-day', 'vulnerability research', 'variant analysis', 'fuzz', 'exploit dev', 'CVE'. Not SAST: security-audit.
+  · Hunt novel vulnerabilities via reversing, patch diffs, fuzzing, and PoCs. Triggers: 'zero-day', '0-day', 'vulnerability research', 'CVE variant analysis', 'patch diffing', 'n-day variant', 'fuzz', 'exploit dev'. Not SAST: security-audit.
 license: MIT
 compatibility: "Optional: codeql, semgrep, joern, ghidra, radare2/rizin, afl++, gdb, pwntools, strace, ltrace, checksec"
 metadata:

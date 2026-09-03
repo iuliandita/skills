@@ -1,7 +1,7 @@
 ---
 name: databases
 description: >
-  · Configure/tune/migrate PostgreSQL, MongoDB, MySQL/MariaDB, MSSQL. Triggers: 'database', 'postgres', 'mysql', 'mongodb', 'schema', 'migration', 'pgbouncer', 'EXPLAIN'. Not for HTTP APIs (use backend-api).
+  · Configure/tune/migrate PostgreSQL, MongoDB, MySQL/MariaDB, MSSQL. Triggers: 'database', 'postgres', 'mysql', 'mongodb', 'database schema', 'database migration', 'pgbouncer', 'EXPLAIN'. Not for HTTP APIs (use backend-api).
 license: MIT
 compatibility: "Requires one or more of: psql, mongosh, mysql, or sqlcmd"
 metadata:
@@ -42,7 +42,7 @@ This skill covers six domains depending on context:
 - Analyzing query performance (EXPLAIN, slow query logs, index usage)
 - Database-level PCI-DSS 4.0 compliance (encryption, audit logging, access control)
 - Evaluating managed vs self-hosted database decisions
-- Setting up database monitoring and alerting
+- Exposing engine-native metrics and diagnosing database-specific health or query signals
 
 ## When NOT to use
 
@@ -53,6 +53,7 @@ This skill covers six domains depending on context:
 - Application-level database bugs (N+1, transaction misuse, ORM pitfalls) - use **code-review**
 - SQL injection detection, connection string secrets in code - use **security-audit**
 - CI/CD pipelines that run migrations - use **ci-cd**
+- Cross-service telemetry pipelines, dashboards, alert routing, or SLOs - use **observability**
 - Redis/Valkey (cache/KV stores) and other non-relational engines (Cassandra, DynamoDB, ClickHouse, etc.) - outside this skill's four primary engines; use the relevant platform skill or general guidance
 
 ---
@@ -382,6 +383,8 @@ See `references/output-contract.md` for the full contract.
 - **docker** - for database containers in Docker Compose
 - **ansible** - for database server configuration management
 - **ci-cd** - for CI/CD pipelines that run migrations (schema execution in CI, migration gating, rollback automation)
+- **observability** - for cross-service telemetry pipelines, dashboards, alert routing, and SLOs.
+  This skill owns database-native metrics, engine health, and query diagnosis.
 
 ---
 

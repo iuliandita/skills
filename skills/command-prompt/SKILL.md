@@ -1,7 +1,7 @@
 ---
 name: command-prompt
 description: >
-  · Write/debug shell commands, scripts, dotfiles, completions for zsh, bash, POSIX sh, fish. Triggers: 'shell', 'script', '.zshrc', '.bashrc', 'alias', 'completion', 'trap'. Not for CI blocks (use ci-cd).
+  · Write/debug shell commands, scripts, dotfiles, completions for zsh, bash, POSIX sh, fish. Triggers: 'shell', 'shell script', '.zshrc', '.bashrc', 'alias', 'shell completion', 'trap'. Not for CI blocks (use ci-cd).
 license: MIT
 compatibility: "Requires a POSIX-compatible shell. Zsh, bash, fish, or nushell for shell-specific features"
 metadata:

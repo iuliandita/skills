@@ -4,13 +4,6 @@ description: >
   · Write/review CI/CD for GitHub Actions, GitLab, Forgejo/Gitea, Woodpecker. Triggers: 'ci/cd', 'pipeline', 'github actions', 'gitlab ci', 'runner', 'renovate', 'trivy'. Not for git workflows (use git).
 license: MIT
 compatibility: "Optional: gh (GitHub CLI), glab (GitLab CLI), fj (Forgejo CLI)"
-paths:
-  - ".github/workflows/*.yml"
-  - ".gitlab-ci.yml"
-  - ".forgejo/workflows/*.yml"
-  - ".gitea/workflows/*.yml"
-  - ".woodpecker/*.yaml"
-  - ".woodpecker.yaml"
 metadata:
   source: iuliandita/skills
   date_added: "2026-03-24"
@@ -26,6 +19,10 @@ satisfy both engineering needs and compliance requirements (PCI-DSS 4.0).
 
 **Target versions**: September 2026 snapshot. Read `references/target-versions.md` before
 pinning forge, runner, CI, or supply-chain tool versions.
+
+**Portable metadata:** keep file-routing patterns in the description and scope sections. `paths`
+is a Claude Code-local extension, not portable Agent Skills metadata, and can make claude.ai uploads
+or Skills API packages fail validation.
 
 This skill covers workflow design, security, compliance, cross-platform migration,
 runners, dependency updates, scanning, review gates, and rollout order.
@@ -49,9 +46,8 @@ runners, dependency updates, scanning, review gates, and rollout order.
 - Terraform/OpenTofu infrastructure-as-code - use **terraform**
 - Ansible playbooks, configuration management - use **ansible**
 - Security audits of application code (SAST findings, auth bugs) - use **security-audit**
-- Code review of pipeline-adjacent code (the app itself) - use **code-review**
-- The code-review skill has a `cicd-pipelines.md` reference for **bug patterns** in existing
-  pipelines. This skill is for **writing and architecting** pipelines.
+- Correctness review of application code that happens to be pipeline-adjacent - use **code-review**.
+  Pipeline config review, debugging, architecture, and CI-specific hardening stay in this skill.
 
 ## AI Self-Check
 
@@ -453,8 +449,8 @@ See `references/output-contract.md` for the full contract.
 
 ## Related Skills
 
-- **code-review** - has a `cicd-pipelines.md` reference for CI/CD **bug patterns** (expression
-  injection, variable scoping, cache gotchas, ArgoCD sync issues)
+- **code-review** - reviews application-code correctness. Pipeline YAML, expressions, runner
+  behavior, caching, and deployment-job bugs stay in this skill.
 - **security-audit** - for auditing application code, not pipeline code
 - **docker** - for Dockerfile and container image optimization
 - **kubernetes** - for K8s manifests and Helm charts that pipelines deploy to

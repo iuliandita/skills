@@ -48,6 +48,7 @@ in that file). Do not restate version numbers here.
 - Localizing an unknown-layer live failure once signals exist (consuming signals to find root
   cause) - use **debug-triage**
 - Application security review or secret scanning in telemetry - use **security-audit**
+- Database engine health, native metrics, query plans, or engine-specific tuning - use **databases**
 
 ---
 
@@ -221,6 +222,8 @@ See `references/output-contract.md` for the full contract.
   not the pipeline itself.
 - **security-audit** - reviews exploitable vulnerabilities and secret exposure. Observability flags
   secrets-in-telemetry as a gap but does not replace a security review.
+- **databases** - owns engine-native metrics, health, query plans, and tuning. Observability owns
+  cross-service collection, dashboards, alert routing, and SLOs built from those signals.
 
 ## Rules
 

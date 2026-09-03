@@ -1,7 +1,7 @@
 ---
 name: ansible
 description: >
-  · Write/review Ansible playbooks, roles, inventories, Vault, Molecule, AWX/AAP. Triggers: 'ansible', 'playbook', 'role', 'inventory', 'group_vars', 'ansible-lint'.
+  · Write/review Ansible playbooks, roles, inventories, Vault, Molecule, AWX/AAP. Triggers: 'ansible', 'playbook', 'ansible role', 'ansible inventory', 'group_vars', 'ansible-lint'.
 license: MIT
 compatibility: "Requires ansible-core and Python 3.9+. Optional: ansible-lint, molecule"
 metadata:

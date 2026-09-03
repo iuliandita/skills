@@ -33,7 +33,7 @@ IBM acquired HashiCorp for $6.4B (closed Feb 2025). Terraform stays BSL 1.1; Ope
 - Writing or reviewing Terraform/OpenTofu configurations
 - Designing module architecture or registry patterns
 - Planning state management, backend strategy, or migration
-- Setting up CI/CD pipelines for IaC (plan/apply workflows)
+- Defining Terraform plan/apply requirements, state access, and policy gates consumed by CI pipelines
 - Implementing policy-as-code gates (Checkov, OPA, Sentinel)
 - PCI-DSS 4.0 compliance for infrastructure provisioning
 - Multi-account/multi-cloud architecture with blast radius controls
@@ -45,7 +45,7 @@ IBM acquired HashiCorp for $6.4B (closed Feb 2025). Terraform stays BSL 1.1; Ope
 - Read-only Kubernetes cluster health checks after provisioning or maintenance (use **cluster-health**)
 - Ansible playbooks or configuration management (use **ansible**)
 - Docker/container optimization (use **docker**)
-- CI/CD pipeline design (use **ci-cd**)
+- CI/CD job and pipeline design, including how Terraform commands are sequenced (use **ci-cd**)
 - Database engine configuration, schema design, or migrations (use **databases**)
 - Security auditing application code (use **security-audit**)
 

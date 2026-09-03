@@ -1,7 +1,7 @@
 ---
 name: code-review
 description: >
-  · Review code for correctness: bugs, edge cases, races, leaks, regressions. Triggers: 'review', 'code review', 'find bugs', 'check this', 'spot check', 'sanity check'. Not for style/slop (anti-slop) or vulnerabilities (security-audit).
+  · Review code for correctness: bugs, edge cases, races, leaks, regressions. Triggers: 'review this code', 'code review', 'find bugs', 'check this diff', 'sanity check'. Not for style/slop (anti-slop) or vulnerabilities (security-audit).
 license: MIT
 compatibility: "None - works on any codebase"
 metadata:
@@ -38,7 +38,7 @@ Every finding answers one of:
 
 - Style, verbosity, or machine-generated code quality issues - use **anti-slop**
 - Exploitable vulnerabilities, auth flaws, or secret scanning - use **security-audit**
-- Pipeline architecture design - use **ci-cd**
+- Pipeline config review, pipeline architecture, runner behavior, caching, or deployment-job bugs - use **ci-cd**
 - End-of-session doc hygiene or instruction-file cleanup - use **update-docs**
 
 ## AI Self-Check

@@ -37,7 +37,7 @@ measure, or cut.
 - Code correctness, crashes, edge cases, or regressions - use **code-review**
 - AI-generated code quality, over-abstraction, or test theater - use **anti-slop**
 - Security vulnerabilities, auth flaws, secrets, or OWASP issues - use **security-audit**
-- Detailed UI construction or visual critique - use **frontend-design**
+- Hands-on UI construction, visual critique, or interface polish - use **frontend-design**
 - Capturing ideas into a project backlog - use **roadmap**
 - Turning notes into an LLM prompt - use **prompt-generator**
 - Running a full repository audit or merge gate - use **full-review** or **deep-audit**
