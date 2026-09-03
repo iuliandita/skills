@@ -49,10 +49,10 @@ validate_description() {
   if grep -Eq '</?[A-Za-z][A-Za-z0-9_-]*([[:space:]][^<>]*)?/?>' <<< "$desc_no_code"; then
     error "$name: description must not contain XML/HTML-like tags; use backticks for literal tag names or generic notation"
   fi
-  if [[ ${#desc} -gt 600 ]]; then
-    error "$name: description exceeds 600 characters (${#desc})"
+  if [[ ${#desc} -gt 1024 ]]; then
+    error "$name: description exceeds 1024 characters (${#desc})"
   elif [[ ${#desc} -gt 240 ]]; then
-    warn "$name: description exceeds Codex-friendly 240 character target (${#desc})"
+    warn "$name: description exceeds the collection's Codex-friendly 240 character target (${#desc}); this is not a spec violation"
   fi
 }
 
@@ -104,18 +104,15 @@ for skill_dir in "$SKILLS_DIR"/*/; do
   if ! frontmatter_has "$skill_file" "description"; then
     error "$name: missing required field 'description'"
   fi
-  if ! frontmatter_has "$skill_file" "license"; then
-    error "$name: missing required field 'license'"
-  fi
-
   # Spec: field constraints
   validate_description "$skill_file" "$name"
   validate_compatibility "$skill_file" "$name"
 
-  # Spec: SKILL.md body recommended under 500 lines (soft target, 600 hard max)
+  # Spec: SKILL.md body is recommended under 500 lines; this is not a hard limit.
   lines=$(wc -l < "$skill_file")
-  warn_msg="$name: SKILL.md is $lines lines (spec recommends < 500)"
-  skill_length_check "$skill_file" "$name" error warn "$warn_msg"
+  if (( lines > 500 )); then
+    warn "$name: SKILL.md is $lines lines (spec recommends < 500)"
+  fi
 
   if [[ $errors -eq $prev_errors ]]; then
     pass "spec-compliant"
