@@ -58,6 +58,8 @@ for skill in ci-cd docker; do
     fail "$skill still has non-portable paths frontmatter"
   fi
 done
+reject_text skills/skill-creator/references/conventions.md 'safe to include for progressive enhancement' "skill-creator still describes paths frontmatter as universally safe"
+require_text skills/skill-creator/references/conventions.md 'claude.ai uploads and Skills API packaging reject' "skill-creator does not document paths packaging incompatibility"
 
 version_ref="skills/dev-cycle/references/version-bump-sites.md"
 require_text "$version_ref" '.version // empty' "dev-cycle does not convert a missing package version to empty"
