@@ -1,7 +1,7 @@
 ---
 name: testing
 description: >
-  · Write/debug tests: unit, integration, E2E, TDD, mocks, fixtures, a11y, perf. Triggers: 'test', 'spec', 'TDD', 'playwright', 'vitest', 'jest', 'pytest', 'coverage', 'flaky'. Not for security tests (use security-audit).
+  · Write/debug tests: unit, integration, E2E, TDD, mocks, fixtures, a11y, perf. Triggers: 'test', 'test spec', 'TDD', 'playwright', 'vitest', 'jest', 'pytest', 'coverage', 'flaky'. Not for security tests (use security-audit).
 license: MIT
 compatibility: "Requires one or more of: vitest, jest, pytest, go test, cargo test, playwright"
 metadata:
@@ -15,15 +15,15 @@ metadata:
 
 Write, structure, and maintain tests across unit, integration, E2E, accessibility, and performance layers. The goal is tests that catch regressions, document behavior, and run fast in CI - not tests that exist to inflate coverage numbers.
 
-**Target versions** (July 2026):
-- Vitest **4.1.10**, Jest **30.4.2**
-- Playwright **1.61.1**, Cypress **15.19.0**
+**Target versions** (September 2026):
+- Vitest **5.0.0**, Jest **30.5.1**
+- Playwright **1.62.1**, Cypress **16.0.0** (both Vitest and Cypress are major upgrades; review migration notes)
 - pytest **9.1.1**, pytest-cov **7.1.0**
-- Go **1.26.5** (testing stdlib, `testing/synctest` GA)
-- Rust **1.97.1** (`cargo test`, cargo-nextest **0.9.140**)
-- Testing Library **16.3.2** (`@testing-library/react`)
-- axe-core **4.12.1** (`@axe-core/playwright`)
-- Grafana k6 **2.1.0** (major release; review migration notes before upgrading load tests)
+- Go **1.27.1** (testing stdlib, `testing/synctest` GA)
+- Rust **1.98.1** (`cargo test`, cargo-nextest **0.9.143**)
+- Testing Library **16.3.3** (`@testing-library/react`)
+- axe-core **4.13.0** (`@axe-core/playwright`)
+- Grafana k6 **2.2.0**
 
 ## When to use
 
@@ -182,6 +182,11 @@ fakeNow.mockReturnValue(START + 1001);
 expect(isExpired(START, 1000, fakeNow)).toBe(true);
 ```
 
+For cached fetches, cover the two observable paths separately:
+- Cache miss: the HTTP boundary is called once and the returned value is cached.
+- Cache hit: the cached value is returned and the HTTP boundary is not called.
+- TTL expiry: advance an injected or fake clock, then assert one refresh instead of sleeping.
+
 Read `references/language-patterns.md` for language-specific mocking idioms (Vitest `vi.mock`, Jest `jest.mock`, pytest `monkeypatch`, Go interfaces, Rust trait objects).
 
 ---
@@ -282,9 +287,11 @@ Flaky tests erode trust. Fix or quarantine immediately.
 3. **Fix root causes** - common culprits by framework:
    - **Playwright/Cypress**: race conditions on navigation or animation. Use `waitForLoadState`,
      `waitForSelector`, or Playwright's auto-waiting. Avoid `page.waitForTimeout`. Stub network
-     requests to eliminate backend variability. Headless mode (CI) has different rendering
+     requests to eliminate backend variability. Create a fresh browser context per test so cookies,
+     storage, and service workers cannot leak between cases. Headless mode (CI) has different rendering
      timing than headed - animations may be skipped or font metrics differ; use
-     `--headed` locally to reproduce CI-only failures.
+     `--headed` locally to reproduce CI-only failures. Check CPU, memory, and worker contention on
+     the CI runner before changing timeouts.
    - **Vitest/Jest**: shared module state between test files. Use `--pool forks` (Vitest) or
      `--runInBand` to isolate. Check for leaked timers (`vi.useFakeTimers` not restored).
    - **pytest**: database state leaking between tests. Use `@pytest.mark.usefixtures("db")`
@@ -326,7 +333,7 @@ See `references/output-contract.md` for the full contract.
 
 - **Skill name:** TESTING
 - **Deliverable bucket:** `audits`
-- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract - boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table - and write the deliverable to `docs/local/audits/testing/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
+- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract - monospace inline header, severity-grouped inline summary, linked Markdown deliverable, and concise monospace conclusion - and write the deliverable to `docs/local/audits/testing/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
 
 ## Related Skills

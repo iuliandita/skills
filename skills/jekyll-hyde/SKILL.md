@@ -37,7 +37,7 @@ measure, or cut.
 - Code correctness, crashes, edge cases, or regressions - use **code-review**
 - AI-generated code quality, over-abstraction, or test theater - use **anti-slop**
 - Security vulnerabilities, auth flaws, secrets, or OWASP issues - use **security-audit**
-- Detailed UI construction or visual critique - use **frontend-design**
+- Hands-on UI construction, visual critique, or interface polish - use **frontend-design**
 - Capturing ideas into a project backlog - use **roadmap**
 - Turning notes into an LLM prompt - use **prompt-generator**
 - Running a full repository audit or merge gate - use **full-review** or **deep-audit**
@@ -221,9 +221,9 @@ Every response should pass these checks:
 
 | Scenario | Hyde should inspect | Jekyll should convert into |
 |---|---|---|
-| AI feature | evaluation gaps, false confidence, data capture, unclear responsibility | measurable success criteria, fallback paths, disclosure, human review |
+| AI feature | evaluation gaps, false confidence, support-quality failure, data capture, unclear responsibility | measurable success criteria, fallback and rollback paths, disclosure, human review |
 | Open source or community | fake openness, unpaid distribution, license drift, trust extraction | reciprocity, governance, clear boundaries, sustainable funding |
-| Growth or retention | confusion, pressure, dark defaults, captive users | honest activation, opt-out, user value, retention by quality |
+| Growth or retention | confusion, pressure, dark defaults, captive users | honest activation, opt-out, exit interviews, downgrade paths, user-value fixes, retention by quality |
 | Platform or ecosystem | dependency, lock-in, default control, partner risk | stable contracts, exit paths, documented incentives, audit points |
 | Architecture or dependency | hidden complexity, vendor power, migration cost, hero ownership | reversibility, boring boundaries, ownership, tests for trust-critical paths |
 
@@ -239,7 +239,7 @@ See `references/output-contract.md` for the full contract.
 
 - **Skill name:** JEKYLL-HYDE
 - **Deliverable bucket:** `deliverables`
-- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** an existing artifact (e.g., adversarial review of a strategy doc, design, or PR), emit the full contract - boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table - and write the deliverable to `docs/local/deliverables/jekyll-hyde/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content** (its primary advisor mode - delivering perspectives in chat), respond freely without the contract.
+- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** an existing artifact (e.g., adversarial review of a strategy doc, design, or PR), emit the full contract - monospace inline header, severity-grouped inline summary, linked Markdown deliverable, and concise monospace conclusion - and write the deliverable to `docs/local/deliverables/jekyll-hyde/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content** (its primary advisor mode - delivering perspectives in chat), respond freely without the contract.
 - **Deliverable path:** `docs/local/deliverables/jekyll-hyde/<YYYY-MM-DD>-<slug>.md`
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
 

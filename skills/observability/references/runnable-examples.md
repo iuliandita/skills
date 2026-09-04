@@ -71,6 +71,10 @@ groups:
         for: 2m
         labels:
           severity: page
+        annotations:
+          summary: API availability SLO is burning too quickly
+          description: The 5-minute and 1-hour error-budget burn rates both exceed 14.4x.
+          runbook_url: https://runbooks.example.invalid/api-slo-fast-burn
       - alert: ApiSloSlowBurn
         expr: |
           (
@@ -87,6 +91,10 @@ groups:
         for: 5m
         labels:
           severity: page
+        annotations:
+          summary: API availability SLO has a sustained burn
+          description: The 30-minute and 6-hour error-budget burn rates both exceed 6x.
+          runbook_url: https://runbooks.example.invalid/api-slo-slow-burn
 ```
 
 ```yaml
@@ -107,11 +115,19 @@ tests:
         exp_alerts:
           - exp_labels:
               severity: page
+            exp_annotations:
+              summary: API availability SLO is burning too quickly
+              description: The 5-minute and 1-hour error-budget burn rates both exceed 14.4x.
+              runbook_url: https://runbooks.example.invalid/api-slo-fast-burn
       - eval_time: 6h
         alertname: ApiSloSlowBurn
         exp_alerts:
           - exp_labels:
               severity: page
+            exp_annotations:
+              summary: API availability SLO has a sustained burn
+              description: The 30-minute and 6-hour error-budget burn rates both exceed 6x.
+              runbook_url: https://runbooks.example.invalid/api-slo-slow-burn
 ```
 
 ```bash

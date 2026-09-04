@@ -19,7 +19,7 @@ Output is a self-contained prompt plus the artifacts to wire it up (a `/schedule
 
 **Why routines differ from chat prompts.** A routine runs as a full autonomous Claude Code cloud session. There is no permission-mode picker, no approval prompts, and no human to answer clarifying questions mid-run. A prompt that works fine in a conversation can stall or misfire silently inside a routine because the model has no one to ask. Every routine prompt must be self-contained, state its success criteria, and declare where output goes.
 
-**Research preview context** (July 2026 recheck): routines ship under the beta header `experimental-cc-routine-2026-04-01`. Behavior, limits, and the API surface can change. Pin any beta header references to that value and date so staleness is detectable.
+**Research preview context** (September 2026 recheck): routines ship under the beta header `experimental-cc-routine-2026-04-01`. Behavior, limits, and the API surface can change. Pin any beta header references to that value and date so staleness is detectable.
 
 ## When to use
 
@@ -237,7 +237,7 @@ See `references/output-contract.md` for the full contract.
 
 - **Skill name:** ROUTINE-WRITER
 - **Deliverable bucket:** `deliverables`
-- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content (e.g., review an existing routine for quality), emit the full contract - boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table - and write the deliverable to `docs/local/deliverables/routine-writer/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content** (its primary mode, producing a routine for the user), respond freely without the contract.
+- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content (e.g., review an existing routine for quality), emit the full contract - monospace inline header, severity-grouped inline summary, linked Markdown deliverable, and concise monospace conclusion - and write the deliverable to `docs/local/deliverables/routine-writer/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content** (its primary mode, producing a routine for the user), respond freely without the contract.
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
 
 ## Related Skills

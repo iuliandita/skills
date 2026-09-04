@@ -17,10 +17,10 @@ Structured, multi-pass security audit. Combines automated tooling with manual pa
 
 Patterns drawn from real OSS incidents (unauthenticated admin endpoints, credential exfiltration, zip slip, auth bypass whitelists, Trivy supply chain compromise) and OpenSSF/SLSA/OWASP standards.
 
-**Target versions** (July 2026):
-- Semgrep 1.170.1, Bandit 1.9.4
-- Gitleaks 8.30.1, Betterleaks 1.1.1 (successor by same author), TruffleHog 3.95.9
-- Trivy 0.72.0 (0.69.4-0.69.6 was compromised - see known incidents; upgrade past the 0.69.x window)
+**Target versions** (September 2026):
+- Semgrep 1.176.0, Bandit 1.9.4
+- Gitleaks 8.30.1, Betterleaks 1.1.1 (successor by same author), TruffleHog 3.97.4
+- Trivy 0.74.0 (0.69.4-0.69.6 was compromised - see known incidents; upgrade past the 0.69.x window)
 - OpenSSF Scorecard 5.5.0 (v6 in proposal stage)
 - OWASP Top 10:2025 (confirmed January 2026), OWASP Agentic Top 10:2026 (released December 2025)
 
@@ -42,6 +42,9 @@ Patterns drawn from real OSS incidents (unauthenticated admin endpoints, credent
 - Novel vulnerability research, fuzzing, patch diffing, or exploit development - use **zero-day**
 - Network appliance administration or firewall tuning - use **firewall-appliance**
 - Linux networking setup and troubleshooting - use **networking**
+- Secure construction or hardening of a known domain artifact without repository-wide audit intent
+  - use that domain skill. Security-audit owns vulnerability discovery, exploitability, severity,
+  and repository-wide reporting.
 
 ---
 
@@ -55,7 +58,7 @@ Before returning any security audit report, verify:
 - [ ] **OWASP mapping present**: each finding maps to the relevant OWASP Top 10:2025 category
 - [ ] **Remediation is specific**: concrete fix per finding, not generic advice ("validate input" is insufficient)
 - [ ] **Commit SHA recorded**: report anchored to a specific point in time
-- [ ] **Report gitignored**: warned user and checked `.gitignore` for `SECURITY-AUDIT.md`
+- [ ] **Report kept local**: wrote the dated report under `docs/local/audits/security-audit/` and verified `docs/local/` is gitignored
 - [ ] **Known incidents checked**: dependency audit verified against the known supply chain incidents listed in Step 3 (event-stream, ua-parser-js, colors any version, faker, polyfill.io, xz-utils, trivy 0.69.4-0.69.6, TrapDoor, Mini Shai-Hulud worm, outdated lodash), not just CVE databases
 - [ ] **Agentic risks covered** (when applicable): MCP servers, AI tool handlers, prompt injection surfaces audited if present
 - [ ] **Scope respected**: no external service probing, no DAST, repo-only analysis
@@ -117,14 +120,15 @@ Find known CVEs in dependencies and assess supply chain risk.
 - **Python**: `pip-audit --format json` or `safety check --json`
 - **Go**: `govulncheck ./...`
 - **Rust**: `cargo audit --json` - also check for `unsafe` blocks without `// SAFETY:` comments, `transmute` misuse, unvalidated FFI boundaries
-- **General**: `trivy fs --scanners vuln .` (use Trivy 0.72.0+ from official releases, or 0.69.3 only as a March 2026 incident rollback; never use 0.69.4-0.69.6)
+- **General**: `trivy fs --scanners vuln .` (use Trivy 0.74.0+ from official releases, or 0.69.3 only as a March 2026 incident rollback; never use 0.69.4-0.69.6)
 
-**Flag**: HIGH/CRITICAL CVEs with fixes available, deps unmaintained 2+ years, lockfile out of sync with manifest, non-standard registries.
+**Flag**: HIGH/CRITICAL CVEs with fixes available, deps unmaintained 2+ years, lockfile out of sync with manifest, non-standard registries. For production applications, prefer exact dependency versions plus a committed, integrity-checked lockfile; ranges alone do not make an install reproducible.
 
 **Known supply chain incidents** - flag these by name, not just by CVE:
 - `event-stream` 3.3.6 (2018 backdoor targeting bitcoin wallets)
 - `ua-parser-js` 0.7.29/0.8.0/1.0.0 (2021 cryptominer injection)
 - `colors` any version / `faker` 6.6.6 (2022 maintainer sabotage - the `colors` package carries ongoing maintainer-sabotage risk regardless of version; prefer `chalk` or `picocolors`)
+- `left-pad` (2016 unpublishing incident and trivial dependency fragility; replace the dependency with the platform's built-in padding support)
 - `lodash` <=2.x or any very outdated lodash (prototype pollution chain - high-risk for aged lockfiles; pin to 4.17.21+)
 - `polyfill.io` (2024 domain takeover, malicious CDN injection)
 - `xz-utils` 5.6.0-5.6.1 (2024 backdoor in compression library)
@@ -235,7 +239,7 @@ Read `references/hardening-checklists.md` (CI/CD section) and `references/grep-p
 
 Read `references/report-guide.md` for the severity classification, OWASP mapping table, and report template.
 
-Save to `SECURITY-AUDIT.md` in repo root. Warn the user this file contains vulnerability details and must be gitignored. Check `.gitignore` and offer to add it if missing.
+Save to `docs/local/audits/security-audit/<YYYY-MM-DD>-<slug>.md`. The report contains vulnerability details, so verify `docs/local/` is gitignored before writing it and offer to add that directory rule if missing.
 
 ---
 
@@ -273,7 +277,7 @@ See `references/output-contract.md` for the full contract.
 
 - **Skill name:** SECURITY-AUDIT
 - **Deliverable bucket:** `audits`
-- **Mode:** always-on. Every invocation emits the full contract - boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table.
+- **Mode:** always-on. Every invocation emits the full contract - monospace inline header, severity-grouped inline summary, linked Markdown deliverable, and concise monospace conclusion.
 - **Deliverable path:** `docs/local/audits/security-audit/<YYYY-MM-DD>-<slug>.md`
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract).
 

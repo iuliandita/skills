@@ -110,7 +110,7 @@ check_ascii() {
     while IFS= read -r line; do
       # Strip allowed emoji status indicators, then check for remaining non-ASCII
       local stripped
-      stripped=$(echo "$line" | perl -CSD -pe 's/[\x{00B7}\x{1F534}\x{1F7E2}\x{1F7E1}\x{1F535}\x{26A1}\x{1F3AF}\x{1F480}]//g' 2>/dev/null || echo "$line")
+      stripped=$(echo "$line" | perl -CSD -pe 's/[\x{00B7}\x{1F534}\x{1F7E0}\x{1F7E2}\x{1F7E1}\x{1F535}\x{26AA}\x{26A1}\x{1F3AF}\x{1F480}]//g' 2>/dev/null || echo "$line")
       if echo "$stripped" | grep -Pq '[^\x00-\x7F]' 2>/dev/null; then
         error "$name: non-ASCII character at $line"
       fi
@@ -322,11 +322,95 @@ check_no_symlinks() {
   fi
 }
 
+# A collection that ships skill-refiner's canonical behavioral catalog must
+# keep exactly one section for every public skill. Smaller or unrelated
+# collections without that catalog are unaffected.
+check_canonical_test_coverage() {
+  local catalog="$SKILLS_DIR/skill-refiner/references/test-cases.md"
+  [[ -f "$catalog" ]] || return 0
+
+  local skill_dir name heading
+  declare -A public_skills=()
+  declare -A heading_counts=()
+
+  for skill_dir in "$SKILLS_DIR"/*/; do
+    name=$(basename "$skill_dir")
+    [[ "$name" == ".backups" || "$name" == ".cook" ]] && continue
+    [[ "$name" == _* ]] && continue
+    git check-ignore -q "$skill_dir" 2>/dev/null && continue
+    [[ -f "$skill_dir/SKILL.md" ]] || continue
+    public_skills["$name"]=1
+  done
+
+  while IFS= read -r heading; do
+    [[ "$heading" == "<skill-name>" ]] && continue
+    (( heading_counts["$heading"]++ )) || true
+  done < <(
+    awk '
+      function marker_length(value, marker, count) {
+        marker = substr(value, 1, 1)
+        count = 0
+        while (substr(value, count + 1, 1) == marker) count++
+        return count
+      }
+      {
+        line = $0
+        sub(/^[[:space:]]*/, "", line)
+
+        marker = substr(line, 1, 3)
+        if (marker == "```" || marker == "~~~") {
+          current_marker = substr(marker, 1, 1)
+          current_length = marker_length(line)
+          if (fence == "") {
+            fence = current_marker
+            fence_length = current_length
+          } else if (fence == current_marker && current_length >= fence_length) {
+            fence = ""
+            fence_length = 0
+          }
+          next
+        }
+        if (fence != "") next
+
+        if (line ~ /^## Test Cases[[:space:]]*$/) {
+          in_cases = 1
+          next
+        }
+        if (line ~ /^## [^#]/) {
+          in_cases = 0
+          next
+        }
+        if (in_cases && line ~ /^### /) {
+          heading = substr(line, 5)
+          sub(/[[:space:]]*$/, "", heading)
+          print heading
+        }
+      }
+    ' "$catalog"
+  )
+
+  for name in "${!public_skills[@]}"; do
+    if [[ -z "${heading_counts[$name]:-}" ]]; then
+      error "canonical test catalog missing section for '$name'"
+    fi
+  done
+
+  for heading in "${!heading_counts[@]}"; do
+    if (( heading_counts["$heading"] > 1 )); then
+      error "canonical test catalog has duplicate section for '$heading'"
+    fi
+    if [[ -z "${public_skills[$heading]:-}" ]]; then
+      error "canonical test catalog has orphan section for '$heading'"
+    fi
+  done
+}
+
 # ── Main ────────────────────────────────────────────────────────────────
 echo "Linting skills in $SKILLS_DIR..."
 echo
 
 check_no_symlinks "$SKILLS_DIR"
+check_canonical_test_coverage
 
 skill_count=0
 for skill_dir in "$SKILLS_DIR"/*/; do

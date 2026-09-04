@@ -235,6 +235,138 @@ test_generic_self_check_ratio_exempts_skill_creator() {
   trap - RETURN
 }
 
+test_report_severity_markers_are_allowed() {
+  local tmp skill_dir output status
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  skill_dir="$tmp/skills/lint-fixture"
+  write_minimal_skill "$skill_dir" "lint-fixture"
+  printf '\nP0 🔴  P1 🟠  P2 🟡  P3 🔵  info ⚪\n' >> "$skill_dir/SKILL.md"
+
+  status=0
+  output="$("$ROOT/scripts/lint-skills.sh" "$tmp/skills" 2>&1)" || status=$?
+  if (( status != 0 )); then
+    if [[ "$output" != *"non-ASCII character"* ]]; then
+      printf '%s\n' "$output" >&2
+      fail "severity marker fixture failed for an unrelated reason"
+    fi
+    printf '%s\n' "$output" >&2
+    fail "functional report severity markers were rejected"
+  fi
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_complete_canonical_test_catalog_passes() {
+  local tmp catalog
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  write_minimal_skill "$tmp/skills/alpha" "alpha"
+  write_minimal_skill "$tmp/skills/beta" "beta"
+  write_minimal_skill "$tmp/skills/skill-refiner" "skill-refiner"
+  catalog="$tmp/skills/skill-refiner/references/test-cases.md"
+  printf '%s\n' '## Test Cases' '### <skill-name>' '### alpha' '### beta' '### skill-refiner' > "$catalog"
+
+  "$ROOT/scripts/lint-skills.sh" "$tmp/skills" >/dev/null
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_incomplete_canonical_test_catalog_fails() {
+  local tmp catalog output status
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  write_minimal_skill "$tmp/skills/alpha" "alpha"
+  write_minimal_skill "$tmp/skills/beta" "beta"
+  write_minimal_skill "$tmp/skills/skill-refiner" "skill-refiner"
+  catalog="$tmp/skills/skill-refiner/references/test-cases.md"
+  printf '%s\n' '## Test Cases' '### <skill-name>' '### alpha' '### alpha' '### orphan' > "$catalog"
+
+  status=0
+  output="$("$ROOT/scripts/lint-skills.sh" "$tmp/skills" 2>&1)" || status=$?
+  if (( status == 0 )); then
+    printf '%s\n' "$output" >&2
+    fail "lint-skills.sh passed an incomplete canonical test catalog"
+  fi
+  for expected in \
+    "missing section for 'beta'" \
+    "duplicate section for 'alpha'" \
+    "orphan section for 'orphan'"; do
+    if [[ "$output" != *"$expected"* ]]; then
+      printf '%s\n' "$output" >&2
+      fail "lint-skills.sh did not report canonical catalog error: $expected"
+    fi
+  done
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_canonical_test_catalog_ignores_private_skills() {
+  local tmp catalog
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  git -C "$tmp" init -q
+  printf '%s\n' 'skills/private-skill/' > "$tmp/.gitignore"
+  write_minimal_skill "$tmp/skills/alpha" "alpha"
+  write_minimal_skill "$tmp/skills/private-skill" "private-skill"
+  write_minimal_skill "$tmp/skills/skill-refiner" "skill-refiner"
+  catalog="$tmp/skills/skill-refiner/references/test-cases.md"
+  printf '%s\n' '## Test Cases' '### <skill-name>' '### alpha' '### skill-refiner' > "$catalog"
+
+  (cd "$tmp" && "$ROOT/scripts/lint-skills.sh" "$tmp/skills" >/dev/null)
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_canonical_test_catalog_ignores_headings_outside_cases_and_fences() {
+  local tmp catalog
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  write_minimal_skill "$tmp/skills/alpha" "alpha"
+  write_minimal_skill "$tmp/skills/beta" "beta"
+  write_minimal_skill "$tmp/skills/skill-refiner" "skill-refiner"
+  catalog="$tmp/skills/skill-refiner/references/test-cases.md"
+  cat > "$catalog" <<'EOF'
+### Introduction
+
+## Test Cases
+
+### alpha
+
+```markdown
+### Example
+```
+
+````markdown
+```markdown
+### Nested Example
+```
+### Still Example
+````
+
+### beta
+### skill-refiner
+
+## Scoring
+
+### Notes
+EOF
+
+  "$ROOT/scripts/lint-skills.sh" "$tmp/skills" >/dev/null
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
 test_reference_files_are_scanned
 test_reference_examples_are_ignored
 test_unrelated_bold_does_not_mask_missing_reference
@@ -243,4 +375,9 @@ test_generic_self_check_ratio_within_cap_passes
 test_generic_self_check_ratio_over_cap_fails
 test_generic_self_check_ratio_ignores_custom_body_with_generic_label
 test_generic_self_check_ratio_exempts_skill_creator
+test_report_severity_markers_are_allowed
+test_complete_canonical_test_catalog_passes
+test_incomplete_canonical_test_catalog_fails
+test_canonical_test_catalog_ignores_private_skills
+test_canonical_test_catalog_ignores_headings_outside_cases_and_fences
 printf 'lint tests passed\n'

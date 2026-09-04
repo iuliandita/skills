@@ -1,10 +1,10 @@
 # Alternative Container Runtimes
 
-Podman, Buildah, Skopeo, and containerd patterns. Reviewed July 2026.
+Podman, Buildah, Skopeo, and containerd patterns. Reviewed September 2026.
 
 ---
 
-## Podman (v6.0.2)
+## Podman (v6.1.1)
 
 Daemonless, rootless container engine. CLI-compatible with Docker. `alias docker=podman` works for most commands. Adopted by 40% of Fortune 500 (2025 survey).
 
@@ -151,7 +151,7 @@ docker compose up -d
 
 ---
 
-## Buildah (v1.44.0)
+## Buildah (v1.45.0)
 
 Build OCI images without a daemon. Can build from Dockerfiles or programmatically via CLI commands.
 
@@ -241,11 +241,11 @@ skopeo list-tags docker://ghcr.io/org/myapp
 
 ---
 
-## containerd (v2.3.3)
+## containerd (v2.3.4)
 
 Low-level container runtime. Kubernetes uses it directly. Docker Engine uses it under the hood.
 
-### Key facts (July 2026)
+### Key facts (September 2026)
 
 - **containerd 2.3.0** was released in April 2026 as the first annual LTS release, supported for 2+ years
 - **containerd 2.2.3** remains a supported 2.2 patch release through November 2026

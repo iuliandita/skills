@@ -16,10 +16,10 @@ Guide AI agents through web browsing tasks using the cheapest tool that gets the
 Every browsing action has a token cost - this skill minimizes it through progressive disclosure,
 smart format selection, and backend-aware strategies.
 
-**Target versions** (July 2026):
-- Lightpanda: 0.3.1
-- @playwright/mcp: 0.0.78
-- agent-browser: 0.32.3
+**Target versions** (September 2026):
+- Lightpanda: 0.4.0
+- @playwright/mcp: 0.0.80
+- agent-browser: 0.36.0
 
 ## When to use
 
@@ -201,6 +201,10 @@ For multi-step flows (login, form submission, navigation):
 2. **Act on specific elements** - click, fill, select using element identifiers
 3. **Re-extract after each action** - page state changes; get a fresh view
 4. **Wait for navigation** - after clicks that trigger page loads, wait before extracting
+5. **Verify authentication** - confirm the post-login URL or a user-only element before opening the target page
+6. **Download through the authenticated browser** - trigger the download without printing cookies,
+   tokens, or form values; save to the requested path and verify the file exists, has the expected
+   media type, and is non-empty before reporting success
 
 **MCP interaction pattern:**
 ```
@@ -393,7 +397,7 @@ fastest path to full browsing capability with minimal overhead.
 **Lightpanda MCP setup** (one-time, ~30 seconds):
 ```bash
 # Install the binary (see references/tool-setup.md for other architectures)
-curl -L -o lightpanda https://github.com/lightpanda-io/browser/releases/download/0.3.1/lightpanda-x86_64-linux
+curl -L -o lightpanda https://github.com/lightpanda-io/browser/releases/download/0.4.0/lightpanda-x86_64-linux
 chmod +x lightpanda && mv lightpanda ~/.local/bin/
 ```
 
@@ -437,7 +441,7 @@ See `references/output-contract.md` for the full contract.
 
 - **Skill name:** BROWSE
 - **Deliverable bucket:** `audits`
-- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract - boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table - and write the deliverable to `docs/local/audits/browse/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
+- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract - monospace inline header, severity-grouped inline summary, linked Markdown deliverable, and concise monospace conclusion - and write the deliverable to `docs/local/audits/browse/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
 
 ## Related Skills

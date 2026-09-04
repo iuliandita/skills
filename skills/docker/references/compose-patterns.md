@@ -1,6 +1,6 @@
 # Docker Compose Patterns & Templates
 
-Production-ready Compose patterns for Docker Compose v5.1+ (no `version:` field). Reviewed July 2026.
+Production-ready Compose patterns for Docker Compose v5.5+ (no `version:` field). Reviewed September 2026.
 
 ---
 

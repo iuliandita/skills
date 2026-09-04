@@ -2,7 +2,7 @@
 
 Encrypt Kubernetes Secrets for safe Git storage. The controller decrypts them in-cluster using RSA-4096 asymmetric encryption. Plaintext never touches Git.
 
-**Current**: controller v0.36.1, Helm chart v2.18.4, kubeseal CLI v0.36.1.
+**Current (September 2026)**: controller v0.39.1, Helm chart v2.19.3, kubeseal CLI v0.39.1.
 
 **CRITICAL: CVE-2026-22728** (fixed in v0.36.0). The `/v1/rotate` endpoint accepted untrusted annotations - an attacker could inject `sealedsecrets.bitnami.com/cluster-wide: "true"` into a victim's SealedSecret, submit it to the rotate endpoint, and receive back a re-encrypted SealedSecret with cluster-wide scope. The attacker could then retarget it (change name/namespace) to decrypt the original secret values in any namespace they control. Upgrade past v0.35.x immediately.
 
@@ -109,7 +109,7 @@ kubectl apply -f sealed-secrets-keys.yaml
 
 # 2. Deploy controller - picks up existing keys on startup
 helm install sealed-secrets sealed-secrets/sealed-secrets \
-  -n kube-system --version 2.18.4
+  -n kube-system --version 2.19.3
 
 # 3. Verify
 kubectl -n kube-system logs -l app.kubernetes.io/name=sealed-secrets | grep "registered"
@@ -400,7 +400,7 @@ Scrape Prometheus metrics from the controller:
 helm install sealed-secrets-controller \
   oci://registry-1.docker.io/bitnamicharts/sealed-secrets \
   -n kube-system \
-  --version 2.18.4 \
+  --version 2.19.3 \
   --set fullnameOverride=sealed-secrets-controller \
   --set keyrenewperiod="720h" \
   --set resources.requests.memory=64Mi \

@@ -7,7 +7,7 @@ lockfile; channels pin implicitly via whatever `nix-channel --update` last fetch
 
 ```bash
 sudo nix-channel --list
-sudo nix-channel --add https://nixos.org/channels/nixos-25.11 nixos
+sudo nix-channel --add https://nixos.org/channels/nixos-26.05 nixos
 sudo nix-channel --update
 sudo nixos-rebuild switch
 ```
@@ -31,10 +31,10 @@ enables this by default; upstream Nix does not.
   description = "box";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
     home-manager = {
-      url = "github:nix-community/home-manager/release-25.11";
+      url = "github:nix-community/home-manager/release-26.05";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
@@ -123,7 +123,7 @@ Migrating a working channel-based NixOS install to flakes without breaking it:
 4. Write `flake.nix` wrapping the existing module:
    ```nix
    {
-     inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
+     inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
      outputs = { self, nixpkgs }: {
        nixosConfigurations.box = nixpkgs.lib.nixosSystem {
          system = "x86_64-linux";
@@ -157,9 +157,9 @@ Use `follows` to deduplicate transitive `nixpkgs` copies:
 
 ```nix
 inputs = {
-  nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
+  nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
   home-manager = {
-    url = "github:nix-community/home-manager/release-25.11";
+    url = "github:nix-community/home-manager/release-26.05";
     inputs.nixpkgs.follows = "nixpkgs";    # use our nixpkgs, not theirs
   };
   sops-nix = {
@@ -234,7 +234,7 @@ for `--impure` every time.
   hard to review. Keep input bumps in their own commit.
 - Enabling flakes on the Nix daemon but not also on the user - missing
   `experimental-features` in `~/.config/nix/nix.conf`.
-- Mixing `nixos-unstable` and `nixos-25.11` inputs without `follows` - you get two
+- Mixing `nixos-unstable` and `nixos-26.05` inputs without `follows` - you get two
   `nixpkgs` trees and surprising collisions.
 - Assuming `nix flake check` builds everything. Use `nix flake check --keep-going` to see
   all failures and `--no-build` for a fast eval-only sanity pass.

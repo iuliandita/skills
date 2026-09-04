@@ -90,6 +90,12 @@ jobs:
       - name: Test lint behavior
         run: ./scripts/test-lint-skills.sh
 
+      - name: Test skill content invariants
+        run: ./scripts/test-skill-content.sh
+
+      - name: Test Agent Skills validator behavior
+        run: ./scripts/test-validate-spec.sh
+
       - name: Test version receipt behavior
         run: ./scripts/test-version-receipts.sh
 

@@ -13,15 +13,15 @@ Headless browser built from scratch in Zig with V8. Single static binary, no dep
 
 ```bash
 # Linux x86_64
-curl -L -o lightpanda https://github.com/lightpanda-io/browser/releases/download/0.3.1/lightpanda-x86_64-linux
+curl -L -o lightpanda https://github.com/lightpanda-io/browser/releases/download/0.4.0/lightpanda-x86_64-linux
 chmod +x lightpanda && sudo mv lightpanda /usr/local/bin/
 
 # Linux aarch64
-curl -L -o lightpanda https://github.com/lightpanda-io/browser/releases/download/0.3.1/lightpanda-aarch64-linux
+curl -L -o lightpanda https://github.com/lightpanda-io/browser/releases/download/0.4.0/lightpanda-aarch64-linux
 chmod +x lightpanda && sudo mv lightpanda /usr/local/bin/
 
 # macOS (Apple Silicon)
-curl -L -o lightpanda https://github.com/lightpanda-io/browser/releases/download/0.3.1/lightpanda-aarch64-macos
+curl -L -o lightpanda https://github.com/lightpanda-io/browser/releases/download/0.4.0/lightpanda-aarch64-macos
 chmod +x lightpanda && sudo mv lightpanda /usr/local/bin/
 
 # Docker
@@ -180,7 +180,7 @@ built-in reasoning.
 ### Installation
 
 ```bash
-npx agent-browser@0.32.3
+npx agent-browser@0.36.0
 # or: npm install -g agent-browser
 ```
 

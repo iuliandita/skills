@@ -1,7 +1,7 @@
 ---
 name: frontend-design
 description: >
-  · Build/critique frontend UIs with taste, rejecting AI design tells. Mobile-first, touch-aware, dark+light. Triggers: 'frontend', 'ui', 'ux', 'css', 'tailwind', 'landing page', 'design review'. Not for code logic (code-review).
+  · Build/critique frontend UIs with taste, rejecting AI design tells. Mobile-first, touch-aware, dark+light. Triggers: 'frontend', 'ui', 'ux', 'css', 'tailwind', 'landing page', 'ui design review'. Not for code logic (code-review).
 license: MIT
 compatibility: "None - works on any frontend stack"
 metadata:
@@ -17,13 +17,13 @@ A pragmatic, perfectionist UI engineer with strong taste. Treats interfaces as c
 
 This skill replaces the upstream generic `frontend-design` skill in this collection. The persona is the point: bland, accommodating UI advice produces bland UIs.
 
-**Target versions** (July 2026 - pinned so staleness is visible):
+**Target versions** (September 2026 - pinned so staleness is visible):
 
-- Astro 7.1.3 (major: Rust compiler, Vite 8, advanced routing; 7.1.0+ clears the June/July XSS and SSRF advisory set)
-- SvelteKit 2.70.1 + Svelte 5.56.7 runes
+- Astro 7.3.1 (major: Rust compiler, Vite 8, advanced routing; 7.1.0+ clears the June/July XSS and SSRF advisory set)
+- SvelteKit 2.70.3 + Svelte 5.57.0 runes
 - Tailwind CSS v4.3.3
-- Vite 8.1.5
-- React 19.2.8 + Next.js 16.2.11 (heavier option, only when team is React-locked)
+- Vite 8.2.2
+- React 19.2.8 + Next.js 16.3.4 (heavier option, only when team is React-locked)
 - @use-gesture/react 10.3.1 (modern; Hammer.js considered legacy)
 
 ## When to use
@@ -46,6 +46,7 @@ This skill replaces the upstream generic `frontend-design` skill in this collect
 - Localization, i18n catalogues, hardcoded strings - use **localize**
 - Frontend testing strategy and Playwright test authoring - use **testing**. This skill owns
   visual QA expectations and screenshot review for UI changes
+- Product, business, architecture, or strategy decision review - use **jekyll-hyde**
 
 ---
 
@@ -283,7 +284,7 @@ See `references/output-contract.md` for the full contract.
 
 - **Skill name:** FRONTEND-DESIGN
 - **Deliverable bucket:** `deliverables`
-- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing UI/UX (e.g., "review my landing page"), emit the full contract - boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table - and write the deliverable to `docs/local/deliverables/frontend-design/<YYYY-MM-DD>-<slug>.md`. When invoked to **build a new artifact or generate content** (its primary mode - producing UI code in chat), respond freely without the contract; build-mode behavior is unchanged.
+- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing UI/UX (e.g., "review my landing page"), emit the full contract - monospace inline header, severity-grouped inline summary, linked Markdown deliverable, and concise monospace conclusion - and write the deliverable to `docs/local/deliverables/frontend-design/<YYYY-MM-DD>-<slug>.md`. When invoked to **build a new artifact or generate content** (its primary mode - producing UI code in chat), respond freely without the contract; build-mode behavior is unchanged.
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
 
 ## Related Skills
@@ -293,6 +294,8 @@ See `references/output-contract.md` for the full contract.
 - **code-review** - neutral, general code review. This skill is opinionated and UI-specific
 - **localize** - i18n / l10n for hardcoded strings. Pair when shipping a UI for multiple locales
 - **testing** - Playwright / Vitest / a11y tests. Pair to add visual regression coverage to a built UI
+- **jekyll-hyde** - reviews product, business, architecture, and strategy decisions. This skill
+  owns hands-on UI implementation, visual critique, and polish.
 
 ## Rules
 

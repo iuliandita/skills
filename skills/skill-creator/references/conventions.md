@@ -16,7 +16,7 @@ when creating or reviewing skills to ensure consistency.
 7. AI Self-Check Patterns
 7.5. Diagnostic Skill Pitfalls
 8. Trigger Description Patterns
-9. Skill Inventory (July 2026)
+9. Skill Inventory (September 2026)
 
 ---
 
@@ -100,19 +100,27 @@ metadata:
 ```yaml
 compatibility: "Requires kubectl. Optional: helm, kustomize"  # env requirements, max 500 chars, MUST quote if value contains colons
 allowed-tools: Read, Bash, Grep, Glob  # restrict which tools the skill can use
-paths:                                  # activate only when matching files exist (YAML list of globs)
-  - "Dockerfile*"
-  - "compose*.yml"
 ```
 
-### `paths:` frontmatter
+### `paths:` frontmatter is a non-portable extension
 
 Some tools (Claude Code v2.1.84+ (March 2026)) support `paths:` as a YAML list of globs in
 skill frontmatter to activate the skill only when matching files exist in the project. This is
 useful for domain-specific skills (e.g., `docker` only when `Dockerfile` exists). The `paths:`
 field existed for rules since v2.0.64 but v2.1.84 extended it to skills and upgraded from
-single-glob to YAML list. It's optional and ignored by tools that don't support it - safe to
-include for progressive enhancement.
+single-glob to YAML list.
+
+This field is not part of the portable Agent Skills frontmatter. It is not universally ignored:
+claude.ai uploads and Skills API packaging reject unknown top-level keys. Do not put `paths:` in a
+portable source skill. Keep routing patterns in the description and scope prose, or inject the
+extension only into a harness-specific installed copy.
+
+```yaml
+# Claude Code-local installed copy only
+paths:
+  - "Dockerfile*"
+  - "compose*.yml"
+```
 
 ### Headless / scripted execution
 
@@ -506,9 +514,9 @@ Use this skill even when the user doesn't explicitly say "git" but is clearly do
 
 ---
 
-## 9. Skill Inventory (July 2026)
+## 9. Skill Inventory (September 2026)
 
-### Published skills (46)
+### Published skills (47)
 
 | Skill | Effort | Date Added | Domain |
 |-------|--------|-----------|--------|
@@ -553,6 +561,7 @@ Use this skill even when the user doesn't explicitly say "git" but is clearly do
 | skill-creator | high | 2026-03-25 | Skill lifecycle management |
 | skill-refiner | high | 2026-03-31 | Iterative self-improvement loop |
 | skill-router | medium | 2026-05-01 | Skill routing and trigger conflict analysis |
+| synology-dsm | high | 2026-07-27 | Synology DSM administration and btrfs recovery |
 | terraform | high | 2026-03-24 | Infrastructure-as-code |
 | testing | high | 2026-04-02 | Test design, debugging, infrastructure |
 | update-docs | medium | 2026-03-25 | Documentation sweep |

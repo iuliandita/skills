@@ -1,7 +1,7 @@
 ---
 name: localize
 description: >
-  · Audit app i18n/l10n: hardcoded strings, locale catalogs, translations, fallback gaps. Triggers: 'i18n', 'internationalization', 'localization', 'locale', 'hardcoded strings', 'next-intl'.
+  · Audit app i18n/l10n: hardcoded strings, locale catalogs, translations, fallback gaps. Triggers: 'i18n', 'internationalization', 'localization', 'locale', 'translate app', 'multilingual', 'add language', 'hardcoded strings', 'next-intl'.
 license: MIT
 compatibility: "Requires Node.js 20+. Optional: react-i18next, vue-i18n, next-intl, svelte-i18n, ngx-translate, i18next (per framework)"
 metadata:
@@ -20,9 +20,9 @@ Built from real production pain - the hardest part of i18n is not translation bu
 every string that needs it, and making sure translations read naturally in context rather
 than as mechanical word-by-word output.
 
-**Target versions (July 2026):** react-i18next 17.0.10, vue-i18n 11.4.7, next-intl 4.13.3,
-i18next 26.3.6. For missing-key persistence, require i18next-http-middleware 3.9.7+ and
-i18next-fs-backend 2.6.6+ to fix critical prototype pollution (CVE-2026-48714).
+**Target versions (September 2026):** react-i18next 17.0.13, vue-i18n 11.4.10, next-intl 4.14.2,
+i18next 26.4.2. For missing-key persistence, require i18next-http-middleware 3.9.8+ and
+i18next-fs-backend 2.6.7+ to fix critical prototype pollution (CVE-2026-48714).
 
 ## When to use
 
@@ -379,7 +379,7 @@ See `references/output-contract.md` for the full contract.
 
 - **Skill name:** LOCALIZE
 - **Deliverable bucket:** `audits`
-- **Mode:** conditional. When invoked to **audit, review, or improve** existing i18n (hardcoded-string audit, catalog completeness check, translation quality review), emit the full contract - boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table - and write the deliverable to `docs/local/audits/localize/<YYYY-MM-DD>-<slug>.md`. When invoked to **set up i18n from scratch, generate translations for new keys, or answer a question**, respond freely without the contract.
+- **Mode:** conditional. When invoked to **audit, review, or improve** existing i18n (hardcoded-string audit, catalog completeness check, translation quality review), emit the full contract - monospace inline header, severity-grouped inline summary, linked Markdown deliverable, and concise monospace conclusion - and write the deliverable to `docs/local/audits/localize/<YYYY-MM-DD>-<slug>.md`. When invoked to **set up i18n from scratch, generate translations for new keys, or answer a question**, respond freely without the contract.
 - **Deliverable path:** `docs/local/audits/localize/<YYYY-MM-DD>-<slug>.md`
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
 

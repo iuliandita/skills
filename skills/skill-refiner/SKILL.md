@@ -79,6 +79,8 @@ contested major flags (non-configurable).
 - Snapshot evaluation criteria before editing the skills that define the criteria.
 - Revert changes that add complexity without improving behavior.
 - Keep run history factual and free of unverifiable score inflation.
+- Deduct behavioral points only for a named failed quality signal or verified defect. Do not
+  reserve points merely because a case was simulated or a live runtime was unavailable.
 - Treat composite deltas as noisy when different scorer instances run across
   iterations: a few points of swing is judge variance, not real change. Anchor
   keep/revert decisions on the structural gate, on whether the specific targeted
@@ -91,6 +93,10 @@ contested major flags (non-configurable).
 - Audit offensive or security skills (privilege escalation, exploit research)
   in-loop rather than through web-researching subagents, which can trip platform
   safeguards. Keep their scoring and edits in the main session.
+- Treat cross-harness review as a data export. Before sending private or sensitive repository
+  content to another provider, require explicit user authorization for that destination; a
+  request to run skill-refiner alone is not authorization. Otherwise use the fresh local-reviewer
+  fallback and record why.
 
 
 ## Workflow
@@ -115,7 +121,9 @@ contested major flags (non-configurable).
    this session
 5. **Probe for secondary harness**: run three-step validation (PATH check, config check,
    smoke test) per `references/harness-detection.md`. Announce result.
-6. **If no secondary found**: **always fall back to self-review.** Spawn a fresh agent on
+   Before sending a review payload, classify the source as public, private, or sensitive and
+   verify that the user authorized sharing it with that harness/provider.
+6. **If no authorized secondary is available**: **always fall back to self-review.** Spawn a fresh agent on
    the current harness with the review prompt template from `references/harness-detection.md`.
    Label as "same-model fresh-context review" in scoring, weight at 3% instead of 5%
    (composite becomes gate/40/55/3, renormalize the missing 2% proportionally to AI Self-Check
@@ -126,7 +134,7 @@ contested major flags (non-configurable).
 
 ### Phase 1: Regular Iterations
 
-6. **Iteration 1 - full sweep**: score every skill in the pool using the four-component
+7. **Iteration 1 - full sweep**: score every skill in the pool using the four-component
    model from `references/evaluation-criteria.md`
    - Structural: run lint-skills.sh + validate-spec.sh
    - AI Self-Check: invoke **skill-creator** review mode on each skill
@@ -136,18 +144,18 @@ contested major flags (non-configurable).
      are lower quality than hand-written ones. Optionally save generated tests to a
      `references/test-cases-local.md` file alongside `references/test-cases.md` so they accumulate across runs.
    - Cross-model: skip on first iteration (no diff to review yet)
-7. **Log baseline scores**: record per-skill and aggregate scores
+8. **Log baseline scores**: record per-skill and aggregate scores
    in a score ledger before any edits. The ledger must include structural gate (G),
    AI Self-Check (A), behavioral score (B), cross-model review (X), composite score,
    test source, reviewer source, and timestamp. After this step, if the ledger is
    missing, incomplete, or only records lint/spec status, pause and backfill scoring before
    applying changes. In headless mode, halt the run and report the missing score data.
-8. **Iteration 2+**: enter adaptive focus mode. For a user-requested single-skill run,
+9. **Iteration 2+**: enter adaptive focus mode. For a user-requested single-skill run,
    treat that skill as the whole phase-1 pool, run at least the requested iteration count,
    and keep iterating until the explicit score target is reached, quality plateaus, or a
    circuit breaker fires.
-9. **Select targets**: identify skills scoring below the focus threshold
-10. **For each targeted skill**, run the improvement cycle:
+10. **Select targets**: identify skills scoring below the focus threshold
+11. **For each targeted skill**, run the improvement cycle:
     a. Read current SKILL.md and all reference files
     b. Invoke **skill-creator** review mode - collect findings
     c. Run behavioral test - score current output quality
@@ -155,13 +163,13 @@ contested major flags (non-configurable).
     e. Apply changes to SKILL.md (and references if needed)
     f. Re-score: run lint + AI Self-Check + behavioral test
     g. **Karpathy gate**: if score improved, keep. If not, revert. No exceptions.
-    h. If cross-model review available, send the diff to secondary harness
+    h. If an authorized cross-model reviewer is available, send the minimum necessary diff
     i. Process flags per `references/harness-detection.md` verification protocol
     j. If secondary flags major issue and primary agrees: revert
     k. If secondary flags major issue and primary disagrees: escalate to circuit breaker
-11. **Commit iteration**: one commit with all improvements from this iteration
+12. **Commit iteration**: one commit with all improvements from this iteration
     Format: `refactor(skill-refiner): iteration N - skill1(+X), skill2(+Y)`
-12. **Log iteration summary**:
+13. **Log iteration summary**:
     ```
     --- iteration N / max -------------------------------------------
     improved:  skill1 (72 > 80 | G:pass A:76 B:78 X:90), skill2 (68 > 73 | G:pass A:70 B:72 X:100)
@@ -174,46 +182,46 @@ contested major flags (non-configurable).
     ```
     Also append the same data to the score ledger. Keep/reject decisions must point to
     numeric before/after scores, not reviewer impressions or passing lint/spec checks.
-13. **Check termination conditions** (phase 1 always flows into phase 2 on termination,
+14. **Check termination conditions** (phase 1 always flows into phase 2 on termination,
     except on circuit-breaker pauses which wait for user input first):
     - Plateau detected (max delta < plateau threshold)? Terminate phase 1.
     - All skills above focus threshold? Bump threshold by 5 and continue. If threshold
       is already at max (95) and all skills still clear it, terminate phase 1.
     - Iteration cap reached? Terminate phase 1.
     - Circuit breaker triggered? Pause for user input.
-14. **Repeat** from step 9 until terminated
+15. **Repeat** from step 10 until terminated
 
 ### Phase 2: Meta-Improvement
 
-15. **Announce**: "Entering phase 2 - meta-improvement. This always requires human review."
-16. **Snapshot evaluation criteria**:
+16. **Announce**: "Entering phase 2 - meta-improvement. This always requires human review."
+17. **Snapshot evaluation criteria**:
     - Copy **skill-creator**'s AI Self-Check section to a temp location
     - Copy `references/evaluation-criteria.md` to a temp location
     - Copy **skill-creator**'s `conventions.md` reference to a temp location
     These snapshots are the evaluation baseline for phase 2.
-17. **Improve skill-creator**: run the improvement cycle (steps 10a-10k) using the
+18. **Improve skill-creator**: run the improvement cycle (steps 11a-11k) using the
     snapshot as the evaluation criteria, not skill-creator's live version
-18. **Improve skill-refiner**: same process, using the snapshot
+19. **Improve skill-refiner**: same process, using the snapshot
     - Compare every public `skills/*/SKILL.md` directory with the canonical `### <skill-name>`
       headings in `references/test-cases.md`. Exclude the format-template heading.
     - Promote stable generated or local cases into the canonical catalog for every gap, then
       verify there are no missing, duplicate, or orphan headings. This edit is phase-2-only.
-19. **Improve lint scripts** (lint-skills.sh, validate-spec.sh):
+20. **Improve lint scripts** (lint-skills.sh, validate-spec.sh):
     - Capture baseline: run both scripts, save full output
     - Propose improvements
     - Apply changes
     - Run regression: compare output to baseline
     - If false positives or false negatives introduced: revert
     - If clean: keep
-20. **Commit phase 2**: one commit per target
+21. **Commit phase 2**: one commit per target
     Format: `refactor(skill-refiner): meta - improve <target> (+N)`
-21. **Pause for human review**: display phase 2 changes, wait for approval.
+22. **Pause for human review**: display phase 2 changes, wait for approval.
     This checkpoint is non-configurable - it fires even in `--mode auto`.
     A direct user approval such as "continue" or "proceed" counts as approval to resume.
 
 ### Phase 3: Summary
 
-22. **Final report**: write a human-readable report first, then machine-readable run history.
+23. **Final report**: write a human-readable report first, then machine-readable run history.
     Include branch, pool, config, every changed skill, score before/after, delta, files changed,
     verification commands, peer-review flags, reverted changes, private-skill handling, and
     skipped checks. If scoring was reconstructed after the fact, label it retroactive and state
@@ -241,7 +249,7 @@ contested major flags (non-configurable).
     Contested:  Z flags escalated to human
     =================================================================
     ```
-23. **Write run history**: append this run's metadata to `.refiner-runs.json` at the
+24. **Write run history**: append this run's metadata to `.refiner-runs.json` at the
     repository root, the same file read in Phase 0 step 2. Include: run_id, branch, date, primary/secondary harness+model+effort,
     config, pool size, termination reason, cross-model flag counts, before/after per-skill
     scores (component breakdown + composite, or clearly labeled estimates if the run used a
@@ -249,7 +257,7 @@ contested major flags (non-configurable).
     updating an existing history file, append the new object without reserializing the whole
     file; do not normalize or rewrite old entries just because a JSON writer changes escaping,
     commas, or whitespace. Commit with the phase 3 summary.
-24. **Announce branch**: remind user to review and merge when ready
+25. **Announce branch**: remind user to review and merge when ready
 
 ## AI Self-Check
 
@@ -274,6 +282,8 @@ Before committing any skill modification, verify:
 - [ ] **Canonical test coverage complete**: phase 2 compares public skill directories with the
   canonical test headings and leaves no missing, duplicate, or orphan skill section
 - [ ] **Local-only scope respected**: public and private skills are separated before commits or release notes
+- [ ] **Review export authorized**: private or sensitive source is sent to another harness/provider
+  only with explicit user authorization; otherwise the fresh local fallback is used
 
 ## Output Contract
 
@@ -281,7 +291,7 @@ See `references/output-contract.md` for the full contract.
 
 - **Skill name:** SKILL-REFINER
 - **Deliverable bucket:** `audits`
-- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content outside the refiner workflow, emit the full contract - boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table - and write the deliverable to `docs/local/audits/skill-refiner/<YYYY-MM-DD>-<slug>.md`. When invoked to **run the refiner workflow** (its primary mode), use the existing Phase 3 "Final report" format described in the workflow; that build-mode output is unchanged by this contract.
+- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content outside the refiner workflow, emit the full contract - monospace inline header, severity-grouped inline summary, linked Markdown deliverable, and concise monospace conclusion - and write the deliverable to `docs/local/audits/skill-refiner/<YYYY-MM-DD>-<slug>.md`. When invoked to **run the refiner workflow** (its primary mode), use the existing Phase 3 "Final report" format described in the workflow; that build-mode output is unchanged by this contract.
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
 
 ## Related Skills
@@ -321,3 +331,5 @@ See `references/output-contract.md` for the full contract.
     Never edit from memory or assumption.
 12. **No score laundering**: do not call a run scored unless component scores were recorded.
     Retroactive scoring is allowed only when clearly labeled.
+13. **No unapproved review export**: do not send private or sensitive repository content to a
+    secondary harness/provider without explicit user authorization for that destination.

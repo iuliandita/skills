@@ -10,7 +10,7 @@ service names, or CLI behaviors that differ.
 - Repo: [NixOS/nix](https://github.com/NixOS/nix)
 - Maintainers: NixOS Foundation contributors
 - Flakes: behind `experimental-features = nix-command flakes`
-- Latest stable: 2.34 (reviewed July 2026)
+- Latest stable: 2.34 (reviewed September 2026)
 - Release cadence: roughly 6 weeks
 
 This is what ships in `nixos` for every standard NixOS release.

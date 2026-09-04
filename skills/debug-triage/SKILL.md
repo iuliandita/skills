@@ -156,7 +156,7 @@ See `references/output-contract.md` for the full contract.
 
 - **Skill name:** DEBUG-TRIAGE
 - **Deliverable bucket:** `audits`
-- **Mode:** conditional. Live triage is conversational - walk the layers, localize, and route inline without the contract. When invoked to **write up a triage or post-incident summary** as a durable artifact, emit the full contract - boxed inline header, per-layer detail in the deliverable file, boxed conclusion, conclusion table - and write it to `docs/local/audits/debug-triage/<YYYY-MM-DD>-<slug>.md`.
+- **Mode:** conditional. Live triage is conversational - walk the layers, localize, and route inline without the contract. When invoked to **write up a triage or post-incident summary** as a durable artifact, emit the full contract - monospace inline header, severity-grouped inline summary, linked Markdown deliverable, and concise monospace conclusion - and write it to `docs/local/audits/debug-triage/<YYYY-MM-DD>-<slug>.md`.
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; used only in the written-summary mode).
 
 ## Related Skills

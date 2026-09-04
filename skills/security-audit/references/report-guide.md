@@ -31,7 +31,7 @@ Tag each finding to the correct category.
 
 ## Report Template
 
-Save to `SECURITY-AUDIT.md` in the repo root. Warn the user this file MUST be gitignored - it contains vulnerability details.
+Save to `docs/local/audits/security-audit/<YYYY-MM-DD>-<slug>.md`. Verify `docs/local/` is gitignored before writing because the report contains vulnerability details.
 
 ```
 # Security Audit Report
@@ -71,12 +71,13 @@ X findings: N P0, N P1, N P2, N P3, N info.
 |------|--------|------|----------|--------|
 | 1 | Secret Scanning | gitleaks / trufflehog / manual | N | Done/Skipped |
 | 2 | Dependency Audit | bun audit / trivy | N | Done/Skipped |
-| 3 | Static Analysis | semgrep / bandit | N | Done/Skipped |
-| 4 | Auth & Authz Review | Manual | N | Done |
-| 5 | Injection & Input | Manual + grep | N | Done |
-| 6 | Crypto & Data | Manual | N | Done |
-| 7 | Container & Infra | Manual | N | Done |
-| 8 | CI/CD & Supply Chain | Manual | N | Done |
+| 3 | Agentic AI & Supply Chain | Agent config, MCP, hooks, automation, provenance | N | Done/Skipped |
+| 4 | Static Analysis | semgrep / bandit | N | Done/Skipped |
+| 5 | Auth & Authz Review | Manual | N | Done |
+| 6 | Injection & Input | Manual + grep | N | Done |
+| 7 | Crypto & Data | Manual | N | Done |
+| 8 | Container & Infra | Manual | N | Done |
+| 9 | CI/CD & Supply Chain | Manual | N | Done |
 
 ## Tool Installation Reference
 
@@ -85,7 +86,7 @@ X findings: N P0, N P1, N P2, N P3, N info.
 - semgrep: `pip install semgrep` or `brew install semgrep`
 - gitleaks: `brew install gitleaks` or `go install github.com/gitleaks/gitleaks/v8@latest`
 - trufflehog: `brew install trufflehog` or `go install github.com/trufflesecurity/trufflehog/v3@latest`
-- trivy: `brew install trivy` or see https://aquasecurity.github.io/trivy (use v0.72.0+ from official releases; v0.69.3 was the March 2026 incident rollback; never use v0.69.4-0.69.6)
+- trivy: `brew install trivy` or see https://aquasecurity.github.io/trivy (use v0.74.0+ from official releases; v0.69.3 was the March 2026 incident rollback; never use v0.69.4-0.69.6)
 - scorecard: `go install github.com/ossf/scorecard/v5/cmd/scorecard@latest`
 - checkov: `pip install checkov`
 

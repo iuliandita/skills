@@ -99,8 +99,10 @@ TOOL_RETRY_MAX = 2  # transient failures only; retry then abort
 spent = 0.0
 
 for i in range(MAX_ITERS):
-    if spent >= BUDGET_USD:
-        raise BudgetExceeded(f"${spent:.2f} >= ${BUDGET_USD}")
+    # Price the serialized input plus max_tokens at the current model rates.
+    reserved = max_cost_of_next_call(msgs, tools=tools, max_tokens=1024)
+    if spent + reserved > BUDGET_USD:
+        raise BudgetExceeded(f"next call could exceed ${BUDGET_USD:.2f}")
     resp = client.messages.create(model=MODEL, max_tokens=1024, tools=tools, messages=msgs)
     spent += cost_of(resp.usage)  # input/output tokens * per-1M price
     if resp.stop_reason == "end_turn":

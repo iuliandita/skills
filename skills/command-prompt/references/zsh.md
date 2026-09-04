@@ -406,6 +406,27 @@ _my_tool() {
 compdef _my_tool my_tool
 ```
 
+For commands with subcommands, route positional completion through a state instead of offering
+the same arguments everywhere:
+
+```zsh
+_my_tool() {
+    local context state line
+    _arguments -C \
+        '1:command:(build deploy status)' \
+        '*::argument:->args'
+
+    if [[ $state == args ]]; then
+        case $line[1] in
+            build)  _arguments '--format[artifact format]:format:(tar zip)' '*:source:_files' ;;
+            deploy) _arguments '--environment[target]:environment:(staging production)' ;;
+            status) _arguments '--json[emit JSON]' ;;
+        esac
+    fi
+}
+compdef _my_tool my_tool
+```
+
 ### Useful zstyle patterns
 
 ```zsh

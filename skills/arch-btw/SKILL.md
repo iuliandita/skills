@@ -1,7 +1,7 @@
 ---
 name: arch-btw
 description: >
-  · Administer Arch/CachyOS: pacman, AUR, systemd, boot, desktop, GPU, gaming. Triggers: 'arch linux', 'cachyos', 'pacman', 'paru', 'mkinitcpio', 'hyprland'. Not for Debian/Fedora/NixOS.
+  · Administer Arch/CachyOS: pacman, AUR, systemd, boot, desktop, GPU, gaming. Triggers: 'arch linux', 'cachyos', 'endeavouros', 'manjaro', 'pacman', 'paru', 'mkinitcpio', 'hyprland'. Not for Debian/Fedora/NixOS.
 license: MIT
 compatibility: Requires Arch Linux, CachyOS, or Arch-based distro with pacman
 metadata:
@@ -17,23 +17,23 @@ Administer Arch Linux and Arch-style systems without falling into rolling-releas
 Focus on vanilla Arch first, then layer in CachyOS behavior, `paru` workflow, systemd-native
 service management, boot recovery, kernel handling, and derivative-specific cautions.
 
-**Versions worth pinning** (July 2026):
+**Versions worth pinning** (September 2026):
 
 Only pin versions here when they materially affect compatibility or troubleshooting shape. For
 ordinary rolling packages, prefer the current repo state over stale version tables.
 
 | Component | Version | Why it matters |
 |-----------|---------|----------------|
-| systemd | 261.1-1 | boot and session behavior |
-| mkinitcpio | 41-5 | initramfs pipeline changed enough to matter |
+| systemd | 261.2-1 | boot and session behavior |
+| mkinitcpio | 41.1-2 | initramfs pipeline changed enough to matter |
 | dracut | 111-1 | alternative initramfs pipeline with different expectations |
-| linux-cachyos | 7.1.3-2 | kernel and module compatibility |
-| linux-cachyos-eevdf | 7.1.3-2 | alternate kernel lane with different behavior surface |
-| Hyprland | 0.55.4-1.1 | old 0.4x and early 0.5x guidance is frequently stale here |
-| xdg-desktop-portal-hyprland | 1.3.12-2.1 | Wayland portal behavior depends on this layer |
+| linux-cachyos | 7.2.2-1 | kernel and module compatibility |
+| linux-cachyos-eevdf | 7.2.2-1 | alternate kernel lane with different behavior surface |
+| Hyprland | 0.56.2-1 | old 0.4x and early 0.5x guidance is frequently stale here |
+| xdg-desktop-portal-hyprland | 1.4.1-1.1 | Wayland portal behavior depends on this layer |
 | PipeWire | 1:1.6.8-1.1 | audio and capture stack anchor |
-| WirePlumber | 0.5.15-1.1 | policy layer paired with PipeWire behavior |
-| nvidia-utils | 610.43.03-1 | driver branch matters for gaming and Wayland breakage |
+| WirePlumber | 0.5.16-1.1 | policy layer paired with PipeWire behavior |
+| nvidia-utils | 610.57.04-1 | driver branch matters for gaming and Wayland breakage |
 
 ## When to use
 
@@ -289,7 +289,7 @@ See `references/output-contract.md` for the full contract.
 
 - **Skill name:** ARCH-BTW
 - **Deliverable bucket:** `audits`
-- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract - boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table - and write the deliverable to `docs/local/audits/arch-btw/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
+- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract - monospace inline header, severity-grouped inline summary, linked Markdown deliverable, and concise monospace conclusion - and write the deliverable to `docs/local/audits/arch-btw/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
 
 ## Related Skills

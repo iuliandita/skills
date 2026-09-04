@@ -1,7 +1,7 @@
 ---
 name: ansible
 description: >
-  · Write/review Ansible playbooks, roles, inventories, Vault, Molecule, AWX/AAP. Triggers: 'ansible', 'playbook', 'role', 'inventory', 'group_vars', 'ansible-lint'.
+  · Write/review Ansible playbooks, roles, inventories, Vault, Molecule, AWX/AAP. Triggers: 'ansible', 'playbook', 'ansible role', 'ansible inventory', 'group_vars', 'ansible-lint'.
 license: MIT
 compatibility: "Requires ansible-core and Python 3.9+. Optional: ansible-lint, molecule"
 metadata:
@@ -15,10 +15,10 @@ metadata:
 
 Write, review, and architect Ansible automation - from single playbooks to multi-tier, compliance-hardened infrastructure management. The goal is idempotent, auditable, maintainable automation that works the same locally and in CI/CD.
 
-**Target versions** (July 2026):
-- ansible-core **2.21.2** (current stable, Python 3.12+ controller, 3.9+ target, EOL Nov 2027); 2.20.x remains maintained through May 2027
-- ansible (community package) **14.2.0** (depends on ansible-core 2.21)
-- molecule **26.6.0**, ansible-lint **26.6.0**, ansible-navigator **26.6.0** (CalVer)
+**Target versions** (September 2026):
+- ansible-core **2.21.3** (current stable, Python 3.12+ controller, 3.9+ target, EOL Nov 2027); 2.20.x remains maintained through May 2027
+- ansible (community package) **14.3.1** (depends on ansible-core 2.21)
+- molecule **26.8.0**, ansible-lint **26.8.0**, ansible-navigator **26.8.0** (CalVer)
 - ansible-builder **3.1.1** (EE definition v3)
 - AWX 24.6.1 (last formal release Jul 2024; upstream AWX releases paused for a major refactor, devel branch active - track ansible/awx; awx-operator ~2.19.x still ships for K8s deploys). Verify current AWX/AAP release status before recommending a specific version or install path.
 - AAP 2.7 (GA June 3, 2026 - containerized/Operator only; 2.6 was the last RPM-installable release, still patched)
@@ -428,7 +428,7 @@ See `references/output-contract.md` for the full contract.
 
 - **Skill name:** ANSIBLE
 - **Deliverable bucket:** `audits`
-- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract - boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table - and write the deliverable to `docs/local/audits/ansible/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
+- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract - monospace inline header, severity-grouped inline summary, linked Markdown deliverable, and concise monospace conclusion - and write the deliverable to `docs/local/audits/ansible/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
 
 ## Related Skills

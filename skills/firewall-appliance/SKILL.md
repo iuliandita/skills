@@ -16,10 +16,10 @@ metadata:
 Manage, troubleshoot, and harden OPNsense and pfSense firewalls via SSH. Both are FreeBSD-based,
 pf-powered firewall distributions - most concepts, commands, and patterns apply to both.
 
-**Target versions** (July 2026):
-- OPNsense CE: 26.7.1 (current Community Edition stable, "Xenial Xenops"; 26.7.1 contains four core security advisories). Business Edition remains a separate even-quarter lane - do not quote the BE number as the CE version
-- pfSense CE: 2.8.1 / pfSense Plus: 26.03.1
-- CrowdSec: v1.7.8
+**Target versions** (September 2026):
+- OPNsense CE: 26.7.3_8 (current Community Edition hotfix, "Xenial Xenops"). Business Edition remains a separate even-quarter lane - do not quote the BE number as the CE version
+- pfSense CE: 2.8.1 / pfSense Plus: 26.07
+- CrowdSec: v1.8.1
 
 ## When to use
 
@@ -233,7 +233,7 @@ See `references/output-contract.md` for the full contract.
 
 - **Skill name:** FIREWALL-APPLIANCE
 - **Deliverable bucket:** `audits`
-- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract - boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table - and write the deliverable to `docs/local/audits/firewall-appliance/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
+- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract - monospace inline header, severity-grouped inline summary, linked Markdown deliverable, and concise monospace conclusion - and write the deliverable to `docs/local/audits/firewall-appliance/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
 
 ## Related Skills

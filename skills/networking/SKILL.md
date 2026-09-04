@@ -17,24 +17,24 @@ Configure, troubleshoot, and optimize Linux networking infrastructure. Covers DN
 VPNs, firewalls (nftables), VLANs, subnetting, high availability, dynamic routing, and network
 performance tuning.
 
-**Target versions** (July 2026):
+**Target versions** (September 2026):
 
 | Tool | Version | Notes |
 |------|---------|-------|
 | Caddy | 2.11.4 | Auto-HTTPS, Caddyfile + JSON API |
-| Nginx | 1.30.4 stable / 1.31.3 mainline | July security releases fix CVE-2026-42533/60005/56434 |
-| Traefik | 3.7.8 | Gateway API native, v2 EOL approaching |
-| HAProxy | 3.4.2 LTS / 3.3.12 stable / 3.2.21 LTS | 3.4 LTS EOL 2031-Q2 |
+| Nginx | 1.30.4 stable / 1.31.4 mainline | July security releases fix CVE-2026-42533/60005/56434 |
+| Traefik | 3.7.12 | Gateway API native, v2 EOL approaching |
+| HAProxy | 3.4.4 LTS / 3.3.14 stable / 3.2.23 LTS | 3.4 LTS EOL 2031-Q2 |
 | WireGuard tools | 1.0.20260223 | Kernel module + userspace tools |
 | strongSwan | 6.0.7 | swanctl config (legacy ipsec.conf deprecated) |
-| nftables | 1.1.6 | iptables successor, default on modern distros |
+| nftables | 1.1.7 | iptables successor, default on modern distros |
 | keepalived | 2.4.3 | VRRP + health checks |
-| Unbound | 1.25.1 | CVE-2025-11411 fix (unsolicited NS RRSets) |
-| CoreDNS | 1.14.6 | K8s default DNS, plugin-based |
-| FRRouting | 10.7.0 | BGP, OSPF, IS-IS, PIM |
-| Tailscale / Headscale | Headscale 0.29.2 | Self-hosted control server |
-| cloudflared | 2026.7.2 | Cloudflare Tunnel (outbound-only) |
-| OpenVPN | 2.7.5 / 2.6.21 LTS | 2.7.x: multi-socket, DCO; 2.6 is the LTS branch |
+| Unbound | 1.26.0 | CVE-2025-11411 fix (unsolicited NS RRSets) |
+| CoreDNS | 1.14.7 | K8s default DNS, plugin-based |
+| FRRouting | 10.7.1 | BGP, OSPF, IS-IS, PIM |
+| Tailscale / Headscale | Headscale 0.29.3 | Self-hosted control server |
+| cloudflared | 2026.8.3 | Cloudflare Tunnel (outbound-only) |
+| OpenVPN | 2.7.7 / 2.6.21 LTS | 2.7.x: multi-socket, DCO; 2.6 is the LTS branch |
 
 ## When to use
 
@@ -370,7 +370,7 @@ See `references/output-contract.md` for the full contract.
 
 - **Skill name:** NETWORKING
 - **Deliverable bucket:** `audits`
-- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract - boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table - and write the deliverable to `docs/local/audits/networking/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
+- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract - monospace inline header, severity-grouped inline summary, linked Markdown deliverable, and concise monospace conclusion - and write the deliverable to `docs/local/audits/networking/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
 
 ## Related Skills

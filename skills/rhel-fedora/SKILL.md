@@ -21,7 +21,7 @@ account for vendor quirks such as subscription-manager, CentOS Stream drift, Ora
 Amazon's cloud-first defaults, and SELinux or firewalld behavior that people love to blame on
 the wrong layer.
 
-**Versions worth pinning** (verified July 2026):
+**Versions worth pinning** (verified September 2026):
 
 Only pin versions here when they materially affect compatibility or troubleshooting shape. For
 ordinary package work, prefer the live distro lane and repo state over a stale package table.
@@ -334,7 +334,7 @@ See `references/output-contract.md` for the full contract.
 
 - **Skill name:** RHEL-FEDORA
 - **Deliverable bucket:** `audits`
-- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract - boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table - and write the deliverable to `docs/local/audits/rhel-fedora/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
+- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract - monospace inline header, severity-grouped inline summary, linked Markdown deliverable, and concise monospace conclusion - and write the deliverable to `docs/local/audits/rhel-fedora/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
 
 ## Related Skills

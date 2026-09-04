@@ -1,7 +1,7 @@
 ---
 name: mcp
 description: >
-  · Build/review MCP servers, tools, resources, prompts, transports, OAuth, elicitation. Triggers: 'mcp', 'model context protocol', 'mcp server', 'tool handler', 'fastmcp', '@modelcontextprotocol/sdk'. Not for HTTP APIs (use backend-api).
+  · Build/review MCP servers, clients, tools, resources, OAuth. Triggers: 'mcp', 'model context protocol', 'mcp server', 'mcp client', 'fastmcp', '@modelcontextprotocol/server', '@modelcontextprotocol/sdk'. Not HTTP APIs (backend-api).
 license: MIT
 compatibility: Requires Node.js or Python runtime
 metadata:
@@ -17,11 +17,11 @@ Build, review, and debug MCP servers that expose tools, resources, and prompts t
 assistants. The goal is secure, well-structured servers that follow the protocol spec and don't
 become yet another server with preventable injection vulnerabilities.
 
-**Target versions** (July 2026):
-- MCP specification: 2025-11-25 (current stable; 2026-07-28 release candidate in draft)
-- TypeScript SDK: @modelcontextprotocol/sdk 1.29.0 (1.x stable; 2.0.0-alpha in dev)
-- Python SDK: mcp 1.28.1 (minimum secure version for WebSocket Host/Origin validation; CVE-2026-59950)
-- Protocol transports: stdio, Streamable HTTP (the standalone HTTP+SSE transport was deprecated in spec 2025-03-26; SSE still streams inside Streamable HTTP)
+**Target versions** (September 2026):
+- MCP specification: 2026-07-28 (current stable; stateless core, extensions framework, and no initialize/session handshake)
+- TypeScript SDK: `@modelcontextprotocol/server`, `@modelcontextprotocol/client`, and `@modelcontextprotocol/core` 2.0.0 (the monolithic `@modelcontextprotocol/sdk` 1.30.0 is the legacy line)
+- Python SDK: mcp 2.1.1 (2.x stable; review the v1-to-v2 migration guide)
+- Protocol transports: stdio and Streamable HTTP. The standalone HTTP+SSE transport is deprecated and available only as a temporary legacy bridge
 
 ## When to use
 
@@ -36,7 +36,7 @@ become yet another server with preventable injection vulnerabilities.
 
 ## When NOT to use
 
-- General REST API development that doesn't use MCP - just write the API
+- General REST API development that doesn't use MCP - use **backend-api**
 - Claude API / Anthropic SDK usage in an application - use **ai-ml**
 - Security auditing existing servers across a codebase - use **security-audit** (it has an MCP section)
 - Using MCP browsing tools to browse or scrape web pages - use **browse**
@@ -103,41 +103,124 @@ Before writing code, clarify:
 **TypeScript** (recommended for production):
 
 ```typescript
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { z } from "zod";
+import { McpServer } from "@modelcontextprotocol/server";
+import { serveStdio } from "@modelcontextprotocol/server/stdio";
+import { readdir, readFile, stat } from "node:fs/promises";
+import path from "node:path";
+import * as z from "zod/v4";
 
-const server = new McpServer({ name: "my-server", version: "1.0.0" });
-const docs = [{ title: "Getting started", body: "Install the server and connect over stdio." }];
+const DOCS_ROOT = path.resolve(process.env.DOCS_ROOT ?? "./docs");
+const MAX_DOCS = 1_000;
+const MAX_DOC_BYTES = 256_000;
 const config = { mode: "read-only" };
 
-// Current SDK API: `server.registerTool(name, { title, description, inputSchema }, handler)`.
-// The older `server.tool(name, desc, schema, handler)` shorthand still works in v1.x.
-server.registerTool(
-  "search_docs",
-  {
-    title: "Search docs",
-    description: "Search documentation by keyword",
-    inputSchema: { query: z.string().max(200).describe("Search query"), limit: z.number().int().min(1).max(100).default(10) },
-  },
-  async ({ query, limit }) => {
-    // If this tool reads files, apply path validation from Step 3 before any fs access.
-    const sanitized = query.replace(/[^\w\s-]/g, "");
-    const needle = sanitized.toLowerCase();
-    const results = docs
-      .filter(({ title, body }) => `${title}\n${body}`.toLowerCase().includes(needle))
-      .slice(0, limit);
-    return { content: [{ type: "text", text: JSON.stringify(results) }] };
+async function loadMarkdownDocs(): Promise<Array<{ title: string; body: string }>> {
+  const entries = await readdir(DOCS_ROOT, { withFileTypes: true });
+  const names = entries
+    .filter((entry) => entry.isFile() && entry.name.endsWith(".md"))
+    .map((entry) => entry.name)
+    .sort()
+    .slice(0, MAX_DOCS);
+  const docs: Array<{ title: string; body: string }> = [];
+  for (const name of names) {
+    const filePath = path.join(DOCS_ROOT, name);
+    if ((await stat(filePath)).size > MAX_DOC_BYTES) continue;
+    docs.push({ title: name, body: await readFile(filePath, "utf8") });
   }
-);
+  return docs;
+}
 
-server.resource("config", "config://app/settings", async (uri) => ({
-  contents: [{ uri: uri.href, mimeType: "application/json", text: JSON.stringify(config) }],
-}));
+let docsPromise: ReturnType<typeof loadMarkdownDocs> | undefined;
 
-const transport = new StdioServerTransport();
-await server.connect(transport);
+function docsIndex(): ReturnType<typeof loadMarkdownDocs> {
+  docsPromise ??= loadMarkdownDocs();
+  return docsPromise;
+}
+
+function createServer(): McpServer {
+  const server = new McpServer({ name: "my-server", version: "1.0.0" });
+
+  server.registerTool(
+    "search_docs",
+    {
+      title: "Search docs",
+      description: "Search documentation by keyword",
+      inputSchema: z.object({
+        query: z.string().max(200).describe("Search query"),
+        limit: z.number().int().min(1).max(100).default(10),
+      }),
+      outputSchema: z.object({
+        results: z.array(z.object({ title: z.string(), snippet: z.string() })),
+      }),
+    },
+    async ({ query, limit }) => {
+      try {
+        const needle = query.normalize("NFKC").trim().toLocaleLowerCase();
+        if (!/[\p{L}\p{N}]/u.test(needle)) {
+          return { isError: true, content: [{ type: "text", text: "Query needs a letter or number." }] };
+        }
+        const results = (await docsIndex())
+          .flatMap(({ title, body }) => {
+            const text = `${title}\n${body}`;
+            const index = text.toLocaleLowerCase().indexOf(needle);
+            if (index < 0) return [];
+            const start = Math.max(0, index - 160);
+            const end = Math.min(text.length, index + needle.length + 320);
+            return [{ title, snippet: text.slice(start, end) }];
+          })
+          .slice(0, limit);
+        const output = { results };
+        return {
+          content: [{ type: "text", text: JSON.stringify(output) }],
+          structuredContent: output,
+        };
+      } catch (error: unknown) {
+        console.error("search_docs failed", error);
+        return { isError: true, content: [{ type: "text", text: "Search failed while loading documentation." }] };
+      }
+    }
+  );
+
+  server.registerResource(
+    "config",
+    "config://app/settings",
+    { title: "Application config", mimeType: "application/json" },
+    async (uri) => ({
+      contents: [{ uri: uri.href, mimeType: "application/json", text: JSON.stringify(config) }],
+    })
+  );
+
+  return server;
+}
+
+async function main(): Promise<void> {
+  const handle = await serveStdio(createServer);
+  let closing = false;
+
+  const shutdown = async (signal: NodeJS.Signals): Promise<void> => {
+    if (closing) return;
+    closing = true;
+    try {
+      await handle.close();
+    } catch (error: unknown) {
+      console.error(`Failed to shut down after ${signal}:`, error);
+      process.exitCode = 1;
+    }
+  };
+
+  process.once("SIGINT", () => void shutdown("SIGINT"));
+  process.once("SIGTERM", () => void shutdown("SIGTERM"));
+}
+
+void main().catch((error: unknown) => {
+  console.error(error);
+  process.exitCode = 1;
+});
 ```
+
+`serveStdio` owns the stdio transport and returns a handle whose `close()` shuts down both the
+pinned server instance and transport. Keep all stdio diagnostics on stderr; stdout is the protocol
+channel.
 
 **Python** (FastMCP for quick prototyping):
 
@@ -215,9 +298,14 @@ server.tool("read_file", "Read a project file",
 server.tool("read_file", "Read a project file",
   { path: z.string().max(500) },
   async ({ path: filePath }) => {
-    const safe = await safeExistingPath("/srv/project", filePath);
-    const data = await readFile(safe, "utf-8");
-    return { content: [{ type: "text", text: data }] };
+    try {
+      const safe = await safeExistingPath("/srv/project", filePath);
+      const data = await readFile(safe, "utf-8");
+      return { content: [{ type: "text", text: data }] };
+    } catch (error: unknown) {
+      console.error("read_file failed", error);
+      return { isError: true, content: [{ type: "text", text: "Read failed." }] };
+    }
   }
 );
 ```
@@ -236,7 +324,9 @@ server.tool("read_file", "Read a project file",
 | **stdio** | Local tools, CLI integration | No | Runs as user's process. Most secure. |
 | **Streamable HTTP** | Remote/multi-client servers | Recommended | Single endpoint, POST for messages, optional SSE streaming. |
 
-The standalone HTTP+SSE transport (spec 2024-11-05) was deprecated in spec 2025-03-26; use Streamable HTTP for all remote servers (it still uses SSE internally for optional response streaming).
+The standalone HTTP+SSE transport (spec 2024-11-05) is deprecated; use Streamable HTTP for
+remote servers. MCP 2026-07-28 removes the initialize/session handshake from the core protocol.
+Use the SDK migration helpers when one endpoint must also serve legacy 2025 clients.
 Auth is optional per spec but strongly recommended for servers handling user data. When
 implementing auth, use OAuth 2.1 with PKCE. Prefer Client ID Metadata Documents over Dynamic
 Client Registration (DCR is a fallback, not a requirement).
@@ -244,11 +334,11 @@ Client Registration (DCR is a fallback, not a requirement).
 **Streamable HTTP security:**
 - Bind to `127.0.0.1` for local servers (never `0.0.0.0`)
 - Validate `Origin` header on all requests (DNS rebinding prevention)
-- If using stateful sessions: `MCP-Session-Id` must be cryptographically random (UUID v4+)
-- Client sends `MCP-Protocol-Version` header (e.g., `2025-11-25`)
+- Treat every 2026-07-28 request as self-contained; do not require `MCP-Session-Id`
+- Client sends `MCP-Protocol-Version: 2026-07-28` plus identity and capabilities in `_meta`
 - Consider using `createMcpExpressApp()` / `createMcpHonoApp()` for built-in DNS rebinding
   protection - these ship from the separate `@modelcontextprotocol/express` and
-  `@modelcontextprotocol/hono` packages, not the core `@modelcontextprotocol/sdk`
+  `@modelcontextprotocol/hono` packages, not the runtime-neutral core package
 
 ### Step 5: Handle elicitation safely
 
@@ -340,7 +430,7 @@ See `references/output-contract.md` for the full contract.
 
 - **Skill name:** MCP
 - **Deliverable bucket:** `audits`
-- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract - boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table - and write the deliverable to `docs/local/audits/mcp/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
+- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract - monospace inline header, severity-grouped inline summary, linked Markdown deliverable, and concise monospace conclusion - and write the deliverable to `docs/local/audits/mcp/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
 
 ## Related Skills

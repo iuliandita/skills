@@ -28,7 +28,7 @@ patterns activates reliably, reads clearly, and plays well with the rest of the 
 - Validating versions, security references, or CVE mentions in skills
 - Optimizing a skill's description for better triggering accuracy
 - Checking cross-skill references and "Related Skills" sections
-- Troubleshooting why a skill isn't triggering or is triggering incorrectly
+- Changing a skill's trigger text after a routing problem has been identified
 
 ## When NOT to use
 
@@ -37,6 +37,7 @@ patterns activates reliably, reads clearly, and plays well with the rest of the 
 - Running a full codebase audit across multiple dimensions - use **full-review**
 - Creating inline prompts within application code - use **prompt-generator**
 - Batch-improving a whole skill collection via evaluation loops - use **skill-refiner**
+- Choosing which installed skill should handle a concrete user request - use **skill-router**
 - Syncing or refreshing third-party skills from upstream - handle that directly in the repo workflow
 - Updating project documentation after infrastructure changes - use **update-docs**
 - Writing application code, even if the code is for a tool a skill might use
@@ -49,7 +50,7 @@ Before returning any generated or modified skill, verify against this list:
 - [ ] **Name spec-valid**: lowercase alphanumeric + hyphens only, no leading/trailing/consecutive
   hyphens, no reserved words (`anthropic`, `claude`), matches directory name
 - [ ] **No XML tags** in `name` or `description` fields (Anthropic platform restriction)
-- [ ] **Description is trigger-optimized**: starts with action verbs, includes trigger keywords, mentions related contexts, stays near 200 chars for the collection (240 warn, 600 hard max in `validate-spec.sh`; platform truncation happens later)
+- [ ] **Description is trigger-optimized**: starts with action verbs, includes trigger keywords, mentions related contexts, stays near 200 chars for the collection (240 warn and 600 hard max in `lint-skills.sh`; the portable spec ceiling is 1024 in `validate-spec.sh`)
 - [ ] **Compatibility field present** (when skill requires specific tools/platforms): quotes values containing colons
 - [ ] **Scope sections present**: "When to use" with concrete scenarios, "When NOT to use"
   cross-referencing related skills by **bold** name (e.g., `use **skill-name**`)
@@ -57,7 +58,7 @@ Before returning any generated or modified skill, verify against this list:
 - [ ] **Rules section at the end**: non-negotiable constraints in imperative form
 - [ ] **Style compliant**: no banned words (per `CLAUDE.md`/`AGENTS.md`), ASCII by default
   except approved markers such as `· ` and output-contract box glyphs. No em-dashes, curly
-  quotes, ligatures, or `--`; use `-`. Check SKILL.md and references for banned words
+  quotes, ligatures, or `--` dash substitutes in SKILL.md/reference prose; preserve real syntax in code and commands.
 - [ ] **Target ~500 lines**: if over 500, extract to `references/` with clear pointers. Hard max 600
 - [ ] **Reference files use `references/` relative paths**: not hardcoded or tool-specific paths
 - [ ] **All references verified**: every tool, CLI flag, IaC resource, config snippet, and
@@ -464,19 +465,18 @@ See `references/output-contract.md` for the full contract.
 
 - **Skill name:** SKILL-CREATOR
 - **Deliverable bucket:** `audits`
-- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content (e.g., Mode 2 review or Mode 3 audit), emit the full contract - boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table - and write the deliverable to `docs/local/audits/skill-creator/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content** (e.g., Mode 1 create), respond freely without the contract; the existing `## Run Report` guidance applies to that build path.
+- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content (e.g., Mode 2 review or Mode 3 audit), emit the full contract - monospace inline header, severity-grouped inline summary, linked Markdown deliverable, and concise monospace conclusion - and write the deliverable to `docs/local/audits/skill-creator/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content** (e.g., Mode 1 create), respond freely without the contract; the existing `## Run Report` guidance applies to that build path.
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
 
 ## Related Skills
 
-- **anti-slop** - the code quality audit skill. When reviewing a skill's example code or
-  reference patterns, anti-slop patterns apply (comment noise, over-abstraction, stale idioms).
-- **full-review** - orchestrates four parallel audits. This skill audits the skill collection
-  itself, not application code.
-- **prompt-generator** - structures prompts for LLM consumption. Skills ARE prompts, but
-  prompt-generator targets one-off prompts saved to `docs/local/prompts/`, not reusable skill files.
+- **anti-slop** - audits code quality. Apply it to example code and reference patterns.
+- **full-review** - orchestrates four application-repo audits; this skill audits the skill collection.
+- **prompt-generator** - targets one-off prompts in `docs/local/prompts/`, not reusable skill files.
 - **code-review** - reviews application code for correctness. This skill reviews skill files
   for convention compliance, not code correctness.
+- **skill-router** - chooses the best installed skill for one concrete request. This skill owns
+  edits to trigger text and collection-wide overlap analysis after a routing defect is identified.
 
 ## Rules
 

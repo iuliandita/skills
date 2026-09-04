@@ -1,7 +1,7 @@
 ---
 name: kubernetes
 description: >
-  · Write/review Kubernetes manifests, Helm, Kustomize, Gateway API, ArgoCD, sealed secrets. Triggers: 'kubernetes', 'k8s', 'helm', 'kubectl', 'deployment', 'pod', 'ingress', 'gateway'.
+  · Write/review Kubernetes manifests, Helm, Kustomize, Gateway API, ArgoCD, sealed secrets. Triggers: 'kubernetes', 'k8s', 'helm', 'kubectl', 'kubernetes deployment', 'pod', 'ingress', 'gateway api'.
 license: MIT
 compatibility: "Requires kubectl. Optional: helm, kustomize, kube-score, cosign"
 metadata:
@@ -15,7 +15,7 @@ metadata:
 
 Create, review, and architect Kubernetes infrastructure - from raw manifests to Helm charts to multi-cluster strategy. The goal is production-ready, security-hardened, cost-aware infrastructure that a team can maintain.
 
-**Target versions** (July 2026): Kubernetes 1.34-1.36 supported (1.36 "Haru" released April 22, 2026; 1.36.2 / 1.35.6 / 1.34.9 are the current patches). Upstream Kubernetes has no LTS; community support per minor is ~14 months. 1.33 reached upstream EOL June 28, 2026; 1.32 reached EOL February 28, 2026. Managed **vendor extended support** (AKS/EKS) carries older minors patches roughly 2 more years - attribute it to the platform, not upstream. Helm 4.2.3, Helm 3.21.3 (parallel v3 maintenance, security fixes until Nov 2026).
+**Target versions** (September 2026): Kubernetes 1.34-1.37 are receiving patches (1.37.0 / 1.36.4 / 1.35.8 / 1.34.11). Kubernetes normally maintains the most recent three minors; 1.34 is in its final maintenance window and reaches EOL October 27, 2026. Upstream Kubernetes has no LTS. Managed **vendor extended support** (AKS/EKS) carries older minors longer - attribute it to the platform, not upstream. Helm 4.2.4 and Helm 3.21.4 are the current parallel release lines; Helm 3 security maintenance ends in November 2026.
 This skill covers four domains depending on context:
 - **Manifests** - raw YAML for Deployments, Services, Gateway API routes, ConfigMaps, Secrets, PVCs
 - **Helm** - Helm 4 chart scaffolding, OCI registries, templating, multi-environment values
@@ -115,10 +115,11 @@ Follow the domain-specific section below. Always apply the production checklist 
 
 ```bash
 # Always verify kube context first
-kubectl config current-context
+KUBE_CONTEXT="$(kubectl config current-context)"
+printf 'Using kube context: %s\n' "$KUBE_CONTEXT"
 
 # Manifests
-kubectl apply -f <manifest> --dry-run=server    # Server-side validation
+kubectl --context "$KUBE_CONTEXT" apply -f <manifest> --dry-run=server  # Server-side validation
 kube-score score <manifest>                     # Best practice scoring
 checkov -d . --framework kubernetes             # Security/compliance scan
 
@@ -126,7 +127,7 @@ checkov -d . --framework kubernetes             # Security/compliance scan
 helm lint <chart>/                              # Lint chart
 helm template <release> <chart>/               # Render templates locally
 helm template <release> <chart>/ -f values-prod.yaml  # With env overlay
-helm install <release> <chart>/ --dry-run --debug     # Server-side dry run (needs cluster)
+helm --kube-context "$KUBE_CONTEXT" install <release> <chart>/ --dry-run --debug  # Server-side dry run
 ```
 
 ### Step 5: GitOps-managed emergency or scaling changes
@@ -168,7 +169,7 @@ Read `references/manifest-templates.md` for complete, copy-pasteable YAML templa
 
 ## Helm Charts
 
-**Helm 4** (4.0.0 released Nov 12, 2025; 4.2.3 current) is current. Helm 3.21.3 gets security fixes until Nov 2026.
+**Helm 4** (4.0.0 released Nov 12, 2025; 4.2.4 current) is current. Helm 3.21.4 gets security fixes until Nov 2026.
 
 ### What changed in Helm 4
 
@@ -348,7 +349,7 @@ The Trivy supply chain attack (CVE-2026-33634) is the defining security event of
 - **Monitor for force-push events** on action repos you depend on. GitHub's audit log and StepSecurity Harden-Runner can detect this.
 - **Vendor critical CI tools** or use pre-built, verified binaries instead of pulling from upstream on every run.
 - **Rotate secrets** if any CI pipeline ran compromised Trivy (v0.69.4/5/6) between March 19-23, 2026. The infostealer exfiltrated SSH keys, cloud creds, Docker configs, and k8s tokens.
-- **Trivy safe version: v0.72.0+ for new pins.** v0.69.3 was the March 2026 rollback version. Actions such as `trivy-action@v0.35.0` and `setup-trivy@v0.2.6` still need verified commit SHAs, not mutable tags.
+- **Trivy safe version: v0.74.0+ for new pins.** v0.69.3 was the March 2026 rollback version. Actions such as `trivy-action@v0.35.0` and `setup-trivy@v0.2.6` still need verified commit SHAs, not mutable tags.
 
 ### Platform awareness
 
@@ -463,7 +464,7 @@ See `references/output-contract.md` for the full contract.
 
 - **Skill name:** KUBERNETES
 - **Deliverable bucket:** `audits`
-- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract - boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table - and write the deliverable to `docs/local/audits/kubernetes/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
+- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract - monospace inline header, severity-grouped inline summary, linked Markdown deliverable, and concise monospace conclusion - and write the deliverable to `docs/local/audits/kubernetes/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
 
 ## Related Skills

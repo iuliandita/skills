@@ -28,7 +28,7 @@ CLI. Both coexist. Rough mapping:
 | Garbage collect | `nix-store --gc` | `nix store gc` |
 | Optimise (dedup) | `nix-store --optimise` | `nix store optimise` |
 | Add to store | `nix-store --add file` | `nix store add-file file` |
-| Print GC roots | `nix-store --gc --print-roots` | `nix store gc --print-roots` |
+| Print GC roots | `nix-store --gc --print-roots` | no direct `nix store gc` equivalent |
 | Dump / restore | `nix-store --dump`, `--restore` | `nix store dump`, `restore` |
 | Copy between stores | `nix-copy-closure`, `nix-store --export` | `nix copy` |
 

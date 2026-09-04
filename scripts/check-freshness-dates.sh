@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-FRESHNESS_LABEL="${SKILLS_FRESHNESS_LABEL:-July 2026}"
+FRESHNESS_LABEL="${SKILLS_FRESHNESS_LABEL:-$(date +'%B %Y')}"
 
 mapfile -t files < <(
   git -C "$ROOT" ls-files \

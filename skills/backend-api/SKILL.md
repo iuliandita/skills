@@ -16,10 +16,10 @@ metadata:
 Design and review HTTP APIs that stay coherent as they grow. Focus on contracts, auth
 boundaries, error models, and framework structure for Python and Node.js services.
 
-**Target versions** (July 2026):
-- FastAPI **0.139.2**
+**Target versions** (September 2026):
+- FastAPI **0.141.1**
 - Express **5.2.1** (published 2025-12-01)
-- NestJS **11.1.28**
+- NestJS **12.0.1** (major release; check migration notes before upgrading)
 - OpenAPI Specification **3.2.0** (published 2025-09-19)
 - HTTP Semantics: **RFC 9110** (June 2022)
 - Problem Details for HTTP APIs: **RFC 9457** (July 2023)
@@ -384,7 +384,7 @@ See `references/output-contract.md` for the full contract.
 
 - **Skill name:** BACKEND-API
 - **Deliverable bucket:** `audits`
-- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract - boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table - and write the deliverable to `docs/local/audits/backend-api/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
+- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract - monospace inline header, severity-grouped inline summary, linked Markdown deliverable, and concise monospace conclusion - and write the deliverable to `docs/local/audits/backend-api/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
 
 ## Related Skills

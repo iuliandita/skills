@@ -99,9 +99,9 @@ silent edits.
 Audit mode produces two surfaces, and they are shaped differently. Do not try to nest one
 inside the other.
 
-1. **In the transcript:** the boxed contract header, the category-grouped summary templated
-   below, then the boxed conclusion and conclusion table. This is where before/after pairs go,
-   because that is what the reader is scanning.
+1. **In the transcript:** the monospace contract header, the category-grouped summary templated
+   below, then the concise monospace conclusion. This is where before/after pairs go, because that
+   is what the reader is scanning.
 2. **In the deliverable file** (`docs/local/audits/anti-ai-prose/<date>-<slug>.md`): the shared
    contract's own shape - findings grouped by priority under `## P0 - Must fix` style headings,
    each a `- [ ]` checkbox with `File` / `Description` / `Suggested action` / `Fix applied`.

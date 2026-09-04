@@ -26,16 +26,23 @@ Run this at repo root to find all version strings:
 ```bash
 # Get the current version from the primary manifest
 CURRENT_VERSION=""
-[[ -f package.json ]] && CURRENT_VERSION=$(jq -r '.version' package.json 2>/dev/null)
-[[ -z "$CURRENT_VERSION" && -f pyproject.toml ]] && CURRENT_VERSION=$(grep -E '^version\s*=' pyproject.toml | head -1 | sed 's/.*"\(.*\)".*/\1/')
-[[ -z "$CURRENT_VERSION" && -f Cargo.toml ]] && CURRENT_VERSION=$(grep -E '^version\s*=' Cargo.toml | head -1 | sed 's/.*"\(.*\)".*/\1/')
-[[ -z "$CURRENT_VERSION" ]] && CURRENT_VERSION=$(git tag -l 'v*' --sort=-v:refname | head -1 | sed 's/^v//')
+[[ -f package.json ]] && CURRENT_VERSION=$(jq -r '.version // empty' package.json 2>/dev/null || true)
+[[ -z "$CURRENT_VERSION" && -f pyproject.toml ]] && CURRENT_VERSION=$(grep -E '^version\s*=' pyproject.toml | head -1 | sed 's/.*"\(.*\)".*/\1/' || true)
+[[ -z "$CURRENT_VERSION" && -f Cargo.toml ]] && CURRENT_VERSION=$(grep -E '^version\s*=' Cargo.toml | head -1 | sed 's/.*"\(.*\)".*/\1/' || true)
+[[ -z "$CURRENT_VERSION" ]] && CURRENT_VERSION=$(git tag -l 'v*' --sort=-v:refname | head -1 | sed 's/^v//' || true)
+
+if [[ -z "$CURRENT_VERSION" ]] ||
+   ! [[ "$CURRENT_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$ ]]; then
+  printf 'No valid version source found; set the current version explicitly before searching.\n' >&2
+  exit 1
+fi
 
 echo "Current version: $CURRENT_VERSION"
 
 # Find all occurrences across the repo
-rg --fixed-strings "$CURRENT_VERSION" --hidden --no-ignore \
-  --glob '!.git' --glob '!node_modules' --glob '!*.lock' --glob '!*.sum'
+rg --fixed-strings --hidden --no-ignore \
+  --glob '!.git' --glob '!node_modules' --glob '!*.lock' --glob '!*.sum' \
+  -- "$CURRENT_VERSION"
 ```
 
 Review each match. Not all are version strings - some may be coincidental (e.g., a test fixture with `"version": "1.2.3"` that's documenting a different system).

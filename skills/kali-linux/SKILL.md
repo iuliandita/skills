@@ -22,7 +22,7 @@ Start by identifying which Kali lane you are actually on - rolling install, last
 live USB, VM image, Purple image, NetHunter, or a throwaway lab box - then separate base OS
 health from tool-selection questions, branch hygiene, hardware support, and engagement scope.
 
-**Target versions** (verified July 2026):
+**Target versions** (verified September 2026):
 
 Only pin versions or dated anchors here when they materially affect compatibility or
 troubleshooting shape. For ordinary package work, prefer the live branch and repo state over a
@@ -31,7 +31,7 @@ stale package table.
 | Component | Version or date | Why it matters |
 |-----------|-----------------|----------------|
 | **Current dated Kali image release** | 2026.2 | current image baseline and release notes |
-| Branch docs | July 2026 recheck / verify live | branch behavior and safe lane selection matter more than a single package version |
+| Branch docs | September 2026 recheck / verify live | branch behavior and safe lane selection matter more than a single package version |
 | Metapackage docs | 2025-07 / verify live | tool-family grouping and install scope matter more than memorizing one package list |
 | Kali 2026.2 kernel lane | 6.19 | release-image baseline for hardware and driver expectations |
 
@@ -307,7 +307,7 @@ See `references/output-contract.md` for the full contract.
 
 - **Skill name:** KALI-LINUX
 - **Deliverable bucket:** `audits`
-- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract - boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table - and write the deliverable to `docs/local/audits/kali-linux/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
+- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract - monospace inline header, severity-grouped inline summary, linked Markdown deliverable, and concise monospace conclusion - and write the deliverable to `docs/local/audits/kali-linux/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
 
 ## Related Skills

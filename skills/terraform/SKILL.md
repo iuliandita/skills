@@ -15,7 +15,7 @@ metadata:
 
 Write, review, and architect Terraform/OpenTofu infrastructure - from individual resources to multi-account, PCI-compliant platform architectures. The goal is reproducible, drift-free, auditable infrastructure that passes both peer review and QSA assessment.
 
-**Target versions** (July 2026): Terraform 1.15.8 (IBM/HashiCorp, BSL; 1.15.x GA, 1.16 prereleases underway), OpenTofu 1.12.5 (Linux Foundation, MPL; 1.11 still maintained). Helm provider v3.1+, K8s provider v3.0+, AWS provider v6.x, Azure v4.x, GCP v7.x.
+**Target versions** (September 2026): Terraform 1.16.1 (IBM/HashiCorp, BSL), OpenTofu 1.12.6 (Linux Foundation, MPL). Helm provider v3.1+, K8s provider v3.0+, AWS provider v6.x, Azure v4.x, GCP v7.x.
 
 This skill covers HCL, modules, operations, state, CI/CD, policy-as-code, audit trails,
 PCI-DSS 4.0 controls, drift detection, and CDE isolation.
@@ -33,7 +33,7 @@ IBM acquired HashiCorp for $6.4B (closed Feb 2025). Terraform stays BSL 1.1; Ope
 - Writing or reviewing Terraform/OpenTofu configurations
 - Designing module architecture or registry patterns
 - Planning state management, backend strategy, or migration
-- Setting up CI/CD pipelines for IaC (plan/apply workflows)
+- Defining Terraform plan/apply requirements, state access, and policy gates consumed by CI pipelines
 - Implementing policy-as-code gates (Checkov, OPA, Sentinel)
 - PCI-DSS 4.0 compliance for infrastructure provisioning
 - Multi-account/multi-cloud architecture with blast radius controls
@@ -45,7 +45,7 @@ IBM acquired HashiCorp for $6.4B (closed Feb 2025). Terraform stays BSL 1.1; Ope
 - Read-only Kubernetes cluster health checks after provisioning or maintenance (use **cluster-health**)
 - Ansible playbooks or configuration management (use **ansible**)
 - Docker/container optimization (use **docker**)
-- CI/CD pipeline design (use **ci-cd**)
+- CI/CD job and pipeline design, including how Terraform commands are sequenced (use **ci-cd**)
 - Database engine configuration, schema design, or migrations (use **databases**)
 - Security auditing application code (use **security-audit**)
 
@@ -408,7 +408,7 @@ provider "aws" {
 | Tool | Role | Status |
 |------|------|--------|
 | **Checkov** | Static HCL + plan analysis, 750+ checks, PCI/CIS/NIST frameworks | 🟢 Active, recommended |
-| **Trivy** (absorbed tfsec) | IaC + container + repo scanning, single binary | 🟢 Active (use v0.72.0+ for new pins; v0.69.4-6 COMPROMISED) |
+| **Trivy** (absorbed tfsec) | IaC + container + repo scanning, single binary | 🟢 Active (use v0.74.0+ for new pins; v0.69.4-6 COMPROMISED) |
 | **TFLint** | Provider-specific linting, catches misconfigs linters miss | 🟢 Active |
 | **OPA / Conftest** | Custom policy-as-code on JSON plan output | 🟢 Active (CNCF) |
 | **Sentinel** | Native TFC/TFE policy engine | 🟢 Active (proprietary) |
@@ -454,7 +454,7 @@ See `references/output-contract.md` for the full contract.
 
 - **Skill name:** TERRAFORM
 - **Deliverable bucket:** `audits`
-- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract - boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table - and write the deliverable to `docs/local/audits/terraform/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
+- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract - monospace inline header, severity-grouped inline summary, linked Markdown deliverable, and concise monospace conclusion - and write the deliverable to `docs/local/audits/terraform/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
 
 ## Related Skills

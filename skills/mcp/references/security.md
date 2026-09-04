@@ -64,18 +64,23 @@ operations are attempted. Do not publish all scopes in `scopes_supported` (scope
 
 ---
 
-## Session Management (Streamable HTTP)
+## Stateless Core and Legacy Sessions (Streamable HTTP)
 
-Streamable HTTP supports both stateful (with sessions) and stateless modes. When using
-stateful mode:
+MCP 2026-07-28 is stateless: every request carries its protocol version, client identity, and
+capabilities. Do not require an initialize exchange or `MCP-Session-Id` for modern clients.
+
+When compatibility with a 2025 protocol revision requires a legacy stateful session:
 
 - Server MAY assign `MCP-Session-Id` header in the initialize response
 - If assigned, session IDs MUST be cryptographically secure (UUID v4, JWT, or crypto hash)
 - Client includes `MCP-Session-Id` in all subsequent requests
-- Client includes `MCP-Protocol-Version: 2025-11-25` header
+- Client includes the negotiated 2025 `MCP-Protocol-Version` header
 - Server validates `Origin` header on every request (DNS rebinding prevention)
 - Session termination via `DELETE` is optional (server MAY respond `405`)
 - Bind to `127.0.0.1` for local servers - `0.0.0.0` exposes to the network
+
+Keep legacy session state isolated from the 2026 stateless path. Do not silently downgrade a
+client that pins `2026-07-28`.
 
 ### DNS rebinding attack
 
@@ -115,49 +120,92 @@ result = subprocess.run(["git", "log", "--oneline", branch], capture_output=True
 
 ### Path traversal
 
+For an existing read target, canonicalize both sides before checking containment:
+
 ```typescript
 import path from "node:path";
+import { realpath } from "node:fs/promises";
 
-function safePath(base: string, userInput: string): string {
-  const resolved = path.resolve(base, userInput);
-  const normalizedBase = path.resolve(base) + path.sep;
-  if (!resolved.startsWith(normalizedBase)) {
+function assertContained(baseReal: string, targetReal: string): void {
+  const relative = path.relative(baseReal, targetReal);
+  if (relative === ".." || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative)) {
     throw new Error("Path traversal blocked");
   }
-  return resolved;
 }
 
-// Also reject in raw input before resolving:
-// - Null bytes (\0) - can truncate paths in C-based libraries
-// - Extremely long paths (> 4096 chars)
+async function safeExistingPath(base: string, userInput: string): Promise<string> {
+  if (userInput.includes("\0")) throw new Error("NUL byte blocked");
+  const baseReal = await realpath(base);
+  const targetReal = await realpath(path.resolve(baseReal, userInput));
+  assertContained(baseReal, targetReal);
+  return targetReal;
+}
 ```
+
+New files do not exist yet, so they cannot be passed to `realpath`. Keep writes to a server-owned
+canonical parent and accept one leaf name, not an arbitrary nested path:
+
+```typescript
+import { constants } from "node:fs";
+import { open, realpath } from "node:fs/promises";
+import path from "node:path";
+
+async function openNewFile(base: string, leaf: string) {
+  if (!leaf || leaf === "." || leaf === ".." || leaf.includes("\0") ||
+      leaf.includes("/") || leaf.includes("\\")) {
+    throw new Error("Invalid filename");
+  }
+
+  const parentReal = await realpath(base);
+  const target = path.join(parentReal, leaf);
+  return open(
+    target,
+    constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | constants.O_NOFOLLOW,
+    0o600
+  );
+}
+```
+
+Check authorization against the canonical path, never the submitted string. The leaf-only write
+pattern assumes attackers cannot rename the server-owned parent. Nested attacker-controlled paths
+need directory-fd/openat-style traversal with no-follow checks on every component; a realpath then
+open sequence alone does not close that race.
 
 ### SSRF prevention
 
-When tools fetch URLs from user input:
+Prefer an explicit hostname allowlist. With a fixed allowlist, URL validation does not make a DNS
+trust decision that can diverge from the later request:
 
 ```typescript
 import { URL } from "node:url";
-import dns from "node:dns/promises";
 
-async function safeUrl(input: string): Promise<URL> {
+const ALLOWED_HOSTS = new Set(["api.example.com", "downloads.example.com"]);
+
+function allowlistedUrl(input: string): URL {
   const url = new URL(input);
   if (url.protocol !== "https:") throw new Error("HTTPS required");
-
-  // Resolve DNS and check for private IPs
-  const { address } = await dns.lookup(url.hostname);
-  if (isPrivateIp(address)) throw new Error("Private IP blocked");
+  if (url.username || url.password) throw new Error("Embedded credentials blocked");
+  if (url.port && url.port !== "443") throw new Error("Unexpected port");
+  if (!ALLOWED_HOSTS.has(url.hostname)) throw new Error("Host not allowed");
   return url;
 }
-
-function isPrivateIp(ip: string): boolean {
-  // IPv4: 10.x, 172.16-31.x, 192.168.x, 127.x, 169.254.x (cloud metadata)
-  if (/^(10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|127\.|169\.254\.)/.test(ip)) return true;
-  // IPv6: loopback (::1), link-local (fe80::), unique-local (fc00::/7)
-  if (/^(::1|fe80:|fc|fd)/i.test(ip)) return true;
-  return false;
-}
 ```
+
+If arbitrary public hosts are a real product requirement, a preflight lookup followed by ordinary
+`fetch(url)` is unsafe because DNS can change between the check and connection. Implement all of
+these controls together:
+
+- Resolve with `dns.lookup(hostname, { all: true, verbatim: true })` and reject the host if any A
+  or AAAA result is loopback, private, link-local, multicast, unspecified, documentation-only, or
+  otherwise non-public. Normalize IPv4-mapped IPv6 addresses before classification.
+- Pin the HTTP transport or dispatcher lookup callback to the validated address set while retaining
+  the original hostname for the HTTP Host header and TLS SNI/certificate verification.
+- Disable automatic redirects, or handle them manually and repeat scheme, credentials, hostname,
+  port, DNS, and address validation for every redirect.
+- Limit request duration, response bytes, and redirect count. Reject unsupported schemes and ports.
+
+Do not publish a partial arbitrary-host helper: secure address classification and transport pinning
+depend on the chosen HTTP client and must be tested together against rebinding and redirect cases.
 
 ### SQL injection
 

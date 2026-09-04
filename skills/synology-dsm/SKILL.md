@@ -22,7 +22,7 @@ btrfs-progs DSM ships and diverges from mainline**, so stock tools report health
 corrupt; and **DSM regenerates `/etc/fstab` and package state at boot**, so hand edits do not
 survive.
 
-**Target versions** (July 2026):
+**Target versions** (September 2026):
 - DSM 7.4.1-90080 - current release (7.4 GA was 90075, 2026-06-16)
 - DSM 7.3 (released 2025-10-08) - Long-Term Support line, maintained to October 2027. Patch
   floor is **7.3.2-86009-3 or above**: `-2` carries the SA-26:06 fixes but not SA-26:03

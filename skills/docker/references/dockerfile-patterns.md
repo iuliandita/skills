@@ -117,7 +117,7 @@ Attestations are stored in the registry alongside the image. Requires `--push`.
 
 \* Chainguard dev variants include shell; prod variants don't.
 
-**Choose Chainguard** for: zero-CVE at build time, built-in SBOM + Sigstore, nightly rebuilds, glibc compat, PCI/regulatory compliance. 2000+ images available as of July 2026 recheck.
+**Choose Chainguard** for: zero-CVE at build time, built-in SBOM + Sigstore, nightly rebuilds, glibc compat, PCI/regulatory compliance. 2000+ images available as of September 2026 recheck.
 
 **Choose Alpine** when: you need a shell, all deps work with musl, image size is top priority.
 
@@ -356,7 +356,9 @@ Standard tag matrix for published images. Each image gets the full set:
 | `latest` | `latest` | Yes (latest release) | Default pull - dev/testing only |
 | `VARIANT` | `alpine` | Yes (latest release) | Variant of latest - dev/testing only |
 
-**Pinned tags** (`MAJOR.MINOR.PATCH[-VARIANT]`) are immutable - once pushed, never overwritten. Production and CI reference these. For maximum immutability, pin to `@sha256:` digests.
+**Pinned tags** (`MAJOR.MINOR.PATCH[-VARIANT]`) are treated as immutable by this publishing policy:
+never overwrite them after push. Registries can still replace tags, so production and CI should pin
+to `@sha256:` digests when technical immutability is required.
 
 **Floating tags** (`MAJOR.MINOR`, `latest`, variant names) move on every release. A `docker pull` on a floating tag may return a different image tomorrow. Never use in production.
 

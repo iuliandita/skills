@@ -21,7 +21,7 @@ Focus on Debian stable and Ubuntu LTS first, then layer in derivative-specific b
 workflows, snap confinement, Ubuntu HWE, and explicit checks for derivatives that diverge on
 init, packaging defaults, or intended use.
 
-**Versions worth pinning** (verified July 2026):
+**Versions worth pinning** (verified September 2026):
 
 Only pin versions here when they materially affect compatibility or troubleshooting shape. For
 ordinary Debian and Ubuntu package work, prefer the live distro lane and package policy over a
@@ -321,7 +321,7 @@ See `references/output-contract.md` for the full contract.
 
 - **Skill name:** DEBIAN-UBUNTU
 - **Deliverable bucket:** `audits`
-- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract - boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table - and write the deliverable to `docs/local/audits/debian-ubuntu/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
+- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract - monospace inline header, severity-grouped inline summary, linked Markdown deliverable, and concise monospace conclusion - and write the deliverable to `docs/local/audits/debian-ubuntu/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
 
 ## Related Skills

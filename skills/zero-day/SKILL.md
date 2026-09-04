@@ -1,7 +1,7 @@
 ---
 name: zero-day
 description: >
-  · Hunt novel vulnerabilities: reversing, patch diffing, fuzzing, attack surface, PoCs. Triggers: 'zero-day', '0-day', 'vulnerability research', 'variant analysis', 'fuzz', 'exploit dev', 'CVE'. Not SAST: security-audit.
+  · Hunt novel vulnerabilities via reversing, patch diffs, fuzzing, and PoCs. Triggers: 'zero-day', '0-day', 'vulnerability research', 'CVE variant analysis', 'patch diffing', 'n-day variant', 'fuzz', 'exploit dev'. Not SAST: security-audit.
 license: MIT
 compatibility: "Optional: codeql, semgrep, joern, ghidra, radare2/rizin, afl++, gdb, pwntools, strace, ltrace, checksec"
 metadata:
@@ -21,7 +21,7 @@ This is the *discovery* skill - it finds vulnerabilities nobody has catalogued y
 exploiting known weaknesses on live systems, use **lockpick**. For scanning code against known
 vulnerability patterns, use **security-audit**.
 
-**Target versions**: July 2026 snapshot. Read `references/target-versions.md` before
+**Target versions**: September 2026 snapshot. Read `references/target-versions.md` before
 pinning static analysis, reversing, fuzzing, or debugger tooling.
 
 ## When to use
@@ -461,7 +461,7 @@ and when to reach for each tool during source, binary, or live-system analysis.
 - `references/binary-analysis.md` - binary reverse engineering workflow, patch diffing, fuzzing harness development, dynamic analysis
 - `references/exploit-patterns.md` - proof-of-concept development templates by vulnerability class, with safety guidelines
 - `references/tooling-quick-reference.md` - tool catalog with install paths and best-fit usage notes
-- `references/target-versions.md` - July 2026 version snapshot for static analysis, reversing, fuzzing, and debugger tools
+- `references/target-versions.md` - September 2026 version snapshot for static analysis, reversing, fuzzing, and debugger tools
 
 ## Output Contract
 
@@ -469,7 +469,7 @@ See `references/output-contract.md` for the full contract.
 
 - **Skill name:** ZERO-DAY
 - **Deliverable bucket:** `audits`
-- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract - boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table - and write the deliverable to `docs/local/audits/zero-day/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
+- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract - monospace inline header, severity-grouped inline summary, linked Markdown deliverable, and concise monospace conclusion - and write the deliverable to `docs/local/audits/zero-day/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
 
 ## Related Skills

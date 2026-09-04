@@ -1,7 +1,7 @@
 ---
 name: databases
 description: >
-  · Configure/tune/migrate PostgreSQL, MongoDB, MySQL/MariaDB, MSSQL. Triggers: 'database', 'postgres', 'mysql', 'mongodb', 'schema', 'migration', 'pgbouncer', 'EXPLAIN'. Not for HTTP APIs (use backend-api).
+  · Configure/tune/migrate PostgreSQL, MongoDB, MySQL/MariaDB, MSSQL. Triggers: 'database', 'postgres', 'mysql', 'mongodb', 'database schema', 'database migration', 'pgbouncer', 'EXPLAIN'. Not for HTTP APIs (use backend-api).
 license: MIT
 compatibility: "Requires one or more of: psql, mongosh, mysql, or sqlcmd"
 metadata:
@@ -15,13 +15,13 @@ metadata:
 
 Configure, tune, design schemas, migrate, back up, and review database engines - from single-node dev setups to PCI-compliant production clusters. The goal is correct, performant, durable databases that survive failures, pass audits, and don't wake you up at 3am.
 
-**Target versions** (July 2026):
-- PostgreSQL **18.4** (EOL 2030-11; May 14, 2026 security release), back-branches: 17.10, 16.14, 15.18, 14.23; PostgreSQL 19 Beta 2 is for testing only
-- MongoDB **8.0.26** (GA, EOL 2029-10; June 11, 2026 security release fixing CVE-2026-11933); rapid lane (8.2+) is Atlas-only with a short window - verify live before pinning
-- MariaDB **11.8.8** (LTS, EOL 2028-06); 12.x rolling GA is quarterly and EOLs at each successor, with 12.3 the next yearly LTS - verify live
-- MySQL **8.4.10** (LTS; June 2026 Critical Security Patch); innovation lane has a short support window - verify live
-- SQL Server **2025 RTM + CU7** (released 2026-07-16)
-- PgBouncer **1.25.2**, Pgpool-II **4.7.2**, ProxySQL **3.0.9** (fixes CVE-2026-48772/48773/48774)
+**Target versions** (September 2026):
+- PostgreSQL **18.6** (EOL 2030-11; August 13, 2026 release), back-branches: 17.11, 16.15, 15.19, 14.24; PostgreSQL 19 Beta 3 is for testing only
+- MongoDB **8.0.30** (GA, EOL 2029-10); 8.0.29 contains the August security fixes and 8.0.30 is the current maintenance release. The rapid lane is Atlas-only with a short window - verify live before pinning
+- MariaDB **11.8.6** (LTS, EOL 2028-06); 12.x rolling GA is quarterly and EOLs at each successor - verify live
+- MySQL **8.4.12** (LTS; August 18, 2026 release); the innovation lane has a short support window - verify live
+- SQL Server **2025 RTM + CU8** (released 2026-08-13)
+- PgBouncer **1.25.2**, Pgpool-II **4.7.2**, ProxySQL **3.0.10** (ProxySQL 3.0.9+ fixes CVE-2026-48772/48773/48774)
 
 This skill covers six domains depending on context:
 - **Configuration** - engine settings, authentication, TLS, tuning parameters
@@ -42,7 +42,7 @@ This skill covers six domains depending on context:
 - Analyzing query performance (EXPLAIN, slow query logs, index usage)
 - Database-level PCI-DSS 4.0 compliance (encryption, audit logging, access control)
 - Evaluating managed vs self-hosted database decisions
-- Setting up database monitoring and alerting
+- Exposing engine-native metrics and diagnosing database-specific health or query signals
 
 ## When NOT to use
 
@@ -53,6 +53,7 @@ This skill covers six domains depending on context:
 - Application-level database bugs (N+1, transaction misuse, ORM pitfalls) - use **code-review**
 - SQL injection detection, connection string secrets in code - use **security-audit**
 - CI/CD pipelines that run migrations - use **ci-cd**
+- Cross-service telemetry pipelines, dashboards, alert routing, or SLOs - use **observability**
 - Redis/Valkey (cache/KV stores) and other non-relational engines (Cassandra, DynamoDB, ClickHouse, etc.) - outside this skill's four primary engines; use the relevant platform skill or general guidance
 
 ---
@@ -370,7 +371,7 @@ See `references/output-contract.md` for the full contract.
 
 - **Skill name:** DATABASES
 - **Deliverable bucket:** `audits`
-- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract - boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table - and write the deliverable to `docs/local/audits/databases/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
+- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract - monospace inline header, severity-grouped inline summary, linked Markdown deliverable, and concise monospace conclusion - and write the deliverable to `docs/local/audits/databases/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
 
 ## Related Skills
@@ -382,6 +383,8 @@ See `references/output-contract.md` for the full contract.
 - **docker** - for database containers in Docker Compose
 - **ansible** - for database server configuration management
 - **ci-cd** - for CI/CD pipelines that run migrations (schema execution in CI, migration gating, rollback automation)
+- **observability** - for cross-service telemetry pipelines, dashboards, alert routing, and SLOs.
+  This skill owns database-native metrics, engine health, and query diagnosis.
 
 ---
 

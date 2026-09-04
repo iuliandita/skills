@@ -32,7 +32,7 @@ disposable dev shells, fleet-wide configuration without a separate config-manage
 and a single language for a workstation, a server, a container image, a NixOS VM, and a
 macOS laptop via nix-darwin.
 
-**Versions worth pinning** (verified July 2026):
+**Versions worth pinning** (verified September 2026):
 
 Pin versions only when they shape compatibility or troubleshooting. For ordinary package
 work, trust the live channel or flake lock over a stale table.
@@ -48,7 +48,7 @@ work, trust the live channel or flake lock over a stale table.
 | nix-darwin | tracks nixpkgs 26.05 and master | active macOS module system (Intel + Apple Silicon) |
 | Determinate Nix | downstream, flakes-on by default | validated distribution; parallel eval, lazy trees |
 | Lix | fork of Nix | compatibility-focused fork; Meson build, improved errors |
-| Kernel default for 26.05 | Linux 6.12 LTS | default `linuxPackages`; `linuxPackages_latest` tracks mainline, not LTS |
+| Kernel default for 26.05 | Linux 6.18 LTS | default `linuxPackages`; `linux_hardened` was removed in 26.05 |
 
 ## When to use
 
@@ -358,7 +358,7 @@ See `references/output-contract.md` for the full contract.
 
 - **Skill name:** NIXOS-BTW
 - **Deliverable bucket:** `audits`
-- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract - boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table - and write the deliverable to `docs/local/audits/nixos-btw/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
+- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract - monospace inline header, severity-grouped inline summary, linked Markdown deliverable, and concise monospace conclusion - and write the deliverable to `docs/local/audits/nixos-btw/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
 
 ## Related Skills

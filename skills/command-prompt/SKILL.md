@@ -1,7 +1,7 @@
 ---
 name: command-prompt
 description: >
-  · Write/debug shell commands, scripts, dotfiles, completions for zsh, bash, POSIX sh, fish. Triggers: 'shell', 'script', '.zshrc', '.bashrc', 'alias', 'completion', 'trap'. Not for CI blocks (use ci-cd).
+  · Write/debug shell commands, scripts, dotfiles, completions for zsh, bash, POSIX sh, fish. Triggers: 'shell', 'shell script', '.zshrc', '.bashrc', 'alias', 'shell completion', 'trap'. Not for CI blocks (use ci-cd).
 license: MIT
 compatibility: "Requires a POSIX-compatible shell. Zsh, bash, fish, or nushell for shell-specific features"
 metadata:
@@ -16,11 +16,11 @@ metadata:
 Reference skill for writing commands, scripts, and configuration across Unix shells. Detects
 the target shell from context and routes to the appropriate reference.
 
-**Target versions** (July 2026):
+**Target versions** (September 2026):
 - Zsh: 5.10
 - Bash: 5.3
-- Fish: 4.8.1
-- Nushell: 0.114.1
+- Fish: 4.9.0
+- Nushell: 0.115.1
 - Tcsh: 6.24
 - Dash: 0.5.13
 
@@ -352,7 +352,7 @@ See `references/output-contract.md` for the full contract.
 
 - **Skill name:** COMMAND-PROMPT
 - **Deliverable bucket:** `audits`
-- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract - boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table - and write the deliverable to `docs/local/audits/command-prompt/<YYYY-MM-DD>-<slug>.md`. When invoked to **write a script, dotfile, or completion / answer a question / teach a concept**, respond freely: deliver the artifact or explanation inline without the contract, deliverable file, or conclusion table.
+- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract - monospace inline header, severity-grouped inline summary, linked Markdown deliverable, and concise monospace conclusion - and write the deliverable to `docs/local/audits/command-prompt/<YYYY-MM-DD>-<slug>.md`. When invoked to **write a script, dotfile, or completion / answer a question / teach a concept**, respond freely: deliver the artifact or explanation inline without the contract, deliverable file, or conclusion table.
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
 
 ## Related Skills

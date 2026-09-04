@@ -3,7 +3,7 @@ name: deep-audit
 description: >
   · Run exhaustive 5-wave repo audits, persist findings, and generate phased tasks. Triggers: 'deep audit', 'comprehensive audit', 'full audit', 'mega review', 'deep review', 'audit report'. For quick sweeps, use full-review.
 license: MIT
-compatibility: "Requires iuliandita/skills collection installed and a harness capable of dispatching full-access agents/subagents. Optional: a brainstorming or ideation skill in the host harness (matched by name pattern) for large-audit planning handoff."
+compatibility: "Requires iuliandita/skills collection installed. Agent/subagent dispatch is optional; without it, run each assigned skill sequentially in the root context. Optional: a brainstorming or ideation skill in the host harness (matched by name pattern) for large-audit planning handoff."
 metadata:
   source: iuliandita/skills
   date_added: "2026-04-14"
@@ -42,8 +42,8 @@ For a quick 4-skill sweep, use **full-review** instead.
 Run after Step 9 completes, before concluding the session. Checks cover the full
 workflow (waves + persistence + routing), not just the wave dispatch phase.
 
-- [ ] All agents dispatched as `general-purpose` type (not `feature-dev:*`, `code-simplifier:*`, or other restricted types - these lack Skill tool access)
-- [ ] Each agent invoked its assigned custom skill via the Skill tool as its first action
+- [ ] Every worker had independent context, repository read access, the tools needed by its audit, and the assigned skill's instructions
+- [ ] Each worker loaded its assigned custom skill through the harness's native skill-loading mechanism, or received those instructions in its prompt
 - [ ] Recon summary (Wave 1) was presented to the user before Wave 2 agents were dispatched
 - [ ] Wave 2 (code quality) ran all 4 skills regardless of repo type
 - [ ] Wave 3 (domain) ran only skills whose detection patterns matched - no false activations
@@ -55,7 +55,7 @@ workflow (waves + persistence + routing), not just the wave dispatch phase.
 - [ ] Failed or timed-out agents noted with reason, not silently dropped
 - [ ] `docs/local/` added to `.gitignore` before writing any audit artifacts (verified with `git check-ignore`)
 - [ ] `docs/local/audits/DEEP-AUDIT.md` written consolidating all wave findings in their native format
-- [ ] Root-level `SECURITY-AUDIT.md` (if written by security-audit) relocated into `docs/local/audits/`
+- [ ] Security-audit used its canonical dated path under `docs/local/audits/security-audit/`
 - [ ] `docs/local/audits/DEEP-AUDIT-TASKS.md` written with phased checklist (priority, effort, files, rationale per task)
 - [ ] Task-list size assessed; routing decision announced (SMALL: direct action list, LARGE: brainstorming handoff or vanilla-harness plan generation)
 - [ ] If LARGE and a brainstorming skill is available, user was told to invoke it manually (no silent auto-invocation)
@@ -84,8 +84,8 @@ workflow (waves + persistence + routing), not just the wave dispatch phase.
 
 Gather context. Run in parallel (guard each with `; true`):
 
-If full-access agent dispatch is unavailable, stop and report the compatibility requirement
-instead of starting a partial five-wave audit.
+If full-access agent dispatch is unavailable, run every assigned skill sequentially in the root
+context. Preserve wave order, separate native result sections, and report the compatibility limit.
 
 1. **Repo state**: `git rev-parse --show-toplevel` and `git rev-parse --short HEAD`
 2. **Branch**: `git branch --show-current`
@@ -159,10 +159,16 @@ Total agents: 4 + 9 + 2 + 3 = 18
 
 Dispatch 4 agents in parallel. All four run on every repo.
 
-**Agent type (critical for all waves):** every agent MUST be dispatched as `general-purpose`
-(or equivalent full-access type). Do NOT use `feature-dev:*`, `code-simplifier:*`, or other
-restricted agent types - they lack Skill tool access and cannot invoke custom skills. The
-agent type controls tool access, not the audit topic.
+**Worker capability selection (critical for all waves):** every worker needs independent context,
+repository read access, the tools required by its assigned audit, and the native ability to load
+the target skill or receive its full instructions. Prefer a specialized read-only reviewer role
+when it meets those requirements. Exact role names are harness-specific examples, never
+requirements.
+
+Load each assigned skill through the harness's native skill-loading mechanism as the worker's first
+action. If native skill loading is unavailable, include the target skill's instructions in the
+worker prompt. If delegation is unavailable, run the wave's audits sequentially in the root context
+and preserve separate result sections.
 
 **Context block** (passed to every agent in every wave - substitute all `{placeholders}`
 with actual preflight values before dispatching):
@@ -184,10 +190,10 @@ Replace `{N}` with the current wave number (2, 3, 4, or 5).
 
 | # | Skill | Prompt |
 |---|-------|--------|
-| 1 | `code-review` | Invoke the `code-review` skill via the Skill tool. Run a full code review on the codebase. Scope: {scope}. Return the complete report. |
-| 2 | `anti-slop` | Invoke the `anti-slop` skill via the Skill tool. Audit the codebase for machine-generated patterns, over-abstraction, and code quality issues. Scope: {scope}. Return the complete report. |
-| 3 | `anti-ai-prose` | Invoke the `anti-ai-prose` skill via the Skill tool. Audit all prose (docs, README, comments, docstrings, commit messages) for AI tells. Scope: {scope}. Return the complete report. |
-| 4 | `code-slimming` | Invoke the `code-slimming` skill via the Skill tool. Audit the codebase for behavior-preserving code slimming, deduplication, and centralization opportunities. Scope: {scope}. Return the complete report. |
+| 1 | `code-review` | Load the `code-review` skill through the native skill-loading mechanism. Run a full code review on the codebase. Scope: {scope}. Return the complete report. |
+| 2 | `anti-slop` | Load the `anti-slop` skill through the native skill-loading mechanism. Audit the codebase for machine-generated patterns, over-abstraction, and code quality issues. Scope: {scope}. Return the complete report. |
+| 3 | `anti-ai-prose` | Load the `anti-ai-prose` skill through the native skill-loading mechanism. Audit all prose (docs, README, comments, docstrings, commit messages) for AI tells. Scope: {scope}. Return the complete report. |
+| 4 | `code-slimming` | Load the `code-slimming` skill through the native skill-loading mechanism. Audit the codebase for behavior-preserving code slimming, deduplication, and centralization opportunities. Scope: {scope}. Return the complete report. |
 
 Present Wave 2 results under:
 
@@ -217,7 +223,7 @@ run in parallel.
 ```
 {context_block}
 
-Invoke the `{skill_name}` skill via the Skill tool, then audit the codebase.
+Load the `{skill_name}` skill through the harness's native skill-loading mechanism, then audit the codebase.
 Scope: {scope}. Return the complete report.
 ```
 
@@ -256,8 +262,9 @@ Run sequentially. Security-audit first, zero-day second.
 ```
 {context_block}
 
-Invoke the `security-audit` skill via the Skill tool. Run a full security audit.
-Scope: {scope}. Return the complete report including SECURITY-AUDIT.md content.
+Load the `security-audit` skill through the harness's native skill-loading mechanism. Run a full
+security audit. Scope: {scope}. Return the complete report, including the dated
+`docs/local/audits/security-audit/` deliverable content.
 ```
 
 Wait for Agent 1 to complete. Extract the top findings (up to 10, one line each,
@@ -271,7 +278,7 @@ zero findings - hunt broadly" so the zero-day agent has non-empty context.
 ```
 {context_block}
 
-Invoke the `zero-day` skill via the Skill tool. Hunt for novel vulnerabilities
+Load the `zero-day` skill through the harness's native skill-loading mechanism. Hunt for novel vulnerabilities
 in the source code. Scope: {scope}.
 
 Prior security-audit findings (for context, avoid duplicating these):
@@ -294,10 +301,9 @@ Present results:
 {agent 2 report verbatim}
 ```
 
-**SECURITY-AUDIT.md handling:** the `security-audit` skill writes its report to
-`SECURITY-AUDIT.md` at the repo root by default. Step 7 relocates this file into
-`docs/local/audits/SECURITY-AUDIT.md` (which is gitignored via the `docs/local/`
-entry). Users do not need to add a separate gitignore rule for the root-level file.
+**Security-audit report handling:** the `security-audit` skill writes directly to its canonical
+dated path under `docs/local/audits/security-audit/`. The `docs/local/` ignore check in Step 7
+covers that report.
 
 ### Step 5: Docs & Hygiene (Wave 5)
 
@@ -305,9 +311,9 @@ Dispatch three agents in parallel.
 
 | # | Skill | Prompt |
 |---|-------|--------|
-| 1 | `update-docs` | Invoke the `update-docs` skill via the Skill tool. Run a read-only audit. Find stale docs, instruction-file bloat, broken links, companion-file drift. Do NOT make changes or commit anything. |
-| 2 | `roadmap` | Invoke the `roadmap` skill via the Skill tool. Audit ROADMAP.md (or equivalent) for drift, stale items, shipped-but-unchecked features, and completeness. If no roadmap exists, note the gap. Do NOT create one. |
-| 3 | `git` | Invoke the `git` skill via the Skill tool. Audit git configuration, hooks, branch hygiene, signing setup, and commit message conventions. Do NOT make changes. |
+| 1 | `update-docs` | Load the `update-docs` skill through the native skill-loading mechanism. Run a read-only audit. Find stale docs, instruction-file bloat, broken links, companion-file drift. Do NOT make changes or commit anything. |
+| 2 | `roadmap` | Load the `roadmap` skill through the native skill-loading mechanism. Audit ROADMAP.md (or equivalent) for drift, stale items, shipped-but-unchecked features, and completeness. If no roadmap exists, note the gap. Do NOT create one. |
+| 3 | `git` | Load the `git` skill through the native skill-loading mechanism. Audit git configuration, hooks, branch hygiene, signing setup, and commit message conventions. Do NOT make changes. |
 
 Present results:
 
@@ -373,11 +379,7 @@ this file is the source of truth that Step 8 and downstream planning work from.
 
 2. **Create the target directory.** `mkdir -p docs/local/audits/`.
 
-3. **Relocate any root-level `SECURITY-AUDIT.md`.** If the security-audit skill wrote
-   `SECURITY-AUDIT.md` to the repo root (its default), move it into `docs/local/audits/`.
-   Do not leave two copies.
-
-4. **Write `docs/local/audits/DEEP-AUDIT.md`.** Follow the DEEP-AUDIT.md template in
+3. **Write `docs/local/audits/DEEP-AUDIT.md`.** Follow the DEEP-AUDIT.md template in
    `references/report-templates.md` (metadata header, headline verdict, scorecard,
    per-wave sections preserving native format). Overwrite any prior file.
 
@@ -464,7 +466,7 @@ See `references/output-contract.md` for the full contract.
 
 - **Skill name:** DEEP-AUDIT
 - **Deliverable bucket:** `audits`
-- **Mode:** always-on. Every invocation emits the full contract - boxed inline header, body summary inline plus per-finding detail in the deliverable file, boxed conclusion, conclusion table.
+- **Mode:** always-on. Every invocation emits the full contract - monospace inline header, severity-grouped inline summary, linked Markdown deliverable, and concise monospace conclusion.
 - **Deliverable path:** `docs/local/audits/DEEP-AUDIT.md` (consolidated findings) and `docs/local/audits/DEEP-AUDIT-TASKS.md` (phased task list). Step 9b also writes `docs/local/specs/` and `docs/local/plans/` files when a full execution plan is generated.
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract).
 
@@ -481,13 +483,13 @@ Read `references/exclusions.md` before changing Wave 3 routing.
 
 ## Rules
 
-1. **General-purpose agents only.** Every subagent MUST be `general-purpose`. Restricted agent types cannot invoke custom skills via the Skill tool.
-2. **Custom skills only.** Only invoke skills from the iuliandita/skills collection. No built-in reviewers, platform audit modes, or third-party skills. If a skill is unavailable, skip it rather than substituting a manual review.
+1. **Capability-based workers.** Every worker needs independent context, repository read access, the audit's required tools, and the assigned instructions. Prefer specialized read-only reviewers that meet those requirements; do not hardcode a harness role name.
+2. **Custom skills only.** Load skills from the iuliandita/skills collection through the native skill-loading mechanism. If native loading is unavailable, include the assigned skill instructions in the worker prompt. If a skill is unavailable, skip it rather than substituting a manual review.
 3. **Wave order is sacred.** Execute waves 1-2-3-4-5 in sequence. Never reorder, skip, or merge waves. Within a wave, agents run in parallel (except Wave 4 which is sequential).
 4. **Present before proceeding.** Each wave's results are shown to the user before the next wave starts. No buffering all results to the end.
 5. **Detection gates Wave 3.** Only dispatch Wave 3 skills whose file patterns matched in the recon sweep. Do not run terraform on a repo with no .tf files.
 6. **Security is sequential.** security-audit completes before zero-day starts. Zero-day receives security-audit findings as input context.
-7. **Read-only audit, with explicit artifact exceptions.** No agent modifies source code, commits, or alters the repo's working tree. The only permitted writes are: (a) audit artifacts under `docs/local/audits/` (`DEEP-AUDIT.md`, `DEEP-AUDIT-TASKS.md`, relocated `SECURITY-AUDIT.md`), (b) Step 9b plan files under `docs/local/specs/` and `docs/local/plans/`, and (c) a one-line addition to `.gitignore` if `docs/local/` is not already covered.
+7. **Read-only audit, with explicit artifact exceptions.** No agent modifies source code, commits, or alters the repo's working tree. The only permitted writes are: (a) audit artifacts under `docs/local/audits/`, including `DEEP-AUDIT.md`, `DEEP-AUDIT-TASKS.md`, and the dated `security-audit/` report, (b) Step 9b plan files under `docs/local/specs/` and `docs/local/plans/`, and (c) a one-line addition to `.gitignore` if `docs/local/` is not already covered.
 8. **Preserve native formats.** Each skill produces its own report format. Do not normalize, merge, or editorialize across reports. Cross-wave synthesis is allowed only in three specific places: the Step 6 terminal summary, the headline verdict + scorecard of `DEEP-AUDIT.md`, and the phased ordering of `DEEP-AUDIT-TASKS.md`. Everywhere else, native format is preserved verbatim.
 9. **Don't stack with full-review.** This skill supersedes full-review's coverage. If the user asked for deep-audit, do not also invoke full-review.
 10. **Respect scope.** When the user specifies a scope, pass it to every agent and filter detection patterns to that scope's file tree.
