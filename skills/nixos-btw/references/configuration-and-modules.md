@@ -68,7 +68,7 @@ Keep `hardware-configuration.nix` as-generated. Regenerate with
     options = "--delete-older-than 30d";
   };
 
-  system.stateVersion = "25.11";  # do not change after first install
+  system.stateVersion = "26.05";  # set for a fresh 26.05 install; do not change later
 }
 ```
 

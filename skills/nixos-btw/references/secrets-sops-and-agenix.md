@@ -121,10 +121,10 @@ sops secrets/prod.yaml
 
     secrets = {
       "db/password" = {
-        owner = "postgres";
-        group = "postgres";
+        owner = "root";
+        group = "root";
         mode = "0400";
-        restartUnits = [ "postgresql.service" ];
+        restartUnits = [ "my-app.service" ];
       };
       "wg/privateKey" = {
         owner = "root";
@@ -133,14 +133,15 @@ sops secrets/prod.yaml
     };
   };
 
-  services.postgresql.enable = true;
-  systemd.services.postgresql.serviceConfig.EnvironmentFile =
-    config.sops.secrets."db/password".path;
+  systemd.services.my-app.serviceConfig.LoadCredential =
+    "db-password:${config.sops.secrets."db/password".path}";
 }
 ```
 
 The decrypted file path is `config.sops.secrets."db/password".path` - typically
-`/run/secrets/db/password`. Modules reference the path, not the value.
+`/run/secrets/db/password`. `LoadCredential=` makes it available to the service as
+`$CREDENTIALS_DIRECTORY/db-password`; the application must support reading the secret from
+a file. Modules reference the path, not the value.
 
 ## agenix
 
@@ -187,17 +188,18 @@ agenix -e db-password.age
 {
   age.secrets.db-password = {
     file = ./secrets/db-password.age;
-    owner = "postgres";
-    group = "postgres";
+    owner = "root";
+    group = "root";
     mode = "0400";
   };
 
-  systemd.services.postgresql.serviceConfig.EnvironmentFile =
-    config.age.secrets.db-password.path;
+  systemd.services.my-app.serviceConfig.LoadCredential =
+    "db-password:${config.age.secrets.db-password.path}";
 }
 ```
 
 Decrypted path is `config.age.secrets.<name>.path`, typically `/run/agenix/<name>`.
+The service reads the credential from `$CREDENTIALS_DIRECTORY/db-password`.
 
 ## Picking between them
 
@@ -223,8 +225,8 @@ API tokens for user services.
 - Do not put secrets in `builtins.readFile ./path-to-plaintext`. That path gets copied into
   the store at eval time.
 - Do not pass secrets via `environment.etc."foo".text = "..."`. Same issue.
-- Do not echo secrets into systemd unit `Environment=` lines. Use `EnvironmentFile=` that
-  points to an agenix/sops-decrypted path.
+- Do not echo secrets into systemd unit `Environment=` lines. For scalar secret files, use
+  `LoadCredential=` and make the service read `$CREDENTIALS_DIRECTORY/<name>`.
 - Do not check in `/var/lib/sops-nix/key.txt` or the host age private key. They must stay on
   the host.
 - Do not forget to add new hosts' public keys to `.sops.yaml` or `secrets.nix` and re-key

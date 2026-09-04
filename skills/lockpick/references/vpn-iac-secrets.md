@@ -44,8 +44,10 @@ ip link show type wireguard 2>/dev/null
 - Check `PreUp`/`PostUp`/`PreDown`/`PostDown` scripts for writable paths (code injection)
 
 **Recent CVEs:**
-- CVE-2026-27899: WireGuard Portal privilege escalation - any authenticated user can become admin via `PUT /api/v1/users/me` with `"IsAdmin": true` (fixed in v2.1.3)
-- CVE-2026-29196: Netmaker API exposes WireGuard private keys to low-privileged users (fixed in v1.5.0)
+- [CVE-2026-27899](https://github.com/advisories/GHSA-5rmx-256w-8mj9): WireGuard Portal privilege escalation - any authenticated user can become admin via `PUT /api/v1/users/me` with `"IsAdmin": true` (fixed in v2.1.3)
+- [CVE-2026-29196](https://github.com/gravitl/netmaker/security/advisories/GHSA-4hgg-c4rr-6h7f): Netmaker API exposes WireGuard private keys to low-privileged users (fixed in v1.5.0)
+
+These affected and fixed versions were verified against the linked advisories in September 2026.
 
 ---
 

@@ -15,7 +15,7 @@ metadata:
 # Skill Router
 
 Route a user request to the smallest useful skill set. Prefer one primary skill. Use a short
-ordered set only when the request genuinely spans independent domains.
+ordered set when one skill's output feeds the next; use parallel skills for independent domains.
 
 ## When to use
 

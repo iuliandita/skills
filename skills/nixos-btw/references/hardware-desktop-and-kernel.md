@@ -6,11 +6,9 @@ common cases.
 
 ## Picking a kernel
 
-`boot.kernelPackages` is the knob. Defaults to the latest LTS that nixpkgs tracks at the
-release's branch point. NixOS 25.11 defaults to Linux 6.12 LTS; `pkgs.linuxPackages_latest`
-tracks mainline (6.17 at the 25.11 branch, bumped in-branch as mainline advances - Linux
-6.18 is an LTS tagged late 2025 and lands under explicit `pkgs.linuxPackages_6_18` once it
-is backported to the release branch).
+`boot.kernelPackages` is the knob. Defaults to the LTS kernel that nixpkgs tracks for the
+release. NixOS 26.05 defaults to Linux 6.18 LTS; `pkgs.linuxPackages_latest` tracks a moving
+mainline kernel, so verify the package in the user's locked revision before naming a version.
 
 ```nix
 {
@@ -20,13 +18,13 @@ is backported to the release branch).
   # specific version (pin for stability)
   boot.kernelPackages = pkgs.linuxPackages_6_12;   # LTS
 
-  # hardened kernel variant
-  boot.kernelPackages = pkgs.linuxPackages_hardened;
-
   # zen / liquorix / custom - use overlays or nixpkgs options
   boot.kernelPackages = pkgs.linuxPackages_zen;
 }
 ```
+
+NixOS 26.05 removed `linux_hardened` for lack of maintenance. Do not carry
+`pkgs.linuxPackages_hardened` forward from older configurations.
 
 Kernel changes drag every out-of-tree module with them: NVIDIA, ZFS, `v4l2loopback`, DKMS
 in general. Before flipping kernels, confirm the modules build against the new kernel in

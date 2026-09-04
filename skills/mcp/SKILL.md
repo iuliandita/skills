@@ -149,6 +149,9 @@ function createServer(): McpServer {
         query: z.string().max(200).describe("Search query"),
         limit: z.number().int().min(1).max(100).default(10),
       }),
+      outputSchema: z.object({
+        results: z.array(z.object({ title: z.string(), snippet: z.string() })),
+      }),
     },
     async ({ query, limit }) => {
       try {
@@ -166,7 +169,11 @@ function createServer(): McpServer {
             return [{ title, snippet: text.slice(start, end) }];
           })
           .slice(0, limit);
-        return { content: [{ type: "text", text: JSON.stringify(results) }] };
+        const output = { results };
+        return {
+          content: [{ type: "text", text: JSON.stringify(output) }],
+          structuredContent: output,
+        };
       } catch (error: unknown) {
         console.error("search_docs failed", error);
         return { isError: true, content: [{ type: "text", text: "Search failed while loading documentation." }] };

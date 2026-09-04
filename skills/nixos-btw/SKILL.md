@@ -48,7 +48,7 @@ work, trust the live channel or flake lock over a stale table.
 | nix-darwin | tracks nixpkgs 26.05 and master | active macOS module system (Intel + Apple Silicon) |
 | Determinate Nix | downstream, flakes-on by default | validated distribution; parallel eval, lazy trees |
 | Lix | fork of Nix | compatibility-focused fork; Meson build, improved errors |
-| Kernel default for 26.05 | Linux 6.12 LTS | default `linuxPackages`; `linuxPackages_latest` tracks mainline, not LTS |
+| Kernel default for 26.05 | Linux 6.18 LTS | default `linuxPackages`; `linux_hardened` was removed in 26.05 |
 
 ## When to use
 

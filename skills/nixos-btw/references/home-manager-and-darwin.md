@@ -17,7 +17,7 @@ produces silent overwrites.
 ### Standalone home-manager (channels)
 
 ```bash
-nix-channel --add https://github.com/nix-community/home-manager/archive/release-25.11.tar.gz home-manager
+nix-channel --add https://github.com/nix-community/home-manager/archive/release-26.05.tar.gz home-manager
 nix-channel --update
 nix-shell '<home-manager>' -A install
 ```
@@ -30,7 +30,7 @@ Then `~/.config/home-manager/home.nix`:
 {
   home.username = "alice";
   home.homeDirectory = "/home/alice";
-  home.stateVersion = "25.11";
+  home.stateVersion = "26.05";
 
   home.packages = with pkgs; [
     ripgrep fd bat eza jq htop
@@ -68,9 +68,9 @@ home-manager switch --rollback
 ```nix
 {
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
     home-manager = {
-      url = "github:nix-community/home-manager/release-25.11";
+      url = "github:nix-community/home-manager/release-26.05";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
@@ -103,7 +103,7 @@ In `configuration.nix` or one of its imports:
   home-manager.backupFileExtension = "hm-bak";
 
   home-manager.users.alice = { config, pkgs, ... }: {
-    home.stateVersion = "25.11";
+    home.stateVersion = "26.05";
     programs.zsh.enable = true;
     home.packages = with pkgs; [ ripgrep fd ];
   };
@@ -122,7 +122,7 @@ Identical shape, different entry point:
 {
   imports = [ home-manager.darwinModules.home-manager ];
   home-manager.users.alice = { pkgs, ... }: {
-    home.stateVersion = "25.11";
+    home.stateVersion = "26.05";
     home.packages = with pkgs; [ ripgrep fd bat jq python312 ];
     programs.direnv = {
       enable = true;
@@ -151,7 +151,7 @@ defaults, fonts, and some system services. It does not replace macOS or the kern
 ### Install (flakes)
 
 ```bash
-sudo nix run nix-darwin/nix-darwin-25.11#darwin-rebuild -- switch --flake ~/.config/nix-darwin
+sudo nix run nix-darwin/nix-darwin-26.05#darwin-rebuild -- switch --flake ~/.config/nix-darwin
 ```
 
 ### Minimal darwin flake
@@ -159,8 +159,8 @@ sudo nix run nix-darwin/nix-darwin-25.11#darwin-rebuild -- switch --flake ~/.con
 ```nix
 {
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
-    nix-darwin.url = "github:nix-darwin/nix-darwin/nix-darwin-25.11";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
+    nix-darwin.url = "github:nix-darwin/nix-darwin/nix-darwin-26.05";
     nix-darwin.inputs.nixpkgs.follows = "nixpkgs";
   };
 
