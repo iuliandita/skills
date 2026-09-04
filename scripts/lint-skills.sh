@@ -345,7 +345,49 @@ check_canonical_test_coverage() {
   while IFS= read -r heading; do
     [[ "$heading" == "<skill-name>" ]] && continue
     (( heading_counts["$heading"]++ )) || true
-  done < <(sed -n 's/^### //p' "$catalog")
+  done < <(
+    awk '
+      function marker_length(value, marker, count) {
+        marker = substr(value, 1, 1)
+        count = 0
+        while (substr(value, count + 1, 1) == marker) count++
+        return count
+      }
+      {
+        line = $0
+        sub(/^[[:space:]]*/, "", line)
+
+        marker = substr(line, 1, 3)
+        if (marker == "```" || marker == "~~~") {
+          current_marker = substr(marker, 1, 1)
+          current_length = marker_length(line)
+          if (fence == "") {
+            fence = current_marker
+            fence_length = current_length
+          } else if (fence == current_marker && current_length >= fence_length) {
+            fence = ""
+            fence_length = 0
+          }
+          next
+        }
+        if (fence != "") next
+
+        if (line ~ /^## Test Cases[[:space:]]*$/) {
+          in_cases = 1
+          next
+        }
+        if (line ~ /^## [^#]/) {
+          in_cases = 0
+          next
+        }
+        if (in_cases && line ~ /^### /) {
+          heading = substr(line, 5)
+          sub(/[[:space:]]*$/, "", heading)
+          print heading
+        }
+      }
+    ' "$catalog"
+  )
 
   for name in "${!public_skills[@]}"; do
     if [[ -z "${heading_counts[$name]:-}" ]]; then

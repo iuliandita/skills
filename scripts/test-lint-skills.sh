@@ -268,7 +268,7 @@ test_complete_canonical_test_catalog_passes() {
   write_minimal_skill "$tmp/skills/beta" "beta"
   write_minimal_skill "$tmp/skills/skill-refiner" "skill-refiner"
   catalog="$tmp/skills/skill-refiner/references/test-cases.md"
-  printf '%s\n' '### <skill-name>' '### alpha' '### beta' '### skill-refiner' > "$catalog"
+  printf '%s\n' '## Test Cases' '### <skill-name>' '### alpha' '### beta' '### skill-refiner' > "$catalog"
 
   "$ROOT/scripts/lint-skills.sh" "$tmp/skills" >/dev/null
 
@@ -285,7 +285,7 @@ test_incomplete_canonical_test_catalog_fails() {
   write_minimal_skill "$tmp/skills/beta" "beta"
   write_minimal_skill "$tmp/skills/skill-refiner" "skill-refiner"
   catalog="$tmp/skills/skill-refiner/references/test-cases.md"
-  printf '%s\n' '### <skill-name>' '### alpha' '### alpha' '### orphan' > "$catalog"
+  printf '%s\n' '## Test Cases' '### <skill-name>' '### alpha' '### alpha' '### orphan' > "$catalog"
 
   status=0
   output="$("$ROOT/scripts/lint-skills.sh" "$tmp/skills" 2>&1)" || status=$?
@@ -318,9 +318,50 @@ test_canonical_test_catalog_ignores_private_skills() {
   write_minimal_skill "$tmp/skills/private-skill" "private-skill"
   write_minimal_skill "$tmp/skills/skill-refiner" "skill-refiner"
   catalog="$tmp/skills/skill-refiner/references/test-cases.md"
-  printf '%s\n' '### <skill-name>' '### alpha' '### skill-refiner' > "$catalog"
+  printf '%s\n' '## Test Cases' '### <skill-name>' '### alpha' '### skill-refiner' > "$catalog"
 
   (cd "$tmp" && "$ROOT/scripts/lint-skills.sh" "$tmp/skills" >/dev/null)
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_canonical_test_catalog_ignores_headings_outside_cases_and_fences() {
+  local tmp catalog
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  write_minimal_skill "$tmp/skills/alpha" "alpha"
+  write_minimal_skill "$tmp/skills/beta" "beta"
+  write_minimal_skill "$tmp/skills/skill-refiner" "skill-refiner"
+  catalog="$tmp/skills/skill-refiner/references/test-cases.md"
+  cat > "$catalog" <<'EOF'
+### Introduction
+
+## Test Cases
+
+### alpha
+
+```markdown
+### Example
+```
+
+````markdown
+```markdown
+### Nested Example
+```
+### Still Example
+````
+
+### beta
+### skill-refiner
+
+## Scoring
+
+### Notes
+EOF
+
+  "$ROOT/scripts/lint-skills.sh" "$tmp/skills" >/dev/null
 
   rm -rf "$tmp"
   trap - RETURN
@@ -338,4 +379,5 @@ test_report_severity_markers_are_allowed
 test_complete_canonical_test_catalog_passes
 test_incomplete_canonical_test_catalog_fails
 test_canonical_test_catalog_ignores_private_skills
+test_canonical_test_catalog_ignores_headings_outside_cases_and_fences
 printf 'lint tests passed\n'

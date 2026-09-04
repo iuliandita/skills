@@ -3888,6 +3888,7 @@
       "validate-spec.sh: 47 validated, 0 violations, 0 warnings",
       "test-skill-content.sh PASS",
       "test-lint-skills.sh PASS",
+      "catalog parser ignores headings outside Test Cases and inside variable-length fences PASS",
       "test-validate-spec.sh PASS",
       "shellcheck on changed lint scripts PASS",
       "canonical catalog: 47 unique skills with no missing, duplicate, or orphan headings",
@@ -3899,6 +3900,7 @@
     "peer_review": {
       "iteration_2_verified_flags": 8,
       "iteration_4_residual_defects": 4,
+      "finalization_review_flags": 2,
       "final_flags": 0,
       "contested": 0
     },
