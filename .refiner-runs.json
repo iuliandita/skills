@@ -3763,5 +3763,151 @@
         "fiction-tells.md statistics verified against primary sources with web access. Namerology/Elara confirmed exactly. Laforge confirmed (Kaggle sci-fi dataset ~10,000 books; 'Dr Thorne' in 26 book descriptions, 204 appearances) - wording corrected from '26 books' to '26 book descriptions'. ChuckMcSneed claim was WRONG and is now fixed: it compared 77% of top-10 names against 4% of top pick, and omitted base Qwen2.5 at 28%. All three sources now carry URLs and a verification date."
       ]
     }
+  },
+  {
+    "run_id": "2026-09-04-full-collection",
+    "kind": "full_collection_refinement",
+    "date": "2026-09-04",
+    "branch": "skill-refiner/2026-09-04-013341",
+    "issues": [128, 130],
+    "baseline": "dd8466e2",
+    "primary": {
+      "harness": "codex-desktop",
+      "model_family": "GPT-5.6 Sol",
+      "effort": "high"
+    },
+    "secondary": {
+      "requested_harness": "claude-code",
+      "requested_model": "Fable alias",
+      "used": "fresh local reviewer fallback",
+      "reason": "repository export was not authorized"
+    },
+    "config": {
+      "iterations_minimum": 3,
+      "iterations_completed": 4,
+      "threshold": 99,
+      "mode": "circuit-breaker",
+      "plateau": 2,
+      "phase1_weights": {
+        "A": 42,
+        "B": 58
+      },
+      "review_weights_after_fallback": {
+        "A": 40.84,
+        "B": 56.16,
+        "X": 3
+      }
+    },
+    "pool_size": 45,
+    "pool": [
+      "ai-ml", "ansible", "anti-ai-prose", "anti-slop", "arch-btw",
+      "backend-api", "browse", "ci-cd", "cluster-health", "code-review",
+      "code-slimming", "command-prompt", "databases", "debian-ubuntu",
+      "debug-triage", "deep-audit", "deep-grill", "dev-cycle", "docker",
+      "firewall-appliance", "frontend-design", "full-review", "git", "handoff",
+      "jekyll-hyde", "kali-linux", "kubernetes", "localize", "lockpick", "mcp",
+      "networking", "nixos-btw", "observability", "prompt-generator", "rhel-fedora",
+      "roadmap", "routine-writer", "security-audit", "skill-router", "synology-dsm",
+      "terraform", "testing", "update-docs", "virtualization", "zero-day"
+    ],
+    "phase2_targets": ["skill-creator", "skill-refiner", "lint target"],
+    "terminated": "all targets met threshold and final gates passed",
+    "aggregate": {
+      "iteration_1_average": 99.17,
+      "iteration_1_minimum": 95.4,
+      "iteration_2_average": 99.87,
+      "iteration_2_minimum": 99.4,
+      "iteration_3_average": 99.83,
+      "iteration_3_minimum": 97.9,
+      "final_average": 99.99,
+      "final_minimum": 99.72,
+      "at_or_above_target": "45/45"
+    },
+    "scores": {
+      "ai-ml": {"before": 98.55, "after": 100.0},
+      "backend-api": {"before": 98.07, "after": 100.0},
+      "browse": {"before": 98.45, "after": 100.0},
+      "command-prompt": {"before": 96.23, "after": 100.0},
+      "deep-audit": {"before": 97.0, "after": 100.0},
+      "docker": {"before": 96.4, "after": 100.0},
+      "jekyll-hyde": {"before": 97.1, "after": 100.0},
+      "kali-linux": {"before": 95.4, "after": 100.0},
+      "lockpick": {"before": 99.4, "after": 99.72},
+      "mcp": {"before": 95.9, "after": 100.0},
+      "nixos-btw": {"before": 100.0, "iteration_3": 98.09, "after": 100.0},
+      "observability": {"before": 98.84, "after": 100.0},
+      "security-audit": {"before": 98.26, "after": 100.0},
+      "skill-router": {"before": 100.0, "iteration_3": 97.9, "after": 100.0},
+      "testing": {"before": 98.26, "after": 100.0},
+      "skill-creator": {"before": 97.5, "after": 100.0},
+      "skill-refiner": {"before": 92.3, "after": 100.0},
+      "lint target": {"before": 92.0, "after": 100.0}
+    },
+    "files_changed": [
+      ".refiner-ledger.md",
+      "scripts/lint-skills.sh",
+      "scripts/test-lint-skills.sh",
+      "skills/ai-ml/references/agent-patterns.md",
+      "skills/backend-api/references/http-api-patterns.md",
+      "skills/browse/SKILL.md",
+      "skills/command-prompt/references/zsh.md",
+      "skills/deep-audit/SKILL.md",
+      "skills/docker/references/dockerfile-patterns.md",
+      "skills/jekyll-hyde/SKILL.md",
+      "skills/kali-linux/references/images-live-persistence-and-recovery.md",
+      "skills/lockpick/references/container-breakout.md",
+      "skills/lockpick/references/vpn-iac-secrets.md",
+      "skills/mcp/SKILL.md",
+      "skills/nixos-btw/SKILL.md",
+      "skills/nixos-btw/references/configuration-and-modules.md",
+      "skills/nixos-btw/references/dev-shells-and-direnv.md",
+      "skills/nixos-btw/references/flakes-and-channels.md",
+      "skills/nixos-btw/references/hardware-desktop-and-kernel.md",
+      "skills/nixos-btw/references/home-manager-and-darwin.md",
+      "skills/nixos-btw/references/secrets-sops-and-agenix.md",
+      "skills/nixos-btw/references/store-gc-and-builders.md",
+      "skills/observability/references/runnable-examples.md",
+      "skills/security-audit/SKILL.md",
+      "skills/skill-creator/SKILL.md",
+      "skills/skill-refiner/SKILL.md",
+      "skills/skill-refiner/references/evaluation-criteria.md",
+      "skills/skill-refiner/references/harness-detection.md",
+      "skills/skill-refiner/references/test-cases.md",
+      "skills/skill-router/SKILL.md",
+      "skills/testing/SKILL.md"
+    ],
+    "changes_summary": [
+      "Closed behavioral and technical gaps in 15 phase-1 skills",
+      "Updated September 2026 NixOS, runc, and VPN guidance from primary-source receipts",
+      "Added structured MCP output and runnable observability examples",
+      "Made skill-refiner reviewer export authorization explicit and deductions evidence-based",
+      "Enforced exactly one canonical behavioral-test heading per public skill"
+    ],
+    "verification": [
+      "lint-skills.sh: 47 checked, 0 errors, 0 warnings",
+      "validate-spec.sh: 47 validated, 0 violations, 0 warnings",
+      "test-skill-content.sh PASS",
+      "test-lint-skills.sh PASS",
+      "test-validate-spec.sh PASS",
+      "shellcheck on changed lint scripts PASS",
+      "canonical catalog: 47 unique skills with no missing, duplicate, or orphan headings",
+      "contract sync PASS",
+      "deep-audit coverage PASS",
+      "final exact-diff peer review NO_FLAGS",
+      "diff whitespace check PASS"
+    ],
+    "peer_review": {
+      "iteration_2_verified_flags": 8,
+      "iteration_4_residual_defects": 4,
+      "final_flags": 0,
+      "contested": 0
+    },
+    "private_skill_handling": "Gitignored private skills were excluded from the public pool; a synthetic private skill verified lint exclusion behavior.",
+    "reverted": [],
+    "skipped_checks": [],
+    "commits": [
+      "fe4d5dd", "dcd8c28", "f68ac1a", "120cb80", "23822f0", "cdc227f", "70c0c5b"
+    ],
+    "notes": "The user approved phase 2 and finalization after the mandatory checkpoint. Frozen baseline evidence was retained outside the repository. Detailed working artifacts remain under ignored docs/local/."
   }
 ]
