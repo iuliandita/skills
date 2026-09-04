@@ -51,7 +51,7 @@ Current repository gates pass for the public skill collection:
 ./scripts/validate-spec.sh
 ```
 
-The latest tracked refiner run in [`.refiner-runs.json`](.refiner-runs.json) is a targeted 2026-05-02 `code-slimming` run. It ended with structural gates passing, a 99/100 final review, a 99/100 behavioral forward-test, and peer review returning `NO_FLAGS`.
+The latest tracked refiner run in [`.refiner-runs.json`](.refiner-runs.json) is the 2026-09-04 full-collection sweep. After four iterations, all 45 phase-1 skills met the 99% target, the final average was 99.99%, and the final exact-diff peer review returned `NO_FLAGS`. The separate meta-phase brought `skill-creator`, `skill-refiner`, and the collection lint target to 100%.
 
 That evidence is a maintenance signal, not a permanent guarantee. Skill behavior still depends on the consuming agent, model, tool limits, and whether the task matches the skill's intended scope.
 
