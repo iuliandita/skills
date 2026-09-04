@@ -80,6 +80,11 @@ Score each output on four dimensions (0-25 each):
 
 Score: average across all test prompts, normalized to 0-100.
 
+Every deduction must cite an unmet listed quality signal or a concrete accuracy, completeness,
+relevance, or actionability defect. Do not reserve points solely because execution is simulated,
+the evaluator is cautious, or a live runtime is unavailable. Record an unavailable runtime as a
+verification limit unless the skill itself falsely claims that runtime behavior was verified.
+
 ### Cross-Model Review (5%)
 
 Secondary model reviews the improvement diff and flags issues:

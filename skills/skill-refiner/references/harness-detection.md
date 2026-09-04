@@ -114,6 +114,12 @@ Setting `--secondary none` explicitly disables cross-model review.
 
 What gets sent to the secondary harness (non-interactive).
 
+Before sending it, classify the source material as public, private, or sensitive. Private or
+sensitive repository content requires explicit user authorization for the named secondary
+harness/provider; invoking skill-refiner or selecting automatic review is not enough. Without
+that authorization, do not send the payload. Use the fresh local-reviewer fallback, retain its
+3% weight, and log the blocked export as the reason.
+
 **Known issue**: Codex in `exec` mode may run tools (lint, validate) instead of producing
 text-only review output. If the secondary returns tool output instead of a
 NO_FLAGS/MINOR_FLAG/MAJOR_FLAG response, fall back to self-review: spawn a fresh agent
@@ -121,8 +127,9 @@ on the primary harness with the review prompt template (see Phase 0, Step 6 in S
 Weight self-review at 3% instead of 5% (composite becomes gate/40/55/3, renormalize the
 missing 2% proportionally across AI Self-Check and Behavioral).
 
-**Peer review is mandatory.** Always attempt the secondary harness first (three-step probe).
-If no secondary is available or the secondary fails to produce a valid response, self-review
+**Peer review is mandatory.** Probe the secondary first, then run the privacy/authorization
+preflight before transmitting source. If no authorized secondary is available or the secondary
+fails to produce a valid response, self-review
 on a fresh context of the primary harness is the required fallback. Skipping review entirely
 is never acceptable - even same-model fresh-context review catches issues the working context
 is blind to.
@@ -130,8 +137,8 @@ is blind to.
 ```
 You are reviewing a skill improvement diff. Be specific and cite exact lines.
 
-## Original Skill (before)
-<full SKILL.md content before the change>
+## Relevant Original Context (before)
+<changed sections plus only the surrounding rules/references needed to detect regressions>
 
 ## Diff
 <git diff output of the change>
@@ -152,6 +159,9 @@ Respond with exactly one of:
 - MINOR_FLAG: <specific description citing lines> - suboptimal but not harmful
 - MAJOR_FLAG: <specific description citing lines> - harmful, regression, or removes critical content
 ```
+
+Send the full original skill only when the change is broad enough that selected context cannot
+support a regression review, and record that justification in the iteration log.
 
 ---
 
