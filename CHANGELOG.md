@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.45.2](https://github.com/iuliandita/skills/compare/v1.45.1...v1.45.2) (2026-09-04)
+
+
+### Bug Fixes
+
+* **skills:** refresh September guidance and quality gates ([#131](https://github.com/iuliandita/skills/issues/131)) ([ccfce41](https://github.com/iuliandita/skills/commit/ccfce41274122bd06f27708bf73bdb89ecb44dd0))
+
 ## [1.45.1](https://github.com/iuliandita/skills/compare/v1.45.0...v1.45.1) (2026-08-19)
 
 
