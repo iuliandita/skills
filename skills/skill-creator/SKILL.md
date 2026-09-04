@@ -58,7 +58,7 @@ Before returning any generated or modified skill, verify against this list:
 - [ ] **Rules section at the end**: non-negotiable constraints in imperative form
 - [ ] **Style compliant**: no banned words (per `CLAUDE.md`/`AGENTS.md`), ASCII by default
   except approved markers such as `· ` and output-contract box glyphs. No em-dashes, curly
-  quotes, ligatures, or `--`; use `-`. Check SKILL.md and references for banned words
+  quotes, ligatures, or `--` dash substitutes in SKILL.md/reference prose; preserve real syntax in code and commands.
 - [ ] **Target ~500 lines**: if over 500, extract to `references/` with clear pointers. Hard max 600
 - [ ] **Reference files use `references/` relative paths**: not hardcoded or tool-specific paths
 - [ ] **All references verified**: every tool, CLI flag, IaC resource, config snippet, and
