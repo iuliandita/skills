@@ -322,11 +322,53 @@ check_no_symlinks() {
   fi
 }
 
+# A collection that ships skill-refiner's canonical behavioral catalog must
+# keep exactly one section for every public skill. Smaller or unrelated
+# collections without that catalog are unaffected.
+check_canonical_test_coverage() {
+  local catalog="$SKILLS_DIR/skill-refiner/references/test-cases.md"
+  [[ -f "$catalog" ]] || return 0
+
+  local skill_dir name heading
+  declare -A public_skills=()
+  declare -A heading_counts=()
+
+  for skill_dir in "$SKILLS_DIR"/*/; do
+    name=$(basename "$skill_dir")
+    [[ "$name" == ".backups" || "$name" == ".cook" ]] && continue
+    [[ "$name" == _* ]] && continue
+    git check-ignore -q "$skill_dir" 2>/dev/null && continue
+    [[ -f "$skill_dir/SKILL.md" ]] || continue
+    public_skills["$name"]=1
+  done
+
+  while IFS= read -r heading; do
+    [[ "$heading" == "<skill-name>" ]] && continue
+    (( heading_counts["$heading"]++ )) || true
+  done < <(sed -n 's/^### //p' "$catalog")
+
+  for name in "${!public_skills[@]}"; do
+    if [[ -z "${heading_counts[$name]:-}" ]]; then
+      error "canonical test catalog missing section for '$name'"
+    fi
+  done
+
+  for heading in "${!heading_counts[@]}"; do
+    if (( heading_counts["$heading"] > 1 )); then
+      error "canonical test catalog has duplicate section for '$heading'"
+    fi
+    if [[ -z "${public_skills[$heading]:-}" ]]; then
+      error "canonical test catalog has orphan section for '$heading'"
+    fi
+  done
+}
+
 # ── Main ────────────────────────────────────────────────────────────────
 echo "Linting skills in $SKILLS_DIR..."
 echo
 
 check_no_symlinks "$SKILLS_DIR"
+check_canonical_test_coverage
 
 skill_count=0
 for skill_dir in "$SKILLS_DIR"/*/; do
