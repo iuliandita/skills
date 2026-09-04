@@ -50,6 +50,43 @@ lsblk -f
 Kali publishes `SHA256SUMS` and GPG signatures for release images. Prefer those over SHA1 and
 prefer verified official images over mystery USB media.
 
+## Build a persistent live USB
+
+Use Kali's current live-USB and persistence guides. The write and partition steps destroy data if
+the target device is wrong, so resolve the whole-disk device with `lsblk`, show it to the user, and
+obtain explicit confirmation before writing.
+
+1. Download the current **live** ISO from `https://www.kali.org/get-kali/` and verify its SHA-256
+   checksum or signed checksum file against Kali's official download guidance.
+2. Unmount the target device's partitions. Write the ISO to the confirmed whole device, never a
+   partition. On Linux, Kali documents `dd` with `bs=4M` and `conv=fsync`; keep the ISO and device
+   as explicit placeholders until confirmation:
+
+   ```bash
+   sudo dd if=/path/to/kali-live.iso of=/dev/sdX bs=4M status=progress conv=fsync
+   ```
+
+3. Re-read the partition table and use `lsblk` to confirm the two live-image partitions. Create one
+   new partition in the remaining free space with `fdisk /dev/sdX`; do not copy a guessed partition
+   number from an example.
+4. Format the confirmed new partition as ext4 with label `persistence`, mount it, create the exact
+   configuration line, sync, and unmount:
+
+   ```bash
+   sudo mkfs.ext4 -L persistence /dev/sdXN
+   sudo mkdir -p /mnt/my_usb
+   sudo mount /dev/sdXN /mnt/my_usb
+   echo '/ union' | sudo tee /mnt/my_usb/persistence.conf
+   sync
+   sudo umount /mnt/my_usb
+   ```
+
+5. Boot the **Live USB Persistence** menu entry. After login, verify the overlay and persistence
+   mount with the checks below, then create a harmless marker file and confirm it survives reboot.
+
+The sequence above was checked against Kali's official live-USB and USB-persistence documentation
+in September 2026. Use the encrypted-persistence guide instead when the stored data needs LUKS.
+
 ## Recovery pattern
 
 1. Confirm image type.

@@ -182,6 +182,11 @@ fakeNow.mockReturnValue(START + 1001);
 expect(isExpired(START, 1000, fakeNow)).toBe(true);
 ```
 
+For cached fetches, cover the two observable paths separately:
+- Cache miss: the HTTP boundary is called once and the returned value is cached.
+- Cache hit: the cached value is returned and the HTTP boundary is not called.
+- TTL expiry: advance an injected or fake clock, then assert one refresh instead of sleeping.
+
 Read `references/language-patterns.md` for language-specific mocking idioms (Vitest `vi.mock`, Jest `jest.mock`, pytest `monkeypatch`, Go interfaces, Rust trait objects).
 
 ---
@@ -282,9 +287,11 @@ Flaky tests erode trust. Fix or quarantine immediately.
 3. **Fix root causes** - common culprits by framework:
    - **Playwright/Cypress**: race conditions on navigation or animation. Use `waitForLoadState`,
      `waitForSelector`, or Playwright's auto-waiting. Avoid `page.waitForTimeout`. Stub network
-     requests to eliminate backend variability. Headless mode (CI) has different rendering
+     requests to eliminate backend variability. Create a fresh browser context per test so cookies,
+     storage, and service workers cannot leak between cases. Headless mode (CI) has different rendering
      timing than headed - animations may be skipped or font metrics differ; use
-     `--headed` locally to reproduce CI-only failures.
+     `--headed` locally to reproduce CI-only failures. Check CPU, memory, and worker contention on
+     the CI runner before changing timeouts.
    - **Vitest/Jest**: shared module state between test files. Use `--pool forks` (Vitest) or
      `--runInBand` to isolate. Check for leaked timers (`vi.useFakeTimers` not restored).
    - **pytest**: database state leaking between tests. Use `@pytest.mark.usefixtures("db")`

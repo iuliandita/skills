@@ -102,7 +102,9 @@ GET /events?cursor=eyJjcmVhdGVkQXQiOiIyMDI2LTA0LTA2VDEwOjAwOjAwWiIsImlkIjoiZXZ0X
 Rules:
 - Keep sort order stable
 - Include tie-breakers in the cursor (`createdAt` + `id`, not just `createdAt`)
-- Return pagination metadata that is consistent across list endpoints
+- Encode or sign cursors so clients treat them as opaque values, not database offsets
+- Return a consistent `{ data, next_cursor, has_more }` envelope across list endpoints
+- Return `data: []`, `next_cursor: null`, and `has_more: false` at the end; reject malformed or expired cursors explicitly
 - Keep list parameter names consistent across the service (`cursor`/`limit` or `page`/`perPage`, not both without a migration plan)
 
 ## Filtering and Sorting

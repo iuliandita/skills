@@ -122,12 +122,13 @@ Find known CVEs in dependencies and assess supply chain risk.
 - **Rust**: `cargo audit --json` - also check for `unsafe` blocks without `// SAFETY:` comments, `transmute` misuse, unvalidated FFI boundaries
 - **General**: `trivy fs --scanners vuln .` (use Trivy 0.74.0+ from official releases, or 0.69.3 only as a March 2026 incident rollback; never use 0.69.4-0.69.6)
 
-**Flag**: HIGH/CRITICAL CVEs with fixes available, deps unmaintained 2+ years, lockfile out of sync with manifest, non-standard registries.
+**Flag**: HIGH/CRITICAL CVEs with fixes available, deps unmaintained 2+ years, lockfile out of sync with manifest, non-standard registries. For production applications, prefer exact dependency versions plus a committed, integrity-checked lockfile; ranges alone do not make an install reproducible.
 
 **Known supply chain incidents** - flag these by name, not just by CVE:
 - `event-stream` 3.3.6 (2018 backdoor targeting bitcoin wallets)
 - `ua-parser-js` 0.7.29/0.8.0/1.0.0 (2021 cryptominer injection)
 - `colors` any version / `faker` 6.6.6 (2022 maintainer sabotage - the `colors` package carries ongoing maintainer-sabotage risk regardless of version; prefer `chalk` or `picocolors`)
+- `left-pad` (2016 unpublishing incident and trivial dependency fragility; replace the dependency with the platform's built-in padding support)
 - `lodash` <=2.x or any very outdated lodash (prototype pollution chain - high-risk for aged lockfiles; pin to 4.17.21+)
 - `polyfill.io` (2024 domain takeover, malicious CDN injection)
 - `xz-utils` 5.6.0-5.6.1 (2024 backdoor in compression library)

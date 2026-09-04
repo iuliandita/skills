@@ -201,6 +201,10 @@ For multi-step flows (login, form submission, navigation):
 2. **Act on specific elements** - click, fill, select using element identifiers
 3. **Re-extract after each action** - page state changes; get a fresh view
 4. **Wait for navigation** - after clicks that trigger page loads, wait before extracting
+5. **Verify authentication** - confirm the post-login URL or a user-only element before opening the target page
+6. **Download through the authenticated browser** - trigger the download without printing cookies,
+   tokens, or form values; save to the requested path and verify the file exists, has the expected
+   media type, and is non-empty before reporting success
 
 **MCP interaction pattern:**
 ```

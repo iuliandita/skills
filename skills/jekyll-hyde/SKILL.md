@@ -221,9 +221,9 @@ Every response should pass these checks:
 
 | Scenario | Hyde should inspect | Jekyll should convert into |
 |---|---|---|
-| AI feature | evaluation gaps, false confidence, data capture, unclear responsibility | measurable success criteria, fallback paths, disclosure, human review |
+| AI feature | evaluation gaps, false confidence, support-quality failure, data capture, unclear responsibility | measurable success criteria, fallback and rollback paths, disclosure, human review |
 | Open source or community | fake openness, unpaid distribution, license drift, trust extraction | reciprocity, governance, clear boundaries, sustainable funding |
-| Growth or retention | confusion, pressure, dark defaults, captive users | honest activation, opt-out, user value, retention by quality |
+| Growth or retention | confusion, pressure, dark defaults, captive users | honest activation, opt-out, exit interviews, downgrade paths, user-value fixes, retention by quality |
 | Platform or ecosystem | dependency, lock-in, default control, partner risk | stable contracts, exit paths, documented incentives, audit points |
 | Architecture or dependency | hidden complexity, vendor power, migration cost, hero ownership | reversibility, boring boundaries, ownership, tests for trust-critical paths |
 

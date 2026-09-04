@@ -356,7 +356,9 @@ Standard tag matrix for published images. Each image gets the full set:
 | `latest` | `latest` | Yes (latest release) | Default pull - dev/testing only |
 | `VARIANT` | `alpine` | Yes (latest release) | Variant of latest - dev/testing only |
 
-**Pinned tags** (`MAJOR.MINOR.PATCH[-VARIANT]`) are immutable - once pushed, never overwritten. Production and CI reference these. For maximum immutability, pin to `@sha256:` digests.
+**Pinned tags** (`MAJOR.MINOR.PATCH[-VARIANT]`) are treated as immutable by this publishing policy:
+never overwrite them after push. Registries can still replace tags, so production and CI should pin
+to `@sha256:` digests when technical immutability is required.
 
 **Floating tags** (`MAJOR.MINOR`, `latest`, variant names) move on every release. A `docker pull` on a floating tag may return a different image tomorrow. Never use in production.
 

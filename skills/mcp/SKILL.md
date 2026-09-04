@@ -105,10 +105,37 @@ Before writing code, clarify:
 ```typescript
 import { McpServer } from "@modelcontextprotocol/server";
 import { serveStdio } from "@modelcontextprotocol/server/stdio";
+import { readdir, readFile, stat } from "node:fs/promises";
+import path from "node:path";
 import * as z from "zod/v4";
 
-const docs = [{ title: "Getting started", body: "Install the server and connect over stdio." }];
+const DOCS_ROOT = path.resolve(process.env.DOCS_ROOT ?? "./docs");
+const MAX_DOCS = 1_000;
+const MAX_DOC_BYTES = 256_000;
 const config = { mode: "read-only" };
+
+async function loadMarkdownDocs(): Promise<Array<{ title: string; body: string }>> {
+  const entries = await readdir(DOCS_ROOT, { withFileTypes: true });
+  const names = entries
+    .filter((entry) => entry.isFile() && entry.name.endsWith(".md"))
+    .map((entry) => entry.name)
+    .sort()
+    .slice(0, MAX_DOCS);
+  const docs: Array<{ title: string; body: string }> = [];
+  for (const name of names) {
+    const filePath = path.join(DOCS_ROOT, name);
+    if ((await stat(filePath)).size > MAX_DOC_BYTES) continue;
+    docs.push({ title: name, body: await readFile(filePath, "utf8") });
+  }
+  return docs;
+}
+
+let docsPromise: ReturnType<typeof loadMarkdownDocs> | undefined;
+
+function docsIndex(): ReturnType<typeof loadMarkdownDocs> {
+  docsPromise ??= loadMarkdownDocs();
+  return docsPromise;
+}
 
 function createServer(): McpServer {
   const server = new McpServer({ name: "my-server", version: "1.0.0" });
@@ -124,12 +151,26 @@ function createServer(): McpServer {
       }),
     },
     async ({ query, limit }) => {
-      const sanitized = query.replace(/[^\w\s-]/g, "");
-      const needle = sanitized.toLowerCase();
-      const results = docs
-        .filter(({ title, body }) => `${title}\n${body}`.toLowerCase().includes(needle))
-        .slice(0, limit);
-      return { content: [{ type: "text", text: JSON.stringify(results) }] };
+      try {
+        const needle = query.normalize("NFKC").trim().toLocaleLowerCase();
+        if (!/[\p{L}\p{N}]/u.test(needle)) {
+          return { isError: true, content: [{ type: "text", text: "Query needs a letter or number." }] };
+        }
+        const results = (await docsIndex())
+          .flatMap(({ title, body }) => {
+            const text = `${title}\n${body}`;
+            const index = text.toLocaleLowerCase().indexOf(needle);
+            if (index < 0) return [];
+            const start = Math.max(0, index - 160);
+            const end = Math.min(text.length, index + needle.length + 320);
+            return [{ title, snippet: text.slice(start, end) }];
+          })
+          .slice(0, limit);
+        return { content: [{ type: "text", text: JSON.stringify(results) }] };
+      } catch (error: unknown) {
+        console.error("search_docs failed", error);
+        return { isError: true, content: [{ type: "text", text: "Search failed while loading documentation." }] };
+      }
     }
   );
 
@@ -250,9 +291,14 @@ server.tool("read_file", "Read a project file",
 server.tool("read_file", "Read a project file",
   { path: z.string().max(500) },
   async ({ path: filePath }) => {
-    const safe = await safeExistingPath("/srv/project", filePath);
-    const data = await readFile(safe, "utf-8");
-    return { content: [{ type: "text", text: data }] };
+    try {
+      const safe = await safeExistingPath("/srv/project", filePath);
+      const data = await readFile(safe, "utf-8");
+      return { content: [{ type: "text", text: data }] };
+    } catch (error: unknown) {
+      console.error("read_file failed", error);
+      return { isError: true, content: [{ type: "text", text: "Read failed." }] };
+    }
   }
 );
 ```
