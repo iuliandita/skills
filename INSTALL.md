@@ -81,6 +81,10 @@ The public `cluster-health` skill can also have a local protected overlay at `sk
 
 When present in a local checkout, normal copy installs and `--link` installs copy the overlay into the installed `cluster-health` skill. In symlink mode, tool-specific skill directories point at the canonical copy, so Claude, Codex, OpenCode, and other linked tools all see the same protected overlay. Public GitHub installs do not include the overlay because it is not tracked.
 
+Before using `--force`, copy any overlay that exists only in the installed skill back into
+`skills/cluster-health/protected/` in the source checkout. Forced installs replace the whole
+skill directory; they do not preserve or merge installed-only files into the new copy.
+
 `cluster-health` is public, so it no longer needs `--include-internal`; that flag is only for separate gitignored skills with `metadata.internal: true`.
 
 Before committing local changes, install the repository hooks with either `prek` or `pre-commit`:
@@ -146,35 +150,49 @@ For important workflows, smoke-test the target tool after install:
 
 Common aliases also work: `claude-code`, `openai-codex`, `github-copilot`, `gemini-cli`, `kiro-cli`, `qwen-code`, `kimi-cli`.
 
-Some agent ecosystems prefer shared or project-local skill directories. OpenClaw also scans `~/.agents/skills`; Hermes can be configured to scan external directories such as `~/.agents/skills`. NanoClaw is intentionally not a normal global target because its docs use project-local `.claude/skills` and `container/skills`; install to a NanoClaw checkout with `--tool portable --dest /path/to/NanoClaw/.claude/skills` or `--dest /path/to/NanoClaw/container/skills` as appropriate.
+For a target or project directory outside this table, use `--tool portable --dest /path/to/skills`.
+Verify that the consuming tool discovers skills at that destination.
 
 ## Updating
 
-Pull the latest and re-run the installer:
+Pull the latest and re-run the installer with the same tool selection, skill selection,
+destination overrides, and copy or `--link` mode used for the original install:
 
 ```bash
 cd /path/to/skills
-git pull
-./install.sh --force      # update everything
+git pull --ff-only
+./install.sh --tool codex --force kubernetes docker
 ```
 
 Or check what changed first:
 
 ```bash
-./install.sh --check       # list outdated skills
-./install.sh --force       # apply
+./install.sh --check --link
+./install.sh --tool claude,cursor,gemini --link --force
 ```
 
-The installer backs up existing skills before overwriting (unless `--no-backup`), so local customizations are preserved.
-Backups are stored next to the target skill directory under `.skills-backups/`, not inside the
-skill discovery root. This prevents tools such as OpenCode from indexing old backup `SKILL.md`
-files as duplicate skills.
+The first example updates two copied skills for Codex; the second checks and updates all
+skills in the canonical directory and maintains links for the selected tools. Omitting skill
+names installs all available skills. Omitting `--tool` uses `SKILLS_TOOL`, or Claude if unset.
+
+The installer backs up existing skills before overwriting unless `--no-backup` is set.
+It retains the last three backups per skill under
+`<destination-parent>/.skills-backups/<destination-name>/`, outside the skill discovery root.
+Override that backup base with `SKILLS_BACKUP_DIR`. Backups support manual recovery;
+customizations are not merged into the replacement. Preserve edits in the source checkout
+before reinstalling if they must remain active.
 
 ## Checking for updates
 
 Each install writes a `.skills-lock.json` with content hashes. In `--link` mode, the installer
 writes the lock file to both the canonical directory and each selected tool directory, so either
-canonical or tool-specific checks work after install. Compare against the source:
+canonical or tool-specific checks work after install. `--check` compares current source hashes
+with the hashes recorded in that lock file. It does not hash the installed files again, so it
+does not detect edits or deletions made there after installation. It checks all discoverable
+source skills, even when skill names are passed, and exits with status 1 if any are outdated
+or absent from the lock. With `--link`, only the canonical lock is checked; tool-directory
+links are not verified. Check a tool's lock separately without `--link`, which checks only
+the first selected tool.
 
 ```bash
 ./install.sh --check                  # check default (Claude)
@@ -187,7 +205,7 @@ canonical or tool-specific checks work after install. Compare against the source
 Each skill follows the [Agent Skills specification](https://agentskills.io/specification):
 
 - **`SKILL.md` with YAML frontmatter** - `name`, `description`, `license`, optional `compatibility` for environment requirements, and `metadata` for custom fields. The frontmatter is what agents read at startup to decide which skills to activate.
-- **Compact body** - the core instructions that load into every conversation. Target under 500 lines, 600 hard max. Kept lean so it doesn't eat the context window.
+- **Compact body** - the core instructions loaded when the skill is activated. Target under 500 lines, 600 hard max. Kept lean so it doesn't eat the context window.
 - **Reference files** in `references/` - detailed pattern libraries, compliance checklists, manifest templates. The agent reads these on-demand when the task requires depth. Expert-level detail without paying the token cost upfront.
 - **Argument hints** (`metadata.argument_hint`) - tells agents what arguments a skill expects (e.g., `<file-or-pattern>`, `[iterations]`). Angle brackets for required, square brackets for optional.
 - **Precise trigger descriptions** - target around 200 characters (warn above 240) so startup skill lists stay compact in tools with tight context budgets.
@@ -239,15 +257,23 @@ last tag:
 If a refactor or perf change should cut a release, use a squash-merge title that reflects the
 user-facing impact, usually `fix:`.
 
-Release steps (on a clean, up-to-date `main`):
+Release steps (start with a clean checkout and update `main` with `git pull --ff-only`):
 
-1. Prepend a `## [X.Y.Z](https://github.com/iuliandita/skills/compare/vPREV...vX.Y.Z) (YYYY-MM-DD)`
+1. Create a release preparation branch from `main`, such as `release/X.Y.Z`.
+   Prepend a `## [X.Y.Z](https://github.com/iuliandita/skills/compare/vPREV...vX.Y.Z) (YYYY-MM-DD)`
    section to `CHANGELOG.md` listing the releasable squash commits since `vPREV`, grouped under
    `### Features`, `### Bug Fixes`, `### Refactoring`, `### Performance Improvements`, and
    `### Dependencies` as applicable.
-2. Commit: `chore(main): release X.Y.Z` and push `main`.
-3. Tag and push: `git tag -a vX.Y.Z -m "vX.Y.Z" && git push origin vX.Y.Z`.
-4. Publish: `gh release create vX.Y.Z --title "vX.Y.Z" --notes "<changelog section>"`.
+2. Commit the changelog on that branch with `chore(main): release X.Y.Z`, push the branch,
+   and open a PR targeting `main`. Require green CI and squash merge the PR.
+3. Switch to `main`, run `git pull --ff-only`, and verify that `HEAD` is the merged release
+   preparation commit and that its checks passed. If `main` advanced, reconcile the notes
+   through another PR before tagging. Do not commit or push directly to `main`.
+4. Save the merged changelog section to a notes file outside the checkout, such as
+   `/tmp/skills-release-notes.md`. Review it against the commits since `vPREV`.
+5. Tag the verified commit with `git tag -a vX.Y.Z -m "vX.Y.Z"`, then push only that tag with
+   `git push origin vX.Y.Z`.
+6. Publish with `gh release create vX.Y.Z --verify-tag --title "vX.Y.Z" --notes-file /tmp/skills-release-notes.md`.
 
 ## Requirements
 

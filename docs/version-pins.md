@@ -1,13 +1,13 @@
 # Version pin receipts
 
-Skills that pin specific tool versions ("Prometheus 3.13.1", "Helm 4.2.3") back
-that claim with a receipt file, not a month label in prose. A month label only
-proves someone ran a find-and-replace; a receipt proves someone checked a
-source and recorded when.
+Version receipts record which source was checked and when. This collection
+is migrating version pins from dated prose to `references/versions.md`;
+most skills still use the month-label convention. A receipt records a
+verification claim, not proof that the source or version remains current.
 
 ## Mechanism
 
-- Any skill that pins tool versions carries `references/versions.md`.
+- When migrating a skill's version pins, put them in `references/versions.md`.
 - That file has YAML frontmatter plus a human-readable table body describing
   the same pins for humans reading the rendered skill.
 - `scripts/check-version-receipts.sh` validates every `references/versions.md`
@@ -18,7 +18,8 @@ source and recorded when.
 ## Frontmatter contract
 
 This is the shape `scripts/check-version-receipts.sh` parses. Keys and
-structure must match exactly.
+structure should follow this example. The values below illustrate the format;
+they are not current version recommendations.
 
 ```yaml
 ---
@@ -34,16 +35,21 @@ pins:
 ---
 ```
 
-- `checked_at` (required) — `YYYY-MM-DD`. The date a human or agent actually
+- `checked_at` (required) - `YYYY-MM-DD`. The date a human or agent actually
   confirmed the numbers below against `source`. It is a claim of work done,
   not a release date, and not a copy of whatever the label bump script wrote
   elsewhere.
-- `checked_by` (required) — free text, e.g. `"manual"` or an agent identifier.
-- `pins` (required) — a list of one or more entries. Each entry requires:
-  - `tool` — the pinned tool's name.
-  - `version` — the pinned version string, exactly as it should read in docs.
-  - `source` — an `https://` URL a reader can follow to verify the version.
+- `checked_by` (required) - free text, e.g. `"manual"` or an agent identifier.
+- `pins` (required) - a list of one or more entries. Each entry requires:
+  - `tool` - the pinned tool's name.
+  - `version` - the pinned version string, exactly as it should read in docs.
+  - `source` - an `https://` URL a reader can follow to verify the version.
     `http://` is rejected.
+
+The check validates receipt dates, nonempty pin entries, and HTTPS source
+prefixes. It does not fetch sources, require receipts for unmigrated skills,
+compare the table with frontmatter, or enforce the `checked_by` convention.
+Those checks remain part of review.
 
 ## Staleness budget
 
@@ -56,7 +62,7 @@ worth tracking. Override the budget locally with
 ## SKILL.md bodies must not restate version numbers
 
 Once a skill has `references/versions.md`, its `SKILL.md` must not carry the
-version numbers directly — that reintroduces exactly the drift this mechanism
+version numbers directly - that reintroduces exactly the drift this mechanism
 exists to prevent (two places to update, only one of them checked). Point at
 the receipt file instead:
 
@@ -69,13 +75,14 @@ in that file). Do not restate version numbers here.
 
 `scripts/check-freshness-dates.sh` still enforces the `**Target versions**
 (Month Year):` label convention for any skill that has *not* migrated to a
-receipt file — that is still most of the collection. The moment a skill grows
+receipt file - that is still most of the collection. The moment a skill grows
 `references/versions.md`, the label check is skipped for that skill (it prints
 a `note:` line saying so) because the receipt file's `checked_at` field is now
 the source of truth for that skill's freshness.
 
-`skills/cluster-health/protected/` stays excluded from both checks, as it
-already was from the label gate.
+Private overlays do not belong in the public version inventory. The receipt
+checker searches recursively for `references/versions.md`, so keep private
+notes under a different name.
 
 ## Adding receipts to a new skill
 
@@ -88,13 +95,18 @@ already was from the label gate.
 4. Replace any inline version numbers in `SKILL.md` with a pointer to
    `references/versions.md`.
 5. Run `./scripts/check-version-receipts.sh` and
-   `./scripts/check-freshness-dates.sh` — both must exit 0, and the second
+   `./scripts/check-freshness-dates.sh` - both must exit 0, and the second
    must print the `note:` line for your skill.
 
-## Current status
+## Migration status
 
-Only `observability` uses this mechanism so far (see plan 007). Migrating the
-remaining skills is tracked as a follow-up (plan 013+), done in batches by
-category so each batch's receipts can be verified in one research pass. Once
-every skill that pins versions has a receipt, `scripts/check-freshness-dates.sh`
-should be deleted outright rather than kept as a vestigial gate.
+[observability](../skills/observability/references/versions.md) provides an
+existing receipt example. Discover the migrated skills directly:
+
+```bash
+rg --files skills -g versions.md
+```
+
+Migrate other skills when their pins are verified against primary sources.
+Keep the label gate for skills that have not migrated; creating a receipt
+without checking its sources does not establish freshness.

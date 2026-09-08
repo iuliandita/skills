@@ -1,136 +1,80 @@
-# skills.
+# skills
 
-**Hand-built [Agent Skills](https://agentskills.io) with automated quality gates.**
+Agent skills for infrastructure, security, software engineering, and agent workflows. Each skill provides task instructions, routing hints, and supporting references that can be installed individually.
 
-<div align="center">
+## Install
 
 ```bash
-npx skills add iuliandita/skills
+# Browse the collection
+npx skills add iuliandita/skills --list
+
+# Install selected skills
+npx skills add iuliandita/skills --skill kubernetes --skill docker
 ```
 
-47 skills for DevOps, security, infra, and software engineering, maintained with lint/spec checks, behavioral test coverage, and a [Karpathy-style autoresearch loop](https://github.com/karpathy/autoresearch).
+The bundled installer also supports copying skills or sharing one canonical copy across tools with symlinks:
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Agent Skills](https://img.shields.io/badge/Agent_Skills-open_standard-blue.svg)](https://agentskills.io)
+```bash
+git clone https://github.com/iuliandita/skills.git
+cd skills
+./install.sh --tool codex kubernetes docker
+```
 
-</div>
+See [installation and updates](INSTALL.md) for target paths, symlink mode, backups, and private overlays.
 
----
+## Collection
 
-## The story
+47 skills, grouped by the work they cover:
 
-AI coding tools used to mean prompts. Prompts don't compose, don't carry between tools, and don't improve unless you rewrite them by hand. Agent Skills replaced that: a directory of markdown plus a description, portable across every conformant tool. Drop a skill folder anywhere the spec is read and the agent gets a new capability.
+| Area | Skills |
+|------|--------|
+| Infrastructure and operations | [ansible](skills/ansible/SKILL.md), [ci-cd](skills/ci-cd/SKILL.md), [cluster-health](skills/cluster-health/SKILL.md), [databases](skills/databases/SKILL.md), [debug-triage](skills/debug-triage/SKILL.md), [docker](skills/docker/SKILL.md), [firewall-appliance](skills/firewall-appliance/SKILL.md), [kubernetes](skills/kubernetes/SKILL.md), [networking](skills/networking/SKILL.md), [observability](skills/observability/SKILL.md), [synology-dsm](skills/synology-dsm/SKILL.md), [terraform](skills/terraform/SKILL.md), [virtualization](skills/virtualization/SKILL.md) |
+| Linux systems | [arch-btw](skills/arch-btw/SKILL.md), [debian-ubuntu](skills/debian-ubuntu/SKILL.md), [kali-linux](skills/kali-linux/SKILL.md), [nixos-btw](skills/nixos-btw/SKILL.md), [rhel-fedora](skills/rhel-fedora/SKILL.md) |
+| Software development | [ai-ml](skills/ai-ml/SKILL.md), [backend-api](skills/backend-api/SKILL.md), [browse](skills/browse/SKILL.md), [command-prompt](skills/command-prompt/SKILL.md), [frontend-design](skills/frontend-design/SKILL.md), [localize](skills/localize/SKILL.md), [mcp](skills/mcp/SKILL.md), [testing](skills/testing/SKILL.md) |
+| Review and security | [anti-ai-prose](skills/anti-ai-prose/SKILL.md), [anti-slop](skills/anti-slop/SKILL.md), [code-review](skills/code-review/SKILL.md), [code-slimming](skills/code-slimming/SKILL.md), [deep-audit](skills/deep-audit/SKILL.md), [full-review](skills/full-review/SKILL.md), [jekyll-hyde](skills/jekyll-hyde/SKILL.md), [lockpick](skills/lockpick/SKILL.md), [security-audit](skills/security-audit/SKILL.md), [zero-day](skills/zero-day/SKILL.md) |
+| Development workflows | [deep-grill](skills/deep-grill/SKILL.md), [dev-cycle](skills/dev-cycle/SKILL.md), [git](skills/git/SKILL.md), [handoff](skills/handoff/SKILL.md), [prompt-generator](skills/prompt-generator/SKILL.md), [roadmap](skills/roadmap/SKILL.md), [routine-writer](skills/routine-writer/SKILL.md), [update-docs](skills/update-docs/SKILL.md) |
+| Skill maintenance | [skill-creator](skills/skill-creator/SKILL.md), [skill-refiner](skills/skill-refiner/SKILL.md), [skill-router](skills/skill-router/SKILL.md) |
 
-Then Karpathy pointed an agent at a 630-line training script overnight. It edited the code, ran a 5-minute training, kept changes that improved the score, discarded the rest. 700 runs, 20 wins, on one GPU. The pattern works on anything you can score.
+## Using a skill
 
-This repo applies that pattern conservatively to 47 hand-built skills. The loop helps find weak spots and propose improvements; the gates and review discipline decide what survives.
+Ask your agent to use a skill by name, or describe a task that matches its trigger description. For example: "Use code-review to review this diff" or "Use cluster-health to check the current cluster."
 
-## The autoresearch loop
+Each `SKILL.md` defines when to use the skill, when to route elsewhere, and how to perform the work. Supporting references ship inside the same directory. Skills are instructions; they do not install the tools, credentials, or services a task requires.
 
-`skill-refiner` ports Karpathy's pattern to a skill collection. It loads every skill, scores it across structural and behavioral checks, targets the weakest areas, and keeps changes only when the measured result improves without failing review.
+Audit and review skills share a report format. Small reviews use compact chat output; larger audits include findings and evidence in a saved report. Reports default to `docs/local/`, with the user's requested output format and location taking precedence. Keep that directory ignored when reports contain private project details.
 
-The cycle:
+## Compatibility
 
-> **Score → Improve → Verify → Keep or Revert → Repeat.**
+Skills follow the [Agent Skills specification](https://agentskills.io/specification). The bundled installer provides paths for 25 targets, including Claude Code, Codex, Cursor, Gemini CLI, Copilot, and OpenCode. See the [target table](INSTALL.md#supported-targets).
 
-- **Structural gates.** `lint-skills.sh` and `validate-spec.sh` enforce the collection shape, YAML frontmatter, routing conventions, reference links, and size limits.
-- **Behavioral checks.** Synthetic tasks test whether the skill produces useful output in context. These are useful signals, not proof of universal behavior across every model.
-- **Adaptive focus.** First pass scores everything. Subsequent iterations target the lowest-scoring skills until they're brought up.
-- **Peer review.** Every improvement gets a fresh review. Verified distinct models receive cross-model review weight, even on the same harness; same-model or unknown-model reviewers use a reduced weight. Runtime evidence determines the classification.
-- **The Karpathy gate.** Only changes that measurably improve the score survive. Changes that score worse, remove important content, or fail peer review are reverted or revised.
-- **Self-improvement.** `skill-refiner` improves its own evaluation infrastructure (including itself) in a separate meta-phase, with human review checkpoints.
+Path support does not establish equivalent runtime behavior. Activation, reference loading, tool access, and delegation depend on the consuming agent and model. Smoke-test important workflows after installing skills or changing models.
 
-The goal is not magic self-repair. The goal is a repeatable maintenance loop with evidence, review points, and a bias toward reverting weak changes.
+## Quality and maintenance
 
-## Quality evidence
-
-Current repository gates pass for the public skill collection:
+Repository checks cover frontmatter, routing conventions, reference links, size limits, generated-file consistency, and installer behavior. Run the collection's structural checks locally:
 
 ```bash
 ./scripts/lint-skills.sh
 ./scripts/validate-spec.sh
 ```
 
-The latest tracked refiner run in [`.refiner-runs.json`](.refiner-runs.json) is the 2026-09-04 full-collection sweep. After four iterations, all 45 phase-1 skills met the 99% target, the final average was 99.99%, and the final exact-diff peer review returned `NO_FLAGS`. The separate meta-phase brought `skill-creator`, `skill-refiner`, and the collection lint target to 100%.
+[skill-refiner](skills/skill-refiner/SKILL.md) adds iterative scoring, synthetic behavioral tasks, and peer review. Changes are kept only after the required checks and review pass and the composite score improves. Review weight depends on verified model identity; a fresh session alone does not establish cross-model review.
 
-That evidence is a maintenance signal, not a permanent guarantee. Skill behavior still depends on the consuming agent, model, tool limits, and whether the task matches the skill's intended scope.
-
-## Report output
-
-Audit and review skills use a shared output contract. Small reviews use compact chat output; substantial audits use an expanded format. Reports are saved as markdown under `docs/local/` unless the user requests otherwise. That directory is gitignored by default so local audit notes do not leak into published commits.
-
-Example report excerpt:
-
-```markdown
-# CODE-REVIEW - src/auth/ - 2026-05-03
-
-- **Skill:** code-review
-- **Mode:** audit
-- **Target:** `src/auth/`
-- **Findings:** 2 (P0:1, P2:1)
-
-## P0 - Must fix
-
-- [ ] **#1 Missing CSRF check on POST /api/posts**
-  - **File:** `src/auth/routes.ts:42`
-  - **Description:** State-changing requests accept browser-originated traffic without verifying a CSRF token.
-  - **Suggested action:** Add `requireCsrf()` before the route handler.
-  - **Fix applied:** _to be filled by implementer_
-
-## P2 - Nice to fix
-
-- [x] **#2 Duplicate auth cookie parsing**
-  - **File:** `src/auth/cookie.ts:12`
-  - **Description:** Three handlers repeated the same cookie decode branch.
-  - **Suggested action:** Extract a shared `decodeAuthCookie()` helper.
-  - **Fix applied:** Added `decodeAuthCookie()` and updated the repeated handlers.
-```
-
-Report checkboxes are intentionally editable. As fixes land, flip `- [ ]` to `- [x]` and replace the `Fix applied` placeholder with the actual change.
-
-## Why it matters
-
-- **The collection is easier to improve safely.** New skills inherit the current lint, spec, routing, and behavioral standards. The bar moves through explicit checks instead of memory.
-- **One folder, every tool.** Built on the [Agent Skills open standard](https://agentskills.io/specification). Any conformant tool reads them. No conversion, no per-tool forks.
-- **Maintained outside model weights.** Skills can carry recent tool changes, CVEs, deprecations, and local practices without waiting for a model retrain.
-- **Skills know about each other.** Routing hints (`Not for X (use Y)`) reduce collisions and help agents choose the right instruction set.
-
-## Quick install
-
-```bash
-npx skills add iuliandita/skills
-```
-
-That's it. For specific skills, alternative tools, the bundled installer, or symlink mode across multiple agents, see [INSTALL.md](INSTALL.md).
-
-## What's in here
-
-47 skills covering infra (Kubernetes, Terraform, Docker, Ansible), cluster health diagnostics, observability and SRE signal pipelines, live-incident triage, distros (Arch, Debian, Fedora, Kali, NixOS), networking and firewalls, Synology NAS administration and btrfs recovery, security and pentesting, code review, code slimming, and prose audits, frontend and UI design, AI/ML and MCP server work, virtualization, dev workflow tooling, plan interrogation and session handoff (deep-grill and handoff, inspired by Matt Pocock's grill-me and handoff skills), and meta-tooling (the skill creator, refiner, router, and full-review orchestrator).
-
-Browse [`skills/`](skills/) for the full list, or query it:
-
-```bash
-npx skills add iuliandita/skills --list
-```
-
-Each skill description is in its own `SKILL.md` frontmatter. The trigger keywords and routing hints there tell the agent when to load it.
-
-## Compatibility
-
-Built on the [Agent Skills open standard](https://agentskills.io/specification). Any conformant tool can read the skill structure directly. The bundled installer ships paths for 25 specific targets (Claude Code, Codex, Cursor, Gemini, Copilot, Windsurf, OpenCode, and others); see [INSTALL.md](INSTALL.md) for the full table and overrides.
-
-Installer support means the repo knows where to copy or symlink the skills. It is not a certification that every target handles activation, trigger matching, context loading, or subagent workflows identically. Smoke-test important skills in the agent you plan to use.
+The [run history](.refiner-runs.json) and [score ledger](.refiner-ledger.md) record past evaluations. Scores describe those runs, not a guarantee of correctness or performance on another model or task. Tool-version checks also need source verification; see [version pin receipts](docs/version-pins.md).
 
 ## Contributing
 
-Issues and PRs welcome. Skills must pass `./scripts/lint-skills.sh` and follow the [Agent Skills specification](https://agentskills.io/specification).
+Use a branch and pull request, with green CI before squash merge. See [skill authoring](docs/skill-authoring.md) for opening summaries and [INSTALL.md](INSTALL.md#releases) for the release workflow. Report vulnerabilities using [SECURITY.md](SECURITY.md).
 
-Skills are self-contained: each one references only files inside its own directory, so it works when installed individually. The shared output contract lives at `skills/_shared/output-contract.md` as a build input and is copied into every skill's `references/output-contract.md` by `./scripts/gen-contract-refs.sh`. Edit the contract there, re-run the generator, and commit the result; `./scripts/check-contract-sync.sh` (wired into CI and pre-commit) fails on drift or any runtime `skills/_shared/` reference.
+Every skill must work when installed alone: runtime file references stay inside its own directory. Shared output and agent-hygiene instructions originate in `skills/_shared/`; edit those sources and regenerate the shipped copies:
+
+```bash
+./scripts/gen-contract-refs.sh
+./scripts/check-contract-sync.sh
+```
+
+New skills must also be registered in the deep-audit coverage check or its [exclusions table](skills/deep-audit/references/exclusions.md). Run the repository's `scripts/check-*.sh` gates before pushing.
 
 ## License
 
 [MIT](LICENSE)
-
----
-
-`kubernetes` `terraform` `docker` `ansible` `archlinux` `cachyos` `pacman` `paru` `aur` `systemd` `nixos` `nix` `flakes` `home-manager` `nix-darwin` `helm` `argocd` `ci-cd` `github-actions` `gitlab-ci` `postgresql` `mongodb` `mysql` `networking` `dns` `wireguard` `tailscale` `vpn` `nftables` `opnsense` `pfsense` `mcp` `model-context-protocol` `security-audit` `owasp` `pentesting` `code-slimming` `privilege-escalation` `ctf` `code-review` `git` `shell` `zsh` `bash` `prompt-engineering` `pci-dss` `compliance` `devops` `infrastructure-as-code` `iac` `containers` `podman` `buildah` `sealed-secrets` `haproxy` `caddy` `traefik` `nginx` `autoresearch` `self-improving` `llm` `rag` `embedding` `vector-store` `langchain` `langgraph` `openai-sdk` `anthropic-sdk` `agents` `fine-tuning` `ollama` `vllm` `promptfoo` `vitest` `jest` `playwright` `pytest` `tdd` `e2e` `accessibility` `axe-core` `load-testing` `k6` `proxmox` `qemu` `kvm` `libvirt` `packer` `cloud-init` `gpu-passthrough` `virtualization` `hypervisor` `synology` `dsm` `nas` `btrfs` `observability` `prometheus` `opentelemetry` `grafana` `metrics` `tracing` `slo` `debug-triage` `incident-response` `outage` `troubleshooting` `root-cause`
