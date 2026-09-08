@@ -167,7 +167,7 @@ git pull --ff-only
 Or check what changed first:
 
 ```bash
-./install.sh --check --tool claude,cursor,gemini --link
+./install.sh --check --link
 ./install.sh --tool claude,cursor,gemini --link --force
 ```
 
@@ -190,7 +190,9 @@ canonical or tool-specific checks work after install. `--check` compares current
 with the hashes recorded in that lock file. It does not hash the installed files again, so it
 does not detect edits or deletions made there after installation. It checks all discoverable
 source skills, even when skill names are passed, and exits with status 1 if any are outdated
-or absent from the lock. Without `--link`, only the first selected tool is checked.
+or absent from the lock. With `--link`, only the canonical lock is checked; tool-directory
+links are not verified. Check a tool's lock separately without `--link`, which checks only
+the first selected tool.
 
 ```bash
 ./install.sh --check                  # check default (Claude)
