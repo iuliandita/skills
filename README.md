@@ -36,7 +36,7 @@ The cycle:
 - **Structural gates.** `lint-skills.sh` and `validate-spec.sh` enforce the collection shape, YAML frontmatter, routing conventions, reference links, and size limits.
 - **Behavioral checks.** Synthetic tasks test whether the skill produces useful output in context. These are useful signals, not proof of universal behavior across every model.
 - **Adaptive focus.** First pass scores everything. Subsequent iterations target the lowest-scoring skills until they're brought up.
-- **Cross-model peer review.** If a second AI harness is available (Claude alongside Codex, for example), the second model reviews every change the first one makes. Single-model blind spots get caught.
+- **Peer review.** Every improvement gets a fresh review. Verified distinct models receive cross-model review weight, even on the same harness; same-model or unknown-model reviewers use a reduced weight. Runtime evidence determines the classification.
 - **The Karpathy gate.** Only changes that measurably improve the score survive. Changes that score worse, remove important content, or fail peer review are reverted or revised.
 - **Self-improvement.** `skill-refiner` improves its own evaluation infrastructure (including itself) in a separate meta-phase, with human review checkpoints.
 
@@ -57,7 +57,7 @@ That evidence is a maintenance signal, not a permanent guarantee. Skill behavior
 
 ## Report output
 
-Audit and review skills use a shared output contract. In chat they keep results compact; when a durable report is useful, they write markdown under `docs/local/`, which is gitignored by default so local audit notes do not leak into published commits.
+Audit and review skills use a shared output contract. Small reviews use compact chat output; substantial audits use an expanded format. Reports are saved as markdown under `docs/local/` unless the user requests otherwise. That directory is gitignored by default so local audit notes do not leak into published commits.
 
 Example report excerpt:
 

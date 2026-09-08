@@ -133,7 +133,10 @@ Follow the language-specific patterns below. Universal principles:
 
 ### Step 4: Validate
 
-- Run the full test suite: failures in other tests may indicate your change broke something
+- Run checks appropriate to the changed behavior and every required repository gate. Run the
+  full suite when required or when the affected surface warrants it; do not add tests that
+  mirror reversible, low-impact edits. Repeat or broaden passing checks only for new changes,
+  failures, or unresolved concerns.
 - Check coverage delta: new code should be covered, but don't chase vanity numbers
 - Run in CI if possible - tests that pass locally but fail in CI are the worst kind
 

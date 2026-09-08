@@ -21,11 +21,24 @@ is the weighted sum of three behavior-oriented components.
 | Structural compliance | **gate** | lint-skills.sh + validate-spec.sh (pass/fail) |
 | AI Self-Check | 40% | skill-creator review mode |
 | Behavioral test | 55% | Synthetic task execution |
-| Cross-model review | 5% | Secondary model flag count |
+| Cross-model review | 5% | Verified distinct model flag count |
 
-### Renormalized Weights (No Secondary Model)
+### Fresh-Context Review (Same or Unknown Model)
 
-When cross-model review is unavailable, redistribute the 5% proportionally:
+Verified cross-model review requires distinct resolved model identities, regardless of harness.
+Different providers, harnesses, or effort settings alone do not establish model diversity.
+Record actual provider, resolved model, effective effort, harness/version, and redacted
+runtime/config evidence per evaluation using `references/harness-detection.md`.
+
+Same-model and unknown-model fresh-context reviews receive 3%. Redistribute the missing 2%
+proportionally: AI Self-Check = `40 + 2 * 40 / 95`, Behavioral = `55 + 2 * 55 / 95`, review = 3.
+Unknown identity cannot receive 5%. Use the same flag deductions and veto rules in either case.
+
+### Renormalized Weights (Baseline Only)
+
+The first iteration has no improvement diff to review. For that baseline only, redistribute
+5% proportionally (rounded as below). After the baseline, fresh-context peer review is
+mandatory; unavailable secondary review uses the 3% fallback, not this two-component table:
 
 | Component | Weight |
 |---|---|
@@ -87,7 +100,8 @@ verification limit unless the skill itself falsely claims that runtime behavior 
 
 ### Cross-Model Review (5%)
 
-Secondary model reviews the improvement diff and flags issues:
+A reviewer with verified distinct model identity reviews the improvement diff and flags issues
+(the same flag rules apply to same-model or unknown-model fresh-context review at 3%):
 
 - No flags: 100
 - Minor flag (verified): -20 per flag

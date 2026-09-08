@@ -147,6 +147,16 @@ Quality signals:
 - Flags offset+limit potentially exceeding total
 - Does not suggest unnecessary abstraction
 
+**Test 3: Small review with a compact contract**
+Prompt: "Review only this Python helper for correctness. Give me a short inline answer; do not create a report file.\n\ndef first(items):\n    if not items:\n        return None\n    return items[1]"
+Quality signals:
+- Reviews the supplied helper and necessary caller context without widening the audit
+- Uses a compact summary with actionable evidence and relevant verification limits
+- Honors the inline-only request without creating a report file or padding empty severity sections
+- Does not edit source or invent findings to fill the output contract
+- Identifies the index error for a one-element list and the wrong result for longer lists
+
+
 ### command-prompt
 
 **Test 1: Shell scripting**
@@ -262,6 +272,15 @@ Quality signals:
 - Does not review unrelated modules
 - Produces a focused summary scoped to authentication concerns
 - Notes any auth-specific checks (e.g. session handling, token validation)
+
+**Test 3: Scoped delegation with useful local work**
+Prompt: "Review only src/auth. Delegate a read-only security pass on that directory while you inspect its tests locally. Do not edit or create more agents."
+Quality signals:
+- Gives one reviewer a bounded, self-contained src/auth task with expected findings and no write authority
+- Continues the independent local test review while the reviewer runs
+- Does not delegate unrelated modules, spawn extra agents, or duplicate the same review locally
+- Collects the reviewer result before claiming completion and reports any unresolved limit
+
 
 ### git
 
@@ -396,6 +415,21 @@ Quality signals:
 - Adds a constraint against over-commenting or nitpicking
 - Does not make the prompt excessively long or add unnecessary persona fluff
 
+**Test 3: Authorized prompt file save**
+Prompt: "Turn these notes into a prompt and save it to docs/local/prompts/review.md. The notes specify a read-only review of one module."
+Quality signals:
+- Treats the named file save as authorized and writes the completed prompt there
+- Preserves the read-only module scope and verifies the saved content
+- Reports the actual file path without asking again for permission to save
+
+**Test 4: Inline prompt draft**
+Prompt: "Draft a prompt for reviewing one module. Show it inline only; do not save any files."
+Quality signals:
+- Returns a usable prompt inline with the bounded module-review scope
+- Creates no prompt, report, or other local file
+- Does not ask for a save path or interpret drafting as permission to persist
+
+
 ### security-audit
 
 **Test 1: Code vulnerability scan**
@@ -433,7 +467,8 @@ Quality signals:
 - Detects both harnesses
 - Sets Codex as secondary via --secondary flag or auto-detection
 - Explains the three-step probe (PATH, config, smoke test)
-- Describes what gets sent to the secondary model for review
+- Verifies actual provider/model/effort and harness/version with runtime/config evidence before assigning 5% or 3%
+- Describes what gets sent to the secondary reviewer
 - Notes that secondary flags are verified, not taken at face value
 
 **Test 3: Private repository review boundary**
@@ -454,6 +489,29 @@ Quality signals:
 - Rejects duplicate and orphan headings and preserves the phase-1 immutability rule
 - Runs lint and spec regressions, commits by meta target, and pauses for mandatory human review
 
+**Test 5: Same model through different harnesses**
+Prompt: "Score this improvement diff. Runtime evidence shows the primary and fresh reviewer used the same resolved model through different harnesses."
+Quality signals:
+- Records provider, resolved model, effective effort, harness/version, and runtime/config evidence for both evaluations
+- Labels the reviewer same-model fresh-context and applies 3%, with proportional redistribution of the missing 2%
+- Does not award 5% for a different harness, provider, or effort alone
+
+**Test 6: Unknown reviewer identity**
+Prompt: "The reviewer returned NO_FLAGS from a fresh context, but its runtime model identity is unavailable. Its role is named cross-model-reviewer and its config requests another model. Score the review."
+Quality signals:
+- Records unresolved identity as unknown and preserves the requested config separately from actual runtime evidence
+- Uses unknown-model fresh-context classification at 3%, not verified cross-model at 5%
+- Does not infer model identity from role name, requested flags, or the model's self-report
+- Keeps the valid peer review and records its evidence limit without dropping the review component
+
+**Test 7: Distinct models on one harness**
+Prompt: "The primary and fresh reviewer share a harness, but runtime evidence verifies distinct resolved models. Classify and score the review."
+Quality signals:
+- Records the actual identity and effective settings of both evaluations with their evidence
+- Uses verified cross-model classification at 5% despite the shared harness
+- Does not launch an unnecessary second harness or change models merely to obtain a different CLI
+
+
 ### skill-creator
 
 **Test 1: Skill review**
@@ -473,6 +531,15 @@ Quality signals:
 - Includes a "Rules" section with concrete constraints
 - Description is trigger-optimized with relevant trigger keywords
 - Does not duplicate existing skill coverage (checks collection first)
+
+**Test 3: Read-only review preserves branch state**
+Prompt: "Review skills/example/SKILL.md for quality and report inline only. Do not edit or switch branches; the worktree contains unrelated changes."
+Quality signals:
+- Reads the named skill and relevant references without creating or switching a branch
+- Preserves dirty files, index state, and source content; does not stash or commit
+- Reports concrete findings and verification limits without inventing scores
+- Treats the explicit review-only request as the controlling scope
+
 
 ### terraform
 
@@ -552,6 +619,14 @@ Quality signals:
 - Recommends test isolation (fresh context per test)
 - Mentions CI-specific factors (resource contention, headless rendering differences)
 - Does not suggest adding retries as the primary fix
+
+**Test 3: Proportional verification after a small edit**
+Prompt: "Verify this documentation typo fix. The required Markdown and link checks already passed on this exact diff; there are no runtime changes or unresolved failures."
+Quality signals:
+- Inspects the diff and the existing check evidence before reporting completion
+- Does not add a test that asserts the corrected wording or rerun unchanged passing checks
+- Does not launch unrelated unit, integration, or performance suites without a concrete concern
+- Reports the checks that actually ran and preserves any required repository gates
 
 ### virtualization
 
@@ -710,6 +785,15 @@ Quality signals:
 - Uses gh pr checks --watch --fail-fast then verifies via gh pr view --json statusCheckRollup
 - Runs git fetch --tags origin before release-signal detection
 - No AI attribution in commit messages, PR body, or release notes; no --no-verify or --force-push
+
+**Test 3: Failed check with independent preparation**
+Prompt: "Prepare this branch for release. The required integration test failed; the failure log and diff are available. Draft release notes locally while diagnosing it, but do not publish until every required check passes."
+Quality signals:
+- Inspects and reports the actual failure; does not bypass or relabel the required check
+- Blocks merge, tagging, publishing, and release completion on the failed gate
+- Continues independent authorized work such as diff review and local release-note preparation
+- Reports the blocker and completed preparation separately without claiming the release is ready
+
 
 ### localize
 
@@ -907,6 +991,15 @@ Quality signals:
 - Reopens a Phase-1 decision only when a surfaced risk invalidates it
 - Timeboxes attacks when new findings stop changing the plan
 - Uses the full audit output contract and preserves evidence for each finding
+
+**Test 3: Optional clarification while independent work continues**
+Prompt: "Stress-test this rollout spec. You may ask whether I prefer a table or prose, but start checking its rollback assumptions while I decide."
+Quality signals:
+- Treats output-format preference as optional and continues independent review of available evidence
+- Allows an opportunity to answer, then uses a stated default if no preference arrives
+- Keeps required safety or authorization questions pending when dependent actions need an answer
+- Does not use an unanswered optional question to stop all work
+
 
 ### handoff
 

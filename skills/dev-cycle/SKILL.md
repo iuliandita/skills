@@ -75,7 +75,7 @@ Before declaring start-mode complete:
 Before declaring finish-mode complete:
 
 - [ ] `$FORGE` detected from `git remote get-url origin` before any push/PR/merge step
-- [ ] All lint/type/test suites green - output inspected, not inferred from "exit code 0". If no toolchain was detectable, user was asked explicitly (not silently skipped)
+- [ ] Applicable checks and every required repository gate passed with output inspected. Missing verification remains unresolved; independent preparation does not make merge or release ready
 - [ ] `update-docs` ran over tracked AND gitignored context files (`CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, `.claude/`, `.codex/`, `.opencode/`, `.planning/`); findings addressed or deferred with a note. Only tracked files were staged for commit; gitignored edits remain local
 - [ ] Current version sourced from primary manifest (or user confirmation) before proposing bumps
 - [ ] Version-bump sites checked: Dockerfile, K8s manifests, Helm Chart.yaml/values, package.json/pyproject.toml/Cargo.toml, CHANGELOG
@@ -94,7 +94,7 @@ Before declaring finish-mode complete:
 
 ## Performance
 
-- Run the narrowest meaningful checks (e.g., `--testPathPattern` or `go test ./pkg/...`) during iteration, then the full required gate (`lint + typecheck + test`) once before finishing. Running the full suite on every edit wastes minutes per cycle.
+- Run the narrowest meaningful checks (e.g., `--testPathPattern` or `go test ./pkg/...`) during iteration, then every required repository gate once before finishing. Running the full suite on every edit wastes minutes per cycle.
 - Keep commits batch-sized by review concern - one logical change per commit - so bisect, revert, and blame stay useful on a branch with many commits.
 - Invoke existing project scripts (`Makefile`, `justfile`, `scripts/`) instead of reconstructing ad hoc command sequences; those scripts encode project conventions that ad hoc commands silently skip.
 
@@ -218,7 +218,10 @@ If the branch has no commits or the diff is empty, stop - there's nothing to shi
 
 ### Step B2: Run lint, type, and tests
 
-Delegate to the **testing** skill with instruction "run lint, type checks, and tests; surface any failures".
+Use the **testing** skill to run checks appropriate to the changed behavior and every required
+repository gate. Delegate only when the check workload benefits from a separate worker.
+Do not add tests that merely mirror a reversible, low-impact edit. After checks pass, expand
+or repeat them only for new changes, failures, or unresolved concerns.
 
 If the testing skill isn't installed, detect the toolchain. Check in order - first match wins. If no language manifest matches, **continue** to task runners and custom scripts; don't give up:
 
@@ -229,11 +232,18 @@ If the testing skill isn't installed, detect the toolchain. Check in order - fir
 
 Full detection table and the quick-scan commands live in `references/finish.md`.
 
-**If nothing detectable**: stop and ask the user how to verify. Do NOT silently skip - a finish-mode report with no verification run is a false green. Offer: (a) run a command they'll provide, (b) skip with explicit acknowledgement, (c) abort.
+**If nothing detectable**: report that verification is unresolved. Inspect the changed artifact
+with a suitable parser or direct check when available; do not call that a passed test suite.
+Complete independent authorized preparation, then ask for the missing verification command
+before merge or release. Never silently waive a required check.
 
 Inspect the actual output. "Exit 0" is not verification - tests that didn't run also return 0. Confirm the suite was exercised.
 
-**If anything is red, stop.** Do not proceed. Fix the root cause (or ask the user to), then re-run. Never use `--no-verify` or skip failing tests.
+**Failed required checks block merge and release.** Diagnose whether the failure comes from
+this change or the baseline. Fix in-scope failures and re-run affected checks. Report unrelated
+failures without silently fixing them; continue independent authorized documentation and review
+preparation. Keep the release gate blocked and state what remains. Never use `--no-verify` or
+skip failing tests to manufacture a pass.
 
 ### Step B3: Sync docs and versions
 

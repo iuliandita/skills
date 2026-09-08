@@ -122,11 +122,11 @@ possible update is destructive or would create a new class-level skill with unce
    locations - if the default doesn't match, ask or accept a user-supplied path. If no
    collection is found, skip collection-wide checks (cross-references, trigger overlap, audit
    mode) and note what was skipped.
-2. **Check git and create a run branch**: run `git rev-parse --git-dir`. If inside git,
-   create `skill-creator/YYYY-MM-DD-HHMMSS` from current HEAD before checks or edits unless
-   already on a task branch created for this run. Preserve dirty worktrees; branching is for
-   isolation, not cleanup. Without git, state "branch unavailable" in the final report and
-   fall back to file modification dates.
+2. **Record git state**: run `git rev-parse --git-dir`; record the branch and dirty paths.
+   Report-only checks do not create or switch branches or modify tracked files.
+   Before authorized tracked edits, create a task branch following repository conventions,
+   unless already on one for this work. Preserve unrelated changes. Without git, report
+   "branch unavailable" and fall back to file modification dates.
 3. **Single skill vs collection**: Modes 1 (Create) and 2 (Review) work on individual skills
    with or without a collection - collection-dependent steps become best-effort. Mode 3
    (Audit) requires a collection. Mode 4 (Optimize) works standalone but benefits from
@@ -298,10 +298,10 @@ Use severity ratings:
 
 #### Step 4: Confirm scope
 
-Present findings to the user and wait for confirmation before editing. The user may want a
-report only, or may want to fix a subset. In headless mode (no interactive user), report
-findings and stop unless the original user request explicitly authorized edits. Programmatic
-callers must pass that authorization through or stop after reporting findings.
+For report-only requests, present findings without editing. Apply already-authorized fixes without
+asking again. Ask only for missing scope or an unauthorized destructive or external action.
+Explicit user instructions take precedence. Programmatic callers must pass the authorized scope;
+otherwise report findings and stop.
 
 #### Step 5: Apply fixes
 
@@ -444,9 +444,9 @@ collection, run Mode 2 Step 2 (quality checks) to verify no regressions were int
 
 ## Run Report
 
-End every run with a human-readable report, even for report-only checks. Include branch, mode,
+Record every run in a human-readable report, even for report-only checks. Include branch, mode,
 scope, score or "not scored - report only", changed files, finding counts, verification results,
-skipped checks, and recommended next action.
+skipped checks, and next action. Keep metadata in the saved report; use compact inline output when applicable.
 
 For edited skills, report before/after checklist pass rate and behavioral or forward-test scores
 plus keep/reject decisions. For audit-only runs, report structural gate and finding counts
@@ -495,6 +495,5 @@ See `references/output-contract.md` for the full contract.
    quotes, ligatures, or `--` dash substitutes. Prose only: never rewrite `--` inside code or
    fenced blocks - there it is real syntax (SQL comments, CLI `--` separators) and must stay.
 8. **Run the AI Self-Check.** Every generated or modified skill gets checked before return.
-9. **Branch every run.** In git-backed collections, create or record a run branch before checks.
-10. **Report every run.** Finish with the Run Report format and score before/after or "not scored."
-    Do not substitute lint/spec status for behavioral scoring.
+9. **Separate review from edits.** Record the branch for reviews; create or reuse a task branch for tracked edits.
+10. **Report every run.** Use the Run Report format; never substitute lint/spec status for behavioral scoring.

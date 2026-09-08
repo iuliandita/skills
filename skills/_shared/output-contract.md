@@ -11,6 +11,22 @@ The contract has two intentionally divergent shapes:
 
 ## Inline format
 
+### Choose the reporting size
+
+The user's explicit output instructions take precedence over these defaults, including
+requests for inline-only output or no file writes. Skill sections that say "full contract"
+select this contract; they do not override the size selection here.
+
+For a small, focused review (one concern with up to three findings), use compact inline
+output: state the result, list actionable findings with priority and location, and give
+verification limits plus one link if a report was saved. For zero findings, say so directly.
+Omit metadata fences, severity headings, and a repeated conclusion in this form. Save the
+report unless the user requested otherwise; keep detailed run metadata there.
+
+For substantial or multi-area audits, use the expanded format below. Do not append another
+skill-specific run summary that repeats its metadata. An explicitly requested report format
+overrides either default.
+
 ### Monospace header
 
 Use a fenced `text` block so desktop apps and terminals render the metadata with a monospace font. Do not pad fields to a fixed width.
