@@ -1,10 +1,9 @@
-# Skill authoring: the first body paragraph is storefront copy
+# Skill authoring: opening summaries
 
-This collection is published at `https://skills.sh/iuliandita/skills`. On a
-skill's page there, the rendered summary comes from the **first paragraph of
-the SKILL.md body** - not from the YAML `description` frontmatter. That
-paragraph is the only copy a stranger reads before deciding whether to
-install.
+The first body paragraph of each `SKILL.md` gives readers a concise summary
+of the skill. These are collection conventions, independent of how an
+installer or directory renders the file. The YAML `description` supplies
+activation hints and may also appear in skill listings.
 
 ## Constraints
 
@@ -29,8 +28,7 @@ The first paragraph after the `# Title: Subtitle` H1 must:
 Find bugs that actually break things. Not style, not slop - correctness, reliability, and logic errors that will bite in production.
 ```
 
-One sentence. Says what it does, who it is for, what it is not. 132
-characters.
+The paragraph names the task and its scope without repeating the title.
 
 ## Fixing a paragraph that fails the check
 
@@ -68,9 +66,8 @@ something to default into.
 
 ## Not the same thing as the frontmatter `description`
 
-The YAML `description` field serves a different job: agent trigger matching,
-governed by the middle-dot prefix rule in `scripts/lint-skills.sh`. It is
-read by agents deciding whether to invoke a skill, not by humans browsing
-skills.sh.
-Fixing the first body paragraph never means editing `description`, and vice
-versa.
+The YAML `description` field supplies agent routing hints, governed by the
+middle-dot prefix rule in `scripts/lint-skills.sh`. Keep trigger descriptions
+and human-facing summaries consistent, but edit each according to its own
+purpose. A failing first-paragraph check does not itself require a
+frontmatter change.
