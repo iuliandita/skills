@@ -15,8 +15,8 @@ metadata:
 
 Adaptive evaluation loop for AI skill collections, inspired by Karpathy's AutoResearch.
 Orchestrates repeated score-improve-verify cycles using **skill-creator** as the engine
-and mandatory peer review as an adversarial check (cross-model when a secondary harness
-is available, fresh-context self-review as the minimum fallback).
+and mandatory peer review as an adversarial check (cross-model when distinct model identity
+is verified, fresh-context self-review as the minimum fallback).
 
 ## When to use
 
@@ -47,7 +47,7 @@ skill-refiner [--iterations N] [--mode MODE] [--secondary HARNESS] [--threshold 
 |---|---|---|
 | `--iterations` | 10 | Maximum iterations for phase 1 |
 | `--mode` | circuit-breaker | `auto`, `circuit-breaker`, or `step` |
-| `--secondary` | auto-detect | Secondary harness for cross-model review, or `none` |
+| `--secondary` | auto-detect | Secondary review harness, or `none`; model identity determines weight |
 | `--threshold` | 85 | Focus threshold - skip skills scoring above this (user can override max) |
 | `--plateau` | 2 | Minimum score delta to keep iterating |
 
@@ -84,7 +84,7 @@ contested major flags (non-configurable).
 - Treat composite deltas as noisy when different scorer instances run across
   iterations: a few points of swing is judge variance, not real change. Anchor
   keep/revert decisions on the structural gate, on whether the specific targeted
-  weakness was fixed, and on cross-model NO_FLAGS - not on small composite moves.
+  weakness was fixed, and on peer-review NO_FLAGS - not on small composite moves.
   Use a consistent scoring approach within a single before/after comparison.
 - Leave externally-maintained version, CVE, and EOL pins out of scope. When a
   collection has a freshness routine (or equivalent) that owns version currency,
@@ -117,17 +117,21 @@ contested major flags (non-configurable).
    (don't re-attempt improvements that were already tried and reverted in a recent run).
 3. **Build skill inventory**: list all skills, exclude phase-2 targets (skill-creator,
    skill-refiner) from the improvement pool
-4. **Detect primary harness**: check environment to identify which AI CLI is running
-   this session
+4. **Record evaluator identity**: capture actual provider, resolved model, effective effort,
+   harness and version for primary and reviewer evaluations, with redacted runtime/config
+   evidence per `references/harness-detection.md`. Record unavailable fields as unknown;
+   requested flags and skill effort metadata do not prove effective runtime settings.
 5. **Probe for secondary harness**: run three-step validation (PATH check, config check,
    smoke test) per `references/harness-detection.md`. Announce result.
    Before sending a review payload, classify the source as public, private, or sensitive and
    verify that the user authorized sharing it with that harness/provider.
 6. **If no authorized secondary is available**: **always fall back to self-review.** Spawn a fresh agent on
    the current harness with the review prompt template from `references/harness-detection.md`.
-   Label as "same-model fresh-context review" in scoring, weight at 3% instead of 5%
+   Label as "same-model fresh-context review" only when identity is verified; otherwise use
+   "unknown-model fresh-context review". Both weight at 3% instead of 5%
    (composite becomes gate/40/55/3, renormalize the missing 2% proportionally to AI Self-Check
-   and Behavioral). This catches confirmation bias but shares the primary model's blind spots.
+   and Behavioral). Only a verified distinct model receives 5%, including on the same harness.
+   Different harnesses alone do not establish model diversity.
    Skipping review entirely is not an option - a fresh-context self-review is the minimum bar.
    If the harness doesn't support subagents, run the review prompt as a separate CLI
    invocation (`claude -p`, `codex exec`, `gemini -p`, etc.).
@@ -147,7 +151,8 @@ contested major flags (non-configurable).
 8. **Log baseline scores**: record per-skill and aggregate scores
    in a score ledger before any edits. The ledger must include structural gate (G),
    AI Self-Check (A), behavioral score (B), cross-model review (X), composite score,
-   test source, reviewer source, and timestamp. After this step, if the ledger is
+   test source, evaluator identity and evidence for each evaluation, reviewer classification
+   and applied weight, and timestamp. After this step, if the ledger is
    missing, incomplete, or only records lint/spec status, pause and backfill scoring before
    applying changes. In headless mode, halt the run and report the missing score data.
 9. **Iteration 2+**: enter adaptive focus mode. For a user-requested single-skill run,
@@ -161,12 +166,13 @@ contested major flags (non-configurable).
     c. Run behavioral test - score current output quality
     d. Propose targeted improvements based on findings (not random changes)
     e. Apply changes to SKILL.md (and references if needed)
-    f. Re-score: run lint + AI Self-Check + behavioral test
-    g. **Karpathy gate**: if score improved, keep. If not, revert. No exceptions.
-    h. If an authorized cross-model reviewer is available, send the minimum necessary diff
-    i. Process flags per `references/harness-detection.md` verification protocol
-    j. If secondary flags major issue and primary agrees: revert
-    k. If secondary flags major issue and primary disagrees: escalate to circuit breaker
+    f. Re-score structural, AI Self-Check, and behavioral components; keep the change provisional
+    g. Send the minimum necessary diff to an authorized peer reviewer or the fresh local fallback
+    h. Process flags per `references/harness-detection.md` verification protocol
+    i. If secondary flags major issue and primary agrees: revert
+    j. If secondary flags major issue and primary disagrees: escalate to circuit breaker
+    k. **Karpathy gate**: compute the final composite including verified peer-review deductions
+       and the applicable 5% or 3% weight. Keep only if it improved; otherwise revert.
 12. **Commit iteration**: one commit with all improvements from this iteration
     Format: `refactor(skill-refiner): iteration N - skill1(+X), skill2(+Y)`
 13. **Log iteration summary**:
@@ -229,8 +235,11 @@ contested major flags (non-configurable).
     ```
     === skill-refiner run complete ===================================
     Branch:     skill-refiner/YYYY-MM-DD-HHMMSS
-    Primary:    <harness> <version> (<model>, effort: <level>)
-    Secondary:  <harness> <version> (<model>, effort: <level>) | none
+    Primary:    <harness> <version> (<provider>/<resolved model>, effective effort: <level>)
+    Secondary:  <same identity fields> | none (baseline only)
+    Evidence:   <redacted runtime/config references; unknown fields and reasons>
+    Review:     <verified cross-model | same-model | unknown-model>, weight: <5% | 3%>
+                <baseline: no diff, review omitted>
     Pool:       N skills (skill-creator, skill-refiner excluded)
     Config:     iterations=M, threshold=T, mode=MODE, plateau=P
 
@@ -250,8 +259,10 @@ contested major flags (non-configurable).
     =================================================================
     ```
 24. **Write run history**: append this run's metadata to `.refiner-runs.json` at the
-    repository root, the same file read in Phase 0 step 2. Include: run_id, branch, date, primary/secondary harness+model+effort,
-    config, pool size, termination reason, cross-model flag counts, before/after per-skill
+    repository root, the same file read in Phase 0 step 2. Include: run_id, branch, date,
+    primary/secondary provider+resolved model+effective effort+harness+version and redacted
+    runtime/config evidence per evaluation, reviewer classification and applied weight, config,
+    pool size, termination reason, peer-review flag counts, before/after per-skill
     scores (component breakdown + composite, or clearly labeled estimates if the run used a
     targeted manual rubric instead of the full automated sweep), and a changes summary. When
     updating an existing history file, append the new object without reserializing the whole
@@ -278,6 +289,8 @@ Before committing any skill modification, verify:
 - [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
 - [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
 - [ ] **Score discipline kept**: changes are kept only when they improve measured quality or fix a verified defect
+- [ ] **Reviewer identity verified**: weight is 5% only for verified distinct models; same or
+  unknown model identity uses fresh context at 3%, with runtime/config evidence recorded
 - [ ] **Score ledger present**: baseline, iteration, and final component scores exist before reporting completion
 - [ ] **Canonical test coverage complete**: phase 2 compares public skill directories with the
   canonical test headings and leaves no missing, duplicate, or orphan skill section

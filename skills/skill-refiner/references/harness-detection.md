@@ -72,8 +72,9 @@ If no match, error, or timeout, skip to next harness.
 6. goose
 ```
 
-The primary harness (the one running the current session) is always excluded from
-secondary selection.
+The primary harness may also host the reviewer in a fresh invocation or agent context.
+Do not exclude it when a distinct model is available, or infer model diversity from a
+different harness. Classify the actual resolved model identities before assigning weight.
 
 ### Detecting the Primary Harness
 
@@ -82,14 +83,37 @@ Check in order (env var names are approximate - verify against current CLI versi
 2. Parent process name contains `codex` - primary is codex
 3. Gemini CLI env var (e.g., `GEMINI_CLI` or session marker) or parent process name contains `gemini` - primary is gemini
 4. OpenCode env var (e.g., `OPENCODE_SESSION` or similar) - primary is opencode
-5. If ambiguous, prompt user once at run start
+5. If ambiguous, record the harness as unknown and inspect available runtime metadata;
+   ask only if the missing fact blocks an authorized invocation
 
-### Multi-Model Harnesses
+### Evaluator Identity and Evidence
 
-When the detected secondary harness supports multiple models (OpenCode, Aider):
-1. Prompt user once: "Which model should be the secondary reviewer?"
-2. Store selection for the run duration
-3. Pass model selection via the harness's native flag (e.g., `--model <model>`)
+For every primary evaluation and peer review, record provider, resolved model ID, effective
+reasoning effort, harness name and version, and a redacted evidence reference. Use session or
+invocation metadata and the effective config/override source. Record requested settings
+separately when they differ from actual settings. Do not copy credentials or private endpoints.
+
+A CLI binary, role name, skill `metadata.effort`, requested flag, default config, or model's
+self-description alone does not prove which model or effort executed. If resolution or override
+precedence cannot be verified, mark the field unknown with a reason; use `not applicable` only
+when evidence establishes that the setting is unsupported. Keep evidence linked to the specific
+evaluation so later config changes cannot rewrite its identity.
+
+| Verified identity | Review classification | Weight |
+|---|---|---|
+| Distinct resolved models, on the same or different harness | verified cross-model | 5% |
+| Same resolved model, even through different providers or harnesses | same-model fresh-context | 3% |
+| Either model identity unknown, or alias equivalence unresolved | unknown-model fresh-context | 3% |
+
+Provider, harness, or effort differences alone do not establish distinct models. Use a fresh
+context for all reviewers. For 3% reviews, redistribute the missing 2% proportionally across
+AI Self-Check and Behavioral per `references/evaluation-criteria.md`.
+
+For multi-model harnesses, honor an explicit user selection or use an authorized configured
+reviewer. Verify current model-selection syntax before invoking it, then capture the resolved
+runtime identity. An optional preference question must not block independent setup work;
+proceed with a stated authorized default if no answer arrives. Never treat missing export
+authorization as an optional preference.
 
 ---
 
@@ -106,7 +130,8 @@ skill-refiner --secondary codex
 ```
 
 CLI flag takes precedence over env var. Both skip auto-detection entirely.
-Setting `--secondary none` explicitly disables cross-model review.
+Setting `--secondary none` disables secondary selection; fresh local peer review at 3%
+remains mandatory after the baseline.
 
 ---
 
@@ -124,7 +149,8 @@ that authorization, do not send the payload. Use the fresh local-reviewer fallba
 text-only review output. If the secondary returns tool output instead of a
 NO_FLAGS/MINOR_FLAG/MAJOR_FLAG response, fall back to self-review: spawn a fresh agent
 on the primary harness with the review prompt template (see Phase 0, Step 6 in SKILL.md).
-Weight self-review at 3% instead of 5% (composite becomes gate/40/55/3, renormalize the
+Classify the fallback as same-model or unknown-model fresh-context review using its evidence.
+Weight it at 3% instead of 5% (composite becomes gate/40/55/3, renormalize the
 missing 2% proportionally across AI Self-Check and Behavioral).
 
 **Peer review is mandatory.** Probe the secondary first, then run the privacy/authorization

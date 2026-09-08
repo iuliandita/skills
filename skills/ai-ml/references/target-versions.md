@@ -26,6 +26,29 @@ API-available. Do not append a dated suffix to Claude 4.6+ IDs - the bare ID is 
 guessed suffix like `claude-sonnet-4-6-20250514` is invalid (that date belonged to the original
 Sonnet 4) and returns a 404.
 
+## Astra migration
+
+Checked 2026-09-08 against the [official migration guide](https://developers.openai.com/api/docs/guides/latest-model).
+This compatibility check does not refresh the other provider or SDK pins above or below.
+
+- Use Responses for tool calls; Astra's Chat Completions support does not include tools.
+- Remove `temperature`, `top_p`, `top_logprobs`, and logprob requests. In Responses, remove
+  `message.output_text.logprobs` from `include`; in Chat Completions, remove `logprobs`.
+- When migrating from `none` or `minimal` reasoning, start at `low`; otherwise preserve the
+  effective effort for the baseline comparison. Tune effort using task results, not model names.
+- Map request and result shapes when moving to Responses: `input`, `max_output_tokens`, and
+  `output_text` replace the simple chat example's message, budget, and result access patterns.
+- For migrations from GPT-5.5 or earlier, review caching changes, including replacement of
+  `prompt_cache_retention` by `prompt_cache_options.ttl` with `"30m"`.
+- Verify account access and processing-tier compatibility before rollout. EU data residency
+  requires Standard processing for Astra; retain a compatible fallback for unavailable accounts.
+
+Start with the [Responses example](llm-patterns.md#openai-responses-python). Validate tool
+schemas and preserve response output items, including reasoning items, when returning tool
+results. Follow the [function-calling guide](https://developers.openai.com/api/docs/guides/function-calling)
+for the complete loop. Async tools, mid-turn steering, and effort updates are optional designs;
+adopt them only when the application can manage pending results and continuation state.
+
 ## SDKs, runtimes, and tooling
 
 | Component | Version | Notes |

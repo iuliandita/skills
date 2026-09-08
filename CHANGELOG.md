@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.45.3](https://github.com/iuliandita/skills/compare/v1.45.2...v1.45.3) (2026-09-08)
+
+### Bug Fixes
+
+* **skills:** honor authorized local edits, keep reviews read-only, and scale reporting and verification to the task ([#132](https://github.com/iuliandita/skills/issues/132)).
+* **ai-ml:** document model migration constraints and provide a Responses API example.
+* **skill-refiner:** verify reviewer model identity, apply review deductions before keeping changes, and expand behavioral coverage.
+
 ## [1.45.2](https://github.com/iuliandita/skills/compare/v1.45.1...v1.45.2) (2026-09-04)
 
 

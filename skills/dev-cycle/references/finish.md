@@ -83,13 +83,14 @@ Determine the base branch from the PR target if one exists, else from `origin/HE
 
 ## Step B2 details: Lint, type, test
 
-### Delegate to the testing skill
+### Use the testing skill
 
 Prefer this over a hand-rolled invocation:
 
-> "Invoke the **testing** skill via the Skill tool. Run the repo's full lint, type, and test suites. Report pass/fail with evidence. Do not silence failures or rerun with exclusions."
+> "Use the **testing** skill. Run checks appropriate to the changed behavior and every required repository gate. Report pass/fail with evidence. Do not silence failures or rerun with exclusions. Expand or repeat passing checks only for new changes, failures, or unresolved concerns."
 
-If the testing skill isn't available, detect the toolchain and run manually.
+Delegate execution only when the workload benefits from a separate worker. If the testing
+skill isn't available, detect the toolchain and run manually.
 
 ### Toolchain detection + commands
 
@@ -114,7 +115,7 @@ Check in order - first match wins. If no language manifest matches, **keep going
 | `scripts/` dir with executable bash/python | Look for `lint`, `test`, `check`, `ci`, `validate`, `verify` in filenames. Run found scripts. |
 | `bin/` dir with executable scripts | Same pattern as `scripts/` |
 | Nx / Turbo monorepo | `nx run-many -t lint test` or `turbo run lint test` |
-| **No detectable toolchain** | **Stop and ask the user**: "I can't detect a lint/test convention in this repo. How should I verify the change? Options: (a) run a specific command you'll provide, (b) skip verification with explicit acknowledgement, (c) abort finish-mode." Do NOT silently proceed - a finish report with no actual verification is a false green. |
+| **No detectable toolchain** | Report verification as unresolved. Use a suitable parser or direct artifact check if available, complete independent authorized preparation, then ask for the missing verification command before merge or release. Do not claim an undetected suite passed or silently waive required checks. |
 
 ### Detection heuristic
 
@@ -127,7 +128,7 @@ find scripts bin -maxdepth 2 -type f -executable 2>/dev/null | \
 grep -Ei '^\s*(\$ )?(bash |sh )?\./?(scripts|bin)/[a-z-]+\.sh' README.md CONTRIBUTING.md 2>/dev/null
 ```
 
-If this returns nothing useful AND no language manifest matched, hit the "No detectable toolchain" row - ask the user, don't guess.
+If this returns nothing useful AND no language manifest matched, follow the "No detectable toolchain" row. Keep verification unresolved while completing independent preparation; do not invent a test command.
 
 ### Inspect output, don't infer
 
@@ -146,16 +147,20 @@ Common traps:
 - Exit 0 with skipped suites - check what was skipped and why.
 - Flaky tests - rerun identical commit to confirm. Don't retry until green.
 
-### Red = stop
+### Failed checks block merge and release
 
-If anything is red, stop the workflow. Fix the root cause. Do not:
+Diagnose whether a failed required check comes from this change or the baseline. Fix in-scope
+failures and re-run affected checks. Complete independent authorized documentation and review
+preparation while the release gate remains blocked. Do not:
 
 - Use `--no-verify`
 - Add `skip` / `xit` / `pytest.mark.skip` to make tests pass
 - Commit with "will fix later"
 - Merge and file a follow-up ticket
 
-If the failure is outside the branch's scope (pre-existing breakage), stop and ask the user how to proceed.
+If the failure is outside the branch's scope, record evidence and report who needs to resolve
+it. Do not silently repair unrelated code. Ask only when the next dependent action requires
+user input; preserve the failed-check status in the handoff and do not merge or release.
 
 ---
 
@@ -777,7 +782,7 @@ Never force-push to the base branch. Never delete a published tag.
 
 | Failure | Recovery |
 |---------|----------|
-| Tests red after Step B2 | Fix root cause, return to B2. Do not proceed. |
+| Tests red after Step B2 | Block merge/release; fix in-scope failures and re-run affected checks. Report baseline failures and complete independent authorized preparation. |
 | CI red in Step B6 | Read logs, fix, push. Return to B6. |
 | PR feedback requires refactor | Loop back to B2 (tests), B4 (review) after changes. |
 | Merge conflict at B7 | Rebase onto latest base, resolve, push, return to B6 (CI rerun). |

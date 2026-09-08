@@ -54,20 +54,29 @@ const response = await client.messages.create({
 console.log(response.content[0].type === "text" ? response.content[0].text : "");
 ```
 
-### OpenAI (Python)
+### OpenAI Responses (Python)
 
 ```python
 from openai import OpenAI
 
 client = OpenAI()  # reads OPENAI_API_KEY
 
-response = client.chat.completions.create(
-    model="gpt-5.5",
-    messages=[{"role": "user", "content": "Hello"}],
-    max_tokens=1024,
+response = client.responses.create(
+    model="gpt-6-astra",
+    input="Explain why a queue needs a retry limit in one sentence.",
+    reasoning={"effort": "low"},
+    max_output_tokens=4096,
 )
-print(response.choices[0].message.content)
+if response.status != "completed":
+    raise RuntimeError(f"Response did not complete: {response.status}")
+print(response.output_text)
 ```
+
+Use `AsyncOpenAI` and await requests in async handlers. The output budget includes reasoning;
+handle incomplete responses rather than treating empty text as success. See the
+[Astra migration checklist](target-versions.md#astra-migration) before adapting older examples.
+The GPT-5.5 Chat Completions examples below illustrate that API; replacing their model ID
+alone is not an Astra migration, especially when adding tools.
 
 ### Vercel AI SDK (TypeScript)
 

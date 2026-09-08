@@ -104,16 +104,18 @@ Most of the time, skip this step entirely.
    - **Reusable template**: include a variables table and stable `{{VARIABLE_NAME}}` placeholders.
    - **Evaluator prompt**: define rubric dimensions, pass/fail threshold, failure examples, and required evidence.
    - **Delegation prompt**: define task, ownership, files in scope, files out of scope, allowed edits, and output contract.
-2. **Present the prompt in conversation for review. Don't write files yet.**
-3. On approval, save to file (see Output Format below).
+2. For an inline draft or review request, present the prompt in conversation without writing files.
+3. If the user requested creating, saving, or editing a local file, complete that write using
+   the existing authorization. Otherwise, save only after the user asks to save the draft.
 4. Revisions: edit in place, don't create new files.
 
 ### Step 4: Save
 
-1. Resolve output directory: user-specified path > `docs/local/prompts/` > `docs/` > ask
-2. Scan for `NNN-*.md` files, increment highest number, zero-pad to 3 digits
-3. Infer a slug from the topic (e.g., `code-review`, `data-extraction`)
-4. Write to `<output-dir>/NNN-slug.md`
+1. Use an exact user-specified filename unchanged. Otherwise resolve output directory:
+   user-specified directory > `docs/local/prompts/` > `docs/` > ask
+2. Only when no filename was specified, scan for `NNN-*.md` files, increment the highest
+   number, zero-pad to 3 digits, and infer a topic slug (e.g., `code-review`).
+3. Write to the specified filename or the resolved `<output-dir>/NNN-slug.md`.
 
 ---
 
@@ -214,8 +216,8 @@ If the user gives you an existing prompt to improve (not rough notes):
    - **Vague role**: "helpful assistant" tells the model nothing useful
    - **Missing constraints**: no anti-patterns, no "do not" list, no quality criteria
    - **Over-specified**: drowning the model in rules when 2-3 clear constraints would work
-3. Present specific changes with reasoning - not a full rewrite unless it's warranted
-4. On approval, edit in place
+3. For review-only requests, present specific changes with reasoning without editing.
+4. For an authorized refinement of a local file, edit in place and summarize the changes.
 
 **Example refinement:**
 
@@ -281,7 +283,9 @@ See `references/output-contract.md` for the full contract.
 ## Rules
 
 1. **Faithful structuring.** Preserve the user's facts and intent. If output structure is unstated, infer only the minimum structure made necessary by the stated downstream use; when that choice could change semantics or no use makes it evident, ask or leave it open. During refinement, flag a missing output contract when it prevents reliable evaluation.
-2. **Never write files without approval.** Always present in conversation first.
+2. **Honor existing authorization.** A request to create, save, or edit a local prompt file
+   authorizes that write. Inline drafts and reviews stay in conversation. Follow the user's
+   explicit instructions over this skill's defaults; retain approval for destructive or external actions.
 3. **Scale structure to complexity.** Simple = lean. Complex = structured. Never the reverse.
 4. **Respect their voice.** If the rough notes have a specific tone or personality, preserve it in the structured version.
 5. **Run the AI Self-Check.** Every generated prompt file gets verified against the checklist before returning.
