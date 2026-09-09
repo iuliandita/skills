@@ -2,7 +2,11 @@
 
 Both themes are first-class. Neither is auto-derived from the other. Both are designed - colors picked, contrast checked, semantic tokens defined - then implemented as CSS custom properties with a `[data-theme]` selector for explicit toggle and `prefers-color-scheme` for default.
 
-The persona refuses to ship a theme that's only `filter: invert()` or only auto-generated from the other.
+Apply this reference when theme implementation is in scope. Preserve the project's supported
+themes; a single-theme campaign or a scoped component fix does not require adding a toggle.
+The palette and fonts below illustrate token structure, not a default visual identity. Choose
+values from the brief and verify each actual text/surface combination before reuse.
+Do not create an alternate theme solely with `filter: invert()` without inspecting the result.
 
 ---
 
@@ -224,9 +228,9 @@ Always include `<meta name="color-scheme" content="light dark">` so native form 
 
 ---
 
-## Common mistakes the persona refuses
+## Common mistakes when implementing theme support
 
-1. **Single theme, "we'll add light later"** - both themes ship together or neither ships. "Later" never happens.
+1. **Missing a required theme** - implement and inspect every theme in the agreed scope.
 2. **`filter: invert()` for dark mode** - colors become wrong; images break; brand identity disappears.
 3. **`@media (prefers-color-scheme: dark)` only, no toggle** - users on browsers that lie about preference can't override.
 4. **Toggle that flashes** - missing inline init script.

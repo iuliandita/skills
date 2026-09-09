@@ -1,8 +1,13 @@
 # AI Design Tells: The Catalogue
 
-The patterns AI tools reach for by default. They are not "wrong"; they are exhausted. Every product looks the same when everyone's tools default to the same shapes. The persona refuses these in build mode and names them in critique mode.
+Use this catalogue to question unexamined defaults, not to ban visual styles. A pattern is a
+problem when it obscures the task, conflicts with the brief, or substitutes generic decoration
+for meaningful content. Explicit user direction and existing brand conventions take precedence.
 
-Each entry has: the tell, why it's a tell, and the specific replacement.
+Each entry offers a possible alternative. Test whether it fits the actual content; do not apply
+all replacements together as a new template. Cream-and-serif editorial pages, neon-on-black
+technical pages, and border-heavy asymmetry can become defaults too. Keep a pattern when it
+serves the brief and works well. A familiar font, palette, or layout is not itself a defect.
 
 ---
 
@@ -40,7 +45,7 @@ Each entry has: the tell, why it's a tell, and the specific replacement.
 
 **Tell.** Icon + heading + 12-word description, repeated three times in a grid. Almost always the second section after the hero.
 
-**Why.** It's the default Tailwind UI / Vercel template / shadcn-landing layout. Means nothing. Skipped by every reader.
+**Why.** Repeated generic claims can hide what the product actually does. A grid is useful when the items genuinely need comparison.
 
 **Replacement.** One feature, shown working. A loop of the actual product, or a single annotated screenshot, beats nine words about three abstract benefits.
 
@@ -48,9 +53,9 @@ Each entry has: the tell, why it's a tell, and the specific replacement.
 
 **Tell.** Centered headline ("Build [noun] [adverb]."), centered subheading, two buttons (one primary solid, one ghost), then a tilted browser-frame screenshot. Often gradient background.
 
-**Why.** It's the literal default template across landing-page generators. Recognizable as AI-generated within 200ms.
+**Why.** This combination can appear without regard for the content. Check whether both actions and the screenshot help the audience understand the product.
 
-**Replacement.** Off-center. Asymmetric. One CTA. Real screenshot at full opacity (not faked, not in a tilted frame). Or a live demo embedded in place of the screenshot.
+**Replacement.** Let the content determine alignment and the number of actions. A real screenshot or live demo may explain the product; a centered headline may be right for a short, focused message.
 
 ### 4. Auto-dashboard
 
@@ -86,7 +91,7 @@ Each entry has: the tell, why it's a tell, and the specific replacement.
 
 **Why.** It's the literal default of the "warm UI" trend. Indistinguishable across products.
 
-**Replacement.** Pick a real palette. Cool-and-clinical (zinc + cyan accent), warm-and-editorial (cream + ink + one bold accent), high-contrast (true black + true white + one neon), etc. Variety beats safety.
+**Replacement.** Choose surface, text, accent, and state roles from the brand and content. Keep a soft palette when it fits; verify contrast and avoid substituting another category-based palette by reflex.
 
 ### 8. Tailwind default indigo as accent
 
@@ -102,7 +107,7 @@ Each entry has: the tell, why it's a tell, and the specific replacement.
 
 **Why.** Same purple-pink problem, plus illegibility on busy backgrounds, plus poor contrast checking.
 
-**Replacement.** Solid color. If you want emphasis, use weight, size, or one accent word in a different color, not gradient.
+**Replacement.** Check hierarchy and contrast first. A solid treatment may be clearer; do not automatically accent one word as a substitute. Keep a requested gradient when text remains legible across it.
 
 ---
 
@@ -128,9 +133,9 @@ Each entry has: the tell, why it's a tell, and the specific replacement.
 
 **Tell.** Loading state with a sweeping rainbow gradient or sparkle animation, regardless of whether AI is involved.
 
-**Why.** AI shimmer is a context cue: "this is an LLM thinking". On a normal data fetch, it's a lie.
+**Why.** An elaborate loading effect can distract or imply behavior the surrounding copy does not support. Animation alone does not establish whether a feature uses AI.
 
-**Replacement.** Skeleton loaders for content shape, spinner for unknown duration, progress bar for known duration. No sparkles unless an LLM is actually generating.
+**Replacement.** Match feedback to the wait: skeleton for a known content shape, spinner for unknown duration, progress bar for measurable progress. Keep descriptions accurate and motion restrained.
 
 ### 12.5. shadcn default stack
 
@@ -161,7 +166,7 @@ state treatment around the actual domain.
 
 **Why.** Cute on a personal blog. In product UI, it's a tell that someone ran out of ideas.
 
-**Replacement.** Type-set headings. If you must mark sections, use a glyph from the brand's icon family or a numbered prefix.
+**Replacement.** Use clear headings. Add a meaningful icon only when it aids scanning; number sections only when sequence or reference matters.
 
 ### 15. Stock 3D blobby figures
 
@@ -233,11 +238,11 @@ state treatment around the actual domain.
 
 ### 22. Inter / Geist / Space Grotesk on every product
 
-**Tell.** Default sans-serif on body and heading. No display font. No personality.
+**Tell.** The same font treatment is reused without considering the content, language support, or existing brand.
 
-**Why.** Inter and Geist are good fonts but become invisible because everything uses them.
+**Why.** Font selection alone does not establish hierarchy. A familiar family can work well with deliberate size, weight, spacing, and line length.
 
-**Replacement.** Pair a distinctive display font (custom, foundry, or carefully picked free font) with a refined body font. Or use a single variable font that supports a wide weight axis. Pixel/bitmap fonts are first-class for technical UIs.
+**Replacement.** Define text roles and test them with real copy. Keep an existing brand family; add another only when it contributes a necessary distinction. Check availability, loading cost, and glyph coverage.
 
 ### 23. Same weight everywhere
 
@@ -257,15 +262,17 @@ state treatment around the actual domain.
 
 ---
 
-## Critique mode: pattern-naming dictionary
+## Critique mode: establish impact
 
-When critiquing, name the pattern explicitly so the team knows what the persona is talking about. Use the names from this catalogue. "This hero is a centered-hero-with-two-buttons" is more useful than "the hero feels generic".
+Describe the visible problem, where it occurs, and how it affects the user's task or the brief.
+Pattern names may help explain a finding, but they are not evidence of failure by themselves.
+Do not make a release-blocking ticket solely because a design uses indigo, cards, or a standard
+font. Keep successful conventions and separate optional aesthetic alternatives from defects.
 
-## Build mode: refusal vs override
+## Build mode: respect direction
 
-When the user asks for a hard-hate pattern, the persona pushes back once with the alternative from this file, then:
-
-- **Refuses** if the request would ship something dishonest (fake "trusted by" logos, dark-pattern modals, AI shimmer on non-AI features). Persona explains why.
-- **Complies** if the request is legitimate but unfashionable (user genuinely wants a card grid; there is a real reason). Ships clean code without disclaimers in comments.
-
-The line: dishonest patterns are refused; tasteless-but-honest patterns are shipped on user override.
+Follow legitimate style requests without requiring the user to overrule this catalogue.
+Explain a specific accessibility or usability tradeoff when one exists, then solve it while
+preserving the requested direction where possible. Never fabricate endorsements, customer
+relationships, or product capabilities. Correct misleading content without treating a visual
+style or animation as inherently dishonest.

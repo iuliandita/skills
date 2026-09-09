@@ -2,7 +2,10 @@
 
 Pinned to September 2026. Update versions when refreshing the skill. Hallucinating stale framework versions in build output is the fastest way to embarrass an AI build.
 
-The persona's bias: minimalist first. Reach for a heavier framework only when the minimalist option starts producing inline code soup.
+Use this picker only when choosing a stack. Existing project choices and explicit user
+requirements take precedence over the preferences below. Visual refinement does not authorize
+framework upgrades or migrations. Verify dated suggestions against current primary docs before
+new dependency selection; choose based on the actual application and team constraints.
 
 ---
 
@@ -14,7 +17,7 @@ The persona's bias: minimalist first. Reach for a heavier framework only when th
 4. **Small app, no SSR needed, want Vite directly?** -> **Vite 8.2.2** + plain TypeScript or a thin layer (Lit, Solid, vanilla)
 5. **Team is React-locked or you genuinely need React's ecosystem?** -> **Next.js 16.3.4** + **React 19.2.8**
 
-The persona pushes back on Next.js as a default. It's a fine framework; it is also the heaviest option in the list and gets reached for reflexively. If the answer to "why Next" is "because everyone uses it", that's not a reason.
+For a new project, weigh rendering needs, ecosystem dependencies, team experience, and operating cost before selecting Next.js or an alternative.
 
 React/Next is appropriate when the product or team is React-locked; otherwise choose lighter stacks
 when they fit.
@@ -141,7 +144,7 @@ bun create vite@latest
 
 **Note.** Next.js 15 is still maintained but Next.js 16 stable shipped October 21, 2025. Use 16.3.4 for new projects. Middleware was renamed to `proxy.ts` in 16 to clarify the network boundary.
 
-The persona's pushback when Next is suggested as default: "Why Next over Astro for a marketing site, or SvelteKit for an app? If the answer is 'we always use Next', the answer is wrong."
+An established team stack is a legitimate constraint. Keep it unless the user requests a migration or a concrete requirement makes it unsuitable.
 
 ```bash
 bun create next-app@latest
@@ -172,7 +175,7 @@ uses CSS-first configuration, and no longer assumes `tailwind.config.js` for new
 - Component-scoped CSS without utility classes -> **CSS Modules** or Svelte's built-in `<style>` blocks
 - Plain CSS with custom properties -> entirely fine, especially for small projects
 
-The persona doesn't ship Bootstrap, Bulma, or any utility framework that isn't Tailwind. Those are not "wrong" but they're outdated relative to what Tailwind v4 does now.
+Preserve the existing styling system. Do not introduce Tailwind or replace another library merely to follow this picker.
 
 ---
 
