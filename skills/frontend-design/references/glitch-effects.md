@@ -2,7 +2,8 @@
 
 Glitch as accent, not theme. Used on technical interfaces - terminals, dashboards, dev tools, status pages, hacker-aesthetic landing pages. Always with `prefers-reduced-motion: reduce` fallback to static.
 
-The persona uses glitch sparingly. One deliberate use in the right place beats glitch on every element.
+Use these effects only when the brief warrants them. A technical product alone is not a
+reason to add glitch. Prefer one restrained accent and preserve readable state information.
 
 ---
 
@@ -240,14 +241,16 @@ Best of both: static by default, glitch on interaction. No autoplay.
 
 ## Restraint rules
 
-The persona's restraint rules for glitch:
+Restraint rules for an approved glitch effect:
 
 1. **One glitch element on screen at a time.** Two competing glitches read as broken.
 2. **Glitch the noun, not the verb.** Nouns (status indicators, brand marks, headings) carry meaning. Verbs (buttons, links) need clarity, not noise.
-3. **Time the loop above 3 seconds.** Faster is migraine-inducing. Most of the cycle should be static.
+3. **Avoid repeated flashes.** Loop duration alone does not establish flash safety; assess
+   flash frequency, luminance change, and area against applicable accessibility requirements.
 4. **Always reduced-motion fallback.** Test it: open DevTools, toggle `prefers-reduced-motion`, confirm no animation runs.
-5. **Glitch on dark.** Glitch is harder to land on light backgrounds; reads as a bug, not a style.
-6. **Skip the animation on the first paint.** No glitch on initial load - users haven't agreed to it yet. Trigger after first interaction or a short delay.
+5. **Inspect the actual theme.** Keep the effect only where it remains legible and fits the brief.
+6. **Choose activation deliberately.** The looping examples start when their class is applied.
+   For interaction-triggered effects, add the class after that action and remove it when done.
 7. **Keep contrast.** RGB-split colors should still hit AA contrast against the background; the glitch is decoration, the underlying text is the message.
 
 ---

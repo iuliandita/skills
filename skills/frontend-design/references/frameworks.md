@@ -2,7 +2,10 @@
 
 Pinned to September 2026. Update versions when refreshing the skill. Hallucinating stale framework versions in build output is the fastest way to embarrass an AI build.
 
-The persona's bias: minimalist first. Reach for a heavier framework only when the minimalist option starts producing inline code soup.
+Use this picker only when choosing a stack. Existing project choices and explicit user
+requirements take precedence over the preferences below. Visual refinement does not authorize
+framework upgrades or migrations. Verify dated suggestions against current primary docs before
+new dependency selection; choose based on the actual application and team constraints.
 
 ---
 
@@ -12,12 +15,12 @@ The persona's bias: minimalist first. Reach for a heavier framework only when th
 2. **Static content, marketing site, blog, docs?** -> **Astro 7.3.1**
 3. **Interactive app, bundle size matters, you want runes?** -> **SvelteKit 2.70.3** + Svelte 5.57.0
 4. **Small app, no SSR needed, want Vite directly?** -> **Vite 8.2.2** + plain TypeScript or a thin layer (Lit, Solid, vanilla)
-5. **Team is React-locked or you genuinely need React's ecosystem?** -> **Next.js 16.3.4** + **React 19.2.8**
+5. **React ecosystem, rendering needs, or team familiarity fit the product?** -> **Next.js 16.3.4** + **React 19.2.8**
 
-The persona pushes back on Next.js as a default. It's a fine framework; it is also the heaviest option in the list and gets reached for reflexively. If the answer to "why Next" is "because everyone uses it", that's not a reason.
+For a new project, weigh rendering needs, ecosystem dependencies, team experience, and operating cost before selecting Next.js or an alternative.
 
-React/Next is appropriate when the product or team is React-locked; otherwise choose lighter stacks
-when they fit.
+React/Next is appropriate when its ecosystem, rendering model, or team familiarity fits the
+product. Compare alternatives against concrete requirements rather than a fixed ranking.
 
 ---
 
@@ -120,7 +123,8 @@ bun create vite@latest
 
 ## Next.js 16.3.4 + React 19.2.8
 
-**When.** Team is React-locked, ecosystem dependencies (specific React libraries with no equivalent), or app needs Server Components and Server Actions for a specific reason.
+**When.** React ecosystem dependencies, team familiarity, or a need for Server Components
+and Server Actions make it a suitable fit.
 
 **Why.** It works. It has the largest ecosystem. It's the default when "the team already knows React" outweighs everything else.
 
@@ -134,14 +138,14 @@ bun create vite@latest
 
 **When NOT.**
 
-- "Because everyone uses it" - not a reason
+- Familiarity alone does not resolve a concrete mismatch with the product requirements
 - Static content site (Astro is faster, ships less JS)
 - You want explicit reactivity (Svelte 5 runes are clearer)
 - Bundle size matters (Next is the heaviest in this list)
 
 **Note.** Next.js 15 is still maintained but Next.js 16 stable shipped October 21, 2025. Use 16.3.4 for new projects. Middleware was renamed to `proxy.ts` in 16 to clarify the network boundary.
 
-The persona's pushback when Next is suggested as default: "Why Next over Astro for a marketing site, or SvelteKit for an app? If the answer is 'we always use Next', the answer is wrong."
+An established team stack is a legitimate constraint. Keep it unless the user requests a migration or a concrete requirement makes it unsuitable.
 
 ```bash
 bun create next-app@latest
@@ -149,9 +153,10 @@ bun create next-app@latest
 
 ---
 
-## Styling: Tailwind v4 by default
+## Styling when Tailwind is selected
 
-**Tailwind CSS v4.3.3** is the default styling layer.
+**Tailwind CSS v4.3.3** is an option when utility classes suit the project. Existing CSS,
+component-scoped styles, and other established libraries are equally valid constraints.
 
 **Why this version matters.** v4 rewrote the engine (Oxide, with Lightning CSS for parsing),
 uses CSS-first configuration, and no longer assumes `tailwind.config.js` for new projects.
@@ -172,7 +177,7 @@ uses CSS-first configuration, and no longer assumes `tailwind.config.js` for new
 - Component-scoped CSS without utility classes -> **CSS Modules** or Svelte's built-in `<style>` blocks
 - Plain CSS with custom properties -> entirely fine, especially for small projects
 
-The persona doesn't ship Bootstrap, Bulma, or any utility framework that isn't Tailwind. Those are not "wrong" but they're outdated relative to what Tailwind v4 does now.
+Preserve the existing styling system. Do not introduce Tailwind or replace another library merely to follow this picker.
 
 ---
 
@@ -236,13 +241,13 @@ If the build fails, ship the fix, not the failure. AI builds love to ship code t
 
 ---
 
-## What NOT to suggest
+## Compatibility and selection cautions
 
 - **Create React App** - deprecated, replaced by Vite + React or Next
 - **Gatsby** - Astro replaced its niche; not actively recommended
 - **Vue 2** - end-of-life since December 2023
-- **Angular** - not on the persona's default list; only when team is Angular-locked
+- **Angular** - consider team experience, existing components, and application requirements
 - **jQuery** - rarely justified in a new project; legacy maintenance only
-- **Bootstrap** - Tailwind v4 occupies its niche better
+- **Bootstrap** - retain or select it when its components and conventions fit the requirements
 - **Material UI as default** - use it when the brand explicitly wants Material; not as a default
 - **shadcn/ui copy-paste components used as default brand** - they're a good starting kit, but if you copy them unmodified you ship the shadcn aesthetic, which is the AI-default aesthetic

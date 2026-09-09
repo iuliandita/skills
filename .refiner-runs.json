@@ -3911,5 +3911,143 @@
       "fe4d5dd", "dcd8c28", "f68ac1a", "120cb80", "23822f0", "cdc227f", "70c0c5b"
     ],
     "notes": "The user approved phase 2 and finalization after the mandatory checkpoint. Frozen baseline evidence was retained outside the repository. Detailed working artifacts remain under ignored docs/local/."
+  },
+  {
+    "run_id": "137-2026-09-09-frontend-design",
+    "branch": "codex/137-frontend-design-direction",
+    "date": "2026-09-09",
+    "recorded_at": "2026-09-09T21:00:04.739173+00:00",
+    "primary": {
+      "provider": "unknown",
+      "resolved_model": "unknown",
+      "effective_effort": "unknown",
+      "harness": "desktop",
+      "version": "unknown",
+      "evidence": "Requested settings and installed CLI versions do not establish resolved runtime identity."
+    },
+    "secondary": null,
+    "reviewer": {
+      "provider": "unknown",
+      "resolved_model": "unknown",
+      "effective_effort": "unknown",
+      "harness": "desktop",
+      "version": "unknown",
+      "evidence": "Requested settings and installed CLI versions do not establish resolved runtime identity.",
+      "classification": "unknown-model fresh-context",
+      "weight": 0.03
+    },
+    "config": {
+      "minimum_iterations": 3,
+      "target": 99,
+      "mode": "circuit-breaker",
+      "scope": [
+        "frontend-design"
+      ],
+      "phase_2": "outside named-skill scope"
+    },
+    "pool_size": 1,
+    "iterations_completed": 3,
+    "terminated": "target reached",
+    "iterations": [
+      {
+        "iteration": 1,
+        "G": "pass",
+        "A": 95.2381,
+        "B": 92.3333,
+        "X": null,
+        "composite": 93.5533,
+        "evaluator": {
+          "provider": "unknown",
+          "resolved_model": "unknown",
+          "effective_effort": "unknown",
+          "harness": "desktop",
+          "version": "unknown",
+          "evidence": "Requested settings and installed CLI versions do not establish resolved runtime identity."
+        },
+        "test_source": "two canonical, one generated",
+        "receipt": "e1fa832"
+      },
+      {
+        "iteration": 2,
+        "G": "pass",
+        "A": 95.2381,
+        "B": 97,
+        "X": 100,
+        "composite": 96.3704,
+        "evaluator": {
+          "provider": "unknown",
+          "resolved_model": "unknown",
+          "effective_effort": "unknown",
+          "harness": "desktop",
+          "version": "unknown",
+          "evidence": "Requested settings and installed CLI versions do not establish resolved runtime identity."
+        },
+        "test_source": "same cases; feedback-assisted execution",
+        "receipt": "5726ddd"
+      },
+      {
+        "iteration": 3,
+        "G": "pass",
+        "A": 100,
+        "B": 99.3333,
+        "X": 100,
+        "composite": 99.6256,
+        "evaluator": {
+          "provider": "unknown",
+          "resolved_model": "unknown",
+          "effective_effort": "unknown",
+          "harness": "desktop",
+          "version": "unknown",
+          "evidence": "Requested settings and installed CLI versions do not establish resolved runtime identity."
+        },
+        "test_source": "same cases; assisted revision and regression replay"
+      }
+    ],
+    "scores": {
+      "frontend-design": {
+        "before": 93.5533,
+        "after": 99.6256
+      }
+    },
+    "peer_review": {
+      "accepted_minor_flags_fixed": 2,
+      "final_flags": 0,
+      "major_introduced": 0,
+      "contested": 0
+    },
+    "files_changed": [
+      ".refiner-ledger.md",
+      "skills/frontend-design/SKILL.md",
+      "skills/frontend-design/references/ai-tells.md",
+      "skills/frontend-design/references/app-ui-patterns.md",
+      "skills/frontend-design/references/critique-template.md",
+      "skills/frontend-design/references/frameworks.md",
+      "skills/frontend-design/references/glitch-effects.md",
+      "skills/frontend-design/references/mobile-touch.md",
+      "skills/frontend-design/references/themes.md",
+      ".refiner-runs.json"
+    ],
+    "changes_summary": [
+      "Replaced mandatory aesthetics with brief-driven direction and a short opinionated voice",
+      "Aligned supporting references and corrected theme and gesture examples",
+      "Added rendered initial/recovery state and focus checks"
+    ],
+    "verification": [
+      "Nine collection check scripts pass",
+      "47 skills linted and validated without errors or warnings",
+      "Five repository test scripts pass",
+      "Markdown, shell syntax, ShellCheck and Python syntax pass",
+      "46 theme contrast pairs and extracted theme/pointer runtime tests pass",
+      "Synthetic browser assertions pass; two contrast limitations deducted",
+      "Final full-diff and slimming reviews clean"
+    ],
+    "limitations": [
+      "Feedback-assisted synthetic outputs, not a blind or cross-model visual benchmark",
+      "Synthetic light focus ring 2.11:1 and dark placeholder 3.55:1 remain below applicable contrast targets; artifacts not shipped",
+      "Version pins excluded per frozen policy; unrelated phase2 outside scope"
+    ],
+    "reverted": [],
+    "skipped_checks": [],
+    "private_skill_handling": "Only the named public skill was edited; detailed working evidence remains in ignored local audit storage."
   }
 ]
