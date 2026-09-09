@@ -8,7 +8,9 @@ browser and from assumptions that still need checking.
 
 Record the page or component, intended audience and task, supplied brand direction, and the
 viewports, themes, and states actually inspected. If only a screenshot is available, do not
-claim keyboard behavior, contrast measurements, or responsiveness were tested.
+claim keyboard behavior, contrast measurements, or responsiveness were tested. Missing
+evidence is a verification limit, not a defect: do not assign it a severity merely because
+the description omitted mobile, focus, or loading behavior.
 
 ## 2. Prioritize findings
 
@@ -28,7 +30,7 @@ preferred design target alone; identify the applicable criterion and its excepti
 ## 3. Write actionable tickets
 
 Keep the main table to 10 findings, ordered by impact. Group repeated instances of the same
-cause. If more serious findings exist, list them in an appendix with their actual priorities;
+cause. Keep info notes outside the ticket table. If more serious findings exist, list them in an appendix with their actual priorities;
 the table cap must not hide blockers or relabel them as optional polish.
 
 | ID | Priority | Evidence and location | User impact | Fix and verification |

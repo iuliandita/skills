@@ -90,7 +90,8 @@ Inspect provided references and existing screenshots when available.
 Ask only for information that materially changes the result and cannot be inferred. Otherwise
 state a concise assumption and proceed. Do not require a new design document or approval round
 when the user has supplied enough direction. For a small fix, preserve the established design
-and keep planning proportional to the change.
+and keep planning proportional to the change. In a spacing-only request, use the supplied
+selectors and change spacing; report unrelated sizing or accessibility concerns separately.
 
 ### Step 2: Choose a visual direction
 
@@ -122,13 +123,16 @@ comprehension or contradict the user's requested style.
   For an unconstrained new project, choose the simplest suitable implementation; plain HTML
   is valid. Load `references/frameworks.md` only when selecting a stack
 - Compose the actual screen with representative content. Avoid placeholder copy that hides
-  layout problems. Label sample data; do not present invented metrics or relationships as real
+  layout problems. Label sample data and derive displayed totals from it. Omit optional
+  controls that cannot perform their named action; do not ship clickable placeholders
 - Use type, alignment, spacing, and grouping to make hierarchy clear. Cards, gradients,
   centered layouts, and standard fonts are legitimate when they serve the brief
 - Read `references/ai-tells.md` when checking generic composition. Its alternatives are
   diagnostic examples, not a replacement house style
 - Make controls functional and use semantic elements, accessible names, visible focus, and
-  keyboard flows. Include applicable loading, empty, error, success, and disabled states
+  keyboard flows. Prefer native controls; use composite ARIA widgets only with their full
+  focus and keyboard model. Include reachable loading, empty, error/retry, success, and
+  disabled states; demonstrate them with labeled sample controls when no backend exists
 - Design narrow layouts deliberately. Aim for 44 x 44 CSS px touch targets on mobile; assess
   accessibility conformance separately against the applicable standard and its exceptions
 - Keep dark and light support for product interfaces where warranted and preserve existing
@@ -172,7 +176,8 @@ the product UI. Avoid a mandatory file tree or a separate aesthetic README for a
 For Critique, follow `references/critique-template.md`: evidence, user impact, and a concrete
 fix. Lead with the most consequential findings; do not rank a color or font preference as a
 release blocker. Keep the main ticket list to 10, with additional serious findings visible
-in an appendix rather than omitted.
+in an appendix rather than omitted. Unknown behavior belongs in verification limits, not
+in severity-ranked findings; keep info notes outside the fix-ticket table.
 
 ## Performance
 

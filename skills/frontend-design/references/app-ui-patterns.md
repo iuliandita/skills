@@ -76,8 +76,9 @@ Onboarding should get the user to their first real success, then get out of the 
 
 - Drive toward the first meaningful action (create the first project, connect the first source), not
   a tour of buttons whose purpose is self-evident.
-- Prefer inline, contextual hints and a short checklist over a modal carousel. Always offer a skip,
-  and never block the product behind it.
+- Prefer inline, contextual hints and a short checklist over a modal carousel. Offer a skip
+  for optional tours. Required setup, access, consent, and security steps may gate use; explain
+  why each is necessary and preserve progress.
 - Pre-fill and use sensible defaults so the first success needs the fewest decisions.
 - Show progress honestly ("2 of 3") and let users leave and resume; persist partial state.
 - Anti-pattern: a multi-slide modal on first load that explains the obvious, with no skip and no
