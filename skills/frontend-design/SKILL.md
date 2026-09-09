@@ -132,7 +132,9 @@ comprehension or contradict the user's requested style.
 - Make controls functional and use semantic elements, accessible names, visible focus, and
   keyboard flows. Prefer native controls; use composite ARIA widgets only with their full
   focus and keyboard model. Include reachable loading, empty, error/retry, success, and
-  disabled states; demonstrate them with labeled sample controls when no backend exists
+  disabled states and selection where relevant; demonstrate them with labeled sample controls
+  when no backend exists. Preserve useful keyboard focus when an action removes or disables
+  the focused control
 - Design narrow layouts deliberately. Aim for 44 x 44 CSS px touch targets on mobile; assess
   accessibility conformance separately against the applicable standard and its exceptions
 - Keep dark and light support for product interfaces where warranted and preserve existing
@@ -155,7 +157,9 @@ plugin, or installed sibling skill.
 2. Inspect desktop and narrow mobile renders, plus any layout breakpoint showing a defect.
    Review hierarchy, alignment, density, type wrapping, imagery, and primary-action visibility.
 3. Exercise the primary interaction, keyboard flow, and relevant error or empty state. Check
-   long labels, overflow, supported themes, focus, and reduced-motion behavior.
+   long labels, overflow, supported themes, focus, and reduced-motion behavior. Verify initial,
+   active, and recovered states in the rendered UI; CSS can override an element's `hidden`
+   attribute. Check all visible mobile controls, including controls revealed by state changes.
 4. Identify the largest observed mismatches against the brief. Correct them in Build/Refine
    mode, render again, and recheck the affected views and behavior. In Critique mode, report
    the evidence and proposed fixes without modifying the artifact.

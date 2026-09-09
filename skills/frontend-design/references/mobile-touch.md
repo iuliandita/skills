@@ -2,15 +2,20 @@
 
 Mobile is not a viewport. It's a different input modality: touch instead of pointer, gestures instead of hover, smaller surface, occluded fingers, no precise targets.
 
-The persona designs mobile first, then adds desktop. Touch targets meet 44 x 44 px. Gesture handlers use modern APIs - Pointer Events first, `@use-gesture` when component logic gets complex. Hammer.js is legacy and not introduced to new code.
+Design narrow screens and touch behavior deliberately while preserving existing responsive
+conventions. Aim for 44 x 44 CSS px touch targets. Prefer Pointer Events for custom gestures
+and a combined gesture library binding when coordination is needed. Examples below are
+independent patterns; adapt their layout and controls to the actual task.
 
 ---
 
 ## The 44 px rule
 
-Apple's HIG and WCAG 2.5.5 (Target Size, Level AAA) both recommend 44 x 44 px minimum touch targets. WCAG 2.5.8 (Target Size, Minimum, Level AA) sets 24 x 24 px as the absolute floor.
-
-The persona uses 44 px on mobile and 32 px minimum on desktop. Smaller is allowed only in dense data tables and code editors where the user is in precision mode.
+Use 44 x 44 CSS px as a mobile design target. WCAG 2.5.5 (AAA) and 2.5.8 (AA) have different
+thresholds and exceptions; 24 x 24 CSS px is not an unconditional floor. Inspect spacing,
+inline targets, equivalent controls, and the other applicable exceptions before declaring a
+violation. See [WCAG target size](https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html).
+Do not expand controls during a spacing-only task without authorization for that scope.
 
 ```css
 /* Default targets */
@@ -54,7 +59,8 @@ Pseudo-element padding when the visual element is smaller than 44 px:
 
 ## Mobile-first markup
 
-`min-width` queries, not `max-width`. The unstyled state is the mobile state. Desktop is the enhancement.
+For a new layout, a narrow-screen base with `min-width` enhancements is a useful starting
+point. Preserve an existing `max-width` or container-query convention when refining a component.
 
 ```css
 /* Mobile (default) */
@@ -115,32 +121,40 @@ Pointer Events unify mouse, touch, pen, and stylus into one event model. They ar
 const target = document.querySelector(".swipe-target") as HTMLElement;
 let startX = 0;
 let activePointerId: number | null = null;
+target.style.touchAction = "pan-y";
+
+function resetSwipe(e: PointerEvent) {
+  if (e.pointerId !== activePointerId) return;
+  activePointerId = null;
+  target.style.transform = "";
+}
 
 target.addEventListener("pointerdown", (e) => {
+  if (!e.isPrimary || e.button !== 0 || activePointerId !== null) return;
   activePointerId = e.pointerId;
   startX = e.clientX;
+  delete target.dataset.swipe;
   target.setPointerCapture(e.pointerId);
 });
 
 target.addEventListener("pointermove", (e) => {
   if (e.pointerId !== activePointerId) return;
-  const dx = e.clientX - startX;
-  target.style.transform = `translateX(${dx}px)`;
+  target.style.transform = `translateX(${e.clientX - startX}px)`;
 });
 
 target.addEventListener("pointerup", (e) => {
   if (e.pointerId !== activePointerId) return;
-  activePointerId = null;
   const dx = e.clientX - startX;
-  if (Math.abs(dx) > 100) {
-    target.dataset.swipe = dx > 0 ? "right" : "left";
-  } else {
-    target.style.transform = "";
-  }
+  if (Math.abs(dx) > 100) target.dataset.swipe = dx > 0 ? "right" : "left";
+  resetSwipe(e);
 });
+target.addEventListener("pointercancel", resetSwipe);
+target.addEventListener("lostpointercapture", resetSwipe);
 ```
 
-`setPointerCapture` is the key feature - the element keeps receiving events even if the pointer leaves its bounds.
+`setPointerCapture` keeps delivery when the pointer leaves the element. Cancellation must
+reset visual and pointer state. Keep a visible button alternative for the swipe action and
+dispose listeners when the component unmounts.
 
 ---
 
@@ -174,7 +188,7 @@ For most swipe carousels, CSS scroll-snap is enough. No event handlers, no JS.
 
 @media (prefers-reduced-motion: reduce) {
   .carousel {
-    scroll-snap-type: none;
+    scroll-behavior: auto;
   }
 }
 ```
@@ -192,38 +206,57 @@ bun add @use-gesture/react
 ```
 
 ```tsx
-import { useDrag, usePinch } from "@use-gesture/react";
-import { useState } from "react";
+import { useGesture } from "@use-gesture/react";
+import { useId, useState } from "react";
 
-export function PinchableImage({ src }: { src: string }) {
+export function PinchableImage({ src, alt }: { src: string; alt: string }) {
+  const instructions = useId();
   const [scale, setScale] = useState(1);
   const [{ x, y }, setPos] = useState({ x: 0, y: 0 });
-
-  const bindDrag = useDrag(({ offset: [ox, oy] }) => {
-    setPos({ x: ox, y: oy });
-  });
-
-  const bindPinch = usePinch(({ offset: [s] }) => {
-    setScale(Math.max(1, Math.min(s, 4)));
+  const bind = useGesture({
+    onDrag: ({ offset: [ox, oy] }) => setPos({ x: ox, y: oy }),
+    onPinch: ({ offset: [s] }) => setScale(s),
+  }, {
+    drag: { from: () => [x, y] },
+    pinch: { from: () => [scale, 0], scaleBounds: { min: 1, max: 4 } },
   });
 
   return (
-    <img
-      src={src}
-      {...bindDrag()}
-      {...bindPinch()}
-      style={{
-        transform: `translate(${x}px, ${y}px) scale(${scale})`,
-        touchAction: "none",   /* required: disables browser pan/zoom */
-        userSelect: "none",
-      }}
-      draggable={false}
-    />
+    <figure>
+      <p id={instructions}>Drag or use arrow keys to pan. Pinch or use Zoom to resize.</p>
+      <div style={{ overflow: "hidden" }}>
+        <img
+          src={src} alt={alt} tabIndex={0} aria-describedby={instructions}
+          {...bind()}
+          style={{
+            maxWidth: "100%",
+            transform: `translate(${x}px, ${y}px) scale(${scale})`,
+            touchAction: "none", userSelect: "none",
+          }}
+          draggable={false}
+        />
+      </div>
+      <label>
+        Zoom
+        <input type="range" min="1" max="4" step="0.1" value={scale}
+          onChange={(e) => setScale(Number(e.currentTarget.value))} />
+      </label>
+      <button type="button" onClick={() => { setScale(1); setPos({ x: 0, y: 0 }); }}>
+        Reset view
+      </button>
+    </figure>
   );
 }
 ```
 
-`touch-action: none` is required - without it, browsers handle pan and zoom themselves and your gesture handlers fight them.
+Use one [combined binding](https://use-gesture.netlify.app/docs/gestures/) so drag and pinch
+do not overwrite each other's event handlers. Keep control-driven state synchronized with
+[gesture offsets](https://use-gesture.netlify.app/docs/options/) using `from`.
+Scope `touch-action: none` to a dedicated manipulation surface: it disables browser pan/zoom
+there, so preserve page scrolling elsewhere and provide keyboard zoom/pan and reset controls.
+Set intrinsic image dimensions from real asset metadata and keep a visible focus style.
+For Safari trackpad pinch, use the documented target/ref integration when required; do not
+block browser zoom globally.
 
 For Vue / Svelte / vanilla, use `@use-gesture/vanilla` with the same primitives.
 
@@ -236,35 +269,47 @@ Long-press (touch-hold) is a context-menu equivalent on mobile. Use Pointer Even
 ```ts
 const target = document.querySelector(".long-press") as HTMLElement;
 let timer: number | null = null;
+let pointerId: number | null = null;
+let startX = 0;
+let startY = 0;
 const HOLD_MS = 500;
-
-function start(e: PointerEvent) {
-  timer = window.setTimeout(() => {
-    target.dispatchEvent(new CustomEvent("longpress", { detail: { x: e.clientX, y: e.clientY } }));
-    timer = null;
-  }, HOLD_MS);
-}
+const MOVE_TOLERANCE = 8;
 
 function cancel() {
-  if (timer) {
-    clearTimeout(timer);
-    timer = null;
-  }
+  if (timer !== null) window.clearTimeout(timer);
+  timer = null;
+  pointerId = null;
 }
 
-target.addEventListener("pointerdown", start);
-target.addEventListener("pointerup", cancel);
-target.addEventListener("pointermove", cancel);
-target.addEventListener("pointercancel", cancel);
+target.addEventListener("pointerdown", (e) => {
+  if (!e.isPrimary || e.button !== 0 || pointerId !== null) return;
+  pointerId = e.pointerId;
+  startX = e.clientX;
+  startY = e.clientY;
+  target.setPointerCapture(e.pointerId);
+  timer = window.setTimeout(() => {
+    target.dispatchEvent(new CustomEvent("longpress", { detail: { x: startX, y: startY } }));
+    timer = null;
+  }, HOLD_MS);
+});
+target.addEventListener("pointermove", (e) => {
+  if (e.pointerId === pointerId && Math.hypot(e.clientX - startX, e.clientY - startY) > MOVE_TOLERANCE) cancel();
+});
+for (const name of ["pointerup", "pointercancel", "lostpointercapture"]) {
+  target.addEventListener(name, (e) => {
+    if ((e as PointerEvent).pointerId === pointerId) cancel();
+  });
+}
 ```
 
-Provide a desktop equivalent (right-click menu, kebab button) - long-press is not discoverable on its own.
+Provide a visible menu button usable by touch and keyboard; long-press is not discoverable
+on its own. Dispose listeners and cancel the timer when the component unmounts.
 
 ---
 
 ## Pull-to-refresh
 
-Native on iOS Safari and Android Chrome inside scrollable areas. The persona usually does NOT implement custom pull-to-refresh:
+Native on iOS Safari and Android Chrome inside scrollable areas. Custom pull-to-refresh is usually unnecessary:
 
 - Hard to get right (overscroll behavior, momentum, visual feedback)
 - Often a tell that someone copied a native app pattern into the web
@@ -378,7 +423,8 @@ Primary action stays in thumb reach.
 }
 ```
 
-`env(safe-area-inset-bottom)` accounts for iPhone home-bar.
+`env(safe-area-inset-bottom)` accounts for the home indicator. Reserve matching space in
+the scrollable content so the fixed bar does not cover the last row or focused control.
 
 ### Navigation: bottom tabs on mobile, side nav on desktop
 
@@ -386,7 +432,7 @@ Primary action stays in thumb reach.
 nav {
   position: fixed;
   inset: auto 0 0 0;       /* bottom on mobile */
-  padding: 0.5rem max(1rem, env(safe-area-inset-bottom));
+  padding: 0.5rem 1rem max(0.5rem, env(safe-area-inset-bottom));
 }
 
 @media (min-width: 64em) {
@@ -408,12 +454,11 @@ nav {
 
 ---
 
-## What the persona refuses on mobile
+## Mobile review priorities
 
-1. **Hover-only interactions for primary actions.** If the user can't get to it on touch, it doesn't exist on mobile.
-2. **Carousel as the only navigation for content.** Hamburger menus for primary nav are fine; carousels for primary content are an attention tax.
-3. **Tiny tap targets to fit a desktop layout** - 24 x 24 px buttons because that's how it looks on the design.
-4. **Auto-playing video on mobile.** Battery, bandwidth, attention - all wrong.
-5. **Modal-on-load on mobile.** It's worse than desktop. The user has less screen.
-6. **Bottom-fixed banners that block reading without a clear close button.**
-7. **`scroll-behavior: smooth` on long pages without `prefers-reduced-motion` opt-out.**
+- Keep primary actions available without hover and give gestures visible alternatives.
+- Assess target size and spacing against the applicable criterion; preserve scoped changes.
+- Provide pause controls for moving media and respect reduced-motion preferences.
+- Avoid optional interruptions on arrival; explain required access or consent decisions.
+- Keep fixed navigation and banners clear of content, focused controls, and device safe areas.
+- Preserve discrete scroll snapping under reduced motion while disabling smooth scrolling.
