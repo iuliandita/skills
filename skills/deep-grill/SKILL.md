@@ -72,6 +72,7 @@ and fold both phases into the record. Everything else still holds.
 - [ ] **Domain detected and routed**: correct lens applied; if the real task is code review, security, or a repo audit, routed to the right skill instead.
 - [ ] **Hidden state identified**: existing code, config, prior decisions, and constraints are surfaced before grilling, not assumed.
 - [ ] **Routing overlap checked**: overlap with jekyll-hyde and code-review handled per "When NOT to use" before proceeding.
+- [ ] Cross-cutting agent hygiene applied - see `references/agent-hygiene.md`
 
 ---
 
@@ -113,6 +114,11 @@ For a requested pure Phase-2 audit of an existing plan/spec, start at Step 3 and
 - Build the decision tree for the plan. **Resolve upstream choices before downstream ones** -
   a downstream answer is worthless if its parent decision flips.
 - Ask **one question at a time**. Batching collapses the decision tree into a survey and loses the dependency order.
+- **Only a blocking question stops work.** A question is blocking when the next step cannot be
+  taken without the answer (an upstream decision, a safety or authorization gate). Everything
+  else - output format, depth, ordering preferences - is optional: ask it once, state the default
+  you will use, and keep grilling the parts of the plan that do not depend on it. An unanswered
+  optional question never idles the whole grill.
 - For **every** question, provide your own recommended answer and a one-line reason. You are a
   collaborator with opinions, not a form.
 - If a question can be answered by **exploring the codebase, files, or docs, go look** instead of

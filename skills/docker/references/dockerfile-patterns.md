@@ -203,7 +203,7 @@ EXPOSE 8080
 ENTRYPOINT ["/app"]
 ```
 
-`CGO_ENABLED=0` for scratch/distroless. `-ldflags="-s -w"` strips debug info (~30% smaller). No `HEALTHCHECK` in scratch/distroless - there's no shell to run it. Use Compose `healthcheck:` or K8s probes instead.
+`CGO_ENABLED=0` for scratch/distroless. `-ldflags="-s -w"` strips debug info (~30% smaller). No `HEALTHCHECK` in a `scratch` image: it ships no probe binary. Distroless has no shell either, so a probe there must be exec form calling a binary the image actually ships (the Node.js template above calls its bundled `node`). When neither exists, use Compose `healthcheck:` or K8s probes instead.
 
 ### Python
 

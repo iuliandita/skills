@@ -20,7 +20,7 @@ Use these only when betterleaks/gitleaks/trufflehog are all unavailable.
 
 Also check git history: `git log --all --diff-filter=A - '*.env*'`
 
-## Authentication & Authorization (Pass 4)
+## Authentication & Authorization (Pass 5)
 
 | Pattern | What it finds | Flag as |
 |---------|---------------|---------|
@@ -30,7 +30,7 @@ Also check git history: `git log --all --diff-filter=A - '*.env*'`
 | `x-forwarded-for\|x-real-ip\|forwarded` (case-insensitive) | Header trust for auth decisions | High if used for auth |
 | `startsWith.*api\|endsWith.*setup\|includes.*path` | Substring/suffix auth bypass patterns | Critical pattern |
 
-## Injection & Input Validation (Pass 5)
+## Injection & Input Validation (Pass 6)
 
 ### Command Injection
 | Pattern | Context |
@@ -75,7 +75,7 @@ Also check git history: `git log --all --diff-filter=A - '*.env*'`
 | `parseXML\|DOMParser\|xml2js\|ElementTree\|etree\|lxml` | XML parsing |
 | `resolveExternals\|loadExternalSubsets\|XMLReader` | External entity config |
 
-## Cryptography & Data Protection (Pass 6)
+## Cryptography & Data Protection (Pass 7)
 
 | Pattern | What it finds |
 |---------|---------------|
@@ -86,7 +86,7 @@ Also check git history: `git log --all --diff-filter=A - '*.env*'`
 | `md5\|sha1\|sha256.*password\|sha-256.*hash` | Weak password hashing |
 | `crypto\.createCipher[^I]\|DES\|RC4\|ECB` | Weak/deprecated crypto |
 
-## Container & Infrastructure (Pass 7)
+## Container & Infrastructure (Pass 8)
 
 ### Terraform
 | Pattern | What it finds | File types |
@@ -131,11 +131,11 @@ Also check git history: `git log --all --diff-filter=A - '*.env*'`
 | `curl.*\|\s*bash\|wget.*\|\s*sh\|curl.*\|\s*sh` | Pipe-to-shell (no integrity check) | `*.sh`, `*.yaml`, `*.cfg` |
 | `chmod\s+777\|chmod\s+-R\s+777` | World-writable permissions | `*.sh` |
 
-## CI/CD & Supply Chain (Pass 8)
+## CI/CD & Supply Chain (Pass 9)
 
 ### CI/CD Workflows
 
-*See pass 8 in the main audit skill for workflow-level checks.*
+*See pass 9 in the main audit skill for workflow-level checks.*
 
 ### Supply Chain: Image Pinning
 

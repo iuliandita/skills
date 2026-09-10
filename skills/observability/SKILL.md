@@ -71,6 +71,7 @@ rule, pipeline, or dashboard, verify:
   functions, and Grafana panel types verified against current docs - not assumed.
 - [ ] **Sampling intentional**: trace sampling rate is stated and justified (head vs tail), not
   silently defaulted; 100% sampling on a hot path is flagged.
+- [ ] Cross-cutting agent hygiene applied - see `references/agent-hygiene.md`
 
 ---
 
@@ -125,6 +126,8 @@ notes in `references/versions.md` when selecting Alloy or Grafana authentication
   least one service before declaring coverage
 - Start with `references/runnable-examples.md` when a task needs compact Collector, SLO-rule,
   rule-test, or dashboard artifacts that can be passed to the validators above.
+- Report the validator results: name each command you ran and its outcome, and list any check
+  skipped because the tool or backend was unavailable. Never present an unrun check as passing.
 
 ---
 

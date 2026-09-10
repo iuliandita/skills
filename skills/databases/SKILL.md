@@ -244,7 +244,7 @@ Three approaches, pick by downtime tolerance:
 | `pg_dump` / `pg_restore` | Hours (full copy) | Cross-engine, major schema changes, or when logical replication is impractical |
 
 **Zero-downtime with logical replication** (PG -> PG):
-1. Stand up new version replica alongside the primary
+1. Confirm the source runs `wal_level = logical` (`SHOW wal_level;`). It can only be set at server start, so a source still on `replica` needs a restart scheduled before the migration window. Also confirm free `max_replication_slots`/`max_wal_senders` and a `pg_hba.conf` rule for the subscriber's role (logical replication connects to the database itself, not the `replication` pseudo-database), then stand up the new version instance alongside the primary
 2. Create publication on source: `CREATE PUBLICATION upgrade_pub FOR ALL TABLES;`
 3. Create subscription on target: `CREATE SUBSCRIPTION upgrade_sub CONNECTION '...' PUBLICATION upgrade_pub;`
 4. Wait for initial sync + catchup (monitor `pg_stat_subscription`, replication lag)
@@ -263,6 +263,7 @@ Three approaches, pick by downtime tolerance:
 - DDL is not replicated - schema changes during migration need manual sync on both sides
 - Large objects (`lo`) are not replicated
 - Sequence values drift - copy final values after source write fencing/drain and before any target writes
+- A lagging or inactive slot pins WAL on the source - watch `pg_replication_slots.wal_status` and free disk, and set `max_slot_wal_keep_size` deliberately (the default keeps WAL without bound and can fill the source volume; a bounded value invalidates the slot instead and forces a resync)
 
 Read `references/migration-patterns.md` for cross-engine type mapping, ORM migration tooling, and detailed migration patterns.
 

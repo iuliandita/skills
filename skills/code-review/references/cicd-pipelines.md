@@ -325,7 +325,7 @@ Forgejo Actions is designed for familiarity, not compatibility. It makes no comp
 **Detect:**
 - Using `check` blocks for mandatory compliance rules - check blocks produce **warnings**, not errors. They don't block the deployment. Use preconditions/postconditions for mandatory checks
 - Using `preconditions` for post-apply verification - preconditions run before resource creation, so post-creation attributes aren't available. Use postconditions instead
-- `variable` validation referencing other variables or resources - variable validation can only reference the variable being validated. Use preconditions for cross-variable checks
+- `variable` validation referencing other variables, locals, or data sources - supported since Terraform 1.9.0 (June 2024); on Terraform below 1.9 and on OpenTofu (through 1.8) validation can only reference the variable being validated, so flag it against the pinned engine, and use preconditions for cross-variable checks where it is unsupported
 - `postcondition` failure doesn't undo the resource that was just created - it halts processing and prevents downstream resources, but the failed resource persists in state
 - Check blocks run as the final step of plan/apply, after postconditions - ordering: variable validation -> preconditions -> resource creation -> postconditions -> check blocks
 

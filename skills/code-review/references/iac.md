@@ -136,21 +136,33 @@ Helm templates are Go templates. Errors only surface at deploy time if `helm tem
 
 **Detect:**
 - Missing `required` on values that must be provided (chart installs with empty/nil values, k8s objects are malformed)
-- `{{ .Values.foo.bar }}` without `{{ if .Values.foo }}` guard (nil pointer if `foo` is not set)
+- `{{ .Values.foo.bar }}` without `{{ if .Values.foo }}` guard (nil pointer whether `foo` is declared null or absent from the values entirely)
 - Wrong indentation with `nindent` / `indent` (YAML is whitespace-sensitive, and template indentation doesn't match the output indentation)
 - `toYaml` output not indented properly: `{{ toYaml .Values.resources | nindent 12 }}` - wrong nindent value breaks the manifest
 - Accessing `.Release.Namespace` in a helper that's called from a different context
 
 **Example:**
 ```yaml
-# bug: crashes if resources is not set in values
+# renders "resources: null" when resources is null or absent: valid YAML, silently no limits
 resources:
   {{ toYaml .Values.resources | nindent 2 }}
 
-# fix: guard with default or required
+# crashes: "nil pointer evaluating interface {}.limits" whether values.yaml declares
+# "resources:" with a null value or omits the key entirely
+memory: {{ .Values.resources.limits.memory }}
+
+# fix: parenthesize every hop, or require the value when it must be set
 resources:
   {{- toYaml (.Values.resources | default dict) | nindent 2 }}
+memory: {{ ((.Values.resources).limits).memory | default "256Mi" }}
 ```
+
+`toYaml nil` is not a crash; it renders `null`. The crash is nested field access on a nil
+parent, so parentheses must wrap each hop: `(.Values.resources.limits).memory` still
+evaluates the failing `.limits` access first. Absent and explicitly-null keys behave the
+same: both crash on nested access and both render `null` through `toYaml`. Review both
+shapes, because a silently rendered `null` is a missing-limit bug, not a template error.
+Verified against `helm template` on Helm v4.2.2.
 
 ### Value Type Mismatches
 
@@ -214,7 +226,7 @@ startupProbe:              # use startupProbe for slow starters
 ### Resource Bugs
 
 **Detect:**
-- Memory limit equal to request (no burst room, OOMKilled on any spike)
+- Memory limit far above request (node overcommit; the kernel OOM-kills bursting pods under pressure). Request equal to limit is the recommended pattern for memory on critical workloads, not a defect - and when every container sets both cpu and memory that way, the pod gets Guaranteed QoS; flag it only when the request is sized below real usage
 - CPU limit set too low (causes throttling, which looks like slowness not errors - hard to debug)
 - No resource requests (scheduler can't make good decisions, pods get evicted first)
 - Ephemeral storage not set (container logs / tmp files can fill the node)

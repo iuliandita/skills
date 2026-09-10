@@ -50,7 +50,9 @@ When generating or reviewing MCP server code, verify each item before presenting
 
 - [ ] All tool handler inputs validated server-side (no raw string interpolation into
   shell commands, SQL, file paths, or URLs)
-- [ ] Tool descriptions accurate and concise (some clients truncate long descriptions)
+- [ ] Every tool ships a non-empty, accurate, concise description in `tools/list` (FastMCP takes it
+  from the docstring, so an undocumented function registers an empty description; some clients
+  truncate long ones)
 - [ ] Resource URIs use a defined scheme and are validated before use
 - [ ] Error responses use proper MCP error codes, not raw stack traces
 - [ ] Authentication implemented for remote transports that handle user data (OAuth 2.1 with PKCE)

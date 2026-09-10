@@ -29,7 +29,7 @@
 |---------|-------------|---------------------|
 | `[[ ]]` | Bash/zsh built-in, not a POSIX command | `[ ]` with proper quoting |
 | `(( ))` arithmetic | Bash/zsh extension | `[ "$(( expr ))" -ne 0 ]` or `test` |
-| Arrays | Bash 2.0+ / zsh | Positional params (`set - a b c`) or IFS tricks |
+| Arrays | Bash 2.0+ / zsh | Positional params (`set -- a b c`) or IFS tricks |
 | `${var,,}` / `${var^^}` | Bash 4.0+ case conversion | `printf '%s' "$var" \| tr '[:upper:]' '[:lower:]'` |
 | `${var:offset:length}` | Bash substring | `expr substr "$var" start length` or `cut` |
 | `<<<` here string | Bash/zsh | `printf '%s\n' "$var" \| cmd` |
@@ -253,7 +253,7 @@ POSIX sh has no arrays. Here's how to work around it:
 
 ```sh
 # Set positional params
-set - alpha bravo charlie
+set -- alpha bravo charlie
 
 # Access
 printf 'First: %s\n' "$1"     # alpha
@@ -270,7 +270,7 @@ shift
 printf 'Now first: %s\n' "$1" # bravo
 
 # Append (rebuilds the list)
-set - "$@" delta
+set -- "$@" delta
 ```
 
 ### IFS splitting for simple lists
@@ -279,7 +279,7 @@ set - "$@" delta
 # Split a colon-separated string
 old_ifs="$IFS"
 IFS=:
-set - $PATH                   # splits PATH into positional params
+set -- $PATH                   # splits PATH into positional params
 IFS="$old_ifs"
 
 for dir in "$@"; do

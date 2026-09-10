@@ -635,7 +635,7 @@ If you need to port a script to `#!/bin/sh`, these bash features are NOT availab
 |-------------|-------------------|
 | `[[ ]]` | `[ ]` (with more quoting) |
 | `(( ))` arithmetic | `$(( ))` in test: `[ "$(( a > b ))" = 1 ]` |
-| Arrays | Positional params (`set - a b c; echo "$1"`) |
+| Arrays | Positional params (`set -- a b c; echo "$1"`) |
 | `${var,,}` / `${var^^}` | `tr '[:upper:]' '[:lower:]'` via pipe or `$(...)` |
 | `${var:offset:length}` | `expr substr` or `cut` |
 | `<<<` here string | `echo "$var" \| cmd` or `printf '%s' "$var" \| cmd` |

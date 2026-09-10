@@ -4883,5 +4883,74 @@
     "skills/zero-day/references/target-versions.md",
     "skills/zero-day/references/vulnerability-classes.md"
   ]
-}
+},
+ {
+  "run_id": "2026-09-10-collection-iteration-3",
+  "date": "2026-09-10",
+  "branch": "skill-refiner/2026-09-10-iteration-3",
+  "resumes": "2026-09-10-collection-iteration-2",
+  "primary": {
+   "provider": "anthropic",
+   "resolved_model": "claude-opus-4-8 (main loop); claude-opus-5 (group evaluators)",
+   "effective_effort": "high",
+   "harness": "Claude Code",
+   "version": "unknown",
+   "evidence": "Group evaluators dispatched as Opus subagents; offensive pair scored in main loop."
+  },
+  "secondary": {
+   "provider": "anthropic",
+   "resolved_model": "unknown (fresh-context subagent)",
+   "effective_effort": "unknown",
+   "harness": "Claude Code subagent",
+   "version": "unknown",
+   "evidence": "Per-group fresh-context review; identity not attested."
+  },
+  "reviewer_classification": "unknown-model fresh-context",
+  "review_weight": 0.03,
+  "pool_size": 45,
+  "excluded": [
+   "skill-creator",
+   "skill-refiner"
+  ],
+  "config": {
+   "requested_minimum_iterations": 3,
+   "threshold": 99,
+   "iterations_completed": 3,
+   "mode": "resumed-manual"
+  },
+  "terminated": "target-met-and-ceiling (all 45 at composite 100; phase 2 completed)",
+  "target_met": true,
+  "phase2": "completed (skill-creator 96.11->100, skill-refiner 98.06->100; lint scripts unchanged, no proven defect)",
+  "peer_review": {
+   "remaining_minor": 0,
+   "unresolved_major": 0,
+   "contested": 0,
+   "note": "Fresh-context re-read corrected two of the root's own iteration-3 source edits (Helm nil behavior, Terraform 1.9.0 date) and found new defects (deep-audit wave3 list, terraform Checkov IDs, ansible token argv, nixos postDeviceCommands)."
+  },
+  "reverted": [],
+  "aggregate": {
+   "mean": 100.0,
+   "min": 100.0,
+   "max": 100.0
+  },
+  "verification": [
+   "Nine collection check scripts exit 0",
+   "lint-skills.sh + validate-spec.sh: 47 skills, 0 errors, 0 warnings",
+   "Real runtimes where available: helm template 4.2.2, zsh pty, promtool/otelcol, deep-audit fixture, browser-rendered dashboard"
+  ],
+  "limitations": [
+   "Feedback-assisted finite synthetic cases; no blind reliability claim",
+   "No live infrastructure/cluster/device or destructive command executed",
+   "Reviewer model identity unknown, peer review at 3%",
+   "Version/CVE/EOL pins out of scope, retained under freshness receipts"
+  ],
+  "out_of_scope_followups": [
+   "ai-ml local-inference.md Ollama 0.19 heading vs 0.33.3 pin",
+   "firewall plugins.md OPNsense 26.1 vs 26.7.3_11",
+   "networking vpn.md Headscale/cloudflared vs SKILL.md",
+   "cluster-health private overlay 2>/dev/null (local, not released)"
+  ],
+  "local_report": "docs/local/audits/skill-refiner/2026-09-10-collection/iteration-3/report.md",
+  "scores": "docs/local/audits/skill-refiner/2026-09-10-collection/iteration-3/iteration-3.json"
+ }
 ]

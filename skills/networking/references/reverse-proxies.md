@@ -386,7 +386,8 @@ proxy_request_buffering on;
 global
     tune.h2.header-table-size 4096
 defaults
-    option http-use-htx
+    # HTX is mandatory since 2.1; `option http-use-htx` was removed in 2.5 and a
+    # config that still carries it will not start on a current HAProxy.
     http-request deny if { req.hdr_cnt(content-length) gt 1 }
     http-request deny if { req.hdr_cnt(transfer-encoding) gt 1 }
 ```

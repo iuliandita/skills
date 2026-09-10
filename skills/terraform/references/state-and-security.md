@@ -263,7 +263,7 @@ terraform state mv 'aws_instance.web' 'aws_instance.app'
 terraform state mv 'aws_instance.app' 'module.compute.aws_instance.app'
 ```
 
-**Prefer `moved` blocks over `terraform state mv`** for intra-state refactoring (TF 1.8+). `moved` blocks are declarative, reviewable in PRs, and apply automatically on `terraform apply`. Use `terraform state mv` only when you need the move to happen immediately outside the plan/apply cycle, or on older Terraform versions.
+**Prefer `moved` blocks over `terraform state mv`** for intra-state refactoring (TF 1.1+). `moved` blocks are declarative, reviewable in PRs, and apply automatically on `terraform apply`. Use `terraform state mv` only when you need the move to happen immediately outside the plan/apply cycle, or on older Terraform versions.
 
 ### Cross-state resource migration
 

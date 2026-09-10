@@ -188,9 +188,9 @@ This is where quality slips. Address it in three parts.
 git diff --name-only                              # modified, tracked
 
 # Gitignored docs (leave unstaged; verify they ARE gitignored, not new-untracked)
-git ls-files --others --exclude-standard          # untracked (new files - review before ignoring)
-comm -12 <(git ls-files --others | sort) <(git status --short | awk '{print $2}' | sort)
-# Or simply: for each ??-marked file in `git status`, check with `git check-ignore <file>`
+git ls-files --others --exclude-standard           # untracked and NOT ignored - review before staging
+git ls-files --others --ignored --exclude-standard # ignored - leave unstaged
+# Confirm one path: git check-ignore -v <file> (exit 0 means the file is ignored)
 ```
 
 Stage explicitly reviewed public documentation paths, including intended new documentation; never force-add ignored files. Gitignored edits land locally but are intentionally out of the PR.
@@ -235,7 +235,7 @@ Grep for the old version string across tests:
 
 ```bash
 rg --fixed-strings "$OLD_VERSION" test/ tests/ spec/ __tests__/
-rg --fixed-strings "$OLD_VERSION" '*.snap'
+rg --fixed-strings "$OLD_VERSION" -g '*.snap' .
 ```
 
 Update or regenerate snapshots. Rerun tests.
@@ -497,10 +497,16 @@ git log --merges --oneline "$BASE_BRANCH" | head -5
 # Detect what the repo allows
 gh repo view --json mergeCommitAllowed,squashMergeAllowed,rebaseMergeAllowed
 
+# Capture the PR number before --delete-branch removes the branch this command resolves from
+PR_NUMBER=$(gh pr view --json number --jq '.number')
+
 # Pick one
-gh pr merge --squash  --delete-branch   # most common
-gh pr merge --rebase  --delete-branch
-gh pr merge --merge   --delete-branch   # merge commit
+gh pr merge "$PR_NUMBER" --squash  --delete-branch   # most common
+gh pr merge "$PR_NUMBER" --rebase  --delete-branch
+gh pr merge "$PR_NUMBER" --merge   --delete-branch   # merge commit
+
+# Record the merge commit for Step B8 - the release tag must point at it
+MERGE_SHA=$(gh pr view "$PR_NUMBER" --json mergeCommit --jq '.mergeCommit.oid')
 ```
 
 ### GitLab (`$FORGE=gitlab`)
@@ -574,6 +580,11 @@ if [[ "$FORGE" != "bare" ]]; then
   git pull --ff-only   # fail loud if base diverged
 fi
 
+# Step B8 tags this commit. If the forge CLI did not supply it, resolve it here and confirm
+# it is this branch's merge before tagging - base HEAD may have moved past it.
+MERGE_SHA=${MERGE_SHA:-$(git rev-parse "$BASE_BRANCH")}
+git log -1 --oneline "$MERGE_SHA"
+
 # Safe delete only (-d). Do NOT escalate to -D automatically - unmerged commits
 # indicate either incomplete merge or wrong branch; stop and investigate.
 if ! git branch -d "$BRANCH_NAME" 2>/dev/null; then
@@ -592,7 +603,10 @@ fi
 ```bash
 # Fetch tags if a remote exists; any fetch/auth/network failure stops release detection
 if git remote get-url origin >/dev/null 2>&1; then
-  git fetch --tags origin
+  git fetch --tags origin || {
+    echo "tag fetch failed; release detection would be unreliable - stop and fix the remote" >&2
+    exit 1
+  }
 fi
 ```
 
@@ -668,17 +682,23 @@ git checkout "$BASE_BRANCH"
 git pull --ff-only  # merge commit is here now
 
 NEW_VERSION="X.Y.Z"
+
+# Tag the verified merge commit from Step B7, not whatever base HEAD is now -
+# someone else may have merged after yours landed.
+: "${MERGE_SHA:?set to the merge commit produced in Step B7}"
+RELEASE_SHA=$(git rev-parse "$MERGE_SHA^{commit}") || exit 1
+
 # git tag -l always exits 0 - check for non-empty output instead
 if git rev-parse --verify --quiet "refs/tags/v$NEW_VERSION" >/dev/null; then
   echo "tag v$NEW_VERSION already exists; stop and investigate"; exit 1
 fi
 
-# Annotated, signed if the repo requires it
-git tag -a "v$NEW_VERSION" -m "Release v$NEW_VERSION"
-# Or signed
-git tag -s "v$NEW_VERSION" -m "Release v$NEW_VERSION"
+# Annotated; use the signed variant if the repo requires it
+git tag -a "v$NEW_VERSION" -m "Release v$NEW_VERSION" "$RELEASE_SHA"
+# Signed: git tag -s "v$NEW_VERSION" -m "Release v$NEW_VERSION" "$RELEASE_SHA"
 
-git push origin "v$NEW_VERSION"
+# Fully qualified refspec - a branch sharing the name would make "v$NEW_VERSION" ambiguous
+git push origin "refs/tags/v$NEW_VERSION"
 ```
 
 ### Create the release (forge-specific)
@@ -773,9 +793,12 @@ glab api "projects/$PROJECT_ID/pipelines/$PIPELINE_ID" | jq -e \
 **Forgejo/Gitea (`$FORGE=forgejo`)**:
 
 ```bash
-# Actions support varies by instance. If available:
-tea actions list --repo "$REPO" --limit 1
-# Otherwise, watch in web UI
+# Actions support varies by instance. If available, list several runs and pick the one
+# whose commit is the published tag - never assume the newest run is this release.
+RELEASE_SHA=$(git rev-parse "v$NEW_VERSION^{commit}") || exit 1
+tea actions list --repo "$REPO" --limit 20
+# Confirm the run for $RELEASE_SHA reached success before calling the release done.
+# If the output cannot be matched to that commit, confirm in the web UI instead.
 ```
 
 **Others**: announce the release URL/tag and rely on the user to confirm pipeline success. Do not assume green.

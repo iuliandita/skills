@@ -155,10 +155,12 @@ contested major flags (non-configurable).
    and applied weight, and timestamp. After this step, if the ledger is
    missing, incomplete, or only records lint/spec status, pause and backfill scoring before
    applying changes. In headless mode, halt the run and report the missing score data.
-9. **Iteration 2+**: enter adaptive focus mode. For a user-requested single-skill run,
-   treat that skill as the whole phase-1 pool, run at least the requested iteration count,
-   and keep iterating until the explicit score target is reached, quality plateaus, or a
-   circuit breaker fires.
+9. **Iteration 2+**: enter adaptive focus mode. Honor any explicitly requested minimum iteration
+   count and score target for the whole run, not only single-skill runs: keep iterating until the
+   requested rounds are complete and the target is reached across the pool, quality plateaus, or a
+   circuit breaker fires. A collection-wide requested minimum overrides an early plateau or
+   threshold termination. For a user-requested single-skill run, treat that skill as the whole
+   phase-1 pool.
 10. **Select targets**: identify skills scoring below the focus threshold
 11. **For each targeted skill**, run the improvement cycle:
     a. Read current SKILL.md and all reference files
@@ -279,7 +281,9 @@ Before committing any skill modification, verify:
 - [ ] **Score improved**: composite score is strictly higher than before the change
 - [ ] **No content regression**: change does not remove critical sections, warnings,
   or cross-references without replacement
-- [ ] **Simplicity maintained**: change does not add unnecessary complexity for marginal gains
+- [ ] **Simplicity maintained**: change does not add unnecessary complexity for marginal gains,
+  and no simplification removed a verified-defect fix or critical guard (a flat composite within
+  judge noise does not license a deletion)
 - [ ] **Cross-references intact**: all skill names in bold still resolve to existing skills
 - [ ] **Target ~500 lines**: modified SKILL.md stays near 500 lines. Hard max 600
 - [ ] **ASCII only**: no non-ASCII characters introduced (except allowed emoji indicators)
@@ -334,8 +338,11 @@ See `references/output-contract.md` for the full contract.
    Evaluate against the snapshot, never the live version being modified.
 5. **Phase 2 always pauses**: even in `--mode auto`. Non-configurable.
 6. **Contested major flags always pause**: even in `--mode auto`. Non-configurable.
-7. **Simplicity criterion**: all else being equal, simpler is better. Deletions that
-   maintain score are preferred over additions that marginally improve it.
+7. **Simplicity criterion**: all else being equal, simpler is better. Deletions that maintain
+   score are preferred over additions that marginally improve it - but never delete a verified-defect
+   fix, security warning, or critical guard to satisfy simplicity, and never justify a deletion by a
+   flat composite when that delta is within judge noise. Simplicity applies only when behavior and
+   defect coverage are unchanged.
 8. **One commit per iteration**: bundle improvements, include score deltas in message.
 9. **Branch isolation**: all work on a feature branch. Never modify main directly.
 10. **Human-readable report required**: every run ends with a report that names changes,

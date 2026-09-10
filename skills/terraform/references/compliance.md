@@ -175,7 +175,7 @@ resource "aws_s3_bucket_policy" "data" {
 }
 ```
 
-**Checkov checks**: `CKV_AWS_53` (block public access), `CKV_AWS_19` (SSE), `CKV_AWS_145` (CMK encryption), `CKV_AWS_18` (access logging), `CKV_AWS_21` (versioning), `CKV_AWS_70` (deny non-SSL). If any S3 bucket in a review lacks `aws_s3_bucket_public_access_block`, flag it immediately.
+**Checkov checks**: `CKV_AWS_53`/`54`/`55`/`56` (one per public-access-block setting), `CKV_AWS_19` (SSE), `CKV_AWS_145` (CMK encryption), `CKV_AWS_18` (access logging), `CKV_AWS_21` (versioning), `CKV_AWS_379` (deny non-SSL), `CKV_AWS_70` (wildcard principal in the bucket policy). If any S3 bucket in a review lacks `aws_s3_bucket_public_access_block`, flag it immediately.
 
 ### Req 6 - Secure Development
 

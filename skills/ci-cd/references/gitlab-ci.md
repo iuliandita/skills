@@ -166,7 +166,7 @@ variables:
   cache:
     key:
       files:
-        - bun.lockb
+        - bun.lock
     paths:
       - node_modules/
     policy: pull-push
@@ -324,7 +324,7 @@ rules:
     changes:
       - src/**/*
       - package.json
-      - bun.lockb
+      - bun.lock
 ```
 
 ### First-match rules and unmatched jobs
@@ -352,7 +352,7 @@ rules:
 cache:
   key:
     files:
-      - bun.lockb
+      - bun.lock
   paths:
     - node_modules/
   policy: pull-push    # default: download cache, update after job
@@ -381,7 +381,7 @@ cache:
   key:
     prefix: $CI_PROJECT_NAME
     files:
-      - bun.lockb
+      - bun.lock
   paths:
     - node_modules/
 ```
@@ -428,7 +428,10 @@ deploy:
 
 **Gotchas**:
 - `needs: []` (empty) = "run immediately, no dependencies." Not "don't run."
-- `needs` referencing a job excluded by `rules:` = pipeline fails with "job not found"
+- `needs` referencing a job excluded by `rules:` = pipeline fails with "job not found" at
+  creation time. In change-filtered monorepos this is routine, so declare those dependencies
+  as `needs: [{job: test-common, optional: true}]` - wait for it if it exists, ignore it if
+  the filter excluded it.
 - `needs` chains that run through deployment can cause modules to deploy at different versions
 
 ---

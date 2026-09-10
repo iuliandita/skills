@@ -84,7 +84,7 @@ succeeded" invites the agent to invent checks with wrong paths and service names
 
 ```yaml
 ---
-name: skill-name              # lowercase a-z, 0-9, hyphens; no leading/trailing/consecutive hyphens; max 64 chars; must match directory name; no reserved words (anthropic, claude)
+name: skill-name              # lowercase a-z, 0-9, hyphens; no leading/trailing/consecutive hyphens; max 64 chars; must match directory name. (anthropic, claude) are Anthropic platform-reserved, not barred by the portable spec - avoid for compatibility
 description: >                # aim for 80-120 chars; advisory warning above 120
   · Write and debug shell scripts, commands, and dotfiles for bash, zsh, sh, and fish.
 license: MIT                  # Agent Skills spec field
@@ -138,7 +138,7 @@ user confirmation in steps that could run unattended.
 
 | Field | Values | Purpose |
 |-------|--------|---------|
-| `name` | `a-z`, `0-9`, hyphens; no leading/trailing/consecutive hyphens; max 64 chars; no reserved words (`anthropic`, `claude`) | identifier, must match directory name |
+| `name` | `a-z`, `0-9`, hyphens; no leading/trailing/consecutive hyphens; max 64 chars. `anthropic`/`claude` are Anthropic platform-reserved, not barred by the portable spec - avoid them | identifier, must match directory name |
 | `description` | free text, usually 80-120 chars, warn above 120, 1024 spec max, no XML tags | primary trigger mechanism - the agent scans this |
 | `license` | license name (e.g., `MIT`) | Agent Skills spec field |
 | `compatibility` | free text, <500 chars | environment requirements (optional) |
@@ -148,11 +148,16 @@ user confirmation in steps that could run unattended.
 
 ### Effort tiers
 
-| Tier | Token usage | Typical skills | Structure depth |
-|------|-------------|---------------|-----------------|
-| **low** | <5k tokens | (none in collection; reserved for minimal single-purpose wrappers) | Minimal workflow, few rules |
-| **medium** | 5-15k tokens | anti-slop, prompt-generator, command-prompt, update-docs | Moderate workflow, reference files |
-| **high** | 15k+ tokens | ansible, docker, kubernetes, terraform, etc. (see Skill Inventory) | Full workflow, AI self-check, checklists, multiple references |
+| Tier | Complexity signal | Typical skills | Structure depth |
+|------|-------------------|---------------|-----------------|
+| **low** | single-purpose wrapper, minimal context | (none in collection; reserved for minimal single-purpose wrappers) | Minimal workflow, few rules |
+| **medium** | one domain, moderate workflow | anti-slop, prompt-generator, command-prompt, update-docs | Moderate workflow, reference files |
+| **high** | multi-step domain with on-demand references | ansible, docker, kubernetes, terraform, etc. (see Skill Inventory) | Full workflow, AI self-check, checklists, multiple references |
+
+`effort` is a qualitative signal of a skill's depth and expected complexity, not a measured token
+count. The SKILL.md body still targets ~500 lines (<5k tokens) at every tier; references carry the
+rest and load on demand, so a high-effort skill's larger total footprint lives mostly outside the
+always-loaded body.
 
 ### Upstream skills (for reference)
 
@@ -446,7 +451,7 @@ different findings with different remediation paths.
 
 Document what each metric actually measures. Common traps:
 
-- **LVM thin `data_percent`** = blocks ever written, not filesystem usage
+- **LVM thin `data_percent`** = pool blocks currently allocated (reclaimable via discard/TRIM), not live filesystem usage and not a lifetime count of every block ever written
 - **K8s HPA `targetCPU`** = percentage of CPU *request*, not actual CPU
 - **Docker image size** = virtual size including shared layers, not disk footprint
 - **`df` vs `du`** = filesystem allocation vs actual content size

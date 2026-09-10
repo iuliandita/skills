@@ -33,31 +33,46 @@ command -v <binary> >/dev/null 2>&1
 
 If binary not found on PATH, skip to next harness.
 
-### Step 2: Config Check
+### Step 2: Config Check (hint only)
 
-Verify credentials exist (file OR env var):
+Check whether credentials appear to exist (config file OR env var):
 
 ```bash
 [[ -f <config_path> ]] || [[ -n "${ENV_VAR:-}" ]]
 ```
 
-If neither config file nor env var exists, skip to next harness.
+Treat this as a hint, not a gate. A missing config file or unset env var does not prove the
+harness is unusable - credentials may live in a keyring, a project-local config, or a credential
+helper - and a present config does not prove it works. Record the hint, then let the Step 3 smoke
+test decide. Skip before the smoke test only when the binary is absent (Step 1).
 
 ### Step 3: Smoke Test
 
-Send a trivial prompt with a distinct canary word, verify it appears in the output:
+Send a trivial prompt with a distinct canary word and confirm the canary appears in the harness's
+actual model response - not in a banner, log line, or echoed prompt. Run it in an isolated,
+read-only working directory with a private temp dir, and never send repository content:
 
 ```bash
-output=$(timeout 60 <smoke_test_command> 2>&1)
-echo "$output" | grep -qi "pong"
+tmp=$(mktemp -d)                          # private scratch, not the repo tree
+out="$tmp/out"; err="$tmp/err"
+timeout 60 <smoke_test_command> >"$out" 2>"$err"; status=$?
+if [[ $status -ne 0 ]]; then
+  result=skip                             # status 124 = timeout; any non-zero = failed run -> reject
+elif grep -qi "pong" "$out"; then
+  result=pass                             # canary found in the response stream (stdout)
+else
+  result=skip                             # banner-only / no canary in response -> reject
+fi
+rm -rf "$tmp"
 ```
 
-Use "respond with PONG" as the prompt (not "OK" - too likely to match banner text).
-60-second timeout - some harnesses (Codex) run MCP startup and emit verbose banners
-(10+ lines of config metadata) before the model response. Never truncate output with
-`head` or assume the response appears in the first N lines. Grep the full output.
-
-If no match, error, or timeout, skip to next harness.
+Use "respond with PONG" as the prompt (not "OK" - too likely to match banner text). Keep stderr
+separate from stdout: harnesses (Codex especially) emit verbose startup banners and MCP metadata
+(10+ lines) on stderr or ahead of the response, and merging them with `2>&1` lets banner text
+satisfy the grep. Capture the exit status explicitly - a timeout (124), crash, or auth error must
+reject the harness, not fall through as a pass. Never truncate with `head` or assume the response
+is in the first N lines; scan the full response stream. A PONG that appears only in a banner, a
+timed-out run, or an errored run does not count: reject and skip to the next harness.
 
 ---
 

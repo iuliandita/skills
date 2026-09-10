@@ -107,7 +107,8 @@ in Competitive Intel without prompting.
 ## Step 4: Update Roadmap
 
 Add user-approved items to the appropriate priority tier with source attribution:
-`-- from: owner/repo-name issues` or `-- user request: issue #N`.
+`| from: owner/repo-name issues` or `| user request: owner/repo#N`, using the tracking field of the
+Item format in `SKILL.md`.
 
 Create or update the **Competitive Intel** section with the full analysis per repo,
 including what was deliberately excluded and why.

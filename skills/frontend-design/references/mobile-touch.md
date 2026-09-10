@@ -207,17 +207,46 @@ bun add @use-gesture/react
 
 ```tsx
 import { useGesture } from "@use-gesture/react";
-import { useId, useState } from "react";
+import { useId, useRef, useState } from "react";
 
 export function PinchableImage({ src, alt }: { src: string; alt: string }) {
   const instructions = useId();
+  const imgRef = useRef<HTMLImageElement>(null);
   const [scale, setScale] = useState(1);
   const [{ x, y }, setPos] = useState({ x: 0, y: 0 });
+
+  // The image scales about its center, so it overhangs the clip by
+  // (scale - 1) / 2 of its layout size per side. Never pan past that overhang.
+  // offsetWidth/offsetHeight are layout values, unaffected by the transform, and
+  // translate() runs in unscaled parent pixels here, so the bound needs no divide.
+  const panMax = (s: number) => {
+    const el = imgRef.current;
+    return {
+      x: el ? ((s - 1) * el.offsetWidth) / 2 : 0,
+      y: el ? ((s - 1) * el.offsetHeight) / 2 : 0,
+    };
+  };
+  const panBounds = (s: number) => {
+    const { x: mx, y: my } = panMax(s);
+    return { left: -mx, right: mx, top: -my, bottom: my };
+  };
+  const clampPos = (pos: { x: number; y: number }, s: number) => {
+    const { x: mx, y: my } = panMax(s);
+    return {
+      x: Math.min(mx, Math.max(-mx, pos.x)),
+      y: Math.min(my, Math.max(-my, pos.y)),
+    };
+  };
+  const applyScale = (s: number) => {
+    setScale(s);
+    setPos((pos) => clampPos(pos, s));
+  };
+
   const bind = useGesture({
-    onDrag: ({ offset: [ox, oy] }) => setPos({ x: ox, y: oy }),
-    onPinch: ({ offset: [s] }) => setScale(s),
+    onDrag: ({ offset: [ox, oy] }) => setPos(clampPos({ x: ox, y: oy }, scale)),
+    onPinch: ({ offset: [s] }) => applyScale(s),
   }, {
-    drag: { from: () => [x, y] },
+    drag: { from: () => [x, y], bounds: () => panBounds(scale) },
     pinch: { from: () => [scale, 0], scaleBounds: { min: 1, max: 4 } },
   });
 
@@ -226,6 +255,7 @@ export function PinchableImage({ src, alt }: { src: string; alt: string }) {
       <p id={instructions}>Drag or use arrow keys to pan. Pinch or use Zoom to resize.</p>
       <div style={{ overflow: "hidden" }}>
         <img
+          ref={imgRef}
           src={src} alt={alt} tabIndex={0} aria-describedby={instructions}
           {...bind()}
           onKeyDown={(e) => {
@@ -234,7 +264,7 @@ export function PinchableImage({ src, alt }: { src: string; alt: string }) {
             const delta = directions[e.key];
             if (!delta) return;
             e.preventDefault();
-            setPos((pos) => ({ x: pos.x + delta[0], y: pos.y + delta[1] }));
+            setPos((pos) => clampPos({ x: pos.x + delta[0], y: pos.y + delta[1] }, scale));
           }}
           style={{
             maxWidth: "100%",
@@ -247,7 +277,7 @@ export function PinchableImage({ src, alt }: { src: string; alt: string }) {
       <label>
         Zoom
         <input type="range" min="1" max="4" step="0.1" value={scale}
-          onChange={(e) => setScale(Number(e.currentTarget.value))} />
+          onChange={(e) => applyScale(Number(e.currentTarget.value))} />
       </label>
       <button type="button" onClick={() => { setScale(1); setPos({ x: 0, y: 0 }); }}>
         Reset view
@@ -260,6 +290,13 @@ export function PinchableImage({ src, alt }: { src: string; alt: string }) {
 Use one [combined binding](https://use-gesture.netlify.app/docs/gestures/) so drag and pinch
 do not overwrite each other's event handlers. Keep control-driven state synchronized with
 [gesture offsets](https://use-gesture.netlify.app/docs/options/) using `from`.
+
+Clamp every offset write (drag, arrow keys, zoom change) through the same bound so repeated
+key presses cannot push the image out of the clip. Give drag a dynamic
+[`bounds`](https://use-gesture.netlify.app/docs/options/) function as well: clamping only the
+React state lets the gesture's internal offset keep accumulating past the edge, so the user
+would have to drag all the way back before the image moved again. Test: hold ArrowRight at scale 1 (no
+movement), at scale 4 (stops at the edge), zoom back to 1 (offset returns to 0), then Reset.
 Scope `touch-action: none` to a dedicated manipulation surface: it disables browser pan/zoom
 there, so preserve page scrolling elsewhere and provide keyboard zoom/pan and reset controls.
 Set intrinsic image dimensions from real asset metadata and keep a visible focus style.

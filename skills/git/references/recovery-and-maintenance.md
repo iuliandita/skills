@@ -10,7 +10,9 @@ Research date: September 2026.
 
 ### The reflog - git's safety net
 
-The reflog records every HEAD movement for 90 days. Almost nothing is truly lost in git.
+The reflog records HEAD movements. Defaults keep reachable entries 90 days and unreachable
+entries 30 days (`gc.reflogExpire`, `gc.reflogExpireUnreachable`), so check the repo's config
+rather than assuming a fixed window. Almost nothing is truly lost in git.
 
 ```bash
 # View reflog (all HEAD movements)
@@ -74,7 +76,7 @@ git bisect bad    # if this commit is broken
 
 # Automated bisect (run a test script)
 git bisect start HEAD v1.0.0
-git bisect run bun test - src/auth.test.ts
+git bisect run bun test src/auth.test.ts
 
 # Automated bisect with a custom CI check script
 # Exit 0 = good; 1-127 except 125 = bad; 125 = untestable/skip; 128-255 = abort.

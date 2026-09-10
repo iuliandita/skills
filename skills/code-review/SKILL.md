@@ -180,15 +180,9 @@ Rate every potential issue on a confidence scale of 0-100:
 
 For each significant code change, ask: **What are the three most likely failure modes?** This question catches architecture-level bugs that line-by-line review misses - especially in AI-generated code where individual lines look fine but the overall design has gaps.
 
-Before assigning a score, verify:
-- Read the full function/file, not just the flagged line
-- Check if there's a test covering this case (and whether the test is correct)
-- Check git blame - is this new code or battle-tested?
-- Look for comments explaining why something looks odd (comments are intent evidence, not proof of correctness)
-- **Cite the evidence.** Every >= 80% finding must reference the exact file, line, and code that proves the issue. If you can't cite it, go find it. If you can't find evidence, downgrade the score.
-- **Adversarial self-check.** Before finalizing each finding, argue *against* it. Try to explain why the code is actually correct. If the counter-argument is convincing, drop the finding.
-- **Construct a failing case.** For P0 findings, describe the specific input or sequence that triggers the bug. If you can't construct one, it's not P0.
-- **Never claim API/stdlib behavior without verifying.** 18% of "high-confidence" AI code review suggestions contain factual errors about framework behavior. If unsure whether a function is stable-sorted, returns a view, or handles null - look it up first.
+Before assigning a score, run the AI Self-Check list above: full context, tests, git blame, explaining comments, cited evidence, the adversarial argument against the finding, and a constructed failing case for anything P0. If you cannot cite the evidence or construct the failing input, lower the score rather than reporting it.
+
+Never assert API or stdlib behavior from memory: 18% of "high-confidence" AI review suggestions contain factual errors about framework behavior, so look up whether a function is stable-sorted, returns a view, or handles null before making it a finding.
 
 ### Step 6: Report
 

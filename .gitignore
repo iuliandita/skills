@@ -26,3 +26,6 @@ test.sh
 
 # Disposable improve-skill audit plans
 plans/
+
+# Superpowers brainstorm scratch (local only)
+.superpowers/

@@ -82,7 +82,7 @@ X findings: N P0, N P1, N P2, N P3, N info.
 ## Tool Installation Reference
 
 [For each skipped tool, provide install command]:
-- betterleaks: `brew install betterleaks` or see https://github.com/zricethezav/betterleaks (gitleaks successor)
+- betterleaks: see https://github.com/betterleaks/betterleaks for current install options (gitleaks successor, same author)
 - semgrep: `pip install semgrep` or `brew install semgrep`
 - gitleaks: `brew install gitleaks` or `go install github.com/gitleaks/gitleaks/v8@latest`
 - trufflehog: `brew install trufflehog` or `go install github.com/trufflesecurity/trufflehog/v3@latest`

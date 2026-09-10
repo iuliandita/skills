@@ -61,6 +61,7 @@ Routines are high-stakes: they run unattended, consume daily allowance, and can 
 - [ ] **Beta header pinned with date**: prose mentions of `experimental-cc-routine-2026-04-01` carry the header date so future readers can scan for staleness. Inside code blocks the header string itself carries the date, so no parenthetical is needed.
 - [ ] **No tokens in output**: environment variable placeholders only. Never paste a real `sk-ant-oat01-...` value.
 - [ ] **API surface checked**: routine headers, beta names, schedule syntax, and event payloads match current official docs
+- [ ] **Fire payload complete**: for API triggers, the emitted example payload carries every field the routine prompt requires (repository, environment, current and prior SHA, identifiers), sourced from the caller's real variables or named secrets. Nothing is left for the user to add before the routine can run.
 - [ ] **Unattended risk bounded**: permissions, spending, mutation scope, and notification paths are explicit
 - [ ] Cross-cutting agent hygiene applied - see `references/agent-hygiene.md`
 

@@ -1,8 +1,8 @@
 # Security Audit: Hardening Checklists
 
-Detailed checklists for passes 6-8. Read this file when executing those passes.
+Detailed checklists for passes 7-9. Read this file when executing those passes.
 
-## Cryptography & Data Protection (Pass 6)
+## Cryptography & Data Protection (Pass 7)
 
 - [ ] **TLS verification**: is `rejectUnauthorized: false` or `NODE_TLS_REJECT_UNAUTHORIZED=0` used? If so, is it opt-in per-connection and documented, not global?
 - [ ] **Sensitive data in logs**: are passwords, tokens, or API keys logged? Check logging middleware and error handlers.
@@ -15,7 +15,7 @@ Detailed checklists for passes 6-8. Read this file when executing those passes.
 - [ ] **HSTS**: is `Strict-Transport-Security` header set?
 - [ ] **CSP**: is `Content-Security-Policy` configured?
 
-## Container & Infrastructure (Pass 7)
+## Container & Infrastructure (Pass 8)
 
 ### Dockerfile
 
@@ -111,7 +111,7 @@ Detailed checklists for passes 6-8. Read this file when executing those passes.
 - [ ] Scripts fetched over HTTPS with integrity verification (checksums)?
 - [ ] No `curl | bash` patterns without pinned URL + checksum?
 
-## CI/CD & Supply Chain (Pass 8)
+## CI/CD & Supply Chain (Pass 9)
 
 ### CI/CD Workflows
 
