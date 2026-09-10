@@ -254,7 +254,7 @@ def redact_for_logging(data: dict) -> dict:
 | Scenario | Action |
 |----------|--------|
 | User input sent to external LLM API | Strip PII before sending |
-| Model response displayed to user | No stripping needed (model shouldn't have PII) |
+| Model response displayed to user | Check recipient authorization and apply output DLP/redaction under the data policy; retrieved or generated output can contain PII |
 | Logging prompts/responses | Redact PII in logs |
 | Storing conversation history | Encrypt at rest, access-control |
 | Self-hosted model (air-gapped) | PII stays local, lower risk |

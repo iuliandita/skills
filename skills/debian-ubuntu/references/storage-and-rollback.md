@@ -40,11 +40,13 @@ sudo lvs        # logical volumes
 sudo lvs -a     # includes hidden/thin-pool volumes
 ```
 
-- For thin pools, `lvs -a` shows `Data%` and `Meta%`. `Data%` is blocks ever written to the pool,
-  not live filesystem usage and not freed by deletes inside a thin volume - a thin pool can hit
-  100% even though the filesystems look half-empty. Pool or metadata exhaustion takes volumes
-  read-only, so watch both `Data%` and `Meta%`.
-- Grow with `lvextend -r -L +<size> /dev/vg/lv` (the `-r` resizes the filesystem too on ext4/Btrfs).
+- For thin pools, `lvs -a` shows `Data%` and `Meta%`: allocated pool data and metadata, not live
+  filesystem usage. Deletion reclaims pool chunks only when discard reaches the pool and no
+  snapshot still references them. A pool can fill while guest filesystems look half-empty;
+  monitor both percentages and the pool's exhaustion policy.
+- For a confirmed ext4 LV, `lvextend -r -L +<size> /dev/vg/lv` grows the LV and filesystem.
+  For Btrfs, grow the LV without `-r`, then run `btrfs filesystem resize max <mountpoint>`
+  against the confirmed mounted filesystem. Check free VG space and backup/recovery first.
 
 ## ext4 and Btrfs
 

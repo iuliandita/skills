@@ -1,7 +1,7 @@
 ---
 name: git
 description: >
-  · Handle git branches, commits, remotes, conflicts, hooks, signing, releases, PR/MR workflows. Triggers: 'git', 'commit', 'branch', 'merge', 'rebase', 'tag', 'push', 'PR', 'MR', 'gh', 'glab'.
+  · Manage git commits, branches, conflicts, rebases, PRs/MRs, tags, releases, and GitHub/GitLab/Forgejo/Gitea workflows.
 license: MIT
 compatibility: "Requires git. Optional: gh (GitHub CLI), glab (GitLab CLI), fj (Forgejo CLI)"
 metadata:
@@ -19,14 +19,14 @@ The goal is clean, signed, traceable history that satisfies both engineering sta
 compliance requirements (PCI-DSS 4.0).
 
 **Target versions** (September 2026):
-- **git**: 2.55.0 (current stable). Major additions include Linux fsmonitor, remote-group push, and parallel compatible hooks. Git 3.0 remains expected later in 2026.
+- **git**: 2.55.0 (current stable). Major additions include Linux fsmonitor, remote-group push, and parallel compatible hooks.
 - **GitHub CLI (`gh`)**: 2.100.0
-- **GitLab CLI (`glab`)**: 1.116.0
-- **Forgejo CLI (`fj`)**: 0.6.0 (verify the current release at `codeberg.org/forgejo-contrib/forgejo-cli`). Rust-written, official community CLI. Covers PRs (incl. AGit), issues, repos, releases, tags, actions.
+- **GitLab CLI (`glab`)**: 1.117.0
+- **Forgejo CLI (`fj`)**: verify the current release at `codeberg.org/forgejo-contrib/forgejo-cli`; the previous 0.6.0 pin was not independently confirmed on September 10. Rust-written, official community CLI. Covers PRs (incl. AGit), issues, repos, releases, tags, actions.
 - **Forgejo**: v16.0.3 current; v15.0.7 is the current LTS. Critical RCE (CVE-2025-68937) patched in v13.0.2+.
 - **prek**: 0.5.2 (Rust, recommended) or **pre-commit**: 4.6.2 (Python, largest ecosystem)
-- **git-filter-repo**: 2.47.x
-- **gitleaks**: 8.30.x (secret scanning)
+- **git-filter-repo**: 2.47.0
+- **gitleaks**: 8.30.1 (secret scanning)
 - **cosign**: 3.1.3 (Sigstore, for tag/release signing context)
 
 This skill covers five domains depending on context:
@@ -192,12 +192,18 @@ collaborative development with review. Adapt to the project's actual workflow.
 Read `references/forge-workflows.md` for forge-specific PR/MR creation
 patterns (GitHub `gh pr create`, GitLab `glab mr create`, Forgejo web UI or API).
 
+Select verification from the diff and repository policy. Opening a PR does not by itself
+justify a full build, integration suite, or release pipeline. Run affected checks and
+honor required merge gates; reuse passing results for the same revision and relevant inputs.
+If CI does unnecessary work, use **ci-cd** to scope its triggers and jobs rather than
+bypassing checks or repeatedly dispatching the full pipeline.
+
 General flow:
 1. **Create feature branch**: `git checkout -b type/short-description` (e.g., `feat/user-search`, `fix/auth-bypass`). Keep branch names lowercase, hyphenated, prefixed with type.
 2. **Make changes**: commit early, commit often. Each commit should be a logical unit.
 3. **Rebase onto base**: `git fetch origin && git rebase origin/main` (or whatever the base branch is). Resolve conflicts: look for `<<<<<<<`, `=======`, `>>>>>>>` markers, keep the correct content from both sides (often both additions belong), then `git add` and `git rebase --continue`. After resolving conflicts in dependency files (`package.json`, `Cargo.toml`, `go.mod`, etc.), re-run the package manager to regenerate the lock file. Never merge the base into the feature branch. For merge strategy guidance, see `references/forge-workflows.md`.
 
-   **Dependency file conflicts** (`package.json`, `go.mod`, `pyproject.toml`): keep additions from both branches; when the same dependency has conflicting version pins, take the higher compatible version conservatively and validate. Never hand-edit the lock file - always regenerate it by running the package manager (`npm install`, `go mod tidy`, `uv sync`, etc.) after resolving the manifest conflict. Do not use `--ours` or `--theirs` for dependency manifest conflicts - these silently drop one branch's additions.
+   **Dependency file conflicts** (`package.json`, `go.mod`, `pyproject.toml`): keep additions from both branches; when the same dependency has conflicting version pins, reconcile both branches' constraints and intent, then let the package manager resolve a compatible version and validate the affected behavior. Never hand-edit the lock file - always regenerate it by running the package manager (`npm install`, `go mod tidy`, `uv sync`, etc.) after resolving the manifest conflict. Do not use `--ours` or `--theirs` for dependency manifest conflicts - these silently drop one branch's additions.
 4. **Push**: `git push -u origin feat/short-description`. Then verify the remote actually
    advanced: compare `git rev-parse HEAD` with the forge PR/MR head SHA (`gh pr view ...`,
    `glab mr view ...`, or forge API). Do not rely on a terse or aliased push wrapper alone.
@@ -256,13 +262,13 @@ breaking change marker and consistent scopes make these tools significantly more
 Read `references/recovery-and-maintenance.md` for detailed recovery
 procedures (reflog, bisect, rerere, filter-repo, etc.).
 
-**Golden rule**: don't panic. Git almost never loses data. The reflog has 90 days of history.
+**Golden rule**: don't panic. Git almost never loses data. Reflog retention is configurable: defaults are 90 days for reachable entries and 30 for unreachable entries; expiration and GC can remove recovery data.
 
 Quick reference:
 - **Undo last commit (keep changes)**: `git reset --soft HEAD~1`
 - **Undo last commit (discard changes)**: `git reset --hard HEAD~1` - **DESTRUCTIVE, confirm first**
 - **Revert a pushed commit**: `git revert <sha>` (creates a new commit, safe for shared branches)
-- **Find lost commits**: `git reflog` - shows every HEAD movement for 90 days
+- **Find lost commits**: `git reflog` - shows retained HEAD movements; do not assume a fixed recovery window
 - **Find which commit broke something**: `git bisect start && git bisect bad && git bisect good <sha>`
 - **Automated bisect with test script**: `git bisect start HEAD v1.0.0 && git bisect run bun test - src/auth.test.ts` - runs the test at each bisect step automatically. Exit codes: 0 = good, 1-127 except 125 = bad, 125 = skip this commit, 128-255 = abort the bisect immediately. Ideal for CI integration: `git bisect run ./scripts/ci-check.sh`
 - **Squash last N commits (no interactive rebase)**: `git reset --soft HEAD~N && git commit -m "feat: combined change"` - resets N commits but keeps all changes staged, then commits them as one. Safer than `git rebase -i` in automated contexts.
@@ -280,7 +286,7 @@ When `git pull` fails with "divergent branches" or `git status` shows "have dive
    - **Your commits are the ones that matter** (common for solo work): `git pull --rebase origin branch` - replays your local commits on top of remote.
    - **Remote commits are the ones that matter** (someone force-pushed, or you want to discard local): `git reset --hard origin/branch` - **DESTRUCTIVE, confirm first**.
    - **Both sides have real work** (collaboration divergence): `git pull --rebase origin branch`, resolve conflicts at each step, `git rebase --continue`.
-   - **You don't know yet**: `git stash && git pull && git stash pop` as a safe first attempt (only works if the divergence is minor).
+   - **You don't know yet**: inspect both histories and repository policy before selecting a strategy; do not run a configuration-dependent pull as a probe.
 3. **After resolving**: verify with `git log --oneline -10` that history looks correct.
 4. **Prevent recurrence**: if this was caused by force-push on a shared branch, set up branch protection. If caused by forgetting to pull before committing, consider `git config pull.rebase true` for rebase-on-pull default.
 
@@ -302,12 +308,12 @@ auditable, and conservative:
    When submodules are present, also run `git submodule update --init --recursive` after
    the pull - `--recurse-submodules` updates existing submodule checkouts but does not
    initialize new submodules added since the last pull.
-5. If a pull is blocked by local changes, use a named stash, fast-forward the branch,
-   then pop the stash. If conflicts appear, preserve both upstream updates and local
-   user additions when possible.
-6. After resolving stash conflicts, run `git restore --staged .` so previously unstaged
-   user changes do not stay staged accidentally. Keep the stash entry if conflict
-   resolution required judgment, and mention it in the final response.
+5. If authorized to stash local changes, record the original index and worktree diffs,
+   create a named stash, fast-forward, then use `git stash apply --index` with that stash's
+   exact object id. Keep it until both content and the staged/unstaged split are verified.
+6. If applying the index conflicts, preserve the stash and stop updating that repository.
+   Resolve against the saved staged and unstaged patches deliberately; never blanket-unstage
+   user work. Report the unresolved repository and continue independent repositories.
 7. Verify every repo with `git rev-list --left-right --count HEAD...@{u}` and
    `git status --porcelain`. Report repos that remain dirty or have no upstream.
 

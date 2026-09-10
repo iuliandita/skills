@@ -1,6 +1,6 @@
 # AI/ML Target Versions
 
-September 2026 snapshot. Verified 2026-09-03 against provider docs, PyPI, npm, GitHub releases,
+September 2026 snapshot. Refreshed 2026-09-10 against provider docs, PyPI, npm, GitHub releases,
 and GitHub Security Advisories.
 Verify current releases before pinning.
 
@@ -12,7 +12,7 @@ Verify against provider docs before pinning. Current as of September 2026:
 | Provider | Tier | Model ID | Notes |
 |----------|------|----------|-------|
 | Anthropic | Frontier | `claude-fable-5-1` | Most capable public model for demanding reasoning and long-horizon work (released 2026-09-01) |
-| Anthropic | Flagship | `claude-opus-4-8` | Most capable: complex reasoning, long-horizon agentic coding (GA 2026-05-28) |
+| Anthropic | Flagship | `claude-opus-5` | Complex reasoning and agentic coding; [released July 24, 2026](https://platform.claude.com/docs/en/models/opus-5/overview) |
 | Anthropic | Balanced | `claude-sonnet-5` | Current speed/intelligence balance. 4.6+ dropped dated snapshots: the bare ID IS the pinned snapshot |
 | Anthropic | Fast | `claude-haiku-4-5` | Low cost/latency. Dated snapshot: `claude-haiku-4-5-20251001` |
 | OpenAI | Flagship | `gpt-5.6-sol` | Complex reasoning and coding; `gpt-5.6` is its alias |
@@ -53,20 +53,25 @@ adopt them only when the application can manage pending results and continuation
 
 | Component | Version | Notes |
 |-----------|---------|-------|
-| Anthropic Python SDK | 1.3.0 | Major release; review migration notes before upgrading |
-| Anthropic TS SDK | 0.123.0 | Claude models, streaming, tool use, structured output |
-| Claude Agent SDK (TS) | 0.3.259 | Programmatic agent building with Claude Code capabilities |
-| OpenAI Python SDK | 3.8.0 | Major release; GPT-6/GPT-5.6 models and Responses API |
-| OpenAI Agents SDK | 0.22.0 | Multi-agent orchestration, tracing, sessions |
-| Vercel AI SDK | 7.0.92 | Node.js 22+ and ESM required; agents, workflows, telemetry, multimodal APIs |
+| Anthropic Python SDK | 1.4.0 | Major release; review migration notes before upgrading |
+| Anthropic TS SDK | 0.124.0 | Claude models, streaming, tool use, structured output |
+| Claude Agent SDK (TS) | 0.3.266 | Programmatic agent building with Claude Code capabilities |
+| OpenAI Python SDK | 3.10.0 | Major release; GPT-6/GPT-5.6 models and Responses API |
+| OpenAI Agents SDK | 0.22.2 | Multi-agent orchestration, tracing, sessions |
+| Vercel AI SDK | 7.0.93 | Node.js 22+ and ESM required; agents, workflows, telemetry, multimodal APIs |
 | LangChain | 1.4.0 | Minor release; review integration compatibility |
 | LangGraph | 1.2.11 | Stateful agent graphs, cycles, persistence |
 | LlamaIndex | 0.14.24 | RAG framework, 300+ integrations |
-| Transformers | 5.16.1 | Model inference, fine-tuning, PyTorch 2.4+ required |
+| Transformers | 5.17.0 | Model inference, fine-tuning, PyTorch 2.4+ required |
 | vLLM | 0.28.0 | Review release and security notes before upgrading multi-tenant deployments |
-| Ollama | 0.33.3 | CVE-2026-65315 has no fixed-version range yet; keep current and do not trust unreviewed GGUF files |
+| Ollama | 0.33.3 | Do not trust unreviewed GGUF files; see the advisory qualification below |
 | pgvector | 0.8.6 | PostgreSQL extension, HNSW + IVFFlat |
 | Qdrant | 1.19.0 | Self-hosted vector DB, hybrid search |
 | Pinecone (Python) | 10.0.0 | Major release; review migration notes before upgrading |
 | ChromaDB | 1.5.9 | Lightweight vector DB, local-first |
 | promptfoo | 0.122.2 | LLM eval framework, red teaming |
+
+## Security update (checked 2026-09-10)
+
+- vLLM versions before 0.28.0 are affected by [LlavaOnevision2 model-code execution despite `trust_remote_code=False`](https://github.com/vllm-project/vllm/security/advisories/GHSA-3c86-2m5g-59q7) and [embedding/pooling input denial of service](https://github.com/vllm-project/vllm/security/advisories/GHSA-25q3-v2hm-8vpf). Both are fixed in 0.28.0; retain reviewed model sources and revisions after patching.
+- [CVE-2026-65315](https://github.com/advisories/GHSA-9hhj-2jwx-r87p) describes Ollama GGUF allocation denial of service. The retrieved advisory has unknown affected/patched release ranges; do not infer that 0.33.3 fixes it. Restrict model upload/create/pull access and accept only reviewed model files while checking publisher remediation.

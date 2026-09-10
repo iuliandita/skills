@@ -97,7 +97,7 @@ func validate(s string) error {
 Defers run in last-in-first-out order. This matters when operations have dependencies (e.g., flush before close).
 
 **Detect:**
-- `defer f.Close()` before `defer writer.Flush()` - file closes before flush, data lost
+- `defer writer.Flush()` before `defer f.Close()` - LIFO closes the file before flushing; register Close first, then Flush
 - Deferred unlock before deferred lock acquisition in complex flows
 - Multiple defers on the same resource in non-obvious order
 
@@ -112,12 +112,12 @@ Deferred function arguments are evaluated at the `defer` statement. But closures
 
 **Example:**
 ```go
-// bug: all defers print the final value of i
+// Pre-Go 1.22 semantics: all closures share the final i; check go.mod first
 for i := 0; i < 5; i++ {
     defer func() { fmt.Println(i) }() // prints 5, 5, 5, 5, 5
 }
 
-// fix: pass as argument to capture current value
+// Explicit argument capture also works on older language versions
 for i := 0; i < 5; i++ {
     defer func(n int) { fmt.Println(n) }(i) // prints 4, 3, 2, 1, 0
 }
@@ -174,27 +174,27 @@ func produce(ch chan int) {
 **Detect:**
 - `select` with both `case <-ctx.Done()` and a channel operation - Go picks randomly when both are ready, so a cancel might not be noticed immediately
 - `for-select` loop without a return/break on the done case (loop continues after cancel)
-- `time.After()` inside a `for-select` loop - creates a new timer every iteration, leaking until GC
+- `time.After()` inside a hot loop allocates repeatedly. With Go 1.23+ timer semantics, unreachable timers are GC-eligible before firing; older semantics retain them until firing. Check go.mod and GODEBUG before claiming a leak.
 
 ```go
-// bug: new timer allocated every iteration, old ones leak until they fire
+// Allocation pattern to measure; old timer semantics retain timers until firing
 for {
     select {
     case msg := <-ch:
         process(msg)
-    case <-time.After(5 * time.Second): // leak!
+    case <-time.After(5 * time.Second):
         return
     }
 }
 
-// fix: reuse a ticker or reset a timer
+// Reuse an inactivity timer; this single goroutine owns its channel
 timer := time.NewTimer(5 * time.Second)
 defer timer.Stop()
 for {
     select {
     case msg := <-ch:
         if !timer.Stop() {
-            <-timer.C
+            select { case <-timer.C: default: }
         }
         timer.Reset(5 * time.Second)
         process(msg)
@@ -233,7 +233,7 @@ if err != nil {
 **Detect:**
 - `err == ErrFoo` instead of `errors.Is(err, ErrFoo)` - breaks when errors are wrapped
 - `err.(*MyError)` type assertion instead of `errors.As(err, &target)` - same problem
-- Sentinel errors defined as `var` instead of via `errors.New()` (mutable - another package can overwrite)
+- Reassigning an exported sentinel can break identity checks; `var ErrFoo = errors.New("foo")` is the normal declaration, not a bug
 
 ---
 
@@ -316,7 +316,7 @@ Go 1.22 changed loop variable semantics - each iteration gets a new variable. Fo
 - Check `go.mod` for Go version. If `go 1.21` or earlier:
   - `go func() { use(v) }()` inside a `for _, v := range` loop - all goroutines share the same `v`
   - `&v` taken inside a loop - all pointers point to the same variable
-- For Go >= 1.22: this class of bug is fixed by the compiler. Skip this check.
+- For Go >= 1.22: variables declared with := in the loop are per-iteration. Assignment to a pre-existing variable with = still shares that variable; inspect the declaration.
 
 ---
 

@@ -93,6 +93,12 @@ def run_agent(user_query: str, tools: list[dict], max_iterations: int = 15) -> s
 Use this shape when an agent can call tools repeatedly. It combines the non-negotiables:
 iteration cap, cost gate, transient retry policy, and explicit `is_error` tool results.
 
+The accounting/dispatch functions below are application contracts, not SDK methods. Disable
+hidden SDK retries (for example, configure the Anthropic client with `max_retries=0`) and set
+request/tool deadlines. Reserve every billed attempt, include paid tool charges in a whole-run
+ceiling, and retain a reservation when a timeout leaves actual usage unknown. Retry a side
+effect only when idempotency or reconciliation proves doing so is safe.
+
 ```python
 MAX_ITERS, BUDGET_USD = 20, 5.00
 TOOL_RETRY_MAX = 2  # transient failures only; retry then abort
@@ -107,6 +113,10 @@ for i in range(MAX_ITERS):
     spent += cost_of(resp.usage)  # input/output tokens * per-1M price
     if resp.stop_reason == "end_turn":
         return resp
+    if resp.stop_reason != "tool_use":
+        raise RuntimeError(f"incomplete or unsupported stop: {resp.stop_reason}")
+    msgs.append({"role": "assistant", "content": resp.content})
+    tool_results = []
     for block in resp.content:
         if block.type != "tool_use":
             continue
@@ -117,9 +127,11 @@ for i in range(MAX_ITERS):
                 if attempt == TOOL_RETRY_MAX: result, is_error = "tool failed after retries", True
             except PermanentToolError as e:
                 result, is_error = f"tool aborted: {e}", True; break
-        msgs.append({"role": "assistant", "content": resp.content})
-        msgs.append({"role": "user", "content": [{"type": "tool_result",
-            "tool_use_id": block.id, "content": str(result), "is_error": is_error}]})
+        tool_results.append({"type": "tool_result", "tool_use_id": block.id,
+            "content": str(result), "is_error": is_error})
+    if not tool_results:
+        raise RuntimeError("tool_use stop without tool calls")
+    msgs.append({"role": "user", "content": tool_results})
 raise IterationLimitExceeded(MAX_ITERS)
 ```
 

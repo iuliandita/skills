@@ -143,8 +143,8 @@ with `--no-verify` or have it misconfigured locally. CI runs the same checks to 
 
 ### Layer 2: CI (authoritative)
 
-CI runs the full linter suite on every PR. Same config as pre-commit where possible, so
-there's no "works on my machine" divergence.
+CI runs the applicable linters on affected artifacts, widening scope for shared lint
+configuration. Use the same config as pre-commit where possible to avoid local/CI drift.
 
 Language-specific linters to wire up:
 
@@ -226,7 +226,7 @@ nightly cron or pre-release job; they take minutes and block nothing useful on a
 Both are good. Pick one per pipeline and stick with it.
 
 - **Trivy** - one binary, scans images + filesystems + IaC + secrets + licenses. Good
-  default for teams who want fewer tools. After the 2025 TeamPCP incident, pin to a
+  default for teams who want fewer tools. After the 2026 TeamPCP incident, pin to a
   verified version (`v0.74.0+` from official releases; `v0.69.3` was the March 2026
   rollback version; avoid `v0.69.4/5/6` which were compromised).
 - **Grype** - vulnerability-matching only, but has **risk scoring** that combines CVSS
@@ -362,21 +362,42 @@ path filters if workflow edits should trigger a verification run.
 
 ### Required status checks
 
-On protected branches, require:
+Choose gates for the changed behavior and repository policy. Keep existing required gates
+until their configuration is deliberately updated; a slow run alone is not a reason to
+bypass them. Inspect job timings before optimizing.
 
 | Check type | Required? | Why |
 |------------|-----------|-----|
-| Lint | Yes | Cheap; no reason to ever merge lint failures |
-| Unit tests | Yes | The baseline contract |
-| Integration tests | Yes (on main-bound PRs) | Catches integration bugs |
+| Lint | For affected artifacts and configuration | Fast syntax and style feedback |
+| Unit tests | For affected behavior and dependencies | The baseline contract |
+| Integration tests | When affected interfaces, dependencies, or policy warrant them | Catches integration bugs |
 | E2E tests | Maybe | Flaky E2E breaks more PRs than it catches bugs - gate as advisory until flake rate <1% |
-| Type check | Yes (for typed languages) | Cheap |
-| Build | Yes | If CI can't build, nobody can |
+| Type check | For affected typed code and configuration | Catches interface errors |
+| Build | When source, build inputs, dependencies, or policy warrant it | Verifies affected artifacts |
 | Secret scan | Yes | Blocking on secrets is non-negotiable |
-| Container scan | Yes (for new/changed Criticals only) | Ratchet pattern above |
+| Container scan | When producing or changing an image | Ratchet pattern above; scan published images on a schedule |
 | SAST | Advisory | Too noisy for hard block |
 | Coverage | Usually no, sometimes yes | Covered below |
 | SBOM diff | Advisory | Surfaces dependency changes for review |
+
+For docs-only or metadata-only changes, validate the changed artifacts and any consumers
+they affect. A documentation-site or packaging change may still need its own build.
+For code changes, select affected tests and builds, including dependents of shared code.
+Lockfiles, toolchain settings, build configuration, and CI edits can widen that scope;
+when change detection cannot determine the impact, run the broader checks.
+
+Full platform matrices, long E2E suites, and release packaging belong on PRs when they
+protect against a relevant failure. Otherwise use scheduled, post-merge, or release runs
+according to the project's risk tolerance. Avoid duplicate push/PR runs and reuse valid
+results for the same revision and relevant inputs; superseded PR runs can be canceled.
+
+For conditional heavy jobs, keep a stable required gate that always reports and verifies
+change detection plus every selected job. Accept a skipped job only when it was deliberately
+out of scope; failures, cancellations, and unexpected skips must not produce a green gate.
+On GitHub, skipping an entire required workflow through path filters leaves its check
+pending, while skipped jobs report success. An aggregate job needs `always()` and explicit
+result validation so failed dependencies cannot skip the gate and appear successful.
+See [GitHub's required-check guidance](https://docs.github.com/en/pull-requests/how-tos/merge-and-close-pull-requests/troubleshooting-required-status-checks).
 
 ### Coverage thresholds
 

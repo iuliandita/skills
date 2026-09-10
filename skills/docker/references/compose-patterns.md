@@ -193,10 +193,7 @@ services:
     cap_drop: []
     ports:
       - "5432:5432"
-    environment:
-      POSTGRES_DB: myapp_dev
-      POSTGRES_USER: dev
-      POSTGRES_PASSWORD: dev
+    # Keep the base *_FILE variables and secrets; use local dev-only secret files.
 ```
 
 ### Production: `compose.prod.yaml` (explicit `-f`)
@@ -461,13 +458,18 @@ The old file format versions (2.x/3.x) were unified into the versionless Compose
 Prevents `docker compose up --scale`. Only use when external systems reference the container by name (reverse proxy hardcoded upstream, etc.).
 
 ### Environment variable precedence
-1. Compose file `environment:` (highest)
-2. Shell environment variables
-3. `.env` file (in project directory)
-4. Dockerfile `ENV`
+Interpolation and container environment are separate. The host shell takes precedence over
+`.env`/`--env-file` when resolving `${NAME}`; neither automatically injects every value into
+the container. For container values, `docker compose run -e` overrides service `environment:`,
+which overrides service `env_file:`, which overrides image `ENV`. An explicit literal in
+`environment:` is not replaced by a same-named host variable. Inspect `docker compose config`
+with the intended files and environment to verify the resolved model.
 
 ### Secrets in Swarm vs standalone
-`secrets:` with `file:` works without Swarm mode. Compose mounts the file as a tmpfs volume at `/run/secrets/<name>`. `external: true` requires Swarm or a secrets manager integration.
+`secrets:` with `file:` works without Swarm mode. Standalone Compose bind-mounts the source
+file at `/run/secrets/<name>`; it is not a tmpfs secret store. Protect the host file and verify
+the container user can read it; file-backed mounts do not implement secret `uid`/`gid`/`mode`
+remapping. `external: true` needs support from the selected platform or integration.
 
 ### Build + image on same service
 Both `build:` and `image:` on the same service is intentional: Compose builds the image and tags it with the `image:` name. Useful for CI (build and tag in one step). But confusing if unintentional.

@@ -105,10 +105,12 @@ For each issue, if it already has the `auto-triaged` label, skip it.
 Otherwise apply the label as the final step so re-runs are no-ops.
 ```
 
-**Pattern C: delta window.** Compute a `since` timestamp and scope the query to it. For schedules, "since the last scheduled run" can be approximated by the routine's cadence (a weekly routine looks at the last seven days).
+**Pattern C: delta window.** Compute a `since` timestamp and scope the query to it. Use a durable last-success cursor or an overlapping, deduplicated window; a cadence-only
+window can miss failed, delayed, or skipped runs.
 
 ```
-Compute `since = now - 7 days`. List merged PRs in that window.
+Read the last successful cursor. List merged PRs since that cursor, deduplicate by PR ID,
+and advance the cursor only after the required output succeeds.
 ```
 
 None of these are enforced by the platform. The prompt must implement them explicitly.
@@ -133,20 +135,26 @@ Most routines are single-trigger. Only add branching when the user actually want
 ## Example 1: Scheduled backlog triage (single trigger)
 
 ```
-This routine runs on weeknight mornings to triage issues opened against the `myorg/api`
-repository since the last run.
+This routine runs on weekday mornings to triage issues opened against the `myorg/api`
+repository, including backlog missed by earlier runs.
 
-Read issues created in the last 24 hours in `myorg/api` that do not yet have the
-`auto-triaged` label.
+Read up to 100 oldest open issues in `myorg/api` without the `auto-triaged` label.
+This includes weekend issues and work missed by failed runs. Continue the backlog on later runs.
 
-Step 1. If that list is empty, exit with no output.
+Step 1. If that list is empty and no summary delivery is pending, exit with no output.
 Step 2. For each issue:
         - Read the title, body, and any labels set by the reporter.
         - Infer the area of code most likely involved (`api/`, `db/`, `auth/`, or `infra/`).
-        - Apply the matching `area/*` label and the `auto-triaged` label.
+        - Apply the matching `area/*` label.
         - Assign the owner listed in `.github/CODEOWNERS` for that area.
-Step 3. Post one Slack message in `#eng-backlog` listing the issues triaged this run,
-        grouped by area, with direct links to each issue.
+        - After both actions succeed, durably record its ID as pending summary delivery,
+          then add `auto-triaged`. Reconcile recorded IDs if either write was interrupted.
+        - Preserve unresolved issues for retry; do not invent an owner when none matches.
+Step 3. Reconcile one Slack summary in `#eng-backlog`, grouped by area with direct links.
+        Persist the summary ID and completed issue IDs in the configured durable run record;
+        recover an interrupted post by checking that record and channel before posting again.
+        If issue work finished but summary delivery failed, retry delivery on the next run
+        even when no untriaged issues remain.
 
 A successful run produces: the labels and assignees applied to each issue, plus one
 Slack summary message. If Step 1 decides there is nothing to do, produce nothing.

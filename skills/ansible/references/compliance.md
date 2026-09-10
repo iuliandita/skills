@@ -83,7 +83,7 @@ New benchmarks merged within 2-4 weeks of CIS/STIG release.
 
 **Not supported**: Alpine Linux. CIS has not published a benchmark for Alpine, and neither
 ansible-lockdown nor `devsec.hardening` officially support it. Alpine's minimal attack surface
-(musl, BusyBox, no systemd, no PAM by default) makes it inherently hardened, but for formal
+(musl, BusyBox, no systemd, no PAM by default) makes it smaller by default, but still requiring threat-model-specific hardening and verification, but for formal
 compliance you need a custom hardening role. Alternatives: run `lynis audit system` (supports
 Alpine) for an auditable checklist, apply `devsec.hardening.ssh_hardening` (partially works
 since sshd config is distro-agnostic - test it), and handle the rest with targeted tasks
@@ -315,7 +315,7 @@ Banner /etc/ssh/banner
 - name: Initialize AIDE database
   ansible.builtin.command:
     cmd: aide --init
-    creates: /var/lib/aide/aide.db.new.gz
+    creates: /var/lib/aide/aide.db.gz
   become: true
 
 - name: Move new database to active
@@ -366,9 +366,19 @@ AWX and AAP provide built-in audit logging:
 - **External logging**: ship to Splunk, ELK, or any syslog-compatible SIEM
 
 ```bash
-# Query AWX activity stream
-curl -s -H "Authorization: Bearer $AWX_TOKEN" \
-  "https://awx.example.com/api/v2/activity_stream/?timestamp__gte=2026-01-01" | jq '.results[] | {timestamp, operation, summary_fields}'
+# Supply AWX_TOKEN through the secret manager; the value never appears in argv.
+python3 - <<'PYCODE'
+import json, os, urllib.request
+request = urllib.request.Request(
+    "https://awx.example.com/api/v2/activity_stream/?timestamp__gte=2026-01-01",
+    headers={"Authorization": "Bearer " + os.environ["AWX_TOKEN"]},
+)
+with urllib.request.urlopen(request, timeout=30) as response:
+    page = json.load(response)
+for event in page["results"]:
+    print(json.dumps({key: event.get(key) for key in ("timestamp", "operation", "summary_fields")}))
+PYCODE
+# This prints one page only; follow the trusted API's next link for a complete export.
 ```
 
 ### CI/CD audit artifacts

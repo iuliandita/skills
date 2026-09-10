@@ -259,9 +259,9 @@ Requires `pytest-asyncio` and `asyncio_mode = "auto"` in `pyproject.toml` (or `"
 ### Common pytest pitfalls
 
 - **Mutable default fixture data**: returning a dict from a session-scoped fixture that tests modify. Each test sees mutations from previous tests.
-- **Missing `@pytest.mark.asyncio`**: async test runs but never actually awaits anything. Passes silently.
+- **Async runner mismatch**: auto mode can handle unmarked async tests; strict mode requires explicit markers and an async plugin. Verify the runner result instead of assuming an unmarked test passed.
 - **`assert obj`** instead of `assert obj is not None`: truthy check catches more than intended (empty list is falsy).
-- **Fixture dependency order**: fixtures execute top-to-bottom in the parameter list. If fixture B depends on fixture A, list A first.
+- **Fixture dependency order**: parameter-list order is not a scheduling contract. Declare A as a parameter of fixture B when B depends on A; scope, dependencies, and autouse determine ordering.
 - **`tmp_path` vs `tmp_path_factory`**: `tmp_path` is per-test (function scope). Use `tmp_path_factory` for wider scopes.
 
 ---
@@ -409,7 +409,7 @@ func BenchmarkHash(b *testing.B) {
 - **Parallel test data races**: `t.Parallel()` without protecting shared state. Run with `-race` flag.
 - **Test binary caching**: `go test` caches results. Use `-count=1` to force re-run.
 - **Missing `t.Helper()`**: helper functions that call `t.Errorf` report the wrong line. Mark them with `t.Helper()`.
-- **`testing/synctest`**: Go 1.25 promoted `synctest` from experiment to stdlib. Go 1.26 replaced `synctest.Run` with `synctest.Test` (accepts `*testing.T`). Use `synctest.Test(t, func(t *testing.T) { ... })` to test concurrent code in an isolated "bubble" - fake clock, deterministic goroutine scheduling, no real sleeps needed.
+- **`testing/synctest`**: Go 1.25 promoted `synctest` from experiment to stdlib. The stable Go 1.25 API uses `synctest.Test` (accepts `*testing.T`). Use `synctest.Test(t, func(t *testing.T) { ... })` to test concurrent code in an isolated "bubble" - fake clock and wait-for-quiescence support; runnable goroutine order is not guaranteed.
 
 ---
 
@@ -422,6 +422,7 @@ Rust's test framework is built into the language. Unit tests go in the same file
 ```rust
 // src/cart.rs
 pub fn total_with_discount(items: &[Item]) -> f64 {
+    assert!(items.iter().all(|i| i.price.is_finite() && i.price > 0.0), "Price must be positive");
     let total: f64 = items.iter().map(|i| i.price).sum();
     if total > 100.0 { total * 0.9 } else { total }
 }

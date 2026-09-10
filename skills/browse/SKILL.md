@@ -1,7 +1,7 @@
 ---
 name: browse
 description: >
-  · Browse/scrape web pages with Lightpanda, Playwright MCP, agent-browser, or fetch. Triggers: 'browse', 'scrape', 'headless', 'open url', 'read website', 'fill form', 'crawl'. Not for E2E tests (use testing).
+  · Read and scrape websites, navigate pages, and fill forms. For browser tests, use testing.
 license: MIT
 compatibility: "Optional: lightpanda, @playwright/mcp, agent-browser. Falls back to WebFetch or curl"
 metadata:
@@ -256,19 +256,17 @@ file rather than keeping everything in context:
 lightpanda fetch --dump markdown --strip-mode full <url> > extracted.md
 ```
 
-For binary downloads (PDFs, images) after auth, extract the session cookie from the browser
-context and hand it to curl. With Playwright MCP or Lightpanda MCP, use `evaluate` to read
-`document.cookie`, then:
-```bash
-curl -L -o report.pdf -b "session=<value>; csrf=<value>" \
-  -H "Referer: https://internal.example.com/reports" <pdf-url>
-```
-Alternative: trigger the browser's native download via `evaluate`
-(`document.querySelector('a.download').click()`) and let the headless session write to its
-download directory - avoids moving the cookie out of the browser entirely. This is the only
-working path for `blob:` URLs and `data:` URIs - they are in-memory browser references with
-no fetchable origin, so curl cannot resolve them; let the page itself resolve the blob via a
-click or read it with `evaluate` and `FileReader.readAsDataURL` to extract the bytes.
+For authenticated binary downloads, use the browser's native download support and save the
+result directly to the permitted output directory. Keep session cookies in the browser;
+`document.cookie` cannot read HttpOnly cookies and must not become a credential-export recipe.
+For `blob:` URLs, trigger the page's download action inside the same browser context.
+
+If native download is unavailable and an authorized HTTP export is necessary, use the tool's
+browser-storage export directly into a permission-restricted cookie jar, then pass only the
+jar path to the HTTP client. Do not display cookie values, include them in command arguments,
+or carry them into model context. Preserve domain/path/secure restrictions, verify the target
+and redirect destinations, and remove the jar after use. If the tool cannot export securely,
+report that limit rather than extracting credentials with page JavaScript.
 
 ---
 
@@ -394,12 +392,9 @@ For session isolation, CSRF-sensitive actions, and multi-tenant account handling
 If no browsing tools are detected, recommend the user set up Lightpanda MCP - it's the
 fastest path to full browsing capability with minimal overhead.
 
-**Lightpanda MCP setup** (one-time, ~30 seconds):
-```bash
-# Install the binary (see references/tool-setup.md for other architectures)
-curl -L -o lightpanda https://github.com/lightpanda-io/browser/releases/download/0.4.0/lightpanda-x86_64-linux
-chmod +x lightpanda && mv lightpanda ~/.local/bin/
-```
+**Lightpanda MCP setup**: follow the architecture-specific release verification in
+`references/tool-setup.md` before installing the executable. Do not copy an unverified release
+asset into PATH. Use an existing approved browser when a trusted install artifact is unavailable.
 
 Add the MCP server to your Claude Code settings (`~/.claude/settings.json` or project
 `.mcp.json`) - merge with existing config, don't overwrite:

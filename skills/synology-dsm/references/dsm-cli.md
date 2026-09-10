@@ -254,10 +254,10 @@ plain-text grep covers DSM events.
 way to see what else happened:
 
 ```sh
-sudo dmesg > /root/dmesg.before
+sudo sh -c 'dmesg > /root/dmesg.before'
 # ... action ...
-sudo dmesg > /root/dmesg.after
-diff /root/dmesg.before /root/dmesg.after | head -50
+sudo sh -c 'dmesg > /root/dmesg.after'
+sudo diff /root/dmesg.before /root/dmesg.after | head -50
 ```
 
 ## 9. Network

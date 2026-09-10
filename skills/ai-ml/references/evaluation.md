@@ -28,10 +28,12 @@ dataset creation, CI integration, regression detection, and red teaming.
 - RAG pipeline changes (chunking, embedding, retrieval) affect answer quality
 - You need a baseline to measure improvements against
 
-Every AI feature should have at minimum:
-- A test dataset (20+ examples for small features, 100+ for core features)
-- Automated metrics that run in CI
-- A human review process for subjective quality
+Choose evaluation depth from the changed behavior and its risks:
+- A representative dataset covering the contract, known failures, and material boundaries
+- Automated checks integrated with the project's required gates
+- Human review where subjective quality or consequential decisions need it
+
+Expand coverage when measured gaps justify it; there is no universal minimum case count.
 
 ---
 
@@ -253,10 +255,10 @@ jobs:
 
 ### What to run in CI
 
-- **Every PR that touches prompts**: full eval suite
-- **Every PR that touches AI code**: relevant subset of evals
-- **Nightly**: full suite against current production prompts (catch model drift)
-- **On model updates**: full suite comparison between old and new model
+- **Prompt or AI-code changes**: relevant regression cases plus required repository gates
+- **Broad behavior or model changes**: compare old and new behavior across the affected suite
+- **Drift monitoring**: schedule a bounded production-prompt sample when drift risk and cost justify it
+- Reuse passing evidence for an unchanged diff; widen only for failures, uncertain impact, or a required gate
 
 ---
 
@@ -405,4 +407,6 @@ tests:
 | Indirect injection | Malicious content in retrieved docs | Model doesn't follow injected instructions |
 | Context manipulation | Contradictory information in context | Model handles conflicts appropriately |
 
-Run red team evals before every production deployment and after prompt changes.
+Run relevant adversarial cases when prompts, tools, permissions, data boundaries, or models
+change. Use a broader red-team suite for substantial risk changes and required release gates;
+a documentation-only deployment does not justify a paid repeat by itself.

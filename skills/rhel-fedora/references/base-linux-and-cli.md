@@ -13,7 +13,7 @@ rpm -V package_name
 repoquery --whatprovides /path/to/file 2>&1 || true
 dnf repolist --enabled 2>&1 || true
 grubby --default-kernel 2>&1 || true
-restorecon -Rv /path 2>&1 || true
+restorecon -nRv /path 2>&1 || true     # preview label differences without changing them
 semanage fcontext -l 2>&1 | head -40 || true
 ```
 
@@ -21,4 +21,4 @@ semanage fcontext -l 2>&1 | head -40 || true
 
 - `rpm -V` is great when files disappeared or permissions look wrong.
 - `repoquery` beats guessing which package owns a capability.
-- `restorecon` fixes labels; it does not change policy.
+- After confirming a labeling fault, `restorecon -Rv /path` applies the label repair; inspection uses `-n`.

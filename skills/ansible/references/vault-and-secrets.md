@@ -50,14 +50,14 @@ ansible-vault rekey --vault-id old@prompt --new-vault-id new@prompt secrets.yml
 Encrypt a single variable value inline:
 
 ```bash
-# Interactive
-ansible-vault encrypt_string 'my_secret_value' --name 'vault_db_password'
+# Enter the value at a private prompt, never as a literal CLI argument.
+ansible-vault encrypt_string --prompt --name 'vault_db_password'
 
-# From stdin
-echo -n 'my_secret_value' | ansible-vault encrypt_string --stdin-name 'vault_api_key'
+# Or feed a protected secret file through stdin (path only is visible in argv).
+ansible-vault encrypt_string --stdin-name 'vault_api_key' < "$SECRET_VALUE_FILE"
 
 # With vault ID
-ansible-vault encrypt_string 'my_secret_value' --name 'vault_db_password' --vault-id prod@prompt
+ansible-vault encrypt_string --prompt --name 'vault_db_password' --vault-id prod@prompt
 ```
 
 Output (paste into your vars file):
@@ -250,12 +250,17 @@ The `hashicorp.vault` certified collection provides native Ansible integration w
 ### SSH secret engine (signed certificates)
 
 ```yaml
+- name: Read this managed host's SSH public key
+  ansible.builtin.slurp:
+    src: /etc/ssh/ssh_host_ed25519_key.pub
+  register: host_public_key
+
 - name: Sign SSH host key
   hashicorp.vault.vault_write:
     path: ssh-host/sign/host-role
     data:
       cert_type: host
-      public_key: "{{ lookup('ansible.builtin.file', '/etc/ssh/ssh_host_ed25519_key.pub') }}"
+      public_key: "{{ host_public_key.content | b64decode | trim }}"
     url: "{{ vault_url }}"
     auth_method: approle
     role_id: "{{ vault_role_id }}"
@@ -277,53 +282,66 @@ The `hashicorp.vault` certified collection provides native Ansible integration w
 
 ### GitLab CI
 
+Use protected, masked secret variables and independently verified `SSH_KNOWN_HOSTS` content.
+Do not generate trust by accepting a fresh unauthenticated `ssh-keyscan` result.
+
 ```yaml
-# .gitlab-ci.yml
 ansible-deploy:
   stage: deploy
   image: my-ee:1.0.0
   variables:
-    ANSIBLE_HOST_KEY_CHECKING: "false"
+    ANSIBLE_HOST_KEY_CHECKING: "true"
   script:
-    # Vault password from CI variable (masked in logs)
-    - ansible-playbook -i inventory/production deploy.yml
-      --vault-password-file <(echo "$VAULT_PASSWORD")
-      --diff
+    - |
+      set -eu
+      umask 077
+      secret_dir=$(mktemp -d)
+      trap 'rm -rf -- "$secret_dir"' EXIT
+      printf '%s\n' "$VAULT_PASSWORD" > "$secret_dir/vault-pass"
+      printf '%s\n' "$SSH_KNOWN_HOSTS" > "$secret_dir/known_hosts"
+      export ANSIBLE_SSH_ARGS="-o UserKnownHostsFile=$secret_dir/known_hosts"
+      ansible-playbook -i inventory/production deploy.yml \
+        --vault-password-file "$secret_dir/vault-pass"
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
       when: manual
 ```
 
-**Key points:**
-- `$VAULT_PASSWORD` is a CI/CD variable (Settings > CI/CD > Variables, masked)
-- `<(echo "$VAULT_PASSWORD")` is process substitution - the password never touches disk
-- For HashiCorp Vault: pass `VAULT_TOKEN` or `VAULT_ROLE_ID`/`VAULT_SECRET_ID` as CI variables
-- Pin the EE image to a specific tag (not `:latest`)
+Run this script with Bash; keep required SSH private keys in the runner's protected credential
+mechanism. Pin the execution image to an approved immutable reference. Secret-bearing tasks
+need `no_log: true`; avoid `--diff` on secret templates.
 
 ### GitHub Actions
 
 ```yaml
-# .github/workflows/deploy.yml
 jobs:
   deploy:
     runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@<sha>           # Pin to SHA!
+      - uses: actions/checkout@<sha> # Replace with a reviewed commit SHA.
       - name: Run playbook
-        run: |
-          echo "${{ secrets.VAULT_PASSWORD }}" > /tmp/.vault-pass
-          ansible-playbook -i inventory/production deploy.yml \
-            --vault-password-file /tmp/.vault-pass \
-            --diff
-          rm -f /tmp/.vault-pass
+        shell: bash
         env:
-          ANSIBLE_HOST_KEY_CHECKING: "false"
+          VAULT_PASSWORD: ${{ secrets.VAULT_PASSWORD }}
+          SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
+          ANSIBLE_HOST_KEY_CHECKING: "true"
+        run: |
+          set -euo pipefail
+          umask 077
+          secret_dir=$(mktemp -d)
+          trap 'rm -rf -- "$secret_dir"' EXIT
+          printf '%s\n' "$VAULT_PASSWORD" > "$secret_dir/vault-pass"
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > "$secret_dir/known_hosts"
+          export ANSIBLE_SSH_ARGS="-o UserKnownHostsFile=$secret_dir/known_hosts"
+          ansible-playbook -i inventory/production deploy.yml \
+            --vault-password-file "$secret_dir/vault-pass"
 ```
 
-**Warning**: pin ALL GitHub Actions to commit SHAs. The tj-actions compromise (March 2025)
-and Trivy compromise (March 2026) prove mutable tags are not safe.
+Pin every action and execution image before use. Both examples keep secret values out of shell
+program text and argv, restrict files at creation, and clean their private temporary directory
+on ordinary failure. Runner isolation must also clean up after a forced kill.
 
 ### AWS SSM Parameter Store
 
@@ -369,50 +387,25 @@ ansible-vault rekey --vault-password-file old-pass --new-vault-password-file new
 
 ### Rotating application secrets
 
-```yaml
-# rotate-secrets.yml
-- name: Rotate application secrets
-  hosts: appservers
-  become: true
-  vars_prompt:
-    - name: confirm_rotation
-      prompt: "Type 'rotate' to confirm secret rotation"
-      private: false
+Rotation is a coordinated credential lifecycle, not a random value written to one config:
 
-  tasks:
-    - name: Abort if not confirmed
-      ansible.builtin.fail:
-        msg: "Rotation not confirmed"
-      when: confirm_rotation != 'rotate'
+1. Read the current version from the authoritative secret store. Create and persist a staged
+   new version there before changing consumers; keep the old version recoverable.
+2. Determine whether the application supports overlapping credentials. If not, plan an
+   authorized coordinated cutover and recovery window instead of claiming zero downtime.
+3. Deploy the staged version to the server with `no_log: true`, restricted file modes, and a
+   protected rollback copy. Define the notified restart/reload handler in the play and run
+   `ansible.builtin.meta: flush_handlers` before checking activation.
+4. Verify health and an authenticated operation using the new credential. On failure, restore
+   the old config, restart, verify recovery, and fail the play; do not advance the version.
+5. Roll clients to the new stored version and verify their real requests. Mark the version
+   current only after all required consumers have switched successfully.
+6. Revoke the old credential after the documented overlap window and verify that it is rejected.
+   Retain audit metadata, not secret values. A partial run must resume from persisted version
+   state without generating a different key on every retry.
 
-    - name: Generate new API key
-      ansible.builtin.set_fact:
-        new_api_key: "{{ lookup('ansible.builtin.password', '/dev/null length=64 chars=ascii_letters,digits') }}"
-      no_log: true
-
-    - name: Update application config
-      ansible.builtin.template:
-        src: config.j2
-        dest: /etc/myapp/config.yml
-        mode: "0600"
-      notify: Restart application
-      no_log: true
-
-    - name: Wait for application to restart
-      ansible.builtin.uri:
-        url: "http://localhost:{{ app_port }}/health"
-        status_code: 200
-      retries: 10
-      delay: 5
-
-    - name: Verify new key works
-      ansible.builtin.uri:
-        url: "http://localhost:{{ app_port }}/api/verify"
-        headers:
-          Authorization: "Bearer {{ new_api_key }}"
-        status_code: 200
-      no_log: true
-```
+Use the secret store and application's supported modules/API for these transitions. A generic
+playbook cannot invent their activation, rollback, or revocation contracts.
 
 ---
 

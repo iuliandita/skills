@@ -15,9 +15,11 @@ Context:
 - Baseline validation run: [commands and results; implementation validation not run because this audit is read-only]
 - Validation gaps: [missing, noisy, skipped, or unavailable checks]
 
-### High-Value Opportunities
+## P2 - Nice to fix
 
-**Do with tests** `services/*/list-items.*` - Centralize repeated pagination and filter parsing.
+- [ ] **#1 Centralize list parsing**
+Recommendation: Do with tests
+File: `services/*/list-items.*` - Centralize repeated pagination and filter parsing.
 Affected files: `services/users/list-items.*`, `services/projects/list-items.*`
 Evidence: `services/users/list-items.ts:24-58`, `services/projects/list-items.ts:19-55`
 Current duplication: both modules parse the same page, limit, sort, and filter parameters.
@@ -26,17 +28,23 @@ Behavior invariant: page and limit defaults, max-limit handling, sort allowlists
 Call-site impact: 2 endpoint handlers, no public import path changes.
 Why better: one behavior path for defaults and validation, with fewer divergent call sites.
 Tradeoffs: one shared helper couples list endpoints to a common pagination contract.
+Priority: P2
 Risk: medium
+Fix applied: _to be filled by implementer_
 Validation needed: add boundary tests for page and limit values, then run lint/type/build/test commands.
 
-**Do now** `src/legacy/format.ts` - Delete unused module.
+- [ ] **#2 Delete unused module**
+Recommendation: Do now
+File: `src/legacy/format.ts` - Delete unused module.
 Evidence: `src/legacy/format.ts:1-120` defines `formatLegacy`; no imports of `legacy/format` or
 references to `formatLegacy` in `src/`, `test/`, config, or route tables (`rg -n "legacy/format|formatLegacy"`).
 No-reference proof: not exported from the package index, not referenced by string key, not a DI/CLI/route registration.
 Behavior invariant: none; nothing reaches this code.
 Why better: removes a whole dead module and its transitive imports.
 Tradeoffs: none if the no-reference proof holds.
+Priority: P2
 Risk: low
+Fix applied: _to be filled by implementer_
 Validation needed: type and build pass after deletion; grep confirms zero references.
 
 ### Removed-Code Safety Review
@@ -51,14 +59,18 @@ Evidence checked: [diff lines, call sites, tests, type checks]
 Risk: [low/medium/high]
 Validation needed: [specific command/test/case]
 
-### Low-Value Or Risky Opportunities
+## Info
 
-**Leave alone** `integrations/*` - Duplication is likely to diverge per provider.
+- [ ] **#3 Keep provider-specific implementations**
+Recommendation: Leave alone
+File: `integrations/*` - Duplication is likely to diverge per provider.
 Why not: each provider already has different retry, auth, pagination, and error semantics.
+Priority: info
+Fix applied: not applicable; retain current behavior.
 
 ### Summary
 
-- High-value opportunities: 1
+- High-value opportunities: 2
 - Low-value or risky opportunities: 1
 - Merge blockers: none from this audit lens
 - Residual risk / skipped areas: [large dirs, generated files, expensive checks, external services]
@@ -70,7 +82,7 @@ Why not: each provider already has different retry, auth, pagination, and error 
 If no useful slimming opportunities are found, say so explicitly:
 
 ```markdown
-### High-Value Opportunities
+## P2 - Nice to fix
 None found within scope.
 
 ### Search Coverage
@@ -84,7 +96,7 @@ None found within scope.
 - Thin wrappers are retained because: [...]
 - Shared abstraction would likely worsen: [...]
 
-### Low-Value Or Risky Opportunities
+## Info
 [optional leave-alone observations]
 
 ### Summary

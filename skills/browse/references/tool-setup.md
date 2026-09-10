@@ -11,21 +11,35 @@ Headless browser built from scratch in Zig with V8. Single static binary, no dep
 
 ### Installation
 
+Select the pinned release asset for the host: `lightpanda-x86_64-linux`,
+`lightpanda-aarch64-linux`, or `lightpanda-aarch64-macos`. Obtain its expected SHA-256 from an
+independently authenticated publisher release record before installation. A hash computed from
+the untrusted download itself is not verification. If no trusted digest/signature is available,
+report that gap instead of presenting the download as verified.
+
 ```bash
-# Linux x86_64
-curl -L -o lightpanda https://github.com/lightpanda-io/browser/releases/download/0.4.0/lightpanda-x86_64-linux
-chmod +x lightpanda && sudo mv lightpanda /usr/local/bin/
+# Bash; LIGHTPANDA_SHA256 must already contain the trusted digest for this exact asset.
+set -euo pipefail
+: "${LIGHTPANDA_SHA256:?Set the authenticated publisher digest first}"
+export LIGHTPANDA_SHA256
+work_dir=$(mktemp -d)
+trap 'rm -rf -- "$work_dir"' EXIT
+curl --fail --location --proto '=https' --proto-redir '=https' \
+  -o "$work_dir/lightpanda" \
+  https://github.com/lightpanda-io/browser/releases/download/0.4.0/lightpanda-x86_64-linux
+python3 - "$work_dir/lightpanda" <<'PYCODE'
+import hashlib, os, pathlib, re, sys
+expected = os.environ["LIGHTPANDA_SHA256"].lower()
+actual = hashlib.sha256(pathlib.Path(sys.argv[1]).read_bytes()).hexdigest()
+if not re.fullmatch(r"[a-f0-9]{64}", expected) or actual != expected:
+    raise SystemExit("Release checksum mismatch")
+PYCODE
+mkdir -p "$HOME/.local/bin"
+install -m755 "$work_dir/lightpanda" "$HOME/.local/bin/lightpanda"
 
-# Linux aarch64
-curl -L -o lightpanda https://github.com/lightpanda-io/browser/releases/download/0.4.0/lightpanda-aarch64-linux
-chmod +x lightpanda && sudo mv lightpanda /usr/local/bin/
-
-# macOS (Apple Silicon)
-curl -L -o lightpanda https://github.com/lightpanda-io/browser/releases/download/0.4.0/lightpanda-aarch64-macos
-chmod +x lightpanda && sudo mv lightpanda /usr/local/bin/
-
-# Docker
-docker run -d --name lightpanda -p 9222:9222 lightpanda/browser:nightly
+# Docker alternative: replace with the reviewed digest of the approved release image.
+docker run -d --name lightpanda -p 127.0.0.1:9222:9222 \
+  "lightpanda/browser@sha256:<reviewed-digest>"
 ```
 
 Platforms: Linux x86_64, Linux aarch64, macOS x86_64, macOS aarch64. Windows via WSL2 only.
@@ -125,7 +139,7 @@ or WebKit. Higher token cost than Lightpanda but complete Web API coverage.
 ```bash
 # As Claude Code plugin (if available in your plugin marketplace)
 # Or standalone:
-npx @playwright/mcp@0.0.75
+npx @playwright/mcp@0.0.80
 ```
 
 ### Key Tools

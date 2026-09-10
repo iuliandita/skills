@@ -1,7 +1,7 @@
 ---
 name: code-review
 description: >
-  · Review code for correctness: bugs, edge cases, races, leaks, regressions. Triggers: 'review this code', 'code review', 'find bugs', 'check this diff', 'sanity check'. Not for style/slop (anti-slop) or vulnerabilities (security-audit).
+  · Review code and diffs for correctness: bugs, regressions, edge cases, races, and resource leaks.
 license: MIT
 compatibility: "None - works on any codebase"
 metadata:
@@ -47,14 +47,14 @@ Before reporting any finding at >= 80% confidence, verify:
 
 - [ ] **Read full context**: read the entire function/file, not just the flagged line
 - [ ] **Check for tests**: is there a test covering this case? Is the test correct?
-- [ ] **Check git blame**: is this new code or battle-tested? Pre-existing issues belong out of scope
-- [ ] **Check for explaining comments**: a comment explaining the pattern means someone already considered it
+- [ ] **Check git blame**: is this new code or battle-tested? Exclude pre-existing issues only in a diff-scoped review
+- [ ] **Check for explaining comments**: comments establish intent; check that the implementation actually satisfies that intent
 - [ ] **Cite the evidence**: exact file, line, and code that proves the issue. No citation = no finding
 - [ ] **Adversarial self-check**: argue against each finding. If the counter-argument is convincing, drop it
 - [ ] **Construct a failing case**: for P0 findings, describe the specific input or sequence that triggers the bug
 - [ ] **Verify API/stdlib claims**: AI code review suggestions frequently contain factual errors about framework behavior. If unsure, look it up
-- [ ] **Boundary values on numeric inputs flagged**: zero, negative, and overflow values on page numbers, sizes, counts, and indices are high-confidence findings - do not suppress with the 80% threshold
-- [ ] **Line references verified**: every finding points to code that exists in the reviewed diff
+- [ ] **Boundary values on numeric inputs flagged**: trace zero, negative, and overflow values through the actual input contract and callers; require a reachable failure before assigning confidence
+- [ ] **Line references verified**: every finding points to code in the agreed review scope
 - [ ] **Behavioral claim proven**: findings describe a plausible failing input, race, leak, or regression
 - [ ] Cross-cutting agent hygiene applied - see `references/agent-hygiene.md`
 
@@ -134,9 +134,14 @@ Follow every code path. For each branch, loop, or condition:
 - What happens at boundaries (empty, zero, max, null, negative)?
 - Are all cases handled? (switch/match exhaustiveness, if/else completeness)
 
-**Boundary value analysis** deserves special attention: when a function accepts numeric inputs (page numbers, sizes, counts, indices), zero, negative, and overflow values are inherently high-confidence findings. Don't suppress these with the 80% threshold - if the function doesn't guard against `page=0`, `perPage=0` (division by zero in callers), `offset > total`, or `offset + limit > total` (last page returns a short slice or the caller over-reads), that's a real bug on a realistic path. For paginated APIs, walk the arithmetic for page=1, page=0, page=-1, and the final page where `(page-1)*perPage` lands at or past `total`.
+**Boundary value analysis** deserves special attention. Trace page=1, page=0, page=-1,
+zero page size, the final page, and arithmetic overflow against the function's contract and
+actual callers. Report a missing guard when invalid input can reach an operation that fails
+or returns an incorrect result. `LIMIT` exceeding the remaining SQL rows is normally valid;
+a slice end beyond an array may panic. Do not invent downstream division or assume every
+numeric boundary is a bug. Apply the same evidence and confidence threshold as other findings.
 
-If no `go.mod` is available (inline snippet, paste, interview question), flag version-dependent issues at reduced confidence and note the version dependency.
+If no `go.mod` is available, state the version condition as an unresolved check; do not report a version-dependent bug as confirmed.
 
 **Focus 3: Check Contracts & Boundaries**
 Examine every interface between components:
@@ -160,11 +165,11 @@ Rate every potential issue on a confidence scale of 0-100:
 
 | Score | Meaning | Action |
 |-------|---------|--------|
-| 0 | False positive. Doesn't hold up under scrutiny or is pre-existing. | Discard |
+| 0 | False positive. Does not hold up under scrutiny. | Discard |
 | 25 | Might be real. Could also be intentional or context-dependent. | Discard |
-| 50 | Real issue, but minor. Nitpick territory. Won't cause production incidents. | Discard |
-| 75 | Very likely real. Will impact functionality or violates explicit project rules. | Borderline |
-| 80+ | Confirmed real. Verified by reading surrounding code. High impact. | **Report** |
+| 50 | Evidence is mixed; the failure has not been established. | Discard |
+| 75 | Very likely real, but a material assumption remains. | Borderline |
+| 80+ | Supported by concrete evidence and surrounding context; severity is separate. | **Report** |
 | 100 | Dead certain. The code is definitively wrong. Evidence is unambiguous. | **Report** |
 
 **Only report findings scored >= 80.** Quality over quantity. A report with 3 real bugs beats one with 20 maybes.
@@ -179,7 +184,7 @@ Before assigning a score, verify:
 - Read the full function/file, not just the flagged line
 - Check if there's a test covering this case (and whether the test is correct)
 - Check git blame - is this new code or battle-tested?
-- Look for comments explaining why something looks odd (if a comment explains the pattern, it's not a bug)
+- Look for comments explaining why something looks odd (comments are intent evidence, not proof of correctness)
 - **Cite the evidence.** Every >= 80% finding must reference the exact file, line, and code that proves the issue. If you can't cite it, go find it. If you can't find evidence, downgrade the score.
 - **Adversarial self-check.** Before finalizing each finding, argue *against* it. Try to explain why the code is actually correct. If the counter-argument is convincing, drop the finding.
 - **Construct a failing case.** For P0 findings, describe the specific input or sequence that triggers the bug. If you can't construct one, it's not P0.
@@ -249,14 +254,14 @@ Read `references/python.md` for the full Python bug pattern catalog. Key highlig
 - **Import side effects**: circular imports, module-level code that runs on import
 - **Async pitfalls**: mixing sync and async, blocking the event loop, missing `await`
 - **Dataclass/pydantic bugs**: mutable default fields without `default_factory`, validator side effects, `model_validate()` coercion on untrusted input
-- **Attribute typos**: `self.nmae = name` silently creates a new attribute on regular classes - use `__slots__` or dataclasses
+- **Attribute typos**: `self.nmae = name` silently creates a new attribute on regular classes - use `__slots__` or `@dataclass(slots=True)`
 
 ## Language: Bash / Shell
 
 Read `references/shell.md` for the full Shell bug pattern catalog. Key highlights:
 
 - **Word splitting**: unquoted variables breaking on spaces, glob expansion in unexpected places
-- **Exit code masking**: pipes hiding failures (`cmd1 | cmd2` only checks cmd2), `$(...)` in assignments
+- **Exit code masking**: pipes hiding failures (`cmd1 | cmd2` only checks cmd2), `$(...)` masked by `local`/`export` declarations
 - **Signal handling**: missing trap for cleanup, backgrounded processes not cleaned up
 - **Portability**: bashisms in `#!/bin/sh` scripts, GNU vs BSD tool differences
 
@@ -285,15 +290,22 @@ Read `references/iac.md` for the full IaC bug pattern catalog. Key highlights:
 
 ## CI/CD Pipelines
 
+Route pipeline-only findings to **ci-cd**. This reference is candidate context for tracing
+an application change across its delivery boundary, not a second pipeline audit.
+
 Read `references/cicd-pipelines.md` for the full CI/CD bug pattern catalog. Key highlights:
 
-- **GitLab CI/CD**: `rules:` vs `only:/except:` mixing (silently rejected), missing `when: never` causing fallthrough, `workflow:rules` absent causing duplicate pipelines, dotenv variables used in `rules:` (don't exist yet), protected variable silently empty on non-protected branches
+- **GitLab CI/CD**: `rules:` vs `only:/except:` mixing (silently rejected), unconditional final rules creating unwanted jobs, `workflow:rules` absent causing duplicate pipelines, dotenv variables used in `rules:` (don't exist yet), protected variable silently empty on non-protected branches
 - **GitHub Actions**: expression injection via `${{ }}` with user-controlled input, `GITHUB_TOKEN` permission scope too broad, reusable workflow input type mismatches, concurrency group bugs canceling wrong runs
 - **Forgejo Actions**: GitHub Actions compatibility gaps (missing features, different runner behavior, secrets handling differences)
 - **ArgoCD advanced**: ApplicationSet generator collisions, multi-source Application gotchas, annotation-based sync options silently changing behavior, progressive delivery rollback ordering
 - **Terraform advanced**: state locking race conditions, workspace isolation failures, provider alias confusion, `moved` blocks breaking plans, `import` block limitations
 
 ## AI-Age Patterns
+
+Use this reference to find concrete behavior defects. Naming, style, and abstraction preferences
+belong to **anti-slop**; vulnerability findings belong to **security-audit**. Pattern matches
+and historical statistics are prompts for investigation, never evidence about the reviewed code.
 
 Read `references/ai-age-patterns.md` for the full AI-age bug pattern catalog. Key highlights:
 
@@ -308,7 +320,7 @@ Read `references/databases.md` for the full database bug pattern catalog. Key hi
 
 - **General SQL**: transaction misuse (partial writes, missing rollback), NULL handling (`NOT IN` with NULLs returns 0 rows), migration bugs (NOT NULL without DEFAULT on existing tables)
 - **PostgreSQL**: `timestamp` vs `timestamptz` confusion, connection pool exhaustion, `jsonb` operator mixups (`->` vs `->>`), idle-in-transaction blocking autovacuum
-- **MongoDB**: missing `$set` in updates (replaces entire document), field name typos silently match nothing, write concern `w:0` data loss, schema-less type inconsistency
+- **MongoDB**: plain replacement passed to updateOne/updateMany (invalid update document), field name typos silently match nothing, write concern `w:0` data loss, schema-less type inconsistency
 - **MySQL/MariaDB**: silent data truncation in non-strict mode, `utf8` is not real UTF-8 (use `utf8mb4`), `GROUP BY` returning arbitrary values
 - **MSSQL**: `@@IDENTITY` vs `SCOPE_IDENTITY()`, VARCHAR can't store Unicode (use NVARCHAR), `TOP` without `ORDER BY`
 - **ORM pitfalls**: N+1 queries, stale entity caches, enum stored as ordinal (reorder breaks data), auto-DDL in production
@@ -320,7 +332,7 @@ Read `references/go.md` for the full Go bug pattern catalog. Key highlights:
 - **Goroutine leaks**: goroutines blocked on channels with no receiver, missing context/done signal, no WaitGroup
 - **Nil interface traps**: interface holding a typed nil pointer is not nil - `error` returned as `(*MyError)(nil)` fails nil checks
 - **Defer ordering**: LIFO execution, closure capture by reference, defer in loops exhausting file descriptors
-- **Channel deadlocks**: unbuffered channel send/receive in same goroutine, double close panic, `time.After` in for-select loop leaking timers
+- **Channel deadlocks**: unbuffered channel send/receive in same goroutine, double close panic, timer allocation and version-dependent retention in loops
 - **Error wrapping**: `%s` vs `%w` in `fmt.Errorf`, sentinel comparison with `==` instead of `errors.Is()`, custom errors missing `Unwrap()`
 - **Context leaks**: `context.WithCancel`/`WithTimeout` without `defer cancel()`, ignoring request-scoped contexts
 - **Data races**: concurrent map writes (fatal panic), shared slice append, read-modify-write without sync, missing `-race` in CI
@@ -338,7 +350,7 @@ For Rust and other languages without dedicated reference files: apply the univer
 - **Security vulnerabilities** - that's security-audit's job.
 - **Pre-existing bugs** - issues on lines not touched by the current changes (when reviewing a diff).
 - **Linter/compiler catches** - missing imports, type errors, formatting. The toolchain handles these.
-- **Intentional trade-offs** - code comments explaining "we do X because Y" signal the author already considered it.
+- **Intentional trade-offs** - code comments explaining "we do X because Y" establish intent; still flag a demonstrated failure of that intent.
 - **Test-only code** - relaxed error handling in test fixtures/helpers is often fine.
 - **Defensive code at boundaries** - input validation on external data is correct, not a bug.
 - **Known framework quirks** - patterns that look wrong but are idiomatic for the framework.

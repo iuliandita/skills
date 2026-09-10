@@ -1,9 +1,7 @@
 ---
 name: update-docs
 description: >
-  · Sweep docs after changes: README, changelog, API, runbooks. Triggers: 'update docs',
-  'refresh docs', 'sync docs', 'docs drift', 'merged PR', 'release cut', 'version bump',
-  'update changelog'. Not for PR text (use git).
+  · Update README, changelogs, API docs, and runbooks after changes; find and fix documentation drift.
 license: MIT
 compatibility: "Requires git. Optional: wc (for size audits)"
 metadata:
@@ -42,7 +40,7 @@ Post-change documentation sweep. Captures non-obvious knowledge into the right d
 
 Before presenting documentation updates, verify:
 
-- [ ] Only documenting gotchas, decisions, and failure modes - not defaults readable from config
+- [ ] Audience needs covered: setup, public behavior, gotchas, decisions, and failure modes; no redundant implementation inventory
 - [ ] No stale counts introduced (used "N" or kept count accurate)
 - [ ] Internal links verified (no broken references after renames or moves)
 - [ ] Companion instruction files still aligned (AGENTS.md synced if CLAUDE.md changed)
@@ -63,7 +61,7 @@ Before presenting documentation updates, verify:
 
 ## Core Principle
 
-**Document what you can't grep, in the file readers will actually check.** If it's in the source code, config files, or manifests, it usually doesn't belong in docs. Document: gotchas, decisions, failure modes, workarounds, implicit dependencies, release-facing deltas, and "the thing that took 30 minutes to figure out."
+**Document what the reader needs to act, in the file they will actually check.** Explain setup, public behavior, and required defaults when that audience needs them; avoid duplicating implementation inventories. Document: gotchas, decisions, failure modes, workarounds, implicit dependencies, release-facing deltas, and "the thing that took 30 minutes to figure out."
 
 ---
 
@@ -85,7 +83,7 @@ Before presenting documentation updates, verify:
 
 ## Workflow
 
-**Audit-only mode:** When invoked by full-review or when the user asks to "just report" or "check docs," run Steps 1-6 and report findings without making changes or committing. Skip Steps 7-8.
+**Audit-only mode:** When invoked by full-review or asked to report/check docs, inspect applicable Steps 1-7, including companion shape and drift, without editing. Skip commit Step 8. Scope all checks to documentation affected by the requested change; private configuration and unrelated roadmaps are not an automatic sweep target.
 
 1. Identify changes
 1.5. Roadmap freshness check
@@ -132,7 +130,7 @@ ROADMAPS=$(
 if [[ -n "$ROADMAPS" ]]; then
   # Resolve the source-of-truth version (try common manifests in order)
   REPO_VER=""
-  [[ -f package.json   ]] && REPO_VER=$(node -p "require('./package.json').version" 2>/dev/null)
+  [[ -f package.json   ]] && REPO_VER=$(node -p "require('./package.json').version ?? ''" 2>/dev/null)
   [[ -z "$REPO_VER" && -f Cargo.toml     ]] && REPO_VER=$(grep -m1 '^version' Cargo.toml     | sed -E 's/.*"([^"]+)".*/\1/')
   [[ -z "$REPO_VER" && -f pyproject.toml ]] && REPO_VER=$(grep -m1 '^version' pyproject.toml | sed -E 's/.*"([^"]+)".*/\1/')
   [[ -z "$REPO_VER" && -f setup.py       ]] && REPO_VER=$(grep -oE "version=['\"][^'\"]+" setup.py | sed -E "s/.*['\"]//")
@@ -323,8 +321,8 @@ If the repo has no meaningful documentation surface, or only a minimal `README.m
 - If the project has no instruction file at all, note this to the user and suggest creating one with the essential gotcha. Don't block on it.
 
 #### What NOT to add:
-- Default values readable from config files or manifests
-- Standard framework/platform behavior
+- Implementation defaults that the intended reader does not need for setup or correct use
+- Standard framework/platform detail unrelated to the reader's task
 - Information already in upstream docs
 - Temporary state (in-progress work, one-time migration steps already completed)
 - Verbose explanations - one line per gotcha, expand only if the fix is non-obvious
@@ -333,18 +331,33 @@ If the repo has no meaningful documentation surface, or only a minimal `README.m
 
 After editing docs, check that internal references still resolve:
 
+Prefer the repository's Markdown/link checker for affected documents. If none exists, this limited inline-link check resolves paths relative to each source document; it does not validate heading anchors, reference-style links, or nested Markdown syntax. Pass the reviewed document paths explicitly.
+
 ```bash
-# Check tracked and new markdown files
-{ git ls-files '*.md'; git ls-files --others --exclude-standard -- '*.md'; } 2>/dev/null | sort -u | while read -r file; do
-  grep -oEh '\[[^]]*\]\([^)#]+' "$file"
-done | sed 's/.*](//' | grep -v '^https\?://' | sort -u | while read -r path; do
-  [[ -e "$path" ]] || echo "BROKEN LINK: $path"
-done
+python3 - README.md docs/guide.md <<'PYLINK'
+from pathlib import Path
+from urllib.parse import unquote, urlsplit
+import re, sys
+failed = False
+for name in sys.argv[1:]:
+    source = Path(name)
+    for raw in re.findall(r'\[[^\]]*\]\(([^()]+)\)', source.read_text()):
+        destination = raw.strip().split(' "', 1)[0].strip('<>')
+        url = urlsplit(destination)
+        if url.scheme or url.netloc or not url.path:
+            continue
+        if url.path.startswith('/'):
+            print(f"SITE-ROOT LINK: {source}: {raw}; validate against site configuration")
+            continue
+        target = source.parent / unquote(url.path)
+        if not target.exists():
+            print(f"BROKEN LINK: {source}: {raw}")
+            failed = True
+sys.exit(1 if failed else 0)
+PYLINK
 ```
 
-This catches `[text](path)` and `![alt](path)` links, strips anchors (`#section`),
-and skips external URLs. Works on both GNU and BSD grep (no `-P` flag needed).
-If files were renamed or moved, update all references.
+If files moved, search incoming references as well. Report unsupported link forms as unchecked, not passed.
 
 ### 6. Audit Project Instruction Files for Bloat
 
@@ -373,28 +386,15 @@ After updates, review the project's shared instruction file critically:
 
 If the project keeps multiple instruction files (`AGENTS.md` plus tool-specific variants, for example), keep them aligned after updates.
 
-```bash
-# Example: sync AGENTS.md into a tool-specific companion
-test -f AGENTS.md && test -f CLAUDE.md && cp AGENTS.md CLAUDE.md
-```
-
-Review the copied file after syncing and remove any tool-specific commands or behavior that do not apply to that target.
+Inspect whether companions are symlinks, import stubs, generated files, or independent documents before editing. For a symlink to the canonical file, edit that source once; copying onto the same file is unnecessary. Preserve import stubs. For generated companions, edit their source fragments and run the repository generator. For independent files, update only the corresponding shared guidance and retain target-specific sections. Review the resulting diff; never overwrite an entire distinct companion as a synchronization shortcut.
 
 **Default: instruction files are usually gitignored unless the project intentionally tracks them.** Check `.gitignore` and existing history before committing them.
 
 ### 8. Commit Documentation Changes
 
-Only commit changes to tracked docs (inventory, runbooks, ADRs, changelogs, feature docs, API docs, roadmaps, and instruction files if the project commits them).
+Record the initial staged and dirty state before editing. Keep a list of task-owned paths and hunks, including intended new public docs. Leave ignored/private files local. Stage only reviewed task changes with explicit paths or patch staging.
 
-```bash
-# Stage specific changed docs (don't blindly add everything)
-{ git diff --name-only -- '*.md' '.env.example'; git ls-files --others --exclude-standard -- '*.md' '.env.example'; } 2>/dev/null | sort -u | \
-  while read -r path; do
-    [[ -n "$path" ]] && git add -- "$path"
-  done
-# Only if docs changed:
-git diff --cached --quiet || git commit -m "docs: update [target] after [what changed]"
-```
+Before committing, inspect the complete staged diff and compare it with the initial index. If unrelated work was already staged, preserve it and leave the task's edits uncommitted unless the user has authorized an isolation method. Do not reset another person's index, stage every dirty Markdown file, or commit the whole index merely because some documentation changed. Follow the repository's commit workflow only when committing is within the request's scope.
 
 ## Quick Reference: File Locations
 
@@ -439,7 +439,7 @@ See `references/output-contract.md` for the full contract.
 
 ## Common Mistakes
 
-- **Documenting everything**: If it's in config files, don't repeat the default value in the instruction file. Document the gotcha around it.
+- **Documenting everything**: Avoid repeating implementation inventories. Include a default when readers need it to configure or use the product correctly.
 - **Stale counts**: "13 dashboards" becomes wrong when you add one. Use "N dashboards" or keep the count accurate.
 - **Stale quality evidence**: README claims like "latest run", "current score", or "39/39 skills" must be checked against the source artifact in the same session.
 - **Orphaned gotchas**: A gotcha about a bug that was fixed 3 months ago is noise. Prune regularly.

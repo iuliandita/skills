@@ -31,7 +31,7 @@ than which runner you pick.
 | **Container / pod** | Docker executor on a long-lived runner. Standard default. | Kubernetes executor, docker-autoscaler, `--ephemeral` flag. Correct default for untrusted code. |
 
 **Rule of thumb**: if the repo is public or accepts PRs from outside your org, runners
-**must** be ephemeral + containerized. Non-ephemeral shell runners on public repos is the
+**must** be ephemeral + isolated. Containerization alone is insufficient for privileged jobs. Non-ephemeral shell runners on public repos is the
 single most common CI pwnage vector (documented extensively by Synacktiv, Sysdig).
 
 ### Shell vs Docker executor
@@ -57,8 +57,8 @@ When jobs need to build images or run containers themselves:
 - **Socket mount** (`-v /var/run/docker.sock:/var/run/docker.sock`): fast, simple.
   **Warning**: jobs can control the host Docker daemon. Untrusted code can escape the
   runner in one step. Only for trusted internal pipelines.
-- **DinD** (`dind` sidecar on port 2375/2376): per-job Docker daemon, proper isolation.
-  Slower (need to re-pull layers per job) but correct for shared runners.
+- **DinD** (`dind` sidecar on port 2375/2376): per-job daemon. Privileged DinD is not a
+  security boundary for untrusted jobs; isolate its host and use authenticated TLS networking.
 - **rootless buildkit** (`buildx` with a rootless daemon): the 2026 default for image
   builds - no privileged containers, no socket mount, no DinD complexity.
 
@@ -90,11 +90,9 @@ registers a launchd agent under the installing user (not root - this matters for
 # Interactive
 sudo gitlab-runner register
 
-# Non-interactive (scriptable)
+# Interactive; enter the token through the prompt, not argv
 sudo gitlab-runner register \
-  --non-interactive \
   --url https://gitlab.example.com \
-  --registration-token "$GITLAB_RUNNER_TOKEN" \
   --executor docker \
   --docker-image "alpine:3.19" \
   --description "docker-runner-01" \
@@ -124,7 +122,7 @@ check_interval = 0
     image = "alpine:3.19"
     privileged = false
     volumes = ["/cache"]
-    pull_policy = ["if-not-present"]
+    pull_policy = ["always"]
 ```
 
 ### Executor choice
@@ -151,7 +149,7 @@ check_interval = 0
 |----|---------|
 | Binary (Linux) | Download from `code.forgejo.org/forgejo/runner/releases/latest`, verify with `gpg`, `install -m 755 ... /usr/local/bin/forgejo-runner` |
 | Binary (macOS) | Same, pick `darwin-arm64` or `darwin-amd64` |
-| OCI container | `docker pull data.forgejo.org/forgejo/runner:<major>` (current stable tag is `:13`, matching runner v13.x; check `https://data.forgejo.org/forgejo/-/packages/container/runner/versions` for the latest tag before pinning. Runs as uid 1000.) |
+| OCI container | `docker pull data.forgejo.org/forgejo/runner:<major>` (the prior `:13` target is unverified; check `https://data.forgejo.org/forgejo/-/packages/container/runner/versions` for the latest tag before pinning. Runs as uid 1000.) |
 | Docker Compose | Reference compose file in upstream docs - pairs with a DinD sidecar |
 | Kubernetes | Community Helm charts exist; no official chart yet |
 
@@ -164,11 +162,9 @@ both Linux and macOS.
 # Interactive
 forgejo-runner register
 
-# Non-interactive
+# Interactive registration; provision verified file/environment input for automation
 forgejo-runner register \
-  --no-interactive \
   --instance https://git.example.com \
-  --token "$FORGEJO_RUNNER_TOKEN" \
   --name "runner-01" \
   --labels "docker:docker://node:20-bookworm,ubuntu-22.04:docker://node:20-bookworm"
 ```
@@ -176,19 +172,9 @@ forgejo-runner register \
 Token from **Site Administration -> Actions -> Runners -> Create new runner** (instance
 scope) or per-repo runner settings.
 
-**Offline registration** (declarative / IaC friendly): generate a secret on the Forgejo
-side, then have the runner create its own registration file without network round-trip:
-
-```bash
-# On the Forgejo server
-forgejo forgejo-cli actions register --secret <40-hex-char-secret>
-
-# On the runner machine
-forgejo-runner create-runner-file --instance https://git.example.com --secret <same-secret>
-```
-
-This is the pattern to use with Ansible, Terraform, or NixOS - the `.runner` file is
-reproducible and doesn't need manual token copy-paste.
+**Automated registration:** inspect the installed runner's help and official registration
+API for protected environment/file input. Provision registration state through a secret
+manager and mode-0600 files. Do not put tokens or shared registration secrets in argv.
 
 ### Config location
 
@@ -250,10 +236,9 @@ official registry before using either container example.
 # Interactive
 ./act_runner register
 
-# Non-interactive
-./act_runner register --no-interactive \
+# Interactive registration; provision verified file/environment input for automation
+./act_runner register \
   --instance https://gitea.example.com \
-  --token "$GITEA_RUNNER_TOKEN" \
   --name "runner-01" \
   --labels "ubuntu-latest:docker://node:20-bookworm,ubuntu-22.04:docker://node:20-bookworm"
 
@@ -271,8 +256,8 @@ to `forgejo-runner`'s; differences worth knowing:
 
 - Default labels use `ubuntu-*` names directly (aligning with GitHub Actions expectations)
 - `act_runner` has a first-class `--ephemeral` flag on `register`; on `forgejo-runner`,
-  ephemeral is controlled by exiting the daemon after each task (via wrapper scripts) or
-  capacity=1 + systemd restart
+  use a verified single-job exit lifecycle plus fresh per-job host/container state.
+  A concurrency limit or daemon restart alone is not ephemerality.
 
 ### Executor choice
 
@@ -315,7 +300,6 @@ curl -o runner.tar.gz -L \
 tar xzf runner.tar.gz
 ./config.sh \
   --url https://github.com/your-org/your-repo \
-  --token AAAA... \
   --labels "linux,docker,self-hosted" \
   --ephemeral \
   --runnergroup default \
@@ -473,7 +457,7 @@ artifacts only.
 
 - **Ephemeral everywhere possible**: `gitlab-runner` + kubernetes/docker-autoscaler;
   `actions-runner` with `--ephemeral`; `act_runner --ephemeral`; `forgejo-runner` with
-  capacity=1 + systemd restart; `woodpecker-agent` with k8s backend.
+  a verified single-job exit wrapper plus fresh per-job host/container state; `woodpecker-agent` with k8s backend.
 - **Rootless container runtime**: rootless Podman + rootless Buildkit for image builds.
   Eliminates privileged containers entirely.
 - **Forward runner logs off-host**: log lines are evidence of compromise. On-host logs get
@@ -518,16 +502,16 @@ previous job. Stop using shell for shared runners or wipe the workdir on each ru
 the leak that makes shell runners unsafe.
 
 **"Out of disk space" mid-build**: Docker image layers accumulate on long-lived runners.
-Schedule `docker system prune --volumes --filter "until=24h"` on a cron on the runner
-host, or use ephemeral runners.
+Inspect usage and retention first; prune only approved unused resources on an isolated
+runner with no active jobs. Prefer disposable runners; do not schedule broad volume deletion blindly.
 
 **macOS keychain unlock prompt blocks job**: runner is running as a user without an active
 login session. For iOS builds, run the runner as the logged-in user with `security
 unlock-keychain` at the start of each job (and do not commit the keychain password).
 
-**Runner pulls cold on every job**: no image pull cache. `pull_policy = ["if-not-present"]`
-in GitLab's `config.toml`, equivalent settings in other runners. Verify images are not
-tagged with `:latest` (which forces re-pull when the registry has a newer digest).
+**Runner pulls cold on every job**: no image pull cache. Use a registry mirror or reviewed prewarming. Do not use `if-not-present` on shared
+multitenant runners where cached private images could be reused without authorization.
+Pull behavior follows the runner policy, not a universal `latest` rule.
 
 **DinD races on parallel jobs**: two jobs on the same runner both starting a DinD sidecar
 fight over port 2376 (TLS, default since Docker 20+) or 2375 (no TLS). Lower concurrency

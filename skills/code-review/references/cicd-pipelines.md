@@ -9,9 +9,9 @@ Bug patterns specific to CI/CD pipeline configurations. Focused on correctness b
 ### rules vs only/except Migration Traps
 
 **Detect:**
-- Mixing `rules:` and `only:/except:` in the same job - GitLab silently rejects this; one or the other per job
+- Mixing `rules:` and `only:/except:` in the same job - GitLab rejects the invalid configuration; one or the other per job
 - Default behavior mismatch: `only/except` defaults to `except: merge_requests`; `rules:` defaults to `when: on_success` - migrating 1:1 causes jobs to run on MR pipelines they didn't before
-- Missing `when: never` as final rule - without it, unmatched conditions fall through and the job runs anyway (opposite of `only/except` behavior where unmatched means skip)
+- An unconditional final rule includes otherwise unmatched jobs; if no rule matches, GitLab excludes the job
 - `workflow:rules` absent while jobs use `rules:` - single events like pushing to an open MR branch trigger both push AND merge request pipelines simultaneously, running every job twice
 - Final `when: always` without `workflow: rules` creates duplicate pipelines across push and MR events
 - Rule order matters: first matching rule wins - put specific rules before general catch-alls
@@ -46,7 +46,7 @@ workflow:
 ### Cache and Artifact Gotchas
 
 **Detect:**
-- Cache and artifacts storing the same path - cache is restored before artifacts, so the cache overwrites the artifact content
+- Cache and artifacts storing the same path - cache is restored before artifacts, so downloaded artifacts overwrite overlapping cached content
 - Missing cache key prefix in shared runners - `$CI_PROJECT_NAME` prefix prevents collisions when multiple projects use the same runner/storage
 - Cache treated as guaranteed (it's not) - use artifacts for inter-job data, cache only for speed optimization
 - Default artifact expiry is 30 days - artifacts from old pipelines silently disappear if `expire_in` isn't set
@@ -184,7 +184,7 @@ permissions:
 
 **Detect:**
 - `paths:` filter on `push` events doesn't fire for the initial commit (no diff base)
-- Path filters combined with `required` status checks - if the path filter skips the workflow, the required check never reports, blocking merges. Use `paths-ignore` or a separate always-running workflow for the status check
+- Path filters combined with `required` status checks - if the path filter skips the workflow, the required check never reports, blocking merges. Use a separate always-running workflow for the required status check; `paths-ignore` can skip a workflow too
 - Path filters don't work with `workflow_dispatch` or `schedule` triggers
 - Glob patterns in `paths:` - `**` matches any number of directories but `*` doesn't match `/`, so `src/*` only matches one level deep
 

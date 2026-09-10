@@ -1,7 +1,7 @@
 ---
 name: docker
 description: >
-  · Write/review Dockerfiles, Compose, OCI/Podman/BuildKit builds, signing, hardening. Triggers: 'docker', 'dockerfile', 'podman', 'buildkit', 'buildah', 'skopeo', 'containerd'. Not for K8s manifests (use kubernetes).
+  · Build and debug Dockerfiles, Compose, Docker/Podman containers, and BuildKit images; review container security.
 license: MIT
 compatibility: "Requires docker or podman. Optional: docker compose, buildkit, cosign, trivy"
 metadata:
@@ -54,8 +54,8 @@ AI tools consistently produce the same Docker mistakes. **Before returning any g
 - [ ] Final image is slim/distroless/scratch - no build tools, no package caches
 - [ ] `USER` directive present - container does NOT run as root
 - [ ] No secrets in `ENV`, `ARG`, or `COPY` - use `--mount=type=secret` or runtime injection
-- [ ] Base image pinned to specific version or SHA256 digest (never `:latest` except Chainguard free tier, never bare `:22`)
-- [ ] `HEALTHCHECK` present for production images
+- [ ] Production base image resolved to a SHA256 digest; illustrative major/minor tags in templates must be resolved before release
+- [ ] Long-running production services have a meaningful health probe in the image or orchestrator; one-shot jobs use exit status
 - [ ] `.dockerignore` exists and excludes `.git`, `node_modules`, `.env`, `__pycache__`, etc.
 - [ ] No `ADD` for local files (use `COPY` - `ADD` auto-extracts and fetches URLs)
 - [ ] Compose: no `version:` field (deprecated since Compose v2, removed in spec v5)
@@ -112,7 +112,7 @@ Follow the domain-specific section below. Always apply the production checklist 
 
 ```bash
 # Dockerfile
-docker build --no-cache -t test-build .
+docker build -t test-build .          # Use --no-cache only when investigating stale cache or clean-build reproducibility
 docker history test-build --format "{{.Size}}\t{{.CreatedBy}}" | head -15
 docker scout quickview test-build     # vulnerability overview
 docker scout cves test-build          # detailed CVE list
@@ -276,7 +276,14 @@ Read `references/security-and-compliance.md` for the full PCI-DSS 4.0 container 
 | CVE-2026-33747 | BuildKit | High | Malicious frontend file escape outside storage root | BuildKit v0.28.1 |
 | CVE-2026-33748 | BuildKit | High | Git URL validation bypass - restricted file access | BuildKit v0.28.1 |
 
-**Action items**: upgrade runc to >= 1.4.0, BuildKit to >= 0.28.1, Docker Desktop to >= 4.71.0 (prefer the current 4.86.0 snapshot), never pull Trivy v0.69.4/5/6. Pin ALL CI tool images to SHA256 digests.
+**Additional fixes checked September 10, 2026**: [CVE-2026-17106](https://github.com/moby/go-archive/security/advisories/GHSA-hfg8-hc9c-6c3h)
+allows archive extraction outside the destination; the advisory lists go-archive < 0.2.2
+as affected and 0.3.0 as patched. Docker Engine 29.7.0 includes the fix.
+[CVE-2026-15793](https://github.com/moby/buildkit/security/advisories/GHSA-hw3h-2gp9-cxpv)
+affects BuildKit 0.30.0-0.31.1 custom frontends using Git checkout bundles; fixed in
+0.31.2. Ordinary Dockerfile builds are unaffected by that specific issue.
+
+**Action items**: upgrade runc to >= 1.4.0, BuildKit to >= 0.31.2, Docker Desktop to >= 4.71.0 (prefer the current 4.90.0 snapshot), never pull Trivy v0.69.4/5/6. Pin ALL CI tool images to SHA256 digests.
 
 ### Hardened Compose baseline
 
@@ -382,7 +389,7 @@ See AI Self-Check above for the full build-time checklist (Dockerfile correctnes
 ### Deploy-time additions
 
 - [ ] runc >= 1.4.0 (CVE-2025-31133/52565/52881 patched)
-- [ ] BuildKit >= 0.28.1 (CVE-2026-33747/33748 patched)
+- [ ] BuildKit >= 0.31.2 (includes CVE-2026-15793 and CVE-2026-33747/33748 fixes)
 - [ ] Docker Desktop >= 4.71.0 (adds CVE-2026-5817/5843 Model Runner container-to-host RCE fixes; floor was 4.66.1 for CVE-2025-9074/CVE-2026-28400)
 - [ ] Trivy v0.74.0+ from official releases (v0.69.4-6 COMPROMISED)
 - [ ] Images signed with cosign, verified at deploy
@@ -441,12 +448,12 @@ See `references/output-contract.md` for the full contract.
 
 ## Rules
 
-1. **No `:latest` tags in production.** Pin images to a specific version or SHA256 digest.
+1. **Resolve production images to digests.** Template tags illustrate image families; they are mutable and do not establish reproducibility.
 2. **Multi-stage builds for compiled/transpiled languages.** Build tools do not belong in production images.
 3. **Non-root user.** Every production container must run as non-root (numeric UID for K8s compat).
 4. **No secrets in layers.** Not in `ENV`, not in `ARG`, not in `COPY`. Use `--mount=type=secret` or runtime injection.
 5. **Deps before source.** Copy dependency manifests first, install, then copy source. Layer cache depends on it.
-6. **Healthchecks on everything.** Dockerfile `HEALTHCHECK` and Compose `healthcheck:`.
+6. **Meaningful service healthchecks.** Use Dockerfile, Compose, or orchestrator probes for long-running services; use exit status for one-shot jobs and document external monitoring.
 7. **Pin CI tools to SHA256 digests.** Mutable tags are compromised supply chain vectors (Trivy CVE-2026-33634 March 2026, tj-actions CVE-2025-30066 (upstream: reviewdog CVE-2025-30154) March 2025).
 8. **Trivy v0.74.0+ for new pins.** v0.69.3 was the March 2026 rollback version; v0.69.4-6 contained credential-stealing malware. If you ran it, rotate secrets.
 9. **Compose: no `version:` field.** It's deprecated and removed. Just delete it.

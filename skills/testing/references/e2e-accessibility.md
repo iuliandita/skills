@@ -441,7 +441,7 @@ jobs:
 
 ```yaml
 e2e:
-  image: mcr.microsoft.com/playwright:v1.62.1-noble
+  image: mcr.microsoft.com/playwright:v1.63.0-noble
   stage: test
   script:
     - npm ci
@@ -488,7 +488,7 @@ for (const path of pages) {
 ### Docker for consistent test environments
 
 ```dockerfile
-FROM mcr.microsoft.com/playwright:v1.62.1-noble
+FROM mcr.microsoft.com/playwright:v1.63.0-noble
 
 WORKDIR /app
 COPY package*.json ./

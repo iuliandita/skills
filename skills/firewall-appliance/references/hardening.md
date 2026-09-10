@@ -48,8 +48,8 @@ tailor recommendations to the device's role and hardware constraints.
 
 ## WireGuard VPN
 
-- [ ] **Tunnel addressing** - use CIDR notation (e.g., 10.0.0.1/24), never /32.
-      Use RFC1918 ranges distinct from existing LAN subnets
+- [ ] **Tunnel addressing** - use nonoverlapping CIDRs suited to the topology, including
+      /32 or /128 host addresses where appropriate; verify peer AllowedIPs and routes.
 - [ ] **MTU** - 1420 default, 1412 for PPPoE. 80 bytes less than WAN MTU
 - [ ] **MSS clamping** - create normalization rules: 1380 IPv4 (1372 PPPoE),
       1360 IPv6 (1352 PPPoE). Prevents TCP fragmentation through the tunnel
@@ -161,8 +161,8 @@ Without monitoring, you only find out something is broken when users complain.
       expiry dates. A silently-failed renewal is worse than no ACME at all
 - [ ] **CrowdSec bouncer health** - `cscli bouncers list` shows last pull time.
       Alert if a bouncer hasn't pulled in >15 minutes
-- [ ] **WireGuard handshake staleness** - latest handshake >2 minutes = peer unreachable.
-      Monitorable via `wg show` output parsing
+- [ ] **WireGuard reachability** - correlate handshake age with expected traffic or an active
+      probe and transfer counters. An old handshake alone is normal for an idle peer.
 - [ ] **Newsyslog rotation** - verify `/etc/newsyslog.conf` has appropriate rotation
       settings for all active log files. Default rotation may be insufficient for
       high-traffic devices with IDS/IPS enabled

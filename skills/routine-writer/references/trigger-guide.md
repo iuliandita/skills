@@ -2,7 +2,7 @@
 
 Per-trigger specifics: cron rules, API fire semantics, GitHub event catalogue, filter fields, and how triggers combine.
 
-All details below reflect the research preview as of September 2026 recheck. The beta header is `experimental-cc-routine-2026-04-01`. Shapes, limits, and behavior can change; pin the beta header date so staleness is detectable.
+September 2026 check (2026-09-10): see the [current routine documentation](https://code.claude.com/docs/en/routines). The beta header is `experimental-cc-routine-2026-04-01`. Shapes, limits, and behavior can change; pin the beta header date so staleness is detectable.
 
 ---
 
@@ -118,7 +118,7 @@ There is no idempotency key. Every successful POST creates a new session. If a w
 
 Two limits apply to API fires:
 
-1. The per-account daily routine run cap (5 / 15 / 25 depending on plan).
+1. The per-account daily routine run cap shown in the account UI.
 2. The account's Claude Code subscription usage.
 
 When either hits, the endpoint returns `429` with a `Retry-After` header. Organizations with extra usage enabled continue past the daily cap on metered overage.
@@ -158,12 +158,10 @@ Only pull request triggers expose structured filters. Filter conditions are AND-
 | Labels | Labels applied to the PR |
 | Is draft | Whether the PR is in draft state |
 | Is merged | Whether the PR has been merged |
-| From fork | Whether the PR comes from a fork |
 
 Useful combinations:
 
 - **Ready-for-review only**: is draft `false`. Skips drafts.
-- **External contributor review**: from fork `true`. Routes fork-based PRs through extra checks.
 - **Label-gated action**: labels include `needs-backport`. Fires only when a maintainer tags the PR.
 - **Scoped review**: base branch `main`, head branch contains `auth-provider`. Sends auth-touching PRs to a focused reviewer.
 
@@ -206,7 +204,7 @@ Avoid combining all three unless the routine genuinely has three firing modes - 
 
 ### Repositories
 
-Each repo is cloned at the start of every run from the default branch. Claude creates `claude/`-prefixed branches for changes. The "Allow unrestricted branch pushes" toggle per-repo lifts this. Leave it off unless the routine legitimately pushes elsewhere.
+Branches under `claude/` are accepted. Other pushes are checked against branch protection, other authors' commits, and other users' open PRs; no unrestricted-push toggle is documented.
 
 ### Connectors
 
@@ -218,7 +216,7 @@ Each routine runs in a cloud environment that controls:
 
 - Network access level (none, limited, full)
 - Environment variables (for API keys, tokens)
-- Setup script (runs before each session, e.g., `npm install`)
+- Setup script (results are cached, not rerun for every session)
 
 A default environment is provided. Custom environments must be created before the routine references them.
 
@@ -230,12 +228,7 @@ Routines act as the user who owns them. Commits, PRs, Slack messages, and Linear
 
 ## Daily caps
 
-| Plan | Daily routine runs |
-|---|---|
-| Pro | 5 |
-| Max | 15 |
-| Team | 25 |
-| Enterprise | 25 |
+Check the account UI for current plan allowances. One-off runs bypass the daily routine cap, but still consume subscription usage.
 
 Runs also draw down Claude Code subscription usage the same way interactive sessions do. When either limit is hit, new fires are rejected. Organizations with extra usage enabled continue on metered overage.
 

@@ -311,7 +311,6 @@ compose*.y*ml
 .eslintrc*
 .prettierrc*
 biome.json
-tsconfig*.json
 jest.config*
 vitest.config*
 .vscode
@@ -383,7 +382,7 @@ For variant builds (alpine, distroless), use separate Dockerfile targets or `--b
 
 ## Common Gotchas
 
-- **PID 1 / signal handling**: the first process in a container runs as PID 1 and must handle SIGTERM for graceful shutdown. Node.js, Python, and most runtimes do NOT handle signals as PID 1 by default. Solutions: (1) `CMD ["node", "dist/index.js"]` exec form (not shell form `CMD node dist/index.js`), (2) use `tini` as init (`--init` flag on `docker run`, or `init: true` in Compose), (3) `ENTRYPOINT ["tini", "--"]` in Dockerfile. Without this, `docker stop` sends SIGTERM, container ignores it, Docker waits 10s, then SIGKILL. Distroless images include a minimal init. Compose `stop_grace_period: 30s` extends the timeout but doesn't fix the root cause.
+- **PID 1 / signal handling**: use exec-form `CMD` so the application receives SIGTERM, then verify graceful termination and child reaping. If the application does not handle these, supply an init with `docker run --init`, Compose `init: true`, or an installed `tini` entrypoint. Distroless does not supply a general-purpose init. `stop_grace_period` extends the shutdown deadline but does not fix signal handling.
 - **Bun/Vite build-time env**: they inline `process.env.*` at build time. Set `NODE_ENV=production` BEFORE `RUN bun run build`, not just in the runtime stage.
 - **Alpine musl**: Node.js native addons, Python C extensions, and some Go CGO builds may fail on musl. Use slim (glibc) or Chainguard (glibc) instead.
 - **`npm ci` vs `npm install`**: `ci` is reproducible (lockfile-only), `install` may modify lockfile.

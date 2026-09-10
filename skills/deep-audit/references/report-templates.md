@@ -111,10 +111,10 @@ brainstorming skill is available. Required sections:
 
 1. **Metadata header** - date, status, source audit file + commit, scope, timeline, execution model.
 2. **Table of Contents** - per-phase sections plus appendix and decision log.
-3. **Operational Contract** - non-negotiable rules: version mapping (phase N -> minor bump),
-   branching (`audit/phase-N-<slug>` off `main`), subphase commit rules (atomic, Conventional
-   Commits, no AI attribution), pre-commit baseline (lint/typecheck/test), end-of-phase
-   release protocol (push, PR, CI, merge, tag).
+3. **Operational Contract** - use the repository's branching, versioning, commit, and
+   release conventions. Select checks for the affected behavior. A phase does not imply a
+   minor version bump or release; distinguish proposed execution from actions the user
+   already authorized. Preserve existing reports and task progress before replacing files.
 4. **Testing Gates by Phase Type** - which test commands each phase must pass.
 5. **Delegation Model** - who runs what (Claude, Codex, human), when to handoff.
 6. **Phase Section Template** - one section per phase with: goal, audit tasks covered, files

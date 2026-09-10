@@ -1,7 +1,7 @@
 ---
 name: arch-btw
 description: >
-  · Administer Arch/CachyOS: pacman, AUR, systemd, boot, desktop, GPU, gaming. Triggers: 'arch linux', 'cachyos', 'endeavouros', 'manjaro', 'pacman', 'paru', 'mkinitcpio', 'hyprland'. Not for Debian/Fedora/NixOS.
+  · Administer Arch, CachyOS, EndeavourOS, and Manjaro: pacman, AUR, boot, desktop, GPU, and gaming.
 license: MIT
 compatibility: Requires Arch Linux, CachyOS, or Arch-based distro with pacman
 metadata:
@@ -21,19 +21,21 @@ service management, boot recovery, kernel handling, and derivative-specific caut
 
 Only pin versions here when they materially affect compatibility or troubleshooting shape. For
 ordinary rolling packages, prefer the current repo state over stale version tables.
+Versions below are upstream component versions; distro package release suffixes and epochs
+are repository-specific. Check the enabled Arch or CachyOS repository before comparing builds.
 
 | Component | Version | Why it matters |
 |-----------|---------|----------------|
-| systemd | 261.2-1 | boot and session behavior |
-| mkinitcpio | 41.1-2 | initramfs pipeline changed enough to matter |
-| dracut | 111-1 | alternative initramfs pipeline with different expectations |
-| linux-cachyos | 7.2.2-1 | kernel and module compatibility |
-| linux-cachyos-eevdf | 7.2.2-1 | alternate kernel lane with different behavior surface |
-| Hyprland | 0.56.2-1 | old 0.4x and early 0.5x guidance is frequently stale here |
-| xdg-desktop-portal-hyprland | 1.4.1-1.1 | Wayland portal behavior depends on this layer |
-| PipeWire | 1:1.6.8-1.1 | audio and capture stack anchor |
-| WirePlumber | 0.5.16-1.1 | policy layer paired with PipeWire behavior |
-| nvidia-utils | 610.57.04-1 | driver branch matters for gaming and Wayland breakage |
+| systemd | 261.2 | boot and session behavior |
+| mkinitcpio | 41.1 | initramfs pipeline changed enough to matter |
+| dracut | 111 | alternative initramfs pipeline with different expectations |
+| linux-cachyos | verify enabled CachyOS repo | kernel and module compatibility |
+| linux-cachyos-eevdf | verify enabled CachyOS repo | alternate kernel lane with different behavior surface |
+| Hyprland | 0.56.2 | old 0.4x and early 0.5x guidance is frequently stale here |
+| xdg-desktop-portal-hyprland | 1.4.1 | Wayland portal behavior depends on this layer |
+| PipeWire | 1.6.8 | audio and capture stack anchor |
+| WirePlumber | 0.5.17 (Arch; check derivative repo) | policy layer paired with PipeWire behavior |
+| nvidia-utils | 610.57.04 | driver branch matters for gaming and Wayland breakage |
 
 ## When to use
 
@@ -154,7 +156,7 @@ lsmod | grep '^v4l2loopback'
 command -v dkms >/dev/null 2>&1 && dkms status
 findmnt -t btrfs
 systemctl status fstrim.timer 2>&1 || true
-find /etc -maxdepth 1 -type f \( -name '*.pacnew' -o -name '*.pacsave' \) -print
+find /etc -type f \( -name '*.pacnew' -o -name '*.pacsave' \) -print
 ```
 
 If `paru` is present, prefer it for day-to-day AUR workflow. Fall back to raw `makepkg` and
@@ -251,7 +253,7 @@ When a bug looks "desktop-only," compare one clean baseline:
 |---------|-------------|
 | Package weirdness after install | Partial upgrade? `pacman -Syu` first. Conflicting files? pacman error output shows the conflicting path - use it in `pacman -Syu --overwrite '/exact/path'` (specific glob, never `'*'`) |
 | Service fails after update | `.pacnew` merge needed? `pacdiff` or `DIFFPROG=nvim pacdiff`. Check unit overrides and `journalctl -b` |
-| Won't boot after kernel work | Btrfs snapshots: check and restore before reinstalling kernel or regenerating initramfs. ESP mount, bootloader, initramfs, kernel artifacts. From live USB: `mount /dev/sdX2 /mnt && mount /dev/sdX1 /mnt/boot && arch-chroot /mnt` (adjust for Btrfs subvolumes: `mount -o subvol=@ /dev/sdX2 /mnt`). CachyOS reinstall: `pacman -S linux-cachyos && mkinitcpio -P && bootctl update` |
+| Won't boot after kernel work | Confirm root/subvolume, separate boot and ESP mounts, installed kernel, active initramfs generator and bootloader. Inspect available snapshots before changing boot artifacts. Follow `references/boot-kernel-and-recovery.md`; use the confirmed generator/loader for CachyOS too. |
 | CachyOS unstable after repo tuning | CPU capability, repo tier, forked `pacman` |
 | AUR build failure | `PKGBUILD`, keys, pinned deps, repo conflicts |
 | Hyprland desktop weirdness | `XDG_SESSION_TYPE`, portal, Xwayland, user services |

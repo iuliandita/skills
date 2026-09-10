@@ -235,20 +235,24 @@ import json
 data = json.loads(response.choices[0].message.content)
 ```
 
-### Vercel AI SDK - generateObject
+### Vercel AI SDK - structured output
+
+Use the current [Output API](https://ai-sdk.dev/docs/reference/ai-sdk-core/output).
 
 ```typescript
-import { generateObject } from "ai";
+import { generateText, Output } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
 import { z } from "zod";
 
-const { object } = await generateObject({
-  model: anthropic("claude-sonnet-4-6"),
-  schema: z.object({
-    name: z.string(),
-    age: z.number().int().min(0).max(150).optional(),
-    email: z.string().email(),
-    topics: z.array(z.string()).max(10),
+const { output } = await generateText({
+  model: anthropic("claude-sonnet-5"),
+  output: Output.object({
+    schema: z.object({
+      name: z.string(),
+      age: z.number().int().min(0).max(150).optional(),
+      email: z.string().email(),
+      topics: z.array(z.string()).max(10),
+    }),
   }),
   prompt: `Extract info from: ${text}`,
 });
@@ -268,10 +272,20 @@ const { object } = await generateObject({
 
 ### Anthropic tool use loop
 
+This is a bounded control-flow template. Implement the cost helpers, disable hidden SDK
+retries, and set request/tool deadlines before use. Reserve paid tool charges too when the
+ceiling covers the whole run; uncertain provider usage retains its full reservation.
+
 ```python
 messages = [{"role": "user", "content": user_query}]
 
-while True:
+MAX_ITERS, BUDGET_USD = 20, 5.00
+spent = 0.0
+for _ in range(MAX_ITERS):
+    # Implement these accounting helpers from the selected model's rates.
+    reserved = max_cost_of_next_call(messages, tools=tools, max_tokens=4096)
+    if spent + reserved > BUDGET_USD:
+        raise RuntimeError("agent budget would be exceeded")
     response = client.messages.create(
         model="claude-sonnet-4-6",
         max_tokens=4096,
@@ -279,7 +293,8 @@ while True:
         messages=messages,
     )
 
-    # Collect all content blocks
+    spent += cost_of(response.usage)
+    # Preserve the complete assistant turn, including signed thinking blocks.
     messages.append({"role": "assistant", "content": response.content})
 
     if response.stop_reason == "end_turn":
@@ -289,13 +304,25 @@ while True:
         tool_results = []
         for block in response.content:
             if block.type == "tool_use":
-                result = execute_tool(block.name, block.input)
+                try:
+                    # Validate tool name/arguments and enforce per-tool timeout/output limits.
+                    result = execute_tool(block.name, block.input)
+                    is_error = False
+                except Exception:
+                    result, is_error = "Tool failed; inspect server logs", True
                 tool_results.append({
                     "type": "tool_result",
                     "tool_use_id": block.id,
                     "content": str(result),
+                    "is_error": is_error,
                 })
+        if not tool_results:
+            raise RuntimeError("tool_use stop without tool calls")
         messages.append({"role": "user", "content": tool_results})
+    else:
+        raise RuntimeError(f"incomplete or unsupported stop: {response.stop_reason}")
+else:
+    raise RuntimeError("agent iteration limit exceeded")
 ```
 
 ### Tool design guidelines

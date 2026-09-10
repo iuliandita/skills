@@ -5,13 +5,13 @@
 The #1 shell slop tell: no error handling discipline.
 
 **Detect:**
-- Missing `set -euo pipefail` (or equivalent) at the top of scripts
+- Unhandled command failures; strict-mode options must fit the declared shell and its calling contexts
 - Unquoted variables: `$var` instead of `"$var"` (word splitting + globbing)
 - No `shellcheck` compliance (if shellcheck is available, run it)
-- Using `#!/bin/bash` instead of `#!/usr/bin/env bash` (portability)
+- A shebang whose interpreter path is unavailable on the target; fixed paths and PATH lookup have different deployment tradeoffs
 - Missing `trap` for cleanup on exit/error
 
-**Fix:** Add `set -euo pipefail` to every script. Quote all variables. Use `shellcheck` as the authority on shell correctness.
+**Fix:** Choose supported strict-mode options and explicit error handling for the script. Quote expansions unless splitting or globbing is intentional. ShellCheck catches many defects but does not prove behavior correct.
 
 **Exception:** Interactive one-liners and `.bashrc`/`.zshrc` functions don't need `set -euo pipefail`.
 
@@ -61,12 +61,12 @@ set -euo pipefail
 result=$(some_command)
 ```
 
-- `if command; then true; else echo "failed"; exit 1; fi` when `set -e` is active
+- Wrappers that add no diagnostics or recovery; an explicit failure branch remains useful with `set -e`
 - Manual `$?` checks after every command
 - `|| true` on commands that should fail loudly
 - Wrapping every command in a function just for error handling
 
-**Exception:** `|| true` is correct when a command legitimately returns non-zero for informational reasons (e.g., `grep` no match, `diff` finding differences). Also fine in parallel Bash calls where one non-zero would cancel siblings.
+**Exception:** Distinguish expected statuses from errors: grep/diff status1 can be informational, while higher statuses indicate failure. Collect each parallel command's status instead of turning all failures into success. `set -e` is suppressed in several conditional and function contexts; verify the actual call site.
 
 ## Verbose Patterns (Noise)
 
@@ -87,12 +87,12 @@ cd "$DIR"
 cd "$(dirname "$0")"
 ```
 
-- `echo "$var" | grep -q pattern` -> `[[ "$var" == *pattern* ]]`
-- `echo "$var" | sed 's/old/new/'` -> `"${var/old/new}"`
+- A literal substring search may use shell pattern matching; a grep regular expression is not equivalent to a literal substring test
+- Shell substitution can replace a simple literal transform; preserve regex, escaping, and replacement semantics when sed uses them
 - `echo "$var" | cut -d'/' -f1` -> `"${var%%/*}"`
-- `echo "$var" | wc -c` -> `${#var}`
+- Distinguish byte counts from character counts and any newline added by the producer; `${#var}` does not generally equal `echo "$var" | wc -c`
 - Spawning subshells for simple variable manipulation
-- `for f in $(find ...)` -> `find ... -exec` or `while IFS= read -r` with `-print0`
+- `for f in $(find ...)` -> `find ... -exec` or `while IFS= read -r -d ''` in Bash with `-print0`
 
 ## Script Structure (Soul)
 
@@ -103,7 +103,7 @@ cd "$(dirname "$0")"
 - Hardcoded paths that should be variables or arguments
 - Missing `readonly` on constants
 
-**Fix:** Use `main()` pattern for scripts >50 lines. Define functions before use. Use `readonly` for constants. Accept paths as arguments with sensible defaults.
+**Fix:** Use a `main()` function when it clarifies control flow; line count alone is not a defect. Define functions before use and parameterize environment-dependent paths.
 
 ## AI-Native Tells (Lies + Soul)
 

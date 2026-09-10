@@ -1,7 +1,7 @@
 ---
 name: terraform
 description: >
-  · Write/review Terraform/OpenTofu HCL, modules, state, policy-as-code. Triggers: 'terraform', 'opentofu', 'hcl', 'tfvars', 'tfstate', 'tflint', 'terragrunt', 'checkov', 'CDKTF'. Not for Kubernetes manifests (use kubernetes).
+  · Write and review Terraform/OpenTofu infrastructure: HCL, modules, state, providers, and policy checks.
 license: MIT
 compatibility: "Requires terraform or tofu CLI. Optional: tflint, checkov, conftest"
 metadata:
@@ -15,7 +15,7 @@ metadata:
 
 Write, review, and architect Terraform/OpenTofu infrastructure - from individual resources to multi-account, PCI-compliant platform architectures. The goal is reproducible, drift-free, auditable infrastructure that passes both peer review and QSA assessment.
 
-**Target versions** (September 2026): Terraform 1.16.1 (IBM/HashiCorp, BSL), OpenTofu 1.12.6 (Linux Foundation, MPL). Helm provider v3.1+, K8s provider v3.0+, AWS provider v6.x, Azure v4.x, GCP v7.x.
+**Target versions** (September 2026): Terraform 1.16.2 (IBM/HashiCorp, BSL), OpenTofu 1.12.6 (Linux Foundation, MPL). Helm provider 3.3.0, Kubernetes provider 3.2.1, AWS provider 6.64.0, AzureRM provider 5.4.0, Google provider 7.46.1 (checked September 10). Review the AzureRM v5 migration guide before changing an existing v4 lockfile.
 
 This skill covers HCL, modules, operations, state, CI/CD, policy-as-code, audit trails,
 PCI-DSS 4.0 controls, drift detection, and CDE isolation.
@@ -64,7 +64,7 @@ AI tools consistently produce the same Terraform mistakes. **Before returning an
 - [ ] Tags on every taggable resource (at minimum: Name, Environment, Owner, pci_scope if applicable)
 - [ ] No deprecated resource arguments (check provider changelog - AI trains on old syntax)
 - [ ] No `provisioner` blocks - use Ansible or user_data instead
-- [ ] State file does NOT contain plaintext secrets (use ephemeral resources on TF 1.10+ or data sources for runtime secret lookup)
+- [ ] Minimize secret persistence with supported ephemeral/write-only flows or application runtime lookup; ordinary secret data sources persist values in state and require protected state
 - [ ] `terraform fmt` and `terraform validate` pass
 
 **AI should never own `terraform apply`.** In March 2026, an AI-assisted Terraform workflow deleted production infrastructure through escalating cleanup logic. Plan output is reviewed by a human. Always.
@@ -244,13 +244,16 @@ moved {
 **Cross-state resource move** (state surgery - when `moved` blocks can't help):
 
 ```bash
-# 1. Back up source state, then remove the resource
-terraform state pull > backup.tfstate         # safety backup only
-terraform state rm aws_instance.web           # removes from source backend directly
-
-# 2. In the destination workspace, import the resource
-terraform import aws_instance.web i-0abc1234def56789
-# Then add the matching resource block in HCL to avoid drift
+# Freeze both applies; stage source HCL removal and destination HCL addition first.
+# Resolve references in both configs; fmt/validate both before state writes.
+set -euo pipefail
+umask 077
+terraform -chdir=source state pull > source-backup.tfstate
+terraform -chdir=destination state pull > destination-backup.tfstate
+# With approved migration and correct backend/workspace identities:
+terraform -chdir=source state rm aws_instance.web
+terraform -chdir=destination import aws_instance.web i-0abc1234def56789
+# Plan both: neither may propose unintended create/destroy or drift.
 ```
 
 Verify both states with `terraform plan` before and after. `state rm` writes directly to the backend - do not `state push` the backup afterward (that would undo the removal). Ensure no other runs hold the state lock before starting (check `terraform force-unlock` only as a last resort with a known-stale lock ID) and block concurrent `apply` in CI for both source and destination during the migration.
@@ -432,6 +435,13 @@ Read `references/compliance.md` for the full PCI-DSS 4.0 requirements mapping, d
 - **Req 11.5**: Drift detection satisfies FIM - schedule `terraform plan` runs and alert on unexpected changes
 
 See `references/compliance.md` for full Req 1/3/7 mapping, drift detection strategy, and audit trail architecture.
+
+**Terraform Enterprise security** (checked September 10, 2026):
+[CVE-2026-14468](https://discuss.hashicorp.com/t/hcsec-2026-17-terraform-enterprise-vulnerable-to-arbitrary-file-read/77549)
+affects v202506-1, v202507-1, and 1.0.0-2.0.3: module publishers can read files outside
+the repository during VCS ingestion. Use the fixed 1.2.4 or 2.0.4 release for that lane,
+or later. Restrict untrusted module publishers pending upgrade. This advisory concerns
+Terraform Enterprise, not the Terraform CLI version above.
 
 **State file security**: state contains secrets (even with `sensitive`). Encrypt at rest (S3 SSE-KMS), restrict access (IAM policy), enable versioning, log all access (CloudTrail data events), retain 1+ year.
 

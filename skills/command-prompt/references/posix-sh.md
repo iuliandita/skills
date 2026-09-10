@@ -20,7 +20,7 @@
 - `for`, `while`, `until`, `case`, `if`
 - `trap`, `wait`, `kill`, `exec`
 - `set -eu` (but NOT `set -o pipefail`)
-- `local` - technically NOT in POSIX, but supported by every modern sh (dash, ash, busybox, mksh). Safe to use.
+- Function-local variables via `local` are NOT guaranteed by POSIX; avoid that extension in strictly portable examples.
 - `printf` - POSIX-specified and much more predictable than `echo`
 
 ### NOT POSIX (bash/zsh-isms to avoid)
@@ -40,7 +40,7 @@
 | `set -o pipefail` | Bash/zsh | No equivalent - check each stage manually |
 | `$RANDOM` | Bash/zsh/ksh | `awk 'BEGIN{srand(); print int(rand()*32768)}'` |
 | `BASH_SOURCE` | Bash-only | `$0` (different in sourced files) |
-| `declare` / `typeset` | Bash/ksh/zsh | Plain assignment; `local` for function scope |
+| `declare` / `typeset` | Bash/ksh/zsh | Plain assignments with distinct names, or a subshell for isolation |
 | `select` | Bash/ksh/zsh | Write a manual menu with `while`/`case` |
 | `echo -e` / `echo -n` | Behavior varies by shell and platform | `printf` always |
 
@@ -61,7 +61,9 @@ log_error() { printf '[ERROR] %s\n' "$1" >&2; }
 cleanup() {
     rm -f "${tmpfile:-}"
 }
-trap cleanup EXIT INT TERM
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
 main() {
     log_info "Starting..."
@@ -389,7 +391,7 @@ When you write `#!/bin/sh`, the actual shell that runs depends on the OS:
 | Debian/Ubuntu | **dash** | Fast, strict POSIX. Catches bash-isms immediately. |
 | Alpine/BusyBox | **ash** | Minimal. Missing some features even dash has. |
 | Arch Linux | **bash** | `#!/bin/sh` runs bash in POSIX mode. Bash-isms "work" but shouldn't be relied on. |
-| macOS | **zsh** (since Catalina) | Runs in sh-emulation mode. Most POSIX scripts work. |
+| macOS | System `/bin/sh` | Distinct from the default interactive zsh; verify the installed implementation. |
 | FreeBSD | **ash** (FreeBSD variant) | Strict POSIX. |
 | OpenBSD | **ksh** (pdksh derivative) | Has some ksh extensions. |
 
@@ -426,10 +428,15 @@ cleanup() {
     trap - EXIT INT TERM
     rm -f "${tmpfile:-}"
     rm -rf "${tmpdir:-}"
-    # Kill background jobs if any
-    kill 0 2>/dev/null || true
+    # Only signal child PIDs recorded when this script launched them.
+    for child_pid in ${child_pids:-}; do
+        case "$child_pid" in ''|*[!0-9]*) continue ;; esac
+        [ "$child_pid" -gt 1 ] && kill "$child_pid" 2>/dev/null || :
+    done
 }
-trap cleanup EXIT INT TERM
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
 ```
 
 ---

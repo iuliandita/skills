@@ -96,7 +96,8 @@ succeed where approaches that *remove* it cannot. Reach for the ignoring lever f
 
 - Detach anything long-running: `setsid nohup <cmd> > log 2>&1 < /dev/null &`. An SSH drop kills
   an attached job, and a 40-minute repair interrupted halfway is worse than one not started.
-- Take the origin fingerprint before starting and re-verify it after (see the overlay procedure
-  in `btrfs-recovery.md`). It is the only proof the origin was untouched.
+- Take the sampled origin fingerprint before starting and re-verify it after (see the overlay
+  procedure in `btrfs-recovery.md`). It detects changes only in the sampled windows, not across
+  the whole device. Verify overlay mapping and origin write protection separately.
 - Log to a file on persistent storage, not to the terminal. The terminal is the least durable
   place the output can live.

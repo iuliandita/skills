@@ -1,9 +1,7 @@
 ---
 name: observability
 description: >
-  · Instrument and audit observability: metrics, traces, logs, alerts, SLOs, dashboards.
-  Triggers: observability, metrics, tracing, prometheus, opentelemetry, grafana, slo. Not for
-  live diagnostics (cluster-health) or manifests (kubernetes).
+  · Instrument, audit, and debug telemetry: metrics, traces, logs, alerts, SLOs, Prometheus, OpenTelemetry, Grafana.
 license: MIT
 compatibility: "Optional: prometheus, otelcol, grafana, promtool, amtool, jq"
 metadata:
@@ -92,11 +90,15 @@ questions - do not instrument everything because you can.
 |---|---|
 | Metrics | Prometheus scrape, or OTLP metrics through the OTel Collector to a Prometheus-compatible store |
 | Traces | OpenTelemetry SDK -> OTLP -> Collector -> Tempo (or vendor backend) |
-| Logs | Structured JSON -> agent (Alloy/Promtail/OTel) -> Loki |
+| Logs | Structured JSON -> agent (Alloy/OTel) -> Loki |
 | Unified pipeline | OpenTelemetry Collector as the single ingest/route/transform layer |
 
 Prefer OTLP and the OTel Collector as the vendor-neutral seam: instrument once, re-route backends
 in config. Use direct Prometheus scrape where pull and existing exporters already fit.
+
+[Promtail reached EOL on March 2, 2026](https://grafana.com/docs/loki/latest/send-data/promtail/).
+Migrate existing Promtail agents to Alloy or another supported client. Check the security
+notes in `references/versions.md` when selecting Alloy or Grafana authentication settings.
 
 ### Step 3: Instrument and configure
 

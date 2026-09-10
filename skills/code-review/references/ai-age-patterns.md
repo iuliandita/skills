@@ -4,6 +4,10 @@ Bug patterns specific to AI-generated code, LLM API integrations, agentic AI sys
 
 Research date: September 2026.
 
+Treat the catalog as investigation prompts. Style-only patterns route to **anti-slop** and
+exploitable flaws to **security-audit**. Historical study percentages are not evidence that
+a particular snippet is generated or defective; verify a concrete failure and its API context.
+
 ---
 
 ## AI-Generated Code Smells
@@ -31,7 +35,7 @@ AI training data includes code from many years. Patterns that were standard in 2
 - Deprecated crypto algorithms (MD5, SHA1 for security, `Math.random()` for secrets)
 - Old API patterns (callbacks where promises/async-await is standard, XMLHttpRequest instead of fetch)
 - Framework version mismatches - React class components in a hooks-based codebase, Express 4 patterns in Express 5, Vue Options API in a Composition API project
-- Deprecated stdlib functions (Python's `os.path.join` when the project uses `pathlib`, `unittest` when `pytest` is standard)
+- Project-style differences such as `os.path.join` versus `pathlib` or `unittest` versus `pytest` are not deprecations or correctness bugs; route style concerns separately
 - Outdated dependency versions hardcoded in config (AI copies version numbers from training data)
 
 ### Over-Defensive Error Handling
@@ -240,7 +244,7 @@ MCP is still maturing in security. As of March 2026: 43% of MCP servers contain 
 **Detect:**
 - User input passed to shell execution functions without sanitization (CVE-2025-53355: Kubernetes MCP, CVE-2025-6514: mcp-remote, CVSS 9.6)
 - Malicious MCP server sending crafted `authorization_endpoint` during OAuth flow - mcp-remote passed it straight to the system shell (437,000+ downloads affected)
-- `.git/config` manipulation through git MCP server operations (CVE-2025-68145, CVE-2025-68143, CVE-2025-68144 in Anthropic's mcp-server-git)
+- Git MCP argument injection allowing local file overwrite ([CVE-2025-68144](https://github.com/modelcontextprotocol/servers/security/advisories/GHSA-9xwc-hfwc-8w59), fixed 2025.12.18); distinguish it from repository-scope bypass ([CVE-2025-68145](https://github.com/modelcontextprotocol/servers/security/advisories/GHSA-j22h-9j4x-23w5), fixed 2025.12.18) and unrestricted repository creation ([CVE-2025-68143](https://github.com/modelcontextprotocol/servers/security/advisories/GHSA-5cgr-j3jf-jw3v), fixed 2025.9.25). Advisory descriptions rechecked September 2026.
 - Unsanitized input from tool parameters used in subprocess calls (CVE-2025-53967: Figma/Framelink MCP)
 - Direct string concatenation of user data into shell commands in any MCP server tool handler
 

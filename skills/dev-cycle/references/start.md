@@ -51,11 +51,12 @@ gh   repo view --json defaultBranchRef --jq '.defaultBranchRef.name' 2>/dev/null
 glab repo view --output json 2>/dev/null | jq -r '.default_branch'
 tea  repos show --output simple 2>/dev/null | awk '/^Default Branch:/ {print $3}'
 
-# 3. Heuristic: main or master
-git show-ref --verify --quiet refs/heads/main && echo main || echo master
+# If neither source resolves the base, use an explicit repository/user setting.
+# Do not infer main/master from local branch presence.
 ```
 
-If all three disagree, ask the user. Do not guess.
+Honor an explicit repository/user base. Otherwise resolve the remote default; if sources
+disagree or it remains unknown, stop branch creation and resolve the discrepancy. Do not guess.
 
 ### Pull with fast-forward only
 

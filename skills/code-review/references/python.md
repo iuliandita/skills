@@ -45,22 +45,22 @@ Catches everything including KeyboardInterrupt, SystemExit, and GeneratorExit.
 
 ### Exception Chain Loss
 
-Re-raising exceptions without preserving the original cause.
+Distinguish implicit exception context from an explicit cause. Missing `from` alone is not lost traceback.
 
 **Detect:**
-- `raise NewError("msg")` inside an except block (loses original traceback)
-- Missing `from` clause: `raise NewError("msg") from original_err`
-- `raise` vs `raise err` (the former preserves traceback, the latter may not in Python 2-style patterns)
+- `raise NewError("msg") from None` suppressing context that callers need; suppression can be intentional
+- Use `raise NewError("msg") from original_err` when explicitly describing the cause
+- Bare `raise` re-raises unchanged; `raise err` adds the re-raise location but retains the earlier traceback
 
 **Example:**
 ```python
-# bug: original traceback is lost
+# implicit context is retained; this is valid exception chaining
 try:
     parse_config(path)
 except ValueError:
-    raise RuntimeError("bad config")  # no idea what the original error was
+    raise RuntimeError("bad config")  # ValueError remains in __context__
 
-# fix: chain the exception
+# explicit cause and useful application context
 try:
     parse_config(path)
 except ValueError as e:
@@ -101,7 +101,7 @@ filtered = [x for x in data if x > 0]
 
 ### `StopIteration` Leaking
 
-`StopIteration` raised inside a generator silently stops it (PEP 479 changed this in 3.7, but older code or `__next__` calls can still be affected).
+In modern Python, `StopIteration` escaping a generator body becomes `RuntimeError`, including one from an unguarded `next()` call. An iterator's own `__next__` raises `StopIteration` normally to signal exhaustion.
 
 **Detect:**
 - Calling `next()` without a default inside a generator function
@@ -238,21 +238,16 @@ These are bugs where type hints lie about what the code actually does.
 Same concept as mutable default arguments, but sneakier because the syntax looks safe.
 
 **Detect:**
-- `@dataclass` with `field: list = []` or `field: dict = {}` (shared across instances)
+- `@dataclass` with `field: list = []` or `field: dict = {}` (raises ValueError during class definition)
 - Missing `field(default_factory=list)` or `field(default_factory=dict)`
-- Pydantic models with mutable defaults in `Field()` (pydantic v2 handles this better, but v1 doesn't)
+- For other model libraries, check their actual copying/validation semantics before claiming shared defaults
 
 **Example:**
 ```python
-# bug: all instances share the same list
+# bug: class definition raises ValueError; instances are never created
 @dataclass
 class Config:
-    tags: list[str] = []  # shared mutable default!
-
-a = Config()
-b = Config()
-a.tags.append("x")
-print(b.tags)  # ['x'] - oops
+    tags: list[str] = []
 
 # fix: use default_factory
 @dataclass
@@ -300,7 +295,7 @@ class User:
         self.nmae = name  # AttributeError!
 ```
 
-**Fix:** Use `__slots__` on classes where attribute safety matters. Or use `@dataclass` which defines attributes explicitly.
+**Fix:** Use `__slots__` on classes where attribute safety matters. Or use `@dataclass(slots=True)`; a plain dataclass still permits new attributes.
 
 ---
 

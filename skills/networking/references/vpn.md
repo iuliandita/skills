@@ -39,15 +39,19 @@ PersistentKeepalive = 25         # Needed behind NAT
 
 ### Key Generation
 
+Use a new protected directory so existing key files cannot be overwritten or retain broader
+permissions. Do not replace an active peer's private key as part of routine inspection.
+
 ```bash
-# Generate keypair
+# Generate private files without exposing key material in output
+umask 077
 wg genkey | tee privatekey | wg pubkey > publickey
 
 # Generate preshared key (optional, for post-quantum resistance)
 wg genpsk > presharedkey
 
-# All-in-one
-priv=$(wg genkey); pub=$(echo "$priv" | wg pubkey); echo "Private: $priv"; echo "Public: $pub"
+# Share only the public key
+cat publickey
 ```
 
 ### Hub-and-Spoke (site-to-site)
@@ -471,11 +475,17 @@ table inet vpn_killswitch {
     type filter hook output priority 0; policy drop;
     oifname "wg0" accept                    # Allow traffic through VPN
     oifname "lo" accept                      # Allow loopback
-    ip daddr <vpn_server_ip> udp dport 51820 accept  # Allow WG handshake
-    ct state established,related accept      # Allow established connections
+    oifname "<underlay_iface>" ip daddr <vpn_server_ip> udp dport 51820 accept
   }
 }
 ```
+
+This minimal client example assumes an IPv4 endpoint with an already configured underlay.
+Add only required underlay control traffic (for example DHCP or scoped IPv6 neighbor discovery)
+and use an `ip6 daddr` endpoint rule if needed. Resolve/pin the intended endpoint before enabling
+the policy. Do not add an unrestricted `ct state established,related accept`: it lets existing
+non-tunnel connections bypass the kill switch. Test both existing and new flows after tunnel
+loss, including DNS and IPv6, while preserving a separate recovery path.
 
 ### DNS leak prevention
 

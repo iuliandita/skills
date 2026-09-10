@@ -24,8 +24,8 @@ echo "$(git config user.email) $(cat ~/.ssh/id_ed25519.pub)" >> ~/.config/git/al
 git config --global gpg.ssh.allowedSignersFile ~/.config/git/allowed_signers
 
 # Verify signing works
-echo "test" | git commit-tree HEAD^{tree} -S
-git log --show-signature -1
+probe_oid=$(printf '%s\n' "signing probe" | git commit-tree HEAD^{tree} -S) || exit 1
+git verify-commit "$probe_oid"
 ```
 
 **Upload your SSH public key to each forge as a "Signing Key":**
@@ -111,10 +111,14 @@ git config user.signingkey <KEY_ID>
 git config commit.gpgsign true
 
 # SSH in CI: use deploy key as signing key
-echo "$SSH_SIGNING_KEY" > /tmp/signing_key
-chmod 600 /tmp/signing_key
-git config gpg.format ssh
-git config user.signingkey /tmp/signing_key
+umask 077
+signing_key=$(mktemp) || exit 1
+trap 'rm -f "$signing_key"' EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+printf '%s\n' "$SSH_SIGNING_KEY" > "$signing_key"
+# Scope configuration to the signing operation; do not leave a deleted key path in config.
+git -c gpg.format=ssh -c user.signingkey="$signing_key" commit -S
 ```
 
 ---
@@ -262,6 +266,16 @@ wild** - a weaponized `.gitmodules` file can overwrite hook scripts to achieve R
 --recursive`. Patched in v2.50.1, v2.49.1, v2.48.2, v2.47.3, and backports. Linux and macOS
 affected; Windows is not.
 
+### Git for Windows (checked September 10, 2026)
+
+[CVE-2026-62960](https://github.com/git-for-windows/git/security/advisories/GHSA-xrpg-8j9v-v282)
+allows an untrusted server's bundle URI to trigger an outbound SMB connection when
+`transfer.bundleuri=true`. The advisory confirms 2.53.0.windows.3 and the tested main
+revision as affected and lists no patched version. Keep bundle URI transfer disabled for
+untrusted Windows remotes and check the advisory before claiming a newer Git release fixes
+this issue. SMB callback is confirmed; NTLM disclosure is a stated risk, not a captured
+credential result in the advisory.
+
 ### Supply chain (git-adjacent)
 
 | Incident | Date | Impact |
@@ -326,7 +340,8 @@ git config --global push.autoSetupRemote true  # auto-track on first push (git 2
 ### Repository-level hardening
 
 ```bash
-# Reject unsigned commits on merge (server-side equivalent of branch protection)
+# Reject non-fast-forward updates and deletions; these do NOT verify signatures.
+# Enforce signed commits with forge rulesets or a reviewed signature-verifying receive hook.
 git config receive.denyNonFastForwards true
 git config receive.denyDeletes true
 
@@ -369,7 +384,7 @@ git lfs migrate import --include="*.psd" --everything
 
 **LFS gotchas**:
 - LFS storage is separate from git storage. GitHub free tier: 1GB storage, 1GB/month bandwidth.
-- `git clone` downloads LFS pointers, not files. `git lfs pull` fetches actual files.
+- With Git LFS installed, checkout normally smudges pointers into file content. If smudging is skipped or unavailable, `git lfs pull` fetches and checks out the content.
 - Self-hosted LFS requires a separate LFS server (Forgejo includes one).
-- LFS files don't show meaningful diffs (they're pointers). Use `git lfs diff` or configure
-  diff drivers in `.gitattributes`.
+- LFS files don't show meaningful diffs (they're pointers). Configure Git diff drivers/textconv in `.gitattributes` for suitable formats.
+  Git LFS has no `git lfs diff` subcommand.

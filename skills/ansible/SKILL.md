@@ -1,9 +1,9 @@
 ---
 name: ansible
 description: >
-  · Write/review Ansible playbooks, roles, inventories, Vault, Molecule, AWX/AAP. Triggers: 'ansible', 'playbook', 'ansible role', 'ansible inventory', 'group_vars', 'ansible-lint'.
+  · Write, review, and debug Ansible playbooks, roles, inventories, Ansible Vault, Molecule tests, and AWX/AAP.
 license: MIT
-compatibility: "Requires ansible-core and Python 3.9+. Optional: ansible-lint, molecule"
+compatibility: "Requires ansible-core; target controller Python 3.12+. Check managed-node support separately. Optional: ansible-lint, molecule"
 metadata:
   source: iuliandita/skills
   date_added: "2026-03-24"
@@ -16,12 +16,12 @@ metadata:
 Write, review, and architect Ansible automation - from single playbooks to multi-tier, compliance-hardened infrastructure management. The goal is idempotent, auditable, maintainable automation that works the same locally and in CI/CD.
 
 **Target versions** (September 2026):
-- ansible-core **2.21.3** (current stable, Python 3.12+ controller, 3.9+ target, EOL Nov 2027); 2.20.x remains maintained through May 2027
+- ansible-core **2.21.4** (current stable, Python 3.12+ controller); verify managed-node Python support and branch EOL in the [support matrix](https://docs.ansible.com/projects/ansible-core/devel/reference_appendices/release_and_maintenance.html) before pinning
 - ansible (community package) **14.3.1** (depends on ansible-core 2.21)
 - molecule **26.8.0**, ansible-lint **26.8.0**, ansible-navigator **26.8.0** (CalVer)
 - ansible-builder **3.1.1** (EE definition v3)
 - AWX 24.6.1 (last formal release Jul 2024; upstream AWX releases paused for a major refactor, devel branch active - track ansible/awx; awx-operator ~2.19.x still ships for K8s deploys). Verify current AWX/AAP release status before recommending a specific version or install path.
-- AAP 2.7 (GA June 3, 2026 - containerized/Operator only; 2.6 was the last RPM-installable release, still patched)
+- AAP 2.7 (current stream); verify supported installation methods and patch builds in the [vendor lifecycle documentation](https://access.redhat.com/support/policy/updates/ansible-automation-platform) before deployment
 
 This skill covers four domains depending on context:
 - **Playbooks** - tasks, handlers, variables, conditions, loops, blocks, templates, Jinja2
@@ -236,7 +236,7 @@ and remote SSH commands are not hijacked.
 
 ```bash
 # Encrypt a single variable (inline in YAML)
-ansible-vault encrypt_string 'supersecret' --name 'db_password'
+ansible-vault encrypt_string --prompt --name 'db_password'
 
 # Encrypt an entire file
 ansible-vault encrypt group_vars/production/secrets.yml
@@ -260,7 +260,7 @@ Never store the vault password in plaintext alongside the repo. Use `--ask-vault
 - `copy` without `mode:` on sensitive files (defaults to umask, unpredictable)
 - `template` without `.j2` extension on the source file
 - `ignore_errors: true` without a comment explaining why (use `block`/`rescue` instead)
-- `with_items` (deprecated - use `loop:`)
+- Blind `with_items` to `loop` rewrites: both are supported; prefer `loop` for simple lists, and preserve single-level flattening with `flatten(1)` when needed
 - Bare `{{ var }}` without quotes (YAML parses it as a dict start)
 - `gather_facts: true` + never using facts (wasted 5-15 seconds per host)
 - Tasks without `name:` (legal but unreadable in output)
@@ -394,6 +394,13 @@ All Ansible DevTools projects (molecule, ansible-lint, ansible-navigator, tox-an
 | CVE-2025-14010 | Medium | community.general exposes Keycloak credentials in verbose output | Upgrade to community.general >= 12.2.0 |
 | CVE-2025-49520 | High | EDA authenticated argument injection in Git URL (command execution) | Patch AAP/EDA |
 | CVE-2025-49521 | High | EDA template injection via Git branch/refspec (command execution) | Patch AAP/EDA |
+
+Checked 2026-09-10: [CVE-2026-16493](https://access.redhat.com/security/cve/cve-2026-16493)
+is a high-severity collection-install argument injection, missed by the role-install fix for
+CVE-2026-11332. Review git sources in `requirements.yml`; use trusted Galaxy/Automation Hub
+sources and the vendor's fixed build. The retrieved vendor record does not establish an upstream
+fixed-version range, so do not assume the target pin alone proves remediation.
+
 
 ### Supply chain
 

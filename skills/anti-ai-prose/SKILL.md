@@ -1,7 +1,7 @@
 ---
 name: anti-ai-prose
 description: >
-  · Strip AI tells from prose in docs, PRs, emails, and your own replies. Filters every response once loaded; full audit on request. Triggers: 'unslop', 'ai writing', 'sounds like chatgpt', 'llm voice'. Not for code (use anti-slop).
+  · Edit prose that sounds AI-written: remove filler and canned phrasing in docs, emails, and replies.
 license: MIT
 compatibility: "None - works on any prose or text input"
 metadata:
@@ -79,12 +79,12 @@ Always, in both modes:
 
 Audit only:
 
-- [ ] **Findings are patterns, not taste**: every finding is a demonstrable AI tell, not a writing preference, and plain-but-valid technical prose was not labeled AI-written without concrete evidence
+- [ ] **Findings explain reader impact**: each finding identifies lost clarity, unsupported claims, or a mismatch with the audience and genre. Style patterns alone do not establish authorship
 - [ ] **Context respected**: genre conventions (academic, journalism, marketing, tourism) and domain terms of art were not flagged - `pivotal` in hinge hardware, `landscape` in horticulture, `foster` in child welfare, `realm` in Kerberos
 - [ ] **Direct quotes preserved**: quoted material from other authors was not edited, even when it contains banned vocabulary
 - [ ] **Code untouched, prose audited**: identifiers, string literals, and API names were not flagged for containing a banned word. Prose *inside* comments and docstrings is a valid target; the code around it is not
-- [ ] **All four categories scanned**, including the checks that are easy to skip: adverb stacking, confident filler, the plain-speech set (participle tails, false ranges, unnamed-actor passives, dense sentence stacking, feeling-instead-of-mechanism), and fiction fallback names
-- [ ] **Density and short-text rule applied**: density set severity, and text under 100 words with 2+ tells in one paragraph was rated P1 regardless of the per-500-word threshold
+- [ ] **All four categories scanned**, including the checks that are easy to skip: adverb stacking, confident filler, the plain-speech set (participle tails, false ranges, unnamed-actor passives, dense sentence stacking, feeling-instead-of-mechanism), and character-name clarity
+- [ ] **Reader impact established**: density helped prioritize a confirmed clarity problem; word count or vocabulary matches alone did not set severity
 - [ ] **Severity is honest**: no P3 inflated to P2 to pad the report, and no finding count padded
 - [ ] **Rewrites are real improvements**: every "after" is shorter, clearer, or more specific than the "before", carries a position and specifics, and invents no fact the source did not have. No lateral synonym swaps, and voice suggestions are marked `Consider`, never `Fix`
 - [ ] **Audience preserved**: edits keep the author's domain vocabulary, intent, and required formality
@@ -118,17 +118,17 @@ example.
 2. **Detect text kind.** Technical docs, README/PR/commit, marketing, fiction, wiki, email, and
    slides each carry conventions that change what counts as a tell.
 3. **Scan.** Apply the four categories below. Read surrounding context before flagging: one AI
-   word in 5000 words is noise, three in three paragraphs is a pattern. Density sets severity;
-   text under 100 words with 2+ tells in a paragraph is P1 regardless. Some checks skip density
+   word in 5000 words is noise, three in three paragraphs is a pattern. Density helps prioritize confirmed problems;
+   text under 100 words with 2+ substantive problems may warrant P1. Some checks skip density
    because one instance is already the finding: travel-guide voice, promotional tone, the
-   formulaic article shape, chat artifacts, and an AI fallback character name. Trust breaches
+   formulaic article shape and chat artifacts. A character name alone is not a finding. Trust breaches
    skip it too, at P0 in text meant to ship - a fabricated citation, an invented fact, a leaked
    secret, generator residue, or a cutoff disclaimer under a human byline.
    `references/audit-mode.md` holds the authoritative gated/not-gated list.
 4. **Report and fix.** Group by category, show the concrete rewrite, keep every rewrite shorter or
-   more specific than the original. **Plan first, apply that plan only:** when the user asks for
-   fixes, change only what the report flagged. New findings during application become a second
-   audit, never silent edits.
+   more specific than the original. Apply authorized fixes and record newly discovered issues
+   that affect the same scope. Ask only when the fix would change the author's intent or expand
+   the authorized work; a separate audit is unnecessary for routine discoveries.
 
 ---
 
@@ -177,11 +177,11 @@ and (or start the sentence with the content).
 
 See "What NOT to Flag" below for domain exceptions (horticulture `landscape`, child welfare `foster`, networking `realm`, etc.).
 
-#### AI fallback character names (fiction)
+#### Character names (fiction)
 
-Generated fiction converges on soft, no-baggage names such as `Elara`, `Kael`, or `Voss`. Not
-density-gated: one such protagonist name is the finding. See `references/fiction-tells.md` for
-the phonetic test and the exceptions.
+Assess whether names fit the setting and help readers distinguish characters. A familiar name
+or sound pattern is not evidence of weak writing or AI authorship. See `references/fiction-tells.md` for
+setting and continuity checks.
 
 #### Abstract metaphor nouns
 
@@ -457,7 +457,7 @@ Inline mode has no output format: the cleaned prose is the output.
 
 - `references/audit-mode.md` - audit workflow, scoping, density and severity scales, report template, worked example
 - `references/plain-speech.md` - abstract metaphor nouns, the concreteness and actor tests, sentence splitting, voice restoration
-- `references/fiction-tells.md` - AI fallback character names, adverb crutch, elegant variation
+- `references/fiction-tells.md` - character-name clarity, adverb crutch, elegant variation
 - `references/formatting-tells.md` - the formatting long tail
 - `references/agent-hygiene.md` - cross-cutting agent hygiene shared across the collection
 - `references/output-contract.md` - the shared output contract
@@ -487,8 +487,8 @@ See `references/output-contract.md` for the full contract.
 1. **Read the full piece before flagging.** A single `delve` in a 10,000-word book is not a pattern. Three in a paragraph is. Context determines severity.
 2. **Never edit quoted material.** Original words from other authors stay as written.
 3. **Respect genre conventions.** Travel writing, marketing, fiction, and academic prose have legitimate conventions that overlap with AI tells. Flag only when the writing is worse for the device, not because it matches a pattern.
-4. **Every rewrite must be shorter or more specific.** Lateral synonym swaps are not improvements. If the rewrite is longer, the original was fine.
-5. **Plan first, apply that plan only.** When applying fixes after the audit, change only what the report flagged. New findings during application become a follow-up audit, not silent edits.
+4. **Make the rewrite earn its words.** Prefer shorter, clearer, or more specific prose. Necessary explanation or accessibility detail can justify added length; never invent facts.
+5. **Stay within the authorized scope.** Apply reported fixes and record related discoveries. Ask before changing author intent or expanding the work; routine in-scope corrections do not need a separate audit.
 6. **Keep the voice of the author.** The goal is prose that sounds like a specific human, not a generic "good writing" rewrite. If you do not know the author's voice, flag only the mechanical tells.
 7. **Do not pad the report.** If there are three findings, list three. Not five. Not one inflated to three.
 8. **Inline mode is silent.** Applying these rules to your own output produces cleaner prose and nothing else: no report, no findings, no deliverable, no note that the skill ran. A user who wanted an audit will ask for one.

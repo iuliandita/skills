@@ -276,8 +276,9 @@ written to, not current filesystem usage. A VM that wrote 50GB then deleted it s
 50GB in data_percent. The only way to reclaim space is:
 1. `discard=on` on the QEMU disk config
 2. `fstrim` in the guest (or `fstrim.timer` for automatic weekly TRIM)
-3. **Both require `qm stop` + `qm start`** if discard was added after VM creation (guest
-   reboot doesn't restart QEMU, so disk config changes don't take effect)
+3. If discard is pending, use `qm shutdown <vmid>`, verify `qm status <vmid>` reports
+   stopped, then `qm start <vmid>`. A guest reboot does not restart QEMU. Diagnose a
+   failed graceful shutdown; forced power-off requires a justified recovery decision.
 
 ### ZFS
 
@@ -543,10 +544,15 @@ terraform {
   }
 }
 
+variable "proxmox_api_token" {
+  type      = string
+  sensitive = true
+}
+
 provider "proxmox" {
-  endpoint = "https://pve1.example.com:8006/"
-  api_token = "terraform@pve!automation=SECRET"
-  insecure  = true  # Self-signed cert (use ca_cert in production)
+  endpoint  = "https://pve1.example.com:8006/"
+  api_token = var.proxmox_api_token
+  insecure  = false
   ssh {
     agent = true
     node {
@@ -556,6 +562,10 @@ provider "proxmox" {
   }
 }
 ```
+
+Supply `TF_VAR_proxmox_api_token` from a secret store or protected runner environment; do not
+put its value in HCL, command arguments, or tracked tfvars. Install the appliance CA in the
+runner's trusted CA store so certificate verification succeeds.
 
 ### VM resource pattern
 

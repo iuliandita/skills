@@ -315,19 +315,20 @@ spec:
 - Multi-stage build `COPY --from=builder` referencing wrong stage name or index
 - `RUN` commands that assume specific OS packages are available (works locally with fat base image, fails in CI with slim image)
 - Missing `.dockerignore` causing `node_modules`, `.git`, or secrets to be included in context (slow builds, image bloat, potential secret exposure)
-- `ARG` used before `FROM` (only available in the first stage, silently empty in subsequent stages)
+- Global `ARG` is available in every `FROM`, but not in stage instructions unless redeclared in that stage
 
 **Example:**
 ```dockerfile
-# bug: ARG is scoped to the build stage where it's defined
-ARG VERSION=latest
-FROM node:${VERSION}
-# VERSION is available here
+# Global ARG is usable in both FROM instructions
+ARG VERSION=22
+FROM node:${VERSION} AS build
+# RUN cannot use VERSION until it is consumed in this stage
+ARG VERSION
+RUN printf '%s\n' "$VERSION"
 
 FROM node:${VERSION}-slim
-# bug: VERSION is empty here! ARG is reset after FROM
-# fix: redeclare the ARG after FROM
-ARG VERSION=latest
+# Redeclare for RUN/ENV in this independent stage too
+ARG VERSION
 ```
 
 ### Runtime Bugs

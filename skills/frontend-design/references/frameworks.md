@@ -12,7 +12,7 @@ new dependency selection; choose based on the actual application and team constr
 ## Decision tree
 
 1. **No-build, single HTML file demo, codepen-style?** -> Plain HTML + CSS + JS, no framework. State the constraint at the top of the file.
-2. **Static content, marketing site, blog, docs?** -> **Astro 7.3.1**
+2. **Static content, marketing site, blog, docs?** -> **Astro 7.3.2**
 3. **Interactive app, bundle size matters, you want runes?** -> **SvelteKit 2.70.3** + Svelte 5.57.0
 4. **Small app, no SSR needed, want Vite directly?** -> **Vite 8.2.2** + plain TypeScript or a thin layer (Lit, Solid, vanilla)
 5. **React ecosystem, rendering needs, or team familiarity fit the product?** -> **Next.js 16.3.4** + **React 19.2.8**
@@ -24,7 +24,7 @@ product. Compare alternatives against concrete requirements rather than a fixed 
 
 ---
 
-## Astro 7.3.1 (Cloudflare-owned since January 16, 2026)
+## Astro 7.3.2 (Cloudflare-owned since January 16, 2026)
 
 **When.** Content-heavy: marketing pages, docs, blogs, portfolios, landing sites, hybrid sites with islands of interactivity.
 
@@ -45,8 +45,8 @@ product. Compare alternatives against concrete requirements rather than a fixed 
 - App with heavy client state across many routes (use SvelteKit)
 
 **Note.** Astro 7 is a major migration. Run the official upgrade path and review adapter,
-content, and routing changes. Require Astro 7.1.0+ because earlier supported lines include
-June/July 2026 XSS and host-header SSRF advisories.
+content, and routing changes. Check the [publisher advisories](https://github.com/withastro/astro/security/advisories)
+for each applicable XSS/SSRF fixed range; a blanket 7.1.0 security floor is not verified.
 
 ```bash
 # Bun-first (preferred per repo convention)
@@ -89,7 +89,7 @@ bun create astro@latest
 `writable` / `readable` stores still work; new code prefers runes.
 
 ```bash
-bun create svelte@latest
+bunx sv create --install bun
 ```
 
 ---

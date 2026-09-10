@@ -228,6 +228,14 @@ export function PinchableImage({ src, alt }: { src: string; alt: string }) {
         <img
           src={src} alt={alt} tabIndex={0} aria-describedby={instructions}
           {...bind()}
+          onKeyDown={(e) => {
+            const directions: Record<string, [number, number]> = { ArrowLeft: [-20, 0], ArrowRight: [20, 0],
+              ArrowUp: [0, -20], ArrowDown: [0, 20] };
+            const delta = directions[e.key];
+            if (!delta) return;
+            e.preventDefault();
+            setPos((pos) => ({ x: pos.x + delta[0], y: pos.y + delta[1] }));
+          }}
           style={{
             maxWidth: "100%",
             transform: `translate(${x}px, ${y}px) scale(${scale})`,
@@ -406,6 +414,10 @@ Modals on mobile that bottom-sheet feel native. Centered modals leave the user r
 
 .sheet[data-open="true"] {
   transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sheet { transition: none; }
 }
 ```
 

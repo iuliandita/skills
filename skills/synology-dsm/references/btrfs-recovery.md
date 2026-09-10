@@ -267,7 +267,10 @@ sudo dmsetup create ovl --table "0 $(sudo blockdev --getsz $ORIGIN) snapshot $OR
 
 Tear down with `umount`, then `dmsetup remove ovl`, then `losetup -d "$LOOP"`.
 
-Pair it with an origin fingerprint taken before any work and re-verified after:
+Verify `dmsetup table ovl` names the intended origin and COW device, keep the origin unmounted,
+and confirm origin write protection for the chosen recovery setup independently. Pair this
+with a sampled origin fingerprint taken before any work and re-verified after; unchanged
+samples cannot prove that writes did not occur elsewhere on the device:
 
 ```sh
 for off in 0 67108864 1073741824 274877906944; do          # byte offsets: 0, 64 MiB, 1 GiB, 256 GiB

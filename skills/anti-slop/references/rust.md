@@ -40,7 +40,7 @@ AI loves creating a custom error enum for every module.
 - `.expect("should never happen")` on fallible operations that absolutely can happen
 - `Box<dyn Error>` as return type when `anyhow::Result` is in the deps
 
-**Fix:** For applications, use `anyhow`. For libraries, use `thiserror`. Don't hand-roll error types unless you need stable public API error variants.
+**Fix:** Prefer the project's existing error approach. `anyhow` can suit applications and `thiserror` can reduce library boilerplate, but a small custom error enum is valid and does not justify a dependency by itself.
 
 ## Overly Generic Trait Bounds (Noise)
 
@@ -80,7 +80,7 @@ if let Some(v) = maybe_value {
 - `unsafe` blocks for operations that have safe alternatives
 - `unsafe` without a `// SAFETY:` comment explaining the invariant
 - `transmute` when `as` casting or `From`/`Into` would work
-- Raw pointer manipulation that could use `slice::from_raw_parts` or similar safe wrappers
+- Raw pointer manipulation where an existing safe borrowed slice would suffice; `slice::from_raw_parts` is itself unsafe and requires valid allocation, lifetime, alignment, and aliasing invariants
 
 **Fix:** Remove unsafe when a safe API exists. When unsafe is genuinely needed, document the safety invariant.
 
@@ -104,14 +104,13 @@ if let Some(v) = maybe_value {
 
 ## Supply Chain Risk (Lies)
 
-**High-risk crates** (active CVEs, March 2026):
-- `tar`, `async-tar`, `tokio-tar` - CVE-2026-33056 (symlink-following RCE during `cargo build`). Pin `tar >= 0.4.45` (the actionable mitigation). Fix also shipped in the Cargo bundled with Rust 1.94.x. Affects uv, testcontainers, wasmCloud.
-- Rust supply chain attacks up 130% in 2025. Crates.io deploying TUF (The Update Framework) in 2026.
+**Advisory check** (September 2026, 2026-09-10):
+- [`tar` CVE-2026-33056](https://rustsec.org/advisories/RUSTSEC-2026-0067.html): versions before 0.4.45 can change directory permissions outside the extraction root through symlink handling. Use `tar >= 0.4.45`; the [Cargo advisory](https://blog.rust-lang.org/2026/03/21/cve-2026-33056/) identifies Rust 1.94.1 as the toolchain update carrying the fix. Check forks and other tar implementations against their own advisories instead of assuming the same CVE or fixed version applies.
 
 **Detect:**
 - Unpinned `tar`/`async-tar`/`tokio-tar` in `Cargo.toml`
 - `cargo audit` not in CI pipeline
-- No `Cargo.lock` committed (for binaries/applications - libraries should omit it)
+- No reproducible dependency resolution where the project requires it; libraries can also commit `Cargo.lock` for development and CI
 
 **Deeper tools** (beyond `cargo audit`):
 - `cargo-geiger` - maps unsafe usage across entire dependency graph

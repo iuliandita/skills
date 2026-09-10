@@ -101,11 +101,16 @@ Back up after every key renewal (minimum monthly). Automate with a CronJob or ex
 ### Disaster recovery
 
 ```bash
-# 0. Decrypt the age backup first (if encrypted per the backup procedure)
-age -d sealed-secrets-keys-YYYYMMDD.yaml.age > sealed-secrets-keys.yaml
+# Run as a script after verifying the recovery cluster context.
+set -euo pipefail
+umask 077
+KEY_BACKUP=$(mktemp)
+trap 'rm -f "$KEY_BACKUP"' EXIT
+# Decrypt into a private file; a failed decryption stops before any cluster write.
+age -d sealed-secrets-keys-YYYYMMDD.yaml.age > "$KEY_BACKUP"
 
 # 1. Restore keys BEFORE deploying the controller
-kubectl apply -f sealed-secrets-keys.yaml
+kubectl apply -f "$KEY_BACKUP"
 
 # 2. Deploy controller - picks up existing keys on startup
 helm install sealed-secrets sealed-secrets/sealed-secrets \
@@ -114,8 +119,7 @@ helm install sealed-secrets sealed-secrets/sealed-secrets \
 # 3. Verify
 kubectl -n kube-system logs -l app.kubernetes.io/name=sealed-secrets | grep "registered"
 
-# 4. Clean up plaintext key file
-rm -P sealed-secrets-keys.yaml 2>/dev/null || rm sealed-secrets-keys.yaml
+# The EXIT trap removes the private file; use encrypted storage for temporary plaintext.
 
 # Offline decryption (if you have the backup private key)
 kubeseal --recovery-unseal --recovery-private-key backup.key < sealed-secret.yaml
@@ -325,7 +329,7 @@ Sealed Secrets satisfy some PCI requirements but have gaps.
 | No automatic secret value rotation | Req 3.7.1 (key management policies) | Manual re-seal + apply. Automate via CI pipeline that re-seals on credential rotation. |
 | Unsealed secrets in etcd are base64, not encrypted | Req 3.5.1.2 (disk-level alone insufficient) | Enable etcd encryption-at-rest via KMS v2 |
 | No HSM integration for key storage | Req 3.6.1 (key storage security) | BYOC with HSM-generated keys, or use ESO + cloud KMS |
-| No split knowledge for key generation | Req 3.7.4 (split knowledge / dual control) | Manual BYOC ceremony: custodian A generates key on air-gapped machine, custodian B imports to cluster, neither sees the other's portion. Document the ceremony. |
+| No split knowledge for key generation | Req 3.7.4 (split knowledge / dual control) | A two-person BYOC ceremony can provide dual control, but generating and importing a complete private key does not split it. Document who can access the whole key; genuine split knowledge needs a separately designed, supported threshold mechanism. |
 
 **Bottom line for PCI**: Sealed Secrets work for static secrets (API keys, registry creds, webhook tokens) in a CDE if combined with etcd encryption and proper audit logging. For dynamic credentials (DB passwords, PKI), pair with Vault or ESO. QSAs will probe the key management gaps - document your mitigations. See `compliance.md` for the full PCI-DSS requirements mapping and etcd encryption config (KMS v2 ranked options). See `architecture.md` Secrets Management section for the tool decision matrix.
 

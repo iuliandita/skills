@@ -22,7 +22,8 @@ enable both just because they sound compatible.
 
 ### Rolling install
 ```bash
-grep -Rhv '^#\|^$' /etc/apt/sources.list /etc/apt/sources.list.d/*.list 2>&1 || true
+find /etc/apt -maxdepth 2 -type f \( -path /etc/apt/sources.list -o -path '/etc/apt/sources.list.d/*.list' -o -path '/etc/apt/sources.list.d/*.sources' \) \
+  -exec grep -HnEv '^[[:space:]]*(#|$)' {} +
 ```
 
 Expected shape is one clear Kali lane, not a soup of Kali plus random Debian suites.
@@ -84,7 +85,8 @@ Symptoms:
 
 Check:
 ```bash
-grep -Rhv '^#\|^$' /etc/apt/sources.list /etc/apt/sources.list.d/*.list 2>&1 || true
+find /etc/apt -maxdepth 2 -type f \( -path /etc/apt/sources.list -o -path '/etc/apt/sources.list.d/*.list' -o -path '/etc/apt/sources.list.d/*.sources' \) \
+  -exec grep -HnEv '^[[:space:]]*(#|$)' {} +
 apt-cache policy 2>&1 || true
 ```
 

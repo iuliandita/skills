@@ -1,7 +1,7 @@
 ---
 name: security-audit
 description: >
-  · Audit code security: OWASP, credentials, auth, access control, supply chain, hardening. Triggers: 'security audit', 'vulnerability scan', 'secret scan', 'OWASP', 'auth review'. Not for offensive work (use lockpick).
+  · Audit code for vulnerabilities: auth flaws, exposed secrets, OWASP risks, and dependency/supply-chain threats.
 license: MIT
 compatibility: "Optional: betterleaks, gitleaks, trivy, semgrep, bandit, checkov, scorecard"
 metadata:
@@ -17,9 +17,9 @@ Structured, multi-pass security audit. Combines automated tooling with manual pa
 
 Patterns drawn from real OSS incidents (unauthenticated admin endpoints, credential exfiltration, zip slip, auth bypass whitelists, Trivy supply chain compromise) and OpenSSF/SLSA/OWASP standards.
 
-**Target versions** (September 2026):
+**Target versions** (September 2026, release check 2026-09-10):
 - Semgrep 1.176.0, Bandit 1.9.4
-- Gitleaks 8.30.1, Betterleaks 1.1.1 (successor by same author), TruffleHog 3.97.4
+- Gitleaks 8.30.1, [Betterleaks 1.8.1](https://github.com/betterleaks/betterleaks/releases/tag/v1.8.1) (same author as Gitleaks), TruffleHog 3.97.4
 - Trivy 0.74.0 (0.69.4-0.69.6 was compromised - see known incidents; upgrade past the 0.69.x window)
 - OpenSSF Scorecard 5.5.0 (v6 in proposal stage)
 - OWASP Top 10:2025 (confirmed January 2026), OWASP Agentic Top 10:2026 (released December 2025)
@@ -72,7 +72,7 @@ Before returning any security audit report, verify:
 
 - Run secret and dependency checks early; they are cheap and often high impact.
 - Prioritize auth, authorization, input handling, deserialization, and supply-chain paths before low-risk headers.
-- Use targeted dynamic tests for risky flows instead of broad unauthenticated crawling only.
+- Validate risky flows with isolated local fixtures; live endpoint testing requires a separately authorized assessment outside this repo-only scope.
 
 
 ---
@@ -122,7 +122,7 @@ Find known CVEs in dependencies and assess supply chain risk.
 - **Rust**: `cargo audit --json` - also check for `unsafe` blocks without `// SAFETY:` comments, `transmute` misuse, unvalidated FFI boundaries
 - **General**: `trivy fs --scanners vuln .` (use Trivy 0.74.0+ from official releases, or 0.69.3 only as a March 2026 incident rollback; never use 0.69.4-0.69.6)
 
-**Flag**: HIGH/CRITICAL CVEs with fixes available, deps unmaintained 2+ years, lockfile out of sync with manifest, non-standard registries. For production applications, prefer exact dependency versions plus a committed, integrity-checked lockfile; ranges alone do not make an install reproducible.
+**Flag**: reachable HIGH/CRITICAL CVEs whether or not a fix exists, deps unmaintained 2+ years, lockfile out of sync with manifest, non-standard registries. For production applications, prefer exact dependency versions plus a committed, integrity-checked lockfile; ranges alone do not make an install reproducible.
 
 **Known supply chain incidents** - flag these by name, not just by CVE:
 - `event-stream` 3.3.6 (2018 backdoor targeting bitcoin wallets)
@@ -135,9 +135,15 @@ Find known CVEs in dependencies and assess supply chain risk.
 - TrapDoor (2026-05 multi-registry campaign: 34+ malicious npm/PyPI/crates packages stealing SSH keys and cloud/crypto credentials; notably hides zero-width-Unicode prompt injection in `.cursorrules` / `CLAUDE.md` to subvert AI coding agents - check agent rule files, not just dependencies)
 - `trivy` 0.69.4-0.69.6 / `aquasecurity/trivy` Docker tags 0.69.5-0.69.6 / `aquasecurity/trivy-action` + `aquasecurity/setup-trivy` force-pushed tags (2026-03 TeamPCP supply chain compromise - credential-stealing malware in CI/CD pipelines)
 - Mini Shai-Hulud worm (2026-04/05 TeamPCP npm/PyPI follow-up: SAP `@sap/*` npm Apr 29, PyTorch `lightning` PyPI 2.6.2/2.6.3 Apr 30, 84 malicious versions across 42 `@tanstack/*` May 11 - self-propagating, steals GitHub/npm tokens, CI/CD secrets, and cloud creds; ~1,800 developers across npm + PyPI)
-Any match on package name + version range is P0 severity regardless of `audit` output.
+Confirm the affected artifact and execution path before assigning severity. Malicious artifacts with credential theft or equivalent critical exposure warrant P0; historical dependency fragility or an unaffected predecessor version does not. Record maintainer risk separately from demonstrated compromise.
 For active incident triage, use `references/hardening-checklists.md` for repo-wide package,
 IOC, local-runtime, and remote-repo checks.
+
+**Scanner security recheck** (September 2026, 2026-09-10):
+[CVE-2026-63328](https://github.com/aquasecurity/trivy/security/advisories/GHSA-8rc5-4fr6-64pw)
+affects Trivy before 0.72.0 when installing an attacker-controlled plugin; it permits writes
+outside the plugin directory. The 0.74.0 target includes the fix. This is separate from the
+March supply-chain compromise; only install trusted plugins.
 
 ### Step 4: Agentic AI & Supply Chain (Pass 3 - Manual)
 
@@ -216,7 +222,8 @@ Load grep patterns from `references/grep-patterns.md` (Injection section).
   - `mysql2`: `db.execute('SELECT * FROM users WHERE id = ?', [req.params.id])`
   - Prisma: `prisma.user.findUnique({ where: { id: req.params.id } })` (tagged-template `$queryRaw` is safe; `$queryRawUnsafe` is not)
   - Drizzle: `db.select().from(users).where(eq(users.id, req.params.id))`
-  - Python (psycopg/sqlite3): `cur.execute('SELECT * FROM users WHERE id = %s', (user_id,))` - never `%` string-format the SQL
+  - Python psycopg: `cur.execute('SELECT id FROM users WHERE id = %s', (user_id,))` - never `%` string-format the SQL
+  - Python sqlite3: `cur.execute('SELECT id FROM users WHERE id = ?', (user_id,))`
 - **Command injection**: shelling out with user args, `shell=True` with user input, string interpolation in child-process commands
 - **Path traversal**: user paths without containment check, zip extraction without name validation (Zip Slip), recursive delete on user-controlled paths
 - **SSRF**: user URLs passed to HTTP clients, IP allowlist checking hostname string not resolved IP, redirect following to internal hosts, DNS rebinding
@@ -254,7 +261,7 @@ These look like security issues but aren't (or are acceptable):
 - **Rate limiting absence** on internal-only services behind a reverse proxy that handles it. Flag if internet-facing.
 - **`eval()` in build scripts/tooling** that never touches user input. Flag if in request-handling code.
 - **Test fixtures with fake credentials** (`test-api-key-12345`). Flag if they look real.
-- **Dependency vulns with no fix available** - note them but don't inflate severity. Mark as informational with a "monitor" recommendation.
+- **Patch availability is not severity.** Rate dependency vulnerabilities by reachable impact even when no fix exists; record the missing fix as remediation status and propose mitigation, isolation, or removal where needed.
 - **Cookie flags missing on non-auth cookies** (analytics, preferences). Only flag on session/auth cookies.
 - **Terraform state in S3/GCS** with proper ACLs. Flag if local state or unencrypted remote state.
 - **Ansible vault-encrypted files**. Flag plaintext secrets, not vault usage.

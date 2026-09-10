@@ -33,7 +33,8 @@ containerd --version 2>/dev/null ; true
 # runc must be >= 1.2.8 or >= 1.3.3 or >= 1.4.0
 # containerd should be >= 2.2.2
 # BuildKit must be >= 0.28.1 (CVE-2026-33747/33748 patched)
-docker buildx version 2>/dev/null ; true
+docker buildx inspect                 # Selected builder's nodes and BuildKit daemon versions
+# If unavailable or missing a daemon version, report unknown; the Buildx CLI version is not BuildKit.
 
 # Check for vulnerable Trivy images
 docker images | grep trivy ; true
@@ -245,16 +246,20 @@ Key settings:
 
 ### Secrets management
 
-**Build-time** (BuildKit secret mounts):
+**Build-time** (BuildKit SSH and secret mounts; install git and an SSH client in the build stage):
 
 ```dockerfile
 # syntax=docker/dockerfile:1
-RUN --mount=type=secret,id=github_token \
-    GITHUB_TOKEN=$(cat /run/secrets/github_token) && \
-    git clone https://${GITHUB_TOKEN}@github.com/org/repo.git
+RUN --mount=type=ssh,required=true \
+    --mount=type=secret,id=known_hosts,required=true \
+    GIT_SSH_COMMAND='ssh -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/run/secrets/known_hosts' \
+    git clone git@github.com:org/repo.git
 ```
 
-The secret is available ONLY during the `RUN` that mounts it. Not in any layer. Not in `docker history`.
+Pass the SSH agent with `--ssh default` and a previously verified host-key file with
+`--secret id=known_hosts,src=known_hosts`. Mount contents are temporary, but a command can
+still leak them into files or logs. Never embed tokens in clone URLs: argv and `.git/config`
+can retain them. Inspect build output and artifacts for accidental secret copies.
 
 **Runtime** (Compose secrets):
 

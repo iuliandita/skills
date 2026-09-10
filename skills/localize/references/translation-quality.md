@@ -165,6 +165,7 @@ After translation, verify protected terms appear exactly:
 
 ```typescript
 function countOccurrences(str: string, sub: string): number {
+  if (sub.length === 0) throw new Error("Protected terms must not be empty")
   let count = 0, pos = 0
   while ((pos = str.indexOf(sub, pos)) !== -1) { count++; pos += sub.length }
   return count
@@ -210,8 +211,8 @@ string causes a visible `{0}` in the UI or a silent rendering bug.
 ### Detection pattern
 
 ```typescript
-// Covers: {0}, {name}, {{var}}, ${expr}, %s/%d, and ICU {count, plural, ...}
-const PLACEHOLDER_PATTERN = /\$\{[^}]+\}|\{\{[^}]+\}\}|\{[A-Za-z0-9_]+(?:,[^}]*)?\}|%[sdif]/g
+// Simple interpolation only; ICU requires the project's MessageFormat parser.
+const PLACEHOLDER_PATTERN = /\$\{[^}]+\}|\{\{[A-Za-z0-9_]+\}\}|\{[A-Za-z0-9_]+\}|%[sdif]/g
 const LINE_BREAK_PATTERN = /\r\n|\n|\r/g
 
 function validatePlaceholders(
@@ -224,6 +225,11 @@ function validatePlaceholders(
     const source = sourceCatalog[key]
     const translated = translatedCatalog[key]
     if (!source || !translated) continue
+
+    if (/\{[^{}]*,/.test(source) || /\{[^{}]*,/.test(translated)) {
+      errors.push(`${key}: ICU syntax requires MessageFormat parser validation`)
+      continue
+    }
 
     // Placeholder identifiers and counts; grammatical order may differ by language
     const sourcePH = source.match(PLACEHOLDER_PATTERN) ?? []
@@ -246,6 +252,12 @@ function validatePlaceholders(
 }
 ```
 
+For ICU catalogs, parse both messages using the project's MessageFormat parser and
+compare argument identities/types and required options recursively. Allow translated branch
+text and locale-specific plural categories; require valid syntax and an `other` branch.
+The simple validator above deliberately fails closed on comma-form ICU syntax instead of
+claiming a regular expression validates nested messages.
+
 ### Common placeholder formats
 
 | Format | Example | Common in |
@@ -264,9 +276,30 @@ instead of being converted to a placeholder pattern. Fix the source catalog firs
 
 ## Complete Validation Script
 
-Combines all checks into a single validation pass:
+Combines all checks for simple-interpolation catalogs. Normalize nested catalogs first;
+reject non-string leaves and flattened-key collisions rather than losing data or crashing
+on `.trim()`. The source catalog remains the authority for allowed keys.
 
 ```typescript
+function flattenCatalog(input: unknown): Record<string, string> {
+  const result: Record<string, string> = Object.create(null)
+  function visit(value: unknown, path: string[]) {
+    if (typeof value === 'string' && path.length > 0) {
+      const key = path.join('.')
+      if (Object.hasOwn(result, key)) throw new Error(`Duplicate flattened key: ${key}`)
+      result[key] = value
+    } else if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
+      const entries = Object.entries(value)
+      if (entries.length === 0 && path.length > 0) throw new Error(`Empty namespace: ${path.join('.')}`)
+      for (const [key, child] of entries) visit(child, [...path, key])
+    } else {
+      throw new Error(`Expected string or catalog object at ${path.join('.') || '<root>'}`)
+    }
+  }
+  visit(input, [])
+  return result
+}
+
 interface ValidationResult {
   locale: string
   missing: string[]
@@ -284,7 +317,7 @@ function validateCatalog(
   protectedTerms: string[],
 ): ValidationResult {
   const keys = Object.keys(targetCatalog)
-  const missing = sourceKeys.filter(k => !(k in targetCatalog))
+  const missing = sourceKeys.filter(k => !Object.hasOwn(targetCatalog, k))
   const extra = keys.filter(k => !sourceKeys.includes(k))
   const empty = sourceKeys.filter(k => targetCatalog[k]?.trim() === '')
 
@@ -295,14 +328,15 @@ function validateCatalog(
 }
 
 function validateAll(
-  sourceCatalog: Record<string, string>,
+  sourceInput: unknown,
   locales: string[],
-  getCatalog: (locale: string) => Record<string, string>,
+  getCatalog: (locale: string) => unknown,
   protectedTerms: string[],
 ): ValidationResult[] {
+  const sourceCatalog = flattenCatalog(sourceInput)
   const sourceKeys = Object.keys(sourceCatalog)
   return locales.map(locale =>
-    validateCatalog(sourceKeys, sourceCatalog, getCatalog(locale), locale, protectedTerms)
+    validateCatalog(sourceKeys, sourceCatalog, flattenCatalog(getCatalog(locale)), locale, protectedTerms)
   )
 }
 ```

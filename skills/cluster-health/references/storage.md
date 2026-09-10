@@ -12,7 +12,7 @@ kubectl --context <context> get pv | head -n 120
 kubectl --context <context> get pvc -A | head -n 120
 kubectl --context <context> get volumeattachments.storage.k8s.io | head -n 120
 kubectl --context <context> get pods -A -o wide | grep -Ei 'csi|storage|provisioner' | head -n 80
-kubectl --context <context> get events -A --field-selector type=Warning --sort-by=.lastTimestamp | grep -Ei 'volume|mount|attach|provision' | tail -n 80
+# Use kubernetes-core.md event filtering for the requested time window, then narrow by this area.
 ```
 
 ## PVC and PV phase (distinct states)
@@ -34,8 +34,7 @@ is scheduled. Do not flag it as RED if no consumer pod exists yet; that is by de
 the volume's declared size, not its disk footprint. Two common misreads:
 
 - **Thin-provisioned and LVM-thin volumes report provisioned size, not allocation.** With LVM thin
-  pools, the pool's `data_percent` (visible on the node via `lvs -a`, not via kubectl) is blocks
-  ever written to the pool, not current filesystem usage and not per-volume usage. A high
+  pools, the pool's `data_percent` (visible on the node via `lvs -a`, not via kubectl) is currently allocated pool data space, not current filesystem usage and not per-volume usage. Discards can reclaim chunks when supported/configured; snapshots can keep them allocated. A high
   `data_percent` after deletes does not mean the filesystem is full; it means blocks were allocated.
   Pool exhaustion, not PVC count, is the real risk on thin pools.
 - **PVC "size" is not usage.** Actual disk consumption inside a volume requires looking at the

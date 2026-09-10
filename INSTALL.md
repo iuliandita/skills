@@ -208,7 +208,7 @@ Each skill follows the [Agent Skills specification](https://agentskills.io/speci
 - **Compact body** - the core instructions loaded when the skill is activated. Target under 500 lines, 600 hard max. Kept lean so it doesn't eat the context window.
 - **Reference files** in `references/` - detailed pattern libraries, compliance checklists, manifest templates. The agent reads these on-demand when the task requires depth. Expert-level detail without paying the token cost upfront.
 - **Argument hints** (`metadata.argument_hint`) - tells agents what arguments a skill expects (e.g., `<file-or-pattern>`, `[iterations]`). Angle brackets for required, square brackets for optional.
-- **Precise trigger descriptions** - target around 200 characters (warn above 240) so startup skill lists stay compact in tools with tight context budgets.
+- **Precise trigger descriptions** - usually 80-120 characters, with the task and distinctive terms first. The warning above 120 is advisory; hosts can still shorten entries to fit a shared catalog budget.
 - **Cross-skill awareness** - skills know about each other. Routing hints (`Not for X (use Y)`) prevent collisions. The security-audit skill defers to lockpick on offensive work; docker defers to kubernetes on cluster networking.
 
 ## Structure

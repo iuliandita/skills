@@ -6,13 +6,14 @@ How to emit `/schedule` invocations, `/fire` curl templates, and GitHub Actions 
 
 ## What is automatable, and what is not
 
-The routines API surface, as of September 2026 recheck, is asymmetric:
+The routines API surface, as of September 2026 check (2026-09-10), is asymmetric:
 
 | Action | Automatable? | How |
 |---|---|---|
 | Create a routine | Not via public API | Web UI, Desktop app, or `/schedule` in the `claude` CLI |
 | Fire an existing routine | Yes | `POST /v1/claude_code/routines/{trig_id}/fire` |
-| Add API or GitHub triggers to an existing routine | Not via public API | Web UI only |
+| Add API triggers | Not via public API | Web UI |
+| Add GitHub triggers | Not via public API | Web UI or CLI 2.1.225+ |
 | Generate or revoke tokens | Not via public API | Web UI only |
 | Pause / resume a schedule | Not via public API | Web UI or `/schedule update` in the `claude` CLI |
 
@@ -36,29 +37,28 @@ fi
 
 If `HAS_CLAUDE=0`, skip the `/schedule` path and emit the web-UI walkthrough.
 
-### Fuller detection (recommended before scripting a headless fire)
+### Authentication check before live CLI setup
+
+Binary presence does not prove authentication, and a settings file is not a credential check.
+Use the installed CLI's supported status command; do not spend a model call on an echoed canary:
 
 ```bash
-# 1. Binary on PATH
-command -v claude >/dev/null 2>&1 || { echo "claude not on PATH"; exit 1; }
-
-# 2. Credentials present (config file or OAuth token env var)
-[[ -f "$HOME/.claude/settings.json" ]] || [[ -n "${CLAUDE_CODE_OAUTH_TOKEN:-}" ]] \
-  || { echo "claude has no credentials configured"; exit 1; }
-
-# 3. Optional: smoke test - the /schedule command is interactive, so verify by running a
-#    trivial non-scheduling prompt. Use a distinct canary so banner text does not match.
-if ! timeout 60 claude -p "respond with PONG" 2>&1 | grep -qi "pong"; then
-  echo "claude smoke test failed - skipping CLI automation"
-  exit 1
-fi
+# Bash; verified against installed `claude auth status --help`.
+set -euo pipefail
+command -v claude >/dev/null 2>&1 || { echo "claude not on PATH" >&2; exit 1; }
+claude auth status --json | python3 -c '
+import json, sys
+state = json.load(sys.stdin)
+if state.get("loggedIn") is not True:
+    print("Claude authentication required", file=sys.stderr)
+    sys.exit(1)
+'
 ```
 
-Notes:
-
-- `claude --version` tests the binary but does not test auth.
-- The interactive `/schedule` flow asks follow-up questions. Headless `claude -p "/schedule ..."` works for scheduled routines when all required info is in the prompt, but this is an emerging pattern - verify against the installed `claude` version.
-- A Claude Code session running the skill already has `claude` on PATH by definition, so when Claude Code is the active harness the detection mostly guards against misconfigured environments.
+The parser does not print account details. Keep the command's nonzero status visible. If an
+older CLI lacks this surface, report that limitation and use the web setup path; do not infer
+success from a file or from text containing the requested canary. Check `/schedule` support
+against the installed CLI before live creation. Drafting instructions needs no auth probe.
 
 ### Detecting the running harness
 
@@ -89,9 +89,9 @@ Tell the user to paste this at the Claude Code prompt:
 For a concrete example, using the backlog triage prompt:
 
 ```
-/schedule Run every weekday at 07:00 local. Read issues opened in the last 24 hours
-in myorg/api without the auto-triaged label. Apply area and auto-triaged labels,
-assign owners from CODEOWNERS, and post a Slack summary in #eng-backlog. If no
+/schedule Run every weekday at 07:00 local. Read up to 100 oldest open untriaged issues
+in myorg/api without the auto-triaged label. Apply area labels,
+assign owners from CODEOWNERS, then mark each completed issue auto-triaged and reconcile one Slack summary in #eng-backlog. If no
 issues match, exit without output.
 ```
 
@@ -107,9 +107,11 @@ Pass the cadence as part of the description:
 /schedule hourly deploy verification
 ```
 
-`/schedule` can only add **scheduled** triggers. To add an API or GitHub trigger to the same routine, the user edits the routine at `claude.ai/code/routines` afterwards.
+CLI 2.1.225+ can attach GitHub triggers after app installation. API tokens still require web setup. See `references/trigger-guide.md`.
 
 ### Managing existing routines
+
+CLI 2.1.227+ supports routine management and run-history inspection.
 
 ```
 /schedule list           # list all routines for this account
@@ -122,9 +124,9 @@ Pass the cadence as part of the description:
 For scripted invocation outside an interactive Claude Code session, pipe the `/schedule` description through `claude -p`:
 
 ```bash
-PROMPT='Run every weekday at 07:00 local. Read issues opened in the last 24 hours
-in myorg/api without the auto-triaged label. Apply area and auto-triaged labels,
-assign owners from CODEOWNERS, and post a Slack summary in #eng-backlog. If no
+PROMPT='Run every weekday at 07:00 local. Read up to 100 oldest open untriaged issues
+in myorg/api without the auto-triaged label. Apply area labels,
+assign owners from CODEOWNERS, then mark each completed issue auto-triaged and reconcile one Slack summary in #eng-backlog. If no
 issues match, exit without output.'
 
 claude -p "/schedule $PROMPT"
@@ -145,15 +147,18 @@ Works regardless of which harness is running. Requires an already-created routin
 ### Curl template
 
 ```bash
-ROUTINE_FIRE_URL="$ROUTINE_FIRE_URL"      # from the web UI modal
-ROUTINE_FIRE_TOKEN="$ROUTINE_FIRE_TOKEN"  # shown once at token generation
-
-curl -X POST "$ROUTINE_FIRE_URL" \
-  -H "Authorization: Bearer $ROUTINE_FIRE_TOKEN" \
-  -H "anthropic-version: 2023-06-01" \
-  -H "anthropic-beta: experimental-cc-routine-2026-04-01" \
-  -H "Content-Type: application/json" \
-  -d '{"text": "Sentry alert SEN-4521 fired in prod. Stack trace attached."}'
+# Bash; URL and token come from protected environment injection.
+set -euo pipefail
+umask 077
+fire_dir=$(mktemp -d)
+trap 'rm -rf -- "$fire_dir"' EXIT
+printf 'Authorization: Bearer %s\nanthropic-version: 2023-06-01\nanthropic-beta: experimental-cc-routine-2026-04-01\nContent-Type: application/json\n' \
+  "$ROUTINE_FIRE_TOKEN" > "$fire_dir/headers"
+jq -n --arg text "Sentry alert SEN-4521 fired; inspect the supplied stack trace." \
+  '{text: $text}' > "$fire_dir/payload.json"
+curl --fail-with-body --silent --show-error --max-time 60 \
+  -X POST "$ROUTINE_FIRE_URL" -H @"$fire_dir/headers" \
+  --data-binary @"$fire_dir/payload.json"
 ```
 
 Successful response:
@@ -175,40 +180,13 @@ Use these names consistently so the user can wire them into their secret manager
 - `ROUTINE_FIRE_URL` - the full `/fire` URL for this routine
 - `ROUTINE_FIRE_TOKEN` - the bearer token (`sk-ant-oat01-...`)
 
-### Error handling template
+### Error handling
 
-```bash
-HTTP=$(curl -sS -o /tmp/routine_fire.json -w "%{http_code}" \
-  -X POST "$ROUTINE_FIRE_URL" \
-  -H "Authorization: Bearer $ROUTINE_FIRE_TOKEN" \
-  -H "anthropic-version: 2023-06-01" \
-  -H "anthropic-beta: experimental-cc-routine-2026-04-01" \
-  -H "Content-Type: application/json" \
-  -d "$PAYLOAD")
-
-case "$HTTP" in
-  200)
-    jq -r .claude_code_session_url /tmp/routine_fire.json
-    ;;
-  429)
-    echo "rate limited - check Retry-After header or claude.ai/code/routines for daily cap"
-    exit 1
-    ;;
-  401|403)
-    echo "auth failure - token invalid or routine does not grant this account access"
-    exit 1
-    ;;
-  404)
-    echo "routine does not exist - check the URL"
-    exit 1
-    ;;
-  *)
-    echo "fire failed with HTTP $HTTP"
-    cat /tmp/routine_fire.json
-    exit 1
-    ;;
-esac
-```
+`--fail-with-body` returns nonzero on HTTP errors; retain the response securely if needed.
+Treat 401/403 as access failures, 404 as a target/configuration failure, and 429 as a rate or
+run-cap limit. A timeout or lost response may follow a successful dispatch: inspect the
+routine's sessions before retrying. Never report a fire as successful just because curl ran.
+Do not print bearer headers or raw private response bodies into general CI logs.
 
 ### Idempotency reminder
 
@@ -223,17 +201,27 @@ Firing a routine from a GitHub Actions workflow on CI failure:
 ```yaml
 - name: Fire triage routine on CI failure
   if: failure()
+  shell: bash
   env:
     ROUTINE_FIRE_URL: ${{ secrets.ROUTINE_FIRE_URL }}
     ROUTINE_FIRE_TOKEN: ${{ secrets.ROUTINE_FIRE_TOKEN }}
   run: |
-    curl -X POST "$ROUTINE_FIRE_URL" \
-      -H "Authorization: Bearer $ROUTINE_FIRE_TOKEN" \
-      -H "anthropic-version: 2023-06-01" \
-      -H "anthropic-beta: experimental-cc-routine-2026-04-01" \
-      -H "Content-Type: application/json" \
-      -d "{\"text\": \"CI failed: workflow=$GITHUB_WORKFLOW run=$GITHUB_RUN_ID ref=$GITHUB_REF sha=$GITHUB_SHA\"}"
+    set -euo pipefail
+    umask 077
+    fire_dir=$(mktemp -d)
+    trap 'rm -rf -- "$fire_dir"' EXIT
+    printf 'Authorization: Bearer %s\nanthropic-version: 2023-06-01\nanthropic-beta: experimental-cc-routine-2026-04-01\nContent-Type: application/json\n' \
+      "$ROUTINE_FIRE_TOKEN" > "$fire_dir/headers"
+    jq -n --arg text "CI failed: workflow=$GITHUB_WORKFLOW run=$GITHUB_RUN_ID ref=$GITHUB_REF sha=$GITHUB_SHA" \
+      '{text: $text}' > "$fire_dir/payload.json"
+    curl --fail-with-body --silent --show-error --max-time 60 \
+      -X POST "$ROUTINE_FIRE_URL" -H @"$fire_dir/headers" \
+      --data-binary @"$fire_dir/payload.json"
 ```
+
+For release notes after a successful deploy, use `if: success()` after that deploy and
+change the payload/prompt to the release-note task. The failure hook above is only for triage.
+Deduplicate dispatch by the upstream run/deployment ID before firing.
 
 Add the two secrets under **Settings > Secrets and variables > Actions** in the repository. A generated `ROUTINE_FIRE_TOKEN` is shown once - store it immediately.
 
@@ -243,7 +231,7 @@ For GitLab CI, Jenkins, CircleCI, etc., the pattern is the same: read URL and to
 
 ## Pattern D: web-UI walkthrough (fallback)
 
-When `claude` is not on PATH, or when the trigger is GitHub / API only, emit a walkthrough the user follows at `claude.ai/code/routines`.
+When CLI setup is unavailable or API tokens are needed, emit a walkthrough the user follows at `claude.ai/code/routines`.
 
 Template to fill in:
 
@@ -251,7 +239,7 @@ Template to fill in:
 1. Open https://claude.ai/code/routines and click **New routine**.
 2. Name: <name>
 3. Prompt: <paste the drafted prompt>
-4. Repositories: <repo list>, branch policy <default or unrestricted>
+4. Repositories: <repo list>, branch policy <current restrictions>
 5. Environment: <default or custom-name>
 6. Connectors: <keep only these: ...>
 7. Trigger(s):
@@ -270,12 +258,7 @@ Always print the drafted prompt verbatim so the user can paste it.
 
 Before a scripted `/fire` call, the user may want to know if there is capacity left. There is no endpoint for this - the daily cap is only shown in the web UI at `claude.ai/code/routines` and `claude.ai/settings/usage`. Plan fire frequency against the known plan cap:
 
-| Plan | Daily routine runs |
-|---|---|
-| Pro | 5 |
-| Max | 15 |
-| Team | 25 |
-| Enterprise | 25 |
+Read the current allowance from the account UI; do not assume fixed per-plan counts.
 
 A webhook integration that fires more than this will get 429s for the rest of the day. Organizations with extra usage enabled continue on metered overage.
 

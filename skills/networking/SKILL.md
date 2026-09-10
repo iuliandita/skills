@@ -1,7 +1,7 @@
 ---
 name: networking
 description: >
-  · Configure/troubleshoot Linux networking: DNS, proxies, VPNs, VLANs, nftables, routing. Triggers: 'dns', 'reverse proxy', 'vpn', 'wireguard', 'tailscale', 'vlan', 'nftables', 'bgp', 'ospf', 'frrouting'. Not OPNsense: firewall-appliance.
+  · Configure and debug Linux networking: DNS, reverse proxies, VPNs, WireGuard, VLANs, nftables, and routing.
 license: MIT
 compatibility: "Requires Linux. Tools vary by task: nftables, WireGuard, dig, mtr, tcpdump"
 metadata:
@@ -22,19 +22,27 @@ performance tuning.
 | Tool | Version | Notes |
 |------|---------|-------|
 | Caddy | 2.11.4 | Auto-HTTPS, Caddyfile + JSON API |
-| Nginx | 1.30.4 stable / 1.31.4 mainline | July security releases fix CVE-2026-42533/60005/56434 |
+| Nginx | 1.30.4 stable / 1.31.4 mainline | Includes fixes for CVE-2026-42533/60005/56434 |
 | Traefik | 3.7.12 | Gateway API native, v2 EOL approaching |
 | HAProxy | 3.4.4 LTS / 3.3.14 stable / 3.2.23 LTS | 3.4 LTS EOL 2031-Q2 |
 | WireGuard tools | 1.0.20260223 | Kernel module + userspace tools |
 | strongSwan | 6.0.7 | swanctl config (legacy ipsec.conf deprecated) |
 | nftables | 1.1.7 | iptables successor, default on modern distros |
 | keepalived | 2.4.3 | VRRP + health checks |
-| Unbound | 1.26.0 | CVE-2025-11411 fix (unsolicited NS RRSets) |
+| Unbound | 1.26.0 | Includes July 2026 DNS security fixes |
 | CoreDNS | 1.14.7 | K8s default DNS, plugin-based |
-| FRRouting | 10.7.1 | BGP, OSPF, IS-IS, PIM |
+| FRRouting | 10.7.1 (retained, unverified) | Verify the current publisher release before targeting this pin |
 | Tailscale / Headscale | Headscale 0.29.3 | Self-hosted control server |
 | cloudflared | 2026.8.3 | Cloudflare Tunnel (outbound-only) |
 | OpenVPN | 2.7.7 / 2.6.21 LTS | 2.7.x: multi-socket, DCO; 2.6 is the LTS branch |
+
+Security recheck (2026-09-10): nginx's [publisher advisories](https://nginx.org/en/security_advisories.html)
+rate CVE-2026-42533 (map/regex buffer overflow) major: affected 0.9.6-1.31.2,
+fixed in 1.30.4+ or 1.31.3+. CVE-2026-42530 (HTTP/3 use-after-free) affects
+1.31.0-1.31.1 and is fixed in 1.31.2+. Check enabled modules and vendor backports.
+[Unbound advisories](https://nlnetlabs.nl/projects/unbound/security-advisories/) also
+rate CVE-2026-32665 high: DoQ-enabled 1.22.0-1.25.1 is affected, with a fix in
+1.25.2. Check compile-time DoQ support and configured listeners before assessing exposure.
 
 ## When to use
 
@@ -148,8 +156,10 @@ Read the appropriate reference file for detailed patterns. Key principles:
 - **Test before persisting.** Add nftables rules, verify connectivity, then save. Apply reverse
   proxy config changes with `--dry-run` or syntax check first (`caddy validate`, `nginx -t`,
   `haproxy -c`).
-- **One change at a time.** Network misconfigs can lock you out. If working over SSH, set a
-  revert timer (`at now + 5 minutes <<< 'systemctl restart networking'`).
+- **One change at a time.** Over SSH, save the exact rules/routes/manager configuration being
+  changed and schedule a tested restoration command before applying. A generic networking
+  restart is not a rollback. Verify the timer exists; cancel it only after a second session
+  confirms management access and the intended allowed/blocked traffic.
 - **Log what you changed.** Network debugging is 10x harder when you don't know what changed.
 
 ### Step 4: Validate
@@ -157,7 +167,7 @@ Read the appropriate reference file for detailed patterns. Key principles:
 | What to validate | How |
 |-----------------|-----|
 | DNS resolution | `dig @server domain A +short`, `dig domain AAAA +short` |
-| Reverse proxy | `curl -vk https://domain` (check cert, headers, upstream response) |
+| Reverse proxy | `curl -v https://domain` (verify certificate trust, headers, upstream response) |
 | VPN tunnel | `wg show` (WireGuard), `ping` across tunnel, check `ip route` |
 | Firewall rules | `nft list ruleset`, test both allowed and blocked traffic |
 | VLAN tagging | `ip -d link show`, `tcpdump -e -i interface` (check 802.1Q tags) |
@@ -176,7 +186,7 @@ Read the appropriate reference file for detailed patterns. Key principles:
 | `mtr` | Combined traceroute + ping | `mtr -n --report target` (non-interactive) |
 | `tcpdump` | Packet capture | `tcpdump -i any -nn port 53` (DNS traffic) |
 | `tshark` | Wireshark CLI | `tshark -i any -f 'port 443' -Y 'tls.handshake'` |
-| `curl` | HTTP testing | `curl -vk -o /dev/null https://target` (verbose TLS info) |
+| `curl` | HTTP testing | `curl -v -o /dev/null https://target` (verified TLS and HTTP details) |
 | `iperf3` | Bandwidth testing | Server: `iperf3 -s` / Client: `iperf3 -c server` |
 | `nft` | nftables rule management | `nft list ruleset`, `nft monitor trace` |
 | `wg` | WireGuard status | `wg show`, `wg showconf wg0` |
@@ -273,13 +283,19 @@ health checks, rate limiting, and WebSocket/gRPC proxying.
 
 ### WireGuard site-to-site quick start
 
+Each peer must route its local LAN. If WireGuard runs on a separate host rather than the LAN's
+default gateway, add a route on each LAN gateway for the remote LAN via its local WireGuard
+host. Verify return routes, forwarding and firewall policy in both directions; tunnel-peer
+pings alone do not prove LAN-to-LAN connectivity.
+
 ```ini
 # Site A (/etc/wireguard/wg0.conf) - 10.0.1.0/24
 [Interface]
 PrivateKey = <SITE_A_PRIVATE_KEY>
 Address = 10.100.0.1/30
 ListenPort = 51820
-# MTU = 1420 for most setups; subtract 80 more if over PPPoE
+# MTU: derive from measured underlay; 1420 for 1500-byte underlay with 80-byte overhead,
+# or 1412 for a 1492-byte PPPoE underlay with the same overhead.
 
 [Peer]
 PublicKey = <SITE_B_PUBLIC_KEY>
@@ -301,8 +317,8 @@ PersistentKeepalive = 25
 ```
 
 Both sides need `net.ipv4.ip_forward = 1` in `/etc/sysctl.d/`. **AllowedIPs** is the remote
-subnet (not `0.0.0.0/0` - that's full-tunnel, not site-to-site). Key generation:
-`wg genkey | tee privatekey | wg pubkey > publickey`.
+subnet (not `0.0.0.0/0` - that's full-tunnel, not site-to-site). Generate keys in a new
+protected directory with `umask 077`, following `references/vpn.md`; never overwrite existing keys.
 
 Read `references/vpn.md` for setup patterns, key management, MTU tuning,
 NAT traversal, and overlay network comparison.

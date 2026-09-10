@@ -48,7 +48,7 @@ readelf --dyn-syms TARGET 2>/dev/null | head -30
 
 ```bash
 # Headless analysis (script is at $GHIDRA_HOME/support/analyzeHeadless)
-analyzeHeadless /tmp/ghidra_project PROJECT_NAME -import TARGET -postAnalysis
+"$GHIDRA_HOME/support/analyzeHeadless" /tmp/ghidra_project PROJECT_NAME -import TARGET
 
 # Or interactive (recommended for research):
 ghidra &
@@ -198,12 +198,12 @@ reveals the vulnerability class and location. Then search for similar patterns n
 git log --oneline --all --grep='CVE-XXXX-XXXXX'
 git log --oneline --all --grep='security fix'
 
-# Build pre-patch
-git checkout COMMIT_BEFORE_FIX^
+# In an isolated clean checkout, build the parent of the fix
+git checkout FIX_COMMIT^
 make clean && make
 
 # Build post-patch
-git checkout COMMIT_AFTER_FIX
+git checkout FIX_COMMIT
 make clean && make
 ```
 
@@ -368,18 +368,18 @@ echo "minimal valid input" > corpus/seed1
 cp existing_testcases/* corpus/
 
 # Run fuzzer
-afl-fuzz -i corpus/ -o findings/ - ./target_fuzz @@
+afl-fuzz -i corpus/ -o findings/ -- ./target_fuzz @@
 # @@ = placeholder for input file path
 
 # For stdin-based targets:
-afl-fuzz -i corpus/ -o findings/ - ./target_fuzz
+afl-fuzz -i corpus/ -o findings/ -- ./target_fuzz
 
 # Parallel fuzzing (multiple cores)
 # Master:
-afl-fuzz -M fuzzer01 -i corpus/ -o findings/ - ./target_fuzz @@
+afl-fuzz -M fuzzer01 -i corpus/ -o findings/ -- ./target_fuzz @@
 # Secondaries:
-afl-fuzz -S fuzzer02 -i corpus/ -o findings/ - ./target_fuzz @@
-afl-fuzz -S fuzzer03 -i corpus/ -o findings/ - ./target_fuzz @@
+afl-fuzz -S fuzzer02 -i corpus/ -o findings/ -- ./target_fuzz @@
+afl-fuzz -S fuzzer03 -i corpus/ -o findings/ -- ./target_fuzz @@
 ```
 
 ### Writing Effective Fuzz Harnesses
@@ -448,7 +448,7 @@ clang -fsanitize=fuzzer,address -g fuzz_target.c target.c -o fuzzer
 ASAN_OPTIONS=print_stats=1 ./target_asan < findings/crashes/id:000000,...
 
 # Minimize crash input
-afl-tmin -i findings/crashes/id:000000,... -o minimized.bin - ./target_fuzz @@
+afl-tmin -i findings/crashes/id:000000,... -o minimized.bin -- ./target_fuzz @@
 
 # Deduplicate crashes by unique ASan stack trace
 # (afl-cmin is for corpus minimization, not crash dedup)
@@ -487,7 +487,7 @@ go test -fuzz=FuzzParse -fuzztime=60s ./...
 cargo install cargo-fuzz
 cargo fuzz init
 # Edit fuzz/fuzz_targets/fuzz_target_1.rs
-cargo fuzz run fuzz_target_1 - -max_total_time=300
+cargo fuzz run fuzz_target_1 -- -max_total_time=300
 ```
 
 **Java (Jazzer):**

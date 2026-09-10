@@ -1,7 +1,7 @@
 ---
 name: nixos-btw
 description: >
-  · Administer NixOS/Nix: flakes, home-manager, nix-darwin, generations, overlays, disko. Triggers: 'nixos', 'nix', 'flake', 'home-manager', 'configuration.nix', 'nixos-rebuild'. Not for other distros.
+  · Administer NixOS and Nix: flakes, home-manager, nix-darwin, generations, overlays, and declarative system config.
 license: MIT
 compatibility: "Requires NixOS, or Nix/Determinate Nix/Lix on Linux/macOS/WSL"
 metadata:
@@ -32,7 +32,7 @@ disposable dev shells, fleet-wide configuration without a separate config-manage
 and a single language for a workstation, a server, a container image, a NixOS VM, and a
 macOS laptop via nix-darwin.
 
-**Versions worth pinning** (verified September 2026):
+**Versions worth pinning** (September 2026; verification exceptions marked below):
 
 Pin versions only when they shape compatibility or troubleshooting. For ordinary package
 work, trust the live channel or flake lock over a stale table.
@@ -41,14 +41,14 @@ work, trust the live channel or flake lock over a stale table.
 |-----------|-----------------|----------------|
 | NixOS stable | 26.05 "Yarara" (May 2026) | current stable, released 2026-05-30, maintained until 2026-12-31 |
 | NixOS previous stable | 25.11 "Xantusia" (Nov 2025) | EOL 2026-06-30; upgrade off it now |
-| NixOS upcoming | 26.11 (~Nov 2026) | next release; do not target yet for production |
-| Nix (CLI / daemon) | 2.34 | stable upstream; verify the packaged distro lane before upgrading |
-| `nixos-rebuild-ng` | default in 25.11+ | Python rewrite of nixos-rebuild, default for new installs |
+| NixOS upcoming | 26.11 (schedule unverified) | Verify the release calendar; do not target an unreleased version for production |
+| Nix (CLI / daemon) | 2.34.9 | stable upstream; verify the packaged distro lane before upgrading |
+| `nixos-rebuild-ng` | verify installed implementation | Python rewrite; default status for the selected release was not verified |
 | home-manager | release-26.05 (May 2026) | matches NixOS 26.05; unstable tracks nixos-unstable |
-| nix-darwin | tracks nixpkgs 26.05 and master | active macOS module system (Intel + Apple Silicon) |
+| nix-darwin | verify supported nixpkgs branch | Exact branch support was not verified; check the selected nix-darwin release |
 | Determinate Nix | downstream, flakes-on by default | validated distribution; parallel eval, lazy trees |
 | Lix | fork of Nix | compatibility-focused fork; Meson build, improved errors |
-| Kernel default for 26.05 | Linux 6.18 LTS | default `linuxPackages`; `linux_hardened` was removed in 26.05 |
+| Kernel default for 26.05 | verify the selected nixpkgs revision | Linux 6.18 default and `linux_hardened` removal claims were not verified; inspect release notes and package options |
 
 ## When to use
 
@@ -184,7 +184,11 @@ command -v bootctl >/dev/null 2>&1 && bootctl status 2>&1 | head -20 || true
 # Store health and GC state
 df -h /nix/store
 du -sh /nix/store 2>&1 || true
-nix-store --gc --print-roots 2>&1 | wc -l
+if gc_roots=$(nix-store --gc --print-roots); then
+  printf '%s\n' "$gc_roots" | sed '/^$/d' | wc -l
+else
+  printf '%s\n' 'GC root inspection failed; count is unknown.' >&2
+fi
 ```
 
 Add subsystem probes only when the task needs them:
@@ -324,7 +328,7 @@ When a problem looks "flake-only," compare one clean baseline:
 | Build fails mid-derivation | `--print-build-logs`, check sandbox violations, check unfree or insecure gates |
 | Boot drops to emergency shell | previous generation from bootloader menu, check `hardware-configuration.nix`, LUKS, kernel modules |
 | Flake input won't update | `nix flake update <name>` (the `nix flake lock --update-input` form is deprecated on Nix 2.30+), check `inputs.<x>.follows`, check registry override |
-| System is huge, `/nix/store` fills disk | `nix-collect-garbage -d`, `nix-store --optimise`, prune generations, check direnv GC roots |
+| System is huge, `/nix/store` fills disk | inspect GC roots and generations, preserve known-good rollback, selectively prune, then plain `nix-collect-garbage` |
 | `nix-env -i` installed something that won't stick | user profile vs system config; move to `environment.systemPackages` or `home.packages` |
 | home-manager drift vs NixOS | standalone vs module mode, which one owns the file, `home-manager switch` vs `nixos-rebuild switch` |
 | Unfree package refuses to build | `nixpkgs.config.allowUnfree = true;` or predicate, or `NIXPKGS_ALLOW_UNFREE=1 nix-build --impure` for one-off |

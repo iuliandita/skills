@@ -1,7 +1,7 @@
 ---
 name: dev-cycle
 description: >
-  · Run dev workflow: branch, implement, lint/test, review, docs, PR, merge, release. Triggers: 'start working', 'kick off', 'wrap up', 'ship this', 'ready to ship'. Not for single git ops (use git).
+  · Run a requested full development workflow: branch, implement, check, review, PR, merge, and release.
 license: MIT
 compatibility: "Requires git. Optional forge CLIs by host: gh (GitHub), glab (GitLab), tea (Forgejo/Gitea). Bitbucket uses web UI or REST API. Bare git (no remote) works via format-patch/bundle. Delegates to git, testing, code-review, update-docs, and a brainstorming skill if installed."
 metadata:
@@ -251,7 +251,7 @@ Docs and versions get left behind. Address in two parts:
 
 **Part 1 - Delegate to `update-docs`** for README, CHANGELOG, roadmap, instruction files, companion-file drift. Invoke as a review-and-fix pass, not read-only.
 
-**Important: refresh gitignored docs too**, not just tracked ones. Files like `CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, `.claude/`, `.codex/`, `.opencode/`, and private `.planning/` directories are commonly gitignored but are still primary context for the developer and for future AI sessions. Stale gitignored docs cause just as much confusion as stale tracked ones. Only the tracked subset gets staged for commit; gitignored updates stay local but still get made. Ask `update-docs` to sweep both sets.
+**Refresh affected gitignored docs too.** Include relevant instruction and companion files when this branch changes their guidance. Keep private edits local. Do not sweep unrelated private automation or configuration; stage only reviewed public documentation.
 
 **Part 2 - Version-bump sites**. First read the current version from the primary source (see `references/version-bump-sites.md` for the detection script - it checks `package.json`, `pyproject.toml`, `Cargo.toml`, then falls back to the latest semver tag). If no primary source exists, ask the user what the current version is before proceeding.
 
@@ -267,7 +267,7 @@ Then find and update version strings. Common sites:
 - `CHANGELOG.md` (new section with today's date)
 - Version badges in `README.md`
 
-Propose a diff. Do not silently edit. The user confirms the version bump scope.
+Explain the version and prepare a concrete diff. Apply within existing release authorization; ask only when authority or an agreed version decision is missing.
 
 **Part 3 - Tests reflect new version**. If tests reference version strings (snapshots, integration tests pulling images by tag, fixtures hardcoding versions), update them and rerun the suite.
 
@@ -361,12 +361,18 @@ B4  code-review on main..HEAD   -> 2 nits addressed, re-run tests green
 B5  git push -u origin feat/oauth-login
     gh pr create --base main --title "feat(auth): OAuth login" --body-file .github/pr-body.md
 B6  gh pr checks --watch --fail-fast     # then:
-    gh pr view --json statusCheckRollup --jq '.statusCheckRollup[].conclusion' | grep -v SUCCESS && exit 1
+    gh pr view --json headRefOid,statusCheckRollup
+    # Match the tested head SHA and inspect required check runs and legacy status contexts.
 B7  gh pr merge --squash --delete-branch
-B8  git fetch --tags origin
-    git rev-parse --verify --quiet refs/tags/v1.5.0 || git tag -a v1.5.0 -m "v1.5.0" && git push origin v1.5.0
+B8  # Set RELEASE_SHA to the verified merged release commit before tagging.
+    git fetch --tags origin
+    if git show-ref --verify --quiet refs/tags/v1.5.0; then
+      echo "Tag exists; verify the existing release before proceeding" >&2; exit 1
+    fi
+    git tag -a v1.5.0 -m "v1.5.0" "$RELEASE_SHA" && git push origin refs/tags/v1.5.0
     gh release create v1.5.0 --title v1.5.0 --notes-file <(extract_changelog 1.5.0)
-    RUN_ID=$(gh run list --limit 1 --json databaseId --jq '.[0].databaseId')
+    # Resolve RELEASE_SHA from the merged release commit, not the former feature HEAD.
+    # Select the exact workflow/tag/SHA/event using references/finish.md, then:
     gh run watch "$RUN_ID" --exit-status
 ```
 
@@ -396,8 +402,8 @@ See `references/output-contract.md` for the full contract.
 2. **Never force-push, never `--no-verify`, never skip failing tests.** If a hook or test is in the way, fix the underlying issue. Destructive shortcuts are a red flag, not a convenience.
 3. **Delegate, don't reimplement.** `git`, `testing`, `code-review`, `update-docs`, and brainstorming skills know their domains better than this skill does. Call them.
 4. **No AI attribution in git artifacts.** No `Co-Authored-By` trailers, no "Generated with Claude Code" lines, no robot emoji in commit messages, PR titles/bodies, or release notes. Strip from any commit-helper templates before committing.
-5. **Confirm before release.** Release cutting is a forge-visible action. Announce the version, bump sites, and plan to the user; get explicit confirmation before pushing the tag.
-6. **Inspect CI output, don't infer it.** Every forge's watch command has a default-exit trap: `gh run watch` exits 0 on workflow failure without `--exit-status`; `gh pr checks --watch` returns when done, not only when green; `glab ci status --live` prints but doesn't always exit non-zero on pipeline failure. After any watch, verify with an explicit status query (`gh pr view --json statusCheckRollup`, `glab ci status --output json`, or web-UI confirmation for forges without a CLI). Confirm every check actually passed.
+5. **Preserve release authorization.** Announce the version, bump sites, and concrete plan. Existing authorization remains valid within its scope; ask before pushing the tag only when that authority is missing or scope changes.
+6. **Inspect CI output, don't infer it.** Every forge's watch command has a default-exit trap: `gh run watch` exits 0 on workflow failure without `--exit-status`; `gh pr checks --watch` returns when done, not only when green; `glab ci status --live` prints but doesn't always exit non-zero on pipeline failure. After any watch, verify with an explicit status query (`gh pr view --json statusCheckRollup`, `glab api projects/$PROJECT_ID/pipelines/$PIPELINE_ID`, or web-UI confirmation for forges without a CLI). Confirm every check actually passed.
 7. **Release detection is conservative.** If no convention signals are present, skip. A missing `CHANGELOG.md` plus no tags means this isn't a release-cut situation - don't create one.
 8. **Don't bundle unrelated work.** If mid-finish you notice a bug outside the branch's scope, file it (roadmap skill or an issue) - don't sneak it into the PR.
 9. **Plain ASCII only.** No em-dashes, no `--` substitutes, no curly quotes, no decorative emoji. Functional status markers (`[OK]`, `[FAIL]`, severity emoji in reports from delegated skills) are fine.

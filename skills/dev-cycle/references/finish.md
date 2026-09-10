@@ -94,6 +94,13 @@ skill isn't available, detect the toolchain and run manually.
 
 ### Toolchain detection + commands
 
+Treat the commands below as candidates, not a mandatory whole-repository suite. Inspect
+the project's scripts and diff, then select supported affected-file/package checks plus
+required local gates. A docs-only change need not run application tests unless it affects
+them. Required remote gates still need to pass before merge; running them in CI does not
+automatically require duplicating the full workload locally. Reuse valid results for the
+same revision and relevant inputs unless repository policy requires a fresh local run.
+
 Check in order - first match wins. If no language manifest matches, **keep going** to the task-runner and custom-script rows. Many repos (infrastructure, skill collections, dotfiles, mixed-language monorepos) have no language manifest at all.
 
 | Signal | Commands |
@@ -170,7 +177,7 @@ This is where quality slips. Address it in three parts.
 
 ### Part 1: Delegate to update-docs
 
-> "Invoke the **update-docs** skill via the Skill tool. Run in update mode (not read-only). Sweep README, CHANGELOG, roadmap, instruction files, companion files, **AND gitignored context files** (`CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, files under `.claude/`, `.codex/`, `.opencode/`, and private `.planning/` directories). Address drift caused by the current branch's changes in all of them."
+> "Invoke the **update-docs** skill via the Skill tool. Run in update mode (not read-only). Inspect documentation affected by this branch, including relevant tracked and gitignored instruction or companion files. Address drift caused by the current change. Do not load unrelated private automation or configuration simply because it is present."
 
 **Why gitignored files still need updating**: these files are often agent instruction files, developer context notes, or per-AI-tool config. They're gitignored because they're local or personal, not because they're disposable. Stale instruction files mislead the next session just as badly as stale READMEs. Keep them current even though they won't be staged.
 
@@ -186,7 +193,7 @@ comm -12 <(git ls-files --others | sort) <(git status --short | awk '{print $2}'
 # Or simply: for each ??-marked file in `git status`, check with `git check-ignore <file>`
 ```
 
-Only `git add` the tracked set. Gitignored edits land locally but are intentionally out of the PR.
+Stage explicitly reviewed public documentation paths, including intended new documentation; never force-add ignored files. Gitignored edits land locally but are intentionally out of the PR.
 
 Review update-docs findings. Accept, modify, or defer each. Defer only with a note in the PR body ("docs for X tracked in #Y, not blocking this merge").
 
@@ -196,8 +203,8 @@ See `version-bump-sites.md` for grep patterns and locations. Walk the list:
 
 1. Identify all version strings in the repo
 2. Determine the new version from the change scope (major/minor/patch)
-3. Propose a diff to the user - **do not auto-edit**
-4. Apply after confirmation
+3. Explain the selected version and prepare the concrete diff within the authorized release scope.
+4. Apply when existing authorization covers the release; ask only if the version changes the agreed scope or release authority is missing.
 5. Re-run tests if version strings appear in fixtures
 
 ### Part 3: CHANGELOG entry
@@ -257,7 +264,7 @@ Document the triage in the PR body if the review found issues.
 
 The **git** skill handles this for every forge. Prefer delegation:
 
-> "Invoke the **git** skill via the Skill tool. Push the current branch to origin (with upstream tracking) and open a PR/MR against `{BASE_BRANCH}`. Conventional-commit title, summary + test plan in body. No AI attribution trailers."
+> "Invoke the **git** skill via the Skill tool. Push the current branch to origin (with upstream tracking) and open a PR/MR against `{BASE_BRANCH}`. Follow repository PR title and body policy; use a conventional-commit title and summary + test plan only when no repository policy overrides them. No AI attribution trailers."
 
 If the git skill isn't available, dispatch on `$FORGE` from Step B1. Skip to "No forge CLI" if `$FORGE_CLI` is empty.
 
@@ -445,7 +452,7 @@ Forgejo/Gitea Actions API is newer and less uniform than GitHub's. If `tea actio
 
 No official CLI. Options:
 - Watch in the web UI (Pull Request view shows Pipeline status)
-- Poll the REST API if scripted: `curl -u "$USER:$APP_PASSWORD" "https://api.bitbucket.org/2.0/repositories/$WORKSPACE_REPO/pipelines/?sort=-created_on&pagelen=5"`
+- Poll the REST API if scripted: `curl --fail --config "$BITBUCKET_CURL_CONFIG" "https://api.bitbucket.org/2.0/repositories/$WORKSPACE_REPO/pipelines/?sort=-created_on&pagelen=5"`. Supply credentials through a mode-0600 curl config provisioned from a secret manager/no-echo input; never expand passwords into argv. Bind the returned run to the PR head SHA.
 
 Announce the Pipelines URL to the user and wait for their confirmation. Do not merge until they confirm green.
 
@@ -521,7 +528,7 @@ Available styles depend on the repo's settings. If the style isn't allowed, the 
 Merge in the web UI (no official CLI). Or via REST API if scripted:
 
 ```bash
-curl -X POST -u "$USER:$APP_PASSWORD" \
+curl --fail --config "${BITBUCKET_CURL_CONFIG:?set a mode-0600 credential config}" -X POST \
   "https://api.bitbucket.org/2.0/repositories/$WORKSPACE_REPO/pullrequests/$PR_ID/merge" \
   -H 'Content-Type: application/json' \
   -d '{"type":"pullrequest","close_source_branch":true,"merge_strategy":"squash"}'
@@ -731,10 +738,23 @@ Dispatch on `$FORGE`. Every forge's "watch" command has the same class of trap: 
 **GitHub (`$FORGE=github`)** - `gh run watch` needs an explicit run ID in non-interactive mode AND it exits `0` by default even on failure. MUST pass `--exit-status`:
 
 ```bash
-LATEST_RUN=$(gh run list --limit 1 --json databaseId,name,status \
-  --jq '.[0] | "\(.databaseId) \(.name) \(.status)"')
-echo "About to watch: $LATEST_RUN"
-RUN_ID=$(echo "$LATEST_RUN" | cut -d' ' -f1)
+# Set these from the repository release workflow and the verified published tag.
+: "${RELEASE_WORKFLOW:?workflow filename or id}"
+: "${RELEASE_EVENT:?push or release, matching the workflow trigger}"
+TAG="v$NEW_VERSION"
+RELEASE_SHA=$(git rev-parse "$TAG^{commit}") || exit 1
+RUN_ID=
+for attempt in 1 2 3 4 5 6; do
+  runs=$(gh run list --workflow "$RELEASE_WORKFLOW" --branch "$TAG" \
+    --commit "$RELEASE_SHA" --event "$RELEASE_EVENT" --limit 20 \
+    --json databaseId,headSha,headBranch,event) || exit 1
+  RUN_ID=$(printf '%s' "$runs" | jq -r --arg sha "$RELEASE_SHA" \
+    --arg tag "$TAG" --arg event "$RELEASE_EVENT" \
+    '[.[] | select(.headSha == $sha and .headBranch == $tag and .event == $event)][0].databaseId // empty')
+  [ -z "$RUN_ID" ] || break
+  sleep 5
+done
+[ -n "$RUN_ID" ] || { echo "Matching release run not found; release verification pending" >&2; exit 1; }
 gh run watch "$RUN_ID" --exit-status
 ```
 
@@ -744,7 +764,10 @@ gh run watch "$RUN_ID" --exit-status
 # Live view blocks until the pipeline finishes, but doesn't reliably exit non-zero on failure
 glab ci status --live
 # Verify after
-glab ci status --output json | jq -e '.status == "success"'
+# Resolve PROJECT_ID and PIPELINE_ID for the published tag and release commit first.
+glab api "projects/$PROJECT_ID/pipelines/$PIPELINE_ID" | jq -e \
+  --arg sha "$RELEASE_SHA" --arg ref "v$NEW_VERSION" \
+  '.sha == $sha and .ref == $ref and .status == "success"'
 ```
 
 **Forgejo/Gitea (`$FORGE=forgejo`)**:
@@ -768,7 +791,10 @@ If the release breaks production after merge:
 1. **Don't panic-delete the tag.** Deleted tags leave artifacts orphaned.
 2. **Revert the merge commit**:
    ```bash
-   git revert -m 1 "$MERGE_SHA"
+   # Inspect parents: use -m only for an actual merge and select its intended mainline.
+   git show --no-patch --format='%P' "$MERGE_SHA"
+   # Squash/single-parent result: git revert "$MERGE_SHA"
+   # Merge result, first parent confirmed as release base: git revert -m 1 "$MERGE_SHA"
    git push origin "$BASE_BRANCH"
    ```
 3. **Cut a new patch release** with the revert, don't try to replace the broken tag.

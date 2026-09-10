@@ -9,9 +9,9 @@ hardening tool handlers, or reviewing MCP code for vulnerabilities.
 
 | CVE | Component | Severity | Description | Mitigation |
 |-----|-----------|----------|-------------|------------|
-| CVE-2025-68143 | mcp-server-git | High | Unrestricted `git_init` allows creating repos in arbitrary paths | Validate and restrict allowed repository root paths |
-| CVE-2025-68144 | mcp-server-git | High | Path traversal via repository path parameter | Resolve and validate path prefix |
-| CVE-2025-68145 | mcp-server-git | High | Repository path validation bypass enables out-of-scope access | Canonicalize paths before validation |
+| [CVE-2025-68143](https://github.com/modelcontextprotocol/servers/security/advisories/GHSA-5cgr-j3jf-jw3v) | mcp-server-git | Moderate | Unrestricted `git_init` allows creating repos in arbitrary paths | Affected <2025.9.25; upgrade to 2025.9.25+ (tool removed) |
+| [CVE-2025-68144](https://github.com/modelcontextprotocol/servers/security/advisories/GHSA-9xwc-hfwc-8w59) | mcp-server-git | Moderate | Argument injection in `git_diff`/`git_checkout` permits local file overwrite | Affected <2025.12.18; upgrade to 2025.12.18+ |
+| [CVE-2025-68145](https://github.com/modelcontextprotocol/servers/security/advisories/GHSA-j22h-9j4x-23w5) | mcp-server-git | Moderate | `--repository` restriction not enforced on later tool repository paths | Affected <2025.12.18; upgrade to 2025.12.18+ |
 | CVE-2025-6514 | mcp-remote | High | OAuth injection - attacker injects malicious auth server URL | Validate authorization server metadata against allowlist |
 | CVE-2025-64106 | Cursor MCP | High | Deep-link flow can hide and execute MCP server commands | Client-side - explicit consent with full command visibility |
 
@@ -20,6 +20,14 @@ These are representative of the vulnerability classes found in 43% of MCP server
 server can have multiple path and access control flaws at once.
 
 ---
+
+## SDK advisory update (checked 2026-09-10)
+
+- [TypeScript SDK cross-client response leak](https://github.com/modelcontextprotocol/typescript-sdk/security/advisories/GHSA-345p-7cg4-v4c7): legacy `@modelcontextprotocol/sdk` >=1.10.0,<=1.25.3; fixed in 1.26.0. Avoid sharing server/transport instances across clients; verify concurrent-client isolation.
+- [Python SDK session principal bypass](https://github.com/modelcontextprotocol/python-sdk/security/advisories/GHSA-jpw9-pfvf-9f58): `mcp` <=1.27.1; fixed in 1.27.2. Affects authenticated stateful HTTP transports, not stdio or stateless HTTP. Bind sessions to the authenticated user, including the token subject when users share an OAuth client.
+- [Go SDK localhost DNS rebinding](https://github.com/modelcontextprotocol/go-sdk/security/advisories/GHSA-xw59-hvm2-8pj6): versions <1.4.0; fixed in 1.4.0. Affects unauthenticated localhost HTTP servers, not stdio. Keep Host/Origin validation and authentication enabled.
+
+These are advisory-specific fixed floors, not substitutes for current supported SDK releases.
 
 ## OAuth 2.1 Authorization
 
@@ -105,17 +113,41 @@ execSync(`cat ${args.file}`)
 subprocess.run(f"git log {branch}", shell=True)
 ```
 
-**Safe patterns:**
+**Bounded revision lookup (server-owned repository):** Argument arrays prevent shell
+expansion, not Git option injection. Accept one simple ref, resolve it to a commit, then pass
+only the verified object ID to the bounded log command. Repository authorization is separate.
+
 ```typescript
-// Array form - no shell interpretation
 import { execFileSync } from "node:child_process";
-const result = execFileSync("git", ["log", "--oneline", args.branch]);
+function recentCommits(branch: string, repo: string): string {
+  if (!/^[A-Za-z0-9][A-Za-z0-9._/-]{0,199}$/.test(branch)) {
+    throw new Error("Expected a simple revision name");
+  }
+  const oid = execFileSync("git", ["rev-parse", "--verify", "--end-of-options",
+    `${branch}^{commit}`], { cwd: repo, encoding: "utf8", timeout: 5000 }).trim();
+  if (!/^[a-f0-9]{40,64}$/.test(oid)) throw new Error("Invalid commit ID");
+  return execFileSync("git", ["log", "--no-ext-diff", "--no-textconv", "--oneline",
+    "-n", "20", oid, "--"], { cwd: repo, encoding: "utf8", timeout: 5000 });
+}
 ```
 
 ```python
+import re
 import subprocess
-result = subprocess.run(["git", "log", "--oneline", branch], capture_output=True)
-# shell=False is the default - never set shell=True with user input
+
+def recent_commits(branch: str, repo: str) -> str:
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._/-]{0,199}", branch):
+        raise ValueError("Expected a simple revision name")
+    oid = subprocess.run(
+        ["git", "rev-parse", "--verify", "--end-of-options", f"{branch}^{{commit}}"],
+        cwd=repo, capture_output=True, text=True, check=True, timeout=5,
+    ).stdout.strip()
+    if not re.fullmatch(r"[a-f0-9]{40,64}", oid):
+        raise ValueError("Invalid commit ID")
+    return subprocess.run(
+        ["git", "log", "--no-ext-diff", "--no-textconv", "--oneline", "-n", "20", oid, "--"],
+        cwd=repo, capture_output=True, text=True, check=True, timeout=5,
+    ).stdout
 ```
 
 ### Path traversal

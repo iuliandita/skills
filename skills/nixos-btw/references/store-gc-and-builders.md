@@ -187,15 +187,15 @@ nix path-info --all --size --human-readable | sort -h | tail -30
 # Heavy dependents of a path
 nix why-depends /run/current-system /nix/store/<hash>-foo
 
-# Older generations you are keeping on purpose?
+# Inspect roots and retain the current and last known-good system generations
+nix-store --gc --print-roots
 nix-env --list-generations -p /nix/var/nix/profiles/system
-nix-env --delete-generations +5 -p /nix/var/nix/profiles/system
+# Select obsolete generation numbers only after reviewing rollback needs:
+# sudo nix-env --delete-generations <obsolete-generation> -p /nix/var/nix/profiles/system
 
-# User-profile closures often dominate after system GC
-home-manager expire-generations '-30 days' 2>&1 || true
-nix profile wipe-history --older-than 30d 2>&1 || true
-
-sudo nix-collect-garbage -d
+# Review user/home-manager histories separately before selecting obsolete entries.
+# Plain GC preserves every remaining generation; -d would remove that protection.
+sudo nix-collect-garbage
 ```
 
 `nix store optimise` (dedup) and `nix.settings.auto-optimise-store = true;` help on big

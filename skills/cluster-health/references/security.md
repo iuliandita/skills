@@ -26,7 +26,7 @@ Keep `2>&1` on the policy-engine queries. Distinguish "engine not installed" fro
 ## Interpretation
 
 - **`auth can-i --list` shows granted verbs, not exercised ones.** A serviceaccount listing `*` on
-  `*` is cluster-admin-equivalent and worth flagging; a narrow verb set is normal. The list is what
+  `*` has broad access within the queried scope; a namespaced result does not prove cluster-wide privileges. Inspect binding scope before judging cluster-admin equivalence; a narrow verb set is normal. The list is what
   the SA *could* do, not what it has done. Do not read a broad grant as proof of compromise, but do
   flag wildcard verbs/resources on workload SAs as excessive.
 - **ClusterRoleBindings to `cluster-admin` are expected for some components.** Control-plane and

@@ -1,7 +1,7 @@
 ---
 name: prompt-generator
 description: >
-  · Turn notes into structured LLM prompts or improve existing prompts. Triggers: 'write a prompt', 'system prompt', 'prompt template', 'evaluator prompt', 'delegation prompt', 'rewrite this prompt'. Not for skills or routines.
+  · Write or improve one-off LLM prompts, system prompts, and prompt templates from rough notes.
 license: MIT
 compatibility: "Model-agnostic. Optional: tailor output format to Claude, GPT, or Gemini when target is known"
 metadata:
@@ -44,7 +44,7 @@ Before returning any generated or modified prompt file, verify:
 - [ ] **Faithful to input**: prompt reflects what the user said, not what you think they should have said
 - [ ] **Structure matches complexity**: simple tasks get plain prose, not XML-tagged multi-section prompts
 - [ ] **Variables consistent**: every `{{PLACEHOLDER}}` in the prompt body appears in the Variables table and vice versa
-- [ ] **No injected instructions**: didn't add error handling, safety disclaimers, or output constraints the user didn't request
+- [ ] **No unrelated instructions**: preserve the user's semantics; add only the minimum output structure needed by the stated use, not unrelated error handling, disclaimers, or constraints
 - [ ] **Untrusted text delimited**: source text, user examples, logs, web pages, and documents are clearly fenced or labeled before the prompt tells the model what to do
 - [ ] **No slop phrases**: no "certainly", "I'd be happy to", "great question", or other filler in the prompt text
 - [ ] **Output format specified**: if the prompt expects structured output, the format is explicit (JSON schema, XML tags, delimiters)
@@ -177,7 +177,7 @@ When the target model is known, adapt format to its strengths:
 
 | Target | Preferred structure | Notes |
 |--------|-------------------|-------|
-| Claude | XML tags for sections, markdown for content | Supports assistant prefill; use `<result>` tags for structured output |
+| Claude | XML tags for sections, markdown for content | Verify prefill support for the selected model/API; delimiters do not enforce an output schema |
 | GPT | Markdown headers, JSON schema for structured output | Native JSON mode available - use it over prose format instructions |
 | Gemini | Markdown sections, explicit output examples | Separate instructions for text vs. attached files/images |
 | Model-agnostic | Markdown headers + explicit delimiters | Avoid prefills, model-specific tags, or format-mode flags |

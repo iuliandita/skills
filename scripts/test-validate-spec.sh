@@ -56,6 +56,27 @@ test_license_is_optional() {
   trap - RETURN
 }
 
+test_description_advisory_boundary() {
+  local tmp output status length
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  for length in 120 121; do
+    write_skill "$tmp/skills" description-boundary "$(make_description "$length")" yes 3
+    run_validator "$tmp/skills" output status
+    if (( status != 0 )); then
+      fail "advisory description target rejected $length characters"
+    fi
+    if (( length == 120 )) && [[ "$output" == *"advisory 120 character target"* ]]; then
+      fail "validator warned at the inclusive 120-character target"
+    fi
+    if (( length == 121 )) && [[ "$output" != *"advisory 120 character target"* ]]; then
+      fail "validator did not warn above the description target"
+    fi
+  done
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
 test_description_through_1024_passes() {
   local tmp output status description
   tmp="$(mktemp -d)"
@@ -131,6 +152,7 @@ test_very_long_body_remains_a_warning() {
 }
 
 test_license_is_optional
+test_description_advisory_boundary
 test_description_through_1024_passes
 test_description_over_1024_fails
 test_long_body_warns_without_failing

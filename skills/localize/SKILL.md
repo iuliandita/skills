@@ -1,7 +1,7 @@
 ---
 name: localize
 description: >
-  · Audit app i18n/l10n: hardcoded strings, locale catalogs, translations, fallback gaps. Triggers: 'i18n', 'internationalization', 'localization', 'locale', 'translate app', 'multilingual', 'add language', 'hardcoded strings', 'next-intl'.
+  · Localize multilingual apps: i18n/l10n, translate app strings, add languages, and audit missing translations.
 license: MIT
 compatibility: "Requires Node.js 20+. Optional: react-i18next, vue-i18n, next-intl, svelte-i18n, ngx-translate, i18next (per framework)"
 metadata:
@@ -21,8 +21,13 @@ every string that needs it, and making sure translations read naturally in conte
 than as mechanical word-by-word output.
 
 **Target versions (September 2026):** react-i18next 17.0.13, vue-i18n 11.4.10, next-intl 4.14.2,
-i18next 26.4.2. For missing-key persistence, require i18next-http-middleware 3.9.8+ and
-i18next-fs-backend 2.6.7+ to fix critical prototype pollution (CVE-2026-48714).
+i18next 26.4.2. Missing-key persistence snapshots: i18next-http-middleware 3.9.8 and
+i18next-fs-backend 2.6.7 (latest status unverified on 2026-09-10; check the package registry
+before pinning). Require at least the following verified security fixes: critical missing-key prototype-pollution
+fixes first shipped in middleware 3.9.7 ([CVE-2026-48714](https://github.com/i18next/i18next-http-middleware/security/advisories/GHSA-f49m-vf83-692w), affected <3.9.7)
+and filesystem backend 2.6.6 ([CVE-2026-48713](https://github.com/i18next/i18next-fs-backend/security/advisories/GHSA-2933-q333-qg83), affected <2.6.6).
+Do not expose missing-key persistence to untrusted users; disable `saveMissing` where unnecessary.
+Advisory ranges checked 2026-09-10.
 
 ## When to use
 
@@ -68,7 +73,7 @@ code, catalogs, or translations, verify against this list:**
 - [ ] **Brand names protected**: product names, service names, and proper nouns are preserved
   exactly in all locales
 - [ ] **No partial extraction**: if auditing a file, every user-facing string in that file
-  is extracted - not just the obvious ones. Check JSX text content, attribute values, template
+  is inventoried (and extracted when edits are authorized) - not just the obvious ones. Check JSX text content, attribute values, template
   literals, and string arguments to UI functions
 - [ ] **Fallback chain exists**: missing keys fall back to the source locale, then to the
   key itself - never to an empty string or a crash
@@ -113,6 +118,10 @@ code, catalogs, or translations, verify against this list:**
 
 
 ## Workflow
+
+Audit/review requests are read-only: report every candidate string and proposed key without
+changing application files. Apply extraction and catalog changes when implementation is
+authorized; an existing request to fix or add i18n supplies that authority.
 
 **Entry points** (always read the AI Self-Check above first, regardless of entry point):
 - Adding i18n from scratch? Start at Step 1.
@@ -256,7 +265,7 @@ aria-labels, then placeholders...) is the #1 i18n time sink.
 | Toast/notification | `toast.success('Saved')` | In event handlers, not JSX |
 | Validation error | `setError('Name is required')` | Buried in form logic |
 | Placeholder | `placeholder="Search..."` | Attribute, not text content |
-| defaultValue | `defaultValue="Search..."` | Functionally same as placeholder, different attr |
+| defaultValue | `defaultValue="Search..."` | May be editable user data or an identifier; translate only default UI copy |
 | aria-label | `aria-label="Close menu"` | Not visible on screen |
 | title attribute | `title="Click to expand"` | Tooltip, invisible by default |
 | alt text | `alt="User avatar"` | Image fallback, often ignored |
@@ -319,10 +328,12 @@ Validation is the safety net. Set it up early, run it often.
 **Validation script pattern:**
 
 ```typescript
-const sourceKeys = Object.keys(sourceCatalog)
+// flattenCatalog is defined in references/translation-quality.md.
+const source = flattenCatalog(sourceCatalog)
+const sourceKeys = Object.keys(source)
 for (const locale of supportedLocales) {
-  const catalog = getCatalog(locale)
-  const missing = sourceKeys.filter(k => !(k in catalog))
+  const catalog = flattenCatalog(getCatalog(locale))
+  const missing = sourceKeys.filter(k => !Object.hasOwn(catalog, k))
   const extra = Object.keys(catalog).filter(k => !sourceKeys.includes(k))
   const empty = sourceKeys.filter(k => catalog[k]?.trim() === '')
   // Fail if any issues

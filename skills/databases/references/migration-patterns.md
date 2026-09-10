@@ -184,7 +184,8 @@ ALTER TABLE orders ADD COLUMN status TEXT NOT NULL DEFAULT 'pending';
 
 -- MySQL 8.0+: INSTANT (metadata-only, limited to adding at end)
 ALTER TABLE orders ADD COLUMN tracking_url TEXT, ALGORITHM=INSTANT;
--- Falls back to INPLACE if INSTANT isn't possible. Check: ALGORITHM=INSTANT, LOCK=NONE
+-- Explicit INSTANT fails if unsupported; only an omitted ALGORITHM permits server selection.
+-- Review supported operation/locking behavior before choosing an alternative.
 -- MySQL < 8.0.29: INSTANT only works for adding columns at the end.
 
 -- MSSQL: generally non-blocking for nullable columns
@@ -396,7 +397,7 @@ bun run drizzle-kit generate
 # 3. ALWAYS review the generated SQL
 cat drizzle/XXXX_migration_name.sql
 
-# 4. Add safety guards to the DDL
+# 4. Validate DDL preconditions; add guards only for intentionally rerunnable operations
 # Drizzle generates bare DDL that crashes on re-run:
 #   ALTER TABLE users ADD COLUMN email TEXT;
 # Fix to:
@@ -415,7 +416,7 @@ bun run drizzle-kit migrate
 
 - `generate` reads schema files only - no DB connection needed.
 - `migrate` requires `DATABASE_URL` (or equivalent connection config).
-- Generated SQL has no `IF NOT EXISTS` / `IF EXISTS` guards. If a previous deploy applied DDL but crashed before journaling the migration, re-running crashes. Always add guards manually.
+- If DDL was applied before migration journaling failed, inspect actual schema and runner state before retrying. Do not hide drift with blanket guards; reconcile the partial application deliberately.
 - Drizzle doesn't generate data backfill SQL. Write separate scripts for data migrations.
 - The `drizzle` meta table tracks applied migrations. Don't manually insert/delete rows.
 - `push` (dev-only) applies schema directly without generating migration files. Never use in production.
@@ -438,7 +439,7 @@ npx prisma migrate reset
 - `migrate dev` creates AND applies the migration. `migrate deploy` only applies.
 - Prisma locks you into its migration format. Ejecting is painful.
 - Shadow database required for `migrate dev` - needs CREATE DATABASE permissions.
-- No `IF NOT EXISTS` guards either. Same re-run crash risk as Drizzle.
+- Reconcile any partially applied migration with actual schema and journal state before retrying; guards are not a substitute for drift detection.
 - Prisma's introspection (`db pull`) can lose information (comments, partial indexes, custom types).
 - Data migrations: write separate SQL files, reference them in the migration directory.
 
@@ -518,7 +519,7 @@ liquibase generate-changelog
 ### Common ORM Migration Anti-Patterns
 
 - **Running `migrate` in application startup code.** Migrations should run once, separately, before the app starts. Race conditions with multiple replicas.
-- **No down migration / rollback plan.** "We'll just fix forward" works until it doesn't.
+- **No tested recovery plan.** Choose safe reversal, roll-forward, or restore based on the change and data-loss risk.
 - **Mixing schema and data migrations.** Keep them separate. Schema changes are fast and reversible. Data backfills are slow and not.
 - **Not reviewing generated SQL.** Autogenerate is a suggestion, not a command. Review every migration.
 - **Testing migrations only against empty databases.** Test against a copy of production data. Column type changes behave differently with 10M rows vs 0.
@@ -648,8 +649,8 @@ SELECT * FROM users WHERE is_active = 1;
 -- But there are subtle differences:
 
 -- MySQL: NULL-safe equality operator
-SELECT * FROM t WHERE col <=> NULL;   - returns rows where col IS NULL
-SELECT * FROM t WHERE col <=> 'foo';  - NULL-safe comparison
+SELECT * FROM t WHERE col <=> NULL;   -- returns rows where col IS NULL
+SELECT * FROM t WHERE col <=> 'foo';  -- NULL-safe comparison
 
 -- PostgreSQL: IS NOT DISTINCT FROM (SQL standard, verbose)
 SELECT * FROM t WHERE col IS NOT DISTINCT FROM NULL;
@@ -690,7 +691,8 @@ pt-online-schema-change \
     --max-lag=1s \
     --check-interval=1 \
     --critical-load="Threads_running=50" \
-    D=mydb,t=users,h=localhost,u=root,p=secret
+    --defaults-file="${DB_CLIENT_CONFIG:?mode-0600 client option file}" \
+    D=mydb,t=users,h=localhost,u=maintenance_user
 
 # Flags that matter:
 # --max-lag: pause if replica lag exceeds this
@@ -833,28 +835,35 @@ set -euo pipefail
 BATCH_SIZE=5000
 SLEEP_BETWEEN=0.5  # seconds
 
+# Use PGSERVICE/PGSERVICEFILE and a mode-0600 PGPASSFILE, never a password DSN in argv.
 while true; do
-    # psql prints "UPDATE N" on success - extract N
-    output=$(psql -c "
+    affected=$(psql -X -v ON_ERROR_STOP=1 -At -c "
         WITH batch AS (
-            SELECT id FROM orders
-            WHERE new_status IS NULL
-            ORDER BY id LIMIT ${BATCH_SIZE}
-            FOR UPDATE SKIP LOCKED
-        )
-        UPDATE orders SET new_status = 'pending'
-        FROM batch WHERE orders.id = batch.id;
-    " "$DATABASE_URL" 2>&1)
-    affected=$(echo "$output" | grep -oP 'UPDATE \K[0-9]+' || echo "0")
-
+            SELECT id FROM orders WHERE new_status IS NULL
+            ORDER BY id LIMIT ${BATCH_SIZE} FOR UPDATE SKIP LOCKED
+        ), updated AS (
+            UPDATE orders SET new_status = 'pending'
+            FROM batch WHERE orders.id = batch.id RETURNING orders.id
+        ) SELECT count(*) FROM updated;
+    ") || exit 1
+    [[ "$affected" =~ ^[0-9]+$ ]] || { echo "Invalid affected-row count" >&2; exit 1; }
     echo "Updated ${affected} rows"
-    if [[ "${affected}" -eq 0 ]]; then
-        echo "Backfill complete."
-        break
+    if [[ "$affected" -eq 0 ]]; then
+        remaining=$(psql -X -v ON_ERROR_STOP=1 -At -c \
+          "SELECT EXISTS (SELECT 1 FROM orders WHERE new_status IS NULL);") || exit 1
+        case "$remaining" in
+          f) echo "Backfill complete at this snapshot."; break ;;
+          t) echo "Eligible rows remain, possibly locked; retrying." ;;
+          *) echo "Invalid remaining-row result" >&2; exit 1 ;;
+        esac
     fi
-    sleep "${SLEEP_BETWEEN}"
+    sleep "$SLEEP_BETWEEN"
 done
 ```
+
+Before final validation, ensure new writers populate the new column (or briefly fence them).
+An empty snapshot alone cannot prevent later old-format inserts. Bound retries operationally
+and investigate persistent locked rows rather than announcing completion.
 
 **Key principles for large backfills:**
 

@@ -123,10 +123,12 @@ btrfs subvolume list /mnt
 # If Snapper is in use:
 chroot /mnt snapper list
 
-# 4. Restore the root snapshot (read-write snapshot of a known-good state)
-btrfs subvolume snapshot /mnt/.snapshots/NUMBER/snapshot /mnt/@_restored
-# Then update fstab or bootloader to point at @_restored, or
-# rename subvolumes so @ is the restored copy.
+# 4. Create the restored root at the filesystem top level; preserve the original @
+mkdir -p /mnt-btrfs-top
+mount -o subvolid=5 /dev/sdX2 /mnt-btrfs-top
+btrfs subvolume snapshot /mnt/.snapshots/NUMBER/snapshot /mnt-btrfs-top/@_restored
+btrfs subvolume show /mnt-btrfs-top/@_restored
+umount /mnt-btrfs-top
 
 # 5. Enter the restored root
 umount -R /mnt
@@ -134,6 +136,8 @@ mount -o subvol=@_restored /dev/sdX2 /mnt
 mount -o subvol=@home /dev/sdX2 /mnt/home
 mount /dev/sdX1 /mnt/efi
 arch-chroot /mnt
+# Update the restored root's fstab and rootflags/UKI command line to subvol=@_restored.
+# Confirm both refer to this same top-level path before regenerating boot artifacts.
 
 # 6. Verify bootloader state
 bootctl status
@@ -141,7 +145,7 @@ bootctl list
 
 # 7. Rebuild initramfs / regenerate UKI with the installed generator
 pacman -Q mkinitcpio dracut
-# Pick the one that is installed:
+# Inspect the installed kernel hooks/presets and use the active generator, not merely any installed one:
 mkinitcpio -P        # or: dracut --regenerate-all --force
 
 # 8. Confirm UKIs landed on ESP

@@ -24,17 +24,17 @@ Available scopes:
 ### Step 2: Detect text kind
 
 Different text types have different conventions. Before flagging, identify which applies:
-- **Technical docs** - formal is OK, but vocabulary bans still apply
+- **Technical docs** - formal language and terms of art are fine; flag only wording that obscures the explanation
 - **README / PR / commit** - concise is expected, significance padding is especially jarring
-- **Marketing / product copy** - tonal tells (`boast`, `showcase`) may be intentional but still weaken the writing
+- **Marketing / product copy** - assess tone against the brief and audience; unsupported claims matter more than a preferred word list
 - **Creative fiction** - many tells (tricolons, elegant variation) are legitimate devices; flag only when they read as mechanical
 - **Wiki article** - neutral voice required, promotional language is always a finding
 - **Email** - conversational is expected, formality inflation is a tell
-- **Slides / presentation** - fragments are fine, but vocabulary and tonal tells still apply
+- **Slides / presentation** - fragments are fine; check whether the audience can understand the point at presentation speed
 
 ### Step 3: Scan for patterns
 
-Apply the four categories from `SKILL.md`. For each match, read the surrounding context - a single instance of an AI word in a 5000-word document is probably noise, but three instances in three paragraphs is a pattern.
+Apply the four categories from `SKILL.md`. These are editing heuristics, not reliable authorship tests. Establish reader impact before applying the density guide. For each match, read the surrounding context - a single instance of an AI word in a 5000-word document is probably noise, but three instances in three paragraphs is a pattern.
 
 **Density heuristic** (rough guide, not a hard rule):
 - **Under 1 flagged item per 500 words** - noise. Do not flag, unless the instance sits in a
@@ -42,9 +42,9 @@ Apply the four categories from `SKILL.md`. For each match, read the surrounding 
   still shapes the reader's impression. Those isolated flags are P3, never higher
 - **1 to under 2 per 500 words** - borderline. Flag only what a reader would notice, at P3
 - **2 to under 4 per 500 words** - a pattern, flag the cluster as P2
-- **4+ per 500 words** - dominant voice, P1 severity, recommend structural rewrite
+- **4+ per 500 words** - inspect the passage as a whole; P1 only if the cluster obscures its main point
 
-**Short text scaling:** for text under 100 words, 2+ tells in a single paragraph is P1 regardless of the per-500-word threshold. A single sentence crammed with AI vocabulary is worse than a long doc with scattered instances. Formatting nits do not count toward that 2, and never escalate past P3 on their own: two curly quotes in a short paragraph is P3, not P1.
+**Short text scaling:** under 100 words, a cluster that obscures the main point may warrant P1. Count substantive clarity problems, not word matches. A single sentence crammed with AI vocabulary is worse than a long doc with scattered instances. Formatting nits do not count toward the cluster, and never escalate past P3 on their own: two curly quotes in a short paragraph is P3, not P1.
 
 **What density gates.** One list, authoritative:
 
@@ -53,8 +53,7 @@ Apply the four categories from `SKILL.md`. For each match, read the surrounding 
   passives, and dense sentence stacking), plus the sentence-level checks in category 3 -
   hedging and qualifier stacking, scaffolding padding, confident filler, vague attribution,
   significance padding, feeling-instead-of-mechanism. One instance is noise; the pattern is
-  the finding. Exception: an AI fallback character name is a category 1 check that is not
-  gated - one such protagonist name is the finding, per `references/fiction-tells.md`.
+  the finding. Character names require a setting or continuity problem; see `references/fiction-tells.md`.
 - **Not gated** (one instance is the finding): whole-passage register tells, meaning
   travel-guide voice and promotional tone, at P2; the formulaic article shape, which is a
   document-level structure occurring once, at P2; chat artifacts, where one is one too many in
@@ -69,28 +68,25 @@ the LLM output bugs, which are trust breaches at P0.
 Classify each finding by category, action, and severity:
 
 **Action:**
-- **Fix** - clearly a tell, should change
+- **Fix** - a concrete clarity, accuracy, or audience-fit problem with a supported correction
 - **Consider** - judgment call, present it and let the user decide
 - **Fine** - matches the pattern but is justified (note why, move on)
 
 **Severity** (the shared contract's `P0 | P1 | P2 | P3 | info` scale, mapped to prose):
 - **P0** - the text misleads or exposes the author: a fabricated citation, a factual claim invented to fill a gap, an unredacted secret or private hostname, or raw generator residue (`turn0search0`, `oaicite`, `As of my last update`) left in published text. P0 is about trust, not voice
-- **P1** - cluster of tells that makes the piece sound unmistakably AI-written; vague attribution passing opinion as fact; broken references
+- **P1** - a cluster that obscures the main point; vague attribution passing opinion as fact; broken references
 - **P2** - vocabulary or syntax tells that dull the voice without breaking trust; formulaic article shape; travel-guide voice in non-travel writing
-- **P3** - single instances of banned vocabulary; formatting nits (em-dash usage, unnecessary bold); tricolon overuse
+- **P3** - small clarity or house-style problems with reader impact; justified domain vocabulary and deliberate voice are not findings
 - **info** - a pattern match you checked and cleared (a domain term of art, a genre convention), worth recording so the next reader does not re-litigate it. Never an action item
 
 ### Step 4: Report and fix
 
-Present findings grouped by category. For each Fix-level item, show the concrete rewrite. Rewrites should be **shorter** or **more specific** - never longer.
+Present findings grouped by category. For each Fix-level item, show the concrete rewrite. Prefer shorter, clearer, or more specific rewrites. Added detail is justified when it improves understanding without inventing facts.
 
-**Plan first, apply that plan only.** Produce the audit report as the improvement plan before any
-rewrites are merged. If the user then asks for the fixes to be applied, change only what the plan
-flagged. Do not freelance edits outside the plan, do not "while we're here" rewrite adjacent
-prose, and do not chain a second pass of new fixes on top of the applied ones in the same step.
-This keeps the work auditable and prevents a cheap model from re-drafting the piece worse than
-the original. If new findings emerge while applying, surface them as a second audit, not as
-silent edits.
+For report-only requests, show the proposed changes without applying them. When fixes are
+already authorized, apply them and record the result. Include newly discovered issues within
+the same scope; avoid unrelated rewrites. Ask only if the next change would alter the author's
+intent or needs authority the user has not supplied.
 
 ---
 
@@ -156,30 +152,17 @@ Report:
 
 ### Findings
 
-#### Vocabulary Tells (1 finding, 10 flagged words)
+#### Clarity (1 finding)
 
-**#1 Fix** (P1) `README.md:1` - cluster of 10 flagged words in 49 words: far above 4/500 threshold
-> before: empowers / seamlessly / navigate / landscape / commitment to / boasts / robust / fosters / pivotal / journey toward
+**#1 Fix** (P1) `README.md:1` - generic promotion obscures what the product does
+> before: "empowers developers to seamlessly navigate" and "serves as a pivotal resource"
 > after: (rewrite, see below)
 
-#### Syntax Tells (1 finding)
-
-**#3 Fix** (P2) `README.md:1` - copula avoidance
-> before: "this tool serves as a pivotal resource"
-> after: "this tool is X" (name the thing)
-
-#### Tonal Tells (2 findings)
-
-**#2 Fix** (P1) `README.md:1` - scaffolding padding and significance padding
-> before: "In today's fast-paced world"
-> after: (cut)
-
-**#4 Fix** (P2) `README.md:1` - promotional tone
-> before: "Built with a commitment to excellence"
-> after: (cut)
+Scaffolding, vague benefits, and copula avoidance reinforce this one problem. Count the
+cluster once instead of producing separate findings for every phrase or category.
 
 ### Summary
-- 4 findings covering 13 flagged items, one paragraph, dominant AI voice
+- 1 clarity finding: the paragraph supplies almost no concrete product information
 - Rewrite, using only what the source actually claims: "A tool for working with modern APIs.
   Usable by beginners and experts." 49 words down to 12.
 - Note what the rewrite cannot do: the source never says what the product *is*, so no honest

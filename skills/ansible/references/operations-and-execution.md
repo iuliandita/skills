@@ -105,27 +105,34 @@ deploy-baseline:
   runs-on: self-hosted
   steps:
     - uses: actions/checkout@<pinned-sha> # vX
-    - name: Set up SSH and vault
+    - name: Deploy with isolated SSH and vault files
+      shell: bash
       env:
         SSH_KEY_PRIMARY: ${{ secrets.SSH_KEY_PRIMARY }}
         SSH_KEY_SECONDARY: ${{ secrets.SSH_KEY_SECONDARY }}
+        SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
         ANSIBLE_VAULT_PASSWORD: ${{ secrets.ANSIBLE_VAULT_PASSWORD }}
+        ANSIBLE_HOST_KEY_CHECKING: "true"
       run: |
-        mkdir -p ~/.ssh
-        echo "$SSH_KEY_PRIMARY" > ~/.ssh/id_primary
-        chmod 600 ~/.ssh/id_primary
-        echo "$SSH_KEY_SECONDARY" > ~/.ssh/id_secondary
-        chmod 600 ~/.ssh/id_secondary
-        echo "$ANSIBLE_VAULT_PASSWORD" > /tmp/.vault_pass
-        chmod 600 /tmp/.vault_pass
-    - name: Deploy baseline
-      run: |
+        set -euo pipefail
+        umask 077
+        secret_dir=$(mktemp -d)
+        trap 'rm -rf -- "$secret_dir"' EXIT
+        printf '%s\n' "$SSH_KEY_PRIMARY" > "$secret_dir/id_primary"
+        printf '%s\n' "$SSH_KEY_SECONDARY" > "$secret_dir/id_secondary"
+        printf '%s\n' "$SSH_KNOWN_HOSTS" > "$secret_dir/known_hosts"
+        printf '%s\n' "$ANSIBLE_VAULT_PASSWORD" > "$secret_dir/vault-pass"
+        export ANSIBLE_VAULT_PASSWORD_FILE="$secret_dir/vault-pass"
+        export PRIMARY_SSH_KEY_FILE="$secret_dir/id_primary"
+        export SECONDARY_SSH_KEY_FILE="$secret_dir/id_secondary"
+        export ANSIBLE_SSH_ARGS="-o UserKnownHostsFile=$secret_dir/known_hosts"
         cd ansible
-        ANSIBLE_VAULT_PASSWORD_FILE=/tmp/.vault_pass ansible-playbook playbooks/baseline.yml
-    - name: Cleanup secrets
-      if: always()
-      run: rm -f /tmp/.vault_pass ~/.ssh/id_primary ~/.ssh/id_secondary
+        ansible-playbook playbooks/baseline.yml
 ```
+
+Inventory must read `PRIMARY_SSH_KEY_FILE` and `SECONDARY_SSH_KEY_FILE` for the matching host
+groups. Supply independently verified known-host keys. Keep secret task output redacted;
+runner teardown must also clean private files after a forced kill.
 
 Validate the Ansible side before relying on the pipeline:
 

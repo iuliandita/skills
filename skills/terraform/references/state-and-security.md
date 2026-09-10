@@ -118,13 +118,16 @@ plan:
     AWS_TOKEN:
       aud: https://gitlab.example.com
   script:
-    - >
-      export $(aws sts assume-role-with-web-identity
-      --role-arn $PLAN_ROLE_ARN
-      --role-session-name gitlab-plan
-      --web-identity-token $AWS_TOKEN
-      --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]'
-      --output text | awk '{print "AWS_ACCESS_KEY_ID="$1" AWS_SECRET_ACCESS_KEY="$2" AWS_SESSION_TOKEN="$3}')
+    - |
+      set +x
+      set -eu
+      umask 077
+      AWS_WEB_IDENTITY_TOKEN_FILE=$(mktemp)
+      export AWS_WEB_IDENTITY_TOKEN_FILE
+      trap 'rm -f "$AWS_WEB_IDENTITY_TOKEN_FILE"' EXIT
+      printf '%s' "$AWS_TOKEN" > "$AWS_WEB_IDENTITY_TOKEN_FILE"
+      unset AWS_TOKEN AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN
+      export AWS_ROLE_ARN="$PLAN_ROLE_ARN" AWS_ROLE_SESSION_NAME=gitlab-plan
     - terraform plan
 ```
 
@@ -269,7 +272,12 @@ Moving a resource from one state file to another (e.g., extracting a module into
 **Workflow: remove from source + import in destination**
 
 ```bash
-# Step 1: Back up both states BEFORE touching anything
+# Step 1: Freeze applies in both workspaces and confirm backend/workspace identities.
+# Stage source resource HCL removal and destination resource HCL addition;
+# update references on both sides, then fmt/validate both configurations.
+# Back up both states BEFORE touching their tracking (files contain sensitive values).
+set -euo pipefail
+umask 077
 terraform -chdir=source state pull > source-backup.tfstate
 terraform -chdir=destination state pull > destination-backup.tfstate
 
@@ -283,29 +291,21 @@ terraform -chdir=source state rm 'aws_rds_cluster.main'
 #       to = aws_rds_cluster.main
 #       id = "my-cluster-id"
 #     }
-#   Then: terraform -chdir=destination plan  (verify no changes)
+#   Then: terraform -chdir=destination plan  (expect import only, no remote changes)
 #         terraform -chdir=destination apply
 
 # Option B: CLI import (immediate, no PR review)
 terraform -chdir=destination import 'aws_rds_cluster.main' 'my-cluster-id'
 
 # Step 4: Run plan on BOTH source and destination
-# Source should show no changes (resource removed from its tracking)
+# Source should show no changes (resource removed from HCL and tracking)
 # Destination should show no changes (resource now tracked here)
 # If either plan shows destroy/create, STOP - something is wrong
 ```
 
-**Alternative for bulk moves: `terraform state pull` + `terraform state push`**
-
-For moving many resources at once, you can pull the state as JSON, use `terraform state mv` or `jq` to manipulate addresses, and push back. This is fragile - prefer the rm+import workflow for safety. If you must use pull/push:
-
-```bash
-terraform state pull > state.json
-# ... careful manipulation ...
-terraform state push state.json
-```
-
-**Never edit the JSON manually with a text editor.** The state file contains serial numbers, lineage UUIDs, and internal checksums. Manual edits corrupt state silently - Terraform may plan destructive changes on the next run. Always use `terraform state` subcommands.
+For bulk moves, repeat supported state operations or stage declarative removal/import in
+reviewable batches. Do not manipulate state JSON with `jq` or a text editor. Preserve backups,
+lineage, and serial information; use `terraform state` subcommands for tracking changes.
 
 ### State locking during surgery
 
@@ -318,7 +318,9 @@ terraform state push state.json
 1. `terraform state pull > backup-YYYYMMDD-HHMM.tfstate` before every state surgery operation.
 2. If using S3, bucket versioning provides automatic rollback - but do not rely on it as the only backup.
 3. Store backups outside the state bucket (different S3 prefix or local encrypted storage).
-4. After surgery, run `terraform plan` immediately. A clean "no changes" plan confirms success. Any planned destroy or create means the migration went wrong - restore from backup.
+4. After surgery, run `terraform plan` on both configurations. Stop on unintended create/destroy;
+   investigate tracking and HCL together. Do not blindly push a backup over newer state or
+   restore duplicate ownership across backends; reconcile any rollback under the same apply freeze.
 
 ---
 

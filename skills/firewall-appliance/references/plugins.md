@@ -93,12 +93,13 @@ wg show                          # all tunnels: peers, handshakes, transfer
 wg show <iface> dump             # machine-readable output
 ```
 
-- **Stale handshakes**: latest handshake >2 minutes ago = peer is unreachable or
-  misconfigured. Check: endpoint IP, allowed IPs, firewall pass rules on the `wg` interface.
+- **Stale handshakes**: an idle peer can have an old handshake. Generate an authorized probe
+  or confirm recent expected traffic, then correlate handshakes, transfer counters, endpoint,
+  routes and firewall rules before classifying it as unreachable.
 - **NAT alignment**: allowed-IPs in WireGuard config must match firewall pass rules on the
   tunnel interface. Mismatch = traffic silently dropped.
-- **Tunnel addressing**: use CIDR notation (e.g., 10.0.0.1/24), never /32. Use RFC1918
-  ranges distinct from existing LAN subnets.
+- **Tunnel addressing**: use nonoverlapping CIDRs appropriate to the topology. Shared tunnel
+  subnets and /32 IPv4 or /128 IPv6 host addresses are valid; configure peer AllowedIPs and routes accordingly.
 - **MTU**: 1420 default, 1412 for PPPoE (80 bytes less than WAN MTU).
 - **MSS clamping**: create normalization rules to prevent TCP fragmentation through the tunnel.
   IPv4: 1380 (1372 PPPoE). IPv6: 1360 (1352 PPPoE).

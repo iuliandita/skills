@@ -31,8 +31,7 @@ Claude Code hooks receive tool input as JSON on stdin. The hook parses the Bash
 command via `jq`, checks if it matches merge/release patterns, and prints a reminder.
 It does not auto-edit ROADMAP.md - the user still invokes the skill.
 
-Requires `jq` installed. If unavailable, a simpler approach is a `Notification` hook
-that fires a generic reminder after any Bash call containing "merge" or "release."
+Requires `jq`. If unavailable, keep the built-in activity detection or use a supported JSON parser with PostToolUse; Notification events do not carry completed Bash command input. The command-pattern match is only a reminder trigger, not proof that publication succeeded.
 
 ---
 
@@ -85,8 +84,7 @@ ROADMAP.md.
 Event data is passed through environment variables (not inline `${{ }}` interpolation)
 to prevent script injection via crafted PR titles.
 
-**Note**: This only works if ROADMAP.md is tracked in git. For gitignored roadmaps,
-the issue is still useful as a reminder but the actual update happens locally.
+The issue reminder works whether ROADMAP.md is tracked or ignored. Ignored roadmap edits happen locally.
 
 ---
 

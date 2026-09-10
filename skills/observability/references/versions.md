@@ -1,5 +1,5 @@
 ---
-checked_at: "2026-09-03"
+checked_at: "2026-09-10"
 checked_by: "manual"
 pins:
   - tool: "Prometheus"
@@ -24,8 +24,8 @@ pins:
 
 # Observability target versions
 
-Pins referenced by `../SKILL.md`. See `docs/version-pins.md` for the receipt
-contract and staleness budget (120 days).
+Pins referenced by `../SKILL.md`. Record the checked date, exact version, and primary
+source when refreshing a pin. Reverify before use if the receipt exceeds 120 days.
 
 | Tool | Version | Source |
 |---|---|---|
@@ -35,3 +35,14 @@ contract and staleness budget (120 days).
 | Grafana Loki | 3.7.7 | <https://github.com/grafana/loki/releases> |
 | Grafana Tempo | 3.0.3 | <https://github.com/grafana/tempo/releases> |
 | Alertmanager | 0.34.0 | <https://github.com/prometheus/alertmanager/releases> |
+
+## Security notes (checked 2026-09-10)
+
+- [CVE-2026-14199](https://grafana.com/security/security-advisories/cve-2026-14199/):
+  self-managed Grafana Enterprise with Auth Proxy and `sync_ttl > 0` can confuse cached
+  identities and permit session takeover. The 13.2 lane is fixed in 13.2.1; other patched
+  lanes are 13.1.5, 13.0.8, and 12.4.10. Check the advisory for the deployed branch.
+- [CVE-2026-75889](https://grafana.com/security/security-advisories/cve-2026-75889/):
+  Alloy before 1.19.0 can disclose local files through a ServiceMonitor `bearerTokenFile`
+  when a less-privileged user can write watched ServiceMonitors. Use Alloy 1.19.0 or later
+  and restrict ServiceMonitor writes and the collector service account's permissions.

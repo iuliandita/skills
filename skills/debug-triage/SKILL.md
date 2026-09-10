@@ -1,9 +1,7 @@
 ---
 name: debug-triage
 description: >
-  · Triage a live incident to localize an unknown failing layer, then route. Triggers:
-  incident, outage, triage, production down, crashloop, 502. Not for known-component debugging
-  (systematic-debugging) or repo audits (deep-audit).
+  · Triage live outages when the failing component is unknown; localize the fault and route further debugging.
 license: MIT
 compatibility: "Optional, stack-dependent: kubectl, dig, curl, openssl, ss, journalctl, pg_isready, jq"
 metadata:
@@ -78,7 +76,7 @@ or paths; if a layer needs coverage not listed here, note it as a gap and ask, d
 Pin the observable failure before touching anything. Capture: what is failing (endpoint, job,
 user action), since when, what changed near that time (deploy, config, cert rotation, infra
 change), and the blast radius (one service, one node, one region, everything). A recent change is
-the strongest prior - check it first.
+a useful hypothesis, not proof of causation. Before cluster checks, resolve and state the kube context and namespace from the request or confirmed configuration; carry them on every command.
 
 ### Step 2: Form layer hypotheses
 
@@ -88,8 +86,7 @@ not one. List them; do not commit to a favorite.
 ### Step 3: Run the cheapest discriminating check
 
 For the candidate layers, run the check that excludes the most layers per command (see the
-discriminating-signal table). After each result, drop the layers it rules out. Repeat until one
-layer remains. Report *why* each layer was excluded, with the evidence.
+discriminating-signal table). After each result, eliminate only failure modes the evidence excludes. Stop at a supported localization or report unresolved competing layers; do not force one layer to remain. Report *why* each layer was excluded, with the evidence.
 
 ### Step 4: Localize and hand off
 
@@ -126,17 +123,17 @@ ClusterIP services and split-horizon DNS, not from a laptop - or a wrong exclusi
 which-fraction; see the last row - read its percentiles first (uniform vs tail vs one slow
 replica), then chase only the resource that split implicates.
 
-| Question | Check (adapt to stack) | A pass rules out | A fail implicates |
+| Question | Check (adapt to stack) | A pass establishes | A fail suggests |
 |---|---|---|---|
-| Does the name resolve? | `dig +short <host>` (or `getent hosts <host>`) | DNS | DNS / upstream resolver |
-| Is the port reachable? | `curl -sS -o /dev/null -w '%{http_code}' <url>`; `ss -tnp` | network/routing | network, LB, or the listener |
-| Is TLS valid? | `openssl s_client -connect <host:port> -servername <host> </dev/null` | TLS/cert | cert expiry / SAN / chain |
-| Is the pod actually up? | `kubectl get pods -o wide`; `kubectl describe pod` | service/pod | scheduling, image, probes, OOM |
-| Does the ingress have backends? | `kubectl get endpoints <svc>` (empty = nothing to route to) | ingress wiring | empty endpoints (selector mismatch or all pods unready) -> 502 |
-| Is the dependency answering? | dependency ping/health (e.g. `pg_isready`, broker health) | data layer | DB/cache/queue or its credentials |
-| Did something just change? | `kubectl rollout history` / git log of the manifests / deploy log | config/deploy | the last change; hand off rollback or canary verification to the owning skill, with explicit approval |
-| Is the host healthy? | `df -h`, `journalctl -p err -b`, unit status (surface errors) | host/node | disk, memory, a failed unit |
-| Slow, not down (no errors)? | latency percentiles per endpoint/pod (p50 vs p99); CPU throttle ratio; pool-wait (`pg_stat_activity`); cache hit/miss ratio | a flat, healthy distribution rules out saturation | tail latency or one slow replica: CPU throttle, pool exhaustion, slow query, cache-miss shift |
+| Does the name resolve? | `dig +noall +comments +answer +authority <host>` (or `getent hosts <host>`) | this resolver answered this name at this time; intermittent/split-horizon faults remain open | DNS / upstream resolver |
+| Is the port reachable? | `curl -sS -o /dev/null -w '%{http_code}' <url>`; `ss -tnp` | this URL was reachable from this vantage point; other routes and intermittent failures remain open | network, LB, listener, TLS, or HTTP behavior |
+| Is TLS valid? | `openssl s_client -connect <host:port> -servername <host> -verify_hostname <host> -verify_return_error </dev/null` | this handshake validates for the supplied hostname and trust store | cert expiry / SAN / chain or reachability |
+| Is the pod actually up? | `kubectl --context <context> -n <namespace> get pods -o wide`; `kubectl --context <context> -n <namespace> describe pod <pod>` | inspected readiness and container states; application behavior still needs evidence | scheduling, image, probes, OOM |
+| Does the ingress have backends? | `kubectl --context <context> -n <namespace> get endpointslices -l kubernetes.io/service-name=<svc> -o yaml` (empty = nothing to route to) | selected endpoint addresses and conditions; routing and controller configuration remain open | absent or unready backends; correlate with observed proxy response |
+| Is the dependency answering? | dependency ping/health (e.g. `pg_isready`, broker health) | server/listener accepts connections; authorization, query latency, locks and pool saturation remain open | DB/cache/queue reachability or server state; inspect the exact error |
+| Did something just change? | `kubectl --context <context> -n <namespace> rollout history deployment/<deployment>` / git log of the manifests / deploy log | recorded rollout history only; changes elsewhere remain possible | a candidate recent change; hand off rollback or canary verification to the owning skill, with explicit approval |
+| Is the host healthy? | `df -h`, `journalctl -p err -b`, unit status (surface errors) | inspected filesystem/unit signals only | disk, memory, a failed unit |
+| Slow, not down (no errors)? | latency percentiles per endpoint/pod (p50 vs p99); CPU throttle ratio; application/pool connection-acquisition wait; backend query/wait evidence (`pg_stat_activity`); cache hit/miss ratio | observed latency is healthy in this window; intermittent saturation remains possible | tail latency or one slow replica: CPU throttle, pool exhaustion, slow query, cache-miss shift |
 
 Read metrics for what they measure, not what they seem to say (e.g. K8s HPA `targetCPU` is a
 percentage of the CPU *request*, not raw CPU; `df` is allocation, not live content). When a

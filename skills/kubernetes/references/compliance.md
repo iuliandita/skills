@@ -72,7 +72,7 @@ Key shift: PCI-DSS 4.0 is outcome-based with a "customized approach" - prove you
 
 | Sub-req | K8s implementation |
 |---------|-------------------|
-| 10.2 (log all CDE access) | **K8s API audit logging** at `RequestResponse` level for CDE namespaces; ship to SIEM. |
+| 10.2 (log all CDE access) | **K8s API audit logging** with `Metadata` for sensitive payloads and `RequestResponse` only for reviewed non-sensitive resources; ship to SIEM. |
 | 10.2.2 (audit log record format and content) | Audit policy capturing all create/update/patch/delete on CDE namespace resources. Note: admin action logging is at 10.2.1.2. |
 | 10.4.1.1 (automated log review) | SIEM alert rules; Prometheus alerting on anomalous API patterns; Falco runtime alerts to incident response. |
 | 10.5 (protect audit logs) | Ship to immutable storage (S3 Object Lock, WORM); separate credentials for log shipping. |
@@ -143,7 +143,7 @@ If co-locating CDE and non-CDE on the same cluster, ALL of these are required:
 
 **Audit:**
 - Separate audit log streams for CDE namespaces
-- RequestResponse audit level for CDE
+- Metadata for sensitive payloads; RequestResponse only for reviewed non-sensitive resources
 
 ### QSA Perspective
 
@@ -160,16 +160,21 @@ If co-locating CDE and non-CDE on the same cluster, ALL of these are required:
 apiVersion: audit.k8s.io/v1
 kind: Policy
 rules:
-  # Log all requests to CDE namespaces at RequestResponse level
+  # First-match rule: keep credentials and workload bodies out of audit/SIEM logs
+  - level: Metadata
+    resources:
+      - group: ""
+        resources: ["secrets", "secrets/*", "configmaps", "pods", "pods/*", "serviceaccounts", "serviceaccounts/*", "replicationcontrollers"]
+      - group: "apps"
+        resources: ["deployments", "statefulsets", "daemonsets", "replicasets"]
+      - group: "batch"
+        resources: ["jobs", "cronjobs"]
+  # Body logging only for reviewed non-sensitive CDE resource types
   - level: RequestResponse
     namespaces: ["pci-cde", "pci-dmz"]
     resources:
       - group: ""
-        resources: ["pods", "services", "secrets", "configmaps", "serviceaccounts", "persistentvolumeclaims"]
-      - group: "apps"
-        resources: ["deployments", "statefulsets", "daemonsets"]
-      - group: "batch"
-        resources: ["jobs", "cronjobs"]
+        resources: ["services", "persistentvolumeclaims"]
       - group: "networking.k8s.io"
         resources: ["networkpolicies", "ingresses"]
       - group: "gateway.networking.k8s.io"
@@ -306,7 +311,7 @@ All PCI-DSS 4.0 controls in this document apply to the A&M backend cluster. Addi
 7. **Image pipeline**: Scan (Trivy) -> sign (cosign) -> SBOM (Syft) -> verify at admission (Kyverno)
 8. **Runtime security**: Falco with PCI rule pack, seccomp restricted, read-only rootfs, no privileged
 9. **Secrets**: ESO, Vault, or Sealed Secrets (document PCI gaps if using Sealed Secrets); no plaintext secrets in Git/ConfigMaps/env vars/Helm values
-10. **Audit logging**: K8s audit policy at RequestResponse for CDE, ship to immutable SIEM, automated alerts
+10. **Audit logging**: K8s audit policy with Metadata for sensitive payloads and RequestResponse only for reviewed non-sensitive resources; ship to immutable SIEM with automated alerts
 11. **Certificates**: cert-manager, automated rotation, inventory dashboard
 12. **Vulnerability scanning**: Continuous (Trivy Operator), quarterly authenticated internal scans (Req 11.3.1.2)
 13. **FIM**: Falco runtime + ArgoCD drift detection + image digest pinning
