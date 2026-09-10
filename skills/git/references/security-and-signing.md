@@ -321,8 +321,8 @@ setting - if an attacker controls it, they control code execution.
 
 ```bash
 # Refuse to clone/fetch from repos with suspicious ownership
-git config --global safe.directory '*'    # DO NOT use '*' - this disables the check!
-# Instead, add specific trusted directories:
+# Never set safe.directory to '*'; the wildcard disables the ownership check entirely.
+# Add specific trusted directories instead:
 git config --global --add safe.directory /home/user/projects/repo
 
 # Disable credential helper fallback to plaintext

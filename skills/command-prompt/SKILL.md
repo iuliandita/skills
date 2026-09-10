@@ -212,7 +212,8 @@ kill_gracefully() {
     while kill -0 "$pid" 2>/dev/null && [ $i -lt $timeout ]; do
         sleep 1; i=$((i+1))
     done
-    kill -0 "$pid" 2>/dev/null && kill -KILL "$pid"
+    kill -0 "$pid" 2>/dev/null || return 0   # gone after TERM: report success
+    kill -KILL "$pid"
 }
 ```
 
@@ -220,8 +221,11 @@ kill_gracefully() {
 
 ```zsh
 pk() {                                           # usage: pk <pattern>
-    local pattern=$1 pids
-    pids=(${(f)"$(pgrep -af -- "$pattern")"})    # -f matches full cmdline (spaces ok)
+    local pattern=$1 line self=$$
+    local -a pids
+    # -f matches full cmdline (spaces ok); -a prints it (procps-ng; BSD pgrep uses -l).
+    # Drop this shell and its parent so `pk zsh` cannot offer to kill your own terminal.
+    pids=(${${(f)"$(pgrep -af -- "$pattern")"}:#($self|$PPID) *})
     (( $#pids )) || { print -u2 "no match"; return 1 }
     printf '%s\n' "${pids[@]}"                   # show PID + cmdline
     read -q "?kill these? [y/N] " || { print; return 1 }
@@ -290,6 +294,7 @@ example for a CLI tool with subcommands:
 #compdef mycli
 
 _mycli() {
+  local context state line curcontext="$curcontext"   # required before `_arguments -C`
   local -a subcmds=(
     'init:Initialize a new project'
     'build:Build the project'
@@ -337,6 +342,7 @@ Before returning any shell script, check:
 - [ ] **Glob safety.** POSIX sh: guard with `[ -e "$f" ] || continue`. Zsh: use `(N)` qualifier. Bash: `shopt -s nullglob` or guard.
 - [ ] **Array indexing matches the shell.** Bash: 0-indexed. Zsh: 1-indexed. POSIX sh: no arrays.
 - [ ] **`printf` over `echo`** for anything non-trivial (echo behavior varies across shells and platforms).
+- [ ] **Parsed by the target shell**, not only read: `bash -n`, `zsh -n`, or `sh -n` on the file, plus `shellcheck` for sh/bash. A completion file also needs a real Tab press under `compinit`; `zsh -n` only proves it parses. Report which checks ran and which were unavailable.
 
 ---
 

@@ -401,7 +401,7 @@ caller.
 - uses: actions/cache@<sha>
   with:
     path: ~/.bun/install/cache
-    key: bun-${{ runner.os }}-${{ hashFiles('**/bun.lockb') }}
+    key: bun-${{ runner.os }}-${{ hashFiles('**/bun.lock') }}
     restore-keys: |
       bun-${{ runner.os }}-
 ```

@@ -261,7 +261,7 @@ actually write to.
 ```bash
 # Check thin pool status
 lvs -a -o+devices,data_percent,metadata_percent
-# data_percent = blocks ever written (not current usage!)
+# data_percent = share of pool data space currently allocated (not in-guest usage!)
 # metadata_percent = thin pool metadata usage
 
 # Extend thin pool when running low
@@ -271,9 +271,10 @@ lvextend -L +50G pve/data
 pvesm status
 ```
 
-**CRITICAL: data_percent semantics.** `data_percent` measures blocks that have EVER been
-written to, not current filesystem usage. A VM that wrote 50GB then deleted it still shows
-50GB in data_percent. The only way to reclaim space is:
+**CRITICAL: data_percent semantics.** `data_percent` is the share of the thin pool's data
+space currently allocated to its thin volumes (lvmthin(7)), not in-guest filesystem usage.
+Allocated blocks are only released when a discard reaches the pool, so a VM that wrote 50GB
+then deleted it still shows 50GB until then. The way to reclaim space is:
 1. `discard=on` on the QEMU disk config
 2. `fstrim` in the guest (or `fstrim.timer` for automatic weekly TRIM)
 3. If discard is pending, use `qm shutdown <vmid>`, verify `qm status <vmid>` reports
@@ -637,7 +638,7 @@ resource "proxmox_virtual_environment_vm" "vm" {
   lifecycle {
     prevent_destroy = true
     ignore_changes = [
-      disk,                          # Disk resized via qm, not Terraform
+      disk,                          # Only if you resize via qm instead of Terraform
       network_device[0].mac_address, # Auto-generated
       node_name,                     # Changes after live migration
     ]
@@ -650,9 +651,9 @@ resource "proxmox_virtual_environment_vm" "vm" {
 **`prevent_destroy = true`:** Non-negotiable on all VMs. Prevents accidental `terraform
 destroy` from killing production VMs.
 
-**`ignore_changes = [disk]`:** Disk resize must happen via `qm resize` on the host, not
-Terraform. If you don't ignore disk changes, Terraform will try to recreate the VM when
-the actual disk size doesn't match the config.
+**`ignore_changes = [disk]`:** Use this only when disks are grown on the host with `qm resize`;
+it stops the provider from reverting the size on the next apply. If Terraform owns disk size
+(see below), do not ignore `disk`, or growth in config is never applied.
 
 **`ignore_changes = [node_name]`:** After live migration, the VM's node_name changes.
 Without this ignore rule, Terraform would try to migrate it back on next apply.
@@ -667,12 +668,16 @@ for the cloud-init drive. Explicitly set to `scsi1` if you need SCSI.
 installs it). The provider's `agent.timeout = "2m"` gives cloud-init time to install and
 start the agent. First apply may show a timeout warning - this is expected.
 
-### Disk resize procedure (the Terraform trap)
+### Disk resize procedure
 
-Terraform CANNOT resize Proxmox VM disks. The bpg/proxmox provider doesn't support it.
+The bpg/proxmox provider grows a disk in place when `disk.size` increases: live if `disk` is
+in the VM's `hotplug` list, otherwise with a provider-initiated reboot (resource docs,
+`virtual_environment_vm`). Shrinking is unsupported everywhere. Pick one owner of disk size:
+either raise `size` in Terraform (no `ignore_changes` on `disk`), or grow on the host and
+ignore `disk` drift. Mixing both produces plans that shrink or recreate the disk.
 
 ```bash
-# 1. On Proxmox host
+# 1. On Proxmox host (host-owned path), or raise disk.size and apply (Terraform-owned path)
 qm resize <vmid> scsi0 +10G
 
 # 2. In the VM guest
@@ -681,8 +686,7 @@ resize2fs /dev/sda1              # Expand ext4 filesystem
 # Or for XFS:
 # growpart /dev/sda 1 && xfs_growfs /
 
-# 3. Update Terraform variable to match new size
-# This prevents Terraform from showing drift
+# 3. Host-owned path only: update the Terraform size to match and keep disk ignored
 ```
 
 ---

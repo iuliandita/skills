@@ -9,22 +9,22 @@ A traditional channel-based install:
 
 ```
 /etc/nixos/
-├── configuration.nix       # entry module
-└── hardware-configuration.nix  # generated, do not hand-edit
+|-- configuration.nix       # entry module
+`-- hardware-configuration.nix  # generated, do not hand-edit
 ```
 
 A flake-based install:
 
 ```
 /etc/nixos/
-├── flake.nix
-├── flake.lock
-├── configuration.nix
-├── hardware-configuration.nix
-└── modules/
-    ├── desktop.nix
-    ├── networking.nix
-    └── users.nix
+|-- flake.nix
+|-- flake.lock
+|-- configuration.nix
+|-- hardware-configuration.nix
+`-- modules/
+    |-- desktop.nix
+    |-- networking.nix
+    `-- users.nix
 ```
 
 Keep `hardware-configuration.nix` as-generated. Regenerate with

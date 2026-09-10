@@ -342,8 +342,8 @@ For complex HA clusters with multiple interdependent resources, use Corosync + P
 # Install: pacemaker, corosync, pcs (or crmsh)
 
 # Initialize cluster
-pcs cluster auth node1 node2
-pcs cluster setup --name mycluster node1 node2
+pcs host auth node1 node2          # `pcs cluster auth` was replaced in pcs 0.10
+pcs cluster setup mycluster node1 node2   # cluster name is positional; no --name flag
 pcs cluster start --all
 
 # Add a VIP resource

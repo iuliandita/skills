@@ -210,33 +210,18 @@ CHANGELOG, release docs, project status docs, or any doc with evidence/quality/s
 DOCS=$(git ls-files '*.md' 'docs/**/*.md' 2>/dev/null)
 if [[ -n "$DOCS" ]]; then
   printf '%s\n' "$DOCS" | while IFS= read -r doc; do
-    git grep -n -E '([0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]+/[0-9]+|quality evidence|refiner run|refiner-runs|benchmark|latest (run|score|evidence|benchmark)|current (run|score|evidence|gates|version)|score[: ]|passed (for|in|on))' -- "$doc" 2>/dev/null || true
+    git grep -n -E '([0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]+/[0-9]+|quality evidence|benchmark|latest (run|score|evidence|benchmark)|current (run|score|evidence|gates|version)|score[: ]|passed (for|in|on))' -- "$doc" 2>/dev/null || true
   done
 fi
-
-# Compare public skill count claims against the actual tracked collection.
-ACTUAL_SKILLS=$(git ls-files 'skills/*/SKILL.md' 2>/dev/null | wc -l | tr -d ' ')
-if [[ "$ACTUAL_SKILLS" -eq 0 ]]; then
-  ACTUAL_SKILLS=$(find skills -mindepth 2 -maxdepth 2 -name SKILL.md -not -path '*/_*/*' | wc -l | tr -d ' ')
-fi
-if [[ -n "$DOCS" ]]; then
-  printf '%s\n' "$DOCS" | while IFS= read -r doc; do
-    git grep -n -E '[0-9]+ public skills|[0-9]+ skills|[0-9]+/[0-9]+' -- "$doc" 2>/dev/null || true
-  done
-fi
-printf 'Actual tracked public skills: %s\n' "$ACTUAL_SKILLS"
-
-# If .refiner-runs.json exists, identify the latest recorded run before restating it.
-python3 - <<'PY' 2>/dev/null
-import json
-from pathlib import Path
-p = Path(".refiner-runs.json")
-if p.exists():
-    data = json.loads(p.read_text())
-    run = data[-1] if isinstance(data, list) and data else data
-    print(json.dumps(run, indent=2)[:2000])
-PY
+# Any claimed count ("N plugins", "N endpoints", "N tests") is only as good as the inventory
+# that proves it. Recount from the repo's own source of truth before repeating the number:
+#   git ls-files '<the tracked glob the claim describes>' | wc -l
+# Do the same for scores, run IDs, and benchmark dates: re-read the artifact that stores them.
 ```
+
+Every evidence claim needs its own artifact re-read in the same session - a count from the repo
+inventory, a score or run ID from the file that records it, a date from the report it came from.
+Never restate one from an earlier session or from the doc making the claim.
 
 When a stale evidence claim is found, either update it from the source artifact or rewrite it to
 avoid brittle counts. Good: "Current repository gates pass for the public skill collection."

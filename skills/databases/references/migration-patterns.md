@@ -281,7 +281,9 @@ ALTER TABLE orders DROP INDEX idx_status, ALGORITHM=INPLACE, LOCK=NONE;
 
 -- MSSQL: ONLINE = ON for Enterprise/Developer editions
 CREATE INDEX idx_orders_status ON orders (status) WITH (ONLINE = ON);
-DROP INDEX idx_orders_status ON orders WITH (ONLINE = ON);
+DROP INDEX idx_orders_status ON orders;
+-- WITH (ONLINE = ON) is accepted only when dropping a CLUSTERED index. On a nonclustered
+-- index the option is rejected; the drop is metadata-only and fast anyway.
 -- Standard Edition: no ONLINE option. Plan for a maintenance window.
 ```
 
@@ -751,7 +753,7 @@ pg_repack --only-indexes --table=orders mydb
 MySQL 8.0+ supports many DDL operations as online (INPLACE or INSTANT algorithm).
 
 ```sql
--- INSTANT operations (metadata-only, PG 16+ equivalent):
+-- INSTANT operations (catalog change only, no table rebuild):
 ALTER TABLE t ADD COLUMN c INT, ALGORITHM=INSTANT;               -- 8.0.12+
 ALTER TABLE t ALTER COLUMN c SET DEFAULT 42, ALGORITHM=INSTANT;
 ALTER TABLE t RENAME COLUMN old TO new, ALGORITHM=INSTANT;        -- 8.0.28+

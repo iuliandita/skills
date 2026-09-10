@@ -117,11 +117,17 @@ mount -o subvol=@ /dev/sdX2 /mnt
 # 2. Mount remaining subvolumes and ESP
 mount -o subvol=@home /dev/sdX2 /mnt/home
 mount /dev/sdX1 /mnt/efi          # or /mnt/boot - match fstab
+# Snapper keeps snapshots in their own subvolume. On the common Arch/CachyOS layout it is
+# @snapshots mounted at /.snapshots, so it is NOT visible under /mnt until mounted:
+mount -o subvol=@snapshots /dev/sdX2 /mnt/.snapshots   # adjust to the real subvolume name
 
 # 3. Identify the rollback point
 btrfs subvolume list /mnt
-# If Snapper is in use:
-chroot /mnt snapper list
+# If Snapper is in use, read the snapshot tree directly from the live USB. Do not run
+# `chroot /mnt snapper list` here: snapper needs a working /proc, /sys and D-Bus, which a
+# bare chroot does not have. arch-chroot (step 5) sets those up; plain chroot does not.
+ls -1 /mnt/.snapshots
+cat /mnt/.snapshots/NUMBER/info.xml
 
 # 4. Create the restored root at the filesystem top level; preserve the original @
 mkdir -p /mnt-btrfs-top

@@ -48,7 +48,7 @@ Before returning any generated or modified skill, verify against this list:
 
 - [ ] **Frontmatter complete**: `name`, `description`, `license`, `metadata.source` (`owner/repo` for published collections or `custom` for unpublished skills), `metadata.date_added` (ISO), `metadata.effort` (low/medium/high)
 - [ ] **Name spec-valid**: lowercase alphanumeric + hyphens only, no leading/trailing/consecutive
-  hyphens, no reserved words (`anthropic`, `claude`), matches directory name
+  hyphens, matches directory name. Reserved words (`anthropic`, `claude`) are an Anthropic platform restriction, not part of the portable spec - avoid them for compatibility
 - [ ] **No XML tags** in `name` or `description` fields (Anthropic platform restriction)
 - [ ] **Description is trigger-optimized**: front-loads the task and distinctive terms, usually fits 80-120 characters, and separates likely neighboring skills (120-character advisory warning; 1024-character spec ceiling in `validate-spec.sh`)
 - [ ] **Compatibility field present** (when skill requires specific tools/platforms): quotes values containing colons
@@ -163,9 +163,9 @@ Before drafting, gather context:
 4. **Check security** - search for recent CVEs, supply chain incidents, or known vulnerabilities
    relevant to the domain. The custom skill collection tracks these actively - verify current
    advisories rather than relying on specific CVE numbers from training data.
-5. **Check compliance** - if the domain touches infrastructure, containers, CI/CD, auth, or data
-   handling, consider PCI-DSS 4.0 relevance. Many users work in regulated environments or run
-   self-hosted infrastructure where compliance matters.
+5. **Check compliance** - add it only when the skill's audience is subject to a named framework
+   (PCI-DSS 4.0 for cardholder data, HIPAA, SOC 2, GDPR); never a blanket PCI-DSS mandate on every
+   infrastructure, container, or CI/CD skill. Note it as optional when the audience is unknown.
 
 #### Step 3: Draft the skill
 
@@ -198,8 +198,8 @@ Run through the AI Self-Check above. Then:
 
 1. **Cross-reference check**: grep the skill collection for every skill name mentioned in the draft.
    Verify they exist and the characterization is accurate.
-2. **Trigger overlap check**: compare the description against all other skill descriptions. Flag
-   any that share >50% of trigger keywords.
+2. **Trigger overlap check**: flag a conflict when the draft would capture requests a better-matched
+   skill owns - judged by real routing, not a raw keyword-overlap count (shared vocabulary between adjacent domains is normal). Resolve by narrowing the description or cross-referencing.
 3. **Convention check**: compare frontmatter, structure, and style against 2-3 existing custom
    skills in the same `effort` tier.
 4. **Script-runner reality check**: if the collection uses helper scripts like `lint-skills.sh`

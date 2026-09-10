@@ -468,7 +468,7 @@ See `references/output-contract.md` for the full contract.
 - **code-review**, **anti-slop**, **anti-ai-prose**, **code-slimming** - Wave 2 participants.
 - **security-audit**, **zero-day** - Wave 4 participants.
 - **update-docs**, **roadmap**, **git** - Wave 5 participants.
-- **testing**, **command-prompt**, **databases**, **backend-api**, **frontend-design**, **localize**, **ai-ml**, **mcp**, **docker**, **kubernetes**, **terraform**, **ansible**, **ci-cd**, **networking**, **arch-btw**, **debian-ubuntu**, **rhel-fedora**, **nixos-btw**, **firewall-appliance**, **virtualization** - Wave 3 candidates (conditional).
+- **testing**, **command-prompt**, **databases**, **backend-api**, **frontend-design**, **localize**, **ai-ml**, **mcp**, **docker**, **kubernetes**, **terraform**, **ansible**, **ci-cd**, **networking**, **observability**, **arch-btw**, **debian-ubuntu**, **rhel-fedora**, **nixos-btw**, **firewall-appliance**, **virtualization** - Wave 3 candidates (conditional).
 - **skill-creator** - audits the skill collection. This skill audits application repos.
 
 Read `references/exclusions.md` before changing Wave 3 routing.

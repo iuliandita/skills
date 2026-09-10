@@ -274,12 +274,12 @@ When reviewing or writing S3 bucket configurations, verify every bucket has **al
 
 | # | Resource | Why | Checkov |
 |---|----------|-----|---------|
-| 1 | `aws_s3_bucket_public_access_block` | Block all public access (all four settings `true`) | CKV_AWS_53 |
+| 1 | `aws_s3_bucket_public_access_block` | Block all public access (all four settings `true`) | CKV_AWS_53/54/55/56 (one per setting) |
 | 2 | `aws_s3_bucket_server_side_encryption_configuration` | SSE-KMS with customer-managed key | CKV_AWS_145 |
 | 3 | `aws_s3_bucket_versioning` | Rollback + tamper evidence | CKV_AWS_21 |
 | 4 | `aws_s3_bucket_logging` | Access audit trail (target a dedicated logging bucket) | CKV_AWS_18 |
 | 5 | `aws_s3_bucket_lifecycle_configuration` | Expiration/transition rules for cost and compliance retention | - |
-| 6 | `aws_s3_bucket_policy` | Explicit deny on non-SSL requests (`aws:SecureTransport = false`); no `Principal: "*"` grants unless public access is justified | CKV_AWS_70 |
+| 6 | `aws_s3_bucket_policy` | Explicit deny on non-SSL requests (`aws:SecureTransport = false`); no `Principal: "*"` grants unless public access is justified | CKV_AWS_379 (non-SSL), CKV_AWS_70 (wildcard principal) |
 
 Also verify the **account-level** safety net: `aws_s3_account_public_access_block` with all four settings `true`. This catches any bucket that accidentally ships without its own block.
 

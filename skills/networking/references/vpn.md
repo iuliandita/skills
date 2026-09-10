@@ -88,7 +88,7 @@ WireGuard default MTU is 1420 (accounts for WG overhead on a 1500 MTU link).
 [Interface]
 MTU = 1420    # Standard for Ethernet underlay
 # MTU = 1280  # Minimum for IPv6, use if path MTU is constrained
-# MTU = 1380  # If underlay is PPPoE (1492 MTU) or has other overhead
+# MTU = 1412  # PPPoE underlay (1492 MTU) minus the same 80-byte overhead
 ```
 
 **Rule of thumb**: WireGuard overhead is 60 bytes (IPv4) or 80 bytes (IPv6). Subtract from

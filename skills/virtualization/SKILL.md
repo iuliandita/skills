@@ -74,16 +74,17 @@ generated VM config, Terraform HCL, or Packer template, verify against this list
 - [ ] `iothread = true` on SCSI disks only with the `virtio-scsi-single` controller
 - [ ] `ssd = true` emulation enabled when backing store is SSD (enables guest TRIM)
 - [ ] `discard = on` on QEMU disk config for thin-provisioned storage (fstrim passthrough)
-- [ ] Memory ballooning disabled unless tested on the specific guest OS (Alpine, some BSDs can't
-  hotplug DIMMs - balloon changes need full power-cycle, not reboot)
+- [ ] Memory ballooning disabled unless the guest loads the `virtio_balloon` driver (minimal
+  Alpine builds, some BSDs); raising `memory:` past the running maximum is DIMM hotplug, not
+  ballooning, and needs `hotplug: memory` plus NUMA or a full stop/start
 - [ ] In bpg/proxmox Terraform, disable ballooning in the `memory` block with
   `floating = 0`; keep native Proxmox `balloon: 0` syntax separate
 - [ ] CPU type is `host` for production (full feature passthrough), not `kvm64`/`qemu64`
 - [ ] NUMA enabled for multi-socket or large-memory VMs
 - [ ] QEMU guest agent enabled (cloud-init installs it, but verify)
 - [ ] Cloud-init interface specified (bpg/proxmox defaults to ide2 when null)
-- [ ] Terraform lifecycle: `prevent_destroy` on VMs, `ignore_changes` on `disk` and `node_name`
-- [ ] No disk resize via Terraform - use `qm resize` on host, then update Terraform var to match
+- [ ] Terraform lifecycle: `prevent_destroy` on VMs, `ignore_changes` on `node_name`; ignore `disk` only when disks are grown on the host
+- [ ] One owner of disk size: grow via `disk.size` in bpg/proxmox (live when `disk` is in `hotplug`), or via `qm resize` with `disk` ignored, never both
 - [ ] PCI passthrough: `pcie = false` for standard passthrough, `xvga = false` unless display GPU
 - [ ] PCI passthrough: machine type is `q35` when `pcie = true` is needed
 - [ ] GPU passthrough: AMD GPUs are prone to reset bugs (vendor-reset kernel module or `pcie_port_pm=off` may be required); NVIDIA generally resets cleanly but verify with your card model before production use
@@ -243,9 +244,9 @@ justified forced-stop recovery after graceful shutdown fails; it cuts guest powe
 **LVM thin pool at 100%:** When data_percent hits 100%, ALL VM I/O on that pool fails
 instantly - guests hang, no graceful degradation. Recovery requires `lvextend` on the
 thin pool or migrating VMs off. Monitor thin pool usage and alert well before 100% (80%
-warning, 90% critical). `data_percent` measures blocks ever written, not current filesystem
-usage - a VM that wrote then deleted 50GB still shows that 50GB in data_percent until
-fstrim reclaims it.
+warning, 90% critical). `data_percent` is the share of the pool's data space currently
+allocated to its thin volumes (lvmthin(7)), not in-guest filesystem usage - a VM that wrote
+then deleted 50GB keeps that 50GB allocated until a discard reaches the pool.
 
 **Live migration via SSH:** `qm migrate` runs in the foreground. If the SSH session drops,
 the migration aborts. For large VMs (32GB+ disk), use:
@@ -255,12 +256,14 @@ nohup qm migrate <vmid> <target> --online --with-local-disks \
 ```
 Migration is abort-safe: source VM stays running on failure, target LVs are cleaned up.
 
-**KVM ballooning:** The balloon device lets the host reclaim unused guest memory. Sounds
-great, causes pain. Alpine Linux (and some BSDs) can't hotplug DIMMs - balloon changes
-need full power-cycle (stop/start, not reboot). Even on Debian, balloon behavior is
-unpredictable under memory pressure. Recommendation: use `floating = 0` in the bpg/proxmox
-Terraform `memory` block, or set `balloon: 0` in native Proxmox config, and provision VMs with the
-memory they actually need.
+**KVM ballooning:** The balloon device lets the host reclaim unused guest memory between the
+configured minimum and `memory:`. It needs the guest's `virtio_balloon` driver: minimal Alpine
+images and some BSDs do not load it, so the host's request is simply ignored. Raising `memory:`
+above the running maximum is a different mechanism - DIMM hotplug, which needs `hotplug: memory`
+plus NUMA and a guest that onlines new blocks, or a full stop/start. Even on Debian, balloon
+behavior is unpredictable under memory pressure. Recommendation: use `floating = 0` in the
+bpg/proxmox Terraform `memory` block, or set `balloon: 0` in native Proxmox config, and
+provision VMs with the memory they actually need.
 
 **fail2ban on Proxmox (Debian 13):** `/var/log/daemon.log` doesn't exist under journald.
 Use `backend = systemd` with `journalmatch = _COMM=pvedaemon` in the jail config.
@@ -293,12 +296,18 @@ updates; disabling doesn't.
 - [ ] `fstrim.timer` enabled in guest (weekly by default on systemd distros)
 - [ ] Verify with: `fstrim -v /` in guest, then check `lvs -o data_percent` on host
 
-**Disk resize (the Terraform trap):** Can't resize disks via the bpg/proxmox Terraform
-provider. The correct procedure:
-1. `qm resize <vmid> scsi0 +10G` on the Proxmox host
-2. `growpart /dev/sda 1` in the guest (expand partition)
-3. `resize2fs /dev/sda1` in the guest (expand filesystem)
-4. Update the `disk_size_gb` variable in Terraform to match
+**Disk resize (the Terraform trap):** growth works from either side, but only one side may
+own it. The bpg/proxmox provider grows a disk in place when `disk.size` increases - live when
+`disk` is in the VM's `hotplug` list, otherwise with a provider-initiated reboot. Shrinking is
+unsupported everywhere. Pick one owner:
+- **Terraform-owned:** raise `size` in the `disk` block and apply. Do not put `disk` in
+  `ignore_changes`, or the growth is never applied.
+- **Host-owned:** `qm resize <vmid> scsi0 +10G` on the Proxmox host, keep `disk` in
+  `ignore_changes`, and update the Terraform size afterwards so plans stay clean.
+
+Either way, finish inside the guest: `growpart /dev/sda 1` (expand partition), then
+`resize2fs /dev/sda1` or `xfs_growfs /` (expand filesystem). Mixing both owners produces
+plans that shrink or recreate the disk.
 
 ---
 
@@ -350,8 +359,10 @@ vm.nr_hugepages = 1024
 Then enable in VM config. Note: hugepages memory can't be shared or ballooned.
 
 **CPU hotplug vs memory hotplug:** CPU hotplug works live on most modern Linux guests.
-Memory hotplug (adding DIMMs at runtime) is fragile - Alpine can't do it at all, and even
-Debian requires specific kernel config. Size memory correctly at creation time.
+Memory hotplug (adding DIMMs at runtime) needs `hotplug: memory` plus NUMA on the VM and a
+guest that onlines the new blocks, usually through a udev rule; without all three the change
+fails silently. This is a different mechanism from ballooning, which only moves memory between
+the configured minimum and `memory:`. Size memory correctly at creation time.
 
 ---
 
@@ -458,13 +469,15 @@ These are non-negotiable. Violating any of these is a bug.
    for live migration across heterogeneous CPU generations.
 3. **Shutdown/start for hardware changes, not reboot.** Guest reboot doesn't restart QEMU.
    Shut down gracefully, verify stopped state, then start; forced stop needs separate justification.
-4. **No disk resize via Terraform.** Use `qm resize` on host, growpart/resize2fs in guest,
-   then update the Terraform variable.
+4. **One owner of disk size.** Either grow via `disk.size` in bpg/proxmox with `disk` not
+   ignored, or grow with `qm resize` on the host with `disk` ignored - never both. Finish with
+   growpart plus resize2fs or xfs_growfs in the guest.
 5. **Disable ballooning by default.** Enable only after testing on the specific guest OS.
 6. **Monitor thin pool data_percent.** Alert at 80%, critical at 90%. At 100%, all I/O fails.
 7. **nohup for long migrations.** SSH disconnect kills foreground `qm migrate`.
-8. **`prevent_destroy` + `ignore_changes` on Terraform VMs.** Protect disk and node_name
-   from accidental destruction and migration drift.
+8. **`prevent_destroy` + `ignore_changes` on Terraform VMs.** Protect against accidental
+   destruction, and ignore `node_name` and the generated MAC so live migration does not read as
+   drift. Add `disk` to `ignore_changes` only on the host-owned resize path (rule 4).
 9. **Run the AI self-check.** Every generated VM config gets verified against the checklist
    above before returning.
 10. **Test before production.** New VM configs, passthrough setups, storage backends - test

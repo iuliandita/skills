@@ -67,6 +67,7 @@ AI tools consistently produce the same mistakes when generating AI application c
 - [ ] Temperature set intentionally (0 for deterministic tasks, higher for creative)
 - [ ] **Provider drift checked**: Responses/Agents/SDK examples use current provider surfaces, not deprecated patterns - specifically verify no use of `openai.beta.assistants.create` (Assistants API, superseded by Responses/Agents API) or other Assistants-era surfaces
 - [ ] **RAG evidence bounded**: retrieval thresholds, citations, and empty-result behavior are defined before generation
+- [ ] **Pipeline delivered end to end**: a requested RAG or agent build ships ingestion and chunking, the embedding adapter, indexing, retrieval, and the generation handler as runnable code, not a schema plus a retrieval query with the rest left as TODO
 - [ ] Cross-cutting agent hygiene applied - see `references/agent-hygiene.md`
 
 ## Performance
@@ -263,6 +264,8 @@ def ask(question: str) -> str:
 ```
 
 Key patterns: relevance threshold (0.7), same embedding model for index/query, context passed as user message prefix.
+`get_embedding` and the indexing loop are the pieces most often left out of a "build a RAG pipeline"
+answer; a delivered pipeline includes both (sections 3 and 4 of `references/rag-patterns.md`).
 
 Read `references/rag-patterns.md` for indexing pipelines, metadata filtering, multi-index
 strategies, and production RAG architecture.

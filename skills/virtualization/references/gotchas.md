@@ -73,13 +73,13 @@ just hung I/O and frozen VMs.
 - Monitor `data_percent` (not filesystem usage inside VMs!)
 - Alert at 80% (warning) and 90% (critical)
 - Enable `discard=on` on VM disks + `fstrim.timer` in guests to reclaim deleted blocks
-- Remember: `data_percent` = blocks ever written, not current usage
+- Remember: `data_percent` = blocks currently allocated to thin LVs (lvmthin(7)), which is
+  higher than in-guest filesystem usage until discards reach the pool
 
 ### data_percent only goes up (without TRIM)
 
-**Problem:** LVM thin pool `data_percent` tracks blocks that have been written. Deleting
-files in the guest doesn't free thin pool blocks unless TRIM/discard is properly configured
-end-to-end.
+**Problem:** LVM thin pool `data_percent` tracks allocated blocks. Deleting files in the
+guest doesn't free thin pool blocks unless TRIM/discard is properly configured end-to-end.
 
 **The full chain:**
 1. QEMU disk config: `discard=on` (passes SCSI UNMAP from guest to host)
@@ -97,15 +97,20 @@ fills up, the pool becomes read-only. Monitor `metadata_percent` alongside `data
 
 ## 3. Memory and Ballooning
 
-### Balloon device + Alpine/BSD = pain
+### Balloon device on guests without the driver = pain
 
-**Problem:** The KVM balloon device works by asking the guest to return unused memory to the
-host. This works well on recent Debian/Ubuntu with the balloon driver. It does NOT work
-reliably on:
+**Problem:** The virtio balloon device asks the guest to return unused memory to the host
+between the configured minimum and `memory:`. It is a live mechanism on any guest with the
+`virtio_balloon` driver loaded (mainline Linux ships it). It does NOT work reliably on:
 
-- **Alpine Linux** - can't hotplug DIMMs. Balloon changes need full power-cycle (stop/start)
+- **Guests without the driver loaded** - minimal images (some Alpine and appliance builds)
+  and guests where the module is missing; the host request is simply ignored
 - **FreeBSD** - balloon driver support varies by version
 - **Older kernels** - balloon driver may not handle memory pressure correctly
+
+Ballooning is not memory hotplug. Raising `memory:` above the running maximum is a DIMM
+hotplug (see the next section), and on a guest without hotplug support it takes a full
+stop/start, not a reboot.
 
 **Symptoms:** VM becomes unresponsive, OOM kills inside guest, guest hangs when balloon
 deflates (host trying to reclaim memory).
@@ -116,9 +121,10 @@ Overcommitment via ballooning is a false economy.
 
 ### Memory hotplug limitations
 
-**Problem:** Adding memory to a running VM (hotplug) requires the guest OS to accept new
-DIMM modules. This works on modern Linux (Debian 12+, Ubuntu 22.04+, RHEL 9+) but fails
-silently on many other OSes.
+**Problem:** Adding memory to a running VM (hotplug) requires `hotplug: memory` plus NUMA on
+the VM, and a guest kernel (3.10+) that onlines new DIMMs, usually through a udev rule that
+sets `online` on added memory blocks (Proxmox wiki, Hotplug). Without those, the change
+fails silently or the guest never sees the memory.
 
 **Fix:** Size memory correctly at VM creation. If you must change memory, plan for a
 stop/start cycle.
@@ -268,7 +274,7 @@ Every VM resource needs:
 lifecycle {
   prevent_destroy = true
   ignore_changes = [
-    disk,                           # Disk resized via qm, not TF
+    disk,                           # Only when disks are grown on the host with qm resize
     network_device[0].mac_address,  # Auto-generated
     node_name,                      # Changed by live migration
   ]
@@ -276,7 +282,8 @@ lifecycle {
 ```
 
 Without `prevent_destroy`: `terraform destroy` kills production VMs.
-Without `ignore_changes[disk]`: TF detects drift after `qm resize`, tries to recreate VM.
+Without `ignore_changes[disk]` on the host-owned path: TF detects drift after `qm resize` and
+proposes a shrink or recreate. On the Terraform-owned path, do not ignore `disk` at all.
 Without `ignore_changes[node_name]`: TF tries to migrate VM back after live migration.
 
 ### cloud_init_interface = null defaults to ide2
@@ -287,16 +294,21 @@ IDE for CD-ROM or have a specific bus requirement.
 
 **Fix:** Set explicitly to `scsi1` if you want SCSI, or leave as null for the default.
 
-### Disk resize is not supported
+### Disk resize needs exactly one owner
 
-**Problem:** The bpg/proxmox provider cannot resize disks. There's no resize operation in
-the Proxmox API that maps cleanly to a Terraform resource update.
+**Problem:** the provider does grow a disk when `disk.size` increases - live when `disk` is in
+the VM's `hotplug` list, otherwise with a provider-initiated reboot (`reboot_after_update`).
+Shrinking is unsupported. Trouble comes from two owners: growing on the host while Terraform
+still owns `size` makes the next plan propose a shrink or a recreate.
 
-**Procedure:**
-1. `qm resize <vmid> scsi0 +10G` on the host
-2. `growpart /dev/sda 1` in the guest
-3. `resize2fs /dev/sda1` in the guest
-4. Update `disk_size_gb` in Terraform to match (prevents drift)
+**Procedure - pick one:**
+- **Terraform-owned:** raise `size` in the `disk` block and apply. Leave `disk` out of
+  `ignore_changes`, or the growth never reaches the VM.
+- **Host-owned:** `qm resize <vmid> scsi0 +10G`, keep `disk` in `ignore_changes`, and update
+  the Terraform size afterwards so plans stay clean.
+
+Then, in the guest: `growpart /dev/sda 1`, followed by `resize2fs /dev/sda1` (ext4) or
+`xfs_growfs /` (XFS).
 
 ### vendor_data_file_id changes cause replacement
 

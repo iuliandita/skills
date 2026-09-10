@@ -588,7 +588,9 @@ Galaxy has no signing or hash verification. Mitigations:
 
 # Collection
 ansible-galaxy collection build
-ansible-galaxy collection publish namespace-name-1.0.0.tar.gz --api-key $TOKEN
+# Pass the token through a named server's token env var, never --api-key argv (see Build and publish).
+ANSIBLE_GALAXY_SERVER_GALAXY_TOKEN="$GALAXY_API_KEY" \
+  ansible-galaxy collection publish namespace-name-1.0.0.tar.gz --server galaxy
 ```
 
 ---

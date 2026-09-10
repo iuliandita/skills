@@ -15,7 +15,7 @@ Versions drift because nobody owns the full list. This skill owns the list.
 Two rules:
 
 1. **Grep, don't remember.** The locations below are common, but every repo has quirks. Always grep for the current version string.
-2. **Propose, don't auto-edit.** Show the user the diff. They confirm the scope.
+2. **Show the diff before editing.** Present every bump site you found. Apply within existing release authorization; ask only when that authority or the version decision is missing.
 
 ---
 
@@ -197,7 +197,7 @@ Not touching (confirm):
   test/fixtures/old_response.json   contains "version": "1.0.0" - unrelated fixture
 ```
 
-Apply after user confirms. If they want changes to the plan, redo the proposal - don't partially apply.
+Apply the whole proposal within existing release authorization; ask first only when that authority or the version decision is missing. If the plan changes, redo the proposal - don't partially apply.
 
 ---
 

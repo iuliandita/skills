@@ -124,7 +124,7 @@ sockstat -4l             # listening sockets
 ### Step 2: Back up config
 
 Before any change that modifies rules, services, plugins, or firmware:
-- OPNsense: `configctl firmware backup` or GUI export (System > Configuration > Backups)
+- OPNsense: GUI export (System > Configuration > Backups), the `/api/core/backup/download/this` API endpoint, or copy `/conf/config.xml`. There is no `configctl` action that exports the config
 - pfSense: GUI export (Diagnostics > Backup & Restore) or copy `/cf/conf/config.xml`
 - For major upgrades on virtualized firewalls, pair config backup with a hypervisor snapshot
 
@@ -143,7 +143,7 @@ and the reference files for specifics. For any change that affects connectivity:
 After every change, confirm the firewall is healthy:
 - Connectivity: can you still reach the device? Can clients reach the internet?
 - Logs: check `/var/log/filter.log`, service logs, and CrowdSec/Suricata if active
-- Service status: `configctl service list` (OPNsense) or `service -e` (pfSense)
+- Service status: `service -e` (works on both, FreeBSD base) plus `pluginctl -s <name> status` for OPNsense plugin services. `configctl` with no arguments lists the available configd actions; there is no `configctl service list`
 - State table: `pfctl -si | grep entries` - watch for unexpected drops or state exhaustion
 
 ---
@@ -192,7 +192,7 @@ Work through these steps in order. **Do not skip ahead or assume the root cause*
 
 1. **Interface assigned and UP?** `ifconfig` - is the VLAN interface listed and UP? If not: assign it (see prerequisite above). If listed but DOWN: enable it in the GUI or check the parent interface.
 2. **Blocklist check**: `cscli decisions list` (OPNsense CrowdSec) or check pfBlockerNG deny logs (pfSense) - CrowdSec and pfBlockerNG bans look identical to firewall drops from the client side. Clear false positives before digging into rules.
-3. **Services running?** `configctl service list` (OPNsense) or `service -e` (pfSense) - confirm DHCP, DNS (Unbound), and the packet filter are running. A stopped DHCP server on the new VLAN means clients never get an IP.
+3. **Services running?** `service -e` on either platform, plus `pluginctl -s <name> status` for OPNsense plugin services - confirm DHCP, DNS (Unbound), and the packet filter are running. A stopped DHCP server on the new VLAN means clients never get an IP.
 4. **Rules present?** `pfctl -sr` - any pass rules on the new VLAN interface? New interfaces have no rules by default (deny all).
 5. **NAT configured?** Check outbound NAT rules include the new VLAN subnet. On OPNsense: Firewall > NAT > Outbound. Missing outbound NAT is the #1 cause of "VLAN can't reach internet."
 6. **DNS working?** `drill google.com @<firewall-ip>` from a VLAN client. If this fails while public-IP connectivity works, inspect the DNS path: resolver service, TCP/UDP 53 rules and the reply path. IP reachability alone does not rule out a DNS-specific firewall block.

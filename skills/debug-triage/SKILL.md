@@ -63,6 +63,7 @@ Diagnostic work fails in specific ways. Before reporting a localization or runni
   scale, flush) is called out as an action requiring explicit confirmation, not run silently.
 - [ ] **Handoff is explicit.** The output names the implicated layer, the evidence, and the exact
   skill to route to next.
+- [ ] Cross-cutting agent hygiene applied - see `references/agent-hygiene.md`
 
 ---
 

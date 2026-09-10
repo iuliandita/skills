@@ -100,9 +100,15 @@ Two popular approaches:
 
 ### btrfs snapshot-wipe example
 
+Check which initrd the host uses first. With systemd initrd
+(`boot.initrd.systemd.enable = true;`) the scripted hooks below are rejected outright, and the
+wipe has to be a `boot.initrd.systemd.services.<name>` unit ordered before
+`sysroot.mount`. The scripted-initrd form is:
+
 ```nix
-# early in initrd
-boot.initrd.postDeviceCommands = lib.mkAfter ''
+# early in scripted initrd; postResumeCommands runs after any hibernation resume,
+# so it does not destroy the resume image the way postDeviceCommands can
+boot.initrd.postResumeCommands = lib.mkAfter ''
   mkdir -p /mnt
   mount -o subvol=/ /dev/mapper/cryptroot /mnt
   btrfs subvolume list -o /mnt/root | cut -f9 -d' ' | \

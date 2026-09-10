@@ -232,15 +232,15 @@ Load grep patterns from `references/grep-patterns.md` (Injection section).
 
 ### Step 8: Cryptography & Data Protection (Pass 7 - Manual)
 
-Read `references/hardening-checklists.md` (Cryptography section) and `references/grep-patterns.md` (Pass 6 section) for search patterns. Covers TLS verification, secrets in logs, error responses, CORS, cookie flags, HSTS, CSP.
+Read `references/hardening-checklists.md` (Cryptography section) and `references/grep-patterns.md` (Pass 7 section) for search patterns. Covers TLS verification, secrets in logs, error responses, CORS, cookie flags, HSTS, CSP.
 
 ### Step 9: Container & Infrastructure (Pass 8 - Manual)
 
-Read `references/hardening-checklists.md` (Container section) and `references/grep-patterns.md` (Pass 7 section) for search patterns. Covers Dockerfile, Kubernetes, Helm, Terraform, Ansible, Compose hardening.
+Read `references/hardening-checklists.md` (Container section) and `references/grep-patterns.md` (Pass 8 section) for search patterns. Covers Dockerfile, Kubernetes, Helm, Terraform, Ansible, Compose hardening.
 
 ### Step 10: CI/CD & Supply Chain (Pass 9 - Manual)
 
-Read `references/hardening-checklists.md` (CI/CD section) and `references/grep-patterns.md` (Pass 8 section) for search patterns. Covers action pinning, GITHUB_TOKEN permissions, OSS governance, OpenSSF Scorecard.
+Read `references/hardening-checklists.md` (CI/CD section) and `references/grep-patterns.md` (Pass 9 section) for search patterns. Covers action pinning, GITHUB_TOKEN permissions, OSS governance, OpenSSF Scorecard.
 
 ### Step 11: Report Generation
 

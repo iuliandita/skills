@@ -201,7 +201,7 @@ EOF
 )"
 
 # Upload assets
-glab release upload v1.2.3 ./dist/app.tar.gz --name "app.tar.gz"
+glab release upload v1.2.3 './dist/app.tar.gz#app.tar.gz'
 ```
 
 ### GitLab branch protection
@@ -296,7 +296,7 @@ once per host; `fj` picks the right credential based on the repo's remote or the
 ```bash
 # Create a PR from the current branch
 fj pr create "feat(pipeline): add subscription scheduler" \
-  --body-from-file .github/pr-body.md \
+  --body-file .github/pr-body.md \
   --base main
 
 # Autofill title and body from commits
@@ -326,21 +326,22 @@ fj pr merge --method rebase --delete
 fj pr close 42 --with-msg "superseded by #45"
 ```
 
-Merge methods: `merge`, `rebase`, `rebase-merge`, `squash`, `fast-forward-only`. Match the
+Merge methods (`fj pr merge --method`, v0.6.0): `merge`, `rebase`, `rebase-merge`, `squash`,
+`manual`. Match the
 repo's branch protection policy - `fj` will surface the error if the method is not allowed.
 
 ### `fj` issues
 
 ```bash
 fj issue create "token refresh races on concurrent logins" \
-  --repo org/repo --body-from-file bug.md
+  --repo org/repo --body-file bug.md
 fj issue create --web               # new-issue page in browser
 fj issue create --template bug.md   # use a repo issue template
 fj issue view 16
 fj issue view 16 comments
 fj issue comment 16 "reproduces on v1.2.3 with OIDC enabled"
 fj issue close org/repo#16 --with-msg "fixed in #45"
-fj issue search --state open --label bug
+fj issue search --state open --labels bug
 ```
 
 ### `fj` releases and tags
@@ -525,5 +526,8 @@ merge produce ugly messages.
 1. **Understand both sides** before resolving. Read the conflict markers and understand the intent of each change.
 2. **Test after resolving** - run tests, lint, typecheck. Conflict resolution is error-prone.
 3. **Reconcile intent and invariants** when both sides modified the same logic. Use current requirements and tests; chronology alone does not decide which behavior to retain.
-4. **Lock files** (package-lock.json, bun.lockb): regenerate, don't manually resolve. Delete the file, run the package manager, commit the fresh lockfile.
+4. **Lock files** (package-lock.json, bun.lockb): regenerate, don't manually resolve. Resolve the
+   manifest first, then run the package manager (`npm install`, `bun install`) so it updates the
+   existing lock in place, and commit the result. Delete the lock file only when the tool cannot
+   reconcile it; deleting it re-resolves every transitive dependency.
 5. **Schema/migration files**: never resolve automatically. These may require creating a new migration that merges both changes.

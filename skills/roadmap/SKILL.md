@@ -301,7 +301,7 @@ re-asking "check these off?"
 
 For confirmed matches:
 1. Apply strikethrough: `~~description~~`
-2. Add attribution: `-- PR #N, vX.Y.Z (date)` (include both when a PR and release apply)
+2. Add attribution in the shipped-item shape from Item format: `- area | PR #N, vX.Y.Z (date)` (include both when a PR and release apply)
 3. Move to the "Shipped" section (create it if missing), grouped by version or date
 
 Update the "Last updated" line in the header.
