@@ -1,7 +1,7 @@
 ---
 name: anti-slop
 description: >
-  · Audit AI-generated code slop: hallucinated APIs, over-abstraction, duplicate code, test theater, noisy comments. Triggers: 'slop', 'AI-generated code', 'cleanup', 'overengineered'. Not for prose (use anti-ai-prose).
+  · Audit AI-generated code for overengineering, invented APIs, noisy comments, and test theater.
 license: MIT
 compatibility: "None - works on any codebase"
 metadata:

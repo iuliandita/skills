@@ -1,7 +1,7 @@
 ---
 name: databases
 description: >
-  · Configure/tune/migrate PostgreSQL, MongoDB, MySQL/MariaDB, MSSQL. Triggers: 'database', 'postgres', 'mysql', 'mongodb', 'database schema', 'database migration', 'pgbouncer', 'EXPLAIN'. Not for HTTP APIs (use backend-api).
+  · Design schemas, tune queries, migrate, and administer PostgreSQL, MySQL/MariaDB, MongoDB, and MSSQL.
 license: MIT
 compatibility: "Requires one or more of: psql, mongosh, mysql, or sqlcmd"
 metadata:
@@ -307,6 +307,7 @@ Read `references/migration-patterns.md` for cross-engine type mapping, ORM migra
 - [ ] Foreign key columns have indexes
 - [ ] pgAudit installed and configured (if PCI scope)
 - [ ] Patched against CVE-2026-2005 (pgcrypto heap buffer overflow, RCE) - 18.2+ / 17.8+ / 16.12+
+- [ ] On the [August 13 PostgreSQL security update](https://www.postgresql.org/support/security/): 18.6 / 17.11 / 16.15 / 15.19 / 14.24 or later in the chosen supported lane. Earlier minors are affected by high-impact server and client issues including CVE-2026-16239 (cursor type confusion), CVE-2026-19385 (pg_dump overflow), and CVE-2026-18408 (psql execution via untrusted dump origin). Update backup/restore clients too. CVE-2026-16238 specifically affects PostgreSQL 18 before 18.6.
 - [ ] On the May 14, 2026 PostgreSQL update (CVE-2026-6473/6475/6476/6477/6478: integer-wraparound under-sized allocation, intarray/ltree field overflow, pg_createsubscriber SQL injection, libpq lo_*/path traversal, MD5 password timing leak) - 18.4+ / 17.10+ / 16.14+ / 15.18+ / 14.23+
 
 ### MySQL/MariaDB-Specific

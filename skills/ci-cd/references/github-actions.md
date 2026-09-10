@@ -9,7 +9,7 @@ runners, arm64 GA, artifact v4, attestations, SHA pinning enforcement.
 
 | Label | OS | Architecture | Notes |
 |-------|----|-------------|-------|
-| `ubuntu-latest` | Ubuntu 24.04 | x86_64 | Alias since Jan 2025. Ubuntu 20.04 retired Apr 2025. |
+| `ubuntu-latest` | Verify current alias | x86_64 | Alias mapping was not confirmed on September 10, 2026; use an explicit OS label. |
 | `ubuntu-24.04` | Ubuntu 24.04 | x86_64 | Explicit pin (recommended). |
 | `ubuntu-22.04` | Ubuntu 22.04 | x86_64 | Will be deprecated eventually. |
 | `ubuntu-24.04-arm` | Ubuntu 24.04 | arm64 | GA Aug 2025 (public), Jan 2026 (private). 4 vCPU public, 2 vCPU private. |

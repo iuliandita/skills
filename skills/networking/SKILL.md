@@ -1,7 +1,7 @@
 ---
 name: networking
 description: >
-  · Configure/troubleshoot Linux networking: DNS, proxies, VPNs, VLANs, nftables, routing. Triggers: 'dns', 'reverse proxy', 'vpn', 'wireguard', 'tailscale', 'vlan', 'nftables', 'bgp', 'ospf', 'frrouting'. Not OPNsense: firewall-appliance.
+  · Configure and debug Linux networking: DNS, reverse proxies, VPNs, WireGuard, VLANs, nftables, and routing.
 license: MIT
 compatibility: "Requires Linux. Tools vary by task: nftables, WireGuard, dig, mtr, tcpdump"
 metadata:
@@ -22,19 +22,27 @@ performance tuning.
 | Tool | Version | Notes |
 |------|---------|-------|
 | Caddy | 2.11.4 | Auto-HTTPS, Caddyfile + JSON API |
-| Nginx | 1.30.4 stable / 1.31.4 mainline | July security releases fix CVE-2026-42533/60005/56434 |
+| Nginx | 1.30.4 stable / 1.31.4 mainline | Includes fixes for CVE-2026-42533/60005/56434 |
 | Traefik | 3.7.12 | Gateway API native, v2 EOL approaching |
 | HAProxy | 3.4.4 LTS / 3.3.14 stable / 3.2.23 LTS | 3.4 LTS EOL 2031-Q2 |
 | WireGuard tools | 1.0.20260223 | Kernel module + userspace tools |
 | strongSwan | 6.0.7 | swanctl config (legacy ipsec.conf deprecated) |
 | nftables | 1.1.7 | iptables successor, default on modern distros |
 | keepalived | 2.4.3 | VRRP + health checks |
-| Unbound | 1.26.0 | CVE-2025-11411 fix (unsolicited NS RRSets) |
+| Unbound | 1.26.0 | Includes July 2026 DNS security fixes |
 | CoreDNS | 1.14.7 | K8s default DNS, plugin-based |
-| FRRouting | 10.7.1 | BGP, OSPF, IS-IS, PIM |
+| FRRouting | 10.7.1 (retained, unverified) | Verify the current publisher release before targeting this pin |
 | Tailscale / Headscale | Headscale 0.29.3 | Self-hosted control server |
 | cloudflared | 2026.8.3 | Cloudflare Tunnel (outbound-only) |
 | OpenVPN | 2.7.7 / 2.6.21 LTS | 2.7.x: multi-socket, DCO; 2.6 is the LTS branch |
+
+Security recheck (2026-09-10): nginx's [publisher advisories](https://nginx.org/en/security_advisories.html)
+rate CVE-2026-42533 (map/regex buffer overflow) major: affected 0.9.6-1.31.2,
+fixed in 1.30.4+ or 1.31.3+. CVE-2026-42530 (HTTP/3 use-after-free) affects
+1.31.0-1.31.1 and is fixed in 1.31.2+. Check enabled modules and vendor backports.
+[Unbound advisories](https://nlnetlabs.nl/projects/unbound/security-advisories/) also
+rate CVE-2026-32665 high: DoQ-enabled 1.22.0-1.25.1 is affected, with a fix in
+1.25.2. Check compile-time DoQ support and configured listeners before assessing exposure.
 
 ## When to use
 

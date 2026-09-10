@@ -1,7 +1,7 @@
 ---
 name: backend-api
 description: >
-  · Design/review HTTP APIs for FastAPI, Express, NestJS: REST, OpenAPI, pagination, OAuth/JWT. Triggers: 'fastapi', 'express', 'nestjs', 'openapi', 'pagination', 'idempotency', 'rest api', 'endpoint'. Not for schemas (use databases).
+  · Design and review REST/HTTP APIs: FastAPI, Express, NestJS, OpenAPI, auth, and pagination.
 license: MIT
 compatibility: "Optional: Python or Node.js framework context. Optional: OpenAPI-capable framework/docs tooling"
 metadata:
@@ -24,6 +24,11 @@ boundaries, error models, and framework structure for Python and Node.js service
 - HTTP Semantics: **RFC 9110** (June 2022)
 - Problem Details for HTTP APIs: **RFC 9457** (July 2023)
 - OAuth 2.0 Security Best Current Practice: **RFC 9700** (January 2025)
+
+Security check (2026-09-10): Express/NestJS upload stacks using Multer <2.3.0 are affected by
+high-severity multipart denial of service, [CVE-2026-82333](https://github.com/expressjs/multer/security/advisories/GHSA-535w-7cp7-47q4).
+Upgrade Multer to 2.3.0+ and bound `limits.fieldArrayIndexLimit` to application needs; checking
+only the top-level framework version misses vulnerable middleware.
 
 This skill works across five concerns:
 - **Contract design** - resources, methods, status codes, schemas, versioning

@@ -1,7 +1,7 @@
 ---
 name: routine-writer
 description: >
-  · Write Claude Code routine prompts for schedules, APIs, and GitHub events. Triggers: 'routine', 'claude routine', 'scheduled claude task', 'unattended claude', '/schedule', '/fire'. Not one-off prompts: prompt-generator.
+  · Write Claude Code routine prompts for recurring schedules, API triggers, and GitHub events.
 license: MIT
 compatibility: "Routines require a Pro, Max, Team, or Enterprise plan with Claude Code on the web. CLI automation requires the claude binary on PATH"
 metadata:
@@ -19,7 +19,7 @@ Output is a self-contained prompt plus the artifacts to wire it up (a `/schedule
 
 **Why routines differ from chat prompts.** A routine runs as a full autonomous Claude Code cloud session. There is no permission-mode picker, no approval prompts, and no human to answer clarifying questions mid-run. A prompt that works fine in a conversation can stall or misfire silently inside a routine because the model has no one to ask. Every routine prompt must be self-contained, state its success criteria, and declare where output goes.
 
-**Research preview context** (September 2026 recheck): routines ship under the beta header `experimental-cc-routine-2026-04-01`. Behavior, limits, and the API surface can change. Pin any beta header references to that value and date so staleness is detectable.
+**Research preview context** (September 2026, checked 2026-09-10): routines ship under the beta header `experimental-cc-routine-2026-04-01`. Behavior, limits, and the API surface can change. Pin any beta header references to that value and date so staleness is detectable.
 
 ## When to use
 
@@ -54,7 +54,7 @@ Routines are high-stakes: they run unattended, consume daily allowance, and can 
 - [ ] **Idempotent no-op**: handles "nothing to do" cleanly. A nightly docs sweep with no stale docs should exit quietly, not invent work.
 - [ ] **Output destination named**: where results land is stated explicitly (PR against `main`, Slack message in `#eng-bot`, Linear issue with label `auto-triage`, a summary comment on the PR).
 - [ ] **Scope declared in config**: repositories, connectors, environment variables, and branch policy match what the prompt actually uses. Nothing extra.
-- [ ] **Branch policy matches intent**: default is `claude/*` prefix only. If the prompt expects to push to other branches, **Allow unrestricted branch pushes** is documented as a required toggle.
+- [ ] **Branch policy matches intent**: check current branch restrictions in `references/trigger-guide.md`.
 - [ ] **Safety rail present**: what the routine should NOT do (no force-push, no protected-branch changes, no destructive ops, no new connectors, no credential exfil).
 - [ ] **No injected slop**: no "certainly", "I'd be happy to", "great question", no ALL CAPS emphasis, no filler preamble. Calm imperatives only.
 - [ ] **Cron interval >= 1 hour**: scheduled triggers under one hour are rejected by the platform.
@@ -115,7 +115,7 @@ Read `references/trigger-guide.md` for full cron rules, the GitHub event catalog
 Ask (or infer from context) and record:
 
 - **Repositories**: which repos get cloned. Each is cloned on every run from the default branch.
-- **Branch policy**: default is pushes limited to `claude/*` branches. If the routine legitimately needs to push elsewhere (e.g., docs updates to `main`), flag that the user must enable **Allow unrestricted branch pushes** per-repo. Default to leaving it off and have the routine open PRs instead.
+- **Branch policy**: prefer PRs; use the current restrictions in `references/trigger-guide.md`.
 - **Connectors**: minimal set. All connected MCP connectors are included by default; remove anything the routine does not actually use.
 - **Environment**: network access level, env vars (API keys, tokens), setup script. Custom environments must be created before the routine references them.
 
@@ -153,7 +153,7 @@ After approval, emit the right artifacts for the chosen trigger(s):
 
 - **Scheduled**: if `claude` is on PATH, a `/schedule` CLI invocation. Otherwise a web-UI walkthrough with the prompt copy-paste ready.
 - **API**: a `curl` template for the `/fire` endpoint (with env var placeholders for token and URL), plus a GitHub Actions step when the user is wiring this from CI.
-- **GitHub**: a web-UI walkthrough (this trigger type is configured from the web only).
+- **GitHub**: web setup or the supported CLI path in `references/automation.md`.
 - **Combined**: the scheduled `/schedule` command first (to create the routine), then a web-UI walkthrough for adding API / GitHub triggers to that routine.
 
 Read `references/automation.md` for the harness detection logic, the exact `/schedule` invocation patterns, the `/fire` curl template with the current beta header, and GitHub Actions failure-hook patterns.
@@ -169,7 +169,7 @@ Detection logic to run before emitting CLI artifacts:
 ```bash
 if command -v claude >/dev/null 2>&1; then
   # claude binary present - /schedule CLI is available for scheduled routines
-  # (API and GitHub triggers still need the web UI)
+  # (API tokens still need the web UI)
   HAS_CLAUDE=1
 else
   HAS_CLAUDE=0
@@ -219,7 +219,7 @@ For a scheduled nightly triage routine on a machine where `claude` is on PATH, t
      -d '{"text": "Manual re-fire after CODEOWNERS refresh"}'
    ```
 
-API-only and GitHub-only routines skip artifact #2 and emit a web-UI walkthrough instead. See `references/automation.md` for the full emit matrix.
+API-only routines use web setup; GitHub setup also supports the CLI path below. See `references/automation.md` for the full emit matrix.
 
 ---
 
@@ -256,7 +256,7 @@ See `references/output-contract.md` for the full contract.
 2. **Explicit success criteria.** Every routine prompt states what a successful run produces, in terms of concrete artifacts (a PR, a message, an issue, a summary comment). "Improve the code" is not a success criterion.
 3. **Idempotent no-op.** Every scheduled or webhook-driven routine handles "nothing to do" cleanly by exiting without producing output. Routines that invent work on empty inputs burn daily allowance.
 4. **Minimum scope.** Declare only the repos, connectors, and env vars the prompt actually uses. Each connector is attack surface; each extra repo is extra clone time.
-5. **Branch policy off by default.** Do not recommend enabling **Allow unrestricted branch pushes** unless the prompt genuinely needs to write outside `claude/*`. Prefer opening PRs.
+5. **Prefer PRs.** Check current branch restrictions before drafting push instructions.
 6. **Never embed tokens.** Every `Authorization: Bearer` in emitted artifacts uses an env var placeholder (`$ROUTINE_FIRE_TOKEN`). Tokens are shown once in the web UI and cannot be retrieved - emitting a real one in the conversation exposes it.
 7. **Never auto-run `/schedule`.** Emit the command for the user to paste or confirm. Routines count against the daily allowance; the skill never consumes that allowance autonomously.
 8. **Pin the beta header with its date in prose.** Prose mentions of `experimental-cc-routine-2026-04-01` carry the header date so a reader scanning the docs can spot staleness without parsing the header string. In code blocks the header string itself contains `2026-04-01`, so no extra annotation is needed. The two most recent prior header versions keep working for migration.

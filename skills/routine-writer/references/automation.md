@@ -6,13 +6,14 @@ How to emit `/schedule` invocations, `/fire` curl templates, and GitHub Actions 
 
 ## What is automatable, and what is not
 
-The routines API surface, as of September 2026 recheck, is asymmetric:
+The routines API surface, as of September 2026 check (2026-09-10), is asymmetric:
 
 | Action | Automatable? | How |
 |---|---|---|
 | Create a routine | Not via public API | Web UI, Desktop app, or `/schedule` in the `claude` CLI |
 | Fire an existing routine | Yes | `POST /v1/claude_code/routines/{trig_id}/fire` |
-| Add API or GitHub triggers to an existing routine | Not via public API | Web UI only |
+| Add API triggers | Not via public API | Web UI |
+| Add GitHub triggers | Not via public API | Web UI or CLI 2.1.225+ |
 | Generate or revoke tokens | Not via public API | Web UI only |
 | Pause / resume a schedule | Not via public API | Web UI or `/schedule update` in the `claude` CLI |
 
@@ -107,9 +108,11 @@ Pass the cadence as part of the description:
 /schedule hourly deploy verification
 ```
 
-`/schedule` can only add **scheduled** triggers. To add an API or GitHub trigger to the same routine, the user edits the routine at `claude.ai/code/routines` afterwards.
+CLI 2.1.225+ can attach GitHub triggers after app installation. API tokens still require web setup. See `references/trigger-guide.md`.
 
 ### Managing existing routines
+
+CLI 2.1.227+ supports routine management and run-history inspection.
 
 ```
 /schedule list           # list all routines for this account
@@ -243,7 +246,7 @@ For GitLab CI, Jenkins, CircleCI, etc., the pattern is the same: read URL and to
 
 ## Pattern D: web-UI walkthrough (fallback)
 
-When `claude` is not on PATH, or when the trigger is GitHub / API only, emit a walkthrough the user follows at `claude.ai/code/routines`.
+When CLI setup is unavailable or API tokens are needed, emit a walkthrough the user follows at `claude.ai/code/routines`.
 
 Template to fill in:
 
@@ -251,7 +254,7 @@ Template to fill in:
 1. Open https://claude.ai/code/routines and click **New routine**.
 2. Name: <name>
 3. Prompt: <paste the drafted prompt>
-4. Repositories: <repo list>, branch policy <default or unrestricted>
+4. Repositories: <repo list>, branch policy <current restrictions>
 5. Environment: <default or custom-name>
 6. Connectors: <keep only these: ...>
 7. Trigger(s):
@@ -270,12 +273,7 @@ Always print the drafted prompt verbatim so the user can paste it.
 
 Before a scripted `/fire` call, the user may want to know if there is capacity left. There is no endpoint for this - the daily cap is only shown in the web UI at `claude.ai/code/routines` and `claude.ai/settings/usage`. Plan fire frequency against the known plan cap:
 
-| Plan | Daily routine runs |
-|---|---|
-| Pro | 5 |
-| Max | 15 |
-| Team | 25 |
-| Enterprise | 25 |
+Read the current allowance from the account UI; do not assume fixed per-plan counts.
 
 A webhook integration that fires more than this will get 429s for the rest of the day. Organizations with extra usage enabled continue on metered overage.
 

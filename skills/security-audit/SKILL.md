@@ -1,7 +1,7 @@
 ---
 name: security-audit
 description: >
-  · Audit code security: OWASP, credentials, auth, access control, supply chain, hardening. Triggers: 'security audit', 'vulnerability scan', 'secret scan', 'OWASP', 'auth review'. Not for offensive work (use lockpick).
+  · Audit code for vulnerabilities: auth flaws, exposed secrets, OWASP risks, and dependency/supply-chain threats.
 license: MIT
 compatibility: "Optional: betterleaks, gitleaks, trivy, semgrep, bandit, checkov, scorecard"
 metadata:
@@ -17,9 +17,9 @@ Structured, multi-pass security audit. Combines automated tooling with manual pa
 
 Patterns drawn from real OSS incidents (unauthenticated admin endpoints, credential exfiltration, zip slip, auth bypass whitelists, Trivy supply chain compromise) and OpenSSF/SLSA/OWASP standards.
 
-**Target versions** (September 2026):
+**Target versions** (September 2026, release check 2026-09-10):
 - Semgrep 1.176.0, Bandit 1.9.4
-- Gitleaks 8.30.1, Betterleaks 1.1.1 (successor by same author), TruffleHog 3.97.4
+- Gitleaks 8.30.1, [Betterleaks 1.8.1](https://github.com/betterleaks/betterleaks/releases/tag/v1.8.1) (same author as Gitleaks), TruffleHog 3.97.4
 - Trivy 0.74.0 (0.69.4-0.69.6 was compromised - see known incidents; upgrade past the 0.69.x window)
 - OpenSSF Scorecard 5.5.0 (v6 in proposal stage)
 - OWASP Top 10:2025 (confirmed January 2026), OWASP Agentic Top 10:2026 (released December 2025)
@@ -138,6 +138,12 @@ Find known CVEs in dependencies and assess supply chain risk.
 Any match on package name + version range is P0 severity regardless of `audit` output.
 For active incident triage, use `references/hardening-checklists.md` for repo-wide package,
 IOC, local-runtime, and remote-repo checks.
+
+**Scanner security recheck** (September 2026, 2026-09-10):
+[CVE-2026-63328](https://github.com/aquasecurity/trivy/security/advisories/GHSA-8rc5-4fr6-64pw)
+affects Trivy before 0.72.0 when installing an attacker-controlled plugin; it permits writes
+outside the plugin directory. The 0.74.0 target includes the fix. This is separate from the
+March supply-chain compromise; only install trusted plugins.
 
 ### Step 4: Agentic AI & Supply Chain (Pass 3 - Manual)
 

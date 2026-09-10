@@ -1,7 +1,7 @@
 ---
 name: full-review
 description: >
-  · Run 4 parallel audits: code-review, anti-slop, security-audit, update-docs. Triggers: 'full review', 'four-lens review', 'full repository review', 'code security docs audit', 'review before merge'. For deep coverage, use deep-audit.
+  · Run four parallel code, slop, security, and docs audits for a requested broad pre-merge or repository review.
 license: MIT
 compatibility: "Requires code-review, anti-slop, security-audit, update-docs skills installed"
 metadata:

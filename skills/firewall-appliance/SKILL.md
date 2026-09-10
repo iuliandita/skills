@@ -1,7 +1,7 @@
 ---
 name: firewall-appliance
 description: >
-  · Manage OPNsense/pfSense via SSH: pfctl, pf rules, CARP, CrowdSec, pfBlockerNG. Triggers: 'opnsense', 'pfsense', 'pfctl', 'CARP', 'configctl'. Not for Linux firewalls.
+  · Administer OPNsense/pfSense firewalls over SSH: pf rules, pfctl, CARP, and appliance diagnostics.
 license: MIT
 compatibility: "Requires SSH access to OPNsense or pfSense appliance"
 metadata:
@@ -17,9 +17,13 @@ Manage, troubleshoot, and harden OPNsense and pfSense firewalls via SSH. Both ar
 pf-powered firewall distributions - most concepts, commands, and patterns apply to both.
 
 **Target versions** (September 2026):
-- OPNsense CE: 26.7.3_8 (current Community Edition hotfix, "Xenial Xenops"). Business Edition remains a separate even-quarter lane - do not quote the BE number as the CE version
-- pfSense CE: 2.8.1 / pfSense Plus: 26.07
+- OPNsense CE: 26.7.3_11 (current Community Edition hotfix, "Xenial Xenops"). Business Edition remains a separate even-quarter lane - do not quote the BE number as the CE version
+- pfSense CE: 2.9.0 / pfSense Plus: 26.07
 - CrowdSec: v1.8.1
+
+Check [OPNsense release notes](https://docs.opnsense.org/releases/CE_26.7.html)
+and the [pfSense version matrix](https://docs.netgate.com/pfsense/en/latest/releases/versions.html)
+before selecting a firmware image; CE, Plus, and Business Edition have separate patch lanes.
 
 ## When to use
 

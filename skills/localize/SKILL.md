@@ -1,7 +1,7 @@
 ---
 name: localize
 description: >
-  · Audit app i18n/l10n: hardcoded strings, locale catalogs, translations, fallback gaps. Triggers: 'i18n', 'internationalization', 'localization', 'locale', 'translate app', 'multilingual', 'add language', 'hardcoded strings', 'next-intl'.
+  · Localize multilingual apps: i18n/l10n, translate app strings, add languages, and audit missing translations.
 license: MIT
 compatibility: "Requires Node.js 20+. Optional: react-i18next, vue-i18n, next-intl, svelte-i18n, ngx-translate, i18next (per framework)"
 metadata:
@@ -21,8 +21,13 @@ every string that needs it, and making sure translations read naturally in conte
 than as mechanical word-by-word output.
 
 **Target versions (September 2026):** react-i18next 17.0.13, vue-i18n 11.4.10, next-intl 4.14.2,
-i18next 26.4.2. For missing-key persistence, require i18next-http-middleware 3.9.8+ and
-i18next-fs-backend 2.6.7+ to fix critical prototype pollution (CVE-2026-48714).
+i18next 26.4.2. Missing-key persistence snapshots: i18next-http-middleware 3.9.8 and
+i18next-fs-backend 2.6.7 (latest status unverified on 2026-09-10; check the package registry
+before pinning). Require at least the following verified security fixes: critical missing-key prototype-pollution
+fixes first shipped in middleware 3.9.7 ([CVE-2026-48714](https://github.com/i18next/i18next-http-middleware/security/advisories/GHSA-f49m-vf83-692w), affected <3.9.7)
+and filesystem backend 2.6.6 ([CVE-2026-48713](https://github.com/i18next/i18next-fs-backend/security/advisories/GHSA-2933-q333-qg83), affected <2.6.6).
+Do not expose missing-key persistence to untrusted users; disable `saveMissing` where unnecessary.
+Advisory ranges checked 2026-09-10.
 
 ## When to use
 

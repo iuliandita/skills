@@ -1,9 +1,7 @@
 ---
 name: update-docs
 description: >
-  · Sweep docs after changes: README, changelog, API, runbooks. Triggers: 'update docs',
-  'refresh docs', 'sync docs', 'docs drift', 'merged PR', 'release cut', 'version bump',
-  'update changelog'. Not for PR text (use git).
+  · Update README, changelogs, API docs, and runbooks after changes; find and fix documentation drift.
 license: MIT
 compatibility: "Requires git. Optional: wc (for size audits)"
 metadata:

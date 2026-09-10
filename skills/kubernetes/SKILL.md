@@ -1,7 +1,7 @@
 ---
 name: kubernetes
 description: >
-  · Write/review Kubernetes manifests, Helm, Kustomize, Gateway API, ArgoCD, sealed secrets. Triggers: 'kubernetes', 'k8s', 'helm', 'kubectl', 'kubernetes deployment', 'pod', 'ingress', 'gateway api'.
+  · Build and review Kubernetes/K8s manifests, Helm charts, Kustomize overlays, Gateway API, and ArgoCD deployments.
 license: MIT
 compatibility: "Requires kubectl. Optional: helm, kustomize, kube-score, cosign"
 metadata:
@@ -15,7 +15,7 @@ metadata:
 
 Create, review, and architect Kubernetes infrastructure - from raw manifests to Helm charts to multi-cluster strategy. The goal is production-ready, security-hardened, cost-aware infrastructure that a team can maintain.
 
-**Target versions** (September 2026): Kubernetes 1.34-1.37 are receiving patches (1.37.0 / 1.36.4 / 1.35.8 / 1.34.11). Kubernetes normally maintains the most recent three minors; 1.34 is in its final maintenance window and reaches EOL October 27, 2026. Upstream Kubernetes has no LTS. Managed **vendor extended support** (AKS/EKS) carries older minors longer - attribute it to the platform, not upstream. Helm 4.2.4 and Helm 3.21.4 are the current parallel release lines; Helm 3 security maintenance ends in November 2026.
+**Target versions** (September 2026): Kubernetes 1.34-1.37 are receiving patches (1.37.0 / 1.36.4 / 1.35.8 / 1.34.11). Kubernetes normally maintains the most recent three minors; 1.34 is in its final maintenance window and reaches EOL October 27, 2026. Upstream Kubernetes has no LTS. Managed **vendor extended support** (AKS/EKS) carries older minors longer - attribute it to the platform, not upstream. Helm 4.2.4 and Helm 3.21.4 are the current parallel release lines. Verify Helm 3 support status before selecting it for a new deployment. Check the [Helm compatibility matrix](https://helm.sh/docs/topics/version_skew/) before pairing releases: Helm 4.2.x documents Kubernetes 1.33-1.36 support and makes no forward-compatibility guarantee for 1.37.
 This skill covers four domains depending on context:
 - **Manifests** - raw YAML for Deployments, Services, Gateway API routes, ConfigMaps, Secrets, PVCs
 - **Helm** - Helm 4 chart scaffolding, OCI registries, templating, multi-environment values
@@ -147,7 +147,7 @@ Read `references/manifest-templates.md` for complete, copy-pasteable YAML templa
 - `app.kubernetes.io/part-of` - parent system
 
 **External access** (new clusters must use Gateway API, not legacy Ingress):
-- **Gateway API** `HTTPRoute` (GA v1.5): role-oriented, expressive routing, no annotation hell. Ingress-NGINX retired March 2026 (its Feb 2026 RCE set CVE-2026-24512/24513/24514, CVSS 8.8, is a further reason to migrate off; fixed in ingress-nginx 1.13.7 / 1.14.3 if you must stay).
+- **Gateway API** `HTTPRoute` (GA v1.5): role-oriented, expressive routing, no annotation hell. Ingress-NGINX retired March 2026; migrate to a maintained controller. Later [CVE-2026-4342](https://github.com/kubernetes/kubernetes/issues/137893) permits configuration injection and controller code execution; affected branch versions are before 1.13.9 / 1.14.5 / 1.15.1 respectively. Those fixes do not restore ongoing support.
 - **ClusterIP** (default): internal-only
 - **LoadBalancer**: cloud LB without HTTP routing
 - **Headless** (`clusterIP: None`): StatefulSet pod discovery
@@ -169,7 +169,7 @@ Read `references/manifest-templates.md` for complete, copy-pasteable YAML templa
 
 ## Helm Charts
 
-**Helm 4** (4.0.0 released Nov 12, 2025; 4.2.4 current) is current. Helm 3.21.4 gets security fixes until Nov 2026.
+**Helm 4** (4.0.0 released Nov 12, 2025; 4.2.4 current) is current. Verify the current Helm 3 support policy before selecting 3.21.4.
 
 ### What changed in Helm 4
 

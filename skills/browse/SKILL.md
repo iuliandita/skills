@@ -1,7 +1,7 @@
 ---
 name: browse
 description: >
-  · Browse/scrape web pages with Lightpanda, Playwright MCP, agent-browser, or fetch. Triggers: 'browse', 'scrape', 'headless', 'open url', 'read website', 'fill form', 'crawl'. Not for E2E tests (use testing).
+  · Read and scrape websites, navigate pages, and fill forms. For browser tests, use testing.
 license: MIT
 compatibility: "Optional: lightpanda, @playwright/mcp, agent-browser. Falls back to WebFetch or curl"
 metadata:

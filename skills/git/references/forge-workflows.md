@@ -72,7 +72,7 @@ Rulesets are more flexible (org-level, tag rules, bypass lists) and the recommen
 
 Key ruleset settings for production branches:
 - **Require pull request**: min 1 approval, dismiss stale reviews, require review from code owners
-- **Require status checks**: CI must pass (lint, test, typecheck, SAST)
+- **Require status checks**: choose gates for the project's risks and affected code; honor existing requirements. A PR does not automatically need every build or test suite. Use the **ci-cd** skill for conditional jobs and check selection.
 - **Require signed commits**: for PCI-DSS non-repudiation
 - **Require linear history**: no merge commits (rebase or squash only)
 - **Block force push**: always, no exceptions on release branches

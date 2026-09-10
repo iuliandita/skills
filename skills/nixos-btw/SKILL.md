@@ -1,7 +1,7 @@
 ---
 name: nixos-btw
 description: >
-  · Administer NixOS/Nix: flakes, home-manager, nix-darwin, generations, overlays, disko. Triggers: 'nixos', 'nix', 'flake', 'home-manager', 'configuration.nix', 'nixos-rebuild'. Not for other distros.
+  · Administer NixOS and Nix: flakes, home-manager, nix-darwin, generations, overlays, and declarative system config.
 license: MIT
 compatibility: "Requires NixOS, or Nix/Determinate Nix/Lix on Linux/macOS/WSL"
 metadata:
@@ -32,7 +32,7 @@ disposable dev shells, fleet-wide configuration without a separate config-manage
 and a single language for a workstation, a server, a container image, a NixOS VM, and a
 macOS laptop via nix-darwin.
 
-**Versions worth pinning** (verified September 2026):
+**Versions worth pinning** (September 2026; verification exceptions marked below):
 
 Pin versions only when they shape compatibility or troubleshooting. For ordinary package
 work, trust the live channel or flake lock over a stale table.
@@ -41,14 +41,14 @@ work, trust the live channel or flake lock over a stale table.
 |-----------|-----------------|----------------|
 | NixOS stable | 26.05 "Yarara" (May 2026) | current stable, released 2026-05-30, maintained until 2026-12-31 |
 | NixOS previous stable | 25.11 "Xantusia" (Nov 2025) | EOL 2026-06-30; upgrade off it now |
-| NixOS upcoming | 26.11 (~Nov 2026) | next release; do not target yet for production |
-| Nix (CLI / daemon) | 2.34 | stable upstream; verify the packaged distro lane before upgrading |
-| `nixos-rebuild-ng` | default in 25.11+ | Python rewrite of nixos-rebuild, default for new installs |
+| NixOS upcoming | 26.11 (schedule unverified) | Verify the release calendar; do not target an unreleased version for production |
+| Nix (CLI / daemon) | 2.34.9 | stable upstream; verify the packaged distro lane before upgrading |
+| `nixos-rebuild-ng` | verify installed implementation | Python rewrite; default status for the selected release was not verified |
 | home-manager | release-26.05 (May 2026) | matches NixOS 26.05; unstable tracks nixos-unstable |
-| nix-darwin | tracks nixpkgs 26.05 and master | active macOS module system (Intel + Apple Silicon) |
+| nix-darwin | verify supported nixpkgs branch | Exact branch support was not verified; check the selected nix-darwin release |
 | Determinate Nix | downstream, flakes-on by default | validated distribution; parallel eval, lazy trees |
 | Lix | fork of Nix | compatibility-focused fork; Meson build, improved errors |
-| Kernel default for 26.05 | Linux 6.18 LTS | default `linuxPackages`; `linux_hardened` was removed in 26.05 |
+| Kernel default for 26.05 | verify the selected nixpkgs revision | Linux 6.18 default and `linux_hardened` removal claims were not verified; inspect release notes and package options |
 
 ## When to use
 

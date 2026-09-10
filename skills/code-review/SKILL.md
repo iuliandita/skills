@@ -1,7 +1,7 @@
 ---
 name: code-review
 description: >
-  · Review code for correctness: bugs, edge cases, races, leaks, regressions. Triggers: 'review this code', 'code review', 'find bugs', 'check this diff', 'sanity check'. Not for style/slop (anti-slop) or vulnerabilities (security-audit).
+  · Review code and diffs for correctness: bugs, regressions, edge cases, races, and resource leaks.
 license: MIT
 compatibility: "None - works on any codebase"
 metadata:

@@ -235,20 +235,24 @@ import json
 data = json.loads(response.choices[0].message.content)
 ```
 
-### Vercel AI SDK - generateObject
+### Vercel AI SDK - structured output
+
+Use the current [Output API](https://ai-sdk.dev/docs/reference/ai-sdk-core/output).
 
 ```typescript
-import { generateObject } from "ai";
+import { generateText, Output } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
 import { z } from "zod";
 
-const { object } = await generateObject({
-  model: anthropic("claude-sonnet-4-6"),
-  schema: z.object({
-    name: z.string(),
-    age: z.number().int().min(0).max(150).optional(),
-    email: z.string().email(),
-    topics: z.array(z.string()).max(10),
+const { output } = await generateText({
+  model: anthropic("claude-sonnet-5"),
+  output: Output.object({
+    schema: z.object({
+      name: z.string(),
+      age: z.number().int().min(0).max(150).optional(),
+      email: z.string().email(),
+      topics: z.array(z.string()).max(10),
+    }),
   }),
   prompt: `Extract info from: ${text}`,
 });

@@ -101,14 +101,22 @@ reject_trigger zero-day CVE
 reject_trigger full-review 'run all checks'
 reject_trigger full-review 'full check'
 
-require_text skills/localize/SKILL.md "'translate app'" "localize is missing the translate-app alias"
-require_text skills/localize/SKILL.md "'multilingual'" "localize is missing the multilingual alias"
-require_text skills/localize/SKILL.md "'add language'" "localize is missing the add-language alias"
-require_text skills/mcp/SKILL.md "'@modelcontextprotocol/server'" "mcp is missing the current server-package alias"
-require_text skills/mcp/SKILL.md "'mcp client'" "mcp is missing the client alias"
-require_text skills/arch-btw/SKILL.md "'endeavouros'" "arch-btw is missing the EndeavourOS alias"
-require_text skills/arch-btw/SKILL.md "'manjaro'" "arch-btw is missing the Manjaro alias"
-require_text skills/virtualization/SKILL.md "'vmware'" "virtualization is missing the VMware alias"
-require_text skills/virtualization/SKILL.md "'esxi'" "virtualization is missing the ESXi alias"
+# Check useful domain cues without requiring the old quoted keyword-list syntax.
+require_description() {
+  local skill="$1" text="$2" description
+  description="$(frontmatter_get "$ROOT/skills/$skill/SKILL.md" description)"
+  grep -Fiq -- "$text" <<< "$description" || fail "$skill description is missing '$text'"
+}
+
+require_description localize 'translate app'
+require_description localize 'multilingual'
+require_description localize 'add language'
+require_description mcp 'MCP'
+require_description mcp 'clients'
+require_text skills/mcp/SKILL.md '@modelcontextprotocol/server' "mcp is missing the current server-package reference"
+require_description arch-btw 'EndeavourOS'
+require_description arch-btw 'Manjaro'
+require_description virtualization 'VMware'
+require_description virtualization 'ESXi'
 
 printf 'All skill content tests passed.\n'

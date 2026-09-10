@@ -1,7 +1,7 @@
 ---
 name: code-slimming
 description: >
-  · Audit read-only code slimming: dead/superseded code, unused files, duplicates, wrappers, inert try/catch, copy-per-element functions. Triggers: 'slim codebase', 'dead code', 'unused files', 'dedupe'. Not for bugs or broad reviews.
+  · Find safe code reduction opportunities: dead code, unused files, duplicates, and redundant wrappers. Read-only.
 license: MIT
 compatibility: "None - works on any codebase"
 metadata:

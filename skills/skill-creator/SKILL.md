@@ -1,7 +1,7 @@
 ---
 name: skill-creator
 description: >
-  · Create/review skills: frontmatter, triggers, overlaps, collection consistency, retrospective updates. Triggers: 'skill creator', 'new skill', 'skill audit', 'skill review', 'update skill library'.
+  · Create or review skills; fix descriptions, triggers, frontmatter, references, and collection overlaps.
 license: MIT
 compatibility: "Optional: git (for freshness and gitignore filtering)"
 metadata:
@@ -50,7 +50,7 @@ Before returning any generated or modified skill, verify against this list:
 - [ ] **Name spec-valid**: lowercase alphanumeric + hyphens only, no leading/trailing/consecutive
   hyphens, no reserved words (`anthropic`, `claude`), matches directory name
 - [ ] **No XML tags** in `name` or `description` fields (Anthropic platform restriction)
-- [ ] **Description is trigger-optimized**: starts with action verbs, includes trigger keywords, mentions related contexts, stays near 200 chars for the collection (240 warn and 600 hard max in `lint-skills.sh`; the portable spec ceiling is 1024 in `validate-spec.sh`)
+- [ ] **Description is trigger-optimized**: front-loads the task and distinctive terms, usually fits 80-120 characters, and separates likely neighboring skills (120-character advisory warning; 1024-character spec ceiling in `validate-spec.sh`)
 - [ ] **Compatibility field present** (when skill requires specific tools/platforms): quotes values containing colons
 - [ ] **Scope sections present**: "When to use" with concrete scenarios, "When NOT to use"
   cross-referencing related skills by **bold** name (e.g., `use **skill-name**`)
@@ -422,13 +422,14 @@ description differentiates clearly. For standalone skills, skip this step.
 
 #### Step 3: Rewrite the description
 
-Follow these patterns from high-performing custom skill descriptions:
-- **Start with action verbs**: "Use when writing, reviewing, or architecting..."
-- **Include specific trigger keywords**: list them inline, e.g., "Triggers: 'keyword1', 'keyword2'"
-- **Mention adjacent skills to avoid**: "Not for X (use Y instead)"
-- **Be slightly pushy**: many tools undertrigger skills by default. Include edge cases.
-- **Stay near 200 characters**: the collection warns above 240 and errors above 600. Codex loads every skill description at startup, so concise descriptions prevent startup truncation.
-- **Treat 1024 as the platform ceiling, not the collection target**: truncation happens there, but the repo convention is stricter
+- **Lead with the task and domain** so the opening still routes usefully if the host shortens it.
+- **Use distinctive terms once** in natural prose: artifact names, domain aliases, and user intent.
+- **Disambiguate likely neighbors** with a specific task or short exclusion where it earns space.
+- **Aim for 80-120 characters**, including the prefix; preserve useful distinctions over shaving characters.
+- **Test natural requests and near misses**; avoid generic "cleanup" or "start working" triggers.
+
+The validator warns above 120 characters and rejects above the 1024-character spec ceiling.
+Hosts may shorten or omit entries to fit a shared catalog budget even below that ceiling.
 
 #### Step 4: Validate
 

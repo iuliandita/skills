@@ -1,7 +1,7 @@
 ---
 name: rhel-fedora
 description: >
-  · Administer RHEL/Fedora/CentOS/Rocky/Alma/Amazon Linux: dnf, yum, SELinux, firewalld, dracut. Triggers: 'rhel', 'fedora', 'centos stream', 'rocky', 'dnf', 'selinux'. Not for other distros.
+  · Administer Fedora/RHEL, Rocky, AlmaLinux, CentOS, and Amazon Linux: dnf, SELinux, boot, and desktop issues.
 license: MIT
 compatibility: Requires Fedora, RHEL, or RHEL-family distro with dnf, yum, or rpm
 metadata:
@@ -40,6 +40,11 @@ ordinary package work, prefer the live distro lane and repo state over a stale p
 | DNF | verify live | Fedora moves faster than enterprise lanes; DNF 5 vs legacy expectations matter |
 | Podman | verify live | rootless and quadlet behavior depend on the shipped distro lane |
 | Kernel security | verify live via RHSA/FEDORA tracker | patch high-severity privesc CVEs promptly; mid-2026 examples to confirm fixed: Copy Fail CVE-2026-31431 (CISA KEV, exploited), Dirty Frag CVE-2026-43284/43500, Fragnesia CVE-2026-46300 (ESP-in-TCP, exploited), ptrace CVE-2026-46333 |
+
+For kernel advisories, use the exact vendor package and support stream. Red Hat rates
+[Copy Fail CVE-2026-31431](https://access.redhat.com/security/cve/CVE-2026-31431)
+Important; use the linked bulletin and RHSA package matrix for affected and fixed builds.
+Do not transfer Ubuntu kernel patch floors to RHEL, Fedora, or a downstream clone.
 
 ## When to use
 

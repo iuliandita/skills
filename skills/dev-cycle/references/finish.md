@@ -94,6 +94,13 @@ skill isn't available, detect the toolchain and run manually.
 
 ### Toolchain detection + commands
 
+Treat the commands below as candidates, not a mandatory whole-repository suite. Inspect
+the project's scripts and diff, then select supported affected-file/package checks plus
+required local gates. A docs-only change need not run application tests unless it affects
+them. Required remote gates still need to pass before merge; running them in CI does not
+automatically require duplicating the full workload locally. Reuse valid results for the
+same revision and relevant inputs unless repository policy requires a fresh local run.
+
 Check in order - first match wins. If no language manifest matches, **keep going** to the task-runner and custom-script rows. Many repos (infrastructure, skill collections, dotfiles, mixed-language monorepos) have no language manifest at all.
 
 | Signal | Commands |

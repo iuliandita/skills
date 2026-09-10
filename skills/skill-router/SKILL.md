@@ -1,8 +1,7 @@
 ---
 name: skill-router
 description: >
-  · Route user requests to the right installed skill with minimal loading. Triggers: 'which skill',
-  'skill routing', 'choose skill', 'route this request', 'skill match'. Not for creating or editing skills (use skill-creator).
+  · Choose the best installed skill for a request and explain ambiguous matches. For skill edits, use skill-creator.
 license: MIT
 compatibility: "None - works with any Agent Skills collection"
 metadata:

@@ -1,7 +1,7 @@
 ---
 name: frontend-design
 description: >
-  · Build/refine frontend UIs from the brief, with art direction and visual QA. Triggers: 'frontend', 'ui', 'ux', 'css', 'tailwind', 'landing page', 'ui design review'. Not for code logic (code-review).
+  · Design, build, and critique frontend UI/UX: layouts, CSS, Tailwind, landing pages, and visual polish.
 license: MIT
 compatibility: "None - works on any frontend stack"
 metadata:
@@ -19,12 +19,17 @@ preserve the user's brand and the existing application's conventions.
 
 **Target versions** (September 2026 - pinned so staleness is visible):
 
-- Astro 7.3.1 (major: Rust compiler, Vite 8, advanced routing; 7.1.0+ clears the June/July XSS and SSRF advisory set)
+- Astro 7.3.2 (major: Rust compiler, Vite 8, advanced routing; verify advisory-specific fixed ranges before migration)
 - SvelteKit 2.70.3 + Svelte 5.57.0 runes
 - Tailwind CSS v4.3.3
 - Vite 8.2.2
 - React 19.2.8 + Next.js 16.3.4 (heavier option, only when team is React-locked)
 - @use-gesture/react 10.3.1 (modern; Hammer.js considered legacy)
+
+The [August 2026 Next.js security release](https://nextjs.org/blog/august-2026-security-release)
+fixes critical AVIF image-optimization RCE and Windows mixed-router RCE (CVE-2026-75604).
+Its patched LTS releases are 15.5.24 and 16.3.3; the 16.3.4 snapshot above includes those fixes.
+Check the advisory's deployment conditions when assessing an existing app (checked 2026-09-10).
 
 The version list is a reference for new-project selection, not an upgrade instruction.
 Inspect installed packages and follow the project's stack. Verify current documentation when

@@ -1,6 +1,6 @@
 # Zsh Reference
 
-> Patterns and gotchas for Zsh 5.9/5.10 on Linux and macOS. Focuses on where Zsh diverges
+> Patterns and gotchas for Zsh 5.9.2 on Linux and macOS. Focuses on where Zsh diverges
 > from Bash - the stuff that silently breaks.
 
 ---
@@ -19,7 +19,7 @@ Not every task needs all 680 lines. Use this routing:
 | Editing .zshrc / startup | Section 6 (load order) + 7 (prompt, options, hooks) |
 | Completion issues | Section 8 + 9. Check: (1) `compinit` called? (2) after `fpath` mods? (3) file named `_commandname`? (4) stale cache? (`rm ~/.zcompdump*`) |
 | Zsh-only features | Section 12 (named dirs, assoc arrays, suffix aliases) |
-| Zsh 5.10 features | Section 13 (non-forking `${ }`, namerefs, SRANDOM) |
+| Release-specific features | Section 13 (verify the installed build) |
 
 ---
 
@@ -628,72 +628,22 @@ ls -la G ".js"      # expands to: ls -la | grep ".js"
 
 ---
 
-## 13. Zsh 5.10 Features
+## 13. Release-Specific Features
 
-> **Note**: macOS Tahoe still ships zsh 5.9. These features are only available if you install
-> zsh via Homebrew or are on Linux with zsh 5.10+.
+The stable target is Zsh 5.9.2 (checked September 10, 2026). The
+[release notes](https://zsh.sourceforge.io/releases.html) identify PCRE2 support in 5.9.1
+and minor fixes in 5.9.2. Do not assume development-branch features are present in a
+stable package or that installing from Homebrew enables them.
 
-### Non-forking command substitution
-
-The biggest performance win in zsh 5.10. Runs in-process instead of spawning a subshell:
-
-```zsh
-# Old (forks a subshell):
-result=$(some_function)
-
-# New (runs in-process, much faster):
-result=${ some_function }       # note the spaces inside braces
-result=${| REPLY=value }        # assign to REPLY for return value
-```
-
-Use for: hot loops, frequently-called functions, startup scripts. Especially impactful in prompt rendering and completion functions.
-
-**Gotcha**: `${ }` (non-forking) vs `$()` (forking) - the space after `{` is required.
-
-### Named references (nameref)
-
-Similar to Bash 4.3+ namerefs. Requires `zsh/ksh93` module:
-
-```zsh
-zmodload zsh/ksh93
-typeset -n ref=myvar
-myvar="hello"
-echo $ref  # prints "hello"
-```
-
-### SRANDOM
-
-Cryptographic random number via `zsh/random` module:
-
-```zsh
-zmodload zsh/random
-echo $SRANDOM  # 32-bit random from OS entropy
-```
-
-### ERR_EXIT / ERR_RETURN refinements
-
-Functions or anonymous functions prefixed with `!` never trigger ERR_EXIT/ERR_RETURN:
-
-```zsh
-set -e
-! { false; echo "this still runs" }  # ! prefix bypasses ERR_EXIT
-```
-
-**Gotcha for existing scripts**: behavior change from 5.9. Scripts relying on `set -e` catching errors inside `!`-prefixed blocks will silently stop catching.
-
-### Other notable additions
-
-- `time` keyword now works on builtins and assignments
-- Array syntax `array=([index]=value)` for cross-shell compatibility
-- `zparseopts` learned `-v` (verbose) and `-G` (gnu-style) options
-- pcre2 support in `zsh/pcre` module
-- Monotonic time used internally (immune to clock adjustments)
+Before using non-forking substitutions, namerefs, or new module parameters, check
+`zsh --version`, the installed manual, and a minimal isolated example on that build.
+Use established `$()` substitution when the target's support has not been verified.
 
 ---
 
 ## 14. macOS-Specific Notes
 
-- macOS Tahoe (26.x) still ships zsh 5.9. Zsh 5.10 features (non-forking `${ }`, namerefs) are not available unless you install zsh via Homebrew.
+- Check `/bin/zsh --version` separately from a package-manager installation; their versions and compiled modules may differ.
 - `/etc/zshrc` runs `path_helper` which reorders `$PATH` - putting `/usr/bin` before Homebrew paths. Fix: set PATH in `.zshenv` (runs before `/etc/zshrc` in non-login shells) or `.zprofile` (runs after, overrides it for login shells).
 - BSD coreutils differ from GNU: `sed -i ''` (not `sed -i`), `stat -f %m` (not `stat -c %Y`), `date` flags differ. When writing portable scripts, check which `coreutils` variant is available.
 

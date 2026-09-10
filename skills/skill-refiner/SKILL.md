@@ -1,7 +1,7 @@
 ---
 name: skill-refiner
 description: >
-  · Improve skill collections or a named skill with iterative scoring, lint checks, behavioral tests, peer review. Triggers: 'skill refiner', 'improve skills', 'quality sweep', 'batch improve', 'skill loop', 'target 99%'.
+  · Improve skills through repeated scoring, behavioral tests, and peer review toward a requested quality target.
 license: MIT
 compatibility: "Requires: skill-creator skill, git. Optional: secondary AI harness (codex, claude, gemini, opencode) for cross-model review"
 metadata:

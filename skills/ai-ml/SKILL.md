@@ -1,7 +1,7 @@
 ---
 name: ai-ml
 description: >
-  · Build/review AI apps: LLMs, RAG, embeddings, agents, evals, local inference. Triggers: 'llm', 'rag', 'embedding', 'openai sdk', 'agent loop', 'fine-tune', 'ollama', 'vllm'. Not for MCP (use mcp).
+  · Build LLM apps: RAG, embeddings, agent loops, evals, fine-tuning, and local inference.
 license: MIT
 compatibility: "Varies by task. Common: Python 3.10+, Node.js 18+. Optional: GPU for local inference"
 metadata:
@@ -155,7 +155,7 @@ Use native provider mechanisms, not regex parsing of free-text responses.
 
 - **Anthropic**: `tool_use` with JSON schema, or `response_format` with `json_schema`
 - **OpenAI**: `response_format: { type: "json_schema", json_schema: {...} }`
-- **Vercel AI SDK**: `generateObject()` with Zod schema
+- **Vercel AI SDK**: `generateText()` with `output: Output.object({ schema })` and a Zod schema
 
 ### Tool use / function calling
 

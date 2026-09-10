@@ -262,6 +262,16 @@ wild** - a weaponized `.gitmodules` file can overwrite hook scripts to achieve R
 --recursive`. Patched in v2.50.1, v2.49.1, v2.48.2, v2.47.3, and backports. Linux and macOS
 affected; Windows is not.
 
+### Git for Windows (checked September 10, 2026)
+
+[CVE-2026-62960](https://github.com/git-for-windows/git/security/advisories/GHSA-xrpg-8j9v-v282)
+allows an untrusted server's bundle URI to trigger an outbound SMB connection when
+`transfer.bundleuri=true`. The advisory confirms 2.53.0.windows.3 and the tested main
+revision as affected and lists no patched version. Keep bundle URI transfer disabled for
+untrusted Windows remotes and check the advisory before claiming a newer Git release fixes
+this issue. SMB callback is confirmed; NTLM disclosure is a stated risk, not a captured
+credential result in the advisory.
+
 ### Supply chain (git-adjacent)
 
 | Incident | Date | Impact |

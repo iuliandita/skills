@@ -337,6 +337,12 @@ cat /proc/version
 
 ### Notable Kernel CVEs
 
+September 2026 advisory check (2026-09-10): [CVE-2026-53362](https://ubuntu.com/security/CVE-2026-53362)
+is a high-priority IPv6 memory-corruption issue listed in CISA KEV according to Canonical.
+Check the distribution's exact kernel package and backport status; there is no universal
+kernel-version cutoff across vendor branches. This is patch-triage guidance, not a validated
+exploit procedure. Historical ranges below also require vendor-specific confirmation.
+
 | CVE | Name | Kernel Versions | Type |
 |-----|------|----------------|------|
 | CVE-2016-5195 | Dirty COW | 2.6.22 - 4.8.3 | Race condition, write to read-only mappings |

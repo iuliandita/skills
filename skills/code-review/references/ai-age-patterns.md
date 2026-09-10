@@ -240,7 +240,7 @@ MCP is still maturing in security. As of March 2026: 43% of MCP servers contain 
 **Detect:**
 - User input passed to shell execution functions without sanitization (CVE-2025-53355: Kubernetes MCP, CVE-2025-6514: mcp-remote, CVSS 9.6)
 - Malicious MCP server sending crafted `authorization_endpoint` during OAuth flow - mcp-remote passed it straight to the system shell (437,000+ downloads affected)
-- `.git/config` manipulation through git MCP server operations (CVE-2025-68145, CVE-2025-68143, CVE-2025-68144 in Anthropic's mcp-server-git)
+- Git MCP argument injection allowing local file overwrite ([CVE-2025-68144](https://github.com/modelcontextprotocol/servers/security/advisories/GHSA-9xwc-hfwc-8w59), fixed 2025.12.18); distinguish it from repository-scope bypass ([CVE-2025-68145](https://github.com/modelcontextprotocol/servers/security/advisories/GHSA-j22h-9j4x-23w5), fixed 2025.12.18) and unrestricted repository creation ([CVE-2025-68143](https://github.com/modelcontextprotocol/servers/security/advisories/GHSA-5cgr-j3jf-jw3v), fixed 2025.9.25). Advisory descriptions rechecked September 2026.
 - Unsanitized input from tool parameters used in subprocess calls (CVE-2025-53967: Figma/Framelink MCP)
 - Direct string concatenation of user data into shell commands in any MCP server tool handler
 

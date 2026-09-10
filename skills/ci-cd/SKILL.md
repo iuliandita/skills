@@ -1,7 +1,7 @@
 ---
 name: ci-cd
 description: >
-  · Write/review CI/CD for GitHub Actions, GitLab, Forgejo/Gitea, Woodpecker. Triggers: 'ci/cd', 'pipeline', 'github actions', 'gitlab ci', 'runner', 'renovate', 'trivy'. Not for git workflows (use git).
+  · Build, review, and debug CI/CD pipelines and runners: GitHub Actions, GitLab CI, Forgejo/Gitea, and Woodpecker.
 license: MIT
 compatibility: "Optional: gh (GitHub CLI), glab (GitLab CLI), fj (Forgejo CLI)"
 metadata:
@@ -148,6 +148,12 @@ Run through the checklist above before returning any generated config.
 
 ### Stage ordering (all platforms)
 
+Select stages by changed behavior, dependencies, and repository policy; this is an ordering
+guide, not a requirement to run every stage on every PR. Start with fast affected checks.
+Build or run integration suites when the change can affect their results; reserve unrelated
+expensive matrices and release work for suitable scheduled, post-merge, or release runs.
+See `references/best-practices.md` for check selection and conditional required gates.
+
 ```
 lint -> test -> build -> scan -> deploy
 ```
@@ -187,7 +193,7 @@ to artifacts. Use environment variables or file-based injection.
 
 | Environment | Trigger | Approval |
 |-------------|---------|----------|
-| **Dev/Preview** | Every PR/MR push | None |
+| **Dev/Preview** | Relevant app changes or requested preview | Per project policy |
 | **Staging** | Merge to main | None (auto-deploy) |
 | **Production** | Tag or manual dispatch | Required reviewer(s) |
 
@@ -199,6 +205,9 @@ Forgejo: manual dispatch (`workflow_dispatch`).
 When a repo contains multiple services sharing a common library:
 
 ### Path-based triggering
+Keep required workflows reporting on every applicable PR; condition expensive jobs inside
+them instead. See `references/best-practices.md` for the required-status pending trap.
+
 - **GitHub Actions**: `on.push.paths` / `on.pull_request.paths` to scope workflows per service
 - **GitLab CI/CD**: `rules: changes: paths:` with `compare_to: refs/heads/main`
 - **Forgejo**: same as GitHub Actions (`on.push.paths`)

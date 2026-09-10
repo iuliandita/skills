@@ -1,7 +1,7 @@
 ---
 name: deep-grill
 description: >
-  · Grill a plan before building: clarify the decision tree, then attack it. Triggers: 'grill me', 'deep grill', 'stress-test this plan', 'poke holes', 'what did I miss'. Not for existing code (code-review) or decision red-team (jekyll-hyde).
+  · Stress-test a plan before building: clarify assumptions, probe decisions, and find missing requirements.
 license: MIT
 compatibility: "None - works on any plan or design. Optional: a codebase to explore for code/infra domains."
 metadata:

@@ -39,7 +39,7 @@ gotcha with that specific Helm chart version, the compliance requirement that is
 
 | Component | Budget | Why |
 |-----------|--------|-----|
-| Frontmatter (`name` + `description`) | ~60-80 tokens | always loaded for all skills at startup |
+| Frontmatter (`name` + `description`) | description usually 80-120 characters | catalog entries share the host's context budget |
 | SKILL.md body | ~500 lines target, 600 hard max, <5k tokens recommended | loaded when the skill activates |
 | Reference files | unlimited per file, but keep individual files focused | loaded on demand |
 
@@ -85,8 +85,8 @@ succeeded" invites the agent to invent checks with wrong paths and service names
 ```yaml
 ---
 name: skill-name              # lowercase a-z, 0-9, hyphens; no leading/trailing/consecutive hyphens; max 64 chars; must match directory name; no reserved words (anthropic, claude)
-description: >                # target ~200 chars, warn above 240, 600 hard max; platform truncates later
-  Use when... Also use for... Triggers: '...', '...'.
+description: >                # aim for 80-120 chars; advisory warning above 120
+  · Write and debug shell scripts, commands, and dotfiles for bash, zsh, sh, and fish.
 license: MIT                  # Agent Skills spec field
 metadata:
   source: iuliandita/skills   # collection identifier (owner/repo); use "custom" for unpublished skills
@@ -139,7 +139,7 @@ user confirmation in steps that could run unattended.
 | Field | Values | Purpose |
 |-------|--------|---------|
 | `name` | `a-z`, `0-9`, hyphens; no leading/trailing/consecutive hyphens; max 64 chars; no reserved words (`anthropic`, `claude`) | identifier, must match directory name |
-| `description` | free text, target ~200 chars, warn above 240, 600 hard max, no XML tags | primary trigger mechanism - the agent scans this |
+| `description` | free text, usually 80-120 chars, warn above 120, 1024 spec max, no XML tags | primary trigger mechanism - the agent scans this |
 | `license` | license name (e.g., `MIT`) | Agent Skills spec field |
 | `compatibility` | free text, <500 chars | environment requirements (optional) |
 | `metadata.source` | `owner/repo` or `custom` | identifies the publishing collection or an unpublished local skill |
@@ -477,40 +477,29 @@ Negative constraints ("don't do X") are weak for LLMs. Comprehensive positive de
 
 ## 8. Trigger Description Patterns
 
-### High-performing patterns (from the custom collection)
+Put the task and distinguishing domain first. Use a few meaningful terms once in natural
+prose; repeated keyword lists spend catalog space without adding scope. The first clause
+should help choose the skill even when a host shortens the description.
 
-**Start with action verbs:**
-```
-Use when writing, reviewing, or architecting...
-```
-
-**Include specific trigger keywords:**
-```
-Triggers: 'docker', 'dockerfile', 'compose', 'container', 'podman'...
+```text
+· Review code and diffs for correctness: bugs, regressions, edge cases, races, and resource leaks.
+· Write or improve one-off LLM prompts, system prompts, and prompt templates from rough notes.
+· Read and scrape websites, navigate pages, and fill forms. For browser tests, use testing.
 ```
 
-**Mention adjacent contexts:**
-```
-Also use for Podman, Buildah, Skopeo, containerd, BuildKit, image signing, SBOM generation...
-```
+Aim for 80-120 characters including the prefix. The 120-character warning is advisory;
+a useful boundary can justify extra text. The 1024-character spec ceiling is a validation
+limit, not a guarantee that a host will display or load the whole description. Hosts may
+shorten descriptions or omit entries to fit the combined catalog budget.
 
-**Include negative routing:**
-```
-Not for style/slop audits (use anti-slop).
-```
+Test natural requests, aliases, and adjacent tasks against the whole catalog. Put detailed
+examples and exclusions in the body; retain a short exclusion in the description when it
+prevents a likely wrong match. Describe the skill's actual scope without adding unsupported
+capabilities to attract more requests.
 
-**Be pushy on edge cases:**
-```
-Use this skill even when the user doesn't explicitly say "git" but is clearly doing git work
-(e.g., "push this", "cut a release", "create a PR").
-```
-
-### Anti-patterns
-
-- **Too vague**: "Use for Docker stuff" - no specific triggers
-- **Too narrow**: "Use only when the user says 'write a Dockerfile'" - misses most use cases
-- **No differentiation**: shares all keywords with another skill, no routing guidance
-- **Over 600 chars**: fails collection validation; platform truncation at 1024 is not the operative repo limit
+Avoid vague descriptions ("Docker stuff"), exact-phrase-only triggers, generic words such as
+"cleanup" without a domain, and duplicated `Triggers:` lists. Character counts measure
+brevity; routing trials provide evidence about selection quality.
 
 ---
 

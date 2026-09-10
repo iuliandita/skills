@@ -1,7 +1,7 @@
 ---
 name: anti-ai-prose
 description: >
-  · Strip AI tells from prose in docs, PRs, emails, and your own replies. Filters every response once loaded; full audit on request. Triggers: 'unslop', 'ai writing', 'sounds like chatgpt', 'llm voice'. Not for code (use anti-slop).
+  · Edit prose that sounds AI-written: remove filler and canned phrasing in docs, emails, and replies.
 license: MIT
 compatibility: "None - works on any prose or text input"
 metadata:

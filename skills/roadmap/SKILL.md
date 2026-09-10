@@ -1,9 +1,7 @@
 ---
 name: roadmap
 description: >
-  · Capture, track, and prioritize ideas in gitignored ROADMAP.md. Triggers: 'roadmap',
-  'ideas', 'feature ideas', 'competitive analysis', 'what should I build', 'feature backlog'.
-  Not for project management or code review.
+  · Capture and prioritize feature ideas and competitor findings in a private ROADMAP.md backlog.
 license: MIT
 compatibility: "Requires git. Optional: gh (GitHub CLI) or glab (GitLab CLI) for PR tracking and competitive scanning"
 metadata:

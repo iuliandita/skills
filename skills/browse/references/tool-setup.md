@@ -125,7 +125,7 @@ or WebKit. Higher token cost than Lightpanda but complete Web API coverage.
 ```bash
 # As Claude Code plugin (if available in your plugin marketplace)
 # Or standalone:
-npx @playwright/mcp@0.0.75
+npx @playwright/mcp@0.0.80
 ```
 
 ### Key Tools

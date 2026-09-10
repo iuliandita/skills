@@ -1,7 +1,7 @@
 ---
 name: git
 description: >
-  · Handle git branches, commits, remotes, conflicts, hooks, signing, releases, PR/MR workflows. Triggers: 'git', 'commit', 'branch', 'merge', 'rebase', 'tag', 'push', 'PR', 'MR', 'gh', 'glab'.
+  · Manage git commits, branches, conflicts, rebases, PRs/MRs, tags, releases, and GitHub/GitLab/Forgejo/Gitea workflows.
 license: MIT
 compatibility: "Requires git. Optional: gh (GitHub CLI), glab (GitLab CLI), fj (Forgejo CLI)"
 metadata:
@@ -19,14 +19,14 @@ The goal is clean, signed, traceable history that satisfies both engineering sta
 compliance requirements (PCI-DSS 4.0).
 
 **Target versions** (September 2026):
-- **git**: 2.55.0 (current stable). Major additions include Linux fsmonitor, remote-group push, and parallel compatible hooks. Git 3.0 remains expected later in 2026.
+- **git**: 2.55.0 (current stable). Major additions include Linux fsmonitor, remote-group push, and parallel compatible hooks.
 - **GitHub CLI (`gh`)**: 2.100.0
-- **GitLab CLI (`glab`)**: 1.116.0
-- **Forgejo CLI (`fj`)**: 0.6.0 (verify the current release at `codeberg.org/forgejo-contrib/forgejo-cli`). Rust-written, official community CLI. Covers PRs (incl. AGit), issues, repos, releases, tags, actions.
+- **GitLab CLI (`glab`)**: 1.117.0
+- **Forgejo CLI (`fj`)**: verify the current release at `codeberg.org/forgejo-contrib/forgejo-cli`; the previous 0.6.0 pin was not independently confirmed on September 10. Rust-written, official community CLI. Covers PRs (incl. AGit), issues, repos, releases, tags, actions.
 - **Forgejo**: v16.0.3 current; v15.0.7 is the current LTS. Critical RCE (CVE-2025-68937) patched in v13.0.2+.
 - **prek**: 0.5.2 (Rust, recommended) or **pre-commit**: 4.6.2 (Python, largest ecosystem)
-- **git-filter-repo**: 2.47.x
-- **gitleaks**: 8.30.x (secret scanning)
+- **git-filter-repo**: 2.47.0
+- **gitleaks**: 8.30.1 (secret scanning)
 - **cosign**: 3.1.3 (Sigstore, for tag/release signing context)
 
 This skill covers five domains depending on context:
@@ -191,6 +191,12 @@ collaborative development with review. Adapt to the project's actual workflow.
 
 Read `references/forge-workflows.md` for forge-specific PR/MR creation
 patterns (GitHub `gh pr create`, GitLab `glab mr create`, Forgejo web UI or API).
+
+Select verification from the diff and repository policy. Opening a PR does not by itself
+justify a full build, integration suite, or release pipeline. Run affected checks and
+honor required merge gates; reuse passing results for the same revision and relevant inputs.
+If CI does unnecessary work, use **ci-cd** to scope its triggers and jobs rather than
+bypassing checks or repeatedly dispatching the full pipeline.
 
 General flow:
 1. **Create feature branch**: `git checkout -b type/short-description` (e.g., `feat/user-search`, `fix/auth-bypass`). Keep branch names lowercase, hyphenated, prefixed with type.

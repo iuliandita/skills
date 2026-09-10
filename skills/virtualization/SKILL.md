@@ -1,7 +1,7 @@
 ---
 name: virtualization
 description: >
-  · Create/troubleshoot VMs and hypervisors: Proxmox, QEMU/KVM, libvirt, XCP-ng, VMware/vSphere. Triggers: 'proxmox', 'qemu', 'kvm', 'libvirt', 'virsh', 'vm', 'hypervisor', 'xcp-ng', 'vmware', 'esxi'. Not for containers (use docker).
+  · Manage VMs: Proxmox, QEMU/KVM, libvirt, XCP-ng, VMware/ESXi; debug hypervisors, storage, and GPU passthrough.
 license: MIT
 compatibility: "Varies by hypervisor. Proxmox: pvesh, qm, pct. Libvirt: virsh, virt-install. Optional: packer, terraform"
 metadata:
@@ -18,7 +18,7 @@ setups to multi-node clusters with HA, live migration, and GPU passthrough. The 
 production-ready VM infrastructure with correct storage, memory, and CPU config that won't
 bite you at 3 AM.
 
-**Target versions** (verified September 2026):
+**Target versions** (September 2026; verification exceptions marked below):
 
 | Tool | Version | Release date | Notes |
 |------|---------|-------------|-------|
@@ -28,10 +28,17 @@ bite you at 3 AM.
 | QEMU | 11.1.1 | Sep 2026 | Stable 11.1 maintenance release |
 | libvirt | 12.7.0 | Sep 2026 | Hypervisor abstraction layer |
 | XCP-ng | 8.3 LTS | Oct 2024 | Xen-based, LTS since Jun 2025, EOL Nov 2028 |
-| VMware ESXi | 8.0 U3i | Feb 2026 | Broadcom-owned, licensing upheaval |
-| VirtualBox | 7.2.14 | Jul 2026 | Dev/testing only |
+| VMware ESXi | 8.0 U3k (25595708) | Jul 2026 | Security floor for the 8.0 U3 lane; check the appliance lane |
+| VirtualBox | 7.2.14 (retained, unverified) | Unverified | Verify the current publisher release before targeting this pin |
 | Packer | 1.16.0 | Aug 2026 | Image builder, multi-platform |
 | cloud-init | 26.2 | Aug 2026 | Instance initialization standard |
+
+Security recheck (2026-09-10): [VMSA-2026-0006](https://brcm.tech/vmsa-2026-0006)
+addresses critical CVE-2026-47876 in ESX. The 8.0 fixed builds are
+ESXi80U3k-25595708 or ESXi80U2f-25626445; select the matching update lane.
+The advisory also covers critical vCenter CVE-2026-59309/CVE-2026-59310;
+patch vCenter separately using its response matrix. ESX/vCenter 7.0 require
+Broadcom extended-support guidance rather than assuming an 8.0 patch applies.
 
 ## When to use
 

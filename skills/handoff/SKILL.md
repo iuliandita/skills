@@ -1,9 +1,7 @@
 ---
 name: handoff
 description: >
-  · Compress the current session into a handoff doc another agent continues from. Triggers:
-  'handoff', 'hand off', 'context handoff', 'fresh session', 'AFK run'. Not for idea capture
-  (use roadmap) or full dev workflow (use dev-cycle).
+  · Write a session handoff so another agent can resume with the current state, decisions, and next steps.
 license: MIT
 compatibility: "None - writes a markdown file. Optional: git for gitignoring the .handoff/ directory"
 metadata:

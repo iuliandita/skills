@@ -5,7 +5,7 @@
 
 ---
 
-## Fish (4.8)
+## Fish (4.9.3)
 
 Fish is a modern, user-friendly shell that intentionally breaks POSIX compatibility for a
 better interactive experience. You'll encounter it when users have it as their login shell or
@@ -268,7 +268,7 @@ bash (`pkg install bash`) or write POSIX sh.
 
 ---
 
-## Nushell (0.114)
+## Nushell (0.115.1)
 
 Nushell is a modern shell that treats data as structured tables instead of text streams. It's
 gaining traction among developers who work with JSON/YAML/CSV regularly.
@@ -407,7 +407,7 @@ actually means compatible.
 **Status**: pre-1.0, actively developed. OSH is usable as a bash replacement for testing
 scripts. YSH is maturing but still experimental.
 
-### Dash (0.5.13)
+### Dash (0.5.13.5)
 
 Not really an "alternative" shell - dash is the Debian Almquist Shell, the `/bin/sh` on Debian
 and Ubuntu. It's intentionally minimal and POSIX-strict. You don't write "dash scripts" - you
