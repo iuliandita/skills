@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.45.6](https://github.com/iuliandita/skills/compare/v1.45.5...v1.45.6) (2026-09-10)
+
+### Bug Fixes
+
+* **skills:** correct reference inaccuracies and behavioral gaps found by a third fresh-context refinement pass - Helm nil-value and QoS guidance, Terraform cross-variable validation and Checkov policy IDs, LVM thin-pool and Proxmox disk-resize semantics, ansible Galaxy token handling, NixOS systemd-initrd impermanence, and the deep-audit wave-3 list ([#153](https://github.com/iuliandita/skills/pull/153)).
+* **skill-creator, skill-refiner:** complete the deferred meta-improvement - correct LVM interpretation, scope reserved words to the platform, realistic routing-overlap and audience-led compliance, qualitative effort tiers, a hardened harness probe, and reconciled requested-round and simplicity rules ([#153](https://github.com/iuliandita/skills/pull/153)).
+
 ## [1.45.5](https://github.com/iuliandita/skills/compare/v1.45.4...v1.45.5) (2026-09-10)
 
 ### Bug Fixes
