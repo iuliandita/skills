@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.45.5](https://github.com/iuliandita/skills/compare/v1.45.4...v1.45.5) (2026-09-10)
+
+### Bug Fixes
+
+* **skills:** shorten descriptions, scope verification to the change, refresh September references, and correct shell, API, backup, infrastructure, prose, and audit guidance ([#151](https://github.com/iuliandita/skills/pull/151)).
+* **skill-refiner:** record two collection refinement rounds and retain remaining deductions; iteration 3 and meta-skill changes are deferred in [#150](https://github.com/iuliandita/skills/issues/150).
+
 ## [1.45.4](https://github.com/iuliandita/skills/compare/v1.45.3...v1.45.4) (2026-09-09)
 
 ### Bug Fixes
