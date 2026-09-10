@@ -304,8 +304,9 @@ sudoers and evade detection.
 
 ## OIDC and Keyless Authentication
 
-GitHub's OIDC provider issues short-lived tokens (10 min) via Sigstore's Fulcio CA, eliminating
-long-lived cloud credentials in CI.
+GitHub issues OIDC tokens that a configured cloud identity provider can exchange for
+short-lived credentials. Sigstore separately uses OIDC identity with Fulcio for signing
+certificates; Fulcio does not issue GitHub cloud-federation tokens.
 
 ```yaml
 permissions:
@@ -340,7 +341,7 @@ GA since June 2024. Proves an artifact was built by a specific workflow in a spe
     push-to-registry: true
 
 # Verify locally:
-# gh attestation verify ghcr.io/org/repo@sha256:... --owner org
+# gh attestation verify oci://ghcr.io/org/repo@sha256:... --owner org
 ```
 
 Public repos use Sigstore's public-good instance. Private repos use GitHub's private instance.
@@ -408,7 +409,7 @@ caller.
 ### Setup actions with built-in cache
 
 Many setup actions handle caching automatically:
-- `actions/setup-node@v4` - `cache: npm` / `cache: bun`
+- `actions/setup-node@v4` - `cache: npm` / `cache: yarn` / `cache: pnpm`; use an explicit cache for Bun
 - `actions/setup-go@v5` - `cache: true` (default)
 - `actions/setup-python@v5` - `cache: pip`
 
@@ -510,11 +511,7 @@ security:
     - uses: actions/checkout@<sha>
 
     # Dependency audit
-    - run: bun audit 2>&1 | tee audit.txt; true
-    - run: |
-        if grep -qiE '(high|critical)' audit.txt; then
-          echo "::warning::HIGH/CRITICAL vulnerabilities found"
-        fi
+    - run: bun audit  # fail on findings or operational error; tune a documented baseline before adoption
 
     # Container scan (pin to known-safe version post-Trivy compromise)
     - uses: aquasecurity/trivy-action@<sha>  # v0.35.0 (verified safe)
@@ -546,5 +543,6 @@ actions to full commit SHAs. The March 2026 rollback set was binary v0.69.3,
 - **Concurrency group deadlock**: same group at workflow AND job level creates a deadlock. Pick one.
 - **Reusable workflow input defaults**: always provide inputs explicitly from the caller for
   cross-platform compatibility (Forgejo ignores defaults).
-- **`needs` referencing excluded jobs**: a job with `needs: [excluded-job]` fails with "job not found"
-  when the needed job is excluded by an `if:` condition. Use `if: always() && needs.job.result != 'skipped'`.
+- **Skipped dependencies**: a job skipped by `if` normally skips its dependents. For an aggregate
+  gate use `always()` and explicitly require success for every selected job; an undefined job id
+  is a separate validation error. Do not accept failures merely because they are not skipped.

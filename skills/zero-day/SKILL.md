@@ -161,8 +161,8 @@ checksec --file=TARGET_BINARY 2>/dev/null || (
   readelf -d TARGET_BINARY 2>/dev/null | grep -i 'BIND_NOW\|FLAGS'
 )
 
-# Linked libraries (attack surface)
-ldd TARGET_BINARY 2>/dev/null || otool -L TARGET_BINARY 2>/dev/null
+# Inspect dependencies statically; ldd can execute an untrusted binary
+readelf -d TARGET_BINARY  # ELF; use otool -L for Mach-O instead
 
 # Strings - low-hanging fruit (URLs, paths, format strings, debug messages)
 strings -n 8 TARGET_BINARY | grep -iE 'http://\|https://\|/tmp/\|/etc/\|password\|key\|token\|%s\|%d\|%x\|%n\|debug\|error\|fail' | head -40
@@ -389,17 +389,20 @@ version in a lab environment.
 
 | Metric | Question |
 |--------|----------|
-| Attack Vector | Network, adjacent, local, or physical? |
-| Attack Complexity | Any special conditions needed? |
-| Privileges Required | None, low, or high? |
-| User Interaction | None, passive, or active? |
-| Confidentiality | None, low, or high impact? |
-| Integrity | None, low, or high impact? |
-| Availability | None, low, or high impact? |
+| Attack Vector (AV) | Network, adjacent, local, or physical? |
+| Attack Complexity (AC) | Must security-enhancing conditions be circumvented? |
+| Attack Requirements (AT) | Are particular deployment or execution conditions required? |
+| Privileges Required (PR) | None, low, or high? |
+| User Interaction (UI) | None, passive, or active? |
+| Vulnerable System Confidentiality (VC) | None, low, or high impact? |
+| Vulnerable System Integrity (VI) | None, low, or high impact? |
+| Vulnerable System Availability (VA) | None, low, or high impact? |
+| Subsequent System Confidentiality (SC) | None, low, or high impact beyond the vulnerable system? |
+| Subsequent System Integrity (SI) | None, low, or high impact beyond the vulnerable system? |
+| Subsequent System Availability (SA) | None, low, or high impact beyond the vulnerable system? |
 
-CVSS 4.0 also adds Subsequent System metrics (impact beyond the vulnerable component) and
-Supplemental metrics (Automatable, Recovery, Provider Urgency). Include these when the
-vulnerability affects systems beyond the immediate target.
+All eleven metrics belong to the base vector. Supplemental metrics provide optional
+context and do not change the numeric base score.
 
 Use the FIRST CVSS calculator: https://www.first.org/cvss/calculator/4.0
 

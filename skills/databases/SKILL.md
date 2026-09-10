@@ -64,14 +64,14 @@ AI tools consistently produce the same database mistakes. **Before returning any
 
 ### Migrations
 
-- [ ] `IF NOT EXISTS` / `IF EXISTS` guards on `ADD COLUMN` / `DROP COLUMN` (bare DDL crashes on re-run)
+- [ ] Versioned migrations detect unexpected schema drift; use guards only for intentionally rerunnable operations
 - [ ] Adding `NOT NULL` column includes a `DEFAULT` value (or two-step: add nullable, backfill, alter NOT NULL)
-- [ ] Index creation uses `CONCURRENTLY` on PostgreSQL (prevents full table lock)
+- [ ] Live-write PostgreSQL index builds use CONCURRENTLY only where supported, outside transaction blocks; check for invalid indexes after failure
 - [ ] Large table changes run in batches, not a single transaction (lock escalation, OOM risk)
 - [ ] Migration is backward-compatible (old app version can still run against new schema)
 - [ ] No `DROP TABLE` or `DROP DATABASE` without explicit user confirmation
-- [ ] Migration is idempotent - can be run twice without error
-- [ ] Rollback/down migration exists and is tested
+- [ ] Migration runner records applied versions; rerunnable operational scripts converge and validate existing objects
+- [ ] Recovery is tested: down migration when safe, or documented roll-forward/restore when reversal loses data
 - [ ] PG enum changes use `ALTER TYPE ... ADD VALUE` outside a transaction (PG 12+ allows it inside a transaction, but the new value cannot be used until that transaction commits - run it standalone to use the value immediately)
 
 ### Schema
@@ -167,24 +167,24 @@ Follow the domain-specific section below. Always apply the production checklist 
 5. Re-run `EXPLAIN ANALYZE` to confirm the planner uses the new index and that estimated vs actual rows are close.
 
 **Lock contention / deadlock diagnosis** (second most common "it's stuck" scenario):
-1. PG: `SELECT pid, age(backend_xact_start), query, wait_event_type, wait_event FROM pg_stat_activity WHERE state != 'idle' AND wait_event IS NOT NULL ORDER BY age(backend_xact_start) DESC;`
+1. PG: `SELECT pid, age(xact_start), query, wait_event_type, wait_event FROM pg_stat_activity WHERE state != 'idle' AND wait_event IS NOT NULL ORDER BY age(xact_start) DESC;`
 2. PG blocked queries: `SELECT blocked.pid AS blocked_pid, blocked.query AS blocked_query, blocking.pid AS blocking_pid, blocking.query AS blocking_query FROM pg_stat_activity blocked JOIN pg_locks bl ON bl.pid = blocked.pid JOIN pg_locks kl ON kl.locktype = bl.locktype AND kl.database IS NOT DISTINCT FROM bl.database AND kl.relation IS NOT DISTINCT FROM bl.relation AND kl.page IS NOT DISTINCT FROM bl.page AND kl.tuple IS NOT DISTINCT FROM bl.tuple AND kl.transactionid IS NOT DISTINCT FROM bl.transactionid AND kl.pid != bl.pid JOIN pg_stat_activity blocking ON blocking.pid = kl.pid WHERE NOT bl.granted AND kl.granted;`
 3. MySQL: `SHOW ENGINE INNODB STATUS\G` - look for `LATEST DETECTED DEADLOCK` section. Also: `SELECT * FROM performance_schema.data_lock_waits;` (MySQL 8.0+).
 4. MongoDB: `db.currentOp({"waitingForLock": true})` and check `mongod` log for `LockTimeout` entries.
-5. Fix: kill the blocking query if it's stuck (`SELECT pg_terminate_backend(PID);` / `KILL CONNECTION thread_id;`), then investigate why the lock was held (long transactions, missing indexes on UPDATE/DELETE WHERE clauses, lock ordering bugs in application code).
+5. Inspect the blocker owner, transaction age, and impact. Prefer query cancellation when appropriate; terminate the exact backend/thread only with explicit authorization after assessing rollback impact. Then address the cause of the lock.
 
 **Connection pooler sizing** (second most common):
-1. Determine backend budget: `max_connections` minus superuser_reserved minus replication slots = available.
-2. PgBouncer `default_pool_size` per user/db pair: start at `available / number_of_app_instances`, round down.
+1. Determine backend budget: `max_connections` minus reserved connections and operational headroom = available; budget replication workers/senders separately.
+2. PgBouncer `default_pool_size` per user/db pair: budget the sum across every active user/database pool and PgBouncer instance within available backend capacity.
 3. Set `max_client_conn` to the total connections your app fleet will open (all instances combined).
 4. Use `transaction` pool mode for stateless web apps. Switch to `session` mode (which supports all PostgreSQL features) when the app needs session-level state: temp tables, advisory locks, `SET`, or prepared statements on PgBouncer older than 1.21 (1.21+ supports prepared statements in transaction mode via `max_prepared_statements`).
 5. Validate: `psql -h pgbouncer-host -p 6432 pgbouncer -c "SHOW POOLS;"` - watch `sv_active` vs `sv_idle` under load.
 
 **Migration safety check** (before running any DDL in production):
-1. Verify the migration is idempotent: `IF NOT EXISTS` / `IF EXISTS` guards on all DDL.
-2. Check table size: `SELECT pg_size_pretty(pg_total_relation_size('tablename'));` - anything over 1GB needs batched operations or `CONCURRENTLY` indexes.
+1. Identify versioned migration versus rerunnable operation; validate preconditions and preserve drift detection.
+2. Check table size, write traffic, operation rewrite/lock behavior, and runtime budget; choose batching or supported concurrent indexing where needed.
 3. Verify backward compatibility: can the current app version still function after this DDL runs?
-4. Test the rollback/down migration against a copy of production data, not just an empty schema.
+4. Test the selected recovery path against representative populated data; do not require a lossy down migration.
 5. Run during low-traffic window if the operation takes locks (even brief ones).
 
 ### Step 4: Validate
@@ -248,21 +248,21 @@ Three approaches, pick by downtime tolerance:
 2. Create publication on source: `CREATE PUBLICATION upgrade_pub FOR ALL TABLES;`
 3. Create subscription on target: `CREATE SUBSCRIPTION upgrade_sub CONNECTION '...' PUBLICATION upgrade_pub;`
 4. Wait for initial sync + catchup (monitor `pg_stat_subscription`, replication lag)
-5. Migrate sequences: logical replication does not replicate sequence values - copy them manually
+5. Inventory sequences and prepare their synchronization; logical replication does not copy their values
 6. Test application against the new version (read traffic, connection pooler split). **Monitor during split-test**: query latency p50/p95/p99 (compare old vs new - regression means planner stats or config drift), error rates by query type (new version may have stricter behavior), connection pool saturation (`SHOW POOLS` in PgBouncer - watch `cl_waiting`), replication lag trend (should stay flat or decrease, never grow during read-only test), and memory/CPU on the new instance. Run for at least one full traffic cycle (24h if your workload is diurnal). Abort and route back to old primary if error rate exceeds baseline or p99 latency degrades >20%.
-7. Cutover: stop writes to old primary, verify lag = 0, point connection pooler to new primary
-8. Drop subscription and decommission old primary
+7. Cutover: fence source writes and drain transactions, verify target replay reached the final source WAL position, synchronize final sequence values, then route writes to the target
+8. Verify application health and retain the source for the agreed rollback window; decommission only after that window and explicit authorization
 
 **Rollback procedure** (if replication stalls or validation fails):
-- **Lag not reaching zero**: Check `pg_stat_subscription` for `last_msg_send_time` vs `last_msg_receipt_time` delta. Common causes: long-running transactions on source blocking WAL send, tables missing primary keys (forces full-row comparison), or network throughput limits. If lag is stuck, check `pg_replication_slots` on the source for `active = false` - an inactive slot means the subscription dropped. Recreate the subscription; do not proceed with cutover.
+- **Lag not reaching zero**: Check `pg_stat_subscription` for `last_msg_send_time` vs `last_msg_receipt_time` delta. Common causes: long-running transactions on source blocking WAL send, tables missing primary keys (forces full-row comparison), or network throughput limits. If lag is stuck, check `pg_replication_slots` on the source for `active = false` - an inactive slot means no current receiver is using it, not proof of a dropped subscription. Inspect target subscription/workers and logs; do not recreate it blindly or proceed with cutover.
 - **Application validation fails on new version**: Route all traffic back to the old primary (update pooler config). The old primary never stopped accepting writes, so no data is lost. Drop the subscription on the new instance: `DROP SUBSCRIPTION upgrade_sub;` - this also drops the replication slot on the source. Investigate, fix, and restart from step 3.
-- **Post-cutover rollback** (writes already went to new primary): This is the hard case. Options: (a) set up reverse logical replication from new -> old before decommissioning the old primary (plan this before cutover if RTO requires it), or (b) restore old primary from backup + WAL and accept data loss for the cutover window. Option (a) requires the old primary to still be running. **Decision point**: if you need rollback after cutover, set up reverse replication in step 6 before routing write traffic.
+- **Post-cutover rollback** (writes already went to new primary): This is the hard case. Options: (a) set up reverse logical replication from new -> old before decommissioning the old primary (plan this before cutover if RTO requires it), or (b) restore old primary from backup + WAL and accept data loss for the cutover window. Option (a) requires the old primary to still be running. **Decision point**: if you need rollback after cutover, test a reverse-replication/failback plan in step 6 before routing write traffic; prevent loops and never permit concurrent independent writers.
 
 **Key pitfalls** (check all of these before starting):
 - Tables need primary keys or `REPLICA IDENTITY FULL` - check first: `SELECT c.relname FROM pg_class c JOIN pg_namespace n ON c.relnamespace = n.oid WHERE n.nspname = 'public' AND c.relkind = 'r' AND NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid = c.oid AND contype = 'p');`
 - DDL is not replicated - schema changes during migration need manual sync on both sides
 - Large objects (`lo`) are not replicated
-- Sequence values drift - copy them manually after cutover, not before
+- Sequence values drift - copy final values after source write fencing/drain and before any target writes
 
 Read `references/migration-patterns.md` for cross-engine type mapping, ORM migration tooling, and detailed migration patterns.
 
@@ -300,7 +300,7 @@ Read `references/migration-patterns.md` for cross-engine type mapping, ORM migra
 - [ ] `work_mem` sized for concurrency (PG default is 4MB; allocated per sort/hash operation, not per connection - multiply by concurrent queries x operations to estimate peak memory)
 - [ ] `random_page_cost = 1.1` for SSD storage
 - [ ] `statement_timeout` set per-role (not globally - migrations need longer)
-- [ ] `idle_in_transaction_session_timeout` set (60s default)
+- [ ] `idle_in_transaction_session_timeout` assessed per role/workload; default 0 disables it
 - [ ] `pg_stat_statements` enabled
 - [ ] Autovacuum tuned for large tables (`autovacuum_vacuum_scale_factor`)
 - [ ] WAL archiving enabled for PITR (`archive_mode = on` + pgBackRest/Barman, or managed backup)
@@ -349,7 +349,7 @@ Read `references/migration-patterns.md` for cross-engine type mapping, ORM migra
 - [ ] Encryption in transit: TLS 1.2+ enforced on all connections (Req 4)
 - [ ] Audit logging: pgAudit/audit plugin, shipped to immutable SIEM (Req 10)
 - [ ] Key management: keys in HSM/KMS, not alongside data (Req 3.6)
-- [ ] Key rotation: DEKs every 90 days, master keys annually (Req 3.7)
+- [ ] Key rotation follows each key owner/vendor-defined cryptoperiod and compromise response; do not invent universal numeric PCI intervals
 - [ ] Access control: separate roles, no shared accounts, MFA for CDE access (Req 7, 8)
 - [ ] Data masking: PAN display limited to last 4 digits (Req 3.3)
 - [ ] No cardholder data in non-prod environments (Req 6.5.4)

@@ -42,7 +42,7 @@ For a quick 4-skill sweep, use **full-review** instead.
 Run after Step 9 completes, before concluding the session. Checks cover the full
 workflow (waves + persistence + routing), not just the wave dispatch phase.
 
-- [ ] Every worker had independent context, repository read access, the tools needed by its audit, and the assigned skill's instructions
+- [ ] Delegated workers had independent context, read access, required tools, and assigned instructions; any sequential root-context fallback was disclosed
 - [ ] Each worker loaded its assigned custom skill through the harness's native skill-loading mechanism, or received those instructions in its prompt
 - [ ] Recon summary (Wave 1) was presented to the user before Wave 2 agents were dispatched
 - [ ] Wave 2 (code quality) ran all 4 skills regardless of repo type
@@ -82,7 +82,13 @@ workflow (waves + persistence + routing), not just the wave dispatch phase.
 
 ### Step 0: Preflight
 
-Gather context. Run in parallel (guard each with `; true`):
+Gather context. Run independent reads in parallel, capturing each exit status and error
+separately; report unavailable context instead of masking failures with `; true`.
+
+Before dispatch or artifact writes, ensure `docs/local/` is ignored. Add the bare
+`docs/local/` entry to `.gitignore` if needed and verify with `git check-ignore`. Check
+that intended artifact paths are not already tracked; stop artifact writes if protection
+is ineffective. Preserve existing reports and task progress in a dated backup before replacement.
 
 If full-access agent dispatch is unavailable, run every assigned skill sequentially in the root
 context. Preserve wave order, separate native result sections, and report the compatibility limit.
@@ -112,9 +118,10 @@ Compute `{count}` by summing: 4 (Wave 2) + matched Wave 3 skills + 2 (Wave 4) +
 
 In scoped mode, separate Wave 3 matches into two lines: skills matched by files
 within the scoped subtree, and skills matched only by repo-root manifests
-(potential false activations from workspace-root deps). Dispatch both sets - the
-invoked skill will report zero findings if its domain isn't actually in scope.
-The `[root-manifest]` separation is for user transparency, not gating.
+(candidate matches from workspace-root dependencies). Derive the split by repeating scoped
+detection with `DEEP_AUDIT_ROOT_MANIFESTS=0` and comparing the two output sets. Confirm candidates against
+actual scoped imports, configuration, or shared build dependencies before dispatch.
+Record irrelevant root-only matches as skipped.
 
 If the user stated a priority (e.g., "security is top priority"), acknowledge it
 in the recon summary: "Security is prioritized - it runs in Wave 4 as designed;
@@ -302,7 +309,7 @@ Present results:
 ```
 
 **Security-audit report handling:** the `security-audit` skill writes directly to its canonical
-dated path under `docs/local/audits/security-audit/`. The `docs/local/` ignore check in Step 7
+dated path under `docs/local/audits/security-audit/`. The preflight `docs/local/` ignore check
 covers that report.
 
 ### Step 5: Docs & Hygiene (Wave 5)
@@ -360,28 +367,13 @@ Consolidate every wave's findings into a single durable report at
 `docs/local/audits/DEEP-AUDIT.md`. The terminal summary in Step 6 is ephemeral;
 this file is the source of truth that Step 8 and downstream planning work from.
 
-1. **Ensure `docs/local/` is gitignored.** Check `.gitignore` for an entry covering
-   `docs/local/`. If missing, append exactly these two lines to the repo-root `.gitignore`:
-
-   ```
-   # Local audit/spec/plan scratchpad (deep-audit output, not tracked)
-   docs/local/
-   ```
-
-   Then verify:
-
-   ```bash
-   git check-ignore -q docs/local/ && echo "gitignored" || echo "NOT gitignored"
-   ```
-
-   Do not write any audit artifact until this check passes. Contents include unredacted
-   security findings.
+1. **Recheck artifact protection** from Step 0 and back up existing reports and task progress.
 
 2. **Create the target directory.** `mkdir -p docs/local/audits/`.
 
 3. **Write `docs/local/audits/DEEP-AUDIT.md`.** Follow the DEEP-AUDIT.md template in
    `references/report-templates.md` (metadata header, headline verdict, scorecard,
-   per-wave sections preserving native format). Overwrite any prior file.
+   per-wave sections preserving native format). Replace a prior file only after its backup is verified.
 
 ### Step 8: Generate DEEP-AUDIT-TASKS.md
 

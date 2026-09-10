@@ -86,8 +86,8 @@ Determine what you're working with before trying anything.
 # Who am I, what can I do?
 id && hostname && uname -a && cat /etc/*-release 2>/dev/null
 
-# Am I in a container?
-cat /proc/1/cgroup 2>/dev/null | grep -qiE 'docker|kubepods|containerd' && echo "CONTAINER" || echo "HOST"
+# Container indicators; missing markers do not prove this is the host
+cat /proc/1/cgroup 2>/dev/null
 ls -la /.dockerenv 2>/dev/null && echo "Docker container detected"
 cat /proc/self/mountinfo | grep -q 'kubepods' && echo "Kubernetes pod detected"
 
@@ -180,12 +180,12 @@ covering:
 
 ### Phase 5: Container Breakout
 
-If you're inside a container, look for escape vectors. **The `--privileged` flag is the critical enabler** - it disables all security mechanisms (seccomp, AppArmor, capability drops, device cgroup) and grants full access to host devices. A privileged container is effectively root on the host.
+If you're inside a container, inspect its isolation boundaries. **Rootful privileged containers are high risk**, but effective host access depends on the runtime, user namespaces, exposed devices, and remaining security policy. Capabilities alone do not prove privileged mode or host root access.
 
 Read `references/container-breakout.md` for the full technique library
 covering:
 
-1. **Docker socket** - mounted `/var/run/docker.sock` -> full host access
+1. **Docker socket** - writable rootful daemon socket can grant host root access
 2. **Privileged mode** - `--privileged` -> mount host filesystems, load kernel modules
 3. **Dangerous capabilities** - SYS_ADMIN (cgroup escape), SYS_PTRACE (process injection), DAC_READ_SEARCH (shocker), SYS_MODULE
 4. **Host mounts** - `/host`, `/mnt`, or host paths mounted into container
@@ -196,8 +196,9 @@ covering:
 
 **Quick check:**
 ```bash
-# Am I privileged?
-ip link add dummy0 type dummy 2>/dev/null && echo "PRIVILEGED" && ip link del dummy0
+# Read-only clues; confirm privileged mode from runtime configuration
+grep -E "CapEff|CapBnd|NoNewPrivs|Seccomp" /proc/self/status
+cat /proc/self/uid_map
 # Docker socket?
 ls -la /var/run/docker.sock 2>/dev/null
 # Capabilities?
@@ -223,23 +224,15 @@ covering:
 6. **Node-to-cluster** - kubeconfig files, static pod manifests, CNI creds, cloud IMDS
 7. **Pod Security bypass** - namespace label manipulation, admission controller gaps
 
-**Quick check from inside a pod:**
+**Permission checks:** first verify that the selected context authenticates as the
+intended pod ServiceAccount and uses the intended cluster. A local administrator context
+would test the wrong identity. With a correctly configured kubectl client:
 ```bash
-# ServiceAccount token
-TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token 2>/dev/null)
-APISERVER="https://kubernetes.default.svc"
-
-# What can I do?
-curl -sk "$APISERVER/apis" -H "Authorization: Bearer $TOKEN" | head -20
-
-# Can I list secrets?
-curl -sk "$APISERVER/api/v1/secrets" -H "Authorization: Bearer $TOKEN"
-
-# Can I create pods?
-curl -sk "$APISERVER/api/v1/namespaces/default/pods" \
-  -H "Authorization: Bearer $TOKEN" -X POST -H "Content-Type: application/json" \
-  -d '{}' 2>&1 | grep -o '"message":"[^"]*"'
+kubectl --context "$KUBE_CONTEXT" auth can-i list secrets --namespace "$NAMESPACE"
+kubectl --context "$KUBE_CONTEXT" auth can-i create pods --namespace "$NAMESPACE"
 ```
+These authorization checks do not retrieve secret values or create a test pod. Admission
+policy can still reject an operation that RBAC permits.
 
 ### Phase 7: IaC & Cloud Credential Exposure
 

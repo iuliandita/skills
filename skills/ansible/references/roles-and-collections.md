@@ -261,6 +261,19 @@ plugin_routing:
 
 ### Build and publish
 
+Configure the nonsecret server list in `ansible.cfg` before publishing:
+
+```ini
+[galaxy]
+server_list = galaxy, hub
+[galaxy_server.galaxy]
+url = https://galaxy.ansible.com/
+[galaxy_server.hub]
+url = https://hub.example.com/api/galaxy/content/published/
+```
+
+Keep tokens in protected environment variables, not the tracked configuration.
+
 ```bash
 # Build the collection artifact
 ansible-galaxy collection build
@@ -268,13 +281,13 @@ ansible-galaxy collection build
 # Install locally for testing
 ansible-galaxy collection install myorg-infrastructure-1.0.0.tar.gz --force
 
-# Publish to Galaxy
-ansible-galaxy collection publish myorg-infrastructure-1.0.0.tar.gz --api-key $GALAXY_API_KEY
-
-# Publish to private Automation Hub
-ansible-galaxy collection publish myorg-infrastructure-1.0.0.tar.gz \
-  --server https://hub.example.com/api/galaxy/content/published/ \
-  --api-key $HUB_API_KEY
+# Supply GALAXY_API_KEY / HUB_API_KEY through protected environment injection.
+# Configure named Galaxy servers and use their supported token environment variables;
+# never expand a token into --api-key argv.
+ANSIBLE_GALAXY_SERVER_GALAXY_TOKEN="$GALAXY_API_KEY" \
+  ansible-galaxy collection publish myorg-infrastructure-1.0.0.tar.gz --server galaxy
+ANSIBLE_GALAXY_SERVER_HUB_TOKEN="$HUB_API_KEY" \
+  ansible-galaxy collection publish myorg-infrastructure-1.0.0.tar.gz --server hub
 ```
 
 ---
@@ -334,7 +347,7 @@ driver:
 
 platforms:
   - name: ubuntu-noble
-    image: "docker.io/geerlingguy/docker-ubuntu2404-ansible:latest"
+    image: "docker.io/geerlingguy/docker-ubuntu2404-ansible@sha256:<reviewed-digest>"
     pre_build_image: true
     tmpfs:
       - /run
@@ -345,7 +358,7 @@ platforms:
     privileged: true               # Needed for systemd in container
 
   - name: rhel9
-    image: "docker.io/geerlingguy/docker-rockylinux9-ansible:latest"
+    image: "docker.io/geerlingguy/docker-rockylinux9-ansible@sha256:<reviewed-digest>"
     pre_build_image: true
     tmpfs:
       - /run
@@ -356,7 +369,7 @@ platforms:
     privileged: true
 
   - name: alpine
-    image: "ghcr.io/buluma/alpine-openrc:latest"
+    image: "ghcr.io/buluma/alpine-openrc@sha256:<reviewed-digest>"
     pre_build_image: true
     privileged: true               # required for OpenRC in container
     volumes:
@@ -383,11 +396,17 @@ provisioner:
 
 verifier:
   name: ansible
-
-lint: |
-  set -e
-  ansible-lint -p production
 ```
+
+Run lint explicitly before `molecule test`; do not assume the installed Molecule version
+executes a legacy `lint` key:
+
+```bash
+ansible-lint --profile production
+molecule test
+```
+
+Replace each `<reviewed-digest>` with the approved image digest before running the scenario.
 
 ### converge.yml
 

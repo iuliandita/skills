@@ -89,7 +89,7 @@ bun create astro@latest
 `writable` / `readable` stores still work; new code prefers runes.
 
 ```bash
-bun create svelte@latest
+bunx sv create --install bun
 ```
 
 ---

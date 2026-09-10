@@ -39,7 +39,9 @@ cleanup() {
     # Cleanup logic here
     :
 }
-trap cleanup EXIT INT TERM
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
 usage() {
     cat <<EOF
@@ -285,7 +287,7 @@ pattern='^v[0-9]+\.[0-9]+\.[0-9]+$'
 
 ```bash
 # (( )) for arithmetic evaluation
-(( count++ ))
+count=$((count + 1))
 (( total = a + b * c ))
 (( remaining = total % batch_size ))
 
@@ -317,12 +319,12 @@ some_command | tee >(grep ERROR > errors.log) >(wc -l > count.txt) > /dev/null
 ```bash
 # Variables set inside a pipe are in a subshell - they don't persist
 count=0
-cat file.txt | while read -r line; do (( count++ )); done
+cat file.txt | while read -r line; do count=$((count + 1)); done
 echo "$count"   # still 0!
 
 # Fix 1: process substitution instead of pipe
 count=0
-while read -r line; do (( count++ )); done < <(cat file.txt)
+while read -r line; do count=$((count + 1)); done < <(cat file.txt)
 echo "$count"   # correct
 
 # Fix 2: lastpipe (bash 4.2+) - last pipe segment runs in current shell
@@ -469,12 +471,12 @@ echo "${my_arr[@]}"              # one two three
 ### set options
 
 ```bash
-set -e          # Exit on error (any command returning non-zero)
+set -e          # Exit on unhandled failures; conditional/AND/OR contexts have exceptions
 set -u          # Exit on undefined variable
-set -o pipefail # Exit on pipe failure (not just last command)
+set -o pipefail # Pipeline status reflects the rightmost failure; does not itself exit
 set -x          # Debug: print every command before execution
 
-# Combined (always use this in scripts)
+# Combined (when expected nonzero statuses are explicitly handled)
 set -euo pipefail
 ```
 
@@ -492,7 +494,7 @@ trap cleanup EXIT
 trap 'echo "Interrupted"; exit 130' INT
 trap 'echo "Terminated"; exit 143' TERM
 
-# ERR trap (runs on any command failure when set -e is active)
+# ERR trap (subject to conditional-context exceptions, like errexit)
 trap 'echo "Error on line $LINENO: $BASH_COMMAND" >&2' ERR
 
 # DEBUG trap (runs before every command)
@@ -596,8 +598,8 @@ echo "$result"                       # computed-1234567890
 
 # Why it matters: variables modified inside ${ } persist in the caller
 count=0
-: ${ (( count++ )); }
-echo "$count"                        # 1 (would be 0 with traditional $((...)))
+: ${ count=$((count + 1)); }
+echo "$count"                        # 1 (the change would not persist from a traditional $(...) subshell)
 ```
 
 Use `${ }` and `${| }` in: hot loops, prompt rendering, frequently-called functions,
@@ -639,7 +641,7 @@ If you need to port a script to `#!/bin/sh`, these bash features are NOT availab
 | `<<<` here string | `echo "$var" \| cmd` or `printf '%s' "$var" \| cmd` |
 | `<(cmd)` process sub | Temp files or named pipes |
 | `mapfile` / `readarray` | `while read` loop |
-| `local` (mostly works) | Technically not POSIX, but supported by dash/ash/all major sh |
+| `local` | Not guaranteed by POSIX; use distinct variable names or subshell isolation |
 | `function name { }` | `name() { }` (POSIX form) |
 | `source file` | `. file` (POSIX form) |
 | `BASH_SOURCE` | `$0` (different semantics in sourced files) |
@@ -709,5 +711,5 @@ wait "$my_proc_PID"
 
 ---
 
-> **Remember:** Bash is the lingua franca of Unix scripting. Write it with `set -euo pipefail`,
+> **Remember:** Bash is the lingua franca of Unix scripting. Use explicit error handling,
 > quote your variables, and use shellcheck. When portability matters, see the POSIX sh reference.

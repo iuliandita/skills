@@ -129,14 +129,14 @@ pg_restore \
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Full base backup with WAL streaming
+# Full base backup with WAL streaming; client gzip compresses base and streamed WAL archives
 pg_basebackup \
   --host=localhost \
   --port=5432 \
   --username=replicator \
   --pgdata=/backup/base/$(date +%Y%m%d_%H%M%S) \
   --format=tar \
-  --compress=server-zstd:6 \
+  --compress=client-gzip:6 \
   --wal-method=stream \
   --checkpoint=fast \
   --progress \
@@ -177,7 +177,7 @@ RESTORE_DIR="/restore/pgdata"
 BASE_BACKUP="/backup/base/20260324_020000"
 
 # Extract base backup
-mkdir -p "$RESTORE_DIR"
+mkdir -p "$RESTORE_DIR/pg_wal"
 tar xzf "$BASE_BACKUP/base.tar.gz" -C "$RESTORE_DIR"
 tar xzf "$BASE_BACKUP/pg_wal.tar.gz" -C "$RESTORE_DIR/pg_wal"
 
@@ -513,38 +513,35 @@ mongosh --eval '
 set -euo pipefail
 
 # mysqldump - single database, InnoDB-safe
-mysqldump \
+mysqldump --defaults-extra-file="${DB_CLIENT_CONFIG:?mode-0600 client option file}" \
   --host=localhost \
   --user=backup_user \
-  --password="$DB_BACKUP_PASSWORD" \
   --single-transaction \
   --routines \
   --triggers \
   --events \
-  --set-gtid-purged=ON \
+  --set-gtid-purged=AUTO \
   --source-data=2 \
   --databases mydb \
   | zstd -6 > "/backup/mydb_$(date +%Y%m%d_%H%M%S).sql.zst"
 
 # All databases
-mysqldump \
+mysqldump --defaults-extra-file="${DB_CLIENT_CONFIG:?mode-0600 client option file}" \
   --host=localhost \
   --user=backup_user \
-  --password="$DB_BACKUP_PASSWORD" \
   --all-databases \
   --single-transaction \
   --routines \
   --triggers \
   --events \
-  --set-gtid-purged=ON \
+  --set-gtid-purged=AUTO \
   --source-data=2 \
   | zstd -6 > "/backup/all_$(date +%Y%m%d_%H%M%S).sql.zst"
 
 # MariaDB equivalent (mariadb-dump, same flags minus --set-gtid-purged)
-mariadb-dump \
+mariadb-dump --defaults-extra-file="${DB_CLIENT_CONFIG:?mode-0600 client option file}" \
   --host=localhost \
   --user=backup_user \
-  --password="$DB_BACKUP_PASSWORD" \
   --single-transaction \
   --routines \
   --triggers \
@@ -559,7 +556,7 @@ mariadb-dump \
 - `--routines` - include stored procedures/functions
 - `--triggers` - include triggers (on by default, but explicit is better)
 - `--events` - include scheduled events
-- `--set-gtid-purged=ON` - required for GTID replication
+- `--set-gtid-purged=AUTO` - default; includes GTIDs when enabled. Choose ON/OFF explicitly only for the intended restore topology; partial dumps can overlap GTID sets.
 - `--source-data=2` - record binlog position as a comment (for PITR)
 
 **Never use `--lock-all-tables`** unless you have MyISAM tables (why do you have MyISAM tables?).
@@ -571,30 +568,27 @@ mariadb-dump \
 set -euo pipefail
 
 # Full backup (MySQL 8.4 - Percona XtraBackup 8.4.x)
-xtrabackup \
+xtrabackup --defaults-extra-file="${DB_CLIENT_CONFIG:?mode-0600 client option file}" \
   --backup \
   --user=backup_user \
-  --password="$DB_BACKUP_PASSWORD" \
   --target-dir=/backup/full/$(date +%Y%m%d_%H%M%S) \
   --compress=zstd \
   --compress-threads=4 \
   --parallel=4
 
 # Incremental backup (based on last full)
-xtrabackup \
+xtrabackup --defaults-extra-file="${DB_CLIENT_CONFIG:?mode-0600 client option file}" \
   --backup \
   --user=backup_user \
-  --password="$DB_BACKUP_PASSWORD" \
   --target-dir=/backup/incr/$(date +%Y%m%d_%H%M%S) \
   --incremental-basedir=/backup/full/20260324_020000 \
   --compress=zstd \
   --parallel=4
 
 # MariaDB equivalent
-mariabackup \
+mariabackup --defaults-extra-file="${DB_CLIENT_CONFIG:?mode-0600 client option file}" \
   --backup \
   --user=backup_user \
-  --password="$DB_BACKUP_PASSWORD" \
   --target-dir=/backup/full/$(date +%Y%m%d_%H%M%S) \
   --parallel=4
 ```
@@ -605,13 +599,16 @@ mariabackup \
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Step 1: Prepare (apply redo log)
-xtrabackup --prepare --target-dir=/backup/full/20260324_020000
-
-# Step 1b: If incremental, apply incrementals to full first
+# Step 1: Decompress the compressed backup and each incremental first.
+xtrabackup --decompress --target-dir=/backup/full/20260324_020000
+xtrabackup --decompress --target-dir=/backup/incr/20260324_140000
+# For an incremental chain, do not roll back transactions before merging it.
 xtrabackup --prepare --apply-log-only --target-dir=/backup/full/20260324_020000
-xtrabackup --prepare --target-dir=/backup/full/20260324_020000 \
+xtrabackup --prepare --apply-log-only --target-dir=/backup/full/20260324_020000 \
   --incremental-dir=/backup/incr/20260324_140000
+# Apply any further incrementals in order with --apply-log-only, then finalize once.
+xtrabackup --prepare --target-dir=/backup/full/20260324_020000
+# For a full-only backup, decompress and perform the final prepare directly.
 
 # Step 2: Stop MySQL
 systemctl stop mysql
@@ -676,7 +673,7 @@ mysqlbinlog \
 ### Common Gotchas
 
 - `mysqldump --single-transaction` only works for InnoDB. MyISAM tables still get locked.
-- `--set-gtid-purged=ON` is required when restoring to a GTID-enabled replica. Without it, replication breaks.
+- GTID provisioning can use AUTO or ON; select OFF when GTID state must not be restored. Review partial-dump overlap and the destination GTID state before import.
 - Percona XtraBackup major version must match MySQL major version (XtraBackup 8.4 for MySQL 8.4).
 - `mariabackup` is NOT compatible with MySQL, and XtraBackup is NOT compatible with MariaDB. Use the right tool.
 - Binary log file names change across server restarts. Your archival script must handle the index file.
@@ -884,7 +881,7 @@ DROP DATABASE [mydb_verify];
 PCI-DSS 4.0 requirements that affect backup strategy:
 
 - **Req 3.5**: Render PAN unreadable wherever stored - backups included. Encrypt backups at rest.
-- **Req 3.6/3.7**: Cryptographic key management for backup encryption keys. Key rotation annually minimum.
+- **Req 3.6/3.7**: Cryptographic key management for backup encryption keys. Use key owner/vendor-defined cryptoperiods and compromise-triggered rotation.
 - **Req 9.4**: Media (including backup media) must be physically secured and tracked.
 - **Req 10.5**: Audit logs must be backed up and immutable for 12 months.
 - **Req 12.10.2**: Incident response plan must include backup restoration procedures. Test annually.
@@ -998,16 +995,9 @@ repo1-retention-archive=8        # keep WAL for 8 full backup cycles
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Generate backup-specific GPG key (do this once)
-gpg --batch --gen-key <<'GPG'
-%no-protection
-Key-Type: RSA
-Key-Length: 4096
-Name-Real: Database Backups
-Name-Email: backup@company.com
-Expire-Date: 2y
-%commit
-GPG
+# Generate a protected backup key interactively on a trusted key-management host.
+# Keep the private key offline/protected; backup jobs need only its public key.
+gpg --full-generate-key
 
 # Encrypt backup
 pg_dump --format=custom mydb | gpg --encrypt --recipient backup@company.com > backup.dump.gpg
@@ -1021,7 +1011,7 @@ pg_dump --format=custom mydb | age -r age1abc123... > backup.dump.age
 - Never store encryption keys alongside backups. Separate systems, separate access controls.
 - Use a secrets manager (Vault, AWS KMS, Azure Key Vault) for key storage.
 - Document the key recovery procedure. Encrypted backups with lost keys = no backups.
-- Rotate keys annually (PCI requirement). Old keys must remain available until the last backup encrypted with them expires.
+- Rotate according to the documented cryptoperiod and on compromise. Old keys must remain available until the last backup encrypted with them expires.
 - Test decryption after every key rotation.
 
 ---
@@ -1207,7 +1197,7 @@ metadata:
   name: mydb-daily
   namespace: databases
 spec:
-  schedule: "0 2 * * *"
+  schedule: "0 0 2 * * *"  # CloudNativePG: seconds, minutes, hours, day, month, weekday
   cluster:
     name: mydb
   backupOwnerReference: self
@@ -1287,7 +1277,10 @@ Key differences in k8s:
 
 ## Universal Backup Script Template
 
-A starting point for any engine. Customize per environment.
+A starting point for any engine. Customize credentials and the restore-verification program
+per environment. MySQL-family option files must be mode 0600; PostgreSQL uses a protected
+service/passfile, MongoDB tools use their protected config, and sqlcmd reads SQLCMDPASSWORD
+from the protected environment. Test restores before enabling retention in production.
 
 ```bash
 #!/usr/bin/env bash
@@ -1296,33 +1289,55 @@ set -euo pipefail
 # === Configuration ===
 DB_ENGINE="${DB_ENGINE:?Set DB_ENGINE (postgres|mysql|mariadb|mongodb|mssql)}"
 DB_HOST="${DB_HOST:-localhost}"
-DB_PORT="${DB_PORT:-5432}"
+case "$DB_ENGINE" in
+  postgres) default_port=5432 ;;
+  mysql|mariadb) default_port=3306 ;;
+  mongodb) default_port=27017 ;;
+  mssql) default_port=1433 ;;
+  *) printf 'Unknown DB_ENGINE: %s\n' "$DB_ENGINE" >&2; exit 1 ;;
+esac
+DB_PORT="${DB_PORT:-$default_port}"
 DB_NAME="${DB_NAME:?Set DB_NAME}"
+# This filename/SQL template accepts simple identifiers; adapt with engine-native quoting otherwise.
+[[ "$DB_NAME" =~ ^[A-Za-z0-9_]+$ ]] || { echo "Unsupported DB_NAME" >&2; exit 1; }
 DB_USER="${DB_USER:?Set DB_USER}"
 BACKUP_DIR="${BACKUP_DIR:-/backup}"
+[[ "$BACKUP_DIR" != *\'* ]] || { echo "Backup path cannot contain a SQL quote" >&2; exit 1; }
+umask 077
 BACKUP_RETENTION_DAYS="${BACKUP_RETENTION_DAYS:-14}"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 BACKUP_FILE="${BACKUP_DIR}/${DB_NAME}_${TIMESTAMP}"
 
 # Optional: encryption recipient (GPG key email or age public key)
 ENCRYPT_RECIPIENT="${ENCRYPT_RECIPIENT:-}"
+ENCRYPT_TOOL="${ENCRYPT_TOOL:-age}"  # age public recipient or gpg recipient/key id
 
 # === Functions ===
 log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*"; }
 
 encrypt_if_needed() {
-  local file="$1"
-  if [[ -n "$ENCRYPT_RECIPIENT" ]]; then
-    if command -v age &>/dev/null; then
-      age -r "$ENCRYPT_RECIPIENT" "$file" > "${file}.age" && rm "$file"
-      echo "${file}.age"
-    else
-      gpg --encrypt --recipient "$ENCRYPT_RECIPIENT" "$file" && rm "$file"
-      echo "${file}.gpg"
-    fi
-  else
-    echo "$file"
+  local file="$1" suffix temporary final
+  [[ -s "$file" ]] || { echo "Backup missing or empty: $file" >&2; return 1; }
+  if [[ -z "$ENCRYPT_RECIPIENT" ]]; then
+    printf '%s\n' "$file"
+    return 0
   fi
+  case "$ENCRYPT_TOOL" in age) suffix=age ;; gpg) suffix=gpg ;;
+    *) echo "ENCRYPT_TOOL must be age or gpg" >&2; return 1 ;; esac
+  final="${file}.${suffix}"
+  [[ ! -e "$final" ]] || { echo "Refusing existing encrypted output" >&2; return 1; }
+  temporary=$(mktemp "${final}.tmp.XXXXXX") || return 1
+  if [[ "$ENCRYPT_TOOL" == age ]]; then
+    if ! age -r "$ENCRYPT_RECIPIENT" "$file" > "$temporary"; then
+      rm -f "$temporary"; return 1
+    fi
+  elif ! gpg --batch --encrypt --recipient "$ENCRYPT_RECIPIENT" < "$file" > "$temporary"; then
+    rm -f "$temporary"; return 1
+  fi
+  if [[ ! -s "$temporary" ]]; then rm -f "$temporary"; return 1; fi
+  mv "$temporary" "$final" || return 1
+  rm "$file" || return 1
+  printf '%s\n' "$final"
 }
 
 cleanup_old() {
@@ -1342,34 +1357,36 @@ case "$DB_ENGINE" in
     BACKUP_FILE=$(encrypt_if_needed "${BACKUP_FILE}.dump")
     ;;
   mysql)
-    mysqldump --host="$DB_HOST" --port="$DB_PORT" --user="$DB_USER" \
+    mysqldump --defaults-extra-file="${DB_CLIENT_CONFIG:?mode-0600 client option file}" --host="$DB_HOST" --port="$DB_PORT" --user="$DB_USER" \
       --single-transaction --routines --triggers --events \
-      --set-gtid-purged=ON --databases "$DB_NAME" \
+      --set-gtid-purged=AUTO --databases "$DB_NAME" \
       | zstd -6 > "${BACKUP_FILE}.sql.zst"
     BACKUP_FILE=$(encrypt_if_needed "${BACKUP_FILE}.sql.zst")
     ;;
   mariadb)
-    mariadb-dump --host="$DB_HOST" --port="$DB_PORT" --user="$DB_USER" \
+    mariadb-dump --defaults-extra-file="${DB_CLIENT_CONFIG:?mode-0600 client option file}" --host="$DB_HOST" --port="$DB_PORT" --user="$DB_USER" \
       --single-transaction --routines --triggers --events \
       --databases "$DB_NAME" \
       | zstd -6 > "${BACKUP_FILE}.sql.zst"
     BACKUP_FILE=$(encrypt_if_needed "${BACKUP_FILE}.sql.zst")
     ;;
   mongodb)
-    mongodump --host="$DB_HOST" --port="$DB_PORT" --username="$DB_USER" \
+    mongodump --config="${MONGODB_BACKUP_CONFIG:?mode-0600 tool config}" --host="$DB_HOST" --port="$DB_PORT" --username="$DB_USER" \
       --authenticationDatabase=admin --db="$DB_NAME" \
       --gzip --out="${BACKUP_FILE}"
-    tar cf "${BACKUP_FILE}.tar.gz" -C "$(dirname "$BACKUP_FILE")" "$(basename "$BACKUP_FILE")"
+    tar czf "${BACKUP_FILE}.tar.gz" -C "$(dirname "$BACKUP_FILE")" "$(basename "$BACKUP_FILE")"
     rm -rf "${BACKUP_FILE}"
     BACKUP_FILE=$(encrypt_if_needed "${BACKUP_FILE}.tar.gz")
     ;;
   mssql)
-    sqlcmd -S "$DB_HOST,$DB_PORT" -U "$DB_USER" -P "$DB_PASSWORD" -Q "
+    sqlcmd -b -S "$DB_HOST,$DB_PORT" -U "$DB_USER" -Q "
       BACKUP DATABASE [$DB_NAME]
       TO DISK = N'${BACKUP_FILE}.bak'
       WITH COMPRESSION, CHECKSUM, STATS = 10, INIT;
     "
-    # For Windows Integrated Auth, replace -U/-P with -E
+    # Supply SQLCMDPASSWORD through the protected environment; for Integrated Auth use -E.
+    # BACKUP writes on the database server: this template requires a shared backup path
+    # visible at the same location to sqlcmd and the backup/encryption process.
     BACKUP_FILE=$(encrypt_if_needed "${BACKUP_FILE}.bak")
     ;;
   *)
@@ -1380,8 +1397,11 @@ esac
 
 # === Post-backup ===
 SIZE=$(stat --format='%s' "$BACKUP_FILE" 2>/dev/null || echo "unknown")
-log "Backup complete: $BACKUP_FILE ($SIZE bytes)"
+log "Backup created: $BACKUP_FILE ($SIZE bytes); verification pending"
 
+# Run a site-specific decrypt/restore verification program before declaring success or retention.
+: "${BACKUP_VERIFY_PROGRAM:?path to a tested backup verification program}"
+"$BACKUP_VERIFY_PROGRAM" "$BACKUP_FILE"
 cleanup_old
 
 log "Done"

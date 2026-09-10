@@ -227,8 +227,7 @@ Best of both: static by default, glitch on interaction. No autoplay.
 
 @media (prefers-reduced-motion: reduce) {
   .glitch-hover:hover::before {
-    animation: none;
-    transform: none;
+    display: none;
   }
 }
 ```
@@ -261,5 +260,5 @@ Restraint rules for an approved glitch effect:
 - Glitch on form inputs - users think the form is broken
 - Permanent glitch (no quiet phase) - exhausting
 - Glitch + scanlines + stutter all at once on the same element - visual mud
-- Glitch animations longer than 800ms per cycle - feels broken, not stylish
+- Long active displacement or flashing phases - keep them brief, with a quiet phase; the full loop may include several seconds of stillness
 - `text-shadow` glitch on body type at small sizes - blurs reading

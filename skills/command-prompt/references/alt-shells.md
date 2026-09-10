@@ -148,7 +148,7 @@ complete -c mytool -s f -l file -r -F -d "Input file"
 complete -c mytool -l format -x -a "json yaml toml" -d "Output format"
 
 # -s = short flag, -l = long flag
-# -r = requires argument, -f = no argument
+# -r = requires argument, -f = disable file completion
 # -x = exclusive (don't complete files), -F = force file completion
 # -a = list of possible arguments
 ```

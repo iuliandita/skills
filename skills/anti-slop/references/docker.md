@@ -23,17 +23,20 @@ RUN npm install
 RUN npm run build
 CMD ["node", "dist/index.js"]
 
-# CLEAN: multi-stage
+# CLEAN: multi-stage Node app with an npm lockfile
 FROM node:22-slim AS build
 WORKDIR /app
-COPY package.json bun.lockb ./
-RUN bun install --frozen-lockfile
+COPY package.json package-lock.json ./
+RUN npm ci
 COPY . .
-RUN bun run build
+RUN npm run build && npm prune --omit=dev
 
-FROM gcr.io/distroless/nodejs22-debian12
-COPY --from=build /app/dist /app
-CMD ["/app/index.js"]
+FROM gcr.io/distroless/nodejs22-debian12:nonroot
+WORKDIR /app
+COPY --from=build --chown=65532:65532 /app/dist ./dist
+COPY --from=build --chown=65532:65532 /app/node_modules ./node_modules
+COPY --from=build --chown=65532:65532 /app/package.json ./package.json
+CMD ["dist/index.js"]
 ```
 
 ## Layer Waste (Noise)
@@ -71,7 +74,7 @@ For secrets: use build secrets (`--mount=type=secret`) or runtime secret injecti
 
 **Detect:**
 - `container_name` on every service (breaks scaling, usually unnecessary)
-- `restart: always` without health checks (restarts broken containers forever)
+- Restart behavior and health checks that do not match recovery needs; unhealthy status alone does not cause a Docker restart
 - `network_mode: host` when port mapping would work
 - `volumes` mounting the entire project directory in production (dev pattern leak)
 - Hardcoded ports that should be in `.env`
@@ -82,13 +85,13 @@ For secrets: use build secrets (`--mount=type=secret`) or runtime secret injecti
 ## Stale Patterns (Lies)
 
 **Detect:**
-- `FROM node:18` or `FROM python:3.10` when 22/3.13 are current
+- Unsupported or affected base images; verify the chosen release line against the application and current advisories rather than treating example tags as current-version guidance
 - `MAINTAINER` directive (deprecated - use `LABEL maintainer=`)
-- `RUN pip install` without `--break-system-packages` or a venv in newer Python images
-- `ENTRYPOINT` + `CMD` confusion (both set, unclear which is the "real" command)
+- Installing into a distro-managed Python environment without an appropriate virtual environment; do not add `--break-system-packages` automatically
+- Incorrect ENTRYPOINT/CMD composition: an exec-form ENTRYPOINT can intentionally use CMD as overridable default arguments
 - `HEALTHCHECK` using `curl` when `wget` is available (alpine) or vice versa
 
-**Fix:** Use current base image versions. Use `LABEL` for metadata. Pick one of ENTRYPOINT or CMD and be explicit.
+**Fix:** Choose supported base images and use `LABEL` for metadata. Verify the combined ENTRYPOINT and CMD invocation and signal behavior.
 
 ## Docker Compose Anti-Patterns (Noise + Lies)
 
@@ -112,8 +115,8 @@ services:
 ### Network Overkill (Noise)
 **Detect:**
 - Custom networks for single-service stacks (the default bridge is fine)
-- Every service explicitly joined to the same custom network (they all join by default)
-- `external: true` networks that don't exist yet (fails silently until deploy)
+- Repeated custom-network declarations without a needed network boundary; services join the default network only when no explicit networks are configured
+- `external: true` networks whose required pre-provisioning is missing; Compose reports an error when the network is absent
 
 ```yaml
 # SLOP: explicit network everyone joins anyway
@@ -134,7 +137,7 @@ services:
 
 ### Volume Anti-Patterns (Noise)
 **Detect:**
-- Named volumes defined but only used by one service (anonymous or bind mount is simpler)
+- Volumes whose lifecycle does not match the data; a named volume is useful for persistent data even with one consumer
 - `driver: local` on every volume (it's the default)
 - Bind mounts with absolute host paths that only work on one machine
 
@@ -142,18 +145,18 @@ services:
 **Detect:**
 - 20+ `environment:` entries inline instead of `env_file:`
 - Duplicated env vars across services (extract to shared `.env` or `env_file`)
-- Secrets passed as plain `environment:` values instead of Docker secrets or env_file
+- Secrets committed inline or exposed through container configuration; env_file still becomes environment data, so use a supported file-based secret when that boundary is required
 
 ### Proxmox / LXC Compose Gotchas (Lies)
 When running Docker inside Proxmox LXC containers:
-- `privileged: true` is often needed for nesting but should be on the LXC, not the compose service
+- Verify supported nesting configuration and isolation requirements; do not enable privileged LXC or privileged Compose services by default
 - `cgroup` version mismatches (Proxmox default is cgroupv2; some old images need v1)
-- `tmpfs` mounts may fail in unprivileged LXC - use bind mounts instead
+- Diagnose mount permissions before changing storage; a bind mount has different persistence and isolation semantics from tmpfs
 - GPU passthrough requires LXC config, not just compose `deploy.resources.reservations`
 
 ## Hardened Compose Baseline (reference template)
 
-Every production service should start from this, then relax only what's needed:
+Use this as a starting point when the application supports these restrictions. Select a health command present in the image, and set resource values for the workload:
 
 ```yaml
 services:

@@ -175,8 +175,9 @@ For git repos, gather cheap preflight context before deciding:
 
 - repo root and branch: `git rev-parse --show-toplevel`, `git branch --show-current`
 - uncommitted files: `git diff --name-only`, `git diff --cached --name-only`
-- branch base when available: `git merge-base HEAD @{upstream}`; otherwise detect the default
-  branch and use `git merge-base HEAD origin/<default-branch>`
+- review base: resolve the PR target or explicit integration branch first, then use
+  `git merge-base HEAD <confirmed-target-ref>`. A feature branch's upstream is its synchronization
+  target and must not be assumed to be the integration base.
 - default branch when needed: `git symbolic-ref refs/remotes/origin/HEAD --short 2>/dev/null`
   or inspect `git remote show origin`
 - changed files and size: `git diff --name-only <base>...HEAD`, `git diff --stat <base>...HEAD`
@@ -185,8 +186,8 @@ Scope precedence:
 
 1. User-provided diff or path
 2. Uncommitted changes
-3. Current branch against upstream
-4. Current branch against the default branch
+3. Current branch against its confirmed PR/integration target
+4. Current branch against the resolved default branch when no PR target exists
 5. Whole repo, or ask one concise question when interactive
 
 If the scope is unclear and no diff exists, ask one concise question. In headless contexts, default
@@ -268,7 +269,7 @@ Run the searches for all four axes. Use structural and textual searches to find:
 **Wrappers and bloat:**
 
 - wrappers with little behavior beyond forwarding to another object or function
-- inert error handling: try/catch that only rethrows, catch-log-rethrow adding no context, try
+- inert error handling: try/catch that only rethrows, catch-log-rethrow only when equivalent required logging is proven at the owning boundary, try
   around code that cannot throw, blanket per-function try/catch added mechanically, and defensive
   null checks on values a type system or upstream contract already guarantees (cite the guarantee);
   a catch that swallows or converts errors is behavior-changing to remove - at best `Do with
@@ -371,14 +372,11 @@ slimming recommendation to fill the report. Prefer a well-justified `Leave alone
 low-confidence abstraction.
 
 The written deliverable follows `references/report-templates.md`: one template for audits with
-findings (grouped by action label, plus a Removed-Code Safety Review section when the reviewed
+findings (grouped by priority with action labels, plus a Removed-Code Safety Review section when the reviewed
 diff removed code) and one for the zero-findings case (explicit search coverage and why-no-action
-sections). The report is a read-only set of proposals: it intentionally opts out of the checkbox
-Fix protocol in the Output Contract (there is nothing for an implementer to flip here). Wrap the
-body with the monospace inline header, severity-grouped summary, and concise monospace conclusion
-when emitting to the transcript. The saved Markdown conclusion table remaps the shared columns
-exactly as defined in the Output Contract section below (`Type` = `rec`/`found`, `Priority` carries
-`Risk`, `Action` = `proposed`/`recommend`).
+sections). Use the shared priority headings, numbered checkboxes, and Fix applied placeholders
+for recommendations; they remain unchecked during this read-only audit. Keep action label and
+Risk as additional fields. Use the shared contract's compact or expanded inline form as appropriate.
 
 Keep the report concise. Show the refactor shape, not a lecture.
 
@@ -400,8 +398,8 @@ See `references/output-contract.md` for the full contract.
 - **Mode:** always-on for audit and review invocations. Every invocation that analyses existing code emits the full contract - monospace inline header, severity-grouped inline summary, linked Markdown deliverable, and concise monospace conclusion. For a quick factual question (e.g., "what is wrapper removal?") respond freely without the contract.
 - **Deliverable path:** `docs/local/audits/code-slimming/<YYYY-MM-DD>-<slug>.md`, resolved against
   the audited repo's root (use the session cwd only when the audit target is not a repo)
-- **Severity scale:** this skill overrides the shared P0-P3 scale, which the contract permits via its scale-migration note. Findings are classified by action - `Do now | Do with tests | Defer | Leave alone` - plus a `Risk: low | medium | high` field per finding (see the Workflow). This skill proposes deletions, not severity-ranked defects. Old -> new: P0-P3 priority is not used; `Risk` replaces the `Priority` column (see Conclusion-table columns below).
-- **Conclusion-table columns** (the shared table in `references/output-contract.md` is code-review-flavored; map it for this skill): `Type` is `rec` for opportunities or `found` when reviewing removed code; the `Priority` column carries this skill's `Risk` value (`low | medium | high`), not a P-level; `Action` is `proposed` for opportunities and `recommend` for removed-code safety findings. The file-deliverable groups findings by action label (`Do now`, `Do with tests`, `Defer`, `Leave alone`), not by `## P0`-style headings.
+- **Severity scale:** `P0 | P1 | P2 | P3 | info`, matching the shared contract. Migration: prior action labels remain recommendation fields; `Risk` is supplementary and no longer replaces priority. Routine improvements are P2, deferred backlog is P3, and leave-alone observations are info. Assign higher priorities only for substantiated impact and route correctness/security findings to their owning skills.
+- **Conclusion-table columns:** retain `Type`, `Priority`, `Summary`, and `Action` from the shared contract. `Priority` carries a P-level or info; keep recommendation label and Risk in each finding.
 
 ## Related Skills
 

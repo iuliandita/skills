@@ -44,8 +44,8 @@ gh pr list -R owner/repo --state merged \
   --limit 20 --json number,title,mergedAt
 
 # GitLab (glab)
-glab issue list -R owner/repo --sort popularity --per-page 50
-glab mr list -R owner/repo --state merged --per-page 20
+glab issue list -R owner/repo --order popularity --per-page 50
+glab mr list -R owner/repo --merged --per-page 20
 ```
 
 A non-zero exit is source failure: report it, then use the documented web or browse fallback. An

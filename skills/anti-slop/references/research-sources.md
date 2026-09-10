@@ -2,16 +2,11 @@
 
 Read this file for deeper context on specific findings or when the user wants citations. Covers all supported languages (TS/JS, Python, Bash/Shell, Terraform, Ansible, Helm, Kubernetes).
 
-## Key Statistics
+## How to use this research
 
-- AI-generated PRs average 10.83 issues vs 6.45 for human PRs (1.7x more) - CodeRabbit 2025
-- AI coding assistants produce output 2x as verbose as Stack Overflow answers - LeadDev
-- AI models are 9x more prone to use `any` than human developers - arxiv.org/html/2602.17955
-- 82% of AI-generated catch blocks fail to distinguish error types - AlterSquare
-- 76% of AI-generated code omits critical network timeouts - AlterSquare
-- 25-38% of AI-generated code relies on deprecated APIs - multiple sources
-- ~20% of AI-suggested package dependencies point to non-existent libraries - multiple sources
-- 45% of AI-generated code contains security flaws - Veracode 2025
+Reports and experiments describe particular samples, tools, and settings. They do not establish
+an error rate for the code under review or prove who wrote it. Verify the original methodology
+before quoting a statistic; base each finding on the current repository's behavior and contracts.
 
 ## Source List
 
@@ -46,11 +41,11 @@ Read this file for deeper context on specific findings or when the user wants ci
 
 ## The "No Soul" Problem
 
-The hardest slop to detect programmatically. Code that compiles, passes tests, and follows conventions - but feels generic. Signs:
+The hardest slop to detect programmatically. Use concrete maintenance and usability costs rather than a generic feeling. Examples to inspect:
 
 - Every module follows the exact same structure regardless of its role
-- Naming is correct but bland (follows conventions without adding domain clarity)
+- Naming makes distinct domain concepts difficult to tell apart
 - Error messages are grammatically perfect but uninformative ("An error occurred while processing your request")
 - Code reads like documentation of itself rather than a solution to a problem
 
-This requires human judgment. The skill flags patterns, but the user decides what has soul and what doesn't.
+Shared structure and conventional names are often useful. Report a finding only when the example causes a concrete problem for readers, users, or maintainers.

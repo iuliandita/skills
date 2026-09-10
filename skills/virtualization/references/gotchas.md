@@ -33,9 +33,10 @@ hardware within the same QEMU instance. This means:
 - CPU model changes don't apply
 - Machine type changes don't apply
 
-**Fix:** Always use `qm stop` then `qm start` (Proxmox) or `virsh destroy` then
-`virsh start` (libvirt) for hardware configuration changes. `qm reboot` and `virsh reboot`
-are NOT sufficient.
+**Fix:** Use `qm shutdown` (Proxmox) or `virsh shutdown` (libvirt), then verify stopped state
+with `qm status` or `virsh domstate` before changing hardware and starting the VM. `qm reboot`
+and `virsh reboot` do not start a new QEMU process. If graceful shutdown fails, diagnose it;
+`qm stop` and `virsh destroy` cut power and require a separately justified recovery decision.
 
 **How to remember:** Reboot = guest OS restart. Stop/start = new QEMU process.
 
@@ -63,8 +64,10 @@ just hung I/O and frozen VMs.
 **Recovery:**
 1. `lvextend -L +50G <vg>/<thin_pool>` - add space to the thin pool
 2. If no space available: live-migrate VMs to another node/pool
-3. After extending: `qm stop <vmid>` then `qm start <vmid>` (not reboot - QEMU needs restart)
-4. `qm reset` does NOT work here - the QEMU disk backend needs to re-detect the pool state
+3. After extending, verify pool health and whether guest I/O resumes before restarting anything.
+4. If a QEMU restart is needed, request `qm shutdown <vmid>`, verify stopped state with
+   `qm status <vmid>`, then start. If shutdown hangs, assess guest/storage recovery before
+   authorizing forced power-off; do not assume every VM needs it.
 
 **Prevention:**
 - Monitor `data_percent` (not filesystem usage inside VMs!)
@@ -361,5 +364,5 @@ For thin-provisioned storage on SSDs, all four pieces must be in place:
 4. **Host storage:** Thin-provisioned pool that supports discard
 
 Missing any link means deleted data never gets reclaimed at the storage level.
-And remember: adding `discard=on` to an existing VM requires `qm stop` + `qm start`
-(not reboot) because QEMU disk config only applies when QEMU starts fresh.
+And remember: adding `discard=on` to an existing VM requires a graceful shutdown, verified
+stopped state, and a fresh start (not reboot), because QEMU reads disk config when it starts.

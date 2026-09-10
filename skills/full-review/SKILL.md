@@ -44,7 +44,7 @@ Each audit runs in its own parallel agent/subprocess with a fresh context window
 
 ## AI Self-Check
 
-Run this checklist after all agents return but before presenting the combined report to the user. Do not present results until every item passes.
+Run this checklist after all agents return but before presenting the combined report to the user. Record each item as passed, failed, or skipped with a reason. Present completed audits even when another audit is unavailable; do not claim four independent passes if that did not happen.
 
 Verify:
 
@@ -82,12 +82,12 @@ Verify:
 
 ### Step 0: Preflight
 
-Gather context before dispatching agents. Run these in parallel (guard each with `; true` so one failure doesn't cancel siblings):
+Gather context before dispatching agents. Run these independently and retain each exit status and stderr; one failed check must not cancel siblings or become a successful result:
 
-1. **Repo state**: `git rev-parse --show-toplevel ; true` and `git rev-parse --short HEAD ; true`
-2. **Branch**: `git branch --show-current ; true`
+1. **Repo state**: `git rev-parse --show-toplevel` and `git rev-parse --short HEAD`
+2. **Branch**: `git branch --show-current`
 3. **Language detection**: check for manifest files (`package.json`, `requirements.txt`, `go.mod`, `Cargo.toml`, `pyproject.toml`, `composer.json`, `Gemfile`, `*.tf`, `helmfile.yaml`)
-4. **Repo size estimate**: `git ls-files | wc -l ; true`
+4. **Repo size estimate**: capture `git ls-files` successfully first, then count its lines
 
 **If not a git repo** (step 1 fails): stop and tell the user. The audits rely on git context (history, blame, diff). Running without it produces low-quality results.
 
@@ -95,9 +95,9 @@ Record preflight values - each subagent prompt uses them. Substitute `{placehold
 
 ### Step 1: Determine Scope
 
-Default is **full codebase** since the user is running this as a quality gate. Adapt if context suggests otherwise:
+Use the user's requested scope. For a branch or pre-merge review, use the complete change against the confirmed integration base; use the full repository when requested or when no narrower task context exists:
 
-- **Uncommitted changes present** -> mention this, but still audit the full repo.
+- **Uncommitted changes present** -> record their ownership and include them only when they belong to the requested review.
 - **Detached HEAD / bare repo** -> warn the user, proceed with what's available.
 - **User specified a narrower scope** (specific files, directory, module) -> pass that scope constraint to all four agents. Each agent only audits within the specified scope. This is the key to scoped reviews: narrowing the target, not the audit dimensions. Set `{scope}` in the context block to the user's scope (e.g., "src/auth/ directory only") instead of the default "full codebase review - scan everything".
 
@@ -244,7 +244,7 @@ editorialize, or rank findings across reports.
 If an agent fails or times out:
 - Note which audit failed and why (timeout, skill not found, tool permission denied)
 - Present whatever completed successfully
-- Do not re-run failed agents unless the user asks
+- Retry a failed audit only when its cause is understood and a bounded retry can resolve it; preserve valid completed reports and disclose persistent gaps
 
 If a skill is not available, perform a manual review in a worker with the required repository access and audit tools. Note the substitution in the output header so the user knows a fallback was used. Partial results are still useful.
 

@@ -359,18 +359,19 @@ SyslogIdentifier={{ app_name }}
 LimitNOFILE={{ app_nofile_limit | default(65535) }}
 LimitNPROC={{ app_nproc_limit | default(4096) }}
 
-{% if app_env is defined %}
-# Environment
-{% for key, value in app_env.items() %}
-Environment="{{ key }}={{ value }}"
-{% endfor %}
-{% endif %}
+# Generate this restricted file separately; do not interpolate arbitrary env values here.
+EnvironmentFile=/etc/{{ app_name }}/environment
 
 [Install]
 WantedBy=multi-user.target
 ```
 
 ---
+
+For the environment file, validate variable names as shell-style identifiers and use a
+systemd-aware serializer for quoted values, escapes, and multiline data. Keep secrets in the
+application's credential mechanism where supported. Do not substitute shell or JSON escaping
+without testing systemd's parsing; validate the generated unit with `systemd-analyze verify`.
 
 ## User and Group Management
 
@@ -512,33 +513,14 @@ WantedBy=multi-user.target
   become: true
   notify: Restart sshd
 
-# Or with lineinfile for targeted changes:
-- name: Disable root login
-  ansible.builtin.lineinfile:
-    path: /etc/ssh/sshd_config
-    regexp: "^#?PermitRootLogin"
-    line: "PermitRootLogin no"
-  become: true
-  notify: Restart sshd
 
-- name: Disable password authentication
-  ansible.builtin.lineinfile:
-    path: /etc/ssh/sshd_config
-    regexp: "^#?PasswordAuthentication"
-    line: "PasswordAuthentication no"
-  become: true
-  notify: Restart sshd
-
-- name: Set SSH idle timeout
-  ansible.builtin.lineinfile:
-    path: /etc/ssh/sshd_config
-    regexp: "^#?ClientAliveInterval"
-    line: "ClientAliveInterval {{ ssh_idle_timeout | default(300) }}"
-  become: true
-  notify: Restart sshd
 ```
 
 ---
+
+The whole-file SSH template must place global directives before any `Match` blocks. Avoid
+blind `lineinfile` append/replacement in a config with conditional sections. Preserve a tested
+access/recovery path and flush the declared sshd handler only after validation succeeds.
 
 ## Cron Jobs
 

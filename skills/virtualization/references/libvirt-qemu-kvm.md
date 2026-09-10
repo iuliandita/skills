@@ -134,6 +134,7 @@ virsh net-autostart default           # Auto-start on boot
   <name>myvm</name>
   <memory unit='GiB'>4</memory>
   <vcpu placement='static'>2</vcpu>
+  <iothreads>1</iothreads>
 
   <os>
     <type arch='x86_64' machine='q35'>hvm</type>
@@ -152,7 +153,7 @@ virsh net-autostart default           # Auto-start on boot
   <devices>
     <!-- Disk -->
     <disk type='file' device='disk'>
-      <driver name='qemu' type='qcow2' discard='unmap' iothread='1'/>
+      <driver name='qemu' type='qcow2' discard='unmap'/>
       <source file='/var/lib/libvirt/images/myvm.qcow2'/>
       <target dev='sda' bus='scsi'/>
     </disk>

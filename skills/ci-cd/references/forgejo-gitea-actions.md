@@ -144,6 +144,7 @@ multi-job-per-file like Actions - one pipeline per file, one agent per pipeline 
 when:
   - event: [push, pull_request]
     branch: main
+  - event: tag
 
 steps:
   - name: lint
@@ -151,6 +152,8 @@ steps:
     commands:
       - bun install --frozen-lockfile
       - bun run lint
+    when:
+      - event: [push, pull_request]
 
   - name: test
     image: oven/bun:1.2
@@ -205,8 +208,8 @@ matrix:
   OS: [linux/amd64, linux/arm64]
 
 steps:
-  - name: test-${{ matrix.NODE_VERSION }}-${{ matrix.OS }}
-    image: node:${{ matrix.NODE_VERSION }}
+  - name: test-${NODE_VERSION}-${OS}
+    image: node:${NODE_VERSION}
     commands:
       - npm test
 ```

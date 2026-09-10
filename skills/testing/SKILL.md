@@ -262,6 +262,7 @@ export const options = {
     { duration: "10s", target: 0 },    // ramp down
   ],
   thresholds: {
+    checks: ["rate==1"],              // fail the run when any status check fails
     http_req_duration: ["p(95)<500"],   // 95th percentile under 500ms
   },
 };
@@ -298,8 +299,8 @@ Flaky tests erode trust. Fix or quarantine immediately.
      `waitForSelector`, or Playwright's auto-waiting. Avoid `page.waitForTimeout`. Stub network
      requests to eliminate backend variability. Create a fresh browser context per test so cookies,
      storage, and service workers cannot leak between cases. Headless mode (CI) has different rendering
-     timing than headed - animations may be skipped or font metrics differ; use
-     `--headed` locally to reproduce CI-only failures. Check CPU, memory, and worker contention on
+     timing than headed. Reproduce with the same headless browser, OS image, viewport,
+     fonts, and worker count as CI first; compare `--headed` only to isolate rendering differences. Check CPU, memory, and worker contention on
      the CI runner before changing timeouts.
    - **Vitest/Jest**: shared module state between test files. Use `--pool forks` (Vitest) or
      `--runInBand` to isolate. Check for leaked timers (`vi.useFakeTimers` not restored).

@@ -47,7 +47,7 @@ Before running checks or reporting results, verify:
 - [ ] Findings include evidence, impact, and next action
 - [ ] **Cluster target explicit**: kubeconfig context, namespace, and environment are named before any query
 - [ ] **Read-only posture kept**: health checks do not mutate resources or restart workloads unless the user explicitly escalates
-- [ ] **No improvisation**: only the read-only commands in the reference files were run; missing coverage was noted as a suggestion, not freelanced with guessed service names, paths, or flags
+- [ ] **No improvisation**: reference checks or verified read-only follow-ups used confirmed object names and supported flags; missing coverage was reported
 - [ ] **Stderr is visible**: diagnostic commands surface their failure reason instead of masking it with `2>/dev/null`; a missing tool, permission gap, or wrong context is reported, not silently treated as a clean result
 - [ ] Cross-cutting agent hygiene applied - see `references/agent-hygiene.md`
 
@@ -62,7 +62,7 @@ Before running checks or reporting results, verify:
 - Treat the current kube context as hidden state until it is explicitly named.
 - Separate health evidence from remediation; fixes require a separate escalation.
 - Report permission gaps and missing CRDs as diagnostic findings, not silent skips.
-- Run only the commands the reference files define. A monitoring context invites improvisation; resist it. When a check you want is not listed, write it as a suggested follow-up instead of guessing a service name, namespace, or path that may not exist.
+- Start with the reference checks. Use verified read-only follow-ups against discovered objects when needed to establish health; never guess service names, namespaces, paths, or flags.
 - Do not read a metric's status without knowing what the metric measures. The reference files state what each signal does and does NOT represent; misreading a percentage or a stale value produces a confidently wrong report.
 
 ## Cluster Registry
@@ -189,4 +189,4 @@ See `references/output-contract.md` for the full contract.
 4. Never guess a cluster target from a vague request.
 5. Keep protected overlay details out of public reports unless the user asks for those exact details.
 6. Report failed checks as findings; do not hide missing tools, missing CRDs, or permission errors.
-7. **Run ONLY the read-only commands listed in the reference files. If a needed check is missing, note it as a suggested follow-up in the report rather than improvising a mutating or unlisted command.** Inventing service names, paths, or flags is how diagnostic skills produce false results.
+7. **Use reference checks and verified read-only follow-ups against the confirmed target.** Discover object names, verify flags, and report missing coverage. Mutation still requires explicit escalation.

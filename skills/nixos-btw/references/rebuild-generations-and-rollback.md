@@ -77,12 +77,20 @@ Roll back to the previous generation:
 sudo nixos-rebuild switch --rollback
 ```
 
-Delete old generations (but keep the current one and its immediate predecessor):
+Inspect generations first; retain a tested rollback generation when pruning old ones:
+
+Use `+5` only if the reviewed retained set includes the known-good generation. Otherwise select
+individual obsolete generation IDs instead of applying this count-based example.
 
 ```bash
+sudo nix-env --list-generations -p /nix/var/nix/profiles/system
 sudo nix-env --delete-generations +5 -p /nix/var/nix/profiles/system
-sudo nix-collect-garbage -d   # also removes unreachable store paths
+sudo nix-collect-garbage     # collect unreachable paths without deleting more generations
+sudo nix-env --list-generations -p /nix/var/nix/profiles/system
 ```
+
+Confirm the known-good generation remains rooted and its boot entry is available. Do not add
+`-d`: it deletes old generations across profiles and defeats the selective retention above.
 
 ## Boot entries
 

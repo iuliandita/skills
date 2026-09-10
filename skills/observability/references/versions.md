@@ -24,8 +24,8 @@ pins:
 
 # Observability target versions
 
-Pins referenced by `../SKILL.md`. See `docs/version-pins.md` for the receipt
-contract and staleness budget (120 days).
+Pins referenced by `../SKILL.md`. Record the checked date, exact version, and primary
+source when refreshing a pin. Reverify before use if the receipt exceeds 120 days.
 
 | Tool | Version | Source |
 |---|---|---|

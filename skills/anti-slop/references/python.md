@@ -16,17 +16,17 @@ The Java brain transplant. Python modules are already namespaces - you don't nee
 ## Stale Patterns (Lies)
 
 - `os.path.join()` -> `pathlib.Path()` operations
-- `"{}".format(x)` or `"%s" % x` -> f-strings
+- Prefer f-strings when clearer; preserve deferred logging interpolation, template contracts, and supported Python versions
 - `typing.Optional[X]` -> `X | None` (3.10+)
 - `typing.Union[X, Y]` -> `X | Y` (3.10+)
 - `typing.List[X]` -> `list[X]` (3.9+)
 - `typing.Dict[K, V]` -> `dict[K, V]` (3.9+)
-- `if/elif/elif/else` chains on a single value -> `match`/`case` (3.10+)
+- Consider `match`/`case` (3.10+) when pattern matching improves clarity; a conditional chain is valid
 - `open()` without context manager -> `with open() as f:`
 - Manual `__enter__`/`__exit__` -> `@contextmanager` decorator
-- `try/finally` for cleanup -> context managers or `atexit`
-- `dict()` constructor -> `{}` literal
-- `list()` constructor -> `[]` literal
+- `try/finally` for cleanup -> consider a context manager only if it preserves cleanup timing and exception behavior; `atexit` is not an equivalent replacement
+- Empty `dict()` and `{}` are equivalent style choices, not correctness findings
+- Empty `list()` and `[]` are equivalent style choices, not correctness findings
 
 ## Type Hint Abuse (Noise)
 
@@ -69,9 +69,9 @@ def process(x):
 - `filter(lambda x: ..., items)` -> list comprehension with `if`
 - Manual `enumerate` index tracking -> `for i, item in enumerate(items)`
 - `len(x) == 0` -> `not x`
-- `if x == True` -> `if x`
+- Replace `x == True` with truthiness only when the accepted values make them equivalent
 - `if x == None` -> `if x is None`
-- Importing and immediately aliasing: `import numpy as np` is fine, but `from foo import bar as bar` is not
+- Importing and immediately aliasing: `import numpy as np` is fine, and `from foo import bar as bar` can deliberately declare a public re-export
 
 ## Dependency Creep (Lies)
 
@@ -115,7 +115,7 @@ if name.equals(other)                  # name == other
 str_val = obj.toString()               # str(obj)
 ```
 
-These never appear in human-written Python. If you see them, the code was generated without language-aware review.
+These APIs are invalid in the shown Python context. Verify the actual type and fix the error without inferring authorship.
 
 ## Error Handling (Noise + Lies)
 

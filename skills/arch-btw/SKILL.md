@@ -156,7 +156,7 @@ lsmod | grep '^v4l2loopback'
 command -v dkms >/dev/null 2>&1 && dkms status
 findmnt -t btrfs
 systemctl status fstrim.timer 2>&1 || true
-find /etc -maxdepth 1 -type f \( -name '*.pacnew' -o -name '*.pacsave' \) -print
+find /etc -type f \( -name '*.pacnew' -o -name '*.pacsave' \) -print
 ```
 
 If `paru` is present, prefer it for day-to-day AUR workflow. Fall back to raw `makepkg` and
@@ -253,7 +253,7 @@ When a bug looks "desktop-only," compare one clean baseline:
 |---------|-------------|
 | Package weirdness after install | Partial upgrade? `pacman -Syu` first. Conflicting files? pacman error output shows the conflicting path - use it in `pacman -Syu --overwrite '/exact/path'` (specific glob, never `'*'`) |
 | Service fails after update | `.pacnew` merge needed? `pacdiff` or `DIFFPROG=nvim pacdiff`. Check unit overrides and `journalctl -b` |
-| Won't boot after kernel work | Btrfs snapshots: check and restore before reinstalling kernel or regenerating initramfs. ESP mount, bootloader, initramfs, kernel artifacts. From live USB: `mount /dev/sdX2 /mnt && mount /dev/sdX1 /mnt/boot && arch-chroot /mnt` (adjust for Btrfs subvolumes: `mount -o subvol=@ /dev/sdX2 /mnt`). CachyOS reinstall: `pacman -S linux-cachyos && mkinitcpio -P && bootctl update` |
+| Won't boot after kernel work | Confirm root/subvolume, separate boot and ESP mounts, installed kernel, active initramfs generator and bootloader. Inspect available snapshots before changing boot artifacts. Follow `references/boot-kernel-and-recovery.md`; use the confirmed generator/loader for CachyOS too. |
 | CachyOS unstable after repo tuning | CPU capability, repo tier, forked `pacman` |
 | AUR build failure | `PKGBUILD`, keys, pinned deps, repo conflicts |
 | Hyprland desktop weirdness | `XDG_SESSION_TYPE`, portal, Xwayland, user services |

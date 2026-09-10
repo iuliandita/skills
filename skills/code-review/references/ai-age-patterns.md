@@ -4,6 +4,10 @@ Bug patterns specific to AI-generated code, LLM API integrations, agentic AI sys
 
 Research date: September 2026.
 
+Treat the catalog as investigation prompts. Style-only patterns route to **anti-slop** and
+exploitable flaws to **security-audit**. Historical study percentages are not evidence that
+a particular snippet is generated or defective; verify a concrete failure and its API context.
+
 ---
 
 ## AI-Generated Code Smells
@@ -31,7 +35,7 @@ AI training data includes code from many years. Patterns that were standard in 2
 - Deprecated crypto algorithms (MD5, SHA1 for security, `Math.random()` for secrets)
 - Old API patterns (callbacks where promises/async-await is standard, XMLHttpRequest instead of fetch)
 - Framework version mismatches - React class components in a hooks-based codebase, Express 4 patterns in Express 5, Vue Options API in a Composition API project
-- Deprecated stdlib functions (Python's `os.path.join` when the project uses `pathlib`, `unittest` when `pytest` is standard)
+- Project-style differences such as `os.path.join` versus `pathlib` or `unittest` versus `pytest` are not deprecations or correctness bugs; route style concerns separately
 - Outdated dependency versions hardcoded in config (AI copies version numbers from training data)
 
 ### Over-Defensive Error Handling

@@ -211,10 +211,11 @@ sudo btrfs filesystem usage /volume1           # metadata headroom
 sudo dmesg | tail -100                         # kernel truth about the mount
 synopkg status <Pkg>                           # package state as JSON
 # damage survey: hours on a large share, so detach it and keep stderr
-sudo setsid nohup sh -c 'find /volume1/<share> -size +0 > /dev/null' \
-  > /root/survey.log 2>&1 < /dev/null &
+sudo sh -c 'setsid nohup find /volume1/SHARE -size +0 > /dev/null 2> /root/survey.log < /dev/null &'
 ```
 
+Replace `SHARE` with the confirmed share path, quoting it inside the elevated shell if needed.
+The elevated shell opens the log and detaches the survey; inspect that log for errors.
 `find <dir>` alone performs readdir only and reads no inodes, so it reports a badly damaged
 filesystem as clean. **`-type f` does not fix that**: `find` answers `-type` from the `d_type`
 that `readdir` already returned and skips the `stat` entirely. Use a predicate that needs inode

@@ -108,7 +108,7 @@ pass against those assumptions, and still write the decision record.
 
 ### Step 2: Phase 1 - Clarify (resolve the decision tree)
 
-Run the core grill mechanics. They are the load-bearing part, and apply in every domain:
+For a requested pure Phase-2 audit of an existing plan/spec, start at Step 3 and reopen only decisions invalidated by concrete findings. Otherwise run the clarification mechanics:
 
 - Build the decision tree for the plan. **Resolve upstream choices before downstream ones** -
   a downstream answer is worthless if its parent decision flips.
@@ -185,8 +185,7 @@ Write one file to `docs/local/deliverables/deep-grill/<YYYY-MM-DD>-<slug>.md` us
 three deferral sections (Open questions, Not yet specified, Prerequisites) use the four-outcome model
 from Step 2; emit each whenever it has any entry. Headless one-pass grills are the most likely to
 collapse them - do not. A decision of the form "inspect X before deciding Y" is not one resolved
-decision: it is a **prerequisite** (inspect X) plus **fog** (the shape of Y, unphraseable until X is
-known).
+decision: it is a **prerequisite** (inspect X) plus an **open question** when Y can already be phrased precisely. Use **fog** only when Y cannot yet be specified.
 
 This file is the deliverable. It is both the design (resolved choices) and the spec (what to
 build and what to watch).
@@ -235,7 +234,7 @@ See `references/output-contract.md` for the full contract.
 3. Explore the codebase, files, and docs for anything answerable there; do not ask what you can check.
 4. Resolve upstream decisions before the downstream ones that depend on them.
 5. Challenge overloaded terms before building on them; a wrong term resolves the wrong tree.
-6. Do not start Phase 2 until the tree is resolved, and announce the switch (the announcement is interactive-only; headless folds Phase 2 into the record).
+6. For a new plan, resolve the tree before Phase 2; a requested existing-artifact audit may start directly at Phase 2. Announce the switch (the announcement is interactive-only; headless folds Phase 2 into the record).
 7. Phase 2 attacks the plan; it does not restate Phase 1.
 8. Force vague answers to one of four outcomes - decision, open question, fog (not yet specifiable), or prerequisite (do-first action) - before moving on.
 9. Always write the decision record. It is the design and the spec.

@@ -40,7 +40,7 @@ AI loves creating a custom error enum for every module.
 - `.expect("should never happen")` on fallible operations that absolutely can happen
 - `Box<dyn Error>` as return type when `anyhow::Result` is in the deps
 
-**Fix:** For applications, use `anyhow`. For libraries, use `thiserror`. Don't hand-roll error types unless you need stable public API error variants.
+**Fix:** Prefer the project's existing error approach. `anyhow` can suit applications and `thiserror` can reduce library boilerplate, but a small custom error enum is valid and does not justify a dependency by itself.
 
 ## Overly Generic Trait Bounds (Noise)
 
@@ -80,7 +80,7 @@ if let Some(v) = maybe_value {
 - `unsafe` blocks for operations that have safe alternatives
 - `unsafe` without a `// SAFETY:` comment explaining the invariant
 - `transmute` when `as` casting or `From`/`Into` would work
-- Raw pointer manipulation that could use `slice::from_raw_parts` or similar safe wrappers
+- Raw pointer manipulation where an existing safe borrowed slice would suffice; `slice::from_raw_parts` is itself unsafe and requires valid allocation, lifetime, alignment, and aliasing invariants
 
 **Fix:** Remove unsafe when a safe API exists. When unsafe is genuinely needed, document the safety invariant.
 
@@ -110,7 +110,7 @@ if let Some(v) = maybe_value {
 **Detect:**
 - Unpinned `tar`/`async-tar`/`tokio-tar` in `Cargo.toml`
 - `cargo audit` not in CI pipeline
-- No `Cargo.lock` committed (for binaries/applications - libraries should omit it)
+- No reproducible dependency resolution where the project requires it; libraries can also commit `Cargo.lock` for development and CI
 
 **Deeper tools** (beyond `cargo audit`):
 - `cargo-geiger` - maps unsafe usage across entire dependency graph

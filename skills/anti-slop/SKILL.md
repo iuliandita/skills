@@ -17,6 +17,8 @@ Detect and fix patterns that make code look machine-generated, over-abstracted, 
 
 This skill covers: **TypeScript/JavaScript**, **Python**, **Bash/Shell**, **Rust**, **Docker/Containers**, and **Infrastructure as Code** (Terraform, Ansible, Helm, Kubernetes manifests). The universal patterns apply everywhere; language-specific sections add targeted checks.
 
+Treat these lists as review prompts. Style preferences alone are not defects: preserve supported syntax, public contracts, runtime validation, cleanup timing, and intentional architecture. Explain a concrete correctness or maintenance cost before proposing a rewrite.
+
 ## When to use
 
 - Reviewing code that feels machine-generated, bloated, or oddly generic
@@ -153,7 +155,7 @@ The single biggest tell. Comments that narrate what code does instead of why.
 - `@param` descriptions repeating the parameter name; comments on obvious ops (`// increment counter`)
 - Convention blindness: camelCase in a snake_case repo, JSDoc in a no-JSDoc project
 
-**Fix:** Delete obvious comments. Keep only *why* comments - business logic, workarounds, gotchas, non-obvious decisions. If code needs a *what* comment, rewrite the code. A 20-line function needs zero comments if the names are good. A 200-line module might need 3-4.
+**Fix:** Remove comments that merely repeat nearby code. Keep explanations of contracts, intent, non-obvious behavior, constraints, and workarounds. Improve confusing code where practical; do not impose a comment quota.
 
 **Exception:** Comments explaining workarounds for bugs, API quirks, or platform limitations are valuable. Also: shell scripts benefit from more comments than typical code because the syntax is less self-documenting.
 
@@ -166,10 +168,10 @@ Error handling or validation that protects against impossible scenarios.
 - Null/nil/None checks after the type system or prior logic already guarantees non-null
 - Input validation deep inside internal functions (validate at boundaries, trust internally)
 - Fallback values for things that can't be missing
-- Shell scripts wrapping every command in `if ... then ... fi` instead of using `set -e`
+- Shell wrappers that repeat handling without adding context or recovery; explicit status checks can be necessary even with `set -e`
 - Terraform `try()` / `can()` wrapping expressions that can't fail
 
-**AI agent tells** (guardrails humans would never write):
+**Patterns to inspect** (regardless of author):
 - Try/catch wrapping every function body, catching `Error` with a generic log message
 - Null checks on values from functions you control that never return null
 - Input validation on internal helpers that only receive pre-validated data
@@ -254,7 +256,7 @@ Same logic written slightly differently in multiple places - a telltale sign of 
 
 **Fix:** Consolidate into a shared helper/factory/base module or keep one representative implementation and parameterize the differences. But only if truly the same - slight variations might be intentional.
 
-**Exception:** Sometimes duplication is clearer than a contorted abstraction, especially when integrations are likely to diverge. Still surface it as a **Consider** finding if the files/classes are near-twins today.
+**Exception:** Duplication can be clearer than a shared abstraction, especially when integrations evolve independently. Report it only with concrete divergence or maintenance risk; otherwise record the intentional boundary without a finding.
 
 ### 7. Stale Patterns (Lies)
 
@@ -269,7 +271,7 @@ Code that was fine 5 years ago but has better alternatives now.
 - Every function wrapped in its own error handler (handle at boundaries instead)
 - Errors caught and re-raised as new exceptions, losing the original stack
 - Silent swallowing: `.catch(() => {})`, `except: pass`, `2>/dev/null` on critical commands
-- Shell scripts without `set -e` that check `$?` after every command manually
+- Shell scripts that discard a failure status before checking it or continue after an unhandled error
 
 **Fix:** Handle errors at boundaries. Let errors propagate through internal code. When catching, either recover or add context and re-raise.
 
@@ -286,7 +288,7 @@ AI models trained on multiple languages bleed idioms across boundaries. A reliab
 - Shell patterns in Python: backtick usage, `$VARIABLE` syntax
 - Go patterns elsewhere: `fmt.Println()`, `:=` assignment, `func ` in non-Go
 
-**Fix:** Replace with the target language's idiom. This is almost always an AI generation artifact - humans don't accidentally write `.push()` in Python.
+**Fix:** Replace with the target language's idiom. An invalid API is a correctness problem regardless of who wrote it; it does not prove AI authorship.
 
 ### 10. Plausible Hallucinations / Schema Drift (Lies)
 
@@ -324,7 +326,7 @@ Tests can be slop too. A green test suite is not evidence if the tests were gene
 Read `references/typescript.md` for the full TS/JS pattern catalog. Key highlights:
 
 - **Type abuse**: redundant annotations where inference works, `any` instead of `unknown`, enums instead of const objects/unions, missing `satisfies` / `as const`
-- **Stale patterns**: `require()` in ESM, `var`, `React.FC`, class components, `PropTypes` alongside TS, `.then()` chains, `namespace`
+- **Compatibility and idioms**: verify module format and supported APIs; valid React types, classes, promise chains, or namespaces are not defects merely because another style exists
 - **Verbose**: `for` loops that should be `.filter().map()`, `Object.keys().forEach()` instead of `for...of`, classes for stateless logic
 - **Dependency creep**: `node-fetch` when `fetch` is global, `uuid` when `crypto.randomUUID()` exists, two libs for the same concern
 - **AI-native tells**: `try/catch` around deterministic local code, `new Promise(async ...)`, fallback defaults for required env/config, tests that only assert mocks or snapshots
@@ -335,8 +337,8 @@ Read `references/typescript.md` for the full TS/JS pattern catalog. Key highligh
 Read `references/python.md` for the full Python pattern catalog. Key highlights:
 
 - **Class-for-everything disease**: stateless classes that should be plain functions/modules
-- **Exception anti-patterns**: bare `except:` catching KeyboardInterrupt/SystemExit, `except Exception as e: logger.error(e); raise` (adds nothing), type/None checks on typed parameters (e.g., `if user_id is None` when the signature says `int`), broad try/except wrapping its own explicit `raise` statements
-- **Stale patterns**: `os.path` instead of `pathlib`, `.format()` instead of f-strings, `%` formatting, `if/elif` chains instead of `match` (3.10+), `typing.Optional[X]` instead of `X | None` (3.10+)
+- **Exception anti-patterns**: bare `except:` catching KeyboardInterrupt/SystemExit, `except Exception as e: logger.error(e); raise` (adds nothing), redundant internal checks only where caller invariants are proven (Python annotations alone do not validate runtime values), broad try/except wrapping its own explicit `raise` statements
+- **Compatibility and idioms**: preserve supported Python syntax, deferred logging, and cleanup behavior; modernization needs a concrete benefit
 - **Type hints**: `Any` used to bypass type errors, redundant hints on obvious assignments, overly complex `TypeVar` gymnastics
 - **Verbose**: manual dict/list building instead of comprehensions, nested `if` instead of early returns, `lambda` assigned to a variable (just use `def`), redundant docstrings restating the function signature
 - **Dependency creep**: `requests` for a single GET when `urllib` works, `python-dotenv` when `os.environ` is fine
@@ -346,10 +348,10 @@ Read `references/python.md` for the full Python pattern catalog. Key highlights:
 
 Read `references/shell.md` for the full Shell pattern catalog. Key highlights:
 
-- **Missing safety**: no `set -euo pipefail`, unquoted variables, no `shellcheck` compliance
+- **Missing safety**: unhandled failures, unsafe expansion, or unsupported shell syntax; select strict-mode options for the actual shell and use ShellCheck where available
 - **Useless use of cat**: `cat file | grep` instead of `grep file`
 - **Stale patterns**: backticks instead of `$()`, `expr` instead of `$(())`, `[ ]` instead of `[[ ]]` in bash/zsh, parsing `ls` output
-- **Over-defensive**: `if command; then ... fi` on every line instead of `set -e`, manual `$?` checks
+- **Error handling**: preserve explicit checks that add diagnostics or recovery; `set -e` has conditional and function-context exceptions
 - **Verbose**: `echo "$var" | grep` instead of `[[ "$var" == *pattern* ]]`, external tools for built-in operations
 - **AI-native tells**: hallucinated flags/subcommands copied from adjacent CLIs, `2>/dev/null || true` used to hide uncertainty, heredoc-heavy automation instead of checked files/templates
 
@@ -487,6 +489,6 @@ Keep it concise. Show the diff, not a paragraph explaining it.
 - **Keep security out of scope.** Defensive code often looks verbose on purpose. Do not flag it casually.
 - **Read before judging.** A pattern that looks generic in isolation may be justified by framework or project constraints.
 - **Ground hallucination claims.** Use local types, schema, lockfiles, generated docs, or tool help before saying a flag/resource/API is fake.
-- **Do not bury structural duplication.** If near-twin modules or repeated registry/wrapper shapes appear, surface at least one representative finding even when higher-severity hallucination findings dominate the report.
+- **Explain duplication risk.** For near-twin modules, report a representative finding only when you can show a maintenance cost; intentional independent boundaries are valid.
 - **Prefer concrete rewrites.** If you flag a pattern, show the simpler version.
 - **Run the AI Self-Check.** Verify findings against the checklist before returning the audit.

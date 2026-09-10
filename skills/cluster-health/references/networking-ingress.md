@@ -11,8 +11,8 @@ kubectl --context <context> get svc -A -o wide | head -n 120
 kubectl --context <context> get ingress -A -o wide | head -n 120
 kubectl --context <context> describe ingress -n <namespace> <ingress> | tail -n 120
 kubectl --context <context> get endpointslices -A | head -n 120
-kubectl --context <context> get events -A --field-selector type=Warning --sort-by=.lastTimestamp | tail -n 80
-dig +short <hostname> 2>&1 || true
+# Use kubernetes-core.md event filtering for the requested time window, then narrow by this area.
+dig +noall +comments +answer +authority +time=3 +tries=1 <hostname>
 echo | openssl s_client -servername <hostname> -connect <hostname>:443 2>&1 | openssl x509 -noout -dates -issuer -subject 2>&1
 ```
 
@@ -22,7 +22,7 @@ output as "name does not exist," which reads as a clean check. Keep `2>&1` and r
 
 | Symptom | Means | Not |
 |---------|-------|-----|
-| `dig` empty + `SERVFAIL`/`connection timed out` | resolver unreachable from here | "hostname is down" |
+| `dig` `SERVFAIL` / `connection timed out` | resolver failed the query / no response from this vantage point | "hostname is down" |
 | `dig` empty, `NXDOMAIN` | record genuinely absent or internal-only name from outside | resolver failure |
 | `openssl` `connect: Connection refused` | nothing listening on 443 | expired cert |
 | `openssl` `verify error: certificate has expired` | actual expiry | unreachable |

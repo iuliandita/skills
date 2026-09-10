@@ -64,7 +64,7 @@ AI tools consistently produce the same Terraform mistakes. **Before returning an
 - [ ] Tags on every taggable resource (at minimum: Name, Environment, Owner, pci_scope if applicable)
 - [ ] No deprecated resource arguments (check provider changelog - AI trains on old syntax)
 - [ ] No `provisioner` blocks - use Ansible or user_data instead
-- [ ] State file does NOT contain plaintext secrets (use ephemeral resources on TF 1.10+ or data sources for runtime secret lookup)
+- [ ] Minimize secret persistence with supported ephemeral/write-only flows or application runtime lookup; ordinary secret data sources persist values in state and require protected state
 - [ ] `terraform fmt` and `terraform validate` pass
 
 **AI should never own `terraform apply`.** In March 2026, an AI-assisted Terraform workflow deleted production infrastructure through escalating cleanup logic. Plan output is reviewed by a human. Always.
@@ -244,13 +244,16 @@ moved {
 **Cross-state resource move** (state surgery - when `moved` blocks can't help):
 
 ```bash
-# 1. Back up source state, then remove the resource
-terraform state pull > backup.tfstate         # safety backup only
-terraform state rm aws_instance.web           # removes from source backend directly
-
-# 2. In the destination workspace, import the resource
-terraform import aws_instance.web i-0abc1234def56789
-# Then add the matching resource block in HCL to avoid drift
+# Freeze both applies; stage source HCL removal and destination HCL addition first.
+# Resolve references in both configs; fmt/validate both before state writes.
+set -euo pipefail
+umask 077
+terraform -chdir=source state pull > source-backup.tfstate
+terraform -chdir=destination state pull > destination-backup.tfstate
+# With approved migration and correct backend/workspace identities:
+terraform -chdir=source state rm aws_instance.web
+terraform -chdir=destination import aws_instance.web i-0abc1234def56789
+# Plan both: neither may propose unintended create/destroy or drift.
 ```
 
 Verify both states with `terraform plan` before and after. `state rm` writes directly to the backend - do not `state push` the backup afterward (that would undo the removal). Ensure no other runs hold the state lock before starting (check `terraform force-unlock` only as a last resort with a known-stale lock ID) and block concurrent `apply` in CI for both source and destination during the migration.

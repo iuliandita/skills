@@ -145,11 +145,13 @@ Show the user:
 3. The scope (repos + branch policy, connectors, env vars, environment choice)
 4. Any assumptions you made
 
-**Do not emit automation artifacts yet.** Wait for approval. On edits, revise in place rather than rewriting from scratch.
+Prepare the requested prompt and automation artifacts together so the result is reviewable.
+Existing authorization covers drafting; ask only for missing live creation/fire authority or
+required configuration. On edits, revise in place rather than rewriting from scratch.
 
 ### Step 6: Emit artifacts
 
-After approval, emit the right artifacts for the chosen trigger(s):
+Emit the right artifacts for the requested trigger(s); drafting does not itself create or fire a routine:
 
 - **Scheduled**: if `claude` is on PATH, a `/schedule` CLI invocation. Otherwise a web-UI walkthrough with the prompt copy-paste ready.
 - **API**: a `curl` template for the `/fire` endpoint (with env var placeholders for token and URL), plus a GitHub Actions step when the user is wiring this from CI.
@@ -200,24 +202,17 @@ When the skill finishes, the user should have, depending on triggers chosen:
 
 For a scheduled nightly triage routine on a machine where `claude` is on PATH, the user gets three things back:
 
-1. The routine prompt (from Step 4, drafted and approved in Step 5).
+1. The routine prompt (from Step 4, prepared with the configuration in Step 5).
 
 2. The `/schedule` invocation to paste into Claude Code:
 
    ```
-   /schedule Run every weekday at 07:00 local. Read issues opened in the last 24 hours in myorg/api without the auto-triaged label. Apply area and auto-triaged labels, assign owners from CODEOWNERS, and post a Slack summary in #eng-backlog. If no issues match, exit without output.
+   /schedule Run every weekday at 07:00 local. Read up to 100 oldest open untriaged issues in myorg/api without the auto-triaged label. Apply area labels, assign owners from CODEOWNERS, then mark each completed issue auto-triaged and reconcile one Slack summary in #eng-backlog. If no issues match, exit without output.
    ```
 
-3. The `/fire` curl template (after the user adds an API trigger in the web UI and stores the token as `$ROUTINE_FIRE_TOKEN`):
-
-   ```bash
-   curl -X POST "$ROUTINE_FIRE_URL" \
-     -H "Authorization: Bearer $ROUTINE_FIRE_TOKEN" \
-     -H "anthropic-version: 2023-06-01" \
-     -H "anthropic-beta: experimental-cc-routine-2026-04-01" \
-     -H "Content-Type: application/json" \
-     -d '{"text": "Manual re-fire after CODEOWNERS refresh"}'
-   ```
+3. If the user also requests an API trigger, include the protected-header-file curl template
+   from `references/automation.md` after explaining token setup. A schedule-only routine does
+   not need an API token or an unused fire template.
 
 API-only routines use web setup; GitHub setup also supports the CLI path below. See `references/automation.md` for the full emit matrix.
 
@@ -257,7 +252,7 @@ See `references/output-contract.md` for the full contract.
 3. **Idempotent no-op.** Every scheduled or webhook-driven routine handles "nothing to do" cleanly by exiting without producing output. Routines that invent work on empty inputs burn daily allowance.
 4. **Minimum scope.** Declare only the repos, connectors, and env vars the prompt actually uses. Each connector is attack surface; each extra repo is extra clone time.
 5. **Prefer PRs.** Check current branch restrictions before drafting push instructions.
-6. **Never embed tokens.** Every `Authorization: Bearer` in emitted artifacts uses an env var placeholder (`$ROUTINE_FIRE_TOKEN`). Tokens are shown once in the web UI and cannot be retrieved - emitting a real one in the conversation exposes it.
+6. **Never embed tokens.** Read `$ROUTINE_FIRE_TOKEN` from protected environment injection and write the header directly to a restricted temporary file; pass only its path to curl, never token values in argv. Tokens are shown once in the web UI and cannot be retrieved - emitting a real one in the conversation exposes it.
 7. **Never auto-run `/schedule`.** Emit the command for the user to paste or confirm. Routines count against the daily allowance; the skill never consumes that allowance autonomously.
 8. **Pin the beta header with its date in prose.** Prose mentions of `experimental-cc-routine-2026-04-01` carry the header date so a reader scanning the docs can spot staleness without parsing the header string. In code blocks the header string itself contains `2026-04-01`, so no extra annotation is needed. The two most recent prior header versions keep working for migration.
 9. **Detect before emitting.** Before printing `/schedule` instructions, verify `claude` is on PATH. If not, emit the web-UI walkthrough instead.

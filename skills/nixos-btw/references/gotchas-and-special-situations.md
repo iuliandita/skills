@@ -43,9 +43,13 @@ generations.
 Fix:
 ```bash
 nix-env -q                       # what is there
-nix-env -e '*'                   # wipe the user profile
-# Then add the packages to environment.systemPackages or home.packages.
+# Add the required packages to environment.systemPackages or home.packages first.
+# Build, activate and verify the declarative replacements and a rollback path.
+nix-env -e <migrated-package>     # remove only a confirmed replacement
 ```
+
+Re-check command resolution after each removal. Keep unmatched packages until their replacements
+work; never wipe the entire profile as the first migration step.
 
 ## Options that no longer exist
 

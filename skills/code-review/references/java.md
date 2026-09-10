@@ -75,7 +75,7 @@ The #1 source of Spring bugs. `@Transactional` works through CGLIB proxies - any
 
 **Detect:**
 - Self-invocation: method in the same bean calling another `@Transactional` method directly (bypasses proxy, no transaction)
-- `@Transactional` on non-public methods (silently ignored - proxy can't intercept)
+- Private methods cannot be intercepted; Spring 6+ class-based proxies support protected/package-visible transactional methods by default. Interface-based proxies still require public interface methods. Verify proxy configuration.
 - `@Transactional` on `final` class or method (CGLIB can't subclass)
 - Checked exception thrown without `rollbackFor` (Spring only auto-rolls-back on unchecked exceptions)
 - `@Transactional` called from `@PostConstruct` (proxy not fully initialized)

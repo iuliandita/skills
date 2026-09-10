@@ -49,6 +49,9 @@ otelcol validate --config otel-collector.yaml
 ## Prometheus SLO rules and tests
 
 This example treats 5xx responses as bad events for a 99.9% availability SLO.
+The denominator filter retains the actual positive request rate; zero traffic and absent
+series produce no burn alert. Monitor missing telemetry separately. Initialize status-code
+counters to zero so dashboards can distinguish no errors from absent instrumentation.
 
 ```yaml
 # slo-rules.yaml
@@ -59,13 +62,13 @@ groups:
         expr: |
           (
             sum(rate(http_requests_total{job="api",code=~"5.."}[5m]))
-            / clamp_min(sum(rate(http_requests_total{job="api"}[5m])), 1)
+            / (sum(rate(http_requests_total{job="api"}[5m])) > 0)
             > 14.4 * 0.001
           )
           and
           (
             sum(rate(http_requests_total{job="api",code=~"5.."}[1h]))
-            / clamp_min(sum(rate(http_requests_total{job="api"}[1h])), 1)
+            / (sum(rate(http_requests_total{job="api"}[1h])) > 0)
             > 14.4 * 0.001
           )
         for: 2m
@@ -79,13 +82,13 @@ groups:
         expr: |
           (
             sum(rate(http_requests_total{job="api",code=~"5.."}[30m]))
-            / clamp_min(sum(rate(http_requests_total{job="api"}[30m])), 1)
+            / (sum(rate(http_requests_total{job="api"}[30m])) > 0)
             > 6 * 0.001
           )
           and
           (
             sum(rate(http_requests_total{job="api",code=~"5.."}[6h]))
-            / clamp_min(sum(rate(http_requests_total{job="api"}[6h])), 1)
+            / (sum(rate(http_requests_total{job="api"}[6h])) > 0)
             > 6 * 0.001
           )
         for: 5m
@@ -98,36 +101,115 @@ groups:
 ```
 
 ```yaml
-# slo-rules.test.yaml
 rule_files:
-  - slo-rules.yaml
+- slo-rules.yaml
 evaluation_interval: 1m
 tests:
-  - interval: 1m
-    input_series:
-      - series: 'http_requests_total{job="api",code="200"}'
-        values: '0+100x400'
-      - series: 'http_requests_total{job="api",code="500"}'
-        values: '0+10x400'
-    alert_rule_test:
-      - eval_time: 1h
-        alertname: ApiSloFastBurn
-        exp_alerts:
-          - exp_labels:
-              severity: page
-            exp_annotations:
-              summary: API availability SLO is burning too quickly
-              description: The 5-minute and 1-hour error-budget burn rates both exceed 14.4x.
-              runbook_url: https://runbooks.example.invalid/api-slo-fast-burn
-      - eval_time: 6h
-        alertname: ApiSloSlowBurn
-        exp_alerts:
-          - exp_labels:
-              severity: page
-            exp_annotations:
-              summary: API availability SLO has a sustained burn
-              description: The 30-minute and 6-hour error-budget burn rates both exceed 6x.
-              runbook_url: https://runbooks.example.invalid/api-slo-slow-burn
+- interval: 1m
+  input_series:
+  - series: http_requests_total{job="api",code="200"}
+    values: 0+100x400
+  - series: http_requests_total{job="api",code="500"}
+    values: 0+10x400
+  alert_rule_test:
+  - eval_time: 1h
+    alertname: ApiSloFastBurn
+    exp_alerts:
+    - exp_labels:
+        severity: page
+      exp_annotations:
+        summary: API availability SLO is burning too quickly
+        description: The 5-minute and 1-hour error-budget burn rates both exceed 14.4x.
+        runbook_url: https://runbooks.example.invalid/api-slo-fast-burn
+  - eval_time: 6h
+    alertname: ApiSloSlowBurn
+    exp_alerts:
+    - exp_labels:
+        severity: page
+      exp_annotations:
+        summary: API availability SLO has a sustained burn
+        description: The 30-minute and 6-hour error-budget burn rates both exceed
+          6x.
+        runbook_url: https://runbooks.example.invalid/api-slo-slow-burn
+- interval: 1m
+  input_series:
+  - series: http_requests_total{job="api",code="200"}
+    values: 0+0x400
+  - series: http_requests_total{job="api",code="500"}
+    values: 0+0.06x400
+  alert_rule_test:
+  - eval_time: 1h
+    alertname: ApiSloFastBurn
+    exp_alerts:
+    - exp_labels:
+        severity: page
+      exp_annotations:
+        summary: API availability SLO is burning too quickly
+        description: The 5-minute and 1-hour error-budget burn rates both exceed 14.4x.
+        runbook_url: https://runbooks.example.invalid/api-slo-fast-burn
+  - eval_time: 6h
+    alertname: ApiSloSlowBurn
+    exp_alerts:
+    - exp_labels:
+        severity: page
+      exp_annotations:
+        summary: API availability SLO has a sustained burn
+        description: The 30-minute and 6-hour error-budget burn rates both exceed
+          6x.
+        runbook_url: https://runbooks.example.invalid/api-slo-slow-burn
+  name: low-traffic-outage
+- interval: 1m
+  input_series:
+  - series: http_requests_total{job="api",code="200"}
+    values: 0+100x400
+  - series: http_requests_total{job="api",code="500"}
+    values: 0+0x400
+  alert_rule_test:
+  - eval_time: 1h
+    alertname: ApiSloFastBurn
+    exp_alerts: []
+  - eval_time: 6h
+    alertname: ApiSloSlowBurn
+    exp_alerts: []
+  name: healthy-high
+- interval: 1m
+  input_series:
+  - series: http_requests_total{job="api",code="200"}
+    values: 0+0.06x400
+  - series: http_requests_total{job="api",code="500"}
+    values: 0+0x400
+  alert_rule_test:
+  - eval_time: 1h
+    alertname: ApiSloFastBurn
+    exp_alerts: []
+  - eval_time: 6h
+    alertname: ApiSloSlowBurn
+    exp_alerts: []
+  name: healthy-low
+- interval: 1m
+  input_series:
+  - series: http_requests_total{job="api",code="200"}
+    values: 0+0x400
+  - series: http_requests_total{job="api",code="500"}
+    values: 0+0x400
+  alert_rule_test:
+  - eval_time: 1h
+    alertname: ApiSloFastBurn
+    exp_alerts: []
+  - eval_time: 6h
+    alertname: ApiSloSlowBurn
+    exp_alerts: []
+  name: zero-traffic
+- interval: 1m
+  input_series: []
+  alert_rule_test:
+  - eval_time: 1h
+    alertname: ApiSloFastBurn
+    exp_alerts: []
+  - eval_time: 6h
+    alertname: ApiSloSlowBurn
+    exp_alerts: []
+  name: absent-series
 ```
 
 ```bash
@@ -161,7 +243,7 @@ promtool test rules slo-rules.test.yaml
       "type": "timeseries",
       "title": "Error ratio",
       "targets": [
-        { "refId": "A", "expr": "sum(rate(http_requests_total{job=~\"$job\",code=~\"5..\"}[5m])) / clamp_min(sum(rate(http_requests_total{job=~\"$job\"}[5m])), 1)" }
+        { "refId": "A", "expr": "sum(rate(http_requests_total{job=~\"$job\",code=~\"5..\"}[5m])) / (sum(rate(http_requests_total{job=~\"$job\"}[5m])) > 0)" }
       ]
     },
     {

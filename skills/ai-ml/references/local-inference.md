@@ -232,10 +232,10 @@ Q2_K   = 2-bit, significant quality loss, smallest
 ```
 Available VRAM -> max model size at chosen quantization
   6 GB  -> 7-8B at Q4
-  12 GB -> 13B at Q4, or 7-8B at FP16
-  24 GB -> 34B at Q4, or 13B at FP16
+  12 GB -> 13B at Q4
+  24 GB -> 34B at Q4, or 7-8B at FP16
   48 GB -> 70B at Q4
-  80 GB -> 70B at FP16
+  80 GB -> 34B at FP16; 70B FP16 needs roughly 140 GB for weights alone
 ```
 
 ---
@@ -245,7 +245,8 @@ Available VRAM -> max model size at chosen quantization
 ### Rule of thumb
 
 ```
-Memory (GB) = Parameters (B) * Bytes per parameter / 1024^3
+Weights (decimal GB) = Parameters (billions) * Bytes per parameter
+Weights (GiB) = Parameters (billions) * 1e9 * Bytes per parameter / 1024^3
 
 FP16: 7B model = ~14 GB
 INT8: 7B model = ~7 GB

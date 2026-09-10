@@ -74,15 +74,19 @@ will misbehave.
 
 ```bash
 sudo mount /dev/sdXn /mnt              # root filesystem
+cat /mnt/etc/fstab                    # resolve installed UUIDs with lsblk/blkid
+sudo mount /dev/sdXb /mnt/boot         # ONLY if fstab has a separate /boot
 sudo mount /dev/sdXm /mnt/boot/efi     # ESP, on EFI systems
 for d in /dev /dev/pts /proc /sys /run; do sudo mount --bind "$d" "/mnt$d"; done
 sudo chroot /mnt
 # inside chroot:
-update-grub
 update-initramfs -u -k all
+update-grub
 exit
 for d in /run /sys /proc /dev/pts /dev; do sudo umount "/mnt$d"; done
-sudo umount /mnt/boot/efi /mnt
+sudo umount /mnt/boot/efi             # only if mounted above
+sudo umount /mnt/boot                 # only if separately mounted above
+sudo umount /mnt
 ```
 
 - For LUKS-encrypted root, `cryptsetup open` the container first; for LVM, activate with

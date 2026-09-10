@@ -190,14 +190,15 @@ spec:
             - entries:
                 - keyless:
                     issuer: "https://token.actions.githubusercontent.com"
-                    subject: "https://github.com/my-org/*"
+                    subject: "https://github.com/my-org/my-repo/.github/workflows/release.yml@refs/heads/main"
 ```
 
 ---
 
 ## SBOM Generation
 
-Required for PCI-DSS 4.0 Requirement 6.3.2 (mandatory since March 31, 2025).
+An SBOM can support the software/component inventory required by PCI DSS 6.3.2.
+The standard does not prescribe this particular file format or artifact signing.
 
 ### Formats
 
@@ -206,7 +207,7 @@ Required for PCI-DSS 4.0 Requirement 6.3.2 (mandatory since March 31, 2025).
 | **SPDX** | Linux Foundation | Compliance, licensing |
 | **CycloneDX** | OWASP | Security, vulnerability correlation |
 
-Both are acceptable for PCI-DSS. Pick one and be consistent.
+Choose the format supported by your inventory tooling and documented control evidence.
 
 ### Generation in CI
 
@@ -237,9 +238,9 @@ docker buildx build --sbom=true --provenance=true -t myapp:1.0.0 --push .
 
 ### Storage
 
-SBOMs must be stored and queryable for PCI compliance:
+Store SBOMs according to the documented retention/access policy, for example:
 - Attach to GitHub releases as assets
-- Store as GitLab CI artifacts (90+ day retention)
+- Store as GitLab CI artifacts with policy-defined retention
 - Push to OCI registry alongside the image (BuildKit attestations)
 - Index in a vulnerability management system (Dependency-Track, GUAC)
 
@@ -251,12 +252,12 @@ SLSA (Supply-chain Levels for Software Artifacts) is a framework for build integ
 
 | Level | Meaning | Effort |
 |-------|---------|--------|
-| **1** | Documentation of build process | Trivial |
-| **2** | Hosted build service, signed provenance | Afternoon |
-| **3** | Hardened build platform, non-falsifiable provenance | Week |
-| **4** | Two-party review, hermetic builds | Enterprise |
+| **Build L1** | Provenance exists | Capture actual build inputs/process |
+| **Build L2** | Hosted build platform generates signed provenance | Verify producer and consumer requirements |
+| **Build L3** | Hardened build platform with isolation and protected signing | Evaluate platform guarantees |
 
-**Level 2 is achievable in an afternoon with GitHub Actions.** Use `actions/attest-build-provenance`:
+[SLSA v1.1 build levels](https://slsa.dev/spec/v1.1/levels) stop at L3. An attestation action
+alone does not prove a level; verify the platform and consumer requirements. Example:
 
 ```yaml
 - uses: actions/attest-build-provenance@<sha>
@@ -268,7 +269,7 @@ SLSA (Supply-chain Levels for Software Artifacts) is a framework for build integ
 
 Verification:
 ```bash
-gh attestation verify ghcr.io/org/repo@sha256:... --owner org
+gh attestation verify oci://ghcr.io/org/repo@sha256:... --owner org
 ```
 
 ---
@@ -350,75 +351,20 @@ Same syntax as GitHub. No environment-level scoping yet.
 
 ---
 
-## PCI-DSS 4.0 CI/CD Compliance
+## PCI-DSS CI/CD Assessment Boundaries
 
-All future-dated requirements became **mandatory March 31, 2025**.
+Use the applicable standard and entity scope, not tool presence, to assess compliance.
+[PCI SSC requirement text](https://listings.pcisecuritystandards.org/documents/PCI-DSS-v4-0-SAQ-D-Service-Provider.pdf)
+includes software review (6.2.3), software/component inventory (6.3.2), and documented
+production change approval/testing/recovery (6.5.1). Manual review conditions are separately
+assessable. Automated review needs documented coverage and findings handling; SAST/DAST/SCA
+are not a universal substitute for all required review evidence.
 
-### Requirement 6.2.1 - Secure Development
+SBOMs, signed artifacts, protected environments, and pipeline records can support documented
+controls. Do not invent a universal reviewer count, 90-day artifact retention, or signing
+mandate from these requirements. A customized approach needs its own documented assessment;
+no generic pipeline can declare equivalence or compliance by itself.
 
-**What it says**: developers trained in secure coding, processes address common vulns.
-
-**CI/CD implementation**:
-- SAST on every PR/MR (Semgrep, CodeQL, Bandit)
-- Dependency scanning on every PR/MR (Trivy, bun audit, pip-audit)
-- Secret detection on every PR/MR (gitleaks, trufflehog)
-- Block merges when HIGH/CRITICAL findings exist
-- Document scanning coverage in runbooks
-
-### Requirement 6.2.4 - Access Control and Change Tracking
-
-**What it says**: access control, change approvals, audit trails.
-
-**CI/CD implementation**:
-- Branch protection on main/production branches
-- Required reviewers (minimum 2 for CDE repos)
-- Signed commits (GPG or SSH key signing)
-- Audit logging enabled (GitHub: audit log, GitLab: audit events)
-- No direct pushes to protected branches
-
-### Requirement 6.3.2 - Software Inventory (SBOM)
-
-**What it says**: maintain inventory of bespoke and custom software components.
-
-**CI/CD implementation**:
-- Generate SPDX or CycloneDX SBOM on every release
-- Attach to release artifacts (GitHub releases, GitLab artifacts)
-- Store with 90+ day retention
-- Index in vulnerability management system
-- Cover both application code AND container base image
-
-### Requirement 6.4.2 - Change Control
-
-**What it says**: changes approved, documented, tested before production.
-
-**CI/CD implementation**:
-- Required status checks (lint, test, scan) before merge
-- Manual approval gate for production deployments
-- Deployment audit trail (who approved, when, what SHA)
-- IaC changes through git only (no manual kubectl/terraform from laptops)
-
-### Requirement 6.5.3 - Consistent Security Controls
-
-**What it says**: security controls consistent across all environments.
-
-**CI/CD implementation**:
-- Same scanning pipeline in dev, staging, AND production
-- Not just scanning in production - scanning in ALL environments
-- Shared CI components/templates to enforce consistency
-- Regular audit that dev pipelines haven't drifted from prod pipelines
-
-### Customized Approach (v4.0.1)
-
-PCI-DSS 4.0.1's Customized Approach allows automated CI/CD controls to satisfy manual review
-requirements if properly documented:
-- Automated SAST/DAST/SCA gate with evidence = equivalent to manual code review
-- Documented pipeline with audit trail = change control process
-- Signed artifacts with provenance = software inventory
-
-This is a significant change for fast-moving teams. **Document your CI/CD controls thoroughly
-for QSA assessment.** The pipeline IS the control.
-
----
 
 ## AI-Age Supply Chain Risks
 
@@ -517,7 +463,7 @@ had a 2-hour window, and automated exfiltration begins within seconds.
   connections from CI jobs.
 - **Audit all third-party actions/images** currently in use. Verify SHAs, check for known
   compromises, remove unused dependencies.
-- **Document the incident.** For PCI-DSS 4.0 (Req 6.2.4): record what happened, when it was
+- **Document the incident.** For the incident and applicable assessment evidence, record what happened, when it was
   detected, what was rotated, and what was rebuilt. QSAs will ask for this.
 
 ### Secret rotation checklist
@@ -557,4 +503,4 @@ Run through this before shipping any pipeline to production:
 - [ ] CI tool images pinned to known-safe versions
 - [ ] No `allow_failure` without documented justification
 - [ ] Concurrency control prevents parallel production deploys
-- [ ] Artifact retention meets compliance requirements (90+ days for PCI)
+- [ ] Artifact retention meets the documented applicable policy

@@ -233,12 +233,16 @@ docs = [{"title": "Getting started", "body": "Install the server and connect ove
 config = {"mode": "read-only"}
 
 @mcp.tool()
-def search_docs(query: str, limit: int = 10) -> str:
-    """Search documentation by keyword."""
-    sanitized = re.sub(r"[^\w\s-]", "", query[:200])
-    needle = sanitized.casefold()
+def search_docs(query: str, limit: int = 10) -> dict[str, list[dict[str, str]]]:
+    """Search documentation; return bounded title/snippet matches."""
+    if not 1 <= len(query) <= 200 or not 1 <= limit <= 20:
+        raise ValueError("Require a 1-200 character query and limit 1-20")
+    needle = re.sub(r"[^\w\s-]", "", query).strip().casefold()
+    if not any(char.isalnum() for char in needle):
+        raise ValueError("Query must contain a letter or number")
     matches = [doc for doc in docs if needle in f"{doc['title']}\n{doc['body']}".casefold()]
-    return json.dumps(matches[:max(1, min(limit, 100))])
+    return {"matches": [{"title": doc["title"][:120], "snippet": doc["body"][:240]}
+                        for doc in matches[:limit]]}
 
 @mcp.resource("config://app/settings")
 def get_config() -> str:

@@ -72,7 +72,7 @@ Adding package outputs alongside `nixosConfigurations` - `nix build .#my-tool` c
 these directly:
 
 ```nix
-outputs = { self, nixpkgs, ... }:
+outputs = inputs@{ self, nixpkgs, ... }:
 let
   forAllSystems = f: nixpkgs.lib.genAttrs
     [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ]

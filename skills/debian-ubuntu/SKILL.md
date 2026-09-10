@@ -356,7 +356,7 @@ See `references/output-contract.md` for the full contract.
 5. **Never remove the last known-good kernel path casually.** Especially on remote or encrypted systems.
 6. **Prefer systemd-native diagnostics.** `systemctl`, `journalctl`, and `update-grub` usually tell you more than distro wrappers or generic forum folklore.
 7. **Ubuntu 26.04 changed some desktop defaults in ways that affect support.** Do not assume a stock Ubuntu Xorg session, the old `Software & Updates` GUI, or 24.04-era desktop app names are still present on fresh installs.
-8. **Ubuntu HWE is opt-in complexity.** Treat HWE kernels as additions that must be validated, not magic defaults.
+8. **Identify the installed Ubuntu kernel lane.** HWE can be a Desktop install default or an explicit choice. Check the release-qualified metapackage and validate driver compatibility before changing lanes.
 9. **For Wayland issues, inspect the user session first.** Portals, user units, and Xwayland compatibility usually matter more than package reinstall churn.
 10. **For gaming issues, identify the GPU vendor and userspace first.** Driver branch, Vulkan stack, `i386` multilib, and launch wrappers usually explain more than random tweak cargo cults.
 11. **For capture issues, debug portals and PipeWire before app folklore.** OBS, browser WebRTC, Discord, and Teams often fail at the screencast path.

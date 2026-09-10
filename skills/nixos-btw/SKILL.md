@@ -184,7 +184,11 @@ command -v bootctl >/dev/null 2>&1 && bootctl status 2>&1 | head -20 || true
 # Store health and GC state
 df -h /nix/store
 du -sh /nix/store 2>&1 || true
-nix-store --gc --print-roots 2>&1 | wc -l
+if gc_roots=$(nix-store --gc --print-roots); then
+  printf '%s\n' "$gc_roots" | sed '/^$/d' | wc -l
+else
+  printf '%s\n' 'GC root inspection failed; count is unknown.' >&2
+fi
 ```
 
 Add subsystem probes only when the task needs them:
@@ -324,7 +328,7 @@ When a problem looks "flake-only," compare one clean baseline:
 | Build fails mid-derivation | `--print-build-logs`, check sandbox violations, check unfree or insecure gates |
 | Boot drops to emergency shell | previous generation from bootloader menu, check `hardware-configuration.nix`, LUKS, kernel modules |
 | Flake input won't update | `nix flake update <name>` (the `nix flake lock --update-input` form is deprecated on Nix 2.30+), check `inputs.<x>.follows`, check registry override |
-| System is huge, `/nix/store` fills disk | `nix-collect-garbage -d`, `nix-store --optimise`, prune generations, check direnv GC roots |
+| System is huge, `/nix/store` fills disk | inspect GC roots and generations, preserve known-good rollback, selectively prune, then plain `nix-collect-garbage` |
 | `nix-env -i` installed something that won't stick | user profile vs system config; move to `environment.systemPackages` or `home.packages` |
 | home-manager drift vs NixOS | standalone vs module mode, which one owns the file, `home-manager switch` vs `nixos-rebuild switch` |
 | Unfree package refuses to build | `nixpkgs.config.allowUnfree = true;` or predicate, or `NIXPKGS_ALLOW_UNFREE=1 nix-build --impure` for one-off |

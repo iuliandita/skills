@@ -58,8 +58,7 @@ when the explicit form is a framework convention (route tables, codegen targets)
 ## Inert try/catch and defensive scaffolding
 
 Another AI-generated shape: mechanical try/catch around code that needs none. Inert forms are safe
-to flag - a catch that only rethrows unchanged, catch-log-rethrow that adds no context the logger
-lacks, try around code that cannot throw, and blanket per-function wrapping applied uniformly.
+to flag - a catch that only rethrows unchanged, catch-log-rethrow only after proving equivalent required logging at the owning boundary (logging itself is observable behavior), try around code that cannot throw, and blanket per-function wrapping applied uniformly.
 Distinguish these from behavior-carrying catches: swallow-and-continue, error conversion or
 wrapping into typed errors, retries, fallbacks, and cleanup in `finally`. Removing a swallowing
 catch changes propagation - that is `Do with tests` at best, and a swallowed error that hides a bug

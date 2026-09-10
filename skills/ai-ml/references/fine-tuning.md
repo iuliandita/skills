@@ -92,8 +92,11 @@ def validate_example(example: dict) -> list[str]:
     issues = []
     messages = example.get("messages", [])
 
-    if not messages:
-        issues.append("Empty messages")
+    if not isinstance(messages, list) or not messages:
+        return ["Messages must be a nonempty list"]
+    if any(not isinstance(m, dict) or not isinstance(m.get("role"), str)
+           or not isinstance(m.get("content"), str) for m in messages):
+        return ["Each message requires string role and content"]
     if messages[-1]["role"] != "assistant":
         issues.append("Last message must be assistant")
     if any(m["content"].strip() == "" for m in messages):
@@ -263,14 +266,22 @@ For most use cases, LoRA produces comparable quality at a fraction of the cost.
 Stop training when validation loss stops improving:
 
 ```python
+from transformers import EarlyStoppingCallback, Trainer, TrainingArguments
+
 training_args = TrainingArguments(
-    # ...
+    output_dir="./checkpoints",
     eval_strategy="steps",
+    save_strategy="steps",
+    save_steps=50,
     eval_steps=50,
     load_best_model_at_end=True,
     metric_for_best_model="eval_loss",
     greater_is_better=False,
-    early_stopping_patience=3,  # stop after 3 evals without improvement
+)
+trainer = Trainer(
+    model=model, args=training_args,
+    train_dataset=train_dataset, eval_dataset=eval_dataset,
+    callbacks=[EarlyStoppingCallback(early_stopping_patience=3)],
 )
 ```
 

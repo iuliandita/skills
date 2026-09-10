@@ -64,6 +64,8 @@ Use document loaders to normalize content before chunking:
 
 ```python
 def chunk_fixed(text: str, chunk_size: int = 1000, overlap: int = 200) -> list[str]:
+    if chunk_size <= 0 or not 0 <= overlap < chunk_size:
+        raise ValueError("require chunk_size > 0 and 0 <= overlap < chunk_size")
     chunks = []
     start = 0
     while start < len(text):
@@ -202,7 +204,7 @@ CREATE EXTENSION IF NOT EXISTS vector;
 CREATE TABLE documents (
     id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     content TEXT NOT NULL,
-    embedding vector(1024) NOT NULL,  - match your model's dimensions
+    embedding vector(1024) NOT NULL,  -- match your model's dimensions
     metadata JSONB DEFAULT '{}',
     created_at TIMESTAMPTZ DEFAULT now()
 );

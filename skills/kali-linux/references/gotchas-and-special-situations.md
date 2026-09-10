@@ -37,7 +37,8 @@ session plumbing, PipeWire, portals, or the hypervisor display stack.
 
 ```bash
 apt-cache policy 2>&1 || true
-grep -Rhv '^#\|^$' /etc/apt/sources.list /etc/apt/sources.list.d/*.list 2>&1 || true
+find /etc/apt -maxdepth 2 -type f \( -path /etc/apt/sources.list -o -path '/etc/apt/sources.list.d/*.list' -o -path '/etc/apt/sources.list.d/*.sources' \) \
+  -exec grep -HnEv '^[[:space:]]*(#|$)' {} +
 dpkg -l | grep '^ii  kali-' | head -30
 findmnt | grep -Ei 'live|overlay|persistence' 2>&1 || true
 rfkill list 2>&1 || true

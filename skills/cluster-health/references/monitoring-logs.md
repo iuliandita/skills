@@ -11,7 +11,7 @@ kubectl --context <context> get pods -A | grep -Ei 'prometheus|grafana|alertmana
 kubectl --context <context> top nodes 2>&1 | head -n 80
 kubectl --context <context> top pods -A 2>&1 | head -n 80
 kubectl --context <context> logs -n <namespace> deploy/<app> --since=<timewindow> --tail=120 2>&1 | tail -n 120
-kubectl --context <context> get events -A --field-selector type=Warning --sort-by=.lastTimestamp | tail -n 100
+# Use kubernetes-core.md event filtering for the requested time window, then narrow by this area.
 ```
 
 Read stderr, do not discard it. `kubectl logs ... 2>/dev/null` hides the reason a check failed: a
@@ -27,7 +27,7 @@ the actual message before classifying. Common log-fetch failures and what they m
 | empty output, exit 0 | genuinely no matching log lines in window | always trustworthy |
 
 When you need the crash reason, fetch the previous container's logs explicitly with
-`kubectl --context <context> logs -n <namespace> <pod> -c <container> --previous --tail=120 2>&1`.
+`kubectl --context <context> logs -n <namespace> <pod> -c <container> --previous --since=<timewindow> --tail=120 2>&1`.
 Without `--previous` you see the new container, which may look clean while the crash is in the dead one.
 
 ## Metric interpretation
@@ -49,8 +49,7 @@ Without `--previous` you see the new container, which may look clean while the c
 
 If a metric or log stream has an expected cadence (scrape interval, alert evaluation interval,
 log shipper flush), compare recency against that cadence, not a fixed guess. A 5-minute-old scrape
-is normal for a 15s interval only if the pipeline is alive; if the newest sample predates the
-scrape interval by a wide margin, the collector or target is likely down. Read the configured
+is stale for a 15s interval even if the collector process is alive. Investigate the target, scrape, and delivery path when the newest sample substantially exceeds its expected cadence. Read the configured
 interval before judging a metric stale.
 
 ## Criteria

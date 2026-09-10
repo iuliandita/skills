@@ -159,9 +159,9 @@ After every change, confirm the firewall is healthy:
    - OPNsense API (the config file holds credentials; no secret appears in argv or shell history):
      ```bash
      : "${FW_API_CURL_CONFIG:?set to a mode-0600 curl config populated from an approved secret store or no-echo prompt}"
-     curl --config "$FW_API_CURL_CONFIG" -X POST https://<fw>/api/firewall/alias/addItem \
+     curl --config "$FW_API_CURL_CONFIG" -H 'Content-Type: application/json' -X POST https://<fw>/api/firewall/alias/add_item \
        -d '{"alias":{"name":"SourceVLAN","type":"network","content":"10.0.50.0/24"}}'
-     curl --config "$FW_API_CURL_CONFIG" -X POST https://<fw>/api/firewall/alias/addItem \
+     curl --config "$FW_API_CURL_CONFIG" -H 'Content-Type: application/json' -X POST https://<fw>/api/firewall/alias/add_item \
        -d '{"alias":{"name":"WebServer","type":"host","content":"10.0.1.100"}}'
      ```
    - OPNsense CLI: `configctl template reload OPNsense/Filter` (after editing alias via API or XML). To verify the alias was created: `configctl template list | grep Alias`, then confirm with `pfctl -t WebServer -T show`.
@@ -179,9 +179,9 @@ Block IoT devices from reaching internal networks while allowing internet access
 
 1. Identify the IoT VLAN interface (e.g., `opt3` for VLAN 30)
 2. Create an alias for RFC1918 ranges: name `RFC1918`, type `Network`, content `10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16`
-3. Add a **block** rule on the IoT interface: source = IoT subnet, destination = `RFC1918` alias, action = block. This prevents IoT from reaching any internal network.
-4. Add a **pass** rule below it: source = IoT subnet, destination = any, ports = 53 (DNS), 443 (HTTPS). This allows internet access for the permitted services.
-5. Rule order matters: with `quick` (the OPNsense/pfSense default) the FIRST matching rule wins, so the RFC1918 block must come before the broad pass rule - otherwise the pass matches first and lets the traffic through.
+3. Allow only required infrastructure exceptions first: for example, TCP/UDP 53 to the exact intended resolver, including a resolver on the firewall's private address. Account for DHCP if used.
+4. Below those exceptions, **block** IoT traffic to `RFC1918`, then **pass** only the intended internet services such as TCP 443. Leave other traffic denied.
+5. With `quick` rules, the FIRST match wins: narrow infrastructure exceptions, private-network block, then internet allow. RFC1918 covers only IPv4; define corresponding IPv6 isolation or disable IPv6 on this VLAN deliberately.
 6. Test and apply as above: `pfctl -n -f /tmp/rules.debug`, then `configctl filter reload`
 
 ### Troubleshooting connectivity after VLAN changes
@@ -195,10 +195,10 @@ Work through these steps in order. **Do not skip ahead or assume the root cause*
 3. **Services running?** `configctl service list` (OPNsense) or `service -e` (pfSense) - confirm DHCP, DNS (Unbound), and the packet filter are running. A stopped DHCP server on the new VLAN means clients never get an IP.
 4. **Rules present?** `pfctl -sr` - any pass rules on the new VLAN interface? New interfaces have no rules by default (deny all).
 5. **NAT configured?** Check outbound NAT rules include the new VLAN subnet. On OPNsense: Firewall > NAT > Outbound. Missing outbound NAT is the #1 cause of "VLAN can't reach internet."
-6. **DNS working?** `drill google.com @<firewall-ip>` from a VLAN client. If this fails but ping to 8.8.8.8 works, it's a DNS issue, not a firewall rule.
+6. **DNS working?** `drill google.com @<firewall-ip>` from a VLAN client. If this fails while public-IP connectivity works, inspect the DNS path: resolver service, TCP/UDP 53 rules and the reply path. IP reachability alone does not rule out a DNS-specific firewall block.
 7. **Packet capture**: `tcpdump -ni <vlan-iface> host <client-ip>` - are packets arriving at the firewall?
-   - **Reading tcpdump output**: each line shows `timestamp src > dst: proto`. Look for: (a) request packets from the client arriving on the VLAN interface, (b) reply packets going back. If you see requests but no replies, the firewall is blocking or NAT is missing. If you see no packets at all, the issue is below the firewall - check VLAN tagging, trunk config, and switch ports. Use `-v` for header details or `-X` for payload hex when deeper inspection is needed.
-8. If packets arrive but no response: the rule or NAT is the problem. If no packets: the VLAN trunk, switch tagging, or interface assignment is wrong - check the physical/virtual layer before touching firewall config.
+   - **Reading tcpdump output**: correlate ingress requests with egress traffic, translated addresses and return packets. Requests without replies on one interface do not identify the cause: inspect rule counters/states, routes, NAT, upstream reachability and the target's return path. Use `-v` for header details; capture payloads only when needed and authorized.
+8. If no packets are captured, first confirm the client generated traffic and the interface/filter are correct, then inspect VLAN tagging, trunks and switch ports. If requests leave the WAN but replies do not return, investigate the upstream/target path before changing local rules.
 
 ---
 

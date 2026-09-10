@@ -12,7 +12,7 @@ CI/CD Catalog GA, Components with typed inputs, rules-based workflows.
 - **CI Components** are the endorsed path for reusable pipeline logic. `include:` templates still work
   but components have versioning, typed inputs, and discoverability.
 - **`only:/except:` is legacy.** Use `rules:` for all new pipelines. Migration is non-trivial - see
-  the bug patterns in the code-review skill's `cicd-pipelines.md`.
+  the rules section below; preserve first-match behavior when migrating.
 
 ---
 
@@ -219,7 +219,7 @@ build-image:
   variables:
     DOCKER_TLS_CERTDIR: "/certs"
   before_script:
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - printf '%s\n' "$CI_REGISTRY_PASSWORD" | docker login --username "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
   script:
     - |
       docker build \
@@ -247,8 +247,8 @@ Components are versioned, typed, and discoverable. They replace the old `include
 include:
   - component: gitlab.example.com/my-org/ci-components/sast@1.0.0
     inputs:
-      severity: HIGH,CRITICAL
-      fail-on-findings: true
+      severity: ERROR
+      allow-failure: false
 ```
 
 ### Creating a component
@@ -259,8 +259,8 @@ spec:
   inputs:
     severity:
       type: string
-      default: "HIGH,CRITICAL"
-    fail-on-findings:
+      default: "ERROR"
+    allow-failure:
       type: boolean
       default: false
 
@@ -269,8 +269,10 @@ sast-scan:
   stage: test
   image: semgrep/semgrep:1.124
   script:
-    - semgrep scan --config auto --severity $[[ inputs.severity ]]
-  allow_failure: $[[ !inputs.fail-on-findings ]]
+    - semgrep scan --config auto --error --severity "$SEMGREP_SEVERITY"
+  variables:
+    SEMGREP_SEVERITY: $[[ inputs.severity ]]
+  allow_failure: $[[ inputs.allow-failure ]]
 ```
 
 **Key differences from `include:` templates**:
@@ -325,23 +327,21 @@ rules:
       - bun.lockb
 ```
 
-### Critical rule: `when: never` as final catch-all
+### First-match rules and unmatched jobs
 
-Without a final `when: never`, unmatched conditions fall through and the job runs anyway.
-This is the opposite of `only/except` behavior.
+Rules are evaluated in order. The first match determines inclusion and attributes; if no
+rule matches, the job is omitted. A final unconditional rule includes remaining cases only
+when that is intentional. An explicit final `when: never` can clarify intent but is not needed
+to prevent unmatched jobs from running.
 
 ```yaml
-# DANGEROUS: job runs on every pipeline
+# Included only on tag pipelines; omitted when CI_COMMIT_TAG is absent.
 rules:
   - if: $CI_COMMIT_TAG
     when: manual
-
-# CORRECT: job only runs on tags, skipped otherwise
-rules:
-  - if: $CI_COMMIT_TAG
-    when: manual
-  - when: never
 ```
+
+[GitLab rules semantics](https://docs.gitlab.com/ci/yaml/#rules).
 
 ---
 
@@ -649,7 +649,6 @@ workflow:
     - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS
       when: never
     - if: $CI_COMMIT_BRANCH
-    - if: $CI_COMMIT_TAG
 
 variables:
   DOCKER_TLS_CERTDIR: "/certs"
@@ -660,31 +659,31 @@ variables:
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       changes:
-        paths: [services/api/**, libs/common/**]
+        paths: [services/api/**, libs/common/**, .gitlab-ci.yml, ci/**]
         compare_to: refs/heads/main
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       changes:
-        paths: [services/api/**, libs/common/**]
+        paths: [services/api/**, libs/common/**, .gitlab-ci.yml, ci/**]
 
 .changes-web: &changes-web
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       changes:
-        paths: [services/web/**, libs/common/**]
+        paths: [services/web/**, libs/common/**, .gitlab-ci.yml, ci/**]
         compare_to: refs/heads/main
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       changes:
-        paths: [services/web/**, libs/common/**]
+        paths: [services/web/**, libs/common/**, .gitlab-ci.yml, ci/**]
 
 .changes-worker: &changes-worker
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       changes:
-        paths: [services/worker/**, libs/common/**]
+        paths: [services/worker/**, libs/common/**, .gitlab-ci.yml, ci/**]
         compare_to: refs/heads/main
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       changes:
-        paths: [services/worker/**, libs/common/**]
+        paths: [services/worker/**, libs/common/**, .gitlab-ci.yml, ci/**]
 
 .node-setup: &node-setup
   image: node:22-slim
@@ -706,7 +705,7 @@ variables:
   services:
     - docker:29.3-dind
   before_script:
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - printf '%s\n' "$CI_REGISTRY_PASSWORD" | docker login --username "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
   script:
     - |
       docker build \
@@ -731,11 +730,11 @@ lint-common:
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       changes:
-        paths: [libs/common/**]
+        paths: [libs/common/**, .gitlab-ci.yml, ci/**]
         compare_to: refs/heads/main
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       changes:
-        paths: [libs/common/**]
+        paths: [libs/common/**, .gitlab-ci.yml, ci/**]
 
 test-common:
   <<: *node-setup
@@ -748,11 +747,11 @@ test-common:
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       changes:
-        paths: [libs/common/**]
+        paths: [libs/common/**, .gitlab-ci.yml, ci/**]
         compare_to: refs/heads/main
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       changes:
-        paths: [libs/common/**]
+        paths: [libs/common/**, .gitlab-ci.yml, ci/**]
 
 # --- API service ---
 
@@ -780,6 +779,9 @@ build-api:
   variables:
     SERVICE_DIR: services/api
     SERVICE_NAME: api
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      changes: { paths: [services/api/**, libs/common/**, .gitlab-ci.yml, ci/**] }
 
 # --- Web service ---
 
@@ -807,6 +809,9 @@ build-web:
   variables:
     SERVICE_DIR: services/web
     SERVICE_NAME: web
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      changes: { paths: [services/web/**, libs/common/**, .gitlab-ci.yml, ci/**] }
 
 # --- Worker service ---
 
@@ -834,67 +839,80 @@ build-worker:
   variables:
     SERVICE_DIR: services/worker
     SERVICE_NAME: worker
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      changes: { paths: [services/worker/**, libs/common/**, .gitlab-ci.yml, ci/**] }
 
-# --- Security scan (all images) ---
-
-scan:
+# --- Selected-service scans and deployments ---
+.scan-template:
   stage: scan
+  variables:
+    TRIVY_USERNAME: $CI_REGISTRY_USER
+    TRIVY_PASSWORD: $CI_REGISTRY_PASSWORD
   image:
     name: aquasec/trivy:0.70.0@sha256:<digest>
+    entrypoint: [""]
   script:
-    - |
-      for svc in api web worker; do
-        echo "--- Scanning $svc ---"
-        trivy image --exit-code 1 --severity HIGH,CRITICAL \
-          $CI_REGISTRY_IMAGE/$svc:$CI_COMMIT_SHA || SCAN_FAILED=1
-      done
-      [ -z "$SCAN_FAILED" ] || exit 1
-  rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - trivy image --exit-code 1 --severity HIGH,CRITICAL "$CI_REGISTRY_IMAGE/$SERVICE_NAME:$CI_COMMIT_SHA"
 
-# --- Deployment ---
-
-deploy-staging:
+.deploy-template:
   stage: deploy
   image: alpine/k8s:1.32.3
+  resource_group: production
+  environment: production
   script:
-    - |
-      for svc in api web worker; do
-        kubectl set image deployment/$svc \
-          $svc=$CI_REGISTRY_IMAGE/$svc:$CI_COMMIT_SHA \
-          -n staging
-      done
-    - |
-      for svc in api web worker; do
-        kubectl rollout status deployment/$svc -n staging --timeout=300s
-      done
-  environment:
-    name: staging
-    url: https://staging.example.com
-  rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - kubectl config use-context "$KUBE_CONTEXT"
+    - kubectl set image "deployment/$SERVICE_NAME" "$SERVICE_NAME=$CI_REGISTRY_IMAGE/$SERVICE_NAME:$CI_COMMIT_SHA" -n production
+    - kubectl rollout status "deployment/$SERVICE_NAME" -n production --timeout=300s
 
-deploy-production:
-  stage: deploy
-  image: alpine/k8s:1.32.3
-  script:
-    - |
-      for svc in api web worker; do
-        kubectl set image deployment/$svc \
-          $svc=$CI_REGISTRY_IMAGE/$svc:$CI_COMMIT_SHA \
-          -n production
-      done
-    - |
-      for svc in api web worker; do
-        kubectl rollout status deployment/$svc -n production --timeout=300s
-      done
-  environment:
-    name: production
-    url: https://app.example.com
+scan-api:
+  extends: .scan-template
+  variables: { SERVICE_NAME: api }
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      changes: { paths: [services/api/**, libs/common/**, .gitlab-ci.yml, ci/**] }
+
+deploy-api:
+  extends: .deploy-template
+  variables: { SERVICE_NAME: api }
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      changes: { paths: [services/api/**, libs/common/**, .gitlab-ci.yml, ci/**] }
       when: manual
       allow_failure: false
+
+scan-web:
+  extends: .scan-template
+  variables: { SERVICE_NAME: web }
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      changes: { paths: [services/web/**, libs/common/**, .gitlab-ci.yml, ci/**] }
+
+deploy-web:
+  extends: .deploy-template
+  variables: { SERVICE_NAME: web }
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      changes: { paths: [services/web/**, libs/common/**, .gitlab-ci.yml, ci/**] }
+      when: manual
+      allow_failure: false
+
+scan-worker:
+  extends: .scan-template
+  variables: { SERVICE_NAME: worker }
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      changes: { paths: [services/worker/**, libs/common/**, .gitlab-ci.yml, ci/**] }
+
+deploy-worker:
+  extends: .deploy-template
+  variables: { SERVICE_NAME: worker }
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      changes: { paths: [services/worker/**, libs/common/**, .gitlab-ci.yml, ci/**] }
+      when: manual
+      allow_failure: false
+
 ```
 
 **Key patterns**:
@@ -902,19 +920,16 @@ deploy-production:
 - **`compare_to: refs/heads/main`** ensures `changes:` compares against main, not the previous commit (which misses multi-commit MRs).
 - **Shared lib (`libs/common/**`)** is included in every service's change filter. If only the shared lib changes, all dependent services rebuild.
 - **Cache key prefix** uses `$SERVICE_NAME` to avoid cache collisions between services on shared runners.
-- **Single scan job** iterates all service images. In larger setups, split into per-service scan jobs for parallelism.
+- **Matched build/scan/deploy sets**: default-branch jobs use the same service/shared/CI paths. Unchanged services retain their deployed image; they are not scanned/deployed at an unbuilt SHA.
+- Image publication/scanning/deployment run only on the protected default branch; MR lint/test jobs do not receive registry/deployment credentials. Add unprivileged PR build validation when the project needs it.
+- Set a protected production `KUBE_CONTEXT`, namespace, deployment permissions, and environment approval policy before enabling deployment.
 
 ---
 
-## PCI-DSS 4.0 Compliance (GitLab)
+## Compliance evidence on GitLab
 
-| Requirement | GitLab implementation |
-|-------------|----------------------|
-| **6.2.1** SAST/SCA | Include Security templates, require pipeline success on protected branches |
-| **6.2.4** Change control | Protected branches, required MR approvals (min 2 for CDE repos), audit events |
-| **6.3.2** SBOM | `generate-sbom` job on every release tag, stored as artifact |
-| **6.4.2** Gated deploys | `when: manual` + `allow_failure: false` on production deploy jobs |
-| **6.5.3** Consistent controls | Same security templates included in all environments' pipelines |
-
-**Protected branches**: at minimum, `main` should require MR approval and passing pipeline.
-For CDE repos, require 2+ approvals and include SAST results in MR widget.
+For in-scope software, retain review results, component inventory, change approval/testing,
+and recovery evidence. Configure protected branches/environments and authorized deployers
+for the project. Manual jobs alone do not enforce reviewer independence. See the mapping
+and primary assessment boundaries in `supply-chain.md`; GitLab tier/tool presence is not
+proof of compliance.

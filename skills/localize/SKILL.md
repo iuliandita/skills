@@ -73,7 +73,7 @@ code, catalogs, or translations, verify against this list:**
 - [ ] **Brand names protected**: product names, service names, and proper nouns are preserved
   exactly in all locales
 - [ ] **No partial extraction**: if auditing a file, every user-facing string in that file
-  is extracted - not just the obvious ones. Check JSX text content, attribute values, template
+  is inventoried (and extracted when edits are authorized) - not just the obvious ones. Check JSX text content, attribute values, template
   literals, and string arguments to UI functions
 - [ ] **Fallback chain exists**: missing keys fall back to the source locale, then to the
   key itself - never to an empty string or a crash
@@ -118,6 +118,10 @@ code, catalogs, or translations, verify against this list:**
 
 
 ## Workflow
+
+Audit/review requests are read-only: report every candidate string and proposed key without
+changing application files. Apply extraction and catalog changes when implementation is
+authorized; an existing request to fix or add i18n supplies that authority.
 
 **Entry points** (always read the AI Self-Check above first, regardless of entry point):
 - Adding i18n from scratch? Start at Step 1.
@@ -261,7 +265,7 @@ aria-labels, then placeholders...) is the #1 i18n time sink.
 | Toast/notification | `toast.success('Saved')` | In event handlers, not JSX |
 | Validation error | `setError('Name is required')` | Buried in form logic |
 | Placeholder | `placeholder="Search..."` | Attribute, not text content |
-| defaultValue | `defaultValue="Search..."` | Functionally same as placeholder, different attr |
+| defaultValue | `defaultValue="Search..."` | May be editable user data or an identifier; translate only default UI copy |
 | aria-label | `aria-label="Close menu"` | Not visible on screen |
 | title attribute | `title="Click to expand"` | Tooltip, invisible by default |
 | alt text | `alt="User avatar"` | Image fallback, often ignored |
@@ -324,10 +328,12 @@ Validation is the safety net. Set it up early, run it often.
 **Validation script pattern:**
 
 ```typescript
-const sourceKeys = Object.keys(sourceCatalog)
+// flattenCatalog is defined in references/translation-quality.md.
+const source = flattenCatalog(sourceCatalog)
+const sourceKeys = Object.keys(source)
 for (const locale of supportedLocales) {
-  const catalog = getCatalog(locale)
-  const missing = sourceKeys.filter(k => !(k in catalog))
+  const catalog = flattenCatalog(getCatalog(locale))
+  const missing = sourceKeys.filter(k => !Object.hasOwn(catalog, k))
   const extra = Object.keys(catalog).filter(k => !sourceKeys.includes(k))
   const empty = sourceKeys.filter(k => catalog[k]?.trim() === '')
   // Fail if any issues

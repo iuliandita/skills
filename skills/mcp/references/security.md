@@ -113,17 +113,41 @@ execSync(`cat ${args.file}`)
 subprocess.run(f"git log {branch}", shell=True)
 ```
 
-**Safe patterns:**
+**Bounded revision lookup (server-owned repository):** Argument arrays prevent shell
+expansion, not Git option injection. Accept one simple ref, resolve it to a commit, then pass
+only the verified object ID to the bounded log command. Repository authorization is separate.
+
 ```typescript
-// Array form - no shell interpretation
 import { execFileSync } from "node:child_process";
-const result = execFileSync("git", ["log", "--oneline", args.branch]);
+function recentCommits(branch: string, repo: string): string {
+  if (!/^[A-Za-z0-9][A-Za-z0-9._/-]{0,199}$/.test(branch)) {
+    throw new Error("Expected a simple revision name");
+  }
+  const oid = execFileSync("git", ["rev-parse", "--verify", "--end-of-options",
+    `${branch}^{commit}`], { cwd: repo, encoding: "utf8", timeout: 5000 }).trim();
+  if (!/^[a-f0-9]{40,64}$/.test(oid)) throw new Error("Invalid commit ID");
+  return execFileSync("git", ["log", "--no-ext-diff", "--no-textconv", "--oneline",
+    "-n", "20", oid, "--"], { cwd: repo, encoding: "utf8", timeout: 5000 });
+}
 ```
 
 ```python
+import re
 import subprocess
-result = subprocess.run(["git", "log", "--oneline", branch], capture_output=True)
-# shell=False is the default - never set shell=True with user input
+
+def recent_commits(branch: str, repo: str) -> str:
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._/-]{0,199}", branch):
+        raise ValueError("Expected a simple revision name")
+    oid = subprocess.run(
+        ["git", "rev-parse", "--verify", "--end-of-options", f"{branch}^{{commit}}"],
+        cwd=repo, capture_output=True, text=True, check=True, timeout=5,
+    ).stdout.strip()
+    if not re.fullmatch(r"[a-f0-9]{40,64}", oid):
+        raise ValueError("Invalid commit ID")
+    return subprocess.run(
+        ["git", "log", "--no-ext-diff", "--no-textconv", "--oneline", "-n", "20", oid, "--"],
+        cwd=repo, capture_output=True, text=True, check=True, timeout=5,
+    ).stdout
 ```
 
 ### Path traversal

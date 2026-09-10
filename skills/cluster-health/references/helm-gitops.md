@@ -12,7 +12,7 @@ helm --kube-context <context> history <release> -n <namespace> --max 10
 kubectl --context <context> get applications.argoproj.io -A 2>&1 | head -n 80
 kubectl --context <context> get kustomizations.toolkit.fluxcd.io -A 2>&1 | head -n 80
 kubectl --context <context> get helmreleases.helm.toolkit.fluxcd.io -A 2>&1 | head -n 80
-kubectl --context <context> get events -A --field-selector type=Warning --sort-by=.lastTimestamp | tail -n 80
+# Use kubernetes-core.md event filtering for the requested time window, then narrow by this area.
 ```
 
 Keep `2>&1` on the CRD queries so a real error is visible. Distinguish two outcomes that

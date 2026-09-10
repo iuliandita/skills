@@ -127,7 +127,7 @@ checkov -d . --framework kubernetes             # Security/compliance scan
 helm lint <chart>/                              # Lint chart
 helm template <release> <chart>/               # Render templates locally
 helm template <release> <chart>/ -f values-prod.yaml  # With env overlay
-helm --kube-context "$KUBE_CONTEXT" install <release> <chart>/ --dry-run --debug  # Server-side dry run
+helm --kube-context "$KUBE_CONTEXT" install <release> <chart>/ --dry-run=server --debug  # Server-side dry run
 ```
 
 ### Step 5: GitOps-managed emergency or scaling changes
@@ -376,7 +376,7 @@ PCI-DSS 4.0 is the only active version (3.2.1 retired March 2024). 51 future-dat
 - **Req 6.3.2**: Component inventory -> SBOMs for every image
 - **Req 8.4.2**: MFA for all CDE access -> OIDC + MFA on all kubectl paths
 - **Req 8.6.2**: No hardcoded secrets -> External Secrets Operator, never in manifests/values/env vars
-- **Req 10.4.1.1**: Automated audit log review -> K8s audit policy at RequestResponse level for CDE namespaces, ship to SIEM with alert rules
+- **Req 10.4.1.1**: Automated audit log review -> K8s audit policy with Metadata for sensitive payloads and RequestResponse only for reviewed non-sensitive resources, ship to SIEM with alert rules
 - **Req 11.5**: FIM / change detection -> Falco runtime detection, ArgoCD drift detection, image digest pinning
 
 **CDE isolation**: dedicated cluster strongly preferred. Shared cluster puts the entire cluster in PCI scope and requires dedicated node pools + taints, gVisor/Kata for CDE pods, separate DNS, separate audit streams, and extensive QSA documentation. Most QSAs push back on shared clusters.
@@ -441,7 +441,7 @@ PCI-DSS 4.0 is the only active version (3.2.1 retired March 2024). 51 future-dat
 - [ ] CDE in dedicated cluster or hard-isolated with dedicated node pools
 - [ ] etcd encryption via KMS v2 (not disk-level alone)
 - [ ] mTLS between all CDE services (Istio strict / Cilium)
-- [ ] K8s audit logging at RequestResponse level for CDE namespaces
+- [ ] K8s audit logging excludes sensitive bodies; RequestResponse is limited to reviewed non-sensitive resources
 - [ ] Audit logs shipped to immutable SIEM, automated review rules
 - [ ] SBOMs generated and stored for every image
 - [ ] No hardcoded secrets anywhere (Req 8.6.2)

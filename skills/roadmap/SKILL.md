@@ -191,7 +191,7 @@ Read the existing structure first. If it doesn't match this format:
 
 ### Step 0: Activity Detection (runs on every invocation)
 
-If no ROADMAP.md exists yet or no recent activity is found, skip silently.
+If no ROADMAP.md exists yet or a successful activity query returns no recent activity, skip the reminder. Report query failures as unavailable evidence.
 
 Otherwise, check for recent project activity:
 
@@ -199,13 +199,13 @@ Otherwise, check for recent project activity:
 # Detect forge CLI: gh (GitHub), glab (GitLab), or git-only fallback
 # GitHub
 gh pr list --state merged --limit 10 \
-  --json number,title,mergedAt 2>/dev/null
+  --json number,title,mergedAt
 # GitLab
-glab mr list --state merged --per-page 10 2>/dev/null
+glab mr list --merged --per-page 10
 
 # Always available (portable - no GNU date required)
-git tag --sort=-creatordate 2>/dev/null | head -5
-git log --oneline --since="2 weeks ago" 2>/dev/null | head -15
+git tag --sort=-creatordate | head -5
+git log --oneline --since="2 weeks ago" | head -15
 ```
 
 If neither `gh` nor `glab` is available, note it once ("PR tracking unavailable -
@@ -229,14 +229,13 @@ Trigger: user throws ideas at the project, says "add to roadmap", or describes f
 
 1. Check if ROADMAP.md exists in the project root (in monorepos, default to the git
    root unless the user specifies a package - if multiple ROADMAP.md files exist, ask)
-2. If not, create it using the starter structure. Read the project's README, package.json,
-   or equivalent to fill in the Snapshot section with real context
-3. Check if ROADMAP.md is in .gitignore - if not, add it:
+2. Before writing any content, ensure /ROADMAP.md is ignored unless the user explicitly opted into tracking. If needed, add:
    ```
    # Project roadmap (local planning doc)
-   ROADMAP.md
+   /ROADMAP.md
    ```
-   Inform the user: "Added ROADMAP.md to .gitignore. Remove the entry if you want it tracked."
+   Verify with `git check-ignore --no-index ROADMAP.md` and check `git ls-files --error-unmatch ROADMAP.md`: an already tracked file remains tracked despite ignore rules; do not silently untrack it.
+3. If absent, create it using the starter structure. Read README or the primary manifest to fill Snapshot with real context. Report any ignore entry added.
 
 #### Step 2: Parse and place ideas
 
@@ -267,14 +266,14 @@ If no ROADMAP.md exists, redirect to Mode 1 (bootstrap) first.
 
 ```bash
 # Always available (portable - no GNU date required)
-git log --oneline --since="2 weeks ago" 2>/dev/null
-git tag --sort=-creatordate 2>/dev/null | head -5
+git log --oneline --since="2 weeks ago"
+git tag --sort=-creatordate | head -5
 
 # GitHub
 gh pr list --state merged --limit 20 \
-  --json title,number,mergedAt 2>/dev/null
+  --json title,number,mergedAt
 # GitLab
-glab mr list --state merged --per-page 20 2>/dev/null
+glab mr list --merged --per-page 20
 ```
 
 Adjust the time range if the user specifies one. If the user names specific PRs
@@ -329,7 +328,7 @@ Read ROADMAP.md. Present a summary:
 - Items currently in progress (if tracked)
 - Recently shipped items
 - Stale items: items untouched for 60+ days are candidates for archival or re-prioritization
-  (use git blame or file modification dates to estimate age)
+  (use per-item dates or recorded history; git blame cannot date an ignored file, and file mtime does not establish individual item age)
 
 #### Step 2: Suggest actions
 

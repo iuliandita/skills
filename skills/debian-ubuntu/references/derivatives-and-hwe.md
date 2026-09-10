@@ -7,7 +7,7 @@ Debian-derived distro specifics that materially change package, boot, or service
 - `cat /etc/os-release`
 - `lsb_release -a 2>&1 || true`
 - `uname -r`
-- `apt-cache policy linux-generic linux-generic-hwe 2>&1 || true`
+- `dpkg-query -W 'linux-generic*'` (identify installed release-qualified HWE metapackages, then use `apt-cache policy` on those exact names)
 - `apt-cache policy 2>&1 | sed -n '1,40p'`
 - `ps -p 1 -o comm=`
 - `command -v systemctl >/dev/null 2>&1 && systemctl --version`
@@ -32,7 +32,7 @@ Debian-derived distro specifics that materially change package, boot, or service
 ### Ubuntu LTS
 - Current LTS baseline is Ubuntu 26.04 LTS (Resolute Raccoon).
 - Typical direct upgrade starting points are Ubuntu 24.04 LTS and Ubuntu 25.10.
-- HWE changes the kernel lane. Check whether the host tracks `linux-generic` or `linux-generic-hwe`.
+- HWE changes the kernel lane and can be a Desktop installation default. Check `linux-generic` versus the installed `linux-generic-hwe-<release>` metapackage rather than assuming an unversioned HWE package exists.
 - PPAs, snaps, and AppArmor are normal parts of the troubleshooting surface here.
 
 ## Ubuntu 24.04 -> 26.04 operational differences

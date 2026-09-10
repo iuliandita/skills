@@ -77,15 +77,17 @@ git bisect start HEAD v1.0.0
 git bisect run bun test - src/auth.test.ts
 
 # Automated bisect with a custom CI check script
-# The script must exit 0 (good), 1-124 or 128-255 (bad), or 125 (skip)
+# Exit 0 = good; 1-127 except 125 = bad; 125 = untestable/skip; 128-255 = abort.
 git bisect start HEAD v1.0.0
 git bisect run ./scripts/bisect-check.sh
 
 # Example bisect-check.sh:
 #   #!/usr/bin/env bash
 #   set -euo pipefail
-#   npm ci --silent 2>/dev/null && npm test -- --filter="auth" 2>/dev/null
-#   # Exit code 0 = good commit, non-zero = bad commit
+#   npm ci || exit 125
+#   # This project-specific probe must distinguish the target regression from setup errors:
+#   # 0 = absent, 1 = reproduced, 125 = revision cannot be tested, 128+ = abort.
+#   ./scripts/probe-auth-regression.sh
 
 # Bisect with make target
 git bisect start HEAD v1.0.0
@@ -193,7 +195,10 @@ pip install git-filter-repo
 git filter-repo --invert-paths --path secrets.env
 
 # Replace text in all files across history
-git filter-repo --replace-text <(echo 'old_domain.com==>REDACTED')
+: "${GIT_FILTER_REPO_REPLACEMENTS:?set a mode-0600 replacement file}"
+git filter-repo --replace-text "$GIT_FILTER_REPO_REPLACEMENTS"
+# Populate the file through a secret manager/no-echo input; remove it after use.
+# Never put sensitive replacement text in shell history or argv.
 
 # Remove a directory from history
 git filter-repo --invert-paths --path vendor/
@@ -358,14 +363,14 @@ Useful for monorepos where you only need a subset of the codebase.
 # Run maintenance tasks (repack, gc, commit-graph, multi-pack-index)
 git maintenance start  # schedules periodic maintenance
 
-# Manual gc
-git gc --aggressive  # full repack, slow but thorough
+# Manual maintenance, when needed
+git gc  # retain normal grace periods; avoid concurrent repository writers
 
 # Check repo health
 git fsck --full
 
-# Prune unreachable objects
-git prune --expire=now  # usually handled by gc
+# Do not immediately prune unreachable objects during routine maintenance.
+# Destructive cleanup needs a backup, quiescent repository, dry run, and explicit authorization.
 
 # Check repo size
 git count-objects -vH

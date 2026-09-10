@@ -385,7 +385,7 @@ on systems that don't need io_uring.
 ### Mitigations to Check
 
 ```bash
-# KASLR (Kernel Address Space Layout Randomization)
+# Userspace ASLR (this does not report kernel KASLR)
 cat /proc/sys/kernel/randomize_va_space
 
 # SMEP/SMAP (Supervisor Mode Execution/Access Prevention)

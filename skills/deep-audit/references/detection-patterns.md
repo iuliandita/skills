@@ -1,13 +1,13 @@
 # Detection Patterns for Wave 3
 
 File-pattern matching table for determining which domain-specific skills to run.
-Each skill activates when ANY of its patterns match files in the repo.
+Each match proposes a candidate lens; confirm relevance to the requested scope.
 
 ## Detection Method
 
 Run from repo root using `git ls-files` output. A skill activates if at least one
-pattern matches. False positives are acceptable - the skill itself handles repos where
-its domain isn't actually present.
+pattern matches. Confirm ambiguous matches before dispatch, especially workspace-root
+dependencies that may belong to an unrelated service.
 
 ## Pattern Table
 
@@ -41,7 +41,9 @@ Manifests to check for dependency patterns: `package.json`, `requirements.txt`,
 ## Detection Script
 
 Run from repo root. Outputs matched skill names, one per line. Accepts an optional
-scope argument to filter detection to a subdirectory.
+scope argument to filter detection to a subdirectory. The line-based example assumes
+ordinary filenames without embedded newlines or Git quoting; for unusual paths, use a
+NUL-delimited inventory and preserve that representation through matching.
 
 ```bash
 #!/usr/bin/env bash
@@ -49,6 +51,7 @@ set -euo pipefail
 
 # Requires: git repo as CWD. Optional: $1 = scope path for subdirectory filtering.
 scope="${1:-}"
+include_root="${DEEP_AUDIT_ROOT_MANIFESTS:-1}"
 if [[ -n "$scope" ]]; then
   files=$(git ls-files -- "$scope")
 else
@@ -60,84 +63,95 @@ matched=()
 # Patterns avoid start-of-line anchors so subdirectory paths match.
 
 # testing
-echo "$files" | grep -qE '\.(test|spec)\.|__tests__/|(^|/)tests?/|jest\.config|vitest\.config|playwright\.config|pytest\.ini|conftest\.py|cypress\.config|cypress/|\.nycrc' \
+grep -qE '\.(test|spec)\.|__tests__/|(^|/)tests?/|jest\.config|vitest\.config|playwright\.config|pytest\.ini|conftest\.py|cypress\.config|cypress/|\.nycrc' <<< "$files" \
   && matched+=(testing)
 
 # command-prompt
-echo "$files" | grep -qE '\.sh$|\.bash$|\.zsh$|(^|/)Makefile$|(^|/)justfile$|(^|/)scripts/|\.envrc$' \
+grep -qE '\.sh$|\.bash$|\.zsh$|(^|/)Makefile$|(^|/)justfile$|(^|/)scripts/|\.envrc$' <<< "$files" \
   && matched+=(command-prompt)
 
 # databases
-echo "$files" | grep -qE '\.sql$|migrations/|\.prisma$|knexfile\.|alembic|flyway/|drizzle\.config|pgbouncer\.ini|mongod\.conf|my\.cnf|pg_hba\.conf' \
+grep -qE '\.sql$|migrations/|\.prisma$|knexfile\.|alembic|flyway/|drizzle\.config|pgbouncer\.ini|mongod\.conf|my\.cnf|pg_hba\.conf' <<< "$files" \
   && matched+=(databases)
 
 # backend-api (file patterns)
-echo "$files" | grep -qE 'openapi\.|swagger\.' \
+grep -qE 'openapi\.|swagger\.' <<< "$files" \
   && matched+=(backend-api)
 
 # frontend-design
-echo "$files" | grep -qE 'astro\.config|svelte\.config|next\.config|vite\.config|tailwind\.config|(^|/)(src/)?(app|pages|routes)/|(^|/)components/|\.(css|scss|sass|tsx|jsx|svelte|astro|vue)$' \
+grep -qE 'astro\.config|svelte\.config|next\.config|vite\.config|tailwind\.config|(^|/)(src/)?(app|pages|routes)/|(^|/)components/|\.(css|scss|sass|tsx|jsx|svelte|astro|vue)$' <<< "$files" \
   && matched+=(frontend-design)
 
 # localize
-echo "$files" | grep -qE 'locales/|i18n/|\.po$|\.pot$|\.xliff$|\.xlf$|messages\.[a-z].*\.json$|messages\.[a-z].*\.yaml$' \
+grep -qE 'locales/|i18n/|\.po$|\.pot$|\.xliff$|\.xlf$|messages\.[a-z].*\.json$|messages\.[a-z].*\.yaml$' <<< "$files" \
   && matched+=(localize)
 
 # mcp
-echo "$files" | grep -qE '(^|/)\.?mcp\.json$' \
+grep -qE '(^|/)\.?mcp\.json$' <<< "$files" \
   && matched+=(mcp)
 
 # docker (no -i flag, no start-of-line anchors)
-echo "$files" | grep -qE '(^|/)Dockerfile|(^|/)docker-compose\.|(^|/)compose\.|\.dockerignore$|(^|/)Containerfile' \
+grep -qE '(^|/)Dockerfile|(^|/)docker-compose\.|(^|/)compose\.|\.dockerignore$|(^|/)Containerfile' <<< "$files" \
   && matched+=(docker)
 
 # kubernetes (well-known files)
-echo "$files" | grep -qE 'Chart\.yaml$|helmfile\.yaml$|kustomization\.ya?ml$' \
+grep -qE 'Chart\.yaml$|helmfile\.yaml$|kustomization\.ya?ml$' <<< "$files" \
   && matched+=(kubernetes)
 
 # terraform
-echo "$files" | grep -qE '\.tf$|\.tfvars$|terragrunt\.hcl$|\.terraform-version$|\.terraform\.lock\.hcl$' \
+grep -qE '\.tf$|\.tfvars$|terragrunt\.hcl$|\.terraform-version$|\.terraform\.lock\.hcl$' <<< "$files" \
   && matched+=(terraform)
 
 # ansible
-echo "$files" | grep -qE '(^|/)ansible\.cfg$|galaxy\.ya?ml$|roles/.*/tasks/main\.yml' \
+grep -qE '(^|/)ansible\.cfg$|galaxy\.ya?ml$|roles/.*/tasks/main\.yml' <<< "$files" \
   && matched+=(ansible)
 
 # ci-cd
-echo "$files" | grep -qE '\.github/workflows/|\.gitlab-ci\.yml$|\.forgejo/workflows/|Jenkinsfile$|\.circleci/' \
+grep -qE '\.github/workflows/|\.gitlab-ci\.yml$|\.forgejo/workflows/|Jenkinsfile$|\.circleci/' <<< "$files" \
   && matched+=(ci-cd)
 
 # networking
-echo "$files" | grep -qE 'nginx\.conf|Caddyfile|haproxy\.cfg|traefik\.(ya?ml|toml)|\.zone$|named\.conf|dnsmasq\.conf|wg[0-9]*\.conf$|nftables\.conf' \
+grep -qE 'nginx\.conf|Caddyfile|haproxy\.cfg|traefik\.(ya?ml|toml)|\.zone$|named\.conf|dnsmasq\.conf|wg[0-9]*\.conf$|nftables\.conf' <<< "$files" \
   && matched+=(networking)
 
 # observability (Prometheus/Alertmanager/OTel/Loki/Tempo config, Grafana provisioning)
-echo "$files" | grep -qE '(^|/)prometheus\.ya?ml$|\.rules\.ya?ml$|(^|/)alertmanager\.ya?ml$|(^|/)otel-collector.*\.ya?ml$|(^|/)otelcol.*\.ya?ml$|(^|/)loki.*\.ya?ml$|(^|/)tempo.*\.ya?ml$|(^|/)grafana/(provisioning|dashboards)/' \
+grep -qE '(^|/)prometheus\.ya?ml$|\.rules\.ya?ml$|(^|/)alertmanager\.ya?ml$|(^|/)otel-collector.*\.ya?ml$|(^|/)otelcol.*\.ya?ml$|(^|/)loki.*\.ya?ml$|(^|/)tempo.*\.ya?ml$|(^|/)grafana/(provisioning|dashboards)/' <<< "$files" \
   && matched+=(observability)
 
 # arch-btw
-echo "$files" | grep -qE '(^|/)PKGBUILD$|\.install$|(^|/)mkinitcpio\.conf|(^|/)archinstall\.json$|(^|/)etc/pacman\.(d/|conf)' \
+grep -qE '(^|/)PKGBUILD$|\.install$|(^|/)mkinitcpio\.conf|(^|/)archinstall\.json$|(^|/)etc/pacman\.(d/|conf)' <<< "$files" \
   && matched+=(arch-btw)
 
 # debian-ubuntu
-echo "$files" | grep -qE '(^|/)debian/(control|changelog|rules|copyright)$|\.dsc$|(^|/)(snap/)?snapcraft\.yaml$' \
+grep -qE '(^|/)debian/(control|changelog|rules|copyright)$|\.dsc$|(^|/)(snap/)?snapcraft\.yaml$' <<< "$files" \
   && matched+=(debian-ubuntu)
 
 # rhel-fedora
-echo "$files" | grep -qE '\.spec$|(^|/)\.copr/|(^|/)dracut\.conf|(^|/)selinux/.*\.te$|(^|/)comps\.xml|(^|/)dnf/modules\.d/' \
+grep -qE '\.spec$|(^|/)\.copr/|(^|/)dracut\.conf|(^|/)selinux/.*\.te$|(^|/)comps\.xml|(^|/)dnf/modules\.d/' <<< "$files" \
   && matched+=(rhel-fedora)
 
-# nixos-btw (any .nix file is a strong signal; flake.lock is the conclusive one)
-echo "$files" | grep -qE '\.nix$|(^|/)flake\.lock$' \
+# nixos-btw (Nix files and flake.lock are candidate signals)
+grep -qE '\.nix$|(^|/)flake\.lock$' <<< "$files" \
   && matched+=(nixos-btw)
 
 # firewall-appliance (OPNsense/pfSense config repos)
-echo "$files" | grep -qE '(^|/)pf\.conf|(^|/)opnsense/|(^|/)pfsense/|(^|/)configctl|(^|/)pf\.anchors/' \
+grep -qE '(^|/)pf\.conf|(^|/)opnsense/|(^|/)pfsense/|(^|/)configctl|(^|/)pf\.anchors/' <<< "$files" \
   && matched+=(firewall-appliance)
 
 # virtualization (Packer, cloud-init, libvirt, Proxmox, Vagrant)
-echo "$files" | grep -qE '(^|/)Vagrantfile|\.pkr\.hcl$|(^|/)packer.*\.json$|(^|/)cloud-init|(^|/)user-data$|(^|/)meta-data$|(^|/)libvirt/.*\.xml$|(^|/)proxmox-.*\.json$' \
+grep -qE '(^|/)Vagrantfile|\.pkr\.hcl$|(^|/)packer.*\.json$|(^|/)cloud-init|(^|/)user-data$|(^|/)meta-data$|(^|/)libvirt/.*\.xml$|(^|/)proxmox-.*\.json$' <<< "$files" \
   && matched+=(virtualization)
+
+# Content errors are coverage failures, not negative matches.
+check_content() {
+  local status=0
+  grep "$@" || status=$?
+  if (( status > 1 )); then
+    printf 'Detection could not read a candidate file (status %s).\n' "$status" >&2
+    exit "$status"
+  fi
+  return "$status"
+}
 
 # --- Dependency-manifest checks (only for skills not yet matched) ---
 
@@ -147,17 +161,17 @@ check_manifest() {
   printf '%s\n' "${matched[@]}" | grep -qx "$skill" && return 0
   # Check repo-root manifests first, then scoped manifests (monorepo support)
   local manifest_files=()
-  for name in package.json requirements.txt pyproject.toml go.mod Cargo.toml Gemfile composer.json; do
-    [[ -f "$name" ]] && manifest_files+=("$name")
-  done
-  # Also find manifests within the scoped file tree
-  if [[ -n "$scope" ]]; then
-    while IFS= read -r f; do
-      manifest_files+=("$f")
-    done < <(echo "$files" | grep -E '(^|/)(package\.json|requirements\.txt|pyproject\.toml|go\.mod|Cargo\.toml|Gemfile|composer\.json)$' | head -10)
+  if [[ "$include_root" == 1 ]]; then
+    for name in package.json requirements.txt pyproject.toml go.mod Cargo.toml Gemfile composer.json; do
+      [[ -f "$name" ]] && manifest_files+=("$name")
+    done
   fi
+  # Include every tracked nested manifest in both full and scoped runs.
+  while IFS= read -r f; do
+    manifest_files+=("$f")
+  done < <(grep -E '(^|/)(package\.json|requirements\.txt|pyproject\.toml|go\.mod|Cargo\.toml|Gemfile|composer\.json)$' <<< "$files")
   for manifest in "${manifest_files[@]}"; do
-    grep -qEi "$pattern" "$manifest" 2>/dev/null && matched+=("$skill") && return 0
+    check_content -qEi "$pattern" "$manifest" && matched+=("$skill") && return 0
   done
   return 0
 }
@@ -172,23 +186,23 @@ check_manifest mcp '@modelcontextprotocol/sdk|fastmcp'
 # kubernetes: check for raw manifests if Chart.yaml etc. not found
 printf '%s\n' "${matched[@]}" | grep -qx kubernetes || {
   while IFS= read -r f; do
-    grep -q 'apiVersion:' "$f" 2>/dev/null && grep -q 'kind:' "$f" 2>/dev/null \
+    check_content -q 'apiVersion:' "$f" && check_content -q 'kind:' "$f" \
       && matched+=(kubernetes) && break
-  done < <(echo "$files" | grep -E '\.ya?ml$' | grep -vE 'docker-compose|compose\.|\.github/|\.gitlab-ci|\.forgejo/' | head -20)
+  done < <(grep -E '\.ya?ml$' <<< "$files" | grep -vE 'docker-compose|compose\.|\.github/|\.gitlab-ci|\.forgejo/')
 }
 
 # ansible: check for playbooks and requirements.yml if ansible.cfg not found
 printf '%s\n' "${matched[@]}" | grep -qx ansible || {
   # check requirements.yml for roles:/collections:
   while IFS= read -r f; do
-    grep -qE '^\s*(roles|collections):' "$f" 2>/dev/null && matched+=(ansible) && break
-  done < <(echo "$files" | grep -E '(^|/)requirements\.ya?ml$' | head -5)
+    check_content -qE '^\s*(roles|collections):' "$f" && matched+=(ansible) && break
+  done < <(grep -E '(^|/)requirements\.ya?ml$' <<< "$files")
 }
 printf '%s\n' "${matched[@]}" | grep -qx ansible || {
   # check playbook-like files for hosts: (exclude .github/ to avoid CI false positives)
   while IFS= read -r f; do
-    grep -q 'hosts:' "$f" 2>/dev/null && matched+=(ansible) && break
-  done < <(echo "$files" | grep -E '(playbook|site|main).*\.ya?ml$' | grep -v '\.github/' | head -10)
+    check_content -q 'hosts:' "$f" && matched+=(ansible) && break
+  done < <(grep -E '(playbook|site|main).*\.ya?ml$' <<< "$files" | grep -v '\.github/')
 }
 
 # --- Output ---
@@ -200,15 +214,16 @@ printf '%s\n' "${matched[@]}" | sort -u
 - **Monorepos**: pass the scope path as `$1` to filter detection to that subtree.
   The script uses `git ls-files -- "$scope"` when an argument is provided.
   Note: repo-root manifests (e.g., a workspace-level `package.json`) are always
-  checked even in scoped mode. This can cause false activations if the root manifest
-  lists dependencies belonging to other services. Acceptable trade-off - the invoked
-  skill will quickly identify that the scoped subtree has no relevant code.
+  checked by default even in scoped mode. Run the same scope again with
+  `DEEP_AUDIT_ROOT_MANIFESTS=0` to get scoped-only matches; the set difference is
+  root-manifest-only candidates. This can cause false activations if the root manifest
+  lists dependencies belonging to other services. Treat these as candidates and confirm actual scoped usage before dispatch.
 - **Polyglot repos**: multiple Wave 3 skills matching is expected. Run all of them.
 - **No matches**: skip Wave 3 entirely with a note.
 - **False positives**: a `test/` directory with only fixture data may trigger `testing`.
-  Acceptable - the testing skill will recognize the situation and report accordingly.
+  Inspect ambiguous fixtures before dispatch.
 - **Large repos (>5000 files)**: the detection script is fast (grep on file list, not file
-  contents) but the dependency manifest checks read files. Both are negligible even at scale.
+  contents) but the dependency manifest checks read files. No file-count caps silently omit later manifests. Report unreadable tracked files as coverage gaps.
 - **Shebang detection**: the table notes shebang matching for `command-prompt` but the script
   does not implement it (would require reading file contents, significantly slower). The
   `*.sh`/`*.bash`/`Makefile`/`scripts/` patterns catch the vast majority of cases.

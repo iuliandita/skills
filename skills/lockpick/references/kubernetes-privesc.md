@@ -101,21 +101,22 @@ done
 
 | Permission | Why It's Dangerous |
 |------------|-------------------|
-| `create pods` | Schedule privileged pod, mount host filesystem |
-| `get secrets` | Read all secrets in namespace (or cluster-wide) |
-| `create/update rolebindings` | Grant yourself any role |
-| `escalate` verb on roles | Bypass RBAC escalation prevention |
-| `bind` verb on roles | Bind any role to yourself |
-| `impersonate` users/groups | Act as any user including system:masters |
-| `create tokenrequest` | Generate tokens for any SA |
-| `update/patch pods` | Inject containers, change images |
-| `create/update daemonsets` | Run on every node |
-| `exec` on pods | Shell into any pod in the namespace |
-| Wildcard `*` on verbs/resources | Everything - check for this first |
+| `create pods` | Pod creation within scope; privileged settings and host mounts remain subject to admission |
+| `get secrets` | Read allowed named secrets within the granted scope; resourceNames can restrict access |
+| `create/update rolebindings` | Bind only permitted roles; escalation prevention still applies |
+| `escalate` on roles | Bypass the permission-content check for roles within the grant's scope |
+| `bind` on roles | Bind roles allowed by scope and resourceNames restrictions |
+| `impersonate` users/groups | Impersonate only authorized identities; check resourceNames and groups separately |
+| `create serviceaccounts/token` | Request tokens for permitted ServiceAccounts within scope |
+| `update/patch pods` | Change allowed mutable fields; adding ephemeral containers uses a separate subresource |
+| `create/update daemonsets` | Create node workloads subject to admission, selectors, taints, and scheduling |
+| `create pods/exec` | Start commands in allowed pods; scope and container tooling constrain access |
+| Wildcard `*` on verbs/resources | Broad access within the binding's scope; inspect API groups and resourceNames |
 
 ### Exploiting create/update RoleBindings
 
-If you can create or update RoleBindings:
+Creating or updating RoleBindings does not itself bypass bind or escalation checks.
+Confirm the referenced role is permitted before treating this as an escalation path:
 
 ```bash
 # Bind cluster-admin to your ServiceAccount
@@ -188,7 +189,8 @@ Then: `kubectl exec -it pwned - chroot /host bash`
 
 ### Escape to Node via nsenter
 
-If `hostPID: true`:
+`hostPID: true` exposes host process IDs; entering their namespaces additionally requires
+the relevant capabilities and policy permissions:
 
 ```bash
 # Enter all namespaces of host PID 1
@@ -367,9 +369,9 @@ kubectl get ns TARGET_NAMESPACE -o jsonpath='{.metadata.labels}' | python3 -m js
 
 ### Bypass Strategies
 
-- **No label = no enforcement** - check if the namespace has PSS labels at all
-- **warn/audit only** - pods still run, just generate warnings
-- **Create pod in unlabeled namespace** - if you can create namespaces
+- **Missing labels are inconclusive** - inspect admission defaults, exemptions, and other admission policies
+- **warn/audit modes** do not reject by themselves; separate enforcement may still reject
+- **Unlabeled namespaces** can inherit enforced defaults; namespace creation is not proof of bypass
 - **Namespace label manipulation** - if you can update namespace labels, change enforcement to `privileged`
 - **Ephemeral containers** - may bypass some checks (depends on admission config)
 - **Static pods on nodes** - bypass all admission (direct kubelet, not API)

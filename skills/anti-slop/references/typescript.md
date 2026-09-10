@@ -9,7 +9,7 @@ TypeScript's inference is good. Fighting it with redundant annotations is noise.
 - `any` used to bypass type errors instead of fixing the actual type
 - `catch (error: any)` instead of `catch (error: unknown)` with narrowing
 - Utility type gymnastics that a simpler type would replace
-- Interfaces with a single implementation and no plans for more
+- Extra abstraction layers with no useful contract; an interface describing one implementation can still be a valid public type
 - Duplicated type definitions across files instead of importing from one source
 - Enums where const objects or union types would be simpler and tree-shake better
 - `as` casts to force types instead of fixing the actual data flow
@@ -31,20 +31,20 @@ TypeScript's inference is good. Fighting it with redundant annotations is noise.
 - `module.exports` when the project uses ESM -> `export`
 - `var` -> `const` / `let`
 - `arguments` object -> rest parameters
-- `Promise` constructor for async operations -> `async`/`await`
+- Redundant Promise wrapping of an existing promise; keep constructors used to adapt callback APIs
 - `React.FC` type (unnecessary since React 18) -> type props directly
 - Class components in React -> function components + hooks
 - `PropTypes` alongside TypeScript -> redundant, remove
 - `namespace` -> modules
 - `/// <reference>` directives -> proper imports
-- `.then()` chains -> async/await (except when composing promise combinators)
+- Choose `.then()` or async/await for clarity while preserving concurrency and error behavior
 - `Object.assign({}, ...)` -> spread syntax
 - `Array.prototype.forEach` for side-effect-free transforms -> `.map()`
 
 ## Verbose Patterns (Noise)
 
-- `for` loops that should be `.filter().map()` or `.reduce()`
-- `.then()` chains instead of async/await
+- Loop complexity that a clearer transform could remove; consider allocation, early exits, and readability before replacing a loop
+- Promise chains that obscure actual sequencing or error handling, not merely the presence of `.then()`
 - Manual `Promise.all()` where sequential flow is fine (or vice versa)
 - Unnecessary intermediate variables: `const result = foo(); return result;`
 - `class` for stateless logic that should be plain functions
@@ -66,7 +66,7 @@ TypeScript's inference is good. Fighting it with redundant annotations is noise.
 
 - `node-fetch` when `fetch` is global (Node 18+, Bun, Deno)
 - `uuid` when `crypto.randomUUID()` exists
-- `lodash.get` / `lodash.set` when optional chaining and nullish coalescing exist
+- `lodash.get` for a fixed property read that optional chaining covers; optional chaining does not replace `lodash.set` or dynamic-path traversal
 - `moment` / `dayjs` for simple ISO date formatting (`Intl.DateTimeFormat`, `Date.toISOString()`)
 - Two HTTP clients (e.g., `axios` + `node-fetch`)
 - Two date libraries

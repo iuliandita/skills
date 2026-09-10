@@ -28,7 +28,7 @@ Not every task needs all 680 lines. Use this routing:
 Before returning any zsh script or .zshrc edit:
 
 - [ ] Shebang is `#!/usr/bin/env zsh` (not `#!/bin/bash`, not `#!/bin/sh`)
-- [ ] `set -euo pipefail` present for scripts (or `setopt ERR_EXIT NO_UNSET PIPE_FAIL`)
+- [ ] Error handling is explicit; when strict mode is used, expected nonzero statuses and signal exits are tested
 - [ ] Arrays are 1-indexed (not 0-indexed) - every loop, slice, index
 - [ ] Globs use `(N)` qualifier where empty results are acceptable
 - [ ] File-filtering globs use type qualifiers: `(.)` files, `(/)` dirs, `(@)` symlinks
@@ -54,7 +54,8 @@ Zsh globbing is stricter and more powerful than bash. **A failed glob is a fatal
 ls *.nonexistent    # zsh: no matches found
 
 # Fix: use (N) null glob qualifier
-ls *.nonexistent(N)    # returns nothing silently
+files=(*.nonexistent(N))
+(( $#files )) && ls -- "${files[@]}"  # no call when empty; bare ls would list cwd
 
 # Or set globally (often in .zshrc)
 setopt NULL_GLOB
@@ -185,7 +186,7 @@ echo ${str:u}              # HELLO WORLD (uppercase - zsh-only)
 | Array length | `${#arr[@]}` | `${#arr}` |
 | First element | `${arr[0]}` | `${arr[1]}` |
 
-> **Tip:** Bash-style `${var,,}` and `${var^^}` also work in modern zsh (5.9+), but `${var:l}` and `${var:u}` are idiomatic.
+> Use `${var:l}` and `${var:u}` in zsh; Bash case-conversion syntax is not portable to zsh.
 
 ---
 
@@ -237,7 +238,7 @@ setopt INTERACTIVE_COMMENTS
 # Don't use #!/bin/bash for zsh scripts (obvious but common)
 # Don't use #!/bin/sh - zsh in sh-emulation mode loses features
 
-set -euo pipefail    # works in zsh too, use it
+set -euo pipefail    # use only with expected nonzero statuses handled
 ```
 
 ### Zsh-specific `set` options
@@ -522,7 +523,9 @@ log_error() { print -P "%F{red}[ERROR]%f $1" >&2 }
 cleanup() {
     # Cleanup logic here
 }
-trap cleanup EXIT INT TERM
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
 main() {
     log_info "Starting..."
@@ -538,7 +541,7 @@ main "$@"
 ```zsh
 # Send SIGTERM, wait briefly, escalate to SIGKILL if still alive
 graceful_kill() {
-    local pid=$1 timeout=${2:-5}
+    local pid=$1 timeout=${2:-5} i
     kill "$pid" 2>/dev/null || return 0
     for (( i=0; i < timeout; i++ )); do
         kill -0 "$pid" 2>/dev/null || return 0
@@ -644,7 +647,7 @@ Use established `$()` substitution when the target's support has not been verifi
 ## 14. macOS-Specific Notes
 
 - Check `/bin/zsh --version` separately from a package-manager installation; their versions and compiled modules may differ.
-- `/etc/zshrc` runs `path_helper` which reorders `$PATH` - putting `/usr/bin` before Homebrew paths. Fix: set PATH in `.zshenv` (runs before `/etc/zshrc` in non-login shells) or `.zprofile` (runs after, overrides it for login shells).
+- Inspect the installed system startup files before changing PATH. Login shells commonly run `path_helper` from `/etc/zprofile`; place login PATH overrides afterward in `.zprofile` and verify both login and non-login shells.
 - BSD coreutils differ from GNU: `sed -i ''` (not `sed -i`), `stat -f %m` (not `stat -c %Y`), `date` flags differ. When writing portable scripts, check which `coreutils` variant is available.
 
 ---

@@ -3,7 +3,7 @@ name: ansible
 description: >
   · Write, review, and debug Ansible playbooks, roles, inventories, Ansible Vault, Molecule tests, and AWX/AAP.
 license: MIT
-compatibility: "Requires ansible-core and Python 3.9+. Optional: ansible-lint, molecule"
+compatibility: "Requires ansible-core; target controller Python 3.12+. Check managed-node support separately. Optional: ansible-lint, molecule"
 metadata:
   source: iuliandita/skills
   date_added: "2026-03-24"
@@ -236,7 +236,7 @@ and remote SSH commands are not hijacked.
 
 ```bash
 # Encrypt a single variable (inline in YAML)
-ansible-vault encrypt_string 'supersecret' --name 'db_password'
+ansible-vault encrypt_string --prompt --name 'db_password'
 
 # Encrypt an entire file
 ansible-vault encrypt group_vars/production/secrets.yml
@@ -260,7 +260,7 @@ Never store the vault password in plaintext alongside the repo. Use `--ask-vault
 - `copy` without `mode:` on sensitive files (defaults to umask, unpredictable)
 - `template` without `.j2` extension on the source file
 - `ignore_errors: true` without a comment explaining why (use `block`/`rescue` instead)
-- `with_items` (deprecated - use `loop:`)
+- Blind `with_items` to `loop` rewrites: both are supported; prefer `loop` for simple lists, and preserve single-level flattening with `flatten(1)` when needed
 - Bare `{{ var }}` without quotes (YAML parses it as a dict start)
 - `gather_facts: true` + never using facts (wasted 5-15 seconds per host)
 - Tasks without `name:` (legal but unreadable in output)

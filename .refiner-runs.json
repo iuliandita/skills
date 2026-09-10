@@ -4049,5 +4049,839 @@
     "reverted": [],
     "skipped_checks": [],
     "private_skill_handling": "Only the named public skill was edited; detailed working evidence remains in ignored local audit storage."
-  }
+  },
+{
+  "run_id": "2026-09-10-collection-iteration-2",
+  "peer_review": {"remaining_minor": 1, "unresolved_major": 0, "contested": 0, "note": "Frontend keyboard pan bounds deferred; recovered by Reset."},
+  "reverted": [],
+  "date": "2026-09-10",
+  "branch": "codex/141-concise-skill-descriptions",
+  "primary": {
+    "provider": "unknown",
+    "resolved_model": "unknown",
+    "effective_effort": "unknown",
+    "harness": "Codex desktop",
+    "version": "unknown",
+    "evidence": "Desktop tool surface; no effective runtime identity attestation available."
+  },
+  "secondary": {
+    "provider": "unknown",
+    "resolved_model": "unknown",
+    "effective_effort": "unknown",
+    "harness": "Codex desktop",
+    "version": "unknown",
+    "evidence": "Desktop tool surface; no effective runtime identity attestation available."
+  },
+  "reviewer_classification": "unknown-model fresh-context",
+  "review_weight": 0.03,
+  "pool_size": 45,
+  "excluded": [
+    "skill-creator",
+    "skill-refiner"
+  ],
+  "config": {
+    "requested_minimum_iterations": 3,
+    "threshold": 99,
+    "user_stop_after": 2
+  },
+  "iterations_completed": 2,
+  "terminated": "user-deferred-iteration-3-and-meta",
+  "target_met": false,
+  "phase2": "deferred by user",
+  "scores": {
+    "before": {
+      "aggregate": {
+        "mean": 94.97256140350878,
+        "minimum": 87.75999999999999,
+        "maximum": 100.0
+      },
+      "per_skill": {
+        "ai-ml": {
+          "G": "pass",
+          "A": 90.47619047619048,
+          "B": 94.0,
+          "composite": 92.52
+        },
+        "ansible": {
+          "G": "pass",
+          "A": 90.47619047619048,
+          "B": 100.0,
+          "composite": 96.0
+        },
+        "anti-ai-prose": {
+          "G": "pass",
+          "A": 90.47619047619048,
+          "B": 100.0,
+          "composite": 96.0
+        },
+        "anti-slop": {
+          "G": "pass",
+          "A": 85.71428571428571,
+          "B": 100.0,
+          "composite": 93.99999999999999
+        },
+        "arch-btw": {
+          "G": "pass",
+          "A": 89.47368421052632,
+          "B": 92.0,
+          "composite": 90.93894736842105
+        },
+        "backend-api": {
+          "G": "pass",
+          "A": 95.23809523809524,
+          "B": 100.0,
+          "composite": 98.0
+        },
+        "browse": {
+          "G": "pass",
+          "A": 95.23809523809524,
+          "B": 100.0,
+          "composite": 98.0
+        },
+        "ci-cd": {
+          "G": "pass",
+          "A": 75.0,
+          "B": 97.0,
+          "composite": 87.75999999999999
+        },
+        "cluster-health": {
+          "G": "pass",
+          "A": 89.47368421052632,
+          "B": 98.5,
+          "composite": 94.70894736842104
+        },
+        "code-review": {
+          "G": "pass",
+          "A": 80.95238095238095,
+          "B": 100.0,
+          "composite": 92.0
+        },
+        "code-slimming": {
+          "G": "pass",
+          "A": 89.47368421052632,
+          "B": 100.0,
+          "composite": 95.57894736842104
+        },
+        "command-prompt": {
+          "G": "pass",
+          "A": 85.0,
+          "B": 100.0,
+          "composite": 93.69999999999999
+        },
+        "databases": {
+          "G": "pass",
+          "A": 80.0,
+          "B": 100.0,
+          "composite": 91.6
+        },
+        "debian-ubuntu": {
+          "G": "pass",
+          "A": 94.73684210526316,
+          "B": 100.0,
+          "composite": 97.78947368421052
+        },
+        "debug-triage": {
+          "G": "pass",
+          "A": 89.47368421052632,
+          "B": 100.0,
+          "composite": 95.57894736842104
+        },
+        "deep-audit": {
+          "G": "pass",
+          "A": 85.71428571428571,
+          "B": 95.0,
+          "composite": 91.1
+        },
+        "deep-grill": {
+          "G": "pass",
+          "A": 94.73684210526316,
+          "B": 99.0,
+          "composite": 97.20947368421052
+        },
+        "dev-cycle": {
+          "G": "pass",
+          "A": 80.0,
+          "B": 100.0,
+          "composite": 91.6
+        },
+        "docker": {
+          "G": "pass",
+          "A": 90.0,
+          "B": 100.0,
+          "composite": 95.79999999999998
+        },
+        "firewall-appliance": {
+          "G": "pass",
+          "A": 89.47368421052632,
+          "B": 95.0,
+          "composite": 92.67894736842103
+        },
+        "frontend-design": {
+          "G": "pass",
+          "A": 95.23809523809524,
+          "B": 100.0,
+          "composite": 98.0
+        },
+        "full-review": {
+          "G": "pass",
+          "A": 94.73684210526316,
+          "B": 100.0,
+          "composite": 97.78947368421052
+        },
+        "git": {
+          "G": "pass",
+          "A": 85.0,
+          "B": 100.0,
+          "composite": 93.69999999999999
+        },
+        "handoff": {
+          "G": "pass",
+          "A": 100.0,
+          "B": 100.0,
+          "composite": 100.0
+        },
+        "jekyll-hyde": {
+          "G": "pass",
+          "A": 100.0,
+          "B": 100.0,
+          "composite": 100.0
+        },
+        "kali-linux": {
+          "G": "pass",
+          "A": 94.73684210526316,
+          "B": 97.5,
+          "composite": 96.33947368421053
+        },
+        "kubernetes": {
+          "G": "pass",
+          "A": 89.47368421052632,
+          "B": 97.0,
+          "composite": 93.83894736842105
+        },
+        "localize": {
+          "G": "pass",
+          "A": 90.47619047619048,
+          "B": 100.0,
+          "composite": 96.0
+        },
+        "lockpick": {
+          "G": "pass",
+          "A": 85.71428571428571,
+          "B": 100.0,
+          "composite": 93.99999999999999
+        },
+        "mcp": {
+          "G": "pass",
+          "A": 95.23809523809524,
+          "B": 94.0,
+          "composite": 94.52
+        },
+        "networking": {
+          "G": "pass",
+          "A": 89.47368421052632,
+          "B": 95.5,
+          "composite": 92.96894736842104
+        },
+        "nixos-btw": {
+          "G": "pass",
+          "A": 89.47368421052632,
+          "B": 100.0,
+          "composite": 95.57894736842104
+        },
+        "observability": {
+          "G": "pass",
+          "A": 85.0,
+          "B": 95.0,
+          "composite": 90.79999999999998
+        },
+        "prompt-generator": {
+          "G": "pass",
+          "A": 95.23809523809524,
+          "B": 100.0,
+          "composite": 98.0
+        },
+        "rhel-fedora": {
+          "G": "pass",
+          "A": 94.73684210526316,
+          "B": 100.0,
+          "composite": 97.78947368421052
+        },
+        "roadmap": {
+          "G": "pass",
+          "A": 90.0,
+          "B": 100.0,
+          "composite": 95.79999999999998
+        },
+        "routine-writer": {
+          "G": "pass",
+          "A": 90.47619047619048,
+          "B": 100.0,
+          "composite": 96.0
+        },
+        "security-audit": {
+          "G": "pass",
+          "A": 94.73684210526316,
+          "B": 96.0,
+          "composite": 95.46947368421053
+        },
+        "skill-router": {
+          "G": "pass",
+          "A": 100.0,
+          "B": 100.0,
+          "composite": 100.0
+        },
+        "synology-dsm": {
+          "G": "pass",
+          "A": 89.47368421052632,
+          "B": 96.5,
+          "composite": 93.54894736842104
+        },
+        "terraform": {
+          "G": "pass",
+          "A": 89.47368421052632,
+          "B": 94.0,
+          "composite": 92.09894736842105
+        },
+        "testing": {
+          "G": "pass",
+          "A": 95.23809523809524,
+          "B": 100.0,
+          "composite": 98.0
+        },
+        "update-docs": {
+          "G": "pass",
+          "A": 85.0,
+          "B": 100.0,
+          "composite": 93.69999999999999
+        },
+        "virtualization": {
+          "G": "pass",
+          "A": 89.47368421052632,
+          "B": 96.0,
+          "composite": 93.25894736842105
+        },
+        "zero-day": {
+          "G": "pass",
+          "A": 85.71428571428571,
+          "B": 100.0,
+          "composite": 93.99999999999999
+        }
+      }
+    },
+    "after": {
+      "aggregate": {
+        "mean": 99.78336317401691,
+        "min": 96.63052631578947,
+        "max": 100.0
+      },
+      "per_skill": {
+        "ai-ml": {
+          "G": "pass",
+          "A": 100,
+          "B": 94.0,
+          "X": 100,
+          "composite": 96.63052631578947
+        },
+        "ansible": {
+          "G": "pass",
+          "A": 100,
+          "B": 100.0,
+          "X": 100,
+          "composite": 100.0
+        },
+        "anti-ai-prose": {
+          "G": "pass",
+          "A": 100.0,
+          "B": 100,
+          "X": 100,
+          "composite": 100.0
+        },
+        "anti-slop": {
+          "G": "pass",
+          "A": 100.0,
+          "B": 100,
+          "X": 100,
+          "composite": 100.0
+        },
+        "arch-btw": {
+          "G": "pass",
+          "A": 100.0,
+          "B": 100.0,
+          "X": 100,
+          "composite": 100.0
+        },
+        "backend-api": {
+          "G": "pass",
+          "A": 100,
+          "B": 100.0,
+          "X": 100,
+          "composite": 100.0
+        },
+        "browse": {
+          "G": "pass",
+          "A": 100,
+          "B": 100.0,
+          "X": 100,
+          "composite": 100.0
+        },
+        "ci-cd": {
+          "G": "pass",
+          "A": 100,
+          "B": 100,
+          "X": 100,
+          "composite": 100.0
+        },
+        "cluster-health": {
+          "G": "pass",
+          "A": 100.0,
+          "B": 100,
+          "X": 100,
+          "composite": 100.0
+        },
+        "code-review": {
+          "G": "pass",
+          "A": 95.23809523809523,
+          "B": 100,
+          "X": 100,
+          "composite": 98.05513784461152
+        },
+        "code-slimming": {
+          "G": "pass",
+          "A": 100.0,
+          "B": 100,
+          "X": 100,
+          "composite": 100.0
+        },
+        "command-prompt": {
+          "G": "pass",
+          "A": 100,
+          "B": 100,
+          "X": 100,
+          "composite": 100.0
+        },
+        "databases": {
+          "G": "pass",
+          "A": 100,
+          "B": 100,
+          "X": 100,
+          "composite": 100.0
+        },
+        "debian-ubuntu": {
+          "G": "pass",
+          "A": 100.0,
+          "B": 100.0,
+          "X": 100,
+          "composite": 100.0
+        },
+        "debug-triage": {
+          "G": "pass",
+          "A": 100.0,
+          "B": 100,
+          "X": 100,
+          "composite": 100.0
+        },
+        "deep-audit": {
+          "G": "pass",
+          "A": 100.0,
+          "B": 100,
+          "X": 100,
+          "composite": 100.0
+        },
+        "deep-grill": {
+          "G": "pass",
+          "A": 100.0,
+          "B": 100,
+          "X": 100,
+          "composite": 100.0
+        },
+        "dev-cycle": {
+          "G": "pass",
+          "A": 100,
+          "B": 100,
+          "X": 100,
+          "composite": 100.0
+        },
+        "docker": {
+          "G": "pass",
+          "A": 100.0,
+          "B": 100.0,
+          "X": 100,
+          "composite": 100.0
+        },
+        "firewall-appliance": {
+          "G": "pass",
+          "A": 100.0,
+          "B": 100.0,
+          "X": 100,
+          "composite": 100.0
+        },
+        "frontend-design": {
+          "G": "pass",
+          "A": 100.0,
+          "B": 100,
+          "X": 80,
+          "composite": 99.4
+        },
+        "full-review": {
+          "G": "pass",
+          "A": 100.0,
+          "B": 100,
+          "X": 100,
+          "composite": 100.0
+        },
+        "git": {
+          "G": "pass",
+          "A": 100,
+          "B": 100,
+          "X": 100,
+          "composite": 100.0
+        },
+        "handoff": {
+          "G": "pass",
+          "A": 100.0,
+          "B": 100,
+          "X": 100,
+          "composite": 100.0
+        },
+        "jekyll-hyde": {
+          "G": "pass",
+          "A": 100.0,
+          "B": 100,
+          "X": 100,
+          "composite": 100.0
+        },
+        "kali-linux": {
+          "G": "pass",
+          "A": 100.0,
+          "B": 100.0,
+          "X": 100,
+          "composite": 100.0
+        },
+        "kubernetes": {
+          "G": "pass",
+          "A": 100.0,
+          "B": 100.0,
+          "X": 100,
+          "composite": 100.0
+        },
+        "localize": {
+          "G": "pass",
+          "A": 100.0,
+          "B": 100,
+          "X": 100,
+          "composite": 100.0
+        },
+        "lockpick": {
+          "G": "pass",
+          "A": 100.0,
+          "B": 100,
+          "X": 100,
+          "composite": 100.0
+        },
+        "mcp": {
+          "G": "pass",
+          "A": 100,
+          "B": 99,
+          "X": 100,
+          "composite": 99.43842105263158
+        },
+        "networking": {
+          "G": "pass",
+          "A": 100.0,
+          "B": 100.0,
+          "X": 100,
+          "composite": 100.0
+        },
+        "nixos-btw": {
+          "G": "pass",
+          "A": 100.0,
+          "B": 100.0,
+          "X": 100,
+          "composite": 100.0
+        },
+        "observability": {
+          "G": "pass",
+          "A": 100,
+          "B": 100,
+          "X": 100,
+          "composite": 100.0
+        },
+        "prompt-generator": {
+          "G": "pass",
+          "A": 100,
+          "B": 100.0,
+          "X": 100,
+          "composite": 100.0
+        },
+        "rhel-fedora": {
+          "G": "pass",
+          "A": 100.0,
+          "B": 100.0,
+          "X": 100,
+          "composite": 100.0
+        },
+        "roadmap": {
+          "G": "pass",
+          "A": 100.0,
+          "B": 100,
+          "X": 100,
+          "composite": 100.0
+        },
+        "routine-writer": {
+          "G": "pass",
+          "A": 100,
+          "B": 98.0,
+          "X": 100,
+          "composite": 98.87684210526317
+        },
+        "security-audit": {
+          "G": "pass",
+          "A": 100.0,
+          "B": 100.0,
+          "X": 100,
+          "composite": 100.0
+        },
+        "skill-router": {
+          "G": "pass",
+          "A": 100.0,
+          "B": 100,
+          "X": 100,
+          "composite": 100.0
+        },
+        "synology-dsm": {
+          "G": "pass",
+          "A": 100.0,
+          "B": 100.0,
+          "X": 100,
+          "composite": 100.0
+        },
+        "terraform": {
+          "G": "pass",
+          "A": 100.0,
+          "B": 100.0,
+          "X": 100,
+          "composite": 100.0
+        },
+        "testing": {
+          "G": "pass",
+          "A": 100.0,
+          "B": 100,
+          "X": 100,
+          "composite": 100.0
+        },
+        "update-docs": {
+          "G": "pass",
+          "A": 100.0,
+          "B": 100,
+          "X": 100,
+          "composite": 100.0
+        },
+        "virtualization": {
+          "G": "pass",
+          "A": 94.73684210526315,
+          "B": 100.0,
+          "X": 100,
+          "composite": 97.85041551246537
+        },
+        "zero-day": {
+          "G": "pass",
+          "A": 100.0,
+          "B": 100,
+          "X": 100,
+          "composite": 100.0
+        }
+      }
+    }
+  },
+  "changes_summary": [
+    "Short task-led descriptions and proportional verification",
+    "Corrected shell, API, backup, secret-handling and infrastructure references",
+    "Audience-led prose/design behavior and consistent authorization",
+    "Scoped nested-source audit coverage and protected deliverables"
+  ],
+  "verification": [
+    "Nine collection gates",
+    "Skill lint and spec:47 pass, one504-line advisory warning",
+    "Five repository test scripts",
+    "Shell syntax, ShellCheck, Python compilation, Markdown, actionlint",
+    "Public links, Semgrep and gitleaks",
+    "Per-group executable fixtures and fresh-context diff reviews"
+  ],
+  "limitations": [
+    "Feedback-assisted finite synthetic cases; no blind reliability claim",
+    "Iteration3 and phase2 deliberately deferred",
+    "Known RAG/deployment/MCP output and code-review/virtualization reference deductions retained",
+    "Live infrastructure not exercised; runtime limitations retained in local receipts"
+  ],
+  "deferred_issue": 150,
+  "local_report": "docs/local/audits/skill-refiner/2026-09-10-collection/report.md",
+  "continuation": "docs/local/audits/skill-refiner/2026-09-10-collection/NEXT.md",
+  "private_skill_handling": "Protected overlay unchanged; detailed working evidence remains gitignored",
+  "files_changed": [
+    ".refiner-ledger.md",
+    "INSTALL.md",
+    "scripts/test-skill-content.sh",
+    "scripts/test-validate-spec.sh",
+    "scripts/validate-spec.sh",
+    "skills/ai-ml/SKILL.md",
+    "skills/ai-ml/references/agent-patterns.md",
+    "skills/ai-ml/references/evaluation.md",
+    "skills/ai-ml/references/fine-tuning.md",
+    "skills/ai-ml/references/llm-patterns.md",
+    "skills/ai-ml/references/local-inference.md",
+    "skills/ai-ml/references/rag-patterns.md",
+    "skills/ai-ml/references/safety.md",
+    "skills/ai-ml/references/target-versions.md",
+    "skills/ansible/SKILL.md",
+    "skills/ansible/references/compliance.md",
+    "skills/ansible/references/operations-and-execution.md",
+    "skills/ansible/references/playbook-patterns.md",
+    "skills/ansible/references/roles-and-collections.md",
+    "skills/ansible/references/vault-and-secrets.md",
+    "skills/anti-ai-prose/SKILL.md",
+    "skills/anti-ai-prose/references/audit-mode.md",
+    "skills/anti-ai-prose/references/fiction-tells.md",
+    "skills/anti-slop/SKILL.md",
+    "skills/anti-slop/references/docker.md",
+    "skills/anti-slop/references/iac.md",
+    "skills/anti-slop/references/python.md",
+    "skills/anti-slop/references/research-sources.md",
+    "skills/anti-slop/references/rust.md",
+    "skills/anti-slop/references/shell.md",
+    "skills/anti-slop/references/typescript.md",
+    "skills/arch-btw/SKILL.md",
+    "skills/arch-btw/references/boot-kernel-and-recovery.md",
+    "skills/arch-btw/references/packages-and-aur.md",
+    "skills/backend-api/SKILL.md",
+    "skills/browse/SKILL.md",
+    "skills/browse/references/tool-setup.md",
+    "skills/ci-cd/SKILL.md",
+    "skills/ci-cd/references/best-practices.md",
+    "skills/ci-cd/references/forgejo-gitea-actions.md",
+    "skills/ci-cd/references/github-actions.md",
+    "skills/ci-cd/references/gitlab-ci.md",
+    "skills/ci-cd/references/runners.md",
+    "skills/ci-cd/references/supply-chain.md",
+    "skills/ci-cd/references/target-versions.md",
+    "skills/cluster-health/SKILL.md",
+    "skills/cluster-health/references/helm-gitops.md",
+    "skills/cluster-health/references/kubernetes-core.md",
+    "skills/cluster-health/references/monitoring-logs.md",
+    "skills/cluster-health/references/networking-ingress.md",
+    "skills/cluster-health/references/security.md",
+    "skills/cluster-health/references/storage.md",
+    "skills/code-review/SKILL.md",
+    "skills/code-review/references/ai-age-patterns.md",
+    "skills/code-review/references/cicd-pipelines.md",
+    "skills/code-review/references/databases.md",
+    "skills/code-review/references/go.md",
+    "skills/code-review/references/iac.md",
+    "skills/code-review/references/java.md",
+    "skills/code-review/references/python.md",
+    "skills/code-review/references/shell.md",
+    "skills/code-slimming/SKILL.md",
+    "skills/code-slimming/references/patterns.md",
+    "skills/code-slimming/references/report-templates.md",
+    "skills/command-prompt/SKILL.md",
+    "skills/command-prompt/references/alt-shells.md",
+    "skills/command-prompt/references/bash.md",
+    "skills/command-prompt/references/posix-sh.md",
+    "skills/command-prompt/references/zsh.md",
+    "skills/databases/SKILL.md",
+    "skills/databases/references/backup-patterns.md",
+    "skills/databases/references/config-templates.md",
+    "skills/databases/references/migration-patterns.md",
+    "skills/debian-ubuntu/SKILL.md",
+    "skills/debian-ubuntu/references/boot-kernel-and-recovery.md",
+    "skills/debian-ubuntu/references/derivatives-and-hwe.md",
+    "skills/debian-ubuntu/references/storage-and-rollback.md",
+    "skills/debug-triage/SKILL.md",
+    "skills/deep-audit/SKILL.md",
+    "skills/deep-audit/references/detection-patterns.md",
+    "skills/deep-audit/references/report-templates.md",
+    "skills/deep-grill/SKILL.md",
+    "skills/dev-cycle/SKILL.md",
+    "skills/dev-cycle/references/finish.md",
+    "skills/dev-cycle/references/start.md",
+    "skills/docker/SKILL.md",
+    "skills/docker/references/compose-patterns.md",
+    "skills/docker/references/dockerfile-patterns.md",
+    "skills/docker/references/security-and-compliance.md",
+    "skills/docker/references/target-versions.md",
+    "skills/firewall-appliance/SKILL.md",
+    "skills/firewall-appliance/references/hardening.md",
+    "skills/firewall-appliance/references/plugins.md",
+    "skills/frontend-design/SKILL.md",
+    "skills/frontend-design/references/frameworks.md",
+    "skills/frontend-design/references/glitch-effects.md",
+    "skills/frontend-design/references/mobile-touch.md",
+    "skills/full-review/SKILL.md",
+    "skills/git/SKILL.md",
+    "skills/git/references/forge-workflows.md",
+    "skills/git/references/recovery-and-maintenance.md",
+    "skills/git/references/security-and-signing.md",
+    "skills/handoff/SKILL.md",
+    "skills/jekyll-hyde/SKILL.md",
+    "skills/kali-linux/SKILL.md",
+    "skills/kali-linux/references/gotchas-and-special-situations.md",
+    "skills/kali-linux/references/packages-branches-and-repos.md",
+    "skills/kubernetes/SKILL.md",
+    "skills/kubernetes/references/compliance.md",
+    "skills/kubernetes/references/sealed-secrets.md",
+    "skills/localize/SKILL.md",
+    "skills/localize/references/translation-quality.md",
+    "skills/lockpick/SKILL.md",
+    "skills/lockpick/references/container-breakout.md",
+    "skills/lockpick/references/kubernetes-privesc.md",
+    "skills/lockpick/references/linux-privesc.md",
+    "skills/lockpick/references/vpn-iac-secrets.md",
+    "skills/mcp/SKILL.md",
+    "skills/mcp/references/security.md",
+    "skills/networking/SKILL.md",
+    "skills/networking/references/vpn.md",
+    "skills/nixos-btw/SKILL.md",
+    "skills/nixos-btw/references/flakes-and-channels.md",
+    "skills/nixos-btw/references/gotchas-and-special-situations.md",
+    "skills/nixos-btw/references/rebuild-generations-and-rollback.md",
+    "skills/nixos-btw/references/store-gc-and-builders.md",
+    "skills/observability/SKILL.md",
+    "skills/observability/references/runnable-examples.md",
+    "skills/observability/references/versions.md",
+    "skills/prompt-generator/SKILL.md",
+    "skills/rhel-fedora/SKILL.md",
+    "skills/rhel-fedora/references/base-linux-and-cli.md",
+    "skills/roadmap/SKILL.md",
+    "skills/roadmap/references/competitive-scan.md",
+    "skills/roadmap/references/trigger-integration.md",
+    "skills/routine-writer/SKILL.md",
+    "skills/routine-writer/references/automation.md",
+    "skills/routine-writer/references/prompt-anatomy.md",
+    "skills/routine-writer/references/trigger-guide.md",
+    "skills/security-audit/SKILL.md",
+    "skills/skill-creator/SKILL.md",
+    "skills/skill-creator/references/conventions.md",
+    "skills/skill-refiner/SKILL.md",
+    "skills/skill-router/SKILL.md",
+    "skills/synology-dsm/SKILL.md",
+    "skills/synology-dsm/references/btrfs-recovery.md",
+    "skills/synology-dsm/references/dsm-cli.md",
+    "skills/synology-dsm/references/gotchas.md",
+    "skills/terraform/SKILL.md",
+    "skills/terraform/references/state-and-security.md",
+    "skills/testing/SKILL.md",
+    "skills/testing/references/e2e-accessibility.md",
+    "skills/testing/references/language-patterns.md",
+    "skills/update-docs/SKILL.md",
+    "skills/virtualization/SKILL.md",
+    "skills/virtualization/references/gotchas.md",
+    "skills/virtualization/references/libvirt-qemu-kvm.md",
+    "skills/virtualization/references/proxmox.md",
+    "skills/zero-day/SKILL.md",
+    "skills/zero-day/references/binary-analysis.md",
+    "skills/zero-day/references/exploit-patterns.md",
+    "skills/zero-day/references/taint-analysis.md",
+    "skills/zero-day/references/target-versions.md",
+    "skills/zero-day/references/vulnerability-classes.md"
+  ]
+}
 ]

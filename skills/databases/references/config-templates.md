@@ -179,8 +179,6 @@ shared_buffers = '512MB'                  # smaller for dev machines
 
 storage:
   dbPath: /var/lib/mongodb
-  journal:
-    enabled: true
   wiredTiger:
     engineConfig:
       cacheSizeGB: 4                      # (RAM - 1GB) / 2 for dedicated server, set explicitly for shared

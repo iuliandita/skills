@@ -41,7 +41,7 @@ Covers Terraform, Ansible, Helm, and Kubernetes manifests.
 
 - Unpinned provider versions (no `required_providers` with version constraints)
 - `provisioner "local-exec"` or `provisioner "remote-exec"` - use Ansible or user_data instead
-- `terraform.tfvars` committed to git with real values
+- Secrets or private environment details committed in variable files; ordinary nonsecret configuration can be tracked
 - `count` for conditional resources when `for_each` with a set would be clearer
 - String interpolation for simple references: `"${var.name}"` -> `var.name`
 - Nested `dynamic` blocks when a simple `for_each` on the resource would work
@@ -59,7 +59,7 @@ Covers Terraform, Ansible, Helm, and Kubernetes manifests.
 
 ### Verbose (Noise)
 
-- Declaring variables with `type = string` and no `description`, `default`, or `validation` - the variable block is just noise
+- Undocumented input intent where it affects correct use; a typed variable without a default deliberately declares a required input
 - Empty `tags = {}` on every resource (either tag meaningfully or don't)
 - `output` blocks for values nobody consumes downstream
 
@@ -79,7 +79,7 @@ The #1 Ansible slop pattern. If there's a module for it, use the module.
 - `command: cp /src /dst` -> `ansible.builtin.copy:`
 - `shell: pip install ...` -> `ansible.builtin.pip:`
 
-**Fix:** Replace with the appropriate module. Modules are idempotent; `command`/`shell` are not (unless you add `creates`/`removes`).
+**Fix:** Replace with the appropriate module. Check the operation's idempotency: module behavior depends on its state and arguments, while command/shell tasks need appropriate guards and changed/failed conditions.
 
 **Exception:** When no module exists for the operation, or when the module's behavior differs from what you need. Document why.
 
@@ -114,7 +114,7 @@ The #1 Ansible slop pattern. If there's a module for it, use the module.
 - Module names without FQCN: `apt:` -> `ansible.builtin.apt:`
 - `with_items` -> `loop` (modern Ansible)
 - `include:` -> `include_tasks:` or `import_tasks:`
-- No YAML anchors for repeated blocks (DRY violation)
+- Repeated blocks that have demonstrably drifted; anchors, variables, or includes are options rather than mandatory structure
 
 ### Module / Collection Hallucinations (Lies)
 
@@ -183,7 +183,7 @@ The #1 Ansible slop pattern. If there's a module for it, use the module.
 
 **Fix:** Add resource limits, pin image versions, set namespace, add probes, add security context with `runAsNonRoot: true`.
 
-**Exception:** Development/test manifests, CronJobs, and one-shot Jobs may skip probes. Security context can be inherited from PodSecurityStandards/PodSecurityPolicies at the namespace level.
+**Exception:** Development/test manifests, CronJobs, and one-shot Jobs may skip probes. Container settings can inherit supported pod-level securityContext fields. Pod Security Admission validates policy; namespace labels do not inject a securityContext. PodSecurityPolicy is removed.
 
 ### Imperative in Automation (Soul)
 
@@ -193,7 +193,7 @@ The #1 Ansible slop pattern. If there's a module for it, use the module.
 - `kubectl apply -f -` with inline heredocs in shell scripts (fragile)
 - Manual `kubectl scale` instead of HPA
 
-**Fix:** Use declarative manifests with `kubectl apply -f`. Use HPA for scaling. Use Kustomize or Helm for environment variations.
+**Fix:** Use declarative manifests with `kubectl apply -f`. Use HPA when automatic scaling fits the workload; a deliberate fixed replica count is valid. Use Kustomize or Helm for environment variations.
 
 ### Anti-Patterns (Noise)
 
@@ -226,9 +226,9 @@ The #1 Ansible slop pattern. If there's a module for it, use the module.
 - `disk` blocks without `iothread = true` on virtio-scsi (leaving performance on the table)
 - `scsihw = "lsi"` instead of `virtio-scsi-single` (slower)
 - Missing `agent = 1` when the VM has qemu-guest-agent installed
-- `memory = 2048` with `balloon = 0` (disabling balloon wastes RAM on overcommitted hosts)
+- Memory ballooning choices that conflict with workload latency or host capacity requirements; disabling ballooning can be intentional
 
-**Fix:** Pin provider version. Use linked clones for ephemeral VMs. Enable iothread, virtio-scsi-single, and balloon for KSM.
+**Fix:** Pin provider version. Use linked clones for ephemeral VMs. Choose disk and memory settings supported by the guest and workload; ballooning and KSM are separate mechanisms.
 
 ### Ansible Proxmox Modules (Soul)
 
@@ -242,9 +242,9 @@ The #1 Ansible slop pattern. If there's a module for it, use the module.
 ### LXC Container Config (Lies)
 
 **Detect:**
-- `nesting=1` without `keyctl=1` when running Docker inside LXC (Docker won't start)
+- Missing nesting features required by the installed container/runtime combination; verify those prerequisites before changing host isolation
 - `unprivileged: 0` (privileged LXC) when unprivileged would work
 - Static IPs hardcoded in LXC config AND in cloud-init AND in Ansible (three sources of truth)
-- `rootfs` on slow storage (local-lvm) for I/O-heavy workloads when faster storage exists
+- Storage latency or throughput that misses measured workload needs; a storage name alone does not establish performance
 - Missing `features: mount=nfs` when the container needs NFS mounts
 - `mp0` mount points with `backup=1` on large data volumes (inflates PBS backups)

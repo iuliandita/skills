@@ -101,7 +101,7 @@ Postgres defaults to READ COMMITTED, which is fine for most cases but can surpri
 **Detect:**
 - `UPSERT` (`ON CONFLICT DO UPDATE`) without specifying the conflict target correctly (wrong constraint name or columns)
 - `TRUNCATE` not being MVCC-safe the way `DELETE` is (concurrent transactions see different things)
-- `LISTEN/NOTIFY` payloads silently truncated at 8000 bytes
+- `NOTIFY` payload at or above the default 8000-byte limit is rejected, not silently truncated
 - `jsonb` operators: `->` returns JSON, `->>` returns text - mixing them up causes type errors
 - `LIKE` with `%` on a column without a trigram index (full table scan, but more importantly, `LIKE` is case-sensitive; use `ILIKE` for case-insensitive)
 - `timestamp` vs `timestamptz` confusion - `timestamp` stores no timezone info, can cause bugs when the server or session timezone changes
@@ -111,12 +111,12 @@ Postgres defaults to READ COMMITTED, which is fine for most cases but can surpri
 ```sql
 -- bug: timestamp without timezone, server timezone change breaks everything
 CREATE TABLE events (
-    created_at timestamp DEFAULT now()  - stores in server's current timezone
+    created_at timestamp DEFAULT now()  -- stores in server's current timezone
 );
 
 -- fix: always use timestamptz
 CREATE TABLE events (
-    created_at timestamptz DEFAULT now()  - stores UTC, renders in session timezone
+    created_at timestamptz DEFAULT now()  -- stores UTC, renders in session timezone
 );
 ```
 
@@ -146,7 +146,7 @@ CREATE TABLE events (
 **Detect:**
 - `find()` without projection returning entire documents (bandwidth waste, potential data exposure)
 - Missing `await` on cursor operations (common in Node.js drivers)
-- `updateMany` without `$set` (replaces the entire document): `db.users.updateMany({}, { active: true })` replaces all fields
+- `updateMany` with a plain replacement document is invalid: use an update-operator document or supported aggregation pipeline; `replaceOne` is the explicit replacement API
 - `$in` with an empty array matches nothing (correct but surprising)
 - Aggregation pipeline `$match` stage not at the beginning (can't use indexes)
 - `$lookup` (join) without indexes on the foreign collection's join field
@@ -154,7 +154,7 @@ CREATE TABLE events (
 
 **Example:**
 ```javascript
-// bug: replaces the entire document, removing all other fields
+// bug: updateOne rejects a plain replacement document; use an update operator
 await db.collection('users').updateOne(
   { _id: userId },
   { status: 'active' }  // missing $set!

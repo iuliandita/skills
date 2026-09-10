@@ -127,26 +127,26 @@ For each source-sink pair that could be connected, trace the data flow.
  * @kind path-problem
  */
 import javascript
-import DataFlow::PathGraph
+module TaintConfig implements DataFlow::ConfigSig {
 
-class TaintConfig extends TaintTracking::Configuration {
-  TaintConfig() { this = "CustomTaint" }
-
-  override predicate isSource(DataFlow::Node node) {
+  predicate isSource(DataFlow::Node node) {
     // HTTP request parameters
     node instanceof RemoteFlowSource
   }
 
-  override predicate isSink(DataFlow::Node node) {
+  predicate isSink(DataFlow::Node node) {
     // Command execution
     exists(SystemCommandExecution cmd |
-      node = cmd.getAnArgument()
+      node = cmd.getACommandArgument()
     )
   }
 }
 
-from TaintConfig cfg, DataFlow::PathNode source, DataFlow::PathNode sink
-where cfg.hasFlowPath(source, sink)
+module TaintFlow = TaintTracking::Global<TaintConfig>;
+import TaintFlow::PathGraph
+
+from TaintFlow::PathNode source, TaintFlow::PathNode sink
+where TaintFlow::flowPath(source, sink)
 select sink.getNode(), source, sink, "Command injection from $@", source.getNode(), "user input"
 ```
 
@@ -284,13 +284,28 @@ app.get('/download', (req, res) => {
    - `path.join('/uploads', '../../etc/passwd')` = `/etc/passwd`
    - `fs.existsSync('/etc/passwd')` = true
    - `res.download('/etc/passwd')` = file contents sent to attacker
-6. **Fix**: resolve the path and verify it starts with the upload directory:
+6. **Fix**: check canonical path components, not string prefixes:
    ```javascript
-   const resolved = path.resolve(UPLOAD_DIR, filename);
-   if (!resolved.startsWith(path.resolve(UPLOAD_DIR))) {
+   // fs and path are Node built-ins; UPLOAD_DIR is controlled by the application.
+   if (typeof filename !== 'string' || path.isAbsolute(filename)) {
      return res.status(400).send('Invalid filename');
    }
+   let resolved;
+   try {
+     const root = fs.realpathSync(UPLOAD_DIR);
+     resolved = fs.realpathSync(path.resolve(root, filename));
+     const relative = path.relative(root, resolved);
+     if (!relative || relative === '..' || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative)) {
+       return res.status(400).send('Invalid filename');
+     }
+   } catch {
+     return res.status(404).send('File not found');
+   }
+   return res.download(resolved);
    ```
+   This assumes the directory and symlinks cannot change between validation and open.
+   For attacker-writable trees, use an OS-supported descriptor-relative containment design;
+   a separate realpath check alone cannot eliminate that race.
 
 ---
 

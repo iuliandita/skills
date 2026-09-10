@@ -388,19 +388,21 @@ fj actions variables delete CACHE_BUCKET
 
 # Secrets (write-only; value never echoed back)
 fj actions secrets list
-fj actions secrets create REGISTRY_TOKEN "$REGISTRY_TOKEN"
+# Create/update secrets in the authenticated forge UI unless installed CLI help
+# verifies a stdin/file input. Positional secret values are exposed in argv.
 fj actions secrets delete REGISTRY_TOKEN
 ```
 
 ### Falling back to the REST API
 
 `fj` does not cover branch protection, webhooks, or org/team admin. Use `curl` against
-the Gitea-compatible API:
+the Gitea-compatible API. Provision a mode-0600 curl config containing the Authorization
+header through a secret manager/no-echo input; never put token values in argv. The branch
+example creates a rule; update an existing rule at its instance-documented endpoint.
 
 ```bash
 # Protect a branch
-curl -s -X PUT "https://git.example.com/api/v1/repos/{owner}/{repo}/branch_protections" \
-  -H "Authorization: token ${FORGEJO_TOKEN}" \
+curl --fail --config "${FORGEJO_CURL_CONFIG:?mode-0600 credential config}" -X POST "https://git.example.com/api/v1/repos/{owner}/{repo}/branch_protections" \
   -H "Content-Type: application/json" \
   -d '{
     "branch_name": "main",
@@ -413,8 +415,7 @@ curl -s -X PUT "https://git.example.com/api/v1/repos/{owner}/{repo}/branch_prote
   }'
 
 # Create a PR without fj (CI contexts where installing fj is overkill)
-curl -s -X POST "https://git.example.com/api/v1/repos/{owner}/{repo}/pulls" \
-  -H "Authorization: token ${FORGEJO_TOKEN}" \
+curl --fail --config "$FORGEJO_CURL_CONFIG" -X POST "https://git.example.com/api/v1/repos/{owner}/{repo}/pulls" \
   -H "Content-Type: application/json" \
   -d '{
     "title": "feat(x): ...",
@@ -427,9 +428,9 @@ curl -s -X POST "https://git.example.com/api/v1/repos/{owner}/{repo}/pulls" \
 ### Forgejo-specific gotchas
 
 - **No `permissions:` in Actions** - silently ignored (unlike GitHub where it scopes GITHUB_TOKEN).
-- **Self-signed certs** - `GIT_SSL_NO_VERIFY=true` may be needed for git operations. Set per-remote:
-  `git config http.https://git.example.com/.sslVerify false`. For `fj`, ensure the CA is in
-  the system trust store; `fj` uses the OS TLS stack and does not expose a skip-verify flag.
+- **Private CA certificates** - install the instance CA in the trust store or configure a
+  scoped Git `sslCAInfo` bundle. Keep verification enabled for authenticated traffic.
+  Configure the trust store used by `fj` as well.
 - **Runner availability** - self-hosted runners can be down. Check runner status before relying
   on CI for branch protection checks.
 - **Mirror sync delay** - if Forgejo mirrors from GitHub (or vice versa), there's a sync interval.
@@ -442,8 +443,9 @@ curl -s -X POST "https://git.example.com/api/v1/repos/{owner}/{repo}/pulls" \
 
 `tea` (`gitea.com/gitea/tea`) is the Gitea community CLI. It predates `fj` and still works
 against Gitea 1.20+ instances. Install: `go install code.gitea.io/tea@latest`, Arch
-`paru -S tea-bin`, macOS `brew install tea-cli`. Auth: `tea login add --name home --url
-https://gitea.example.com --token <token>` (no OAuth flow - token only).
+`paru -S tea-bin`, macOS `brew install tea-cli`. Inspect `tea login add --help` and use
+interactive no-echo input if supported; otherwise provision its protected credential
+configuration. Never put access token values in argv.
 
 Rough feature parity: `tea pulls create`, `tea issues create`, `tea releases create`,
 `tea repos clone`. No AGit support (Gitea does not ship it), no Actions secret/variable
@@ -522,6 +524,6 @@ merge produce ugly messages.
 
 1. **Understand both sides** before resolving. Read the conflict markers and understand the intent of each change.
 2. **Test after resolving** - run tests, lint, typecheck. Conflict resolution is error-prone.
-3. **Prefer the more recent change** when both sides modified the same logic, unless the older change was a bugfix.
+3. **Reconcile intent and invariants** when both sides modified the same logic. Use current requirements and tests; chronology alone does not decide which behavior to retain.
 4. **Lock files** (package-lock.json, bun.lockb): regenerate, don't manually resolve. Delete the file, run the package manager, commit the fresh lockfile.
 5. **Schema/migration files**: never resolve automatically. These may require creating a new migration that merges both changes.

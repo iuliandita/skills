@@ -36,7 +36,7 @@ rm "$file"  # runs: rm "my file*.txt" (1 arg, literal)
 ### Glob Expansion in Unexpected Places
 
 **Detect:**
-- `case $var in *) ...` without quoting (glob patterns in case are intentional, but the variable should still be quoted)
+- The word in `case $var in ...` is not subject to splitting or pathname expansion; pattern globs are intentional
 - Variables containing `*`, `?`, or `[` used without quoting
 - `echo $var` where var could contain glob characters
 
@@ -57,7 +57,7 @@ By default, a pipeline's exit code is the exit code of the *last* command. Failu
 
 ### Command Substitution Masks Exit Codes
 
-Assignment always succeeds, hiding the command's exit code.
+Declaration builtins can hide a substitution's exit status. A plain `output=$(cmd)` returns the last command substitution's status.
 
 **Detect:**
 - `local var=$(cmd)` - `local` always returns 0, masking cmd's exit code
@@ -124,7 +124,7 @@ echo "$count"  # correct
 
 ### IFS Surprises
 
-- `IFS=: read -ra parts <<< "$PATH"` - IFS change persists if not localized
+- `IFS=: read -ra parts <<< "$PATH"` scopes IFS to that Bash command; a separate `IFS=:` assignment persists
 - `for word in $var` splits on IFS (default: space, tab, newline) - might not be what you want
 - Missing `-r` flag on `read` - backslashes are interpreted as escapes
 

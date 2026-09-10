@@ -121,9 +121,11 @@ patterns and code examples.
 Every AI feature needs evaluation. Not "run it once and eyeball the output" - structured evals
 with datasets, metrics, and regression detection.
 
-Minimum viable eval: create a `promptfooconfig.yaml` with 20+ test cases, use `contains`,
-`llm-rubric`, and `cost` assertions, run `npx promptfoo eval` in CI on every PR that touches
-prompts. Track pass rate over time - any regression blocks the merge.
+Start with the project's existing evals and representative success, failure, and boundary
+cases for the changed behavior. Prefer deterministic assertions where they prove the contract;
+add paid judge or cost checks only when they answer a material question. Preserve required CI
+gates, track regressions, and expand the dataset when failures expose missing coverage. A small
+prompt fix does not require a new framework or an arbitrary minimum case count.
 
 Read `references/evaluation.md` for promptfoo setup, assertion types, CI integration (GitHub
 Actions example), RAG-specific evals, agent evals, and red teaming patterns.

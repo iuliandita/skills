@@ -10,8 +10,9 @@ Check generic cluster health: nodes, namespaces, workloads, events, and resource
 kubectl --context <context> get nodes -o wide
 kubectl --context <context> describe nodes | tail -n 120
 kubectl --context <context> get namespaces
-kubectl --context <context> get pods -A --field-selector=status.phase!=Running,status.phase!=Succeeded | head -n 80
-kubectl --context <context> get events -A --sort-by=.lastTimestamp | tail -n 80
+kubectl --context <context> get pods -A --field-selector=status.phase!=Succeeded
+# Inspect every returned pod; narrow by namespace if the result exceeds display capacity.
+# Use the bounded event check below for the requested time window.
 kubectl --context <context> top nodes 2>&1 | head -n 80
 kubectl --context <context> top pods -A --containers 2>&1 | head -n 80
 ```
@@ -19,10 +20,9 @@ kubectl --context <context> top pods -A --containers 2>&1 | head -n 80
 Keep `2>&1` on `top`: a missing metrics-server returns `error: Metrics API not available`, which is
 a finding, not a healthy zero. Do not mask it with `2>/dev/null`.
 
-## Pod not-running states (do not conflate)
+## Pod and container states (do not conflate)
 
-A non-Running pod can fail in distinct ways with different remediation. Read the `STATUS` column
-and the pod events before classifying.
+Running is a pod phase, not readiness. Running pods can contain crashing or unready containers. Inspect READY, container waiting/termination states, restart counts, and events before classifying.
 
 | State | Means | Where to look next |
 |-------|-------|--------------------|
@@ -66,5 +66,26 @@ are separate from this and indicate active eviction risk.
 
 ## Output Caps
 
-Use `head -n 80`, `tail -n 120`, label selectors, and field selectors. Avoid full `describe` output
-unless narrowing to one namespace, pod, or node.
+Use namespace/label selectors to keep checks readable. Treat capped output as partial coverage,
+never as proof that the omitted resources are healthy. Inspect all pod readiness/state rows;
+for large clusters, finish each namespace before aggregating. Narrow `describe` to a specific
+namespace, pod, or node instead of truncating a cluster-wide diagnostic.
+
+## Events in the requested window
+
+Use Bash with jq for this check. Set the confirmed context and requested window in seconds (2h = 7200); capture the cutoff once. Unknown timestamps remain explicit coverage gaps. Filter before limiting output; if more than 80 events match, narrow by namespace before claiming complete coverage.
+
+```bash
+: "${CONTEXT:?confirmed context}" "${WINDOW_SECONDS:?requested window in seconds}"
+case "$WINDOW_SECONDS" in ''|*[!0-9]*) echo 'Invalid window' >&2; exit 1;; esac
+EVENT_CUTOFF=$(($(date +%s) - WINDOW_SECONDS))
+event_data=$(kubectl --context "$CONTEXT" get events -A -o json) || exit 1
+printf '%s' "$event_data" | jq --argjson cutoff "$EVENT_CUTOFF" '
+  [.items[] |
+   (.series.lastObservedTime // .lastTimestamp // .eventTime // .metadata.creationTimestamp) as $stamp |
+   (try ($stamp | sub("\\.[0-9]+Z$"; "Z") | fromdateiso8601) catch null) as $time |
+   select($time == null or $time >= $cutoff) |
+   {namespace: .metadata.namespace, name: .metadata.name, type, reason, message,
+    lastObserved: $stamp, unknownTime: ($time == null)}] |
+  {matched: length, events: .[:80]}'
+```

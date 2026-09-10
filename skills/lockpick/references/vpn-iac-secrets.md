@@ -196,8 +196,10 @@ ssh -J user@pivot1,user@pivot2 user@final_target
 
 ### Terraform State Files
 
-Terraform state contains every secret in plaintext - database passwords, API keys, TLS certs,
-cloud credentials. This is a known limitation with no first-class fix (open issue for 6+ years).
+Terraform state can contain secret values. Marking a value sensitive hides display output
+but does not omit it from state. Supported ephemeral values and write-only arguments can
+avoid persistence; inspect the actual configuration and state rather than assuming every
+secret is present.
 
 ```bash
 # Find state files
@@ -282,9 +284,9 @@ curl -s -H "Metadata: true" \
 curl -s http://169.254.169.254/metadata/v1/
 ```
 
-**From k8s pods:** IMDS is accessible unless blocked by NetworkPolicy or node iptables.
-In EKS, pods can steal the node's IAM role credentials unless IRSA (IAM Roles for Service
-Accounts) is configured.
+**From k8s pods:** node IMDS reachability depends on metadata settings and network controls.
+IRSA supplies a workload identity but does not itself block node metadata access. Verify
+actual reachability and restrictions, including host-network workloads.
 
 ### Kubernetes Secrets on Disk
 

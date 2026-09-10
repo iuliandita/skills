@@ -64,8 +64,8 @@ every failure with file and line reference.
 - [ ] **No `latest` tags**: runner images, tool images, and base images pinned to specific versions or SHA256 digests.
 - [ ] **Caching strategy**: dependencies cached correctly (lockfile-based keys), build outputs use artifacts (not cache).
 - [ ] **Fail-fast security**: SAST, dependency scanning, and secret detection run early (not after deployment).
-- [ ] **Manual gates for production**: production deployments require explicit approval (not auto-deploy on merge).
-- [ ] **SBOM generation**: release pipelines generate and attach SBOMs (SPDX or CycloneDX). Required for PCI-DSS 4.0.
+- [ ] **Production authorization**: honor required environment approvals and the repository deployment policy; preserve explicit authorization already granted for the release.
+- [ ] **SBOM generation**: release pipelines generate and attach SBOMs (SPDX or CycloneDX). Useful inventory evidence; mandatory only when an applicable control/policy requires this format.
 - [ ] **Minimal scope**: jobs have minimum required permissions, access only needed secrets, and run only needed steps.
 - [ ] **No `allow_failure` without justification**: if a job can fail, explain why in a comment.
 - [ ] **Version pinning on tools**: `node:22`, not `node:lts`. `python:3.13`, not `python:3`. Specific versions prevent silent breakage.
@@ -327,8 +327,7 @@ git checkout <sha>
 
 The community Forgejo CLI (`fj`, v0.4.1+) covers the day-to-day Actions surface: listing
 runs, dispatching workflows, and managing variables/secrets. It is much faster than the web
-UI for bulk secret updates and scriptable for one-shot runs. Install and auth details live
-in the **git** skill's `forge-workflows.md` reference.
+UI for bulk secret updates and scriptable for one-shot runs. For installation and authentication, use the CLI's official docs and protected credential store. The **git** skill is an optional neighbor.
 
 ```bash
 # List recent runs (for a quick "is CI green on main?" check)
@@ -339,7 +338,8 @@ fj actions dispatch publish.yaml main --inputs version=1.2.3
 
 # Bulk variable/secret management (writes to the repo scope)
 fj actions variables create CACHE_BUCKET gs://my-bucket
-fj actions secrets create REGISTRY_TOKEN "$REGISTRY_TOKEN"
+# Create secrets in the authenticated forge UI unless CLI help verifies stdin/file input.
+# Do not pass secret values as positional arguments.
 ```
 
 **What `fj` does not do yet** (as of 0.4.1): stream runner logs, re-run failed jobs, cancel
@@ -400,23 +400,19 @@ jobs:
 
 **Note**: use secrets for registry host/image to avoid hardcoding private domains in git history.
 
-## PCI-DSS 4.0: CI/CD Compliance Mapping
+## PCI-DSS: CI/CD Compliance Mapping
 
-All future-dated requirements became **mandatory March 31, 2025**.
+For in-scope systems, map controls to the actual requirement and assessment evidence:
 
-| PCI-DSS Req | What it means for CI/CD | Implementation |
-|-------------|-------------------------|----------------|
-| **6.2.1** | Secure development training + OWASP-aware processes | SAST on every PR/MR, dependency scanning, secret detection |
-| **6.2.4** | Access control + change tracking | Branch protection, required reviewers, signed commits, audit logs |
-| **6.3.2** | Software inventory (SBOM) | Generate SPDX/CycloneDX SBOM per release, attach to artifacts |
-| **6.4.2** | Changes approved, documented, tested | Gated deployments, required approvals for prod, IaC audit trails |
-| **6.5.3** | Consistent security controls across environments | Same scanning in dev/staging/prod, not just prod |
+| Requirement | CI/CD contribution |
+|---|---|
+| 6.2.3 | Review bespoke/custom software before release; document coverage and findings handling |
+| 6.3.2 | Maintain software/component inventory; an SBOM can support this |
+| 6.5.1 | Record production change approval, testing, impact, and recovery procedures |
 
-**Customized Approach** (v4.0.1): automated CI/CD controls can satisfy manual review requirements
-if properly documented. An automated SAST/DAST/SCA gate with evidence = equivalent to manual
-code review for QSA assessment.
-
-Read `references/supply-chain.md` for detailed PCI-DSS compliance patterns.
+Tool presence does not establish compliance. Artifact signing and SBOM formats are useful
+controls, not universally prescribed PCI implementations. See `references/supply-chain.md`
+for assessment boundaries and primary sources.
 
 ## AI-Age Considerations
 
@@ -478,9 +474,9 @@ See `references/output-contract.md` for the full contract.
   modes. Don't discover pipeline bugs in production.
 - **Cache != artifact.** Cache is ephemeral speed optimization. Artifacts are guaranteed inter-job
   data. Confusing them causes intermittent failures.
-- **Manual gates for prod.** No exceptions. Auto-deploy to staging is fine. Auto-deploy to
-  production is how incidents happen.
+- **Honor production gates.** Apply the repository approval policy, least privilege, and
+  rollout checks. Existing release authorization does not waive required environment protection.
 - **Scan early, deploy late.** Security scanning in the first stages, deployment in the last.
   Finding a CVE after deployment is expensive.
-- **PCI-DSS 4.0 is mandatory.** If the pipeline touches CDE (cardholder data environment),
-  SBOM generation, signed artifacts, and gated deployments are not optional.
+- **Map compliance to evidence.** For in-scope systems, verify the applicable PCI requirements
+  and documented controls; SBOMs/signing are implementation choices unless separately required.

@@ -3,7 +3,7 @@ name: command-prompt
 description: >
   · Write and debug shell commands, scripts, dotfiles, and completions for bash, zsh, sh, and fish.
 license: MIT
-compatibility: "Requires a POSIX-compatible shell. Zsh, bash, fish, or nushell for shell-specific features"
+compatibility: "Use sh, Bash, or Zsh for POSIX examples; Fish and Nushell require their dedicated syntax"
 metadata:
   source: iuliandita/skills
   date_added: "2026-03-25"
@@ -49,7 +49,7 @@ the target shell from context and routes to the appropriate reference.
 Before returning any generated shell script or command, verify:
 
 - [ ] Shebang matches the detected target shell (not assumed bash)
-- [ ] `set -euo pipefail` (bash/zsh) or `set -eu` (POSIX sh) present in scripts
+- [ ] Error handling matches the declared shell; strict-mode exceptions and expected nonzero statuses are handled
 - [ ] All variables double-quoted (`"$var"`) unless word splitting is intentional
 - [ ] No shell-isms from the wrong shell (no `[[ ]]` in `#!/bin/sh`, no `BASH_SOURCE` in zsh)
 - [ ] Array indexing correct for the target shell (bash: 0-indexed, zsh: 1-indexed)
@@ -90,7 +90,7 @@ Before writing any shell code, determine the target shell. Check these signals i
 |--------|-------------|-----------|
 | **Shebang** | First line of existing script | `#!/usr/bin/env zsh` -> zsh, `#!/usr/bin/env bash` -> bash, `#!/bin/sh` -> posix-sh |
 | **File name/extension** | `.zsh`, `.zshrc`, `.zprofile`, `.zshenv` -> zsh; `.bash`, `.bashrc`, `.bash_profile` -> bash; `.fish`, `config.fish` -> fish |  |
-| **User's shell** | Conversation context, `$SHELL` | User's local machine = zsh |
+| **User's shell** | Conversation context, `$SHELL` | Verify the active shell; `$SHELL` normally names the login shell |
 | **Task type** | What the script does | See routing below |
 
 ### Task-based routing
@@ -139,7 +139,7 @@ Verification Checklist at the bottom of this section.
 | Completions | none | basic (bash-completion) | powerful (compsys) | powerful (built-in) |
 | Config file | `.profile` | `.bashrc` | `.zshrc` | `config.fish` |
 | Shebang | `#!/bin/sh` | `#!/usr/bin/env bash` | `#!/usr/bin/env zsh` | `#!/usr/bin/env fish` |
-| Script safety | `set -eu` | `set -euo pipefail` | `set -euo pipefail` | N/A (strict by default) |
+| Script safety | `set -eu` | `set -euo pipefail` | `set -euo pipefail` | Explicit status checks |
 | Non-forking cmd sub | no | `${ cmd; }` (5.3+) | verify target build | no |
 
 ---
@@ -195,14 +195,16 @@ alt-shells reference.
 cleanup() {
     rm -f "$tmpfile"
 }
-trap cleanup EXIT INT TERM
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
 # Ignore a signal
 trap '' HUP
 
 # Common signals: EXIT (0), HUP (1), INT (2), TERM (15), USR1 (10), USR2 (12)
 
-# Graceful kill with SIGTERM -> wait -> SIGKILL escalation
+# Bash/Zsh helper (uses local; not strict POSIX sh): TERM -> wait -> KILL
 kill_gracefully() {
     local pid=$1 timeout=${2:-5}
     kill -TERM "$pid" 2>/dev/null || return
@@ -329,7 +331,7 @@ completion patterns.
 Before returning any shell script, check:
 
 - [ ] **Shebang matches the target shell.** `#!/usr/bin/env bash` for bash, `#!/usr/bin/env zsh` for zsh, `#!/bin/sh` for POSIX sh. Never `#!/bin/bash` (not portable across distros).
-- [ ] **`set -euo pipefail`** present for bash and zsh scripts. For POSIX sh: `set -eu` (no `pipefail`).
+- [ ] **Error handling tested** for the selected shell, including expected nonzero statuses, pipeline failures, and signal exits. Use strict mode when the script handles its semantics.
 - [ ] **Variables are quoted.** `"$var"` not `$var`, unless word splitting is intentional.
 - [ ] **No shell-isms in the wrong shell.** No `[[ ]]` in `#!/bin/sh`. No `BASH_SOURCE` in zsh. No bash arrays in POSIX sh.
 - [ ] **Glob safety.** POSIX sh: guard with `[ -e "$f" ] || continue`. Zsh: use `(N)` qualifier. Bash: `shopt -s nullglob` or guard.
@@ -369,7 +371,7 @@ See `references/output-contract.md` for the full contract.
 1. **Detect the shell first.** Check shebang, file extension, or ask. Don't assume bash when the user might mean zsh.
 2. **Load the right reference.** Don't wing zsh arrays or bash parameter expansion from memory - the subtle differences justify loading the reference every time.
 3. **Shebang is `#!/usr/bin/env <shell>`.** Not `#!/bin/bash`. The env form is portable across distros. Exception: `#!/bin/sh` for POSIX scripts (this IS the standard form).
-4. **`set -euo pipefail` in every bash/zsh script.** No exceptions for scripts beyond a one-liner.
-5. **User's interactive shell is zsh.** When writing commands for the user to run locally, use zsh syntax. Bash for scripts and remote machines unless the script specifically needs zsh.
+4. **Use explicit error handling.** Strict mode is useful when expected nonzero statuses are handled; test its behavior rather than adding it mechanically.
+5. **Match the actual shell.** Use conversation, shebang, and runtime evidence; do not assume the user's local shell from this skill's examples.
 6. **Don't mix shell syntaxes.** A bash script uses bash idioms. A zsh script uses zsh idioms. "Works in both" compromises use neither well and confuse readers.
 7. **Quote your variables.** `"$var"` is the default. Unquoted `$var` is the exception that needs justification.

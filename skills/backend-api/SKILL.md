@@ -283,7 +283,12 @@ async def validation_handler(request: Request, exc: RequestValidationError):
             "type": "https://api.example.com/errors/validation",
             "title": "Invalid request",
             "status": 400,
-            "errors": exc.errors(),
+            "errors": [
+                {"location": [part for part in error.get("loc", ())
+                              if isinstance(part, (str, int))],
+                 "message": "Invalid value"}
+                for error in exc.errors()
+            ],
         },
     )
 ```
@@ -301,33 +306,20 @@ async def validation_handler(request: Request, exc: RequestValidationError):
 - Use explicit idempotency keys for payment-like or request-replay-prone operations
 - Distinguish "request accepted" from "side effect completed" when async workflows exist
 
-Idempotency key header pattern (Express/NestJS):
-```typescript
-const key = req.headers['idempotency-key'];
-if (key) {
-  const cached = await cache.get(`idem:${key}`);
-  if (cached) return res.status(cached.status).json(cached.body);
-}
-// ... execute, then store result keyed by idempotency-key before returning
-```
+Use the same transaction protocol in Express/NestJS and FastAPI; a cache get/write/set
+sequence is not atomic:
 
-Idempotency key header pattern (FastAPI):
-```python
-from fastapi import Header, HTTPException
-
-async def create_order(
-    body: OrderCreate,
-    idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
-):
-    if idempotency_key:
-        cached = await cache.get(f"idem:{idempotency_key}")
-        if cached:
-            return JSONResponse(status_code=cached["status"], content=cached["body"])
-    result = await orders.create(body)
-    if idempotency_key:
-        await cache.set(f"idem:{idempotency_key}", {"status": 201, "body": result}, ttl=86400)
-    return result
-```
+1. Authenticate and authorize the operation. Bound the header length and scope the key to
+   the caller or tenant plus operation; hash the normalized request into a fingerprint.
+2. Atomically reserve that scoped key with a unique database constraint. For an existing
+   record, reject a different fingerprint; report in-progress work without executing it again.
+   Replay a completed authorized outcome only for the matching caller and fingerprint.
+3. Commit the business mutation and completed response record in the same transaction.
+   For external effects, use a transactional outbox and the provider's idempotency facility;
+   a database rollback cannot undo an already sent payment or message.
+4. Retain outcomes for the documented retry window. Recover interrupted reservations through
+   a defined state transition, never by blindly executing the effect again. Test concurrent
+   duplicates, two callers sharing a key, body mismatch, and crashes between effect and reply.
 
 Cursor pagination response envelope:
 ```json
@@ -365,7 +357,7 @@ Rolling deploys send SIGTERM to old instances while new ones come up. Handle it 
 
 - Trap SIGTERM, stop accepting new connections, drain in-flight requests, then exit. FastAPI/Uvicorn: configure `--timeout-graceful-shutdown` (default 30s); Express 5: `server.close()` then `server.closeAllConnections()` after the drain window; NestJS: `app.enableShutdownHooks()` plus `onApplicationShutdown` handlers
 - Keep the app-side shutdown window shorter than the orchestrator's termination grace (Kubernetes default 30s). `app_shutdown < terminationGracePeriodSeconds` or the kernel kills in-flight work
-- Set HTTP keep-alive timeout shorter than any upstream idle timeout (load balancer, ingress). If the LB holds a connection the server already closed, the next request hits a dead socket. Typical safe pair: server keep-alive 65s behind an LB with 60s idle
+- Set the server HTTP keep-alive timeout longer than the upstream backend-connection idle timeout (load balancer, ingress). If the LB holds a connection the server already closed, the next request hits a dead socket. Typical safe pair: server keep-alive 65s behind an LB with 60s idle
 - Add a readiness probe that flips to failing on SIGTERM before the drain starts. The orchestrator stops routing new traffic while in-flight requests finish
 
 ## What NOT to Force

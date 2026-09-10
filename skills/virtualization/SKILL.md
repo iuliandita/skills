@@ -158,8 +158,8 @@ Follow the domain-specific reference file. Key principles:
   headless). IDE and e1000 exist for legacy OS compatibility only.
 - **Pin CPU type to `host`.** Emulated CPU types (kvm64, qemu64) hide features the guest needs
   (AES-NI, AVX, SSE4). Use `host` unless you need live migration across heterogeneous hardware.
-- **Test disk config changes with stop/start, not reboot.** Guest reboot doesn't restart QEMU -
-  disk config changes (discard, cache, iothread) only take effect after `qm stop` + `qm start`.
+- **Test disk config changes with shutdown/start, not reboot.** Shut down gracefully with
+  `qm shutdown`, verify `qm status` reports stopped, then start a fresh QEMU process.
 
 ### Step 4: Validate
 
@@ -185,7 +185,7 @@ The fastest path to a production-ready VM. Skip Packer and ISO installs for stan
 2. Create the VM shell:
    `qm create 100 --name myvm --memory 2048 --cores 2 --cpu host --net0 virtio,bridge=vmbr0 --agent enabled=1 --scsihw virtio-scsi-single`
 3. Import and attach the disk with SSD optimizations:
-   `qm importdisk 100 debian-13-generic-amd64.qcow2 local-lvm`
+   `qm importdisk 100 /var/lib/vz/template/iso/debian-13-generic-amd64.qcow2 local-lvm`
    `qm set 100 --scsi0 local-lvm:vm-100-disk-0,discard=on,iothread=1,ssd=1 --boot order=scsi0`
 4. Add cloud-init drive and configure:
    `qm set 100 --ide2 local-lvm:cloudinit`
@@ -236,8 +236,9 @@ These come from production Proxmox environments and will save hours of debugging
 
 **Stop/start vs reboot:** Guest `reboot` does NOT restart the QEMU process. Disk config
 changes (discard, cache mode, iothread, bus type) only apply when QEMU starts fresh.
-Always use `qm stop` then `qm start` for hardware config changes. This also applies to
-memory balloon device changes.
+Use `qm shutdown`, verify stopped state, then `qm start` for hardware config changes.
+This also applies to memory balloon device changes. Reserve `qm stop` for an explicitly
+justified forced-stop recovery after graceful shutdown fails; it cuts guest power.
 
 **LVM thin pool at 100%:** When data_percent hits 100%, ALL VM I/O on that pool fails
 instantly - guests hang, no graceful degradation. Recovery requires `lvextend` on the
@@ -455,8 +456,8 @@ These are non-negotiable. Violating any of these is a bug.
    for legacy OS compatibility only.
 2. **CPU type `host` in production.** Emulated types hide features. Only use emulated types
    for live migration across heterogeneous CPU generations.
-3. **Stop/start for hardware changes, not reboot.** Guest reboot doesn't restart QEMU. Disk,
-   memory, and device config changes need `qm stop` + `qm start`.
+3. **Shutdown/start for hardware changes, not reboot.** Guest reboot doesn't restart QEMU.
+   Shut down gracefully, verify stopped state, then start; forced stop needs separate justification.
 4. **No disk resize via Terraform.** Use `qm resize` on host, growpart/resize2fs in guest,
    then update the Terraform variable.
 5. **Disable ballooning by default.** Enable only after testing on the specific guest OS.

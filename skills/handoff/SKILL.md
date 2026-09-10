@@ -57,7 +57,7 @@ Before writing or returning a handoff doc, verify:
       so the next session knows what it can trust without rechecking
 - [ ] **Pointers, not paste**: artifacts are referenced by path, `file:line`, PR, or branch -
       not copied in, which would bloat the carry and drift from the source
-- [ ] **No secrets**: API keys, passwords, tokens, PII, and internal URLs are redacted
+- [ ] **No secrets**: API keys, passwords, tokens, PII, credential-bearing URLs, and sensitive topology are redacted
 - [ ] **Suggested skills listed**: the next session is told which skills to invoke for its task
 - [ ] **Small enough to fit**: the doc is short enough to sit in the next session's
       high-attention zone - if it is long, cut detail and lean harder on pointers
@@ -178,12 +178,14 @@ branch names. Confirm each pointer resolves at write time - check that the file 
 rather than trusting a remembered location, because a stale line number sends the next session
 to the wrong place. Do not paste file contents.
 
-While collecting, strip any secrets: API keys, passwords, tokens, PII, internal URLs,
-connection strings. This includes secrets that surfaced in the session itself - a value the user
+While collecting, strip secrets: API keys, passwords, tokens, PII, credential-bearing
+connection strings, and sensitive topology. For a private handoff, preserve authorized
+non-secret operational endpoints when needed to resume, or point to their durable config
+entry. Public or committed handoffs must follow the repository's publication rules. This includes secrets that surfaced in the session itself - a value the user
 pasted into the chat or that printed to a log is just as sensitive as one read from a file.
 Redact by reference, not by partial value - point at where the secret lives so the next session
-can resolve it, and never write a fragment that is itself sensitive (a host, a port, half a
-token):
+can resolve it, and never write a fragment that is itself sensitive (part of a token or protected
+network topology):
 
 - `REDIS_URL` env var
 - credentials loaded from `.env.local`
@@ -277,7 +279,7 @@ See `references/output-contract.md` for the full contract.
 3. **Pointers, not paste.** Reference artifacts; never copy file contents into the handoff.
 4. **Tag confidence.** Mark state `verified`, `assumed`, or `blocked`. Never present an
    assumption as a fact.
-5. **Redact secrets.** Strip API keys, passwords, tokens, PII, and internal URLs before writing.
+5. **Redact secrets.** Strip API keys, passwords, tokens, PII, credential-bearing URLs, and sensitive topology before writing.
 6. **Gitignore by default.** Ensure `.handoff/` is gitignored unless the user asks to commit
    the doc.
 7. **Keep it small.** The handoff must fit the next session's high-attention window. Cut detail
