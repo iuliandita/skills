@@ -55,7 +55,7 @@ Before returning any generated or modified skill, verify against this list:
 - [ ] **Scope sections present**: "When to use" with concrete scenarios, "When NOT to use"
   cross-referencing related skills by **bold** name (e.g., `use **skill-name**`)
 - [ ] **Workflow section with numbered steps**: clear, sequential, actionable
-- [ ] **Rules section at the end**: non-negotiable constraints in imperative form
+- [ ] **Rules section at the end**: the real non-negotiable constraints in imperative form; add only constraints the skill genuinely needs and do not invent rules to fill the section
 - [ ] **Style compliant**: no banned words (per `CLAUDE.md`/`AGENTS.md`), ASCII by default
   except approved markers such as `· ` and output-contract box glyphs. No em-dashes, curly
   quotes, ligatures, or `--` dash substitutes in SKILL.md/reference prose; preserve real syntax in code and commands.
@@ -175,7 +175,7 @@ Key elements every custom skill needs:
 - **Frontmatter**: `name`, `description`, `license`, `metadata` block (see conventions Section 2)
 - **"When to use" / "When NOT to use"**: concrete scenarios, cross-reference adjacent skills
 - **Workflow**: numbered steps, sequential, actionable
-- **Rules**: non-negotiable constraints at the end, imperative form
+- **Rules**: non-negotiable constraints at the end, imperative form; keep it to genuine constraints and do not pad it
 - **AI Self-Check**: required when the skill generates code, config, or structured files
 - **Reference Files / Related Skills**: when applicable
 
@@ -482,8 +482,8 @@ See `references/output-contract.md` for the full contract.
 ## Rules
 
 1. **Read before edit.** Always read a skill's SKILL.md and reference files before modifying.
-2. **Conventions are non-negotiable.** Custom skills need `metadata.source`, `date_added`,
-   `effort`, "When to use", "When NOT to use", Workflow, and Rules sections.
+2. **Conventions are non-negotiable.** Custom skills need `metadata.source`, `date_added`, `effort`,
+   "When to use", "When NOT to use", Workflow, and Rules sections. The Rules list may be brief; add only genuine constraints.
 3. **Verify everything, assume nothing.** Confirm tools, versions, flags, APIs, and behavior via
    source docs, `--help`, registries, or explicit "unverified" notes. Do not guess.
 4. **Prefer dedicated skill workflows over generic helpers.**
