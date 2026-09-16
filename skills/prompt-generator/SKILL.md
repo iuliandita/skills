@@ -40,7 +40,7 @@ Take the user's rough thoughts, scattered notes, or half-formed ideas and turn t
 
 Before returning any generated or modified prompt file, verify:
 
-- [ ] **Frontmatter complete**: `name`, `description`, `target_model`, `prompt_type`, `date_created` all present
+- [ ] **Frontmatter complete for saved files**: a persisted prompt file carries `name`, `description`, `target_model`, `prompt_type`, and `date_created`. Inline drafts, reviews, and unsaved output need no frontmatter
 - [ ] **Faithful to input**: prompt reflects what the user said, not what you think they should have said
 - [ ] **Structure matches complexity**: simple tasks get plain prose, not XML-tagged multi-section prompts
 - [ ] **Variables consistent**: every `{{PLACEHOLDER}}` in the prompt body appears in the Variables table and vice versa
@@ -146,6 +146,9 @@ The actual prompt content here.
 ```
 
 Only include sections that apply. A simple prompt with no variables skips the Variables table.
+
+The frontmatter block applies to the saved file only. An inline draft or a review output has no
+frontmatter, because there is no persisted artifact to describe.
 
 Optional frontmatter additions: `tags: [...]`, `related: [NNN-other.md]` - only when genuinely useful.
 

@@ -210,7 +210,7 @@ Overview paragraph. Goal statement.
 
 ## Reference Files               # if references/ exist
 ## Related Skills                # cross-references
-## Rules                         # non-negotiable constraints
+## Rules                         # only constraints this skill genuinely needs; do not pad
 ```
 
 ### Medium-effort skills
@@ -246,6 +246,10 @@ Overview.
 
 ## Rules
 ```
+
+The Rules section is required by the collection linter, but its length is not. List the
+constraints a skill genuinely has; a short, honest list beats invented rules added to look
+thorough.
 
 ---
 

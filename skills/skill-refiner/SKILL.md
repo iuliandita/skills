@@ -40,7 +40,7 @@ is verified, fresh-context self-review as the minimum fallback).
 ## Configuration
 
 ```
-skill-refiner [--iterations N] [--mode MODE] [--secondary HARNESS] [--threshold N] [--plateau N]
+skill-refiner [--iterations N] [--mode MODE] [--secondary HARNESS] [--threshold N] [--plateau N] [--meta]
 ```
 
 | Flag | Default | Description |
@@ -50,6 +50,7 @@ skill-refiner [--iterations N] [--mode MODE] [--secondary HARNESS] [--threshold 
 | `--secondary` | auto-detect | Secondary review harness, or `none`; model identity determines weight |
 | `--threshold` | 85 | Focus threshold - skip skills scoring above this (user can override max) |
 | `--plateau` | 2 | Minimum score delta to keep iterating |
+| `--meta` | off for single-skill runs | Run phase 2 (meta-improvement) for a single named-skill run, which otherwise stops after phase 1. Collection-wide runs enter phase 2 by default and ignore this flag. |
 
 **Environment override:** `SKILL_REFINER_SECONDARY=<harness>` (CLI flag takes precedence)
 
@@ -62,6 +63,10 @@ contested major flags, or plateau. Always pauses before phase 2.
 contested major flags (non-configurable).
 
 **step**: pauses after every iteration for manual review. Best for first run or learning.
+
+Phase 2 (meta-improvement) is opt-in for a single-skill run: unless `--meta` is passed, a run
+that targets one named skill ends after phase 1 and reports. Collection-wide runs enter phase 2
+by default. Either way, phase 2 still pauses for review.
 
 ---
 
@@ -190,8 +195,9 @@ contested major flags (non-configurable).
     ```
     Also append the same data to the score ledger. Keep/reject decisions must point to
     numeric before/after scores, not reviewer impressions or passing lint/spec checks.
-14. **Check termination conditions** (phase 1 always flows into phase 2 on termination,
-    except on circuit-breaker pauses which wait for user input first):
+14. **Check termination conditions** (a collection run flows into phase 2 on termination;
+    a single-skill run stops after phase 1 unless `--meta` was passed. Circuit-breaker pauses
+    wait for user input first):
     - Plateau detected (max delta < plateau threshold)? Terminate phase 1.
     - All skills above focus threshold? Bump threshold by 5 and continue. If threshold
       is already at max (95) and all skills still clear it, terminate phase 1.
@@ -202,6 +208,8 @@ contested major flags (non-configurable).
 ### Phase 2: Meta-Improvement
 
 16. **Announce**: "Entering phase 2 - meta-improvement. This always requires human review."
+    Enter phase 2 only for a collection run or when `--meta` was passed; a single-skill run
+    that did not opt in stops after phase 1 and reports.
 17. **Snapshot evaluation criteria**:
     - Copy **skill-creator**'s AI Self-Check section to a temp location
     - Copy `references/evaluation-criteria.md` to a temp location
@@ -336,7 +344,9 @@ See `references/output-contract.md` for the full contract.
    every flag independently. Disagreements on major flags go to human.
 4. **Snapshot before meta**: always snapshot evaluation criteria before phase 2.
    Evaluate against the snapshot, never the live version being modified.
-5. **Phase 2 always pauses**: even in `--mode auto`. Non-configurable.
+5. **Phase 2 is opt-in for single-skill runs and always pauses**: a run targeting one named
+   skill enters phase 2 only with `--meta`; collection runs enter it by default. Either way it
+   pauses for human review, even in `--mode auto`. Non-configurable.
 6. **Contested major flags always pause**: even in `--mode auto`. Non-configurable.
 7. **Simplicity criterion**: all else being equal, simpler is better. Deletions that maintain
    score are preferred over additions that marginally improve it - but never delete a verified-defect
