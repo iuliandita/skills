@@ -44,6 +44,13 @@ metadata:
 EOF
 }
 
+# One canonical test-catalog section with a single case. The lint rule now
+# requires both a '**Test ' entry and a 'Prompt:' line per '### <skill>'.
+write_catalog_section() {
+  local name="$1"
+  printf '### %s\n\n**Test 1: fixture**\nPrompt: "fixture prompt"\n\n' "$name"
+}
+
 test_reference_files_are_scanned() {
   local tmp skill_dir output status
   tmp="$(mktemp -d)"
@@ -268,7 +275,12 @@ test_complete_canonical_test_catalog_passes() {
   write_minimal_skill "$tmp/skills/beta" "beta"
   write_minimal_skill "$tmp/skills/skill-refiner" "skill-refiner"
   catalog="$tmp/skills/skill-refiner/references/test-cases.md"
-  printf '%s\n' '## Test Cases' '### <skill-name>' '### alpha' '### beta' '### skill-refiner' > "$catalog"
+  {
+    printf '%s\n' '## Test Cases' '### <skill-name>'
+    write_catalog_section alpha
+    write_catalog_section beta
+    write_catalog_section skill-refiner
+  } > "$catalog"
 
   "$ROOT/scripts/lint-skills.sh" "$tmp/skills" >/dev/null
 
@@ -285,7 +297,12 @@ test_incomplete_canonical_test_catalog_fails() {
   write_minimal_skill "$tmp/skills/beta" "beta"
   write_minimal_skill "$tmp/skills/skill-refiner" "skill-refiner"
   catalog="$tmp/skills/skill-refiner/references/test-cases.md"
-  printf '%s\n' '## Test Cases' '### <skill-name>' '### alpha' '### alpha' '### orphan' > "$catalog"
+  {
+    printf '%s\n' '## Test Cases' '### <skill-name>'
+    write_catalog_section alpha
+    write_catalog_section alpha
+    write_catalog_section orphan
+  } > "$catalog"
 
   status=0
   output="$("$ROOT/scripts/lint-skills.sh" "$tmp/skills" 2>&1)" || status=$?
@@ -318,7 +335,11 @@ test_canonical_test_catalog_ignores_private_skills() {
   write_minimal_skill "$tmp/skills/private-skill" "private-skill"
   write_minimal_skill "$tmp/skills/skill-refiner" "skill-refiner"
   catalog="$tmp/skills/skill-refiner/references/test-cases.md"
-  printf '%s\n' '## Test Cases' '### <skill-name>' '### alpha' '### skill-refiner' > "$catalog"
+  {
+    printf '%s\n' '## Test Cases' '### <skill-name>'
+    write_catalog_section alpha
+    write_catalog_section skill-refiner
+  } > "$catalog"
 
   (cd "$tmp" && "$ROOT/scripts/lint-skills.sh" "$tmp/skills" >/dev/null)
 
@@ -342,6 +363,9 @@ test_canonical_test_catalog_ignores_headings_outside_cases_and_fences() {
 
 ### alpha
 
+**Test 1: alpha fixture**
+Prompt: "alpha prompt"
+
 ```markdown
 ### Example
 ```
@@ -354,7 +378,14 @@ test_canonical_test_catalog_ignores_headings_outside_cases_and_fences() {
 ````
 
 ### beta
+
+**Test 1: beta fixture**
+Prompt: "beta prompt"
+
 ### skill-refiner
+
+**Test 1: refiner fixture**
+Prompt: "refiner prompt"
 
 ## Scoring
 
@@ -362,6 +393,162 @@ test_canonical_test_catalog_ignores_headings_outside_cases_and_fences() {
 EOF
 
   "$ROOT/scripts/lint-skills.sh" "$tmp/skills" >/dev/null
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_missing_rules_section_fails() {
+  local tmp skill_dir output status
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  skill_dir="$tmp/skills/lint-fixture"
+  write_minimal_skill "$skill_dir" "lint-fixture"
+  sed -i '/^## Rules$/d' "$skill_dir/SKILL.md"
+
+  status=0
+  output="$("$ROOT/scripts/lint-skills.sh" "$tmp/skills" 2>&1)" || status=$?
+  if (( status == 0 )); then
+    printf '%s\n' "$output" >&2
+    fail "lint-skills.sh passed despite a missing '## Rules' section"
+  fi
+  if [[ "$output" != *"missing '## Rules' section"* ]]; then
+    printf '%s\n' "$output" >&2
+    fail "lint-skills.sh did not report the missing '## Rules' section"
+  fi
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_missing_frontmatter_field_fails() {
+  local tmp skill_dir output status
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  skill_dir="$tmp/skills/lint-fixture"
+  write_minimal_skill "$skill_dir" "lint-fixture"
+  sed -i '/^license: MIT$/d' "$skill_dir/SKILL.md"
+
+  status=0
+  output="$("$ROOT/scripts/lint-skills.sh" "$tmp/skills" 2>&1)" || status=$?
+  if (( status == 0 )); then
+    printf '%s\n' "$output" >&2
+    fail "lint-skills.sh passed despite a missing frontmatter field"
+  fi
+  if [[ "$output" != *"missing frontmatter field 'license'"* ]]; then
+    printf '%s\n' "$output" >&2
+    fail "lint-skills.sh did not report the missing frontmatter field"
+  fi
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_non_ascii_character_fails() {
+  local tmp skill_dir output status
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  skill_dir="$tmp/skills/lint-fixture"
+  write_minimal_skill "$skill_dir" "lint-fixture"
+  printf '\ncaf\xc3\xa9 latte\n' >> "$skill_dir/SKILL.md"
+
+  status=0
+  output="$("$ROOT/scripts/lint-skills.sh" "$tmp/skills" 2>&1)" || status=$?
+  if (( status == 0 )); then
+    printf '%s\n' "$output" >&2
+    fail "lint-skills.sh passed despite a non-ASCII character"
+  fi
+  if [[ "$output" != *"non-ASCII character"* ]]; then
+    printf '%s\n' "$output" >&2
+    fail "lint-skills.sh did not report the non-ASCII character"
+  fi
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_skill_over_hard_max_lines_fails() {
+  local tmp skill_dir output status i
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  skill_dir="$tmp/skills/lint-fixture"
+  write_minimal_skill "$skill_dir" "lint-fixture"
+  for ((i = 0; i < 600; i++)); do
+    printf '\n' >> "$skill_dir/SKILL.md"
+  done
+
+  status=0
+  output="$("$ROOT/scripts/lint-skills.sh" "$tmp/skills" 2>&1)" || status=$?
+  if (( status == 0 )); then
+    printf '%s\n' "$output" >&2
+    fail "lint-skills.sh passed despite SKILL.md over the hard max of 600 lines"
+  fi
+  if [[ "$output" != *"hard max 600"* ]]; then
+    printf '%s\n' "$output" >&2
+    fail "lint-skills.sh did not report the SKILL.md hard-max violation"
+  fi
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+# Banned words are warning-only by design, so the mutation cannot force a
+# non-zero exit without also making every existing warning an error. The test
+# asserts the check fires and names the word, which is the failure signal.
+test_banned_word_is_reported() {
+  local tmp skill_dir output status
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  skill_dir="$tmp/skills/lint-fixture"
+  write_minimal_skill "$skill_dir" "lint-fixture"
+  printf '\nWe delve into the fixture details.\n' >> "$skill_dir/SKILL.md"
+
+  status=0
+  output="$("$ROOT/scripts/lint-skills.sh" "$tmp/skills" 2>&1)" || status=$?
+  if (( status != 0 )); then
+    printf '%s\n' "$output" >&2
+    fail "banned-word fixture failed for an unrelated lint error"
+  fi
+  if [[ "$output" != *"banned word 'delve'"* ]]; then
+    printf '%s\n' "$output" >&2
+    fail "lint-skills.sh did not report the banned word 'delve'"
+  fi
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_canonical_section_without_test_case_fails() {
+  local tmp catalog output status
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  write_minimal_skill "$tmp/skills/alpha" "alpha"
+  write_minimal_skill "$tmp/skills/beta" "beta"
+  write_minimal_skill "$tmp/skills/skill-refiner" "skill-refiner"
+  catalog="$tmp/skills/skill-refiner/references/test-cases.md"
+  {
+    printf '%s\n' '## Test Cases' '### <skill-name>'
+    write_catalog_section alpha
+    printf '%s\n' '### beta'
+    write_catalog_section skill-refiner
+  } > "$catalog"
+
+  status=0
+  output="$("$ROOT/scripts/lint-skills.sh" "$tmp/skills" 2>&1)" || status=$?
+  if (( status == 0 )); then
+    printf '%s\n' "$output" >&2
+    fail "lint-skills.sh passed a canonical section with a heading but no test case"
+  fi
+  if [[ "$output" != *"section for 'beta' has no test case"* ]]; then
+    printf '%s\n' "$output" >&2
+    fail "lint-skills.sh did not report the canonical section without a test case"
+  fi
 
   rm -rf "$tmp"
   trap - RETURN
@@ -380,4 +567,10 @@ test_complete_canonical_test_catalog_passes
 test_incomplete_canonical_test_catalog_fails
 test_canonical_test_catalog_ignores_private_skills
 test_canonical_test_catalog_ignores_headings_outside_cases_and_fences
+test_missing_rules_section_fails
+test_missing_frontmatter_field_fails
+test_non_ascii_character_fails
+test_skill_over_hard_max_lines_fails
+test_banned_word_is_reported
+test_canonical_section_without_test_case_fails
 printf 'lint tests passed\n'

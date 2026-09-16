@@ -119,4 +119,9 @@ require_description arch-btw 'Manjaro'
 require_description virtualization 'VMware'
 require_description virtualization 'ESXi'
 
+# The meta-skill self-check exemption must not silently widen. Pin the exact
+# declaration and require the comment that ties phase-1 changes to the guard.
+require_text scripts/lint-skills.sh 'GENERIC_SELF_CHECK_EXEMPT=("skill-refiner" "skill-creator")' "lint-skills.sh GENERIC_SELF_CHECK_EXEMPT changed; re-justify the exemption and update this guard"
+require_text scripts/lint-skills.sh 'phase-1 changes to this list remain subject to scripts/check-refiner-phase1-guard.sh' "lint-skills.sh exemption comment no longer ties phase-1 changes to the phase-1 guard"
+
 printf 'All skill content tests passed.\n'
