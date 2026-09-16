@@ -130,9 +130,9 @@ A reviewer with verified distinct model identity reviews the improvement diff an
 (the same flag rules apply to same-model or unknown-model fresh-context review at cap 3):
 
 - No verified flags: penalty 0 (no bonus)
-- Minor flag (verified): weight 0.2, summed and clamped to a maximum penalty of 1.0
-- Minor flag (disputed by primary): discarded, no penalty
-- Major flag (verified): weight 1.0 and hard veto (revert; the penalty applies only if retained)
+- Minor flag (upheld by the independent adjudicator): weight 0.2, summed and clamped to a maximum penalty of 1.0
+- Minor flag (adjudicator disagrees): no penalty; log the disagreement and leave the item unresolved for the human report
+- Major flag (upheld by the independent adjudicator): weight 1.0 and hard veto (revert; the penalty applies only if retained)
 
 ---
 
@@ -177,7 +177,7 @@ Examples:
 - "The new example is redundant with an existing one"
 - "Step ordering could be improved"
 
-**Processing:** Primary model reviews independently. Agree = deduct. Disagree = discard and log.
+**Processing:** An independent fresh context, never the primary that authored the change, decides. Agree = deduct 0.2 penalty weight and log. Disagree = log the disagreement and leave the item unresolved for the human report; never silently discard it.
 
 ### Major Flag
 
@@ -189,7 +189,7 @@ Examples:
 - "This change breaks cross-references to other skills"
 - "Critical accuracy issue in a command or config example"
 
-**Processing:** Primary model reviews with reasoning. Agree = hard revert. Disagree = escalate to circuit breaker (human review). Contested major flags always go to human.
+**Processing:** An independent fresh context, never the primary that authored the change, decides with the reviewer's reasoning. Agree = hard revert. Disagree = escalate to the human. A major flag cannot be cleared by the primary; contested major flags always go to the human.
 
 ---
 

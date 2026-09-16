@@ -181,10 +181,12 @@ by default. Either way, phase 2 still pauses for review.
     e. Apply changes to SKILL.md (and references if needed)
     f. Re-score structural, AI Self-Check, and behavioral components, each as the minimum of
        at least 3 fresh-context gradings; keep the change provisional
-    g. Send the minimum necessary diff to an authorized peer reviewer or the fresh local fallback
-    h. Process flags per `references/harness-detection.md` verification protocol
-    i. If secondary flags major issue and primary agrees: revert
-    j. If secondary flags major issue and primary disagrees: escalate to circuit breaker
+    g. Send the minimum necessary diff to an authorized peer reviewer or the fresh local fallback;
+       never send the primary's scores or the expected verdict
+    h. Adjudicate flags per the `references/harness-detection.md` protocol, using a fresh context
+       independent of the author; the primary never adjudicates its own review
+    i. Minor flag upheld by the adjudicator: apply the 0.2 penalty weight and log it
+    j. Major flag upheld: hard revert; contested major flag: escalate to the human (circuit breaker)
     k. **Karpathy gate**: compute the lower-bound composite for the change and for the
        pre-change version with the same formula. Keep only when the lower-bound composite
        strictly improves by at least the plateau delta (2 points) over the previous lower-bound
@@ -200,7 +202,7 @@ by default. Either way, phase 2 still pauses for review.
     gated:     skillZ (lint/spec failed - excluded from scoring)
     skipped:   M skills above threshold
     reverted:  skill3 (lower bound regressed, rolled back | G:pass A:74 B:69 pen:1.0)
-    contested: skill4 (secondary flagged major, primary disagreed)
+    contested: skill4 (major flag contested at independent adjudication, escalated to human)
     plateau:   yes/no (max lower-bound delta: +X)
     -----------------------------------------------------------------
     ```
@@ -286,12 +288,14 @@ by default. Either way, phase 2 still pauses for review.
     `rubric_hash: <value>` from `scripts/refiner-rubric-hash.sh`, plus run_id, branch, date,
     primary/secondary provider+resolved model+effective effort+harness+version and redacted
     runtime/config evidence per evaluation, reviewer classification and applied cap, config,
-    pool size, termination reason, peer-review flag counts, before/after per-skill
-    scores (component breakdown + composite, or clearly labeled estimates if the run used a
-    targeted manual rubric instead of the full automated sweep), and a changes summary. When
-    updating an existing history file, append the new object without reserializing the whole
-    file; do not normalize or rewrite old entries just because a JSON writer changes escaping,
-    commas, or whitespace. Commit with the phase 3 summary.
+    pool size, termination reason, peer-review flag counts, a `control_failures` array (empty
+    when none), before/after per-skill scores (component breakdown + composite, or clearly
+    labeled estimates if the run used a targeted manual rubric instead of the full automated
+    sweep), and a changes summary. Record in `control_failures` every fallback to same-model or
+    unknown-model review, every unavailable reviewer, and every reviewer that returned tool
+    output instead of a verdict. When updating an existing history file, append the new object
+    without reserializing the whole file; do not normalize or rewrite old entries just because a
+    JSON writer changes escaping, commas, or whitespace. Commit with the phase 3 summary.
 25. **Announce branch**: remind user to review and merge when ready
 
 ## AI Self-Check
@@ -362,8 +366,11 @@ See `references/output-contract.md` for the full contract.
    plateau delta (2 points) over the previous lower-bound composite, or when it preserves
    that composite while reducing complexity or lines with no behavior change. Revert
    otherwise; unverifiable point-estimate moves never keep a change.
-3. **Verify flags**: never take cross-model flags at face value. Primary reviews
-   every flag independently. Disagreements on major flags go to human.
+3. **Independent flag adjudication**: never take peer flags at face value, and never let the
+   context that authored the change adjudicate them. A fresh context independent of the author
+   decides each flag: an upheld minor deducts penalty weight, a disputed minor is logged and left
+   unresolved for the human report, an upheld major reverts the change, and a contested major
+   goes to the human. The primary cannot clear a major flag.
 4. **Snapshot before meta**: always snapshot evaluation criteria before phase 2.
    Evaluate against the snapshot, never the live version being modified.
 5. **Phase 2 is opt-in for single-skill runs and always pauses**: a run targeting one named

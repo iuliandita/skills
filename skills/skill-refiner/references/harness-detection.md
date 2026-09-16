@@ -8,11 +8,11 @@ How skill-refiner detects and validates AI CLI harnesses for cross-model peer re
 
 | Harness | Binary | Config Paths | Env Vars | Smoke Test |
 |---------|--------|-------------|----------|------------|
-| Claude Code | `claude` | `~/.claude/settings.json` | `ANTHROPIC_API_KEY` | `claude -p "respond with PONG"` |
-| Codex | `codex` | `~/.codex/config.toml` | `OPENAI_API_KEY` | `codex exec "respond with PONG"` |
-| Gemini CLI | `gemini` | `~/.gemini/settings.json` | `GEMINI_API_KEY` or `GOOGLE_API_KEY` | `gemini -p "respond with PONG"` |
+| Claude Code | `claude` | `~/.claude/settings.json` | `ANTHROPIC_API_KEY` | `claude -p "Reply with only the integer result of 17 * 3"` |
+| Codex | `codex` | `~/.codex/config.toml` | `OPENAI_API_KEY` | `codex exec -s read-only "Reply with only the integer result of 17 * 3"` |
+| Gemini CLI | `gemini` | `~/.gemini/settings.json` | `GEMINI_API_KEY` or `GOOGLE_API_KEY` | `gemini -p "Reply with only the integer result of 17 * 3"` |
 | OpenCode | `opencode` | project-level `.opencode/` (verify) | varies by provider | check `opencode --help` |
-| Aider | `aider` | `~/.aider.conf.yml` | `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` | `aider --message "respond with PONG" --no-git --yes-always` |
+| Aider | `aider` | `~/.aider.conf.yml` | `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` | `aider --message "Reply with only the integer result of 17 * 3" --no-git --yes-always` |
 | Goose | `goose` | `~/.config/goose/config.yaml` | varies by provider | check `goose --help` |
 
 **Important:** Smoke test commands are approximate. Verify against current CLI versions
@@ -48,31 +48,38 @@ test decide. Skip before the smoke test only when the binary is absent (Step 1).
 
 ### Step 3: Smoke Test
 
-Send a trivial prompt with a distinct canary word and confirm the canary appears in the harness's
-actual model response - not in a banner, log line, or echoed prompt. Run it in an isolated,
-read-only working directory with a private temp dir, and never send repository content:
+Send a trivial prompt whose answer is a canary token the prompt itself does not contain, then
+confirm that token appears in the harness's actual model response - not in a banner, log line, or
+echoed prompt. Run the probe inside a private temp dir, on a read-only or no-tools sandbox where
+the harness supports one, and never send repository content:
 
 ```bash
 tmp=$(mktemp -d)                          # private scratch, not the repo tree
 out="$tmp/out"; err="$tmp/err"
+cd "$tmp" || exit 1                       # probe runs in the temp dir, never the repo tree
 timeout 60 <smoke_test_command> >"$out" 2>"$err"; status=$?
 if [[ $status -ne 0 ]]; then
   result=skip                             # status 124 = timeout; any non-zero = failed run -> reject
-elif grep -qi "pong" "$out"; then
-  result=pass                             # canary found in the response stream (stdout)
+elif grep -Eq '(^|[^0-9])51([^0-9]|$)' "$out"; then
+  result=pass                             # exact canary token found in the response stream (stdout)
 else
-  result=skip                             # banner-only / no canary in response -> reject
+  result=skip                             # banner-only / echoed prompt / no canary -> reject
 fi
+cd - >/dev/null 2>&1 || true
 rm -rf "$tmp"
 ```
 
-Use "respond with PONG" as the prompt (not "OK" - too likely to match banner text). Keep stderr
+Ask the prompt `Reply with only the integer result of 17 * 3`. The answer, 51, does not appear in
+the prompt text, so an echoed prompt can never satisfy the match, and the boundary-aware pattern
+`(^|[^0-9])51([^0-9]|$)` accepts the token 51 but not substrings such as 517 or 2510. Keep stderr
 separate from stdout: harnesses (Codex especially) emit verbose startup banners and MCP metadata
 (10+ lines) on stderr or ahead of the response, and merging them with `2>&1` lets banner text
 satisfy the grep. Capture the exit status explicitly - a timeout (124), crash, or auth error must
 reject the harness, not fall through as a pass. Never truncate with `head` or assume the response
-is in the first N lines; scan the full response stream. A PONG that appears only in a banner, a
-timed-out run, or an errored run does not count: reject and skip to the next harness.
+is in the first N lines; scan the full response stream. A canary that appears only in a banner, a
+timed-out run, or an errored run does not count: reject and skip to the next harness. Where the
+harness supports a read-only or no-tools mode - for example `codex exec -s read-only` - use it so
+the smoke test cannot modify files.
 
 ---
 
@@ -89,7 +96,7 @@ timed-out run, or an errored run does not count: reject and skip to the next har
 
 The primary harness may also host the reviewer in a fresh invocation or agent context.
 Do not exclude it when a distinct model is available, or infer model diversity from a
-different harness. Classify the actual resolved model identities before assigning weight.
+different harness. Classify the actual resolved model identities before assigning a cap.
 
 ### Detecting the Primary Harness
 
@@ -108,21 +115,28 @@ reasoning effort, harness name and version, and a redacted evidence reference. U
 invocation metadata and the effective config/override source. Record requested settings
 separately when they differ from actual settings. Do not copy credentials or private endpoints.
 
-A CLI binary, role name, skill `metadata.effort`, requested flag, default config, or model's
-self-description alone does not prove which model or effort executed. If resolution or override
-precedence cannot be verified, mark the field unknown with a reason; use `not applicable` only
-when evidence establishes that the setting is unsupported. Keep evidence linked to the specific
-evaluation so later config changes cannot rewrite its identity.
+Identity is verified only when it comes from raw harness output captured verbatim and stored
+with the run, such as the harness's own model/version line in the invocation transcript.
+Requested flags, config defaults, role names, and the model's self-description are not
+attestation: a CLI binary, `--model` request, skill `metadata.effort`, or a model naming itself
+does not prove which model or effort executed. If resolution or override precedence cannot be
+attested, mark the field unknown with a reason; use `not applicable` only when evidence
+establishes that the setting is unsupported. Keep evidence linked to the specific evaluation so
+later config changes cannot rewrite its identity.
 
-| Verified identity | Review classification | Weight |
+When identity cannot be attested from raw harness output, the review uses `cap 3` and the
+fallback is recorded as a control failure in the run history (see SKILL.md Phase 3 step 24).
+An unattested reviewer never earns `cap 5`.
+
+| Attested identity | Review classification | Cap |
 |---|---|---|
-| Distinct resolved models, on the same or different harness | verified cross-model | 5% |
-| Same resolved model, even through different providers or harnesses | same-model fresh-context | 3% |
-| Either model identity unknown, or alias equivalence unresolved | unknown-model fresh-context | 3% |
+| Distinct resolved models, captured verbatim from both harnesses | verified cross-model | 5 |
+| Same resolved model, even through different providers or harnesses | same-model fresh-context | 3 |
+| Either model identity not attested, or alias equivalence unresolved | unknown-model fresh-context | 3 |
 
 Provider, harness, or effort differences alone do not establish distinct models. Use a fresh
-context for all reviewers. For 3% reviews, redistribute the missing 2% proportionally across
-AI Self-Check and Behavioral per `references/evaluation-criteria.md`.
+context for all reviewers. The cap only bounds how much a verified flag can deduct; it never
+adds a bonus, and there is no weight renormalization.
 
 For multi-model harnesses, honor an explicit user selection or use an authorized configured
 reviewer. Verify current model-selection syntax before invoking it, then capture the resolved
@@ -145,7 +159,7 @@ skill-refiner --secondary codex
 ```
 
 CLI flag takes precedence over env var. Both skip auto-detection entirely.
-Setting `--secondary none` disables secondary selection; fresh local peer review at 3%
+Setting `--secondary none` disables secondary selection; fresh local peer review at `cap 3`
 remains mandatory after the baseline.
 
 ---
@@ -157,16 +171,22 @@ What gets sent to the secondary harness (non-interactive).
 Before sending it, classify the source material as public, private, or sensitive. Private or
 sensitive repository content requires explicit user authorization for the named secondary
 harness/provider; invoking skill-refiner or selecting automatic review is not enough. Without
-that authorization, do not send the payload. Use the fresh local-reviewer fallback, retain its
-3% weight, and log the blocked export as the reason.
+that authorization, do not send the payload. Use the fresh local-reviewer fallback, apply
+`cap 3`, and log the blocked export as the reason.
+
+**Anchoring prohibition.** The payload must not include the primary's component or composite
+scores, and the reviewer must not be told the expected verdict (that the change is expected to
+improve the score, be kept, or be reverted). A reviewer that sees the primary's numbers or the
+intended outcome anchors on them instead of judging independently. Send only the changed
+context and the diff.
 
 **Known issue**: Codex in `exec` mode may run tools (lint, validate) instead of producing
 text-only review output. If the secondary returns tool output instead of a
 NO_FLAGS/MINOR_FLAG/MAJOR_FLAG response, fall back to self-review: spawn a fresh agent
 on the primary harness with the review prompt template (see Phase 0, Step 6 in SKILL.md).
-Classify the fallback as same-model or unknown-model fresh-context review using its evidence.
-Weight it at 3% instead of 5% (composite becomes gate/40/55/3, renormalize the
-missing 2% proportionally across AI Self-Check and Behavioral).
+Classify the fallback as same-model or unknown-model fresh-context review using its attested
+evidence, apply `cap 3`, and record the fallback as a control failure in the run history
+(SKILL.md Phase 3 step 24). No bonus weight is restored when a distinct reviewer is unavailable.
 
 **Peer review is mandatory.** Probe the secondary first, then run the privacy/authorization
 preflight before transmitting source. If no authorized secondary is available or the secondary
@@ -176,19 +196,14 @@ is never acceptable - even same-model fresh-context review catches issues the wo
 is blind to.
 
 ```
-You are reviewing a skill improvement diff. Be specific and cite exact lines.
+You are reviewing a skill improvement diff. You are not given the primary's scores or the
+expected outcome, so judge the diff on its merits. Be specific and cite exact lines.
 
 ## Relevant Original Context (before)
 <changed sections plus only the surrounding rules/references needed to detect regressions>
 
 ## Diff
 <git diff output of the change>
-
-## Scoring Breakdown
-Structural: <score>/100
-AI Self-Check: <score>/100
-Behavioral: <score>/100
-Overall: <score>/100
 
 ## Your Task
 1. Does this change genuinely improve the skill?
@@ -206,21 +221,25 @@ support a regression review, and record that justification in the iteration log.
 
 ---
 
-## Flag Verification Protocol
+## Flag Adjudication Protocol
 
-Flags from the secondary model are verified before action:
+Flags from the reviewer are adjudicated by a fresh context that is independent of the context
+that authored the change. The author (primary) never adjudicates its own review, and a major
+flag can never be cleared by the primary. Spawn a new subagent or a separate CLI invocation for
+each adjudication; if no independent context can be spawned, do not clear the flag - leave it
+unresolved and carry it into the human report.
 
 ### Minor Flag
-1. Present the flag + diff to the primary model (fresh context, no leading)
+1. Present the flag + diff to the independent adjudicator, without the primary's scores or reasoning
 2. Ask: "Do you agree this is a valid concern? Why or why not?"
-3. If primary agrees: deduct 20 points from cross-model component, log flag
-4. If primary disagrees: discard flag, log disagreement with reasoning
+3. Adjudicator agrees: deduct 0.2 penalty weight and log the flag
+4. Adjudicator disagrees: log the disagreement and leave the item unresolved for the human report; do not silently discard it
 
 ### Major Flag
-1. Present the flag + diff + secondary's full reasoning to primary
+1. Present the flag + diff + the reviewer's full reasoning to the independent adjudicator
 2. Ask: "Is this change genuinely harmful? Analyze independently."
-3. If primary agrees: hard revert the change, log reason
-4. If primary disagrees: **escalate to circuit breaker** - pause for human review
+3. Adjudicator agrees: hard revert the change, log reason
+4. Adjudicator disagrees: **escalate to the human** with the flag and both positions
 5. Human decides: keep, revert, or modify
 
 The contested-major-flag-to-human escalation is non-configurable even in `--mode auto`.
