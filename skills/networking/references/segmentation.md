@@ -333,7 +333,7 @@ IPv6 uses /64 for all regular subnets. Smaller than /64 breaks SLAAC.
 ```bash
 # Generate a random ULA prefix (should be globally unique)
 # Format: fdXX:XXXX:XXXX::/48
-# Use a generator or: printf 'fd%02x:%04x:%04x::/48\n' $RANDOM $RANDOM $RANDOM
+# Use a generator or: printf 'fd%02x:%04x:%04x::/48\n' $((RANDOM % 256)) $RANDOM $((RANDOM % 65536))
 ```
 
 **Dual-stack considerations:**

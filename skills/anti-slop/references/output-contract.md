@@ -201,7 +201,7 @@ docs/local/
 
 Each skill declares one of two modes in its `## Output Contract` section:
 
-- **Always-on:** every invocation emits the full contract. Used by audit/report skills (code-review, anti-slop, security-audit, deep-audit, full-review, update-docs, code-slimming, localize).
+- **Always-on:** every invocation emits the full contract. Used by audit/report skills (code-review, anti-slop, security-audit, deep-audit, full-review, update-docs, code-slimming).
 
 - **Conditional:** the agent applies this rule per invocation:
 

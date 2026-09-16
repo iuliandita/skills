@@ -22,7 +22,8 @@ case "$REMOTE_URL" in
   *github.com[:/]*)             FORGE=github ;;
   *gitlab.com[:/]*|*gitlab.*)   FORGE=gitlab ;;       # gitlab.com or self-hosted gitlab
   *codeberg.org[:/]*)           FORGE=forgejo ;;      # Codeberg runs Forgejo
-  *gitea.*|*forgejo.*)          FORGE=forgejo ;;      # self-hosted Forgejo/Gitea
+  *forgejo.*)                   FORGE=forgejo ;;      # self-hosted Forgejo (fj)
+  *gitea.*)                     FORGE=gitea ;;        # self-hosted Gitea (tea, not fj)
   *bitbucket.org[:/]*)          FORGE=bitbucket ;;
   *)                            FORGE=unknown ;;      # self-hosted; CLI tool may not exist
 esac
@@ -30,9 +31,10 @@ esac
 # Pick the CLI (empty if none available)
 FORGE_CLI=""
 case "$FORGE" in
-  github)                 command -v gh  >/dev/null && FORGE_CLI=gh  ;;
+  github)                 command -v gh   >/dev/null && FORGE_CLI=gh   ;;
   gitlab)                 command -v glab >/dev/null && FORGE_CLI=glab ;;
-  forgejo)                command -v tea  >/dev/null && FORGE_CLI=tea ;;
+  forgejo)                command -v fj   >/dev/null && FORGE_CLI=fj   ;;
+  gitea)                  command -v tea  >/dev/null && FORGE_CLI=tea  ;;
   bitbucket|unknown|bare) FORGE_CLI="" ;;
 esac
 
@@ -45,10 +47,13 @@ echo "Forge: $FORGE | CLI: ${FORGE_CLI:-none}"
 |----------|--------------|--------------------|
 | `github` | `gh` | Standard PR flow via `gh` |
 | `gitlab` | `glab` | MR flow via `glab` |
-| `forgejo` | `tea` | PR flow via `tea` (Codeberg, self-hosted Forgejo/Gitea) |
+| `forgejo` | `fj` | PR flow via `fj` (Codeberg, self-hosted Forgejo) |
+| `gitea` | `tea` | PR flow via `tea` (self-hosted Gitea) |
 | `bitbucket` | (none - no official CLI) | Manual push + create PR in web UI; skill provides the URL |
-| `unknown` | (none) | Self-hosted. Ask user: is this a Gitea/GitLab/other? If unclear, treat as bare. |
+| `unknown` | (none) | Self-hosted. Ask user: is this Forgejo, Gitea, GitLab, or other? If unclear, treat as bare. |
 | `bare` | n/a | No remote; share via format-patch or direct ref-push. Manual integration. |
+
+Self-hosted hosts whose name contains neither `forgejo` nor `gitea` fall to `unknown`. Ask the user which project runs there: the CLIs differ. `fj` speaks Gitea's API too, but it tracks Forgejo features, so use `tea` on a Gitea instance.
 
 If `$FORGE_CLI` is empty for a forge that normally has one, install it (`brew install gh` etc.) or fall through to the manual web-UI path. Don't silently skip the step.
 
@@ -323,7 +328,20 @@ echo "MR IID: ${MR_IID:-unknown}"
 
 Recent-MR style: `glab mr list --state merged --per-page 10 --output json | jq -r '.[].title'`
 
-### Forgejo / Gitea / Codeberg (`$FORGE=forgejo`, `tea`)
+### Forgejo / Codeberg (`$FORGE=forgejo`, `fj`)
+
+```bash
+git push -u origin "$BRANCH_NAME"
+
+fj pr create "feat(scope): short description" \
+  --base "$BASE_BRANCH" \
+  --body-file .github/pr-body.md
+
+# Options: --autofill seeds title/body from commits; --agit pushes to refs/for/<base>
+# and opens the PR in one step (Forgejo 7+); --web opens the browser form instead.
+```
+
+### Gitea (`$FORGE=gitea`, `tea`)
 
 ```bash
 git push -u origin "$BRANCH_NAME"
@@ -436,7 +454,19 @@ glab mr view --output json | jq '.pipeline | {status: .status, web_url: .web_url
 
 `glab ci status --live` does not emit JSON. For scripted checks, poll `glab mr view` until `.pipeline.status` reaches `success` / `failed` / `canceled`. Treat anything other than `success` as not ready to merge.
 
-### Forgejo / Gitea / Codeberg (`$FORGE=forgejo`)
+### Forgejo / Codeberg (`$FORGE=forgejo`)
+
+```bash
+# Block until the PR's checks finish (polls Forgejo Actions check status)
+fj pr status --wait
+
+# List recent action runs (fj has no log streaming or re-run control; use the web UI)
+fj actions tasks
+```
+
+Forgejo Actions support varies by instance. `fj` cannot stream logs or re-run jobs; if a run cannot be matched to the PR head, fall through to web-UI confirmation.
+
+### Gitea (`$FORGE=gitea`)
 
 ```bash
 # Check status of a PR by number (from the create-PR output)
@@ -446,7 +476,7 @@ tea pulls status "$PR_NUMBER"
 tea actions list --repo "$(git remote get-url origin | sed -E 's|.*[:/]([^/]+/[^/]+)\.git$|\1|')"
 ```
 
-Forgejo/Gitea Actions API is newer and less uniform than GitHub's. If `tea actions` is unavailable on the instance's version, fall through to web-UI confirmation.
+Gitea Actions API is newer and less uniform than GitHub's. If `tea actions` is unavailable on the instance's version, fall through to web-UI confirmation.
 
 ### Bitbucket (`$FORGE=bitbucket`)
 
@@ -521,7 +551,16 @@ glab mr merge --remove-source-branch
 
 Check project settings for allowed merge methods: `glab repo view --output json | jq '{merge_method, squash_option}'`
 
-### Forgejo / Gitea (`$FORGE=forgejo`)
+### Forgejo / Codeberg (`$FORGE=forgejo`)
+
+```bash
+# Methods: merge, rebase, rebase-merge, squash, manual. --delete removes the source branch.
+fj pr merge "$PR_NUMBER" --method squash --delete
+```
+
+Available methods depend on the repo's settings. If the method isn't allowed, the command errors - adjust and retry.
+
+### Gitea (`$FORGE=gitea`)
 
 ```bash
 tea pulls merge "$PR_NUMBER" --style squash   # or: merge, rebase, rebase-merge, squash
@@ -624,10 +663,12 @@ Check all signals. **Require at least 2 independent positive signals** before tr
 **Forge-specific "published releases" check**:
 
 ```bash
+# fj release flags vary by version; verify with `fj release --help` and confirm history in the web UI.
 case "$FORGE" in
   github)  [[ -n "$(gh release list --limit 1 2>/dev/null)" ]] && echo "has releases" ;;
   gitlab)  [[ -n "$(glab release list --per-page 1 2>/dev/null)" ]] && echo "has releases" ;;
-  forgejo) tea releases list 2>/dev/null | head -n 1 | grep -q . && echo "has releases" ;;
+  forgejo) fj release --help >/dev/null 2>&1 && echo "fj release available; confirm history in the web UI" ;;
+  gitea)   tea releases list 2>/dev/null | head -n 1 | grep -q . && echo "has releases" ;;
   *)       echo "forge-specific release history not checkable; rely on tags" ;;
 esac
 ```
@@ -734,7 +775,18 @@ glab release create "v$NEW_VERSION" \
   --notes "$(extract_changelog "$NEW_VERSION")"
 ```
 
-### Forgejo / Gitea (`$FORGE=forgejo`)
+### Forgejo / Codeberg (`$FORGE=forgejo`)
+
+`fj` publishes releases, but the exact `fj release` flags are not reliably documented across
+versions. Run `fj release --help` on the installed version to confirm syntax. If `fj release`
+is unavailable, fall back to the stable REST API: `POST /api/v1/repos/{owner}/{repo}/releases`.
+
+```bash
+# Confirm the subcommand and flags before scripting against them.
+fj release --help
+```
+
+### Gitea (`$FORGE=gitea`)
 
 ```bash
 tea releases create \
@@ -790,11 +842,21 @@ glab api "projects/$PROJECT_ID/pipelines/$PIPELINE_ID" | jq -e \
   '.sha == $sha and .ref == $ref and .status == "success"'
 ```
 
-**Forgejo/Gitea (`$FORGE=forgejo`)**:
+**Forgejo/Codeberg (`$FORGE=forgejo`)**:
 
 ```bash
-# Actions support varies by instance. If available, list several runs and pick the one
-# whose commit is the published tag - never assume the newest run is this release.
+# Actions support varies by instance, and fj has no log streaming or re-run control.
+RELEASE_SHA=$(git rev-parse "v$NEW_VERSION^{commit}") || exit 1
+fj actions tasks
+# Confirm the run for $RELEASE_SHA reached success before calling the release done.
+# If the output cannot be matched to that commit, confirm in the web UI instead.
+```
+
+**Gitea (`$FORGE=gitea`)**:
+
+```bash
+# Actions support varies by instance. List several runs and pick the one whose commit is
+# the published tag - never assume the newest run is this release.
 RELEASE_SHA=$(git rev-parse "v$NEW_VERSION^{commit}") || exit 1
 tea actions list --repo "$REPO" --limit 20
 # Confirm the run for $RELEASE_SHA reached success before calling the release done.

@@ -394,14 +394,6 @@ For each stale high-effort skill, search the web for:
 
 Present findings grouped by severity. Include actionable fixes for each finding.
 
-### Mode 5: Retrospective Update
-
-When the user asks to review a completed conversation and update the skill library, capture
-reusable class-level learning, not a session log. Patch a loaded or umbrella skill for
-reusable workflow, routing, preference, or pitfall changes; create a new skill only when no
-class-level fit exists. In the public skills repo, read gitignored instruction files such as
-`AGENTS.md`, but do not force-add them; stage only intended public skill paths and validate.
-
 ### Mode 4: Optimize Skill Description
 
 The `description` field in frontmatter is the primary triggering mechanism. Optimize it for
@@ -442,6 +434,14 @@ The goal is catching obvious gaps and false-positive magnets, not deterministic 
 
 Edit the skill's frontmatter with the rewritten description. If the skill is part of a
 collection, run Mode 2 Step 2 (quality checks) to verify no regressions were introduced.
+
+### Mode 5: Retrospective Update
+
+When the user asks to review a completed conversation and update the skill library, capture
+reusable class-level learning, not a session log. Patch a loaded or umbrella skill for
+reusable workflow, routing, preference, or pitfall changes; create a new skill only when no
+class-level fit exists. In the public skills repo, read gitignored instruction files such as
+`AGENTS.md`, but do not force-add them; stage only intended public skill paths and validate.
 
 ## Run Report
 

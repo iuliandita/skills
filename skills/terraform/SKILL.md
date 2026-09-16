@@ -333,7 +333,7 @@ Read `references/state-and-security.md` for state backends, locking, encryption,
 
 See `references/state-and-security.md` for full backend config examples, OIDC federation patterns, CI/CD pipeline flows, and cross-state migration workflows.
 
-**S3 + native locking** (TF 1.10+): native `use_lockfile = true` replaces DynamoDB locking (DynamoDB still works and is slated for deprecation in a future release). Encrypt with KMS. Enable versioning and CloudTrail data events on the bucket.
+**S3 + native locking** (TF 1.10+): native `use_lockfile = true` is the recommended path for new configs; DynamoDB locking still works and is on a deprecation path, not removed. Encrypt with KMS. Enable versioning and CloudTrail data events on the bucket.
 
 **OpenTofu**: add client-side state encryption on top (AES-GCM, AWS KMS, GCP KMS, or OpenBao) - encrypts before upload, even a compromised backend can't read state.
 

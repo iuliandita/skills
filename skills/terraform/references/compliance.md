@@ -68,7 +68,7 @@ resource "aws_db_instance" "payment_db" {
 }
 
 resource "aws_db_parameter_group" "force_ssl" {
-  family = "postgres16"
+  family = "postgres18"  # must match the RDS engine version
   parameter {
     name  = "rds.force_ssl"
     value = "1"
@@ -307,7 +307,10 @@ resource "aws_config_config_rule" "encrypted_volumes" {
 checkov -d . --framework terraform --check CKV_AWS_16,CKV_AWS_17,CKV_AWS_19,CKV_AWS_145
 
 # Or use the PCI framework
-checkov -d . --framework terraform --compliance pci_dss_v4
+# Note: checkov 3.3.17 has no --compliance flag and no pci_dss_v4 identifier (verified
+# against `checkov --help` and the Checkov CLI Command Reference). Use the explicit
+# --check list above, or --policy-metadata-filter with a Prisma Cloud API key.
+# checkov -d . --framework terraform --compliance pci_dss_v4
 ```
 
 Key PCI checks:

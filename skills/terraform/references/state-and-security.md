@@ -8,7 +8,7 @@ State backends, locking, encryption, OIDC federation, and CI/CD pipeline pattern
 
 ### S3 + Native Locking (recommended for AWS, TF 1.10+)
 
-DynamoDB-based locking is **deprecated**. Use S3 native locking.
+DynamoDB-based locking still works but is on a deprecation path. Use S3 native locking (`use_lockfile = true`, TF 1.10+) for new configurations.
 
 ```hcl
 terraform {

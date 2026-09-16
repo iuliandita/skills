@@ -157,7 +157,7 @@ Language-specific linters to wire up:
 | Shell | `shellcheck` | Blocking; mature since forever |
 | YAML | `yamllint` | Catches stupid indentation bugs |
 | Dockerfile | `hadolint` | Flags anti-patterns like `ADD` instead of `COPY` |
-| Terraform | `tflint` + `terraform fmt -check` | Plus `tfsec`/Trivy for security |
+| Terraform | `tflint` + `terraform fmt -check` | Plus `trivy config` for security |
 | Ansible | `ansible-lint` | |
 | Markdown | `markdownlint-cli2` | Optional; useful for docs-heavy repos |
 

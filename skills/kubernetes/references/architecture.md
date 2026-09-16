@@ -1,6 +1,6 @@
 # Kubernetes Architecture Decision Framework
 
-Deep-dive reference for cluster design, GitOps strategy, security architecture, and operational patterns. Updated for K8s 1.34-1.36 and Helm 4.
+Deep-dive reference for cluster design, GitOps strategy, security architecture, and operational patterns. Updated for K8s 1.35-1.37 and Helm 4.
 
 ---
 

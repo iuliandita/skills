@@ -3,7 +3,7 @@ name: dev-cycle
 description: >
   · Run a requested full development workflow: branch, implement, check, review, PR, merge, and release.
 license: MIT
-compatibility: "Requires git. Optional forge CLIs by host: gh (GitHub), glab (GitLab), tea (Forgejo/Gitea). Bitbucket uses web UI or REST API. Bare git (no remote) works via format-patch/bundle. Delegates to git, testing, code-review, update-docs, and a brainstorming skill if installed."
+compatibility: "Requires git. Optional forge CLIs by host: gh (GitHub), glab (GitLab), fj (Forgejo), tea (Gitea). Bitbucket uses web UI or REST API. Bare git (no remote) works via format-patch/bundle. Delegates to git, testing, code-review, update-docs, and a brainstorming skill if installed."
 metadata:
   source: iuliandita/skills
   date_added: "2026-04-14"
@@ -203,7 +203,7 @@ Detailed steps live in `references/finish.md`. Summary:
 
 ### Step B1: Pre-close audit and forge detection
 
-First, detect the forge - every later step (push, PR, CI watch, merge, release) dispatches on it. See `references/finish.md` Step B1 for the full detection block. Short version: read `git remote get-url origin`, pattern-match on host, set `$FORGE` to one of `github | gitlab | forgejo | bitbucket | unknown | bare`. Forgejo and Gitea share a CLI (`tea`) and are collapsed into the single value `forgejo`.
+First, detect the forge - every later step (push, PR, CI watch, merge, release) dispatches on it. See `references/finish.md` Step B1 for the full detection block. Short version: read `git remote get-url origin`, pattern-match on host, set `$FORGE` to one of `github | gitlab | forgejo | gitea | bitbucket | unknown | bare`. Forgejo uses the Forgejo CLI (`fj`); Gitea gets its own value and uses the Gitea community CLI (`tea`).
 
 Then sanity-check the branch:
 
@@ -285,7 +285,8 @@ Delegate to the **git** skill - it handles forge routing. If unavailable, dispat
 |----------|-----------|
 | `github` | `git push -u origin <branch>` + `gh pr create` |
 | `gitlab` | same push + `glab mr create --target-branch` |
-| `forgejo` | same push + `tea pulls create --base --head` |
+| `forgejo` | same push + `fj pr create "<title>" --base <base>` |
+| `gitea` | same push + `tea pulls create --base --head` |
 | `bitbucket` | push + announce web-UI URL (no official CLI) |
 | `unknown` (self-hosted) | push + announce branch URL; ask user what forge this is |
 | `bare` (no remote) | `git format-patch` or `git bundle` - share file with reviewer |
@@ -300,7 +301,8 @@ Dispatch on `$FORGE`. Every tool has a watch trap - default exit code may not re
 |----------|---------|------|
 | `github` | `gh pr checks --watch --fail-fast` then verify via `gh pr view --json statusCheckRollup` | exits 0/1/8; treat anything non-zero as not-ready |
 | `gitlab` | `glab ci status --live` then `glab mr view --output json` | `--live` doesn't always exit non-zero on failure; verify explicitly |
-| `forgejo` | `tea pulls status <pr>` or `tea actions list` (varies by instance) | Actions API is newer; fall back to web UI if command missing |
+| `forgejo` | `fj pr status --wait`, then `fj actions tasks` to list runs | `fj` has no log streaming or re-run; confirm the run in the web UI |
+| `gitea` | `tea pulls status <pr>` or `tea actions list` (varies by instance) | Actions API is newer; fall back to web UI if command missing |
 | `bitbucket` | No CLI - watch web UI or poll Pipelines REST API | Manual confirmation before merge |
 | `unknown` | Ask user which CI is wired (Jenkins, Drone, Woodpecker, Buildkite, Teamcity) and point them at the URL | Assume nothing |
 | `bare` | No remote CI; rely on B2 local output | N/A |
@@ -315,7 +317,8 @@ Once CI is green, dispatch on `$FORGE`:
 |----------|---------------|--------------------|
 | `github` | `gh pr merge --squash` / `--rebase` / `--merge` | `--delete-branch` |
 | `gitlab` | `glab mr merge --squash` / `--rebase` / (default = merge commit) | `--remove-source-branch` |
-| `forgejo` | `tea pulls merge <pr> --style squash\|merge\|rebase\|rebase-merge` | Delete via web UI or follow-up `git push origin --delete <branch>` |
+| `forgejo` | `fj pr merge <pr> --method squash\|merge\|rebase\|rebase-merge --delete` | `--delete` removes the source branch |
+| `gitea` | `tea pulls merge <pr> --style squash\|merge\|rebase\|rebase-merge` | Delete via web UI or follow-up `git push origin --delete <branch>` |
 | `bitbucket` | Web UI or REST API with `"merge_strategy": "squash"` | `"close_source_branch": true` |
 | `unknown`/`bare` | Local: `git merge --no-ff` (or `--ff-only` after rebase) on base, push, `git branch -d` | N/A |
 
@@ -330,7 +333,7 @@ Check the repo's merge convention before picking a style. If multiple are allowe
 - Semver tags (`git tag -l 'v[0-9]*'` after `git fetch --tags`)
 - CHANGELOG / CHANGES / HISTORY file
 - Release workflow file (GitHub Actions, GitLab CI, Forgejo/Gitea Actions, Woodpecker, Drone)
-- Forge-native release history (`gh`/`glab`/`tea` release list)
+- Forge-native release history (`gh release list`, `glab release list`, `fj release`, `tea releases list`)
 - Published package (non-private `package.json`, `[project]` in `pyproject.toml`, `[package]` in `Cargo.toml`)
 
 **Hard skips**: `package.json` has `"private": true`, or `$FORGE=bare` with no local-tag-only intent (ask user).
@@ -340,7 +343,7 @@ If release-capable:
 1. Determine bump type (breaking -> major, feature -> minor, fix -> patch). Ask if unclear.
 2. Guard against existing tag via `git rev-parse --verify --quiet "refs/tags/v$NEW_VERSION"` (note: `git tag -l` always exits 0 so it cannot be used as a guard).
 3. Tag the merge commit on `$BASE_BRANCH` and push.
-4. Create a forge-native release object (`gh release create`, `glab release create`, `tea releases create`) - Bitbucket and bare have no platform release object; the tag itself IS the release.
+4. Create a forge-native release object (`gh release create`, `glab release create`, `fj release`, `tea releases create`) - Bitbucket and bare have no platform release object; the tag itself IS the release.
 5. Watch the release workflow with the forge-appropriate exit-status flag. **Every forge has a default-exit trap** (see Rule 6 and `references/finish.md` for per-forge commands).
 
 Full procedures, extract-changelog function, and per-forge release-watch commands in `references/finish.md`.
@@ -376,7 +379,7 @@ B8  # Set RELEASE_SHA to the verified merged release commit before tagging.
     gh run watch "$RUN_ID" --exit-status
 ```
 
-GitLab substitutes `glab mr create`, `glab ci status --live`, `glab mr merge --squash --remove-source-branch`, `glab release create`. Forgejo substitutes `tea pulls create`, `tea pulls merge --style squash`, `tea releases create`. Bitbucket and bare paths skip B5-B8 CLI steps and use web UI / `format-patch` respectively.
+GitLab substitutes `glab mr create`, `glab ci status --live`, `glab mr merge --squash --remove-source-branch`, `glab release create`. Forgejo substitutes `fj pr create`, `fj pr merge --method squash --delete`, `fj release`. Gitea substitutes `tea pulls create`, `tea pulls merge --style squash`, `tea releases create`. Bitbucket and bare paths skip B5-B8 CLI steps and use web UI / `format-patch` respectively.
 
 ---
 

@@ -30,6 +30,7 @@ Local users may add ignored protected overlays for aliases and environment-speci
 - Writing Helm charts, Kustomize overlays, or IaC - use **kubernetes** or **terraform**
 - Changing resources, restarting pods, deleting objects, or applying fixes - ask for explicit escalation
 - Debugging one application deeply after the broad sweep identifies it - use the relevant domain skill
+- Unknown-root-cause debugging or triage - use **debug-triage**
 
 ---
 

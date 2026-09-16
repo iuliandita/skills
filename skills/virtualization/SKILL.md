@@ -61,6 +61,8 @@ Broadcom extended-support guidance rather than assuming an 8.0 patch applies.
 - Ansible playbooks and configuration management (use **ansible**)
 - Docker/container image optimization (use **docker**)
 - OPNsense/pfSense firewall management (use **firewall-appliance**)
+- Synology DSM administration (use **synology-dsm**)
+- NixOS configuration and image generation (use **nixos-btw**)
 
 ---
 

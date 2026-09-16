@@ -1,6 +1,6 @@
 # Kubernetes Manifest Templates
 
-Production-ready, copy-pasteable YAML templates. Every template includes security context, probes, resource limits, and standard labels. Updated for K8s 1.33-1.35+.
+Production-ready, copy-pasteable YAML templates. Every template includes security context, probes, resource limits, and standard labels. Updated for K8s 1.35-1.37+.
 
 ---
 

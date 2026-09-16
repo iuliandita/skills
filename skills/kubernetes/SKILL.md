@@ -15,7 +15,7 @@ metadata:
 
 Create, review, and architect Kubernetes infrastructure - from raw manifests to Helm charts to multi-cluster strategy. The goal is production-ready, security-hardened, cost-aware infrastructure that a team can maintain.
 
-**Target versions** (September 2026): Kubernetes 1.34-1.37 are receiving patches (1.37.0 / 1.36.4 / 1.35.8 / 1.34.11). Kubernetes normally maintains the most recent three minors; 1.34 is in its final maintenance window and reaches EOL October 27, 2026. Upstream Kubernetes has no LTS. Managed **vendor extended support** (AKS/EKS) carries older minors longer - attribute it to the platform, not upstream. Helm 4.2.4 and Helm 3.21.4 are the current parallel release lines. Verify Helm 3 support status before selecting it for a new deployment. Check the [Helm compatibility matrix](https://helm.sh/docs/topics/version_skew/) before pairing releases: Helm 4.2.x documents Kubernetes 1.33-1.36 support and makes no forward-compatibility guarantee for 1.37.
+**Target versions** (September 2026): Kubernetes 1.35-1.37 are the supported minors (1.37.0 / 1.36.4 / 1.35.8). Kubernetes maintains the most recent three minors (1.37, 1.36, 1.35), per the [release history](https://kubernetes.io/releases/); 1.34 entered maintenance mode August 27, 2026 and reaches EOL October 27, 2026. Upstream Kubernetes has no LTS. Managed **vendor extended support** (AKS/EKS) carries older minors longer - attribute it to the platform, not upstream. Helm 4.3.0 and Helm 3.22.0 are the current parallel release lines. Verify Helm 3 support status before selecting it for a new deployment. Check the [Helm compatibility matrix](https://helm.sh/docs/topics/version_skew/) before pairing releases: Helm 4.3.x and Helm 3.22.x both document Kubernetes 1.34-1.37 support, covering the supported minors above.
 This skill covers four domains depending on context:
 - **Manifests** - raw YAML for Deployments, Services, Gateway API routes, ConfigMaps, Secrets, PVCs
 - **Helm** - Helm 4 chart scaffolding, OCI registries, templating, multi-environment values
@@ -169,7 +169,7 @@ Read `references/manifest-templates.md` for complete, copy-pasteable YAML templa
 
 ## Helm Charts
 
-**Helm 4** (4.0.0 released Nov 12, 2025; 4.2.4 current) is current. Verify the current Helm 3 support policy before selecting 3.21.4.
+**Helm 4** (4.0.0 released Nov 12, 2025; 4.3.0 current) is current. Verify the current Helm 3 support policy before selecting 3.22.0.
 
 ### What changed in Helm 4
 

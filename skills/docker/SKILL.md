@@ -58,7 +58,7 @@ AI tools consistently produce the same Docker mistakes. **Before returning any g
 - [ ] Long-running production services have a meaningful health probe in the image or orchestrator; one-shot jobs use exit status
 - [ ] `.dockerignore` exists and excludes `.git`, `node_modules`, `.env`, `__pycache__`, etc.
 - [ ] No `ADD` for local files (use `COPY` - `ADD` auto-extracts and fetches URLs)
-- [ ] Compose: no `version:` field (deprecated since Compose v2, removed in spec v5)
+- [ ] Compose: no `version:` field (obsolete, ignored, and emits a deprecation warning in current Compose - omit it)
 - [ ] Compose: `depends_on` uses `condition: service_healthy`, not bare ordering
 - [ ] Compose: resource limits set on production services
 - [ ] Package caches cleaned in same layer: `--no-cache` (apk), `rm -rf /var/lib/apt/lists/*` (apt). For pip: use `--mount=type=cache` OR `--no-cache-dir`, not both.

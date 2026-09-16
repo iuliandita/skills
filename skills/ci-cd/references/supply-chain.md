@@ -97,14 +97,14 @@ image: aquasec/trivy:latest
 
 # DO
 image:
-  name: aquasec/trivy:0.70.0@sha256:<digest>
+  name: aquasec/trivy:0.74.0@sha256:<digest>
 ```
 
 ### How (Docker images in any CI)
 
 ```bash
 # Get the digest
-docker inspect --format='{{index .RepoDigests 0}}' aquasec/trivy:0.70.0
+docker inspect --format='{{index .RepoDigests 0}}' aquasec/trivy:0.74.0
 
 # Pin to digest
 image: aquasec/trivy@sha256:abc123def456...

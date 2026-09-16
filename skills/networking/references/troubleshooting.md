@@ -380,9 +380,10 @@ Check your version: `openssl version` - anything below the patched versions is v
 ### Critical: nginx CVE-2026-42945 "NGINX Rift" (CVSS 9.2)
 
 Heap buffer overflow in `ngx_http_rewrite_module` via a crafted URI - worker DoS and potential
-unauthenticated RCE. Affects nginx OSS 0.6.27-1.30.0 (and Plus R32-R36). Fixed first in
-1.30.1 / 1.31.0; current patched releases are 1.30.2 (stable) / 1.31.1 (mainline). Actively
-exploited in the wild (added to CISA KEV) - patch now.
+unauthenticated RCE. Affects nginx OSS 0.6.27-1.30.0 (and Plus R32-R36). First fixed in
+1.30.1 / 1.31.0. This is a separate, earlier advisory from CVE-2026-42533/60005/56434 (fixed
+in 1.30.4+ / 1.31.3+) and CVE-2026-90439 (fixed in 1.30.5+ / 1.31.6+); any release at or above
+those floors includes this fix. Actively exploited in the wild (added to CISA KEV) - patch now.
 
 ### Critical: OpenSSH CVE-2026-35414 (cert principal bypass)
 
