@@ -494,7 +494,7 @@ include:
 trivy-scan:
   stage: scan
   image:
-    name: aquasec/trivy:0.70.0@sha256:<digest>    # pin digest; do NOT use 0.69.4/5/6
+    name: aquasec/trivy:0.74.0@sha256:<digest>    # pin digest; do NOT use 0.69.4/5/6
   script:
     - trivy image --exit-code 1 --severity HIGH,CRITICAL $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
   allow_failure: true    # non-blocking for dev/staging; set to false for release pipelines (PCI 6.2.1)
@@ -853,7 +853,7 @@ build-worker:
     TRIVY_USERNAME: $CI_REGISTRY_USER
     TRIVY_PASSWORD: $CI_REGISTRY_PASSWORD
   image:
-    name: aquasec/trivy:0.70.0@sha256:<digest>
+    name: aquasec/trivy:0.74.0@sha256:<digest>
     entrypoint: [""]
   script:
     - trivy image --exit-code 1 --severity HIGH,CRITICAL "$CI_REGISTRY_IMAGE/$SERVICE_NAME:$CI_COMMIT_SHA"

@@ -48,6 +48,7 @@ runners, dependency updates, scanning, review gates, and rollout order.
 - Security audits of application code (SAST findings, auth bugs) - use **security-audit**
 - Correctness review of application code that happens to be pipeline-adjacent - use **code-review**.
   Pipeline config review, debugging, architecture, and CI-specific hardening stay in this skill.
+- Database migration or schema work - use **databases**
 
 ## AI Self-Check
 

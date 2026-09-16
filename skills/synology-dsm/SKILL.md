@@ -355,7 +355,7 @@ See `references/output-contract.md` for the full contract.
 ## Rules
 
 1. **Identify the DSM version and platform before advising anything.** Behavior differs across
-   DSM 6, 7.1, 7.2, and 7.4.
+   DSM 6, 7.1, 7.2, 7.3, and 7.4.
 2. **No repair without an overlay.** Any operation that can write to a damaged volume runs
    against a dm-snapshot overlay first.
 3. **Never `--init-extent-tree`, never `clear_cache` on a damaged volume.** Both destroy volumes,

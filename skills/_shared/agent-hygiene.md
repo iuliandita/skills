@@ -1,7 +1,7 @@
 # Agent Hygiene
 
 Cross-cutting discipline for any AI agent output, independent of what the skill's
-domain checks cover. These five items are not skill-specific self-checks - they
+domain checks cover. These items are not skill-specific self-checks - they
 are baseline agent hygiene, checked once here instead of duplicated per skill.
 
 - [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them

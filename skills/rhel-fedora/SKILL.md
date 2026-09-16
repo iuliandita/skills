@@ -77,6 +77,8 @@ Do not transfer Ubuntu kernel patch floors to RHEL, Fedora, or a downstream clon
 - Debian, Ubuntu, Mint, Pop!_OS, or other apt-family systems - use **debian-ubuntu**
 - Fedora Silverblue, Kinoite, Bazzite, Bluefin, Universal Blue, CoreOS, bootc, or other rpm-ostree / image-mode workflows - outside this skill; do not treat them like ordinary dnf-managed hosts
 - OPNsense or pfSense appliance work - use **firewall-appliance**
+- NixOS declarative system configuration - use **nixos-btw**
+- Kali Linux and offensive-tool distros - use **kali-linux**
 
 ---
 

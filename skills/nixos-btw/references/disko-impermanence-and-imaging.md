@@ -246,6 +246,12 @@ Common formats:
 ```bash
 nix build ./#nixosConfigurations.rpi4.config.system.build.sdImage
 zstd -d result/sd-image/nixos-sd-image-*.img.zst
+```
+
+Writing to the wrong device irreversibly destroys its contents. Confirm the target with `lsblk`
+and check it against the intended device, then obtain explicit confirmation before running:
+
+```bash
 sudo dd if=nixos-sd-image-*.img of=/dev/sdX bs=4M status=progress conv=fsync
 ```
 

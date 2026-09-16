@@ -61,7 +61,7 @@ services:
         max-file: "3"
 
   db:
-    image: postgres:17-alpine
+    image: postgres:18-alpine
     restart: unless-stopped
     read_only: true
     security_opt:

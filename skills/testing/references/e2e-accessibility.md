@@ -364,7 +364,7 @@ await expect(page).toHaveScreenshot({
 ```
 - **Consistent viewport**: set in `playwright.config.ts`, not per-test.
 - **Font loading**: wait for `networkidle` or explicitly wait for font load. Font rendering differences are the #1 cause of false positives.
-- **CI vs local**: screenshots may differ between OS/GPU. Generate baseline screenshots in CI, not locally. Use `--update-snapshots` in CI to regenerate.
+- **CI vs local**: screenshots may differ between OS/GPU, so generate or compare baselines in the same environment CI uses rather than mixing machines. Snapshot updates are an explicit, reviewed change: regenerate with `--update-snapshots` locally or in a controlled job, inspect the diff, then commit the new baselines. CI should fail on drift, not silently rewrite baselines.
 - **Threshold**: `maxDiffPixels` or `maxDiffPixelRatio` - start permissive, tighten as you gain confidence.
 
 ### Storybook + visual regression

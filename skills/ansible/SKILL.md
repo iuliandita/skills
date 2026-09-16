@@ -200,7 +200,7 @@ Read `references/playbook-patterns.md` for complete, copy-pasteable task example
 
 ### Key patterns
 
-**Variable precedence** (22 levels - the most common source of confusion). In ascending priority:
+**Variable precedence** (22 levels; the most important are, in ascending priority):
 1. Role defaults (`defaults/main.yml`) - weakest, meant to be overridden
 2. Inventory vars (`group_vars/`, `host_vars/`)
 3. Play vars
@@ -344,7 +344,7 @@ Read `references/compliance.md` for the full PCI-DSS 4.0 requirements mapping to
 ### Compliance (PCI-DSS 4.0)
 
 - [ ] CIS benchmark role applied and tested (Req 2.2)
-- [ ] SSH hardened: key-only auth, no root login, protocol 2, idle timeout (Req 2.2.7)
+- [ ] SSH hardened: key-only auth, no root login, idle timeout (Req 2.2.7)
 - [ ] Firewall rules managed as code (Req 1)
 - [ ] Auditd rules deployed for CDE systems (Req 10.2)
 - [ ] Log forwarding to immutable SIEM (Req 10.4.1.1)

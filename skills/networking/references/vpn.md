@@ -348,7 +348,7 @@ ZeroTier is an overlay network with a simpler setup than Nebula. Requires a cont
 
 ## Cloudflare Tunnels
 
-Cloudflare Tunnel (`cloudflared`, v2026.7.2) creates outbound-only encrypted connections from
+Cloudflare Tunnel (`cloudflared`, v2026.8.3) creates outbound-only encrypted connections from
 your origin to Cloudflare's edge. No inbound ports needed - the tunnel connects out to
 Cloudflare, which proxies traffic back through it.
 
@@ -370,7 +370,7 @@ Internet -> Cloudflare Edge (CDN, WAF, DDoS, Access) -> cloudflared -> Origin se
 # Install cloudflared
 # Debian/Ubuntu: apt install cloudflared
 # Arch: paru -S cloudflared
-# Docker: cloudflare/cloudflared:latest
+# Docker: cloudflare/cloudflared:2026.8.3
 
 # Authenticate (opens browser)
 cloudflared tunnel login

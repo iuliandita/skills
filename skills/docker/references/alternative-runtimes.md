@@ -41,7 +41,7 @@ sudo dnf install -y podman podman-compose buildah skopeo
 
 ```bash
 # Run a container (same as docker run)
-podman run -d --name web -p 8080:80 nginx:1.27-alpine
+podman run -d --name web -p 8080:80 nginx:1.31-alpine
 
 # Build (uses Buildah internally)
 podman build -t myapp:1.0.0 .
@@ -114,7 +114,7 @@ Group containers like Kubernetes pods (shared network namespace):
 podman pod create --name myapp -p 8080:8080
 
 # Add containers to the pod
-podman run -d --pod myapp --name web nginx:1.27-alpine
+podman run -d --pod myapp --name web nginx:1.31-alpine
 podman run -d --pod myapp --name api myapp:1.0.0
 
 # Generate K8s manifest from pod
@@ -275,7 +275,7 @@ Most users interact with containerd indirectly via Docker, Podman, or Kubernetes
 
 ```bash
 # Install nerdctl for Docker-compatible commands on containerd
-nerdctl run -d --name web -p 8080:80 nginx:1.27-alpine
+nerdctl run -d --name web -p 8080:80 nginx:1.31-alpine
 nerdctl build -t myapp:1.0.0 .
 nerdctl compose up -d
 ```

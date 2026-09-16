@@ -159,7 +159,7 @@ return configs.collect(Collectors.toList()); // exception thrown HERE, uncaught
 - Checked exception caught and swallowed in lambdas (returning null, poisoning downstream with NPEs)
 - Catch block that logs AND rethrows (same stack trace logged 2-5x up the call chain - log OR throw, not both)
 - Try-with-resources with chained constructors (`new BufferedReader(new FileReader(f))` - if outer constructor throws, inner resource leaks)
-- `raise NewException("msg")` inside catch without chaining original (`throw new X("msg", cause)`)
+- `throw new X("msg")` inside catch without chaining original cause (`throw new X("msg", cause)`)
 
 ### equals/hashCode Contract
 
@@ -182,7 +182,7 @@ return configs.collect(Collectors.toList()); // exception thrown HERE, uncaught
 - Assuming virtual threads increase DB throughput (HikariCP has 10 connections regardless - 9,990 virtual threads just block waiting)
 - `StructuredTaskScope` without try-with-resources (thread leak on exception)
 
-**Fix:** Detect pinning with `-Djdk.tracePinnedThreads=full`. Note: Java 24+ resolves `synchronized` pinning, but JNI pinning remains.
+**Fix:** Detect pinning with the JFR event `jdk.VirtualThreadPinned` (`-Djdk.tracePinnedThreads` was removed in JDK 24 by JEP 491 and has no effect). Note: Java 24+ resolves `synchronized` pinning, but JNI/native pinning remains.
 
 ### Pattern Matching & Sealed Classes
 

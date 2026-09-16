@@ -355,7 +355,7 @@ Clients treat `next_cursor` as opaque; the server controls shape and can change 
 
 Rolling deploys send SIGTERM to old instances while new ones come up. Handle it on the API side or expect 502s under load:
 
-- Trap SIGTERM, stop accepting new connections, drain in-flight requests, then exit. FastAPI/Uvicorn: configure `--timeout-graceful-shutdown` (default 30s); Express 5: `server.close()` then `server.closeAllConnections()` after the drain window; NestJS: `app.enableShutdownHooks()` plus `onApplicationShutdown` handlers
+- Trap SIGTERM, stop accepting new connections, drain in-flight requests, then exit. FastAPI/Uvicorn: set `--timeout-graceful-shutdown` (unset by default, so Uvicorn waits for in-flight requests with no timeout; set a bounded value in production); Express 5: `server.close()` then `server.closeAllConnections()` after the drain window; NestJS: `app.enableShutdownHooks()` plus `onApplicationShutdown` handlers
 - Keep the app-side shutdown window shorter than the orchestrator's termination grace (Kubernetes default 30s). `app_shutdown < terminationGracePeriodSeconds` or the kernel kills in-flight work
 - Set the server HTTP keep-alive timeout longer than the upstream backend-connection idle timeout (load balancer, ingress). If the LB holds a connection the server already closed, the next request hits a dead socket. Typical safe pair: server keep-alive 65s behind an LB with 60s idle
 - Add a readiness probe that flips to failing on SIGTERM before the drain starts. The orchestrator stops routing new traffic while in-flight requests finish

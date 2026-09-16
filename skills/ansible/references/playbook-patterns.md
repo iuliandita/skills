@@ -650,7 +650,7 @@ upstream {{ upstream.name }} {
 {% endfor %}
 
 {# Note: -%} strips whitespace/newlines after the tag #}
-{# -% strips whitespace/newlines before the tag #}
+{# {%- strips whitespace/newlines before the tag #}
 ```
 
 ### Lookups

@@ -7,7 +7,7 @@
 
 ## Section Routing
 
-Not every task needs all 680 lines. Use this routing:
+Not every task needs all 656 lines. Use this routing:
 
 | Task | What to read |
 |------|-------------|
