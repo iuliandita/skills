@@ -217,7 +217,7 @@ Read `references/playbook-patterns.md` for complete, copy-pasteable task example
 
 **Blocks**: use `block`/`rescue`/`always` for error handling and rollback - see `playbook-patterns.md` for complete deploy-with-rollback examples. Prefer `block`/`rescue` over `ignore_errors: true`.
 
-**Loops**: prefer `loop:` over deprecated `with_*` syntax. Use `loop_control.label` for clean output.
+**Loops**: prefer `loop:` over the older `with_*` lookup syntax. Use `loop_control.label` for clean output.
 
 **Conditional execution**: `when: ansible_os_family == "Debian"` etc. For multi-OS roles, use conditionals or `include_tasks` per OS family. See `playbook-patterns.md` for Alpine/OpenRC patterns.
 

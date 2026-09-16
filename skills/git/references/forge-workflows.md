@@ -389,8 +389,15 @@ fj actions variables delete CACHE_BUCKET
 
 # Secrets (write-only; value never echoed back)
 fj actions secrets list
-# Create/update secrets in the authenticated forge UI unless installed CLI help
-# verifies a stdin/file input. Positional secret values are exposed in argv.
+# `fj actions secrets create <NAME> <DATA>` takes the value as a positional argument,
+# so it always exposes the secret in argv. Use the REST API instead: authenticate from a
+# mode-0600 curl config and pipe the JSON body on stdin so the value never enters argv.
+jq -n '{data: env.REGISTRY_TOKEN}' | \
+  curl --fail --config "${FORGEJO_CURL_CONFIG:?mode-0600 credential config}" \
+    -X PUT "https://git.example.com/api/v1/repos/{owner}/{repo}/actions/secrets/REGISTRY_TOKEN" \
+    -H "Content-Type: application/json" --data @-
+# jq reads the value from the exported env var, set from a secret manager or no-echo input.
+# Without jq, write the same JSON to a mode-0600 file and pass --data @"$file" instead.
 fj actions secrets delete REGISTRY_TOKEN
 ```
 
@@ -444,9 +451,11 @@ curl --fail --config "$FORGEJO_CURL_CONFIG" -X POST "https://git.example.com/api
 
 `tea` (`gitea.com/gitea/tea`) is the Gitea community CLI. It predates `fj` and still works
 against Gitea 1.20+ instances. Install: `go install code.gitea.io/tea@latest`, Arch
-`paru -S tea-bin`, macOS `brew install tea-cli`. Inspect `tea login add --help` and use
-interactive no-echo input if supported; otherwise provision its protected credential
-configuration. Never put access token values in argv.
+`paru -S tea-bin`, macOS `brew install tea-cli`. Run `tea login add` with no flags: current
+tea creates the login interactively and prompts for the token, keeping the value out of argv.
+If your version demands the flag, supply the token through a protected credential file or
+no-echo stdin instead of `--token <token>`. Never put access token values in argv. Not
+verified against an installed `tea` here; confirm the prompt with `tea login add --help`.
 
 Rough feature parity: `tea pulls create`, `tea issues create`, `tea releases create`,
 `tea repos clone`. No AGit support (Gitea does not ship it), no Actions secret/variable

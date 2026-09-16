@@ -239,9 +239,13 @@ VMware Tools integration. Same as above but for ESXi/vSphere.
 - [ ] Test custom plugins against Python 3.13 compatibility
 - [ ] Update backup scripts if using Google Drive backend
 
-### 26.1 "Witty Woodpecker" (Jan 28, 2026) - CURRENT STABLE
+### 26.1 "Witty Woodpecker" (Jan 28, 2026) - historical; superseded by the 26.7 line
 
-Current release: **26.1.5** (March 26, 2026). 25.7.x series EOL at 25.7.11.
+This section is retained as migration context for hosts still moving off 25.7. The current CE line is
+26.7 (see SKILL.md "Target versions"); the commands and behaviors below describe 26.1 and may not
+match 26.7.
+
+Release at the time: **26.1.5** (March 26, 2026). 25.7.x series EOL at 25.7.11.
 
 - Redesigned Firewall Rules interface
 - IDPS moved to declarative `conf.d` structure + new inline inspection mode

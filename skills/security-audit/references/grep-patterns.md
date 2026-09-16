@@ -18,7 +18,7 @@ Use these only when betterleaks/gitleaks/trufflehog are all unavailable.
 | `mongodb(\+srv)?://[^/\s]+:[^@\s]+@` | Connection strings with embedded passwords | All files |
 | `postgres(ql)?://[^/\s]+:[^@\s]+@` | Postgres connection strings with passwords | All files |
 
-Also check git history: `git log --all --diff-filter=A - '*.env*'`
+Also check git history: `git log --all --diff-filter=A -- '*.env*'`
 
 ## Authentication & Authorization (Pass 5)
 

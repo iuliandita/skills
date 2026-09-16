@@ -278,7 +278,7 @@ Before committing any skill modification, verify:
 
 - [ ] **Lint passes**: lint-skills.sh exits 0 for the modified skill
 - [ ] **Spec valid**: validate-spec.sh exits 0 for the modified skill
-- [ ] **Score improved**: composite score is strictly higher than before the change
+- [ ] **Score improved**: a change is kept when the composite score strictly improves, or when it preserves the score while reducing complexity or lines with no behavior change
 - [ ] **No content regression**: change does not remove critical sections, warnings,
   or cross-references without replacement
 - [ ] **Simplicity maintained**: change does not add unnecessary complexity for marginal gains,

@@ -156,7 +156,7 @@ with client.messages.stream(
 
 Use native provider mechanisms, not regex parsing of free-text responses.
 
-- **Anthropic**: `tool_use` with JSON schema, or `response_format` with `json_schema`
+- **Anthropic**: `tool_use` with JSON schema (add `strict: true` to guarantee validation), or `output_config: { format: { type: "json_schema", ... } }`
 - **OpenAI**: `response_format: { type: "json_schema", json_schema: {...} }`
 - **Vercel AI SDK**: `generateText()` with `output: Output.object({ schema })` and a Zod schema
 
