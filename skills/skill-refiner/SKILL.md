@@ -47,9 +47,9 @@ skill-refiner [--iterations N] [--mode MODE] [--secondary HARNESS] [--threshold 
 |---|---|---|
 | `--iterations` | 10 | Maximum iterations for phase 1 |
 | `--mode` | circuit-breaker | `auto`, `circuit-breaker`, or `step` |
-| `--secondary` | auto-detect | Secondary review harness, or `none`; model identity determines weight |
-| `--threshold` | 85 | Focus threshold - skip skills scoring above this (user can override max) |
-| `--plateau` | 2 | Minimum score delta to keep iterating |
+| `--secondary` | auto-detect | Secondary review harness, or `none`; model identity determines the penalty cap |
+| `--threshold` | 85 | Focus threshold - skip skills scoring above this; hard cap 95, not overridable |
+| `--plateau` | 2 | Minimum lower-bound composite delta to keep a change or keep iterating |
 | `--meta` | off for single-skill runs | Run phase 2 (meta-improvement) for a single named-skill run, which otherwise stops after phase 1. Collection-wide runs enter phase 2 by default and ignore this flag. |
 
 **Environment override:** `SKILL_REFINER_SECONDARY=<harness>` (CLI flag takes precedence)
@@ -86,11 +86,10 @@ by default. Either way, phase 2 still pauses for review.
 - Keep run history factual and free of unverifiable score inflation.
 - Deduct behavioral points only for a named failed quality signal or verified defect. Do not
   reserve points merely because a case was simulated or a live runtime was unavailable.
-- Treat composite deltas as noisy when different scorer instances run across
-  iterations: a few points of swing is judge variance, not real change. Anchor
-  keep/revert decisions on the structural gate, on whether the specific targeted
-  weakness was fixed, and on peer-review NO_FLAGS - not on small composite moves.
-  Use a consistent scoring approach within a single before/after comparison.
+- Composite scores are the minimum of k >= 3 independent fresh-context gradings, not a
+  single grader. Treat point-estimate moves below the plateau delta (2 points) as judge
+  variance, not change. Anchor keep/revert decisions on the lower-bound composite and the
+  structural gate, not on one grader's estimate.
 - Leave externally-maintained version, CVE, and EOL pins out of scope. When a
   collection has a freshness routine (or equivalent) that owns version currency,
   do not edit those pins during a run and do not score them as "unverifiable"
@@ -120,6 +119,9 @@ by default. Either way, phase 2 still pauses for review.
    changes), model/harness change detection (flag if the primary or secondary model changed
    since last run - new model = new baseline, not a comparable delta), and skip analysis
    (don't re-attempt improvements that were already tried and reverted in a recent run).
+   Compute the current rubric hash with `scripts/refiner-rubric-hash.sh` and record it. If it
+   differs from the most recent run's recorded `rubric_hash`, prior scores are not comparable:
+   start a fresh baseline and do not compute deltas against the old run.
 3. **Build skill inventory**: list all skills, exclude phase-2 targets (skill-creator,
    skill-refiner) from the improvement pool
 4. **Record evaluator identity**: capture actual provider, resolved model, effective effort,
@@ -133,31 +135,33 @@ by default. Either way, phase 2 still pauses for review.
 6. **If no authorized secondary is available**: **always fall back to self-review.** Spawn a fresh agent on
    the current harness with the review prompt template from `references/harness-detection.md`.
    Label as "same-model fresh-context review" only when identity is verified; otherwise use
-   "unknown-model fresh-context review". Both weight at 3% instead of 5%
-   (composite becomes gate/40/55/3, renormalize the missing 2% proportionally to AI Self-Check
-   and Behavioral). Only a verified distinct model receives 5%, including on the same harness.
-   Different harnesses alone do not establish model diversity.
+   "unknown-model fresh-context review". Review is penalty-only and identical in form at
+   baseline and every iteration: verified flags deduct `cap * weight` from the composite, with
+   cap 5 for a verified distinct model and cap 3 for same-model or unknown-model review. A
+   clean review adds no bonus. Different harnesses alone do not establish model diversity.
    Skipping review entirely is not an option - a fresh-context self-review is the minimum bar.
    If the harness doesn't support subagents, run the review prompt as a separate CLI
    invocation (`claude -p`, `codex exec`, `gemini -p`, etc.).
 
 ### Phase 1: Regular Iterations
 
-7. **Iteration 1 - full sweep**: score every skill in the pool using the four-component
-   model from `references/evaluation-criteria.md`
+7. **Iteration 1 - full sweep**: score every skill in the pool using the gate/AI/behavioral
+   model with penalty-only review from `references/evaluation-criteria.md`
    - Structural: run lint-skills.sh + validate-spec.sh
-   - AI Self-Check: invoke **skill-creator** review mode on each skill
-   - Behavioral: run test prompts from `references/test-cases.md`. For skills without
+   - AI Self-Check: invoke **skill-creator** review mode in at least 3 independent
+     fresh-context gradings per skill; use the minimum (lower bound), not the mean
+   - Behavioral: run test prompts from `references/test-cases.md` in at least 3 independent
+     fresh-context gradings; use the minimum (lower bound). For skills without
      pre-written test cases, auto-generate 2-3 test prompts from the skill's "When to use"
      section and quality signals from its AI Self-Check. Log a warning that generated tests
      are lower quality than hand-written ones. Optionally save generated tests to a
      `references/test-cases-local.md` file alongside `references/test-cases.md` so they accumulate across runs.
-   - Cross-model: skip on first iteration (no diff to review yet)
+   - Cross-model: skip on first iteration (no diff to review yet; penalty is 0)
 8. **Log baseline scores**: record per-skill and aggregate scores
    in a score ledger before any edits. The ledger must include structural gate (G),
-   AI Self-Check (A), behavioral score (B), cross-model review (X), composite score,
-   test source, evaluator identity and evidence for each evaluation, reviewer classification
-   and applied weight, and timestamp. After this step, if the ledger is
+   AI Self-Check (A), behavioral score (B), verified flag count and penalty, reviewer
+   classification and applied cap, composite score, test source, evaluator identity and
+   evidence for each evaluation, and timestamp. After this step, if the ledger is
    missing, incomplete, or only records lint/spec status, pause and backfill scoring before
    applying changes. In headless mode, halt the run and report the missing score data.
 9. **Iteration 2+**: enter adaptive focus mode. Honor any explicitly requested minimum iteration
@@ -169,28 +173,35 @@ by default. Either way, phase 2 still pauses for review.
 10. **Select targets**: identify skills scoring below the focus threshold
 11. **For each targeted skill**, run the improvement cycle:
     a. Read current SKILL.md and all reference files
-    b. Invoke **skill-creator** review mode - collect findings
-    c. Run behavioral test - score current output quality
+    b. Invoke **skill-creator** review mode in at least 3 independent fresh-context
+       gradings - collect findings and take the minimum
+    c. Run behavioral tests in at least 3 independent fresh-context gradings; take the
+       minimum as the component score
     d. Propose targeted improvements based on findings (not random changes)
     e. Apply changes to SKILL.md (and references if needed)
-    f. Re-score structural, AI Self-Check, and behavioral components; keep the change provisional
+    f. Re-score structural, AI Self-Check, and behavioral components, each as the minimum of
+       at least 3 fresh-context gradings; keep the change provisional
     g. Send the minimum necessary diff to an authorized peer reviewer or the fresh local fallback
     h. Process flags per `references/harness-detection.md` verification protocol
     i. If secondary flags major issue and primary agrees: revert
     j. If secondary flags major issue and primary disagrees: escalate to circuit breaker
-    k. **Karpathy gate**: compute the final composite including verified peer-review deductions
-       and the applicable 5% or 3% weight. Keep only if it improved; otherwise revert.
+    k. **Karpathy gate**: compute the lower-bound composite for the change and for the
+       pre-change version with the same formula. Keep only when the lower-bound composite
+       strictly improves by at least the plateau delta (2 points) over the previous lower-bound
+       composite, or when it preserves that composite while reducing complexity or lines with
+       no behavior change; unverifiable point-estimate moves never keep a change. Otherwise
+       revert.
 12. **Commit iteration**: one commit with all improvements from this iteration
     Format: `refactor(skill-refiner): iteration N - skill1(+X), skill2(+Y)`
 13. **Log iteration summary**:
     ```
     --- iteration N / max -------------------------------------------
-    improved:  skill1 (72 > 80 | G:pass A:76 B:78 X:90), skill2 (68 > 73 | G:pass A:70 B:72 X:100)
+    improved:  skill1 (72 > 80 | G:pass A:76 B:78 pen:0), skill2 (68 > 73 | G:pass A:70 B:72 pen:0)
     gated:     skillZ (lint/spec failed - excluded from scoring)
     skipped:   M skills above threshold
-    reverted:  skill3 (proposed change scored -2, rolled back | G:pass A:74 B:69 X:100)
+    reverted:  skill3 (lower bound regressed, rolled back | G:pass A:74 B:69 pen:1.0)
     contested: skill4 (secondary flagged major, primary disagreed)
-    plateau:   yes/no (max delta: +X)
+    plateau:   yes/no (max lower-bound delta: +X)
     -----------------------------------------------------------------
     ```
     Also append the same data to the score ledger. Keep/reject decisions must point to
@@ -198,9 +209,11 @@ by default. Either way, phase 2 still pauses for review.
 14. **Check termination conditions** (a collection run flows into phase 2 on termination;
     a single-skill run stops after phase 1 unless `--meta` was passed. Circuit-breaker pauses
     wait for user input first):
-    - Plateau detected (max delta < plateau threshold)? Terminate phase 1.
-    - All skills above focus threshold? Bump threshold by 5 and continue. If threshold
-      is already at max (95) and all skills still clear it, terminate phase 1.
+    - Saturated? If every skill is at composite 100 (or >= 99), terminate phase 1 as
+      "saturated". Do not raise the threshold past its hard cap of 95.
+    - Plateau detected (max lower-bound delta < plateau threshold)? Terminate phase 1.
+    - All skills above focus threshold? Bump threshold by 5, capped at 95. If already at 95,
+      terminate phase 1.
     - Iteration cap reached? Terminate phase 1.
     - Circuit breaker triggered? Pause for user input.
 15. **Repeat** from step 10 until terminated
@@ -248,20 +261,20 @@ by default. Either way, phase 2 still pauses for review.
     Primary:    <harness> <version> (<provider>/<resolved model>, effective effort: <level>)
     Secondary:  <same identity fields> | none (baseline only)
     Evidence:   <redacted runtime/config references; unknown fields and reasons>
-    Review:     <verified cross-model | same-model | unknown-model>, weight: <5% | 3%>
-                <baseline: no diff, review omitted>
+    Review:     <verified cross-model | same-model | unknown-model>, cap: <5 | 3>
+                <baseline: no diff, penalty 0>
     Pool:       N skills (skill-creator, skill-refiner excluded)
     Config:     iterations=M, threshold=T, mode=MODE, plateau=P
 
     Iterations: N (of max M)
-    Terminated: plateau / threshold / cap / user
+    Terminated: plateau / threshold / cap / saturated / user
 
     Score changes:
-      skill1:  62 > 88 (+26)  [G:pass A:84 B:86 X:90]
-      skill2:  71 > 85 (+14)  [G:pass A:82 B:79 X:100]
+      skill1:  62 > 88 (+26)  [G:pass A:84 B:86 pen:0]
+      skill2:  71 > 85 (+14)  [G:pass A:82 B:79 pen:0]
       ...
-      skill-creator: 80 > 84 (+4)  [G:pass A:82 B:81 X:100] [meta]
-      skill-refiner: 78 > 83 (+5)  [G:pass A:80 B:79 X:100] [meta]
+      skill-creator: 80 > 84 (+4)  [G:pass A:82 B:81 pen:0] [meta]
+      skill-refiner: 78 > 83 (+5)  [G:pass A:80 B:79 pen:0] [meta]
 
     Aggregate:  avg X.X | min X.X | max X.X
     Reverted:   X changes across Y iterations
@@ -269,9 +282,10 @@ by default. Either way, phase 2 still pauses for review.
     =================================================================
     ```
 24. **Write run history**: append this run's metadata to `.refiner-runs.json` at the
-    repository root, the same file read in Phase 0 step 2. Include: run_id, branch, date,
+    repository root, the same file read in Phase 0 step 2. Include `schema: 2` and
+    `rubric_hash: <value>` from `scripts/refiner-rubric-hash.sh`, plus run_id, branch, date,
     primary/secondary provider+resolved model+effective effort+harness+version and redacted
-    runtime/config evidence per evaluation, reviewer classification and applied weight, config,
+    runtime/config evidence per evaluation, reviewer classification and applied cap, config,
     pool size, termination reason, peer-review flag counts, before/after per-skill
     scores (component breakdown + composite, or clearly labeled estimates if the run used a
     targeted manual rubric instead of the full automated sweep), and a changes summary. When
@@ -286,7 +300,10 @@ Before committing any skill modification, verify:
 
 - [ ] **Lint passes**: lint-skills.sh exits 0 for the modified skill
 - [ ] **Spec valid**: validate-spec.sh exits 0 for the modified skill
-- [ ] **Score improved**: a change is kept when the composite score strictly improves, or when it preserves the score while reducing complexity or lines with no behavior change
+- [ ] **Score improved**: a change is kept only when its lower-bound composite (minimum of
+  k >= 3 fresh-context gradings per component) strictly improves by at least the plateau delta
+  (2 points), or when it preserves that composite while reducing complexity or lines with no
+  behavior change
 - [ ] **No content regression**: change does not remove critical sections, warnings,
   or cross-references without replacement
 - [ ] **Simplicity maintained**: change does not add unnecessary complexity for marginal gains,
@@ -301,8 +318,8 @@ Before committing any skill modification, verify:
 - [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
 - [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
 - [ ] **Score discipline kept**: changes are kept only when they improve measured quality or fix a verified defect
-- [ ] **Reviewer identity verified**: weight is 5% only for verified distinct models; same or
-  unknown model identity uses fresh context at 3%, with runtime/config evidence recorded
+- [ ] **Reviewer identity verified**: cap is 5 only for verified distinct models; same or
+  unknown model identity uses fresh context at cap 3, with runtime/config evidence recorded
 - [ ] **Score ledger present**: baseline, iteration, and final component scores exist before reporting completion
 - [ ] **Canonical test coverage complete**: phase 2 compares public skill directories with the
   canonical test headings and leaves no missing, duplicate, or orphan skill section
@@ -338,8 +355,11 @@ See `references/output-contract.md` for the full contract.
 1. **Immutability in phase 1**: never modify `references/evaluation-criteria.md`,
    `references/test-cases.md`, lint-skills.sh, validate-spec.sh, **skill-creator**,
    or **skill-refiner** during phase 1. Violation = abort the run.
-2. **Karpathy gate**: only directional improvements survive. If a change does not
-   improve the composite score, revert it. No exceptions, no "it looks better."
+2. **Karpathy gate**: only lower-bound improvements at or above the noise floor survive.
+   Keep a change only when its lower-bound composite strictly improves by at least the
+   plateau delta (2 points) over the previous lower-bound composite, or when it preserves
+   that composite while reducing complexity or lines with no behavior change. Revert
+   otherwise; unverifiable point-estimate moves never keep a change.
 3. **Verify flags**: never take cross-model flags at face value. Primary reviews
    every flag independently. Disagreements on major flags go to human.
 4. **Snapshot before meta**: always snapshot evaluation criteria before phase 2.

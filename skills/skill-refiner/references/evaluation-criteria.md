@@ -12,16 +12,50 @@ thresholds mean, and how the adaptive loop makes decisions.
 Structural compliance is a **pass/fail gate**, not a weighted score component. A
 skill that fails lint-skills.sh or validate-spec.sh is excluded from scoring until
 the structural issue is fixed. When the gate passes, the composite score (0-100)
-is the weighted sum of three behavior-oriented components.
+follows one penalty-only formula at baseline and every iteration:
+
+```
+composite = clamp0_100( (40*AI + 55*Behavioral) / 95 - cap * penalty )
+```
+
+| Symbol | Meaning |
+|---|---|
+| AI | AI Self-Check score, 0-100; minimum of k >= 3 fresh-context gradings |
+| Behavioral | Behavioral test score, 0-100; minimum of k >= 3 fresh-context gradings |
+| penalty | Sum of verified flag weights, minor = 0.2 and major = 1.0, clamped to a maximum of 1.0 |
+| cap | 5 for a verified distinct-model reviewer, 3 for same-model or unknown-model fresh-context review |
+| clamp0_100 | Clamp the result into the range 0-100 |
+
+### One Formula for Baseline and Iterations
+
+The same formula applies at baseline and every iteration. Baseline review has no diff to
+review, so `penalty = 0` and the formula reduces to `(40*AI + 55*Behavioral) / 95`. Peer
+review is penalty-only: a clean review adds nothing and cannot raise the score. Do not
+renormalize the AI or Behavioral weights between baseline and iterations.
+
+**Worked example.** AI = 80 and Behavioral = 80 in every case:
+
+```
+base = (40*80 + 55*80) / 95 = 7600 / 95 = 80.00
+
+Baseline (no diff, penalty 0):                         composite = 80.00
+After a NO_FLAGS review (penalty 0):                   composite = 80.00
+After one verified minor flag, distinct model (cap 5): composite = 80.00 - 5*0.2 = 79.00
+After one verified minor flag, same/unknown (cap 3):   composite = 80.00 - 3*0.2 = 79.40
+After five verified minor flags (cap 5, penalty 1.0):  composite = 80.00 - 5*1.0 = 75.00
+```
+
+An unchanged score plus a clean review is exactly 80.00, so moving from baseline to an
+iteration cannot manufacture a delta. Only a fixed defect can raise the score.
 
 ### Component Weights
 
-| Component | Weight | Source |
+| Component | Role | Source |
 |---|---|---|
 | Structural compliance | **gate** | lint-skills.sh + validate-spec.sh (pass/fail) |
-| AI Self-Check | 40% | skill-creator review mode |
-| Behavioral test | 55% | Synthetic task execution |
-| Cross-model review | 5% | Verified distinct model flag count |
+| AI Self-Check | 40/95 of the base | skill-creator review mode |
+| Behavioral test | 55/95 of the base | Synthetic task execution |
+| Cross-model review | penalty-only, cap 5 or 3 | Verified flag weights |
 
 ### Fresh-Context Review (Same or Unknown Model)
 
@@ -30,21 +64,9 @@ Different providers, harnesses, or effort settings alone do not establish model 
 Record actual provider, resolved model, effective effort, harness/version, and redacted
 runtime/config evidence per evaluation using `references/harness-detection.md`.
 
-Same-model and unknown-model fresh-context reviews receive 3%. Redistribute the missing 2%
-proportionally: AI Self-Check = `40 + 2 * 40 / 95`, Behavioral = `55 + 2 * 55 / 95`, review = 3.
-Unknown identity cannot receive 5%. Use the same flag deductions and veto rules in either case.
-
-### Renormalized Weights (Baseline Only)
-
-The first iteration has no improvement diff to review. For that baseline only, redistribute
-5% proportionally (rounded as below). After the baseline, fresh-context peer review is
-mandatory; unavailable secondary review uses the 3% fallback, not this two-component table:
-
-| Component | Weight |
-|---|---|
-| Structural compliance | gate |
-| AI Self-Check | 42% |
-| Behavioral test | 58% |
+Same-model and unknown-model fresh-context reviews use `cap = 3` instead of `cap = 5`.
+Unknown identity cannot use cap 5. The cap only bounds how much verified flags can deduct; it
+never adds a bonus. Use the same flag deductions and veto rules in either case.
 
 ---
 
@@ -63,16 +85,18 @@ does not participate in scoring this iteration:
 Structural is a floor constraint, not a signal dimension. Skills that validate
 get scored on behavior; skills that don't validate get fixed first.
 
-### AI Self-Check (40%)
+### AI Self-Check (40/95)
 
 skill-creator's AI Self-Check checklist, scored individually:
 
 - Each item: pass (1) or fail (0)
-- Score: (passing items / applicable items) * 100
+- Score per grading: (passing items / applicable items) * 100
 - Items not applicable to a given skill are excluded from the denominator
   (e.g., "AI self-check section" for skills that don't generate code)
+- Run at least 3 independent fresh-context gradings and use the minimum (lower bound)
+  as the component score, not the mean
 
-### Behavioral Test (55%)
+### Behavioral Test (55/95)
 
 Run 2-3 synthetic test prompts per skill from `references/test-cases.md`.
 
@@ -91,22 +115,24 @@ Score each output on four dimensions (0-25 each):
 | Accuracy | Are the instructions, patterns, and commands correct? |
 | Actionability | Could an engineer follow this output to complete the task? |
 
-Score: average across all test prompts, normalized to 0-100.
+Score: for each grading, average across all test prompts and normalize to 0-100. Run at least
+3 independent fresh-context gradings and use the minimum (lower bound) as the component score,
+not the mean.
 
 Every deduction must cite an unmet listed quality signal or a concrete accuracy, completeness,
 relevance, or actionability defect. Do not reserve points solely because execution is simulated,
 the evaluator is cautious, or a live runtime is unavailable. Record an unavailable runtime as a
 verification limit unless the skill itself falsely claims that runtime behavior was verified.
 
-### Cross-Model Review (5%)
+### Cross-Model Review (penalty-only)
 
 A reviewer with verified distinct model identity reviews the improvement diff and flags issues
-(the same flag rules apply to same-model or unknown-model fresh-context review at 3%):
+(the same flag rules apply to same-model or unknown-model fresh-context review at cap 3):
 
-- No flags: 100
-- Minor flag (verified): -20 per flag
-- Minor flag (disputed by primary): discarded, no deduction
-- Major flag: triggers hard veto (score becomes irrelevant)
+- No verified flags: penalty 0 (no bonus)
+- Minor flag (verified): weight 0.2, summed and clamped to a maximum penalty of 1.0
+- Minor flag (disputed by primary): discarded, no penalty
+- Major flag (verified): weight 1.0 and hard veto (revert; the penalty applies only if retained)
 
 ---
 
@@ -117,9 +143,10 @@ A reviewer with verified distinct model identity reviews the improvement diff an
 | Condition | Action |
 |---|---|
 | Skill score > threshold | Skip in focus iterations |
-| All skills > threshold | Bump threshold by 5 |
+| All skills > threshold | Bump threshold by 5, capped at 95 |
 | Default threshold | 85 |
-| Maximum threshold | 95 |
+| Maximum threshold | 95 (hard cap, not overridable) |
+| All skills at composite 100 (or >= 99) | Terminate phase 1 as "saturated"; do not bump |
 
 ### Plateau Detection
 
@@ -128,6 +155,14 @@ A reviewer with verified distinct model identity reviews the improvement diff an
 | Delta threshold | 2 points |
 | Trigger | No skill improves by more than delta in one iteration |
 | Action | Terminate phase 1 early |
+
+### Noise Floor
+
+A single grading is not a measurement. Each component score is the minimum of k >= 3
+independent fresh-context gradings. Keep a change only when its lower-bound composite strictly
+improves by at least the plateau delta (2 points) over the previous lower-bound composite.
+Point-estimate moves smaller than the floor are judge variance and never keep a change, in
+either direction.
 
 ---
 
@@ -177,6 +212,8 @@ When improving lint-skills.sh or validate-spec.sh in phase 2:
 All else being equal, simpler is better:
 
 - A marginal score improvement (+1-2) that adds significant complexity: reject
-- A change is kept when the composite score strictly improves, or when it preserves the score while reducing complexity or lines with no behavior change
+- A change is kept only when the lower-bound composite strictly improves by at least the
+  plateau delta (2 points), or when it preserves the score while reducing complexity or lines
+  with no behavior change
 - Restructuring that improves clarity without changing content: accept
 - Adding defensive checks for impossible scenarios: reject
