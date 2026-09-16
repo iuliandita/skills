@@ -172,9 +172,45 @@ export async function POST(req: Request) {
 
 ## 3. Structured Output
 
-### Anthropic - tool_use for structured output
+### Anthropic - structured output
 
-Force the model to return structured data by defining a "tool" that captures the schema:
+Anthropic exposes two mechanisms: JSON outputs (`output_config.format` with
+`type: json_schema`) and strict tool use (`strict: true`). Prefer JSON outputs when you only
+need a validated response body; use strict tool use when the model also needs to call tools.
+
+```python
+response = client.messages.create(
+    model="claude-sonnet-4-6",
+    max_tokens=1024,
+    messages=[{"role": "user", "content": f"Extract info from: {text}"}],
+    output_config={
+        "format": {
+            "type": "json_schema",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "name": {"type": "string"},
+                    "age": {"type": "integer", "minimum": 0, "maximum": 150},
+                    "email": {"type": "string", "format": "email"},
+                    "topics": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "maxItems": 10,
+                    },
+                },
+                "required": ["name", "email"],
+                "additionalProperties": False,
+            },
+        },
+    },
+)
+
+import json
+# Result is in the text content block
+data = json.loads(next(b.text for b in response.content if b.type == "text"))
+```
+
+Strict tool use captures the schema in a tool definition instead:
 
 ```python
 response = client.messages.create(
@@ -183,6 +219,7 @@ response = client.messages.create(
     tools=[{
         "name": "extract_info",
         "description": "Extract structured information from the text",
+        "strict": True,
         "input_schema": {
             "type": "object",
             "properties": {

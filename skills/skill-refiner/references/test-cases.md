@@ -53,7 +53,7 @@ Quality signals:
 Prompt: "Review this Python function for AI-generated patterns:\n\ndef get_user_data(user_id: int) -> dict:\n    \"\"\"Retrieves user data from the database.\n    \n    This function takes a user ID as input and returns the corresponding\n    user data as a dictionary. It handles various edge cases including\n    invalid IDs, database connection failures, and missing data scenarios.\n    \"\"\"\n    try:\n        if user_id is None:\n            raise ValueError('User ID cannot be None')\n        if not isinstance(user_id, int):\n            raise TypeError('User ID must be an integer')\n        if user_id < 0:\n            raise ValueError('User ID must be positive')\n        result = db.query(User, id=user_id)\n        if result is None:\n            return {}\n        return result.to_dict()\n    except Exception as e:\n        logger.error(f'Failed to get user data: {e}')\n        raise"
 Quality signals:
 - Identifies redundant docstring (restates function signature)
-- Flags unnecessary type/None checks (function signature already declares int)
+- Notes that the Python type annotation is not enforced at runtime, so the isinstance/None checks are real runtime validation (do not flag them as unnecessary)
 - Flags broad except catching its own raised exceptions
 - Suggests concise alternative
 
@@ -373,7 +373,7 @@ Prompt: "Review this MCP tool handler for security issues:\n\nasync function rea
 Quality signals:
 - Identifies path traversal vulnerability (no path sanitization)
 - Flags missing input validation (params.path could be anything)
-- Suggests path.resolve + startsWith check to restrict to allowed directory
+- Suggests resolving the path and validating the resolved relative path rejects '..' or a separator prefix (not a lexical startsWith prefix check) to restrict to the allowed directory
 - Flags missing error handling (unhandled promise rejection)
 - Does not suggest disabling the tool as the fix
 
@@ -862,7 +862,7 @@ Quality signals:
 - Emits curl template for /fire endpoint with anthropic-beta: experimental-cc-routine-2026-04-01 header
 - Uses env var placeholders for $ROUTINE_FIRE_URL and $ROUTINE_FIRE_TOKEN
 - Notes that token is shown once in web UI and cannot be retrieved
-- Provides a GitHub Actions step with failure-hook pattern
+- Provides a GitHub Actions step gated on success (if: success()) after the deploy, not a failure-only hook
 - Routine prompt frames "input is a text payload up to 65,536 chars" trigger context
 - Branch policy stays off by default (PRs over direct pushes)
 - Does not auto-run /schedule - emits for user to paste

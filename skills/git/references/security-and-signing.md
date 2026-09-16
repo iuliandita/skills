@@ -106,7 +106,8 @@ CI environments need signing without interactive passphrase prompts.
 
 ```bash
 # GPG in CI: import key from secret, no passphrase (or preset passphrase)
-echo "$GPG_PRIVATE_KEY" | gpg --batch --import
+# Feed the key on stdin so it is never an argument to any process.
+gpg --batch --import <<<"$GPG_PRIVATE_KEY"
 git config user.signingkey <KEY_ID>
 git config commit.gpgsign true
 
@@ -116,7 +117,8 @@ signing_key=$(mktemp) || exit 1
 trap 'rm -f "$signing_key"' EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM
-printf '%s\n' "$SSH_SIGNING_KEY" > "$signing_key"
+# Populate through stdin so the key is never an argument to any process.
+cat > "$signing_key" <<<"$SSH_SIGNING_KEY"
 # Scope configuration to the signing operation; do not leave a deleted key path in config.
 git -c gpg.format=ssh -c user.signingkey="$signing_key" commit -S
 ```
@@ -297,8 +299,8 @@ credential result in the advisory.
 
 | CVE | Component | Severity | Description |
 |-----|-----------|----------|-------------|
-| CVE-2025-68143 | Anthropic MCP Git server | High (8.8) | Path traversal in `git_init` - arbitrary filesystem access. Fixed 2025.9.25. |
-| CVE-2025-68144 | Anthropic MCP Git server | High (8.1) | Argument injection in `git_diff`/`git_checkout`. Fixed 2025.12.18. |
+| CVE-2025-68143 | Anthropic MCP Git server | Moderate (6.5) | Path traversal in `git_init` - arbitrary filesystem access. Fixed 2025.9.25. |
+| CVE-2025-68144 | Anthropic MCP Git server | Moderate (6.3) | Argument injection in `git_diff`/`git_checkout`. Fixed 2025.12.18. |
 | CVE-2025-65964 | n8n | Critical (9.4) | RCE via `core.hooksPath` exploitation in Git hooks. |
 
 **MCP + Filesystem server chaining**: combining the Git MCP server with the Filesystem MCP server
@@ -383,7 +385,7 @@ git lfs migrate import --include="*.psd" --everything
 ```
 
 **LFS gotchas**:
-- LFS storage is separate from git storage. GitHub free tier: 1GB storage, 1GB/month bandwidth.
+- LFS storage is separate from git storage. GitHub free tier: 10 GiB storage, 10 GiB/month bandwidth (checked 2026-09-17; see [Git LFS billing](https://docs.github.com/en/billing/concepts/product-billing/git-lfs)).
 - With Git LFS installed, checkout normally smudges pointers into file content. If smudging is skipped or unavailable, `git lfs pull` fetches and checks out the content.
 - Self-hosted LFS requires a separate LFS server (Forgejo includes one).
 - LFS files don't show meaningful diffs (they're pointers). Configure Git diff drivers/textconv in `.gitattributes` for suitable formats.

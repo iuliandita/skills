@@ -177,6 +177,6 @@ When improving lint-skills.sh or validate-spec.sh in phase 2:
 All else being equal, simpler is better:
 
 - A marginal score improvement (+1-2) that adds significant complexity: reject
-- A code deletion that maintains the same score: accept (preferred)
+- A change is kept when the composite score strictly improves, or when it preserves the score while reducing complexity or lines with no behavior change
 - Restructuring that improves clarity without changing content: accept
 - Adding defensive checks for impossible scenarios: reject

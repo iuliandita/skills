@@ -104,7 +104,7 @@ Find hardcoded credentials, API keys, tokens, and secrets in code and git histor
 2. `trufflehog filesystem . --json > /tmp/trufflehog-report.json`
 3. **Fallback**: use `rg`, `grep`, or equivalent pattern search with `references/grep-patterns.md` (Secret Scanning Fallback section)
 
-Also check git history for committed-then-removed secrets: `git log --all --diff-filter=A - '*.env*'`
+Also check git history for committed-then-removed secrets: `git log --all --diff-filter=A -- '*.env*'`
 
 **What to look for**: hardcoded API keys, passwords/tokens in source, `.env` in git history, base64-encoded creds, private keys, connection strings with embedded passwords, OAuth client secrets.
 
