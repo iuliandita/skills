@@ -355,6 +355,8 @@ See `references/output-contract.md` for the full contract.
 1. **Immutability in phase 1**: never modify `references/evaluation-criteria.md`,
    `references/test-cases.md`, lint-skills.sh, validate-spec.sh, **skill-creator**,
    or **skill-refiner** during phase 1. Violation = abort the run.
+   `scripts/check-refiner-phase1-guard.sh` runs in CI and fails any phase-1
+   iteration commit that touches this set, so the rule is not self-enforced.
 2. **Karpathy gate**: only lower-bound improvements at or above the noise floor survive.
    Keep a change only when its lower-bound composite strictly improves by at least the
    plateau delta (2 points) over the previous lower-bound composite, or when it preserves

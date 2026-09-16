@@ -261,8 +261,7 @@ check_ai_self_check() {
 # skill-router's overlap check, or synology-dsm's DSM-specific checks) is
 # authored content, not injected filler, and must not be flagged.
 #
-# skill-refiner and skill-creator are exempt: routing overlap and spec-claim
-# verification are literally their domain, not injected filler.
+# skill-refiner and skill-creator are exempt only because verification is their domain; phase-1 changes to this list remain subject to scripts/check-refiner-phase1-guard.sh, not self-enforced.
 GENERIC_SELF_CHECK_ITEMS=(
   '- [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them'
   '- [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting'
@@ -329,9 +328,11 @@ check_canonical_test_coverage() {
   local catalog="$SKILLS_DIR/skill-refiner/references/test-cases.md"
   [[ -f "$catalog" ]] || return 0
 
-  local skill_dir name heading
+  local skill_dir name heading kind
   declare -A public_skills=()
   declare -A heading_counts=()
+  declare -A test_counts=()
+  declare -A prompt_counts=()
 
   for skill_dir in "$SKILLS_DIR"/*/; do
     name=$(basename "$skill_dir")
@@ -342,9 +343,21 @@ check_canonical_test_coverage() {
     public_skills["$name"]=1
   done
 
-  while IFS= read -r heading; do
-    [[ "$heading" == "<skill-name>" ]] && continue
-    (( heading_counts["$heading"]++ )) || true
+  while IFS=$'\t' read -r kind heading; do
+    case "$kind" in
+      H)
+        [[ "$heading" == "<skill-name>" ]] && continue
+        (( heading_counts["$heading"]++ )) || true
+        ;;
+      T)
+        [[ -n "$heading" ]] || continue
+        (( test_counts["$heading"]++ )) || true
+        ;;
+      P)
+        [[ -n "$heading" ]] || continue
+        (( prompt_counts["$heading"]++ )) || true
+        ;;
+    esac
   done < <(
     awk '
       function marker_length(value, marker, count) {
@@ -383,7 +396,12 @@ check_canonical_test_coverage() {
         if (in_cases && line ~ /^### /) {
           heading = substr(line, 5)
           sub(/[[:space:]]*$/, "", heading)
-          print heading
+          print "H\t" heading
+          next
+        }
+        if (in_cases) {
+          if (line ~ /^\*\*Test /) { print "T\t" heading; next }
+          if (line ~ /^Prompt:/) { print "P\t" heading; next }
         }
       }
     ' "$catalog"
@@ -401,6 +419,9 @@ check_canonical_test_coverage() {
     fi
     if [[ -z "${public_skills[$heading]:-}" ]]; then
       error "canonical test catalog has orphan section for '$heading'"
+    fi
+    if (( ${test_counts[$heading]:-0} == 0 )) || (( ${prompt_counts[$heading]:-0} == 0 )); then
+      error "canonical test catalog section for '$heading' has no test case"
     fi
   done
 }
