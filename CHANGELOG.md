@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.45.8](https://github.com/iuliandita/skills/compare/v1.45.7...v1.45.8) (2026-09-17)
+
+### Bug Fixes
+
+* **skills:** correct defects across the collection found by a skill-refiner run under the new penalty-only scoring model - Gitea/Forgejo `tea` CI-watch commands, an OpenAI fine-tuning CLI example, an akmods probe flag that mutated state, a BinDiff/Ghidra claim, a subscription connection pointer, credential hygiene in examples, reciprocal routing boundaries, and CIDR/DNS tables moved out of always-loaded context ([#186](https://github.com/iuliandita/skills/pull/186)).
+* **skill-creator, skill-refiner, skill-router:** fix meta-skill defects found in review - the plateau boundary against the 2-point noise floor, the structural-gate re-score wording, a self-contradictory audit example, and the `allowed-tools` separator ([#186](https://github.com/iuliandita/skills/pull/186)).
+* **dev-cycle:** tolerate suffixless remotes in the Gitea run-lister and record the 2026-09-17 skill-refiner run in the ledger ([#186](https://github.com/iuliandita/skills/pull/186)).
+
 ## [1.45.7](https://github.com/iuliandita/skills/compare/v1.45.6...v1.45.7) (2026-09-17)
 
 ### Bug Fixes
