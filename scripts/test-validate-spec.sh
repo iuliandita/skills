@@ -151,10 +151,31 @@ test_very_long_body_remains_a_warning() {
   trap - RETURN
 }
 
+test_zero_skills_fails_loudly() {
+  local tmp output status
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  write_skill "$tmp/skills" staged-skill 'A valid skill used to prove a zero-skill target fails.' yes 3
+
+  run_validator "$tmp/skills/staged-skill" output status
+  if (( status == 0 )); then
+    printf '%s\n' "$output" >&2
+    fail "validator passed when it validated zero skills"
+  fi
+  if [[ "$output" != *"no skills found"* ]]; then
+    printf '%s\n' "$output" >&2
+    fail "validator did not report that no skills were found"
+  fi
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
 test_license_is_optional
 test_description_advisory_boundary
 test_description_through_1024_passes
 test_description_over_1024_fails
 test_long_body_warns_without_failing
 test_very_long_body_remains_a_warning
+test_zero_skills_fails_loudly
 printf 'All validate-spec tests passed.\n'
