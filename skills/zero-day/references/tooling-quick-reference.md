@@ -13,7 +13,7 @@ Don't load it by default; open only the tools relevant to the current target.
 | AFL++ | Coverage-guided fuzzing | `apt install afl++` or build from source |
 | GDB + GEF/pwndbg | Dynamic binary analysis | `apt install gdb` + plugin |
 | pwntools | Exploit development framework (Python) | `pip install pwntools` |
-| BinDiff | Binary patch diffing | Bundled with Ghidra (BinDiffHelper) or standalone |
+| BinDiff | Binary patch diffing | Standalone Google tool; BinDiffHelper is a community Ghidra extension |
 | Diaphora | OSS binary diffing (IDA/Ghidra) | github.com/joxeankoret/diaphora |
 | strace/ltrace | Syscall and library call tracing | `apt install strace ltrace` |
 | checksec | Binary mitigation detection (Linux) | `apt install checksec` |

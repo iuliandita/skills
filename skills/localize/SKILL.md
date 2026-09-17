@@ -396,6 +396,8 @@ See `references/output-contract.md` for the full contract.
 
 ## Related Skills
 
+- **frontend-design** - owns layout, RTL mirroring, and visual polish; this skill owns the
+  translation catalog and locale plumbing behind it.
 - **testing** - write tests for i18n behavior (locale switching, fallbacks, formatting).
   This skill guides what to build; testing guides how to verify it.
 - **code-review** - catches hardcoded strings during review. This skill catches them

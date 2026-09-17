@@ -218,8 +218,8 @@ Load grep patterns from `references/grep-patterns.md` (Auth section).
 Load grep patterns from `references/grep-patterns.md` (Injection section).
 
 - **SQL injection**: raw queries with string interpolation, `.raw()` calls with user input. Remediation is always parameterization, never escaping. Also flag `SELECT *` in application queries as information-disclosure-adjacent (over-fetching exposes columns added later; use explicit column lists). Flag unhandled callback errors in Node.js database calls (bare `err` parameter never checked) as a security-adjacent gap (unhandled errors can mask injection attempts or expose stack traces). Concrete forms:
-  - `node-postgres`: `db.query('SELECT * FROM users WHERE id = $1', [req.params.id])`
-  - `mysql2`: `db.execute('SELECT * FROM users WHERE id = ?', [req.params.id])`
+  - `node-postgres`: `db.query('SELECT id, email FROM users WHERE id = $1', [req.params.id])`
+  - `mysql2`: `db.execute('SELECT id, email FROM users WHERE id = ?', [req.params.id])`
   - Prisma: `prisma.user.findUnique({ where: { id: req.params.id } })` (tagged-template `$queryRaw` is safe; `$queryRawUnsafe` is not)
   - Drizzle: `db.select().from(users).where(eq(users.id, req.params.id))`
   - Python psycopg: `cur.execute('SELECT id FROM users WHERE id = %s', (user_id,))` - never `%` string-format the SQL

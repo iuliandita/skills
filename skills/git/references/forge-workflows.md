@@ -147,7 +147,7 @@ yet, use `GITLAB_HOST` or `--host`.
 
 **SSH-IP vs hostname mismatch**: if the SSH remote resolves to an IP and the web URL uses
 a hostname, `glab mr list` can fail. Use `glab api` with URL-encoded paths (see the
-**ci-cd** skill's `references/gitlab-ci.md`).
+**ci-cd** skill's GitLab CI reference (`gitlab-ci.md`)).
 
 ### MR creation with `glab`
 

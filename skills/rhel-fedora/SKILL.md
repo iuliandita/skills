@@ -183,7 +183,7 @@ lspci -k | grep -Ei 'vga|3d|display'
 journalctl -b | grep -Ei 'nvrm|nvidia|amdgpu|i915|xe|drm' 2>&1 || true
 journalctl --user -b | grep -Ei 'portal|pipewire|webrtc|obs' 2>&1 || true
 lsmod | grep '^v4l2loopback' 2>&1 || true
-command -v akmods >/dev/null 2>&1 && akmods --force --kernels "$(uname -r)" --test 2>&1 || true
+rpm -qa 'akmod-*' 'kmod-*' 2>&1 | sort || true
 command -v dkms >/dev/null 2>&1 && dkms status 2>&1 || true
 findmnt -t btrfs,xfs,ext4
 systemctl status fstrim.timer 2>&1 || true

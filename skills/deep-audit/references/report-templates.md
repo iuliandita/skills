@@ -6,9 +6,9 @@ Templates used by Steps 7, 8, and 9. Read this before writing the audit artifact
 
 ## DEEP-AUDIT.md template
 
-Write to `docs/local/audits/DEEP-AUDIT.md`. Overwrite any prior file - git history is
-not retained (the dir is gitignored); users who want to keep an old version should archive
-it themselves before re-running.
+Write to `docs/local/audits/DEEP-AUDIT.md`. Back up any existing file to a dated copy before
+replacing it - git history is not retained because the dir is gitignored (see the
+backup-before-replace step in the workflow).
 
 ```markdown
 # Deep Audit - {repo_name}

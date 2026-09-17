@@ -231,13 +231,19 @@ fine-tuned on a single 80GB A100.
 
 The easiest path - upload data, start training, no GPU management:
 
-```bash
-# OpenAI fine-tuning
-openai api fine_tuning.jobs.create \
-  --training-file file-abc123 \
-  --model gpt-4o-mini-2024-07-18 \
-  --hyperparameters '{"n_epochs": 3}'
+```python
+from openai import OpenAI
+
+client = OpenAI()
+client.fine_tuning.jobs.create(
+    training_file="file-abc123",
+    model="gpt-4o-mini-2024-07-18",
+    method={"type": "supervised", "supervised": {"hyperparameters": {"n_epochs": 3}}},
+)
 ```
+
+Fine-tuning hyperparameters belong under `method.supervised.hyperparameters`; the top-level
+`hyperparameters` argument is deprecated in favor of `method`.
 
 ### When full fine-tuning over LoRA
 
