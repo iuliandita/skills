@@ -470,7 +470,7 @@ Forgejo Actions support varies by instance. `fj` cannot stream logs or re-run jo
 
 ```bash
 # List workflow runs for the repository (Actions-enabled instances)
-tea actions runs list --repo "$(git remote get-url origin | sed -E 's|.*[:/]([^/]+/[^/]+)\.git$|\1|')"
+tea actions runs list --repo "$(git remote get-url origin | sed -E 's|.*[:/]([^/]+/[^/]+)(\.git)?$|\1|')"
 ```
 
 Gitea Actions API is newer and less uniform than GitHub's. `tea pulls` has no `status`
