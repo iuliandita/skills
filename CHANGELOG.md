@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.46.0](https://github.com/iuliandita/skills/compare/v1.45.8...v1.46.0) (2026-09-17)
+
+### Features
+
+* **install:** support the Command Code target (`~/.commandcode/skills`) and the `agy` alias for Antigravity, add the `command-code` and `cmdc` aliases, and fix the Antigravity skills path to `~/.gemini/config/skills` based on the `agy` CLI's documented global discovery ([#188](https://github.com/iuliandita/skills/pull/188)).
+
 ## [1.45.8](https://github.com/iuliandita/skills/compare/v1.45.7...v1.45.8) (2026-09-17)
 
 ### Bug Fixes
