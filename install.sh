@@ -36,7 +36,7 @@ discover_skills() {
 ALL_SKILLS=()
 
 SUPPORTED_TOOLS=(
-  claude codex cursor windsurf opencode
+  claude codex cursor windsurf opencode commandcode
   copilot gemini roo goose amp continue kiro cline warp
   openclaw hermes qwen crush antigravity augment openhands trae qoder kimi
   portable
@@ -61,7 +61,8 @@ declare -A TOOL_PATHS=(
   [hermes]="${HERMES_SKILLS_DIR:-$HOME/.hermes/skills}"
   [qwen]="${QWEN_SKILLS_DIR:-$HOME/.qwen/skills}"
   [crush]="${CRUSH_SKILLS_DIR:-$HOME/.config/crush/skills}"
-  [antigravity]="${ANTIGRAVITY_SKILLS_DIR:-$HOME/.gemini/antigravity/skills}"
+  [antigravity]="${ANTIGRAVITY_SKILLS_DIR:-$HOME/.gemini/config/skills}"
+  [commandcode]="${COMMANDCODE_SKILLS_DIR:-$HOME/.commandcode/skills}"
   [augment]="${AUGMENT_SKILLS_DIR:-$HOME/.augment/skills}"
   [openhands]="${OPENHANDS_SKILLS_DIR:-$HOME/.openhands/skills}"
   [trae]="${TRAE_SKILLS_DIR:-$HOME/.trae/skills}"
@@ -80,6 +81,9 @@ declare -A TOOL_ALIASES=(
   [kiro-cli]=kiro
   [qwen-code]=qwen
   [kimi-cli]=kimi
+  [agy]=antigravity
+  [command-code]=commandcode
+  [cmdc]=commandcode
 )
 
 supported_tools_text() {
