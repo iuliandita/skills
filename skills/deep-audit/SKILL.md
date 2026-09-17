@@ -107,9 +107,10 @@ a narrower target.
 Detect which Wave 3 skills apply by scanning for file patterns. Use the detection table
 and script in `references/detection-patterns.md`.
 
-Run the detection script from the repo root. It outputs matched skill names, one per line.
-If the user specified a scope, pass it as the script's first argument to filter detection
-to that subtree (`git ls-files -- path/to/scope` instead of the full repo).
+Extract the detection script from the fenced block in `references/detection-patterns.md` and
+run it from the repo root. It outputs matched skill names, one per line. If the user specified
+a scope, pass it as the script's first argument to filter detection to that subtree
+(`git ls-files -- path/to/scope` instead of the full repo).
 
 After detection, present the recon summary before proceeding. Compute
 `{unmatched_skills}` as the 21 Wave 3 candidates minus the matched set.
