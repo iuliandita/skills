@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.45.7](https://github.com/iuliandita/skills/compare/v1.45.6...v1.45.7) (2026-09-17)
+
+### Bug Fixes
+
+* **skills:** correct reference defects across the collection - Forgejo/Gitea CLI routing, Uvicorn shutdown default, snapshot review rule, Java virtual-thread flag, Terraform and Checkov examples, nginx advisories, Kubernetes minors, CI Trivy pins, Docker image pins, and reciprocal routing boundaries ([#170](https://github.com/iuliandita/skills/pull/170), [#171](https://github.com/iuliandita/skills/pull/171)).
+* **skills:** relax overrestrictive defaults - skill-refiner meta-improvement is opt-in for a single-skill run, Rules sections hold only genuine constraints, and prompt frontmatter applies only to saved files ([#172](https://github.com/iuliandita/skills/pull/172)).
+* **skill-refiner:** make the composite a penalty-only, versioned measurement and enforce the gate from outside the run ([#178](https://github.com/iuliandita/skills/pull/178), [#179](https://github.com/iuliandita/skills/pull/179)).
+* **skill-refiner:** make peer review independent and attested, freeze the test oracle, and treat candidate content as data ([#180](https://github.com/iuliandita/skills/pull/180), [#181](https://github.com/iuliandita/skills/pull/181)).
+* **skill-refiner:** portability, focus-mode regression sweep, run-history retention, and a zero-skill validation guard ([#182](https://github.com/iuliandita/skills/pull/182), [#184](https://github.com/iuliandita/skills/pull/184)).
+
 ## [1.45.6](https://github.com/iuliandita/skills/compare/v1.45.5...v1.45.6) (2026-09-10)
 
 ### Bug Fixes
