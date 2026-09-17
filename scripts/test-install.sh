@@ -133,10 +133,30 @@ test_backup_preserves_top_level_symlink() {
   trap - RETURN
 }
 
+test_commandcode_and_agy_targets() {
+  local tmp
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  HOME="$tmp" "$ROOT/install.sh" --tool commandcode --link --no-backup docker >/dev/null
+  if [[ ! -e "$tmp/.commandcode/skills/docker" ]]; then
+    fail "commandcode target did not install to ~/.commandcode/skills"
+  fi
+
+  HOME="$tmp" "$ROOT/install.sh" --tool agy --link --no-backup docker >/dev/null
+  if [[ ! -e "$tmp/.gemini/config/skills/docker" ]]; then
+    fail "agy alias did not resolve to the Antigravity global skills path"
+  fi
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
 test_backups_stay_outside_skill_root
 test_legacy_backups_are_migrated_outside_skill_root
 test_opencode_install_allows_installed_skills
 test_link_mode_writes_tool_lock
 test_link_mode_writes_tool_lock_gemini
 test_backup_preserves_top_level_symlink
+test_commandcode_and_agy_targets
 printf 'install tests passed\n'

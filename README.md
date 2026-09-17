@@ -45,7 +45,7 @@ Audit and review skills share a report format. Small reviews use compact chat ou
 
 ## Compatibility
 
-Skills follow the [Agent Skills specification](https://agentskills.io/specification). The bundled installer provides paths for 25 targets, including Claude Code, Codex, Cursor, Gemini CLI, Copilot, and OpenCode. See the [target table](INSTALL.md#supported-targets).
+Skills follow the [Agent Skills specification](https://agentskills.io/specification). The bundled installer provides paths for 26 targets, including Claude Code, Codex, Cursor, Gemini CLI, Copilot, OpenCode, and Command Code. See the [target table](INSTALL.md#supported-targets).
 
 Path support does not establish equivalent runtime behavior. Activation, reference loading, tool access, and delegation depend on the consuming agent and model. Smoke-test important workflows after installing skills or changing models.
 
