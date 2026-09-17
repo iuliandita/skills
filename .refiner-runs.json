@@ -4952,5 +4952,862 @@
   ],
   "local_report": "docs/local/audits/skill-refiner/2026-09-10-collection/iteration-3/report.md",
   "scores": "docs/local/audits/skill-refiner/2026-09-10-collection/iteration-3/iteration-3.json"
- }
+ },
+{
+ "schema": 2,
+ "rubric_hash": "504e3e60d6b0601a8ab82f82230ae267333292eee8b993238a68a8fc08aef70e",
+ "run_id": "2026-09-17-collection-iteration-3",
+ "branch": "skill-refiner/2026-09-17-103541",
+ "date": "2026-09-17",
+ "primary": {
+  "provider": "opencode",
+  "resolved_model": "deepseek-v4.1-flash",
+  "effective_effort": null,
+  "harness": "opencode",
+  "version": "1.18.29",
+  "evidence": "session system prompt only; not attested from raw harness output"
+ },
+ "secondary": {
+  "provider": "anthropic",
+  "resolved_model": "claude-opus-5",
+  "effective_effort": null,
+  "harness": "claude",
+  "version": "2.1.267",
+  "evidence": "claude -p --output-format json modelUsage: claude-opus-5[1m], canonicalModel claude-opus-5, provider firstParty"
+ },
+ "reviewer_classification": "unknown-model",
+ "cap": 3,
+ "config": {
+  "iterations": 3,
+  "threshold": 95,
+  "mode": "circuit-breaker",
+  "plateau": 2
+ },
+ "pool_size": 45,
+ "termination": "iteration cap reached (3); no skill below the focus threshold",
+ "review_flags": {
+  "minor": 1,
+  "major": 0
+ },
+ "control_failures": [
+  "primary model identity not attested from raw harness output; cross-model review demoted to unknown-model, cap 3",
+  "baseline git pass-1 grading invalidated by a staging false positive (ci-cd sibling absent); correct A=100",
+  "behavioral cases were written responses, not live runtime execution (no DB/cluster/forge/browser/offensive host); recorded as verification_limit per case",
+  "version/CVE/EOL pins left to the freshness routine; internal pin contradictions flagged only",
+  "new rubric hash with no prior comparable run; fresh baseline started"
+ ],
+ "skills": {
+  "ai-ml": {
+   "before": {
+    "structural": "pass",
+    "ai": 95.24,
+    "behavioral": 99,
+    "penalty": 0,
+    "composite": 97.42
+   },
+   "after": {
+    "structural": "pass",
+    "ai": 100.0,
+    "behavioral": 97.5,
+    "penalty": 0,
+    "composite": 98.55
+   },
+   "test_source": "canonical test-cases.md",
+   "changed": true
+  },
+  "ansible": {
+   "before": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 100,
+    "penalty": 0,
+    "composite": 100.0
+   },
+   "after": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 100,
+    "penalty": 0,
+    "composite": 100.0
+   },
+   "test_source": "canonical test-cases.md",
+   "changed": false
+  },
+  "anti-ai-prose": {
+   "before": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 100,
+    "penalty": 0,
+    "composite": 100.0
+   },
+   "after": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 100,
+    "penalty": 0,
+    "composite": 100.0
+   },
+   "test_source": "canonical test-cases.md",
+   "changed": false
+  },
+  "anti-slop": {
+   "before": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 98.5,
+    "penalty": 0,
+    "composite": 99.13
+   },
+   "after": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 98.5,
+    "penalty": 0,
+    "composite": 99.13
+   },
+   "test_source": "canonical test-cases.md",
+   "changed": false
+  },
+  "arch-btw": {
+   "before": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 99.0,
+    "penalty": 0,
+    "composite": 99.42
+   },
+   "after": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 99.0,
+    "penalty": 0,
+    "composite": 99.42
+   },
+   "test_source": "canonical test-cases.md",
+   "changed": false
+  },
+  "backend-api": {
+   "before": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 99,
+    "penalty": 0,
+    "composite": 99.42
+   },
+   "after": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 99,
+    "penalty": 0,
+    "composite": 99.42
+   },
+   "test_source": "canonical test-cases.md",
+   "changed": false
+  },
+  "browse": {
+   "before": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 99.0,
+    "penalty": 0,
+    "composite": 99.42
+   },
+   "after": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 99.0,
+    "penalty": 0,
+    "composite": 99.42
+   },
+   "test_source": "canonical test-cases.md",
+   "changed": false
+  },
+  "ci-cd": {
+   "before": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 100,
+    "penalty": 0,
+    "composite": 100.0
+   },
+   "after": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 100,
+    "penalty": 0,
+    "composite": 100.0
+   },
+   "test_source": "canonical test-cases.md",
+   "changed": false
+  },
+  "cluster-health": {
+   "before": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 100,
+    "penalty": 0,
+    "composite": 100.0
+   },
+   "after": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 100,
+    "penalty": 0,
+    "composite": 100.0
+   },
+   "test_source": "canonical test-cases.md",
+   "changed": false
+  },
+  "code-review": {
+   "before": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 97.5,
+    "penalty": 0,
+    "composite": 98.55
+   },
+   "after": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 97.5,
+    "penalty": 0,
+    "composite": 98.55
+   },
+   "test_source": "canonical test-cases.md",
+   "changed": false
+  },
+  "code-slimming": {
+   "before": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 97.5,
+    "penalty": 0,
+    "composite": 98.55
+   },
+   "after": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 97.5,
+    "penalty": 0,
+    "composite": 98.55
+   },
+   "test_source": "canonical test-cases.md",
+   "changed": false
+  },
+  "command-prompt": {
+   "before": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 99.0,
+    "penalty": 0,
+    "composite": 99.42
+   },
+   "after": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 99.0,
+    "penalty": 0,
+    "composite": 99.42
+   },
+   "test_source": "canonical test-cases.md",
+   "changed": false
+  },
+  "databases": {
+   "before": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 100,
+    "penalty": 0,
+    "composite": 100.0
+   },
+   "after": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 100,
+    "penalty": 0,
+    "composite": 100.0
+   },
+   "test_source": "canonical test-cases.md",
+   "changed": true
+  },
+  "debian-ubuntu": {
+   "before": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 99.0,
+    "penalty": 0,
+    "composite": 99.42
+   },
+   "after": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 99.0,
+    "penalty": 0,
+    "composite": 99.42
+   },
+   "test_source": "canonical test-cases.md",
+   "changed": false
+  },
+  "debug-triage": {
+   "before": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 100,
+    "penalty": 0,
+    "composite": 100.0
+   },
+   "after": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 100,
+    "penalty": 0,
+    "composite": 100.0
+   },
+   "test_source": "canonical test-cases.md",
+   "changed": false
+  },
+  "deep-audit": {
+   "before": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 100,
+    "penalty": 0,
+    "composite": 100.0
+   },
+   "after": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 100,
+    "penalty": 0,
+    "composite": 100.0
+   },
+   "test_source": "canonical test-cases.md",
+   "changed": true
+  },
+  "deep-grill": {
+   "before": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 100,
+    "penalty": 0,
+    "composite": 100.0
+   },
+   "after": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 100,
+    "penalty": 0,
+    "composite": 100.0
+   },
+   "test_source": "canonical test-cases.md",
+   "changed": false
+  },
+  "dev-cycle": {
+   "before": {
+    "structural": "pass",
+    "ai": 90,
+    "behavioral": 100,
+    "penalty": 0,
+    "composite": 95.79
+   },
+   "after": {
+    "structural": "pass",
+    "ai": 100.0,
+    "behavioral": 99.5,
+    "penalty": 0,
+    "composite": 99.71
+   },
+   "test_source": "canonical test-cases.md",
+   "changed": true
+  },
+  "docker": {
+   "before": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 100,
+    "penalty": 0,
+    "composite": 100.0
+   },
+   "after": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 100,
+    "penalty": 0,
+    "composite": 100.0
+   },
+   "test_source": "canonical test-cases.md",
+   "changed": false
+  },
+  "firewall-appliance": {
+   "before": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 100,
+    "penalty": 0,
+    "composite": 100.0
+   },
+   "after": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 100,
+    "penalty": 0,
+    "composite": 100.0
+   },
+   "test_source": "canonical test-cases.md",
+   "changed": false
+  },
+  "frontend-design": {
+   "before": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 95,
+    "penalty": 0,
+    "composite": 97.11
+   },
+   "after": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 95,
+    "penalty": 0,
+    "composite": 97.11
+   },
+   "test_source": "canonical test-cases.md",
+   "changed": false
+  },
+  "full-review": {
+   "before": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 100,
+    "penalty": 0,
+    "composite": 100.0
+   },
+   "after": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 100,
+    "penalty": 0,
+    "composite": 100.0
+   },
+   "test_source": "canonical test-cases.md",
+   "changed": false
+  },
+  "git": {
+   "before": {
+    "structural": "pass",
+    "ai": 95.24,
+    "behavioral": 100,
+    "penalty": 0,
+    "composite": 98.0
+   },
+   "after": {
+    "structural": "pass",
+    "ai": 100.0,
+    "behavioral": 99.0,
+    "penalty": 0,
+    "composite": 99.42
+   },
+   "test_source": "canonical test-cases.md",
+   "changed": true
+  },
+  "handoff": {
+   "before": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 99.5,
+    "penalty": 0,
+    "composite": 99.71
+   },
+   "after": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 99.5,
+    "penalty": 0,
+    "composite": 99.71
+   },
+   "test_source": "canonical test-cases.md",
+   "changed": false
+  },
+  "jekyll-hyde": {
+   "before": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 100,
+    "penalty": 0,
+    "composite": 100.0
+   },
+   "after": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 100,
+    "penalty": 0,
+    "composite": 100.0
+   },
+   "test_source": "canonical test-cases.md",
+   "changed": false
+  },
+  "kali-linux": {
+   "before": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 98.5,
+    "penalty": 0,
+    "composite": 99.13
+   },
+   "after": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 98.5,
+    "penalty": 0,
+    "composite": 99.13
+   },
+   "test_source": "canonical test-cases.md",
+   "changed": true
+  },
+  "kubernetes": {
+   "before": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 100,
+    "penalty": 0,
+    "composite": 100.0
+   },
+   "after": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 100,
+    "penalty": 0,
+    "composite": 100.0
+   },
+   "test_source": "canonical test-cases.md",
+   "changed": false
+  },
+  "localize": {
+   "before": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 99,
+    "penalty": 0,
+    "composite": 99.42
+   },
+   "after": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 100,
+    "penalty": 0,
+    "composite": 100.0
+   },
+   "test_source": "canonical test-cases.md",
+   "changed": true
+  },
+  "lockpick": {
+   "before": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 100,
+    "penalty": 0,
+    "composite": 100.0
+   },
+   "after": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 100,
+    "penalty": 0,
+    "composite": 100.0
+   },
+   "test_source": "canonical test-cases.md",
+   "changed": false
+  },
+  "mcp": {
+   "before": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 99,
+    "penalty": 0,
+    "composite": 99.42
+   },
+   "after": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 99,
+    "penalty": 0,
+    "composite": 99.42
+   },
+   "test_source": "canonical test-cases.md",
+   "changed": false
+  },
+  "networking": {
+   "before": {
+    "structural": "pass",
+    "ai": 95.24,
+    "behavioral": 100,
+    "penalty": 0,
+    "composite": 98.0
+   },
+   "after": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 100,
+    "penalty": 0,
+    "composite": 100.0
+   },
+   "test_source": "canonical test-cases.md",
+   "changed": true
+  },
+  "nixos-btw": {
+   "before": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 99.0,
+    "penalty": 0,
+    "composite": 99.42
+   },
+   "after": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 99.0,
+    "penalty": 0,
+    "composite": 99.42
+   },
+   "test_source": "canonical test-cases.md",
+   "changed": false
+  },
+  "observability": {
+   "before": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 100,
+    "penalty": 0,
+    "composite": 100.0
+   },
+   "after": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 100,
+    "penalty": 0,
+    "composite": 100.0
+   },
+   "test_source": "canonical test-cases.md",
+   "changed": false
+  },
+  "prompt-generator": {
+   "before": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 99.5,
+    "penalty": 0,
+    "composite": 99.71
+   },
+   "after": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 99.5,
+    "penalty": 0,
+    "composite": 99.71
+   },
+   "test_source": "canonical test-cases.md",
+   "changed": false
+  },
+  "rhel-fedora": {
+   "before": {
+    "structural": "pass",
+    "ai": 95.24,
+    "behavioral": 98.5,
+    "penalty": 0,
+    "composite": 97.13
+   },
+   "after": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 100,
+    "penalty": 0,
+    "composite": 100.0
+   },
+   "test_source": "canonical test-cases.md",
+   "changed": true
+  },
+  "roadmap": {
+   "before": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 100,
+    "penalty": 0,
+    "composite": 100.0
+   },
+   "after": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 100,
+    "penalty": 0,
+    "composite": 100.0
+   },
+   "test_source": "canonical test-cases.md",
+   "changed": false
+  },
+  "routine-writer": {
+   "before": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 99.0,
+    "penalty": 0,
+    "composite": 99.42
+   },
+   "after": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 99.0,
+    "penalty": 0,
+    "composite": 99.42
+   },
+   "test_source": "canonical test-cases.md",
+   "changed": false
+  },
+  "security-audit": {
+   "before": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 99.5,
+    "penalty": 0,
+    "composite": 99.71
+   },
+   "after": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 100,
+    "penalty": 0,
+    "composite": 100.0
+   },
+   "test_source": "canonical test-cases.md",
+   "changed": true
+  },
+  "skill-router": {
+   "before": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 99,
+    "penalty": 0,
+    "composite": 99.42
+   },
+   "after": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 99,
+    "penalty": 0,
+    "composite": 99.42
+   },
+   "test_source": "canonical test-cases.md",
+   "changed": false
+  },
+  "synology-dsm": {
+   "before": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 100,
+    "penalty": 0,
+    "composite": 100.0
+   },
+   "after": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 100,
+    "penalty": 0,
+    "composite": 100.0
+   },
+   "test_source": "canonical test-cases.md",
+   "changed": false
+  },
+  "terraform": {
+   "before": {
+    "structural": "pass",
+    "ai": 95.45,
+    "behavioral": 100,
+    "penalty": 0,
+    "composite": 98.08
+   },
+   "after": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 100,
+    "penalty": 0,
+    "composite": 100.0
+   },
+   "test_source": "canonical test-cases.md",
+   "changed": true
+  },
+  "testing": {
+   "before": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 96,
+    "penalty": 0,
+    "composite": 97.68
+   },
+   "after": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 96,
+    "penalty": 0,
+    "composite": 97.68
+   },
+   "test_source": "canonical test-cases.md",
+   "changed": false
+  },
+  "update-docs": {
+   "before": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 100,
+    "penalty": 0,
+    "composite": 100.0
+   },
+   "after": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 100,
+    "penalty": 0,
+    "composite": 100.0
+   },
+   "test_source": "canonical test-cases.md",
+   "changed": false
+  },
+  "virtualization": {
+   "before": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 100,
+    "penalty": 0,
+    "composite": 100.0
+   },
+   "after": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 100,
+    "penalty": 0,
+    "composite": 100.0
+   },
+   "test_source": "canonical test-cases.md",
+   "changed": false
+  },
+  "zero-day": {
+   "before": {
+    "structural": "pass",
+    "ai": 95.24,
+    "behavioral": 100,
+    "penalty": 0,
+    "composite": 98.0
+   },
+   "after": {
+    "structural": "pass",
+    "ai": 100,
+    "behavioral": 100,
+    "penalty": 0,
+    "composite": 100.0
+   },
+   "test_source": "canonical test-cases.md",
+   "changed": true
+  }
+ },
+ "changes": "Iteration 1 (b6120a9): fixed baseline P1/P2 defects in dev-cycle (invalid tea commands), ai-ml (legacy fine-tuning CLI), rhel-fedora (akmods --test), zero-day (BinDiff), networking (context budget), git, terraform, databases, security-audit, deep-audit, kali-linux, localize. Iteration 2 (4025f14): databases subscription conninfo host, deep-audit detection-script pointer, networking CoreDNS view plugin. Iteration 3 (a60a660): corrected subscription CONNECTION to the publisher/source, TLS comment, openssl stderr. All 10 gate scripts pass; phase-1 guard clean."
+}
 ]
