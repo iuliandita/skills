@@ -3,7 +3,9 @@
 Immutable scoring rubric for skill-refiner. Defines how skills are scored, what
 thresholds mean, and how the adaptive loop makes decisions.
 
-**This file must not be modified during phase 1.**
+**This file must not be modified during phase 1.** The same applies to the test catalogs
+(`test-cases.md` and `test-cases-local.md`); new cases land only in phase 2 or a separate
+reviewed change.
 
 ---
 
@@ -101,10 +103,11 @@ skill-creator's AI Self-Check checklist, scored individually:
 Run 2-3 synthetic test prompts per skill from `references/test-cases.md`.
 
 **For skills without pre-written test cases**: auto-generate 2-3 prompts from the skill's
-"When to use" section and quality signals from its AI Self-Check. Pre-written tests in
-`test-cases.md` take precedence. Also check for a test-cases-local.md file alongside
-test-cases.md for user-contributed or previously auto-generated tests. Log a warning when
-using generated tests (lower quality than hand-written ones).
+"When to use" section and quality signals from its AI Self-Check. Canonical tests in
+`test-cases.md` always take precedence. A `test-cases-local.md` file alongside
+`test-cases.md` is read only for skills that have no canonical section, and its cases never
+score the run that created them. Log a warning when using generated tests (lower quality
+than hand-written ones).
 
 Score each output on four dimensions (0-25 each):
 
