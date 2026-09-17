@@ -99,7 +99,7 @@ metadata:
 
 ```yaml
 compatibility: "Requires kubectl. Optional: helm, kustomize"  # env requirements, max 500 chars, MUST quote if value contains colons
-allowed-tools: Read, Bash, Grep, Glob  # restrict which tools the skill can use
+allowed-tools: Read Bash(git:*) Grep  # space-separated per the Agent Skills spec; experimental, not a sandbox
 ```
 
 ### `paths:` frontmatter is a non-portable extension

@@ -48,7 +48,7 @@ skill-refiner [--iterations N] [--mode MODE] [--secondary HARNESS] [--threshold 
 | `--iterations` | 10 | Maximum iterations for phase 1 |
 | `--mode` | circuit-breaker | `auto`, `circuit-breaker`, or `step` |
 | `--secondary` | auto-detect | Secondary review harness, or `none`; model identity determines the penalty cap |
-| `--threshold` | 85 | Focus threshold - skip skills scoring at or above it (`>=`, so exactly at the threshold is top-of-focus and skipped); hard cap 95, not overridable |
+| `--threshold` | 85 | Focus threshold - skip skills scoring at or above it (`>=`, so exactly at the threshold is skipped); hard cap 95, not overridable |
 | `--plateau` | 2 | Minimum lower-bound composite delta to keep a change or keep iterating |
 | `--meta` | off for single-skill runs | Run phase 2 (meta-improvement) for a single named-skill run, which otherwise stops after phase 1. Collection-wide runs enter phase 2 by default and ignore this flag. |
 
@@ -200,7 +200,7 @@ delta comparisons against prior runs rather than failing the run.
    threshold termination. For a user-requested single-skill run, treat that skill as the whole
    phase-1 pool.
 10. **Select targets**: identify skills scoring strictly below the focus threshold (a skill
-    exactly at the threshold is top-of-focus and skipped). Reopen any skill that regressed in
+    exactly at the threshold is skipped). Reopen any skill that regressed in
     the previous iteration's sweep (step 13), regardless of the focus threshold.
 11. **For each targeted skill**, run the improvement cycle:
     a. Read current SKILL.md and all reference files
@@ -210,9 +210,10 @@ delta comparisons against prior runs rather than failing the run.
        minimum as the component score
     d. Propose targeted improvements based on findings (not random changes)
     e. Apply changes to SKILL.md (and references if needed)
-    f. Re-score structural, AI Self-Check, and behavioral components, each as the minimum of
-       at least 3 fresh-context gradings; keep the change provisional. Also re-score the
-       targeted skill's direct neighbors behaviorally, in the same fresh-context way.
+    f. Re-run the structural gate (lint + validate, pass/fail) and re-score the AI Self-Check
+       and behavioral components each as the minimum of at least 3 fresh-context gradings;
+       keep the change provisional. Also re-score the targeted skill's direct neighbors
+       behaviorally, in the same fresh-context way.
     g. Send the minimum necessary diff to an authorized peer reviewer or the fresh local fallback;
        never send the primary's scores or the expected verdict
     h. Adjudicate flags per the `references/harness-detection.md` protocol, using a fresh context
