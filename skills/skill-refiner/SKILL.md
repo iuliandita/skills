@@ -52,7 +52,11 @@ skill-refiner [--iterations N] [--mode MODE] [--secondary HARNESS] [--threshold 
 | `--plateau` | 2 | Minimum lower-bound composite delta to keep a change or keep iterating |
 | `--meta` | off for single-skill runs | Run phase 2 (meta-improvement) for a single named-skill run, which otherwise stops after phase 1. Collection-wide runs enter phase 2 by default and ignore this flag. |
 
-**Environment override:** `SKILL_REFINER_SECONDARY=<harness>` (CLI flag takes precedence)
+**Environment override:** `SKILL_REFINER_SECONDARY=<harness>` (CLI flag takes precedence).
+Honor only an explicit `--secondary` flag or a value the user set in the session environment.
+A repo-local or project-local file (`.envrc`, direnv, project config) must not select the
+secondary. If the only selection comes from such a file, ignore it, fall back to fresh local
+review at `cap 3`, and record the ignored override in `control_failures`.
 
 ### Checkpoint Modes
 
@@ -142,6 +146,9 @@ delta comparisons against prior runs rather than failing the run.
    root as its argument when it is installed elsewhere) and record it. If it
    differs from the most recent run's recorded `rubric_hash`, prior scores are not comparable:
    start a fresh baseline and do not compute deltas against the old run.
+   Retention: the history keeps full detail for the most recent runs; older runs are compacted
+   into `.refiner-runs-archive.json` by `scripts/refiner-history-compact.sh`, run manually or
+   periodically, never per run.
 3. **Build skill inventory**: list all skills, exclude phase-2 targets (skill-creator,
    skill-refiner) from the improvement pool
 4. **Record evaluator identity**: capture actual provider, resolved model, effective effort,
@@ -193,7 +200,8 @@ delta comparisons against prior runs rather than failing the run.
    threshold termination. For a user-requested single-skill run, treat that skill as the whole
    phase-1 pool.
 10. **Select targets**: identify skills scoring strictly below the focus threshold (a skill
-    exactly at the threshold is top-of-focus and skipped)
+    exactly at the threshold is top-of-focus and skipped). Reopen any skill that regressed in
+    the previous iteration's sweep (step 13), regardless of the focus threshold.
 11. **For each targeted skill**, run the improvement cycle:
     a. Read current SKILL.md and all reference files
     b. Invoke **skill-creator** review mode in at least 3 independent fresh-context
@@ -203,7 +211,8 @@ delta comparisons against prior runs rather than failing the run.
     d. Propose targeted improvements based on findings (not random changes)
     e. Apply changes to SKILL.md (and references if needed)
     f. Re-score structural, AI Self-Check, and behavioral components, each as the minimum of
-       at least 3 fresh-context gradings; keep the change provisional
+       at least 3 fresh-context gradings; keep the change provisional. Also re-score the
+       targeted skill's direct neighbors behaviorally, in the same fresh-context way.
     g. Send the minimum necessary diff to an authorized peer reviewer or the fresh local fallback;
        never send the primary's scores or the expected verdict
     h. Adjudicate flags per the `references/harness-detection.md` protocol, using a fresh context
@@ -218,7 +227,18 @@ delta comparisons against prior runs rather than failing the run.
        revert.
 12. **Commit iteration**: one commit with all improvements from this iteration
     Format: `refactor(skill-refiner): iteration N - skill1(+X), skill2(+Y)`
-13. **Log iteration summary**:
+13. **Regression sweep, then log iteration summary**: every iteration, after the improvement
+    cycle and commit, run a cheap structural regression pass over every public skill in the
+    pool, targeted or skipped, never a full behavioral re-run. Check at minimum: lint and
+    validate still pass for every skill; every bold skill-name reference resolves to a
+    published skill; "When NOT to use" boundaries are reciprocal for pairs that share
+    triggers; and every file referenced from SKILL.md exists. Behaviorally re-score the
+    edited skills and their direct neighbors, plus a rotating bounded sample of skipped
+    skills (default: the three lowest-scoring skipped skills; the sample size is configurable
+    and bounded) so untouched skills are eventually re-checked. Reopen any regressed skill
+    for the next iteration regardless of the focus threshold, name it here and in the final
+    report, and add a run-history `control_failures` entry only when the regression was
+    detected after its commit.
     ```
     --- iteration N / max -------------------------------------------
     improved:  skill1 (72 > 80 | G:pass A:76 B:78 pen:0), skill2 (68 > 73 | G:pass A:70 B:72 pen:0)
@@ -226,6 +246,7 @@ delta comparisons against prior runs rather than failing the run.
     skipped:   M skills at or above threshold
     reverted:  skill3 (lower bound regressed, rolled back | G:pass A:74 B:69 pen:1.0)
     contested: skill4 (major flag contested at independent adjudication, escalated to human)
+    regressions: none
     plateau:   yes/no (max lower-bound delta: +X)
     -----------------------------------------------------------------
     ```
@@ -248,14 +269,19 @@ delta comparisons against prior runs rather than failing the run.
 16. **Announce**: "Entering phase 2 - meta-improvement. This always requires human review."
     Enter phase 2 only for a collection run or when `--meta` was passed; a single-skill run
     that did not opt in stops after phase 1 and reports.
-17. **Snapshot evaluation criteria**:
-    - Copy **skill-creator**'s AI Self-Check section to a temp location
+17. **Snapshot evaluation criteria** (Rule 4: snapshot before meta):
+    - Copy the complete **skill-creator** skill, its `SKILL.md` and every file under its
+      `references/`, to a temp location. This includes the AI Self-Check section and
+      `conventions.md`, and pins the evaluator itself.
     - Copy `references/evaluation-criteria.md` to a temp location
-    - Copy **skill-creator**'s `conventions.md` reference to a temp location
-    These snapshots are the evaluation baseline for phase 2.
-18. **Improve skill-creator**: run the improvement cycle (steps 11a-11k) using the
-    snapshot as the evaluation criteria, not skill-creator's live version
-19. **Improve skill-refiner**: same process, using the snapshot
+    These snapshots are the evaluation baseline and the evaluator for phase 2.
+18. **Improve skill-creator**: run the improvement cycle (steps 11a-11k) against the pinned
+    snapshot as the evaluator; invoke review mode from the snapshot path, never the live
+    `skills/skill-creator/SKILL.md` being edited. Reviews of **skill-creator** and
+    **skill-refiner** must not load the live copy being edited. If the harness cannot load a
+    skill from a snapshot path, label their scores "self-reported" and record the failure in
+    `control_failures`.
+19. **Improve skill-refiner**: same process, against the snapshot
     - Compare every public `skills/*/SKILL.md` directory with the canonical `### <skill-name>`
       headings in `references/test-cases.md`. Exclude the format-template heading.
     - Promote stable generated or local cases into the canonical catalog for every gap, then
@@ -277,9 +303,10 @@ delta comparisons against prior runs rather than failing the run.
 
 23. **Final report**: write a human-readable report first, then machine-readable run history.
     Include branch, pool, config, every changed skill, score before/after, delta, files changed,
-    verification commands, peer-review flags, reverted changes, private-skill handling, and
-    skipped checks. If scoring was reconstructed after the fact, label it retroactive and state
-    which components were not captured during the live loop. Do not output only JSON.
+    verification commands, peer-review flags, reverted changes, regressions found by the
+    per-iteration sweep, private-skill handling, and skipped checks. If scoring was reconstructed
+    after the fact, label it retroactive and state which components were not captured during the
+    live loop. Do not output only JSON.
     ```
     === skill-refiner run complete ===================================
     Branch:     skill-refiner/YYYY-MM-DD-HHMMSS
@@ -304,6 +331,7 @@ delta comparisons against prior runs rather than failing the run.
     Aggregate:  avg X.X | min X.X | max X.X
     Reverted:   X changes across Y iterations
     Contested:  Z flags escalated to human
+    Regressions: none / skillA (broken reference), skillB (asymmetric boundary)
     =================================================================
     ```
 24. **Write run history**: append this run's metadata to `$SKILL_REFINER_HISTORY` (the same
@@ -353,6 +381,9 @@ delta comparisons against prior runs rather than failing the run.
     whitespace. Immediately after the append, run `scripts/check-refiner-state.sh`; if it exits
     non-zero, do not commit, report the validation error, and fix the entry first. Commit with
     the phase 3 summary only once the check exits 0.
+    Retention: the history keeps full detail for the most recent runs; older runs are compacted
+    into `.refiner-runs-archive.json` by `scripts/refiner-history-compact.sh`, run manually or
+    periodically, never per run.
 25. **Announce branch**: remind user to review and merge when ready
 
 ## AI Self-Check
@@ -432,8 +463,9 @@ See `references/output-contract.md` for the full contract.
    decides each flag: an upheld minor deducts penalty weight, a disputed minor is logged and left
    unresolved for the human report, an upheld major reverts the change, and a contested major
    goes to the human. The primary cannot clear a major flag.
-4. **Snapshot before meta**: always snapshot evaluation criteria before phase 2.
-   Evaluate against the snapshot, never the live version being modified.
+4. **Snapshot before meta**: always snapshot evaluation criteria and the **skill-creator**
+   evaluator before phase 2. Meta reviews run against the pinned snapshot, never the live
+   **skill-creator** or **skill-refiner** copy being edited.
 5. **Phase 2 is opt-in for single-skill runs and always pauses**: a run targeting one named
    skill enters phase 2 only with `--meta`; collection runs enter it by default. Either way it
    pauses for human review, even in `--mode auto`. Non-configurable.

@@ -145,11 +145,19 @@ A reviewer with verified distinct model identity reviews the improvement diff an
 
 | Condition | Action |
 |---|---|
-| Skill score >= threshold | Skip in focus iterations; a skill exactly at the threshold is top-of-focus and skipped |
+| Skill score >= threshold | Skip as a focus target (still structurally re-checked and behaviorally sampled); a skill exactly at the threshold is top-of-focus and skipped |
 | All skills >= threshold | Bump threshold by 5, capped at 95 |
 | Default threshold | 85 |
 | Maximum threshold | 95 (hard cap, not overridable) |
 | All skills at composite 100 (or >= 99) | Terminate phase 1 as "saturated"; do not bump |
+
+"Skip" means "not a focus target", not "unchecked". Every iteration still runs the cheap
+structural regression sweep over the whole pool - lint and validate for every skill, bold
+skill-name references resolving to published skills, reciprocal "When NOT to use" boundaries
+for pairs that share triggers, and referenced-file existence - and behaviorally samples
+skipped skills: the edited skills and their direct neighbors plus a rotating bounded sample
+(default three lowest-scoring skipped skills; configurable and bounded). A skill that
+regresses is reopened for the next iteration regardless of the threshold.
 
 ### Plateau Detection
 

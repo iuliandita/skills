@@ -8,9 +8,17 @@ set -euo pipefail
 # to skills/.refiner-runs.json depending on how the agent read that phrase, so
 # a run could miss the prior baseline for a skill it had already scored.
 # Canonical path is the repository root, beside .refiner-ledger.md.
+#
+# An optional first argument validates a different history file (used by
+# scripts/refiner-history-compact.sh to check a temp copy). Compacted summary
+# entries (those with "compacted": true) keep the shared identity, cap/weight,
+# and control_failures fields but drop the per-skill score detail, so their
+# fractional score fields are not required; the full entry lives in the
+# archive file.
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CANONICAL="$ROOT/.refiner-runs.json"
+HISTORY="${1:-$CANONICAL}"
 
 errors=0
 
@@ -22,12 +30,12 @@ if (( ${#strays[@]} > 0 )); then
   errors=$((errors + 1))
 fi
 
-if [[ -f "$CANONICAL" ]]; then
-  if ! python3 -c 'import json,sys; json.load(open(sys.argv[1]))' "$CANONICAL" 2>/dev/null; then
-    echo "ERROR: .refiner-runs.json is not valid JSON."
+if [[ -f "$HISTORY" ]]; then
+  if ! python3 -c 'import json,sys; json.load(open(sys.argv[1]))' "$HISTORY" 2>/dev/null; then
+    echo "ERROR: $HISTORY is not valid JSON."
     errors=$((errors + 1))
   else
-    dupes="$(python3 - "$CANONICAL" <<'PY'
+    dupes="$(python3 - "$HISTORY" <<'PY'
 import json, sys
 from collections import Counter
 runs = json.load(open(sys.argv[1]))
@@ -41,9 +49,10 @@ PY
     fi
 
     # Schema-2 entries opt into stricter validation. Historical entries without
-    # a schema field are left as-is and must keep passing.
+    # a schema field are left as-is and must keep passing, except compacted
+    # summaries, which are checked for the fields they retain.
     schema_errors=""
-    if ! schema_errors="$(python3 - "$CANONICAL" <<'PY'
+    if ! schema_errors="$(python3 - "$HISTORY" <<'PY'
 import json, re, sys
 
 runs = json.load(open(sys.argv[1]))
@@ -75,22 +84,19 @@ def iter_score_fields(obj, prefix=""):
             yield from iter_score_fields(value, f"{prefix}[{index}]")
 
 
-for i, run in enumerate(runs):
-    if not isinstance(run, dict):
-        continue
-    schema = run.get("schema")
-    if not isinstance(schema, int) or schema < 2:
-        continue
-    rid = run.get("run_id") or f"index {i}"
-
+def check_summary(run, rid, required):
+    # Shared by full schema>=2 entries and compacted summaries. A schema>=2
+    # entry must carry these fields; a compacted legacy entry is checked only
+    # for the retained fields it actually has.
     rubric_hash = run.get("rubric_hash")
-    if not isinstance(rubric_hash, str) or not hex64.match(rubric_hash):
-        problems.append(
-            f"{rid}: rubric_hash must be a 64-char lowercase hex string, got {rubric_hash!r}"
-        )
+    if rubric_hash is not None or required:
+        if not isinstance(rubric_hash, str) or not hex64.match(rubric_hash):
+            problems.append(
+                f"{rid}: rubric_hash must be a 64-char lowercase hex string, got {rubric_hash!r}"
+            )
 
     weight_keys = [k for k in ("review_weight", "cap") if k in run]
-    if not weight_keys:
+    if not weight_keys and required:
         problems.append(f"{rid}: review_weight or cap must be present")
     for key in weight_keys:
         try:
@@ -103,8 +109,11 @@ for i, run in enumerate(runs):
                 f"{rid}: {key} must be 0.03, 0.05, 3, or 5, got {run[key]!r}"
             )
 
+    # Identity keys are mandatory only where the schema requires them. A
+    # compacted legacy entry may have pre-schema reviewer blocks, so require
+    # the key only when present on both sides and check consistency then.
     primary_key = identity_key(run.get("primary"))
-    if primary_key is None:
+    if required and primary_key is None:
         problems.append(
             f"{rid}: primary identity must use a consistent key name (resolved_model or model)"
         )
@@ -112,32 +121,55 @@ for i, run in enumerate(runs):
     secondary = run.get("secondary")
     if isinstance(secondary, dict):
         secondary_key = identity_key(secondary)
-        if secondary_key is None:
+        if required and secondary_key is None:
             problems.append(
                 f"{rid}: secondary identity must use a consistent key name (resolved_model or model)"
             )
-        elif primary_key is not None and secondary_key != primary_key:
+        elif (
+            secondary_key is not None
+            and primary_key is not None
+            and secondary_key != primary_key
+        ):
             problems.append(
                 f"{rid}: primary uses {primary_key!r} but secondary uses {secondary_key!r}; "
                 "identity key names must be consistent"
             )
 
-    if not isinstance(run.get("control_failures"), list):
-        problems.append(
-            f"{rid}: control_failures must be an array, "
-            f"got {type(run.get('control_failures')).__name__}"
-        )
+    control_failures = run.get("control_failures")
+    if control_failures is not None or required:
+        if not isinstance(control_failures, list):
+            problems.append(
+                f"{rid}: control_failures must be an array, "
+                f"got {type(control_failures).__name__}"
+            )
 
-    for path, value in iter_score_fields(run):
-        if isinstance(value, bool) or not isinstance(value, (int, float)):
-            problems.append(f"{rid}: score field {path} must be numeric, got {value!r}")
+
+for i, run in enumerate(runs):
+    if not isinstance(run, dict):
+        continue
+    schema = run.get("schema")
+    schema2 = isinstance(schema, int) and schema >= 2
+    compacted = run.get("compacted") is True
+    if not schema2:
+        if compacted:
+            check_summary(run, run.get("run_id") or f"index {i}", required=False)
+        continue
+    rid = run.get("run_id") or f"index {i}"
+    check_summary(run, rid, required=True)
+
+    if not compacted:
+        # Full entries must have numeric component scores everywhere. Compacted
+        # summaries drop the per-skill scores, which live in the archive.
+        for path, value in iter_score_fields(run):
+            if isinstance(value, bool) or not isinstance(value, (int, float)):
+                problems.append(f"{rid}: score field {path} must be numeric, got {value!r}")
 
 for problem in problems:
     print(problem)
 sys.exit(1 if problems else 0)
 PY
 )"; then
-      echo "ERROR: schema>=2 run-history entries failed validation:"
+      echo "ERROR: schema>=2 and compacted run-history entries failed validation:"
       while IFS= read -r line; do
         echo "  $line"
       done <<< "$schema_errors"
@@ -150,4 +182,4 @@ if (( errors > 0 )); then
   exit 1
 fi
 
-echo "Refiner run history is a single file with unique run ids; schema>=2 entries valid."
+echo "Refiner run history is a single file with unique run ids; schema>=2 and compacted entries valid."

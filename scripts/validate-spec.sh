@@ -128,6 +128,12 @@ echo "Spec violations:  $errors"
 echo "Warnings:         $warnings"
 echo "────────────────────────────────────────"
 
+if (( skill_count == 0 )); then
+  echo "no skills found under '$SKILLS_DIR': pass a parent directory that contains skill subdirectories (or stage a single skill under a temporary parent directory)"
+  echo "FAILED"
+  exit 1
+fi
+
 if (( errors > 0 )); then
   echo "FAILED"
   exit 1

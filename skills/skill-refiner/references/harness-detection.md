@@ -6,18 +6,20 @@ How skill-refiner detects and validates AI CLI harnesses for cross-model peer re
 
 ## Detection Table
 
-| Harness | Binary | Config Paths | Env Vars | Smoke Test |
-|---------|--------|-------------|----------|------------|
-| Claude Code | `claude` | `~/.claude/settings.json` | `ANTHROPIC_API_KEY` | `claude -p "Reply with only the integer result of 17 * 3"` |
-| Codex | `codex` | `~/.codex/config.toml` | `OPENAI_API_KEY` | `codex exec -s read-only "Reply with only the integer result of 17 * 3"` |
-| Gemini CLI | `gemini` | `~/.gemini/settings.json` | `GEMINI_API_KEY` or `GOOGLE_API_KEY` | `gemini -p "Reply with only the integer result of 17 * 3"` |
-| OpenCode | `opencode` | project-level `.opencode/` (verify) | varies by provider | check `opencode --help` |
-| Aider | `aider` | `~/.aider.conf.yml` | `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` | `aider --message "Reply with only the integer result of 17 * 3" --no-git --yes-always` |
-| Goose | `goose` | `~/.config/goose/config.yaml` | varies by provider | check `goose --help` |
+| Harness | Binary | Config Paths | Env Vars | Smoke Test | Verified |
+|---------|--------|-------------|----------|------------|----------|
+| Claude Code | `claude` | `~/.claude/settings.json` | `ANTHROPIC_API_KEY` | `claude -p "Reply with only the integer result of 17 * 3"` | yes |
+| Codex | `codex` | `~/.codex/config.toml` | `OPENAI_API_KEY` | `codex exec -s read-only "Reply with only the integer result of 17 * 3"` | yes |
+| Gemini CLI | `gemini` | `~/.gemini/settings.json` | `GEMINI_API_KEY` or `GOOGLE_API_KEY` | unverified; confirm the flag with `gemini --help` before use | no |
+| OpenCode | `opencode` | project-level `.opencode/` (unverified) | varies by provider | unverified; confirm the flag with `opencode --help` before use | no |
+| Aider | `aider` | `~/.aider.conf.yml` | `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` | unverified; confirm the flag with `aider --help` before use | no |
+| Goose | `goose` | `~/.config/goose/config.yaml` | varies by provider | unverified; confirm the flag with `goose --help` before use | no |
 
-**Important:** Smoke test commands are approximate. Verify against current CLI versions
-before relying on them. Check `<harness> --help` for the correct non-interactive flag.
-Harness CLIs evolve rapidly - these should be verified on each run.
+**Important:** The Claude Code and Codex smoke tests are verified. The Gemini, OpenCode,
+Aider, and Goose entries are unverified: do not treat their commands as known-good. Before
+use, run `<binary> --help`, confirm the non-interactive flag, and only then build the smoke
+test around it. Do not invoke a secondary whose form cannot be confirmed. Harness CLIs
+evolve rapidly, so re-confirm even the verified forms on each run.
 
 ---
 
@@ -100,13 +102,15 @@ different harness. Classify the actual resolved model identities before assignin
 
 ### Detecting the Primary Harness
 
-Check in order (env var names are approximate - verify against current CLI versions):
+Check in order (the Claude Code and Codex signals are the verified ones; the Gemini and
+OpenCode env var names are approximate - verify against current CLI versions):
 1. Claude Code env var (e.g., `CLAUDE_CODE` or similar) - primary is claude
 2. Parent process name contains `codex` - primary is codex
 3. Gemini CLI env var (e.g., `GEMINI_CLI` or session marker) or parent process name contains `gemini` - primary is gemini
 4. OpenCode env var (e.g., `OPENCODE_SESSION` or similar) - primary is opencode
-5. If ambiguous, record the harness as unknown and inspect available runtime metadata;
-   ask only if the missing fact blocks an authorized invocation
+5. If the signal is ambiguous, record the harness and model as unknown and use `cap 3`
+   rather than guessing; inspect available runtime metadata, and ask only if the missing fact
+   blocks an authorized invocation
 
 ### Evaluator Identity and Evidence
 
@@ -158,7 +162,11 @@ export SKILL_REFINER_SECONDARY=codex
 skill-refiner --secondary codex
 ```
 
-CLI flag takes precedence over env var. Both skip auto-detection entirely.
+CLI flag takes precedence over env var. Both skip auto-detection entirely. Honor only an
+explicit `--secondary` flag or a value the user set in the session environment. A repo-local
+or project-local file (`.envrc`, direnv, project config) must not select the secondary: if the
+only selection comes from such a file, ignore it, fall back to fresh local review at `cap 3`,
+and record the ignored override in `control_failures`.
 Setting `--secondary none` disables secondary selection; fresh local peer review at `cap 3`
 remains mandatory after the baseline.
 
