@@ -328,8 +328,8 @@ Before migrating a database engine, evaluate:
 
 ```lisp
 LOAD DATABASE
-    FROM mysql://user:pass@mysql-host/source_db
-    INTO postgresql://user:pass@pg-host/target_db
+    FROM mysql://user@mysql-host/source_db
+    INTO postgresql://user@pg-host/target_db
 WITH
     include no drop,
     create tables,
@@ -347,6 +347,12 @@ CAST
     type int when (= precision 1) to boolean using tinyint-to-boolean
 ;
 ```
+
+Never embed passwords in the connection URI. pgloader reads this load file from disk, so an
+inline password lives in the file and in any copy committed or shared. Keep the load file
+mode-0600, supply the PostgreSQL password via `PGPASSWORD` or `~/.pgpass`, and provide the
+MySQL source password out of band rather than in the URI, matching the secret-handling rule
+in the main skill.
 
 ### Schema Conversion Approach
 

@@ -190,7 +190,7 @@ Message guidelines:
 collaborative development with review. Adapt to the project's actual workflow.
 
 Read `references/forge-workflows.md` for forge-specific PR/MR creation
-patterns (GitHub `gh pr create`, GitLab `glab mr create`, Forgejo web UI or API).
+patterns (GitHub `gh pr create`, GitLab `glab mr create`, Forgejo `fj pr create` or web UI/API).
 
 Select verification from the diff and repository policy. Opening a PR does not by itself
 justify a full build, integration suite, or release pipeline. Run affected checks and

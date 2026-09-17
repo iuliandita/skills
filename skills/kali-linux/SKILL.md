@@ -51,6 +51,9 @@ stale package table.
 ## When NOT to use
 
 - Generic Debian, Ubuntu, Mint, or Pop!_OS administration without Kali-specific context - use **debian-ubuntu**
+- Arch, CachyOS, or EndeavourOS administration - use **arch-btw**
+- Fedora, RHEL, Rocky, or AlmaLinux administration - use **rhel-fedora**
+- NixOS or declarative Nix configuration - use **nixos-btw**
 - Shell syntax, quoting, or script portability - use **command-prompt**
 - Network architecture, DNS, VPNs, reverse proxies, or firewall design - use **networking**
 - Docker, Podman, image builds, or container runtime issues - use **docker**

@@ -469,14 +469,14 @@ Forgejo Actions support varies by instance. `fj` cannot stream logs or re-run jo
 ### Gitea (`$FORGE=gitea`)
 
 ```bash
-# Check status of a PR by number (from the create-PR output)
-tea pulls status "$PR_NUMBER"
-
-# Or list runs for the branch (Actions-enabled instances)
-tea actions list --repo "$(git remote get-url origin | sed -E 's|.*[:/]([^/]+/[^/]+)\.git$|\1|')"
+# List workflow runs for the repository (Actions-enabled instances)
+tea actions runs list --repo "$(git remote get-url origin | sed -E 's|.*[:/]([^/]+/[^/]+)(\.git)?$|\1|')"
 ```
 
-Gitea Actions API is newer and less uniform than GitHub's. If `tea actions` is unavailable on the instance's version, fall through to web-UI confirmation.
+Gitea Actions API is newer and less uniform than GitHub's. `tea pulls` has no `status`
+subcommand; run listing lives under `tea actions runs list`, where the tea version supports
+it (`tea actions` alone manages secrets and variables). Check per-PR status in the web UI.
+If the command is unavailable on the instance's version, fall through to web-UI confirmation.
 
 ### Bitbucket (`$FORGE=bitbucket`)
 
@@ -858,7 +858,7 @@ fj actions tasks
 # Actions support varies by instance. List several runs and pick the one whose commit is
 # the published tag - never assume the newest run is this release.
 RELEASE_SHA=$(git rev-parse "v$NEW_VERSION^{commit}") || exit 1
-tea actions list --repo "$REPO" --limit 20
+tea actions runs list --repo "$REPO" --limit 20
 # Confirm the run for $RELEASE_SHA reached success before calling the release done.
 # If the output cannot be matched to that commit, confirm in the web UI instead.
 ```

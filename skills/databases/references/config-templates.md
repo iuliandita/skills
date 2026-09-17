@@ -66,7 +66,7 @@ log_line_prefix = '%m [%p] %q%u@%d '
 
 # - Security -
 ssl = on
-ssl_min_protocol_version = 'TLSv1.3'     # TLSv1.2 minimum for PCI
+ssl_min_protocol_version = 'TLSv1.3'     # TLSv1.3; PCI requires TLSv1.2 minimum
 password_encryption = scram-sha-256       # NEVER md5
 ssl_cert_file = '/etc/postgresql/server.crt'
 ssl_key_file = '/etc/postgresql/server.key'

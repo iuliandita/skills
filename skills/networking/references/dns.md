@@ -100,7 +100,7 @@ server:
 
 ### Pattern 2: CoreDNS with view-like behavior
 
-CoreDNS doesn't have native views, but you can use the `acl` plugin or run separate CoreDNS
+CoreDNS has a `view` plugin (since 1.10.0) for split-horizon responses; you can also use the `acl` plugin or run separate CoreDNS
 instances on different ports/interfaces:
 
 ```

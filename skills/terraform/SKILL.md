@@ -43,6 +43,7 @@ IBM acquired HashiCorp for $6.4B (closed Feb 2025). Terraform stays BSL 1.1; Ope
 
 - Kubernetes manifests or Helm charts (use **kubernetes**)
 - Read-only Kubernetes cluster health checks after provisioning or maintenance (use **cluster-health**)
+- VM or hypervisor provisioning, guest lifecycle, and passthrough wiring (use **virtualization**)
 - Ansible playbooks or configuration management (use **ansible**)
 - Docker/container optimization (use **docker**)
 - CI/CD job and pipeline design, including how Terraform commands are sequenced (use **ci-cd**)

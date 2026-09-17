@@ -145,7 +145,7 @@ A reviewer with verified distinct model identity reviews the improvement diff an
 
 | Condition | Action |
 |---|---|
-| Skill score >= threshold | Skip as a focus target (still structurally re-checked and behaviorally sampled); a skill exactly at the threshold is top-of-focus and skipped |
+| Skill score >= threshold | Skip as a focus target (still structurally re-checked and behaviorally sampled); a skill exactly at the threshold is skipped |
 | All skills >= threshold | Bump threshold by 5, capped at 95 |
 | Default threshold | 85 |
 | Maximum threshold | 95 (hard cap, not overridable) |
@@ -164,7 +164,7 @@ regresses is reopened for the next iteration regardless of the threshold.
 | Parameter | Value |
 |---|---|
 | Delta threshold | 2 points |
-| Trigger | No skill improves by more than delta in one iteration |
+| Trigger | Max lower-bound composite delta is below the delta threshold |
 | Action | Terminate phase 1 early |
 
 ### Noise Floor

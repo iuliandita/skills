@@ -242,7 +242,8 @@ dig @8.8.8.8 example.com +short    # Bypass local resolver
 
 ```bash
 # Check certificate chain
-openssl s_client -connect target:443 -servername target.com </dev/null 2>/dev/null | openssl x509 -noout -dates -subject -issuer
+# Leave stderr visible: s_client writes the handshake error there when it fails
+openssl s_client -connect target:443 -servername target.com </dev/null | openssl x509 -noout -dates -subject -issuer
 
 # Check specific TLS version
 openssl s_client -connect target:443 -tls1_2

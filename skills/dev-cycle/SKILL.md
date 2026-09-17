@@ -302,7 +302,7 @@ Dispatch on `$FORGE`. Every tool has a watch trap - default exit code may not re
 | `github` | `gh pr checks --watch --fail-fast` then verify via `gh pr view --json statusCheckRollup` | exits 0/1/8; treat anything non-zero as not-ready |
 | `gitlab` | `glab ci status --live` then `glab mr view --output json` | `--live` doesn't always exit non-zero on failure; verify explicitly |
 | `forgejo` | `fj pr status --wait`, then `fj actions tasks` to list runs | `fj` has no log streaming or re-run; confirm the run in the web UI |
-| `gitea` | `tea pulls status <pr>` or `tea actions list` (varies by instance) | Actions API is newer; fall back to web UI if command missing |
+| `gitea` | `tea actions runs list` (per-PR status in the web UI) | `tea pulls` has no `status` subcommand; run listing is `tea actions runs list` on tea versions that support it, else the web UI |
 | `bitbucket` | No CLI - watch web UI or poll Pipelines REST API | Manual confirmation before merge |
 | `unknown` | Ask user which CI is wired (Jenkins, Drone, Woodpecker, Buildkite, Teamcity) and point them at the URL | Assume nothing |
 | `bare` | No remote CI; rely on B2 local output | N/A |
@@ -373,7 +373,7 @@ B8  # Set RELEASE_SHA to the verified merged release commit before tagging.
       echo "Tag exists; verify the existing release before proceeding" >&2; exit 1
     fi
     git tag -a v1.5.0 -m "v1.5.0" "$RELEASE_SHA" && git push origin refs/tags/v1.5.0
-    gh release create v1.5.0 --title v1.5.0 --notes-file <(extract_changelog 1.5.0)
+    gh release create v1.5.0 --title v1.5.0 --notes-file <(extract_changelog 1.5.0)  # helper in references/finish.md
     # Resolve RELEASE_SHA from the merged release commit, not the former feature HEAD.
     # Select the exact workflow/tag/SHA/event using references/finish.md, then:
     gh run watch "$RUN_ID" --exit-status
