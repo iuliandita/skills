@@ -258,21 +258,28 @@ thorough.
 ### Text
 
 - **Imperative form**: "Check the config", not "You should check the config"
-- **ASCII by default**: skill prose should stay ASCII except collection-approved markers such
-  as the public-description `· ` prefix and shared output-contract box glyphs. No em-dashes,
-  no `--` double-dash substitute, no curly quotes, no ligatures. Use a single `-` where you
-  would reach for an em dash. **This is a prose rule only: never rewrite `--` inside code,
-  command examples, or fenced blocks** - `--` is real syntax there (SQL/Lua comments, CLI
-  long-flag separators like `npm test -- --filter`, `git ... --`), and stripping it to `-`
-  produces broken, non-runnable examples.
+- **ASCII by default**: skill prose should stay ASCII except the single approved non-ASCII
+  set below. No em-dashes, no `--` double-dash substitute, no curly quotes, no ligatures.
+  Use a single `-` where you would reach for an em dash. **This is a prose rule only: never
+  rewrite `--` inside code, command examples, or fenced blocks** - `--` is real syntax there
+  (SQL/Lua comments, CLI long-flag separators like `npm test -- --filter`, `git ... --`),
+  and stripping it to `-` produces broken, non-runnable examples.
+- **Approved non-ASCII**: the only permitted non-ASCII is the public-description `· ` prefix
+  (U+00B7 MIDDLE DOT), the shared output-contract box glyphs (ASCII separators), and the
+  output-contract/status emoji markers the linter permits (U+1F534, U+1F7E0, U+1F7E2,
+  U+1F7E1, U+1F535, U+26AA, U+26A1, U+1F3AF, U+1F480). `scripts/lint-skills.sh`
+  (`check_ascii`) is the single authority on this set; this list mirrors it and changes only
+  when the linter does, never the reverse.
 - **Explain why**: "Pin images to SHA256 digests because mutable tags are a proven attack vector
   (Trivy March 2026, tj-actions March 2025)" beats "Always pin images"
 - **Calm directives**: "Do X" outperforms "YOU MUST ALWAYS DO X" on most modern coding agents. Use ALL CAPS
   only for genuinely critical safety constraints, not for emphasis.
-- **Banned words**: per the collection's instruction file - "delve", "navigate" (metaphorical), "landscape"
-  (metaphorical), "tapestry", "nuanced", "multifaceted", "utilize", "robust", "innovative",
-  "cutting-edge", "certainly!", "absolutely", etc. ("best practices" is allowed - it's
-  standard IT terminology.)
+- **Banned words**: the authoritative list lives in `scripts/lint-skills.sh`
+  (`BANNED_WORDS`); this reference mirrors it exactly: "delve", "tapestry", "nuanced",
+  "multifaceted", "utilize", "commence", "facilitate", "synergy", "leverage", "holistic",
+  "empower", "seamless", "innovative". The linter is authoritative; update this mirror when
+  it changes, never the reverse. ("best practices" is allowed - it is standard IT
+  terminology.)
 - **Anti-hallucination**: every tool name, CLI flag, version number, and API endpoint must be
   verified via web search or registry check before including in a skill. AI models hallucinate
   these constantly. "I'm pretty sure" is not verification - search or don't include it.

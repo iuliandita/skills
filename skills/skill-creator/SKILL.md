@@ -56,8 +56,8 @@ Before returning any generated or modified skill, verify against this list:
   cross-referencing related skills by **bold** name (e.g., `use **skill-name**`)
 - [ ] **Workflow section with numbered steps**: clear, sequential, actionable
 - [ ] **Rules section at the end**: the real non-negotiable constraints in imperative form; add only constraints the skill genuinely needs and do not invent rules to fill the section
-- [ ] **Style compliant**: no banned words, ASCII by default except approved markers such as
-  `· ` and output-contract box glyphs; no em-dashes, curly quotes, or `--` substitutes in prose.
+- [ ] **Style compliant**: no banned words and only the approved non-ASCII set, both defined
+  in `references/conventions.md`; no em-dashes, curly quotes, or `--` substitutes in prose.
 - [ ] **Target ~500 lines**: if over 500, extract to `references/` with clear pointers. Hard max 600
 - [ ] **Reference files use `references/` relative paths**: not hardcoded or tool-specific paths
 - [ ] **All references verified**: every tool, CLI flag, IaC resource, and example command
@@ -210,10 +210,10 @@ Run through the AI Self-Check above. Then:
   inside a collection, or the user's specified path for standalone skills
 - Write reference files (if any) to `<skill-dir>/references/`
 - If a collection inventory exists, update it and re-run cross-reference checks
-- If `skill_manage` cannot modify the target because the skill lives in an external repo or
-  non-managed directory, fall back to direct file edits with `patch` or `write_file` on the
-  actual repo paths. Do not stop at the tool limitation if the files are writable and the user
-  asked for the change in-place.
+- If the harness's skill-management tool cannot modify the target because the skill lives in an
+  external repo or non-managed directory, fall back to the harness's skill-management tool or a
+  direct file edit on the actual repo paths. Do not stop at the tool limitation if the files are
+  writable and the user asked for the change in-place.
 
 #### Step 6: Forward-test
 
@@ -276,9 +276,10 @@ Read the SKILL.md and all reference files. No skipping - the whole point is catc
 - Are there patterns that would produce AI slop? (excessive MUSTs, over-defensive instructions,
   generic naming in examples)
 
-**Compliance checks** (for infrastructure skills):
-- PCI-DSS 4.0 mapping present where applicable?
-- All future-dated requirements (mandatory since March 31, 2025) reflected?
+**Compliance checks** (only for skills whose audience is subject to a named framework):
+- PCI-DSS 4.0 mapping only when the skill's audience handles cardholder data (Mode 1, Step
+  2.5); never a blanket mandate on infrastructure, container, or CI/CD skills.
+- Future-dated requirements (mandatory since March 31, 2025) reflected where PCI-DSS applies?
 - No hardcoded secrets in examples?
 
 **Script-runner reality check:** verify helper script input shape. If a single-skill run reports zero skills or odd output, re-run against the collection root and filter for the target.
@@ -336,11 +337,11 @@ for skill in "$SKILL_ROOT"/*/SKILL.md; do
   name=$(basename "$dir")
   [[ "$name" == ".backups" || "$name" == ".cook" ]] && continue  # tooling dirs, not skills
   $IN_GIT && git -C "$dir" check-ignore -q . 2>/dev/null && continue
-  source=$(grep -m1 '[[:space:]]source:' "$skill" 2>/dev/null | sed 's/.*source: *//' || echo "unknown")
-  date=$(grep -m1 '[[:space:]]date_added:' "$skill" 2>/dev/null | sed 's/.*date_added: *"//' | sed 's/"//' || echo "unknown")
-  effort=$(grep -m1 '[[:space:]]effort:' "$skill" 2>/dev/null | sed 's/.*effort: *//' || echo "missing")
+  source=$(grep -m1 '[[:space:]]source:' "$skill" 2>/dev/null | sed 's/.*source: *//'); [[ -n "$source" ]] || source="unknown"
+  date=$(grep -m1 '[[:space:]]date_added:' "$skill" 2>/dev/null | sed 's/.*date_added: *"//' | sed 's/"//'); [[ -n "$date" ]] || date="unknown"
+  effort=$(grep -m1 '[[:space:]]effort:' "$skill" 2>/dev/null | sed 's/.*effort: *//'); [[ -n "$effort" ]] || effort="missing"
   if $IN_GIT; then
-    last_mod=$(git -C "$SKILL_ROOT" log -1 --format=%cd --date=short - "$name" 2>/dev/null || echo "unknown")
+    last_mod=$(git -C "$SKILL_ROOT" log -1 --format=%cd --date=short -- "$name" 2>/dev/null || echo "unknown")
   else
     # Portable: GNU stat then BSD stat; GNU date then BSD date
     mtime=$(stat -c %Y "$skill" 2>/dev/null || stat -f %m "$skill" 2>/dev/null || echo 0)
@@ -369,16 +370,16 @@ without mutual disambiguation (no "When NOT to use" cross-reference).
 #### Step 4: Freshness sweep
 
 Flag skills where the last modification (per git history, or file mtime if git is unavailable)
-is >30 days old AND the skill covers fast-moving domains:
+is >30 days old AND the skill covers fast-moving domains. The lists below are illustrative,
+not exhaustive; derive the sets from the live inventory each run.
 
-**Fast-moving** (>30 days = stale risk): docker, kubernetes, ci-cd, terraform, ansible,
+**Fast-moving examples** (>30 days = stale risk): docker, kubernetes, ci-cd, terraform, ansible,
 databases, git, security-audit, code-review (AI-age patterns section), mcp, networking, arch-btw
 
-**Slow-moving** (>30 days = probably fine): firewall-appliance, command-prompt, prompt-generator,
-update-docs, skill-creator, full-review, anti-slop, lockpick
+**Slow-moving examples** (>30 days = probably fine): firewall-appliance, command-prompt,
+prompt-generator, update-docs, skill-creator, full-review, anti-slop, lockpick
 
-If the collection's conventions change significantly, temporarily reclassify skill-creator
-as fast-moving until the conventions stabilize.
+If conventions change significantly, reclassify skill-creator as fast-moving until they stabilize.
 
 For each stale high-effort skill, search the web for:
 - New major/minor releases of referenced tools
@@ -487,10 +488,9 @@ See `references/output-contract.md` for the full contract.
    inventories and verify counts from live public skills.
 6. **No AI slop in skills.** Avoid comment noise, over-abstraction, ALL CAPS theater, and
    "just in case" instructions.
-7. **ASCII by default.** Keep skill prose ASCII except collection-approved markers such as the
-   public-description `· ` prefix and shared output-contract box glyphs. No em dashes, curly
-   quotes, ligatures, or `--` dash substitutes. Prose only: never rewrite `--` inside code or
-   fenced blocks - there it is real syntax (SQL comments, CLI `--` separators) and must stay.
+7. **ASCII by default.** Use only the approved non-ASCII set and banned-word list defined in
+   `references/conventions.md`. No em dashes, curly quotes, ligatures, or `--` substitutes.
+   Prose only: never rewrite `--` inside code or fenced blocks, where it is real syntax.
 8. **Run the AI Self-Check.** Every generated or modified skill gets checked before return.
 9. **Separate review from edits.** Record the branch for reviews; create or reuse a task branch for tracked edits.
 10. **Report every run.** Use the Run Report format; never substitute lint/spec status for behavioral scoring.

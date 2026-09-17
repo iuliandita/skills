@@ -10,19 +10,28 @@ set -euo pipefail
 # Hash file contents, not paths: a rename with no content change must not
 # invalidate history. Inputs are concatenated in the fixed order below.
 
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT="${1:-$(cd "$SCRIPT_DIR/.." && pwd)}"
 
+if [[ ! -d "$ROOT" ]]; then
+  echo "ERROR: rubric root is not a directory: $ROOT" >&2
+  exit 1
+fi
+ROOT="$(cd "$ROOT" && pwd)"
+
+SELF_CHECK_FILE="skills/skill-creator/SKILL.md"
 FILES=(
   "skills/skill-refiner/references/evaluation-criteria.md"
   "skills/skill-refiner/references/test-cases.md"
   "skills/skill-creator/references/conventions.md"
+  "$SELF_CHECK_FILE"
   "scripts/lint-skills.sh"
   "scripts/validate-spec.sh"
 )
 
 for rel in "${FILES[@]}"; do
   if [[ ! -f "$ROOT/$rel" ]]; then
-    echo "ERROR: missing rubric input: $rel" >&2
+    echo "ERROR: missing rubric input under $ROOT: $rel" >&2
     exit 1
   fi
 done
@@ -32,7 +41,7 @@ ai_self_check_section() {
     /^## AI Self-Check$/ { in_section = 1 }
     in_section && /^## / && !/^## AI Self-Check$/ { exit }
     in_section { print }
-  ' "$ROOT/skills/skill-creator/SKILL.md"
+  ' "$ROOT/$SELF_CHECK_FILE"
 }
 
 {

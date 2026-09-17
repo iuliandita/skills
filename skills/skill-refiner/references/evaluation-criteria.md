@@ -145,8 +145,8 @@ A reviewer with verified distinct model identity reviews the improvement diff an
 
 | Condition | Action |
 |---|---|
-| Skill score > threshold | Skip in focus iterations |
-| All skills > threshold | Bump threshold by 5, capped at 95 |
+| Skill score >= threshold | Skip in focus iterations; a skill exactly at the threshold is top-of-focus and skipped |
+| All skills >= threshold | Bump threshold by 5, capped at 95 |
 | Default threshold | 85 |
 | Maximum threshold | 95 (hard cap, not overridable) |
 | All skills at composite 100 (or >= 99) | Terminate phase 1 as "saturated"; do not bump |

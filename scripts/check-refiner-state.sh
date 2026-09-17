@@ -49,6 +49,7 @@ import json, re, sys
 runs = json.load(open(sys.argv[1]))
 hex64 = re.compile(r"^[0-9a-f]{64}$")
 allowed_weights = {0.03, 0.05, 3.0, 5.0}
+score_keys = {"composite", "ai", "behavioral", "penalty", "cap", "review_weight"}
 problems = []
 
 
@@ -59,6 +60,19 @@ def identity_key(obj):
         if key in obj:
             return key
     return None
+
+
+def iter_score_fields(obj, prefix=""):
+    # Every field named like a score must be a number wherever it appears.
+    if isinstance(obj, dict):
+        for key, value in obj.items():
+            path = f"{prefix}.{key}" if prefix else key
+            if key in score_keys:
+                yield path, value
+            yield from iter_score_fields(value, path)
+    elif isinstance(obj, list):
+        for index, value in enumerate(obj):
+            yield from iter_score_fields(value, f"{prefix}[{index}]")
 
 
 for i, run in enumerate(runs):
@@ -107,6 +121,16 @@ for i, run in enumerate(runs):
                 f"{rid}: primary uses {primary_key!r} but secondary uses {secondary_key!r}; "
                 "identity key names must be consistent"
             )
+
+    if not isinstance(run.get("control_failures"), list):
+        problems.append(
+            f"{rid}: control_failures must be an array, "
+            f"got {type(run.get('control_failures')).__name__}"
+        )
+
+    for path, value in iter_score_fields(run):
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            problems.append(f"{rid}: score field {path} must be numeric, got {value!r}")
 
 for problem in problems:
     print(problem)
