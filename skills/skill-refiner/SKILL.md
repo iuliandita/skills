@@ -1,7 +1,7 @@
 ---
 name: skill-refiner
 description: >
-  · Improve skills through repeated scoring, behavioral tests, and peer review toward a requested quality target.
+  Improve skills through repeated scoring, behavioral tests, and peer review toward a requested quality target.
 license: MIT
 compatibility: "Requires: skill-creator skill, git. Optional: secondary AI harness (codex, claude, gemini, opencode) for cross-model review"
 metadata:
@@ -34,8 +34,8 @@ is verified, fresh-context self-review as the minimum fallback).
 - Creating a new skill from scratch - use **skill-creator** (Mode 1)
 - Single-pass review of one skill without iteration, scoring, or peer review - use **skill-creator** (Mode 2)
 - One-off collection audit without iteration - use **skill-creator** (Mode 3)
-- Full codebase review (code, not skills) - use **full-review**
-- Style/slop audit on application code - use **anti-slop**
+- Full codebase review (code, not skills) - use **repo-audit**
+- Style/slop audit on application code - use **code-simplification**
 
 ## Configuration
 
@@ -429,7 +429,7 @@ See `references/output-contract.md` for the full contract.
 
 - **Skill name:** SKILL-REFINER
 - **Deliverable bucket:** `audits`
-- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content outside the refiner workflow, emit the full contract - monospace inline header, severity-grouped inline summary, linked Markdown deliverable, and concise monospace conclusion - and write the deliverable to `docs/local/audits/skill-refiner/<YYYY-MM-DD>-<slug>.md`. When invoked to **run the refiner workflow** (its primary mode), use the existing Phase 3 "Final report" format described in the workflow; that build-mode output is unchanged by this contract.
+- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content outside the refiner workflow, apply the reporting size and evidence rules in `references/output-contract.md` and write the deliverable to `docs/local/audits/skill-refiner/<YYYY-MM-DD>-<slug>.md`. When invoked to **run the refiner workflow** (its primary mode), use the existing Phase 3 "Final report" format described in the workflow; that build-mode output is unchanged by this contract.
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
 
 ## Related Skills
@@ -438,12 +438,12 @@ See `references/output-contract.md` for the full contract.
   skill-creator's review mode (Mode 2) for scoring and its improve mode for
   generating changes. skill-creator handles individual skill quality; skill-refiner
   handles iteration, prioritization, and orchestration. Primary dependency.
-- **full-review** - one-off collection audit across code-review, anti-slop,
-  security-audit, and update-docs. Use **full-review** for a single pass over
+- **repo-audit** - one-off collection audit across code-review, code-simplification,
+  security-audit, and update-docs. Use **repo-audit** for a single pass over
   application code; use skill-refiner for iterative improvement of skill files.
-- **anti-slop** - code quality patterns. skill-refiner may invoke anti-slop
-  principles through skill-creator during improvement, but does not call anti-slop
-  directly. Different domain: anti-slop audits application code, skill-refiner
+- **code-simplification** - code quality patterns. skill-refiner may invoke code-simplification
+  principles through skill-creator during improvement, but does not call code-simplification
+  directly. Different domain: code-simplification audits application code, skill-refiner
   audits skill files.
 
 ## Rules

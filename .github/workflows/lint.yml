@@ -9,6 +9,8 @@ on:
       - "install.sh"
       - "CHANGELOG.md"
       - "INSTALL.md"
+      - "MIGRATION.md"
+      - "migrations.json"
       - "README.md"
       - "SECURITY.md"
       - "docs/**"
@@ -23,6 +25,8 @@ on:
       - "install.sh"
       - "CHANGELOG.md"
       - "INSTALL.md"
+      - "MIGRATION.md"
+      - "migrations.json"
       - "README.md"
       - "SECURITY.md"
       - "docs/**"
@@ -60,6 +64,9 @@ jobs:
       - name: Check deep-audit skill coverage
         run: ./scripts/check-deep-audit-coverage.sh
 
+      - name: Check migration notices and grace period
+        run: ./scripts/check-migrations.sh
+
       - name: Check output-contract sync
         run: ./scripts/check-contract-sync.sh
 
@@ -94,6 +101,11 @@ jobs:
       - name: Test installer behavior
         run: ./scripts/test-install.sh
 
+      - name: Test migration behavior
+        run: |
+          ./scripts/test-migrate-skills.sh
+          python3 scripts/test-migrations.py
+
       - name: Test lint behavior
         run: ./scripts/test-lint-skills.sh
 
@@ -110,7 +122,7 @@ jobs:
         run: shellcheck install.sh scripts/*.sh
 
       - name: Check Python helper syntax
-        run: python3 -m py_compile scripts/skill-frontmatter.py
+        run: python3 -m py_compile scripts/*.py
 
   markdown:
     runs-on: ubuntu-24.04
@@ -146,7 +158,7 @@ jobs:
           mapfile -t markdown_files < <(
             {
               printf '%s\n' README.md SECURITY.md
-              printf '%s\n' CHANGELOG.md INSTALL.md
+              printf '%s\n' CHANGELOG.md INSTALL.md MIGRATION.md
               find skills docs -type f -name '*.md' 2>/dev/null
             } | sort -u
           )

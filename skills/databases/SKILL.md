@@ -1,9 +1,9 @@
 ---
 name: databases
 description: >
-  · Design schemas, tune queries, migrate, and administer PostgreSQL, MySQL/MariaDB, MongoDB, and MSSQL.
+  Design schemas, tune queries, migrate, and administer PostgreSQL, MySQL/MariaDB, MongoDB, MSSQL, Redis, and Valkey.
 license: MIT
-compatibility: "Requires one or more of: psql, mongosh, mysql, or sqlcmd"
+compatibility: "Use the relevant engine client: psql, mongosh, mysql, sqlcmd, redis-cli, or valkey-cli"
 metadata:
   source: iuliandita/skills
   date_added: "2026-03-24"
@@ -23,13 +23,15 @@ Configure, tune, design schemas, migrate, back up, and review database engines -
 - SQL Server **2025 RTM + CU8** (released 2026-08-13)
 - PgBouncer **1.25.2**, Pgpool-II **4.7.2**, ProxySQL **3.0.10** (ProxySQL 3.0.9+ fixes CVE-2026-48772/48773/48774)
 
-This skill covers six domains depending on context:
+This skill covers these domains depending on context:
 - **Configuration** - engine settings, authentication, TLS, tuning parameters
 - **Schema design** - indexing strategy, partitioning, normalization, type selection
 - **Migration** - cross-engine migration, zero-downtime DDL, ORM migration tooling
 - **Operations** - backup/restore, replication, connection pooling, monitoring
 - **Performance** - query plan analysis, index optimization, vacuum/maintenance
 - **Compliance** - PCI-DSS 4.0 encryption, audit logging, key management, data masking
+- **Redis/Valkey operations** - cache or durable-data classification, memory/eviction, persistence,
+  replication, ACL/TLS, and stream recovery
 
 ## When to use
 
@@ -43,6 +45,7 @@ This skill covers six domains depending on context:
 - Database-level PCI-DSS 4.0 compliance (encryption, audit logging, access control)
 - Evaluating managed vs self-hosted database decisions
 - Exposing engine-native metrics and diagnosing database-specific health or query signals
+- Operating Redis or Valkey as a cache, data store, session store, or stream
 
 ## When NOT to use
 
@@ -54,7 +57,7 @@ This skill covers six domains depending on context:
 - SQL injection detection, connection string secrets in code - use **security-audit**
 - CI/CD pipelines that run migrations - use **ci-cd**
 - Cross-service telemetry pipelines, dashboards, alert routing, or SLOs - use **observability**
-- Redis/Valkey (cache/KV stores) and other non-relational engines (Cassandra, DynamoDB, ClickHouse, etc.) - outside this skill's four primary engines; use the relevant platform skill or general guidance
+- Other non-relational engines (Cassandra, DynamoDB, ClickHouse, etc.) - use the relevant platform skill or general guidance
 
 ---
 
@@ -124,6 +127,9 @@ AI tools consistently produce the same database mistakes. **Before returning any
 ## Best Practices
 
 - Take restorable backups before schema changes and verify restore procedures periodically.
+- Run restore drills in an isolated destination; verify application reads/writes, consistency,
+  encryption-key access, and PITR boundary. Measure elapsed recovery and data loss against
+  RTO/RPO, then record the source backup, checks, and cleanup without overwriting live data.
 - Separate online, background, and analytical workloads where query shape or latency differs.
 - Prefer additive migrations with backfills and compatibility windows for zero-downtime services.
 
@@ -219,6 +225,8 @@ sqlcmd -Q "DBCC CHECKDB ('dbname') WITH NO_INFOMSGS;"  # integrity check
 - **MongoDB**: replica-set health, schema validation, oplog sizing, and avoiding fan-out document patterns
 - **MySQL/MariaDB**: strict mode, `utf8mb4`, GTID or Galera choices, and understanding the MySQL/MariaDB divergence
 - **MSSQL**: memory limits, TempDB layout, Query Store, and backup or restore discipline
+- **Redis/Valkey**: cache-versus-durable-data classification, memory/eviction safety, persistence,
+  replication, ACL/TLS, and stream consumer recovery. Read `references/redis-valkey.md`.
 
 Read `references/config-templates.md` for copy-pasteable engine configs and `references/backup-patterns.md`
 for recovery specifics.
@@ -364,6 +372,7 @@ Read `references/migration-patterns.md` for cross-engine type mapping, ORM migra
 - `references/config-templates.md` - engine configuration templates
 - `references/backup-patterns.md` - backup, restore, and PITR patterns
 - `references/migration-patterns.md` - cross-engine migration patterns and type-mapping guidance
+- `references/redis-valkey.md` - Redis/Valkey data, memory, persistence, replication, and stream safeguards
 
 ---
 
@@ -373,7 +382,7 @@ See `references/output-contract.md` for the full contract.
 
 - **Skill name:** DATABASES
 - **Deliverable bucket:** `audits`
-- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract - monospace inline header, severity-grouped inline summary, linked Markdown deliverable, and concise monospace conclusion - and write the deliverable to `docs/local/audits/databases/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
+- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, apply the reporting size and evidence rules in `references/output-contract.md` and write the deliverable to `docs/local/audits/databases/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
 
 ## Related Skills
@@ -387,6 +396,8 @@ See `references/output-contract.md` for the full contract.
 - **ci-cd** - for CI/CD pipelines that run migrations (schema execution in CI, migration gating, rollback automation)
 - **observability** - for cross-service telemetry pipelines, dashboards, alert routing, and SLOs.
   This skill owns database-native metrics, engine health, and query diagnosis.
+- **message-queues** - broker delivery contracts, retries, dead letters, ordering, and replay. This
+  skill owns Redis/Valkey engine configuration and stream data safety.
 
 ---
 

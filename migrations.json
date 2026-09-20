@@ -1,0 +1,87 @@
+{
+  "version": 1,
+  "transition": {
+    "release": null,
+    "published_at": null,
+    "minimum_days": 7,
+    "placeholder_releases": 1
+  },
+  "skills": {
+    "anti-slop": {
+      "action": "merge",
+      "replacement": "code-simplification"
+    },
+    "code-slimming": {
+      "action": "merge",
+      "replacement": "code-simplification"
+    },
+    "full-review": {
+      "action": "merge",
+      "replacement": "repo-audit"
+    },
+    "deep-audit": {
+      "action": "merge",
+      "replacement": "repo-audit"
+    },
+    "deep-grill": {
+      "action": "merge",
+      "replacement": "plan-review"
+    },
+    "jekyll-hyde": {
+      "action": "merge",
+      "replacement": "plan-review"
+    },
+    "command-prompt": {
+      "action": "rename",
+      "replacement": "shell-scripting"
+    },
+    "arch-btw": {
+      "action": "rename",
+      "replacement": "arch-linux"
+    },
+    "nixos-btw": {
+      "action": "rename",
+      "replacement": "nixos"
+    },
+    "ai-ml": {
+      "action": "rename",
+      "replacement": "llm-app-development"
+    },
+    "firewall-appliance": {
+      "action": "rename",
+      "replacement": "opnsense-pfsense"
+    },
+    "cluster-health": {
+      "action": "rename",
+      "replacement": "kubernetes-health"
+    },
+    "lockpick": {
+      "action": "rename",
+      "replacement": "privilege-escalation"
+    },
+    "zero-day": {
+      "action": "rename",
+      "replacement": "vulnerability-research"
+    },
+    "localize": {
+      "action": "rename",
+      "replacement": "i18n-localization"
+    },
+    "handoff": {
+      "action": "rename",
+      "replacement": "session-handoff"
+    },
+    "routine-writer": {
+      "action": "remove",
+      "replacement": null
+    },
+    "browse": {
+      "action": "remove",
+      "replacement": null
+    },
+    "skill-router": {
+      "action": "remove",
+      "replacement": null
+    }
+  }
+}

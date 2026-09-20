@@ -86,7 +86,7 @@ Examples confirmed on Kali tool pages include:
 ### `kali-tools-reverse-engineering`
 Use for binary inspection and reversing workflows.
 If the task becomes deep vulnerability discovery, exploitability research, or fuzzing strategy,
-hand off to **zero-day**.
+hand off to **vulnerability-research**.
 The 2026.1 release also added `GEF`, which improves GDB-based reversing and exploit debugging.
 
 ### `kali-tools-exploitation`
@@ -94,12 +94,12 @@ Use for exploitation tooling packages and launchers.
 Examples confirmed on Kali tool pages include `metasploit-framework` and its many helper commands
 such as `msfconsole` and `msfvenom`.
 If the user is asking how to conduct exploitation on an authorized target rather than how to keep
-Kali healthy, hand off to **lockpick**.
+Kali healthy, hand off to **privilege-escalation**.
 
 ### `kali-tools-post-exploitation`
 Use for post-access tooling families and operator workflow packages.
 Again, once the question becomes operational tradecraft or escalation flow, this skill should hand
-off to **lockpick**.
+off to **privilege-escalation**.
 
 ### `kali-tools-forensics`
 Use for live and offline evidence collection and analysis.
@@ -118,7 +118,7 @@ Kali also ships targeted bundles such as:
 - `kali-tools-windows-resources`
 
 If the request moves from installing fuzzing tools to designing fuzzing strategy, crash triage, or
-novel vulnerability discovery, hand off to **zero-day**.
+novel vulnerability discovery, hand off to **vulnerability-research**.
 
 These are better than shotgun-installing random packages when the user already knows the workflow.
 
@@ -184,6 +184,6 @@ Do not assume package name, tool page name, and command name are the same string
 ## Safe routing boundaries
 
 - Use this skill to choose and maintain the Kali package set.
-- Use **lockpick** when the user moves from "what should I install" to "how do I escalate or pivot on an authorized target".
-- Use **zero-day** when the user moves from "which reversing tools do I need" to "help me discover a novel bug or build a PoC".
+- Use **privilege-escalation** when the user moves from "what should I install" to "how do I escalate or pivot on an authorized target".
+- Use **vulnerability-research** when the user moves from "which reversing tools do I need" to "help me discover a novel bug or build a PoC".
 - Use **security-audit** when the user is defending an application or service rather than working the Kali workstation itself.

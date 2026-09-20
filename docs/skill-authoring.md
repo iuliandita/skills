@@ -44,7 +44,7 @@ one that works:
    becomes paragraph two. Zero new words. If paragraph one then lands under
    110 characters, pull the next existing sentence up instead of writing new
    copy. This is the correct fix for most TOO-LONG cases -
-   `debian-ubuntu`, `handoff`, `nixos-btw`, `rhel-fedora`, `routine-writer`,
+   `debian-ubuntu`, `session-handoff`, `nixos`, `rhel-fedora`,
    and `observability` are all plain sentence-boundary splits.
 2. **Reorder.** If a bold block (version pins, warnings) sits above the
    prose, move the prose above it without editing either block's content.
@@ -67,7 +67,19 @@ something to default into.
 ## Not the same thing as the frontmatter `description`
 
 The YAML `description` field supplies agent routing hints, governed by the
-middle-dot prefix rule in `scripts/lint-skills.sh`. Keep trigger descriptions
+task-first description rule in `scripts/lint-skills.sh`. Keep trigger descriptions
 and human-facing summaries consistent, but edit each according to its own
 purpose. A failing first-paragraph check does not itself require a
 frontmatter change.
+
+## Names and discovery
+
+Use searchable domain names and natural task phrases. Put the distinguishing action and
+subject first; include common synonyms only when the skill actually covers them. Keep
+metadata plain, without decorative prefixes or keyword stuffing. Descriptions improve
+selection evidence, but cannot guarantee a harness match or skills.sh search ranking.
+
+Choose the narrowest installed skill that covers the request. Use repo-audit only for a
+broad audit, plan-review for decisions, and the host's normal browsing or scheduling
+capabilities for those tasks. When routing stays ambiguous, compare boundaries or ask
+for the missing scope. Use skill-creator to repair recurring description conflicts.

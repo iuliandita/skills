@@ -1,6 +1,6 @@
 # TypeScript / JavaScript Bug Patterns
 
-Bug patterns specific to TypeScript and JavaScript. These focus on correctness - not style (see anti-slop) or security (see security-audit).
+Bug patterns specific to TypeScript and JavaScript. These focus on correctness - not style (see code-simplification) or security (see security-audit).
 
 ---
 

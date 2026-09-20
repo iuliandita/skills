@@ -1,118 +1,38 @@
 ---
 name: skill-router
 description: >
-  · Choose the best installed skill for a request and explain ambiguous matches. For skill edits, use skill-creator.
+  Deprecated and removed. Load this notice only when skill-router is explicitly requested; no replacement skill.
 license: MIT
-compatibility: "None - works with any Agent Skills collection"
 metadata:
   source: iuliandita/skills
-  date_added: "2026-05-01"
-  effort: medium
-  argument_hint: "<request-or-skill-list>"
+  date_added: "2026-09-20"
+  effort: low
+  deprecated: "true"
 ---
 
-# Skill Router
+# Deprecated: skill-router
 
-Route a user request to the smallest useful skill set. Prefer one primary skill. Use a short
-ordered set when one skill's output feeds the next; use parallel skills for independent domains.
+This old skill name is retained temporarily to explain the catalog migration. It provides migration guidance only and does not contain the former task workflow.
 
 ## When to use
 
-- User asks which skill applies to a request
-- A request appears to match multiple skill descriptions
-- A concrete request routes ambiguously and you need to select the best installed skill
-- You need to explain why one adjacent skill is a better fit than another
+Only when the user explicitly invokes the old **skill-router** name or asks how to migrate it.
 
 ## When NOT to use
 
-- Creating or rewriting a skill - use **skill-creator**
-- Batch improving a collection - use **skill-refiner**
-- Capturing feature ideas or competitive backlog items - use **roadmap**
-- Implementing domain work after routing - use the selected domain skill
-- Diagnosing or editing a skill's trigger text, or auditing collection-wide overlaps - use **skill-creator** (Modes 3-4)
-
----
-
-## AI Self-Check
-
-Before returning a routing decision, verify:
-
-- [ ] User intent is stated in one sentence
-- [ ] Hard trigger words were checked against the available skill descriptions
-- [ ] "Not for" routing hints were checked before choosing
-- [ ] One primary skill is selected unless the task truly spans multiple domains
-- [ ] Near misses are explained only when useful
-- [ ] The next action is clear: invoke a skill, ask a question, or proceed without a skill
-- [ ] **Routing overlap checked**: close matches are checked for trigger theft, missing exclusions, and process-skill precedence before the final route
-- [ ] **Spec claims verified**: claims about installed skills, trigger descriptions, or routing metadata are checked against the current collection
-- [ ] Cross-cutting agent hygiene applied - see `references/agent-hygiene.md`
-
----
-
-## Performance
-
-- Read skill metadata first; open full `SKILL.md` files only for close matches.
-- Prefer two or three near matches over scanning every reference file.
-- Stop once the selected skill has enough confidence for the next action.
-
-## Best Practices
-
-- Route by the user's intended work, not by incidental keywords.
-- Respect explicit user skill requests even if another skill might also apply.
-- Use ordered skill sets when process skills must precede domain skills.
-- **Ordered vs Parallel:** use `Ordered` when output of the first skill is input to the second (e.g., a review/reframe step that shapes the domain work). Use `Parallel` when the subtasks are independent and neither depends on the other's output. A process skill is one whose primary purpose is shaping, evaluating, or transforming intent rather than producing a domain artifact - examples in the installed collection: **jekyll-hyde** (critical reframing), **code-review** (evaluation before fixes). See `references/routing-patterns.md` for examples.
+Do not select this notice for ordinary domain tasks or treat it as an active skill.
 
 ## Workflow
 
-### Step 1: Restate intent
+1. Explain that this skill was removed without a replacement.
+2. Direct the user to the host's normal capabilities for this task. Do not run the retired workflow.
+3. Explain how to back up customizations and remove this old installed entry.
 
-Reduce the request to one concrete task statement.
-
-### Step 2: Identify hard matches
-
-Check skill names, trigger words, file types, tools, and explicit user mentions.
-
-### Step 3: Apply exclusions
-
-Read "When NOT to use" and "Not for" hints for close matches. Remove skills whose exclusions fit
-the request.
-
-### Step 4: Choose the route
-
-Return one of:
-
-- `Primary: <skill>` when one skill is enough
-- `Ordered: <skill-1> -> <skill-2>` when a process skill must run before a domain skill
-- `Parallel: <skill-a>, <skill-b>` when independent domains can be worked separately
-- `No skill` when no available skill materially helps
-
-### Step 5: Explain briefly
-
-Give the reason in one or two sentences. Include near misses only if they prevent confusion.
-
-For examples, see `references/routing-patterns.md`.
-
-## Output Contract
-
-See `references/output-contract.md` for the full contract.
-
-- **Skill name:** SKILL-ROUTER
-- **Deliverable bucket:** `audits`
-- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content (e.g., a written routing decision the user asked you to justify), emit the full contract - monospace inline header, severity-grouped inline summary, linked Markdown deliverable, and concise monospace conclusion - and write the deliverable to `docs/local/audits/skill-router/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content** (its primary routing-decision mode), respond freely without the contract.
-- **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
-
-## Related Skills
-
-- **skill-creator** - create, review, or optimize skill files and audit collection-wide overlaps.
-  This skill stops after selecting a route for the concrete request.
-- **skill-refiner** - batch-improve a skill collection with scoring and iteration; this skill only chooses routes.
-- **full-review** and **deep-audit** - orchestrate repo audits after routing identifies broad review intent.
-- **roadmap** - capture product or feature ideas; route there when the request is backlog shaping rather than skill selection.
+See `MIGRATION.md` in the [collection repository](https://github.com/iuliandita/skills)
+for installer-specific steps and the complete mapping.
 
 ## Rules
 
-1. Prefer one primary skill.
-2. Do not load reference files during routing unless the main skill file is ambiguous.
-3. Do not invent skills that are not installed.
-4. Do not let broad words like "review", "test", or "frontend" override explicit exclusions.
-5. After routing, stop routing and let the selected skill govern the next work.
+- Keep this notice for one transition release and at least seven days after publication.
+- Never claim an installed copy will update or disappear automatically.
+- Preserve local edits and private overlays before removing an installed entry.

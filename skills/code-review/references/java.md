@@ -1,6 +1,6 @@
 # Java Bug Patterns
 
-Bug patterns specific to Java, with focus on Quarkus and Spring Boot. Focused on correctness - not style (see anti-slop) or security (see security-audit).
+Bug patterns specific to Java, with focus on Quarkus and Spring Boot. Focused on correctness - not style (see code-simplification) or security (see security-audit).
 
 ---
 

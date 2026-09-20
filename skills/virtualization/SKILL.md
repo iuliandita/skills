@@ -1,7 +1,7 @@
 ---
 name: virtualization
 description: >
-  · Manage VMs: Proxmox, QEMU/KVM, libvirt, XCP-ng, VMware/ESXi; debug hypervisors, storage, and GPU passthrough.
+  Manage VMs: Proxmox, QEMU/KVM, libvirt, XCP-ng, VMware/ESXi; debug hypervisors, storage, and GPU passthrough.
 license: MIT
 compatibility: "Varies by hypervisor. Proxmox: pvesh, qm, pct. Libvirt: virsh, virt-install. Optional: packer, terraform"
 metadata:
@@ -60,9 +60,9 @@ Broadcom extended-support guidance rather than assuming an 8.0 patch applies.
 - Network config not hypervisor-specific: DNS, VPNs, reverse proxies (use **networking**)
 - Ansible playbooks and configuration management (use **ansible**)
 - Docker/container image optimization (use **docker**)
-- OPNsense/pfSense firewall management (use **firewall-appliance**)
+- OPNsense/pfSense firewall management (use **opnsense-pfsense**)
 - Synology DSM administration (use **synology-dsm**)
-- NixOS configuration and image generation (use **nixos-btw**)
+- NixOS configuration and image generation (use **nixos**)
 
 ---
 
@@ -121,6 +121,10 @@ generated VM config, Terraform HCL, or Packer template, verify against this list
 - Keep host, guest, and storage backups independently restorable.
 - Document PCI/GPU passthrough bindings so kernel updates do not strand the host.
 
+
+## Restore drills
+
+Restore a representative guest to an isolated network without duplicate production IPs or identities. Verify boot, application data, dependent services, and encryption-key availability; measure recovery time and data loss against RTO/RPO. Record the backup selected, checks, and cleanup. A successful backup job or snapshot is not evidence of recoverability.
 
 ## Workflow
 
@@ -441,7 +445,7 @@ See `references/output-contract.md` for the full contract.
 
 - **Skill name:** VIRTUALIZATION
 - **Deliverable bucket:** `audits`
-- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract - monospace inline header, severity-grouped inline summary, linked Markdown deliverable, and concise monospace conclusion - and write the deliverable to `docs/local/audits/virtualization/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
+- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, apply the reporting size and evidence rules in `references/output-contract.md` and write the deliverable to `docs/local/audits/virtualization/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
 
 ## Related Skills

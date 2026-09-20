@@ -1,7 +1,7 @@
 ---
 name: anti-ai-prose
 description: >
-  · Edit prose that sounds AI-written: remove filler and canned phrasing in docs, emails, and replies.
+  Edit prose that sounds AI-written: remove filler and canned phrasing in docs, emails, and replies.
 license: MIT
 compatibility: "None - works on any prose or text input"
 metadata:
@@ -28,11 +28,11 @@ Based in part on [Wikipedia: Signs of AI writing](https://en.wikipedia.org/wiki/
 
 ## When NOT to use
 
-- Code quality, over-abstraction, dependency creep, stale idioms - use **anti-slop**
+- Code quality, over-abstraction, dependency creep, stale idioms - use **code-simplification**
 - Doc drift after a feature change, API rename, or config update - use **update-docs**
 - Generating or restructuring a prompt from rough notes - use **prompt-generator**
 - Correctness bugs, logic errors, edge cases - use **code-review**
-- Security review of auth, secrets, or attack surface - use **security-audit**, or **full-review** for a full multi-dimensional repo audit
+- Security review of auth, secrets, or attack surface - use **security-audit**, or **repo-audit** for a full multi-dimensional repo audit
 
 ---
 
@@ -468,16 +468,16 @@ See `references/output-contract.md` for the full contract.
 
 - **Skill name:** ANTI-AI-PROSE
 - **Deliverable bucket:** `audits`
-- **Mode:** conditional, split on the two modes above. **Audit mode** (a file, paste, diff, or directory handed over for review) emits the full contract - monospace inline header, severity-grouped inline summary, linked Markdown deliverable, and concise monospace conclusion. **Inline mode** (filtering your own conversational output as you write it) emits nothing: no header, no findings, no deliverable, no announcement that the skill ran.
+- **Mode:** conditional, split on the two modes above. **Audit mode** (a file, paste, diff, or directory handed over for review) applies the reporting size and evidence rules in `references/output-contract.md`. **Inline mode** (filtering your own conversational output as you write it) emits nothing: no header, no findings, no deliverable, no announcement that the skill ran.
 - **Deliverable path:** `docs/local/audits/anti-ai-prose/<YYYY-MM-DD>-<slug>.md`
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract).
 
 ## Related Skills
 
-- **anti-slop** - code quality audit. When auditing a repo, run anti-slop for code and anti-ai-prose for docs. Deliberately complementary.
+- **code-simplification** - code quality audit. When auditing a repo, run code-simplification for code and anti-ai-prose for docs. Deliberately complementary.
 - **update-docs** - keeps docs accurate after feature changes. Anti-ai-prose covers voice, update-docs covers factual drift.
 - **prompt-generator** - structures a rough draft into an LLM prompt, for generating cleaner prose next time.
-- **full-review** - orchestrates code-review, anti-slop, security-audit, and update-docs. Anti-ai-prose is not wired in by default; invoke it separately when the repo has substantial prose.
+- **repo-audit** - orchestrates code-review, code-simplification, security-audit, and update-docs. Quick mode omits anti-ai-prose; exhaustive mode includes it in code quality.
 - **code-review** - logic and correctness. Anti-ai-prose only touches prose.
 
 ---

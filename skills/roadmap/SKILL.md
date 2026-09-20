@@ -1,7 +1,7 @@
 ---
 name: roadmap
 description: >
-  · Capture and prioritize feature ideas and competitor findings in a private ROADMAP.md backlog.
+  Capture and prioritize feature ideas and competitor findings in a private ROADMAP.md backlog.
 license: MIT
 compatibility: "Requires git. Optional: gh (GitHub CLI) or glab (GitLab CLI) for PR tracking and competitive scanning"
 metadata:
@@ -371,12 +371,12 @@ See `references/output-contract.md` for the full contract.
 
 - **Skill name:** ROADMAP
 - **Deliverable bucket:** `deliverables`
-- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** an existing roadmap (e.g., "review my ROADMAP.md"), emit the full contract - monospace inline header, severity-grouped inline summary, linked Markdown deliverable, and concise monospace conclusion - and write the deliverable to `docs/local/deliverables/roadmap/<YYYY-MM-DD>-<slug>.md`. When invoked to **build or update a roadmap** (its primary mode, writing to the user's working-directory `ROADMAP.md`), respond freely without the contract; build-mode output goes to `ROADMAP.md` in the working directory, not to `docs/local/`.
+- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** an existing roadmap (e.g., "review my ROADMAP.md"), apply the reporting size and evidence rules in `references/output-contract.md` and write the deliverable to `docs/local/deliverables/roadmap/<YYYY-MM-DD>-<slug>.md`. When invoked to **build or update a roadmap** (its primary mode, writing to the user's working-directory `ROADMAP.md`), respond freely without the contract; build-mode output goes to `ROADMAP.md` in the working directory, not to `docs/local/`.
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
 
 ## Related Skills
 
-- **browse** - competitive scan (Mode 3) may use browse for reading competitor repos
+- Use the host's browsing tools during competitive scans (Mode 3) to read competitor repos
   and documentation when web fetch alone isn't sufficient
 - **git** - update mode (Mode 2) reads git history and PR data to match shipped work
 - **code-review** - reviews code correctness. This skill tracks what to build;

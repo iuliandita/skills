@@ -1,7 +1,7 @@
 ---
 name: code-review
 description: >
-  · Review code and diffs for correctness: bugs, regressions, edge cases, races, and resource leaks.
+  Review code and diffs for correctness: bugs, regressions, edge cases, races, and resource leaks.
 license: MIT
 compatibility: "None - works on any codebase"
 metadata:
@@ -15,7 +15,7 @@ metadata:
 
 Find bugs that actually break things. Not style, not slop - correctness, reliability, and logic errors that will bite in production.
 
-This skill complements **anti-slop** (code quality/style) and **security-audit** (vulnerabilities/OWASP). Those catch "is the code clean?" and "is the code safe?" - this one catches "does the code actually work?"
+This skill complements **code-simplification** (code quality/style) and **security-audit** (vulnerabilities/OWASP). Those catch "is the code clean?" and "is the code safe?" - this one catches "does the code actually work?"
 
 Covers: **TypeScript/JavaScript**, **Python**, **Go**, **Java**, **Bash/Shell**, and **Infrastructure as Code** (Terraform, Ansible, Helm, Kubernetes, Docker/Compose, Proxmox/LXC). Universal patterns apply everywhere; language-specific sections add targeted checks.
 
@@ -36,7 +36,7 @@ Every finding answers one of:
 
 ## When NOT to use
 
-- Style, verbosity, or machine-generated code quality issues - use **anti-slop**
+- Style, verbosity, or machine-generated code quality issues - use **code-simplification**
 - Exploitable vulnerabilities, auth flaws, or secret scanning - use **security-audit**
 - Pipeline config review, pipeline architecture, runner behavior, caching, or deployment-job bugs - use **ci-cd**
 - End-of-session doc hygiene or instruction-file cleanup - use **update-docs**
@@ -151,7 +151,7 @@ Examine every interface between components:
 - **Downstream impact**: when reviewing changes to exported functions, interfaces, or API endpoints, grep for all callers/consumers. For config/env var changes, check all files that reference the changed key. A boolean toggle in one file can break feature-flag logic across twelve modules.
 
 **Focus 4: Convention Compliance**
-Check against project-specific correctness rules - not style (that's anti-slop), but rules that affect whether the code works:
+Check against project-specific correctness rules - not style (that's code-simplification), but rules that affect whether the code works:
 - Project instruction-file rules about error handling, transactions, API patterns
 - Consistency with surrounding code's error handling and state management
 - Framework idioms that affect correctness (not just style)
@@ -296,7 +296,7 @@ Read `references/cicd-pipelines.md` for the full CI/CD bug pattern catalog. Key 
 ## AI-Age Patterns
 
 Use this reference to find concrete behavior defects. Naming, style, and abstraction preferences
-belong to **anti-slop**; vulnerability findings belong to **security-audit**. Pattern matches
+belong to **code-simplification**; vulnerability findings belong to **security-audit**. Pattern matches
 and historical statistics are prompts for investigation, never evidence about the reviewed code.
 
 Read `references/ai-age-patterns.md` for the full AI-age bug pattern catalog. Key highlights:
@@ -338,7 +338,7 @@ For Rust and other languages without dedicated reference files: apply the univer
 
 ## What NOT to Flag
 
-- **Style/quality issues** - that's anti-slop's job.
+- **Style/quality issues** - that's code-simplification's job.
 - **Security vulnerabilities** - that's security-audit's job.
 - **Pre-existing bugs** - issues on lines not touched by the current changes (when reviewing a diff).
 - **Linter/compiler catches** - missing imports, type errors, formatting. The toolchain handles these.
@@ -466,17 +466,17 @@ See `references/output-contract.md` for the full contract.
 
 - **Skill name:** CODE-REVIEW
 - **Deliverable bucket:** `audits`
-- **Mode:** always-on. Every invocation emits the full contract - monospace inline header, severity-grouped inline summary, linked Markdown deliverable, and concise monospace conclusion.
+- **Mode:** always-on. Every invocation applies the reporting size and evidence rules in `references/output-contract.md`.
 - **Deliverable path:** `docs/local/audits/code-review/<YYYY-MM-DD>-<slug>.md`
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract).
 
 ## Related Skills
 
-- **anti-slop** - handles style, quality, and machine-generated code patterns. If the finding
-  is "ugly but correct," route to anti-slop. If it would cause incorrect behavior, keep it here.
+- **code-simplification** - handles style, quality, and machine-generated code patterns. If the finding
+  is "ugly but correct," route to code-simplification. If it would cause incorrect behavior, keep it here.
 - **security-audit** - handles vulnerability detection (injection, auth bypass, credential
   exposure). Code-review catches logic bugs; security-audit catches exploitable flaws.
-- **full-review** - orchestrates code-review, anti-slop, security-audit, and update-docs in
+- **repo-audit** - orchestrates code-review, code-simplification, security-audit, and update-docs in
   parallel. Code-review is one of the four passes.
 - **databases** - `references/databases.md` in this skill covers application-level DB bug
   patterns. The databases skill covers engine configuration and operations.
@@ -488,7 +488,7 @@ See `references/output-contract.md` for the full contract.
 ## Rules
 
 - **Read before flagging.** Never flag code you haven't read in full context. Read the function, the file, and the callers if needed. A pattern that looks wrong in isolation might be correct in context.
-- **Don't duplicate other skills.** Style issues belong to anti-slop. Security vulnerabilities belong to security-audit. If you're unsure whether a finding is a bug or a style issue, ask: "would this cause incorrect behavior?" If no, skip it.
+- **Don't duplicate other skills.** Style issues belong to code-simplification. Security vulnerabilities belong to security-audit. If you're unsure whether a finding is a bug or a style issue, ask: "would this cause incorrect behavior?" If no, skip it.
 - **One finding per bug, not per occurrence.** If the same pattern appears in 5 files, report it once with a note about scope. Don't pad the report.
 - **Show the fix.** Every finding must include a concrete code fix, not just a description of the problem. If you can't show a fix, the finding isn't specific enough.
 - **Verify before scoring.** Before assigning 80+, check: is there a test covering this? Does git blame show this is new or old? Is there a comment explaining why?

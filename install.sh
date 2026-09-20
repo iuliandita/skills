@@ -7,6 +7,8 @@ source "$SCRIPT_DIR/scripts/skill-lib.sh"
 
 SKILLS_SRC="$SCRIPT_DIR/skills"
 CANONICAL_DIR="${SKILLS_CANONICAL_DIR:-$HOME/.agents/skills}"
+MIGRATIONS_FILE="${SKILLS_MIGRATIONS_FILE:-$SCRIPT_DIR/migrations.json}"
+MIGRATOR="${SKILLS_MIGRATOR:-$SCRIPT_DIR/scripts/migrate-skills.py}"
 
 # Discover skills dynamically: scan skills/ for dirs with SKILL.md.
 # Gitignored skills are excluded unless --include-internal is active and the
@@ -132,6 +134,8 @@ Options:
   --link              Symlink mode: install once to canonical dir, symlink per tool
   --list              List available skills and install status
   --check             Compare installed skills against source via lock file
+  --migrate           Preview recorded legacy-skill migrations (use --apply to run)
+  --apply             Apply a migration preview; requires --migrate
   --force             Overwrite existing skills without prompting
   --no-backup         Skip backup of existing skills
   --include-internal  Include skills marked metadata.internal: true
@@ -154,6 +158,8 @@ Examples:
   install.sh --tool claude,codex,opencode --link --include-internal
   install.sh --check                            # Check Claude install for updates
   install.sh --check --tool cursor              # Check Cursor install
+  install.sh --migrate                          # Preview legacy-skill migration
+  install.sh --migrate --apply --tool codex     # Apply owned Codex migration
   install.sh --tool portable --dest ~/.skills
   install.sh --list
 EOF
@@ -185,6 +191,62 @@ is_internal() {
   [[ -f "$skill_dir/SKILL.md" ]] || return 1
   frontmatter_has "$skill_dir/SKILL.md" "metadata.internal" \
     && [[ "$(frontmatter_get "$skill_dir/SKILL.md" "metadata.internal")" == "true" ]]
+}
+
+is_deprecated() {
+  local skill_dir="$1"
+  [[ -f "$skill_dir/SKILL.md" ]] || return 1
+  frontmatter_has "$skill_dir/SKILL.md" "metadata.deprecated" \
+    && [[ "$(frontmatter_get "$skill_dir/SKILL.md" "metadata.deprecated")" == "true" ]]
+}
+
+declare -A MIGRATION_ACTIONS=()
+declare -A MIGRATION_REPLACEMENTS=()
+
+load_migrations() {
+  [[ -f "$MIGRATIONS_FILE" ]] || return 0
+  local rows old action replacement
+  if ! rows="$(python3 - "$MIGRATIONS_FILE" <<'PY'
+import json
+import re
+import sys
+
+name = re.compile(r"^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$")
+try:
+    payload = json.load(open(sys.argv[1], encoding="utf-8"))
+    skills = payload["skills"]
+    transition = payload["transition"]
+    expected_transition = {"release", "published_at", "minimum_days", "placeholder_releases"}
+    if payload.get("version") != 1 or not isinstance(skills, dict) or not isinstance(transition, dict):
+        raise ValueError("expected version 1, transition object, and skills object")
+    if set(transition) != expected_transition:
+        raise ValueError("unexpected transition fields")
+    for old, entry in sorted(skills.items()):
+        action = entry["action"]
+        replacement = entry["replacement"]
+        if not isinstance(old, str) or not name.fullmatch(old):
+            raise ValueError(f"invalid skill name: {old!r}")
+        if action not in {"rename", "merge", "remove"}:
+            raise ValueError(f"invalid action for {old}")
+        if action == "remove":
+            if replacement is not None:
+                raise ValueError(f"remove action has replacement for {old}")
+            replacement = ""
+        elif not isinstance(replacement, str) or not name.fullmatch(replacement):
+            raise ValueError(f"invalid replacement for {old}")
+        print(f"{old}\t{action}\t{replacement}")
+except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError) as error:
+    print(f"Invalid migrations manifest: {error}", file=sys.stderr)
+    sys.exit(1)
+PY
+  )"; then
+    return 1
+  fi
+  while IFS=$'\t' read -r old action replacement; do
+    [[ -n "$old" ]] || continue
+    MIGRATION_ACTIONS["$old"]="$action"
+    MIGRATION_REPLACEMENTS["$old"]="$replacement"
+  done <<< "$rows"
 }
 
 # ── Backup ────────────────────────────────────────────────────────────
@@ -232,6 +294,28 @@ migrate_legacy_backups() {
 }
 
 # ── Lock file ─────────────────────────────────────────────────────────
+ensure_lock_source() {
+  local lock_dir="$1"
+  local lock_file="$lock_dir/.skills-lock.json"
+  [[ -f "$lock_file" ]] || return 0
+  python3 - "$lock_file" "$SKILLS_SRC" <<'PY'
+import json
+from pathlib import Path
+import sys
+
+lock_path = Path(sys.argv[1])
+source = Path(sys.argv[2]).resolve(strict=True)
+try:
+    lock = json.loads(lock_path.read_text(encoding="utf-8"))
+    lock_source = Path(lock["source"]).resolve(strict=True)
+    if lock.get("version") != 1 or not isinstance(lock.get("skills"), dict) or lock_source != source:
+        raise ValueError("version, source, or skills is incompatible")
+except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError) as error:
+    print(f"Refusing to update unverified lock {lock_path}: {error}", file=sys.stderr)
+    sys.exit(1)
+PY
+}
+
 write_lock() {
   local lock_dir="$1"
   shift
@@ -240,35 +324,78 @@ write_lock() {
   local now
   now="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
-  {
-    printf '{\n'
-    printf '  "version": 1,\n'
-    printf '  "updated_at": "%s",\n' "$now"
-    printf '  "source": "%s",\n' "$SKILLS_SRC"
-    printf '  "skills": {\n'
-    local first=true
-    for skill in "${skills[@]}"; do
-      local target="$lock_dir/$skill"
-      [[ -L "$target" ]] && target="$(readlink "$target")"
-      [[ -d "$target" ]] || continue
-      local h
-      h="$(skill_hash "$target")"
-      if [[ "$first" == "true" ]]; then
-        first=false
-      else
-        printf ',\n'
-      fi
-      printf '    "%s": "%s"' "$skill" "$h"
-    done
-    printf '\n  }\n'
-    printf '}\n'
-  } > "$lock_file"
+  local updates=()
+  for skill in "${skills[@]}"; do
+    local target="$lock_dir/$skill"
+    [[ -L "$target" ]] && target="$(readlink -f "$target" 2>/dev/null || true)"
+    [[ -d "$target" ]] || continue
+    local source_target="$SKILLS_SRC/$skill"
+    [[ -d "$source_target" ]] || continue
+    local target_hash source_hash
+    target_hash="$(skill_hash "$target")"
+    source_hash="$(skill_hash "$source_target")"
+    [[ "$target_hash" == "$source_hash" ]] || continue
+    updates+=("$skill=$target_hash")
+  done
+
+  python3 - "$lock_file" "$SKILLS_SRC" "$now" "${updates[@]}" <<'PY'
+import json
+import pathlib
+import re
+import sys
+
+lock_path = pathlib.Path(sys.argv[1])
+source = pathlib.Path(sys.argv[2]).resolve(strict=True)
+updated_at = sys.argv[3]
+name = re.compile(r"^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$")
+skills = {}
+if lock_path.exists():
+    try:
+        existing = json.loads(lock_path.read_text(encoding="utf-8"))
+        existing_source = pathlib.Path(existing["source"]).resolve(strict=True)
+        if existing.get("version") != 1 or not isinstance(existing.get("skills"), dict) or existing_source != source:
+            raise ValueError("version, source, or skills is incompatible")
+        skills = dict(existing["skills"])
+    except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError) as error:
+        raise SystemExit(f"Refusing to update unverified lock {lock_path}: {error}")
+for item in sys.argv[4:]:
+    skill, digest = item.split("=", 1)
+    if name.fullmatch(skill):
+        previous = skills.get(skill)
+        if previous is None:
+            skills[skill] = {"hash": digest, "provenance": "source-equal-v1"}
+        elif isinstance(previous, dict) and previous.get("provenance") == "source-equal-v1":
+            skills[skill] = {"hash": digest, "provenance": "source-equal-v1"}
+        elif isinstance(previous, str):
+            skills[skill] = digest
+payload = {
+    "version": 1,
+    "updated_at": updated_at,
+    "source": str(source),
+    "skills": dict(sorted(skills.items())),
+}
+temp = lock_path.with_name(f".{lock_path.name}.tmp")
+temp.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+temp.replace(lock_path)
+PY
 }
 
 read_lock_hash() {
   local lock_file="$1" skill="$2"
   [[ -f "$lock_file" ]] || return 0
-  sed -n "s/.*\"${skill}\": *\"\\([^\"]*\\)\".*/\\1/p" "$lock_file"
+  python3 - "$lock_file" "$skill" <<'PY'
+import json
+import sys
+
+try:
+    value = json.load(open(sys.argv[1], encoding="utf-8"))["skills"].get(sys.argv[2])
+    if isinstance(value, str):
+        print(value)
+    elif isinstance(value, dict) and isinstance(value.get("hash"), str):
+        print(value["hash"])
+except (OSError, ValueError, TypeError, json.JSONDecodeError):
+    pass
+PY
 }
 
 # ── Install helpers ───────────────────────────────────────────────────
@@ -410,9 +537,10 @@ check_updates() {
 
   printf 'Checking for updates...\n\n'
 
-  local outdated=0 current=0 missing=0
+  local outdated=0 current=0 missing=0 legacy=0
   for skill in "${ALL_SKILLS[@]}"; do
     [[ -d "$SKILLS_SRC/$skill" ]] || continue
+    is_deprecated "$SKILLS_SRC/$skill" && continue
 
     local src_hash installed_hash
     src_hash="$(skill_hash "$SKILLS_SRC/$skill")"
@@ -430,8 +558,21 @@ check_updates() {
     fi
   done
 
-  printf '\n%d current, %d outdated, %d not installed\n' "$current" "$outdated" "$missing"
-  if (( outdated > 0 || missing > 0 )); then
+  local old
+  for old in "${!MIGRATION_ACTIONS[@]}"; do
+    if [[ -d "$dest_dir/$old" || -L "$dest_dir/$old" ]]; then
+      local replacement="${MIGRATION_REPLACEMENTS[$old]}"
+      if [[ -n "$replacement" ]]; then
+        printf '  [!] %-24s legacy installed (%s -> %s)\n' "$old" "${MIGRATION_ACTIONS[$old]}" "$replacement"
+      else
+        printf '  [!] %-24s legacy installed (%s)\n' "$old" "${MIGRATION_ACTIONS[$old]}"
+      fi
+      (( legacy++ )) || true
+    fi
+  done
+
+  printf '\n%d current, %d outdated, %d not installed, %d legacy\n' "$current" "$outdated" "$missing" "$legacy"
+  if (( outdated > 0 || missing > 0 || legacy > 0 )); then
     exit 1
   fi
 }
@@ -441,10 +582,20 @@ list_skills() {
   local dest_dir="$1"
   printf '\nAvailable skills (%d):\n\n' "${#ALL_SKILLS[@]}"
   for skill in "${ALL_SKILLS[@]}"; do
+    local status=""
     if [[ -L "$dest_dir/$skill" ]]; then
-      printf '  %-24s [linked]\n' "$skill"
+      status="linked"
     elif [[ -d "$dest_dir/$skill" ]]; then
-      printf '  %-24s [installed]\n' "$skill"
+      status="installed"
+    fi
+    if is_deprecated "$SKILLS_SRC/$skill"; then
+      if [[ -n "$status" ]]; then
+        printf '  %-24s [deprecated, %s]\n' "$skill" "$status"
+      else
+        printf '  %-24s [deprecated]\n' "$skill"
+      fi
+    elif [[ -n "$status" ]]; then
+      printf '  %-24s [%s]\n' "$skill" "$status"
     else
       printf '  %-24s\n' "$skill"
     fi
@@ -455,7 +606,7 @@ list_skills() {
 # ── Main ──────────────────────────────────────────────────────────────
 main() {
   local force=false no_backup=false link_mode=false
-  local check_mode=false show_list=false include_internal=false
+  local check_mode=false show_list=false include_internal=false migrate_mode=false apply_migration=false
   local dest_override=""
   local tools=() skills=()
 
@@ -475,6 +626,8 @@ main() {
       --link)             link_mode=true ;;
       --list)             show_list=true ;;
       --check)            check_mode=true ;;
+      --migrate)          migrate_mode=true ;;
+      --apply)            apply_migration=true ;;
       --force)            force=true ;;
       --no-backup)        no_backup=true ;;
       --include-internal) include_internal=true ;;
@@ -491,6 +644,7 @@ main() {
   fi
 
   mapfile -t ALL_SKILLS < <(discover_skills "$include_internal")
+  load_migrations || { printf '%s\n' "Cannot continue with an invalid migrations.json" >&2; exit 1; }
 
   # Validate tool names
   for i in "${!tools[@]}"; do
@@ -499,9 +653,13 @@ main() {
   done
 
   # Build skill list (filter internal unless --include-internal)
+  local requested_skill_count="${#skills[@]}"
   if (( ${#skills[@]} == 0 )); then
     for skill in "${ALL_SKILLS[@]}"; do
       if [[ "$include_internal" != "true" ]] && is_internal "$SKILLS_SRC/$skill"; then
+        continue
+      fi
+      if is_deprecated "$SKILLS_SRC/$skill"; then
         continue
       fi
       skills+=("$skill")
@@ -514,6 +672,12 @@ main() {
   fi
   if [[ "$link_mode" == "true" && -n "$dest_override" ]]; then
     printf '%s\n' "--link and --dest cannot be used together" >&2; exit 1
+  fi
+  if [[ "$apply_migration" == "true" && "$migrate_mode" != "true" ]]; then
+    printf '%s\n' "--apply requires --migrate" >&2; exit 1
+  fi
+  if [[ "$migrate_mode" == "true" && "$requested_skill_count" -gt 0 ]]; then
+    printf '%s\n' "--migrate does not accept skill names; it uses migrations.json" >&2; exit 1
   fi
 
   # Resolve primary destination (for --list, --check)
@@ -538,11 +702,50 @@ main() {
     exit 0
   fi
 
+  # ── Migration ──────────────────────────────────────────────────────
+  if [[ "$migrate_mode" == "true" ]]; then
+    [[ -x "$MIGRATOR" ]] || { printf 'Migration helper is unavailable: %s\n' "$MIGRATOR" >&2; exit 1; }
+    local migration_args=(--manifest "$MIGRATIONS_FILE" --source "$SKILLS_SRC")
+    if [[ "$apply_migration" == "true" ]]; then
+      migration_args+=(--apply)
+      printf 'Applying recorded legacy-skill migration. Backups are always retained.\n\n'
+    else
+      printf 'Previewing recorded legacy-skill migration. Re-run with --apply to change files.\n\n'
+    fi
+    if [[ "$link_mode" == "true" ]]; then
+      "$MIGRATOR" "${migration_args[@]}" --dest "$CANONICAL_DIR" --preserve-shared-canonical
+      local -A migrated_destinations=()
+      for tool in "${tools[@]}"; do
+        local tool_dir
+        tool_dir="$(resolve_tool_path "$tool")"
+        [[ "$tool_dir" == "$CANONICAL_DIR" ]] && continue
+        [[ -n "${migrated_destinations[$tool_dir]:-}" ]] && continue
+        migrated_destinations["$tool_dir"]=true
+        "$MIGRATOR" "${migration_args[@]}" --dest "$tool_dir" --link-root "$CANONICAL_DIR"
+      done
+    else
+      local -A migrated_destinations=()
+      for tool in "${tools[@]}"; do
+        local tool_dir
+        if [[ -n "$dest_override" ]]; then
+          tool_dir="$dest_override"
+        else
+          tool_dir="$(resolve_tool_path "$tool")"
+        fi
+        [[ -n "${migrated_destinations[$tool_dir]:-}" ]] && continue
+        migrated_destinations["$tool_dir"]=true
+        "$MIGRATOR" "${migration_args[@]}" --dest "$tool_dir"
+      done
+    fi
+    exit 0
+  fi
+
   # ── Install: link mode ──────────────────────────────────────────────
   if [[ "$link_mode" == "true" ]]; then
     printf 'Installing %d skill(s) via symlink\n' "${#skills[@]}"
     printf 'Canonical: %s\n\n' "$CANONICAL_DIR"
     mkdir -p "$CANONICAL_DIR"
+    ensure_lock_source "$CANONICAL_DIR"
     migrate_legacy_backups "$CANONICAL_DIR"
 
     # Copy all skills to canonical dir first
@@ -558,6 +761,14 @@ main() {
         (( failed++ )) || true
         continue
       fi
+      if is_deprecated "$SKILLS_SRC/$skill"; then
+        local replacement="${MIGRATION_REPLACEMENTS[$skill]:-}"
+        if [[ -n "$replacement" ]]; then
+          printf '  [!] %s is deprecated; use %s\n' "$skill" "$replacement"
+        else
+          printf '  [!] %s is deprecated and scheduled for removal\n' "$skill"
+        fi
+      fi
       install_copy "$skill" "$CANONICAL_DIR" "$force" "$no_backup" || (( failed++ )) || true
     done
 
@@ -570,6 +781,7 @@ main() {
         continue
       fi
       mkdir -p "$tool_dir"
+      ensure_lock_source "$tool_dir"
       migrate_legacy_backups "$tool_dir"
       printf '[%s] -> %s\n' "$tool" "$tool_dir"
       for skill in "${skills[@]}"; do
@@ -604,6 +816,7 @@ main() {
         dest="$(resolve_tool_path "$tool")"
       fi
       mkdir -p "$dest"
+      ensure_lock_source "$dest"
       migrate_legacy_backups "$dest"
 
       printf '[%s] -> %s\n' "$tool" "$dest"
@@ -617,6 +830,14 @@ main() {
           printf '  [!] Unknown skill: %s\n' "$skill"
           (( failed++ )) || true
           continue
+        fi
+        if is_deprecated "$SKILLS_SRC/$skill"; then
+          local replacement="${MIGRATION_REPLACEMENTS[$skill]:-}"
+          if [[ -n "$replacement" ]]; then
+            printf '  [!] %s is deprecated; use %s\n' "$skill" "$replacement"
+          else
+            printf '  [!] %s is deprecated and scheduled for removal\n' "$skill"
+          fi
         fi
         install_copy "$skill" "$dest" "$force" "$no_backup" || (( failed++ )) || true
       done

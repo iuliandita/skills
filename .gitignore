@@ -4,6 +4,7 @@ GEMINI.md
 AGENTS.md
 publish.sh
 skills/cluster-health/protected/
+skills/kubernetes-health/protected/
 docs/local/
 SECURITY-AUDIT.md
 .codex

@@ -1,7 +1,7 @@
 ---
 name: skill-creator
 description: >
-  · Create or review skills; fix descriptions, triggers, frontmatter, references, and collection overlaps.
+  Create or review skills; fix descriptions, triggers, frontmatter, references, and collection overlaps.
 license: MIT
 compatibility: "Optional: git (for freshness and gitignore filtering)"
 metadata:
@@ -33,11 +33,11 @@ patterns activates reliably, reads clearly, and plays well with the rest of the 
 ## When NOT to use
 
 - Reviewing application code for correctness or bugs - use **code-review**
-- Auditing code for AI-generated patterns or style issues - use **anti-slop**
-- Running a full codebase audit across multiple dimensions - use **full-review**
+- Auditing code for AI-generated patterns or style issues - use **code-simplification**
+- Running a full codebase audit across multiple dimensions - use **repo-audit**
 - Creating inline prompts within application code - use **prompt-generator**
 - Batch-improving a whole skill collection via evaluation loops - use **skill-refiner**
-- Choosing which installed skill should handle a concrete user request - use **skill-router**
+- Choosing a skill for one request without editing skill files - use the host's normal skill selection.
 - Syncing or refreshing third-party skills from upstream - handle that directly in the repo workflow
 - Updating project documentation after infrastructure changes - use **update-docs**
 - Writing application code, even if the code is for a tool a skill might use
@@ -58,7 +58,7 @@ Before returning any generated or modified skill, verify against this list:
 - [ ] **Rules section at the end**: the real non-negotiable constraints in imperative form; add only constraints the skill genuinely needs and do not invent rules to fill the section
 - [ ] **Style compliant**: no banned words and only the approved non-ASCII set, both defined
   in `references/conventions.md`; no em-dashes, curly quotes, or `--` substitutes in prose.
-- [ ] **Target ~500 lines**: if over 500, extract to `references/` with clear pointers. Hard max 600
+- [ ] **Target 150-250 lines where practical**: if over 500, extract to `references/` with clear pointers. Hard max 600
 - [ ] **Reference files use `references/` relative paths**: not hardcoded or tool-specific paths
 - [ ] **All references verified**: every tool, CLI flag, IaC resource, and example command
   confirmed against actual docs, `--help`, or registries - not assumed from training data.
@@ -244,7 +244,7 @@ Read the SKILL.md and all reference files. No skipping - the whole point is catc
 - AI Self-Check section (required for skills that generate code/config)
 - Reference file paths resolve (check `references/` directory)
 - Related Skills section present and accurate (when the skill interacts with other skills)
-- Target ~500 lines (SKILL.md body), hard max 600
+- Target 150-250 lines where practical (SKILL.md body), hard max 600
 
 **Content checks:**
 - Tools exist? Every tool, CLI, library, or platform named in the skill must be verified as
@@ -374,10 +374,10 @@ is >30 days old AND the skill covers fast-moving domains. The lists below are il
 not exhaustive; derive the sets from the live inventory each run.
 
 **Fast-moving examples** (>30 days = stale risk): docker, kubernetes, ci-cd, terraform, ansible,
-databases, git, security-audit, code-review (AI-age patterns section), mcp, networking, arch-btw
+databases, git, security-audit, code-review (AI-age patterns section), mcp, networking, arch-linux
 
-**Slow-moving examples** (>30 days = probably fine): firewall-appliance, command-prompt,
-prompt-generator, update-docs, skill-creator, full-review, anti-slop, lockpick
+**Slow-moving examples** (>30 days = probably fine): opnsense-pfsense, shell-scripting,
+prompt-generator, update-docs, skill-creator, repo-audit, code-simplification, privilege-escalation
 
 If conventions change significantly, reclassify skill-creator as fast-moving until they stabilize.
 
@@ -414,7 +414,7 @@ description differentiates clearly. For standalone skills, skip this step.
 - **Lead with the task and domain** so the opening still routes usefully if the host shortens it.
 - **Use distinctive terms once** in natural prose: artifact names, domain aliases, and user intent.
 - **Disambiguate likely neighbors** with a specific task or short exclusion where it earns space.
-- **Aim for 80-120 characters**, including the prefix; preserve useful distinctions over shaving characters.
+- **Aim for 80-120 characters**, with useful task terms first; preserve useful distinctions over shaving characters.
 - **Test natural requests and near misses**; avoid generic "cleanup" or "start working" triggers.
 
 The validator warns above 120 characters and rejects above the 1024-character spec ceiling.
@@ -463,18 +463,18 @@ See `references/output-contract.md` for the full contract.
 
 - **Skill name:** SKILL-CREATOR
 - **Deliverable bucket:** `audits`
-- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content (e.g., Mode 2 review or Mode 3 audit), emit the full contract - monospace inline header, severity-grouped inline summary, linked Markdown deliverable, and concise monospace conclusion - and write the deliverable to `docs/local/audits/skill-creator/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content** (e.g., Mode 1 create), respond freely without the contract; the existing `## Run Report` guidance applies to that build path.
+- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content (e.g., Mode 2 review or Mode 3 audit), apply the reporting size and evidence rules in `references/output-contract.md` and write the deliverable to `docs/local/audits/skill-creator/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content** (e.g., Mode 1 create), respond freely without the contract; the existing `## Run Report` guidance applies to that build path.
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
 
 ## Related Skills
 
-- **anti-slop** - audits code quality. Apply it to example code and reference patterns.
-- **full-review** - orchestrates four application-repo audits; this skill audits the skill collection.
+- **code-simplification** - audits code quality. Apply it to example code and reference patterns.
+- **repo-audit** - orchestrates quick or exhaustive application-repo audits; this skill audits the skill collection.
 - **prompt-generator** - targets one-off prompts in `docs/local/prompts/`, not reusable skill files.
 - **code-review** - reviews application code for correctness. This skill reviews skill files
   for convention compliance, not code correctness.
-- **skill-router** - chooses the best installed skill for one concrete request. This skill owns
-  edits to trigger text and collection-wide overlap analysis after a routing defect is identified.
+- Use the host's normal skill selection for individual requests; this skill owns recurring
+  trigger conflicts and collection-wide overlap analysis.
 
 ## Rules
 

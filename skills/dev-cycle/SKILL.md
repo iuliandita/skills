@@ -1,7 +1,7 @@
 ---
 name: dev-cycle
 description: >
-  · Run a requested full development workflow: branch, implement, check, review, PR, merge, and release.
+  Run a requested full development workflow: branch, implement, check, review, PR, merge, and release.
 license: MIT
 compatibility: "Requires git. Optional forge CLIs by host: gh (GitHub), glab (GitLab), fj (Forgejo), tea (Gitea). Bitbucket uses web UI or REST API. Bare git (no remote) works via format-patch/bundle. Delegates to git, testing, code-review, update-docs, and a brainstorming skill if installed."
 metadata:
@@ -43,7 +43,7 @@ skill is the glue, not the engine.
 - Roadmap idea capture without starting code - use **roadmap**
 - Pure brainstorming without any start-of-work intent - use a brainstorming skill directly
 - Post-merge retrospective or documentation cleanup alone - use **update-docs**
-- Full repo audits (security, bugs, slop) - use **full-review** or **deep-audit**
+- Full repo audits (security, bugs, slop) - use **repo-audit** (quick or exhaustive mode)
 
 ## Related Skills
 
@@ -389,7 +389,7 @@ See `references/output-contract.md` for the full contract.
 
 - **Skill name:** DEV-CYCLE
 - **Deliverable bucket:** `audits`
-- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract - monospace inline header, severity-grouped inline summary, linked Markdown deliverable, and concise monospace conclusion - and write the deliverable to `docs/local/audits/dev-cycle/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
+- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, apply the reporting size and evidence rules in `references/output-contract.md` and write the deliverable to `docs/local/audits/dev-cycle/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
 
 ## Reference Files

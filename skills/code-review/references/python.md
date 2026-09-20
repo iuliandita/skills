@@ -1,6 +1,6 @@
 # Python Bug Patterns
 
-Bug patterns specific to Python. Focused on correctness - not style (see anti-slop) or security (see security-audit).
+Bug patterns specific to Python. Focused on correctness - not style (see code-simplification) or security (see security-audit).
 
 ---
 

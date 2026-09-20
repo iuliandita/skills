@@ -1,7 +1,7 @@
 ---
 name: ansible
 description: >
-  · Write, review, and debug Ansible playbooks, roles, inventories, Ansible Vault, Molecule tests, and AWX/AAP.
+  Write, review, and debug Ansible playbooks, roles, inventories, Ansible Vault, Molecule tests, and AWX/AAP.
 license: MIT
 compatibility: "Requires ansible-core; target controller Python 3.12+. Check managed-node support separately. Optional: ansible-lint, molecule"
 metadata:
@@ -49,9 +49,9 @@ This skill covers four domains depending on context:
 - Dockerfiles, Compose stacks, container image optimization - use **docker**
 - CI/CD pipeline design (stages, runners, caching) - use **ci-cd**
 - Security audits of application code (SAST, dependency scanning) - use **security-audit**
-- Shell scripting or one-off commands - use **command-prompt**
-- Firewall appliance management (OPNsense/pfSense) - use **firewall-appliance**
-- Single-machine OS-level admin questions (package setup, user management, service config without automation context) - use the appropriate distro skill: **debian-ubuntu**, **rhel-fedora**, **kali-linux**, or **arch-btw**
+- Shell scripting or one-off commands - use **shell-scripting**
+- Firewall appliance management (OPNsense/pfSense) - use **opnsense-pfsense**
+- Single-machine OS-level admin questions (package setup, user management, service config without automation context) - use the appropriate distro skill: **debian-ubuntu**, **rhel-fedora**, **kali-linux**, or **arch-linux**
 
 ---
 
@@ -435,7 +435,7 @@ See `references/output-contract.md` for the full contract.
 
 - **Skill name:** ANSIBLE
 - **Deliverable bucket:** `audits`
-- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract - monospace inline header, severity-grouped inline summary, linked Markdown deliverable, and concise monospace conclusion - and write the deliverable to `docs/local/audits/ansible/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
+- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, apply the reporting size and evidence rules in `references/output-contract.md` and write the deliverable to `docs/local/audits/ansible/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
 
 ## Related Skills
@@ -455,7 +455,7 @@ See `references/output-contract.md` for the full contract.
 - **debian-ubuntu** - for Debian/Ubuntu/Mint OS-level admin questions outside an automation context.
 - **rhel-fedora** - for RHEL/Fedora/CentOS OS-level admin questions outside an automation context.
 - **kali-linux** - for Kali Linux administration outside an automation context.
-- **arch-btw** - for Arch Linux / CachyOS OS-level admin questions outside an automation context.
+- **arch-linux** - for Arch Linux / CachyOS OS-level admin questions outside an automation context.
 
 ---
 

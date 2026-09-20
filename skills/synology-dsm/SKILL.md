@@ -1,7 +1,7 @@
 ---
 name: synology-dsm
 description: >
-  · Administer Synology DSM NAS over SSH: shares, packages, storage pools, crashed volumes, and btrfs recovery.
+  Administer Synology DSM NAS over SSH: shares, packages, storage pools, crashed volumes, and btrfs recovery.
 license: MIT
 compatibility: "Requires SSH access to a Synology NAS running DSM 7, with an admin account for sudo. DSM 6 differences are noted but not covered in depth"
 metadata:
@@ -58,13 +58,13 @@ Verify the actual build before quoting any of this: `cat /etc.defaults/VERSION`.
 
 ## When NOT to use
 
-- Generic Linux administration on a normal distro - use **debian-ubuntu**, **arch-btw**,
-  **rhel-fedora**, **nixos-btw**
+- Generic Linux administration on a normal distro - use **debian-ubuntu**, **arch-linux**,
+  **rhel-fedora**, **nixos**
 - Mainline btrfs on a normal Linux host - Synology's format divergences do not apply there
 - Docker Compose authoring, image builds, registry work (Container Manager runs stock Docker) -
   use **docker** for the container content, this skill only for DSM-side paths and permissions
 - Router, VLAN, DNS, or reverse proxy design around the NAS - use **networking**
-- OPNsense/pfSense appliances - use **firewall-appliance**
+- OPNsense/pfSense appliances - use **opnsense-pfsense**
 - Kubernetes storage that happens to point at a Synology CSI target - use **kubernetes**
 - Application security review or dependency scanning - use **security-audit**
 - Localizing a live outage across an unknown stack - use **debug-triage** first, then come back here
@@ -298,6 +298,10 @@ fighting the package manager - see `references/dsm-cli.md`.
   introduced in DSM 7.2, resist an admin-account compromise; ordinary snapshots do not
 - Package exposure is the real attack surface: MailPlus, Photos, and Drive carry most advisories.
   Uninstall what is unused
+
+## Restore drills
+
+Restore representative files and application data to a separate destination, never over live data for a drill. Verify contents, permissions, encryption-key access, and application readability; measure recovery time and data loss against the required RTO/RPO. Record the backup selected, checks, and cleanup. A healthy backup task alone does not prove recovery.
 
 ## Performance
 

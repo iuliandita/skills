@@ -1,7 +1,7 @@
 ---
 name: observability
 description: >
-  · Instrument, audit, and debug telemetry: metrics, traces, logs, alerts, SLOs, Prometheus, OpenTelemetry, Grafana.
+  Instrument, audit, and debug telemetry: metrics, traces, logs, alerts, SLOs, Prometheus, OpenTelemetry, Grafana.
 license: MIT
 compatibility: "Optional: prometheus, otelcol, grafana, promtool, amtool, jq"
 metadata:
@@ -37,8 +37,11 @@ in that file). Do not restate version numbers here.
 
 ## When NOT to use
 
+- Profiling and optimizing an identified application bottleneck - use **performance-debugging**.
+- Broker acknowledgement, redelivery, dead-letter, or replay semantics - use **message-queues**.
+
 - Checking whether a live cluster is healthy right now (point-in-time, read-only diagnostics) -
-  use **cluster-health**
+  use **kubernetes-health**
 - Writing or reviewing Kubernetes manifests, Helm charts, or the Prometheus Operator CRDs as
   K8s objects - use **kubernetes**
 - Wiring CI/CD pipelines (the skill defines what they should emit and gate on, not the pipeline
@@ -184,7 +187,7 @@ notes in `references/versions.md` when selecting Alloy or Grafana authentication
 
 ---
 
-## Audit lens (Wave 3 in deep-audit)
+## Audit lens (Wave 3 in repo-audit)
 
 When auditing a repo for observability, report findings on:
 
@@ -211,13 +214,13 @@ See `references/output-contract.md` for the full contract.
 
 - **Skill name:** OBSERVABILITY
 - **Deliverable bucket:** `audits`
-- **Mode:** conditional. When invoked to **audit a repo for observability gaps** (the Wave 3 lens), emit the full contract - monospace inline header, severity-grouped inline summary, linked Markdown deliverable, and concise monospace conclusion - and write the deliverable to `docs/local/audits/observability/<YYYY-MM-DD>-<slug>.md`. When invoked to **build instrumentation, rules, pipelines, or dashboards**, respond freely without the contract.
+- **Mode:** conditional. When invoked to **audit a repo for observability gaps** (the Wave 3 lens), apply the reporting size and evidence rules in `references/output-contract.md` and write the deliverable to `docs/local/audits/observability/<YYYY-MM-DD>-<slug>.md`. When invoked to **build instrumentation, rules, pipelines, or dashboards**, respond freely without the contract.
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit mode).
 
 ## Related Skills
 
-- **cluster-health** - point-in-time, read-only Kubernetes diagnostics ("is it healthy now").
-  Observability builds the standing signal pipeline ("can we see it over time"). cluster-health
+- **kubernetes-health** - point-in-time, read-only Kubernetes diagnostics ("is it healthy now").
+  Observability builds the standing signal pipeline ("can we see it over time"). kubernetes-health
   reads signals live; observability defines and audits them.
 - **kubernetes** - authors manifests, Helm, and Operator CRDs as K8s objects. Observability authors
   the instrumentation, rules, and SLO/alert config those objects carry, platform-agnostic.

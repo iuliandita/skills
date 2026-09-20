@@ -24,20 +24,38 @@ See [installation and updates](INSTALL.md) for target paths, symlink mode, backu
 
 ## Collection
 
-47 skills, grouped by the work they cover:
+43 active skills, grouped by the work they cover:
 
 | Area | Skills |
 |------|--------|
-| Infrastructure and operations | [ansible](skills/ansible/SKILL.md), [ci-cd](skills/ci-cd/SKILL.md), [cluster-health](skills/cluster-health/SKILL.md), [databases](skills/databases/SKILL.md), [debug-triage](skills/debug-triage/SKILL.md), [docker](skills/docker/SKILL.md), [firewall-appliance](skills/firewall-appliance/SKILL.md), [kubernetes](skills/kubernetes/SKILL.md), [networking](skills/networking/SKILL.md), [observability](skills/observability/SKILL.md), [synology-dsm](skills/synology-dsm/SKILL.md), [terraform](skills/terraform/SKILL.md), [virtualization](skills/virtualization/SKILL.md) |
-| Linux systems | [arch-btw](skills/arch-btw/SKILL.md), [debian-ubuntu](skills/debian-ubuntu/SKILL.md), [kali-linux](skills/kali-linux/SKILL.md), [nixos-btw](skills/nixos-btw/SKILL.md), [rhel-fedora](skills/rhel-fedora/SKILL.md) |
-| Software development | [ai-ml](skills/ai-ml/SKILL.md), [backend-api](skills/backend-api/SKILL.md), [browse](skills/browse/SKILL.md), [command-prompt](skills/command-prompt/SKILL.md), [frontend-design](skills/frontend-design/SKILL.md), [localize](skills/localize/SKILL.md), [mcp](skills/mcp/SKILL.md), [testing](skills/testing/SKILL.md) |
-| Review and security | [anti-ai-prose](skills/anti-ai-prose/SKILL.md), [anti-slop](skills/anti-slop/SKILL.md), [code-review](skills/code-review/SKILL.md), [code-slimming](skills/code-slimming/SKILL.md), [deep-audit](skills/deep-audit/SKILL.md), [full-review](skills/full-review/SKILL.md), [jekyll-hyde](skills/jekyll-hyde/SKILL.md), [lockpick](skills/lockpick/SKILL.md), [security-audit](skills/security-audit/SKILL.md), [zero-day](skills/zero-day/SKILL.md) |
-| Development workflows | [deep-grill](skills/deep-grill/SKILL.md), [dev-cycle](skills/dev-cycle/SKILL.md), [git](skills/git/SKILL.md), [handoff](skills/handoff/SKILL.md), [prompt-generator](skills/prompt-generator/SKILL.md), [roadmap](skills/roadmap/SKILL.md), [routine-writer](skills/routine-writer/SKILL.md), [update-docs](skills/update-docs/SKILL.md) |
-| Skill maintenance | [skill-creator](skills/skill-creator/SKILL.md), [skill-refiner](skills/skill-refiner/SKILL.md), [skill-router](skills/skill-router/SKILL.md) |
+| Infrastructure and operations | [ansible](skills/ansible/SKILL.md), [ci-cd](skills/ci-cd/SKILL.md), [kubernetes-health](skills/kubernetes-health/SKILL.md), [databases](skills/databases/SKILL.md), [message-queues](skills/message-queues/SKILL.md), [debug-triage](skills/debug-triage/SKILL.md), [docker](skills/docker/SKILL.md), [opnsense-pfsense](skills/opnsense-pfsense/SKILL.md), [kubernetes](skills/kubernetes/SKILL.md), [networking](skills/networking/SKILL.md), [observability](skills/observability/SKILL.md), [synology-dsm](skills/synology-dsm/SKILL.md), [terraform](skills/terraform/SKILL.md), [virtualization](skills/virtualization/SKILL.md) |
+| Linux systems | [arch-linux](skills/arch-linux/SKILL.md), [debian-ubuntu](skills/debian-ubuntu/SKILL.md), [kali-linux](skills/kali-linux/SKILL.md), [nixos](skills/nixos/SKILL.md), [rhel-fedora](skills/rhel-fedora/SKILL.md) |
+| Software development | [llm-app-development](skills/llm-app-development/SKILL.md), [backend-api](skills/backend-api/SKILL.md), [shell-scripting](skills/shell-scripting/SKILL.md), [frontend-design](skills/frontend-design/SKILL.md), [i18n-localization](skills/i18n-localization/SKILL.md), [mcp](skills/mcp/SKILL.md), [testing](skills/testing/SKILL.md), [performance-debugging](skills/performance-debugging/SKILL.md) |
+| Review and security | [anti-ai-prose](skills/anti-ai-prose/SKILL.md), [code-simplification](skills/code-simplification/SKILL.md), [code-review](skills/code-review/SKILL.md), [repo-audit](skills/repo-audit/SKILL.md), [privilege-escalation](skills/privilege-escalation/SKILL.md), [security-audit](skills/security-audit/SKILL.md), [vulnerability-research](skills/vulnerability-research/SKILL.md) |
+| Development workflows | [plan-review](skills/plan-review/SKILL.md), [dev-cycle](skills/dev-cycle/SKILL.md), [git](skills/git/SKILL.md), [session-handoff](skills/session-handoff/SKILL.md), [prompt-generator](skills/prompt-generator/SKILL.md), [roadmap](skills/roadmap/SKILL.md), [update-docs](skills/update-docs/SKILL.md) |
+| Skill maintenance | [skill-creator](skills/skill-creator/SKILL.md), [skill-refiner](skills/skill-refiner/SKILL.md) |
+
+Nineteen temporary old-name notices are excluded from this active catalog and from default
+bundled installs. See [migration steps and the one-release, seven-day window](MIGRATION.md).
+
+### Install a focused selection
+
+Choose skills for your actual work; there is no need to install the whole collection.
+
+```bash
+# Application development
+npx skills add iuliandita/skills --skill backend-api --skill frontend-design --skill testing
+
+# Infrastructure
+npx skills add iuliandita/skills --skill terraform --skill kubernetes --skill observability
+
+# Skill maintenance
+npx skills add iuliandita/skills --skill skill-creator --skill skill-refiner
+```
 
 ## Using a skill
 
-Ask your agent to use a skill by name, or describe a task that matches its trigger description. For example: "Use code-review to review this diff" or "Use cluster-health to check the current cluster."
+Ask your agent to use a skill by name, or describe a task that matches its trigger description. For example: "Use code-review to review this diff" or "Use kubernetes-health to check the current cluster."
 
 Each `SKILL.md` defines when to use the skill, when to route elsewhere, and how to perform the work. Supporting references ship inside the same directory. Skills are instructions; they do not install the tools, credentials, or services a task requires.
 
@@ -73,7 +91,7 @@ Every skill must work when installed alone: runtime file references stay inside 
 ./scripts/check-contract-sync.sh
 ```
 
-New skills must also be registered in the deep-audit coverage check or its [exclusions table](skills/deep-audit/references/exclusions.md). Run the repository's `scripts/check-*.sh` gates before pushing.
+New skills must also be registered in the repository-audit coverage check or its [exclusions table](skills/repo-audit/references/exclusions.md). Run the repository's `scripts/check-*.sh` gates before pushing.
 
 ## License
 

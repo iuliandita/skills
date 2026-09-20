@@ -1,0 +1,277 @@
+# Quick Audit Workflow
+
+Run four independent audits in parallel and present each report separately. One command that catches bugs, slop, security issues, and stale docs across the entire codebase without invoking each skill manually.
+
+**This is the fast path.** Fixed four passes, predictable cost, fire-and-forget before a merge. When you need exhaustive coverage across every applicable lens (up to 31 agents, conditional domain waves, persisted findings, generated tasks), use **repo-audit exhaustive mode**. Quick mode is the pre-merge reflex; exhaustive mode is the deliberate, heavyweight audit.
+
+The four audits:
+
+1. **Code Review** (`code-review` skill) - bugs, logic errors, edge cases, race conditions, resource leaks, convention violations. Uses confidence-based filtering (>= 80%), adversarial self-check, and evidence-based verification.
+2. **Code Simplification** (`code-simplification` skill) - machine-generated patterns, over-abstraction, verbose code, stale idioms
+3. **Security Audit** (`security-audit` skill) - vulnerabilities, secrets, dependency risks, OWASP mapping
+4. **Docs Sweep** (`update-docs` skill) - stale docs, bloated instruction files, missing gotchas, broken links, companion-file drift
+
+Each audit runs in its own parallel agent/subprocess with a fresh context window, so they don't compete for tokens or bias each other's findings.
+
+## When to use
+
+- Running a repo-wide quality gate before merge, release, or handoff
+- Auditing an unfamiliar codebase across correctness, security, slop, and docs in one pass
+- Getting a broad review when the user explicitly wants multiple audit lenses at once
+
+## When NOT to use
+
+- A targeted correctness review on specific files - use **code-review**
+- Style/slop cleanup without the other audit passes - use **code-simplification**
+- A dedicated security review only - use **security-audit**
+- A documentation-only maintenance sweep - use **update-docs**
+- A comprehensive audit across all applicable lenses (up to 31 audit agents, including 23 conditional Wave 3 domain lenses) - use **repo-audit exhaustive mode**
+- Auditing the skill collection for consistency or quality - use **skill-creator**
+- CI/CD pipeline design or pipeline-config review - use **ci-cd**
+
+## AI Self-Check
+
+Run this checklist after all agents return but before presenting the combined report to the user. Record each item as passed, failed, or skipped with a reason. Present completed audits even when another audit is unavailable; do not claim four independent passes if that did not happen.
+
+Verify:
+
+- [ ] All 4 workers had independent context, repository read access, the tools needed by their audit, and the assigned skill's instructions
+- [ ] Each worker loaded its assigned custom skill (`code-review`, `code-simplification`, `security-audit`, `update-docs`) through the harness's native skill-loading mechanism, or received those instructions in its prompt
+- [ ] Each report presented under its own header, unedited
+- [ ] No cross-report merging or editorializing (findings from different audits stay separate)
+- [ ] The security report used its dated `docs/local/audits/security-audit/` path and `docs/local/` ignore coverage was verified
+- [ ] Failed agents noted with reason (don't silently drop a missing audit)
+- [ ] Preflight context block was passed to all agents
+- [ ] When user specified a scope, the `Scope:` line in every agent's context block reflects that scope (not "full codebase review")
+- [ ] Scope held in output: each agent's findings reference only files/modules within the requested scope. If any agent's output references out-of-scope paths, flag it in that report's header (see Step 3 scope verification)
+- [ ] **Routing explicit**: code-review, code-simplification, security-audit, and update-docs findings stay in their lanes
+- [ ] **No false coverage**: unrun tests, skipped directories, and unavailable tools are reported
+- [ ] Cross-cutting agent hygiene applied - see `references/agent-hygiene.md`
+
+---
+
+## Performance
+
+- Run inventory and changed-file analysis before invoking every review mode.
+- Escalate only confirmed high-risk areas to deeper sweeps.
+
+
+---
+
+## Best Practices
+
+- Lead with actionable findings and severity; keep summaries secondary.
+- Separate code bugs, security issues, slop, and docs drift so owners can act.
+- Do not claim a full audit if the pass was sampled or tool-limited.
+
+
+## Workflow
+
+### Step 0: Preflight
+
+Gather context before dispatching agents. Run these independently and retain each exit status and stderr; one failed check must not cancel siblings or become a successful result:
+
+1. **Repo state**: `git rev-parse --show-toplevel` and `git rev-parse --short HEAD`
+2. **Branch**: `git branch --show-current`
+3. **Language detection**: check for manifest files (`package.json`, `requirements.txt`, `go.mod`, `Cargo.toml`, `pyproject.toml`, `composer.json`, `Gemfile`, `*.tf`, `helmfile.yaml`)
+4. **Repo size estimate**: capture `git ls-files` successfully first, then count its lines
+
+**If not a git repo** (step 1 fails): stop and tell the user. The audits rely on git context (history, blame, diff). Running without it produces low-quality results.
+
+Record preflight values - each subagent prompt uses them. Substitute `{placeholders}` in the agent prompts below with the actual values from preflight (e.g., replace `{repo_root}` with the output of `git rev-parse --show-toplevel`). Default `{scope}` to "full codebase review - scan everything"; override in Step 1 if the user specifies a narrower target.
+
+### Step 1: Determine Scope
+
+Use the user's requested scope. For a branch or pre-merge review, use the complete change against the confirmed integration base; use the full repository when requested or when no narrower task context exists:
+
+- **Uncommitted changes present** -> record their ownership and include them only when they belong to the requested review.
+- **Detached HEAD / bare repo** -> warn the user, proceed with what's available.
+- **User specified a narrower scope** (specific files, directory, module) -> pass that scope constraint to all four agents. Each agent only audits within the specified scope. This is the key to scoped reviews: narrowing the target, not the audit dimensions. Set `{scope}` in the context block to the user's scope (e.g., "src/auth/ directory only") instead of the default "full codebase review - scan everything".
+
+### Step 2: Dispatch Four Parallel Agents
+
+Spawn four workers concurrently. Each worker runs one custom skill against the same scoped snapshot.
+
+**Worker capability selection (critical):** Each worker needs independent context, repository read access, the tools required by its assigned audit, and the native ability to load the target skill or receive its full instructions. Prefer a specialized read-only reviewer role when it meets those requirements. Exact role names are harness-specific examples, never requirements.
+
+**Skill invocation:** Each worker loads the named custom skill through the harness's native skill-loading mechanism as its first action. Custom skills from the user's installed collection take priority over built-in reviewers or platform-provided audit modes. Assign one lens per worker: `code-review`, `code-simplification`, `security-audit`, and `update-docs`.
+
+**Fallback:** If native skill loading is unavailable, include the target skill's instructions in that worker's prompt. If the skill itself is unavailable, perform the corresponding manual review and note the substitution in the output header.
+
+**If parallel execution is unavailable** (restricted sandbox, no subagent support): run
+sequentially in this order: Security Audit, Code Review, Slop Check, Docs Sweep. Security
+first because those findings are most time-sensitive. If any agent exceeds 5 minutes wall-clock, note the timeout in the output header and continue with the remaining agents.
+
+**If agent dispatch is unavailable** (non-Claude harness, no subagent API): run each audit
+sequentially in separate CLI sessions, invoking each skill manually in its own conversation.
+
+Pass this context block to every agent, substituting the `{placeholders}` from preflight:
+
+```
+Context:
+- Repo: {repo_root}
+- Commit: {short_sha}
+- Branch: {branch}
+- Languages: {detected_languages}
+- File count: {file_count}
+- Scope: {scope}
+```
+
+Each agent receives the context block above plus a task prompt. Use these templates:
+
+#### Agent 1: Code Review
+
+```
+{context_block}
+
+Load the `code-review` skill through the harness's native skill-loading mechanism, then run a full code review on the codebase.
+Scope: {scope}. ({scope} defaults to "full codebase" if the user did not specify a narrower target.)
+Return the complete report.
+```
+
+#### Agent 2: Slop Check
+
+```
+{context_block}
+
+Load the `code-simplification` skill through the harness's native skill-loading mechanism, then audit the codebase for machine-generated
+patterns, over-abstraction, and code quality issues.
+Scope: {scope}. ({scope} defaults to "full codebase" if the user did not specify a narrower target.)
+Return the complete report.
+```
+
+#### Agent 3: Security Audit
+
+```
+{context_block}
+
+Load the `security-audit` skill through the harness's native skill-loading mechanism, then run a security audit on the codebase.
+Scope: {scope}. ({scope} defaults to "full codebase" if the user did not specify a narrower target.)
+Return the complete report, including the dated `docs/local/audits/security-audit/` deliverable content.
+```
+
+#### Agent 4: Docs Sweep
+
+```
+{context_block}
+
+Load the `update-docs` skill through the harness's native skill-loading mechanism as a read-only audit.
+Scope: {scope}. ({scope} defaults to "full codebase" if the user did not specify a narrower target.)
+Focus on: stale docs, instruction-file bloat (40,000 char limit), companion-file drift, broken
+links, orphaned gotchas, missing docs on recent changes. Do NOT make changes or commit anything.
+Return the complete report.
+```
+
+### Step 3: Present Results
+
+After all four agents return, present each report under its own header. Do not merge, summarize, or editorialize across reports - each stands alone. The user reads the skill's native output, not a reinterpretation.
+
+**Scoped reviews**: when the user specified a narrower scope, each report focuses on that scope. Use this routing table to emphasize domain-relevant checks:
+
+| Scope | code-review focus | security-audit focus | code-simplification focus | update-docs focus |
+|-------|-------------------|---------------------|-----------------|-------------------|
+| Auth/session | Auth logic paths, token lifecycle | Session handling, token validation, credential storage | Auth middleware over-abstraction | Auth-related docs current |
+| API endpoints | Request/response handling, error paths | Input validation, injection, rate limiting | Handler boilerplate, verbose error wrapping | API docs, OpenAPI spec |
+| Data layer | Query correctness, race conditions | SQL injection, data exposure, access control | ORM abstraction, unnecessary wrappers | Schema docs, migration notes |
+| Infrastructure | Config correctness, resource handling | Secrets exposure, misconfiguration | Over-engineered deploy scripts | Infra docs, runbook accuracy |
+
+For scopes not in the table, apply each skill's standard checklist narrowed to the specified files/module. Do not skip an audit just because the scope seems domain-specific - every skill may surface relevant findings on arbitrary code.
+
+**Scope verification before presenting**: when a scope was specified, confirm each agent's output before including it in the report. If an agent's findings reference files or modules outside the requested scope, that agent ignored the scope constraint - note the discrepancy in its report header and, if possible, filter out-of-scope findings. If an agent returned zero findings, confirm it actually ran against the scoped target (not an empty or wrong path) before reporting "no issues found."
+
+**User requests synthesis**: if the user asks for a combined summary after seeing the reports, prioritize: security fixes > correctness bugs > slop cleanup > doc updates. Keep synthesis brief - the individual reports are the source of truth.
+
+After presenting results, confirm that the security report stayed under `docs/local/audits/security-audit/` and that `docs/local/` is gitignored.
+
+Use this structure:
+
+```markdown
+# Quick Repo Audit: {repo_name} @ {short_sha}
+
+Languages: {detected_languages} | Files: {file_count} | Branch: {branch}
+Scope: {scope}
+
+---
+
+## 1. Code Review
+
+{agent 1 output verbatim}
+
+---
+
+## 2. Slop Check
+
+{agent 2 output verbatim}
+
+---
+
+## 3. Security Audit
+
+{agent 3 output verbatim}
+
+---
+
+## 4. Docs Sweep
+
+{agent 4 output verbatim}
+
+---
+```
+
+### Step 3b: Write the repo-audit deliverable
+
+Write the same preflight block and four unedited report sections to
+`docs/local/audits/repo-audit/<YYYY-MM-DD>-<slug>.md`. Follow `references/output-contract.md`.
+This mechanical wrapper is not cross-report synthesis:
+preserve every native report verbatim, record failed or partial status, and do not deduplicate,
+editorialize, or rank findings across reports.
+
+### Step 4: Handle Failures
+
+If an agent fails or times out:
+- Note which audit failed and why (timeout, skill not found, tool permission denied)
+- Present whatever completed successfully
+- Retry a failed audit only when its cause is understood and a bounded retry can resolve it; preserve valid completed reports and disclose persistent gaps
+
+If a skill is not available, perform a manual review in a worker with the required repository access and audit tools. Note the substitution in the output header so the user knows a fallback was used. Partial results are still useful.
+
+| Unavailable skill | Fallback approach |
+|-------------------|-------------------|
+| `code-review` | Manually review for bugs, logic errors, edge cases, and resource leaks. Focus on high-confidence findings only. |
+| `code-simplification` | Scan for verbose code, redundant comments, over-abstraction, and dead code manually. No structured slop taxonomy - report what you find. |
+| `security-audit` | Manually check for hardcoded secrets, injection points, missing auth checks, and dependency CVEs. Save the result to the canonical dated security-audit path. |
+| `update-docs` | Review README, CLAUDE.md, AGENTS.md, and inline doc comments for staleness. Check that recent code changes have corresponding doc updates. |
+
+## Output Contract
+
+See `references/output-contract.md` for the full contract.
+
+- **Skill name:** REPO-AUDIT (quick mode)
+- **Deliverable bucket:** `audits`
+- **Mode:** follow `references/output-contract.md`; preserve each lane's native report inside the wrapper.
+- **Deliverable path:** `docs/local/audits/repo-audit/<YYYY-MM-DD>-<slug>.md`
+- **Severity scale:** `P0 | P1 | P2 | P3 | info` (see `references/output-contract.md`).
+
+## Related Skills
+
+- **code-review** - one of the four parallel audits. Finds bugs, logic errors, correctness issues.
+- **code-simplification** - one of the four parallel audits. Finds quality/style issues and AI-generated patterns.
+- **security-audit** - one of the four parallel audits. Finds vulnerabilities, secrets, dependency risks.
+- **update-docs** - one of the four parallel audits. Finds stale docs, bloated instruction files, and missing gotchas.
+- **skill-creator** - audits the skill collection itself. Quick mode audits application code.
+- **ci-cd** - pipeline design and pipeline-config review. Quick mode audits application code, not the pipelines that run it.
+
+---
+
+## Rules
+
+- **Capability-based workers.** Every worker needs independent context, repository read access, the audit's required tools, and the assigned instructions. Prefer specialized read-only reviewers that meet those requirements; do not hardcode a harness role name.
+- **Custom skills first.** Each worker loads its assigned custom skill (`code-review`, `code-simplification`, `security-audit`, `update-docs`) through the native skill-loading mechanism as its first action. Include the skill instructions in the prompt when native loading is unavailable; fall back to manual review only if the skill is not installed.
+- **Parallel dispatch is strongly preferred.** Run all four agents concurrently when the environment supports it. If parallel execution is unavailable, run sequentially (security first - see Step 2).
+- **Don't editorialize.** Present each report as the skill produced it. No unsolicited synthesis across reports.
+- **Respect each skill's output format.** The code-simplification skill has its own format. The security audit writes its dated local deliverable. The code reviewer and docs sweep have their formats. Don't normalize them into a single style.
+- **Don't duplicate work.** If a finding appears in multiple reports (e.g., dead code in both slop check and code review), that's fine - independent auditors catching the same thing is signal, not noise.
+- **Preflight is fast.** The parallel git commands in Step 0 should take under 2 seconds. Don't skip them - the agent prompts are much better with context.
+- **Large repos.** If file count exceeds 1000, mention to the user that this will take a while. Don't reduce scope unless asked.
+- **Security report privacy.** The security audit writes vulnerability details under `docs/local/audits/security-audit/`. Verify the enclosing `docs/local/` directory is gitignored before the report is written.
+- **Docs sweep is read-only.** The update-docs agent must not make changes or commit anything during a quick audit. It reports what needs updating; the user decides when to act on it.

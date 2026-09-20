@@ -1,7 +1,7 @@
 ---
 name: security-audit
 description: >
-  · Audit code for vulnerabilities: auth flaws, exposed secrets, OWASP risks, and dependency/supply-chain threats.
+  Audit code for vulnerabilities: auth flaws, exposed secrets, OWASP risks, and dependency/supply-chain threats.
 license: MIT
 compatibility: "Optional: betterleaks, gitleaks, trivy, semgrep, bandit, checkov, scorecard"
 metadata:
@@ -36,11 +36,11 @@ Patterns drawn from real OSS incidents (unauthenticated admin endpoints, credent
 ## When NOT to use
 
 - Correctness bugs, logic errors, or race conditions without a security angle - use **code-review**
-- Style, slop, or maintainability cleanup - use **anti-slop**
+- Style, slop, or maintainability cleanup - use **code-simplification**
 - CI/CD pipeline design, runner architecture, or pipeline hardening strategy - use **ci-cd**
-- Offensive testing, privilege escalation, or post-exploitation work - use **lockpick**
-- Novel vulnerability research, fuzzing, patch diffing, or exploit development - use **zero-day**
-- Network appliance administration or firewall tuning - use **firewall-appliance**
+- Offensive testing, privilege escalation, or post-exploitation work - use **privilege-escalation**
+- Novel vulnerability research, fuzzing, patch diffing, or exploit development - use **vulnerability-research**
+- Network appliance administration or firewall tuning - use **opnsense-pfsense**
 - Linux networking setup and troubleshooting - use **networking**
 - Secure construction or hardening of a known domain artifact without repository-wide audit intent
   - use that domain skill. Security-audit owns vulnerability discovery, exploitability, severity,
@@ -284,7 +284,7 @@ See `references/output-contract.md` for the full contract.
 
 - **Skill name:** SECURITY-AUDIT
 - **Deliverable bucket:** `audits`
-- **Mode:** always-on. Every invocation emits the full contract - monospace inline header, severity-grouped inline summary, linked Markdown deliverable, and concise monospace conclusion.
+- **Mode:** always-on. Every invocation applies the reporting size and evidence rules in `references/output-contract.md`.
 - **Deliverable path:** `docs/local/audits/security-audit/<YYYY-MM-DD>-<slug>.md`
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract).
 
@@ -293,9 +293,9 @@ See `references/output-contract.md` for the full contract.
 - **code-review** - finds correctness bugs (logic errors, race conditions, resource leaks).
   Security-audit finds exploitable vulnerabilities. Overlap: an unvalidated input is both a
   bug and a security issue - security-audit owns it when it's exploitable.
-- **anti-slop** - finds quality/style issues. Defensive code that looks like "overkill" may
+- **code-simplification** - finds quality/style issues. Defensive code that looks like "overkill" may
   be correct security practice - check before flagging it as slop.
-- **full-review** - orchestrates code-review, anti-slop, security-audit, and update-docs in
+- **repo-audit** - orchestrates code-review, code-simplification, security-audit, and update-docs in
   parallel. Security-audit is one of the four passes.
 - **ci-cd** - covers pipeline design and CI/CD hardening patterns (SHA pinning, SBOM generation,
   runner strategy). Security-audit reviews the resulting implementation for vulnerabilities and secrets.
