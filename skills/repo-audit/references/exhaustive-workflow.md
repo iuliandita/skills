@@ -106,7 +106,7 @@ Compute `{count}` by summing: 3 (Wave 2) + matched Wave 3 skills + 2 (Wave 4) +
 In scoped mode, separate Wave 3 matches into two lines: skills matched by files
 within the scoped subtree, and skills matched only by repo-root manifests
 (candidate matches from workspace-root dependencies). Derive the split by repeating scoped
-detection with `DEEP_AUDIT_ROOT_MANIFESTS=0` and comparing the two output sets. Confirm candidates against
+detection with `REPO_AUDIT_ROOT_MANIFESTS=0` and comparing the two output sets. Confirm candidates against
 actual scoped imports, configuration, or shared build dependencies before dispatch.
 Record irrelevant root-only matches as skipped.
 
@@ -142,7 +142,7 @@ Languages: TypeScript, SQL, YAML
 
 Wave 2 (always): code-review, code-simplification, anti-ai-prose
 Wave 3 (detected): testing, shell-scripting, databases, backend-api, frontend-design, i18n-localization, docker, kubernetes, ci-cd
-Wave 3 (skipped): terraform, ansible, networking, observability, llm-app-development, mcp, arch-linux, debian-ubuntu, rhel-fedora, nixos, opnsense-pfsense, virtualization
+Wave 3 (skipped): terraform, ansible, networking, observability, message-queues, performance-debugging, llm-app-development, mcp, arch-linux, debian-ubuntu, rhel-fedora, nixos, opnsense-pfsense, virtualization
 Wave 4 (always): security-audit, vulnerability-research
 Wave 5 (always): update-docs, roadmap, git
 
@@ -151,7 +151,7 @@ Total agents: 3 + 9 + 2 + 3 = 17
 
 ### Step 2: Code Quality (Wave 2)
 
-Dispatch 4 agents in parallel. All four run on every repo.
+Dispatch 3 agents in parallel. All three run on every repo.
 
 **Worker capability selection (critical for all waves):** every worker needs independent context,
 repository read access, the tools required by its assigned audit, and the native ability to load

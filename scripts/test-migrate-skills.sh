@@ -10,7 +10,7 @@ fail() {
 }
 
 hash_skill() {
-  find "$1" -type f -print0 | sort -z | xargs -0 cat | sha256sum | cut -d' ' -f1
+  LC_ALL=C find "$1" -type f -print0 | LC_ALL=C sort -z | xargs -0 cat | sha256sum | cut -d' ' -f1
 }
 
 write_lock() {
@@ -36,6 +36,10 @@ make_fixture() {
   mkdir -p "$tmp/source/old" "$tmp/source/new" "$tmp/dest"
   printf '%s\n' 'old source' > "$tmp/source/old/SKILL.md"
   printf '%s\n' 'new source' > "$tmp/source/new/SKILL.md"
+  printf '%s\n' 'lowercase' > "$tmp/source/old/a"
+  printf '%s\n' 'uppercase' > "$tmp/source/old/B"
+  printf '%s\n' 'lowercase replacement' > "$tmp/source/new/a"
+  printf '%s\n' 'uppercase replacement' > "$tmp/source/new/B"
   cat > "$tmp/migrations.json" <<'JSON'
 {"version":1,"transition":{"release":null,"published_at":null,"minimum_days":7,"placeholder_releases":1},"skills":{"old":{"action":"rename","replacement":"new"}}}
 JSON
@@ -66,6 +70,13 @@ skills = json.load(open(sys.argv[1], encoding="utf-8"))["skills"]
 assert "old" not in skills
 assert "new" in skills
 assert "keep" in skills
+PY
+  python3 - "$tmp/dest/.skills-lock.json" "$(hash_skill "$tmp/dest/new")" <<'PY'
+import json
+import sys
+
+record = json.load(open(sys.argv[1], encoding="utf-8"))["skills"]["new"]
+assert record["hash"] == sys.argv[2]
 PY
 
   "$MIGRATOR" --manifest "$tmp/migrations.json" --source "$tmp/source" --dest "$tmp/dest" --apply > "$tmp/rerun"
@@ -129,6 +140,19 @@ test_source_overlap_is_rejected() {
     fail "source overlap was accepted"
   fi
   grep -q 'destination overlaps the source tree' "$tmp/overlap" || fail "source overlap failure was unclear"
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_missing_destination_is_safe_noop() {
+  local tmp
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  make_fixture "$tmp"
+  rmdir "$tmp/dest"
+  "$MIGRATOR" --manifest "$tmp/migrations.json" --source "$tmp/source" --dest "$tmp/dest" > "$tmp/missing"
+  [[ ! -e "$tmp/dest" ]] || fail "migration created a missing destination"
+  grep -q 'SKIP all: missing lock file' "$tmp/missing" || fail "missing destination result was unclear"
   rm -rf "$tmp"
   trap - RETURN
 }
@@ -226,6 +250,7 @@ test_dry_run_and_apply
 test_modified_unowned_and_collision_are_skipped
 test_remove_merge_and_link_target
 test_source_overlap_is_rejected
+test_missing_destination_is_safe_noop
 test_legacy_hash_only_lock_requires_manual_migration
 test_protected_replacement_skips_only_its_mapping
 printf 'migration tests passed\n'

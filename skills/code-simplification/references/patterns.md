@@ -9,8 +9,8 @@ no-reference discipline, and rules live in `SKILL.md`; this file is the recall l
 Functions, methods, variables, constants, types, and exports that nothing references are pure
 maintenance cost. So are unused imports, orphan files nothing imports, unreachable branches, and
 removed-flag code paths. The deletion is safe only once no-reference is proven. The recurring false
-positives are entry points reached through indirection (see the no-reference paths in SKILL.md Best
-Practices and Step 5); treat any of those as "not dead" until proven otherwise.
+positives are entry points reached through indirection (see `SKILL.md` Workflow Steps 4-5 and Rules);
+treat any of those as "not dead" until proven otherwise.
 
 ## Superseded and replaced code
 

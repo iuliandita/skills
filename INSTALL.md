@@ -183,6 +183,11 @@ Override that backup base with `SKILLS_BACKUP_DIR`. Backups support manual recov
 customizations are not merged into the replacement. Preserve edits in the source checkout
 before reinstalling if they must remain active.
 
+If a source checkout moved or an existing lock is incompatible, a normal install saves
+that lock under the backup base's `.unverified-locks/` directory and starts a fresh lock.
+It records only selected entries whose content matches the new source; it does not adopt
+unselected entries from the old lock. Review the saved lock for any remaining manual updates.
+
 ## Renamed and removed skills
 
 See [MIGRATION.md](MIGRATION.md) for the complete mapping, temporary deprecation notices,
@@ -190,7 +195,7 @@ copy/link migration, npx instructions, and private-overlay preservation. Normal 
 do not prune old names. Preview `./install.sh --tool codex --migrate`, then use `--apply`
 only after reviewing the proposed changes. The helper verifies installer ownership and
 current file-content hashes; detected modifications and ambiguous entries stay untouched
-for manual review. Legacy hashes do not detect pure filename changes. Link migration
+for manual review. Current and historical hashes do not detect pure filename changes. Link migration
 retains old canonical targets until remaining links have been reviewed and cleaned up.
 
 ## Checking for updates
@@ -200,8 +205,10 @@ writes the lock file to both the canonical directory and each selected tool dire
 canonical or tool-specific checks work after install. `--check` compares current source hashes
 with the hashes recorded in that lock file. It does not hash the installed files again, so it
 does not detect edits or deletions made there after installation. It checks all discoverable
-source skills, even when skill names are passed, and exits with status 1 if any are outdated
-or absent from the lock. With `--link`, only the canonical lock is checked; tool-directory
+active source skills, even when skill names are passed, and separately reports legacy
+names recorded in the lock. It exits with status 1 if an active skill is outdated or absent, or a legacy
+entry remains. Deprecated notices are excluded from active update checks. With `--link`,
+only the canonical lock is checked; tool-directory
 links are not verified. Check a tool's lock separately without `--link`, which checks only
 the first selected tool.
 

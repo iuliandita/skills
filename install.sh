@@ -182,7 +182,7 @@ skill_hash() {
   # No -L: symlinks under skills/ are listed but not followed, so a malicious
   # symlink committed to a skill dir cannot leak external file contents into
   # the lock-file hash or into install reads. See SECURITY-AUDIT.md SEC-007.
-  find "$dir" -type f -print0 | sort -z | xargs -0 cat 2>/dev/null | hash_tool
+  LC_ALL=C find "$dir" -type f -print0 | LC_ALL=C sort -z | xargs -0 cat 2>/dev/null | hash_tool
 }
 
 # ── Internal skill detection ──────────────────────────────────────────
@@ -294,11 +294,47 @@ migrate_legacy_backups() {
 }
 
 # ── Lock file ─────────────────────────────────────────────────────────
+backup_unverified_lock() {
+  local lock_dir="$1"
+  local lock_file="$lock_dir/.skills-lock.json"
+  local backup_parent backup_name backup_base
+  backup_parent="$(dirname "$lock_dir")"
+  backup_name="$(basename "$lock_dir")"
+  backup_base="${SKILLS_BACKUP_DIR:-$backup_parent/.skills-backups/$backup_name}"
+
+  python3 - "$lock_file" "$lock_dir" "$backup_base" <<'PY'
+from datetime import datetime, timezone
+from pathlib import Path
+import shutil
+import sys
+
+lock_file = Path(sys.argv[1])
+destination = Path(sys.argv[2]).resolve(strict=True)
+backup_base = Path(sys.argv[3]).resolve(strict=False)
+try:
+    backup_base.relative_to(destination)
+except ValueError:
+    pass
+else:
+    raise SystemExit("Refusing to back up a lock inside the destination")
+stamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
+backup = backup_base / ".unverified-locks" / f"{stamp}.skills-lock.json"
+suffix = 1
+while backup.exists():
+    suffix += 1
+    backup = backup_base / ".unverified-locks" / f"{stamp}-{suffix}.skills-lock.json"
+backup.parent.mkdir(parents=True)
+shutil.copy2(lock_file, backup)
+lock_file.unlink()
+print(backup)
+PY
+}
+
 ensure_lock_source() {
   local lock_dir="$1"
   local lock_file="$lock_dir/.skills-lock.json"
   [[ -f "$lock_file" ]] || return 0
-  python3 - "$lock_file" "$SKILLS_SRC" <<'PY'
+  if python3 - "$lock_file" "$SKILLS_SRC" <<'PY'
 import json
 from pathlib import Path
 import sys
@@ -311,9 +347,14 @@ try:
     if lock.get("version") != 1 or not isinstance(lock.get("skills"), dict) or lock_source != source:
         raise ValueError("version, source, or skills is incompatible")
 except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError) as error:
-    print(f"Refusing to update unverified lock {lock_path}: {error}", file=sys.stderr)
     sys.exit(1)
 PY
+  then
+    return 0
+  fi
+  local backup
+  backup="$(backup_unverified_lock "$lock_dir")"
+  printf '  [>] unverified lock backed up to %s; creating a fresh lock\n' "$backup"
 }
 
 write_lock() {
@@ -524,6 +565,49 @@ PY
   printf '  [=] OpenCode permissions synced\n'
 }
 
+sync_migrated_opencode_permissions() {
+  local dest_dir="$1" applied_file="$2"
+  local lock_file="$dest_dir/.skills-lock.json"
+  local replacements=() replacement target target_hash source_hash lock_hash
+  declare -A seen=()
+  while IFS= read -r replacement; do
+    validate_skill_name "$replacement" || continue
+    [[ -e "$dest_dir/$replacement" || -L "$dest_dir/$replacement" ]] || continue
+    target="$dest_dir/$replacement"
+    [[ -L "$target" ]] && target="$(readlink -f "$target")"
+    [[ -d "$target" ]] || continue
+    target_hash="$(skill_hash "$target")"
+    source_hash="$(skill_hash "$SKILLS_SRC/$replacement")"
+    [[ "$target_hash" == "$source_hash" ]] || continue
+    lock_hash="$(python3 - "$lock_file" "$replacement" "$SKILLS_SRC" <<'PY'
+import json
+from pathlib import Path
+import sys
+
+try:
+    lock = json.load(open(sys.argv[1], encoding="utf-8"))
+    record = lock["skills"].get(sys.argv[2])
+    if Path(lock["source"]).resolve(strict=True) != Path(sys.argv[3]).resolve(strict=True):
+        raise ValueError("foreign lock source")
+    if isinstance(record, dict) and record.get("provenance") == "source-equal-v1" and isinstance(record.get("hash"), str):
+        print(record["hash"])
+except (OSError, ValueError, TypeError, json.JSONDecodeError):
+    pass
+PY
+)"
+    [[ "$target_hash" == "$lock_hash" ]] || continue
+    [[ -n "${seen[$replacement]:-}" ]] && continue
+    seen["$replacement"]=true
+    replacements+=("$replacement")
+  done < "$applied_file"
+  (( ${#replacements[@]} > 0 )) || return 0
+  sync_opencode_permissions "$OPENCODE_CONFIG_FILE" "${replacements[@]}"
+}
+
+paths_match() {
+  [[ "$(readlink -f "$1")" == "$(readlink -f "$2")" ]]
+}
+
 # ── Check mode ────────────────────────────────────────────────────────
 check_updates() {
   local dest_dir="$1"
@@ -679,6 +763,9 @@ main() {
   if [[ "$migrate_mode" == "true" && "$requested_skill_count" -gt 0 ]]; then
     printf '%s\n' "--migrate does not accept skill names; it uses migrations.json" >&2; exit 1
   fi
+  if [[ "$migrate_mode" == "true" && ( "$force" == "true" || "$no_backup" == "true" ) ]]; then
+    printf '%s\n' "--force and --no-backup cannot be used with --migrate" >&2; exit 1
+  fi
 
   # Resolve primary destination (for --list, --check)
   local primary_dest
@@ -704,7 +791,8 @@ main() {
 
   # ── Migration ──────────────────────────────────────────────────────
   if [[ "$migrate_mode" == "true" ]]; then
-    [[ -x "$MIGRATOR" ]] || { printf 'Migration helper is unavailable: %s\n' "$MIGRATOR" >&2; exit 1; }
+    command -v python3 >/dev/null || { printf '%s\n' "Migration requires python3" >&2; exit 1; }
+    [[ -f "$MIGRATOR" ]] || { printf 'Migration helper is unavailable: %s\n' "$MIGRATOR" >&2; exit 1; }
     local migration_args=(--manifest "$MIGRATIONS_FILE" --source "$SKILLS_SRC")
     if [[ "$apply_migration" == "true" ]]; then
       migration_args+=(--apply)
@@ -713,15 +801,25 @@ main() {
       printf 'Previewing recorded legacy-skill migration. Re-run with --apply to change files.\n\n'
     fi
     if [[ "$link_mode" == "true" ]]; then
-      "$MIGRATOR" "${migration_args[@]}" --dest "$CANONICAL_DIR" --preserve-shared-canonical
+      python3 "$MIGRATOR" "${migration_args[@]}" --dest "$CANONICAL_DIR" --backup-dir "${SKILLS_BACKUP_DIR:-$(dirname "$CANONICAL_DIR")/.skills-backups/$(basename "$CANONICAL_DIR")}" --protected-root "$CANONICAL_DIR" --preserve-shared-canonical
       local -A migrated_destinations=()
       for tool in "${tools[@]}"; do
         local tool_dir
         tool_dir="$(resolve_tool_path "$tool")"
-        [[ "$tool_dir" == "$CANONICAL_DIR" ]] && continue
+        paths_match "$tool_dir" "$CANONICAL_DIR" && continue
         [[ -n "${migrated_destinations[$tool_dir]:-}" ]] && continue
         migrated_destinations["$tool_dir"]=true
-        "$MIGRATOR" "${migration_args[@]}" --dest "$tool_dir" --link-root "$CANONICAL_DIR"
+        local applied_file=""
+        local applied_args=()
+        if [[ "$apply_migration" == "true" && "$tool" == "opencode" ]]; then
+          applied_file="$(mktemp)"
+          applied_args=(--applied-file "$applied_file")
+        fi
+        python3 "$MIGRATOR" "${migration_args[@]}" --dest "$tool_dir" --backup-dir "${SKILLS_BACKUP_DIR:-$(dirname "$tool_dir")/.skills-backups/$(basename "$tool_dir")}" --protected-root "$CANONICAL_DIR" --link-root "$CANONICAL_DIR" "${applied_args[@]}"
+        if [[ "$apply_migration" == "true" && "$tool" == "opencode" ]]; then
+          sync_migrated_opencode_permissions "$tool_dir" "$applied_file"
+          rm -f "$applied_file"
+        fi
       done
     else
       local -A migrated_destinations=()
@@ -734,7 +832,21 @@ main() {
         fi
         [[ -n "${migrated_destinations[$tool_dir]:-}" ]] && continue
         migrated_destinations["$tool_dir"]=true
-        "$MIGRATOR" "${migration_args[@]}" --dest "$tool_dir"
+        local applied_file=""
+        local applied_args=()
+        if [[ "$apply_migration" == "true" && "$tool" == "opencode" ]]; then
+          applied_file="$(mktemp)"
+          applied_args=(--applied-file "$applied_file")
+        fi
+        if paths_match "$tool_dir" "$CANONICAL_DIR"; then
+          python3 "$MIGRATOR" "${migration_args[@]}" --dest "$tool_dir" --backup-dir "${SKILLS_BACKUP_DIR:-$(dirname "$tool_dir")/.skills-backups/$(basename "$tool_dir")}" --protected-root "$CANONICAL_DIR" --preserve-shared-canonical "${applied_args[@]}"
+        else
+          python3 "$MIGRATOR" "${migration_args[@]}" --dest "$tool_dir" --backup-dir "${SKILLS_BACKUP_DIR:-$(dirname "$tool_dir")/.skills-backups/$(basename "$tool_dir")}" --protected-root "$CANONICAL_DIR" "${applied_args[@]}"
+        fi
+        if [[ "$apply_migration" == "true" && "$tool" == "opencode" ]]; then
+          sync_migrated_opencode_permissions "$tool_dir" "$applied_file"
+          rm -f "$applied_file"
+        fi
       done
     fi
     exit 0

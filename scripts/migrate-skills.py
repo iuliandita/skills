@@ -26,7 +26,7 @@ class ValidationError(Exception):
 
 def path_is_within(path: Path, parent: Path) -> bool:
     try:
-        path.resolve(strict=False).relative_to(parent.resolve(strict=True))
+        path.resolve(strict=False).relative_to(parent.resolve(strict=False))
     except ValueError:
         return False
     return True
@@ -38,7 +38,7 @@ def skill_hash(directory: Path) -> str:
     for root, dirs, names in os.walk(directory, followlinks=False):
         dirs[:] = [name for name in dirs if not (Path(root) / name).is_symlink()]
         files.extend(Path(root) / name for name in names if not (Path(root) / name).is_symlink())
-    for file_path in sorted(files, key=lambda item: str(item)):
+    for file_path in sorted(files, key=lambda item: os.fsencode(str(item))):
         with file_path.open("rb") as file:
             shutil.copyfileobj(file, _HashWriter(digest))
     return digest.hexdigest()
@@ -221,8 +221,8 @@ def install_replacement(destination: Path, replacement: str, source: Path, link_
         raise OSError(f"replacement verification failed: {reason}")
 
 
-def backup_and_remove(path: Path, destination: Path, name: str) -> None:
-    backup_root = destination.parent / ".skills-backups" / destination.name / name
+def backup_and_remove(path: Path, backup_base: Path, name: str) -> None:
+    backup_root = backup_base / name
     stamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
     backup = backup_root / stamp
     suffix = 1
@@ -265,6 +265,16 @@ def migrate(args: argparse.Namespace) -> int:
     if link_root is not None:
         if link_root == destination or link_root == source or path_is_within(link_root, source):
             raise ValidationError("link root aliases a protected source or destination")
+    protected_root = args.protected_root.resolve(strict=False) if args.protected_root else None
+    backup_base = args.backup_dir.resolve(strict=False) if args.backup_dir else destination.parent / ".skills-backups" / destination.name
+    if backup_base == destination or path_is_within(backup_base, destination):
+        raise ValidationError("backup directory must be outside the destination")
+    if backup_base == source or path_is_within(backup_base, source):
+        raise ValidationError("backup directory must be outside the source")
+    if link_root is not None and (backup_base == link_root or path_is_within(backup_base, link_root)):
+        raise ValidationError("backup directory must be outside the canonical link root")
+    if protected_root is not None and (backup_base == protected_root or path_is_within(backup_base, protected_root)):
+        raise ValidationError("backup directory must be outside the protected root")
     manifest = read_manifest(args.manifest, source)
     lock_path = destination / ".skills-lock.json"
     lock, reason = read_lock(lock_path, source)
@@ -309,7 +319,7 @@ def migrate(args: argparse.Namespace) -> int:
             if replacement is not None:
                 install_replacement(destination, replacement, source, link_root)
                 updates[replacement] = {"hash": skill_hash(source / replacement), "provenance": PROVENANCE}
-            backup_and_remove(old_path, destination, old_name)
+            backup_and_remove(old_path, backup_base, old_name)
             updates[old_name] = None
             changed = True
             detail = f" -> {replacement}" if replacement else ""
@@ -319,6 +329,9 @@ def migrate(args: argparse.Namespace) -> int:
             print(f"DRY-RUN {action} {old_name}{detail}: would install/verify replacement before backup and retire")
     if args.apply and changed:
         write_lock(lock_path, lock, source, updates)
+    if args.apply and args.applied_file:
+        replacements = sorted(name for name, record in updates.items() if record is not None)
+        args.applied_file.write_text("\n".join(replacements) + ("\n" if replacements else ""), encoding="utf-8")
     return 0
 
 
@@ -328,6 +341,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--source", type=Path, required=True)
     parser.add_argument("--dest", type=Path, required=True)
     parser.add_argument("--link-root", type=Path)
+    parser.add_argument("--protected-root", type=Path)
+    parser.add_argument("--backup-dir", type=Path)
+    parser.add_argument("--applied-file", type=Path)
     parser.add_argument("--preserve-shared-canonical", action="store_true")
     parser.add_argument("--apply", action="store_true")
     return parser.parse_args()

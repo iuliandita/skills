@@ -81,7 +81,9 @@ for the original installation:
 ./install.sh --tool codex --migrate --apply
 ```
 
-The helper only migrates installations with a verified-install ownership marker. Older
+The helper only migrates entries with a verified source-content marker. This proves the
+recorded content matched the source, including byte-identical directories a normal install
+skipped; it does not prove which installer originally created the directory. Older
 locks lack that marker and require manual migration: older installers could record a
 directory they skipped without installing it. Do not add the marker yourself or force an
 update over customizations to bypass this check. The lock's source path must still resolve
@@ -90,15 +92,21 @@ moved source checkout requires manual review rather than claiming ownership from
 current files against recorded hashes, installs and verifies the replacement first, and
 backs up old entries outside discovery before retiring them. Modified skills, protected
 overlays, unowned installations, and conflicting replacements require manual review.
-A dry run is not a reservation: apply checks the filesystem again. Historical lock hashes
-cover file bytes but not filenames; a pure filename change can go undetected, so back up
+A dry run is not a reservation: apply checks the filesystem again. All current and historical
+lock hashes cover file bytes but not filenames; a pure filename change can go undetected, so back up
 and manually review renamed local files.
+
+Migration honors `SKILLS_BACKUP_DIR`, but the backup location must stay outside source and
+skill discovery directories. `--force` and `--no-backup` are not migration options.
 
 In link mode, replacements are installed in the canonical directory and selected owned
 tool links are migrated. Old canonical directories remain because unselected tools may
 still link to them. Include all tools you want migrated, then inspect remaining links and
 back up/remove old canonical entries manually once nothing needs them. A canonical directory
 that a harness discovers directly can still expose those old names until that cleanup.
+Copy-mode migration into the shared canonical directory also retains old targets to avoid
+breaking other tools' links. Applied OpenCode migrations synchronize replacement permissions
+while preserving explicit denials; previews do not change permissions.
 
 ## Manual copies, links, and private overlays
 

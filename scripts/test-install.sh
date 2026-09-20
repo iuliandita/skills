@@ -159,7 +159,7 @@ test_lock_preserves_unselected_records() {
 
   dest="$tmp/skills"
   "$ROOT/install.sh" --tool portable --dest "$dest" --no-backup docker >/dev/null
-  docker_hash="$(find "$dest/docker" -type f -print0 | sort -z | xargs -0 cat | sha256sum | cut -d' ' -f1)"
+  docker_hash="$(LC_ALL=C find "$dest/docker" -type f -print0 | LC_ALL=C sort -z | xargs -0 cat | sha256sum | cut -d' ' -f1)"
   python3 - "$dest/.skills-lock.json" "$docker_hash" <<'PY'
 import json
 import sys
@@ -205,7 +205,7 @@ test_check_reports_legacy_manifest_skill() {
 
   mkdir -p "$tmp/skills"
   cp -r "$ROOT/skills/anti-slop" "$tmp/skills/anti-slop"
-  digest="$(find "$tmp/skills/anti-slop" -type f -print0 | sort -z | xargs -0 cat | sha256sum | cut -d' ' -f1)"
+  digest="$(LC_ALL=C find "$tmp/skills/anti-slop" -type f -print0 | LC_ALL=C sort -z | xargs -0 cat | sha256sum | cut -d' ' -f1)"
   python3 - "$tmp/skills/.skills-lock.json" "$ROOT/skills" "$digest" <<'PY'
 import json
 import sys
@@ -241,7 +241,7 @@ test_installer_migration_dry_run_and_apply() {
 
   mkdir -p "$tmp/skills"
   cp -r "$ROOT/skills/anti-slop" "$tmp/skills/anti-slop"
-  digest="$(find "$tmp/skills/anti-slop" -type f -print0 | sort -z | xargs -0 cat | sha256sum | cut -d' ' -f1)"
+  digest="$(LC_ALL=C find "$tmp/skills/anti-slop" -type f -print0 | LC_ALL=C sort -z | xargs -0 cat | sha256sum | cut -d' ' -f1)"
   python3 - "$tmp/skills/.skills-lock.json" "$ROOT/skills" "$digest" <<'PY'
 import json
 import sys
@@ -252,9 +252,16 @@ PY
   "$ROOT/install.sh" --tool portable --dest "$tmp/skills" --migrate > "$tmp/dry-run"
   [[ -d "$tmp/skills/anti-slop" ]] || fail "installer migration dry run retired old skill"
   [[ ! -e "$tmp/skills/code-simplification" ]] || fail "installer migration dry run installed replacement"
-  "$ROOT/install.sh" --tool portable --dest "$tmp/skills" --migrate --apply > "$tmp/apply"
+  SKILLS_BACKUP_DIR="$tmp/migration-backups" "$ROOT/install.sh" --tool portable --dest "$tmp/skills" --migrate --apply > "$tmp/apply"
   [[ ! -e "$tmp/skills/anti-slop" ]] || fail "installer migration apply did not retire old skill"
   [[ -d "$tmp/skills/code-simplification" ]] || fail "installer migration apply did not install replacement"
+  if ! find "$tmp/migration-backups/anti-slop" -type f -name SKILL.md -print -quit | grep -q .; then
+    fail "installer migration did not honor SKILLS_BACKUP_DIR"
+  fi
+  if output="$(LC_ALL=en_US.utf8 "$ROOT/install.sh" --tool portable --dest "$tmp/skills" --check 2>&1)"; then
+    fail "check accepted incomplete migration fixture"
+  fi
+  grep -q 'code-simplification.*current' <<< "$output" || fail "locale check did not recognize migrated replacement"
   rm -rf "$tmp"
   trap - RETURN
 }
@@ -276,13 +283,13 @@ test_skipped_custom_skill_keeps_old_lock_and_migration_skips_it() {
   trap - RETURN
 }
 
-test_foreign_lock_source_is_not_reattributed() {
+test_foreign_lock_is_backed_up_before_fresh_install() {
   local tmp digest output
   tmp="$(mktemp -d)"
   trap 'rm -rf "$tmp"' RETURN
   mkdir -p "$tmp/skills" "$tmp/foreign-source"
   cp -r "$ROOT/skills/docker" "$tmp/skills/docker"
-  digest="$(find "$tmp/skills/docker" -type f -print0 | sort -z | xargs -0 cat | sha256sum | cut -d' ' -f1)"
+  digest="$(LC_ALL=C find "$tmp/skills/docker" -type f -print0 | LC_ALL=C sort -z | xargs -0 cat | sha256sum | cut -d' ' -f1)"
   python3 - "$tmp/skills/.skills-lock.json" "$tmp/foreign-source" "$digest" <<'PY'
 import json
 import sys
@@ -290,15 +297,18 @@ import sys
 with open(sys.argv[1], "w", encoding="utf-8") as f:
     json.dump({"version": 1, "source": sys.argv[2], "skills": {"docker": sys.argv[3]}}, f)
 PY
-  if output="$("$ROOT/install.sh" --tool portable --dest "$tmp/skills" --no-backup docker 2>&1)"; then
-    fail "installer accepted a foreign lock source"
+  output="$("$ROOT/install.sh" --tool portable --dest "$tmp/skills" --no-backup docker 2>&1)"
+  grep -q 'unverified lock backed up' <<< "$output" || fail "foreign lock backup was not reported"
+  if ! find "$tmp/.skills-backups/skills/.unverified-locks" -type f -name '*.skills-lock.json' -print -quit | grep -q .; then
+    fail "foreign lock was not backed up outside the discovery root"
   fi
-  grep -q 'Refusing to update unverified lock' <<< "$output" || fail "foreign lock source failure was unclear"
-  python3 - "$tmp/skills/.skills-lock.json" "$tmp/foreign-source" <<'PY'
+  python3 - "$tmp/skills/.skills-lock.json" "$ROOT/skills" <<'PY'
 import json
 import sys
 
-assert json.load(open(sys.argv[1], encoding="utf-8"))["source"] == sys.argv[2]
+lock = json.load(open(sys.argv[1], encoding="utf-8"))
+assert lock["source"] == sys.argv[2]
+assert lock["skills"] == {"docker": {"hash": lock["skills"]["docker"]["hash"], "provenance": "source-equal-v1"}}
 PY
   rm -rf "$tmp"
   trap - RETURN
@@ -311,7 +321,7 @@ test_copy_mode_migrates_each_selected_tool_destination() {
   mkdir -p "$tmp/claude" "$tmp/codex"
   cp -r "$ROOT/skills/anti-slop" "$tmp/claude/anti-slop"
   cp -r "$ROOT/skills/anti-slop" "$tmp/codex/anti-slop"
-  digest="$(find "$tmp/claude/anti-slop" -type f -print0 | sort -z | xargs -0 cat | sha256sum | cut -d' ' -f1)"
+  digest="$(LC_ALL=C find "$tmp/claude/anti-slop" -type f -print0 | LC_ALL=C sort -z | xargs -0 cat | sha256sum | cut -d' ' -f1)"
   python3 - "$tmp/claude/.skills-lock.json" "$tmp/codex/.skills-lock.json" "$ROOT/skills" "$digest" <<'PY'
 import json
 import sys
@@ -328,38 +338,140 @@ PY
   trap - RETURN
 }
 
-test_force_refreshes_legacy_hash_without_provenance_upgrade() {
+test_copy_canonical_migration_preserves_legacy_target() {
+  local tmp canonical digest
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  canonical="$tmp/canonical"
+  mkdir -p "$canonical" "$tmp/unselected"
+  cp -r "$ROOT/skills/anti-slop" "$canonical/anti-slop"
+  digest="$(LC_ALL=C find "$canonical/anti-slop" -type f -print0 | LC_ALL=C sort -z | xargs -0 cat | sha256sum | cut -d' ' -f1)"
+  python3 - "$canonical/.skills-lock.json" "$ROOT/skills" "$digest" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], "w", encoding="utf-8") as f:
+    json.dump({"version": 1, "source": sys.argv[2], "skills": {"anti-slop": {"hash": sys.argv[3], "provenance": "source-equal-v1"}}}, f)
+PY
+  ln -s "$canonical/anti-slop" "$tmp/unselected/anti-slop"
+  GEMINI_SKILLS_DIR="$canonical" SKILLS_CANONICAL_DIR="$canonical" "$ROOT/install.sh" --tool gemini --migrate --apply >/dev/null
+  [[ -d "$canonical/anti-slop" && -d "$canonical/code-simplification" ]] || fail "canonical migration retired shared legacy target"
+  [[ -e "$tmp/unselected/anti-slop/SKILL.md" ]] || fail "canonical migration broke an unselected tool link"
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_opencode_migration_syncs_apply_only() {
+  local tmp digest config_before config_after
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  mkdir -p "$tmp/skills" "$tmp/config"
+  cp -r "$ROOT/skills/anti-slop" "$tmp/skills/anti-slop"
+  digest="$(LC_ALL=C find "$tmp/skills/anti-slop" -type f -print0 | LC_ALL=C sort -z | xargs -0 cat | sha256sum | cut -d' ' -f1)"
+  python3 - "$tmp/skills/.skills-lock.json" "$ROOT/skills" "$digest" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], "w", encoding="utf-8") as f:
+    json.dump({"version": 1, "source": sys.argv[2], "skills": {"anti-slop": {"hash": sys.argv[3], "provenance": "source-equal-v1"}}}, f)
+PY
+  config_before='{"permission":{"skill":{"*":"deny","custom":"deny"}}}'
+  printf '%s\n' "$config_before" > "$tmp/config/opencode.json"
+  OPENCODE_SKILLS_DIR="$tmp/skills" OPENCODE_CONFIG_FILE="$tmp/config/opencode.json" "$ROOT/install.sh" --tool opencode --migrate >/dev/null
+  config_after="$(<"$tmp/config/opencode.json")"
+  [[ "$config_after" == "$config_before" ]] || fail "OpenCode migration dry run changed permissions"
+  OPENCODE_SKILLS_DIR="$tmp/skills" OPENCODE_CONFIG_FILE="$tmp/config/opencode.json" "$ROOT/install.sh" --tool opencode --migrate --apply >/dev/null
+  python3 - "$tmp/config/opencode.json" <<'PY'
+import json
+import sys
+
+skills = json.load(open(sys.argv[1], encoding="utf-8"))["permission"]["skill"]
+assert skills["*"] == "deny"
+assert skills["custom"] == "deny"
+assert skills["code-simplification"] == "allow"
+PY
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_opencode_noop_apply_keeps_permissions_unchanged() {
+  local tmp digest config_before config_after
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  mkdir -p "$tmp/skills" "$tmp/config"
+  cp -r "$ROOT/skills/code-simplification" "$tmp/skills/code-simplification"
+  digest="$(LC_ALL=C find "$tmp/skills/code-simplification" -type f -print0 | LC_ALL=C sort -z | xargs -0 cat | sha256sum | cut -d' ' -f1)"
+  python3 - "$tmp/skills/.skills-lock.json" "$ROOT/skills" "$digest" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], "w", encoding="utf-8") as f:
+    json.dump({"version": 1, "source": sys.argv[2], "skills": {"code-simplification": {"hash": sys.argv[3], "provenance": "source-equal-v1"}}}, f)
+PY
+  config_before='{"permission":{"skill":{"*":"deny","custom":"deny"}}}'
+  printf '%s\n' "$config_before" > "$tmp/config/opencode.json"
+  OPENCODE_SKILLS_DIR="$tmp/skills" OPENCODE_CONFIG_FILE="$tmp/config/opencode.json" "$ROOT/install.sh" --tool opencode --migrate --apply >/dev/null
+  config_after="$(<"$tmp/config/opencode.json")"
+  [[ "$config_after" == "$config_before" ]] || fail "OpenCode no-op migration changed permissions"
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_copy_migration_rejects_backup_inside_canonical_root() {
+  local tmp output
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  mkdir -p "$tmp/canonical"
+  if output="$(SKILLS_CANONICAL_DIR="$tmp/canonical" SKILLS_BACKUP_DIR="$tmp/canonical/backups" "$ROOT/install.sh" --tool portable --dest "$tmp/tool" --migrate 2>&1)"; then
+    fail "copy migration accepted backup directory inside canonical root"
+  fi
+  grep -q 'backup directory must be outside the protected root' <<< "$output" || fail "canonical backup rejection was unclear"
+  [[ ! -e "$tmp/tool" ]] || fail "rejected copy migration created destination"
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_migration_rejects_irrelevant_flags() {
+  local tmp output
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  if output="$("$ROOT/install.sh" --tool portable --dest "$tmp/skills" --migrate --force 2>&1)"; then
+    fail "migration accepted --force"
+  fi
+  grep -q -- '--force and --no-backup cannot be used with --migrate' <<< "$output" || fail "migration flag rejection was unclear"
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_force_refreshes_active_legacy_hash_without_provenance_upgrade() {
   local tmp digest output
   tmp="$(mktemp -d)"
   trap 'rm -rf "$tmp"' RETURN
   mkdir -p "$tmp/skills"
-  cp -r "$ROOT/skills/anti-slop" "$tmp/skills/anti-slop"
+  cp -r "$ROOT/skills/docker" "$tmp/skills/docker"
   python3 - "$tmp/skills/.skills-lock.json" "$ROOT/skills" <<'PY'
 import json
 import sys
 
 with open(sys.argv[1], "w", encoding="utf-8") as f:
-    json.dump({"version": 1, "source": sys.argv[2], "skills": {"anti-slop": "0" * 64}}, f)
+    json.dump({"version": 1, "source": sys.argv[2], "skills": {"docker": "0" * 64}}, f)
 PY
-  "$ROOT/install.sh" --tool portable --dest "$tmp/skills" --force anti-slop >/dev/null
-  digest="$(find "$tmp/skills/anti-slop" -type f -print0 | sort -z | xargs -0 cat | sha256sum | cut -d' ' -f1)"
+  "$ROOT/install.sh" --tool portable --dest "$tmp/skills" --force docker >/dev/null
+  digest="$(LC_ALL=C find "$tmp/skills/docker" -type f -print0 | LC_ALL=C sort -z | xargs -0 cat | sha256sum | cut -d' ' -f1)"
   python3 - "$tmp/skills/.skills-lock.json" "$digest" <<'PY'
 import json
 import sys
 
-record = json.load(open(sys.argv[1], encoding="utf-8"))["skills"]["anti-slop"]
+record = json.load(open(sys.argv[1], encoding="utf-8"))["skills"]["docker"]
 assert record == sys.argv[2]
 PY
   if output="$("$ROOT/install.sh" --tool portable --dest "$tmp/skills" --check 2>&1)"; then
     fail "check accepted incomplete legacy-only install"
   fi
-  if grep -q 'anti-slop.*outdated' <<< "$output"; then
+  grep -q 'docker.*current' <<< "$output" || fail "force refresh did not make active skill current"
+  if grep -q 'docker.*outdated' <<< "$output"; then
     fail "force refresh left the legacy lock hash outdated"
   fi
-  "$ROOT/install.sh" --tool portable --dest "$tmp/skills" --migrate --apply > "$tmp/migration"
-  [[ -d "$tmp/skills/anti-slop" ]] || fail "legacy lock became migration ownership after force refresh"
-  output="$(<"$tmp/migration")"
-  grep -q 'legacy lock record has no verified provenance' <<< "$output" || fail "legacy force refresh did not retain manual migration guard"
   rm -rf "$tmp"
   trap - RETURN
 }
@@ -377,7 +489,12 @@ test_check_reports_legacy_manifest_skill
 test_invalid_manifest_stops_installer
 test_installer_migration_dry_run_and_apply
 test_skipped_custom_skill_keeps_old_lock_and_migration_skips_it
-test_foreign_lock_source_is_not_reattributed
+test_foreign_lock_is_backed_up_before_fresh_install
 test_copy_mode_migrates_each_selected_tool_destination
-test_force_refreshes_legacy_hash_without_provenance_upgrade
+test_copy_canonical_migration_preserves_legacy_target
+test_opencode_migration_syncs_apply_only
+test_opencode_noop_apply_keeps_permissions_unchanged
+test_copy_migration_rejects_backup_inside_canonical_root
+test_migration_rejects_irrelevant_flags
+test_force_refreshes_active_legacy_hash_without_provenance_upgrade
 printf 'install tests passed\n'

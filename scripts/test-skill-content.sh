@@ -126,4 +126,30 @@ require_description virtualization 'ESXi'
 require_text scripts/lint-skills.sh 'GENERIC_SELF_CHECK_EXEMPT=("skill-refiner" "skill-creator")' "lint-skills.sh GENERIC_SELF_CHECK_EXEMPT changed; re-justify the exemption and update this guard"
 require_text scripts/lint-skills.sh 'phase-1 changes to this list remain subject to scripts/check-refiner-phase1-guard.sh' "lint-skills.sh exemption comment no longer ties phase-1 changes to the phase-1 guard"
 
+test_scoped_audit_detection() (
+  local fixture output
+  fixture="$(mktemp -d)"
+  trap 'rm -rf "$fixture"' EXIT
+  git -C "$fixture" init -q
+  mkdir -p "$fixture/service" "$fixture/other"
+  printf '%s\n' '{"dependencies":{"kafkajs":"1","clinic":"1"}}' > "$fixture/package.json"
+  touch "$fixture/service/user-profile.ts" "$fixture/service/subscription.ts" "$fixture/service/hotel.ts"
+  git -C "$fixture" add .
+  cd "$fixture"
+  output="$(REPO_AUDIT_ROOT_MANIFESTS=0 bash "$ROOT/skills/repo-audit/references/detect.sh" service)"
+  if grep -Eq '^(message-queues|performance-debugging|observability)$' <<< "$output"; then
+    fail "generic scoped filenames activated broker, profiling, or telemetry lanes"
+  fi
+  output="$(bash "$ROOT/skills/repo-audit/references/detect.sh" service)"
+  grep -qx message-queues <<< "$output" || fail "root queue dependency was not reported as a candidate"
+  grep -qx performance-debugging <<< "$output" || fail "root profiling dependency was not reported as a candidate"
+  mkdir -p service/Consumers service/profiling other/queues
+  touch service/Consumers/orders.ts service/profiling/cpu.cpuprofile other/queues/tasks.ts
+  git add .
+  output="$(REPO_AUDIT_ROOT_MANIFESTS=0 bash "$ROOT/skills/repo-audit/references/detect.sh" service)"
+  grep -qx message-queues <<< "$output" || fail "scoped queue component was not detected case-insensitively"
+  grep -qx performance-debugging <<< "$output" || fail "scoped profiling artifact was not detected"
+)
+
+test_scoped_audit_detection
 printf 'All skill content tests passed.\n'
