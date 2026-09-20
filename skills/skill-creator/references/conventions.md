@@ -146,6 +146,18 @@ user confirmation in steps that could run unattended.
 | `metadata.date_added` | ISO date string | staleness detection |
 | `metadata.effort` | `low`, `medium`, `high` | signals expected token usage and complexity |
 
+### Lifecycle status
+
+Parse YAML frontmatter and read `metadata.deprecated`: boolean `true` or a string that
+trims and case-folds to `true` marks a deprecated notice, including quoted values. Missing
+or false means active; malformed frontmatter is an error, not an active default. Do not use
+string truthiness (the string `"false"` is not deprecated) or matches in the body.
+
+Published inventory includes both active skills and notices; report their counts separately.
+Notices preserve migration guidance and explicit legacy invocation behavior. Check them against
+the target repository's notice and removal policy, not active-skill depth or trigger criteria.
+Keep their canonical test coverage and installer integrity checks through the required lifetime.
+
 ### Effort tiers
 
 | Tier | Complexity signal | Typical skills | Structure depth |
@@ -387,10 +399,12 @@ For skills with complex relationships, add an explicit section explaining HOW sk
 
 ### Cross-skill reference rules
 
-1. Every skill name you mention must correspond to a published (non-gitignored) skill in the
-   collection. Use `git check-ignore -q` to filter private skills when git is available.
+1. Ordinary routing targets must be active published (non-gitignored) skills. Explicit
+   migration references may name deprecated notices. Use `git check-ignore -q` to filter
+   private skills when git is available; existence alone does not establish active status.
 2. Characterize the relationship: "use X for Y" (routing) vs "X does Y while this does Z" (explanation)
-3. If two skills share trigger keywords, both must have "When NOT to use" entries pointing at each other
+3. Compare only active skills for trigger overlap. If two active skills share trigger keywords,
+   both must have "When NOT to use" entries pointing at each other
 
 ---
 
@@ -506,8 +520,9 @@ a useful boundary can justify extra text. The 1024-character spec ceiling is a v
 limit, not a guarantee that a host will display or load the whole description. Hosts may
 shorten descriptions or omit entries to fit the combined catalog budget.
 
-Test natural requests, aliases, and adjacent tasks against the whole catalog. Put detailed
-examples and exclusions in the body; retain a short exclusion in the description when it
+Test natural requests, aliases, and adjacent tasks against the active catalog. Test explicit
+legacy invocations separately against notices; do not optimize notices into ordinary triggers.
+Put detailed examples and exclusions in the body; retain a short exclusion in the description when it
 prevents a likely wrong match. Describe the skill's actual scope without adding unsupported
 capabilities to attract more requests.
 
@@ -567,7 +582,8 @@ brevity; routing trials provide evidence about selection quality.
 | virtualization | high | 2026-04-02 | Manage VMs: Proxmox, QEMU/KVM, libvirt, XCP-ng, VMware/ESXi; debug hypervisors, storage, and GPU passthrough. |
 | vulnerability-research | high | 2026-04-03 | Research vulnerabilities in authorized targets through code analysis, reverse engineering, patch diffing, and fuzzing. |
 
-Deprecated notices are migration aids, excluded from the active inventory.
+Deprecated notices are migration aids, excluded from the active inventory above but included
+in published totals and migration-test coverage. Derive all counts from the live collection.
 
 This inventory is a snapshot of the upstream iuliandita/skills collection. Treat it as a
 reference example for convention compliance, not as an authoritative list for other repos.

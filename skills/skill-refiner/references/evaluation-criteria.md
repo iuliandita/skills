@@ -9,6 +9,17 @@ reviewed change.
 
 ---
 
+## Scoring Eligibility
+
+Parse YAML frontmatter before scoring. A boolean `true` or a trimmed, case-folded string
+`true` at `metadata.deprecated` marks a notice, including quoted values; missing or false
+means active. Do not use string truthiness or body matches. Report malformed frontmatter.
+Deprecated notices are excluded from improvement, ordinary checklist/composite scores,
+aggregates, thresholds, saturation, and behavioral neighbor/trigger pools. An empty active
+pool has no aggregate or saturation score. Keep notices in published inventory, canonical
+test coverage, and separate pass/fail migration-integrity and explicit legacy-invocation
+checks according to repository policy. A structural pass does not make a notice scoreable.
+
 ## Scoring Model
 
 Structural compliance is a **pass/fail gate**, not a weighted score component. A
@@ -152,12 +163,14 @@ A reviewer with verified distinct model identity reviews the improvement diff an
 | All skills at composite 100 (or >= 99) | Terminate phase 1 as "saturated"; do not bump |
 
 "Skip" means "not a focus target", not "unchecked". Every iteration still runs the cheap
-structural regression sweep over the whole pool - lint and validate for every skill, bold
-skill-name references resolving to published skills, reciprocal "When NOT to use" boundaries
-for pairs that share triggers, and referenced-file existence - and behaviorally samples
-skipped skills: the edited skills and their direct neighbors plus a rotating bounded sample
-(default three lowest-scoring skipped skills; configurable and bounded). A skill that
-regresses is reopened for the next iteration regardless of the threshold.
+structural regression sweep over every published skill, including notices and phase-2 targets:
+lint and validate, ordinary routing resolving to active published skills (explicit migration
+references may name notices), reciprocal "When NOT to use" boundaries for active pairs sharing
+triggers, referenced-file existence, and repository notice-integrity checks. It behaviorally
+samples edited active skills, their active direct neighbors, and a rotating bounded sample
+(default three lowest-scoring skipped active skills; configurable and bounded). A regressed
+active pool skill is reopened regardless of threshold. Report notice failures separately;
+they never become improvement targets.
 
 ### Plateau Detection
 

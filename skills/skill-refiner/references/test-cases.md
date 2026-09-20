@@ -6,8 +6,11 @@ prompts exercising its core use cases.
 **This file must not be modified during phase 1.** New test cases can only be
 added or modified during phase 2 (meta-improvement).
 
-**Scoring:** Each output is scored on Relevance (0-25), Completeness (0-25),
-Accuracy (0-25), and Actionability (0-25). See `references/evaluation-criteria.md`.
+**Scoring:** Active-skill outputs are scored on Relevance (0-25), Completeness
+(0-25), Accuracy (0-25), and Actionability (0-25). Deprecated notices retain
+canonical headings and explicit legacy-invocation cases, evaluated for notice
+integrity as pass/fail rather than ordinary quality scores or improvement targets.
+See `references/evaluation-criteria.md`.
 
 ---
 
@@ -247,7 +250,8 @@ Quality signals:
 - Gives a concrete loop, lookup-table, inline, or deletion shape rather than vague abstraction advice
 - Preserves wrappers that own policy, compatibility, observability, lifecycle, or another real boundary
 - Proves a catch is inert before recommending removal and preserves behavior-changing catches
-- Deletes only commented-out code, restating comments, and dead banners while keeping intent and pragmas
+- Recommends deleting only commented-out code, restating comments, and dead banners while keeping intent and pragmas
+- Keeps the audit read-only; does not apply recommended deletions or other source edits
 - Evaluates coupling, performance, readability, and validation before assigning an action label
 - Routes correctness or security discoveries to their owning skills instead of mixing lanes
 
@@ -729,7 +733,7 @@ Quality signals:
 **Test 4: Pure Phase-2 spec audit**
 Prompt: "Stress-test this existing rollout spec as a pure Phase-2 audit. Do not reopen basic requirements unless a finding proves they are inconsistent."
 Quality signals:
-- Keeps the request in deep-grill instead of routing a plan artifact to a standalone decision review
+- Uses plan-review in settled-plan critique mode without reopening clarification by default
 - Attacks load-bearing assumptions, rollback, failure modes, and second-order effects without restating the spec
 - Reopens a Phase-1 decision only when a surfaced risk invalidates it
 - Timeboxes attacks when new findings stop changing the plan
@@ -742,6 +746,14 @@ Quality signals:
 - Allows an opportunity to answer, then uses a stated default if no preference arrives
 - Keeps required safety or authorization questions pending when dependent actions need an answer
 - Does not use an unanswered optional question to stop all work
+
+**Test 6: Jekyll-only settled plan**
+Prompt: "Use Jekyll only to review this settled plan: add optional ticket-reply suggestions with human approval before sending. The product scope is agreed; focus on making the benefit reliable."
+Quality signals:
+- Honors Jekyll-only mode and critiques the settled artifact without restarting requirements gathering
+- Identifies user benefit, cost bearers, reversibility, and practical operating constraints
+- Gives a concrete next step without adding a separate Hyde pass or persona theater
+- Reopens a settled choice only when specific evidence invalidates it
 
 ### privilege-escalation
 **Test 1: Privilege escalation**
@@ -794,15 +806,16 @@ Quality signals:
 
 ### repo-audit
 **Test 1: Orchestration**
-Prompt: "Run a full review on the current codebase."
+Prompt: "Run repo-audit in quick mode on the current codebase."
 Quality signals:
-- Dispatches code-review, anti-slop, security-audit, update-docs
+- Dispatches code-review, code-simplification, security-audit, update-docs exactly once each
+- Keeps quick mode to its four lanes without exhaustive waves or task-planning artifacts
 - Mentions parallel execution
 - Presents each audit report under its own header (no cross-report merging)
 - Routes findings to appropriate skill domains
 
 **Test 2: Scoped review**
-Prompt: "Run a full review but focus on the authentication module only."
+Prompt: "Run repo-audit in quick mode on the authentication module only."
 Quality signals:
 - Scopes all dispatched skills to the auth module path/files
 - Still covers the relevant review domains (code quality, security, slop, docs)
@@ -811,7 +824,7 @@ Quality signals:
 - Notes any auth-specific checks (e.g. session handling, token validation)
 
 **Test 3: Scoped delegation with useful local work**
-Prompt: "Review only src/auth. Delegate a read-only security pass on that directory while you inspect its tests locally. Do not edit or create more agents."
+Prompt: "Run repo-audit in quick mode on src/auth only. Delegate a read-only security pass on that directory while you inspect its tests locally. Do not edit or create more agents."
 Quality signals:
 - Gives one reviewer a bounded, self-contained src/auth task with expected findings and no write authority
 - Continues the independent local test review while the reviewer runs
@@ -820,19 +833,19 @@ Quality signals:
 
 
 **Test 4: Full repo orchestration**
-Prompt: "Run deep-audit on this repo - it's a TypeScript Next.js app with Postgres, Docker, and GitHub Actions."
+Prompt: "Run repo-audit in exhaustive mode on this repo - it's a TypeScript Next.js app with Postgres, Docker, and GitHub Actions."
 Quality signals:
 - Executes all 5 waves in order (recon, code quality, domain, security, docs & hygiene)
 - Wave 1 presents detected languages and the matched/skipped Wave 3 skills before Wave 2 starts
-- Wave 2 dispatches code-review, anti-slop, anti-ai-prose regardless of repo type
+- Wave 2 dispatches code-review, code-simplification, anti-ai-prose regardless of repo type, without duplicate merged lanes
 - Wave 3 dispatches only matched skills (testing, backend-api, databases, docker, ci-cd based on stack)
-- Wave 4 runs security-audit and zero-day sequentially, with zero-day receiving security-audit findings
+- Wave 4 runs security-audit and vulnerability-research sequentially, with vulnerability-research receiving security-audit findings
 - Dispatches read-only audit workers whose capabilities match each task, not write-focused roles
 - Preserves each skill's native report format, no cross-report normalization
-- Reminds user to verify SECURITY-AUDIT.md is gitignored after Wave 4
+- Verifies docs/local/ ignore protection and preserves the dated security report under docs/local/audits/security-audit/
 
 **Test 5: Scoped audit**
-Prompt: "Run deep-audit scoped to src/auth/ only."
+Prompt: "Run repo-audit in exhaustive mode scoped to src/auth/ only."
 Quality signals:
 - Filters Wave 1 detection to files under src/auth/
 - Passes scope constraint to every dispatched agent
@@ -959,7 +972,7 @@ Quality signals:
 Prompt: "Create a skill for managing systemd timers and scheduled tasks."
 Quality signals:
 - Follows skill frontmatter conventions (name, description, license, metadata)
-- Includes "When to use" and "When NOT to use" sections (routes cron to command-prompt)
+- Includes "When to use" and "When NOT to use" sections (routes cron to shell-scripting)
 - Includes a "Rules" section with concrete constraints
 - Description is trigger-optimized with relevant trigger keywords
 - Does not duplicate existing skill coverage (checks collection first)
@@ -971,6 +984,14 @@ Quality signals:
 - Preserves dirty files, index state, and source content; does not stash or commit
 - Reports concrete findings and verification limits without inventing scores
 - Treats the explicit review-only request as the controlling scope
+
+**Test 4: Active inventory and migration references**
+Prompt: "Review this fixture catalog. old-helper has metadata.deprecated: true and names active new-helper as its replacement. Another active skill routes ordinary requests to old-helper. Report only."
+Quality signals:
+- Separates active skills and deprecated notices using metadata rather than folder presence alone
+- Flags the ordinary route to old-helper and recommends new-helper after checking its active status
+- Allows explicit migration references to old-helper and retains its legacy-invocation coverage
+- Excludes the notice from ordinary trigger competition and does not demand a full active-skill workflow
 
 ### skill-refiner
 **Test 1: Bounded fixture improvement**
@@ -1035,6 +1056,22 @@ Quality signals:
 - Records the actual identity and effective settings of both evaluations with their evidence
 - Uses verified cross-model classification at cap 5 despite the shared harness
 - Does not launch an unnecessary second harness or change models merely to obtain a different CLI
+
+**Test 8: Notice integrity without ordinary scoring**
+Prompt: "Review this fixture collection's refinement candidates without editing: active new-helper and old-helper with metadata.deprecated: true. The notice has an incorrect replacement name and lacks the required deprecation description prefix."
+Quality signals:
+- Selects only the active skill for ordinary baseline scoring and the improvement pool
+- Reports the notice's replacement and prefix defects as migration-integrity failures without an ordinary composite score
+- Preserves the notice's canonical heading and explicit legacy-invocation test
+- Does not expand the notice into an active workflow or silently install its replacement
+
+**Test 9: Regression routing through a retired name**
+Prompt: "Check regression coverage after a skill rename. The retired name remains published as a deprecated notice; one active test still expects ordinary requests to route to it."
+Quality signals:
+- Requires a canonical heading for every published skill, including the notice
+- Updates ordinary routing expectations to the verified active replacement only in phase 2
+- Keeps the explicit old-name invocation as a migration test outside ordinary trigger scoring
+- Does not claim that a semantic routing test proves native harness discovery or search ranking
 
 ### skill-router
 **Test 1: Explicit legacy invocation**
@@ -1135,6 +1172,21 @@ Quality signals:
 - Proposes clear, actionable wording for the entry (not vague)
 - Notes that AGENTS.md should be synced if CLAUDE.md is updated
 - Does not suggest burying it in a README where it will be missed
+
+**Test 3: Repository retirement policy takes precedence**
+Prompt: "Update deprecated docs in this fixture repo. Its policy requires one transition release AND seven full days after actual publication. The release was published three days ago, and no incoming references remain."
+Quality signals:
+- Reads and follows the repository policy, retaining the dated notice and migration pointer
+- Requires both policy conditions; no-reference evidence cannot shorten the promised grace period
+- Measures elapsed time from actual publication, not a planned date or commit timestamp
+- Treats the fixture's release count and duration as repository policy, not a universal rule
+
+**Test 4: Explicit user policy and generic fallback**
+Prompt: "Clean up deprecated documentation in this fixture repo. No repository policy exists, but I require three completed releases of notice; only two have shipped."
+Quality signals:
+- Honors the explicit user policy and keeps the deprecated entry visible
+- Uses a generic fallback only when neither repository nor user policy exists
+- Does not substitute a shorter fallback or a lack of references for the required grace period
 
 ### virtualization
 **Test 1: GPU passthrough**

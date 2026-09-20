@@ -400,7 +400,8 @@ Before committing, inspect the complete staged diff and compare it with the init
 When a feature, service, or API is deprecated during a session:
 - **Keep the doc entry** with a `[DEPRECATED]` prefix and the date - don't delete immediately
 - **Add the replacement** in the same section so readers find both
-- **Remove deprecated entries** after 2 release cycles or when confirmed no longer referenced anywhere
+- **Follow repository and explicit user retirement policy first.** Verify its release, publication-date, and elapsed-time conditions before removing entries; lack of incoming references cannot shorten a promised grace period.
+- **Only when no policy exists**, keep entries for two completed release cycles after the deprecation is published, then remove them only after checking incoming references and preserving any still-needed migration guidance. If release or publication evidence is unavailable, retain the entry and report what remains unverified.
 - **Breaking changes** deserve their own bullet: what broke, what replaces it, any migration steps
 
 ## Output Contract
@@ -434,7 +435,7 @@ See `references/output-contract.md` for the full contract.
 - **Over-documenting migrations**: Once a migration is complete and verified, condense to a one-liner and remove the step-by-step procedure.
 - **Dangling links**: Renaming a doc without updating references elsewhere creates dead links that erode trust in documentation.
 - **Bootstrapping without consent**: If the repo lacks docs, suggest a minimal docs surface; don't silently create a documentation tree the user did not ask for.
-- **Deleting deprecated docs too early**: Keep deprecated entries visible for at least one release cycle so people find the migration path.
+- **Deleting deprecated docs too early**: Follow repository and explicit user policy; no-reference evidence does not waive its grace period. Use the two-completed-release fallback above only when neither defines retirement conditions.
 - **Skipping the roadmap header check**: A roadmap with `Current: v0.27` while HEAD is on `v0.43` is the loudest possible drift signal. Always parse and compare the header before deciding whether the roadmap needs updates.
 - **Treating a gitignored roadmap as out of scope**: Private roadmaps drift hardest because nobody complains about them publicly. Run the freshness check against ALL roadmaps the `find` command surfaces, not just tracked ones.
 

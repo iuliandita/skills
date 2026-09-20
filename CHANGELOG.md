@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 * Retire `routine-writer`, `browse`, and `skill-router`. Old names become migration notices for one transition release and at least seven days after publication. See [the full mapping and update steps](MIGRATION.md).
 * Add `message-queues` and `performance-debugging`, expand Redis/Valkey and GraphQL/gRPC guidance, and reduce repeated reporting instructions.
 * Default bundled installs select 43 active skills. Add a preview-first migration helper for verified installer-owned copies and links; retain custom or ambiguous installations for manual review.
+* Keep deprecated notices out of normal refinement scores while retaining migration tests; correct merged-mode expectations and make documentation retirement follow repository policy.
 
 ## [1.46.0](https://github.com/iuliandita/skills/compare/v1.45.8...v1.46.0) (2026-09-17)
 

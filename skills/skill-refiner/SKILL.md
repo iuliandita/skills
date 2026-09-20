@@ -149,8 +149,25 @@ delta comparisons against prior runs rather than failing the run.
    Retention: the history keeps full detail for the most recent runs; older runs are compacted
    into `.refiner-runs-archive.json` by `scripts/refiner-history-compact.sh`, run manually or
    periodically, never per run.
-3. **Build skill inventory**: list all skills, exclude phase-2 targets (skill-creator,
-   skill-refiner) from the improvement pool
+3. **Build skill inventory**: enumerate published (non-gitignored) skills and parse YAML
+   frontmatter. `metadata.deprecated` is deprecated when boolean `true` or a string equal
+   to `true` after trimming and case-folding, including quoted values. Missing or false
+   means active; report malformed frontmatter rather than assuming active. Do not use
+   string truthiness or body-text matches. Record active, notice, and published counts.
+   Exclude deprecated notices and phase-2 targets (skill-creator, skill-refiner) from the
+   improvement pool. Notices receive no ordinary checklist/composite score and are excluded
+   from aggregates, thresholds, saturation decisions, and direct-neighbor/trigger pools.
+   Keep every published notice in canonical coverage and separate pass/fail integrity and
+   explicit legacy-invocation tests, following the target repository's migration policy.
+   **Early exit for a named notice or a collection with no active skills**: run applicable
+   lint/spec structural checks (or report gate unavailability), notice-integrity checks,
+   canonical coverage checks, and explicit legacy-invocation tests. Report results and
+   limitations as not scored, then stop. Bypass steps 4-15 and phase 2, including when
+   `--meta` is set; do not create a baseline, aggregate, saturation result, or scored history.
+   Do not redirect edits to a replacement or turn a notice into an active skill.
+   If active phase-2 targets exist but the phase-1 pool is empty, skip phase-1 scoring and
+   proceed to phase 2 only for a collection-wide run or explicit `--meta`, preserving its
+   snapshot and human-review gates. Otherwise report the empty pool without scores.
 4. **Record evaluator identity**: capture actual provider, resolved model, effective effort,
    harness and version for primary and reviewer evaluations, with redacted runtime/config
    evidence per `references/harness-detection.md`. Record unavailable fields as unknown;
@@ -198,9 +215,9 @@ delta comparisons against prior runs rather than failing the run.
    requested rounds are complete and the target is reached across the pool, quality plateaus, or a
    circuit breaker fires. A collection-wide requested minimum overrides an early plateau or
    threshold termination. For a user-requested single-skill run, treat that skill as the whole
-   phase-1 pool.
+   phase-1 pool only if active; the notice path from step 3 still applies.
 10. **Select targets**: identify skills scoring strictly below the focus threshold (a skill
-    exactly at the threshold is skipped). Reopen any skill that regressed in
+    exactly at the threshold is skipped). Reopen any active pool skill that regressed in
     the previous iteration's sweep (step 13), regardless of the focus threshold.
 11. **For each targeted skill**, run the improvement cycle:
     a. Read current SKILL.md and all reference files
@@ -229,15 +246,18 @@ delta comparisons against prior runs rather than failing the run.
 12. **Commit iteration**: one commit with all improvements from this iteration
     Format: `refactor(skill-refiner): iteration N - skill1(+X), skill2(+Y)`
 13. **Regression sweep, then log iteration summary**: every iteration, after the improvement
-    cycle and commit, run a cheap structural regression pass over every public skill in the
-    pool, targeted or skipped, never a full behavioral re-run. Check at minimum: lint and
-    validate still pass for every skill; every bold skill-name reference resolves to a
-    published skill; "When NOT to use" boundaries are reciprocal for pairs that share
-    triggers; and every file referenced from SKILL.md exists. Behaviorally re-score the
-    edited skills and their direct neighbors, plus a rotating bounded sample of skipped
-    skills (default: the three lowest-scoring skipped skills; the sample size is configurable
-    and bounded) so untouched skills are eventually re-checked. Reopen any regressed skill
-    for the next iteration regardless of the focus threshold, name it here and in the final
+    cycle and commit, run a cheap structural regression pass over every public skill,
+    including notices and phase-2 targets, never a full behavioral re-run. Check lint and
+    validate; ordinary routing targets must be active and published (only explicit migration
+    references may name notices); reciprocal "When NOT to use" boundaries apply to active
+    pairs sharing triggers; and every referenced file must exist. Check notice integrity
+    separately against repository policy and retain legacy-invocation tests without scores.
+    Behaviorally re-score edited active skills and their active direct neighbors, plus a
+    rotating bounded sample of skipped
+    active skills (default: the three lowest-scoring skipped skills; the sample size is configurable
+    and bounded) so untouched skills are eventually re-checked. Reopen regressed active pool
+    skills regardless of the threshold; report notice failures separately without making them
+    improvement targets. Name regressions here and in the final
     report, and add a run-history `control_failures` entry only when the regression was
     detected after its commit.
     ```
@@ -285,6 +305,7 @@ delta comparisons against prior runs rather than failing the run.
 19. **Improve skill-refiner**: same process, against the snapshot
     - Compare every public `skills/*/SKILL.md` directory with the canonical `### <skill-name>`
       headings in `references/test-cases.md`. Exclude the format-template heading.
+      Include deprecated notices: their canonical legacy cases remain required despite score exclusion.
     - Promote stable generated or local cases into the canonical catalog for every gap, then
       verify there are no missing, duplicate, or orphan headings. This edit is phase-2-only.
 20. **Improve lint scripts** (lint-skills.sh, validate-spec.sh):
@@ -316,7 +337,8 @@ delta comparisons against prior runs rather than failing the run.
     Evidence:   <redacted runtime/config references; unknown fields and reasons>
     Review:     <verified cross-model | same-model | unknown-model>, cap: <5 | 3>
                 <baseline: no diff, penalty 0>
-    Pool:       N skills (skill-creator, skill-refiner excluded)
+    Pool:       N active skills (notices and phase-2 targets excluded)
+    Inventory:  A active + D deprecated notices = P published; notice checks: pass/fail
     Config:     iterations=M, threshold=T, mode=MODE, plateau=P
 
     Iterations: N (of max M)
@@ -329,7 +351,7 @@ delta comparisons against prior runs rather than failing the run.
       skill-creator: 80 > 84 (+4)  [G:pass A:82 B:81 pen:0] [meta]
       skill-refiner: 78 > 83 (+5)  [G:pass A:80 B:79 pen:0] [meta]
 
-    Aggregate:  avg X.X | min X.X | max X.X
+    Aggregate:  active pool only: avg X.X | min X.X | max X.X
     Reverted:   X changes across Y iterations
     Contested:  Z flags escalated to human
     Regressions: none / skillA (broken reference), skillB (asymmetric boundary)
@@ -402,7 +424,8 @@ Before committing any skill modification, verify:
 - [ ] **Simplicity maintained**: change does not add unnecessary complexity for marginal gains,
   and no simplification removed a verified-defect fix or critical guard (a flat composite within
   judge noise does not license a deletion)
-- [ ] **Cross-references intact**: all skill names in bold still resolve to existing skills
+- [ ] **Cross-references intact**: ordinary routing resolves to active published skills;
+  only explicit migration references may name deprecated notices
 - [ ] **Target ~500 lines**: modified SKILL.md stays near 500 lines. Hard max 600
 - [ ] **ASCII only**: no non-ASCII introduced beyond the single approved set in **skill-creator**'s `references/conventions.md`
 - [ ] **Immutability respected**: no phase-1 modification to evaluation criteria,
@@ -418,7 +441,8 @@ Before committing any skill modification, verify:
   unknown model identity uses fresh context at cap 3, with runtime/config evidence recorded
 - [ ] **Score ledger present**: baseline, iteration, and final component scores exist before reporting completion
 - [ ] **Canonical test coverage complete**: phase 2 compares public skill directories with the
-  canonical test headings and leaves no missing, duplicate, or orphan skill section
+  canonical test headings, including every deprecated notice, with no missing, duplicate,
+  or orphan skill section; notice integrity and legacy tests remain separate from scores
 - [ ] **Local-only scope respected**: public and private skills are separated before commits or release notes
 - [ ] **Review export authorized**: private or sensitive source is sent to another harness/provider
   only with explicit user authorization; otherwise the fresh local fallback is used
