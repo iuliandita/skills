@@ -207,6 +207,7 @@ const savedLocale = localStorage.getItem('locale')
 const requestedLocale = savedLocale ?? navigator.language
 const normalizedLocale = requestedLocale.toLowerCase().split('-')[0]
 const initialLocale = supportedLocales.has(normalizedLocale) ? normalizedLocale : 'en'
+document.documentElement.lang = initialLocale
 i18n.use(initReactI18next).init({ lng: initialLocale, fallbackLng: 'en',
   resources })
 
