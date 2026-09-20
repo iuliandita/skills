@@ -7,7 +7,7 @@ Full install, update, and structure docs for the skills repo. For a quick start,
 ### Quick install via skills.sh
 
 ```bash
-# All skills
+# Select skills interactively (prefer active names; see MIGRATION.md)
 npx skills add iuliandita/skills
 
 # Pick specific ones
@@ -24,10 +24,10 @@ Clone, run, clean up:
 ```bash
 git clone https://github.com/iuliandita/skills.git /tmp/skills-install
 
-# All skills, Claude (default)
+# All active skills, Claude (default)
 /tmp/skills-install/install.sh
 
-# All skills, a specific tool
+# All active skills, a specific tool
 /tmp/skills-install/install.sh --tool codex
 
 # Selected skills
@@ -77,15 +77,15 @@ Skills declaring `metadata.internal: true` and gitignored locally are skipped by
 ./install.sh --tool claude,codex,opencode --link --include-internal --force
 ```
 
-The public `cluster-health` skill can also have a local protected overlay at `skills/cluster-health/protected/`. That directory is gitignored and must stay untracked. Use it for private lab, homelab, work, or customer cluster aliases, kube contexts, CWD mappings, namespaces, dashboards, runbooks, and local thresholds. You can ask an agent to create or update files there, typically `registry.md`, `private-patterns.txt`, and one `<cluster-or-env>.md` profile per environment.
+The public `kubernetes-health` skill can also have a local protected overlay at `skills/kubernetes-health/protected/`. That directory is gitignored and must stay untracked. Use it for private lab, homelab, work, or customer cluster aliases, kube contexts, CWD mappings, namespaces, dashboards, runbooks, and local thresholds. You can ask an agent to create or update files there, typically `registry.md`, `private-patterns.txt`, and one `<cluster-or-env>.md` profile per environment.
 
-When present in a local checkout, normal copy installs and `--link` installs copy the overlay into the installed `cluster-health` skill. In symlink mode, tool-specific skill directories point at the canonical copy, so Claude, Codex, OpenCode, and other linked tools all see the same protected overlay. Public GitHub installs do not include the overlay because it is not tracked.
+When present in a local checkout, normal copy installs and `--link` installs copy the overlay into the installed `kubernetes-health` skill. In symlink mode, tool-specific skill directories point at the canonical copy, so Claude, Codex, OpenCode, and other linked tools all see the same protected overlay. Public GitHub installs do not include the overlay because it is not tracked.
 
 Before using `--force`, copy any overlay that exists only in the installed skill back into
-`skills/cluster-health/protected/` in the source checkout. Forced installs replace the whole
+`skills/kubernetes-health/protected/` in the source checkout. Forced installs replace the whole
 skill directory; they do not preserve or merge installed-only files into the new copy.
 
-`cluster-health` is public, so it no longer needs `--include-internal`; that flag is only for separate gitignored skills with `metadata.internal: true`.
+`kubernetes-health` is public, so it no longer needs `--include-internal`; that flag is only for separate gitignored skills with `metadata.internal: true`.
 
 Before committing local changes, install the repository hooks with either `prek` or `pre-commit`:
 
@@ -95,7 +95,7 @@ prek install --hook-type pre-commit --hook-type pre-push
 pre-commit install --hook-type pre-commit --hook-type pre-push
 ```
 
-The hooks enforce that `skills/cluster-health/protected/` remains ignored and untracked, and they scan public files for protected private patterns when the local overlay is present.
+The hooks enforce that `skills/kubernetes-health/protected/` remains ignored and untracked, and they scan public files for protected private patterns when the local overlay is present.
 
 They also check freshness markers in public skills. Lines that claim currentness, such as `Target versions`, `Reviewed`, `Updated for`, `verified <month year>`, `recheck`, `snapshot`, or `as of <month year>`, must use the current collection label. Override the expected label during a refresh with `SKILLS_FRESHNESS_LABEL="July 2026" ./scripts/check-freshness-dates.sh`.
 
@@ -174,7 +174,7 @@ Or check what changed first:
 
 The first example updates two copied skills for Codex; the second checks and updates all
 skills in the canonical directory and maintains links for the selected tools. Omitting skill
-names installs all available skills. Omitting `--tool` uses `SKILLS_TOOL`, or Claude if unset.
+names installs all active skills. Explicit old names install deprecation notices. Omitting `--tool` uses `SKILLS_TOOL`, or Claude if unset.
 
 The installer backs up existing skills before overwriting unless `--no-backup` is set.
 It retains the last three backups per skill under
@@ -183,6 +183,21 @@ Override that backup base with `SKILLS_BACKUP_DIR`. Backups support manual recov
 customizations are not merged into the replacement. Preserve edits in the source checkout
 before reinstalling if they must remain active.
 
+If a source checkout moved or an existing lock is incompatible, a normal install saves
+that lock under the backup base's `.unverified-locks/` directory and starts a fresh lock.
+It records only selected entries whose content matches the new source; it does not adopt
+unselected entries from the old lock. Review the saved lock for any remaining manual updates.
+
+## Renamed and removed skills
+
+See [MIGRATION.md](MIGRATION.md) for the complete mapping, temporary deprecation notices,
+copy/link migration, npx instructions, and private-overlay preservation. Normal updates
+do not prune old names. Preview `./install.sh --tool codex --migrate`, then use `--apply`
+only after reviewing the proposed changes. The helper verifies installer ownership and
+current file-content hashes; detected modifications and ambiguous entries stay untouched
+for manual review. Current and historical hashes do not detect pure filename changes. Link migration
+retains old canonical targets until remaining links have been reviewed and cleaned up.
+
 ## Checking for updates
 
 Each install writes a `.skills-lock.json` with content hashes. In `--link` mode, the installer
@@ -190,8 +205,10 @@ writes the lock file to both the canonical directory and each selected tool dire
 canonical or tool-specific checks work after install. `--check` compares current source hashes
 with the hashes recorded in that lock file. It does not hash the installed files again, so it
 does not detect edits or deletions made there after installation. It checks all discoverable
-source skills, even when skill names are passed, and exits with status 1 if any are outdated
-or absent from the lock. With `--link`, only the canonical lock is checked; tool-directory
+active source skills, even when skill names are passed, and separately reports legacy
+names recorded in the lock. It exits with status 1 if an active skill is outdated or absent, or a legacy
+entry remains. Deprecated notices are excluded from active update checks. With `--link`,
+only the canonical lock is checked; tool-directory
 links are not verified. Check a tool's lock separately without `--link`, which checks only
 the first selected tool.
 
@@ -206,11 +223,11 @@ the first selected tool.
 Each skill follows the [Agent Skills specification](https://agentskills.io/specification):
 
 - **`SKILL.md` with YAML frontmatter** - `name`, `description`, `license`, optional `compatibility` for environment requirements, and `metadata` for custom fields. The frontmatter is what agents read at startup to decide which skills to activate.
-- **Compact body** - the core instructions loaded when the skill is activated. Target under 500 lines, 600 hard max. Kept lean so it doesn't eat the context window.
+- **Compact body** - the core instructions loaded when the skill is activated. Prefer 150-250 lines where practical, 600 hard max. Kept lean so it doesn't eat the context window.
 - **Reference files** in `references/` - detailed pattern libraries, compliance checklists, manifest templates. The agent reads these on-demand when the task requires depth. Expert-level detail without paying the token cost upfront.
 - **Argument hints** (`metadata.argument_hint`) - tells agents what arguments a skill expects (e.g., `<file-or-pattern>`, `[iterations]`). Angle brackets for required, square brackets for optional.
 - **Precise trigger descriptions** - usually 80-120 characters, with the task and distinctive terms first. The warning above 120 is advisory; hosts can still shorten entries to fit a shared catalog budget.
-- **Cross-skill awareness** - skills know about each other. Routing hints (`Not for X (use Y)`) prevent collisions. The security-audit skill defers to lockpick on offensive work; docker defers to kubernetes on cluster networking.
+- **Cross-skill awareness** - skills know about each other. Routing hints (`Not for X (use Y)`) prevent collisions. The security-audit skill defers to privilege-escalation on offensive work; docker defers to kubernetes on cluster networking.
 
 ## Structure
 
@@ -257,6 +274,8 @@ last tag:
 
 If a refactor or perf change should cut a release, use a squash-merge title that reflects the
 user-facing impact, usually `fix:`.
+
+For the catalog transition, follow the [publication and retirement checklist](MIGRATION.md#maintainer-retirement-checklist). Record the actual publication timestamp after publishing; notices cannot be retired before seven full days have elapsed.
 
 Release steps (start with a clean checkout and update `main` with `git pull --ff-only`):
 

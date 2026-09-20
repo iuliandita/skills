@@ -1,7 +1,7 @@
 ---
 name: update-docs
 description: >
-  · Update README, changelogs, API docs, and runbooks after changes; find and fix documentation drift.
+  Update README, changelogs, API docs, and runbooks after changes; find and fix documentation drift.
 license: MIT
 compatibility: "Requires git. Optional: wc (for size audits)"
 metadata:
@@ -28,9 +28,9 @@ Post-change documentation sweep. Captures non-obvious knowledge into the right d
 
 - Writing a full documentation set from scratch without user approval
 - Code correctness or security review - use **code-review** or **security-audit**
-- Code quality, slop, or maintainability cleanup - use **anti-slop**
+- Code quality, slop, or maintainability cleanup - use **code-simplification**
 - Prompt authoring or reusable skill-file maintenance - use **prompt-generator** or **skill-creator**
-- Full codebase audit across multiple domains - use **full-review** (it invokes update-docs as one pass)
+- Full codebase audit across multiple domains - use **repo-audit** (it invokes update-docs as one pass)
 - Git commit messages, PR descriptions, release announcement copy, or tag operations - use **git**
 - Roadmap prioritisation and backlog shaping belongs to the **roadmap** skill; factual drift (stated version, shipped highlights, items mistakenly listed as planned) belongs here
 
@@ -83,7 +83,7 @@ Before presenting documentation updates, verify:
 
 ## Workflow
 
-**Audit-only mode:** When invoked by full-review or asked to report/check docs, inspect applicable Steps 1-7, including companion shape and drift, without editing. Skip commit Step 8. Scope all checks to documentation affected by the requested change; private configuration and unrelated roadmaps are not an automatic sweep target.
+**Audit-only mode:** When invoked by repo-audit or asked to report/check docs, inspect applicable Steps 1-7, including companion shape and drift, without editing. Skip commit Step 8. Scope all checks to documentation affected by the requested change; private configuration and unrelated roadmaps are not an automatic sweep target.
 
 1. Identify changes
 1.5. Roadmap freshness check
@@ -400,7 +400,8 @@ Before committing, inspect the complete staged diff and compare it with the init
 When a feature, service, or API is deprecated during a session:
 - **Keep the doc entry** with a `[DEPRECATED]` prefix and the date - don't delete immediately
 - **Add the replacement** in the same section so readers find both
-- **Remove deprecated entries** after 2 release cycles or when confirmed no longer referenced anywhere
+- **Follow repository and explicit user retirement policy first.** Verify its release, publication-date, and elapsed-time conditions before removing entries; lack of incoming references cannot shorten a promised grace period.
+- **Only when no policy exists**, keep entries for two completed release cycles after the deprecation is published, then remove them only after checking incoming references and preserving any still-needed migration guidance. If release or publication evidence is unavailable, retain the entry and report what remains unverified.
 - **Breaking changes** deserve their own bullet: what broke, what replaces it, any migration steps
 
 ## Output Contract
@@ -409,13 +410,13 @@ See `references/output-contract.md` for the full contract.
 
 - **Skill name:** UPDATE-DOCS
 - **Deliverable bucket:** `audits`
-- **Mode:** always-on. Every invocation emits the full contract - monospace inline header, severity-grouped inline summary, linked Markdown deliverable, and concise monospace conclusion.
+- **Mode:** always-on. Every invocation applies the reporting size and evidence rules in `references/output-contract.md`.
 - **Deliverable path:** `docs/local/audits/update-docs/<YYYY-MM-DD>-<slug>.md`
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract).
 
 ## Related Skills
 
-- **full-review** - orchestrates code-review, anti-slop, security-audit, and update-docs in
+- **repo-audit** - orchestrates code-review, code-simplification, security-audit, and update-docs in
   parallel. Update-docs is one of the four passes.
 - **git** - for commit message conventions and PR descriptions. Update-docs covers project
   documentation files; git covers version control operations.
@@ -434,7 +435,7 @@ See `references/output-contract.md` for the full contract.
 - **Over-documenting migrations**: Once a migration is complete and verified, condense to a one-liner and remove the step-by-step procedure.
 - **Dangling links**: Renaming a doc without updating references elsewhere creates dead links that erode trust in documentation.
 - **Bootstrapping without consent**: If the repo lacks docs, suggest a minimal docs surface; don't silently create a documentation tree the user did not ask for.
-- **Deleting deprecated docs too early**: Keep deprecated entries visible for at least one release cycle so people find the migration path.
+- **Deleting deprecated docs too early**: Follow repository and explicit user policy; no-reference evidence does not waive its grace period. Use the two-completed-release fallback above only when neither defines retirement conditions.
 - **Skipping the roadmap header check**: A roadmap with `Current: v0.27` while HEAD is on `v0.43` is the loudest possible drift signal. Always parse and compare the header before deciding whether the roadmap needs updates.
 - **Treating a gitignored roadmap as out of scope**: Private roadmaps drift hardest because nobody complains about them publicly. Run the freshness check against ALL roadmaps the `find` command surfaces, not just tracked ones.
 

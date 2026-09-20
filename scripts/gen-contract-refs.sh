@@ -15,6 +15,8 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # shellcheck source=./scripts/contract-lib.sh
 source "$(dirname "${BASH_SOURCE[0]}")/contract-lib.sh"
+# shellcheck source=./scripts/skill-lib.sh
+source "$(dirname "${BASH_SOURCE[0]}")/skill-lib.sh"
 
 total=0
 for target_name in "${SHARED_FILE_NAMES[@]}"; do
@@ -32,6 +34,7 @@ for target_name in "${SHARED_FILE_NAMES[@]}"; do
     name="$(basename "$dir")"
     [[ "$name" == _* ]] && continue          # skip _shared and other build inputs
     [[ -f "$dir/SKILL.md" ]] || continue
+    [[ "$(frontmatter_get "$dir/SKILL.md" metadata.deprecated)" == "true" ]] && continue
     mkdir -p "$dir/references"
     printf '%s\n' "$shipped" > "$dir/references/$target_name"
     count=$((count + 1))

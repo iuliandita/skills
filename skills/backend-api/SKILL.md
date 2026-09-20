@@ -1,7 +1,7 @@
 ---
 name: backend-api
 description: >
-  · Design and review REST/HTTP APIs: FastAPI, Express, NestJS, OpenAPI, auth, and pagination.
+  Design and review REST/HTTP APIs, with bounded GraphQL and gRPC contract guidance: OpenAPI, auth, pagination, compatibility, and retries.
 license: MIT
 compatibility: "Optional: Python or Node.js framework context. Optional: OpenAPI-capable framework/docs tooling"
 metadata:
@@ -30,12 +30,14 @@ high-severity multipart denial of service, [CVE-2026-82333](https://github.com/e
 Upgrade Multer to 2.3.0+ and bound `limits.fieldArrayIndexLimit` to application needs; checking
 only the top-level framework version misses vulnerable middleware.
 
-This skill works across five concerns:
+This skill works across these concerns:
 - **Contract design** - resources, methods, status codes, schemas, versioning
 - **API ergonomics** - pagination, filtering, sorting, idempotency, error format
 - **Framework structure** - FastAPI dependencies, Express middleware, NestJS modules and guards
 - **Authentication** - sessions, bearer tokens, OAuth/OIDC, BFF and token mediation
 - **Review** - unstable contracts, DTO leakage, auth confusion, and HTTP misuse
+- **Bounded protocol patterns** - GraphQL schema/resolver and gRPC contract, deadline, retry, and
+  streaming safeguards when those protocols are already in scope
 
 ## When to use
 
@@ -50,8 +52,8 @@ This skill works across five concerns:
 
 ## When NOT to use
 
-- GraphQL schema, resolvers, federation, or persisted query work - out of scope for this skill
-- gRPC, protobuf schema evolution, or streaming RPCs - out of scope for this skill
+- Standalone GraphQL federation architecture or protocol-wide gRPC platform administration - narrow
+  the request first; this skill covers service contract patterns, not a framework catalog
 - Database schema, indexing, replication, or query tuning - use **databases**
 - General bug-finding, race-condition hunting, or correctness review outside the API boundary - use **code-review**
 - Security auditing for auth bypasses, injection, secrets, or OWASP findings - use **security-audit**
@@ -149,6 +151,10 @@ style unless the task explicitly includes a migration.
 4. Define error shapes
 5. Decide pagination, filtering, sorting, and versioning rules
 6. Only then wire the framework implementation
+
+For a GraphQL or gRPC boundary, keep REST/HTTP rules as the default where they fit, then read
+`references/graphql-grpc-patterns.md` for the protocol-specific contract, compatibility, deadline,
+authorization, pagination, and streaming safeguards.
 
 Prefer:
 - Noun-based resources: `/users/{userId}/sessions`
@@ -374,6 +380,7 @@ Rolling deploys send SIGTERM to old instances while new ones come up. Handle it 
 
 - `references/http-api-patterns.md` - resource design, method semantics, status codes, versioning, pagination, filtering, idempotency
 - `references/auth-and-session-patterns.md` - sessions vs bearer tokens, OAuth/OIDC, BFF, refresh tokens, machine clients
+- `references/graphql-grpc-patterns.md` - bounded GraphQL and gRPC contract and compatibility patterns
 
 ## Output Contract
 
@@ -381,7 +388,7 @@ See `references/output-contract.md` for the full contract.
 
 - **Skill name:** BACKEND-API
 - **Deliverable bucket:** `audits`
-- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract - monospace inline header, severity-grouped inline summary, linked Markdown deliverable, and concise monospace conclusion - and write the deliverable to `docs/local/audits/backend-api/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
+- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, apply the reporting size and evidence rules in `references/output-contract.md` and write the deliverable to `docs/local/audits/backend-api/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
 
 ## Related Skills
@@ -405,5 +412,6 @@ See `references/output-contract.md` for the full contract.
 5. **Keep framework structure boring.** Thin controllers or routes, explicit validation, explicit auth, centralized error handling.
 6. **Backward compatibility is a feature.** New fields are cheap; breaking clients is expensive.
 7. **Write for real retries.** Assume clients, proxies, and job runners will replay requests.
-8. **Keep scope on HTTP APIs.** When the problem is GraphQL or gRPC-specific, say so and stop pretending the same rules apply.
+8. **Apply protocol-specific rules.** REST is the default focus; GraphQL and gRPC require their own
+   schema, compatibility, deadline, and streaming checks from the linked reference.
 9. **Match service conventions unless migrating them.** A one-off endpoint with a different error, auth, or pagination model is usually a contract bug.

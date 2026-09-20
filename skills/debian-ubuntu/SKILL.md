@@ -1,7 +1,7 @@
 ---
 name: debian-ubuntu
 description: >
-  · Administer Debian, Ubuntu, Mint, and Pop!_OS: apt, dpkg, upgrades, boot, drivers, and desktop issues.
+  Administer Debian, Ubuntu, Mint, and Pop!_OS: apt, dpkg, upgrades, boot, drivers, and desktop issues.
 license: MIT
 compatibility: Requires Debian, Ubuntu, or Debian-based distro with apt
 metadata:
@@ -63,17 +63,17 @@ Check the exact release and kernel package; these are not universal kernel versi
 
 ## When NOT to use
 
-- Shell syntax, quoting, or script portability - use **command-prompt**
+- Shell syntax, quoting, or script portability - use **shell-scripting**
 - Network architecture, DNS, VPNs, reverse proxies, or firewall design - use **networking**
 - Docker, Podman, image builds, or container runtime - use **docker**
 - Kubernetes cluster or manifest work - use **kubernetes**
 - Fleet-wide Linux configuration via playbooks - use **ansible**
-- Security review, vulnerability triage, or offensive testing - use **security-audit** or **lockpick**
+- Security review, vulnerability triage, or offensive testing - use **security-audit** or **privilege-escalation**
 - RPM-family distros and tooling - use **rhel-fedora**. That includes RHEL, Fedora, Rocky, AlmaLinux, Oracle Linux, and Amazon Linux.
 - Ubuntu Core and snap-only transactional workflows - outside this skill; do not treat them like ordinary apt-managed Ubuntu hosts
-- NixOS or declarative system management - use **nixos-btw**
+- NixOS or declarative system management - use **nixos**
 - Kali offensive tooling, pentest workflow, or training-image specifics - use **kali-linux**
-- OPNsense or pfSense appliance work - use **firewall-appliance**
+- OPNsense or pfSense appliance work - use **opnsense-pfsense**
 
 ---
 
@@ -327,22 +327,22 @@ See `references/output-contract.md` for the full contract.
 
 - **Skill name:** DEBIAN-UBUNTU
 - **Deliverable bucket:** `audits`
-- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract - monospace inline header, severity-grouped inline summary, linked Markdown deliverable, and concise monospace conclusion - and write the deliverable to `docs/local/audits/debian-ubuntu/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
+- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, apply the reporting size and evidence rules in `references/output-contract.md` and write the deliverable to `docs/local/audits/debian-ubuntu/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
 
 ## Related Skills
 
-- **command-prompt** - shell syntax, zsh or bash behavior, script portability
+- **shell-scripting** - shell syntax, zsh or bash behavior, script portability
 - **networking** - network services, DNS, VPNs, firewall design
 - **docker** - container runtime and image concerns instead of host distro administration
 - **kubernetes** - cluster and manifest work that sits above host OS administration
 - **ansible** - codifying Linux changes across many machines
 - **security-audit** - hardening and security review rather than normal package/service administration
 - **rhel-fedora** - RPM-family distro administration rather than Debian-family behavior
-- **nixos-btw** - NixOS and declarative Nix system management rather than apt-based administration
+- **nixos** - NixOS and declarative Nix system management rather than apt-based administration
 - **kali-linux** - Kali-specific branch, image, and offensive-workflow concerns
-- **firewall-appliance** - OPNsense and pfSense appliance work rather than Linux host administration
-- **arch-btw** - Arch Linux and CachyOS administration (the upstream inspiration for this skill)
+- **opnsense-pfsense** - OPNsense and pfSense appliance work rather than Linux host administration
+- **arch-linux** - Arch Linux and CachyOS administration (the upstream inspiration for this skill)
 - **update-docs** - after substantial system administration changes that introduce new operational gotchas
 
 ---

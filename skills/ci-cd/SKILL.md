@@ -1,7 +1,7 @@
 ---
 name: ci-cd
 description: >
-  · Build, review, and debug CI/CD pipelines and runners: GitHub Actions, GitLab CI, Forgejo/Gitea, and Woodpecker.
+  Build, review, and debug CI/CD pipelines and runners: GitHub Actions, GitLab CI, Forgejo/Gitea, and Woodpecker.
 license: MIT
 compatibility: "Optional: gh (GitHub CLI), glab (GitLab CLI), fj (Forgejo CLI)"
 metadata:
@@ -189,6 +189,10 @@ inter-job data. Cache may evict at any time - pipelines must work without it.
 
 **All platforms**: never echo secrets, never pass as CLI args (visible in `ps`), never write
 to artifacts. Use environment variables or file-based injection.
+
+### Credential lifecycle
+
+Trace issuer trust, job identity, secret injection, downstream permissions, rotation, and revocation. Test expired or revoked credentials in an approved nonproduction job and confirm logs, caches, and artifacts contain no values. Keep provisioning/state concerns with **terraform** and workload refresh/reload with **kubernetes**; document the owner at each boundary.
 
 ### Deployment gates
 
@@ -450,7 +454,7 @@ See `references/output-contract.md` for the full contract.
 
 - **Skill name:** CI-CD
 - **Deliverable bucket:** `audits`
-- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract - monospace inline header, severity-grouped inline summary, linked Markdown deliverable, and concise monospace conclusion - and write the deliverable to `docs/local/audits/ci-cd/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
+- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, apply the reporting size and evidence rules in `references/output-contract.md` and write the deliverable to `docs/local/audits/ci-cd/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
 
 ## Related Skills

@@ -43,12 +43,14 @@ done
 for file in \
   skills/security-audit/SKILL.md \
   skills/security-audit/references/report-guide.md \
-  skills/full-review/SKILL.md \
-  skills/deep-audit/SKILL.md; do
+  skills/repo-audit/SKILL.md \
+  skills/repo-audit/references/quick-workflow.md \
+  skills/repo-audit/references/exhaustive-workflow.md \
+  skills/repo-audit/references/report-templates.md; do
   reject_text "$file" 'SECURITY-AUDIT.md' "$file still prescribes the obsolete security report filename"
 done
 
-for file in skills/full-review/SKILL.md skills/deep-audit/SKILL.md; do
+for file in skills/repo-audit/SKILL.md skills/repo-audit/references/quick-workflow.md; do
   reject_text "$file" '`general-purpose`' "$file still requires a general-purpose worker type"
   reject_text "$file" 'Skill tool' "$file still requires a harness-specific Skill tool"
 done
@@ -89,17 +91,17 @@ reject_trigger code-review review
 reject_trigger code-review 'check this'
 reject_trigger ansible role
 reject_trigger ansible inventory
-reject_trigger command-prompt script
-reject_trigger command-prompt completion
+reject_trigger shell-scripting script
+reject_trigger shell-scripting completion
 reject_trigger databases schema
 reject_trigger databases migration
 reject_trigger testing spec
 reject_trigger kubernetes deployment
 reject_trigger kubernetes gateway
 reject_trigger frontend-design 'design review'
-reject_trigger zero-day CVE
-reject_trigger full-review 'run all checks'
-reject_trigger full-review 'full check'
+reject_trigger vulnerability-research CVE
+reject_trigger repo-audit 'run all checks'
+reject_trigger repo-audit 'full check'
 
 # Check useful domain cues without requiring the old quoted keyword-list syntax.
 require_description() {
@@ -108,14 +110,14 @@ require_description() {
   grep -Fiq -- "$text" <<< "$description" || fail "$skill description is missing '$text'"
 }
 
-require_description localize 'translate app'
-require_description localize 'multilingual'
-require_description localize 'add language'
+require_description i18n-localization 'i18n'
+require_description i18n-localization 'catalog'
+require_description i18n-localization 'translation'
 require_description mcp 'MCP'
 require_description mcp 'clients'
 require_text skills/mcp/SKILL.md '@modelcontextprotocol/server' "mcp is missing the current server-package reference"
-require_description arch-btw 'EndeavourOS'
-require_description arch-btw 'Manjaro'
+require_description arch-linux 'EndeavourOS'
+require_description arch-linux 'Manjaro'
 require_description virtualization 'VMware'
 require_description virtualization 'ESXi'
 
@@ -124,4 +126,30 @@ require_description virtualization 'ESXi'
 require_text scripts/lint-skills.sh 'GENERIC_SELF_CHECK_EXEMPT=("skill-refiner" "skill-creator")' "lint-skills.sh GENERIC_SELF_CHECK_EXEMPT changed; re-justify the exemption and update this guard"
 require_text scripts/lint-skills.sh 'phase-1 changes to this list remain subject to scripts/check-refiner-phase1-guard.sh' "lint-skills.sh exemption comment no longer ties phase-1 changes to the phase-1 guard"
 
+test_scoped_audit_detection() (
+  local fixture output
+  fixture="$(mktemp -d)"
+  trap 'rm -rf "$fixture"' EXIT
+  git -C "$fixture" init -q
+  mkdir -p "$fixture/service" "$fixture/other"
+  printf '%s\n' '{"dependencies":{"kafkajs":"1","clinic":"1"}}' > "$fixture/package.json"
+  touch "$fixture/service/user-profile.ts" "$fixture/service/subscription.ts" "$fixture/service/hotel.ts"
+  git -C "$fixture" add .
+  cd "$fixture"
+  output="$(REPO_AUDIT_ROOT_MANIFESTS=0 bash "$ROOT/skills/repo-audit/references/detect.sh" service)"
+  if grep -Eq '^(message-queues|performance-debugging|observability)$' <<< "$output"; then
+    fail "generic scoped filenames activated broker, profiling, or telemetry lanes"
+  fi
+  output="$(bash "$ROOT/skills/repo-audit/references/detect.sh" service)"
+  grep -qx message-queues <<< "$output" || fail "root queue dependency was not reported as a candidate"
+  grep -qx performance-debugging <<< "$output" || fail "root profiling dependency was not reported as a candidate"
+  mkdir -p service/Consumers service/profiling other/queues
+  touch service/Consumers/orders.ts service/profiling/cpu.cpuprofile other/queues/tasks.ts
+  git add .
+  output="$(REPO_AUDIT_ROOT_MANIFESTS=0 bash "$ROOT/skills/repo-audit/references/detect.sh" service)"
+  grep -qx message-queues <<< "$output" || fail "scoped queue component was not detected case-insensitively"
+  grep -qx performance-debugging <<< "$output" || fail "scoped profiling artifact was not detected"
+)
+
+test_scoped_audit_detection
 printf 'All skill content tests passed.\n'

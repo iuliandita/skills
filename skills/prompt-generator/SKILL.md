@@ -1,7 +1,7 @@
 ---
 name: prompt-generator
 description: >
-  · Write or improve one-off LLM prompts, system prompts, and prompt templates from rough notes.
+  Write or improve one-off LLM prompts, system prompts, and prompt templates from rough notes.
 license: MIT
 compatibility: "Model-agnostic. Optional: tailor output format to Claude, GPT, or Gemini when target is known"
 metadata:
@@ -28,11 +28,11 @@ Take the user's rough thoughts, scattered notes, or half-formed ideas and turn t
 
 - Brainstorming features or creative ideation - this skill structures prompts, not ideas
 - Creating reusable skill files or agent instruction bundles (use **skill-creator**)
-- Creating scheduled or unattended automation routines (use **routine-writer**)
+- Configuring schedules, recurring runs, and event triggers - use the host's automation capabilities.
 - Writing inline prompt strings inside application code - that's just coding
-- The user wants code that calls an LLM API (use **ai-ml** for SDK integration)
+- The user wants code that calls an LLM API (use **llm-app-development** for SDK integration)
 - Security review of prompts for injection risks (use **security-audit**)
-- Reviewing code quality of prompt-related code (use **code-review** or **anti-slop**)
+- Reviewing code quality of prompt-related code (use **code-review** or **code-simplification**)
 
 ---
 
@@ -266,7 +266,7 @@ See `references/output-contract.md` for the full contract.
 
 - **Skill name:** PROMPT-GENERATOR
 - **Deliverable bucket:** `prompts`
-- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content (e.g., review an existing prompt for quality), emit the full contract - monospace inline header, severity-grouped inline summary, linked Markdown deliverable, and concise monospace conclusion - and write the deliverable to `docs/local/prompts/prompt-generator/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content** (its primary mode - producing a prompt for the user), respond freely without the contract.
+- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content (e.g., review an existing prompt for quality), apply the reporting size and evidence rules in `references/output-contract.md` and write the deliverable to `docs/local/prompts/prompt-generator/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content** (its primary mode - producing a prompt for the user), respond freely without the contract.
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
 
 ## Related Skills
@@ -274,11 +274,11 @@ See `references/output-contract.md` for the full contract.
 - **skill-creator** - creates reusable skill files (SKILL.md) for AI tools and coding agents. Skills are
   structured prompts, but they follow different conventions (frontmatter, workflow sections,
   rules) than standalone prompts. If someone says "create a skill", use skill-creator.
-- **routine-writer** - creates unattended or scheduled automation routine prompts. Use it when the
-  user mentions schedules, triggers, recurring runs, `/schedule`, or `/fire`.
+- Use the host's automation capabilities for schedules and event triggers. This skill can
+  help write the prompt body; it does not configure the recurring job.
 - Application code - if the user needs a prompt string inside application code (for example a
   TypeScript `const systemPrompt = ...`), that's coding, not this skill.
-- **anti-slop** - if the user asks to "clean up" or "simplify" a prompt embedded in code, that's
+- **code-simplification** - if the user asks to "clean up" or "simplify" a prompt embedded in code, that's
   a code quality issue, not prompt structuring.
 
 ---

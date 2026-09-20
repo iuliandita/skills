@@ -1,7 +1,7 @@
 ---
 name: networking
 description: >
-  · Configure and debug Linux networking: DNS, reverse proxies, VPNs, WireGuard, VLANs, nftables, and routing.
+  Configure and debug Linux networking: DNS, reverse proxies, VPNs, WireGuard, VLANs, nftables, and routing.
 license: MIT
 compatibility: "Requires Linux. Tools vary by task: nftables, WireGuard, dig, mtr, tcpdump"
 metadata:
@@ -64,14 +64,14 @@ rate CVE-2026-32665 high: DoQ-enabled 1.22.0-1.25.1 is affected, with a fix in
 
 ## When NOT to use
 
-- OPNsense/pfSense firewall appliance management (use **firewall-appliance**)
-- Web browsing, scraping, or headless page interaction - use **browse**
+- OPNsense/pfSense firewall appliance management (use **opnsense-pfsense**)
+- Web browsing, scraping, or headless page interaction - use the host's browsing tools
 - Kubernetes networking: NetworkPolicy, Gateway API, service mesh, CNI (use **kubernetes**)
-- Broad Kubernetes cluster health checks, node status, and post-maintenance diagnostics (use **cluster-health**)
+- Broad Kubernetes cluster health checks, node status, and post-maintenance diagnostics (use **kubernetes-health**)
 - Docker/container networking: bridge, overlay, Compose networks (use **docker**)
 - Cloud VPCs, security groups, managed load balancers (use **terraform**)
 - Network config management at scale via playbooks (use **ansible**)
-- Offensive pentesting, exploitation, lateral movement (use **lockpick**)
+- Offensive pentesting, exploitation, lateral movement (use **privilege-escalation**)
 - Application-level security review, SSRF, header injection (use **security-audit**)
 - CI/CD-automated network configuration management at pipeline scale (use **ci-cd**)
 
@@ -359,17 +359,17 @@ See `references/output-contract.md` for the full contract.
 
 - **Skill name:** NETWORKING
 - **Deliverable bucket:** `audits`
-- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract - monospace inline header, severity-grouped inline summary, linked Markdown deliverable, and concise monospace conclusion - and write the deliverable to `docs/local/audits/networking/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
+- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, apply the reporting size and evidence rules in `references/output-contract.md` and write the deliverable to `docs/local/audits/networking/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
 
 ## Related Skills
 
-- **firewall-appliance** - manages BSD-based firewall appliances (OPNsense, pfSense). This skill
-  handles Linux networking; firewall-appliance handles FreeBSD appliance firewalls. If the user
-  mentions pfctl, CARP, or OPNsense/pfSense hostnames, route to firewall-appliance.
+- **opnsense-pfsense** - manages BSD-based firewall appliances (OPNsense, pfSense). This skill
+  handles Linux networking; opnsense-pfsense handles FreeBSD appliance firewalls. If the user
+  mentions pfctl, CARP, or OPNsense/pfSense hostnames, route to opnsense-pfsense.
 - **kubernetes** - owns K8s networking (NetworkPolicy, Gateway API, service mesh, CNI). This
   skill covers general DNS and proxy config; K8s-specific networking goes to kubernetes.
-- **cluster-health** - owns read-only Kubernetes cluster diagnostics. If the request is
+- **kubernetes-health** - owns read-only Kubernetes cluster diagnostics. If the request is
   "is the cluster healthy?" rather than "configure DNS/proxy/routing", route there.
 - **docker** - owns container networking (bridge, Compose networks, port mapping). This skill
   covers host-level Linux networking.
@@ -377,12 +377,11 @@ See `references/output-contract.md` for the full contract.
   skill covers bare-metal/VM networking.
 - **ansible** - manages config at scale via playbooks. This skill provides the networking
   knowledge; ansible handles the automation wrapper.
-- **lockpick** - offensive network testing, exploitation, lateral movement. This skill covers
+- **privilege-escalation** - offensive network testing, exploitation, lateral movement. This skill covers
   defensive configuration and hardening.
 - **security-audit** - application-level security review (SSRF, header injection). This skill
   covers network-layer security (firewalls, TLS, segmentation).
-- **browse** - web browsing, scraping, headless page interaction. This skill covers network
-  infrastructure, not web content retrieval.
+- Web content retrieval uses the host's browsing tools; this skill configures network infrastructure.
 - **ci-cd** - pipeline design for automated network config management. This skill provides the networking knowledge; ci-cd handles pipeline orchestration around it.
 
 ## Rules
@@ -401,5 +400,5 @@ See `references/output-contract.md` for the full contract.
    cross an untrusted network without TLS, tunnel it through a VPN.
 7. **Subnet overlap kills VPNs.** Before assigning VPN address ranges, inventory all LAN
    subnets and existing VPN ranges. Overlapping ranges cause routing black holes.
-8. **Defer to specialized skills.** OPNsense/pfSense -> firewall-appliance. K8s networking -> kubernetes.
-   Container networking -> docker. Cloud infra -> terraform. Pentesting -> lockpick.
+8. **Defer to specialized skills.** OPNsense/pfSense -> opnsense-pfsense. K8s networking -> kubernetes.
+   Container networking -> docker. Cloud infra -> terraform. Pentesting -> privilege-escalation.

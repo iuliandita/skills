@@ -13,6 +13,8 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # shellcheck source=./scripts/contract-lib.sh
 source "$(dirname "${BASH_SOURCE[0]}")/contract-lib.sh"
+# shellcheck source=./scripts/skill-lib.sh
+source "$(dirname "${BASH_SOURCE[0]}")/skill-lib.sh"
 
 fail=0
 exempt_pattern=""
@@ -38,6 +40,7 @@ for target_name in "${SHARED_FILE_NAMES[@]}"; do
     name="$(basename "$dir")"
     [[ "$name" == _* ]] && continue
     [[ -f "$dir/SKILL.md" ]] || continue
+    [[ "$(frontmatter_get "$dir/SKILL.md" metadata.deprecated)" == "true" ]] && continue
     copy="$dir/references/$target_name"
     if [[ ! -f "$copy" ]]; then
       printf '[!] %s: missing references/%s (run scripts/gen-contract-refs.sh)\n' "$name" "$target_name" >&2

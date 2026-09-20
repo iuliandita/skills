@@ -216,23 +216,12 @@ check_prose_double_dash() {
   done
 }
 
-# ── Description prefix check ───────────────────────────────────────────
-# Collection convention (CLAUDE.md): every public skill description starts
-# with '·' (U+00B7 MIDDLE DOT) for visual identification in skill lists.
-# Internal skills are exempt (they're not listed to users the same way).
+# Descriptions begin with useful task language, not collection decoration.
 check_desc_prefix() {
-  local file="$1" name="$2"
-  local internal
-  internal="$(frontmatter_get "$file" "metadata.internal" 2>/dev/null || true)"
-  [[ "$internal" == "true" ]] && return
-
-  local desc
+  local file="$1" name="$2" desc
   desc="$(frontmatter_get "$file" "description" 2>/dev/null || true)"
-  [[ -z "$desc" ]] && return  # missing-description error already reported
-
-  # Must start with '·' followed by a space
-  if [[ "$desc" != "· "* ]]; then
-    error "$name: description must start with '· ' (middle dot + space) per collection convention"
+  if [[ "$desc" == "· "* ]]; then
+    error "$name: description must start with the task, without a decorative prefix"
   fi
 }
 

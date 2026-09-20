@@ -293,7 +293,7 @@ credential result in the advisory.
 | CVE-2025-68937 | Forgejo <= v13.0.1 | Critical (9.5) | Template processing allows authenticated RCE via symlink to `.ssh/authorized_keys`. Fixed in v13.0.2+ and v11.0.7 (LTS). |
 | CVE-2025-11702 | GitLab | High (8.5) | Runner hijacking - authenticated users could hijack project runners from other projects. Fixed in 18.3.5/18.4.3/18.5.1. |
 | CVE-2025-25291/25292 | GitLab | Critical | SAML SSO authentication bypass - user impersonation. Fixed in 17.9.x patches. |
-| CVE-2025-8110 | Gogs | High (8.7) | Symlink bypass RCE zero-day. 700+ compromised instances. Fixed in v0.13.4 (Jan 2026). |
+| CVE-2025-8110 | Gogs | High (8.7) | Symlink bypass RCE vulnerability-research. 700+ compromised instances. Fixed in v0.13.4 (Jan 2026). |
 
 ### AI tooling and MCP vulnerabilities
 

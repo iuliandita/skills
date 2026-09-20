@@ -7,7 +7,7 @@ FRESHNESS_LABEL="${SKILLS_FRESHNESS_LABEL:-$(date +'%B %Y')}"
 mapfile -t files < <(
   git -C "$ROOT" ls-files \
     | grep -E '^(skills/|README[.]md$|INSTALL[.]md$).*[.]md$' \
-    | grep -v '^skills/cluster-health/protected/' || true
+    | grep -vE '^skills/(cluster-health|kubernetes-health)/protected/' || true
 )
 
 errors=0

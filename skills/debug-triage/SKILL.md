@@ -1,7 +1,7 @@
 ---
 name: debug-triage
 description: >
-  · Triage live outages when the failing component is unknown; localize the fault and route further debugging.
+  Triage live outages when the failing component is unknown; localize the fault and route further debugging.
 license: MIT
 compatibility: "Optional, stack-dependent: kubectl, dig, curl, openssl, ss, journalctl, pg_isready, jq"
 metadata:
@@ -35,9 +35,9 @@ localizes; the domain skill diagnoses; neither guesses a fix before the cause is
 
 - The failing component is already known and you need the root-cause method - use the host
   `systematic-debugging` skill, then the matching domain skill
-- Auditing repo files for problems that are not a live incident - use **deep-audit** or **code-review**
+- Auditing repo files for problems that are not a live incident - use **repo-audit** or **code-review**
 - Running the standing Kubernetes health checklist when you already know it is a cluster question -
-  use **cluster-health**
+  use **kubernetes-health**
 - Building the signals you wish you had mid-incident - use **observability** (do that before the
   next incident, not during this one)
 - A security incident with a suspected intrusion - triage the layer, then escalate to
@@ -106,12 +106,14 @@ Work outside-in along the request path. Each layer is owned by a domain skill fo
 | DNS resolution | NXDOMAIN, wrong IP, intermittent name failures | **networking** |
 | Network / routing (L3-L4) | timeouts, no route, connection refused | **networking** |
 | TLS / certificates | cert expired, SAN mismatch, handshake failure | **networking** (or the distro/appliance skill) |
-| Load balancer / ingress | 502 (upstream sent an invalid/no reply), 503 (no healthy backend), 504 (upstream timed out) | **kubernetes** (ingress/Gateway) or **firewall-appliance** |
-| Service / pod | CrashLoopBackOff, OOMKilled, readiness failing | **kubernetes**, then **cluster-health** for the broad sweep |
+| Load balancer / ingress | 502 (upstream sent an invalid/no reply), 503 (no healthy backend), 504 (upstream timed out) | **kubernetes** (ingress/Gateway) or **opnsense-pfsense** |
+| Service / pod | CrashLoopBackOff, OOMKilled, readiness failing | **kubernetes**, then **kubernetes-health** for the broad sweep |
 | App runtime | 500s, exceptions, deadlocks in one component | host `systematic-debugging`, then the language/domain skill |
-| Dependency (DB/cache/queue) | slow queries, connection pool exhaustion, broker lag | **databases** |
+| Database/cache | slow queries, connection pool exhaustion, eviction | **databases** |
+| Message broker | consumer lag, redelivery, dead letters | **message-queues** |
+| Identified application bottleneck | CPU, heap, lock contention, latency regression | **performance-debugging** |
 | Secrets / auth chain | 401/403, token expired, Vault path unreachable | **security-audit**; trace the Vault->IaC->runtime chain |
-| Host / node | disk full, memory pressure, kernel/systemd unit down | the distro skill (**debian-ubuntu**, **rhel-fedora**, **arch-btw**, **nixos-btw**) |
+| Host / node | disk full, memory pressure, kernel/systemd unit down | the distro skill (**debian-ubuntu**, **rhel-fedora**, **arch-linux**, **nixos**) |
 | Config / deploy (GitOps) | broke right after a sync; drift from desired state | **kubernetes** / **terraform**, check the last change |
 
 ## Discriminating-signal table
@@ -154,7 +156,7 @@ See `references/output-contract.md` for the full contract.
 
 - **Skill name:** DEBUG-TRIAGE
 - **Deliverable bucket:** `audits`
-- **Mode:** conditional. Live triage is conversational - walk the layers, localize, and route inline without the contract. When invoked to **write up a triage or post-incident summary** as a durable artifact, emit the full contract - monospace inline header, severity-grouped inline summary, linked Markdown deliverable, and concise monospace conclusion - and write it to `docs/local/audits/debug-triage/<YYYY-MM-DD>-<slug>.md`.
+- **Mode:** conditional. Live triage is conversational - walk the layers, localize, and route inline without the contract. When invoked to **write up a triage or post-incident summary** as a durable artifact, apply the reporting size and evidence rules in `references/output-contract.md` and write it to `docs/local/audits/debug-triage/<YYYY-MM-DD>-<slug>.md`.
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; used only in the written-summary mode).
 
 ## Related Skills
@@ -162,13 +164,13 @@ See `references/output-contract.md` for the full contract.
 - **observability** - produces the metrics, traces, and logs triage reads. This skill consumes
   those signals to localize; observability builds them. If a layer is dark mid-incident, that is an
   observability gap to fix afterward.
-- **cluster-health** - the broad read-only Kubernetes checklist. Triage routes to it once the
-  symptom is localized to the cluster; cluster-health then sweeps node/workload/event/storage state.
+- **kubernetes-health** - the broad read-only Kubernetes checklist. Triage routes to it once the
+  symptom is localized to the cluster; kubernetes-health then sweeps node/workload/event/storage state.
 - **networking** - owns DNS, routing, TLS, and proxy deep dives once triage points there.
 - **databases** - owns the data-layer deep dive (slow queries, pools, replication) once implicated.
 - **security-audit** - owns the auth/secrets deep dive and exploitability; triage localizes a
   401/403 or a broken Vault chain, security-audit investigates it.
-- **deep-audit** / **code-review** - operate on repo files, not a live incident. Triage is for a
+- **repo-audit** / **code-review** - operate on repo files, not a live incident. Triage is for a
   running system that is currently broken.
 
 ## Rules

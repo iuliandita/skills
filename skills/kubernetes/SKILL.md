@@ -1,7 +1,7 @@
 ---
 name: kubernetes
 description: >
-  · Build and review Kubernetes/K8s manifests, Helm charts, Kustomize overlays, Gateway API, and ArgoCD deployments.
+  Build and review Kubernetes/K8s manifests, Helm charts, Kustomize overlays, Gateway API, and ArgoCD deployments.
 license: MIT
 compatibility: "Requires kubectl. Optional: helm, kustomize, kube-score, cosign"
 metadata:
@@ -40,7 +40,7 @@ This skill covers four domains depending on context:
 - Security audits of application code (use **security-audit**)
 - Provisioning the cluster itself via IaC (use **terraform**)
 - Database engine configuration running on K8s (use **databases**)
-- Broad read-only cluster health checks, status reports, and post-maintenance diagnostics (use **cluster-health**)
+- Broad read-only cluster health checks, status reports, and post-maintenance diagnostics (use **kubernetes-health**)
 
 ## AI Self-Check
 
@@ -78,6 +78,10 @@ Run generated manifests through `kube-score`, `kubelinter`, or `checkov` when av
 - Prefer declarative GitOps or reviewed manifests over live imperative changes for production.
 - Back up CRDs and custom resources before upgrades or operator changes.
 - Use policy gates for privileged pods, hostPath, broad RBAC, and mutable image tags.
+
+## Secret delivery and recovery
+
+Trace external secret ownership through workload identity, namespace/RBAC access, refresh, and application reload. Check expired leases and revoked credentials as well as successful rotation; do not assume updating a Secret reloads a process. Keep issuer and pipeline setup with **terraform** and **ci-cd**. For restore drills, use an isolated cluster or namespace, verify application reads and writes plus dependencies, measure recovery time and data loss against RTO/RPO, and record cleanup. A completed backup job alone proves no restore.
 
 ## Workflow
 
@@ -464,7 +468,7 @@ See `references/output-contract.md` for the full contract.
 
 - **Skill name:** KUBERNETES
 - **Deliverable bucket:** `audits`
-- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract - monospace inline header, severity-grouped inline summary, linked Markdown deliverable, and concise monospace conclusion - and write the deliverable to `docs/local/audits/kubernetes/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
+- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, apply the reporting size and evidence rules in `references/output-contract.md` and write the deliverable to `docs/local/audits/kubernetes/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
 
 ## Related Skills
@@ -472,7 +476,7 @@ See `references/output-contract.md` for the full contract.
 - **docker** - for Dockerfile and Compose patterns. Kubernetes deploys the images Docker builds. Image optimization belongs in docker; manifest design belongs here.
 - **ci-cd** - for pipeline design that deploys to K8s. Kubernetes skill covers manifests and Helm charts; ci-cd covers the pipeline stages that apply them.
 - **terraform** - for provisioning the cluster itself (EKS, GKE, AKS, bare-metal node pools). Terraform creates the cluster; kubernetes configures what runs on it.
-- **cluster-health** - for read-only cluster status checks, node/workload diagnostics, events, ingress/storage/log sweeps, and post-maintenance reports.
+- **kubernetes-health** - for read-only cluster status checks, node/workload diagnostics, events, ingress/storage/log sweeps, and post-maintenance reports.
 - **databases** - for deploying databases on K8s (StatefulSets, operators, PVCs). Kubernetes owns the manifest pattern; databases owns the engine configuration within.
 - **ansible** - can deploy to K8s via `kubernetes.core` collection, but manifest and Helm chart design belong here.
 

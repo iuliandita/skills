@@ -6,8 +6,11 @@ prompts exercising its core use cases.
 **This file must not be modified during phase 1.** New test cases can only be
 added or modified during phase 2 (meta-improvement).
 
-**Scoring:** Each output is scored on Relevance (0-25), Completeness (0-25),
-Accuracy (0-25), and Actionability (0-25). See `references/evaluation-criteria.md`.
+**Scoring:** Active-skill outputs are scored on Relevance (0-25), Completeness
+(0-25), Accuracy (0-25), and Actionability (0-25). Deprecated notices retain
+canonical headings and explicit legacy-invocation cases, evaluated for notice
+integrity as pass/fail rather than ordinary quality scores or improvement targets.
+See `references/evaluation-criteria.md`.
 
 ---
 
@@ -30,8 +33,15 @@ Quality signals:
 
 ## Test Cases
 
-### ansible
+### ai-ml
+**Test 1: Explicit legacy invocation**
+Prompt: "Use ai-ml for this task."
+Quality signals:
+- Explains the deprecation briefly.
+- Names llm-app-development and checks whether it is installed before routing.
+- Does not silently install a skill, read sibling files, or delete user customizations.
 
+### ansible
 **Test 1: Role creation**
 Prompt: "Create an Ansible role that installs and configures Nginx as a reverse proxy with TLS termination. Target: Ubuntu 24.04."
 Quality signals:
@@ -47,25 +57,61 @@ Quality signals:
 - Explains vault password management
 - Does not suggest storing vault password in plaintext
 
+### anti-ai-prose
+**Test 1: README audit**
+Prompt: "Review this README opener for AI-prose tells:\n\nIn today's fast-paced world, our platform empowers developers to seamlessly navigate the complex landscape of modern APIs. Built with a commitment to excellence, it boasts robust features and fosters innovation. Whether you're a beginner or expert, this tool serves as a pivotal resource for your journey toward better software."
+Quality signals:
+- Flags cluster of banned vocabulary (empowers, seamlessly, navigate, landscape, commitment to, boasts, robust, fosters, pivotal, journey toward) as one clustered finding, not ten
+- Identifies scaffolding padding ("In today's fast-paced world") and promotional tone ("commitment to excellence")
+- Flags copula avoidance ("serves as" instead of "is")
+- Applies short-text density rule - assigns P1 for 2+ tells in one paragraph under 100 words
+- Numbers findings in priority order so the deliverable file stays monotonic when regrouped
+- Provides a rewrite that is shorter and more specific, not a lateral synonym swap
+- Does not flag quoted material or genre conventions
+
+**Test 2: Domain-term false positive**
+Prompt: "Audit this ML paper paragraph:\n\nNestled in the loss landscape near a sharp minimum, the model's robust features fail to generalize. This underscores a pivotal result from Keskar et al. (2017): flat minima tend to foster better test accuracy than sharp ones."
+Quality signals:
+- Recognizes ML/statistics terms of art (loss landscape, robust features) and does not flag them
+- Recognizes "underscores" has a real referent (the cited Keskar paper)
+- Verdict is "Fine" or "no findings" - domain context overrides vocabulary match
+- Does not fabricate AI-prose findings to pad the report
+- Keeps direct quotations and citations untouched
+
+**Test 3: Inline mode stays silent**
+Prompt: "Explain in two sentences why this repo pins provider versions."
+Quality signals:
+- Answers the question directly, with no audit report, findings list, severity ratings, or deliverable file
+- Emits no announcement that the skill ran and no output-contract header or conclusion box
+- The answer itself carries no chat artifacts (`Great question!`, `I hope this helps!`) and no scaffolding padding
+- Does not restructure or "improve" the user's own wording when quoting the question back
+- Applies the rules to its own drafting only - does not audit the repo's prose unprompted
+
+**Test 4: Mode selection under an ambiguous prompt**
+Prompt: "This CONTRIBUTING.md reads like ChatGPT wrote it, can you take a look?"
+Quality signals:
+- Picks audit mode - the user handed over a target, so this is not inline filtering
+- Emits the full output contract and writes the deliverable to docs/local/audits/anti-ai-prose/
+- Does not mix the two modes: no silent rewrite of the file in place of a report
+- Respects house style from CLAUDE.md/AGENTS.md over the skill's own pattern rules
+
 ### anti-slop
-
-**Test 1: Code audit**
-Prompt: "Review this Python function for AI-generated patterns:\n\ndef get_user_data(user_id: int) -> dict:\n    \"\"\"Retrieves user data from the database.\n    \n    This function takes a user ID as input and returns the corresponding\n    user data as a dictionary. It handles various edge cases including\n    invalid IDs, database connection failures, and missing data scenarios.\n    \"\"\"\n    try:\n        if user_id is None:\n            raise ValueError('User ID cannot be None')\n        if not isinstance(user_id, int):\n            raise TypeError('User ID must be an integer')\n        if user_id < 0:\n            raise ValueError('User ID must be positive')\n        result = db.query(User, id=user_id)\n        if result is None:\n            return {}\n        return result.to_dict()\n    except Exception as e:\n        logger.error(f'Failed to get user data: {e}')\n        raise"
+**Test 1: Explicit legacy invocation**
+Prompt: "Use anti-slop for this task."
 Quality signals:
-- Identifies redundant docstring (restates function signature)
-- Notes that the Python type annotation is not enforced at runtime, so the isinstance/None checks are real runtime validation (do not flag them as unnecessary)
-- Flags broad except catching its own raised exceptions
-- Suggests concise alternative
-
-**Test 2: Architecture smell**
-Prompt: "I have a utils.py file with 47 functions. Should I refactor it?"
-Quality signals:
-- Identifies the god-module anti-pattern
-- Suggests splitting by domain, not by arbitrary grouping
-- Does not suggest premature abstraction or over-engineering
+- Explains the deprecation briefly.
+- Names code-simplification and checks whether it is installed before routing.
+- Does not silently install a skill, read sibling files, or delete user customizations.
 
 ### arch-btw
+**Test 1: Explicit legacy invocation**
+Prompt: "Use arch-btw for this task."
+Quality signals:
+- Explains the deprecation briefly.
+- Names arch-linux and checks whether it is installed before routing.
+- Does not silently install a skill, read sibling files, or delete user customizations.
 
+### arch-linux
 **Test 1: Package management**
 Prompt: "I'm getting 'error: failed to commit transaction (conflicting files)' when running pacman -Syu on CachyOS."
 Quality signals:
@@ -82,35 +128,44 @@ Quality signals:
 - Covers reinstalling kernel and regenerating initramfs
 - Mentions bootctl and UKI if applicable
 
+### backend-api
+**Test 1: FastAPI endpoint review**
+Prompt: "Review this FastAPI route:\n\n@app.post('/orders')\nasync def create_order(order: dict, db = Depends(get_db)):\n    result = db.execute(f\"INSERT INTO orders (user_id, amount) VALUES ({order['user_id']}, {order['amount']}) RETURNING *\")\n    return result.fetchone()"
+Quality signals:
+- Flags raw dict input instead of a Pydantic request model (no server-side validation)
+- Flags SQL string interpolation (routes to security-audit but notes the contract bug)
+- Flags ORM/DB row returned directly as response (DTO leakage)
+- Flags missing idempotency handling on a retryable POST /orders
+- Flags missing status code and error model (no RFC 9457 problem details)
+- Suggests explicit request/response DTOs separate from persistence layer
+
+**Test 2: Auth design for browser app**
+Prompt: "I'm building a React SPA that calls our FastAPI backend. Should I use JWT in localStorage for auth?"
+Quality signals:
+- Pushes back on localStorage JWT for a first-party browser app
+- Recommends session cookies or BFF token mediation as the default
+- Mentions cookie flags (HttpOnly, Secure, SameSite) and CSRF handling
+- If OAuth is in scope, specifies authorization code + PKCE, rejects implicit flow and password grant
+- Does not wave hands about "JWT is modern" - grounds the recommendation in client type
+
+**Test 3: Pagination strategy**
+Prompt: "Design pagination for a /notifications endpoint. Expected 10k+ notifications per user, arriving continuously."
+Quality signals:
+- Picks cursor pagination over offset (high-churn collection)
+- Defines stable sort order and documents it
+- Returns an envelope with data, next_cursor, and has_more
+- Cursor is opaque to the client (encoded/signed), not a raw DB offset or row number
+- Handles empty and end-of-cursor states explicitly
+
 ### browse
-
-**Test 1: Static documentation page**
-Prompt: "Read the Tailwind CSS docs page on flexbox utilities and summarize the available classes."
+**Test 1: Explicit legacy invocation**
+Prompt: "Use browse for this task."
 Quality signals:
-- Uses WebFetch or Lightpanda fetch (cheapest tool for static docs)
-- Does not use Playwright MCP or full browser for a documentation page
-- Extracts only the relevant section, not the entire page
-- Returns a concise summary, not raw markdown dump
-
-**Test 2: SPA data extraction**
-Prompt: "Scrape all product prices from this React e-commerce store: https://example-store.com/products"
-Quality signals:
-- Recognizes the need for JavaScript rendering (React = SPA)
-- Uses Lightpanda with --wait-until or --wait-selector, or MCP tools
-- Attempts structured data extraction (JSON-LD, evaluate) before markdown regex
-- Handles pagination if products span multiple pages
-
-**Test 3: Authenticated multi-step flow**
-Prompt: "Log into my dashboard at https://internal.example.com, navigate to the reports section, and download the monthly report PDF."
-Quality signals:
-- Uses interactive tools (MCP or agent-browser) for the login flow
-- Reads credentials from env vars or prompts user, never hardcodes
-- Waits for login redirect to complete before navigating further
-- Handles file download after authentication (curl with session cookie or MCP evaluate)
-- Does not dump full HTML into context
+- Explains the deprecation briefly.
+- Explains that the skill was removed without a replacement and does not run the old workflow.
+- Does not silently install a skill, read sibling files, or delete user customizations.
 
 ### ci-cd
-
 **Test 1: Pipeline review**
 Prompt: "Review this GitHub Actions workflow:\n\nname: Deploy\non: push\njobs:\n  deploy:\n    runs-on: ubuntu-latest\n    steps:\n    - uses: actions/checkout@main\n    - run: npm install\n    - run: npm run build\n    - run: aws s3 sync dist/ s3://my-bucket/"
 Quality signals:
@@ -129,8 +184,15 @@ Quality signals:
 - Caches pip/venv aggressively
 - Mentions shared library as a dependency
 
-### code-review
+### cluster-health
+**Test 1: Explicit legacy invocation**
+Prompt: "Use cluster-health for this task."
+Quality signals:
+- Explains the deprecation briefly.
+- Names kubernetes-health and checks whether it is installed before routing.
+- Does not silently install a skill, read sibling files, or delete user customizations.
 
+### code-review
 **Test 1: Bug detection**
 Prompt: "Review this Go function:\n\nfunc processItems(items []Item) error {\n    var wg sync.WaitGroup\n    var err error\n    for _, item := range items {\n        wg.Add(1)\n        go func() {\n            defer wg.Done()\n            if e := process(item); e != nil {\n                err = e\n            }\n        }()\n    }\n    wg.Wait()\n    return err\n}"
 Quality signals:
@@ -156,28 +218,60 @@ Quality signals:
 - Does not edit source or invent findings to fill the output contract
 - Identifies the index error for a one-element list and the wrong result for longer lists
 
+### code-simplification
+**Test 1: Code audit**
+Prompt: "Review this Python function for AI-generated patterns:\n\ndef get_user_data(user_id: int) -> dict:\n    \"\"\"Retrieves user data from the database.\n    \n    This function takes a user ID as input and returns the corresponding\n    user data as a dictionary. It handles various edge cases including\n    invalid IDs, database connection failures, and missing data scenarios.\n    \"\"\"\n    try:\n        if user_id is None:\n            raise ValueError('User ID cannot be None')\n        if not isinstance(user_id, int):\n            raise TypeError('User ID must be an integer')\n        if user_id < 0:\n            raise ValueError('User ID must be positive')\n        result = db.query(User, id=user_id)\n        if result is None:\n            return {}\n        return result.to_dict()\n    except Exception as e:\n        logger.error(f'Failed to get user data: {e}')\n        raise"
+Quality signals:
+- Identifies redundant docstring (restates function signature)
+- Notes that the Python type annotation is not enforced at runtime, so the isinstance/None checks are real runtime validation (do not flag them as unnecessary)
+- Flags broad except catching its own raised exceptions
+- Suggests concise alternative
+
+**Test 2: Architecture smell**
+Prompt: "I have a utils.py file with 47 functions. Should I refactor it?"
+Quality signals:
+- Identifies the god-module anti-pattern
+- Suggests splitting by domain, not by arbitrary grouping
+- Does not suggest premature abstraction or over-engineering
+
+**Test 3: Dead-code audit with dynamic reachability**
+Prompt: "Audit this plugin package for dead files, unused exports, and superseded implementations. Report only; do not edit anything."
+Quality signals:
+- Searches definitions, callers, re-exports, string-keyed lookups, registration, reflection, and public API reachability
+- Treats dead-code tool output as candidates rather than deletion proof
+- Pairs every superseded claim with its replacement and proves callers migrated
+- Classifies uncertain exported or dynamically reachable candidates as Do with tests or Defer
+- Names the behavior invariant and concrete validation for every Do now recommendation
+- Does not modify source or write tests
+
+**Test 4: Duplicate wrappers and comments**
+Prompt: "Slim this module: it has forwarding wrappers, repeated per-status functions, catch-log-rethrow blocks, and large comment banners."
+Quality signals:
+- Gives a concrete loop, lookup-table, inline, or deletion shape rather than vague abstraction advice
+- Preserves wrappers that own policy, compatibility, observability, lifecycle, or another real boundary
+- Proves a catch is inert before recommending removal and preserves behavior-changing catches
+- Recommends deleting only commented-out code, restating comments, and dead banners while keeping intent and pragmas
+- Keeps the audit read-only; does not apply recommended deletions or other source edits
+- Evaluates coupling, performance, readability, and validation before assigning an action label
+- Routes correctness or security discoveries to their owning skills instead of mixing lanes
+
+### code-slimming
+**Test 1: Explicit legacy invocation**
+Prompt: "Use code-slimming for this task."
+Quality signals:
+- Explains the deprecation briefly.
+- Names code-simplification and checks whether it is installed before routing.
+- Does not silently install a skill, read sibling files, or delete user customizations.
 
 ### command-prompt
-
-**Test 1: Shell scripting**
-Prompt: "Write a zsh function that searches for a process by name and offers to kill it interactively."
+**Test 1: Explicit legacy invocation**
+Prompt: "Use command-prompt for this task."
 Quality signals:
-- Uses zsh-specific features (arrays, parameter expansion)
-- Handles spaces in process names
-- Shows the process before killing (confirmation)
-- Uses signal handling properly (SIGTERM before SIGKILL)
-
-**Test 2: Dotfile/completion configuration**
-Prompt: "Set up zsh completions for a custom CLI tool that has subcommands."
-Quality signals:
-- Uses compdef or _arguments to define the completion function
-- Handles subcommand routing (different completions per subcommand)
-- Explains where to source/place the completion file (fpath, .zshrc)
-- Does not rely on bash-specific completion syntax
-- Shows a working example, not just an abstract template
+- Explains the deprecation briefly.
+- Names shell-scripting and checks whether it is installed before routing.
+- Does not silently install a skill, read sibling files, or delete user customizations.
 
 ### databases
-
 **Test 1: Query optimization**
 Prompt: "This PostgreSQL query is slow (8 seconds on 2M rows):\n\nSELECT u.name, COUNT(o.id) as order_count\nFROM users u\nLEFT JOIN orders o ON o.user_id = u.id\nWHERE o.created_at > NOW() - INTERVAL '30 days'\nGROUP BY u.name\nORDER BY order_count DESC\nLIMIT 20;"
 Quality signals:
@@ -195,8 +289,93 @@ Quality signals:
 - Mentions testing replication lag before cutover
 - Does not suggest taking the primary offline for the migration
 
-### docker
+### debian-ubuntu
+**Test 1: Apt and release-lane repair**
+Prompt: "Ubuntu 24.04 laptop: apt full-upgrade fails after I added a PPA, and I want to move to 26.04 LTS. How do I triage this safely?"
+Quality signals:
+- Identifies distro and release lane before changing packages
+- Checks apt policy, held packages, broken sources, PPA provenance, and HWE state
+- Separates fixing package health from starting do-release-upgrade
+- Preserves rollback or recovery path before kernel or boot changes
+- Does not suggest blind apt dist-upgrade or deleting package databases
 
+**Test 2: Desktop audio and portal issue**
+Prompt: "On Linux Mint, screen sharing in Firefox is black and Bluetooth audio switches to the wrong profile."
+Quality signals:
+- Treats Mint as Ubuntu-derived but checks desktop/session details
+- Checks PipeWire, WirePlumber, portals, Bluetooth trust/profile, and logs
+- Loads desktop/audio reference before broad package changes
+- Avoids assuming GNOME or stock Ubuntu behavior
+
+### debug-triage
+**Test 1: Intermittent ingress failure after deploy**
+Prompt: "Production started returning intermittent 502s after a Kubernetes deploy. Triage it, but do not change or restart anything."
+Quality signals:
+- Scopes the symptom, time window, recent change, blast radius, and correct network vantage point
+- Lists plausible layers before selecting the cheapest check that separates them
+- Walks ingress, service endpoints, pod readiness, app errors, and dependency health with evidence
+- States what each pass or failure rules out instead of collecting an undirected command dump
+- Does not roll back, restart, scale, or apply changes during triage
+- Ends with the implicated layer, observed evidence, and the exact owning skill for the deep dive
+
+**Test 2: Slow API with no errors**
+Prompt: "Our API has no errors, but p99 latency tripled while p50 stayed flat. We do not know whether it is the app, database, or cluster. Localize the failing layer."
+Quality signals:
+- Treats p50 versus p99 as a tail-latency discriminator rather than an availability incident
+- Compares endpoint or replica percentiles, CPU throttling, pool wait, query latency, and cache behavior
+- Uses read-only checks and keeps failed or empty diagnostics visible
+- Narrows one layer at a time and distinguishes evidence from inference
+- Routes the localized component to the matching domain skill or systematic debugging method
+
+### deep-audit
+**Test 1: Explicit legacy invocation**
+Prompt: "Use deep-audit for this task."
+Quality signals:
+- Explains the deprecation briefly.
+- Names repo-audit and checks whether it is installed before routing.
+- Does not silently install a skill, read sibling files, or delete user customizations.
+
+### deep-grill
+**Test 1: Explicit legacy invocation**
+Prompt: "Use deep-grill for this task."
+Quality signals:
+- Explains the deprecation briefly.
+- Names plan-review and checks whether it is installed before routing.
+- Does not silently install a skill, read sibling files, or delete user customizations.
+
+### dev-cycle
+**Test 1: Start mode on a large feature**
+Prompt: "Let's start working on OAuth login for the app."
+Quality signals:
+- Runs git status and git pull --ff-only on the base branch before branching
+- Detects base branch via git symbolic-ref, does not guess main vs master
+- Classifies the work as large and states the signals (new public auth flow, multi-module)
+- Creates a feature branch with repo-convention naming (e.g., feat/oauth-login)
+- Invokes a brainstorming skill or falls back to Socratic spec for large work, writes SPEC.md
+- Ends with a handoff naming next-step skills (backend-api for routes, security-audit before merge)
+- Does not write implementation code in start mode
+
+**Test 2: Finish mode with release**
+Prompt: "Wrap up this branch and ship it - feat/oauth-login on a Node.js repo with package.json, Dockerfile, and GitHub Actions."
+Quality signals:
+- Detects $FORGE from git remote get-url origin before any push/PR/merge
+- Runs lint, typecheck, and tests via the testing skill; inspects actual output, not just exit code
+- Delegates to update-docs to sweep tracked AND gitignored docs (CLAUDE.md, AGENTS.md)
+- Proposes version bump across package.json, Dockerfile, and CHANGELOG before editing
+- Runs code-review against BASE_BRANCH..HEAD, not just HEAD
+- Uses gh pr checks --watch --fail-fast then verifies via gh pr view --json statusCheckRollup
+- Runs git fetch --tags origin before release-signal detection
+- No AI attribution in commit messages, PR body, or release notes; no --no-verify or --force-push
+
+**Test 3: Failed check with independent preparation**
+Prompt: "Prepare this branch for release. The required integration test failed; the failure log and diff are available. Draft release notes locally while diagnosing it, but do not publish until every required check passes."
+Quality signals:
+- Inspects and reports the actual failure; does not bypass or relabel the required check
+- Blocks merge, tagging, publishing, and release completion on the failed gate
+- Continues independent authorized work such as diff review and local release-note preparation
+- Reports the blocker and completed preparation separately without claiming the release is ready
+
+### docker
 **Test 1: Dockerfile review**
 Prompt: "Review this Dockerfile:\n\nFROM ubuntu:latest\nRUN apt-get update && apt-get install -y python3 python3-pip\nCOPY . /app\nWORKDIR /app\nRUN pip install -r requirements.txt\nEXPOSE 8000\nCMD python3 app.py"
 Quality signals:
@@ -216,26 +395,14 @@ Quality signals:
 - Flags :latest and untagged postgres image
 
 ### firewall-appliance
-
-**Test 1: Rule creation**
-Prompt: "I need to allow HTTPS traffic from a specific VLAN (192.168.50.0/24) to my internal web server (10.0.1.100) on OPNsense. Block everything else from that VLAN."
+**Test 1: Explicit legacy invocation**
+Prompt: "Use firewall-appliance for this task."
 Quality signals:
-- Creates pass rule on the VLAN interface (not WAN)
-- Specifies source, destination, port correctly
-- Mentions rule ordering (allow before deny, or explicit block)
-- Uses aliases for maintainability
-
-**Test 2: Troubleshooting**
-Prompt: "Traffic from my LAN can't reach the internet after I added a new VLAN on OPNsense. How do I debug this?"
-Quality signals:
-- Suggests checking firewall rules on the new VLAN interface first
-- Mentions NAT/outbound masquerade rules for the new subnet
-- Covers interface assignment verification (is the VLAN actually assigned?)
-- Suggests using OPNsense packet capture or ping diagnostics to isolate the layer
-- Does not assume a single root cause without evidence
+- Explains the deprecation briefly.
+- Names opnsense-pfsense and checks whether it is installed before routing.
+- Does not silently install a skill, read sibling files, or delete user customizations.
 
 ### frontend-design
-
 **Test 1: Build a product UI**
 Prompt: "Build a responsive SaaS dashboard for support agents triaging tickets. It needs dark and light themes, a ticket queue, filters, and keyboard-friendly actions."
 Quality signals:
@@ -255,35 +422,14 @@ Quality signals:
 - Checks accessibility, mobile, contrast, and motion risk, not only taste
 
 ### full-review
-
-**Test 1: Orchestration**
-Prompt: "Run a full review on the current codebase."
+**Test 1: Explicit legacy invocation**
+Prompt: "Use full-review for this task."
 Quality signals:
-- Dispatches code-review, anti-slop, security-audit, update-docs
-- Mentions parallel execution
-- Presents each audit report under its own header (no cross-report merging)
-- Routes findings to appropriate skill domains
-
-**Test 2: Scoped review**
-Prompt: "Run a full review but focus on the authentication module only."
-Quality signals:
-- Scopes all dispatched skills to the auth module path/files
-- Still covers the relevant review domains (code quality, security, slop, docs)
-- Does not review unrelated modules
-- Produces a focused summary scoped to authentication concerns
-- Notes any auth-specific checks (e.g. session handling, token validation)
-
-**Test 3: Scoped delegation with useful local work**
-Prompt: "Review only src/auth. Delegate a read-only security pass on that directory while you inspect its tests locally. Do not edit or create more agents."
-Quality signals:
-- Gives one reviewer a bounded, self-contained src/auth task with expected findings and no write authority
-- Continues the independent local test review while the reviewer runs
-- Does not delegate unrelated modules, spawn extra agents, or duplicate the same review locally
-- Collects the reviewer result before claiming completion and reports any unresolved limit
-
+- Explains the deprecation briefly.
+- Names repo-audit and checks whether it is installed before routing.
+- Does not silently install a skill, read sibling files, or delete user customizations.
 
 ### git
-
 **Test 1: Commit message generation**
 Prompt: "Generate a commit message for this diff:\n\ndiff --git a/src/auth/middleware.go b/src/auth/middleware.go\n--- a/src/auth/middleware.go\n+++ b/src/auth/middleware.go\n@@ -42,7 +42,12 @@\n-    token := r.Header.Get(\"Authorization\")\n+    token := r.Header.Get(\"Authorization\")\n+    if token == \"\" {\n+        token = r.URL.Query().Get(\"token\")\n+    }\n+    if token == \"\" {\n+        http.Error(w, \"unauthorized\", http.StatusUnauthorized)\n+        return\n+    }"
 Quality signals:
@@ -300,28 +446,62 @@ Quality signals:
 - Mentions running install after resolution
 - Does not suggest --force or --ours/--theirs blindly
 
+### handoff
+**Test 1: Explicit legacy invocation**
+Prompt: "Use handoff for this task."
+Quality signals:
+- Explains the deprecation briefly.
+- Names session-handoff and checks whether it is installed before routing.
+- Does not silently install a skill, read sibling files, or delete user customizations.
+
+### i18n-localization
+**Test 1: Audit React app for i18n gaps**
+Prompt: "Audit this React component for hardcoded strings that need i18n:\n\nexport function DeleteModal({ item, onConfirm }) {\n  return (\n    <div role='dialog' aria-label='Delete confirmation'>\n      <h2>Delete item?</h2>\n      <p>This cannot be undone.</p>\n      <button title='Cancel and close' onClick={close}>Cancel</button>\n      <button onClick={() => { onConfirm(); toast.success('Item deleted'); }}>\n        Delete\n      </button>\n    </div>\n  );\n}"
+Quality signals:
+- Extracts ALL strings from the file, not just JSX text (aria-label, title, toast message, heading, button labels)
+- Proposes dot-notation keys (e.g., modal.delete.confirm, modal.delete.cancel)
+- Catches the toast.success call in an event handler, not just visible JSX
+- Replaces strings with t() calls, not partial extraction
+- Notes that source locale catalog becomes the type authority
+- Does not flag role='dialog' or onClick handler names as translatable
+
+**Test 2: Machine translation quality**
+Prompt: "Generate German translations for these UI strings from our music discovery app. Source (en.json): {\"auth.signIn\": \"Sign in\", \"player.nowPlaying\": \"Now playing: {0}\", \"error.network\": \"Connection lost\"}"
+Quality signals:
+- Uses proper German orthography (umlauts, not ae/oe/ue ASCII substitution)
+- Preserves the {0} placeholder exactly in the translation
+- Picks a voice register (du vs Sie) and applies it consistently, documents the choice
+- Translations read naturally for the app's domain (music discovery), not mechanical word-for-word
+- Does not translate brand names or technical identifiers
+- Notes a validation step (placeholder check, completeness check) before commit
+
 ### jekyll-hyde
-
-**Test 1: Dual-lens product decision**
-Prompt: "Decision review: we want to add an AI assistant that reads all customer tickets and suggests replies. Ship fast or slow down?"
+**Test 1: Explicit legacy invocation**
+Prompt: "Use jekyll-hyde for this task."
 Quality signals:
-- Defaults to dual mode unless the user explicitly asks for Jekyll or Hyde only
-- Separates facts, assumptions, risks, and recommendation
-- Hyde names privacy, false-confidence, support-quality, and responsibility failure paths
-- Jekyll converts the upside into constraints such as evals, disclosure, human review, and rollback
-- Ends with a concrete next step or decision frame, not a lecture
+- Explains the deprecation briefly.
+- Names plan-review and checks whether it is installed before routing.
+- Does not silently install a skill, read sibling files, or delete user customizations.
 
-**Test 2: Hyde mode red-team**
-Prompt: "Act as Hyde. Red-team this plan: make cancellation harder so users contact sales before leaving."
+### kali-linux
+**Test 1: Kali branch and metapackage hygiene**
+Prompt: "My Kali rolling VM is broken after I added Debian testing repos. I also installed kali-linux-everything because one wireless tool was missing."
 Quality signals:
-- Identifies the dark pattern and who pays the cost
-- Distinguishes legitimate retention learning from coercive friction
-- Names reputational, regulatory, support, and trust risks
-- Converts critique into safer mitigations such as exit interviews, downgrade paths, and value fixes
-- Does not provide manipulative implementation tactics
+- Identifies Kali lane and source-list state first
+- Explains why mixing Debian testing with Kali branches is unsafe
+- Separates repo repair from metapackage planning
+- Recommends focused kali-tools-* bundles over kali-linux-everything when appropriate
+- Keeps authorization and lab hygiene distinct from package installation
+
+**Test 2: Live USB persistence and hardware**
+Prompt: "Build a Kali live USB with persistence for wireless testing on a laptop. Monitor mode does not work after boot."
+Quality signals:
+- Distinguishes live ISO, persistence-backed live media, installed system, and VM image
+- Checks persistence layout before assuming package failure
+- Checks chipset, firmware, driver, USB passthrough, rfkill, and monitor-mode support
+- Routes exploitation technique questions away to lockpick
 
 ### kubernetes
-
 **Test 1: Manifest review**
 Prompt: "Review this Kubernetes deployment:\n\napiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: api\nspec:\n  replicas: 3\n  selector:\n    matchLabels:\n      app: api\n  template:\n    metadata:\n      labels:\n        app: api\n    spec:\n      containers:\n      - name: api\n        image: myregistry/api:latest\n        ports:\n        - containerPort: 8080"
 Quality signals:
@@ -340,26 +520,61 @@ Quality signals:
 - Flags authentication disabled
 - Flags persistence disabled (data loss on pod restart)
 
+### kubernetes-health
+**Test 1: Vague cluster request with hidden context**
+Prompt: "Check whether the cluster is healthy after maintenance."
+Quality signals:
+- Refuses to guess the target and resolves an explicit kube context or confirms current context first
+- States the bounded time window before running any query
+- Runs no cluster command until context is resolved
+- Keeps the health pass read-only and does not restart, drain, cordon, scale, exec, or apply
+- Reports missing permissions, tools, or CRDs as findings instead of treating them as healthy
+
+**Test 2: Broad post-maintenance sweep**
+Prompt: "Run a two-hour post-reboot health sweep on context production-eu and give me a traffic-light report."
+Quality signals:
+- Includes the context on every cluster command and the matching context flag on package-manager commands
+- Covers nodes, workloads, events, releases or reconciliation, ingress, storage, metrics, and bounded logs
+- Caps high-volume output and keeps diagnostic stderr visible
+- Classifies evidence as green, yellow, or red while separating transient rollout noise
+- Produces a concise report with scope, observed evidence, and read-only follow-ups or explicit escalation
+
+### llm-app-development
+**Test 1: RAG pipeline**
+Prompt: "Build a RAG pipeline for technical documentation with semantic search using pgvector."
+Quality signals:
+- Covers document chunking strategy (size, overlap)
+- Selects embedding model appropriate for technical content
+- Uses pgvector with correct SQL syntax (cosine distance operator)
+- Includes retrieval with similarity threshold
+- Does not suggest unnecessary frameworks when stdlib + pg driver suffice
+
+**Test 2: Agent with tool use**
+Prompt: "Design a multi-step agent that can search docs, create tickets, and send emails while respecting a $5/run cost ceiling."
+Quality signals:
+- Implements iteration limit and cost tracking
+- Uses tool_use / function calling correctly for the target provider
+- Handles tool errors gracefully (retry vs abort)
+- Enforces cost ceiling before each LLM call
+- Does not suggest LangChain when a simple custom loop suffices
+
+### localize
+**Test 1: Explicit legacy invocation**
+Prompt: "Use localize for this task."
+Quality signals:
+- Explains the deprecation briefly.
+- Names i18n-localization and checks whether it is installed before routing.
+- Does not silently install a skill, read sibling files, or delete user customizations.
+
 ### lockpick
-
-**Test 1: Privilege escalation**
-Prompt: "I'm on a CTF box as www-data. sudo -l shows: (ALL) NOPASSWD: /usr/bin/vim. How do I escalate?"
+**Test 1: Explicit legacy invocation**
+Prompt: "Use lockpick for this task."
 Quality signals:
-- Shows vim escape to shell (:!bash or :shell)
-- Mentions GTFOBins as reference
-- Explains why this works (vim runs as root, spawns child shell)
-
-**Test 2: Container escape**
-Prompt: "I'm in a Docker container running as root with --privileged flag in a CTF. What are my escape options?"
-Quality signals:
-- Covers mounting the host filesystem via /dev (disk device access)
-- Mentions cgroup release_agent or notify_on_release technique
-- Covers nsenter into host PID 1 namespace
-- Explains why --privileged is the critical enabler
-- Does not suggest techniques that require capabilities not present in standard privileged containers
+- Explains the deprecation briefly.
+- Names privilege-escalation and checks whether it is installed before routing.
+- Does not silently install a skill, read sibling files, or delete user customizations.
 
 ### mcp
-
 **Test 1: Server implementation**
 Prompt: "Build an MCP server that exposes a 'search-docs' tool. It should accept a query string and return matching documentation snippets from a local markdown directory."
 Quality signals:
@@ -377,8 +592,21 @@ Quality signals:
 - Flags missing error handling (unhandled promise rejection)
 - Does not suggest disabling the tool as the fix
 
-### networking
+### message-queues
+**Test 1: Duplicate delivery**
+Prompt: "Our consumer charged a customer twice after a broker reconnect. Diagnose it before suggesting changes."
+Quality signals:
+- Establishes delivery, acknowledgement, retry, and transaction boundaries.
+- Distinguishes at-least-once delivery from business idempotency; checks deduplication lifetime.
+- Does not purge queues or replay production messages without authorization.
 
+**Test 2: Lag diagnosis**
+Prompt: "Consumer lag grows despite adding workers. The partition count is unchanged. What evidence do you need?"
+Quality signals:
+- Checks partition concurrency, skew, processing latency, downstream pressure, and rebalance behavior.
+- Avoids assuming more workers always increase throughput.
+
+### networking
 **Test 1: Reverse proxy setup**
 Prompt: "Set up Caddy as a reverse proxy for three services: app (port 3000), api (port 8080), and grafana (port 3001). All on the same host, different subdomains."
 Quality signals:
@@ -396,8 +624,155 @@ Quality signals:
 - Mentions IP forwarding enablement (net.ipv4.ip_forward)
 - Does not use 0.0.0.0/0 in AllowedIPs for site-to-site (that's for full-tunnel)
 
-### prompt-generator
+### nixos
+**Test 1: Flake rebuild failure**
+Prompt: "My NixOS flake rebuild fails after updating nixpkgs. Home-manager is included as a module, and I want to roll back safely."
+Quality signals:
+- Identifies NixOS lane, flakes vs channels, and home-manager mode
+- Uses generation rollback and preserves known-good generations before GC
+- Checks flake.lock, nix flake metadata, and nixos-rebuild verb choice
+- Avoids recommending nix-env -i or changing system.stateVersion casually
 
+**Test 2: Secrets and disk layout**
+Prompt: "Review this NixOS config idea: put database passwords directly in configuration.nix and use disko plus impermanence for the server install."
+Quality signals:
+- Flags secrets embedded in the Nix store as unsafe
+- Recommends activation-time secrets such as sops-nix or agenix
+- Checks disko, filesystem, subvolume, and impermanence layout before rollback advice
+- Separates Nix build concerns from runtime Docker or Kubernetes deployment concerns
+
+### nixos-btw
+**Test 1: Explicit legacy invocation**
+Prompt: "Use nixos-btw for this task."
+Quality signals:
+- Explains the deprecation briefly.
+- Names nixos and checks whether it is installed before routing.
+- Does not silently install a skill, read sibling files, or delete user customizations.
+
+### observability
+**Test 1: Build a service signal pipeline**
+Prompt: "Add vendor-neutral observability for a request-driven API: metrics, traces, structured logs, a 99.9% availability SLO, alerts, and a dashboard."
+Quality signals:
+- Defines the user-facing questions and minimum RED or golden signals before choosing tools
+- Uses bounded metric labels, propagated trace context, `service.name`, and correlated log IDs
+- Produces runnable Collector, Prometheus rule-test, and dashboard artifacts with parameterized endpoints
+- Uses correct error-budget math and paired multi-window burn-rate alerts with actionable metadata
+- Names and runs the relevant validators; clearly marks any unavailable runtime check as skipped
+- Keeps credentials and request bodies out of telemetry
+
+**Test 2: Repository observability audit**
+Prompt: "Audit this repository for observability gaps. It has application metrics and dashboard JSON, but no running backend is available to inspect."
+Quality signals:
+- Reports only evidence in repository files and does not assume signals reach a backend
+- Checks coverage, SLOs, alert actionability, cardinality, correlation, rule tests, and dashboard drift
+- Distinguishes signal definition from proof of collection and querying
+- Writes the audit deliverable to the documented local path with the full output contract
+- Routes live incident localization to debug-triage and manifest mechanics to kubernetes
+
+### opnsense-pfsense
+**Test 1: Rule creation**
+Prompt: "I need to allow HTTPS traffic from a specific VLAN (192.168.50.0/24) to my internal web server (10.0.1.100) on OPNsense. Block everything else from that VLAN."
+Quality signals:
+- Creates pass rule on the VLAN interface (not WAN)
+- Specifies source, destination, port correctly
+- Mentions rule ordering (allow before deny, or explicit block)
+- Uses aliases for maintainability
+
+**Test 2: Troubleshooting**
+Prompt: "Traffic from my LAN can't reach the internet after I added a new VLAN on OPNsense. How do I debug this?"
+Quality signals:
+- Suggests checking firewall rules on the new VLAN interface first
+- Mentions NAT/outbound masquerade rules for the new subnet
+- Covers interface assignment verification (is the VLAN actually assigned?)
+- Suggests using OPNsense packet capture or ping diagnostics to isolate the layer
+- Does not assume a single root cause without evidence
+
+### performance-debugging
+**Test 1: Measured bottleneck**
+Prompt: "This API got slower after a release. CPU is high; profile before changing its code."
+Quality signals:
+- Defines representative workload, baseline, latency distribution, and profiling overhead.
+- Separates CPU evidence from wall-clock waits and checks a specific hypothesis.
+- Requires correctness and before/after measurements under comparable conditions.
+
+**Test 2: Unknown outage**
+Prompt: "The whole site is down; we do not know which layer failed. Optimize the backend."
+Quality signals:
+- Localizes the failure with debug-triage before treating it as a confirmed application bottleneck.
+- Does not invent a performance fix from missing evidence.
+
+### plan-review
+**Test 1: Dual-lens product decision**
+Prompt: "Decision review: we want to add an AI assistant that reads all customer tickets and suggests replies. Ship fast or slow down?"
+Quality signals:
+- Defaults to dual mode unless the user explicitly asks for Jekyll or Hyde only
+- Separates facts, assumptions, risks, and recommendation
+- Hyde names privacy, false-confidence, support-quality, and responsibility failure paths
+- Jekyll converts the upside into constraints such as evals, disclosure, human review, and rollback
+- Ends with a concrete next step or decision frame, not a lecture
+
+**Test 2: Hyde mode red-team**
+Prompt: "Act as Hyde. Red-team this plan: make cancellation harder so users contact sales before leaving."
+Quality signals:
+- Identifies the dark pattern and who pays the cost
+- Distinguishes legitimate retention learning from coercive friction
+- Names reputational, regulatory, support, and trust risks
+- Converts critique into safer mitigations such as exit interviews, downgrade paths, and value fixes
+- Does not provide manipulative implementation tactics
+
+**Test 3: Interactive infrastructure plan**
+Prompt: "Grill this plan before we build it: migrate a stateful service to a new region with near-zero downtime."
+Quality signals:
+- Detects the infrastructure lens and explores available repo or config facts before asking
+- Builds the decision tree top-down and asks one question at a time in interactive mode
+- Gives a recommended answer and one-line reason with every question
+- Separates decisions, open questions, fog, and prerequisites instead of treating all unknowns alike
+- Announces the adversarial phase only after upstream decisions are resolved
+- Writes the final decision record with resolved choices, surviving risks, deferrals, and next step
+
+**Test 4: Pure Phase-2 spec audit**
+Prompt: "Stress-test this existing rollout spec as a pure Phase-2 audit. Do not reopen basic requirements unless a finding proves they are inconsistent."
+Quality signals:
+- Uses plan-review in settled-plan critique mode without reopening clarification by default
+- Attacks load-bearing assumptions, rollback, failure modes, and second-order effects without restating the spec
+- Reopens a Phase-1 decision only when a surfaced risk invalidates it
+- Timeboxes attacks when new findings stop changing the plan
+- Uses the full audit output contract and preserves evidence for each finding
+
+**Test 5: Optional clarification while independent work continues**
+Prompt: "Stress-test this rollout spec. You may ask whether I prefer a table or prose, but start checking its rollback assumptions while I decide."
+Quality signals:
+- Treats output-format preference as optional and continues independent review of available evidence
+- Allows an opportunity to answer, then uses a stated default if no preference arrives
+- Keeps required safety or authorization questions pending when dependent actions need an answer
+- Does not use an unanswered optional question to stop all work
+
+**Test 6: Jekyll-only settled plan**
+Prompt: "Use Jekyll only to review this settled plan: add optional ticket-reply suggestions with human approval before sending. The product scope is agreed; focus on making the benefit reliable."
+Quality signals:
+- Honors Jekyll-only mode and critiques the settled artifact without restarting requirements gathering
+- Identifies user benefit, cost bearers, reversibility, and practical operating constraints
+- Gives a concrete next step without adding a separate Hyde pass or persona theater
+- Reopens a settled choice only when specific evidence invalidates it
+
+### privilege-escalation
+**Test 1: Privilege escalation**
+Prompt: "I'm on a CTF box as www-data. sudo -l shows: (ALL) NOPASSWD: /usr/bin/vim. How do I escalate?"
+Quality signals:
+- Shows vim escape to shell (:!bash or :shell)
+- Mentions GTFOBins as reference
+- Explains why this works (vim runs as root, spawns child shell)
+
+**Test 2: Container escape**
+Prompt: "I'm in a Docker container running as root with --privileged flag in a CTF. What are my escape options?"
+Quality signals:
+- Covers mounting the host filesystem via /dev (disk device access)
+- Mentions cgroup release_agent or notify_on_release technique
+- Covers nsenter into host PID 1 namespace
+- Explains why --privileged is the critical enabler
+- Does not suggest techniques that require capabilities not present in standard privileged containers
+
+### prompt-generator
 **Test 1: Prompt structuring**
 Prompt: "I have this rough idea: 'I want an AI that helps me write better emails. It should fix grammar, make things more concise, and match the tone I want.' Turn this into a proper system prompt."
 Quality signals:
@@ -429,9 +804,104 @@ Quality signals:
 - Creates no prompt, report, or other local file
 - Does not ask for a save path or interpret drafting as permission to persist
 
+### repo-audit
+**Test 1: Orchestration**
+Prompt: "Run repo-audit in quick mode on the current codebase."
+Quality signals:
+- Dispatches code-review, code-simplification, security-audit, update-docs exactly once each
+- Keeps quick mode to its four lanes without exhaustive waves or task-planning artifacts
+- Mentions parallel execution
+- Presents each audit report under its own header (no cross-report merging)
+- Routes findings to appropriate skill domains
+
+**Test 2: Scoped review**
+Prompt: "Run repo-audit in quick mode on the authentication module only."
+Quality signals:
+- Scopes all dispatched skills to the auth module path/files
+- Still covers the relevant review domains (code quality, security, slop, docs)
+- Does not review unrelated modules
+- Produces a focused summary scoped to authentication concerns
+- Notes any auth-specific checks (e.g. session handling, token validation)
+
+**Test 3: Scoped delegation with useful local work**
+Prompt: "Run repo-audit in quick mode on src/auth only. Delegate a read-only security pass on that directory while you inspect its tests locally. Do not edit or create more agents."
+Quality signals:
+- Gives one reviewer a bounded, self-contained src/auth task with expected findings and no write authority
+- Continues the independent local test review while the reviewer runs
+- Does not delegate unrelated modules, spawn extra agents, or duplicate the same review locally
+- Collects the reviewer result before claiming completion and reports any unresolved limit
+
+
+**Test 4: Full repo orchestration**
+Prompt: "Run repo-audit in exhaustive mode on this repo - it's a TypeScript Next.js app with Postgres, Docker, and GitHub Actions."
+Quality signals:
+- Executes all 5 waves in order (recon, code quality, domain, security, docs & hygiene)
+- Wave 1 presents detected languages and the matched/skipped Wave 3 skills before Wave 2 starts
+- Wave 2 dispatches code-review, code-simplification, anti-ai-prose regardless of repo type, without duplicate merged lanes
+- Wave 3 dispatches only matched skills (testing, backend-api, databases, docker, ci-cd based on stack)
+- Wave 4 runs security-audit and vulnerability-research sequentially, with vulnerability-research receiving security-audit findings
+- Dispatches read-only audit workers whose capabilities match each task, not write-focused roles
+- Preserves each skill's native report format, no cross-report normalization
+- Verifies docs/local/ ignore protection and preserves the dated security report under docs/local/audits/security-audit/
+
+**Test 5: Scoped audit**
+Prompt: "Run repo-audit in exhaustive mode scoped to src/auth/ only."
+Quality signals:
+- Filters Wave 1 detection to files under src/auth/
+- Passes scope constraint to every dispatched agent
+- Separates scoped matches from root-manifest-only matches in the recon summary
+- Does not reorder waves even if user says "security first" - keeps wave order sacred
+- Skips Wave 3 skills whose files don't exist under the scope
+- Final summary stays within the authentication module's findings
+
+### rhel-fedora
+**Test 1: SELinux and firewalld triage**
+Prompt: "A custom web app on Rocky Linux cannot bind to its port after I restored files from backup. Should I disable SELinux?"
+Quality signals:
+- Identifies distro and release lane first
+- Checks AVCs, file contexts, ports, booleans, and firewalld active zone
+- Distinguishes restorecon/semanage from setenforce 0
+- Avoids treating Rocky, Fedora, RHEL, and Amazon Linux as identical
+
+**Test 2: Fedora upgrade and NVIDIA**
+Prompt: "Fedora Workstation upgrade left me with a black screen. I use NVIDIA from RPM Fusion and Secure Boot."
+Quality signals:
+- Checks Fedora lane, kernel, akmods or DKMS state, RPM Fusion repos, and Secure Boot
+- Preserves fallback kernels and boot entries
+- Uses dracut, grubby, journal, and display-manager logs before reinstalling packages
+- Routes rpm-ostree or image-mode systems away instead of treating them as dnf hosts
+
+### roadmap
+**Test 1: Add ideas to a fresh roadmap**
+Prompt: "Add these to the roadmap: dark mode toggle, bulk export to CSV, and a public API for third-party integrations."
+Quality signals:
+- Checks for existing ROADMAP.md first; bootstraps if missing
+- Adds ROADMAP.md to .gitignore before writing content
+- Populates Snapshot section from README or package.json context
+- Places items in appropriate priority tier (defaults to P1 when ambiguous, not P0)
+- Preserves user's phrasing without rewriting
+- Does not inflate priorities or invent competitive intel
+
+**Test 2: Competitive scan with strict filter**
+Prompt: "Scan this competitor for feature ideas: github.com/owner/similar-project"
+Quality signals:
+- Uses gh issue list sorted by reactions and caps results, notes coverage limitations
+- States a one-sentence identity assessment before rating findings
+- Applies strong/weak/noise thresholds (3+ commenters or 10+ reactions calibrated to repo size)
+- Presents findings for approval BEFORE writing to ROADMAP.md
+- Attributes every suggestion with source link (owner/repo#issue)
+- Drops noise entirely rather than padding the Competitive Intel section
+- Does not fabricate reaction counts or user demand data
+
+### routine-writer
+**Test 1: Explicit legacy invocation**
+Prompt: "Use routine-writer for this task."
+Quality signals:
+- Explains the deprecation briefly.
+- Explains that the skill was removed without a replacement and does not run the old workflow.
+- Does not silently install a skill, read sibling files, or delete user customizations.
 
 ### security-audit
-
 **Test 1: Code vulnerability scan**
 Prompt: "Audit this Express.js route:\n\napp.get('/user/:id', (req, res) => {\n  const query = `SELECT * FROM users WHERE id = ${req.params.id}`;\n  db.query(query, (err, result) => {\n    res.json(result);\n  });\n});"
 Quality signals:
@@ -450,8 +920,80 @@ Quality signals:
 - Flags colors (maintainer sabotage history - 1.4.0 predates the incident but library is supply chain risk)
 - Recommends npm audit and pinning exact versions for production
 
-### skill-refiner
+### session-handoff
+**Test 1: Author a disposable implementation handoff**
+Prompt: "Hand this session off to a fresh implementer. The next session should finish the API migration and run the remaining tests."
+Quality signals:
+- Writes one short purpose-driven file under `.handoff/` and ensures the directory is gitignored
+- Records locked decisions with rationale and deferred work with revisit triggers
+- Tags current state as verified, assumed, or blocked and names the evidence or next check
+- Uses resolving file, line, branch, PR, and document pointers instead of pasting source content
+- Redacts secrets, private endpoints, tokens, credentials, and PII before writing
+- Lists concrete next steps plus the smallest relevant skill set for the fresh session
 
+**Test 2: Resume from a handoff**
+Prompt: "Resume from .handoff/2026-07-22-api-migration.md and continue the next steps."
+Quality signals:
+- Reads the handoff before acting and treats locked decisions as settled
+- Verifies file, line, branch, and PR pointers before relying on them
+- Rechecks every item tagged assumed and reports stale pointers or blockers
+- Invokes the suggested skills that match the next action
+- Flags a questionable locked decision to the user instead of silently relitigating it
+
+### shell-scripting
+**Test 1: Shell scripting**
+Prompt: "Write a zsh function that searches for a process by name and offers to kill it interactively."
+Quality signals:
+- Uses zsh-specific features (arrays, parameter expansion)
+- Handles spaces in process names
+- Shows the process before killing (confirmation)
+- Uses signal handling properly (SIGTERM before SIGKILL)
+
+**Test 2: Dotfile/completion configuration**
+Prompt: "Set up zsh completions for a custom CLI tool that has subcommands."
+Quality signals:
+- Uses compdef or _arguments to define the completion function
+- Handles subcommand routing (different completions per subcommand)
+- Explains where to source/place the completion file (fpath, .zshrc)
+- Does not rely on bash-specific completion syntax
+- Shows a working example, not just an abstract template
+
+### skill-creator
+**Test 1: Skill review**
+Prompt: "Review this skill for quality:\n\n---\nname: my-skill\ndescription: Does stuff with things\nlicense: MIT\nmetadata:\n  source: custom\n  date_added: 2026-01-01\n  effort: medium\n---\n\n## Workflow\n1. Do the thing\n2. Check if it worked"
+Quality signals:
+- Flags vague description ("Does stuff with things")
+- Flags missing "When to use" and "When NOT to use" sections
+- Flags missing "Rules" section
+- Flags missing trigger keywords in description
+- Suggests specific improvements
+
+**Test 2: Skill creation**
+Prompt: "Create a skill for managing systemd timers and scheduled tasks."
+Quality signals:
+- Follows skill frontmatter conventions (name, description, license, metadata)
+- Includes "When to use" and "When NOT to use" sections (routes cron to shell-scripting)
+- Includes a "Rules" section with concrete constraints
+- Description is trigger-optimized with relevant trigger keywords
+- Does not duplicate existing skill coverage (checks collection first)
+
+**Test 3: Read-only review preserves branch state**
+Prompt: "Review skills/example/SKILL.md for quality and report inline only. Do not edit or switch branches; the worktree contains unrelated changes."
+Quality signals:
+- Reads the named skill and relevant references without creating or switching a branch
+- Preserves dirty files, index state, and source content; does not stash or commit
+- Reports concrete findings and verification limits without inventing scores
+- Treats the explicit review-only request as the controlling scope
+
+**Test 4: Active inventory and migration references**
+Prompt: "Review this fixture catalog. old-helper has metadata.deprecated: true and names active new-helper as its replacement. Another active skill routes ordinary requests to old-helper. Report only."
+Quality signals:
+- Separates active skills and deprecated notices using metadata rather than folder presence alone
+- Flags the ordinary route to old-helper and recommends new-helper after checking its active status
+- Allows explicit migration references to old-helper and retains its legacy-invocation coverage
+- Excludes the notice from ordinary trigger competition and does not demand a full active-skill workflow
+
+### skill-refiner
 **Test 1: Bounded fixture improvement**
 Prompt: "Improve the fixture skill at /tmp/refiner-fixture/skills/widget-maker in a throwaway temp directory. Score its baseline first, then run one improvement iteration in step mode. Do not touch this skill collection or any other repository."
 Quality signals:
@@ -515,601 +1057,31 @@ Quality signals:
 - Uses verified cross-model classification at cap 5 despite the shared harness
 - Does not launch an unnecessary second harness or change models merely to obtain a different CLI
 
-
-### skill-creator
-
-**Test 1: Skill review**
-Prompt: "Review this skill for quality:\n\n---\nname: my-skill\ndescription: Does stuff with things\nlicense: MIT\nmetadata:\n  source: custom\n  date_added: 2026-01-01\n  effort: medium\n---\n\n## Workflow\n1. Do the thing\n2. Check if it worked"
+**Test 8: Notice integrity without ordinary scoring**
+Prompt: "Review this fixture collection's refinement candidates without editing: active new-helper and old-helper with metadata.deprecated: true. The notice has an incorrect replacement name and lacks the required deprecation description prefix."
 Quality signals:
-- Flags vague description ("Does stuff with things")
-- Flags missing "When to use" and "When NOT to use" sections
-- Flags missing "Rules" section
-- Flags missing trigger keywords in description
-- Suggests specific improvements
+- Selects only the active skill for ordinary baseline scoring and the improvement pool
+- Reports the notice's replacement and prefix defects as migration-integrity failures without an ordinary composite score
+- Preserves the notice's canonical heading and explicit legacy-invocation test
+- Does not expand the notice into an active workflow or silently install its replacement
 
-**Test 2: Skill creation**
-Prompt: "Create a skill for managing systemd timers and scheduled tasks."
+**Test 9: Regression routing through a retired name**
+Prompt: "Check regression coverage after a skill rename. The retired name remains published as a deprecated notice; one active test still expects ordinary requests to route to it."
 Quality signals:
-- Follows skill frontmatter conventions (name, description, license, metadata)
-- Includes "When to use" and "When NOT to use" sections (routes cron to command-prompt)
-- Includes a "Rules" section with concrete constraints
-- Description is trigger-optimized with relevant trigger keywords
-- Does not duplicate existing skill coverage (checks collection first)
-
-**Test 3: Read-only review preserves branch state**
-Prompt: "Review skills/example/SKILL.md for quality and report inline only. Do not edit or switch branches; the worktree contains unrelated changes."
-Quality signals:
-- Reads the named skill and relevant references without creating or switching a branch
-- Preserves dirty files, index state, and source content; does not stash or commit
-- Reports concrete findings and verification limits without inventing scores
-- Treats the explicit review-only request as the controlling scope
-
-
-### terraform
-
-**Test 1: Module review**
-Prompt: "Review this Terraform config:\n\nresource \"aws_s3_bucket\" \"data\" {\n  bucket = \"my-company-data\"\n}\n\nresource \"aws_s3_bucket_policy\" \"data\" {\n  bucket = aws_s3_bucket.data.id\n  policy = jsonencode({\n    Statement = [{\n      Effect = \"Allow\"\n      Principal = \"*\"\n      Action = \"s3:GetObject\"\n      Resource = \"${aws_s3_bucket.data.arn}/*\"\n    }]\n  })\n}"
-Quality signals:
-- Flags public access (Principal: *)
-- Flags missing versioning
-- Flags missing encryption configuration
-- Flags missing access logging
-- Suggests aws_s3_bucket_public_access_block
-
-**Test 2: State management**
-Prompt: "I need to move a resource from one Terraform state to another without destroying it. Walk me through it."
-Quality signals:
-- Covers terraform state mv or terraform state pull/push approach
-- Mentions removing from source state and importing into destination state
-- Warns about state locking and recommends backup before any state manipulation
-- Explains that the physical resource is not destroyed, only state tracking changes
-- Does not suggest manually editing the state file JSON
-
-### update-docs
-
-**Test 1: Doc sweep**
-Prompt: "I just finished setting up a new PostgreSQL 17 replica on port 5433. The primary is on 5432. Both are on the db-cluster host. Update the project docs."
-Quality signals:
-- Identifies what docs need updating (CLAUDE.md/AGENTS.md, any infra docs)
-- Includes port, version, host details
-- Mentions connection strings if applicable
-- Does not invent documentation that doesn't exist
-
-**Test 2: Gotcha discovery**
-Prompt: "We just discovered that the Redis cache needs a manual FLUSHALL after deployment. Where should this be documented?"
-Quality signals:
-- Recommends CLAUDE.md/AGENTS.md as the primary location (operational gotcha)
-- Suggests adding to deployment runbook or checklist if one exists
-- Proposes clear, actionable wording for the entry (not vague)
-- Notes that AGENTS.md should be synced if CLAUDE.md is updated
-- Does not suggest burying it in a README where it will be missed
-
-### ai-ml
-
-**Test 1: RAG pipeline**
-Prompt: "Build a RAG pipeline for technical documentation with semantic search using pgvector."
-Quality signals:
-- Covers document chunking strategy (size, overlap)
-- Selects embedding model appropriate for technical content
-- Uses pgvector with correct SQL syntax (cosine distance operator)
-- Includes retrieval with similarity threshold
-- Does not suggest unnecessary frameworks when stdlib + pg driver suffice
-
-**Test 2: Agent with tool use**
-Prompt: "Design a multi-step agent that can search docs, create tickets, and send emails while respecting a $5/run cost ceiling."
-Quality signals:
-- Implements iteration limit and cost tracking
-- Uses tool_use / function calling correctly for the target provider
-- Handles tool errors gracefully (retry vs abort)
-- Enforces cost ceiling before each LLM call
-- Does not suggest LangChain when a simple custom loop suffices
-
-### testing
-
-**Test 1: Unit test with mocking**
-Prompt: "Write unit tests for this TypeScript function that fetches user data from an API and caches it in memory."
-Quality signals:
-- Mocks the HTTP client at the boundary (not deep internals)
-- Tests cache hit and cache miss paths separately
-- Uses fake timers or injectable clock for TTL testing
-- Follows Arrange-Act-Assert structure
-- Does not test implementation details (private cache map)
-
-**Test 2: Flaky test diagnosis**
-Prompt: "This Playwright E2E test passes locally but fails 30% of the time on CI. Help me fix it."
-Quality signals:
-- Identifies common flaky causes (race conditions, network timing, shared state)
-- Suggests waitForSelector or waitForLoadState over arbitrary sleep
-- Recommends test isolation (fresh context per test)
-- Mentions CI-specific factors (resource contention, headless rendering differences)
-- Does not suggest adding retries as the primary fix
-
-**Test 3: Proportional verification after a small edit**
-Prompt: "Verify this documentation typo fix. The required Markdown and link checks already passed on this exact diff; there are no runtime changes or unresolved failures."
-Quality signals:
-- Inspects the diff and the existing check evidence before reporting completion
-- Does not add a test that asserts the corrected wording or rerun unchanged passing checks
-- Does not launch unrelated unit, integration, or performance suites without a concrete concern
-- Reports the checks that actually ran and preserves any required repository gates
-
-### virtualization
-
-**Test 1: GPU passthrough**
-Prompt: "Set up GPU passthrough on Proxmox VE for a Windows 11 guest with an NVIDIA RTX 4070."
-Quality signals:
-- Covers IOMMU enablement (kernel params, BIOS)
-- Mentions vfio-pci driver binding
-- Addresses UEFI/OVMF requirement for Windows 11
-- Covers hardware mapping (Proxmox 8.1+) or legacy hostpci syntax
-- Warns about GPU reset bug for affected models
-
-**Test 2: Cloud-init template**
-Prompt: "Create a libvirt/QEMU VM template with cloud-init for automated Ubuntu provisioning."
-Quality signals:
-- Shows cloud-init user-data YAML with packages, runcmd, ssh keys
-- Uses cloud-localds or virt-install --cloud-init for NoCloud datasource
-- Creates a reusable template (backing image or snapshot)
-- Includes validation steps (cloud-init status --wait)
-- Does not hardcode passwords in cloud-init config
-
-### zero-day
-
-**Test 1: Memory safety**
-Prompt: "Analyze this C function for exploitable memory safety vulnerabilities:\n\nvoid process_input(char *user_input) {\n  char buffer[64];\n  strcpy(buffer, user_input);\n  printf(buffer);\n}"
-Quality signals:
-- Identifies buffer overflow via strcpy (no bounds check)
-- Identifies format string vulnerability via printf(buffer)
-- Explains exploitation path for each (stack smash, arbitrary read/write)
-- Suggests mitigations (strncpy/snprintf, format string literal)
-- Mentions relevant protections to check (ASLR, stack canary, NX)
-
-**Test 2: Novel web vulnerability**
-Prompt: "Hunt for novel XSS vectors in a React application that uses DOMPurify for sanitization."
-Quality signals:
-- Considers mutation XSS (mXSS) via parser differentials
-- Checks for DOM clobbering bypasses
-- Examines unsafe innerHTML usage patterns in React components
-- Tests DOMPurify configuration (ALLOWED_TAGS, RETURN_DOM)
-- Does not limit analysis to standard reflected/stored XSS patterns
-
-### anti-ai-prose
-
-**Test 1: README audit**
-Prompt: "Review this README opener for AI-prose tells:\n\nIn today's fast-paced world, our platform empowers developers to seamlessly navigate the complex landscape of modern APIs. Built with a commitment to excellence, it boasts robust features and fosters innovation. Whether you're a beginner or expert, this tool serves as a pivotal resource for your journey toward better software."
-Quality signals:
-- Flags cluster of banned vocabulary (empowers, seamlessly, navigate, landscape, commitment to, boasts, robust, fosters, pivotal, journey toward) as one clustered finding, not ten
-- Identifies scaffolding padding ("In today's fast-paced world") and promotional tone ("commitment to excellence")
-- Flags copula avoidance ("serves as" instead of "is")
-- Applies short-text density rule - assigns P1 for 2+ tells in one paragraph under 100 words
-- Numbers findings in priority order so the deliverable file stays monotonic when regrouped
-- Provides a rewrite that is shorter and more specific, not a lateral synonym swap
-- Does not flag quoted material or genre conventions
-
-**Test 2: Domain-term false positive**
-Prompt: "Audit this ML paper paragraph:\n\nNestled in the loss landscape near a sharp minimum, the model's robust features fail to generalize. This underscores a pivotal result from Keskar et al. (2017): flat minima tend to foster better test accuracy than sharp ones."
-Quality signals:
-- Recognizes ML/statistics terms of art (loss landscape, robust features) and does not flag them
-- Recognizes "underscores" has a real referent (the cited Keskar paper)
-- Verdict is "Fine" or "no findings" - domain context overrides vocabulary match
-- Does not fabricate AI-prose findings to pad the report
-- Keeps direct quotations and citations untouched
-
-**Test 3: Inline mode stays silent**
-Prompt: "Explain in two sentences why this repo pins provider versions."
-Quality signals:
-- Answers the question directly, with no audit report, findings list, severity ratings, or deliverable file
-- Emits no announcement that the skill ran and no output-contract header or conclusion box
-- The answer itself carries no chat artifacts (`Great question!`, `I hope this helps!`) and no scaffolding padding
-- Does not restructure or "improve" the user's own wording when quoting the question back
-- Applies the rules to its own drafting only - does not audit the repo's prose unprompted
-
-**Test 4: Mode selection under an ambiguous prompt**
-Prompt: "This CONTRIBUTING.md reads like ChatGPT wrote it, can you take a look?"
-Quality signals:
-- Picks audit mode - the user handed over a target, so this is not inline filtering
-- Emits the full output contract and writes the deliverable to docs/local/audits/anti-ai-prose/
-- Does not mix the two modes: no silent rewrite of the file in place of a report
-- Respects house style from CLAUDE.md/AGENTS.md over the skill's own pattern rules
-
-### backend-api
-
-**Test 1: FastAPI endpoint review**
-Prompt: "Review this FastAPI route:\n\n@app.post('/orders')\nasync def create_order(order: dict, db = Depends(get_db)):\n    result = db.execute(f\"INSERT INTO orders (user_id, amount) VALUES ({order['user_id']}, {order['amount']}) RETURNING *\")\n    return result.fetchone()"
-Quality signals:
-- Flags raw dict input instead of a Pydantic request model (no server-side validation)
-- Flags SQL string interpolation (routes to security-audit but notes the contract bug)
-- Flags ORM/DB row returned directly as response (DTO leakage)
-- Flags missing idempotency handling on a retryable POST /orders
-- Flags missing status code and error model (no RFC 9457 problem details)
-- Suggests explicit request/response DTOs separate from persistence layer
-
-**Test 2: Auth design for browser app**
-Prompt: "I'm building a React SPA that calls our FastAPI backend. Should I use JWT in localStorage for auth?"
-Quality signals:
-- Pushes back on localStorage JWT for a first-party browser app
-- Recommends session cookies or BFF token mediation as the default
-- Mentions cookie flags (HttpOnly, Secure, SameSite) and CSRF handling
-- If OAuth is in scope, specifies authorization code + PKCE, rejects implicit flow and password grant
-- Does not wave hands about "JWT is modern" - grounds the recommendation in client type
-
-**Test 3: Pagination strategy**
-Prompt: "Design pagination for a /notifications endpoint. Expected 10k+ notifications per user, arriving continuously."
-Quality signals:
-- Picks cursor pagination over offset (high-churn collection)
-- Defines stable sort order and documents it
-- Returns an envelope with data, next_cursor, and has_more
-- Cursor is opaque to the client (encoded/signed), not a raw DB offset or row number
-- Handles empty and end-of-cursor states explicitly
-
-### deep-audit
-
-**Test 1: Full repo orchestration**
-Prompt: "Run deep-audit on this repo - it's a TypeScript Next.js app with Postgres, Docker, and GitHub Actions."
-Quality signals:
-- Executes all 5 waves in order (recon, code quality, domain, security, docs & hygiene)
-- Wave 1 presents detected languages and the matched/skipped Wave 3 skills before Wave 2 starts
-- Wave 2 dispatches code-review, anti-slop, anti-ai-prose regardless of repo type
-- Wave 3 dispatches only matched skills (testing, backend-api, databases, docker, ci-cd based on stack)
-- Wave 4 runs security-audit and zero-day sequentially, with zero-day receiving security-audit findings
-- Dispatches read-only audit workers whose capabilities match each task, not write-focused roles
-- Preserves each skill's native report format, no cross-report normalization
-- Reminds user to verify SECURITY-AUDIT.md is gitignored after Wave 4
-
-**Test 2: Scoped audit**
-Prompt: "Run deep-audit scoped to src/auth/ only."
-Quality signals:
-- Filters Wave 1 detection to files under src/auth/
-- Passes scope constraint to every dispatched agent
-- Separates scoped matches from root-manifest-only matches in the recon summary
-- Does not reorder waves even if user says "security first" - keeps wave order sacred
-- Skips Wave 3 skills whose files don't exist under the scope
-- Final summary stays within the authentication module's findings
-
-### dev-cycle
-
-**Test 1: Start mode on a large feature**
-Prompt: "Let's start working on OAuth login for the app."
-Quality signals:
-- Runs git status and git pull --ff-only on the base branch before branching
-- Detects base branch via git symbolic-ref, does not guess main vs master
-- Classifies the work as large and states the signals (new public auth flow, multi-module)
-- Creates a feature branch with repo-convention naming (e.g., feat/oauth-login)
-- Invokes a brainstorming skill or falls back to Socratic spec for large work, writes SPEC.md
-- Ends with a handoff naming next-step skills (backend-api for routes, security-audit before merge)
-- Does not write implementation code in start mode
-
-**Test 2: Finish mode with release**
-Prompt: "Wrap up this branch and ship it - feat/oauth-login on a Node.js repo with package.json, Dockerfile, and GitHub Actions."
-Quality signals:
-- Detects $FORGE from git remote get-url origin before any push/PR/merge
-- Runs lint, typecheck, and tests via the testing skill; inspects actual output, not just exit code
-- Delegates to update-docs to sweep tracked AND gitignored docs (CLAUDE.md, AGENTS.md)
-- Proposes version bump across package.json, Dockerfile, and CHANGELOG before editing
-- Runs code-review against BASE_BRANCH..HEAD, not just HEAD
-- Uses gh pr checks --watch --fail-fast then verifies via gh pr view --json statusCheckRollup
-- Runs git fetch --tags origin before release-signal detection
-- No AI attribution in commit messages, PR body, or release notes; no --no-verify or --force-push
-
-**Test 3: Failed check with independent preparation**
-Prompt: "Prepare this branch for release. The required integration test failed; the failure log and diff are available. Draft release notes locally while diagnosing it, but do not publish until every required check passes."
-Quality signals:
-- Inspects and reports the actual failure; does not bypass or relabel the required check
-- Blocks merge, tagging, publishing, and release completion on the failed gate
-- Continues independent authorized work such as diff review and local release-note preparation
-- Reports the blocker and completed preparation separately without claiming the release is ready
-
-
-### localize
-
-**Test 1: Audit React app for i18n gaps**
-Prompt: "Audit this React component for hardcoded strings that need i18n:\n\nexport function DeleteModal({ item, onConfirm }) {\n  return (\n    <div role='dialog' aria-label='Delete confirmation'>\n      <h2>Delete item?</h2>\n      <p>This cannot be undone.</p>\n      <button title='Cancel and close' onClick={close}>Cancel</button>\n      <button onClick={() => { onConfirm(); toast.success('Item deleted'); }}>\n        Delete\n      </button>\n    </div>\n  );\n}"
-Quality signals:
-- Extracts ALL strings from the file, not just JSX text (aria-label, title, toast message, heading, button labels)
-- Proposes dot-notation keys (e.g., modal.delete.confirm, modal.delete.cancel)
-- Catches the toast.success call in an event handler, not just visible JSX
-- Replaces strings with t() calls, not partial extraction
-- Notes that source locale catalog becomes the type authority
-- Does not flag role='dialog' or onClick handler names as translatable
-
-**Test 2: Machine translation quality**
-Prompt: "Generate German translations for these UI strings from our music discovery app. Source (en.json): {\"auth.signIn\": \"Sign in\", \"player.nowPlaying\": \"Now playing: {0}\", \"error.network\": \"Connection lost\"}"
-Quality signals:
-- Uses proper German orthography (umlauts, not ae/oe/ue ASCII substitution)
-- Preserves the {0} placeholder exactly in the translation
-- Picks a voice register (du vs Sie) and applies it consistently, documents the choice
-- Translations read naturally for the app's domain (music discovery), not mechanical word-for-word
-- Does not translate brand names or technical identifiers
-- Notes a validation step (placeholder check, completeness check) before commit
-
-### roadmap
-
-**Test 1: Add ideas to a fresh roadmap**
-Prompt: "Add these to the roadmap: dark mode toggle, bulk export to CSV, and a public API for third-party integrations."
-Quality signals:
-- Checks for existing ROADMAP.md first; bootstraps if missing
-- Adds ROADMAP.md to .gitignore before writing content
-- Populates Snapshot section from README or package.json context
-- Places items in appropriate priority tier (defaults to P1 when ambiguous, not P0)
-- Preserves user's phrasing without rewriting
-- Does not inflate priorities or invent competitive intel
-
-**Test 2: Competitive scan with strict filter**
-Prompt: "Scan this competitor for feature ideas: github.com/owner/similar-project"
-Quality signals:
-- Uses gh issue list sorted by reactions and caps results, notes coverage limitations
-- States a one-sentence identity assessment before rating findings
-- Applies strong/weak/noise thresholds (3+ commenters or 10+ reactions calibrated to repo size)
-- Presents findings for approval BEFORE writing to ROADMAP.md
-- Attributes every suggestion with source link (owner/repo#issue)
-- Drops noise entirely rather than padding the Competitive Intel section
-- Does not fabricate reaction counts or user demand data
-
-### routine-writer
-
-**Test 1: Nightly triage routine**
-Prompt: "Make a Claude routine that triages new GitHub issues every night - label them by area, assign owners from CODEOWNERS, post a Slack summary."
-Quality signals:
-- Routine prompt is self-contained with no "ask the user" or "clarify" instructions
-- States explicit success criteria (labels applied, owner assigned, Slack message posted)
-- Handles idempotent no-op ("if no issues match, exit without output")
-- Names output destination concretely (#eng-backlog Slack channel)
-- Uses cron interval >= 1 hour (nightly satisfies this)
-- Declares minimum scope: repos, connectors (Slack + GitHub), env vars
-- Detects claude binary on PATH before emitting /schedule invocation
-- Never embeds real API tokens - uses $ROUTINE_FIRE_TOKEN placeholder
-- Beta header pinned with header date and May 2026 verification annotation in prose
-
-**Test 2: API-triggered routine from CI**
-Prompt: "I want to fire a Claude routine from our GitHub Actions deploy job to generate release notes. How do I wire it up?"
-Quality signals:
-- Picks API trigger, not schedule or GitHub event
-- Emits curl template for /fire endpoint with anthropic-beta: experimental-cc-routine-2026-04-01 header
-- Uses env var placeholders for $ROUTINE_FIRE_URL and $ROUTINE_FIRE_TOKEN
-- Notes that token is shown once in web UI and cannot be retrieved
-- Provides a GitHub Actions step gated on success (if: success()) after the deploy, not a failure-only hook
-- Routine prompt frames "input is a text payload up to 65,536 chars" trigger context
-- Branch policy stays off by default (PRs over direct pushes)
-- Does not auto-run /schedule - emits for user to paste
-
-**Test 3: Rejecting a non-routine task**
-Prompt: "Make a routine that reviews design decisions in every PR and suggests UX improvements."
-Quality signals:
-- Pushes back - design/UX review needs mid-run human judgment, not a fit for routines
-- Suggests /loop or an interactive session instead
-- Explains why: routines cannot pause to ask clarifying questions
-- Does not draft a routine prompt that papers over the ambiguity
-- Does not recommend enabling unrestricted branch pushes as a workaround
-
-### debian-ubuntu
-
-**Test 1: Apt and release-lane repair**
-Prompt: "Ubuntu 24.04 laptop: apt full-upgrade fails after I added a PPA, and I want to move to 26.04 LTS. How do I triage this safely?"
-Quality signals:
-- Identifies distro and release lane before changing packages
-- Checks apt policy, held packages, broken sources, PPA provenance, and HWE state
-- Separates fixing package health from starting do-release-upgrade
-- Preserves rollback or recovery path before kernel or boot changes
-- Does not suggest blind apt dist-upgrade or deleting package databases
-
-**Test 2: Desktop audio and portal issue**
-Prompt: "On Linux Mint, screen sharing in Firefox is black and Bluetooth audio switches to the wrong profile."
-Quality signals:
-- Treats Mint as Ubuntu-derived but checks desktop/session details
-- Checks PipeWire, WirePlumber, portals, Bluetooth trust/profile, and logs
-- Loads desktop/audio reference before broad package changes
-- Avoids assuming GNOME or stock Ubuntu behavior
-
-### kali-linux
-
-**Test 1: Kali branch and metapackage hygiene**
-Prompt: "My Kali rolling VM is broken after I added Debian testing repos. I also installed kali-linux-everything because one wireless tool was missing."
-Quality signals:
-- Identifies Kali lane and source-list state first
-- Explains why mixing Debian testing with Kali branches is unsafe
-- Separates repo repair from metapackage planning
-- Recommends focused kali-tools-* bundles over kali-linux-everything when appropriate
-- Keeps authorization and lab hygiene distinct from package installation
-
-**Test 2: Live USB persistence and hardware**
-Prompt: "Build a Kali live USB with persistence for wireless testing on a laptop. Monitor mode does not work after boot."
-Quality signals:
-- Distinguishes live ISO, persistence-backed live media, installed system, and VM image
-- Checks persistence layout before assuming package failure
-- Checks chipset, firmware, driver, USB passthrough, rfkill, and monitor-mode support
-- Routes exploitation technique questions away to lockpick
-
-### nixos-btw
-
-**Test 1: Flake rebuild failure**
-Prompt: "My NixOS flake rebuild fails after updating nixpkgs. Home-manager is included as a module, and I want to roll back safely."
-Quality signals:
-- Identifies NixOS lane, flakes vs channels, and home-manager mode
-- Uses generation rollback and preserves known-good generations before GC
-- Checks flake.lock, nix flake metadata, and nixos-rebuild verb choice
-- Avoids recommending nix-env -i or changing system.stateVersion casually
-
-**Test 2: Secrets and disk layout**
-Prompt: "Review this NixOS config idea: put database passwords directly in configuration.nix and use disko plus impermanence for the server install."
-Quality signals:
-- Flags secrets embedded in the Nix store as unsafe
-- Recommends activation-time secrets such as sops-nix or agenix
-- Checks disko, filesystem, subvolume, and impermanence layout before rollback advice
-- Separates Nix build concerns from runtime Docker or Kubernetes deployment concerns
-
-### rhel-fedora
-
-**Test 1: SELinux and firewalld triage**
-Prompt: "A custom web app on Rocky Linux cannot bind to its port after I restored files from backup. Should I disable SELinux?"
-Quality signals:
-- Identifies distro and release lane first
-- Checks AVCs, file contexts, ports, booleans, and firewalld active zone
-- Distinguishes restorecon/semanage from setenforce 0
-- Avoids treating Rocky, Fedora, RHEL, and Amazon Linux as identical
-
-**Test 2: Fedora upgrade and NVIDIA**
-Prompt: "Fedora Workstation upgrade left me with a black screen. I use NVIDIA from RPM Fusion and Secure Boot."
-Quality signals:
-- Checks Fedora lane, kernel, akmods or DKMS state, RPM Fusion repos, and Secure Boot
-- Preserves fallback kernels and boot entries
-- Uses dracut, grubby, journal, and display-manager logs before reinstalling packages
-- Routes rpm-ostree or image-mode systems away instead of treating them as dnf hosts
-
-### debug-triage
-
-**Test 1: Intermittent ingress failure after deploy**
-Prompt: "Production started returning intermittent 502s after a Kubernetes deploy. Triage it, but do not change or restart anything."
-Quality signals:
-- Scopes the symptom, time window, recent change, blast radius, and correct network vantage point
-- Lists plausible layers before selecting the cheapest check that separates them
-- Walks ingress, service endpoints, pod readiness, app errors, and dependency health with evidence
-- States what each pass or failure rules out instead of collecting an undirected command dump
-- Does not roll back, restart, scale, or apply changes during triage
-- Ends with the implicated layer, observed evidence, and the exact owning skill for the deep dive
-
-**Test 2: Slow API with no errors**
-Prompt: "Our API has no errors, but p99 latency tripled while p50 stayed flat. We do not know whether it is the app, database, or cluster. Localize the failing layer."
-Quality signals:
-- Treats p50 versus p99 as a tail-latency discriminator rather than an availability incident
-- Compares endpoint or replica percentiles, CPU throttling, pool wait, query latency, and cache behavior
-- Uses read-only checks and keeps failed or empty diagnostics visible
-- Narrows one layer at a time and distinguishes evidence from inference
-- Routes the localized component to the matching domain skill or systematic debugging method
-
-### deep-grill
-
-**Test 1: Interactive infrastructure plan**
-Prompt: "Grill this plan before we build it: migrate a stateful service to a new region with near-zero downtime."
-Quality signals:
-- Detects the infrastructure lens and explores available repo or config facts before asking
-- Builds the decision tree top-down and asks one question at a time in interactive mode
-- Gives a recommended answer and one-line reason with every question
-- Separates decisions, open questions, fog, and prerequisites instead of treating all unknowns alike
-- Announces the adversarial phase only after upstream decisions are resolved
-- Writes the final decision record with resolved choices, surviving risks, deferrals, and next step
-
-**Test 2: Pure Phase-2 spec audit**
-Prompt: "Stress-test this existing rollout spec as a pure Phase-2 audit. Do not reopen basic requirements unless a finding proves they are inconsistent."
-Quality signals:
-- Keeps the request in deep-grill instead of routing a plan artifact to a standalone decision review
-- Attacks load-bearing assumptions, rollback, failure modes, and second-order effects without restating the spec
-- Reopens a Phase-1 decision only when a surfaced risk invalidates it
-- Timeboxes attacks when new findings stop changing the plan
-- Uses the full audit output contract and preserves evidence for each finding
-
-**Test 3: Optional clarification while independent work continues**
-Prompt: "Stress-test this rollout spec. You may ask whether I prefer a table or prose, but start checking its rollback assumptions while I decide."
-Quality signals:
-- Treats output-format preference as optional and continues independent review of available evidence
-- Allows an opportunity to answer, then uses a stated default if no preference arrives
-- Keeps required safety or authorization questions pending when dependent actions need an answer
-- Does not use an unanswered optional question to stop all work
-
-
-### handoff
-
-**Test 1: Author a disposable implementation handoff**
-Prompt: "Hand this session off to a fresh implementer. The next session should finish the API migration and run the remaining tests."
-Quality signals:
-- Writes one short purpose-driven file under `.handoff/` and ensures the directory is gitignored
-- Records locked decisions with rationale and deferred work with revisit triggers
-- Tags current state as verified, assumed, or blocked and names the evidence or next check
-- Uses resolving file, line, branch, PR, and document pointers instead of pasting source content
-- Redacts secrets, private endpoints, tokens, credentials, and PII before writing
-- Lists concrete next steps plus the smallest relevant skill set for the fresh session
-
-**Test 2: Resume from a handoff**
-Prompt: "Resume from .handoff/2026-07-22-api-migration.md and continue the next steps."
-Quality signals:
-- Reads the handoff before acting and treats locked decisions as settled
-- Verifies file, line, branch, and PR pointers before relying on them
-- Rechecks every item tagged assumed and reports stale pointers or blockers
-- Invokes the suggested skills that match the next action
-- Flags a questionable locked decision to the user instead of silently relitigating it
-
-### observability
-
-**Test 1: Build a service signal pipeline**
-Prompt: "Add vendor-neutral observability for a request-driven API: metrics, traces, structured logs, a 99.9% availability SLO, alerts, and a dashboard."
-Quality signals:
-- Defines the user-facing questions and minimum RED or golden signals before choosing tools
-- Uses bounded metric labels, propagated trace context, `service.name`, and correlated log IDs
-- Produces runnable Collector, Prometheus rule-test, and dashboard artifacts with parameterized endpoints
-- Uses correct error-budget math and paired multi-window burn-rate alerts with actionable metadata
-- Names and runs the relevant validators; clearly marks any unavailable runtime check as skipped
-- Keeps credentials and request bodies out of telemetry
-
-**Test 2: Repository observability audit**
-Prompt: "Audit this repository for observability gaps. It has application metrics and dashboard JSON, but no running backend is available to inspect."
-Quality signals:
-- Reports only evidence in repository files and does not assume signals reach a backend
-- Checks coverage, SLOs, alert actionability, cardinality, correlation, rule tests, and dashboard drift
-- Distinguishes signal definition from proof of collection and querying
-- Writes the audit deliverable to the documented local path with the full output contract
-- Routes live incident localization to debug-triage and manifest mechanics to kubernetes
-
-### cluster-health
-
-**Test 1: Vague cluster request with hidden context**
-Prompt: "Check whether the cluster is healthy after maintenance."
-Quality signals:
-- Refuses to guess the target and resolves an explicit kube context or confirms current context first
-- States the bounded time window before running any query
-- Runs no cluster command until context is resolved
-- Keeps the health pass read-only and does not restart, drain, cordon, scale, exec, or apply
-- Reports missing permissions, tools, or CRDs as findings instead of treating them as healthy
-
-**Test 2: Broad post-maintenance sweep**
-Prompt: "Run a two-hour post-reboot health sweep on context production-eu and give me a traffic-light report."
-Quality signals:
-- Includes the context on every cluster command and the matching context flag on package-manager commands
-- Covers nodes, workloads, events, releases or reconciliation, ingress, storage, metrics, and bounded logs
-- Caps high-volume output and keeps diagnostic stderr visible
-- Classifies evidence as green, yellow, or red while separating transient rollout noise
-- Produces a concise report with scope, observed evidence, and read-only follow-ups or explicit escalation
-
-### code-slimming
-
-**Test 1: Dead-code audit with dynamic reachability**
-Prompt: "Audit this plugin package for dead files, unused exports, and superseded implementations. Report only; do not edit anything."
-Quality signals:
-- Searches definitions, callers, re-exports, string-keyed lookups, registration, reflection, and public API reachability
-- Treats dead-code tool output as candidates rather than deletion proof
-- Pairs every superseded claim with its replacement and proves callers migrated
-- Classifies uncertain exported or dynamically reachable candidates as Do with tests or Defer
-- Names the behavior invariant and concrete validation for every Do now recommendation
-- Does not modify source or write tests
-
-**Test 2: Duplicate wrappers and comments**
-Prompt: "Slim this module: it has forwarding wrappers, repeated per-status functions, catch-log-rethrow blocks, and large comment banners."
-Quality signals:
-- Gives a concrete loop, lookup-table, inline, or deletion shape rather than vague abstraction advice
-- Preserves wrappers that own policy, compatibility, observability, lifecycle, or another real boundary
-- Proves a catch is inert before recommending removal and preserves behavior-changing catches
-- Deletes only commented-out code, restating comments, and dead banners while keeping intent and pragmas
-- Evaluates coupling, performance, readability, and validation before assigning an action label
-- Routes correctness or security discoveries to their owning skills instead of mixing lanes
+- Requires a canonical heading for every published skill, including the notice
+- Updates ordinary routing expectations to the verified active replacement only in phase 2
+- Keeps the explicit old-name invocation as a migration test outside ordinary trigger scoring
+- Does not claim that a semantic routing test proves native harness discovery or search ranking
 
 ### skill-router
-
-**Test 1: One primary skill from overlapping terms**
-Prompt: "Which skill should I use to find unused files and duplicate wrappers in this repo? I only want a report, not fixes."
+**Test 1: Explicit legacy invocation**
+Prompt: "Use skill-router for this task."
 Quality signals:
-- Restates the intent as a read-only behavior-preserving slimming audit
-- Returns `Primary: code-slimming`
-- Applies exclusions before choosing and explains anti-slop or code-review only as useful near misses
-- Does not load unrelated reference files or return a broad bundle of skills
-- Stops routing after giving the next action
-
-**Test 2: Ordered process and domain route**
-Prompt: "Choose skills for this task: stress-test my regional cutover plan, then turn the resolved decisions into infrastructure configuration."
-Quality signals:
-- Returns an ordered route with deep-grill before the relevant infrastructure skill
-- Explains that the first output shapes the second task, so the skills are not parallel
-- Uses the installed skill inventory and does not invent a generic planning or infrastructure skill
-- Keeps the explanation to one or two sentences and makes the next invocation clear
+- Explains the deprecation briefly.
+- Explains that the skill was removed without a replacement and does not run the old workflow.
+- Does not silently install a skill, read sibling files, or delete user customizations.
 
 ### synology-dsm
-
 **Test 1: Routine package and service administration**
 Prompt: "A package on my DSM 7 NAS keeps restarting after I disable it over SSH. Diagnose it without uninstalling anything."
 Quality signals:
@@ -1136,3 +1108,128 @@ Quality signals:
 - Treats a changed SSH port as noise reduction rather than a security control
 - Reviews exposed packages and prefers VPN access over direct DSM web exposure
 - Distinguishes ordinary snapshots, immutable snapshots, and verified off-unit backups
+
+### terraform
+**Test 1: Module review**
+Prompt: "Review this Terraform config:\n\nresource \"aws_s3_bucket\" \"data\" {\n  bucket = \"my-company-data\"\n}\n\nresource \"aws_s3_bucket_policy\" \"data\" {\n  bucket = aws_s3_bucket.data.id\n  policy = jsonencode({\n    Statement = [{\n      Effect = \"Allow\"\n      Principal = \"*\"\n      Action = \"s3:GetObject\"\n      Resource = \"${aws_s3_bucket.data.arn}/*\"\n    }]\n  })\n}"
+Quality signals:
+- Flags public access (Principal: *)
+- Flags missing versioning
+- Flags missing encryption configuration
+- Flags missing access logging
+- Suggests aws_s3_bucket_public_access_block
+
+**Test 2: State management**
+Prompt: "I need to move a resource from one Terraform state to another without destroying it. Walk me through it."
+Quality signals:
+- Covers terraform state mv or terraform state pull/push approach
+- Mentions removing from source state and importing into destination state
+- Warns about state locking and recommends backup before any state manipulation
+- Explains that the physical resource is not destroyed, only state tracking changes
+- Does not suggest manually editing the state file JSON
+
+### testing
+**Test 1: Unit test with mocking**
+Prompt: "Write unit tests for this TypeScript function that fetches user data from an API and caches it in memory."
+Quality signals:
+- Mocks the HTTP client at the boundary (not deep internals)
+- Tests cache hit and cache miss paths separately
+- Uses fake timers or injectable clock for TTL testing
+- Follows Arrange-Act-Assert structure
+- Does not test implementation details (private cache map)
+
+**Test 2: Flaky test diagnosis**
+Prompt: "This Playwright E2E test passes locally but fails 30% of the time on CI. Help me fix it."
+Quality signals:
+- Identifies common flaky causes (race conditions, network timing, shared state)
+- Suggests waitForSelector or waitForLoadState over arbitrary sleep
+- Recommends test isolation (fresh context per test)
+- Mentions CI-specific factors (resource contention, headless rendering differences)
+- Does not suggest adding retries as the primary fix
+
+**Test 3: Proportional verification after a small edit**
+Prompt: "Verify this documentation typo fix. The required Markdown and link checks already passed on this exact diff; there are no runtime changes or unresolved failures."
+Quality signals:
+- Inspects the diff and the existing check evidence before reporting completion
+- Does not add a test that asserts the corrected wording or rerun unchanged passing checks
+- Does not launch unrelated unit, integration, or performance suites without a concrete concern
+- Reports the checks that actually ran and preserves any required repository gates
+
+### update-docs
+**Test 1: Doc sweep**
+Prompt: "I just finished setting up a new PostgreSQL 17 replica on port 5433. The primary is on 5432. Both are on the db-cluster host. Update the project docs."
+Quality signals:
+- Identifies what docs need updating (CLAUDE.md/AGENTS.md, any infra docs)
+- Includes port, version, host details
+- Mentions connection strings if applicable
+- Does not invent documentation that doesn't exist
+
+**Test 2: Gotcha discovery**
+Prompt: "We just discovered that the Redis cache needs a manual FLUSHALL after deployment. Where should this be documented?"
+Quality signals:
+- Recommends CLAUDE.md/AGENTS.md as the primary location (operational gotcha)
+- Suggests adding to deployment runbook or checklist if one exists
+- Proposes clear, actionable wording for the entry (not vague)
+- Notes that AGENTS.md should be synced if CLAUDE.md is updated
+- Does not suggest burying it in a README where it will be missed
+
+**Test 3: Repository retirement policy takes precedence**
+Prompt: "Update deprecated docs in this fixture repo. Its policy requires one transition release AND seven full days after actual publication. The release was published three days ago, and no incoming references remain."
+Quality signals:
+- Reads and follows the repository policy, retaining the dated notice and migration pointer
+- Requires both policy conditions; no-reference evidence cannot shorten the promised grace period
+- Measures elapsed time from actual publication, not a planned date or commit timestamp
+- Treats the fixture's release count and duration as repository policy, not a universal rule
+
+**Test 4: Explicit user policy and generic fallback**
+Prompt: "Clean up deprecated documentation in this fixture repo. No repository policy exists, but I require three completed releases of notice; only two have shipped."
+Quality signals:
+- Honors the explicit user policy and keeps the deprecated entry visible
+- Uses a generic fallback only when neither repository nor user policy exists
+- Does not substitute a shorter fallback or a lack of references for the required grace period
+
+### virtualization
+**Test 1: GPU passthrough**
+Prompt: "Set up GPU passthrough on Proxmox VE for a Windows 11 guest with an NVIDIA RTX 4070."
+Quality signals:
+- Covers IOMMU enablement (kernel params, BIOS)
+- Mentions vfio-pci driver binding
+- Addresses UEFI/OVMF requirement for Windows 11
+- Covers hardware mapping (Proxmox 8.1+) or legacy hostpci syntax
+- Warns about GPU reset bug for affected models
+
+**Test 2: Cloud-init template**
+Prompt: "Create a libvirt/QEMU VM template with cloud-init for automated Ubuntu provisioning."
+Quality signals:
+- Shows cloud-init user-data YAML with packages, runcmd, ssh keys
+- Uses cloud-localds or virt-install --cloud-init for NoCloud datasource
+- Creates a reusable template (backing image or snapshot)
+- Includes validation steps (cloud-init status --wait)
+- Does not hardcode passwords in cloud-init config
+
+### vulnerability-research
+**Test 1: Memory safety**
+Prompt: "Analyze this C function for exploitable memory safety vulnerabilities:\n\nvoid process_input(char *user_input) {\n  char buffer[64];\n  strcpy(buffer, user_input);\n  printf(buffer);\n}"
+Quality signals:
+- Identifies buffer overflow via strcpy (no bounds check)
+- Identifies format string vulnerability via printf(buffer)
+- Explains exploitation path for each (stack smash, arbitrary read/write)
+- Suggests mitigations (strncpy/snprintf, format string literal)
+- Mentions relevant protections to check (ASLR, stack canary, NX)
+
+**Test 2: Novel web vulnerability**
+Prompt: "Hunt for novel XSS vectors in a React application that uses DOMPurify for sanitization."
+Quality signals:
+- Considers mutation XSS (mXSS) via parser differentials
+- Checks for DOM clobbering bypasses
+- Examines unsafe innerHTML usage patterns in React components
+- Tests DOMPurify configuration (ALLOWED_TAGS, RETURN_DOM)
+- Does not limit analysis to standard reflected/stored XSS patterns
+
+### zero-day
+**Test 1: Explicit legacy invocation**
+Prompt: "Use zero-day for this task."
+Quality signals:
+- Explains the deprecation briefly.
+- Names vulnerability-research and checks whether it is installed before routing.
+- Does not silently install a skill, read sibling files, or delete user customizations.

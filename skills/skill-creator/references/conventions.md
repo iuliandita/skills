@@ -40,7 +40,7 @@ gotcha with that specific Helm chart version, the compliance requirement that is
 | Component | Budget | Why |
 |-----------|--------|-----|
 | Frontmatter (`name` + `description`) | description usually 80-120 characters | catalog entries share the host's context budget |
-| SKILL.md body | ~500 lines target, 600 hard max, <5k tokens recommended | loaded when the skill activates |
+| SKILL.md body | 150-250 lines preferred, 600 hard max, <5k tokens recommended | loaded when the skill activates |
 | Reference files | unlimited per file, but keep individual files focused | loaded on demand |
 
 Prefer concise examples over verbose explanations. A 5-line code block that shows the pattern
@@ -64,7 +64,7 @@ an open field allows many routes (high freedom).
   agent decide what matters for each codebase
 - **Medium freedom**: docker AI Self-Check - specific checklist items but the agent decides how to
   apply them to the user's Dockerfile
-- **Low freedom**: firewall-appliance pfctl commands - exact syntax because a wrong flag can lock
+- **Low freedom**: opnsense-pfsense pfctl commands - exact syntax because a wrong flag can lock
   you out of a remote appliance
 
 When in doubt, start with higher freedom and tighten only where you've seen the agent consistently
@@ -86,7 +86,7 @@ succeeded" invites the agent to invent checks with wrong paths and service names
 ---
 name: skill-name              # lowercase a-z, 0-9, hyphens; no leading/trailing/consecutive hyphens; max 64 chars; must match directory name. (anthropic, claude) are Anthropic platform-reserved, not barred by the portable spec - avoid for compatibility
 description: >                # aim for 80-120 chars; advisory warning above 120
-  · Write and debug shell scripts, commands, and dotfiles for bash, zsh, sh, and fish.
+  Write and debug shell scripts, commands, and dotfiles for bash, zsh, sh, and fish.
 license: MIT                  # Agent Skills spec field
 metadata:
   source: iuliandita/skills   # collection identifier (owner/repo); use "custom" for unpublished skills
@@ -146,16 +146,28 @@ user confirmation in steps that could run unattended.
 | `metadata.date_added` | ISO date string | staleness detection |
 | `metadata.effort` | `low`, `medium`, `high` | signals expected token usage and complexity |
 
+### Lifecycle status
+
+Parse YAML frontmatter and read `metadata.deprecated`: boolean `true` or a string that
+trims and case-folds to `true` marks a deprecated notice, including quoted values. Missing
+or false means active; malformed frontmatter is an error, not an active default. Do not use
+string truthiness (the string `"false"` is not deprecated) or matches in the body.
+
+Published inventory includes both active skills and notices; report their counts separately.
+Notices preserve migration guidance and explicit legacy invocation behavior. Check them against
+the target repository's notice and removal policy, not active-skill depth or trigger criteria.
+Keep their canonical test coverage and installer integrity checks through the required lifetime.
+
 ### Effort tiers
 
 | Tier | Complexity signal | Typical skills | Structure depth |
 |------|-------------------|---------------|-----------------|
-| **low** | single-purpose wrapper, minimal context | (none in collection; reserved for minimal single-purpose wrappers) | Minimal workflow, few rules |
-| **medium** | one domain, moderate workflow | anti-slop, prompt-generator, command-prompt, update-docs | Moderate workflow, reference files |
+| **low** | single-purpose wrapper, minimal context | temporary deprecation notices | Minimal workflow, few rules |
+| **medium** | one domain, moderate workflow | code-simplification, prompt-generator, shell-scripting, update-docs | Moderate workflow, reference files |
 | **high** | multi-step domain with on-demand references | ansible, docker, kubernetes, terraform, etc. (see Skill Inventory) | Full workflow, AI self-check, checklists, multiple references |
 
 `effort` is a qualitative signal of a skill's depth and expected complexity, not a measured token
-count. The SKILL.md body still targets ~500 lines (<5k tokens) at every tier; references carry the
+count. The SKILL.md body targets 150-250 lines where practical (600 hard max); references carry the
 rest and load on demand, so a high-effort skill's larger total footprint lives mostly outside the
 always-loaded body.
 
@@ -264,9 +276,7 @@ thorough.
   rewrite `--` inside code, command examples, or fenced blocks** - `--` is real syntax there
   (SQL/Lua comments, CLI long-flag separators like `npm test -- --filter`, `git ... --`),
   and stripping it to `-` produces broken, non-runnable examples.
-- **Approved non-ASCII**: the only permitted non-ASCII is the public-description `· ` prefix
-  (U+00B7 MIDDLE DOT), the shared output-contract box glyphs (ASCII separators), and the
-  output-contract/status emoji markers the linter permits (U+1F534, U+1F7E0, U+1F7E2,
+- **Approved non-ASCII**: output-contract/status emoji markers the linter permits (U+1F534, U+1F7E0, U+1F7E2,
   U+1F7E1, U+1F535, U+26AA, U+26A1, U+1F3AF, U+1F480). `scripts/lint-skills.sh`
   (`check_ascii`) is the single authority on this set; this list mirrors it and changes only
   when the linter does, never the reverse.
@@ -322,7 +332,7 @@ metadata:
 
 ### When to create reference files
 
-- SKILL.md over ~500 lines -> extract domain-specific content to references (hard max 600)
+- Move lengthy examples and conditional domain detail to references; prefer 150-250 core lines (hard max 600)
 - Multiple variants of the same pattern (e.g., GitHub Actions vs GitLab CI)
 - Large checklists or template libraries
 - Supplementary content that's only needed in specific scenarios
@@ -331,7 +341,7 @@ metadata:
 
 ```
 skill-name/
-+-- SKILL.md                    # main skill (required, ~500 lines target)
++-- SKILL.md                    # main skill (required, 150-250 lines preferred)
 +-- references/                 # deep-dive content (loaded on demand)
 |   +-- foo.md                  # domain-specific reference
 |   +-- bar.md                  # another reference
@@ -389,10 +399,12 @@ For skills with complex relationships, add an explicit section explaining HOW sk
 
 ### Cross-skill reference rules
 
-1. Every skill name you mention must correspond to a published (non-gitignored) skill in the
-   collection. Use `git check-ignore -q` to filter private skills when git is available.
+1. Ordinary routing targets must be active published (non-gitignored) skills. Explicit
+   migration references may name deprecated notices. Use `git check-ignore -q` to filter
+   private skills when git is available; existence alone does not establish active status.
 2. Characterize the relationship: "use X for Y" (routing) vs "X does Y while this does Z" (explanation)
-3. If two skills share trigger keywords, both must have "When NOT to use" entries pointing at each other
+3. Compare only active skills for trigger overlap. If two active skills share trigger keywords,
+   both must have "When NOT to use" entries pointing at each other
 
 ---
 
@@ -498,18 +510,19 @@ prose; repeated keyword lists spend catalog space without adding scope. The firs
 should help choose the skill even when a host shortens the description.
 
 ```text
-· Review code and diffs for correctness: bugs, regressions, edge cases, races, and resource leaks.
-· Write or improve one-off LLM prompts, system prompts, and prompt templates from rough notes.
-· Read and scrape websites, navigate pages, and fill forms. For browser tests, use testing.
+Review code and diffs for correctness: bugs, regressions, edge cases, races, and resource leaks.
+Write or improve one-off LLM prompts, system prompts, and prompt templates from rough notes.
+Check live Kubernetes cluster health with read-only diagnostics for nodes, pods, and storage.
 ```
 
-Aim for 80-120 characters including the prefix. The 120-character warning is advisory;
+Aim for 80-120 characters with useful task terms first. The 120-character warning is advisory;
 a useful boundary can justify extra text. The 1024-character spec ceiling is a validation
 limit, not a guarantee that a host will display or load the whole description. Hosts may
 shorten descriptions or omit entries to fit the combined catalog budget.
 
-Test natural requests, aliases, and adjacent tasks against the whole catalog. Put detailed
-examples and exclusions in the body; retain a short exclusion in the description when it
+Test natural requests, aliases, and adjacent tasks against the active catalog. Test explicit
+legacy invocations separately against notices; do not optimize notices into ordinary triggers.
+Put detailed examples and exclusions in the body; retain a short exclusion in the description when it
 prevents a likely wrong match. Describe the skill's actual scope without adding unsupported
 capabilities to attract more requests.
 
@@ -521,57 +534,56 @@ brevity; routing trials provide evidence about selection quality.
 
 ## 9. Skill Inventory (September 2026)
 
-### Published skills (47)
+### Active skills (43)
 
-| Skill | Effort | Date Added | Domain |
-|-------|--------|-----------|--------|
-| ai-ml | high | 2026-04-02 | AI/ML applications, RAG, agents |
-| ansible | high | 2026-03-24 | Configuration management |
-| anti-ai-prose | medium | 2026-04-09 | AI prose audit |
-| anti-slop | medium | 2026-03-25 | Code quality audit |
-| arch-btw | high | 2026-03-26 | Arch Linux / CachyOS administration |
-| backend-api | high | 2026-04-06 | HTTP API design and implementation |
-| browse | medium | 2026-04-04 | Web browsing, scraping, token-efficient extraction |
-| ci-cd | high | 2026-03-24 | CI/CD pipelines |
-| cluster-health | high | 2026-03-30 | Kubernetes read-only diagnostics |
-| code-review | high | 2026-03-25 | Correctness audit |
-| code-slimming | medium | 2026-05-02 | Read-only refactor opportunity audit |
-| command-prompt | medium | 2026-03-25 | Shell scripting and config |
-| databases | high | 2026-03-24 | Database operations |
-| debian-ubuntu | high | 2026-04-22 | Debian / Ubuntu administration |
-| debug-triage | high | 2026-06-14 | Live incident localization and routing |
-| deep-audit | high | 2026-04-14 | Wave-based repo audit orchestrator |
-| deep-grill | high | 2026-06-13 | Plan stress-testing and red-team interrogation |
-| dev-cycle | high | 2026-04-14 | Start-to-finish development workflow |
-| docker | high | 2026-03-24 | Containers |
-| firewall-appliance | high | 2026-03-30 | OPNsense/pfSense firewall management |
-| frontend-design | high | 2026-04-26 | Opinionated UI/UX build and critique |
-| full-review | high | 2026-03-22 | Orchestrator (4 parallel audits) |
-| git | high | 2026-03-24 | Version control, multi-forge |
-| handoff | medium | 2026-06-13 | Session handoff document authoring |
-| jekyll-hyde | medium | 2026-04-28 | Dual-lens decision review |
-| kali-linux | high | 2026-04-22 | Kali Linux administration |
-| kubernetes | high | 2026-03-24 | K8s manifests, Helm, architecture |
-| localize | high | 2026-04-12 | i18n/l10n audit |
-| lockpick | high | 2026-03-25 | Post-exploitation, CTF, pivoting |
-| mcp | high | 2026-03-30 | MCP server development |
-| networking | high | 2026-03-25 | DNS, reverse proxies, VPNs, nftables, HA |
-| nixos-btw | high | 2026-04-23 | NixOS / Nix administration |
-| observability | high | 2026-06-14 | Metrics, traces, logs, alerts, SLOs, dashboards |
-| prompt-generator | medium | 2026-03-25 | LLM prompt structuring |
-| rhel-fedora | high | 2026-04-22 | Fedora / RHEL-family administration |
-| roadmap | medium | 2026-04-05 | Gitignored roadmap management and competitor scouting |
-| routine-writer | medium | 2026-04-14 | Claude Code routine prompt authoring |
-| security-audit | high | 2026-03-25 | Application security review |
-| skill-creator | high | 2026-03-25 | Skill lifecycle management |
-| skill-refiner | high | 2026-03-31 | Iterative self-improvement loop |
-| skill-router | medium | 2026-05-01 | Skill routing and trigger conflict analysis |
-| synology-dsm | high | 2026-07-27 | Synology DSM administration and btrfs recovery |
-| terraform | high | 2026-03-24 | Infrastructure-as-code |
-| testing | high | 2026-04-02 | Test design, debugging, infrastructure |
-| update-docs | medium | 2026-03-25 | Documentation sweep |
-| virtualization | high | 2026-04-02 | Proxmox, libvirt, VM operations |
-| zero-day | high | 2026-04-03 | Vulnerability research and discovery |
+| Skill | Effort | Date Added | Scope |
+|---|---|---|---|
+| ansible | high | 2026-03-24 | Write, review, and debug Ansible playbooks, roles, inventories, Ansible Vault, Molecule tests, and AWX/AAP. |
+| anti-ai-prose | medium | 2026-04-09 | Edit prose that sounds AI-written: remove filler and canned phrasing in docs, emails, and replies. |
+| arch-linux | high | 2026-03-26 | Administer Arch Linux, CachyOS, EndeavourOS, and Manjaro: pacman, AUR, upgrades, boot, GPU, and desktop issues. |
+| backend-api | high | 2026-04-06 | Design and review REST/HTTP APIs, with bounded GraphQL and gRPC contract guidance: OpenAPI, auth, pagination, compatibility, and retries. |
+| ci-cd | high | 2026-03-24 | Build, review, and debug CI/CD pipelines and runners: GitHub Actions, GitLab CI, Forgejo/Gitea, and Woodpecker. |
+| code-review | high | 2026-03-25 | Review code and diffs for correctness: bugs, regressions, edge cases, races, and resource leaks. |
+| code-simplification | medium | 2026-09-20 | Review code for dead code, duplication, overengineering, invented APIs, and weak tests. Report safe reductions; no edits. |
+| databases | high | 2026-03-24 | Design schemas, tune queries, migrate, and administer PostgreSQL, MySQL/MariaDB, MongoDB, MSSQL, Redis, and Valkey. |
+| debian-ubuntu | high | 2026-04-22 | Administer Debian, Ubuntu, Mint, and Pop!_OS: apt, dpkg, upgrades, boot, drivers, and desktop issues. |
+| debug-triage | high | 2026-06-14 | Triage live outages when the failing component is unknown; localize the fault and route further debugging. |
+| dev-cycle | high | 2026-04-14 | Run a requested full development workflow: branch, implement, check, review, PR, merge, and release. |
+| docker | high | 2026-03-24 | Build and debug Dockerfiles, Compose, Docker/Podman containers, and BuildKit images; review container security. |
+| frontend-design | high | 2026-04-26 | Design, build, and critique frontend UI/UX: layouts, CSS, Tailwind, landing pages, and visual polish. |
+| git | high | 2026-03-24 | Manage git commits, branches, conflicts, rebases, PRs/MRs, tags, releases, and GitHub/GitLab/Forgejo/Gitea workflows. |
+| i18n-localization | high | 2026-04-12 | App i18n only, not standalone translation: localize UI catalogs, validate placeholders, and audit missing locale keys. |
+| kali-linux | high | 2026-04-22 | Administer Kali Linux: packages, metapackages, rolling upgrades, live USB persistence, and NetHunter. |
+| kubernetes | high | 2026-03-24 | Build and review Kubernetes/K8s manifests, Helm charts, Kustomize overlays, Gateway API, and ArgoCD deployments. |
+| kubernetes-health | high | 2026-03-30 | Check live Kubernetes cluster health with read-only diagnostics: nodes, pods, storage, networking, and GitOps. |
+| llm-app-development | high | 2026-04-02 | Build LLM applications: RAG, embeddings, agents, structured outputs, evaluations, fine-tuning, and local inference. |
+| mcp | high | 2026-03-30 | Build and debug Model Context Protocol (MCP) servers, clients, tools, resources, and OAuth integrations. |
+| message-queues | high | 2026-09-20 | Design, diagnose, and safely operate brokered delivery with Kafka, RabbitMQ, and compatible queues: acknowledgements, retries, dead letters, ordering, lag, and replay. |
+| networking | high | 2026-03-25 | Configure and debug Linux networking: DNS, reverse proxies, VPNs, WireGuard, VLANs, nftables, and routing. |
+| nixos | high | 2026-04-23 | Administer NixOS and Nix: flakes, Home Manager, nix-darwin, generations, overlays, and declarative configuration. |
+| observability | high | 2026-06-14 | Instrument, audit, and debug telemetry: metrics, traces, logs, alerts, SLOs, Prometheus, OpenTelemetry, Grafana. |
+| opnsense-pfsense | high | 2026-03-30 | Administer OPNsense and pfSense firewalls: pf rules, VPNs, CARP failover, upgrades, and SSH diagnostics. |
+| performance-debugging | high | 2026-09-20 | Diagnose a known application's CPU, heap, allocation, lock, and latency regressions with profiles, reproducible baselines, and measured verification. |
+| plan-review | high | 2026-09-20 | Review product, business, and engineering decisions and plans: clarify requirements, challenge assumptions, and assess risks. |
+| privilege-escalation | high | 2026-03-25 | Assess authorized Linux privilege escalation, container escapes, and post-exploitation paths in pentests and CTFs. |
+| prompt-generator | medium | 2026-03-25 | Write or improve one-off LLM prompts, system prompts, and prompt templates from rough notes. |
+| repo-audit | high | 2026-09-20 | Audit repositories or PRs for bugs, security, code quality, and docs: quick review or exhaustive domain coverage. |
+| rhel-fedora | high | 2026-04-22 | Administer Fedora/RHEL, Rocky, AlmaLinux, CentOS, and Amazon Linux: dnf, SELinux, boot, and desktop issues. |
+| roadmap | medium | 2026-04-05 | Capture and prioritize feature ideas and competitor findings in a private ROADMAP.md backlog. |
+| security-audit | high | 2026-03-25 | Audit code for vulnerabilities: auth flaws, exposed secrets, OWASP risks, and dependency/supply-chain threats. |
+| session-handoff | medium | 2026-06-13 | Write an agent session handoff with current state, decisions, unfinished work, verification, and next steps. |
+| shell-scripting | medium | 2026-03-25 | Write and debug Bash, Zsh, POSIX sh, and Fish scripts, commands, quoting, dotfiles, and shell completions. |
+| skill-creator | high | 2026-03-25 | Create or review skills; fix descriptions, triggers, frontmatter, references, and collection overlaps. |
+| skill-refiner | high | 2026-03-31 | Improve skills through repeated scoring, behavioral tests, and peer review toward a requested quality target. |
+| synology-dsm | high | 2026-07-27 | Administer Synology DSM NAS over SSH: shares, packages, storage pools, crashed volumes, and btrfs recovery. |
+| terraform | high | 2026-03-24 | Write and review Terraform/OpenTofu infrastructure: HCL, modules, state, providers, and policy checks. |
+| testing | high | 2026-04-02 | Write unit, integration, E2E, load, and accessibility tests; debug fixtures, mocks, coverage, and flaky suites. |
+| update-docs | medium | 2026-03-25 | Update README, changelogs, API docs, and runbooks after changes; find and fix documentation drift. |
+| virtualization | high | 2026-04-02 | Manage VMs: Proxmox, QEMU/KVM, libvirt, XCP-ng, VMware/ESXi; debug hypervisors, storage, and GPU passthrough. |
+| vulnerability-research | high | 2026-04-03 | Research vulnerabilities in authorized targets through code analysis, reverse engineering, patch diffing, and fuzzing. |
+
+Deprecated notices are migration aids, excluded from the active inventory above but included
+in published totals and migration-test coverage. Derive all counts from the live collection.
 
 This inventory is a snapshot of the upstream iuliandita/skills collection. Treat it as a
 reference example for convention compliance, not as an authoritative list for other repos.

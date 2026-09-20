@@ -1,7 +1,7 @@
 ---
 name: skill-creator
 description: >
-  · Create or review skills; fix descriptions, triggers, frontmatter, references, and collection overlaps.
+  Create or review skills; fix descriptions, triggers, frontmatter, references, and collection overlaps.
 license: MIT
 compatibility: "Optional: git (for freshness and gitignore filtering)"
 metadata:
@@ -33,11 +33,11 @@ patterns activates reliably, reads clearly, and plays well with the rest of the 
 ## When NOT to use
 
 - Reviewing application code for correctness or bugs - use **code-review**
-- Auditing code for AI-generated patterns or style issues - use **anti-slop**
-- Running a full codebase audit across multiple dimensions - use **full-review**
+- Auditing code for AI-generated patterns or style issues - use **code-simplification**
+- Running a full codebase audit across multiple dimensions - use **repo-audit**
 - Creating inline prompts within application code - use **prompt-generator**
 - Batch-improving a whole skill collection via evaluation loops - use **skill-refiner**
-- Choosing which installed skill should handle a concrete user request - use **skill-router**
+- Choosing a skill for one request without editing skill files - use the host's normal skill selection.
 - Syncing or refreshing third-party skills from upstream - handle that directly in the repo workflow
 - Updating project documentation after infrastructure changes - use **update-docs**
 - Writing application code, even if the code is for a tool a skill might use
@@ -58,7 +58,7 @@ Before returning any generated or modified skill, verify against this list:
 - [ ] **Rules section at the end**: the real non-negotiable constraints in imperative form; add only constraints the skill genuinely needs and do not invent rules to fill the section
 - [ ] **Style compliant**: no banned words and only the approved non-ASCII set, both defined
   in `references/conventions.md`; no em-dashes, curly quotes, or `--` substitutes in prose.
-- [ ] **Target ~500 lines**: if over 500, extract to `references/` with clear pointers. Hard max 600
+- [ ] **Target 150-250 lines where practical**: if over 500, extract to `references/` with clear pointers. Hard max 600
 - [ ] **Reference files use `references/` relative paths**: not hardcoded or tool-specific paths
 - [ ] **All references verified**: every tool, CLI flag, IaC resource, and example command
   confirmed against actual docs, `--help`, or registries - not assumed from training data.
@@ -67,7 +67,8 @@ Before returning any generated or modified skill, verify against this list:
   match upstream `values.yaml`, K8s fields match the target API version. Note unverified
   claims when web access is unavailable
 - [ ] **Version numbers verified and dated**: latest stable version searched and pinned with a date (e.g., "v29.3.0 (March 2026)") so staleness is detectable
-- [ ] **Cross-skill references are valid**: every mentioned skill name actually exists
+- [ ] **Cross-skill references are valid**: ordinary routing resolves to active published skills;
+  deprecated notices appear only in explicit migration references
 - [ ] **AI-age awareness**: if the skill generates code, config, or structured files (including skill files), include an AI self-check section
 - [ ] **Context budget justified**: every section earns its token cost (see `references/conventions.md`)
 - [ ] **Forward-tested** (high-effort skills, when feasible): during review, a subagent used the skill on a realistic task without leaked context. This is a process check on the reviewer, not a content requirement on the skill - the skill does not need a "forward-test" section. The reviewer notes what was tested or skipped and why.
@@ -123,7 +124,15 @@ possible update is destructive or would create a new class-level skill with unce
    Before authorized tracked edits, create a task branch following repository conventions,
    unless already on one for this work. Preserve unrelated changes. Without git, report
    "branch unavailable" and fall back to file modification dates.
-3. **Single skill vs collection**: Modes 1 (Create) and 2 (Review) work on individual skills
+3. **Classify lifecycle status**: for existing targets and collection neighbors, parse YAML
+   frontmatter, then read `metadata.deprecated`. In Mode 1, the new file does not yet exist:
+   classify existing neighbors now and validate the draft after it is created in Step 3.
+   Boolean `true` or a string equal to `true` after trimming and case-folding marks a
+   deprecated notice (including quoted values); missing or false means active. Never use
+   string truthiness or search body text. Report malformed frontmatter instead of assuming
+   active. Review notices for migration integrity and legacy invocation behavior, not the
+   ordinary active-skill checklist or trigger optimization.
+4. **Single skill vs collection**: Modes 1 (Create) and 2 (Review) work on individual skills
    with or without a collection - collection-dependent steps become best-effort. Mode 3
    (Audit) requires a collection. Mode 4 (Optimize) works standalone but benefits from
    collection context for overlap analysis.
@@ -144,7 +153,7 @@ skill"), extract the steps, tools used, corrections made, and patterns observed.
 #### Step 2: Research the domain
 
 Before drafting, gather context:
-1. **Check existing skills** for overlap (if a collection is available) - read the "When to use"
+1. **Check existing active skills** for overlap (if a collection is available) - read the "When to use"
    / "When NOT to use" of potentially related skills. Don't create a skill that duplicates
    existing coverage.
 2. **Verify tools exist** - for every tool, library, CLI, or platform the skill references,
@@ -193,7 +202,8 @@ For tool/platform skills, include a **Target versions** block with pinned versio
 Run through the AI Self-Check above. Then:
 
 1. **Cross-reference check**: grep the skill collection for every skill name mentioned in the draft.
-   Verify they exist and the characterization is accurate.
+   Verify ordinary routing targets are active and published; allow notices only in explicit
+   migration references. Check that the characterization is accurate.
 2. **Trigger overlap check**: flag a conflict when the draft would capture requests a better-matched
    skill owns - judged by real routing, not a raw keyword-overlap count (shared vocabulary between adjacent domains is normal). Resolve by narrowing the description or cross-referencing.
 3. **Convention check**: compare frontmatter, structure, and style against 2-3 existing custom
@@ -244,7 +254,7 @@ Read the SKILL.md and all reference files. No skipping - the whole point is catc
 - AI Self-Check section (required for skills that generate code/config)
 - Reference file paths resolve (check `references/` directory)
 - Related Skills section present and accurate (when the skill interacts with other skills)
-- Target ~500 lines (SKILL.md body), hard max 600
+- Target 150-250 lines where practical (SKILL.md body), hard max 600
 
 **Content checks:**
 - Tools exist? Every tool, CLI, library, or platform named in the skill must be verified as
@@ -263,8 +273,9 @@ Read the SKILL.md and all reference files. No skipping - the whole point is catc
   verify every passing mention - focus on versions that drive behavior or could mislead.
 - Security references current? Check for new CVEs since the skill's `date_added`.
 - Cross-skill references valid (if a collection is available)? Every skill name mentioned must
-  exist as a published (non-gitignored) skill in the collection. For standalone skills,
-  note unverifiable references instead of failing them.
+  resolve to active published (non-gitignored) skills for ordinary routing. Deprecated
+  notices are valid only as explicit migration references. For standalone skills, note
+  unverifiable references instead of failing them.
 - "When NOT to use" complete? Should reference all skills with overlapping trigger space.
 
 **AI-age checks:**
@@ -323,39 +334,23 @@ Run a health check across all skills. Useful periodically or after adding/removi
 
 #### Step 1: Inventory
 
-```bash
-# Detect collection root - adapt to your layout
-SKILL_ROOT="${SKILL_ROOT:-skills}"
-[[ -d "$SKILL_ROOT" ]] || { echo "No skill collection at $SKILL_ROOT"; exit 1; }
-
-# Check git availability for gitignore filtering and freshness
-IN_GIT=false
-git -C "$SKILL_ROOT" rev-parse --git-dir &>/dev/null && IN_GIT=true
-
-for skill in "$SKILL_ROOT"/*/SKILL.md; do
-  dir=$(dirname "$skill")
-  name=$(basename "$dir")
-  [[ "$name" == ".backups" || "$name" == ".cook" ]] && continue  # tooling dirs, not skills
-  $IN_GIT && git -C "$dir" check-ignore -q . 2>/dev/null && continue
-  source=$(grep -m1 '[[:space:]]source:' "$skill" 2>/dev/null | sed 's/.*source: *//'); [[ -n "$source" ]] || source="unknown"
-  date=$(grep -m1 '[[:space:]]date_added:' "$skill" 2>/dev/null | sed 's/.*date_added: *"//' | sed 's/"//'); [[ -n "$date" ]] || date="unknown"
-  effort=$(grep -m1 '[[:space:]]effort:' "$skill" 2>/dev/null | sed 's/.*effort: *//'); [[ -n "$effort" ]] || effort="missing"
-  if $IN_GIT; then
-    last_mod=$(git -C "$SKILL_ROOT" log -1 --format=%cd --date=short -- "$name" 2>/dev/null || echo "unknown")
-  else
-    # Portable: GNU stat then BSD stat; GNU date then BSD date
-    mtime=$(stat -c %Y "$skill" 2>/dev/null || stat -f %m "$skill" 2>/dev/null || echo 0)
-    last_mod=$(date -d "@$mtime" +%Y-%m-%d 2>/dev/null || date -r "$mtime" +%Y-%m-%d 2>/dev/null || echo "unknown")
-  fi
-  printf "%-25s %-10s %-12s %-12s %s\n" "$name" "$source" "$date" "$last_mod" "$effort"
-done
-```
+1. Locate the collection root and enumerate its `*/SKILL.md` files. Exclude tooling
+   directories and gitignored private entries when git is available.
+2. Parse each file's YAML frontmatter and classify it using the lifecycle rule above.
+   Keep separate **published**, **active**, and **deprecated notice** sets; published is
+   the union of the latter two. Report parse failures separately and do not claim complete
+   status counts until resolved.
+3. Print each published entry's name, status, source, date added, effort, and last modification
+   (git history when available, otherwise file mtime). Report active, deprecated, and total
+   published counts separately; never label a published total as an active count.
+4. Keep notices in installer/published inventory and migration-integrity checks. Use only
+   active entries for ordinary checklist reviews, freshness sweeps, and trigger comparisons.
 
 #### Step 2: Cross-reference matrix
 
 For each skill, check:
-1. Every skill name mentioned in "When NOT to use" exists as a published (non-gitignored) skill
-2. Every skill name mentioned in "Related Skills" exists as a published (non-gitignored) skill
+1. Ordinary routing in "When NOT to use" resolves to active published skills
+2. "Related Skills" targets are active and published; explicit migration references may name notices
 3. Every declared reference file path has a corresponding file
 4. Installer, publish, or registry files list the published skills correctly
 5. Lint scripts, CI checks, and count tooling exclude gitignored (private) skills -
@@ -364,8 +359,9 @@ For each skill, check:
 
 #### Step 3: Trigger overlap analysis
 
-Compare all skill descriptions pairwise. Flag pairs that share significant trigger keywords
-without mutual disambiguation (no "When NOT to use" cross-reference).
+Compare active skill descriptions pairwise; exclude deprecated notices from trigger competition.
+Flag pairs that share significant trigger keywords without mutual disambiguation
+(no "When NOT to use" cross-reference).
 
 #### Step 4: Freshness sweep
 
@@ -374,10 +370,10 @@ is >30 days old AND the skill covers fast-moving domains. The lists below are il
 not exhaustive; derive the sets from the live inventory each run.
 
 **Fast-moving examples** (>30 days = stale risk): docker, kubernetes, ci-cd, terraform, ansible,
-databases, git, security-audit, code-review (AI-age patterns section), mcp, networking, arch-btw
+databases, git, security-audit, code-review (AI-age patterns section), mcp, networking, arch-linux
 
-**Slow-moving examples** (>30 days = probably fine): firewall-appliance, command-prompt,
-prompt-generator, update-docs, skill-creator, full-review, anti-slop, lockpick
+**Slow-moving examples** (>30 days = probably fine): opnsense-pfsense, shell-scripting,
+prompt-generator, update-docs, skill-creator, repo-audit, code-simplification, privilege-escalation
 
 If conventions change significantly, reclassify skill-creator as fast-moving until they stabilize.
 
@@ -406,7 +402,7 @@ Read the skill's description and identify:
 
 #### Step 2: Compare against the collection
 
-If a collection is available, check which other skills share trigger keywords. Ensure the
+If a collection is available, check which other active skills share trigger keywords. Ensure the
 description differentiates clearly. For standalone skills, skip this step.
 
 #### Step 3: Rewrite the description
@@ -414,7 +410,7 @@ description differentiates clearly. For standalone skills, skip this step.
 - **Lead with the task and domain** so the opening still routes usefully if the host shortens it.
 - **Use distinctive terms once** in natural prose: artifact names, domain aliases, and user intent.
 - **Disambiguate likely neighbors** with a specific task or short exclusion where it earns space.
-- **Aim for 80-120 characters**, including the prefix; preserve useful distinctions over shaving characters.
+- **Aim for 80-120 characters**, with useful task terms first; preserve useful distinctions over shaving characters.
 - **Test natural requests and near misses**; avoid generic "cleanup" or "start working" triggers.
 
 The validator warns above 120 characters and rejects above the 1024-character spec ceiling.
@@ -440,6 +436,19 @@ reusable workflow, routing, preference, or pitfall changes; create a new skill o
 class-level fit exists. In the public skills repo, read gitignored instruction files such as
 `AGENTS.md`, but do not force-add them; stage only intended public skill paths and validate.
 
+## Merge, Rename, or Removal Checklist
+
+- Read the target repository's lifecycle policy and promised transition period before edits.
+  Follow it; missing incoming references never cancel a promised grace period.
+- Map old names to active replacements or explicit retirement guidance. For merges, verify
+  each retained mode, trigger boundary, and read-only or editing behavior in the destination.
+- Update published inventories, routing, tests, and install/publish metadata together. Preserve
+  installer safety and user-owned files; verify supported upgrade and legacy invocation paths.
+- Keep required notices and canonical migration tests until repository removal conditions are
+  met. Confirm publication evidence and elapsed periods required by that policy before removal.
+- Run structural checks and semantic routing/mode tests. Report native harness discovery and
+  registry/search checks separately; semantic trials alone do not prove those integrations.
+
 ## Run Report
 
 Record every run in a human-readable report, even for report-only checks. Include branch, mode,
@@ -463,18 +472,18 @@ See `references/output-contract.md` for the full contract.
 
 - **Skill name:** SKILL-CREATOR
 - **Deliverable bucket:** `audits`
-- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content (e.g., Mode 2 review or Mode 3 audit), emit the full contract - monospace inline header, severity-grouped inline summary, linked Markdown deliverable, and concise monospace conclusion - and write the deliverable to `docs/local/audits/skill-creator/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content** (e.g., Mode 1 create), respond freely without the contract; the existing `## Run Report` guidance applies to that build path.
+- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content (e.g., Mode 2 review or Mode 3 audit), apply the reporting size and evidence rules in `references/output-contract.md` and write the deliverable to `docs/local/audits/skill-creator/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content** (e.g., Mode 1 create), respond freely without the contract; the existing `## Run Report` guidance applies to that build path.
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
 
 ## Related Skills
 
-- **anti-slop** - audits code quality. Apply it to example code and reference patterns.
-- **full-review** - orchestrates four application-repo audits; this skill audits the skill collection.
+- **code-simplification** - audits code quality. Apply it to example code and reference patterns.
+- **repo-audit** - orchestrates quick or exhaustive application-repo audits; this skill audits the skill collection.
 - **prompt-generator** - targets one-off prompts in `docs/local/prompts/`, not reusable skill files.
 - **code-review** - reviews application code for correctness. This skill reviews skill files
   for convention compliance, not code correctness.
-- **skill-router** - chooses the best installed skill for one concrete request. This skill owns
-  edits to trigger text and collection-wide overlap analysis after a routing defect is identified.
+- Use the host's normal skill selection for individual requests; this skill owns recurring
+  trigger conflicts and collection-wide overlap analysis.
 
 ## Rules
 
@@ -485,7 +494,8 @@ See `references/output-contract.md` for the full contract.
    source docs, `--help`, registries, or explicit "unverified" notes. Do not guess.
 4. **Prefer dedicated skill workflows over generic helpers.**
 5. **Update the inventory.** After creating, removing, or renaming a skill, update published
-   inventories and verify counts from live public skills.
+   inventories and verify active, deprecated, and published counts from live public skills.
+   Apply the lifecycle checklist for merges, renames, and removals.
 6. **No AI slop in skills.** Avoid comment noise, over-abstraction, ALL CAPS theater, and
    "just in case" instructions.
 7. **ASCII by default.** Use only the approved non-ASCII set and banned-word list defined in

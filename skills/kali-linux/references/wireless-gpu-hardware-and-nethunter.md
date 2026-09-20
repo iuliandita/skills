@@ -42,7 +42,7 @@ For GPU-heavy tools such as `hashcat`, the key question is not "is Kali installe
 
 If it is packaging and driver shape, stay here.
 If it becomes offensive password-audit tradecraft on an authorized target, that intersects with
-**lockpick**.
+**privilege-escalation**.
 
 ## GUI capture and desktop helpers
 
@@ -66,7 +66,7 @@ Core check:
 command -v nethunter >/dev/null 2>&1 && nethunter -h 2>&1 | head -20
 ```
 
-When a NetHunter question becomes kernel porting or exploit technique, route to **lockpick** for
+When a NetHunter question becomes kernel porting or exploit technique, route to **privilege-escalation** for
 authorized offensive workflow. When it becomes original vulnerability discovery, reversing depth
-work, or PoC development, route to **zero-day**. When it becomes defensive review of the target
+work, or PoC development, route to **vulnerability-research**. When it becomes defensive review of the target
 system or code, route to **security-audit**.

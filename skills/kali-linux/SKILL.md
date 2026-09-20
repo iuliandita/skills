@@ -1,7 +1,7 @@
 ---
 name: kali-linux
 description: >
-  · Administer Kali Linux: packages, metapackages, rolling upgrades, live USB persistence, and NetHunter.
+  Administer Kali Linux: packages, metapackages, rolling upgrades, live USB persistence, and NetHunter.
 license: MIT
 compatibility: "Requires Kali Linux or Kali images with apt and Kali repositories"
 metadata:
@@ -51,19 +51,19 @@ stale package table.
 ## When NOT to use
 
 - Generic Debian, Ubuntu, Mint, or Pop!_OS administration without Kali-specific context - use **debian-ubuntu**
-- Arch, CachyOS, or EndeavourOS administration - use **arch-btw**
+- Arch, CachyOS, or EndeavourOS administration - use **arch-linux**
 - Fedora, RHEL, Rocky, or AlmaLinux administration - use **rhel-fedora**
-- NixOS or declarative Nix configuration - use **nixos-btw**
-- Shell syntax, quoting, or script portability - use **command-prompt**
+- NixOS or declarative Nix configuration - use **nixos**
+- Shell syntax, quoting, or script portability - use **shell-scripting**
 - Network architecture, DNS, VPNs, reverse proxies, or firewall design - use **networking**
 - Docker, Podman, image builds, or container runtime issues - use **docker**
 - Hypervisor configuration, passthrough wiring, or VM platform issues where the fault is clearly outside the Kali guest - use **virtualization**
 - Kubernetes cluster or manifest work - use **kubernetes**
 - Fleet-wide Linux configuration via playbooks - use **ansible**
-- Exploitation, privilege escalation, lateral movement, or post-exploitation on live targets - use **lockpick**
-- Novel vulnerability hunting, reverse engineering depth work, fuzzing, or proof-of-concept research - use **zero-day**
+- Exploitation, privilege escalation, lateral movement, or post-exploitation on live targets - use **privilege-escalation**
+- Novel vulnerability hunting, reverse engineering depth work, fuzzing, or proof-of-concept research - use **vulnerability-research**
 - Defensive hardening, vuln triage, or broad security review - use **security-audit**
-- OPNsense or pfSense appliance work - use **firewall-appliance**
+- OPNsense or pfSense appliance work - use **opnsense-pfsense**
 
 ---
 
@@ -84,7 +84,7 @@ Before returning Kali commands or tool recommendations, verify:
 - [ ] **Wireless and hardware path is real**: chipset, firmware, monitor mode, injection support, SDR stack, USB passthrough, and kernel modules match the actual hardware.
 - [ ] **GPU and capture stack is coherent**: VM passthrough, host acceleration, PipeWire, browser capture, and desktop session line up before blaming the tool.
 - [ ] **NetHunter is not treated like normal desktop Kali**: mobile kernels, Android host constraints, rootless vs full chroot shape, and missing systemd-style tooling can change which checks even make sense.
-- [ ] **Correct handoff chosen**: once the question becomes exploitation methodology, route to **lockpick**. Once it becomes original vulnerability discovery, route to **zero-day**.
+- [ ] **Correct handoff chosen**: once the question becomes exploitation methodology, route to **privilege-escalation**. Once it becomes original vulnerability discovery, route to **vulnerability-research**.
 - [ ] **Diagnostic errors are not silenced**: do not hide useful failure output with `2>/dev/null` on commands whose error reason matters. Use `2>&1 || true` when gathering.
 - [ ] **Channel checked**: kali-rolling, snapshots, metapackages, and NetHunter advice matches official docs
 - [ ] **Lab boundary explicit**: offensive tooling stays in authorized labs, CTFs, or owned systems
@@ -194,8 +194,8 @@ only if the first layer is clean.
 |---------------|-------|
 | install, package, image, persistence, hardware, or tool-family selection on Kali | stay in **kali-linux** |
 | hypervisor config, USB passthrough, guest display acceleration, or VM platform wiring | use **virtualization** |
-| exploit, pivot, privilege escalate, or run post-exploitation workflow on an authorized target | use **lockpick** |
-| fuzz, reverse engineer deeply, hunt a novel bug, or build a PoC | use **zero-day** |
+| exploit, pivot, privilege escalate, or run post-exploitation workflow on an authorized target | use **privilege-escalation** |
+| fuzz, reverse engineer deeply, hunt a novel bug, or build a PoC | use **vulnerability-research** |
 | review the target code or service for defensive findings | use **security-audit** |
 | generic Debian-family host admin with no Kali-specific context | use **debian-ubuntu** |
 
@@ -273,7 +273,7 @@ When the problem smells like "Kali is broken," check the boring causes first:
 - **Labs should be disposable.** Snapshots, throwaway VMs, and isolated media beat hand-maintaining a single sacred pentest laptop forever.
 - **Tool families come before individual tool bikeshedding.** Pick the category, then the tool, then the package.
 - **Wireless and SDR work are hardware stories first.** Chipset support, firmware, passthrough, power, and monitor-mode reality matter more than menu entries.
-- **Route offensive depth correctly.** Kali can install the tools, but **lockpick** owns exploitation workflow and **zero-day** owns novel bug discovery.
+- **Route offensive depth correctly.** Kali can install the tools, but **privilege-escalation** owns exploitation workflow and **vulnerability-research** owns novel bug discovery.
 
 ---
 
@@ -297,7 +297,7 @@ When the problem smells like "Kali is broken," check the boring causes first:
 ## Reference Files
 
 - `references/packages-branches-and-repos.md` - Kali branch model, source lists, keyrings, updates, and package-state recovery
-- `references/metapackages-and-tool-families.md` - what the main Kali metapackages install, how the tool families map to real workflows, the `kali-tweaks` configuration menu, and when to hand off to lockpick or zero-day
+- `references/metapackages-and-tool-families.md` - what the main Kali metapackages install, how the tool families map to real workflows, the `kali-tweaks` configuration menu, and when to hand off to privilege-escalation or vulnerability-research
 - `references/images-live-persistence-and-recovery.md` - installer ISOs, netinst, live images, Purple images, VM images, persistence, and recovery flow
 - `references/wireless-gpu-hardware-and-nethunter.md` - Wi-Fi, Bluetooth, RFID, SDR, GPU, USB passthrough, and NetHunter-specific hardware realities
 - `references/lab-safety-and-scope.md` - disposable lab setup, intentionally vulnerable targets, snapshots, and authorization boundaries
@@ -311,17 +311,17 @@ See `references/output-contract.md` for the full contract.
 
 - **Skill name:** KALI-LINUX
 - **Deliverable bucket:** `audits`
-- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract - monospace inline header, severity-grouped inline summary, linked Markdown deliverable, and concise monospace conclusion - and write the deliverable to `docs/local/audits/kali-linux/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
+- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, apply the reporting size and evidence rules in `references/output-contract.md` and write the deliverable to `docs/local/audits/kali-linux/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
 
 ## Related Skills
 
 - **debian-ubuntu** - base Debian-family administration. Use it for generic apt-family hosts; use this skill when Kali-specific branches, images, metapackages, or tool context matter.
-- **lockpick** - exploitation, post-exploitation, and escalation on authorized targets. This skill helps choose and maintain Kali tooling; lockpick handles the offensive workflow itself.
-- **zero-day** - vulnerability discovery, reverse engineering depth, fuzzing, and proof-of-concept work. This skill covers the Kali environment and tool families that support that work.
+- **privilege-escalation** - exploitation, post-exploitation, and escalation on authorized targets. This skill helps choose and maintain Kali tooling; privilege-escalation handles the offensive workflow itself.
+- **vulnerability-research** - vulnerability discovery, reverse engineering depth, fuzzing, and proof-of-concept work. This skill covers the Kali environment and tool families that support that work.
 - **security-audit** - defensive hardening and vuln review instead of offensive distro workflow.
 - **virtualization** - hypervisor setup, guest provisioning, passthrough, and VM platform issues once the fault is clearly outside the Kali guest.
-- **command-prompt** - shell syntax, wrappers, aliases, and script portability when the real issue is the shell rather than Kali.
+- **shell-scripting** - shell syntax, wrappers, aliases, and script portability when the real issue is the shell rather than Kali.
 - **networking** - network services, VPNs, DNS, proxies, and firewall design beyond host-level Kali package questions.
 
 ---
@@ -336,5 +336,5 @@ See `references/output-contract.md` for the full contract.
 6. **Respect scope.** Recommending Kali tools is not permission to use them outside authorized environments.
 7. **Treat hardware claims as hardware claims.** Monitor mode, injection, SDR capture, HID, and GPU acceleration depend on actual chipsets, firmware, and passthrough support.
 8. **Live USB and persistence are their own failure domain.** Do not debug them like a normal installed root filesystem.
-9. **Hand off correctly.** Once the work becomes exploitation methodology, use **lockpick**. Once it becomes original vulnerability research, use **zero-day**.
+9. **Hand off correctly.** Once the work becomes exploitation methodology, use **privilege-escalation**. Once it becomes original vulnerability research, use **vulnerability-research**.
 10. **Reach for common Kali failure patterns before exotic explanations.** Stale keyrings, branch drift, metapackage sprawl, persistence corruption, and unsupported hardware explain a large share of the mess.

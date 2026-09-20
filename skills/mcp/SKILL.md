@@ -1,7 +1,7 @@
 ---
 name: mcp
 description: >
-  · Build and debug Model Context Protocol (MCP) servers, clients, tools, resources, and OAuth integrations.
+  Build and debug Model Context Protocol (MCP) servers, clients, tools, resources, and OAuth integrations.
 license: MIT
 compatibility: Requires Node.js or Python runtime
 metadata:
@@ -37,9 +37,9 @@ become yet another server with preventable injection vulnerabilities.
 ## When NOT to use
 
 - General REST API development that doesn't use MCP - use **backend-api**
-- Claude API / Anthropic SDK usage in an application - use **ai-ml**
+- Claude API / Anthropic SDK usage in an application - use **llm-app-development**
 - Security auditing existing servers across a codebase - use **security-audit** (it has an MCP section)
-- Using MCP browsing tools to browse or scrape web pages - use **browse**
+- Using MCP browsing tools to browse or scrape web pages - use the host's browsing tools
 - Writing prompts for LLMs (not MCP prompt resources) - use **prompt-generator**
 
 ---
@@ -436,7 +436,7 @@ See `references/output-contract.md` for the full contract.
 
 - **Skill name:** MCP
 - **Deliverable bucket:** `audits`
-- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract - monospace inline header, severity-grouped inline summary, linked Markdown deliverable, and concise monospace conclusion - and write the deliverable to `docs/local/audits/mcp/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
+- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, apply the reporting size and evidence rules in `references/output-contract.md` and write the deliverable to `docs/local/audits/mcp/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
 
 ## Related Skills
@@ -446,9 +446,9 @@ See `references/output-contract.md` for the full contract.
   building servers correctly from the start.
 - **code-review** - for reviewing MCP server code for correctness beyond security.
 - **docker** - for containerizing MCP servers with minimal capabilities.
-- **ai-ml** - for Claude API / Anthropic SDK usage in the application that calls MCP tools. Use ai-ml, not this skill, for Anthropic SDK integration code.
+- **llm-app-development** - for Claude API / Anthropic SDK usage in the application that calls MCP tools. Use llm-app-development, not this skill, for Anthropic SDK integration code.
 - **backend-api** - for general REST/GraphQL API development that does not use the MCP protocol.
-- **browse** - for using MCP browsing tools to scrape or interact with web pages; this skill builds the server, browse operates it.
+- Use the host's browsing tools to read or interact with web pages; this skill builds MCP servers.
 - **prompt-generator** - for writing LLM prompts (not MCP prompt resources); route there when the request is about prompt engineering rather than MCP server construction.
 
 ---

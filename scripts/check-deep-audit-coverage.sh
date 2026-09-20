@@ -3,34 +3,41 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
+# shellcheck source=./scripts/skill-lib.sh
+source "$ROOT/scripts/skill-lib.sh"
+
 mapfile -t public_skills < <(
   git -C "$ROOT" ls-files 'skills/*/SKILL.md' \
     | sed 's#^skills/##; s#/SKILL.md$##' \
-    | sort
+    | sort \
+    | while IFS= read -r name; do
+        [[ "$(frontmatter_get "$ROOT/skills/$name/SKILL.md" metadata.deprecated)" == "true" ]] || printf '%s\n' "$name"
+      done
 )
 
 wave_skills=(
-  ai-ml
+  llm-app-development
   ansible
   anti-ai-prose
-  anti-slop
-  arch-btw
+  arch-linux
   backend-api
   ci-cd
   code-review
-  code-slimming
-  command-prompt
+  code-simplification
+  shell-scripting
   databases
   debian-ubuntu
   docker
-  firewall-appliance
+  opnsense-pfsense
   frontend-design
   git
   kubernetes
-  localize
+  i18n-localization
   mcp
+  message-queues
+  performance-debugging
   networking
-  nixos-btw
+  nixos
   observability
   rhel-fedora
   roadmap
@@ -39,13 +46,13 @@ wave_skills=(
   testing
   update-docs
   virtualization
-  zero-day
+  vulnerability-research
 )
 
-# Single source of truth: the exclusion table in deep-audit's references.
+# Single source of truth: the exclusion table in repo-audit's references.
 # Each excluded skill is the first column of a table row, wrapped in **bold**.
-# Add a skill there (and nowhere else) to exclude it from deep-audit coverage.
-exclusions_file="$ROOT/skills/deep-audit/references/exclusions.md"
+# Add a skill there (and nowhere else) to exclude it from repo-audit coverage.
+exclusions_file="$ROOT/skills/repo-audit/references/exclusions.md"
 if [[ ! -f "$exclusions_file" ]]; then
   echo "ERROR: exclusions file not found: $exclusions_file" >&2
   exit 1
@@ -76,14 +83,14 @@ contains() {
 
 for skill in "${public_skills[@]}"; do
   if ! contains "$skill" "${wave_skills[@]}" && ! contains "$skill" "${excluded_skills[@]}"; then
-    echo "ERROR: deep-audit does not cover public skill: $skill"
+    echo "ERROR: repo-audit does not cover public skill: $skill"
     errors=$((errors + 1))
   fi
 done
 
 for skill in "${wave_skills[@]}" "${excluded_skills[@]}"; do
   if ! contains "$skill" "${public_skills[@]}"; then
-    echo "ERROR: deep-audit references missing public skill: $skill"
+    echo "ERROR: repo-audit references missing public skill: $skill"
     errors=$((errors + 1))
   fi
 done

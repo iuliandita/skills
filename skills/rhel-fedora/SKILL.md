@@ -1,7 +1,7 @@
 ---
 name: rhel-fedora
 description: >
-  · Administer Fedora/RHEL, Rocky, AlmaLinux, CentOS, and Amazon Linux: dnf, SELinux, boot, and desktop issues.
+  Administer Fedora/RHEL, Rocky, AlmaLinux, CentOS, and Amazon Linux: dnf, SELinux, boot, and desktop issues.
 license: MIT
 compatibility: Requires Fedora, RHEL, or RHEL-family distro with dnf, yum, or rpm
 metadata:
@@ -67,17 +67,17 @@ Do not transfer Ubuntu kernel patch floors to RHEL, Fedora, or a downstream clon
 
 ## When NOT to use
 
-- Shell syntax, quoting, or script portability - use **command-prompt**
+- Shell syntax, quoting, or script portability - use **shell-scripting**
 - Network architecture, DNS, VPNs, reverse proxies, or firewall design - use **networking**
 - Dockerfiles, Compose files, image builds, or container runtime architecture - use **docker**
 - Kubernetes cluster or manifest work - use **kubernetes**
 - Fleet-wide Linux configuration via playbooks - use **ansible**
-- Security review, vulnerability triage, or offensive testing - use **security-audit** or **lockpick**
-- Arch, CachyOS, or other pacman-family systems - use **arch-btw**
+- Security review, vulnerability triage, or offensive testing - use **security-audit** or **privilege-escalation**
+- Arch, CachyOS, or other pacman-family systems - use **arch-linux**
 - Debian, Ubuntu, Mint, Pop!_OS, or other apt-family systems - use **debian-ubuntu**
 - Fedora Silverblue, Kinoite, Bazzite, Bluefin, Universal Blue, CoreOS, bootc, or other rpm-ostree / image-mode workflows - outside this skill; do not treat them like ordinary dnf-managed hosts
-- OPNsense or pfSense appliance work - use **firewall-appliance**
-- NixOS declarative system configuration - use **nixos-btw**
+- OPNsense or pfSense appliance work - use **opnsense-pfsense**
+- NixOS declarative system configuration - use **nixos**
 - Kali Linux and offensive-tool distros - use **kali-linux**
 
 ---
@@ -341,18 +341,18 @@ See `references/output-contract.md` for the full contract.
 
 - **Skill name:** RHEL-FEDORA
 - **Deliverable bucket:** `audits`
-- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract - monospace inline header, severity-grouped inline summary, linked Markdown deliverable, and concise monospace conclusion - and write the deliverable to `docs/local/audits/rhel-fedora/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
+- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, apply the reporting size and evidence rules in `references/output-contract.md` and write the deliverable to `docs/local/audits/rhel-fedora/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
 
 ## Related Skills
 
-- **command-prompt** - shell syntax, zsh or bash behavior, script portability
+- **shell-scripting** - shell syntax, zsh or bash behavior, script portability
 - **networking** - network services, DNS, VPNs, firewall design beyond host-level `firewalld`
 - **docker** - container runtime and image concerns instead of host distro administration
 - **kubernetes** - cluster and manifest work that sits above host OS administration
 - **ansible** - codifying Linux changes across many machines
 - **security-audit** - hardening and security review rather than normal package and service administration
-- **arch-btw** - Arch Linux and CachyOS administration (same operating-system-admin pattern, different package and release model)
+- **arch-linux** - Arch Linux and CachyOS administration (same operating-system-admin pattern, different package and release model)
 - **debian-ubuntu** - Debian and Ubuntu administration (same operating-system-admin pattern, different package and distro family)
 - **update-docs** - after substantial system administration changes that introduce new operational gotchas
 

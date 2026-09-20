@@ -1,7 +1,7 @@
 ---
 name: frontend-design
 description: >
-  · Design, build, and critique frontend UI/UX: layouts, CSS, Tailwind, landing pages, and visual polish.
+  Design, build, and critique frontend UI/UX: layouts, CSS, Tailwind, landing pages, and visual polish.
 license: MIT
 compatibility: "None - works on any frontend stack"
 metadata:
@@ -46,13 +46,13 @@ choosing dependencies or using an unfamiliar API; do not migrate frameworks for 
 ## When NOT to use
 
 - General code correctness or logic - use **code-review**
-- Code duplication, invented APIs, or over-abstraction - use **anti-slop**
+- Code duplication, invented APIs, or over-abstraction - use **code-simplification**
 - Prose review outside the interface - use **anti-ai-prose**
 - Backend API design - use **backend-api**
-- Localization catalogs and translation coverage - use **localize**
+- Localization catalogs and translation coverage - use **i18n-localization**
 - Test strategy and automated test authoring - use **testing**. This skill owns rendered
   visual inspection and the UI behaviors that need verification
-- Product strategy or architecture decisions - use **jekyll-hyde**
+- Product strategy or architecture decisions - use **plan-review**
 
 ## AI Self-Check
 
@@ -140,6 +140,9 @@ comprehension or contradict the user's requested style.
   disabled states and selection where relevant; demonstrate them with labeled sample controls
   when no backend exists. Preserve useful keyboard focus when an action removes or disables
   the focused control
+- Own accessible interaction design, semantics, focus order, and error recovery here; use
+  **testing** for repeatable accessibility regression checks. Include manual keyboard and
+  screen-reader checks for the critical flow; automated scans alone do not establish conformance.
 - Design narrow layouts deliberately. Aim for 44 x 44 CSS px touch targets on mobile; assess
   accessibility conformance separately against the applicable standard and its exceptions
 - Keep dark and light support for product interfaces where warranted and preserve existing
@@ -217,17 +220,17 @@ See `references/output-contract.md` for the full contract.
 
 - **Skill name:** FRONTEND-DESIGN
 - **Deliverable bucket:** `deliverables`
-- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing UI/UX (e.g., "review my landing page"), emit the full contract - monospace inline header, severity-grouped inline summary, linked Markdown deliverable, and concise monospace conclusion - and write the deliverable to `docs/local/deliverables/frontend-design/<YYYY-MM-DD>-<slug>.md`. When invoked to **build a new artifact or generate content** (its primary mode - producing UI code in chat), respond freely without the contract; build-mode behavior is unchanged.
+- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing UI/UX (e.g., "review my landing page"), apply the reporting size and evidence rules in `references/output-contract.md` and write the deliverable to `docs/local/deliverables/frontend-design/<YYYY-MM-DD>-<slug>.md`. When invoked to **build a new artifact or generate content** (its primary mode - producing UI code in chat), respond freely without the contract; build-mode behavior is unchanged.
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
 
 ## Related Skills
 
-- **anti-slop** - implementation quality and unnecessary abstractions
+- **code-simplification** - implementation quality and unnecessary abstractions
 - **anti-ai-prose** - prose review; interface copy remains part of this skill
 - **code-review** - code correctness beyond visual design
-- **localize** - translation coverage and locale behavior
+- **i18n-localization** - translation coverage and locale behavior
 - **testing** - automated verification and regression tests
-- **jekyll-hyde** - product, business, and architecture decisions
+- **plan-review** - product, business, and architecture decisions
 
 ## Rules
 

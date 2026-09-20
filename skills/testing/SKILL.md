@@ -1,7 +1,7 @@
 ---
 name: testing
 description: >
-  · Write and debug unit, integration, and E2E tests: fixtures, mocks, coverage, flaky tests, a11y, and performance.
+  Write unit, integration, E2E, load, and accessibility tests; debug fixtures, mocks, coverage, and flaky suites.
 license: MIT
 compatibility: "Requires one or more of: vitest, jest, pytest, go test, cargo test, playwright"
 metadata:
@@ -43,15 +43,18 @@ open untrusted runner URLs while the server is active.
 
 ## When NOT to use
 
+- Profiling and optimizing an identified application bottleneck - use **performance-debugging**.
+- Broker acknowledgement, redelivery, dead-letter, or replay semantics - use **message-queues**.
+
 - Reviewing existing test quality or correctness as part of a code review - use **code-review**
 - Security-specific testing (penetration testing, OWASP checks) - use **security-audit**
-- Cleaning up verbose/sloppy test code - use **anti-slop**
-- Ad-hoc web browsing, scraping, or page interaction outside of tests - use **browse**
+- Cleaning up verbose/sloppy test code - use **code-simplification**
+- Ad-hoc web browsing, scraping, or page interaction outside of tests - use the host's browsing tools
 - CI/CD pipeline architecture (test jobs run inside pipelines, but pipeline design is ci-cd's domain) - use **ci-cd**
 - Database testing patterns at the engine level - use **databases**
 - Writing or refining LLM prompts (use **prompt-generator**)
 - Infrastructure or configuration validation outside tests (use **terraform**, **ansible**, or **kubernetes**)
-- AI/ML model evaluation or LLM output scoring - use **ai-ml**
+- AI/ML model evaluation or LLM output scoring - use **llm-app-development**
 - Infrastructure-level load or chaos testing beyond application tests (use **kubernetes** for cluster-level chaos, or **ci-cd** for pipeline-integrated load test orchestration)
 
 ---
@@ -233,6 +236,8 @@ Catch WCAG violations automatically. Not a replacement for manual testing, but c
 
 Use `@axe-core/playwright` - run `new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa"]).analyze()` and assert zero violations. Run axe scans on every page/component. Exclude known issues with `.exclude()` and track them as tech debt, not permanent exceptions.
 
+Own repeatable accessibility regression checks here; use **frontend-design** to repair interaction design and semantics. Record manual keyboard and screen-reader coverage separately from automated scan results.
+
 Read `references/e2e-accessibility.md` for Playwright E2E patterns, visual regression setup, and CI accessibility gates.
 
 ---
@@ -343,17 +348,17 @@ See `references/output-contract.md` for the full contract.
 
 - **Skill name:** TESTING
 - **Deliverable bucket:** `audits`
-- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, emit the full contract - monospace inline header, severity-grouped inline summary, linked Markdown deliverable, and concise monospace conclusion - and write the deliverable to `docs/local/audits/testing/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
+- **Mode:** conditional. When invoked to **analyze, review, audit, or improve** existing repo content, apply the reporting size and evidence rules in `references/output-contract.md` and write the deliverable to `docs/local/audits/testing/<YYYY-MM-DD>-<slug>.md`. When invoked to **answer a question, teach a concept, build a new artifact, or generate content**, respond freely without the contract.
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see shared contract; only used in audit/review mode).
 
 ## Related Skills
 
 - **code-review** - reviews test quality and correctness as part of code reviews. This skill writes the tests; code-review evaluates whether they actually test the right things.
 - **security-audit** - handles security-specific testing (OWASP, penetration testing, credential scanning). This skill handles functional testing.
-- **anti-slop** - cleans up verbose, over-abstracted, or AI-generated test code. If the test works but reads like a novel, route to anti-slop.
+- **code-simplification** - reviews verbose, over-abstracted, or AI-generated test code for safe reductions. If the test works but reads like a novel, route to code-simplification.
 - **ci-cd** - designs the pipeline that runs tests. This skill writes the tests and configures test runners; ci-cd handles the pipeline structure around them.
 - **databases** - covers database engine testing and configuration. This skill handles application-level database test patterns (transactions, fixtures, test data).
-- **ai-ml** - AI/ML model evaluation, LLM output scoring, and benchmark harnesses. This skill handles functional application testing; ai-ml handles model-level evaluation.
+- **llm-app-development** - AI/ML model evaluation, LLM output scoring, and benchmark harnesses. This skill handles functional application testing; llm-app-development handles model-level evaluation.
 - **kubernetes** - cluster-level chaos, resilience, and infrastructure-layer load testing. This skill handles application test code; kubernetes handles cluster-level fault injection.
 
 ---

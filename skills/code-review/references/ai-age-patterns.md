@@ -4,7 +4,7 @@ Bug patterns specific to AI-generated code, LLM API integrations, agentic AI sys
 
 Research date: September 2026.
 
-Treat the catalog as investigation prompts. Style-only patterns route to **anti-slop** and
+Treat the catalog as investigation prompts. Style-only patterns route to **code-simplification** and
 exploitable flaws to **security-audit**. Historical study percentages are not evidence that
 a particular snippet is generated or defective; verify a concrete failure and its API context.
 

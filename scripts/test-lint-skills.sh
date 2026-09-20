@@ -16,7 +16,7 @@ write_minimal_skill() {
 ---
 name: $name
 description: >
-  · Test fixture skill for lint behavior. Triggers: 'lint fixture'. Not for production use.
+  Test fixture skill for lint behavior. Triggers: 'lint fixture'. Not for production use.
 license: MIT
 metadata:
   source: custom

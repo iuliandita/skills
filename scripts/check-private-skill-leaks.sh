@@ -2,17 +2,20 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-PROTECTED_DIR="$ROOT/skills/cluster-health/protected"
-PATTERN_FILE="$PROTECTED_DIR/private-patterns.txt"
+PATTERN_FILES=()
+for skill in cluster-health kubernetes-health; do
+  file="$ROOT/skills/$skill/protected/private-patterns.txt"
+  [[ ! -f "$file" ]] || PATTERN_FILES+=("$file")
+done
 
-if [[ ! -f "$PATTERN_FILE" ]]; then
+if (( ${#PATTERN_FILES[@]} == 0 )); then
   echo "No protected cluster-health overlay found; skipping private leak check."
   exit 0
 fi
 
 mapfile -t candidate_files < <(
   git -C "$ROOT" ls-files --cached --others --exclude-standard \
-    | grep -v '^skills/cluster-health/protected/' || true
+    | grep -vE '^skills/(cluster-health|kubernetes-health)/protected/' || true
 )
 
 if (( ${#candidate_files[@]} == 0 )); then
@@ -24,7 +27,7 @@ tmp_patterns="$(mktemp)"
 tmp_matches="$(mktemp)"
 trap 'rm -f "$tmp_patterns" "$tmp_matches"' EXIT
 
-grep -vE '^[[:space:]]*(#|$)' "$PATTERN_FILE" > "$tmp_patterns"
+grep -vE '^[[:space:]]*(#|$)' "${PATTERN_FILES[@]}" -h > "$tmp_patterns" || [[ $? == 1 ]]
 if [[ ! -s "$tmp_patterns" ]]; then
   echo "No private cluster-health patterns configured."
   exit 0
