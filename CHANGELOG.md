@@ -2,15 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
-## Unreleased
+## [2.0.0](https://github.com/iuliandita/skills/compare/v1.46.0...v2.0.0) (2026-09-20)
 
-### Catalog migration
+### Breaking Changes
 
-* Consolidate overlapping reviews into `code-simplification`, `repo-audit`, and `plan-review`; rename ten skills for clearer discovery.
-* Retire `routine-writer`, `browse`, and `skill-router`. Old names become migration notices for one transition release and at least seven days after publication. See [the full mapping and update steps](MIGRATION.md).
-* Add `message-queues` and `performance-debugging`, expand Redis/Valkey and GraphQL/gRPC guidance, and reduce repeated reporting instructions.
-* Default bundled installs select 43 active skills. Add a preview-first migration helper for verified installer-owned copies and links; retain custom or ambiguous installations for manual review.
-* Keep deprecated notices out of normal refinement scores while retaining migration tests; correct merged-mode expectations and make documentation retirement follow repository policy.
+* Replace 19 old skill names with temporary migration notices. Merge review pairs into `code-simplification`, `repo-audit`, and `plan-review`; rename ten skills; retire `browse`, `routine-writer`, and `skill-router`. The notices no longer provide the former workflows. See [the complete mapping and migration instructions](MIGRATION.md).
+* Keep notices for one transition release and at least seven full days after actual publication. Existing copied installations require an update or explicit migration; upstream changes do not automatically remove them.
+
+### Features
+
+* Publish 43 active skills with clearer names, task-focused descriptions, preserved specialist references, and shorter reporting instructions ([#191](https://github.com/iuliandita/skills/pull/191)).
+* Add `message-queues` and `performance-debugging`; expand Redis/Valkey, GraphQL/gRPC, secrets lifecycle, restore drills, and accessibility coverage ([#191](https://github.com/iuliandita/skills/pull/191)).
+* Add preview-first migration with backups and conservative ownership checks for bundled installs. Keep modified, protected, and ambiguous entries for manual migration ([#191](https://github.com/iuliandita/skills/pull/191)).
+
+### Bug Fixes
+
+* Separate deprecated notices from active skill routing and refinement scores while preserving migration tests; correct merged-mode behavioral expectations and honor repository retirement policies ([#192](https://github.com/iuliandita/skills/issues/192)).
+* Harden migration hashing, moved-checkout updates, shared link preservation, backup destinations, and replacement permission synchronization ([#191](https://github.com/iuliandita/skills/pull/191)).
+
 
 ## [1.46.0](https://github.com/iuliandita/skills/compare/v1.45.8...v1.46.0) (2026-09-17)
 
