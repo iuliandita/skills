@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.0.1](https://github.com/iuliandita/skills/compare/v2.0.0...v2.0.1) (2026-09-20)
+
+### Bug Fixes
+
+* **skills:** resolve the 36 confirmed v2 audit findings: preserve target identity and diagnostic errors, verify TLS and recipient keys, protect deployment authorization and credentials, and require evidence before claiming security impact ([#196](https://github.com/iuliandita/skills/pull/196), [#195](https://github.com/iuliandita/skills/issues/195)).
+* **skills:** correct platform recipes and active routing; align workload probes, package operations, backup policy, locale loading, and workflow deliverables ([#196](https://github.com/iuliandita/skills/pull/196)).
+* **skill-refiner:** correct the active Kali routing test, require complete-read provenance and valid per-case grades, clarify review checkpoints, and record the v2 collection sweep ([#196](https://github.com/iuliandita/skills/pull/196)).
+
 ## [2.0.0](https://github.com/iuliandita/skills/compare/v1.46.0...v2.0.0) (2026-09-20)
 
 ### Breaking Changes
