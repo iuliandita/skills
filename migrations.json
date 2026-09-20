@@ -1,8 +1,8 @@
 {
   "version": 1,
   "transition": {
-    "release": null,
-    "published_at": null,
+    "release": "v2.0.0",
+    "published_at": "2026-09-20T13:49:13Z",
     "minimum_days": 7,
     "placeholder_releases": 1
   },
