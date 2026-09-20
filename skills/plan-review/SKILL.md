@@ -29,7 +29,10 @@ Use both lenses by default: identify who benefits, who pays, what becomes hard t
 
 - Review existing code for bugs, security flaws, or repository health: use the appropriate code or **repo-audit** skill.
 - Create an implementation plan from scratch when the user has not offered a decision to review.
-- Perform hands-on interface design, capture a backlog, or format a prompt.
+- Perform hands-on interface design: use **frontend-design**.
+- Capture or prioritize a backlog: use **roadmap**.
+- Turn an accepted engineering decision into executable steps: use **dev-cycle** or the repository's planning workflow.
+- Format or improve a prompt: use **prompt-generator**.
 
 ## Workflow
 
@@ -39,14 +42,6 @@ Use both lenses by default: identify who benefits, who pays, what becomes hard t
 4. **Challenge the plan:** identify load-bearing assumptions, failure and abuse paths, incentives under pressure, cost bearers, operational/security/reputation risks, and a three-month pre-mortem. For every material risk, accept it with rationale, mitigate it, or reopen the invalidated upstream decision.
 5. **Critique settled decisions:** load `references/jekyll.md`, `references/hyde.md`, or `references/dual-lens.md` for the selected lens; start an unqualified critique in dual mode. Do not relitigate settled choices without evidence; record the evidence, changed condition, owner, and decision that must reopen. Follow with constructive constraints that keep user benefit, reliability, trust, and changeability.
 6. **Recommend:** state the path, tradeoff, guardrail, next action, and review trigger. Use the smallest output that makes the decision actionable.
-
-## Rules
-
-- No persona theater. The Jekyll/Hyde lenses are concrete user-benefit, incentive, abuse-path, and operating-constraint checks.
-- Strong strategy is not automatically a dark pattern. Name the mechanism, affected party, and condition that changes the recommendation.
-- Resolve terms before building decisions on them. Do not hide unanswered work as an open question when it is actually fog or a prerequisite.
-- In interactive clarification, do not batch questions. In headless use, state assumptions and emit the full tree in one pass.
-- Do not use a risk list as a substitute for a final decision. End with a recommendation or a clear decision frame.
 
 ## AI Self-Check
 
@@ -73,3 +68,11 @@ Use `references/output-contract.md`.
 - **Deliverable:** clarification: `docs/local/deliverables/plan-review/<YYYY-MM-DD>-<slug>.md`; artifact critique: the same path with the full audit contract.
 - **Mode:** conditional. Advice may remain conversational; clarification always writes a decision record; review of an existing artifact writes a full deliverable.
 - **Priority:** P0-P3 and info for artifact critiques. Decision records use risk priority without inventing a defect scale.
+
+## Rules
+
+- No persona theater. The Jekyll/Hyde lenses are concrete user-benefit, incentive, abuse-path, and operating-constraint checks.
+- Strong strategy is not automatically a dark pattern. Name the mechanism, affected party, and condition that changes the recommendation.
+- Resolve terms before building decisions on them. Do not hide unanswered work as an open question when it is actually fog or a prerequisite.
+- In interactive clarification, do not batch questions. In headless use, state assumptions and emit the full tree in one pass.
+- Do not use a risk list as a substitute for a final decision. End with a recommendation or a clear decision frame.

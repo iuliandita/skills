@@ -1,6 +1,6 @@
 # Security Audit: Grep Patterns
 
-Consolidated search patterns for manual audit passes. Use the Grep tool with these patterns - don't shell out to grep/rg.
+Consolidated search patterns for manual audit passes. Use the host's available file-search capability, such as a built-in search tool, `rg`, or `grep`, and scope it to the target files.
 
 ## Secret Scanning Fallback (Pass 1)
 

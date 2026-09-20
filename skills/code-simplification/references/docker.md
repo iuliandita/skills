@@ -6,12 +6,13 @@ The #1 Dockerfile sin. Production images carrying build tools, package caches, a
 
 **Detect:**
 - No multi-stage build when the app has a build step (TypeScript, Go, Rust, Java)
-- `apt-get install` / `apk add` without `--no-cache` or `rm -rf /var/cache/apt/*`
+- `apt-get update` and `apt-get install` split across layers, or APT lists left in `/var/lib/apt/lists/`
+- `apk add` without `--no-cache`
 - `npm install` (includes devDependencies) instead of `npm ci --omit=dev` or `bun install --production`
 - `pip install` without `--no-cache-dir`
 - `COPY . .` before dependency install (busts cache on every source change)
 - Build tools (gcc, make, python3-dev) in the final image
-- Multiple `RUN` commands that should be chained (`RUN apt update && apt install -y ...`)
+- Multiple `RUN` commands that should be chained (`RUN apt-get update && apt-get install -y ... && rm -rf /var/lib/apt/lists/*`)
 
 **Fix:** Multi-stage build. Install deps in builder stage, copy only artifacts to slim/distroless final stage.
 

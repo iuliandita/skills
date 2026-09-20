@@ -407,7 +407,7 @@ git config --global alias.staged "diff --cached --stat"
 # Branch management
 git config --global alias.branches "branch -vv"
 git config --global alias.gone "!git branch -vv | grep ': gone]' | awk '{print \$1}'"
-git config --global alias.cleanup "!git branch --merged main | grep -v main | xargs -r git branch -d"
+git config --global alias.cleanup-candidates "branch --merged"
 
 # Undo shortcuts
 git config --global alias.undo "reset --soft HEAD~1"
@@ -423,7 +423,7 @@ git config --global alias.last "diff HEAD~1"
 
 Regular maintenance for healthy repos:
 
-- [ ] **Prune merged branches**: `git branch --merged main | grep -v main | xargs -r git branch -d`
+- [ ] **Preview merged branches**: set `BASE_BRANCH` to the confirmed integration branch and run `git cleanup-candidates "$BASE_BRANCH"`. Exclude the current branch, the base, and every repository-specific protected branch by exact name. Review the remaining target list, then delete only authorized branches with `git branch -d <branch>`.
 - [ ] **Prune remote tracking branches**: `git fetch --prune` (removes tracking branches for deleted remotes)
 - [ ] **Check for large files**: `git rev-list --objects --all | git cat-file --batch-check='%(objecttype) %(objectname) %(objectsize) %(rest)' | awk '/^blob/ {print $3, $4}' | sort -rn | head`
 - [ ] **Verify repo integrity**: `git fsck --full`

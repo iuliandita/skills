@@ -141,6 +141,11 @@ Read the appropriate reference file:
 
 For **Forgejo CI/CD**, see the Forgejo section below (smaller scope, inline).
 
+For a requested deployment pipeline, account for every lifecycle stage selected in Step 3 and
+include an explicit deployment job or a clearly marked deployment placeholder. Name its target
+environment and authorization/protection requirement. Label test/build-only output as incomplete
+for deployment. Do not add a deploy stage to a CI-only request.
+
 ### Step 5: Verify against AI Self-Check
 
 Run through the checklist above before returning any generated config.

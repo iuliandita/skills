@@ -181,7 +181,8 @@ source "proxmox-iso" "debian" {
   proxmox_url              = "https://pve1.example.com:8006/api2/json"
   username                 = "packer@pve!automation"
   token                    = var.proxmox_token
-  insecure_skip_tls_verify = true
+  # Verify the Proxmox API certificate. Configure its issuing CA in the host trust store.
+  insecure_skip_tls_verify = false
   node                     = "pve1"
 
   # VM settings
@@ -296,7 +297,8 @@ source "proxmox-clone" "debian" {
   proxmox_url              = "https://pve1.example.com:8006/api2/json"
   username                 = "packer@pve!automation"
   token                    = var.proxmox_token
-  insecure_skip_tls_verify = true
+  # Verify the Proxmox API certificate. Configure its issuing CA in the host trust store.
+  insecure_skip_tls_verify = false
   node                     = "pve1"
 
   clone_vm_id  = 9000       # Source template VM ID

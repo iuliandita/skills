@@ -354,21 +354,14 @@ Detailed security and signing guidance stays in `references/security-and-signing
 
 ---
 
-## PCI-DSS 4.0: Change Management Mapping
+## PCI-DSS 4.0 Change Evidence
 
-Source code management requirements that map to git practices.
-
-| PCI-DSS Req | What it means for git | Implementation |
-|-------------|----------------------|----------------|
-| **6.2.2** | Annual security training for developers | Not a git control, but signed commits prove *who* was trained |
-| **6.2.4** | Access control + change tracking | Branch protection, required reviewers, signed commits, audit trail |
-| **6.4.1** | Separate dev/test/prod environments | Branch-per-environment or tag-based promotion |
-| **6.4.2** | Changes approved, documented, tested | PR/MR with required approvals, linked CI checks, merge audit log |
-| **6.5.1** | Custom code reviewed before production | PR/MR required reviews, no direct push to release branches |
-| **6.5.2** | Custom code reviewed for vulnerabilities | SAST/secret-scan in PR/MR checks, pre-commit hooks |
-
-- Branch protection, required review, signed commits, and CI evidence are the main git-side controls.
-- `CODEOWNERS` and protected branches matter more than policy prose with no enforcement.
+For repositories in PCI scope, use protected branches, required review, linked test and security
+checks, and retained or exported forge audit evidence for the organization's applicable software
+change controls. Map each control to the current PCI DSS text with the assessor; Git configuration
+alone does not prove training, environment separation, or the full change-management process.
+Signed commits authenticate a signing key under the chosen trust model. They do not prove that the
+signer completed security training or that the change was reviewed, tested, or authorized.
 
 ---
 

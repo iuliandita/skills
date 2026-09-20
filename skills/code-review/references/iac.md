@@ -11,7 +11,7 @@ Bug patterns specific to Terraform, Ansible, Helm, and Kubernetes manifests. Foc
 **Detect:**
 - Missing `depends_on` when there's an implicit ordering requirement that Terraform can't infer (e.g., IAM policy must exist before the resource that uses it, but they're linked by ARN string, not reference)
 - Wrong `depends_on` creating unnecessary serial execution
-- `data` sources that depend on resources created in the same apply - data sources are read during plan, so the resource doesn't exist yet
+- `data` sources whose read may be deferred until apply but still rely on an external side effect, such as DNS propagation, that Terraform cannot model; do not flag a same-apply dependency merely because it is deferred
 - `count` or `for_each` depending on a value that isn't known until apply (e.g., output of another resource)
 
 **Example:**

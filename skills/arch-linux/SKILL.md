@@ -91,7 +91,7 @@ Before returning Arch or CachyOS commands, verify:
 - [ ] **Hybrid graphics path is identified on laptops**: PRIME offload, muxless, or discrete-only mode affects display output, suspend behavior, and Gamescope compatibility. Do not assume single-GPU behavior on multi-GPU hardware.
 - [ ] **Diagnostic errors are not silenced**: do not mask failures with `2>/dev/null` on commands whose error reason matters for triage. Use `2>&1 || true` to surface errors without aborting a gathering pass.
 - [ ] **Snapshots are not backups**: on Btrfs systems, snapshots help with rollback but do not replace real backups.
-- [ ] **Conflicting files use exact path**: `--overwrite` uses the specific file path from pacman error output, never a blanket `'*'` glob
+- [ ] **Conflicting files use exact path**: `--overwrite` uses the verified package-archive path without its leading `/`, never a blanket `'*'` glob
 - [ ] **Mirror and repo state checked**: package advice matches current Arch/CachyOS repos and local mirror sync status
 - [ ] **AUR trust handled**: PKGBUILDs, install scripts, and maintainer changes are reviewed before build/install
 - [ ] Cross-cutting agent hygiene applied - see `references/agent-hygiene.md`
@@ -251,7 +251,7 @@ When a bug looks "desktop-only," compare one clean baseline:
 
 | Symptom | First checks |
 |---------|-------------|
-| Package weirdness after install | Partial upgrade? `pacman -Syu` first. Conflicting files? pacman error output shows the conflicting path - use it in `pacman -Syu --overwrite '/exact/path'` (specific glob, never `'*'`) |
+| Package weirdness after install | Partial upgrade? `pacman -Syu` first. For a conflict, run `pacman -Qo /exact/path` first. Fix or remove an unowned manual file; report an owned-file conflict. Use `--overwrite exact/path` (package-archive path without the leading `/`) only when that verified file is intentionally being replaced; never use `'*'` or an inferred glob. |
 | Service fails after update | `.pacnew` merge needed? `pacdiff` or `DIFFPROG=nvim pacdiff`. Check unit overrides and `journalctl -b` |
 | Won't boot after kernel work | Confirm root/subvolume, separate boot and ESP mounts, installed kernel, active initramfs generator and bootloader. Inspect available snapshots before changing boot artifacts. Follow `references/boot-kernel-and-recovery.md`; use the confirmed generator/loader for CachyOS too. |
 | CachyOS unstable after repo tuning | CPU capability, repo tier, forked `pacman` |

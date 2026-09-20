@@ -202,6 +202,9 @@ delta comparisons against prior runs rather than failing the run.
      are lower quality than hand-written ones. Generated tests are ephemeral to the run:
      do not write them to `references/test-cases-local.md` or any other file during phase 1.
      Saving or promoting them happens only in phase 2 or a separate reviewed change.
+   - Execution provenance: load each complete candidate and its applicable references before
+     answering its prompts. Resume truncated reads; a file listing or search is not a full read.
+     Record loaded files per candidate. Never relabel copied unguided responses as a fresh run.
    - Cross-model: skip on first iteration (no diff to review yet; penalty is 0)
 8. **Log baseline scores**: record per-skill and aggregate scores
    in a score ledger before any edits. The ledger must include structural gate (G),
@@ -210,6 +213,9 @@ delta comparisons against prior runs rather than failing the run.
    evidence for each evaluation, and timestamp. After this step, if the ledger is
    missing, incomplete, or only records lint/spec status, pause and backfill scoring before
    applying changes. In headless mode, halt the run and report the missing score data.
+   Validate individual checklist statuses, applicability, case coverage, and score arithmetic.
+   Reject default passes for unread content. Every deduction needs a named failed signal or
+   verified defect; missing inputs and prohibited live actions are simulation limits, not failures.
 9. **Iteration 2+**: enter adaptive focus mode. Honor any explicitly requested minimum iteration
    count and score target for the whole run, not only single-skill runs: keep iterating until the
    requested rounds are complete and the target is reached across the pool, quality plateaus, or a
@@ -290,6 +296,8 @@ delta comparisons against prior runs rather than failing the run.
 16. **Announce**: "Entering phase 2 - meta-improvement. This always requires human review."
     Enter phase 2 only for a collection run or when `--meta` was passed; a single-skill run
     that did not opt in stops after phase 1 and reports.
+    Present proposed meta changes and pause before applying them. Read-only snapshots and
+    preparation may happen before this checkpoint; step 22 still reviews the resulting changes.
 17. **Snapshot evaluation criteria** (Rule 4: snapshot before meta):
     - Copy the complete **skill-creator** skill, its `SKILL.md` and every file under its
       `references/`, to a temp location. This includes the AI Self-Check section and

@@ -364,8 +364,11 @@ See `references/output-contract.md` for the full contract.
    against a dm-snapshot overlay first.
 3. **Never `--init-extent-tree`, never `clear_cache` on a damaged volume.** Both destroy volumes,
    and the `clear_cache` ban is unconditional.
-4. **Read Synology's GPL kernel source for the exact build before deep recovery work.** It is
-   authoritative documentation of the on-disk format and nothing else is.
+4. **Read Synology's GPL kernel source for the exact build before deep recovery work when it is
+   published.** If no exact drop exists, the closest lower published release family may guide
+   read-only investigation only; treat every constant and behavior as provisional, do not use it
+   to justify a write or repair, and stop for the exact source or recovery-lab advice when it
+   disagrees with observed DSM behavior.
 5. **Treat mainline-tool corruption reports as unverified.** Synology's private root flags and
    trees are rejected by mainline's tree-checker. Confirm damage against the DSM kernel's own
    behavior before acting on a stock-tool verdict.

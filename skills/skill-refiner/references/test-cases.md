@@ -499,7 +499,7 @@ Quality signals:
 - Distinguishes live ISO, persistence-backed live media, installed system, and VM image
 - Checks persistence layout before assuming package failure
 - Checks chipset, firmware, driver, USB passthrough, rfkill, and monitor-mode support
-- Routes exploitation technique questions away to lockpick
+- Routes exploitation technique questions away to privilege-escalation
 
 ### kubernetes
 **Test 1: Manifest review**

@@ -5810,4 +5810,859 @@
  },
  "changes": "Iteration 1 (b6120a9): fixed baseline P1/P2 defects in dev-cycle (invalid tea commands), ai-ml (legacy fine-tuning CLI), rhel-fedora (akmods --test), zero-day (BinDiff), networking (context budget), git, terraform, databases, security-audit, deep-audit, kali-linux, localize. Iteration 2 (4025f14): databases subscription conninfo host, deep-audit detection-script pointer, networking CoreDNS view plugin. Iteration 3 (a60a660): corrected subscription CONNECTION to the publisher/source, TLS comment, openssl stderr. All 10 gate scripts pass; phase-1 guard clean."
 }
+,
+{
+  "schema": 2,
+  "rubric_hash": "35543ef6b41aa63a6ed26d1f7abcddf0861892b7ef5be5477c22f11bbb508a44",
+  "run_id": "2026-09-20-v2-issue-195",
+  "branch": "codex/195-skill-refiner-v2",
+  "date": "2026-09-20",
+  "primary": {
+    "harness": "Codex desktop",
+    "provider": "OpenAI",
+    "resolved_model": null,
+    "effective_effort": null,
+    "version": null,
+    "evidence": "Native fresh-context evaluations; no raw resolved-model or effective-effort attestation. Requested settings are not runtime proof."
+  },
+  "secondary": null,
+  "reviewer_classification": "unknown-model",
+  "cap": 3,
+  "config": {
+    "iterations": 10,
+    "threshold": 85,
+    "mode": "circuit-breaker",
+    "plateau": 2
+  },
+  "pool_size": 41,
+  "published": 62,
+  "active": 43,
+  "notices": 19,
+  "iterations": 2,
+  "termination": "plateau after regular candidate hard-revert; approved meta improvement retained",
+  "review_flags": {
+    "minor": 0,
+    "major": 1
+  },
+  "control_failures": [
+    "Resolved runtime model identity unavailable; use unknown-model fresh-context review, cap 3.",
+    "Secondary Claude no-tools probe timed out; used local subagents.",
+    "Provisional grading pass 1 had folded-YAML/field-scope/style false positives; root rejected these mechanical results and requested regrading before aggregation.",
+    "Rejected initial behavioral baseline: executor 2 admitted only four full SKILL.md reads, eleven keyword searches, and no applicable reference reads. Re-executing before scoring or edits; other executors undergoing provenance check.",
+    "All three initial regular executors confirmed incomplete reads due to truncated aggregate output. Their 98 outputs and behavioral grades are rejected; complete-read replacement runs dispatched for all39 regular non-offensive skills. No baseline ledger accepted or candidate edited.",
+    "Rejected provisional valid batches0/2 after discovering copied prior responses; regenerated all39 delegated regular skills through fresh stronger-model executors.",
+    "Rejected behavioral graderC: admitted uninspected default100 grades after truncated bulk output; stronger independent replacement graders dispatched.",
+    "Canonical kali-linux case2 still expects retired lockpick routing; lifecycle policy requires active privilege-escalation. Recorded as test defect, frozen catalog unchanged.",
+    "Rejected original AI checklist grades after reviewer admitted automated/excerpt-based checks rather than complete candidate and reference reads; three fresh full-source Sol-requested reviews dispatched before baseline or edits.",
+    "Behavioral grading validation found stale-route deductions and a false zsh completion defect. Real isolated zsh completion disproved the latter; independent grader corrections required before accepting behavioral minima.",
+    "Full-source graders B/C admitted Python scans/hashes/default semantic templates rather than full model-visible source reads. Rejected their full41 files and narrowed both to first10 genuine raw-read targets; remaining31 require subsequent bounded assignments.",
+    "Shared /tmp tmpfs reached capacity during final baseline persistence, causing sandbox startup failures. Moved only this run's Markdown lint tool installation into ignored workspace tool-cache without deleting evidence or other tasks; commands resumed with 1.5 GB available.",
+    "Native fresh-subagent spawning repeatedly returned agent thread limit reached during phase2 despite completed workers. Verified same-provider fresh codex exec read-only/no-approval fallback with no-content arithmetic probe (exit0, response51). Normal outer sandbox blocked CLI session DB; host invocation retained inner read-only sandbox. Runtime identity remains unattested; cap3.",
+    "Automatic approval review rejected the proposed three-process CLI grading launch before execution because payload sensitivity and destination authorization were not sufficiently established. No grading payload was sent via CLI. Native subagent capacity then became available; continued with user-authorized native fresh contexts, without bypassing rejection.",
+    "Final meta grading validation corrected candidate-versus-frozen-catalog confusion and unsupported deductions for missing fixtures/runtime/unverified plausible commands. Every original is preserved; independent graders corrected their own records before final aggregation."
+  ],
+  "skills": {
+    "ansible": {
+      "before": {
+        "structural": "pass",
+        "ai": 80.95238095238095,
+        "behavioral": 96.5,
+        "penalty": 0,
+        "composite": 89.95363408521304
+      },
+      "after": {
+        "structural": "pass",
+        "ai": 80.95238095238095,
+        "behavioral": 96.5,
+        "penalty": 0,
+        "composite": 89.95363408521304
+      },
+      "test_source": "frozen canonical test catalog",
+      "changed": false
+    },
+    "anti-ai-prose": {
+      "before": {
+        "structural": "pass",
+        "ai": 89.47368421052632,
+        "behavioral": 99.5,
+        "penalty": 0,
+        "composite": 95.27839335180056
+      },
+      "after": {
+        "structural": "pass",
+        "ai": 89.47368421052632,
+        "behavioral": 99.5,
+        "penalty": 0,
+        "composite": 95.27839335180056
+      },
+      "test_source": "frozen canonical test catalog",
+      "changed": false
+    },
+    "arch-linux": {
+      "before": {
+        "structural": "pass",
+        "ai": 80.95238095238095,
+        "behavioral": 100.0,
+        "penalty": 0,
+        "composite": 91.97994987468672
+      },
+      "after": {
+        "structural": "pass",
+        "ai": 80.95238095238095,
+        "behavioral": 100.0,
+        "penalty": 0,
+        "composite": 91.97994987468672
+      },
+      "test_source": "frozen canonical test catalog",
+      "changed": false
+    },
+    "backend-api": {
+      "before": {
+        "structural": "pass",
+        "ai": 80.95238095238095,
+        "behavioral": 99.66666666666667,
+        "penalty": 0,
+        "composite": 91.78696741854637
+      },
+      "after": {
+        "structural": "pass",
+        "ai": 80.95238095238095,
+        "behavioral": 99.66666666666667,
+        "penalty": 0,
+        "composite": 91.78696741854637
+      },
+      "test_source": "frozen canonical test catalog",
+      "changed": false
+    },
+    "ci-cd": {
+      "before": {
+        "structural": "pass",
+        "ai": 80.95238095238095,
+        "behavioral": 92.5,
+        "penalty": 0,
+        "composite": 87.63784461152882
+      },
+      "after": {
+        "structural": "pass",
+        "ai": 80.95238095238095,
+        "behavioral": 92.5,
+        "penalty": 0,
+        "composite": 87.63784461152882
+      },
+      "test_source": "frozen canonical test catalog",
+      "changed": false
+    },
+    "code-review": {
+      "before": {
+        "structural": "pass",
+        "ai": 80.95238095238095,
+        "behavioral": 100.0,
+        "penalty": 0,
+        "composite": 91.97994987468672
+      },
+      "after": {
+        "structural": "pass",
+        "ai": 80.95238095238095,
+        "behavioral": 100.0,
+        "penalty": 0,
+        "composite": 91.97994987468672
+      },
+      "test_source": "frozen canonical test catalog",
+      "changed": false
+    },
+    "code-simplification": {
+      "before": {
+        "structural": "pass",
+        "ai": 80.95238095238095,
+        "behavioral": 97.25,
+        "penalty": 0,
+        "composite": 90.38784461152882
+      },
+      "after": {
+        "structural": "pass",
+        "ai": 80.95238095238095,
+        "behavioral": 97.25,
+        "penalty": 0,
+        "composite": 90.38784461152882
+      },
+      "test_source": "frozen canonical test catalog",
+      "changed": false
+    },
+    "databases": {
+      "before": {
+        "structural": "pass",
+        "ai": 80.95238095238095,
+        "behavioral": 96.0,
+        "penalty": 0,
+        "composite": 89.6641604010025
+      },
+      "after": {
+        "structural": "pass",
+        "ai": 80.95238095238095,
+        "behavioral": 96.0,
+        "penalty": 0,
+        "composite": 89.6641604010025
+      },
+      "test_source": "frozen canonical test catalog",
+      "changed": false
+    },
+    "debian-ubuntu": {
+      "before": {
+        "structural": "pass",
+        "ai": 80.95238095238095,
+        "behavioral": 97.0,
+        "penalty": 0,
+        "composite": 90.24310776942356
+      },
+      "after": {
+        "structural": "pass",
+        "ai": 80.95238095238095,
+        "behavioral": 97.0,
+        "penalty": 0,
+        "composite": 90.24310776942356
+      },
+      "test_source": "frozen canonical test catalog",
+      "changed": false
+    },
+    "debug-triage": {
+      "before": {
+        "structural": "pass",
+        "ai": 90.47619047619048,
+        "behavioral": 99.5,
+        "penalty": 0,
+        "composite": 95.70050125313283
+      },
+      "after": {
+        "structural": "pass",
+        "ai": 90.47619047619048,
+        "behavioral": 99.5,
+        "penalty": 0,
+        "composite": 95.70050125313283
+      },
+      "test_source": "frozen canonical test catalog",
+      "changed": false
+    },
+    "dev-cycle": {
+      "before": {
+        "structural": "pass",
+        "ai": 80.95238095238095,
+        "behavioral": 92.33333333333333,
+        "penalty": 0,
+        "composite": 87.54135338345864
+      },
+      "after": {
+        "structural": "pass",
+        "ai": 80.95238095238095,
+        "behavioral": 92.33333333333333,
+        "penalty": 0,
+        "composite": 87.54135338345864
+      },
+      "test_source": "frozen canonical test catalog",
+      "changed": false
+    },
+    "docker": {
+      "before": {
+        "structural": "pass",
+        "ai": 80.95238095238095,
+        "behavioral": 100.0,
+        "penalty": 0,
+        "composite": 91.97994987468672
+      },
+      "after": {
+        "structural": "pass",
+        "ai": 80.95238095238095,
+        "behavioral": 100.0,
+        "penalty": 0,
+        "composite": 91.97994987468672
+      },
+      "test_source": "frozen canonical test catalog",
+      "changed": false
+    },
+    "frontend-design": {
+      "before": {
+        "structural": "pass",
+        "ai": 90.47619047619048,
+        "behavioral": 92.0,
+        "penalty": 0,
+        "composite": 91.35839598997492
+      },
+      "after": {
+        "structural": "pass",
+        "ai": 90.47619047619048,
+        "behavioral": 92.0,
+        "penalty": 0,
+        "composite": 91.35839598997492
+      },
+      "test_source": "frozen canonical test catalog",
+      "changed": false
+    },
+    "git": {
+      "before": {
+        "structural": "pass",
+        "ai": 80.95238095238095,
+        "behavioral": 100.0,
+        "penalty": 0,
+        "composite": 91.97994987468672
+      },
+      "after": {
+        "structural": "pass",
+        "ai": 80.95238095238095,
+        "behavioral": 100.0,
+        "penalty": 0,
+        "composite": 91.97994987468672
+      },
+      "test_source": "frozen canonical test catalog",
+      "changed": false
+    },
+    "i18n-localization": {
+      "before": {
+        "structural": "pass",
+        "ai": 80.95238095238095,
+        "behavioral": 97.0,
+        "penalty": 0,
+        "composite": 90.24310776942356
+      },
+      "after": {
+        "structural": "pass",
+        "ai": 80.95238095238095,
+        "behavioral": 97.0,
+        "penalty": 0,
+        "composite": 90.24310776942356
+      },
+      "test_source": "frozen canonical test catalog",
+      "changed": false
+    },
+    "kali-linux": {
+      "before": {
+        "structural": "pass",
+        "ai": 76.19047619047619,
+        "behavioral": 99.5,
+        "penalty": 0,
+        "composite": 89.68546365914787
+      },
+      "after": {
+        "structural": "pass",
+        "ai": 76.19047619047619,
+        "behavioral": 99.5,
+        "penalty": 0,
+        "composite": 89.68546365914787
+      },
+      "test_source": "frozen canonical test catalog",
+      "changed": false
+    },
+    "kubernetes": {
+      "before": {
+        "structural": "pass",
+        "ai": 80.95238095238095,
+        "behavioral": 100.0,
+        "penalty": 0,
+        "composite": 91.97994987468672
+      },
+      "after": {
+        "structural": "pass",
+        "ai": 80.95238095238095,
+        "behavioral": 100.0,
+        "penalty": 0,
+        "composite": 91.97994987468672
+      },
+      "test_source": "frozen canonical test catalog",
+      "changed": false
+    },
+    "kubernetes-health": {
+      "before": {
+        "structural": "pass",
+        "ai": 90.47619047619048,
+        "behavioral": 96.0,
+        "penalty": 0,
+        "composite": 93.67418546365914
+      },
+      "after": {
+        "structural": "pass",
+        "ai": 90.47619047619048,
+        "behavioral": 96.0,
+        "penalty": 0,
+        "composite": 93.67418546365914
+      },
+      "test_source": "frozen canonical test catalog",
+      "changed": false
+    },
+    "llm-app-development": {
+      "before": {
+        "structural": "pass",
+        "ai": 80.95238095238095,
+        "behavioral": 98.0,
+        "penalty": 0,
+        "composite": 90.82205513784461
+      },
+      "after": {
+        "structural": "pass",
+        "ai": 80.95238095238095,
+        "behavioral": 98.0,
+        "penalty": 0,
+        "composite": 90.82205513784461
+      },
+      "test_source": "frozen canonical test catalog",
+      "changed": false
+    },
+    "mcp": {
+      "before": {
+        "structural": "pass",
+        "ai": 80.95238095238095,
+        "behavioral": 98.0,
+        "penalty": 0,
+        "composite": 90.82205513784461
+      },
+      "after": {
+        "structural": "pass",
+        "ai": 80.95238095238095,
+        "behavioral": 98.0,
+        "penalty": 0,
+        "composite": 90.82205513784461
+      },
+      "test_source": "frozen canonical test catalog",
+      "changed": false
+    },
+    "message-queues": {
+      "before": {
+        "structural": "pass",
+        "ai": 85.71428571428571,
+        "behavioral": 100.0,
+        "penalty": 0,
+        "composite": 93.98496240601503
+      },
+      "after": {
+        "structural": "pass",
+        "ai": 85.71428571428571,
+        "behavioral": 100.0,
+        "penalty": 0,
+        "composite": 93.98496240601503
+      },
+      "test_source": "frozen canonical test catalog",
+      "changed": false
+    },
+    "networking": {
+      "before": {
+        "structural": "pass",
+        "ai": 80.95238095238095,
+        "behavioral": 98.0,
+        "penalty": 0,
+        "composite": 90.82205513784461
+      },
+      "after": {
+        "structural": "pass",
+        "ai": 80.95238095238095,
+        "behavioral": 98.0,
+        "penalty": 0,
+        "composite": 90.82205513784461
+      },
+      "test_source": "frozen canonical test catalog",
+      "changed": false
+    },
+    "nixos": {
+      "before": {
+        "structural": "pass",
+        "ai": 80.95238095238095,
+        "behavioral": 99.0,
+        "penalty": 0,
+        "composite": 91.40100250626567
+      },
+      "after": {
+        "structural": "pass",
+        "ai": 80.95238095238095,
+        "behavioral": 99.0,
+        "penalty": 0,
+        "composite": 91.40100250626567
+      },
+      "test_source": "frozen canonical test catalog",
+      "changed": false
+    },
+    "observability": {
+      "before": {
+        "structural": "pass",
+        "ai": 90.47619047619048,
+        "behavioral": 84.5,
+        "penalty": 0,
+        "composite": 87.01629072681703
+      },
+      "after": {
+        "structural": "pass",
+        "ai": 90.47619047619048,
+        "behavioral": 84.5,
+        "penalty": 0,
+        "composite": 87.01629072681703
+      },
+      "test_source": "frozen canonical test catalog",
+      "changed": false
+    },
+    "opnsense-pfsense": {
+      "before": {
+        "structural": "pass",
+        "ai": 90.47619047619048,
+        "behavioral": 100.0,
+        "penalty": 0,
+        "composite": 95.98997493734335
+      },
+      "after": {
+        "structural": "pass",
+        "ai": 90.47619047619048,
+        "behavioral": 100.0,
+        "penalty": 0,
+        "composite": 95.98997493734335
+      },
+      "test_source": "frozen canonical test catalog",
+      "changed": false
+    },
+    "performance-debugging": {
+      "before": {
+        "structural": "pass",
+        "ai": 85.71428571428571,
+        "behavioral": 100.0,
+        "penalty": 0,
+        "composite": 93.98496240601503
+      },
+      "after": {
+        "structural": "pass",
+        "ai": 85.71428571428571,
+        "behavioral": 100.0,
+        "penalty": 0,
+        "composite": 93.98496240601503
+      },
+      "test_source": "frozen canonical test catalog",
+      "changed": false
+    },
+    "plan-review": {
+      "before": {
+        "structural": "pass",
+        "ai": 84.21052631578948,
+        "behavioral": 97.16666666666667,
+        "penalty": 0,
+        "composite": 91.71144967682365
+      },
+      "after": {
+        "structural": "pass",
+        "ai": 84.21052631578948,
+        "behavioral": 97.16666666666667,
+        "penalty": 0,
+        "composite": 91.71144967682365
+      },
+      "test_source": "frozen canonical test catalog",
+      "changed": false
+    },
+    "privilege-escalation": {
+      "before": {
+        "structural": "pass",
+        "ai": 80.95238095238095,
+        "behavioral": 84.0,
+        "penalty": 0,
+        "composite": 82.71679197994987
+      },
+      "after": {
+        "structural": "pass",
+        "ai": 80.95238095238095,
+        "behavioral": 84.0,
+        "penalty": 0,
+        "composite": 82.71679197994987
+      },
+      "test_source": "frozen canonical test catalog",
+      "changed": false
+    },
+    "prompt-generator": {
+      "before": {
+        "structural": "pass",
+        "ai": 80.95238095238095,
+        "behavioral": 99.0,
+        "penalty": 0,
+        "composite": 91.40100250626567
+      },
+      "after": {
+        "structural": "pass",
+        "ai": 80.95238095238095,
+        "behavioral": 99.0,
+        "penalty": 0,
+        "composite": 91.40100250626567
+      },
+      "test_source": "frozen canonical test catalog",
+      "changed": false
+    },
+    "repo-audit": {
+      "before": {
+        "structural": "pass",
+        "ai": 85.71428571428571,
+        "behavioral": 98.4,
+        "penalty": 0,
+        "composite": 93.05864661654134
+      },
+      "after": {
+        "structural": "pass",
+        "ai": 85.71428571428571,
+        "behavioral": 98.4,
+        "penalty": 0,
+        "composite": 93.05864661654134
+      },
+      "test_source": "frozen canonical test catalog",
+      "changed": false
+    },
+    "rhel-fedora": {
+      "before": {
+        "structural": "pass",
+        "ai": 80.95238095238095,
+        "behavioral": 96.0,
+        "penalty": 0,
+        "composite": 89.6641604010025
+      },
+      "after": {
+        "structural": "pass",
+        "ai": 80.95238095238095,
+        "behavioral": 96.0,
+        "penalty": 0,
+        "composite": 89.6641604010025
+      },
+      "test_source": "frozen canonical test catalog",
+      "changed": false
+    },
+    "roadmap": {
+      "before": {
+        "structural": "pass",
+        "ai": 76.19047619047619,
+        "behavioral": 91.5,
+        "penalty": 0,
+        "composite": 85.05388471177945
+      },
+      "after": {
+        "structural": "pass",
+        "ai": 76.19047619047619,
+        "behavioral": 91.5,
+        "penalty": 0,
+        "composite": 85.05388471177945
+      },
+      "test_source": "frozen canonical test catalog",
+      "changed": false
+    },
+    "security-audit": {
+      "before": {
+        "structural": "pass",
+        "ai": 80.95238095238095,
+        "behavioral": 98.0,
+        "penalty": 0,
+        "composite": 90.82205513784461
+      },
+      "after": {
+        "structural": "pass",
+        "ai": 80.95238095238095,
+        "behavioral": 98.0,
+        "penalty": 0,
+        "composite": 90.82205513784461
+      },
+      "test_source": "frozen canonical test catalog",
+      "changed": false
+    },
+    "session-handoff": {
+      "before": {
+        "structural": "pass",
+        "ai": 80.95238095238095,
+        "behavioral": 100.0,
+        "penalty": 0,
+        "composite": 91.97994987468672
+      },
+      "after": {
+        "structural": "pass",
+        "ai": 80.95238095238095,
+        "behavioral": 100.0,
+        "penalty": 0,
+        "composite": 91.97994987468672
+      },
+      "test_source": "frozen canonical test catalog",
+      "changed": false
+    },
+    "shell-scripting": {
+      "before": {
+        "structural": "pass",
+        "ai": 90.0,
+        "behavioral": 100.0,
+        "penalty": 0,
+        "composite": 95.78947368421052
+      },
+      "after": {
+        "structural": "pass",
+        "ai": 90.0,
+        "behavioral": 100.0,
+        "penalty": 0,
+        "composite": 95.78947368421052
+      },
+      "test_source": "frozen canonical test catalog",
+      "changed": false
+    },
+    "synology-dsm": {
+      "before": {
+        "structural": "pass",
+        "ai": 80.95238095238095,
+        "behavioral": 94.66666666666667,
+        "penalty": 0,
+        "composite": 88.89223057644111
+      },
+      "after": {
+        "structural": "pass",
+        "ai": 80.95238095238095,
+        "behavioral": 94.66666666666667,
+        "penalty": 0,
+        "composite": 88.89223057644111
+      },
+      "test_source": "frozen canonical test catalog",
+      "changed": false
+    },
+    "terraform": {
+      "before": {
+        "structural": "pass",
+        "ai": 90.47619047619048,
+        "behavioral": 100.0,
+        "penalty": 0,
+        "composite": 95.98997493734335
+      },
+      "after": {
+        "structural": "pass",
+        "ai": 90.47619047619048,
+        "behavioral": 100.0,
+        "penalty": 0,
+        "composite": 95.98997493734335
+      },
+      "test_source": "frozen canonical test catalog",
+      "changed": false
+    },
+    "testing": {
+      "before": {
+        "structural": "pass",
+        "ai": 80.95238095238095,
+        "behavioral": 100.0,
+        "penalty": 0,
+        "composite": 91.97994987468672
+      },
+      "after": {
+        "structural": "pass",
+        "ai": 80.95238095238095,
+        "behavioral": 100.0,
+        "penalty": 0,
+        "composite": 91.97994987468672
+      },
+      "test_source": "frozen canonical test catalog",
+      "changed": false
+    },
+    "update-docs": {
+      "before": {
+        "structural": "pass",
+        "ai": 85.0,
+        "behavioral": 94.75,
+        "penalty": 0,
+        "composite": 90.64473684210526
+      },
+      "after": {
+        "structural": "pass",
+        "ai": 85.0,
+        "behavioral": 94.75,
+        "penalty": 0,
+        "composite": 90.64473684210526
+      },
+      "test_source": "frozen canonical test catalog",
+      "changed": false
+    },
+    "virtualization": {
+      "before": {
+        "structural": "pass",
+        "ai": 80.95238095238095,
+        "behavioral": 99.5,
+        "penalty": 0,
+        "composite": 91.69047619047619
+      },
+      "after": {
+        "structural": "pass",
+        "ai": 80.95238095238095,
+        "behavioral": 99.5,
+        "penalty": 0,
+        "composite": 91.69047619047619
+      },
+      "test_source": "frozen canonical test catalog",
+      "changed": false
+    },
+    "vulnerability-research": {
+      "before": {
+        "structural": "pass",
+        "ai": 80.95238095238095,
+        "behavioral": 93.5,
+        "penalty": 0,
+        "composite": 88.21679197994987
+      },
+      "after": {
+        "structural": "pass",
+        "ai": 80.95238095238095,
+        "behavioral": 93.5,
+        "penalty": 0,
+        "composite": 88.21679197994987
+      },
+      "test_source": "frozen canonical test catalog",
+      "changed": false
+    },
+    "skill-creator": {
+      "before": {
+        "structural": "pass",
+        "ai": 80.9523809524,
+        "behavioral": 97,
+        "penalty": 0,
+        "composite": 90.2431077694
+      },
+      "after": {
+        "structural": "pass",
+        "ai": 80.9523809524,
+        "behavioral": 98.0,
+        "penalty": 0,
+        "composite": 90.82205513785264
+      },
+      "test_source": "frozen canonical test catalog",
+      "changed": false
+    },
+    "skill-refiner": {
+      "before": {
+        "structural": "pass",
+        "ai": 76.1904761905,
+        "behavioral": 94.1111111111,
+        "penalty": 0,
+        "composite": 86.5655806182
+      },
+      "after": {
+        "structural": "pass",
+        "ai": 80.95238095238095,
+        "behavioral": 97.66666666666667,
+        "penalty": 0,
+        "composite": 90.62907268170426
+      },
+      "test_source": "frozen canonical test catalog",
+      "changed": true
+    }
+  },
+  "reverted": [
+    {
+      "skill": "privilege-escalation",
+      "iteration": 2,
+      "before": 82.71679197994987,
+      "candidate": 93.11654135338345,
+      "retained": 82.71679197994987,
+      "reason": "Independent adjudication upheld removal of supported in-pod assessment workflow."
+    }
+  ],
+  "regressions": [
+    "ansible",
+    "debian-ubuntu",
+    "docker",
+    "kali-linux",
+    "opnsense-pfsense",
+    "terraform"
+  ],
+  "regression_note": "Fresh judgments of unchanged outputs, not source regressions introduced by the rejected patch. Regular retained-source scores carry the baseline; no regrading increase is credited as a source improvement. No post-commit source regression occurred.",
+  "audit_findings": {
+    "confirmed": 36,
+    "fixed": 1,
+    "open": 35
+  },
+  "changes": "Full v2 creator audit and independent source/behavior baselines for all active skills; separate migration-notice checks. Regular candidate reverted under major review veto. Approved meta patch strengthens execution provenance, grade validation, and review checkpoints, and corrects active Kali routing. Refiner composite 86.5656 to 90.6291 (+4.0635); clean meta peer review. No other source changes retained.",
+  "meta_commit": "27cbb6b77fbec3b3095face8c8f37e266b2177c9",
+  "issue": 195
+}
 ]

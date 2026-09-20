@@ -32,19 +32,10 @@ Choose the audit depth explicitly. **Quick** is a bounded pre-merge sweep. **Exh
 1. **Preflight:** require a git repository; collect commit, branch, integration base, scope, changed files, languages, manifests, file count, instructions, and whether `docs/local/` is ignored before artifacts are written.
 2. **Choose mode:** use explicit user wording; default to **quick** for a PR, diff, merge, release, or handoff check, and to **exhaustive** only for a repo-wide health check, onboarding, or a request for comprehensive coverage. State the choice and scope before dispatch.
 3. **Quick mode:** read `references/quick-workflow.md`, then run independent, scoped lanes: code review, code simplification, security audit, and documentation sweep. Preserve each lane's native report; disclose failed, substituted, or skipped lanes. Do not add domain lanes or task-planning artifacts.
-4. **Exhaustive reconnaissance:** read `references/exhaustive-workflow.md`, then detect domain lanes with `references/detection-patterns.md` and `references/detect.sh`; show the 31-worker budget, matched, root-manifest-only, and skipped candidates before work starts. Confirm ambiguous matches against the scoped tree.
+4. **Exhaustive reconnaissance:** read `references/exhaustive-workflow.md`, then invoke the shipped `references/detect.sh` against the scoped repository and interpret its output with `references/detection-patterns.md`; show the 31-worker budget, matched, root-manifest-only, and skipped candidates before work starts. If the detector cannot run, disclose that failure and perform the documented manual equivalent. Confirm ambiguous matches against the scoped tree.
 5. **Exhaustive waves:** follow the guide to run code quality once (code review, code simplification, prose); then detected domain lanes; then security before vulnerability research; then docs, roadmap, and git hygiene. Show each wave before the next. Never dispatch an undetected lane.
 6. **Persist:** quick mode retains one wrapper report containing the four unedited lane reports, but creates no exhaustive artifacts. Exhaustive mode preserves lane reports in `DEEP-AUDIT.md`, derives `DEEP-AUDIT-TASKS.md`, states residual risk, and chooses direct execution only for a small task list. Larger task lists need an explicitly selected planning workflow.
 7. **Report:** prioritize security, correctness, test gaps, code quality, domain findings, then docs and hygiene. Keep evidence, scope limits, and unrun checks visible.
-
-## Rules
-
-- Quick means exactly four lanes. It is broad, not exhaustive.
-- Exhaustive means all three code-quality lanes once, every confirmed detected domain lane, security in sequence, and hygiene lanes. Do not duplicate code-simplification as separate slop and slimming passes.
-- Workers need independent context, read access, target-skill instructions, and the right tools. Sequential fallback is allowed and must be disclosed.
-- Do not normalize, merge, or silently discard lane reports. Synthesis is a separate final priority view.
-- Audit is read-only unless the user separately authorizes fixes. Do not write artifacts until ignore protection is verified.
-- Scope constraints apply to every lane. Root manifests in a monorepo are candidates, not proof that a scoped service uses a dependency.
 
 ## AI Self-Check
 
@@ -73,3 +64,12 @@ Use `references/output-contract.md`.
 - **Deliverable:** quick: `docs/local/audits/repo-audit/<YYYY-MM-DD>-<slug>.md`; exhaustive: `docs/local/audits/DEEP-AUDIT.md` and `DEEP-AUDIT-TASKS.md`.
 - **Mode:** always-on for audit invocations.
 - **Priority:** P0-P3 and info; retain the source lane and evidence for every finding.
+
+## Rules
+
+- Quick means exactly four lanes. It is broad, not exhaustive.
+- Exhaustive means all three code-quality lanes once, every confirmed detected domain lane, security in sequence, and hygiene lanes. Do not duplicate code-simplification as separate slop and slimming passes.
+- Workers need independent context, read access, target-skill instructions, and the right tools. Sequential fallback is allowed and must be disclosed.
+- Do not normalize, merge, or silently discard lane reports. Synthesis is a separate final priority view.
+- Audit is read-only unless the user separately authorizes fixes. Do not write artifacts until ignore protection is verified.
+- Scope constraints apply to every lane. Root manifests in a monorepo are candidates, not proof that a scoped service uses a dependency.

@@ -133,6 +133,10 @@ Before returning Fedora or RHEL-family commands, verify:
 
 ### Step 1: Identify the distro lane first
 
+Detect immutable and image-based systems (`rpm-ostree`, bootc, CoreOS, Silverblue/Kinoite, and
+vendor image variants) before selecting a package workflow. Do not use a mutable-host `dnf` repair
+sequence on an image lane; route to the image's supported layering, override, or rebuild path.
+
 | Distro | Default stance | What changes |
 |--------|----------------|--------------|
 | **Fedora stable** | Fast-moving workstation or server baseline | DNF 5 era, COPR exists, frequent rebases, shorter support window |
@@ -146,6 +150,10 @@ Before returning Fedora or RHEL-family commands, verify:
 | **Other RPM-based** | Confirm repo and support model | Do not assume Fedora or RHEL rules without evidence |
 
 ### Step 2: Gather current system state
+
+Run only commands that match the lane detected in Step 1. The following broad inventory is for
+mutable RPM hosts; on an image-based lane, skip `dnf`, `yum`, module, package-transaction, and
+mutable-boot commands and gather the equivalent `rpm-ostree` or bootc deployment state instead.
 
 ```bash
 cat /etc/os-release
@@ -188,7 +196,14 @@ command -v dkms >/dev/null 2>&1 && dkms status 2>&1 || true
 findmnt -t btrfs,xfs,ext4
 systemctl status fstrim.timer 2>&1 || true
 fwupdmgr get-devices 2>&1 || true
-dnf check-update 2>&1 || true
+```
+
+On a mutable DNF host, check update availability separately and preserve its tri-state result:
+
+```bash
+dnf check-update
+# Exit 0 means no updates, 100 means updates are available, and every other nonzero exit is a
+# diagnostic failure to report. Do not append `|| true`.
 ```
 
 ### Step 3: Load only the relevant reference
@@ -211,6 +226,10 @@ dnf check-update 2>&1 || true
 
 Do not load every reference by default. Pick the one that matches the failure mode, then widen
 only if the first layer is clean.
+
+For firewall triage, inspect firewalld service state, active zones, interface/source bindings, and
+effective rules before suggesting a change. Use `references/security-and-updates.md` for the
+read-only commands and runtime/permanent verification.
 
 ### Step 4: Change one layer at a time
 

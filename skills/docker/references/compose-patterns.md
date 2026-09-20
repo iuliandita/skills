@@ -38,6 +38,8 @@ services:
       cache:
         condition: service_healthy
     healthcheck:
+      # The application image must include wget; otherwise use a probe implemented
+      # by a runtime already present in the image.
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/health"]
       interval: 30s
       timeout: 5s

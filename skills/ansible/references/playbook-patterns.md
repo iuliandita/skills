@@ -124,6 +124,9 @@ The generic `ansible.builtin.package` auto-detects apk on Alpine but lacks apk-s
   become: true
   notify: Restart nginx
 
+# This template is a complete main nginx.conf. Do not apply this validator to an
+# isolated server{} include; validate a staged or installed complete config instead.
+
 - name: Copy static file
   ansible.builtin.copy:
     src: ssl/dhparam.pem
@@ -163,6 +166,14 @@ The generic `ansible.builtin.package` auto-detects apk on Alpine but lacks apk-s
     force: true
   become: true
 ```
+
+The first example renders a complete main `nginx.conf`, so `nginx -t -c %s` validates the
+candidate as the daemon's main configuration. For an included fragment, stage a complete candidate
+configuration tree, including required modules, MIME data, certificates, and other includes, then
+validate its main configuration. If staging is impractical, install with backup/rollback protection
+and run plain `nginx -t` against the assembled configuration before notifying a reload. Apply the
+same rule to other services: whole-config validators must receive the complete staged or installed
+configuration accepted by the daemon.
 
 ### Line-in-file operations
 

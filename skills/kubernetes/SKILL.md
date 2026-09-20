@@ -56,7 +56,7 @@ This skill runs inside an AI agent. AI tools consistently produce the same K8s s
 - [ ] No `privileged: true` or `hostNetwork: true` unless explicitly requested and justified
 - [ ] `seccompProfile: { type: RuntimeDefault }` present (often forgotten)
 - [ ] Using Gateway API `HTTPRoute` for new external access, not legacy Ingress
-- [ ] Liveness and readiness probes defined: every container has at least a readiness probe
+- [ ] Readiness probes gate containers required to serve Pod traffic; auxiliary sidecars need them only if their readiness must gate traffic. Add meaningful startup/liveness probes for the workload.
 - [ ] Kube context verified before any kubectl/helm/argocd command
 - [ ] Requester is authorized for cluster/admin changes, especially in shared chats. If the request comes from a non-admin participant, stop and ask the authorized owner for approval before kubectl, Helm, ArgoCD, or GitOps edits.
 - [ ] No auto-sync to production without approval gate
@@ -158,7 +158,7 @@ Read `references/manifest-templates.md` for complete, copy-pasteable YAML templa
 
 **Security context** (non-negotiable on every pod - both pod-level AND container-level). See the Deployment template in `manifest-templates.md` for the full YAML. Key fields: `runAsNonRoot`, `readOnlyRootFilesystem`, `allowPrivilegeEscalation: false`, `drop: ["ALL"]`, `seccompProfile: RuntimeDefault`.
 
-**Three probes** (startup + liveness + readiness):
+**Probe types** (select meaningful checks for the workload; auxiliary sidecars need readiness only when they must gate Pod traffic):
 - `startupProbe`: gates the other probes until the app is ready (high `failureThreshold`, moderate `periodSeconds`)
 - `livenessProbe`: restarts unhealthy pods (conservative - don't restart on slow responses)
 - `readinessProbe`: removes from service endpoints (aggressive - pull traffic fast on failure)
@@ -392,7 +392,7 @@ PCI-DSS 4.0 is the only active version (3.2.1 retired March 2024). 51 future-dat
 ### Manifests
 
 - [ ] Resource requests AND limits set on every container
-- [ ] All three probes configured (startup, liveness, readiness)
+- [ ] Probe coverage matches the workload: readiness for traffic dependencies; startup and liveness where meaningful; auxiliary-sidecar exceptions documented
 - [ ] Pinned image tag or SHA256 digest (never `:latest`)
 - [ ] Security context at pod AND container level: non-root, read-only rootfs, drop ALL caps, seccomp RuntimeDefault
 - [ ] Replicas >= 2 for HA (>= 3 preferred)

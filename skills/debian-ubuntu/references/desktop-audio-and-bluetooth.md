@@ -18,8 +18,9 @@ microphone.
 
 - Set it for this session: `pactl set-card-profile bluez_card.AA_BB_CC_DD_EE_FF a2dp-sink`
 - Stop the auto-switch persistently on WirePlumber 0.5.x with a drop-in in
-  `~/.config/wireplumber/wireplumber.conf.d/`: set `bluez5.autoswitch-profile = false`, and drop
-  the `hsp_*`/`hfp_*` entries from `bluez5.roles` only if the headset mic is not needed.
+  `~/.config/wireplumber/wireplumber.conf.d/` that sets
+  `wireplumber.settings = { bluetooth.autoswitch-to-headset-profile = false }`. Remove
+  `hsp_*`/`hfp_*` entries from `bluez5.roles` only if the headset mic is not needed.
 - Check `wireplumber --version` first: 0.4 used `~/.config/wireplumber/bluetooth.lua.d/`, and
   mixing the two config formats silently does nothing.
 

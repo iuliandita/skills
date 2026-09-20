@@ -199,16 +199,24 @@ catalog setup - plan for it in the infrastructure, not as an afterthought.
 import i18n from 'i18next'
 import { initReactI18next } from 'react-i18next'
 import en from './locales/en.json'
+import de from './locales/de.json'
+const resources = { en: { translation: en }, de: { translation: de } }
+const supportedLocales = new Set(Object.keys(resources))
 const savedLocale = localStorage.getItem('locale')
 // A saved localStorage preference wins; otherwise use navigator.language.
-const initialLocale = savedLocale ?? navigator.language
+const requestedLocale = savedLocale ?? navigator.language
+const normalizedLocale = requestedLocale.toLowerCase().split('-')[0]
+const initialLocale = supportedLocales.has(normalizedLocale) ? normalizedLocale : 'en'
+document.documentElement.lang = initialLocale
 i18n.use(initReactI18next).init({ lng: initialLocale, fallbackLng: 'en',
-  resources: { en: { translation: en } } })
+  resources })
 
 export async function setLocale(locale: string): Promise<void> {
-  localStorage.setItem('locale', locale)
-  await i18n.changeLanguage(locale)
-  document.documentElement.lang = locale
+  const normalizedLocale = locale.toLowerCase().split('-')[0]
+  if (!supportedLocales.has(normalizedLocale)) throw new Error(`Unsupported locale: ${locale}`)
+  await i18n.changeLanguage(normalizedLocale)
+  localStorage.setItem('locale', normalizedLocale)
+  document.documentElement.lang = normalizedLocale
 }
 export default i18n
 

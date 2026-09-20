@@ -44,7 +44,7 @@ initramfs first (so the image exists), then `update-grub` (so the menu entry poi
 ## Kernel hygiene
 
 ```bash
-apt list --installed 2>/dev/null | grep linux-image
+dpkg-query -W -f='${binary:Package}\n' 'linux-image*' 2>&1 || true
 sudo apt --purge autoremove           # removes old kernels kept by autoremove policy
 ```
 

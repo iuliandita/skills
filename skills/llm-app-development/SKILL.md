@@ -135,7 +135,8 @@ Actions example), RAG-specific evals, agent evals, and red teaming patterns.
 
 ### Streaming
 
-Always stream for user-facing responses. Buffer for background processing.
+Stream user-facing responses. For background processing, stream when progress, incremental
+persistence, early error detection, or timeout avoidance matters; otherwise buffer the result.
 
 ```python
 # Anthropic streaming (Python)

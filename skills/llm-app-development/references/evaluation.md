@@ -182,7 +182,7 @@ Best quality, most expensive. Required for production evals:
 2. Create expected answers (human-written or human-validated)
 3. Include edge cases: ambiguous queries, out-of-scope, adversarial inputs
 4. Label difficulty: easy, medium, hard
-5. Maintain at least 50 examples for core features
+5. Size the dataset to cover the contract, known failures, material boundaries, and the feature's risk; expand it when measured gaps appear
 
 ### Synthetic generation
 

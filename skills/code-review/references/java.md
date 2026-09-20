@@ -71,12 +71,12 @@ public Uni<Order> create(Order order) {
 
 ### @Transactional Proxy Traps
 
-The #1 source of Spring bugs. `@Transactional` works through CGLIB proxies - anything that bypasses the proxy silently loses the transaction.
+`@Transactional` works through Spring AOP proxies. Spring can use JDK dynamic proxies for interfaces or CGLIB class-based proxies; calls that bypass the active proxy silently lose the transaction advice.
 
 **Detect:**
 - Self-invocation: method in the same bean calling another `@Transactional` method directly (bypasses proxy, no transaction)
 - Private methods cannot be intercepted; Spring 6+ class-based proxies support protected/package-visible transactional methods by default. Interface-based proxies still require public interface methods. Verify proxy configuration.
-- `@Transactional` on `final` class or method (CGLIB can't subclass)
+- `@Transactional` on a `final` class or method when class-based (CGLIB) proxies are active; verify the configured proxy type before flagging it
 - Checked exception thrown without `rollbackFor` (Spring only auto-rolls-back on unchecked exceptions)
 - `@Transactional` called from `@PostConstruct` (proxy not fully initialized)
 - Transaction-bound work spawned into `CompletableFuture.runAsync()` (different thread, different EntityManager, no transaction)

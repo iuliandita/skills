@@ -319,7 +319,7 @@ merged_model.save_pretrained("merged-model")
 
 ### Serving fine-tuned models
 
-- **Provider-hosted** (OpenAI, Anthropic): deploy via API, no infra management
+- **Provider-hosted**: use a provider's documented fine-tuning and inference API, such as OpenAI's fine-tuning API; verify that the selected model supports fine-tuning before creating the job
 - **vLLM**: `python -m vllm.entrypoints.openai.api_server --model merged-model`
 - **Ollama**: create a Modelfile pointing to the merged weights
 - **TGI**: `docker run ghcr.io/huggingface/text-generation-inference --model-id merged-model`

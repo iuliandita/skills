@@ -128,9 +128,13 @@ hostssl cde_db          all             0.0.0.0/0               reject          
 
 ### Role architecture
 
+The block below is a `psql` script, not server-only SQL. Each `\password` command prompts securely
+and sends an `ALTER ROLE` statement without placing the password in the script or shell arguments.
+
 ```sql
 -- Application role: DML only (SELECT, INSERT, UPDATE, DELETE)
-CREATE ROLE app_user LOGIN PASSWORD 'use_vault_not_this';
+CREATE ROLE app_user LOGIN;
+\password app_user
 GRANT CONNECT ON DATABASE mydb TO app_user;
 GRANT USAGE ON SCHEMA public TO app_user;
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO app_user;
@@ -138,7 +142,8 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE O
 -- NO: CREATE, DROP, ALTER, TRUNCATE
 
 -- Migration role: DDL (for schema changes only)
-CREATE ROLE migration_user LOGIN PASSWORD 'use_vault_not_this';
+CREATE ROLE migration_user LOGIN;
+\password migration_user
 GRANT CONNECT ON DATABASE mydb TO migration_user;
 GRANT ALL ON SCHEMA public TO migration_user;
 GRANT ALL ON ALL TABLES IN SCHEMA public TO migration_user;
@@ -147,7 +152,8 @@ GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO migration_user;
 ALTER ROLE migration_user SET statement_timeout = '0';
 
 -- Read-only role: analytics, support, dashboards
-CREATE ROLE readonly_user LOGIN PASSWORD 'use_vault_not_this';
+CREATE ROLE readonly_user LOGIN;
+\password readonly_user
 GRANT CONNECT ON DATABASE mydb TO readonly_user;
 GRANT USAGE ON SCHEMA public TO readonly_user;
 GRANT SELECT ON ALL TABLES IN SCHEMA public TO readonly_user;
@@ -410,15 +416,19 @@ ALTER DATABASE [mydb] SET RECOVERY FULL;
 -- Force encryption (via SQL Server Configuration Manager, not T-SQL)
 -- Or connection string: Encrypt=True;TrustServerCertificate=False
 
--- Enable TDE for CDE databases
+-- Enable TDE for CDE databases. This block requires SQLCMD mode. Populate
+-- TDE_MASTER_KEY_PASSWORD and TDE_CERT_PASSWORD through a process-private environment
+-- supplied by an approved secret provider, not with `sqlcmd -v` command-line arguments.
+-- SQLCMD performs raw text substitution: encode each embedded single quote as two single
+-- quotes before execution, and stop if the client cannot guarantee correct SQL-literal escaping.
 -- Step 1: Create master key and certificate in master (do this ONCE per server)
 USE master;
-CREATE MASTER KEY ENCRYPTION BY PASSWORD = 'use_vault_not_this';
+CREATE MASTER KEY ENCRYPTION BY PASSWORD = '$(TDE_MASTER_KEY_PASSWORD)';
 CREATE CERTIFICATE TDECert WITH SUBJECT = 'TDE Certificate';
 -- IMMEDIATELY back up the cert (losing it = permanent data loss on restore)
 -- BACKUP CERTIFICATE TDECert TO FILE = '/secure/TDECert.cer'
 --     WITH PRIVATE KEY (FILE = '/secure/TDECert.pvk',
---                       ENCRYPTION BY PASSWORD = 'use_vault_not_this');
+--                       ENCRYPTION BY PASSWORD = '$(TDE_CERT_PASSWORD)');
 
 -- Step 2: Create DEK in the target database
 USE cde_db;

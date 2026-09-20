@@ -84,7 +84,7 @@ Before returning Kali commands or tool recommendations, verify:
 - [ ] **Wireless and hardware path is real**: chipset, firmware, monitor mode, injection support, SDR stack, USB passthrough, and kernel modules match the actual hardware.
 - [ ] **GPU and capture stack is coherent**: VM passthrough, host acceleration, PipeWire, browser capture, and desktop session line up before blaming the tool.
 - [ ] **NetHunter is not treated like normal desktop Kali**: mobile kernels, Android host constraints, rootless vs full chroot shape, and missing systemd-style tooling can change which checks even make sense.
-- [ ] **Correct handoff chosen**: once the question becomes exploitation methodology, route to **privilege-escalation**. Once it becomes original vulnerability discovery, route to **vulnerability-research**.
+- [ ] **Correct handoff chosen**: route post-foothold escalation or related authorized paths to **privilege-escalation**. Route original vulnerability discovery to **vulnerability-research**.
 - [ ] **Diagnostic errors are not silenced**: do not hide useful failure output with `2>/dev/null` on commands whose error reason matters. Use `2>&1 || true` when gathering.
 - [ ] **Channel checked**: kali-rolling, snapshots, metapackages, and NetHunter advice matches official docs
 - [ ] **Lab boundary explicit**: offensive tooling stays in authorized labs, CTFs, or owned systems

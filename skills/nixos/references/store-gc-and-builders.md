@@ -41,7 +41,8 @@ The new CLI is cleaner and works better with flakes. It is under `experimental-f
 `nix-store --gc` (alias: `nix-collect-garbage`) deletes any path in `/nix/store` that is
 not reachable from a GC root. GC roots include:
 
-- The current and previous system generations
+- Every retained generation of every profile, including all retained system generations
+  (not only the current and previous ones)
 - All user profile generations
 - Active dev shells (via `.direnv` symlinks, `result` symlinks from `nix build`)
 - `$HOME/.nix-defexpr/channels` entries
