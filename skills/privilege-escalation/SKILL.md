@@ -99,7 +99,7 @@ ip addr && ip route && ss -tulpn
 - **Bare metal / VM** -> Phase 2 (Linux privesc)
 - **Docker container** -> Phase 5 (container breakout)
 - **Kubernetes pod** -> Phase 6 (k8s privesc)
-- **Any of the above** -> also check Phase 7 (VPN/secrets) and Phase 8 (IaC)
+- **Any of the above** -> also check Phase 4 (VPN/secrets) and Phase 7 (IaC)
 
 ### Phase 2: Linux Privilege Escalation
 
@@ -232,7 +232,8 @@ kubectl --context "$KUBE_CONTEXT" auth can-i list secrets --namespace "$NAMESPAC
 kubectl --context "$KUBE_CONTEXT" auth can-i create pods --namespace "$NAMESPACE"
 ```
 These authorization checks do not retrieve secret values or create a test pod. Admission
-policy can still reject an operation that RBAC permits.
+policy can still reject an operation that RBAC permits. Without kubectl, use the mounted
+ServiceAccount curl checks in `references/kubernetes-privesc.md` (Quick Assessment).
 
 ### Phase 7: IaC & Cloud Credential Exposure
 

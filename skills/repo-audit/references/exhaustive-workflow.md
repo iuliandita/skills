@@ -90,13 +90,12 @@ a narrower target.
 
 ### Step 1: Reconnaissance (Wave 1)
 
-Detect which Wave 3 skills apply by scanning for file patterns. Use the detection table
-and script in `references/detection-patterns.md`.
-
-Extract the detection script from the fenced block in `references/detection-patterns.md` and
-run it from the repo root. It outputs matched skill names, one per line. If the user specified
-a scope, pass it as the script's first argument to filter detection to that subtree
-(`git ls-files -- path/to/scope` instead of the full repo).
+Detect which Wave 3 skills apply by scanning for file patterns. Read the detection table in
+`references/detection-patterns.md`, then invoke the shipped `references/detect.sh` from the audited
+repository root. It outputs matched skill names, one per line. If the user specified a scope, pass
+it as the script's first argument to filter detection to that subtree (`git ls-files --
+path/to/scope` instead of the full repo). If the shipped detector cannot run, report the command and
+failure before performing the table's manual equivalent; do not silently replace detector evidence.
 
 After detection, present the recon summary before proceeding. Compute
 `{unmatched_skills}` as the 23 Wave 3 candidates minus the matched set.
@@ -432,7 +431,8 @@ but preserves the wave ordering.
 
 ## Reference Files
 
-- `references/detection-patterns.md` - Wave 3 file-pattern table, runnable detection script, and edge cases. Read before Step 1.
+- `references/detection-patterns.md` - Wave 3 file-pattern table and edge cases. Read before Step 1.
+- `references/detect.sh` - shipped Wave 3 detector. Invoke it from the audited repository root.
 - `references/report-templates.md` - templates for `DEEP-AUDIT.md`, `DEEP-AUDIT-TASKS.md`, and Step 9b plan files.
 - `references/exclusions.md` - skills deliberately excluded from wave dispatch and why.
 

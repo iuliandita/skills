@@ -1,6 +1,6 @@
 # Kubernetes Manifest Templates
 
-Production-ready, copy-pasteable YAML templates. Every template includes security context, probes, resource limits, and standard labels. Updated for K8s 1.35-1.37+.
+Production-ready, copy-pasteable YAML templates. Workload containers include security context, appropriate probes, resource limits, and standard labels. Auxiliary sidecars need a readiness probe only when their readiness should gate Pod traffic. Updated for K8s 1.35-1.37+.
 
 ---
 
@@ -122,6 +122,8 @@ spec:
       - name: log-shipper              # native sidecar
         image: <log-shipper-image>:<tag>
         restartPolicy: Always           # this makes it a sidecar
+        # No readinessProbe: this auxiliary shipper does not gate application traffic.
+        # Add a probe if the application contract requires the shipper to be ready first.
         resources:
           requests:
             memory: "64Mi"

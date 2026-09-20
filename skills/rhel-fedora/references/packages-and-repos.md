@@ -68,8 +68,12 @@ rpm -qpR ./package.rpm
 rpm -qpi ./package.rpm
 rpm -K ./package.rpm
 rpm -qi gpg-pubkey-* 2>&1 || true
-dnf install ./package.rpm 2>&1 || true
+dnf install ./package.rpm
 ```
+
+Do not append `|| true` to DNF transactions. Preserve and report resolver, signature, repository,
+and network failures. For `dnf check-update`, handle exit 100 explicitly as "updates available";
+other nonzero exits are failures.
 
 For third-party release RPMs and repo keys, verify the key fingerprint and source before importing or trusting the repo. `rpm -K` tells you a package is signed, not that the signer is the one you intended to trust.
 

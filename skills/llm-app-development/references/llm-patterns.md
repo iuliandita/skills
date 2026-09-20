@@ -98,7 +98,7 @@ const { text } = await generateText({
 ### Why stream
 
 - User-facing: perceived latency drops from seconds to milliseconds (first token)
-- Background: still stream to detect errors early and implement progress tracking
+- Background: stream when early error detection, progress reporting, incremental persistence, or timeout avoidance is required; otherwise buffer the final result
 - Long outputs: streaming prevents timeout issues on HTTP connections
 
 ### Anthropic streaming (Python)

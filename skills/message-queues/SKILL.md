@@ -78,19 +78,6 @@ non-production copy or a quarantined message first. Offset reset, purge, requeue
 changes delivery state: obtain explicit authorization after presenting the exact scope and rollback
 or containment plan.
 
-## Rules
-
-1. **Assume at-least-once delivery unless the complete boundary proves otherwise.** Consumers must
-   tolerate duplicates; producer retries need stable message IDs.
-2. **Acknowledge after the durable effect.** Auto-ack or early commit trades reliability for loss.
-3. **Make retries bounded and observable.** Include jitter/delay where supported; route poison
-   messages away from the hot path.
-4. **Treat replay as a new execution.** It can recreate effects, so use idempotency and scope it.
-5. **Measure age as well as count.** A small backlog containing old messages can be more urgent than
-   a large fresh burst.
-6. **Do not alter live broker state during diagnosis.** Read metrics, logs, and configuration first;
-   request approval for offset resets, purges, requeues, topology edits, or production replay.
-
 ## AI Self-Check
 
 - [ ] Delivery guarantee names match the chosen producer, broker, consumer, and side-effect boundary
@@ -120,3 +107,16 @@ See `references/output-contract.md` for the full contract.
 - [RabbitMQ acknowledgements and confirms](https://www.rabbitmq.com/docs/confirms) - manual acks,
   redelivery, publisher confirms, prefetch, and requeue behavior
 - [RabbitMQ quorum queues](https://www.rabbitmq.com/docs/quorum-queues) - dead-lettering guarantees
+
+## Rules
+
+1. **Assume at-least-once delivery unless the complete boundary proves otherwise.** Consumers must
+   tolerate duplicates; producer retries need stable message IDs.
+2. **Acknowledge after the durable effect.** Auto-ack or early commit trades reliability for loss.
+3. **Make retries bounded and observable.** Include jitter/delay where supported; route poison
+   messages away from the hot path.
+4. **Treat replay as a new execution.** It can recreate effects, so use idempotency and scope it.
+5. **Measure age as well as count.** A small backlog containing old messages can be more urgent than
+   a large fresh burst.
+6. **Do not alter live broker state during diagnosis.** Read metrics, logs, and configuration first;
+   request approval for offset resets, purges, requeues, topology edits, or production replay.

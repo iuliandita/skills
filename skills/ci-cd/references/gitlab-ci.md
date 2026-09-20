@@ -600,11 +600,19 @@ tf-apply:
     - terraform apply -auto-approve tfplan
   dependencies:
     - tf-plan
+  environment:
+    name: production
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       when: manual
       allow_failure: false
 ```
+
+`when: manual` pauses the pipeline but does not create a deployment authorization boundary. Protect
+the matching `production` environment in GitLab and verify its Allowed to Deploy principals before
+treating this job as an approval gate. Protected environments are tier-dependent; when unavailable,
+document and verify the repository's authorized alternative rather than claiming the manual job
+protects production.
 
 ---
 

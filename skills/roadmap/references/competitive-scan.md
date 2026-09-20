@@ -13,7 +13,7 @@ stack. Confirm before scanning.
 
 ## Step 2: Gather Intelligence
 
-For each target repo, fetch via forge CLI, web fetch, or the browse skill:
+For each target repo, fetch via forge CLI, web fetch, or the host's browsing tools:
 
 | Source | What to look for |
 |--------|------------------|
@@ -48,11 +48,11 @@ glab issue list -R owner/repo --order popularity --per-page 50
 glab mr list -R owner/repo --merged --per-page 20
 ```
 
-A non-zero exit is source failure: report it, then use the documented web or browse fallback. An
+A non-zero exit is source failure: report it, then use the documented web or host-browsing fallback. An
 exit-0 empty result is valid empty evidence; do not confuse it with authentication, rate-limit,
 network, or CLI failure.
 
-If neither `gh` nor `glab` is available, fall back to web fetch or the browse skill.
+If neither `gh` nor `glab` is available, fall back to web fetch or the host's browsing tools.
 As a last resort, ask the user to paste relevant sections.
 
 Note coverage limitations in Competitive Intel, for example: "scanned top 50 issues by

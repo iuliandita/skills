@@ -147,6 +147,8 @@ git pull --ff-only                   # refuse non-fast-forward
 ```
 
 If `BASE_BRANCH` is unknown, read it from `git symbolic-ref refs/remotes/origin/HEAD` or ask the user. Never guess between `main` and `master` - wrong base means a botched branch.
+Report the detected base branch and the exact clean-state, fetch, and fast-forward checks that ran,
+including any untracked files or unavailable remote update.
 
 ### Step A2: Size-detect
 
@@ -192,6 +194,8 @@ End start mode with a clear handoff:
 - State the classification
 - Point the user at skills that fit the domain ("touches Dockerfile - use **docker** when editing", "adds K8s manifests - use **kubernetes**")
 - Remind the user to invoke **dev-cycle** in finish mode when ready to ship
+- Name whether **testing**, **update-docs**, and **security-audit** will apply at finish time. Justify
+  any skipped handoff from the change scope.
 
 Do not continue into implementation - that's the user's next session.
 
@@ -204,6 +208,10 @@ Detailed steps live in `references/finish.md`. Summary:
 ### Step B1: Pre-close audit and forge detection
 
 First, detect the forge - every later step (push, PR, CI watch, merge, release) dispatches on it. See `references/finish.md` Step B1 for the full detection block. Short version: read `git remote get-url origin`, pattern-match on host, set `$FORGE` to one of `github | gitlab | forgejo | gitea | bitbucket | unknown | bare`. Forgejo uses the Forgejo CLI (`fj`); Gitea gets its own value and uses the Gitea community CLI (`tea`).
+
+Before any push or PR command, report the detected forge, the exact origin URL evidence used for
+that classification, and the base branch used for the comparison. Stop when forge or base evidence
+is ambiguous.
 
 Then sanity-check the branch:
 

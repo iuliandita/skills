@@ -28,11 +28,12 @@ off.
 - Use full upgrades on Arch-style systems. `pacman -Sy package_name` creates partial-upgrade risk.
 - Read the transaction plan before confirming. Arch tells you what it is about to remove or replace.
 - Keep an eye on `pacman -Qm`. Foreign packages are a common source of drift.
-- Do not default to `--overwrite`. Conflicting files usually mean packaging or ownership needs to be fixed first. When `--overwrite` is genuinely needed, use a specific glob - never a bare wildcard:
+- Do not default to `--overwrite`. Conflicting files usually mean packaging or ownership needs to be fixed first. Check the exact reported path with `pacman -Qo` first. When `--overwrite` is genuinely needed, use the verified file's package-archive path (without the leading `/`) - never a wildcard or inferred glob:
 
   ```bash
-  # Right: overwrite only the conflicting path
-  sudo pacman -Syu --overwrite '/usr/lib/python3.*/site-packages/collisions/*'
+  # Only after confirming the exact reported path is safe to replace
+  pacman -Qo /usr/lib/python3.13/site-packages/collisions/module.py
+  sudo pacman -Syu --overwrite usr/lib/python3.13/site-packages/collisions/module.py
 
   # Wrong: blanket overwrite hides real conflicts
   sudo pacman -Syu --overwrite '*'

@@ -38,7 +38,7 @@ Generate on the host once (or derive from SSH host key):
 ```bash
 # From existing SSH host key (no new material to manage)
 sudo nix-shell -p ssh-to-age --run \
-  'ssh-keyscan -t ed25519 localhost | ssh-to-age'
+  'ssh-to-age < /etc/ssh/ssh_host_ed25519_key.pub'
 
 # Or a fresh age key
 sudo mkdir -p /var/lib/sops-nix
@@ -89,17 +89,21 @@ creation_rules:
 
 ### Adding a new host
 
-1. Boot the host (live ISO or nixos-anywhere target) and capture its ed25519 SSH host key,
-   or generate a dedicated age key you copy into `/var/lib/sops-nix/key.txt` before
-   activation.
-2. Derive its age public key:
-   `ssh-keyscan -t ed25519 <host> | ssh-to-age`.
-3. Add the key to `.sops.yaml` under `keys:` with an anchor.
-4. Add a `creation_rules` entry scoped to `secrets/hosts/<new>/.*\.yaml$` listing the
+1. Boot the host (live ISO or nixos-anywhere target) and capture its ed25519 SSH host key
+   from the host console, or generate a dedicated age key you copy into
+   `/var/lib/sops-nix/key.txt` before activation.
+2. Authenticate the recipient before adding it. Compare the SHA256 fingerprint from the
+   console-captured public key (or an independently verified inventory) with the fingerprint
+   of the key offered at the host address. Do not turn unauthenticated `ssh-keyscan` output
+   directly into an age recipient.
+3. Derive the age public key from the authenticated public-key artifact:
+   `ssh-to-age < /path/to/verified_ssh_host_ed25519_key.pub`.
+4. Add the key to `.sops.yaml` under `keys:` with an anchor.
+5. Add a `creation_rules` entry scoped to `secrets/hosts/<new>/.*\.yaml$` listing the
    new anchor and any shared admins.
-5. `sops updatekeys secrets/hosts/<new>/*.yaml` to re-key any existing secrets that now
+6. `sops updatekeys secrets/hosts/<new>/*.yaml` to re-key any existing secrets that now
    need the new host added.
-6. Add `nixosConfigurations.<new>` to the flake and deploy with `nixos-anywhere` or a
+7. Add `nixosConfigurations.<new>` to the flake and deploy with `nixos-anywhere` or a
    normal `nixos-rebuild --flake .#<new> --target-host`.
 
 ### Encrypting a secret

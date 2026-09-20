@@ -106,6 +106,11 @@ notes in `references/versions.md` when selecting Alloy or Grafana authentication
 
 ### Step 3: Instrument and configure
 
+When the user asks to build or configure observability artifacts, load
+`references/runnable-examples.md` and return each requested concrete artifact: Collector
+configuration, Prometheus alert or recording rule plus its rule-test fixture, and/or provisioned
+dashboard JSON. Limit output to the requested signals and the detected stack.
+
 - **Metrics**: use auto-instrumentation where it exists; add custom metrics only for
   domain-specific questions. Keep labels low-cardinality. Add recording rules for expensive
   queries that dashboards or alerts repeat.
@@ -129,6 +134,10 @@ notes in `references/versions.md` when selecting Alloy or Grafana authentication
   least one service before declaring coverage
 - Start with `references/runnable-examples.md` when a task needs compact Collector, SLO-rule,
   rule-test, or dashboard artifacts that can be passed to the validators above.
+- Run the matching validator for every artifact produced. Validate Collector configuration with
+  `otelcol validate --config`, Prometheus rules with `promtool check rules`, rule-test fixtures with
+  `promtool test rules`, and dashboard JSON with a JSON parser plus the target provisioning/import
+  check when that backend is available.
 - Report the validator results: name each command you ran and its outcome, and list any check
   skipped because the tool or backend was unavailable. Never present an unrun check as passing.
 

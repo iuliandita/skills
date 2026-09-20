@@ -130,7 +130,7 @@ Defenses:
 For structured output, validate against the expected schema before use:
 
 ```python
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, ValidationError, field_validator
 
 class SupportResponse(BaseModel):
     answer: str

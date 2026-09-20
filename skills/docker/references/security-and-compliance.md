@@ -185,6 +185,8 @@ services:
       - /tmp                             # writable temp (size-limited)
     user: "1001:1001"                    # explicit non-root UID/GID
     healthcheck:
+      # Requires wget in the image. If it is absent, use an equivalent probe
+      # implemented by a runtime already present in the image.
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/health"]
       interval: 30s
       timeout: 5s

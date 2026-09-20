@@ -28,7 +28,7 @@ Kali lowers the friction to run security tooling. It does not lower the bar for 
 
 ## Hand-off boundaries
 
-- For live offensive workflow and escalation methodology, move to **privilege-escalation**.
+- For post-foothold escalation and related authorized paths, move to **privilege-escalation**.
 - For novel bug hunting and proof-of-concept work, move to **vulnerability-research**.
 - For defensive review of the target's code or config, move to **security-audit**.
 

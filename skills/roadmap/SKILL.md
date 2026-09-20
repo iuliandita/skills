@@ -191,6 +191,11 @@ Read the existing structure first. If it doesn't match this format:
 
 ### Step 0: Activity Detection (runs on every invocation)
 
+Before reporting roadmap state, inspect the available repository root, ROADMAP.md, ignore rules,
+README, and primary package/project metadata. Distinguish observed, missing, and unavailable state;
+never infer that a roadmap is absent or ignored when the repository cannot be inspected. Name any
+project context that was unavailable.
+
 If no ROADMAP.md exists yet or a successful activity query returns no recent activity, skip the reminder. Report query failures as unavailable evidence.
 
 Otherwise, check for recent project activity:
@@ -314,6 +319,10 @@ Trigger: user asks to scan competitors, provides repo URLs, or accepts the Mode 
 
 Read `references/competitive-scan.md` for target selection, forge CLI commands, strict
 fit filtering, approval flow, and Competitive Intel formatting.
+
+Mode 3 requires a bounded, reaction-sorted forge query, or a documented equivalent when that forge
+cannot sort by reactions. Apply the reference's repository-size-calibrated strong/weak/noise
+thresholds, attribute every candidate, and present candidates for approval before writing them.
 
 ---
 

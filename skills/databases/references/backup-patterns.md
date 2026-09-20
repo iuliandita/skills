@@ -878,7 +878,7 @@ DROP DATABASE [mydb_verify];
 
 ### PCI-CDE (Cardholder Data Environment)
 
-PCI-DSS 4.0 requirements that affect backup strategy:
+PCI-DSS 4.0 controls that can affect backup strategy include:
 
 - **Req 3.5**: Render PAN unreadable wherever stored - backups included. Encrypt backups at rest.
 - **Req 3.6/3.7**: Cryptographic key management for backup encryption keys. Use key owner/vendor-defined cryptoperiods and compromise-triggered rotation.
@@ -886,17 +886,21 @@ PCI-DSS 4.0 requirements that affect backup strategy:
 - **Req 10.5**: Audit logs must be backed up and immutable for 12 months.
 - **Req 12.10.2**: Incident response plan must include backup restoration procedures. Test annually.
 
-| What | Frequency | Retention | Extra Requirements |
+The schedule below is an example of an aggressive local policy for one CDE. Its numeric
+frequencies and retention periods are not universal PCI DSS requirements; derive them from the
+organization's recovery objectives, data-retention policy, cryptoperiods, and assessed controls.
+
+| What | Example Frequency | Example Retention | Extra Requirements |
 |---|---|---|---|
 | Full physical backup | Daily | 90 days (quarterly audit window) | Encrypted (AES-256), access-logged |
 | WAL/binlog archive | Continuous (< 1 min) | 90 days | Encrypted, immutable storage |
 | Logical dump | Weekly | 90 days | Encrypted |
 | Verify restore | Weekly (automated) + quarterly (documented) | Reports retained 12 months | QSA-auditable evidence |
 | Backup integrity check | Daily | Logs retained 12 months | Automated alerts on failure |
-| Key rotation | Annually minimum | Previous keys retained until oldest encrypted backup expires | Documented procedure |
+| Key rotation | Owner/vendor-defined cryptoperiod and on compromise | Previous keys retained until oldest encrypted backup expires | Documented procedure and policy evidence |
 
 ```
-# PCI-CDE cron (aggressive schedule)
+# Example PCI-CDE cron implementing the local policy above
 # Full backup (daily 1am)
 0 1 * * * /opt/scripts/backup-full-encrypted.sh
 
@@ -939,7 +943,7 @@ The standard for long-term retention:
 | Son (daily) | Daily incremental/diff | 14 days | Mon-Sat diffs |
 | Father (weekly) | Weekly full | 8 weeks | Sunday fulls |
 | Grandfather (monthly) | Monthly full (1st Sunday) | 12 months | Promoted weekly full |
-| Annual | First full of the year | 7 years (PCI) or per policy | Promoted monthly full |
+| Annual | First full of the year | Per documented retention policy | Promoted monthly full |
 
 **pgBackRest retention config:**
 ```ini

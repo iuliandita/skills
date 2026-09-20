@@ -159,11 +159,10 @@ pveam download local debian-12-standard_12.7-1_amd64.tar.zst
 
 ### QEMU guest agent
 
-Install in every VM. Required for:
-- Clean shutdown (ACPI shutdown waits for agent response)
+Install in every VM when its integration features are needed. It enables:
+- Guest-agent shutdown when that integration is enabled, and `qm agent` commands. The ACPI shutdown path does not require a guest agent; check the VM agent setting before diagnosing shutdown.
 - IP address reporting in Proxmox UI
-- Filesystem freeze during snapshots (consistent backups)
-- `qm agent` commands
+- Filesystem freeze for guest-aware backups. Without it, snapshots can still be crash-consistent; filesystem freeze alone does not make an application-consistent backup.
 
 ```bash
 # Debian/Ubuntu
@@ -503,13 +502,13 @@ from a protected file, file descriptor, or secret store. Do not pass the secret 
 ### VZDump (built-in backups)
 
 ```bash
-# Snapshot mode (online, requires QEMU agent for consistency)
+# Snapshot mode: online; guest-agent freeze can improve filesystem consistency
 vzdump 100 --mode snapshot --compress zstd --storage local
 
-# Suspend mode (brief pause, consistent)
+# Suspend mode: pauses the VM; does not itself guarantee application consistency
 vzdump 100 --mode suspend --compress zstd --storage nfs-backup
 
-# Stop mode (offline, guaranteed consistent)
+# Stop mode: offline after shutdown; verify graceful shutdown and application recovery
 vzdump 100 --mode stop --compress zstd --storage nfs-backup
 ```
 

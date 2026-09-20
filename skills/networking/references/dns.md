@@ -164,15 +164,23 @@ supports them.
 
 ### Hosting your own DoH/DoT endpoint
 
-**Option 1**: Caddy + CoreDNS (DoH)
+**Option 1**: CoreDNS native DoH listener
 
-```
-dns.example.com {
-  reverse_proxy localhost:8053
+```corefile
+https://.:443 {
+  tls /etc/letsencrypt/live/dns.example.com/fullchain.pem /etc/letsencrypt/live/dns.example.com/privkey.pem
+  forward . https://9.9.9.9 {
+    tls_servername dns.quad9.net
+    health_check 5s
+  }
+  cache 30
 }
 ```
 
-With CoreDNS listening on `8053` with the `doh` plugin.
+The `https` server scheme serves DoH; `forward` supports an `https://` upstream and defaults to
+the `/dns-query` path. Set `tls_servername` when forwarding to an IP address so TLS certificate
+validation has the intended name. Confirm the installed CoreDNS build includes the `https` plugin
+before deploying this Corefile.
 
 **Option 2**: Unbound native DoT
 
@@ -235,13 +243,28 @@ resolvectl query example.com
 
 ### systemd-resolved gotchas
 
-systemd-resolved manages `/etc/resolv.conf` as a stub resolver (`127.0.0.53`). If you're
-running your own DNS server:
+systemd-resolved manages `/etc/resolv.conf` as a stub resolver (`127.0.0.53`). To keep that stub
+for applications while CoreDNS handles upstream resolution, bind CoreDNS to `127.0.0.1:53` and set
+`DNS=127.0.0.1` in `/etc/systemd/resolved.conf`, then restart `systemd-resolved`. Leave
+`DNSStubListener` enabled and keep `/etc/resolv.conf` linked to
+`/run/systemd/resolve/stub-resolv.conf`: applications query resolved at `127.0.0.53`, resolved
+queries CoreDNS at `127.0.0.1`, and CoreDNS queries explicit external upstreams. Per-link DNS
+routing configured by NetworkManager or networkd can override the global `DNS=` setting, so verify
+the effective path with `resolvectl status`.
 
-1. **Disable the stub listener**: `DNSStubListener=no` in `/etc/systemd/resolved.conf`
-2. **Point resolv.conf at your server**: `ln -sf /run/systemd/resolve/resolv.conf /etc/resolv.conf`
-   (or manage it manually)
-3. **Or symlink to your own**: remove the symlink and write a static `/etc/resolv.conf`
+Configure CoreDNS with explicit upstreams and a TLS server name, for example:
+
+```corefile
+.:53 {
+  bind 127.0.0.1
+  forward . https://9.9.9.9 {
+    tls_servername dns.quad9.net
+  }
+  cache 30
+}
+```
+
+Do not use `forward . /etc/resolv.conf`; that resolver chain loops back to itself.
 
 Check what's active: `resolvectl status` shows per-interface DNS configuration.
 

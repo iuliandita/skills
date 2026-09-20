@@ -48,11 +48,15 @@ What these tell you:
 
 ## Upgrade stance
 
-Kali docs recommend:
+Kali docs recommend `full-upgrade` for package transitions. First simulate and review the
+transaction, including removals, held packages, and services that will restart. After the user
+has approved that reviewed plan, run the real transaction:
 
 ```bash
 sudo apt update
-sudo apt full-upgrade -y
+apt-get -s full-upgrade
+# Review proposed removals and service impact, then run only after approval:
+sudo apt full-upgrade
 ```
 
 Use `full-upgrade` when package transitions matter. Kali is rolling enough that a half-updated

@@ -43,16 +43,6 @@ Smaller code is not automatically better. A finding needs a concrete maintenance
 6. **Classify:** use `Do now` only for mechanically proven, behavior-preserving reductions; `Do with tests` when focused validation is missing; `Defer` for broad, hot-path, or uncertain work; `Leave alone` when the current shape carries a contract.
 7. **Report:** write an audit deliverable using `references/report-templates.md`. Group repeated examples into one finding and include location, evidence, invariant, proposed shape, tradeoff, and validation needed.
 
-## Rules
-
-- Do not edit source, write tests, or present a recommendation as an authorized change.
-- Do not flag security controls, validation at external boundaries, intentional compatibility layers, cleanup in `finally`, retries, logging/metrics/tracing, feature flags, or policy boundaries merely because they add code.
-- Do not call a symbol unused from a static search alone. Treat generated output as owned by its generator or schema.
-- Keep distinct DTOs across trust, lifecycle, persistence, queue/event, and response boundaries unless a shared validated contract is explicit.
-- Preserve performance-sensitive explicit code until measurement supports a change.
-- Route correctness and security findings instead of laundering them into simplification.
-- Classify maintainability findings as Noise, Lies, or Soul and as Fix, Consider, or Fine; project conventions and framework idioms override generic style rules.
-
 ## AI Self-Check
 
 - [ ] Every API, CLI flag, schema key, and version-sensitive replacement is grounded in the target project.
@@ -80,3 +70,13 @@ Use `references/output-contract.md`.
 - **Deliverable:** `docs/local/audits/code-simplification/<YYYY-MM-DD>-<slug>.md`
 - **Mode:** always-on for audits and reviews; answer a factual question without a deliverable.
 - **Priority:** P0-P3 and info. A simplification finding is normally P2 or P3; route correctness and security impact to its owning audit.
+
+## Rules
+
+- Do not edit source, write tests, or present a recommendation as an authorized change.
+- Do not flag security controls, validation at external boundaries, intentional compatibility layers, cleanup in `finally`, retries, logging/metrics/tracing, feature flags, or policy boundaries merely because they add code.
+- Do not call a symbol unused from a static search alone. Treat generated output as owned by its generator or schema.
+- Keep distinct DTOs across trust, lifecycle, persistence, queue/event, and response boundaries unless a shared validated contract is explicit.
+- Preserve performance-sensitive explicit code until measurement supports a change.
+- Route correctness and security findings instead of laundering them into simplification.
+- Classify maintainability findings as Noise, Lies, or Soul and as Fix, Consider, or Fine; project conventions and framework idioms override generic style rules.
