@@ -1322,6 +1322,211 @@ test_link_fault_restores_previous_link() {
   trap - RETURN
 }
 
+assert_lock_matches_installs() {
+  local dest="$1" dir
+  for dir in "$dest"/*/; do
+    dir="${dir%/}"
+    [[ "$(lock_entry "$dest" "${dir##*/}")" == "$(digest "$dir")" && "$(digest "$dir")" == "$(digest "$ROOT/skills/${dir##*/}")" ]] \
+      || fail "${dir##*/} does not match its lock entry and source"
+  done
+}
+
+test_concurrent_installs_serialize() {
+  local tmp dest s1=0 s2=0 p1 p2
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  dest="$tmp/agent/skills"
+  isolated "$tmp" "$ROOT/install.sh" --tool portable --dest "$dest" --no-backup >/dev/null
+  isolated "$tmp" "$ROOT/install.sh" --tool portable --dest "$dest" --force --no-backup > "$tmp/one" 2>&1 &
+  p1=$!
+  isolated "$tmp" "$ROOT/install.sh" --tool portable --dest "$dest" --force --no-backup > "$tmp/two" 2>&1 &
+  p2=$!
+  wait "$p1" || s1=$?
+  wait "$p2" || s2=$?
+  (( s1 == 0 && s2 == 0 )) || fail "concurrent installs exited $s1 and $s2: $(cat "$tmp/one" "$tmp/two")"
+  if grep -q '\[[!r]\]' "$tmp/one" "$tmp/two"; then fail "concurrent installs interfered: $(cat "$tmp/one" "$tmp/two")"; fi
+  [[ ! -e "$(txn_area "$dest")" ]] || fail "concurrent installs left the transaction area"
+  assert_lock_matches_installs "$dest"
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_installer_lock_contention_and_missing_flock() {
+  local tmp lock_dir holder status=0 output dir file
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  lock_dir="$tmp/.local/state/iuliandita-skills"
+  isolated "$tmp" "$ROOT/install.sh" --tool portable --dest "$tmp/first" --no-backup docker >/dev/null
+  [[ "$(python3 -c 'import os, sys; print(oct(os.stat(sys.argv[1]).st_mode & 0o777))' "$lock_dir")" == 0o700 ]] \
+    || fail "lock directory is not private"
+  ( exec 8>>"$lock_dir/install.lock"; flock 8; touch "$tmp/held"; exec sleep 30 ) &
+  holder=$!
+  for _ in $(seq 100); do [[ -e "$tmp/held" ]] && break; sleep 0.1; done
+  output="$(isolated "$tmp" SKILLS_LOCK_WAIT=1 "$ROOT/install.sh" --tool portable --dest "$tmp/second" docker 2>&1)" || status=$?
+  kill "$holder"
+  wait "$holder" 2>/dev/null || true
+  (( status == 3 )) || fail "lock contention exited $status, want 3: $output"
+  grep -q 'Another install.sh run holds' <<< "$output" || fail "lock contention was not explained: $output"
+  [[ ! -e "$tmp/second" ]] || fail "installer changed files without the lock"
+
+  mkdir "$tmp/no-flock"
+  for dir in ${SAFE_PATH//:/ }; do
+    for file in "$dir"/*; do
+      [[ "${file##*/}" == flock || -e "$tmp/no-flock/${file##*/}" || -L "$tmp/no-flock/${file##*/}" ]] || ln -s "$file" "$tmp/no-flock/${file##*/}"
+    done
+  done
+  output="$(env -i HOME="$tmp" PATH="$tmp/no-flock" LANG=C "$ROOT/install.sh" --tool portable --dest "$tmp/third" docker 2>&1)" \
+    || fail "install without flock failed: $output"
+  [[ "$(grep -c 'flock not found' <<< "$output")" == 1 ]] || fail "missing flock warning not printed once: $output"
+  [[ -d "$tmp/third/docker" ]] || fail "install without flock did not proceed"
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_migration_recovers_before_apply() {
+  local tmp dest txn custom output
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  dest="$tmp/agent/skills"
+  isolated "$tmp" "$ROOT/install.sh" --tool portable --dest "$dest" --no-backup code-simplification anti-slop >/dev/null
+  printf '%s\n' 'local edit' >> "$dest/code-simplification/SKILL.md"
+  custom="$(digest "$dest/code-simplification")"
+  if isolated "$tmp" SKILLS_INSTALL_FAULT=promote:code-simplification,restore "$ROOT/install.sh" \
+    --tool portable --dest "$dest" --force --no-backup code-simplification >/dev/null 2>&1; then
+    fail "promote and restore faults did not fail the install"
+  fi
+  txn="$(txn_area "$dest")/code-simplification"
+  [[ ! -e "$dest/code-simplification" && "$(digest "$txn/prev")" == "$custom" ]] || fail "fixture did not leave the copy in prev"
+
+  if output="$(isolated "$tmp" SKILLS_INSTALL_FAULT=restore "$ROOT/install.sh" --tool portable --dest "$dest" --migrate --apply 2>&1)"; then
+    fail "migration ran although recovery failed: $output"
+  fi
+  grep -q "refusing to migrate $dest until its install records are recovered" <<< "$output" || fail "migration refusal was unclear: $output"
+  [[ ! -e "$dest/code-simplification" && "$(digest "$txn/prev")" == "$custom" && -d "$dest/anti-slop" ]] \
+    || fail "refused migration changed the destination"
+
+  if output="$(isolated "$tmp" "$ROOT/install.sh" --tool portable --dest "$dest" --migrate --apply 2>&1)"; then
+    fail "migration ran with an unpublished record for a replacement: $output"
+  fi
+  grep -q 'code-simplification has an unpublished install record' <<< "$output" || fail "record refusal was unclear: $output"
+  [[ "$(digest "$dest/code-simplification")" == "$custom" && -d "$dest/anti-slop" ]] || fail "migration refusal lost the customized copy"
+
+  isolated "$tmp" "$ROOT/install.sh" --tool portable --dest "$dest" --force --no-backup code-simplification >/dev/null \
+    || fail "forced reinstall failed"
+  isolated "$tmp" "$ROOT/install.sh" --tool portable --dest "$dest" --migrate --apply >/dev/null || fail "migration failed after reconciliation"
+  [[ ! -e "$dest/anti-slop" && "$(digest "$dest/code-simplification")" == "$(digest "$ROOT/skills/code-simplification")" ]] \
+    || fail "migration did not complete after reconciliation"
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+stale_lock_entry() {
+  python3 - "$1/.skills-lock.json" "$2" <<'PY'
+import json
+import sys
+
+lock = json.load(open(sys.argv[1], encoding="utf-8"))
+lock["skills"][sys.argv[2]] = {"hash": "0" * 64, "provenance": "source-equal-v1"}
+json.dump(lock, open(sys.argv[1], "w", encoding="utf-8"))
+PY
+}
+
+test_failed_retry_keeps_earlier_record() {
+  local tmp dest txn record before output
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  dest="$tmp/agent/skills"
+  isolated "$tmp" "$ROOT/install.sh" --tool portable --dest "$dest" --no-backup docker >/dev/null
+  stale_lock_entry "$dest" docker
+  if isolated "$tmp" SKILLS_INSTALL_FAULT=lock "$ROOT/install.sh" --tool portable --dest "$dest" --force --no-backup docker >/dev/null 2>&1; then
+    fail "lock fault did not fail"
+  fi
+  txn="$(txn_area "$dest")/docker"
+  record="$(<"$txn/record")"
+  before="$(tree_hash "$dest/docker")"
+  if isolated "$tmp" SKILLS_INSTALL_FAULT=stage "$ROOT/install.sh" --tool portable --dest "$dest" --force --no-backup docker >/dev/null 2>&1; then
+    fail "stage fault did not fail"
+  fi
+  [[ "$(<"$txn/record")" == "$record" ]] || fail "failed retry replaced the earlier record"
+  [[ "$(find "$txn" -mindepth 1 -printf '%f\n')" == record ]] || fail "failed retry left files: $(find "$txn")"
+  [[ "$(tree_hash "$dest/docker")" == "$before" ]] || fail "failed retry changed the working copy"
+
+  # An interruption right after setting the record aside is put back by recovery.
+  mv "$txn/record" "$txn/record.prior"
+  output="$(isolated "$tmp" "$ROOT/install.sh" --tool portable --dest "$dest" docker 2>&1)" || fail "recovery run failed: $output"
+  grep -q 'docker: put back the earlier record' <<< "$output" || fail "earlier record was not put back: $output"
+  [[ ! -e "$(txn_area "$dest")" && "$(lock_entry "$dest" docker)" == "$(digest "$ROOT/skills/docker")" ]] \
+    || fail "earlier record was not reconciled"
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_cross_device_destination_is_refused() {
+  local tmp dest before lock_before status=0 output
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  dest="$tmp/agent/skills"
+  seed_modified_docker "$tmp" "$dest"
+  before="$(tree_hash "$dest/docker")"
+  lock_before="$(sha256sum < "$dest/.skills-lock.json")"
+  output="$(isolated "$tmp" SKILLS_INSTALL_FAULT=xdev "$ROOT/install.sh" --tool portable --dest "$dest" --force docker 2>&1)" || status=$?
+  (( status == 1 )) || fail "cross-device destination exited $status, want 1: $output"
+  grep -q 'is on a different filesystem than' <<< "$output" || fail "cross-device refusal was unclear: $output"
+  grep -q 'docker not attempted' <<< "$output" || fail "cross-device destination was not skipped: $output"
+  assert_untouched_after_fault "cross-device" "$dest" "$before" "$lock_before"
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_post_promotion_failures_stop_and_reconcile() {
+  local tmp dest txn old status output git_before
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  dest="$tmp/agent/skills"
+
+  # record: the phase write after promotion fails.
+  seed_modified_docker "$tmp" "$dest"
+  isolated "$tmp" "$ROOT/install.sh" --tool portable --dest "$dest" --no-backup git >/dev/null
+  printf '%s\n' 'local edit' >> "$dest/git/SKILL.md"
+  git_before="$(tree_hash "$dest/git")"
+  old="$(digest "$dest/docker")"
+  status=0
+  output="$(isolated "$tmp" SKILLS_INSTALL_FAULT=record:docker "$ROOT/install.sh" --tool portable --dest "$dest" --force --no-backup docker git 2>&1)" || status=$?
+  (( status == 1 )) || fail "record fault exited $status, want 1: $output"
+  txn="$(txn_area "$dest")/docker"
+  [[ "$(digest "$dest/docker")" == "$(digest "$ROOT/skills/docker")" && "$(digest "$txn/prev")" == "$old" ]] || fail "record fault lost evidence"
+  [[ "$(record_phase "$txn")" == swapping && "$(sed -n 's/^staged=//p' "$txn/record")" == "$(digest "$ROOT/skills/docker")" ]] \
+    || fail "record fault: record lacks the staged digest"
+  grep -q 'git not attempted' <<< "$output" || fail "record fault did not stop the destination: $output"
+  [[ "$(tree_hash "$dest/git")" == "$git_before" ]] || fail "record fault still changed git"
+  output="$(isolated "$tmp" "$ROOT/install.sh" --tool portable --dest "$dest" docker 2>&1)" || fail "rerun after record fault failed: $output"
+  grep -q 'docker: removed the replaced copy, confirmed the new copy' <<< "$output" || fail "record fault was not reconciled: $output"
+  [[ ! -e "$txn" && "$(lock_entry "$dest" docker)" == "$(digest "$ROOT/skills/docker")" ]] || fail "record fault rerun left state behind"
+
+  # record, then a tampered working copy: recovery restores the previous copy.
+  printf '%s\n' 'local edit' >> "$dest/docker/SKILL.md"
+  old="$(digest "$dest/docker")"
+  if isolated "$tmp" SKILLS_INSTALL_FAULT=record "$ROOT/install.sh" --tool portable --dest "$dest" --force --no-backup docker >/dev/null 2>&1; then
+    fail "record fault did not fail"
+  fi
+  printf '%s\n' 'partial' >> "$dest/docker/SKILL.md"
+  output="$(isolated "$tmp" "$ROOT/install.sh" --tool portable --dest "$dest" docker 2>&1)" || fail "rerun after tampering failed: $output"
+  grep -q 'docker: moved an unverified copy aside, restored the previous copy, removed leftover staging' <<< "$output" \
+    || fail "unverified promotion was not rolled back: $output"
+  [[ "$(digest "$dest/docker")" == "$old" && "$(record_phase "$txn")" == recovered ]] || fail "unverified promotion left the wrong copy"
+
+  # cleanup: removing the previous copy after promotion fails.
+  status=0
+  output="$(isolated "$tmp" SKILLS_INSTALL_FAULT=cleanup "$ROOT/install.sh" --tool portable --dest "$dest" --force --no-backup docker 2>&1)" || status=$?
+  (( status == 1 )) || fail "cleanup fault exited $status, want 1: $output"
+  [[ "$(digest "$txn/prev")" == "$old" && "$(record_phase "$txn")" == promoted ]] || fail "cleanup fault lost evidence"
+  output="$(isolated "$tmp" "$ROOT/install.sh" --tool portable --dest "$dest" docker 2>&1)" || fail "rerun after cleanup fault failed: $output"
+  grep -q 'docker: removed the replaced copy' <<< "$output" || fail "cleanup fault was not reconciled: $output"
+  [[ ! -e "$(txn_area "$dest")" && "$(lock_entry "$dest" docker)" == "$(digest "$ROOT/skills/docker")" ]] || fail "cleanup rerun left state behind"
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
 test_backups_stay_outside_skill_root
 test_legacy_backups_are_migrated_outside_skill_root
 test_opencode_install_allows_installed_skills
@@ -1371,4 +1576,10 @@ test_restore_fault_keeps_evidence_and_stops_destination
 test_lock_fault_leaves_records_until_publication
 test_opencode_fault_keeps_config_unchanged
 test_link_fault_restores_previous_link
+test_concurrent_installs_serialize
+test_installer_lock_contention_and_missing_flock
+test_migration_recovers_before_apply
+test_failed_retry_keeps_earlier_record
+test_cross_device_destination_is_refused
+test_post_promotion_failures_stop_and_reconcile
 printf 'install tests passed\n'

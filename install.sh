@@ -532,24 +532,50 @@ validate_skill_name() {
   [[ "$1" =~ ^[a-z0-9]([a-z0-9-]*[a-z0-9])?$ ]]
 }
 
+# ── Installer lock ────────────────────────────────────────────────────
+# Runs that change files hold an exclusive flock on fd 9 until the process
+# exits; an exec'd child inherits the descriptor and with it the lock.
+INSTALL_LOCK_FD=9
+
+acquire_install_lock() {
+  local dir="${XDG_STATE_HOME:-$HOME/.local/state}/iuliandita-skills" wait="${SKILLS_LOCK_WAIT:-30}"
+  if ! command -v flock >/dev/null 2>&1; then
+    printf '[!] flock not found; concurrent installer runs are not excluded\n' >&2
+    return 0
+  fi
+  if [[ ! "$wait" =~ ^[0-9]+$ ]]; then
+    printf 'SKILLS_LOCK_WAIT must be a whole number of seconds: %s\n' "$wait" >&2
+    exit 1
+  fi
+  if ! mkdir -p "$dir" || ! chmod 700 "$dir" || ! exec 9>>"$dir/install.lock"; then
+    printf 'Cannot open the installer lock in %s\n' "$dir" >&2
+    exit 1
+  fi
+  if ! flock -w "$wait" "$INSTALL_LOCK_FD"; then
+    printf 'Another install.sh run holds %s; gave up after %ss (set SKILLS_LOCK_WAIT to wait longer)\n' \
+      "$dir/install.lock" "$wait" >&2
+    exit 3
+  fi
+}
+
 # ── Replacement transactions ──────────────────────────────────────────
 # Each replacement of <dest>/<skill> runs under
 # <dest parent>/.skills-txn/<dest name>/<skill>/ holding `record`, `staging`
 # (the new entry) and `prev` (the old entry moved aside). The area sits outside
-# the discovery root and on the destination's filesystem, so moves are renames.
-# The record is key=value lines; unknown keys survive phase updates. It is
-# created before staging and removed only after the skill's lock record is
-# published, or after a successful rollback. Startup recovery restores a
-# missing working entry from `prev` and deletes leftover staging, but never
-# deletes a record.
+# the discovery root and must be on the destination's filesystem: every move is
+# a rename, never a copy. The record is key=value lines (phase, and before any
+# move the staged digest); unknown keys survive updates. A record found when a
+# new attempt starts is kept as `record.prior` and put back if the attempt does
+# not land. Records are removed only after the skill's lock record is published,
+# or when a rollback leaves nothing an earlier attempt wrote.
 #
 # Return codes of replace_entry and recover_dest: 0 ok, 1 failed and rolled
-# back, 2 rollback or recovery failed: evidence is kept and the caller stops
-# using that destination for the rest of the run.
+# back, 2 unresolved: evidence is kept and the caller stops using that
+# destination for the rest of the run.
 
 # Test-only fault injection. SKILLS_INSTALL_FAULT is a comma list of
-# stage|backup|promote|restore|lock|opencode, each optionally suffixed with
-# :<skill>, that makes that step fail deterministically.
+# stage|backup|promote|record|cleanup|restore|lock|opencode|xdev, each
+# optionally suffixed with :<skill>, that makes that step fail.
 fault_hit() {
   local point="$1" skill="${2:-}" item
   local -a items=()
@@ -568,15 +594,45 @@ present() {
   [[ -e "$1" || -L "$1" ]]
 }
 
+MV_NO_COPY=""
+
+# Rename only: a move across filesystems must fail, not become copy and delete.
+rename_path() {
+  if [[ -z "$MV_NO_COPY" ]]; then
+    MV_NO_COPY=no
+    mv --help 2>/dev/null | grep -q -- '--no-copy' && MV_NO_COPY=yes
+  fi
+  if [[ "$MV_NO_COPY" == "yes" ]]; then
+    mv --no-copy -T -- "$1" "$2"
+  else
+    python3 -c 'import os, sys; os.rename(sys.argv[1], sys.argv[2])' "$1" "$2"
+  fi
+}
+
 declare -A TXN_ROOTS=()
 TXN_ROOT=""
 
-# Set TXN_ROOT for a destination; cached for the run.
+# Set TXN_ROOT for a destination; cached for the run. A destination whose
+# transaction area would be on another filesystem (a mount point) is refused.
 txn_root() {
-  local dest_abs
+  local dest_abs root
   if [[ -z "${TXN_ROOTS[$1]:-}" ]]; then
-    dest_abs="$(cd "$1" && pwd -P)" || return 1
-    TXN_ROOTS[$1]="${dest_abs%/*}/.skills-txn/${dest_abs##*/}"
+    dest_abs="$(cd "$1" && pwd -P)" || { printf '  [!] cannot resolve %s\n' "$1"; return 1; }
+    root="${dest_abs%/*}/.skills-txn/${dest_abs##*/}"
+    if fault_hit xdev || ! python3 - "$dest_abs" "$root" <<'PY'
+import os
+import sys
+
+dest, path = sys.argv[1], sys.argv[2]
+while not os.path.exists(path):
+    path = os.path.dirname(path)
+sys.exit(0 if os.stat(path).st_dev == os.stat(dest).st_dev else 1)
+PY
+    then
+      printf '  [!] %s is on a different filesystem than %s; refusing to replace skills there\n' "$root" "$dest_abs"
+      return 1
+    fi
+    TXN_ROOTS[$1]="$root"
   fi
   TXN_ROOT="${TXN_ROOTS[$1]}"
 }
@@ -602,20 +658,33 @@ txn_field() {
   return 1
 }
 
-txn_phase() {
-  local record="$1" phase="$2" line found=false
+# Set key=value fields in a record, keeping every other line.
+txn_set() {
+  local record="$1" line pair done_keys=" "
   local -a lines=() out=()
+  shift
   mapfile -t lines < "$record" || return 1
   for line in "${lines[@]}"; do
-    if [[ "$line" == phase=* ]]; then
-      out+=("phase=$phase")
-      found=true
-    else
-      out+=("$line")
-    fi
+    for pair in "$@"; do
+      if [[ "${line%%=*}" == "${pair%%=*}" ]]; then
+        line="$pair"
+        done_keys+="${pair%%=*} "
+      fi
+    done
+    out+=("$line")
   done
-  [[ "$found" == "true" ]] || out+=("phase=$phase")
+  for pair in "$@"; do
+    [[ "$done_keys" == *" ${pair%%=*} "* ]] || out+=("$pair")
+  done
   txn_write "$record" "${out[@]}"
+}
+
+entry_digest() {
+  if [[ -L "$1" ]]; then
+    printf 'link:%s\n' "$(readlink "$1")"
+  else
+    skill_hash "$1"
+  fi
 }
 
 txn_finalize() {
@@ -624,23 +693,28 @@ txn_finalize() {
   root="$TXN_ROOT"
   txn="$root/$2"
   present "$txn" || return 0
-  rm -rf "$txn/prev" "$txn/staging" && rm -f "$txn/record" && rm -rf "$txn" || return 1
+  rm -rf "$txn/prev" "$txn/staging" && rm -f "$txn/record" "$txn/record.prior" && rm -rf "$txn" || return 1
   rmdir "$root" "${root%/*}" 2>/dev/null || true
 }
 
+STAGED_DIGEST=""
+
 stage_entry() {
-  local kind="$1" skill="$2" stage="$3" staged_hash
+  local kind="$1" skill="$2" stage="$3"
+  STAGED_DIGEST=""
   if [[ "$kind" == "link" ]]; then
     ln -s "$CANONICAL_DIR/$skill" "$stage" && ! fault_hit stage "$skill" \
-      && [[ "$(readlink "$stage")" == "$CANONICAL_DIR/$skill" ]]
-    return
+      && [[ "$(readlink "$stage")" == "$CANONICAL_DIR/$skill" ]] || return 1
+    STAGED_DIGEST="link:$CANONICAL_DIR/$skill"
+    return 0
   fi
   mkdir "$stage" && ! fault_hit stage "$skill" && cp -r "$SKILLS_SRC/$skill/." "$stage/" || return 1
-  staged_hash="$(skill_hash "$stage")" || return 1
+  STAGED_DIGEST="$(skill_hash "$stage")" || return 1
   cache_source_digest "$skill" || return 1
-  [[ -n "$staged_hash" && "$staged_hash" == "${SOURCE_DIGESTS[$skill]}" ]]
+  [[ -n "$STAGED_DIGEST" && "$STAGED_DIGEST" == "${SOURCE_DIGESTS[$skill]}" ]]
 }
 
+# Put back what an attempt displaced: the previous entry, then an earlier record.
 txn_rollback() {
   local skill="$1" work="$2" txn="$3"
   if present "$txn/prev"; then
@@ -648,7 +722,7 @@ txn_rollback() {
       printf '  [!] %s: both %s and %s exist; kept both and the record\n' "$skill" "$work" "$txn/prev"
       return 2
     fi
-    if fault_hit restore "$skill" || ! mv "$txn/prev" "$work"; then
+    if fault_hit restore "$skill" || ! rename_path "$txn/prev" "$work"; then
       printf '  [!] %s: could not restore the previous copy; kept it at %s with record %s\n' \
         "$skill" "$txn/prev" "$txn/record"
       return 2
@@ -659,6 +733,13 @@ txn_rollback() {
     printf '  [!] %s: could not remove staging %s; kept record %s\n' "$skill" "$txn/staging" "$txn/record"
     return 2
   fi
+  if [[ -f "$txn/record.prior" ]]; then
+    if ! rename_path "$txn/record.prior" "$txn/record"; then
+      printf '  [!] %s: could not put back the earlier record %s\n' "$skill" "$txn/record.prior"
+      return 2
+    fi
+    return 1
+  fi
   rm -rf "$txn" || printf '  [!] %s: could not remove record %s\n' "$skill" "$txn/record"
   rmdir "${txn%/*}" "${txn%/*/*}" 2>/dev/null || true
   return 1
@@ -667,26 +748,27 @@ txn_rollback() {
 # Stage the new entry, move the old one aside, rename the new one into place.
 replace_entry() {
   local kind="$1" skill="$2" dest="$3" backup="$4"
-  local root work="$dest/$skill" txn
-  txn_root "$dest" || { printf '  [!] %s: cannot resolve %s\n' "$skill" "$dest"; return 1; }
-  root="$TXN_ROOT"
-  txn="$root/$skill"
+  local work="$dest/$skill" txn
+  txn_root "$dest" || return 2
+  txn="$TXN_ROOT/$skill"
 
-  if present "$txn/prev"; then
-    if ! present "$work"; then
-      printf '  [!] %s: previous copy at %s still needs recovery\n' "$skill" "$txn/prev"
-      return 2
-    fi
-    rm -rf "$txn/prev" || { printf '  [!] %s: could not remove stale %s\n' "$skill" "$txn/prev"; return 2; }
-  fi
-  if present "$txn/staging" && ! rm -rf "$txn/staging"; then
-    printf '  [!] %s: could not remove stale %s\n' "$skill" "$txn/staging"
+  if present "$txn/staging" || present "$txn/prev"; then
+    printf '  [!] %s: %s holds an unfinished replacement; rerun the installer to recover it\n' "$skill" "$txn"
     return 2
   fi
-  if ! mkdir -p "$txn" || ! txn_write "$txn/record" version=1 "skill=$skill" "target=$work" \
+  if ! mkdir -p "$txn"; then
+    printf '  [!] %s: could not create %s\n' "$skill" "$txn"
+    return 1
+  fi
+  if [[ -f "$txn/record" ]] && ! rename_path "$txn/record" "$txn/record.prior"; then
+    printf '  [!] %s: could not set aside the earlier record in %s\n' "$skill" "$txn"
+    return 1
+  fi
+  if ! txn_write "$txn/record" version=1 "skill=$skill" "target=$work" \
     "staging=$txn/staging" "backup=$txn/prev" phase=staging; then
     printf '  [!] %s: could not write install record in %s\n' "$skill" "$txn"
-    return 1
+    txn_rollback "$skill" "$work" "$txn"
+    return
   fi
 
   if ! stage_entry "$kind" "$skill" "$txn/staging"; then
@@ -694,82 +776,183 @@ replace_entry() {
     txn_rollback "$skill" "$work" "$txn"
     return
   fi
-  if present "$work"; then
-    if [[ "$backup" == "true" ]]; then
-      if ! backup_skill "$skill" "$dest"; then
-        printf '  [!] %s: backup failed; existing install left in place\n' "$skill"
-        txn_rollback "$skill" "$work" "$txn"
-        return
-      fi
-      printf '  [>] %s backed up\n' "$skill"
-    fi
-    if ! txn_phase "$txn/record" swapping || fault_hit backup "$skill" || ! mv "$work" "$txn/prev"; then
-      printf '  [!] %s: could not move the existing install aside\n' "$skill"
+  if present "$work" && [[ "$backup" == "true" ]]; then
+    if ! backup_skill "$skill" "$dest"; then
+      printf '  [!] %s: backup failed; existing install left in place\n' "$skill"
       txn_rollback "$skill" "$work" "$txn"
       return
     fi
+    printf '  [>] %s backed up\n' "$skill"
   fi
-  if present "$work" || fault_hit promote "$skill" || ! mv "$txn/staging" "$work"; then
+  if ! txn_set "$txn/record" phase=swapping "staged=$STAGED_DIGEST"; then
+    printf '  [!] %s: could not update record %s\n' "$skill" "$txn/record"
+    txn_rollback "$skill" "$work" "$txn"
+    return
+  fi
+  if present "$work" && { fault_hit backup "$skill" || ! rename_path "$work" "$txn/prev"; }; then
+    printf '  [!] %s: could not move the existing install aside\n' "$skill"
+    txn_rollback "$skill" "$work" "$txn"
+    return
+  fi
+  if present "$work" || fault_hit promote "$skill" || ! rename_path "$txn/staging" "$work"; then
     printf '  [!] %s: could not move the new copy into place\n' "$skill"
     txn_rollback "$skill" "$work" "$txn"
     return
   fi
-  txn_phase "$txn/record" promoted || printf '  [!] %s: could not update record %s\n' "$skill" "$txn/record"
-  if present "$txn/prev" && ! rm -rf "$txn/prev"; then
-    printf '  [!] %s: could not remove %s; it goes with the record\n' "$skill" "$txn/prev"
+  if fault_hit record "$skill" || ! txn_set "$txn/record" phase=promoted; then
+    printf '  [!] %s: new copy is in place, but record %s could not be updated; rerun to reconcile\n' "$skill" "$txn/record"
+    return 2
+  fi
+  if present "$txn/prev" && { fault_hit cleanup "$skill" || ! rm -rf "$txn/prev"; }; then
+    printf '  [!] %s: new copy is in place, but %s could not be removed; rerun to reconcile\n' "$skill" "$txn/prev"
+    return 2
+  fi
+  return 0
+}
+
+# Settle one transaction folder. Sets RECOVERY_NOTE; returns 0 or 2.
+RECOVERY_NOTE=""
+
+note() {
+  RECOVERY_NOTE="${RECOVERY_NOTE:+$RECOVERY_NOTE, }$1"
+}
+
+recover_entry() {
+  local skill="$1" work="$2" entry="$3" phase staged rolled_back=false verified=false
+  local record="$entry/record"
+  RECOVERY_NOTE=""
+
+  if [[ ! -f "$record" ]]; then
+    if [[ -f "$entry/record.prior" ]]; then
+      rename_path "$entry/record.prior" "$record" || { printf '  [!] %s: could not put back %s\n' "$skill" "$entry/record.prior"; return 2; }
+      note "put back the earlier record"
+    elif present "$entry/prev"; then
+      printf '  [!] %s: %s has no record; left in place\n' "$skill" "$entry/prev"
+      return 2
+    else
+      rm -rf "$entry" || { printf '  [!] %s: could not remove %s\n' "$skill" "$entry"; return 2; }
+      return 0
+    fi
+  fi
+  if [[ "$(txn_field "$record" skill)" != "$skill" ]]; then
+    printf '  [!] %s: record %s names another skill; left in place\n' "$skill" "$record"
+    return 2
+  fi
+  phase="$(txn_field "$record" phase)" || phase=""
+  staged="$(txn_field "$record" staged)" || staged=""
+
+  case "$phase" in
+    staging)
+      rolled_back=true
+      ;;
+    swapping)
+      if present "$work" && ! present "$entry/staging"; then
+        # The promotion rename ran; keep its result only if it is what was staged.
+        if [[ -n "$staged" && "$(entry_digest "$work")" == "$staged" ]]; then
+          verified=true
+        elif ! rename_path "$work" "$entry/staging"; then
+          printf '  [!] %s: %s does not match the staged copy and could not be moved aside\n' "$skill" "$work"
+          return 2
+        else
+          note "moved an unverified copy aside"
+        fi
+      fi
+      if [[ "$verified" != "true" ]]; then
+        rolled_back=true
+        if present "$entry/prev"; then
+          if present "$work"; then
+            printf '  [!] %s: both %s and %s exist; left in place\n' "$skill" "$work" "$entry/prev"
+            return 2
+          fi
+          if fault_hit restore "$skill" || ! rename_path "$entry/prev" "$work"; then
+            printf '  [!] %s: could not restore %s; kept it with record %s\n' "$skill" "$entry/prev" "$record"
+            return 2
+          fi
+          note "restored the previous copy"
+        fi
+      fi
+      ;;
+    promoted|recovered)
+      ;;
+    *)
+      printf '  [!] %s: record %s has unknown phase %s; left in place\n' "$skill" "$record" "$phase"
+      return 2
+      ;;
+  esac
+
+  if present "$entry/staging"; then
+    rm -rf "$entry/staging" || { printf '  [!] %s: could not remove %s; kept record %s\n' "$skill" "$entry/staging" "$record"; return 2; }
+    note "removed leftover staging"
+  fi
+  if present "$entry/prev"; then
+    # Only a finished promotion leaves prev behind with a working entry in place.
+    if ! present "$work"; then
+      printf '  [!] %s: %s exists without %s; left in place\n' "$skill" "$entry/prev" "$work"
+      return 2
+    fi
+    if fault_hit cleanup "$skill" || ! rm -rf "$entry/prev"; then
+      printf '  [!] %s: could not remove %s; kept record %s\n' "$skill" "$entry/prev" "$record"
+      return 2
+    fi
+    note "removed the replaced copy"
+  fi
+
+  if [[ "$rolled_back" == "true" && -f "$entry/record.prior" ]]; then
+    rename_path "$entry/record.prior" "$record" || { printf '  [!] %s: could not put back %s\n' "$skill" "$entry/record.prior"; return 2; }
+    note "put back the earlier record"
+  elif [[ "$rolled_back" == "true" ]]; then
+    txn_set "$record" phase=recovered || { printf '  [!] %s: could not update %s\n' "$skill" "$record"; return 2; }
+  elif [[ "$verified" == "true" ]]; then
+    txn_set "$record" phase=promoted || { printf '  [!] %s: could not update %s\n' "$skill" "$record"; return 2; }
+    note "confirmed the new copy"
   fi
   return 0
 }
 
 # Settle interrupted or failed replacements left under a destination.
 recover_dest() {
-  local dest="$1" root entry skill work acted
-  txn_root "$dest" || { printf '  [!] cannot resolve %s\n' "$dest"; return 2; }
+  local dest="$1" root entry skill
+  txn_root "$dest" || return 2
   root="$TXN_ROOT"
   [[ -d "$root" ]] || return 0
   for entry in "$root"/*; do
     [[ -d "$entry" && ! -L "$entry" ]] || continue
     skill="${entry##*/}"
-    work="$dest/$skill"
     if ! validate_skill_name "$skill"; then
       printf '  [!] unexpected entry %s left in place\n' "$entry"
       continue
     fi
-    if [[ ! -f "$entry/record" ]]; then
-      if present "$entry/prev"; then
-        printf '  [!] %s: %s has no record; left in place\n' "$skill" "$entry/prev"
-        return 2
-      fi
-      rm -rf "$entry" || { printf '  [!] %s: could not remove %s\n' "$skill" "$entry"; return 2; }
-      continue
-    fi
-    if [[ "$(txn_field "$entry/record" skill)" != "$skill" ]]; then
-      printf '  [!] %s: record %s names another skill; left in place\n' "$skill" "$entry/record"
-      return 2
-    fi
-    acted=""
-    if present "$entry/prev" && ! present "$work"; then
-      if fault_hit restore "$skill" || ! mv "$entry/prev" "$work"; then
-        printf '  [!] %s: could not restore %s; kept it with record %s\n' "$skill" "$entry/prev" "$entry/record"
-        return 2
-      fi
-      acted="restored the previous copy"
-    fi
-    if present "$entry/staging"; then
-      if ! rm -rf "$entry/staging"; then
-        printf '  [!] %s: could not remove %s; kept record %s\n' "$skill" "$entry/staging" "$entry/record"
-        return 2
-      fi
-      acted="${acted:+$acted, }removed leftover staging"
-    fi
-    if [[ -n "$acted" ]]; then
-      txn_phase "$entry/record" recovered || { printf '  [!] %s: could not update %s\n' "$skill" "$entry/record"; return 2; }
-      printf '  [r] %s: %s\n' "$skill" "$acted"
+    recover_entry "$skill" "$dest/$skill" "$entry" || return 2
+    present "$entry" || continue
+    if [[ -n "$RECOVERY_NOTE" ]]; then
+      printf '  [r] %s: %s\n' "$skill" "$RECOVERY_NOTE"
     else
       printf '  [r] %s: install record kept until its lock entry is published\n' "$skill"
     fi
   done
   return 0
+}
+
+# Before a migration changes a destination: recover it, and refuse while a
+# skill the migration would touch still has an install record.
+guard_migration_dest() {
+  local dest="$1" entry skill old
+  [[ -d "$dest" ]] || return 0
+  if ! recover_dest "$dest"; then
+    printf '  [!] refusing to migrate %s until its install records are recovered\n' "$dest"
+    return 1
+  fi
+  for entry in "$TXN_ROOT"/*; do
+    [[ -f "$entry/record" ]] || continue
+    skill="${entry##*/}"
+    for old in "${!MIGRATION_ACTIONS[@]}"; do
+      if [[ "$skill" == "$old" || "$skill" == "${MIGRATION_REPLACEMENTS[$old]}" ]]; then
+        printf '  [!] refusing to migrate %s: %s has an unpublished install record in %s; reinstall it with --force first\n' \
+          "$dest" "$skill" "$entry"
+        return 1
+      fi
+    done
+  done
 }
 
 # Write the lock, then drop the records of skills it published.
@@ -1421,11 +1604,15 @@ main() {
     exit 0
   fi
 
+  if [[ "$migrate_mode" != "true" || "$apply_migration" == "true" ]]; then
+    acquire_install_lock
+  fi
+
   # ── Migration ──────────────────────────────────────────────────────
   if [[ "$migrate_mode" == "true" ]]; then
     command -v python3 >/dev/null || { printf '%s\n' "Migration requires python3" >&2; exit 1; }
     [[ -f "$MIGRATOR" ]] || { printf 'Migration helper is unavailable: %s\n' "$MIGRATOR" >&2; exit 1; }
-    local migration_args=(--manifest "$MIGRATIONS_FILE" --source "$SKILLS_SRC") sync_failed=0
+    local migration_args=(--manifest "$MIGRATIONS_FILE" --source "$SKILLS_SRC") sync_failed=0 refused=0
     if [[ "$apply_migration" == "true" ]]; then
       migration_args+=(--apply)
       printf 'Applying recorded legacy-skill migration. Backups are always retained.\n\n'
@@ -1439,11 +1626,15 @@ main() {
         canonical_applied="$(mktemp)"
         canonical_args=(--applied-file "$canonical_applied")
       fi
-      python3 "$MIGRATOR" "${migration_args[@]}" --dest "$CANONICAL_DIR" --backup-dir "${SKILLS_BACKUP_DIR:-$(dirname "$CANONICAL_DIR")/.skills-backups/$(basename "$CANONICAL_DIR")}" --protected-root "$CANONICAL_DIR" --preserve-shared-canonical "${canonical_args[@]}"
-      if [[ -n "$canonical_applied" ]]; then
-        sync_migrated_opencode_permissions "$CANONICAL_DIR" "$canonical_applied" || sync_failed=1
-        rm -f "$canonical_applied"
+      if [[ "$apply_migration" == "true" ]] && ! guard_migration_dest "$CANONICAL_DIR"; then
+        refused=1
+      else
+        python3 "$MIGRATOR" "${migration_args[@]}" --dest "$CANONICAL_DIR" --backup-dir "${SKILLS_BACKUP_DIR:-$(dirname "$CANONICAL_DIR")/.skills-backups/$(basename "$CANONICAL_DIR")}" --protected-root "$CANONICAL_DIR" --preserve-shared-canonical "${canonical_args[@]}"
       fi
+      if [[ -n "$canonical_applied" && "$refused" == 0 ]]; then
+        sync_migrated_opencode_permissions "$CANONICAL_DIR" "$canonical_applied" || sync_failed=1
+      fi
+      [[ -z "$canonical_applied" ]] || rm -f "$canonical_applied"
       local -A migrated_destinations=()
       for tool in "${tools[@]}"; do
         local tool_dir
@@ -1451,6 +1642,10 @@ main() {
         paths_match "$tool_dir" "$CANONICAL_DIR" && continue
         [[ -n "${migrated_destinations[$tool_dir]:-}" ]] && continue
         migrated_destinations["$tool_dir"]=true
+        if [[ "$apply_migration" == "true" ]] && ! guard_migration_dest "$tool_dir"; then
+          refused=1
+          continue
+        fi
         local applied_file=""
         local applied_args=()
         if [[ "$apply_migration" == "true" && "$tool" == "opencode" ]]; then
@@ -1474,6 +1669,10 @@ main() {
         fi
         [[ -n "${migrated_destinations[$tool_dir]:-}" ]] && continue
         migrated_destinations["$tool_dir"]=true
+        if [[ "$apply_migration" == "true" ]] && ! guard_migration_dest "$tool_dir"; then
+          refused=1
+          continue
+        fi
         local applied_file=""
         local applied_args=()
         if [[ "$apply_migration" == "true" && "$tool" == "opencode" ]]; then
@@ -1507,7 +1706,7 @@ main() {
       done
       (( cleanup_failed == 0 )) || exit 1
     fi
-    (( sync_failed == 0 )) || exit 1
+    (( sync_failed == 0 && refused == 0 )) || exit 1
     exit 0
   fi
 
