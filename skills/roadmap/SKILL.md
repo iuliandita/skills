@@ -35,7 +35,7 @@ scratchpad that evolves with the project.
 - Sprint or iteration planning with task dependencies
 - Code review or PR review - use **code-review**
 - Writing project docs or READMEs - use **update-docs**
-- Factual drift in `ROADMAP.md` itself (stated version mismatch, shipped highlights out of date, `[planned]` / `[exploring]` items that already shipped) - use **update-docs**. This skill owns prioritisation and idea capture; update-docs owns keeping the file's stated facts honest.
+- Factual drift in `ROADMAP.md`'s stated version numbers or release-highlight prose - use **update-docs**. This skill owns item status itself: Mode 2 moves shipped `[planned]` / `[exploring]` items to Shipped. update-docs owns the header version and highlight text; roadmap owns which items count as shipped.
 - Tracking bugs or incidents - use issue trackers directly
 
 ---
@@ -390,10 +390,10 @@ See `references/output-contract.md` for the full contract.
 - **git** - update mode (Mode 2) reads git history and PR data to match shipped work
 - **code-review** - reviews code correctness. This skill tracks what to build;
   code-review evaluates the code that implements it
-- **update-docs** - updates project documentation AND audits ROADMAP.md for factual drift
-  (header version, shipped highlights, items that already shipped but still listed as planned).
-  This skill owns prioritisation, capture, and competitive intel; update-docs owns keeping
-  the file's facts in sync with HEAD. Boundary: ideas + sequencing here, factual freshness there.
+- **update-docs** - updates project documentation AND audits ROADMAP.md for factual drift in
+  the header version and release-highlight prose. This skill owns prioritisation, capture,
+  competitive intel, and item status (Mode 2 moves shipped items out of the active tiers);
+  update-docs owns the stated version and highlight text staying in sync with HEAD.
 
 ## Rules
 

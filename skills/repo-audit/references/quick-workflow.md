@@ -177,7 +177,7 @@ After all four agents return, present each report under its own header. Do not m
 
 For scopes not in the table, apply each skill's standard checklist narrowed to the specified files/module. Do not skip an audit just because the scope seems domain-specific - every skill may surface relevant findings on arbitrary code.
 
-**Scope verification before presenting**: when a scope was specified, confirm each agent's output before including it in the report. If an agent's findings reference files or modules outside the requested scope, that agent ignored the scope constraint - note the discrepancy in its report header and, if possible, filter out-of-scope findings. If an agent returned zero findings, confirm it actually ran against the scoped target (not an empty or wrong path) before reporting "no issues found."
+**Scope verification before presenting**: when a scope was specified, confirm each agent's output before including it in the report. If an agent's findings reference files or modules outside the requested scope, that agent ignored the scope constraint - note the scope violation in that report's header and annotate the out-of-scope findings; do not remove them from the report. Rerun the lane if a scoped-only result is required. If an agent returned zero findings, confirm it actually ran against the scoped target (not an empty or wrong path) before reporting "no issues found."
 
 **User requests synthesis**: if the user asks for a combined summary after seeing the reports, prioritize: security fixes > correctness bugs > slop cleanup > doc updates. Keep synthesis brief - the individual reports are the source of truth.
 

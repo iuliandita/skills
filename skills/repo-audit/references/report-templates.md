@@ -71,7 +71,7 @@ one task entry.
 ```
 
 - **Priority**: exact `P0`, `P1`, `P2`, `P3`, or `info`; do not collapse adjacent labels.
-- **Priority markers**: visual grouping only - `🔴` P0, `🟡` P1/P2, `🔵` P3/info.
+- **Priority markers**: use the shared contract's five-marker mapping - `🔴` P0, `🟠` P1, `🟡` P2, `🔵` P3, `⚪` info.
 - **Effort**: rough human estimate (`15m`, `1-2h`, `1 day`). Err toward calibrated estimates,
   not optimistic ones.
 - **Finding ID**: reference the origin wave/section (e.g., `Z1` from vulnerability-research, `M3` from

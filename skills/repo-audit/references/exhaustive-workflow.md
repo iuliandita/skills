@@ -302,7 +302,7 @@ Dispatch three agents in parallel.
 | # | Skill | Prompt |
 |---|-------|--------|
 | 1 | `update-docs` | Load the `update-docs` skill through the native skill-loading mechanism. Run a read-only audit. Find stale docs, instruction-file bloat, broken links, companion-file drift. Do NOT make changes or commit anything. |
-| 2 | `roadmap` | Load the `roadmap` skill through the native skill-loading mechanism. Audit ROADMAP.md (or equivalent) for drift, stale items, shipped-but-unchecked features, and completeness. If no roadmap exists, note the gap. Do NOT create one. |
+| 2 | `roadmap` | Load the `roadmap` skill through the native skill-loading mechanism. Audit ROADMAP.md (or equivalent) for item-status drift (shipped-but-unchecked features, stale items) and backlog completeness; the update-docs agent above covers stated version numbers and release-highlight prose. If no roadmap exists, note the gap. Do NOT create one. |
 | 3 | `git` | Load the `git` skill through the native skill-loading mechanism. Audit git configuration, hooks, branch hygiene, signing setup, and commit message conventions. Do NOT make changes. |
 
 Present results:
