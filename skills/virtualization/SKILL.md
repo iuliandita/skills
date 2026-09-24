@@ -24,13 +24,13 @@ bite you at 3 AM.
 |------|---------|-------------|-------|
 | Proxmox VE | 9.2 | May 2026 | Current production lane; review upgrade notes from 9.1 |
 | Proxmox Backup Server | 4.2 | Apr 2026 | Dedup, incremental, prune policies |
-| bpg/proxmox (Terraform) | 0.111.1 | Jul 2026 | Primary Proxmox IaC provider |
+| bpg/proxmox (Terraform) | 0.114.0 | Sep 2026 | Primary Proxmox IaC provider |
 | QEMU | 11.1.1 | Sep 2026 | Stable 11.1 maintenance release |
 | libvirt | 12.7.0 | Sep 2026 | Hypervisor abstraction layer |
 | XCP-ng | 8.3 LTS | Oct 2024 | Xen-based, LTS since Jun 2025, EOL Nov 2028 |
 | VMware ESXi | 8.0 U3k (25595708) | Jul 2026 | Security floor for the 8.0 U3 lane; check the appliance lane |
 | VirtualBox | 7.2.14 (retained, unverified) | Unverified | Verify the current publisher release before targeting this pin |
-| Packer | 1.16.0 | Aug 2026 | Image builder, multi-platform |
+| Packer | 1.16.1 | Sep 2026 | Image builder, multi-platform |
 | cloud-init | 26.2 | Aug 2026 | Instance initialization standard |
 
 Security recheck (2026-09-10): [VMSA-2026-0006](https://brcm.tech/vmsa-2026-0006)

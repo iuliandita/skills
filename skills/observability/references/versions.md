@@ -1,24 +1,24 @@
 ---
-checked_at: "2026-09-10"
+checked_at: "2026-09-25"
 checked_by: "manual"
 pins:
   - tool: "Prometheus"
     version: "3.14.0"
     source: "https://github.com/prometheus/prometheus/releases"
   - tool: "OpenTelemetry Collector"
-    version: "v0.160.0"
+    version: "v0.161.0"
     source: "https://github.com/open-telemetry/opentelemetry-collector-releases/releases"
   - tool: "Grafana"
-    version: "13.2.1"
+    version: "13.2.2"
     source: "https://github.com/grafana/grafana/releases"
   - tool: "Grafana Loki"
-    version: "3.7.7"
+    version: "3.7.8"
     source: "https://github.com/grafana/loki/releases"
   - tool: "Grafana Tempo"
     version: "3.0.3"
     source: "https://github.com/grafana/tempo/releases"
   - tool: "Alertmanager"
-    version: "0.34.0"
+    version: "0.34.1"
     source: "https://github.com/prometheus/alertmanager/releases"
 ---
 
@@ -30,11 +30,11 @@ source when refreshing a pin. Reverify before use if the receipt exceeds 120 day
 | Tool | Version | Source |
 |---|---|---|
 | Prometheus | 3.14.0 | <https://github.com/prometheus/prometheus/releases> |
-| OpenTelemetry Collector | v0.160.0 | <https://github.com/open-telemetry/opentelemetry-collector-releases/releases> |
-| Grafana | 13.2.1 | <https://github.com/grafana/grafana/releases> |
-| Grafana Loki | 3.7.7 | <https://github.com/grafana/loki/releases> |
+| OpenTelemetry Collector | v0.161.0 | <https://github.com/open-telemetry/opentelemetry-collector-releases/releases> |
+| Grafana | 13.2.2 | <https://github.com/grafana/grafana/releases> |
+| Grafana Loki | 3.7.8 | <https://github.com/grafana/loki/releases> |
 | Grafana Tempo | 3.0.3 | <https://github.com/grafana/tempo/releases> |
-| Alertmanager | 0.34.0 | <https://github.com/prometheus/alertmanager/releases> |
+| Alertmanager | 0.34.1 | <https://github.com/prometheus/alertmanager/releases> |
 
 ## Security notes (checked 2026-09-10)
 

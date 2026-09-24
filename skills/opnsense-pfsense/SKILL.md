@@ -17,7 +17,7 @@ Manage, troubleshoot, and harden OPNsense and pfSense firewalls via SSH. Both ar
 pf-powered firewall distributions - most concepts, commands, and patterns apply to both.
 
 **Target versions** (September 2026):
-- OPNsense CE: 26.7.3_11 (current Community Edition hotfix, "Xenial Xenops"). Business Edition remains a separate even-quarter lane - do not quote the BE number as the CE version
+- OPNsense CE: 26.7.4_1 (current Community Edition hotfix, "Xenial Xenops"). Business Edition remains a separate even-quarter lane - do not quote the BE number as the CE version
 - pfSense CE: 2.9.0 / pfSense Plus: 26.07
 - CrowdSec: v1.8.1
 

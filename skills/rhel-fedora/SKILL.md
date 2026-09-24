@@ -39,7 +39,7 @@ ordinary package work, prefer the live distro lane and repo state over a stale p
 | SELinux | verify live | policy package and mode matter more than memorized version strings |
 | DNF | verify live | Fedora moves faster than enterprise lanes; DNF 5 vs legacy expectations matter |
 | Podman | verify live | rootless and quadlet behavior depend on the shipped distro lane |
-| Kernel security | verify live via RHSA/FEDORA tracker | patch high-severity privesc CVEs promptly; mid-2026 examples to confirm fixed: Copy Fail CVE-2026-31431 (CISA KEV, exploited), Dirty Frag CVE-2026-43284/43500, Fragnesia CVE-2026-46300 (ESP-in-TCP, exploited), ptrace CVE-2026-46333 |
+| Kernel security | verify live via RHSA/FEDORA tracker | patch high-severity privesc CVEs promptly; mid-2026 examples to confirm fixed: Copy Fail CVE-2026-31431 (CISA KEV, exploited), Dirty Frag CVE-2026-43284/43500, Fragnesia CVE-2026-46300 (ESP-in-TCP, public PoC, not in CISA KEV), ptrace CVE-2026-46333 |
 
 For kernel advisories, use the exact vendor package and support stream. Red Hat rates
 [Copy Fail CVE-2026-31431](https://access.redhat.com/security/cve/CVE-2026-31431)

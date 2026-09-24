@@ -23,18 +23,18 @@ performance tuning.
 |------|---------|-------|
 | Caddy | 2.11.4 | Auto-HTTPS, Caddyfile + JSON API |
 | Nginx | 1.30.5 stable / 1.31.6 mainline | Patched for CVE-2026-90439; includes fixes for CVE-2026-42533/60005/56434 |
-| Traefik | 3.7.12 | Gateway API native, v2 EOL approaching |
-| HAProxy | 3.4.4 LTS / 3.3.14 stable / 3.2.23 LTS | 3.4 LTS EOL 2031-Q2 |
+| Traefik | 3.7.13 (v2 lane 2.11.57) | Gateway API native, v2 EOL approaching |
+| HAProxy | 3.4.5 LTS / 3.3.14 stable / 3.2.23 LTS | 3.4 LTS EOL 2031-Q2 |
 | WireGuard tools | 1.0.20260223 | Kernel module + userspace tools |
-| strongSwan | 6.0.7 | swanctl config (legacy ipsec.conf deprecated) |
+| strongSwan | 6.1.0 (fixes CVE-2026-78133 and ten others, 2026-09-07) | swanctl config (legacy ipsec.conf deprecated) |
 | nftables | 1.1.7 | iptables successor, default on modern distros |
 | keepalived | 2.4.3 | VRRP + health checks |
-| Unbound | 1.26.0 | Includes July 2026 DNS security fixes |
+| Unbound | 1.26.1 | Security floor after the 2026-09-16 advisories |
 | CoreDNS | 1.14.7 | K8s default DNS, plugin-based |
 | FRRouting | 10.7.1 (retained, unverified) | Verify the current publisher release before targeting this pin |
-| Tailscale / Headscale | Headscale 0.29.3 | Self-hosted control server |
-| cloudflared | 2026.8.3 | Cloudflare Tunnel (outbound-only) |
-| OpenVPN | 2.7.7 / 2.6.21 LTS | 2.7.x: multi-socket, DCO; 2.6 is the LTS branch |
+| Tailscale / Headscale | Headscale 0.29.4 | Self-hosted control server |
+| cloudflared | 2026.9.3 | Cloudflare Tunnel (outbound-only) |
+| OpenVPN | 2.7.7 / 2.6.23 LTS | 2.7.x: multi-socket, DCO; 2.6 is the LTS branch |
 
 Security recheck (2026-09-16): nginx's [publisher advisories](https://nginx.org/en/security_advisories.html)
 rate CVE-2026-90439 (HTTP/3 buffer overflow) medium: affected 1.29.2-1.31.5, fixed in

@@ -79,23 +79,23 @@ adopt them only when the application can manage pending results and continuation
 
 | Component | Version | Notes |
 |-----------|---------|-------|
-| Anthropic Python SDK | 1.4.0 | Major release; review migration notes before upgrading |
-| Anthropic TS SDK | 0.124.0 | Claude models, streaming, tool use, structured output |
-| Claude Agent SDK (TS) | 0.3.266 | Programmatic agent building with Claude Code capabilities |
-| OpenAI Python SDK | 3.10.0 | Major release; GPT-6/GPT-5.6 models and Responses API |
-| OpenAI Agents SDK | 0.22.2 | Multi-agent orchestration, tracing, sessions |
-| Vercel AI SDK | 7.0.93 | Node.js 22+ and ESM required; agents, workflows, telemetry, multimodal APIs |
-| LangChain | 1.4.0 | Minor release; review integration compatibility |
-| LangGraph | 1.2.11 | Stateful agent graphs, cycles, persistence |
-| LlamaIndex | 0.14.24 | RAG framework, 300+ integrations |
+| Anthropic Python SDK | 1.8.0 | Major release; review migration notes before upgrading |
+| Anthropic TS SDK | 0.128.0 | Claude models, streaming, tool use, structured output |
+| Claude Agent SDK (TS) | 0.3.282 | Programmatic agent building with Claude Code capabilities |
+| OpenAI Python SDK | 3.19.2 | Major release; GPT-6/GPT-5.6 models and Responses API |
+| OpenAI Agents SDK | 0.22.3 | Multi-agent orchestration, tracing, sessions |
+| Vercel AI SDK | 7.0.114 | Node.js 22+ and ESM required; agents, workflows, telemetry, multimodal APIs |
+| LangChain | 1.4.2 | Review integration compatibility |
+| LangGraph | 1.2.12 | Stateful agent graphs, cycles, persistence |
+| LlamaIndex | 0.14.25 | RAG framework, 300+ integrations |
 | Transformers | 5.17.0 | Model inference, fine-tuning, PyTorch 2.4+ required |
-| vLLM | 0.28.0 | Review release and security notes before upgrading multi-tenant deployments |
+| vLLM | 0.30.0 | 0.28.0 is the minimum patched floor (GHSA-3c86-2m5g-59q7, GHSA-25q3-v2hm-8vpf); review release notes before upgrading multi-tenant deployments |
 | Ollama | 0.33.3 | Do not trust unreviewed GGUF files; see the advisory qualification below |
-| pgvector | 0.8.6 | PostgreSQL extension, HNSW + IVFFlat |
-| Qdrant | 1.19.0 | Self-hosted vector DB, hybrid search |
+| pgvector (extension) | 0.8.6 | PostgreSQL extension, not the `pgvector` Python client; HNSW + IVFFlat |
+| Qdrant | 1.19.1 | Self-hosted vector DB, hybrid search |
 | Pinecone (Python) | 10.0.0 | Major release; review migration notes before upgrading |
 | ChromaDB | 1.5.9 | Lightweight vector DB, local-first |
-| promptfoo | 0.122.2 | LLM eval framework, red teaming |
+| promptfoo | 0.123.1 | LLM eval framework, red teaming |
 
 ## Security update (checked 2026-09-10)
 

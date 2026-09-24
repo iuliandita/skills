@@ -19,8 +19,8 @@ become yet another server with preventable injection vulnerabilities.
 
 **Target versions** (September 2026):
 - MCP specification: 2026-07-28 (current stable; stateless core, extensions framework, and no initialize/session handshake)
-- TypeScript SDK: `@modelcontextprotocol/server`, `@modelcontextprotocol/client`, and `@modelcontextprotocol/core` 2.0.0 (the monolithic `@modelcontextprotocol/sdk` 1.30.0 is the legacy line)
-- Python SDK: mcp 2.1.1 (2.x stable; review the v1-to-v2 migration guide)
+- TypeScript SDK: `@modelcontextprotocol/server`, `@modelcontextprotocol/client`, and `@modelcontextprotocol/core` 2.1.0 (the monolithic `@modelcontextprotocol/sdk` 1.30.1 is the legacy line; both 2026-09-23 releases add HTTP body and JSON-RPC batch limits)
+- Python SDK: mcp 2.2.0 (2.x stable; review the v1-to-v2 migration guide)
 - Protocol transports: stdio and Streamable HTTP. The standalone HTTP+SSE transport is deprecated and available only as a temporary legacy bridge
 
 ## When to use

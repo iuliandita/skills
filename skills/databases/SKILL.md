@@ -16,10 +16,11 @@ metadata:
 Configure, tune, design schemas, migrate, back up, and review database engines - from single-node dev setups to PCI-compliant production clusters. The goal is correct, performant, durable databases that survive failures, pass audits, and don't wake you up at 3am.
 
 **Target versions** (September 2026):
-- PostgreSQL **18.6** (EOL 2030-11; August 13, 2026 release), back-branches: 17.11, 16.15, 15.19, 14.24; PostgreSQL 19 Beta 3 is for testing only
-- MongoDB **8.0.30** (GA, EOL 2029-10); 8.0.29 contains the August security fixes and 8.0.30 is the current maintenance release. The rapid lane is Atlas-only with a short window - verify live before pinning
-- MariaDB **11.8.6** (LTS, EOL 2028-06); 12.x rolling GA is quarterly and EOLs at each successor - verify live
+- PostgreSQL **18.6** (EOL 2030-11; August 13, 2026 release), back-branches: 17.11, 16.15, 15.19, 14.24; PostgreSQL 19 Beta 4 is for testing only
+- MongoDB **8.0.32** (GA, EOL 2029-10); 8.0.32 fixes CVE-2026-89099 and is the security floor for the 8.0 lane. The rapid lane is Atlas-only with a short window - verify live before pinning
+- MariaDB **11.8.9** (LTS, EOL 2028-06); 12.x rolling GA is quarterly and EOLs at each successor - verify live
 - MySQL **8.4.12** (LTS; August 18, 2026 release); the innovation lane has a short support window - verify live
+- Redis **8.10.2**; Valkey **9.1.2** (9.0.6 on the 9.0 lane) - verify live before pinning
 - SQL Server **2025 RTM + CU8** (released 2026-08-13)
 - PgBouncer **1.25.2**, Pgpool-II **4.7.2**, ProxySQL **3.0.10** (ProxySQL 3.0.9+ fixes CVE-2026-48772/48773/48774)
 
@@ -315,7 +316,7 @@ Read `references/migration-patterns.md` for cross-engine type mapping, ORM migra
 - [ ] WAL archiving enabled for PITR (`archive_mode = on` + pgBackRest/Barman, or managed backup)
 - [ ] Foreign key columns have indexes
 - [ ] pgAudit installed and configured (if PCI scope)
-- [ ] Patched against CVE-2026-2005 (pgcrypto heap buffer overflow, RCE) - 18.2+ / 17.8+ / 16.12+
+- [ ] Patched against CVE-2026-2005 (pgcrypto heap buffer overflow, RCE) - 18.2+ / 17.8+ / 16.12+ / 15.16+ / 14.21+
 - [ ] On the [August 13 PostgreSQL security update](https://www.postgresql.org/support/security/): 18.6 / 17.11 / 16.15 / 15.19 / 14.24 or later in the chosen supported lane. Earlier minors are affected by high-impact server and client issues including CVE-2026-16239 (cursor type confusion), CVE-2026-19385 (pg_dump overflow), and CVE-2026-18408 (psql execution via untrusted dump origin). Update backup/restore clients too. CVE-2026-16238 specifically affects PostgreSQL 18 before 18.6.
 - [ ] On the May 14, 2026 PostgreSQL update (CVE-2026-6473/6475/6476/6477/6478: integer-wraparound under-sized allocation, intarray/ltree field overflow, pg_createsubscriber SQL injection, libpq lo_*/path traversal, MD5 password timing leak) - 18.4+ / 17.10+ / 16.14+ / 15.18+ / 14.23+
 
@@ -337,6 +338,7 @@ Read `references/migration-patterns.md` for cross-engine type mapping, ORM migra
 - [ ] Write concern `w: "majority"` (default in 8.0+)
 - [ ] Schema validation (`$jsonSchema`) on critical collections
 - [ ] Patched against MongoBleed (CVE-2025-14847) - 8.0.17+
+- [ ] Patched against CVE-2026-89099 - 8.0.32+ ([release notes](https://www.mongodb.com/docs/v8.0/release-notes/8.0/))
 - [ ] Patched against CVE-2026-25611 (pre-auth DoS via compression) - 8.0.18+ / 8.2.4+ / 7.0.29+
 - [ ] On the June 11, 2026 MongoDB security release (CVE-2026-11933) - 8.0.26+
 - [ ] TLS enabled (`net.tls.mode: requireTLS`)

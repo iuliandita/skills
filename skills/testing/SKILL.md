@@ -16,14 +16,14 @@ metadata:
 Write, structure, and maintain tests across unit, integration, E2E, accessibility, and performance layers. The goal is tests that catch regressions, document behavior, and run fast in CI - not tests that exist to inflate coverage numbers.
 
 **Target versions** (September 2026):
-- Vitest **5.0.0**, Jest **30.5.1**
+- Vitest **5.0.1**, Jest **30.5.1**
 - Playwright **1.63.0**, Cypress **16.0.0** (both Vitest and Cypress are major upgrades; review migration notes)
 - pytest **9.1.1**, pytest-cov **7.1.0**
 - Go **1.27.1** (testing stdlib, `testing/synctest` GA)
-- Rust **1.98.1** (`cargo test`, cargo-nextest **0.9.143**)
+- Rust **1.98.1** (`cargo test`, cargo-nextest **0.9.146**)
 - Testing Library **16.3.3** (`@testing-library/react`)
 - axe-core **4.13.0** (`@axe-core/playwright`)
-- Grafana k6 **2.2.0**
+- Grafana k6 **2.3.0**
 
 Security check (2026-09-10): [GHSA-2h32-95rg-cppp](https://github.com/vitest-dev/vitest/security/advisories/GHSA-2h32-95rg-cppp)
 is critical browser-runner script injection that can expose the API token and lead to local code
