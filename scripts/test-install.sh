@@ -975,6 +975,27 @@ test_doctor_groups_and_verbose() {
   trap - RETURN
 }
 
+test_doctor_orders_blocking_first_across_tools() {
+  local tmp output status=0 bang info
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  doctor_skill "$tmp/.agents/skills" shared shared
+  doctor_skill "$tmp/.claude/skills" shared shared
+  doctor_skill "$tmp/.agents/skills" clash clash
+  doctor_skill "$tmp/.config/opencode/skills" clash clash
+  doctor_skill "$tmp/.commandcode/skills" clash clash
+  output="$(HOME="$tmp" "$ROOT/install.sh" --doctor --tool commandcode,opencode 2>&1)" || status=$?
+  (( status == 1 )) || fail "doctor exited $status with blocking findings in two tools: $output"
+  grep -qx '2 blocking finding(s) across 2 tool(s).' <<< "$output" || fail "doctor miscounted blocking findings across tools: $output"
+  bang="$(grep -n '\[!\] clash:' <<< "$output" | tail -1 | cut -d: -f1)"
+  info="$(grep -n '\[i\] .*opencode resolves these' <<< "$output" | head -1 | cut -d: -f1)"
+  if [[ -z "$bang" || -z "$info" ]] || (( bang > info )); then
+    fail "doctor did not list blocking findings before info in opencode: $output"
+  fi
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
 test_doctor_flag_rules_and_alias() {
   local tmp output mode
   tmp="$(mktemp -d)"
@@ -1110,6 +1131,7 @@ test_doctor_reports_duplicates_read_only
 test_doctor_merges_only_equivalent_findings
 test_doctor_groups_and_verbose
 test_doctor_flag_rules_and_alias
+test_doctor_orders_blocking_first_across_tools
 test_frontmatter_cache_selects_skills
 test_malformed_frontmatter_fails_install
 printf 'install tests passed\n'
