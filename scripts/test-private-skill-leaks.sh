@@ -20,6 +20,7 @@ make_fixture() {
   git -C "$tmp" init -q
   git -C "$tmp" config user.email "test@example.com"
   git -C "$tmp" config user.name "test"
+  printf '/private-patterns.txt\n' > "$tmp/.gitignore"
   printf '%s\n' "$tmp"
 }
 
@@ -193,24 +194,13 @@ test_rg_path_detects_leak() {
 }
 
 test_grep_fallback_detects_leak() {
-  local tmp fakebin output status dir bin name
+  local tmp fakebin output status
   tmp="$(make_fixture)"
   trap 'rm -rf "$tmp"' RETURN
 
   # Build a PATH that mirrors every real command except rg, so the checker
   # falls through to its grep fallback branch instead of skipping rg by luck.
-  fakebin="$(mktemp -d)"
-  IFS=':' read -ra path_dirs <<< "$PATH"
-  for dir in "${path_dirs[@]}"; do
-    [[ -d "$dir" ]] || continue
-    for bin in "$dir"/*; do
-      [[ -x "$bin" ]] || continue
-      name="$(basename "$bin")"
-      [[ "$name" == "rg" ]] && continue
-      [[ -e "$fakebin/$name" ]] && continue
-      ln -s "$bin" "$fakebin/$name" 2>/dev/null || true
-    done
-  done
+  fakebin="$(path_without_rg)"
 
   printf 'fallbackmarker\n' > "$tmp/private-patterns.txt"
   printf 'contains fallbackmarker here\n' > "$tmp/public.txt"
@@ -231,6 +221,82 @@ test_grep_fallback_detects_leak() {
   trap - RETURN
 }
 
+# Mirrors every command on PATH except rg into a new dir and prints it.
+path_without_rg() {
+  local fakebin dir bin name
+  fakebin="$(mktemp -d)"
+  IFS=':' read -ra path_dirs <<< "$PATH"
+  for dir in "${path_dirs[@]}"; do
+    [[ -d "$dir" ]] || continue
+    for bin in "$dir"/*; do
+      [[ -x "$bin" ]] || continue
+      name="$(basename "$bin")"
+      [[ "$name" == "rg" ]] && continue
+      [[ -e "$fakebin/$name" ]] && continue
+      ln -s "$bin" "$fakebin/$name" 2>/dev/null || true
+    done
+  done
+  printf '%s\n' "$fakebin"
+}
+
+test_tracked_example_is_scanned() {
+  local tmp status=0
+  tmp="$(make_fixture)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  printf 'examplemarker\n' > "$tmp/private-patterns.txt"
+  printf 'examplemarker\n' > "$tmp/private-patterns.example.txt"
+  git -C "$tmp" add -A
+
+  run_checker "$tmp" >/dev/null 2>&1 || status=$?
+  (( status != 0 )) || fail "checker skipped a real marker in the tracked example file"
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_rg_failure_fails() {
+  local tmp fakebin status=0
+  tmp="$(make_fixture)"
+  fakebin="$(mktemp -d)"
+  trap 'rm -rf "$tmp" "$fakebin"' RETURN
+
+  printf '#!/bin/sh\nexit 2\n' > "$fakebin/rg"
+  chmod +x "$fakebin/rg"
+  printf 'somemarker\n' > "$tmp/private-patterns.txt"
+  printf 'clean\n' > "$tmp/public.txt"
+  git -C "$tmp" add -A
+
+  (cd "$tmp" && PATH="$fakebin:$PATH" ./scripts/check-private-skill-leaks.sh >/dev/null 2>&1) || status=$?
+  (( status == 2 )) || fail "checker did not fail on rg exit 2 (got $status)"
+
+  rm -rf "$tmp" "$fakebin"
+  trap - RETURN
+}
+
+test_grep_fallback_read_error_fails() {
+  local tmp fakebin status=0
+  if (( EUID == 0 )); then
+    printf 'SKIP: running as root, unreadable-file test not meaningful\n'
+    return
+  fi
+  tmp="$(make_fixture)"
+  fakebin="$(path_without_rg)"
+  trap 'chmod -R u+r "$tmp"; rm -rf "$tmp" "$fakebin"' RETURN
+
+  printf 'somemarker\n' > "$tmp/private-patterns.txt"
+  printf 'clean\n' > "$tmp/public.txt"
+  git -C "$tmp" add -A
+  chmod 000 "$tmp/public.txt"
+
+  (cd "$tmp" && PATH="$fakebin" ./scripts/check-private-skill-leaks.sh >/dev/null 2>&1) || status=$?
+  (( status > 1 )) || fail "grep fallback did not fail on an unreadable file (got $status)"
+
+  chmod -R u+r "$tmp"
+  rm -rf "$tmp" "$fakebin"
+  trap - RETURN
+}
+
 test_no_sources_passes
 test_root_file_only_detects_leak
 test_env_file_only_detects_leak
@@ -240,4 +306,7 @@ test_comments_and_blank_lines_ignored
 test_clean_repo_with_patterns_passes
 test_rg_path_detects_leak
 test_grep_fallback_detects_leak
-printf 'private leak marker tests passed (9 cases)\n'
+test_tracked_example_is_scanned
+test_rg_failure_fails
+test_grep_fallback_read_error_fails
+printf 'private leak marker tests passed (12 cases)\n'

@@ -26,8 +26,7 @@ fi
 
 mapfile -t candidate_files < <(
   git -C "$ROOT" ls-files --cached --others --exclude-standard \
-    | grep -vE '^skills/(cluster-health|kubernetes-health)/protected/' \
-    | grep -vxF -e 'private-patterns.txt' -e 'private-patterns.example.txt' || true
+    | grep -vE '^skills/(cluster-health|kubernetes-health)/protected/' || true
 )
 
 if (( ${#candidate_files[@]} == 0 )); then
@@ -60,8 +59,12 @@ else
   while IFS= read -r pattern; do
     while IFS= read -r file; do
       [[ -f "$file" ]] || continue
-      if grep -qiF -- "$pattern" "$file"; then
+      status=0
+      grep -qiF -- "$pattern" "$file" || status=$?
+      if (( status == 0 )); then
         printf '%s\n' "$file" >> "$tmp_matches"
+      elif (( status > 1 )); then
+        exit "$status"
       fi
     done < <(printf '%s\n' "${candidate_files[@]}")
   done < "$tmp_patterns"
