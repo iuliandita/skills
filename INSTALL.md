@@ -129,7 +129,7 @@ For important workflows, smoke-test the target tool after install:
 | OpenCode | `opencode` | `~/.config/opencode/skills` |
 | Command Code | `commandcode` | `~/.commandcode/skills` |
 | GitHub Copilot | `copilot` | `~/.copilot/skills` |
-| Gemini CLI (legacy, deprecated upstream in favor of Antigravity) | `gemini` | `~/.agents/skills` |
+| Gemini CLI (legacy; consumer accounts moved to Antigravity) | `gemini` | `~/.agents/skills` |
 | Roo Code | `roo` | `~/.roo/skills` |
 | Goose | `goose` | `~/.config/goose/skills` |
 | Amp | `amp` | `~/.config/agents/skills` |

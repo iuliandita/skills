@@ -51,7 +51,7 @@ declare -A TOOL_PATHS=(
   [windsurf]="${WINDSURF_SKILLS_DIR:-$HOME/.codeium/windsurf/skills}"
   [opencode]="${OPENCODE_SKILLS_DIR:-$HOME/.config/opencode/skills}"
   [copilot]="${COPILOT_SKILLS_DIR:-$HOME/.copilot/skills}"
-  # Legacy: Gemini CLI is deprecated upstream in favor of antigravity.
+  # Legacy: Gemini CLI consumer accounts moved to antigravity.
   [gemini]="${GEMINI_SKILLS_DIR:-$HOME/.agents/skills}"
   [roo]="${ROO_SKILLS_DIR:-$HOME/.roo/skills}"
   [goose]="${GOOSE_SKILLS_DIR:-$HOME/.config/goose/skills}"
