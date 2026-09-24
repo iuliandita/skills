@@ -19,7 +19,7 @@ How skill-refiner detects and validates AI CLI harnesses for cross-model peer re
 | Hermes | `hermes` | `~/.hermes/config.yaml` | `~/.hermes/.env` | `hermes chat -q "<P>" -Q` | yes (2026-09-24, 0.21.3) |
 | Aider | `aider` | `~/.aider.conf.yml` | `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` | unverified; confirm the flag with `aider --help` before use | no |
 | Goose | `goose` | `~/.config/goose/config.yaml` | varies by provider | unverified; confirm the flag with `goose --help` before use | no |
-| Gemini CLI (legacy) | `gemini` | `~/.gemini/settings.json` | `GEMINI_API_KEY` or `GOOGLE_API_KEY` | deprecated upstream for `agy`; the 0.42.0 probe exited 55 (unsupported client) | no |
+| Gemini CLI (legacy) | `gemini` | `~/.gemini/settings.json` | `GEMINI_API_KEY` or `GOOGLE_API_KEY` | consumer accounts moved to `agy`; Google still supports enterprise licenses and paid API keys. The 0.42.0 probe here exited 55 (unsupported client) | no |
 
 **Important:** "yes" rows passed an isolated, timed headless probe on the listed date and
 version; other rows are unverified, so do not treat their commands as known-good. Before
@@ -32,6 +32,11 @@ flags: `cmd --list-models` and `--effort`, `agy models` and `--effort`, `omp --t
 Codex prints the resolved model on stderr (the `model:` banner line); in the 2026-09-24 probe
 the banner said `gpt-6-sol` while the model called itself `gpt-6`, so use the banner, not the
 reply, as identity evidence.
+
+Probe receipts (2026-09-24, default models, prompt "Reply with exactly one line: OK <your model id>"):
+`claude` replied `OK claude-opus-5-5[1m]`; `codex` banner `model: gpt-6-sol`; `agy` replied
+`OK Gemini 3.8 Flash`; `cmd` and `hermes` replied `OK deepseek/deepseek-v4.1-flash`. Self-reported
+names are weak evidence; prefer a banner or log line from the harness when one exists.
 
 ---
 
@@ -110,7 +115,7 @@ the smoke test cannot modify files.
 7. hermes
 8. aider
 9. goose
-10. gemini (legacy; expect failure)
+10. gemini (legacy; enterprise or paid API key setups)
 ```
 
 The primary harness may also host the reviewer in a fresh invocation or agent context.
