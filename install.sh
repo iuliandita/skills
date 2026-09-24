@@ -51,8 +51,7 @@ declare -A TOOL_PATHS=(
   [windsurf]="${WINDSURF_SKILLS_DIR:-$HOME/.codeium/windsurf/skills}"
   [opencode]="${OPENCODE_SKILLS_DIR:-$HOME/.config/opencode/skills}"
   [copilot]="${COPILOT_SKILLS_DIR:-$HOME/.copilot/skills}"
-  # gemini: legacy alias. Gemini CLI is deprecated upstream in favor of
-  # Antigravity (agy). Path kept for existing installs.
+  # Legacy: Gemini CLI is deprecated upstream in favor of antigravity.
   [gemini]="${GEMINI_SKILLS_DIR:-$HOME/.agents/skills}"
   [roo]="${ROO_SKILLS_DIR:-$HOME/.roo/skills}"
   [goose]="${GOOSE_SKILLS_DIR:-$HOME/.config/goose/skills}"
@@ -72,9 +71,7 @@ declare -A TOOL_PATHS=(
   [trae]="${TRAE_SKILLS_DIR:-$HOME/.trae/skills}"
   [qoder]="${QODER_SKILLS_DIR:-$HOME/.qoder/skills}"
   [kimi]="${KIMI_SKILLS_DIR:-$HOME/.agents/skills}"
-  # omp: Oh My Pi discovers ~/.agents/skills natively (also ~/.omp/agent/skills).
-  # OMP_SKILLS_DIR only controls where the installer writes; omp itself does
-  # not read this variable.
+  # OMP_SKILLS_DIR is installer-only; omp discovers ~/.agents/skills natively.
   [omp]="${OMP_SKILLS_DIR:-$HOME/.agents/skills}"
   [portable]="${PORTABLE_SKILLS_DIR:-$HOME/.skills}"
 )
