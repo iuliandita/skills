@@ -87,6 +87,8 @@ skill directory; they do not preserve or merge installed-only files into the new
 
 `kubernetes-health` is public, so it no longer needs `--include-internal`; that flag is only for separate gitignored skills with `metadata.internal: true`.
 
+`scripts/check-private-skill-leaks.sh` scans public files for private markers, additively drawn from the `protected/private-patterns.txt` overlays above, a gitignored `private-patterns.txt` at the repo root (see `private-patterns.example.txt`), and a file path in `SKILLS_PRIVATE_PATTERNS`. CI never sees your local overlay or root file; it only sees markers you explicitly supply it, typically by writing a repository secret to a file and pointing `SKILLS_PRIVATE_PATTERNS` at it.
+
 Before committing local changes, install the repository hooks with either `prek` or `pre-commit`:
 
 ```bash

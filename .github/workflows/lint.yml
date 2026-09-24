@@ -118,6 +118,9 @@ jobs:
       - name: Test version receipt behavior
         run: ./scripts/test-version-receipts.sh
 
+      - name: Test private leak marker behavior
+        run: ./scripts/test-private-skill-leaks.sh
+
       - name: Shellcheck scripts
         run: shellcheck install.sh scripts/*.sh
 
