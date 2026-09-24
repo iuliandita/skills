@@ -21,10 +21,11 @@ server can have multiple path and access control flaws at once.
 
 ---
 
-## SDK advisory update (checked 2026-09-10)
+## SDK advisory update (checked 2026-09-25)
 
 - [TypeScript SDK cross-client response leak](https://github.com/modelcontextprotocol/typescript-sdk/security/advisories/GHSA-345p-7cg4-v4c7): legacy `@modelcontextprotocol/sdk` >=1.10.0,<=1.25.3; fixed in 1.26.0. Avoid sharing server/transport instances across clients; verify concurrent-client isolation.
 - [Python SDK session principal bypass](https://github.com/modelcontextprotocol/python-sdk/security/advisories/GHSA-jpw9-pfvf-9f58): `mcp` <=1.27.1; fixed in 1.27.2. Affects authenticated stateful HTTP transports, not stdio or stateless HTTP. Bind sessions to the authenticated user, including the token subject when users share an OAuth client.
+- [Python SDK WebSocket origin check](https://advisories.gitlab.com/pypi/mcp/CVE-2026-59950/) (CVE-2026-59950, high): the deprecated WebSocket server transport in `mcp` <1.28.1 skipped Host/Origin validation; fixed in 1.28.1. Prefer stdio or Streamable HTTP with `TransportSecuritySettings`.
 - [Go SDK localhost DNS rebinding](https://github.com/modelcontextprotocol/go-sdk/security/advisories/GHSA-xw59-hvm2-8pj6): versions <1.4.0; fixed in 1.4.0. Affects unauthenticated localhost HTTP servers, not stdio. Keep Host/Origin validation and authentication enabled.
 
 These are advisory-specific fixed floors, not substitutes for current supported SDK releases.
