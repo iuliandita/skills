@@ -21,7 +21,7 @@ cd skills
 ```
 
 See [installation and updates](INSTALL.md) for target paths, symlink mode, backups, and private overlays.
-`./install.sh --detect` suggests which harnesses to target, and `--save` records a selection that a bare `./install.sh` repeats ([details](INSTALL.md#detect-and-save-a-setup)).
+`./install.sh --detect` suggests which harnesses to target, and `--save` records a selection that a bare `./install.sh` repeats ([details](INSTALL.md#detect-and-save-a-setup)). `./install.sh --update` keeps a saved setup current from cron or a systemd timer ([details](INSTALL.md#scheduled-updates)).
 
 ## Collection
 
