@@ -711,7 +711,10 @@ def yaml_unescape(body):
             digits = body[i + 2:i + 2 + HEX_LEN[code]]
             if len(digits) != HEX_LEN[code] or not re.fullmatch(r"[0-9A-Fa-f]+", digits):
                 return None
-            out.append(chr(int(digits, 16)))
+            point = int(digits, 16)
+            if point > 0x10FFFF:
+                return None
+            out.append(chr(point))
             i += 2 + HEX_LEN[code]
         elif code in YAML_ESCAPES:
             out.append(YAML_ESCAPES[code])
