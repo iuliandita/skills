@@ -462,7 +462,7 @@ test_concurrent_updates_one_proceeds() {
 }
 
 test_fetch_timeout_and_signal() {
-  local start pid sig rc
+  local start pid job sig rc
   new_fixture --tool claude
   mkdir "$F/helpers"
   printf '#!/bin/sh\nexec sleep 60\n' > "$F/helpers/git-remote-slow"
@@ -478,18 +478,20 @@ test_fetch_timeout_and_signal() {
     # Background jobs start with SIGINT ignored, which bash cannot trap;
     # restore the default so the installer sees what a terminal would send.
     isolated "$H" PATH="$F/helpers:$SAFE_PATH" SKILLS_UPDATE_TIMEOUT=60 python3 -c \
-      'import os, signal, sys; signal.signal(signal.SIGINT, signal.SIG_DFL); os.execv(sys.argv[1], sys.argv[1:])' \
-      "$F/repo/install.sh" --update >"$F/sig.out" 2>&1 &
-    pid=$!
+      'import os, signal, sys; signal.signal(signal.SIGINT, signal.SIG_DFL); open(sys.argv[1], "w").write(str(os.getpid())); os.execv(sys.argv[2], sys.argv[2:])' \
+      "$F/sig.pid" "$F/repo/install.sh" --update >"$F/sig.out" 2>&1 &
+    job=$!
     # Signal only once the fetch is running; earlier, SIGINT may still be ignored.
     for _ in $(seq 1 100); do
       grep -q 'update: fetching' "$F/sig.out" 2>/dev/null && break
       sleep 0.1
     done
     grep -q 'update: fetching' "$F/sig.out" || fail "update never reached the fetch: $(cat "$F/sig.out")"
+    # Signal the installer itself: $! may be a subshell that ignores SIGINT.
+    pid="$(cat "$F/sig.pid")"
     start=$SECONDS
     kill "-${sig%%:*}" "$pid"
-    wait "$pid" || rc=$?
+    wait "$job" || rc=$?
     (( rc == ${sig##*:} )) || fail "SIG${sig%%:*} during fetch exited $rc, want ${sig##*:}: $(cat "$F/sig.out")"
     (( SECONDS - start < 5 )) || fail "SIG${sig%%:*} during fetch took $(( SECONDS - start ))s to take effect"
   done
