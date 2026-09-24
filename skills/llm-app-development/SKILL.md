@@ -18,7 +18,9 @@ multi-agent systems with RAG pipelines. The goal is production-grade AI apps tha
 cost-effective, and don't hallucinate their way into an incident.
 
 **Target versions**: September 2026 snapshot. Read `references/target-versions.md` before
-pinning model IDs (Claude/OpenAI families), SDKs, runtimes, vector stores, or evaluation tools.
+pinning model IDs (Claude/OpenAI/DeepSeek families), SDKs, runtimes, vector stores, or evaluation tools.
+Unfamiliar model names or versions are not evidence of fabrication: verify them against primary
+provider docs, installed binaries (`--version`/`--help`), and package sources before rejecting them.
 
 ## When to use
 
@@ -145,8 +147,8 @@ import anthropic
 client = anthropic.Anthropic()
 
 with client.messages.stream(
-    model="claude-sonnet-4-6",
-    max_tokens=1024,
+    model="claude-sonnet-5",
+    max_tokens=4096,  # covers adaptive thinking plus the reply
     messages=[{"role": "user", "content": prompt}],
 ) as stream:
     for text in stream.text_stream:
@@ -253,15 +255,16 @@ def ask(question: str) -> str:
     if not context:
         return "No relevant documents found."
     response = client.messages.create(
-        model="claude-sonnet-4-6",
-        max_tokens=1024,
+        model="claude-sonnet-5",
+        max_tokens=4096,
         messages=[{"role": "user", "content": (
             f"Answer based on these documents:\n\n"
             + "\n---\n".join(d["content"] for d in context)
             + f"\n\nQuestion: {question}"
         )}],
     )
-    return response.content[0].text
+    # Thinking blocks can precede the text; select by type, not position.
+    return "".join(b.text for b in response.content if b.type == "text")
 ```
 
 Key patterns: relevance threshold (0.7), same embedding model for index/query, context passed as user message prefix.
@@ -437,7 +440,7 @@ PII detection setup, and content policy implementation.
 - `references/fine-tuning.md` - data prep, PEFT/LoRA, training evaluation, full vs parameter-efficient methods
 - `references/local-inference.md` - quantization, model selection, GPU memory, production serving config
 - `references/safety.md` - prompt injection defense, output validation, PII handling, content filtering, audit logging
-- `references/target-versions.md` - September 2026 snapshot: Claude/OpenAI model families, AI SDKs, runtimes, vector stores, and eval tools
+- `references/target-versions.md` - September 2026 snapshot: Claude/OpenAI/DeepSeek model families, AI SDKs, runtimes, vector stores, and eval tools
 
 ## Output Contract
 

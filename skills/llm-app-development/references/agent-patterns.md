@@ -52,8 +52,8 @@ def run_agent(user_query: str, tools: list[dict], max_iterations: int = 15) -> s
     while iterations < max_iterations:
         iterations += 1
         response = client.messages.create(
-            model="claude-sonnet-4-6",
-            max_tokens=4096,
+            model="claude-sonnet-5",
+            max_tokens=16000,  # thinking and tool calls share this cap
             tools=tools,
             messages=messages,
         )
@@ -64,6 +64,10 @@ def run_agent(user_query: str, tools: list[dict], max_iterations: int = 15) -> s
             # Extract final text response
             text_blocks = [b.text for b in response.content if b.type == "text"]
             return "\n".join(text_blocks)
+
+        if response.stop_reason != "tool_use":
+            # max_tokens, refusal, etc.; retrying with a trailing assistant turn returns 400
+            raise RuntimeError(f"unhandled stop_reason: {response.stop_reason}")
 
         if response.stop_reason == "tool_use":
             tool_results = []
@@ -222,7 +226,7 @@ support_agent = Agent(
     name="Support Agent",
     instructions="Help users with technical issues. Use the knowledge base.",
     tools=[search_knowledge_base],
-    model="gpt-5.5",
+    model="gpt-6-sol",
 )
 
 # Run the agent
