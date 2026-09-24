@@ -16,9 +16,7 @@ cd "$ROOT"
 BASE_REF="${BASE_REF:-}"
 
 if [[ -n "$BASE_REF" ]]; then
-  # Only shallow an already-shallow clone; a --depth=1 fetch on a full clone
-  # strands origin/$BASE_REF behind a boundary that breaks merge-base for every
-  # check that runs after this one, so deepen instead of shallowing further.
+  # --depth on a full clone writes .git/shallow and breaks merge-base for later checks.
   if [[ "$(git rev-parse --is-shallow-repository)" == "true" ]]; then
     git fetch --quiet origin "$BASE_REF" --depth=1
     git merge-base HEAD "origin/$BASE_REF" >/dev/null 2>&1 || git fetch --quiet --deepen=50 origin "$BASE_REF"
