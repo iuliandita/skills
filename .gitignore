@@ -9,6 +9,7 @@ skills/kubernetes-health/protected/
 docs/local/
 SECURITY-AUDIT.md
 .codex
+.commandcode/
 .env
 .env.*
 !.env.example
