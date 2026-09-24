@@ -415,6 +415,19 @@ test_config_and_invocation_errors() {
   [[ "$(repo_head)" == "$head" ]] || fail "invocation errors moved HEAD"
 }
 
+test_every_override_variable_is_refused() {
+  local var
+  local -a vars=()
+  new_fixture --tool claude
+  mapfile -t vars < <(grep -oE '[A-Z_]+_SKILLS_DIR:-' "$ROOT/install.sh" | cut -d: -f1 | sort -u)
+  (( ${#vars[@]} > 20 )) || fail "override matrix found only ${#vars[@]} *_SKILLS_DIR variables"
+  vars+=(SOMETOOL_SKILLS_DIR SKILLS_CANONICAL_DIR SKILLS_BACKUP_DIR OPENCODE_CONFIG_FILE SKILLS_TOOL)
+  for var in "${vars[@]}"; do
+    expect_refused 2 "$var" "$var is set" "$var=$F/o"
+  done
+  [[ ! -e "$F/o" ]] || fail "an override path was created"
+}
+
 test_held_lock_exits_3() {
   local holder
   new_fixture --tool claude
@@ -449,7 +462,7 @@ test_concurrent_updates_one_proceeds() {
 }
 
 test_fetch_timeout_and_signal() {
-  local start pid rc=0
+  local start pid sig rc
   new_fixture --tool claude
   mkdir "$F/helpers"
   printf '#!/bin/sh\nexec sleep 60\n' > "$F/helpers/git-remote-slow"
@@ -460,14 +473,21 @@ test_fetch_timeout_and_signal() {
   expect_refused 5 "fetch timeout" "fetch timed out after 2s" PATH="$F/helpers:$SAFE_PATH" SKILLS_UPDATE_TIMEOUT=2
   (( SECONDS - start < 15 )) || fail "fetch timeout took $(( SECONDS - start ))s"
 
-  isolated "$H" PATH="$F/helpers:$SAFE_PATH" SKILLS_UPDATE_TIMEOUT=60 "$F/repo/install.sh" --update >/dev/null 2>&1 &
-  pid=$!
-  sleep 1
-  start=$SECONDS
-  kill -TERM "$pid"
-  wait "$pid" || rc=$?
-  (( rc == 143 )) || fail "SIGTERM during fetch exited $rc, want 143"
-  (( SECONDS - start < 5 )) || fail "SIGTERM during fetch took $(( SECONDS - start ))s to take effect"
+  for sig in INT:130 TERM:143; do
+    rc=0
+    # Background jobs start with SIGINT ignored, which bash cannot trap;
+    # restore the default so the installer sees what a terminal would send.
+    isolated "$H" PATH="$F/helpers:$SAFE_PATH" SKILLS_UPDATE_TIMEOUT=60 python3 -c \
+      'import os, signal, sys; signal.signal(signal.SIGINT, signal.SIG_DFL); os.execv(sys.argv[1], sys.argv[1:])' \
+      "$F/repo/install.sh" --update >"$F/sig.out" 2>&1 &
+    pid=$!
+    sleep 1
+    start=$SECONDS
+    kill "-${sig%%:*}" "$pid"
+    wait "$pid" || rc=$?
+    (( rc == ${sig##*:} )) || fail "SIG${sig%%:*} during fetch exited $rc, want ${sig##*:}: $(cat "$F/sig.out")"
+    (( SECONDS - start < 5 )) || fail "SIG${sig%%:*} during fetch took $(( SECONDS - start ))s to take effect"
+  done
 }
 
 test_prompts_fail_instead_of_hanging() {
@@ -556,6 +576,32 @@ test_apply_faults_then_rerun() {
   expect_rc 0 "rerun after interrupted apply"
   [[ "$(last_line)" == "update: ok current" ]] || fail "rerun after interrupted apply: $OUT"
   [[ ! -e "$H/.claude/.skills-txn" ]] || fail "interrupted apply: records left after rerun"
+}
+
+test_edit_after_interrupted_update_is_kept() {
+  local txn edited evidence
+  new_fixture --tool claude
+  txn="$H/.claude/.skills-txn/skills/docker"
+  printf 'upstream\n' >> "$F/dev/skills/docker/SKILL.md"
+  publish
+  run_update SKILLS_INSTALL_FAULT=record:docker
+  expect_rc 1 "record fault during update"
+  printf 'my edit\n' >> "$H/.claude/skills/docker/SKILL.md"
+  edited="$(tree_hash "$H/.claude/skills/docker")"
+  evidence="$(tree_hash "$txn")"
+  [[ -e "$txn/prev" && -f "$txn/record" ]] || fail "record fault left no evidence"
+  printf 'more\n' >> "$F/dev/skills/git/SKILL.md"
+  publish
+  for _ in 1 2; do
+    run_update
+    expect_rc 6 "edit after an interrupted update"
+    [[ "$(last_line)" =~ ^update:\ partial\ .*skipped=1$ ]] || fail "edit after interruption: last line: $OUT"
+    grep -q 'kept it as a local modification' <<< "$OUT" || fail "edit not reported: $OUT"
+    grep -q 'docker skipped: local changes made after an interrupted install' <<< "$OUT" || fail "docker not skipped: $OUT"
+    [[ "$(tree_hash "$H/.claude/skills/docker")" == "$edited" ]] || fail "the edit was not preserved"
+    [[ "$(tree_hash "$txn")" == "$evidence" ]] || fail "the evidence was not kept"
+  done
+  cmp -s "$F/dev/skills/git/SKILL.md" "$H/.claude/skills/git/SKILL.md" || fail "other skills were not updated"
 }
 
 test_lock_publication_fault_keeps_ownership() {
@@ -651,12 +697,14 @@ test_legacy_v1_records
 test_source_checks
 test_fast_forward_failure_changes_nothing
 test_config_and_invocation_errors
+test_every_override_variable_is_refused
 test_held_lock_exits_3
 test_concurrent_updates_one_proceeds
 test_fetch_timeout_and_signal
 test_prompts_fail_instead_of_hanging
 test_updated_installer_runs_once_holding_the_lock
 test_apply_faults_then_rerun
+test_edit_after_interrupted_update_is_kept
 test_lock_publication_fault_keeps_ownership
 test_missing_dependencies_exit_10
 test_link_mode

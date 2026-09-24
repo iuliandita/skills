@@ -353,8 +353,9 @@ owner exec bit, contents, and symlink targets:
 - equal to the digest in its lock entry, or to the copy an earlier interrupted run was
   installing: replaced, with a backup and the same staged, recoverable replacement as a
   normal install.
-- anything else: skipped and reported, and the run exits 6. That covers local edits, an
-  entry with no lock record, and entries recorded before tree digests existed that differ
+- anything else: skipped and reported, and the run exits 6. That covers local edits
+  (including edits made after an interrupted run, which are kept with that run's evidence),
+  an entry with no lock record, and entries recorded before tree digests existed that differ
   from the source; the message names the `install.sh --force` command that reconciles one.
   An older entry that already matches the source is upgraded silently.
 
@@ -492,10 +493,14 @@ Each replacement is staged first and swapped in by rename, with a record under
 installer puts the previous copy back, leaves that skill's lock entry unchanged, and exits
 non-zero. If the run is interrupted, or a step after the swap fails, the record, the
 previous copy, and the staged copy stay there. The next install run settles them before
-doing anything else in that destination: it keeps a swapped-in copy only if it matches the
-digest recorded before the swap, and otherwise puts the previous copy back. When that fails,
-the installer skips the rest of that destination, keeps the evidence, and continues with
-other destinations. A record is removed once the skill's lock entry is written, so an
+doing anything else in that destination. A swapped-in copy that matches the digest recorded
+before the swap is kept; one that matches the previous copy needs nothing undone. A copy
+that matches neither was changed by someone after the interruption: it is never moved or
+deleted. The installer keeps it, the previous copy, and the record, reports how to resolve
+it (delete the record folder to keep your copy, or put the previous copy back), refuses
+that skill, and exits non-zero; `--update` skips it and exits 6. When restoring or cleaning
+up fails, the installer skips the rest of that destination, keeps the evidence, and
+continues with other destinations. A record is removed once the skill's lock entry is written, so an
 install that stopped before writing the lock is reconciled by the next run. A failed retry
 keeps the earlier record.
 

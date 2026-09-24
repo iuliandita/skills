@@ -984,8 +984,10 @@ recover_prev() {
   note "restored the previous copy"
 }
 
+# Returns 0 settled, 2 unresolved (stop the destination), or 3 when the
+# working copy is someone's modification: the skill is held, evidence kept.
 recover_entry() {
-  local skill="$1" work="$2" entry="$3" phase staged previous rolled_back=false verified=false
+  local skill="$1" work="$2" entry="$3" phase staged previous current rolled_back=false verified=false
   local record="$entry/record"
   RECOVERY_NOTE=""
 
@@ -1016,18 +1018,28 @@ recover_entry() {
       ;;
     swapping)
       if present "$work" && ! present "$entry/staging"; then
-        # The promotion rename ran; keep its result only if it is what was staged.
-        if [[ -n "$staged" && "$(entry_digest "$work")" == "$staged" ]]; then
+        # The promotion rename ran. The working copy is the staged one (finish
+        # the promotion), the previous one (nothing to undo), or something
+        # someone changed since: that is theirs and is never moved or deleted.
+        current="$(entry_digest "$work")" || current=""
+        if [[ -n "$staged" && "$current" == "$staged" ]]; then
           verified=true
-        elif ! prev_verified "$entry/prev" "$previous"; then
-          printf '  [!] %s: %s does not match the staged copy and no verified previous copy can replace it; left in place\n' \
-            "$skill" "$work"
-          return 2
-        elif ! rename_path "$work" "$entry/staging"; then
-          printf '  [!] %s: %s does not match the staged copy and could not be moved aside\n' "$skill" "$work"
-          return 2
+        elif [[ -n "$previous" && "$current" == "$previous" ]]; then
+          rolled_back=true
+          if present "$entry/prev"; then
+            if ! prev_verified "$entry/prev" "$previous"; then
+              printf '  [!] %s: %s matches the previous copy but %s does not; kept both and record %s\n' \
+                "$skill" "$work" "$entry/prev" "$record"
+              return 3
+            fi
+            rm -rf "$entry/prev" || { printf '  [!] %s: could not remove %s; kept record %s\n' "$skill" "$entry/prev" "$record"; return 2; }
+          fi
+          note "the previous copy is already in place"
         else
-          note "moved an unverified copy aside"
+          printf '  [!] %s: %s changed after an interrupted install and matches neither the new nor the previous copy; kept it as a local modification. Evidence: record %s%s. To keep your copy, delete %s; to go back, replace %s with %s and delete %s\n' \
+            "$skill" "$work" "$record" "$(present "$entry/prev" && printf ', previous copy %s' "$entry/prev")" \
+            "$entry" "$work" "$entry/prev" "$entry"
+          return 3
         fi
       fi
       if [[ "$verified" != "true" ]]; then
@@ -1078,9 +1090,18 @@ recover_entry() {
   return 0
 }
 
-# Settle interrupted or failed replacements left under a destination.
+# Settle interrupted or failed replacements left under a destination. Skills
+# whose working copy was modified after the interruption land in
+# RECOVERY_HELD; callers must leave them alone.
+RECOVERY_HELD=()
+
+recovery_held() {
+  [[ " ${RECOVERY_HELD[*]} " == *" $1 "* ]]
+}
+
 recover_dest() {
-  local dest="$1" root entry skill
+  local dest="$1" root entry skill rc
+  RECOVERY_HELD=()
   txn_root "$dest" || return 2
   root="$TXN_ROOT"
   [[ -d "$root" ]] || return 0
@@ -1091,7 +1112,13 @@ recover_dest() {
       printf '  [!] unexpected entry %s left in place\n' "$entry"
       continue
     fi
-    recover_entry "$skill" "$dest/$skill" "$entry" || return 2
+    rc=0
+    recover_entry "$skill" "$dest/$skill" "$entry" || rc=$?
+    case "$rc" in
+      0) ;;
+      3) RECOVERY_HELD+=("$skill"); continue ;;
+      *) return 2 ;;
+    esac
     present "$entry" || continue
     if [[ -n "$RECOVERY_NOTE" ]]; then
       printf '  [r] %s: %s\n' "$skill" "$RECOVERY_NOTE"
@@ -1339,6 +1366,11 @@ install_into() {
     fi
     if [[ "$stopped" == "true" ]]; then
       printf '  [!] %s not attempted: %s needs recovery first\n' "$skill" "$dest"
+      (( INSTALL_FAILURES++ )) || true
+      continue
+    fi
+    if recovery_held "$skill"; then
+      printf '  [!] %s not installed: its copy was modified after an interrupted install; resolve it as described above\n' "$skill"
       (( INSTALL_FAILURES++ )) || true
       continue
     fi
@@ -2178,10 +2210,17 @@ run_update() {
   timeout -k 10 "$timeout_s" git -C "$repo" -c core.hooksPath=/dev/null fetch --quiet --no-tags \
     --no-recurse-submodules -- "$SAVED_SOURCE_REMOTE" "$SAVED_SOURCE_UPSTREAM" </dev/null 9>&- &
   UPDATE_FETCH_PID=$!
-  trap 'kill -TERM "$UPDATE_FETCH_PID" 2>/dev/null; wait "$UPDATE_FETCH_PID" 2>/dev/null; exit 130' INT
-  trap 'kill -TERM "$UPDATE_FETCH_PID" 2>/dev/null; wait "$UPDATE_FETCH_PID" 2>/dev/null; exit 143' TERM
-  rc=0
-  wait "$UPDATE_FETCH_PID" || rc=$?
+  trap 'kill -TERM "$UPDATE_FETCH_PID" 2>/dev/null || true; wait "$UPDATE_FETCH_PID" 2>/dev/null || true; exit 130' INT
+  trap 'kill -TERM "$UPDATE_FETCH_PID" 2>/dev/null || true; wait "$UPDATE_FETCH_PID" 2>/dev/null || true; exit 143' TERM
+  # A signal the shell ignores can still end the wait early; keep waiting
+  # while the fetch runs so its exit status is the one mapped below.
+  while :; do
+    rc=0
+    wait "$UPDATE_FETCH_PID" || rc=$?
+    if (( rc <= 128 )) || ! kill -0 "$UPDATE_FETCH_PID" 2>/dev/null; then
+      break
+    fi
+  done
   trap 'exit 130' INT
   trap 'exit 143' TERM
   case "$rc" in
@@ -2316,6 +2355,10 @@ update_dest() {
     skill="${valid[i]}"
     if [[ "$stopped" == "true" ]]; then
       update_failed "$skill" "not attempted: $dest needs recovery first"
+      continue
+    fi
+    if recovery_held "$skill"; then
+      update_skip "$skill" "local changes made after an interrupted install; kept with its evidence (see above)"
       continue
     fi
     if [[ "$kind" == "link" ]]; then
