@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.3.0](https://github.com/iuliandita/skills/compare/v2.2.1...v2.3.0) (2026-09-25)
+
+### Features
+
+* **skills:** add a per-runtime profiler reference to performance-debugging, a Target versions block to message-queues, and read-only Gateway API checks to kubernetes-health; add reciprocal routing between backend-api, performance-debugging, message-queues, llm-app-development, testing, terraform, and virtualization ([#240](https://github.com/iuliandita/skills/pull/240), [#236](https://github.com/iuliandita/skills/issues/236)).
+
+### Bug Fixes
+
+* **skills:** raise security floors below published fixes (Next.js 16.3.6, GitLab 19.4.1 / 19.3.3 / 19.2.7, Unbound 1.26.1, strongSwan 6.1.0, DSM 7.3.2-86009-4, MongoDB 8.0.32, Grafana 13.2.2, Loki 3.7.8, MCP SDKs), correct advisory ranges and severities, and refresh stale version pins across the collection ([#237](https://github.com/iuliandita/skills/pull/237), [#233](https://github.com/iuliandita/skills/issues/233)).
+* **skills:** resolve contradictory instructions in nixos, debug-triage, terraform, kubernetes, ci-cd (Gitea Runner rename), and dev-cycle ([#238](https://github.com/iuliandita/skills/pull/238), [#234](https://github.com/iuliandita/skills/issues/234)).
+* **skills:** skill-refiner resolves helper scripts from `SKILL_REFINER_GATE_DIR` and records them unavailable when absent; fix severity markers, MCP detection for split SDK packages and Python `mcp`, and ownership conflicts in skill-creator, roadmap, update-docs, repo-audit, anti-ai-prose, and plan-review ([#239](https://github.com/iuliandita/skills/pull/239), [#235](https://github.com/iuliandita/skills/issues/235)).
+
 ## [2.2.1](https://github.com/iuliandita/skills/compare/v2.2.0...v2.2.1) (2026-09-24)
 
 ### Bug Fixes
