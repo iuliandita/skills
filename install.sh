@@ -588,7 +588,7 @@ acquire_install_lock() {
 # destination for the rest of the run.
 
 # Test-only fault injection. SKILLS_INSTALL_FAULT is a comma list of
-# stage|backup|promote|record|cleanup|restore|rollback|lock|opencode|xdev, each
+# stage|backup|promote|record|cleanup|restore|rollback|lock|opencode|xdev|configswap|configswaplate, each
 # optionally suffixed with :<skill>, that makes that step fail.
 fault_hit() {
   local point="$1" skill="${2:-}" item
@@ -1588,9 +1588,9 @@ saved_config_py() {
 import errno
 import os
 import re
+import secrets
 import stat
 import sys
-import tempfile
 
 KEYS = ("version", "tools", "link", "include_internal", "skills",
         "source_repo", "source_branch", "source_remote", "source_remote_url", "source_upstream")
@@ -1620,21 +1620,59 @@ def check_owner(info, what):
         fail(2, f"{what} is group- or world-writable")
 
 
-def open_dir():
+def faults():
+    return os.environ.get("SKILLS_INSTALL_FAULT", "").split(",")
+
+
+# Open the config dir relative to its parent's descriptor, refusing a symlink,
+# and verify it through the descriptor that every later step uses. The parent
+# may itself be a symlink (dotfile managers link ~/.config).
+def open_dir(create):
+    parent, name = os.path.split(directory)
     try:
-        fd = os.open(directory, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC)
+        if create:
+            os.makedirs(parent, exist_ok=True)
+        pfd = os.open(parent, os.O_RDONLY | os.O_DIRECTORY | os.O_CLOEXEC)
     except FileNotFoundError:
-        return None
+        if not create:
+            return None
+        fail(7, f"cannot create {directory}: parent is missing")
     except OSError as error:
-        if error.errno in (errno.ELOOP, errno.ENOTDIR):
-            fail(2, f"{directory} is a symlink or not a directory")
-        fail(7, f"cannot open {directory}: {error.strerror}")
+        fail(7, f"cannot {'create' if create else 'open'} {directory}: {error.strerror}")
+    try:
+        if create:
+            try:
+                os.mkdir(name, 0o700, dir_fd=pfd)
+            except FileExistsError:
+                pass
+            except OSError as error:
+                fail(7, f"cannot create {directory}: {error.strerror}")
+        try:
+            fd = os.open(name, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC, dir_fd=pfd)
+        except FileNotFoundError:
+            if not create:
+                return None
+            fail(7, f"{directory} disappeared")
+        except OSError as error:
+            if error.errno in (errno.ELOOP, errno.ENOTDIR):
+                fail(2, f"{directory} is a symlink or not a directory")
+            fail(7, f"cannot open {directory}: {error.strerror}")
+    finally:
+        os.close(pfd)
+    info = os.fstat(fd)
+    if info.st_uid != uid:
+        fail(2, f"{directory} is not owned by uid {uid}")
+    if create:
+        try:
+            os.fchmod(fd, 0o700)
+        except OSError as error:
+            fail(7, f"cannot set permissions on {directory}: {error.strerror}")
     check_owner(os.fstat(fd), directory)
     return fd
 
 
 def read_config(supported, aliases):
-    dfd = open_dir()
+    dfd = open_dir(False)
     if dfd is None:
         sys.exit(ABSENT)
     try:
@@ -1709,24 +1747,28 @@ def read_config(supported, aliases):
 
 
 def prepare():
-    try:
-        os.makedirs(os.path.dirname(directory), exist_ok=True)
-        os.mkdir(directory, 0o700)
-    except FileExistsError:
-        pass
-    except OSError as error:
-        fail(7, f"cannot create {directory}: {error.strerror}")
-    info = os.lstat(directory)
-    if not stat.S_ISDIR(info.st_mode):
-        fail(2, f"{directory} is a symlink or not a directory")
-    if info.st_uid != uid:
-        fail(2, f"{directory} is not owned by uid {uid}")
-    try:
-        os.chmod(directory, 0o700)
-    except OSError as error:
-        fail(7, f"cannot set permissions on {directory}: {error.strerror}")
+    os.close(open_dir(True))
 
 
+def swap(point):
+    # Test-only: replace the validated dir with a symlink to <dir>.elsewhere.
+    if point in faults():
+        print(f"  [!] injected fault: {point}", file=sys.stderr)
+        os.rename(directory, directory + ".moved")
+        os.symlink(directory + ".elsewhere", directory)
+
+
+def same_dir(dfd):
+    try:
+        current = os.stat(directory, follow_symlinks=False)
+    except OSError:
+        return False
+    held = os.fstat(dfd)
+    return (current.st_dev, current.st_ino) == (held.st_dev, held.st_ino)
+
+
+# Every step after validation goes through dfd; the pathname is only compared
+# against it so a directory swapped in meanwhile fails the save.
 def write(pairs):
     body = ["# Written by install.sh --save. Plain key=value; see INSTALL.md."]
     for pair, key in zip(pairs, KEYS):
@@ -1734,11 +1776,11 @@ def write(pairs):
         if name != key or controls(value):
             fail(2, f"refusing to save {name}: unexpected key or control character")
         body.append(pair)
-    dfd = open_dir()
-    if dfd is None:
-        fail(7, f"{directory} disappeared")
+    dfd = open_dir(True)
+    swap("configswap")
+    temp = f".install.conf.{os.getpid()}.{secrets.token_hex(8)}.tmp"
     try:
-        fd, temp = tempfile.mkstemp(dir=directory, prefix=".install.conf.", suffix=".tmp")
+        fd = os.open(temp, os.O_CREAT | os.O_EXCL | os.O_WRONLY | os.O_NOFOLLOW | os.O_CLOEXEC, 0o600, dir_fd=dfd)
     except OSError as error:
         fail(7, f"cannot create a temporary file: {error.strerror}")
     try:
@@ -1747,14 +1789,21 @@ def write(pairs):
             handle.write("\n".join(body) + "\n")
             handle.flush()
             os.fsync(handle.fileno())
-        os.replace(temp, path)
+        if not same_dir(dfd):
+            raise LookupError
+        swap("configswaplate")
+        os.rename(temp, "install.conf", src_dir_fd=dfd, dst_dir_fd=dfd)
         os.fsync(dfd)
-    except OSError as error:
+    except (OSError, LookupError) as error:
         try:
-            os.unlink(temp)
+            os.unlink(temp, dir_fd=dfd)
         except OSError:
             pass
+        if isinstance(error, LookupError):
+            fail(2, f"{directory} was replaced during the save; nothing was written")
         fail(7, f"cannot write: {error.strerror}")
+    if not same_dir(dfd):
+        fail(2, f"{directory} was replaced during the save; the config stayed in the directory that was checked")
 
 
 if mode == "read":
@@ -1924,7 +1973,7 @@ main() {
   local force=false no_backup=false link_mode=false
   local check_mode=false show_list=false include_internal=false migrate_mode=false apply_migration=false
   local doctor_mode=false doctor_verbose=false detect_mode=false save_mode=false
-  local dest_override=""
+  local dest_override="" tool_given=false dest_given=false
   local tools=() skills=()
   local argc=$#
 
@@ -1933,12 +1982,17 @@ main() {
       --tool)
         [[ $# -ge 2 ]] || { printf '%s\n' "--tool requires a value" >&2; exit 1; }
         IFS=',' read -ra _parsed <<< "$2"
+        if [[ -z "$2" || "$2" == ,* || "$2" == *, || "$2" == *,,* ]]; then
+          printf '%s\n' "--tool requires non-empty tool names" >&2; exit 1
+        fi
         tools+=("${_parsed[@]}")
+        tool_given=true
         shift
         ;;
       --dest)
-        [[ $# -ge 2 ]] || { printf '%s\n' "--dest requires a value" >&2; exit 1; }
+        [[ $# -ge 2 && -n "$2" ]] || { printf '%s\n' "--dest requires a non-empty value" >&2; exit 1; }
         dest_override="$2"
+        dest_given=true
         shift
         ;;
       --link)             link_mode=true ;;
@@ -1962,7 +2016,7 @@ main() {
 
   if [[ "$detect_mode" == "true" ]]; then
     if [[ "$link_mode$show_list$check_mode$migrate_mode$apply_migration$force$no_backup$include_internal$doctor_mode$doctor_verbose$save_mode" == *true* \
-      || -n "$dest_override" || ${#tools[@]} -gt 0 || ${#skills[@]} -gt 0 ]]; then
+      || "$dest_given$tool_given" == *true* || ${#skills[@]} -gt 0 ]]; then
       printf '%s\n' "--detect is read-only and accepts no other options or skill names" >&2; exit 1
     fi
     run_detect
@@ -1974,7 +2028,7 @@ main() {
     if [[ "$show_list$check_mode$migrate_mode$apply_migration$doctor_mode$doctor_verbose" == *true* ]]; then
       printf '%s\n' "--save applies only to installs, not to --list, --check, --migrate, or --doctor" >&2; exit 1
     fi
-    if [[ -n "$dest_override" ]]; then
+    if [[ "$dest_given" == "true" ]]; then
       printf '%s\n' "--save cannot be used with --dest; saved configs cover default paths only" >&2; exit 1
     fi
     reject_override_env "--save"

@@ -491,6 +491,75 @@ test_saved_config_from_other_checkout_is_noted() {
   trap - RETURN
 }
 
+test_config_dir_swap_during_save_writes_nothing() {
+  local tmp dir status=0 out
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  make_fixture "$tmp/repo" false "$tmp"
+  dir="$(conf_dir "$tmp")"
+  mkdir -p "$dir.elsewhere"
+  out="$(isolated "$tmp" SKILLS_INSTALL_FAULT=configswap "$tmp/repo/install.sh" --save docker 2>&1)" || status=$?
+  (( status == 2 )) || fail "swapped config dir exited $status, want 2: $out"
+  grep -q 'was replaced during the save; nothing was written' <<< "$out" || fail "swap not explained: $out"
+  [[ -L "$dir" && -d "$dir.moved" ]] || fail "fixture did not swap the directory"
+  [[ -z "$(ls -A "$dir.elsewhere")" ]] || fail "save wrote through the swapped-in symlink: $(ls -A "$dir.elsewhere")"
+  [[ -z "$(ls -A "$dir.moved")" ]] || fail "save left files in the validated dir: $(ls -A "$dir.moved")"
+
+  # Swapped after the last pathname check: the rename is anchored to the checked dir.
+  rm "$dir"
+  mv "$dir.moved" "$dir"
+  status=0
+  out="$(isolated "$tmp" SKILLS_INSTALL_FAULT=configswaplate "$tmp/repo/install.sh" --save docker 2>&1)" || status=$?
+  (( status == 2 )) || fail "late swap exited $status, want 2: $out"
+  grep -q 'the config stayed in the directory that was checked' <<< "$out" || fail "late swap not explained: $out"
+  [[ -z "$(ls -A "$dir.elsewhere")" ]] || fail "late swap wrote outside: $(ls -A "$dir.elsewhere")"
+  [[ "$(ls -A "$dir.moved")" == install.conf ]] || fail "late swap did not keep the write in the checked dir: $(ls -A "$dir.moved")"
+
+  rm "$dir"
+  rm -rf "$dir.moved" "$tmp/.claude"
+  ln -s "$dir.elsewhere" "$dir"
+  status=0
+  out="$(isolated "$tmp" "$tmp/repo/install.sh" --save docker 2>&1)" || status=$?
+  (( status == 2 )) || fail "symlinked config dir at save exited $status, want 2: $out"
+  [[ -z "$(ls -A "$dir.elsewhere")" && ! -e "$tmp/.claude" ]] || fail "save followed a symlinked config dir"
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_empty_option_values_are_rejected() {
+  local tmp args status out
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  make_fixture "$tmp/repo" false "$tmp"
+  local -a cases=(
+    "--detect|--dest|"
+    "--detect|--tool|"
+    "--save|--dest|"
+    "--save|--tool|"
+    "--tool|"
+    "--dest|"
+    "--tool|portable|--dest|"
+    "--tool|claude,"
+    "--tool|,claude"
+    "--tool|claude,,codex"
+    "--check|--tool|"
+    "--list|--dest|"
+  )
+  for args in "${cases[@]}"; do
+    local -a argv=()
+    IFS='|' read -ra argv <<< "$args"
+    [[ "$args" == *"|" ]] && argv+=("")
+    status=0
+    out="$(isolated "$tmp" "$tmp/repo/install.sh" "${argv[@]}" 2>&1)" || status=$?
+    (( status == 1 )) || fail "install.sh ${args//|/ } exited $status, want 1: $out"
+    grep -q 'requires a non-empty value\|requires non-empty tool names' <<< "$out" \
+      || fail "install.sh ${args//|/ } refusal unclear: $out"
+  done
+  [[ ! -e "$tmp/.claude" && ! -e "$(conf_dir "$tmp")" && ! -e "$tmp/.agents" ]] || fail "an empty option value installed or saved"
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
 test_detect_reports_candidates_without_running_anything
 test_detect_suggests_none
 test_detect_rejects_other_options_and_ignores_config
@@ -503,5 +572,7 @@ test_invalid_configs_are_rejected_unexecuted
 test_saved_config_rejects_override_env
 test_explicit_options_ignore_saved_config
 test_saved_config_from_other_checkout_is_noted
+test_config_dir_swap_during_save_writes_nothing
+test_empty_option_values_are_rejected
 
 printf 'setup tests passed\n'

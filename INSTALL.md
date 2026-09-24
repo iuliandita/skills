@@ -272,7 +272,10 @@ of those variables is set. `--save` requires `flock` and takes the installer loc
 touches the config, holding it through the install and the save.
 
 The config is `${XDG_CONFIG_HOME:-~/.config}/iuliandita-skills/install.conf`, directory mode
-700, file mode 600, written to a temporary file in the same directory and renamed into place:
+700, file mode 600. The directory is opened without following a symlink and checked
+through that descriptor; the temporary file, its permissions, and the rename into place all
+go through the same descriptor. If the path is swapped for another directory meanwhile, the
+save exits 2 and nothing is written outside the checked directory:
 
 ```text
 # Written by install.sh --save. Plain key=value; see INSTALL.md.
@@ -303,7 +306,7 @@ group- or world-writable.
 | Exit | Meaning |
 |------|---------|
 | 0 | Success |
-| 1 | Install failed (nothing saved), or an invalid option combination |
+| 1 | Install failed (nothing saved), an invalid option combination, or an empty `--tool` or `--dest` value |
 | 2 | Saved config invalid or unsafe, or an override variable is set |
 | 3 | Another installer run holds the lock |
 | 7 | The config directory or file cannot be created or opened |
