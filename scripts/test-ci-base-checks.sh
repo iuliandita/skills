@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Git hooks export GIT_DIR and friends; fixture repos must not inherit them.
+while IFS= read -r var; do unset "$var"; done < <(git rev-parse --local-env-vars)
+
 # Reproduces the CI shape from issue #211: a full clone (actions/checkout
 # fetch-depth 0) with a PR merge ref checked out as HEAD, built by merging
 # the feature branch onto the main tip the PR last synced with (BRANCH_POINT)
