@@ -210,7 +210,7 @@ services:
       - "traefik.http.services.app.loadbalancer.server.port=8080"
 
   traefik:
-    image: traefik:v3.6
+    image: traefik:v3.7.13
     command:
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"

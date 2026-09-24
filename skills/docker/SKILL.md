@@ -242,7 +242,7 @@ services:
 
 **Secrets**: use top-level `secrets:` with `file:` or `external: true`, reference via `_FILE` env convention (e.g., `POSTGRES_PASSWORD_FILE: /run/secrets/db_pass`). Never hardcode secrets in `environment:`. See `references/compose-patterns.md` for the full template with secret wiring.
 
-**Health-gated dependencies**: always use `depends_on:` with `condition: service_healthy` - bare `depends_on` is ordering only, no readiness guarantee.
+**Health-gated dependencies**: use `depends_on:` with `condition: service_healthy` - bare `depends_on` is ordering only, no readiness guarantee. Exception: dependencies that cannot expose a healthcheck (such as Model Runner provider services); comment the exception inline.
 
 ### Compose anti-patterns
 
@@ -277,7 +277,7 @@ Read `references/security-and-compliance.md` for the full PCI-DSS 4.0 container 
 | CVE-2026-33748 | BuildKit | High | Git URL validation bypass - restricted file access | BuildKit v0.28.1 |
 
 **Additional fixes checked September 10, 2026**: [CVE-2026-17106](https://github.com/moby/go-archive/security/advisories/GHSA-hfg8-hc9c-6c3h)
-allows archive extraction outside the destination; the advisory lists go-archive < 0.2.2
+allows archive extraction outside the destination; the advisory lists go-archive < 0.3.0
 as affected and 0.3.0 as patched. Docker Engine 29.7.0 includes the fix.
 [CVE-2026-15793](https://github.com/moby/buildkit/security/advisories/GHSA-hw3h-2gp9-cxpv)
 affects BuildKit 0.30.0-0.31.1 custom frontends using Git checkout bundles; fixed in
@@ -390,7 +390,7 @@ See AI Self-Check above for the full build-time checklist (Dockerfile correctnes
 
 - [ ] runc >= 1.4.0 (CVE-2025-31133/52565/52881 patched)
 - [ ] BuildKit >= 0.31.2 (includes CVE-2026-15793 and CVE-2026-33747/33748 fixes)
-- [ ] Docker Desktop >= 4.71.0 (adds CVE-2026-5817/5843 Model Runner container-to-host RCE fixes; floor was 4.66.1 for CVE-2025-9074/CVE-2026-28400)
+- [ ] Docker Desktop >= 4.71.0 (adds CVE-2026-5817/5843 Model Runner container-to-host RCE fixes; see the table above for the earlier CVE-2025-9074 and CVE-2026-28400 floors)
 - [ ] Trivy v0.74.0+ from official releases (v0.69.4-6 COMPROMISED)
 - [ ] Images signed with cosign, verified at deploy
 - [ ] SBOM generated for every production image

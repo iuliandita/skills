@@ -122,7 +122,7 @@ wg show wg0 transfer    # Should show non-zero rx/tx if tunnel is active
 ## OpenVPN
 
 OpenVPN 2.7.0 (Feb 2026) added multi-socket server support and `ovpn` DCO (Data Channel Offload)
-kernel module for near-WireGuard performance on Linux. 2.6.x is still maintained (2.6.19).
+kernel module for near-WireGuard performance on Linux. 2.6.x is still maintained (see the Target versions table in SKILL.md).
 Still relevant for tap mode (L2 bridging), x509 PKI with CRL/OCSP, and networks that block UDP.
 
 ### Server config (minimal, UDP, tun mode)
@@ -295,7 +295,7 @@ tailscale up --advertise-exit-node     # on the exit node
 tailscale up --exit-node=<hostname>    # on the client
 ```
 
-**Headscale** (self-hosted, v0.29.2):
+**Headscale** (self-hosted, v0.29.4):
 ```bash
 # Create user and pre-auth key
 headscale users create myuser
@@ -348,7 +348,7 @@ ZeroTier is an overlay network with a simpler setup than Nebula. Requires a cont
 
 ## Cloudflare Tunnels
 
-Cloudflare Tunnel (`cloudflared`, v2026.8.3) creates outbound-only encrypted connections from
+Cloudflare Tunnel (`cloudflared`, v2026.9.3) creates outbound-only encrypted connections from
 your origin to Cloudflare's edge. No inbound ports needed - the tunnel connects out to
 Cloudflare, which proxies traffic back through it.
 
@@ -370,7 +370,7 @@ Internet -> Cloudflare Edge (CDN, WAF, DDoS, Access) -> cloudflared -> Origin se
 # Install cloudflared
 # Debian/Ubuntu: apt install cloudflared
 # Arch: paru -S cloudflared
-# Docker: cloudflare/cloudflared:2026.8.3
+# Docker: cloudflare/cloudflared:2026.9.3
 
 # Authenticate (opens browser)
 cloudflared tunnel login

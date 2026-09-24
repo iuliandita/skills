@@ -57,7 +57,7 @@ exfiltration mechanism was triggered.
 ### HackerBot-Claw (February 2026)
 
 - Automated campaign scanning public repos for vulnerable `pull_request_target` workflows
-- Exploited Microsoft/symphony, Google/ai-ml-recipes, Nvidia/nvrc
+- Hit repos including microsoft/ai-discovery-agent, DataDog/datadog-iac-scanner, avelino/awesome-go, project-akri/akri, aquasecurity/trivy, and RustPython/RustPython ([write-up](https://www.stepsecurity.io/blog/hackerbot-claw-github-actions-exploitation))
 - Modified build/deploy scripts via PRs to exfiltrate service principals, API keys, IMDS tokens
 
 ### TrapDoor multi-registry campaign - May 2026
@@ -150,7 +150,7 @@ Settings > Actions > General > Actions permissions > Require action pinning.
 
 ## Image Signing (Sigstore / cosign)
 
-Docker retired DCT/Notary in favor of Sigstore (August 2025). cosign is the industry standard.
+Docker is retiring DCT/Notary in favor of Sigstore ([announced July 2025, ends 2026-12-08](https://www.docker.com/blog/docker-content-trust-retirement-and-migration-guidance/)). cosign is the industry standard.
 
 ### Sign in CI (keyless)
 
@@ -256,7 +256,7 @@ SLSA (Supply-chain Levels for Software Artifacts) is a framework for build integ
 | **Build L2** | Hosted build platform generates signed provenance | Verify producer and consumer requirements |
 | **Build L3** | Hardened build platform with isolation and protected signing | Evaluate platform guarantees |
 
-[SLSA v1.1 build levels](https://slsa.dev/spec/v1.1/levels) stop at L3. An attestation action
+[SLSA v1.2 build levels](https://slsa.dev/spec/v1.2/levels) stop at L3. An attestation action
 alone does not prove a level; verify the platform and consumer requirements. Example:
 
 ```yaml
@@ -300,7 +300,7 @@ attack anomalies.
 ```
 
 **Note**: v2.12.0 patches CVE-2025-32955 (Docker group privilege escalation bypass). Latest:
-v2.14.2 (March 2026). Do not use versions below v2.12.0 for security-critical workloads.
+v2.21.1 (August 2026). Do not use versions below v2.12.0 for security-critical workloads.
 
 ---
 
@@ -374,8 +374,8 @@ AI code assistants hallucinate package names. ~20% of AI-suggested packages don'
 43% of hallucinated names are consistently repeated across similar prompts. Attackers register
 these phantom names and wait.
 
-**Real-world**: 128 phantom packages accumulated 121,539 downloads between July 2025 and
-January 2026. A Fortune 500 company was compromised through a slopsquatted package.
+**Real-world**: registered phantom package names have been observed collecting real downloads;
+treat any unreviewed AI-suggested dependency as untrusted.
 
 **Defenses in CI**:
 - `--frozen-lockfile` / `npm ci` (not `npm install`)

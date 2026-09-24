@@ -35,7 +35,7 @@ stale package-version table.
 | Ubuntu HWE lane | verify live | kernel metapackage and hardware-enablement behavior matter more than one exact kernel number |
 | NVIDIA driver branch | verify live | proprietary branch choice affects Wayland, gaming, and DKMS behavior |
 | Mesa stack | verify live | AMD and Intel graphics behavior tracks the shipped Mesa lane |
-| Kernel security | verify live via USN tracker | patch high-severity privesc CVEs promptly; mid-2026 examples to confirm fixed: Copy Fail CVE-2026-31431 (CISA KEV, exploited), Dirty Frag CVE-2026-43284/43500, Fragnesia CVE-2026-46300 (ESP-in-TCP, exploited), ptrace CVE-2026-46333 |
+| Kernel security | verify live via USN tracker | patch high-severity privesc CVEs promptly; mid-2026 examples to confirm fixed: Copy Fail CVE-2026-31431 (CISA KEV, exploited), Dirty Frag CVE-2026-43284/43500, Fragnesia CVE-2026-46300 (ESP-in-TCP, public PoC, not in CISA KEV), ptrace CVE-2026-46333 |
 
 Security recheck (2026-09-10): [CVE-2026-53362](https://ubuntu.com/security/CVE-2026-53362)
 is a high-priority Linux IPv6 flaw that Canonical lists as CISA KEV. Ubuntu 26.04's

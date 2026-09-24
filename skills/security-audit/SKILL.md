@@ -17,9 +17,9 @@ Structured, multi-pass security audit. Combines automated tooling with manual pa
 
 Patterns drawn from real OSS incidents (unauthenticated admin endpoints, credential exfiltration, zip slip, auth bypass whitelists, Trivy supply chain compromise) and OpenSSF/SLSA/OWASP standards.
 
-**Target versions** (September 2026, release check 2026-09-10):
-- Semgrep 1.176.0, Bandit 1.9.4
-- Gitleaks 8.30.1, [Betterleaks 1.8.1](https://github.com/betterleaks/betterleaks/releases/tag/v1.8.1) (same author as Gitleaks), TruffleHog 3.97.4
+**Target versions** (September 2026, release check 2026-09-25):
+- Semgrep 1.178.0, Bandit 1.9.4
+- Gitleaks 8.30.1, [Betterleaks 1.8.1](https://github.com/betterleaks/betterleaks/releases/tag/v1.8.1) (same author as Gitleaks), TruffleHog 3.97.9
 - Trivy 0.74.0 (0.69.4-0.69.6 was compromised - see known incidents; upgrade past the 0.69.x window)
 - OpenSSF Scorecard 5.5.0 (v6 in proposal stage)
 - OWASP Top 10:2025 (confirmed January 2026), OWASP Agentic Top 10:2026 (released December 2025)

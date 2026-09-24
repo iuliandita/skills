@@ -322,6 +322,9 @@ fj pr status --wait
 # Merge (rebase + delete source branch)
 fj pr merge --method rebase --delete
 
+# Squash with an explicit commit subject and body
+fj pr merge 42 --method squash --delete --title "feat: subject" --message "body"
+
 # Close with a message
 fj pr close 42 --with-msg "superseded by #45"
 ```

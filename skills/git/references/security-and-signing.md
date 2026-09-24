@@ -273,7 +273,8 @@ affected; Windows is not.
 [CVE-2026-62960](https://github.com/git-for-windows/git/security/advisories/GHSA-xrpg-8j9v-v282)
 allows an untrusted server's bundle URI to trigger an outbound SMB connection when
 `transfer.bundleuri=true`. The advisory confirms 2.53.0.windows.3 and the tested main
-revision as affected and lists no patched version. Keep bundle URI transfer disabled for
+revision as affected and lists no patched version; [NVD](https://nvd.nist.gov/vuln/detail/CVE-2026-62960) reports a fix in
+2.55.0.windows.4 (checked September 25, sources still disagree). Keep bundle URI transfer disabled for
 untrusted Windows remotes and check the advisory before claiming a newer Git release fixes
 this issue. SMB callback is confirmed; NTLM disclosure is a stated risk, not a captured
 credential result in the advisory.
@@ -292,8 +293,8 @@ credential result in the advisory.
 |-----|-------|----------|-------------|
 | CVE-2025-68937 | Forgejo <= v13.0.1 | Critical (9.5) | Template processing allows authenticated RCE via symlink to `.ssh/authorized_keys`. Fixed in v13.0.2+ and v11.0.7 (LTS). |
 | CVE-2025-11702 | GitLab | High (8.5) | Runner hijacking - authenticated users could hijack project runners from other projects. Fixed in 18.3.5/18.4.3/18.5.1. |
-| CVE-2025-25291/25292 | GitLab | Critical | SAML SSO authentication bypass - user impersonation. Fixed in 17.9.x patches. |
-| CVE-2025-8110 | Gogs | High (8.7) | Symlink bypass RCE vulnerability-research. 700+ compromised instances. Fixed in v0.13.4 (Jan 2026). |
+| CVE-2025-25291/25292 | GitLab | Critical | SAML SSO authentication bypass - user impersonation. Fixed in 17.7.7 / 17.8.5 / 17.9.2. |
+| CVE-2025-8110 | Gogs | High (8.7) | Symlink bypass RCE, exploited as a zero-day. 700+ compromised instances. Fixed in v0.13.4 (Jan 2026). |
 
 ### AI tooling and MCP vulnerabilities
 

@@ -20,10 +20,10 @@ compliance requirements (PCI-DSS 4.0).
 
 **Target versions** (September 2026):
 - **git**: 2.55.0 (current stable). Major additions include Linux fsmonitor, remote-group push, and parallel compatible hooks.
-- **GitHub CLI (`gh`)**: 2.100.0
-- **GitLab CLI (`glab`)**: 1.117.0
-- **Forgejo CLI (`fj`)**: verify the current release at `codeberg.org/forgejo-contrib/forgejo-cli`; the previous 0.6.0 pin was not independently confirmed on September 10. Rust-written, official community CLI. Covers PRs (incl. AGit), issues, repos, releases, tags, actions.
-- **Forgejo**: v16.0.3 current; v15.0.7 is the current LTS. Critical RCE (CVE-2025-68937) patched in v13.0.2+.
+- **GitHub CLI (`gh`)**: 2.101.0
+- **GitLab CLI (`glab`)**: 1.119.0
+- **Forgejo CLI (`fj`)**: 0.6.0 (confirmed with `fj pr merge --help` on September 25; source `codeberg.org/forgejo-contrib/forgejo-cli`). Rust-written, official community CLI. Covers PRs (incl. AGit), issues, repos, releases, tags, actions.
+- **Forgejo**: v16.0.5 current; v15.0.9 is the current LTS (both 2026-09-17). Critical RCE (CVE-2025-68937) patched in v13.0.2+.
 - **prek**: 0.5.2 (Rust, recommended) or **pre-commit**: 4.6.2 (Python, largest ecosystem)
 - **git-filter-repo**: 2.47.0
 - **gitleaks**: 8.30.1 (secret scanning)

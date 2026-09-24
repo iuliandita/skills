@@ -23,13 +23,15 @@ preserve the user's brand and the existing application's conventions.
 - SvelteKit 2.70.3 + Svelte 5.57.0 runes
 - Tailwind CSS v4.3.3
 - Vite 8.2.2
-- React 19.2.8 + Next.js 16.3.4 (heavier option, only when team is React-locked)
+- React 19.3.0 + Next.js 16.3.6 (heavier option, only when team is React-locked)
 - @use-gesture/react 10.3.1 (modern; Hammer.js considered legacy)
 
 The [August 2026 Next.js security release](https://nextjs.org/blog/august-2026-security-release)
 fixes critical AVIF image-optimization RCE and Windows mixed-router RCE (CVE-2026-75604).
-Its patched LTS releases are 15.5.24 and 16.3.3; the 16.3.4 snapshot above includes those fixes.
-Check the advisory's deployment conditions when assessing an existing app (checked 2026-09-10).
+Its patched LTS releases are 15.5.24 and 16.3.3. The [September 22 out-of-band release](https://nextjs.org/blog/nextjs-security-update-september-22-2026)
+fixes a critical Node.js `ImageResponse` (`next/og`) RCE (GHSA-vcvr-r3jv-pc5j) affecting
+`>=16.2.0 <16.3.6`; the floor is 16.3.6 (15.5.26 adds hardening only; 15.x is not affected).
+Check each advisory's deployment conditions when assessing an existing app (checked 2026-09-25).
 
 The version list is a reference for new-project selection, not an upgrade instruction.
 Inspect installed packages and follow the project's stack. Verify current documentation when

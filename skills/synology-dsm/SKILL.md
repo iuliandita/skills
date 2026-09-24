@@ -25,8 +25,9 @@ survive.
 **Target versions** (September 2026):
 - DSM 7.4.1-90080 - current release (7.4 GA was 90075, 2026-06-16)
 - DSM 7.3 (released 2025-10-08) - Long-Term Support line, maintained to October 2027. Patch
-  floor is **7.3.2-86009-3 or above**: `-2` carries the SA-26:06 fixes but not SA-26:03
-  (CVE-2026-32746). Later `-4` builds exist
+  floor is **7.3.2-86009-4 or above** ([SA-26:13](https://www.synology.com/en-global/security/advisory/Synology_SA_26_13),
+  critical, 2026-09-18). `-2` carries the SA-26:06 fixes but not SA-26:03 (CVE-2026-32746);
+  `-3` predates SA-26:13
 - DSM 7.2 - end of maintenance December 2025, yet it still received fixes in SA-26:06 (April
   2026). Treat continued patching as unreliable rather than as policy, and plan an upgrade
 - Advisories: Synology-SA-26:03 (CVE-2026-32746, telnetd buffer overflow, CVSS 9.8, unauthenticated

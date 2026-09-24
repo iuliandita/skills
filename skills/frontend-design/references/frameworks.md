@@ -15,7 +15,7 @@ new dependency selection; choose based on the actual application and team constr
 2. **Static content, marketing site, blog, docs?** -> **Astro 7.3.2**
 3. **Interactive app, bundle size matters, you want runes?** -> **SvelteKit 2.70.3** + Svelte 5.57.0
 4. **Small app, no SSR needed, want Vite directly?** -> **Vite 8.2.2** + plain TypeScript or a thin layer (Lit, Solid, vanilla)
-5. **React ecosystem, rendering needs, or team familiarity fit the product?** -> **Next.js 16.3.4** + **React 19.2.8**
+5. **React ecosystem, rendering needs, or team familiarity fit the product?** -> **Next.js 16.3.6** + **React 19.3.0**
 
 For a new project, weigh rendering needs, ecosystem dependencies, team experience, and operating cost before selecting Next.js or an alternative.
 
@@ -121,7 +121,7 @@ bun create vite@latest
 
 ---
 
-## Next.js 16.3.4 + React 19.2.8
+## Next.js 16.3.6 + React 19.3.0
 
 **When.** React ecosystem dependencies, team familiarity, or a need for Server Components
 and Server Actions make it a suitable fit.
@@ -143,7 +143,7 @@ and Server Actions make it a suitable fit.
 - You want explicit reactivity (Svelte 5 runes are clearer)
 - Bundle size matters (Next is the heaviest in this list)
 
-**Note.** Next.js 15 is still maintained but Next.js 16 stable shipped October 21, 2025. Use 16.3.4 for new projects. Middleware was renamed to `proxy.ts` in 16 to clarify the network boundary.
+**Note.** Next.js 15 is still maintained but Next.js 16 stable shipped October 21, 2025. Use 16.3.6 or later for new projects (16.2.0-16.3.5 are affected by GHSA-vcvr-r3jv-pc5j). Middleware was renamed to `proxy.ts` in 16 to clarify the network boundary.
 
 An established team stack is a legitimate constraint. Keep it unless the user requests a migration or a concrete requirement makes it unsuitable.
 
