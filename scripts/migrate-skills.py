@@ -243,11 +243,15 @@ def backup_and_remove(path: Path, backup_base: Path, name: str) -> None:
 
 def write_lock(path: Path, lock: dict[str, Any], source: Path, updates: dict[str, dict[str, str] | None]) -> None:
     skills = dict(lock["skills"])
+    trees = lock.get("trees")
     for name, digest in updates.items():
         if digest is None:
             skills.pop(name, None)
         else:
             skills[name] = digest
+        # install.sh's v2 tree digest; this helper writes v1 records only.
+        if isinstance(trees, dict):
+            trees.pop(name, None)
     lock["skills"] = dict(sorted(skills.items()))
     lock["source"] = str(source)
     lock["updated_at"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")

@@ -312,6 +312,153 @@ group- or world-writable.
 | 7 | The config directory or file cannot be created or opened |
 | 10 | `flock` is missing (`--save` only) |
 
+## Scheduled updates
+
+`--update` keeps a saved setup current without supervision. Save once from a checkout whose
+branch tracks a remote, then schedule the update:
+
+```bash
+./install.sh --save --tool claude,codex --link
+./install.sh --update
+```
+
+`--update` takes no other options or skill names. It needs `git`, `flock`, `timeout`, and
+`python3`. Each run:
+
+1. Takes the installer lock without waiting, before it reads the saved config or touches
+   the checkout. Another run holding it means exit 3; set `SKILLS_LOCK_WAIT` to wait that
+   many seconds instead.
+2. Loads the saved config under the same rules as a bare install. A missing or invalid
+   config, or any override variable (`*_SKILLS_DIR`, `SKILLS_CANONICAL_DIR`,
+   `SKILLS_BACKUP_DIR`, `OPENCODE_CONFIG_FILE`, `SKILLS_TOOL`), means exit 2.
+3. Checks the source: the checkout is the saved `source_repo`, it is on the saved branch,
+   the branch's remote, that remote's URL, and the upstream ref match the saved values, and
+   `git status --porcelain` is empty (untracked files count).
+4. Fetches the saved upstream ref under `timeout -k 10 ${SKILLS_UPDATE_TIMEOUT:-300}`, with
+   hooks disabled, and pins the result to a commit SHA. HEAD must be an ancestor of that
+   commit; local commits or a rewritten upstream mean exit 4.
+5. Fast-forwards with `git merge --ff-only <sha>` (hooks disabled) and checks HEAD is that
+   SHA. If the fast-forward fails partway and leaves the working tree changed, the run exits
+   1 instead of 5; restore the checkout to HEAD before the next run.
+6. Replaces itself with the checkout's own, now updated `install.sh`, which inherits the
+   lock and applies the saved selection. New installer code therefore runs in the same
+   locked run that fetched it.
+
+The apply step never overwrites something it cannot prove it installed. For each selected
+skill in each destination it compares tree digests, which cover file names, types, the
+owner exec bit, contents, and symlink targets:
+
+- missing: installed.
+- equal to the source: current; its lock entry is refreshed if needed.
+- equal to the digest in its lock entry, or to the copy an earlier interrupted run was
+  installing: replaced, with a backup and the same staged, recoverable replacement as a
+  normal install.
+- anything else: skipped and reported, and the run exits 6. That covers local edits
+  (including edits made after an interrupted run, which are kept with that run's evidence),
+  an entry with no lock record, and entries recorded before tree digests existed that differ
+  from the source; the message names the `install.sh --force` command that reconciles one.
+  An older entry that already matches the source is upgraded silently.
+
+In `--link` mode the canonical copies are handled that way; tool directories only get
+missing links created, and anything other than a link to the canonical copy is skipped.
+Skills added upstream are installed when the saved selection is `all`. OpenCode permissions
+are synced for the installed skills exactly as a manual install does, so a new skill gets a
+named `allow` entry that overrides a wildcard `deny`. Migrations are never applied; the
+usual `--migrate` hint is printed when old links remain.
+
+Progress goes to stdout as timestamped lines, errors to stderr. The last stdout line of a
+completed run is one of:
+
+```text
+update: ok current
+update: ok 1a2b3c4d5e6f..7a8b9c0d1e2f changed=3 skipped=0
+update: partial 1a2b3c4d5e6f..7a8b9c0d1e2f changed=2 skipped=1
+```
+
+| Exit | Meaning |
+|------|---------|
+| 0 | Everything selected is current |
+| 1 | HEAD moved but the install did not finish; the message names the HEAD commit, and a rerun completes it |
+| 2 | No saved config, an invalid one, an override variable, a bad `SKILLS_UPDATE_TIMEOUT` or `SKILLS_LOCK_WAIT`, or extra options |
+| 3 | Another installer run holds the lock |
+| 4 | Source check failed: other checkout, branch, remote, URL, or upstream; detached HEAD; no saved upstream; uncommitted or untracked changes; local commits or divergence |
+| 5 | Fetch failed or timed out, or the fast-forward failed |
+| 6 | Finished, but some skills were skipped (see above) |
+| 7 | The lock or config directory cannot be created or opened |
+| 8 | The updated installer could not be started; HEAD is at the new commit, rerun |
+| 10 | `flock`, `timeout`, `git`, or `python3` is missing |
+| 130, 143 | Interrupted by SIGINT or SIGTERM |
+
+Exits 2, 3, 4, 5, 7, and 10 leave HEAD, the index, and the working tree unchanged (a fetch may
+still update remote-tracking refs). After HEAD moves there is no such guarantee; rerun
+`--update` and it picks up where the last run stopped.
+
+### Unattended authentication
+
+Updates run with `GIT_TERMINAL_PROMPT=0`, `GIT_ASKPASS` and `SSH_ASKPASS` set to `false`,
+and `SSH_ASKPASS_REQUIRE=never`, so a credential prompt fails the fetch (exit 5) instead of
+hanging. Unless `GIT_SSH_COMMAND`, `GIT_SSH`, or `core.sshCommand` is set, ssh runs as
+`ssh -o BatchMode=yes`; a command you set is used as is and must not prompt. Supported:
+
+- SSH with a running agent (export `SSH_AUTH_SOCK` in the job) or a key without a
+  passphrase.
+- HTTPS with a credential helper that answers without prompting, such as `store`, or
+  `libsecret` with an unlocked keyring. A public HTTPS remote needs no credentials.
+
+### Threat model
+
+The checkout, the saved config, and the state directory belong to your user; any process
+running as you can already run code as you, so other same-user writers are trusted. The
+update source is the remote URL and branch recorded by `--save`: enabling `--update`
+authorizes running whatever future commits that branch receives, because each run executes
+the fetched `install.sh`. Editing the checkout while an update runs is unsupported.
+
+Runs exclude each other only when every participating run has `flock`. `--update` and
+`--save` require it; ordinary installs warn and proceed without it.
+
+### Scheduling
+
+Use absolute paths, an explicit `PATH`, and a log file. Cron and systemd do not read your
+shell profile: if you set `XDG_CONFIG_HOME` or `XDG_STATE_HOME` there, set the same values
+in the job, or it will not find the saved config (exit 2) and will lock a different file
+than your manual installs. Crontab (`crontab -e`):
+
+```cron
+PATH=/usr/local/bin:/usr/bin:/bin
+17 4 * * * /home/me/src/skills/install.sh --update >>/home/me/.local/state/iuliandita-skills/update.log 2>&1
+```
+
+systemd user units, `~/.config/systemd/user/skills-update.service`:
+
+```ini
+[Unit]
+Description=Update agent skills
+
+[Service]
+Type=oneshot
+Environment=PATH=/usr/local/bin:/usr/bin:/bin
+ExecStart=/home/me/src/skills/install.sh --update
+```
+
+and `~/.config/systemd/user/skills-update.timer`:
+
+```ini
+[Unit]
+Description=Update agent skills daily
+
+[Timer]
+OnCalendar=daily
+RandomizedDelaySec=1h
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+```
+
+Enable it with `systemctl --user enable --now skills-update.timer`; the journal keeps the
+output (`journalctl --user -u skills-update`). For an SSH remote with an agent, also pass
+the agent socket, for example `Environment=SSH_AUTH_SOCK=%t/ssh-agent.socket`.
+
 ## Updating
 
 Pull the latest and re-run the installer with the same tool selection, skill selection,
@@ -346,10 +493,14 @@ Each replacement is staged first and swapped in by rename, with a record under
 installer puts the previous copy back, leaves that skill's lock entry unchanged, and exits
 non-zero. If the run is interrupted, or a step after the swap fails, the record, the
 previous copy, and the staged copy stay there. The next install run settles them before
-doing anything else in that destination: it keeps a swapped-in copy only if it matches the
-digest recorded before the swap, and otherwise puts the previous copy back. When that fails,
-the installer skips the rest of that destination, keeps the evidence, and continues with
-other destinations. A record is removed once the skill's lock entry is written, so an
+doing anything else in that destination. A swapped-in copy that matches the digest recorded
+before the swap is kept; one that matches the previous copy needs nothing undone. A copy
+that matches neither was changed by someone after the interruption: it is never moved or
+deleted. The installer keeps it, the previous copy, and the record, reports how to resolve
+it (delete the record folder to keep your copy, or put the previous copy back), refuses
+that skill, and exits non-zero; `--update` skips it and exits 6. When restoring or cleaning
+up fails, the installer skips the rest of that destination, keeps the evidence, and
+continues with other destinations. A record is removed once the skill's lock entry is written, so an
 install that stopped before writing the lock is reconciled by the next run. A failed retry
 keeps the earlier record.
 
@@ -361,9 +512,9 @@ recovery first and refuses a destination while recovery fails or a skill it woul
 still has an install record; reinstall that skill with `--force` to clear it. The migration
 helper's own copy of a replacement skill is not staged.
 
-Runs that change files (installs and `--migrate --apply`) take an exclusive lock on
+Runs that change files (installs, `--update`, and `--migrate --apply`) take an exclusive lock on
 `${XDG_STATE_HOME:-~/.local/state}/iuliandita-skills/install.lock` with `flock`, waiting up
-to `SKILLS_LOCK_WAIT` seconds (default 30) and exiting with status 3 if another run still
+to `SKILLS_LOCK_WAIT` seconds (default 30, or 0 for `--update`) and exiting with status 3 if another run still
 holds it. Without `flock` the installer prints a warning and proceeds; runs exclude each
 other only when every one of them has `flock`.
 
@@ -395,6 +546,11 @@ entry remains. Deprecated notices are excluded from active update checks. With `
 only the canonical lock is checked; tool-directory
 links are not verified. Check a tool's lock separately without `--link`, which checks only
 the first selected tool.
+
+Next to those content hashes, the lock keeps a `trees` map with a version 2 tree digest per
+skill (`hash_version: 2`), which also covers file names, exec bits, and symlink targets.
+`--update` uses it to tell its own installs from local edits; `--check` and `--migrate` keep
+using the content hashes.
 
 ```bash
 ./install.sh --check                  # check default (Claude)

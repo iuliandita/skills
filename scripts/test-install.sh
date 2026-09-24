@@ -1504,17 +1504,31 @@ test_post_promotion_failures_stop_and_reconcile() {
   grep -q 'docker: removed the replaced copy, confirmed the new copy' <<< "$output" || fail "record fault was not reconciled: $output"
   [[ ! -e "$txn" && "$(lock_entry "$dest" docker)" == "$(digest "$ROOT/skills/docker")" ]] || fail "record fault rerun left state behind"
 
-  # record, then a tampered working copy: recovery restores the previous copy.
+  # record, then the working copy is edited: that edit is the user's. Recovery
+  # keeps it and the evidence, refuses only that skill, and exits non-zero.
   printf '%s\n' 'local edit' >> "$dest/docker/SKILL.md"
-  old="$(digest "$dest/docker")"
   if isolated "$tmp" SKILLS_INSTALL_FAULT=record "$ROOT/install.sh" --tool portable --dest "$dest" --force --no-backup docker >/dev/null 2>&1; then
     fail "record fault did not fail"
   fi
-  printf '%s\n' 'partial' >> "$dest/docker/SKILL.md"
-  output="$(isolated "$tmp" "$ROOT/install.sh" --tool portable --dest "$dest" docker 2>&1)" || fail "rerun after tampering failed: $output"
-  grep -q 'docker: moved an unverified copy aside, restored the previous copy, removed leftover staging' <<< "$output" \
-    || fail "unverified promotion was not rolled back: $output"
-  [[ "$(digest "$dest/docker")" == "$old" && "$(record_phase "$txn")" == recovered ]] || fail "unverified promotion left the wrong copy"
+  printf '%s\n' 'my edit after the fault' >> "$dest/docker/SKILL.md"
+  local edited evidence
+  edited="$(tree_hash "$dest/docker")"
+  evidence="$(tree_hash "$txn")"
+  [[ -e "$txn/prev" && -f "$txn/record" ]] || fail "record fault left no evidence to keep"
+  for _ in 1 2; do
+    status=0
+    output="$(isolated "$tmp" "$ROOT/install.sh" --tool portable --dest "$dest" docker git 2>&1)" || status=$?
+    (( status == 1 )) || fail "rerun after an edit exited $status, want 1: $output"
+    grep -q 'docker: .* matches neither the new nor the previous copy; kept it as a local modification' <<< "$output" \
+      || fail "edited copy not reported: $output"
+    grep -q 'docker not installed: its copy was modified' <<< "$output" || fail "edited skill not refused: $output"
+    ! grep -q 'git not attempted' <<< "$output" || fail "an edited skill stopped the whole destination: $output"
+    [[ "$(tree_hash "$dest/docker")" == "$edited" ]] || fail "recovery changed the edited copy"
+    [[ "$(tree_hash "$txn")" == "$evidence" ]] || fail "recovery changed the evidence"
+  done
+  # Keep the edit, as the message suggests.
+  rm -rf "$txn"
+  old="$(digest "$dest/docker")"
 
   # cleanup: removing the previous copy after promotion fails.
   status=0
@@ -1573,7 +1587,7 @@ test_unverified_copy_without_verified_prev_is_refused() {
       if output="$(isolated "$tmp" "$ROOT/install.sh" --tool portable --dest "$dest" docker 2>&1)"; then
         fail "$case: recovery accepted an unverified working copy: $output"
       fi
-      grep -q 'no verified previous copy can replace it' <<< "$output" || fail "$case: refusal was unclear: $output"
+      grep -q 'kept it as a local modification' <<< "$output" || fail "$case: refusal was unclear: $output"
       [[ "$(tree_hash "$tmp/$case")" == "$before" ]] || fail "$case: refused recovery changed files"
     done
   done

@@ -181,6 +181,9 @@ Options:
   --detect            List harnesses that look installed (read-only, runs nothing)
   --save              After a successful install, save the selection; a bare
                       install.sh with no arguments then repeats it
+  --update            Fast-forward this checkout from its saved upstream and
+                      reinstall the saved selection (cron-safe; takes no other
+                      options; see INSTALL.md for exit codes)
   --help              Show this help
 
 Symlink mode (--link):
@@ -234,6 +237,74 @@ declare -A SOURCE_DIGESTS=()
 cache_source_digest() {
   [[ -n "${SOURCE_DIGESTS[$1]:-}" ]] && return 0
   SOURCE_DIGESTS[$1]="$(skill_hash "$SKILLS_SRC/$1")" && [[ -n "${SOURCE_DIGESTS[$1]}" ]]
+}
+
+# Tree digest v2, one line per path: sorted relative paths with entry type,
+# owner exec bit, content hash, and symlink target, so renames and link-target
+# changes count (skill_hash misses both). A path that is itself a symlink
+# prints link:<hash of target>; a missing path prints -, an unreadable one !.
+tree_digests() {
+  python3 - "$@" <<'PY'
+import hashlib
+import os
+import stat
+import sys
+
+
+def raise_error(error):
+    raise error
+
+
+def file_hash(path):
+    digest = hashlib.sha256()
+    with open(path, "rb") as handle:
+        for chunk in iter(lambda: handle.read(1 << 20), b""):
+            digest.update(chunk)
+    return digest.hexdigest().encode()
+
+
+def tree(root):
+    info = os.lstat(root)
+    if stat.S_ISLNK(info.st_mode):
+        return "link:" + hashlib.sha256(os.fsencode(os.readlink(root))).hexdigest()
+    if not stat.S_ISDIR(info.st_mode):
+        return "other:" + oct(stat.S_IFMT(info.st_mode))
+    rows = []
+    for directory, dirs, files in os.walk(root, followlinks=False, onerror=raise_error):
+        for name in dirs + files:
+            path = os.path.join(directory, name)
+            rel = os.fsencode(os.path.relpath(path, root))
+            mode = os.lstat(path).st_mode
+            if stat.S_ISLNK(mode):
+                row = [b"l", rel, os.fsencode(os.readlink(path))]
+            elif stat.S_ISDIR(mode):
+                row = [b"d", rel]
+            elif stat.S_ISREG(mode):
+                row = [b"f", rel, b"x" if mode & 0o100 else b"-", file_hash(path)]
+            else:
+                row = [b"o", rel, oct(stat.S_IFMT(mode)).encode()]
+            rows.append((rel, row))
+    digest = hashlib.sha256(b"skills-tree-v2\n")
+    for _, row in sorted(rows):
+        for field in row:
+            digest.update(b"%d:" % len(field) + field)
+    return digest.hexdigest()
+
+
+for path in sys.argv[1:]:
+    try:
+        os.lstat(path)
+    except FileNotFoundError:
+        print("-")
+        continue
+    except OSError:
+        pass
+    try:
+        print(tree(path))
+    except OSError as error:
+        print(f"cannot hash {path}: {error.strerror}", file=sys.stderr)
+        print("!")
+PY
 }
 
 # ── Internal skill detection ──────────────────────────────────────────
@@ -353,8 +424,7 @@ migrate_legacy_backups() {
   ts="$(date +%Y%m%d-%H%M%S)"
   dest="$backup_base/.legacy/$ts"
 
-  mkdir -p "$(dirname "$dest")"
-  mv "$legacy_dir" "$dest"
+  mkdir -p "$(dirname "$dest")" && mv "$legacy_dir" "$dest" || return 1
   printf '  [>] legacy .backups moved to %s\n' "$dest"
 }
 
@@ -418,7 +488,7 @@ PY
     return 0
   fi
   local backup
-  backup="$(backup_unverified_lock "$lock_dir")"
+  backup="$(backup_unverified_lock "$lock_dir")" || return 1
   printf '  [>] unverified lock backed up to %s; creating a fresh lock\n' "$backup"
 }
 
@@ -434,7 +504,7 @@ write_lock() {
   now="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
   LOCK_PUBLISHED=()
 
-  local updates=() published=()
+  local candidates=() hashes=() paths=() trees=() updates=() out i
   for skill in "${skills[@]}"; do
     local target="$lock_dir/$skill"
     [[ -L "$target" ]] && target="$(readlink -f "$target" 2>/dev/null || true)"
@@ -445,11 +515,28 @@ write_lock() {
     target_hash="$(skill_hash "$target")"
     cache_source_digest "$skill" || continue
     [[ -n "$target_hash" && "$target_hash" == "${SOURCE_DIGESTS[$skill]}" ]] || continue
-    updates+=("$skill=$target_hash")
-    published+=("$skill")
+    candidates+=("$skill")
+    hashes+=("$target_hash")
+    paths+=("$target" "$source_target")
+  done
+  if (( ${#candidates[@]} > 0 )); then
+    out="$(tree_digests "${paths[@]}")" || return 1
+    mapfile -t trees <<< "$out"
+  fi
+  # A tree entry is written only when the v2 digests agree too; otherwise the
+  # v1 record is still published and any older tree entry is dropped.
+  for i in "${!candidates[@]}"; do
+    if [[ "${trees[2*i]:-}" =~ ^[0-9a-f]{64}$ && "${trees[2*i]}" == "${trees[2*i+1]:-}" ]]; then
+      updates+=("${candidates[i]}=${hashes[i]}=${trees[2*i]}")
+    else
+      updates+=("${candidates[i]}=${hashes[i]}=-")
+    fi
   done
 
-  python3 - "$lock_file" "$SKILLS_SRC" "$now" "${updates[@]}" <<'PY' || return 1
+  # Records keep their v1 shape for --check and the migration helper. The v2
+  # tree digest lives in `trees`, bound to the record's v1 hash so an entry a
+  # v1-only writer left stale stops matching instead of vouching for it.
+  out="$(python3 - "$lock_file" "$SKILLS_SRC" "$now" "${updates[@]}" <<'PY'
 import json
 import os
 import pathlib
@@ -462,6 +549,7 @@ source = pathlib.Path(sys.argv[2]).resolve(strict=True)
 updated_at = sys.argv[3]
 name = re.compile(r"^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$")
 skills = {}
+trees = {}
 existing = None
 if lock_path.exists():
     try:
@@ -470,20 +558,32 @@ if lock_path.exists():
         if existing.get("version") != 1 or not isinstance(existing.get("skills"), dict) or existing_source != source:
             raise ValueError("version, source, or skills is incompatible")
         skills = dict(existing["skills"])
+        if isinstance(existing.get("trees"), dict):
+            trees = dict(existing["trees"])
     except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError) as error:
         raise SystemExit(f"Refusing to update unverified lock {lock_path}: {error}")
+published = []
 for item in sys.argv[4:]:
-    skill, digest = item.split("=", 1)
-    if name.fullmatch(skill):
-        previous = skills.get(skill)
-        if previous is None:
-            skills[skill] = {"hash": digest, "provenance": "source-equal-v1"}
-        elif isinstance(previous, dict) and previous.get("provenance") == "source-equal-v1":
-            skills[skill] = {"hash": digest, "provenance": "source-equal-v1"}
-        elif isinstance(previous, str):
-            skills[skill] = digest
+    skill, digest, tree = item.split("=", 2)
+    if not name.fullmatch(skill):
+        continue
+    published.append(skill)
+    previous = skills.get(skill)
+    if previous is None or (isinstance(previous, dict) and previous.get("provenance") == "source-equal-v1"):
+        skills[skill] = {"hash": digest, "provenance": "source-equal-v1"}
+    elif isinstance(previous, str):
+        skills[skill] = digest
+    else:
+        continue
+    if tree == "-":
+        trees.pop(skill, None)
+    else:
+        trees[skill] = {"hash_version": 2, "hash": digest, "digest": tree}
 skills = dict(sorted(skills.items()))
-if existing is not None and existing.get("source") == str(source) and existing["skills"] == skills:
+trees = {skill: trees[skill] for skill in sorted(trees) if skill in skills}
+if existing is not None and existing.get("source") == str(source) and existing["skills"] == skills \
+        and existing.get("trees", {}) == trees:
+    print("\n".join(published))
     sys.exit(0)
 payload = {
     "version": 1,
@@ -491,6 +591,8 @@ payload = {
     "source": str(source),
     "skills": skills,
 }
+if trees:
+    payload["trees"] = trees
 # Unique temp name: concurrent runs must not share one.
 fd, temp = tempfile.mkstemp(dir=lock_path.parent, prefix=f".{lock_path.name}.", suffix=".tmp")
 try:
@@ -508,8 +610,10 @@ except BaseException as error:
     except OSError:
         pass
     raise SystemExit(f"Could not write {lock_path}: {error}")
+print("\n".join(published))
 PY
-  LOCK_PUBLISHED=("${published[@]}")
+  )" || return 1
+  [[ -z "$out" ]] || mapfile -t LOCK_PUBLISHED <<< "$out"
 }
 
 read_lock_hash() {
@@ -541,15 +645,21 @@ validate_skill_name() {
 INSTALL_LOCK_FD=9
 INSTALL_LOCK_HELD=false
 
-# Pass "required" to exit 10 without flock and 7 when the lock cannot be opened.
-# Taking the lock twice would reopen fd 9 and drop it, so a second call is a no-op.
+install_lock_dir() {
+  printf '%s/iuliandita-skills\n' "${XDG_STATE_HOME:-$HOME/.local/state}"
+}
+
+# Pass "required" to exit 10 without flock and 7 when the lock cannot be opened;
+# $2 overrides the wait in seconds. Taking the lock twice would reopen fd 9 and
+# drop it, so a second call is a no-op.
 acquire_install_lock() {
-  local dir="${XDG_STATE_HOME:-$HOME/.local/state}/iuliandita-skills" wait="${SKILLS_LOCK_WAIT:-30}"
+  local dir wait="${2:-${SKILLS_LOCK_WAIT:-30}}"
   local required="${1:-}"
+  dir="$(install_lock_dir)"
   [[ "$INSTALL_LOCK_HELD" == "false" ]] || return 0
   if ! command -v flock >/dev/null 2>&1; then
     if [[ "$required" == "required" ]]; then
-      printf 'flock (util-linux) is required for --save; install it and rerun\n' >&2
+      printf 'flock (util-linux) is required for --save and --update; install it and rerun\n' >&2
       exit 10
     fi
     printf '[!] flock not found; concurrent installer runs are not excluded\n' >&2
@@ -768,6 +878,11 @@ txn_rollback() {
   return 1
 }
 
+# --update sets TXN_PENDING to the source tree digest it is installing. The
+# record keeps it until the lock is published, so a copy that landed before a
+# failed lock write is still recognized as ours on the next run.
+TXN_PENDING=""
+
 # Stage the new entry, move the old one aside, rename the new one into place.
 replace_entry() {
   local kind="$1" skill="$2" dest="$3" backup="$4"
@@ -788,7 +903,7 @@ replace_entry() {
     return 1
   fi
   if ! txn_write "$txn/record" version=1 "skill=$skill" "target=$work" \
-    "staging=$txn/staging" "backup=$txn/prev" phase=staging; then
+    "staging=$txn/staging" "backup=$txn/prev" phase=staging ${TXN_PENDING:+"pending=$TXN_PENDING"}; then
     printf '  [!] %s: could not write install record in %s\n' "$skill" "$txn"
     txn_rollback "$skill" "$work" "$txn"
     return
@@ -869,8 +984,10 @@ recover_prev() {
   note "restored the previous copy"
 }
 
+# Returns 0 settled, 2 unresolved (stop the destination), or 3 when the
+# working copy is someone's modification: the skill is held, evidence kept.
 recover_entry() {
-  local skill="$1" work="$2" entry="$3" phase staged previous rolled_back=false verified=false
+  local skill="$1" work="$2" entry="$3" phase staged previous current rolled_back=false verified=false
   local record="$entry/record"
   RECOVERY_NOTE=""
 
@@ -901,18 +1018,28 @@ recover_entry() {
       ;;
     swapping)
       if present "$work" && ! present "$entry/staging"; then
-        # The promotion rename ran; keep its result only if it is what was staged.
-        if [[ -n "$staged" && "$(entry_digest "$work")" == "$staged" ]]; then
+        # The promotion rename ran. The working copy is the staged one (finish
+        # the promotion), the previous one (nothing to undo), or something
+        # someone changed since: that is theirs and is never moved or deleted.
+        current="$(entry_digest "$work")" || current=""
+        if [[ -n "$staged" && "$current" == "$staged" ]]; then
           verified=true
-        elif ! prev_verified "$entry/prev" "$previous"; then
-          printf '  [!] %s: %s does not match the staged copy and no verified previous copy can replace it; left in place\n' \
-            "$skill" "$work"
-          return 2
-        elif ! rename_path "$work" "$entry/staging"; then
-          printf '  [!] %s: %s does not match the staged copy and could not be moved aside\n' "$skill" "$work"
-          return 2
+        elif [[ -n "$previous" && "$current" == "$previous" ]]; then
+          rolled_back=true
+          if present "$entry/prev"; then
+            if ! prev_verified "$entry/prev" "$previous"; then
+              printf '  [!] %s: %s matches the previous copy but %s does not; kept both and record %s\n' \
+                "$skill" "$work" "$entry/prev" "$record"
+              return 3
+            fi
+            rm -rf "$entry/prev" || { printf '  [!] %s: could not remove %s; kept record %s\n' "$skill" "$entry/prev" "$record"; return 2; }
+          fi
+          note "the previous copy is already in place"
         else
-          note "moved an unverified copy aside"
+          printf '  [!] %s: %s changed after an interrupted install and matches neither the new nor the previous copy; kept it as a local modification. Evidence: record %s%s. To keep your copy, delete %s; to go back, replace %s with %s and delete %s\n' \
+            "$skill" "$work" "$record" "$(present "$entry/prev" && printf ', previous copy %s' "$entry/prev")" \
+            "$entry" "$work" "$entry/prev" "$entry"
+          return 3
         fi
       fi
       if [[ "$verified" != "true" ]]; then
@@ -963,9 +1090,18 @@ recover_entry() {
   return 0
 }
 
-# Settle interrupted or failed replacements left under a destination.
+# Settle interrupted or failed replacements left under a destination. Skills
+# whose working copy was modified after the interruption land in
+# RECOVERY_HELD; callers must leave them alone.
+RECOVERY_HELD=()
+
+recovery_held() {
+  [[ " ${RECOVERY_HELD[*]} " == *" $1 "* ]]
+}
+
 recover_dest() {
-  local dest="$1" root entry skill
+  local dest="$1" root entry skill rc
+  RECOVERY_HELD=()
   txn_root "$dest" || return 2
   root="$TXN_ROOT"
   [[ -d "$root" ]] || return 0
@@ -976,7 +1112,13 @@ recover_dest() {
       printf '  [!] unexpected entry %s left in place\n' "$entry"
       continue
     fi
-    recover_entry "$skill" "$dest/$skill" "$entry" || return 2
+    rc=0
+    recover_entry "$skill" "$dest/$skill" "$entry" || rc=$?
+    case "$rc" in
+      0) ;;
+      3) RECOVERY_HELD+=("$skill"); continue ;;
+      *) return 2 ;;
+    esac
     present "$entry" || continue
     if [[ -n "$RECOVERY_NOTE" ]]; then
       printf '  [r] %s: %s\n' "$skill" "$RECOVERY_NOTE"
@@ -1224,6 +1366,11 @@ install_into() {
     fi
     if [[ "$stopped" == "true" ]]; then
       printf '  [!] %s not attempted: %s needs recovery first\n' "$skill" "$dest"
+      (( INSTALL_FAILURES++ )) || true
+      continue
+    fi
+    if recovery_held "$skill"; then
+      printf '  [!] %s not installed: its copy was modified after an interrupted install; resolve it as described above\n' "$skill"
       (( INSTALL_FAILURES++ )) || true
       continue
     fi
@@ -1580,8 +1727,12 @@ reject_override_env() {
   [[ -z "$names" ]] && return 0
   printf '%s: %s is set; a saved install config covers only default paths. Unset it or pass explicit options.\n' \
     "$1" "${names//,/, }" >&2
-  exit 2
+  exit "${CONFIG_FAIL_EXIT:-2}"
 }
+
+# Set by --apply-update: once HEAD has moved, config errors exit 1 like any
+# other failure after the fast-forward.
+CONFIG_FAIL_EXIT=""
 
 saved_config_py() {
   python3 - "$@" <<'PY'
@@ -1837,12 +1988,12 @@ load_saved_config() {
   case "$status" in
     0) ;;
     20) return 1 ;;
-    2|7) exit "$status" ;;
-    *) printf 'Could not read the saved install config in %s\n' "$dir" >&2; exit 7 ;;
+    2|7) exit "${CONFIG_FAIL_EXIT:-$status}" ;;
+    *) printf 'Could not read the saved install config in %s\n' "$dir" >&2; exit "${CONFIG_FAIL_EXIT:-7}" ;;
   esac
   if (( ${#fields[@]} != 2 * ${#SAVED_CONFIG_KEYS[@]} )); then
     printf 'Saved install config parser returned malformed output\n' >&2
-    exit 2
+    exit "${CONFIG_FAIL_EXIT:-2}"
   fi
   for (( i = 0; i < ${#fields[@]}; i += 2 )); do
     key="${fields[i]}"
@@ -1852,8 +2003,12 @@ load_saved_config() {
       include_internal) SAVED_INCLUDE_INTERNAL="${fields[i+1]}" ;;
       skills) SAVED_SKILLS="${fields[i+1]}" ;;
       source_repo) SAVED_SOURCE_REPO="${fields[i+1]}" ;;
-      version|source_branch|source_remote|source_remote_url|source_upstream) ;;
-      *) printf 'Saved install config parser returned key %s\n' "$key" >&2; exit 2 ;;
+      source_branch) SAVED_SOURCE_BRANCH="${fields[i+1]}" ;;
+      source_remote) SAVED_SOURCE_REMOTE="${fields[i+1]}" ;;
+      source_remote_url) SAVED_SOURCE_REMOTE_URL="${fields[i+1]}" ;;
+      source_upstream) SAVED_SOURCE_UPSTREAM="${fields[i+1]}" ;;
+      version) ;;
+      *) printf 'Saved install config parser returned key %s\n' "$key" >&2; exit "${CONFIG_FAIL_EXIT:-2}" ;;
     esac
   done
   SAVED_CONFIG_PATH="$dir/install.conf"
@@ -1968,6 +2123,413 @@ list_skills() {
   printf '\n'
 }
 
+# ── Update ────────────────────────────────────────────────────────────
+# --update checks the saved checkout, fast-forwards it to its saved upstream
+# pinned by SHA, and execs the updated install.sh with the internal
+# --apply-update, which inherits the lock on fd 9 and reconciles the saved
+# selection. Exit codes (INSTALL.md, "Scheduled updates"): before HEAD moves
+# 2 config, 3 lock, 4 source check, 5 fetch or fast-forward, 7 local state,
+# 10 missing tool; after it 1 failure, 6 skipped skills, 8 exec failure.
+
+ulog() {
+  printf '%s update: %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$*"
+}
+
+update_fail() {
+  local code="$1"
+  shift
+  printf '%s update: error: %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$*" >&2
+  exit "$code"
+}
+
+# Prompts must fail instead of waiting for a terminal no one is watching. A
+# user-set ssh command is kept and must itself be non-interactive.
+harden_git() {
+  export GIT_TERMINAL_PROMPT=0 GIT_ASKPASS=false SSH_ASKPASS=false SSH_ASKPASS_REQUIRE=never GCM_INTERACTIVE=never
+  if [[ -z "${GIT_SSH_COMMAND:-}" && -z "${GIT_SSH:-}" ]] \
+    && ! ugit -C "$1" config --get core.sshCommand >/dev/null 2>&1; then
+    export GIT_SSH_COMMAND="ssh -o BatchMode=yes"
+  fi
+}
+
+# Git for the update paths, without fd 9: a daemon git starts (fsmonitor, auto
+# gc or maintenance) must not keep holding the installer lock.
+ugit() {
+  git "$@" 9>&-
+}
+
+UPDATE_FETCH_PID=""
+
+update_expect_config() {
+  local repo="$1" key="$2" want="$3" what="$4" value
+  value="$(ugit -C "$repo" config --get "$key")" || value=""
+  [[ "$value" == "$want" ]] || update_fail 4 "$what is '$value' but the saved config says '$want'; checkout unchanged"
+}
+
+run_update() {
+  local timeout_s="${SKILLS_UPDATE_TIMEOUT:-300}" wait="${SKILLS_LOCK_WAIT:-0}"
+  local cmd repo branch status old sha head rc
+  trap 'exit 130' INT
+  trap 'exit 143' TERM
+  for cmd in timeout git python3; do
+    command -v "$cmd" >/dev/null 2>&1 || update_fail 10 "$cmd is required for --update; install it and rerun"
+  done
+  [[ "$timeout_s" =~ ^[1-9][0-9]*$ ]] || update_fail 2 "SKILLS_UPDATE_TIMEOUT must be a positive whole number of seconds: $timeout_s"
+  [[ "$wait" =~ ^[0-9]+$ ]] || update_fail 2 "SKILLS_LOCK_WAIT must be a whole number of seconds: $wait"
+  acquire_install_lock required "$wait"
+  ulog "holding $(install_lock_dir)/install.lock"
+  reject_override_env "--update"
+  load_saved_config || update_fail 2 "no saved install config in $(saved_config_dir); run install.sh --save first"
+  ulog "config $SAVED_CONFIG_PATH"
+
+  repo="$(ugit -C "$SCRIPT_DIR" rev-parse --show-toplevel 2>/dev/null)" \
+    || update_fail 4 "$SCRIPT_DIR is not a git checkout"
+  [[ "$repo" == "$SAVED_SOURCE_REPO" ]] \
+    || update_fail 4 "the config was saved from $SAVED_SOURCE_REPO, not $repo; run --update from that checkout or --save again"
+  if [[ -z "$SAVED_SOURCE_BRANCH" || -z "$SAVED_SOURCE_REMOTE" || "$SAVED_SOURCE_REMOTE" == "." \
+    || -z "$SAVED_SOURCE_UPSTREAM" ]]; then
+    update_fail 4 "the saved config has no upstream branch; run install.sh --save on a branch that tracks a remote"
+  fi
+  harden_git "$repo"
+  branch="$(ugit -C "$repo" symbolic-ref --quiet --short HEAD)" \
+    || update_fail 4 "HEAD is detached; check out $SAVED_SOURCE_BRANCH"
+  [[ "$branch" == "$SAVED_SOURCE_BRANCH" ]] \
+    || update_fail 4 "on branch $branch but the saved config says $SAVED_SOURCE_BRANCH"
+  update_expect_config "$repo" "branch.$branch.remote" "$SAVED_SOURCE_REMOTE" "the upstream remote"
+  update_expect_config "$repo" "remote.$SAVED_SOURCE_REMOTE.url" "$SAVED_SOURCE_REMOTE_URL" "the remote URL"
+  update_expect_config "$repo" "branch.$branch.merge" "$SAVED_SOURCE_UPSTREAM" "the upstream branch"
+  status="$(ugit -C "$repo" status --porcelain)" || update_fail 4 "git status failed in $repo"
+  [[ -z "$status" ]] || update_fail 4 "$repo has uncommitted or untracked changes (${status%%$'\n'*}); checkout unchanged"
+  old="$(ugit -C "$repo" rev-parse --verify HEAD)" || update_fail 4 "cannot resolve HEAD in $repo"
+  ulog "source checks passed: $repo on $branch at ${old:0:12}"
+
+  ulog "fetching $SAVED_SOURCE_UPSTREAM from $SAVED_SOURCE_REMOTE (timeout ${timeout_s}s)"
+  # timeout puts git in its own process group, out of reach of a signal sent
+  # to this shell, and a trap would only run once it exits. Waiting on it as a
+  # job lets a signal end the wait and be forwarded.
+  timeout -k 10 "$timeout_s" git -C "$repo" -c core.hooksPath=/dev/null fetch --quiet --no-tags \
+    --no-recurse-submodules -- "$SAVED_SOURCE_REMOTE" "$SAVED_SOURCE_UPSTREAM" </dev/null 9>&- &
+  UPDATE_FETCH_PID=$!
+  trap 'kill -TERM "$UPDATE_FETCH_PID" 2>/dev/null || true; wait "$UPDATE_FETCH_PID" 2>/dev/null || true; exit 130' INT
+  trap 'kill -TERM "$UPDATE_FETCH_PID" 2>/dev/null || true; wait "$UPDATE_FETCH_PID" 2>/dev/null || true; exit 143' TERM
+  # A signal the shell ignores can still end the wait early; keep waiting
+  # while the fetch runs so its exit status is the one mapped below.
+  while :; do
+    rc=0
+    wait "$UPDATE_FETCH_PID" || rc=$?
+    if (( rc <= 128 )) || ! kill -0 "$UPDATE_FETCH_PID" 2>/dev/null; then
+      break
+    fi
+  done
+  trap 'exit 130' INT
+  trap 'exit 143' TERM
+  case "$rc" in
+    0) ;;
+    124|137) update_fail 5 "fetch timed out after ${timeout_s}s; checkout unchanged" ;;
+    *) update_fail 5 "fetch failed (exit $rc); checkout unchanged" ;;
+  esac
+  sha="$(ugit -C "$repo" rev-parse --verify --quiet 'FETCH_HEAD^{commit}')" \
+    || update_fail 5 "the fetch returned no commit for $SAVED_SOURCE_UPSTREAM; checkout unchanged"
+  rc=0
+  ugit -C "$repo" merge-base --is-ancestor "$old" "$sha" || rc=$?
+  case "$rc" in
+    0) ;;
+    1) update_fail 4 "HEAD ${old:0:12} is not an ancestor of upstream ${sha:0:12} (local commits or a rewritten upstream); checkout unchanged" ;;
+    *) update_fail 5 "cannot compare HEAD with upstream (exit $rc); checkout unchanged" ;;
+  esac
+
+  if [[ "$old" == "$sha" ]]; then
+    ulog "checkout is current at ${sha:0:12}"
+  else
+    ulog "fast-forwarding ${old:0:12}..${sha:0:12}"
+    if ! ugit -C "$repo" -c core.hooksPath=/dev/null merge --ff-only --quiet "$sha" </dev/null; then
+      head="$(ugit -C "$repo" rev-parse --verify HEAD 2>/dev/null)" || head=""
+      status="$(ugit -C "$repo" status --porcelain 2>/dev/null)" || status="unknown"
+      if [[ "$head" == "$old" && -z "$status" ]]; then
+        update_fail 5 "fast-forward to ${sha:0:12} failed; HEAD is still ${old:0:12} and the working tree is unchanged"
+      fi
+      update_fail 1 "fast-forward to ${sha:0:12} failed partway; HEAD is ${head:-unknown} and the working tree may be partly updated; it was clean before, so restore it to HEAD, then rerun install.sh --update"
+    fi
+  fi
+  head="$(ugit -C "$repo" rev-parse --verify HEAD)" || head=""
+  [[ "$head" == "$sha" ]] \
+    || update_fail 1 "HEAD is ${head:-unknown} after the fast-forward, not $sha; rerun install.sh --update"
+
+  ulog "handing off to $repo/install.sh at ${sha:0:12}"
+  shopt -s execfail
+  exec "$BASH" "$repo/install.sh" --apply-update "$sha" "$old" || true
+  update_fail 8 "could not start $repo/install.sh; HEAD is at $sha; rerun install.sh --update to complete the install"
+}
+
+# Per-skill lock state for one destination: "none -", "v1 -", or "v2 <digest>".
+lock_tree_records() {
+  python3 - "$@" <<'PY'
+import json
+import re
+import sys
+
+path, names = sys.argv[1], sys.argv[2:]
+digest_re = re.compile(r"[0-9a-f]{64}")
+try:
+    with open(path, encoding="utf-8") as handle:
+        lock = json.load(handle)
+except FileNotFoundError:
+    lock = {"skills": {}}
+except (OSError, ValueError) as error:
+    sys.exit(f"cannot read {path}: {error}")
+skills = lock.get("skills")
+if not isinstance(skills, dict):
+    sys.exit(f"cannot read {path}: skills is not an object")
+trees = lock.get("trees") if isinstance(lock.get("trees"), dict) else {}
+for name in names:
+    record = skills.get(name)
+    if record is None:
+        print("none -")
+        continue
+    v1 = record if isinstance(record, str) else record.get("hash") if isinstance(record, dict) else None
+    entry = trees.get(name)
+    if isinstance(v1, str) and isinstance(entry, dict) and entry.get("hash_version") == 2 \
+            and entry.get("hash") == v1 and isinstance(entry.get("digest"), str) \
+            and digest_re.fullmatch(entry["digest"]):
+        print("v2", entry["digest"])
+    else:
+        print("v1 -")
+PY
+}
+
+# Counters for one --apply-update run; UPD_INPLACE lists the skills now
+# current in the destination update_dest last handled.
+UPD_CHANGED=0
+UPD_SKIPPED=0
+UPD_FAILED=0
+UPD_INPLACE=()
+
+update_skip() {
+  printf '  [~] %s skipped: %s\n' "$1" "$2"
+  (( UPD_SKIPPED++ )) || true
+}
+
+update_failed() {
+  printf '  [!] %s: %s\n' "$1" "$2" >&2
+  (( UPD_FAILED++ )) || true
+}
+
+# Reconcile one destination. kind=copy classifies each skill by tree digest:
+# missing -> install; equal to source -> current; equal to the digest a
+# pending install record or the v2 lock entry vouches for -> replace; anything
+# else is kept (local change, v1-only entry, or not installed by us).
+# kind=link keeps links to the canonical copy and creates missing ones.
+update_dest() {
+  local kind="$1" dest="$2" force_hint="$3" skill i rc root pending state recorded src dst stopped=false
+  shift 3
+  local -a names=("$@") valid=() paths=() digests=() records=()
+  local out
+  UPD_INPLACE=()
+  if ! mkdir -p "$dest" || ! ensure_lock_source "$dest" || ! migrate_legacy_backups "$dest"; then
+    for skill in "${names[@]}"; do update_failed "$skill" "not attempted: cannot prepare $dest"; done
+    return 0
+  fi
+  if ! recover_dest "$dest"; then
+    for skill in "${names[@]}"; do update_failed "$skill" "not attempted: $dest needs recovery first"; done
+    return 0
+  fi
+  root="$TXN_ROOT"
+
+  for skill in "${names[@]}"; do
+    if ! validate_skill_name "$skill" || [[ ! -d "$SKILLS_SRC/$skill" ]]; then
+      update_skip "$skill" "no longer in the source; see MIGRATION.md"
+      continue
+    fi
+    valid+=("$skill")
+    paths+=("$SKILLS_SRC/$skill" "$dest/$skill")
+  done
+  if [[ "$kind" == "copy" && ${#valid[@]} -gt 0 ]]; then
+    if ! out="$(tree_digests "${paths[@]}")" || ! mapfile -t digests <<< "$out" \
+      || ! out="$(lock_tree_records "$dest/.skills-lock.json" "${valid[@]}")" || ! mapfile -t records <<< "$out"; then
+      for skill in "${valid[@]}"; do update_failed "$skill" "not attempted: cannot read $dest"; done
+      return 0
+    fi
+  fi
+
+  for i in "${!valid[@]}"; do
+    skill="${valid[i]}"
+    if [[ "$stopped" == "true" ]]; then
+      update_failed "$skill" "not attempted: $dest needs recovery first"
+      continue
+    fi
+    if recovery_held "$skill"; then
+      update_skip "$skill" "local changes made after an interrupted install; kept with its evidence (see above)"
+      continue
+    fi
+    if [[ "$kind" == "link" ]]; then
+      if [[ -L "$dest/$skill" && "$(readlink "$dest/$skill")" == "$CANONICAL_DIR/$skill" ]]; then
+        UPD_INPLACE+=("$skill")
+        continue
+      fi
+      if present "$dest/$skill"; then
+        update_skip "$skill" "$dest/$skill is not a link to $CANONICAL_DIR/$skill; replace it with install.sh $force_hint --force $skill"
+        continue
+      fi
+      rc=0
+      replace_entry link "$skill" "$dest" false || rc=$?
+    else
+      src="${digests[2*i]:-}"
+      dst="${digests[2*i+1]:-}"
+      state="${records[i]%% *}"
+      recorded="${records[i]#* }"
+      pending=""
+      if [[ -f "$root/$skill/record" ]]; then
+        pending="$(txn_field "$root/$skill/record" pending)" || pending=""
+      fi
+      if [[ ! "$src" =~ ^[0-9a-f]{64}$ ]]; then
+        update_failed "$skill" "cannot hash the source"
+        continue
+      elif [[ "$dst" == "!" ]]; then
+        update_failed "$skill" "cannot hash $dest/$skill"
+        continue
+      elif [[ "$dst" == "$src" ]]; then
+        UPD_INPLACE+=("$skill")
+        continue
+      elif [[ "$dst" != "-" ]] && ! [[ ( -n "$pending" && "$dst" == "$pending" ) || ( "$state" == "v2" && "$dst" == "$recorded" ) ]]; then
+        case "$state" in
+          v1) update_skip "$skill" "installed before tree digests and differs from the source; run install.sh $force_hint --force $skill once to reconcile" ;;
+          none) update_skip "$skill" "$dest/$skill has no lock entry, so it was not installed by this installer" ;;
+          *) update_skip "$skill" "local changes in $dest/$skill; keep them, or discard them with install.sh $force_hint --force $skill" ;;
+        esac
+        continue
+      fi
+      rc=0
+      TXN_PENDING="$src"
+      if [[ "$dst" == "-" ]]; then
+        replace_entry copy "$skill" "$dest" false || rc=$?
+      else
+        replace_entry copy "$skill" "$dest" true || rc=$?
+      fi
+      TXN_PENDING=""
+    fi
+    case "$rc" in
+      0)
+        if [[ "$kind" == "link" ]]; then
+          printf '  [+] %s linked\n' "$skill"
+        elif [[ "$dst" == "-" ]]; then
+          printf '  [+] %s installed\n' "$skill"
+        else
+          printf '  [^] %s updated\n' "$skill"
+        fi
+        UPD_INPLACE+=("$skill")
+        (( UPD_CHANGED++ )) || true
+        ;;
+      2) stopped=true; update_failed "$skill" "replacement left unresolved; the next run recovers it" ;;
+      *) update_failed "$skill" "replacement failed and was rolled back" ;;
+    esac
+  done
+  if ! publish_lock "$dest" "${UPD_INPLACE[@]}"; then
+    printf '  [!] %s: lock not published\n' "$dest" >&2
+    (( UPD_FAILED++ )) || true
+  fi
+}
+
+run_apply_update() {
+  local new="$1" old="$2" repo head status tool dest skill hint
+  local -a tools=() skills=() canonical_ok=()
+  local -A dest_done=()
+  trap 'exit 130' INT
+  trap 'exit 143' TERM
+  CONFIG_FAIL_EXIT=1
+  [[ "$new" =~ ^[0-9a-f]{40}([0-9a-f]{24})?$ && "$old" =~ ^[0-9a-f]{40}([0-9a-f]{24})?$ ]] \
+    || update_fail 1 "--apply-update is internal to --update"
+  # The lock arrives as fd 9 from the coordinator; reopening the path would
+  # take a new, unheld description, so only the inherited one is checked.
+  if ! python3 -c 'import os, sys
+a, b = os.fstat(9), os.stat(sys.argv[1])
+sys.exit((a.st_dev, a.st_ino) != (b.st_dev, b.st_ino))' "$(install_lock_dir)/install.lock" 2>/dev/null \
+    || ! flock -n "$INSTALL_LOCK_FD" 2>/dev/null; then
+    update_fail 1 "the installer lock was not handed over on fd 9; --apply-update is internal to --update"
+  fi
+  INSTALL_LOCK_HELD=true
+  reject_override_env "--apply-update"
+  load_saved_config || update_fail 1 "the saved install config disappeared; HEAD is at $new; restore it and rerun install.sh --update"
+  repo="$(ugit -C "$SCRIPT_DIR" rev-parse --show-toplevel 2>/dev/null)" || repo=""
+  [[ -n "$repo" && "$repo" == "$SAVED_SOURCE_REPO" ]] \
+    || update_fail 1 "$SCRIPT_DIR is not the saved checkout $SAVED_SOURCE_REPO"
+  head="$(ugit -C "$repo" rev-parse --verify HEAD 2>/dev/null)" || head=""
+  [[ "$head" == "$new" ]] || update_fail 1 "HEAD is ${head:-unknown}, not $new; rerun install.sh --update"
+  status="$(ugit -C "$repo" status --porcelain)" || update_fail 1 "git status failed in $repo; HEAD is at $new"
+  [[ -z "$status" ]] || update_fail 1 "$repo changed during the update; HEAD is at $new; clean it and rerun install.sh --update"
+
+  ulog "applying ${new:0:12} with $SAVED_CONFIG_PATH"
+  load_skill_metadata || update_fail 1 "invalid skill frontmatter at $new; rerun install.sh --update after it is fixed upstream"
+  mapfile -t ALL_SKILLS < <(discover_skills "$SAVED_INCLUDE_INTERNAL")
+  load_migrations || update_fail 1 "invalid migrations.json at $new; rerun install.sh --update after it is fixed upstream"
+  IFS=',' read -ra tools <<< "$SAVED_TOOLS"
+  if [[ "$SAVED_SKILLS" == "all" ]]; then
+    for skill in "${ALL_SKILLS[@]}"; do
+      if [[ "$SAVED_INCLUDE_INTERNAL" != "true" ]] && is_internal "$SKILLS_SRC/$skill"; then
+        continue
+      fi
+      is_deprecated "$SKILLS_SRC/$skill" || skills+=("$skill")
+    done
+  else
+    local -a listed=()
+    IFS=',' read -ra listed <<< "$SAVED_SKILLS"
+    for skill in "${listed[@]}"; do
+      [[ " ${skills[*]} " == *" $skill "* ]] || skills+=("$skill")
+    done
+  fi
+
+  if [[ "$SAVED_LINK" == "true" ]]; then
+    hint="--tool $SAVED_TOOLS --link"
+    printf '[canonical] -> %s\n' "$CANONICAL_DIR"
+    update_dest copy "$CANONICAL_DIR" "$hint" "${skills[@]}"
+    canonical_ok=("${UPD_INPLACE[@]}")
+    for tool in "${tools[@]}"; do
+      dest="$(resolve_tool_path "$tool")"
+      printf '[%s] -> %s\n' "$tool" "$dest"
+      if paths_match "$dest" "$CANONICAL_DIR"; then
+        UPD_INPLACE=("${canonical_ok[@]}")
+      elif [[ -n "${dest_done[$dest]+set}" ]]; then
+        read -ra UPD_INPLACE <<< "${dest_done[$dest]}"
+      else
+        update_dest link "$dest" "$hint" "${canonical_ok[@]}"
+        dest_done[$dest]="${UPD_INPLACE[*]}"
+      fi
+      if [[ "$tool" == "opencode" ]]; then
+        sync_opencode_permissions "$OPENCODE_CONFIG_FILE" "${UPD_INPLACE[@]}" || (( UPD_FAILED++ )) || true
+      fi
+      legacy_cleanup_hint "$tool"
+    done
+  else
+    for tool in "${tools[@]}"; do
+      dest="$(resolve_tool_path "$tool")"
+      printf '[%s] -> %s\n' "$tool" "$dest"
+      if [[ -n "${dest_done[$dest]+set}" ]]; then
+        read -ra UPD_INPLACE <<< "${dest_done[$dest]}"
+      else
+        update_dest copy "$dest" "--tool $tool" "${skills[@]}"
+        dest_done[$dest]="${UPD_INPLACE[*]}"
+      fi
+      if [[ "$tool" == "opencode" ]]; then
+        sync_opencode_permissions "$OPENCODE_CONFIG_FILE" "${UPD_INPLACE[@]}" || (( UPD_FAILED++ )) || true
+      fi
+      legacy_cleanup_hint "$tool"
+    done
+  fi
+
+  if (( UPD_FAILED > 0 )); then
+    update_fail 1 "incomplete: changed=$UPD_CHANGED skipped=$UPD_SKIPPED failed=$UPD_FAILED; HEAD is at $new; rerun install.sh --update to complete the install"
+  fi
+  if (( UPD_SKIPPED > 0 )); then
+    printf 'update: partial %s..%s changed=%d skipped=%d\n' "${old:0:12}" "${new:0:12}" "$UPD_CHANGED" "$UPD_SKIPPED"
+    exit 6
+  fi
+  if [[ "$old" == "$new" && "$UPD_CHANGED" -eq 0 ]]; then
+    printf 'update: ok current\n'
+  else
+    printf 'update: ok %s..%s changed=%d skipped=0\n' "${old:0:12}" "${new:0:12}" "$UPD_CHANGED"
+  fi
+  exit 0
+}
+
 # ── Main ──────────────────────────────────────────────────────────────
 main() {
   local force=false no_backup=false link_mode=false
@@ -1976,6 +2538,17 @@ main() {
   local dest_override="" tool_given=false dest_given=false
   local tools=() skills=()
   local argc=$#
+
+  case "${1:-}" in
+    --update)
+      (( $# == 1 )) || { printf '%s\n' "--update accepts no other options or skill names" >&2; exit 2; }
+      run_update
+      ;;
+    --apply-update)
+      (( $# == 3 )) || { printf '%s\n' "--apply-update is internal to --update" >&2; exit 2; }
+      run_apply_update "$2" "$3"
+      ;;
+  esac
 
   while (( $# > 0 )); do
     case "$1" in
@@ -2007,6 +2580,8 @@ main() {
       --verbose)          doctor_verbose=true ;;
       --detect)           detect_mode=true ;;
       --save)             save_mode=true ;;
+      --update|--apply-update)
+        printf '%s\n' "$1 accepts no other options or skill names" >&2; exit 2 ;;
       --help|-h)          usage; exit 0 ;;
       -*)                 printf 'Unknown option: %s\n' "$1" >&2; usage; exit 1 ;;
       *)                  skills+=("$1") ;;
@@ -2334,4 +2909,6 @@ main() {
   fi
 }
 
-main "$@"
+# One line: bash has read all of it before main runs, so a fast-forward that
+# rewrites this file cannot splice new text into this run.
+main "$@"; exit $?
