@@ -12,9 +12,11 @@ set -euo pipefail
 #
 # Base resolution: optional first argument, else BASE_REF, else the merge base
 # with main or origin/main. The script only reads refs and never mutates the
-# repository. It exits 0 with an explicit message when no base or comparable
-# history exists (for example a shallow clone, or running on the base branch
-# itself): the check is a diff guard and cannot run without a commit range.
+# repository. It exits 0 with an explicit message when no base ref resolves at
+# all, or running on the base branch itself: the check is a diff guard and
+# cannot run without a commit range. If a base ref resolves but no merge-base
+# with HEAD can be computed (shallow clone, unrelated history), it exits 1
+# instead of silently falling back to a non-ancestor tip.
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
@@ -36,21 +38,26 @@ ref_exists() {
   git rev-parse --verify --quiet "${1}^{commit}" >/dev/null 2>&1
 }
 
+resolve_base() {
+  local candidate
+  for candidate in "$@"; do
+    if ref_exists "$candidate"; then
+      if base="$(git merge-base HEAD "$candidate" 2>/dev/null)"; then
+        return 0
+      fi
+      echo "ERROR: base ref '${candidate}' exists but no merge-base with HEAD could be computed" >&2
+      echo "(shallow clone or unrelated history); refusing to fall back to a non-ancestor tip." >&2
+      exit 1
+    fi
+  done
+  base=""
+}
+
 base=""
 if [[ -n "$BASE_REF" ]]; then
-  for candidate in "$BASE_REF" "origin/$BASE_REF"; do
-    if ref_exists "$candidate"; then
-      base="$(git merge-base HEAD "$candidate" 2>/dev/null || git rev-parse "$candidate")"
-      break
-    fi
-  done
+  resolve_base "$BASE_REF" "origin/$BASE_REF"
 else
-  for candidate in main origin/main; do
-    if ref_exists "$candidate"; then
-      base="$(git merge-base HEAD "$candidate" 2>/dev/null || git rev-parse "$candidate")"
-      break
-    fi
-  done
+  resolve_base main origin/main
 fi
 
 head_sha="$(git rev-parse HEAD)"
