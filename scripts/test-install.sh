@@ -279,6 +279,32 @@ test_plain_install_reports_rename_and_symlink_target_differences() {
   trap - RETURN
 }
 
+test_plain_install_keeps_unverifiable_copy_unpublished() {
+  local tmp output lock_before lock_after status=0
+  if (( EUID == 0 )); then
+    printf 'SKIP: running as root, unreadable-file test not meaningful\n'
+    return
+  fi
+  tmp="$(mktemp -d)"
+  trap 'chmod -R u+rwX "$tmp"; rm -rf "$tmp"' RETURN
+
+  HOME="$tmp" "$ROOT/install.sh" --tool omp --no-backup docker >/dev/null
+  lock_before="$(cat "$tmp/.agents/skills/.skills-lock.json")"
+  chmod 000 "$tmp/.agents/skills/docker/SKILL.md"
+  output="$(HOME="$tmp" "$ROOT/install.sh" --tool omp --no-backup docker 2>&1)" || status=$?
+  chmod u+rw "$tmp/.agents/skills/docker/SKILL.md"
+  (( status == 0 )) || fail "unverifiable copy made the install fail ($status): $output"
+  grep -q '\[~\] docker already exists (use --force to overwrite)' <<< "$output" \
+    || fail "unverifiable copy not reported with the fallback wording: $output"
+  if grep -q '\[=\] docker current' <<< "$output"; then fail "unverifiable copy reported current: $output"; fi
+  lock_after="$(cat "$tmp/.agents/skills/.skills-lock.json")"
+  [[ "$lock_after" == "$lock_before" ]] || fail "lock changed for an unverifiable copy"
+
+  chmod -R u+rwX "$tmp"
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
 test_force_still_overwrites_a_differing_copy() {
   local tmp output
   tmp="$(mktemp -d)"
@@ -1727,6 +1753,7 @@ test_plain_install_reports_current_for_unchanged_copies
 test_plain_install_reports_differs_for_locally_edited_copy
 test_plain_install_leaves_unrecorded_differing_copy_unrecorded
 test_plain_install_reports_rename_and_symlink_target_differences
+test_plain_install_keeps_unverifiable_copy_unpublished
 test_force_still_overwrites_a_differing_copy
 test_omp_check_mode
 test_omp_and_gemini_share_destination
