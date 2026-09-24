@@ -210,6 +210,108 @@ Common aliases also work: `claude-code`, `openai-codex`, `github-copilot`, `gemi
 For a target or project directory outside this table, use `--tool portable --dest /path/to/skills`.
 Verify that the consuming tool discovers skills at that destination.
 
+## Detect and save a setup
+
+`--detect` lists harnesses that look installed. It is read-only, runs nothing it finds,
+and ignores the saved config, skill metadata, and migrations:
+
+```bash
+./install.sh --detect
+```
+
+Output is one line per supported tool, tab-separated, then a suggestion:
+
+```text
+candidate	claude	binary:/home/me/.local/bin/claude;config:/home/me/.claude/settings.json
+nomarker	cursor
+suggested: claude
+```
+
+- `candidate<TAB><tool><TAB><evidence>`: at least one marker was found. Evidence items are
+  `binary:<path>` (first executable regular file of that name on `PATH`) or
+  `config:<path>`, joined by `;`. Backslash, tab, newline, `;`, other control characters,
+  and undecodable bytes are written as `\\`, `\t`, `\n`, `\x3b`, and `\xNN`.
+- `nomarker<TAB><tool>`: the installer knows no marker it trusts for this tool. Supported
+  tools whose markers are all absent print nothing.
+- `suggested: a,b` or `suggested: none`: the candidates, ready for `--tool`.
+
+A candidate is a hint, not proof: check it before installing. Only harness-owned markers
+count. Skill directories and shared roots such as `~/.agents/skills` never do, and bare
+`cmd` is ignored because the name is too generic. Notes about skipped `PATH` entries go to
+stderr. `--detect` exits 0 and rejects every other option and skill name.
+
+| Tool | Binary on `PATH` | Config file under `~` |
+|------|------------------|-----------------------|
+| claude | `claude` | `.claude/settings.json` |
+| codex | `codex` | `.codex/config.toml` |
+| opencode | `opencode` | `.config/opencode/opencode.json` |
+| commandcode | `commandcode` | `.commandcode/settings.json` |
+| gemini | `gemini` | `.gemini/settings.json` |
+| antigravity | `agy` | `.gemini/antigravity-cli/settings.json` |
+| hermes | `hermes` | `.hermes/config.yaml` |
+| kimi | `kimi` | none |
+| omp | `omp` | `.omp/agent/config.yml` |
+
+`--save` runs a normal install and, only if it succeeds, records the selection:
+
+```bash
+./install.sh --save --tool claude,codex --link
+./install.sh            # later: repeats the saved selection
+```
+
+A bare `./install.sh` with no arguments at all uses the saved config and prints its path
+first. Any argument, including `--force` alone, ignores the saved config completely; there is
+no merging. `--check`, `--list`, `--migrate`, `--doctor`, and `--detect` never read it.
+Without a saved config, a bare run keeps its old default (all skills for `SKILLS_TOOL`, or
+Claude).
+
+`--save` covers default paths only. It is refused with `--dest` (exit 1) and when any of
+`*_SKILLS_DIR`, `SKILLS_CANONICAL_DIR`, `SKILLS_BACKUP_DIR`, `OPENCODE_CONFIG_FILE`, or
+`SKILLS_TOOL` is set (exit 2). A bare run that finds a saved config also exits 2 while any
+of those variables is set. `--save` requires `flock` and takes the installer lock before it
+touches the config, holding it through the install and the save.
+
+The config is `${XDG_CONFIG_HOME:-~/.config}/iuliandita-skills/install.conf`, directory mode
+700, file mode 600. The directory is opened without following a symlink and checked
+through that descriptor; the temporary file, its permissions, and the rename into place all
+go through the same descriptor. If the path is swapped for another directory meanwhile, the
+save exits 2 and nothing is written outside the checked directory:
+
+```text
+# Written by install.sh --save. Plain key=value; see INSTALL.md.
+version=1
+tools=codex,claude
+link=true
+include_internal=false
+skills=all
+source_repo=/home/me/src/skills
+source_branch=main
+source_remote=origin
+source_remote_url=git@github.com:iuliandita/skills.git
+source_upstream=refs/heads/main
+```
+
+`tools` holds canonical tool names; `skills` is `all` or a comma list. The `source_*` keys
+identify the checkout that ran `--save`. A checkout without an upstream branch saves the
+upstream keys empty and prints a note; a later `--update` refuses to run from such a config.
+A bare run from a different checkout prints a note and installs from the checkout it runs in.
+
+The file is parsed, never sourced. Each line is `key=value`, split at the first `=`; lines
+starting with `#` and blank lines are skipped. All ten keys are required, unknown or repeated
+keys are errors, `link` and `include_internal` must be exactly `true` or `false`, tool names
+must be supported tools or aliases, and control characters are rejected anywhere. The file
+must be a regular file, not a symlink, and it and its directory must be owned by you and not
+group- or world-writable.
+
+| Exit | Meaning |
+|------|---------|
+| 0 | Success |
+| 1 | Install failed (nothing saved), an invalid option combination, or an empty `--tool` or `--dest` value |
+| 2 | Saved config invalid or unsafe, or an override variable is set |
+| 3 | Another installer run holds the lock |
+| 7 | The config directory or file cannot be created or opened |
+| 10 | `flock` is missing (`--save` only) |
+
 ## Updating
 
 Pull the latest and re-run the installer with the same tool selection, skill selection,

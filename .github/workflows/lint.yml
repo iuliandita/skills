@@ -101,6 +101,9 @@ jobs:
       - name: Test installer behavior
         run: ./scripts/test-install.sh
 
+      - name: Test installer detect and saved config
+        run: ./scripts/test-setup.sh
+
       - name: Test migration behavior
         run: |
           ./scripts/test-migrate-skills.sh

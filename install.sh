@@ -178,6 +178,9 @@ Options:
   --doctor            Report skill names a harness can reach through more than
                       one directory (read-only; all known tools unless --tool)
   --verbose           With --doctor, list each overlap the harness resolves
+  --detect            List harnesses that look installed (read-only, runs nothing)
+  --save              After a successful install, save the selection; a bare
+                      install.sh with no arguments then repeats it
   --help              Show this help
 
 Symlink mode (--link):
@@ -536,10 +539,19 @@ validate_skill_name() {
 # Runs that change files hold an exclusive flock on fd 9 until the process
 # exits; an exec'd child inherits the descriptor and with it the lock.
 INSTALL_LOCK_FD=9
+INSTALL_LOCK_HELD=false
 
+# Pass "required" to exit 10 without flock and 7 when the lock cannot be opened.
+# Taking the lock twice would reopen fd 9 and drop it, so a second call is a no-op.
 acquire_install_lock() {
   local dir="${XDG_STATE_HOME:-$HOME/.local/state}/iuliandita-skills" wait="${SKILLS_LOCK_WAIT:-30}"
+  local required="${1:-}"
+  [[ "$INSTALL_LOCK_HELD" == "false" ]] || return 0
   if ! command -v flock >/dev/null 2>&1; then
+    if [[ "$required" == "required" ]]; then
+      printf 'flock (util-linux) is required for --save; install it and rerun\n' >&2
+      exit 10
+    fi
     printf '[!] flock not found; concurrent installer runs are not excluded\n' >&2
     return 0
   fi
@@ -549,6 +561,7 @@ acquire_install_lock() {
   fi
   if ! mkdir -p "$dir" || ! chmod 700 "$dir" || ! exec 9>>"$dir/install.lock"; then
     printf 'Cannot open the installer lock in %s\n' "$dir" >&2
+    [[ "$required" == "required" ]] && exit 7
     exit 1
   fi
   if ! flock -w "$wait" "$INSTALL_LOCK_FD"; then
@@ -556,6 +569,7 @@ acquire_install_lock() {
       "$dir/install.lock" "$wait" >&2
     exit 3
   fi
+  INSTALL_LOCK_HELD=true
 }
 
 # ── Replacement transactions ──────────────────────────────────────────
@@ -574,7 +588,7 @@ acquire_install_lock() {
 # destination for the rest of the run.
 
 # Test-only fault injection. SKILLS_INSTALL_FAULT is a comma list of
-# stage|backup|promote|record|cleanup|restore|rollback|lock|opencode|xdev, each
+# stage|backup|promote|record|cleanup|restore|rollback|lock|opencode|xdev|configswap|configswaplate, each
 # optionally suffixed with :<skill>, that makes that step fail.
 fault_hit() {
   local point="$1" skill="${2:-}" item
@@ -1440,6 +1454,441 @@ print("No blocking duplicates.")
 PY
 }
 
+# ── Detect ────────────────────────────────────────────────────────────
+# Harness-owned markers: tool|binary|<name on PATH> or tool|config|<file under
+# $HOME>. Only markers checked against a real install or the harness docs are
+# listed; skill dirs and shared roots never count. Tools absent here print
+# `nomarker`. Nothing found is ever executed.
+DETECT_MARKERS=(
+  "claude|binary|claude"
+  "claude|config|.claude/settings.json"
+  "codex|binary|codex"
+  "codex|config|.codex/config.toml"
+  "opencode|binary|opencode"
+  "opencode|config|.config/opencode/opencode.json"
+  "commandcode|binary|commandcode"
+  "commandcode|config|.commandcode/settings.json"
+  "gemini|binary|gemini"
+  "gemini|config|.gemini/settings.json"
+  "hermes|binary|hermes"
+  "hermes|config|.hermes/config.yaml"
+  "antigravity|binary|agy"
+  "antigravity|config|.gemini/antigravity-cli/settings.json"
+  "kimi|binary|kimi"
+  "omp|binary|omp"
+  "omp|config|.omp/agent/config.yml"
+)
+
+run_detect() {
+  python3 - "$HOME" "${PATH-}" "$(IFS=,; printf '%s' "${SUPPORTED_TOOLS[*]}")" "${DETECT_MARKERS[@]}" <<'PY'
+import os
+import sys
+
+home, path_env, tools = sys.argv[1], sys.argv[2], sys.argv[3].split(",")
+markers = [row.split("|", 2) for row in sys.argv[4:]]
+
+
+def esc(text):
+    out = []
+    for ch in text:
+        code = ord(ch)
+        if ch == "\\":
+            out.append("\\\\")
+        elif ch == "\t":
+            out.append("\\t")
+        elif ch == "\n":
+            out.append("\\n")
+        elif ch == ";":
+            out.append("\\x3b")
+        elif 0xDC80 <= code <= 0xDCFF:
+            out.append(f"\\x{code - 0xDC00:02x}")
+        elif code < 32 or 127 <= code < 160:
+            out.append(f"\\x{code:02x}")
+        else:
+            out.append(ch)
+    return "".join(out)
+
+
+dirs = []
+for entry in path_env.split(":"):
+    if not os.path.isabs(entry):
+        print(f"detect: skipped PATH entry that is not absolute: {esc(entry) or '(empty)'}", file=sys.stderr)
+    elif entry not in dirs:
+        dirs.append(entry)
+if not os.path.isabs(home):
+    print("detect: HOME is not absolute; config markers skipped", file=sys.stderr)
+
+
+def found(kind, value):
+    if kind == "binary":
+        for directory in dirs:
+            path = os.path.join(directory, value)
+            if os.path.isfile(path) and os.access(path, os.X_OK):
+                return path
+    elif kind == "config" and os.path.isabs(home):
+        path = os.path.join(home, value)
+        if os.path.isfile(path):
+            return path
+    return None
+
+
+suggested = []
+for tool in tools:
+    rows = [(kind, value) for name, kind, value in markers if name == tool]
+    if not rows:
+        print(f"nomarker\t{tool}")
+        continue
+    evidence = []
+    for kind, value in rows:
+        path = found(kind, value)
+        if path is not None:
+            evidence.append(f"{kind}:{esc(path)}")
+    if evidence:
+        print(f"candidate\t{tool}\t{';'.join(evidence)}")
+        suggested.append(tool)
+print(f"suggested: {','.join(suggested) or 'none'}")
+PY
+}
+
+# ── Saved install config ──────────────────────────────────────────────
+# install.conf holds one plain install selection plus the checkout it came
+# from. It is parsed by python from a checked descriptor and handed to bash
+# as NUL-separated key/value pairs; it is never sourced or evaluated.
+# Exit codes: 2 invalid content or unsafe file, 7 cannot create or open.
+SAVED_CONFIG_KEYS=(version tools link include_internal skills
+  source_repo source_branch source_remote source_remote_url source_upstream)
+
+saved_config_dir() {
+  local base="${XDG_CONFIG_HOME:-}"
+  [[ "$base" == /* ]] || base="$HOME/.config"
+  printf '%s/iuliandita-skills\n' "$base"
+}
+
+# Variables that redirect where or what a saved selection installs.
+override_env_names() {
+  local name
+  while IFS= read -r name; do
+    case "$name" in
+      *_SKILLS_DIR|SKILLS_CANONICAL_DIR|SKILLS_BACKUP_DIR|OPENCODE_CONFIG_FILE|SKILLS_TOOL) printf '%s\n' "$name" ;;
+    esac
+  done < <(compgen -e)
+}
+
+reject_override_env() {
+  local names
+  names="$(override_env_names | sort | paste -sd, -)"
+  [[ -z "$names" ]] && return 0
+  printf '%s: %s is set; a saved install config covers only default paths. Unset it or pass explicit options.\n' \
+    "$1" "${names//,/, }" >&2
+  exit 2
+}
+
+saved_config_py() {
+  python3 - "$@" <<'PY'
+import errno
+import os
+import re
+import secrets
+import stat
+import sys
+
+KEYS = ("version", "tools", "link", "include_internal", "skills",
+        "source_repo", "source_branch", "source_remote", "source_remote_url", "source_upstream")
+TOOL = re.compile(r"[a-z][a-z0-9-]{0,31}")
+SKILL = re.compile(r"[a-z0-9](?:[a-z0-9-]*[a-z0-9])?")
+LIMIT = 65536
+ABSENT = 20
+
+mode, directory = sys.argv[1], sys.argv[2]
+path = os.path.join(directory, "install.conf")
+uid = os.getuid()
+
+
+def fail(code, message):
+    print(f"Saved install config {path}: {message}", file=sys.stderr)
+    sys.exit(code)
+
+
+def controls(text):
+    return any(ord(ch) < 32 or 127 <= ord(ch) < 160 for ch in text)
+
+
+def check_owner(info, what):
+    if info.st_uid != uid:
+        fail(2, f"{what} is not owned by uid {uid}")
+    if info.st_mode & 0o022:
+        fail(2, f"{what} is group- or world-writable")
+
+
+def faults():
+    return os.environ.get("SKILLS_INSTALL_FAULT", "").split(",")
+
+
+# Open the config dir relative to its parent's descriptor, refusing a symlink,
+# and verify it through the descriptor that every later step uses. The parent
+# may itself be a symlink (dotfile managers link ~/.config).
+def open_dir(create):
+    parent, name = os.path.split(directory)
+    try:
+        if create:
+            os.makedirs(parent, exist_ok=True)
+        pfd = os.open(parent, os.O_RDONLY | os.O_DIRECTORY | os.O_CLOEXEC)
+    except FileNotFoundError:
+        if not create:
+            return None
+        fail(7, f"cannot create {directory}: parent is missing")
+    except OSError as error:
+        fail(7, f"cannot {'create' if create else 'open'} {directory}: {error.strerror}")
+    try:
+        if create:
+            try:
+                os.mkdir(name, 0o700, dir_fd=pfd)
+            except FileExistsError:
+                pass
+            except OSError as error:
+                fail(7, f"cannot create {directory}: {error.strerror}")
+        try:
+            fd = os.open(name, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC, dir_fd=pfd)
+        except FileNotFoundError:
+            if not create:
+                return None
+            fail(7, f"{directory} disappeared")
+        except OSError as error:
+            if error.errno in (errno.ELOOP, errno.ENOTDIR):
+                fail(2, f"{directory} is a symlink or not a directory")
+            fail(7, f"cannot open {directory}: {error.strerror}")
+    finally:
+        os.close(pfd)
+    info = os.fstat(fd)
+    if info.st_uid != uid:
+        fail(2, f"{directory} is not owned by uid {uid}")
+    if create:
+        try:
+            os.fchmod(fd, 0o700)
+        except OSError as error:
+            fail(7, f"cannot set permissions on {directory}: {error.strerror}")
+    check_owner(os.fstat(fd), directory)
+    return fd
+
+
+def read_config(supported, aliases):
+    dfd = open_dir(False)
+    if dfd is None:
+        sys.exit(ABSENT)
+    try:
+        fd = os.open("install.conf", os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK | os.O_CLOEXEC, dir_fd=dfd)
+    except FileNotFoundError:
+        sys.exit(ABSENT)
+    except OSError as error:
+        if error.errno == errno.ELOOP:
+            fail(2, "is a symlink")
+        fail(7, f"cannot open: {error.strerror}")
+    info = os.fstat(fd)
+    if not stat.S_ISREG(info.st_mode):
+        fail(2, "is not a regular file")
+    check_owner(info, "the file")
+    chunks, size = [], 0
+    while size <= LIMIT:
+        chunk = os.read(fd, LIMIT + 1 - size)
+        if not chunk:
+            break
+        chunks.append(chunk)
+        size += len(chunk)
+    if size > LIMIT:
+        fail(2, f"is larger than {LIMIT} bytes")
+    try:
+        text = b"".join(chunks).decode("utf-8")
+    except UnicodeDecodeError:
+        fail(2, "is not valid UTF-8")
+    lines = text.split("\n")
+    if lines and lines[-1] == "":
+        lines.pop()
+    values = {}
+    for number, line in enumerate(lines, 1):
+        if controls(line):
+            fail(2, f"line {number} contains a control character")
+        if line == "" or line.startswith("#"):
+            continue
+        if "=" not in line:
+            fail(2, f"line {number} is not key=value")
+        key, value = line.split("=", 1)
+        if key not in KEYS:
+            fail(2, f"line {number} has unknown key {key!r}")
+        if key in values:
+            fail(2, f"line {number} repeats key {key!r}")
+        values[key] = value
+    missing = [key for key in KEYS if key not in values]
+    if missing:
+        fail(2, f"missing key(s): {', '.join(missing)}")
+    if values["version"] != "1":
+        fail(2, f"unsupported version {values['version']!r}")
+    for key in ("link", "include_internal"):
+        if values[key] not in ("true", "false"):
+            fail(2, f"{key} must be true or false, not {values[key]!r}")
+    tools = []
+    for tool in values["tools"].split(","):
+        if not TOOL.fullmatch(tool):
+            fail(2, f"invalid tool name {tool!r}")
+        tool = aliases.get(tool, tool)
+        if tool not in supported:
+            fail(2, f"unknown tool {tool!r}")
+        if tool not in tools:
+            tools.append(tool)
+    values["tools"] = ",".join(tools)
+    if values["skills"] != "all":
+        for skill in values["skills"].split(","):
+            if not SKILL.fullmatch(skill):
+                fail(2, f"invalid skill name {skill!r}")
+    if not values["source_repo"].startswith("/"):
+        fail(2, "source_repo must be an absolute path")
+    out = sys.stdout.buffer
+    for key in KEYS:
+        out.write(key.encode() + b"\0" + values[key].encode() + b"\0")
+
+
+def prepare():
+    os.close(open_dir(True))
+
+
+def swap(point):
+    # Test-only: replace the validated dir with a symlink to <dir>.elsewhere.
+    if point in faults():
+        print(f"  [!] injected fault: {point}", file=sys.stderr)
+        os.rename(directory, directory + ".moved")
+        os.symlink(directory + ".elsewhere", directory)
+
+
+def same_dir(dfd):
+    try:
+        current = os.stat(directory, follow_symlinks=False)
+    except OSError:
+        return False
+    held = os.fstat(dfd)
+    return (current.st_dev, current.st_ino) == (held.st_dev, held.st_ino)
+
+
+# Every step after validation goes through dfd; the pathname is only compared
+# against it so a directory swapped in meanwhile fails the save.
+def write(pairs):
+    body = ["# Written by install.sh --save. Plain key=value; see INSTALL.md."]
+    for pair, key in zip(pairs, KEYS):
+        name, value = pair.split("=", 1)
+        if name != key or controls(value):
+            fail(2, f"refusing to save {name}: unexpected key or control character")
+        body.append(pair)
+    dfd = open_dir(True)
+    swap("configswap")
+    temp = f".install.conf.{os.getpid()}.{secrets.token_hex(8)}.tmp"
+    try:
+        fd = os.open(temp, os.O_CREAT | os.O_EXCL | os.O_WRONLY | os.O_NOFOLLOW | os.O_CLOEXEC, 0o600, dir_fd=dfd)
+    except OSError as error:
+        fail(7, f"cannot create a temporary file: {error.strerror}")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as handle:
+            os.fchmod(handle.fileno(), 0o600)
+            handle.write("\n".join(body) + "\n")
+            handle.flush()
+            os.fsync(handle.fileno())
+        if not same_dir(dfd):
+            raise LookupError
+        swap("configswaplate")
+        os.rename(temp, "install.conf", src_dir_fd=dfd, dst_dir_fd=dfd)
+        os.fsync(dfd)
+    except (OSError, LookupError) as error:
+        try:
+            os.unlink(temp, dir_fd=dfd)
+        except OSError:
+            pass
+        if isinstance(error, LookupError):
+            fail(2, f"{directory} was replaced during the save; nothing was written")
+        fail(7, f"cannot write: {error.strerror}")
+    if not same_dir(dfd):
+        fail(2, f"{directory} was replaced during the save; the config stayed in the directory that was checked")
+
+
+if mode == "read":
+    read_config(set(sys.argv[3].split(",")), dict(item.split("=", 1) for item in sys.argv[4].split(",")))
+elif mode == "prepare":
+    prepare()
+elif mode == "write":
+    write(sys.argv[3:])
+else:
+    sys.exit(f"unknown mode {mode}")
+PY
+}
+
+# Load the saved config into SAVED_<KEY> variables. Returns 1 when there is
+# none; exits 2 or 7 on an unsafe or invalid file.
+load_saved_config() {
+  local dir alias aliases="" status key i
+  local -a fields=()
+  dir="$(saved_config_dir)"
+  for alias in "${!TOOL_ALIASES[@]}"; do
+    aliases+="${aliases:+,}$alias=${TOOL_ALIASES[$alias]}"
+  done
+  # The parser's status travels as the last record.
+  mapfile -d '' -t fields < <(
+    rc=0
+    saved_config_py read "$dir" "$(IFS=,; printf '%s' "${SUPPORTED_TOOLS[*]}")" "$aliases" || rc=$?
+    printf '%s\0' "$rc"
+  )
+  status="${fields[-1]:-1}"
+  unset 'fields[-1]'
+  case "$status" in
+    0) ;;
+    20) return 1 ;;
+    2|7) exit "$status" ;;
+    *) printf 'Could not read the saved install config in %s\n' "$dir" >&2; exit 7 ;;
+  esac
+  if (( ${#fields[@]} != 2 * ${#SAVED_CONFIG_KEYS[@]} )); then
+    printf 'Saved install config parser returned malformed output\n' >&2
+    exit 2
+  fi
+  for (( i = 0; i < ${#fields[@]}; i += 2 )); do
+    key="${fields[i]}"
+    case "$key" in
+      tools) SAVED_TOOLS="${fields[i+1]}" ;;
+      link) SAVED_LINK="${fields[i+1]}" ;;
+      include_internal) SAVED_INCLUDE_INTERNAL="${fields[i+1]}" ;;
+      skills) SAVED_SKILLS="${fields[i+1]}" ;;
+      source_repo) SAVED_SOURCE_REPO="${fields[i+1]}" ;;
+      version|source_branch|source_remote|source_remote_url|source_upstream) ;;
+      *) printf 'Saved install config parser returned key %s\n' "$key" >&2; exit 2 ;;
+    esac
+  done
+  SAVED_CONFIG_PATH="$dir/install.conf"
+}
+
+git_value() {
+  git -C "$SCRIPT_DIR" "$@" 2>/dev/null || true
+}
+
+# Record the selection and the checkout it came from. Called under the lock
+# after a successful install.
+save_install_config() {
+  local tools_csv="$1" link="$2" include_internal="$3" skills_csv="$4"
+  local dir repo="" branch="" remote="" remote_url="" upstream=""
+  dir="$(saved_config_dir)"
+  if command -v git >/dev/null 2>&1; then
+    repo="$(git_value rev-parse --show-toplevel)"
+    branch="$(git_value symbolic-ref --quiet --short HEAD)"
+    if [[ -n "$branch" ]]; then
+      remote="$(git_value config --get "branch.$branch.remote")"
+      upstream="$(git_value config --get "branch.$branch.merge")"
+      [[ -z "$remote" || "$remote" == "." ]] || remote_url="$(git_value config --get "remote.$remote.url")"
+    fi
+  fi
+  [[ -n "$repo" ]] || repo="$(cd "$SCRIPT_DIR" && pwd -P)"
+  saved_config_py write "$dir" version=1 "tools=$tools_csv" "link=$link" \
+    "include_internal=$include_internal" "skills=$skills_csv" "source_repo=$repo" \
+    "source_branch=$branch" "source_remote=$remote" "source_remote_url=$remote_url" \
+    "source_upstream=$upstream" || exit "$?"
+  printf 'Saved install config: %s\n' "$dir/install.conf"
+  if [[ -z "$remote" || -z "$upstream" ]]; then
+    printf '[i] %s has no upstream branch; upstream is saved empty, so a later --update will refuse to run\n' "$repo"
+  fi
+}
+
 # ── Check mode ────────────────────────────────────────────────────────
 check_updates() {
   local dest_dir="$1"
@@ -1523,21 +1972,27 @@ list_skills() {
 main() {
   local force=false no_backup=false link_mode=false
   local check_mode=false show_list=false include_internal=false migrate_mode=false apply_migration=false
-  local doctor_mode=false doctor_verbose=false
-  local dest_override=""
+  local doctor_mode=false doctor_verbose=false detect_mode=false save_mode=false
+  local dest_override="" tool_given=false dest_given=false
   local tools=() skills=()
+  local argc=$#
 
   while (( $# > 0 )); do
     case "$1" in
       --tool)
         [[ $# -ge 2 ]] || { printf '%s\n' "--tool requires a value" >&2; exit 1; }
         IFS=',' read -ra _parsed <<< "$2"
+        if [[ -z "$2" || "$2" == ,* || "$2" == *, || "$2" == *,,* ]]; then
+          printf '%s\n' "--tool requires non-empty tool names" >&2; exit 1
+        fi
         tools+=("${_parsed[@]}")
+        tool_given=true
         shift
         ;;
       --dest)
-        [[ $# -ge 2 ]] || { printf '%s\n' "--dest requires a value" >&2; exit 1; }
+        [[ $# -ge 2 && -n "$2" ]] || { printf '%s\n' "--dest requires a non-empty value" >&2; exit 1; }
         dest_override="$2"
+        dest_given=true
         shift
         ;;
       --link)             link_mode=true ;;
@@ -1550,12 +2005,52 @@ main() {
       --include-internal) include_internal=true ;;
       --doctor)           doctor_mode=true ;;
       --verbose)          doctor_verbose=true ;;
+      --detect)           detect_mode=true ;;
+      --save)             save_mode=true ;;
       --help|-h)          usage; exit 0 ;;
       -*)                 printf 'Unknown option: %s\n' "$1" >&2; usage; exit 1 ;;
       *)                  skills+=("$1") ;;
     esac
     shift
   done
+
+  if [[ "$detect_mode" == "true" ]]; then
+    if [[ "$link_mode$show_list$check_mode$migrate_mode$apply_migration$force$no_backup$include_internal$doctor_mode$doctor_verbose$save_mode" == *true* \
+      || "$dest_given$tool_given" == *true* || ${#skills[@]} -gt 0 ]]; then
+      printf '%s\n' "--detect is read-only and accepts no other options or skill names" >&2; exit 1
+    fi
+    run_detect
+    exit 0
+  fi
+
+  # A saved config is used only by a bare `install.sh`; any argument ignores it.
+  if [[ "$save_mode" == "true" ]]; then
+    if [[ "$show_list$check_mode$migrate_mode$apply_migration$doctor_mode$doctor_verbose" == *true* ]]; then
+      printf '%s\n' "--save applies only to installs, not to --list, --check, --migrate, or --doctor" >&2; exit 1
+    fi
+    if [[ "$dest_given" == "true" ]]; then
+      printf '%s\n' "--save cannot be used with --dest; saved configs cover default paths only" >&2; exit 1
+    fi
+    reject_override_env "--save"
+    acquire_install_lock required
+    saved_config_py prepare "$(saved_config_dir)" || exit "$?"
+  elif (( argc == 0 )); then
+    acquire_install_lock
+    if load_saved_config; then
+      reject_override_env "Saved install config $SAVED_CONFIG_PATH"
+      printf 'Using saved install config: %s\n' "$SAVED_CONFIG_PATH"
+      local checkout
+      checkout="$(git_value rev-parse --show-toplevel)"
+      [[ -n "$checkout" ]] || checkout="$(cd "$SCRIPT_DIR" && pwd -P)"
+      if [[ "$checkout" != "$SAVED_SOURCE_REPO" ]]; then
+        printf '[i] the config was saved from %s; installing from %s\n' "$SAVED_SOURCE_REPO" "$checkout" >&2
+      fi
+      IFS=',' read -ra tools <<< "$SAVED_TOOLS"
+      link_mode="$SAVED_LINK"
+      include_internal="$SAVED_INCLUDE_INTERNAL"
+      [[ "$SAVED_SKILLS" == "all" ]] || IFS=',' read -ra skills <<< "$SAVED_SKILLS"
+    fi
+  fi
 
   local tools_given="${#tools[@]}"
   if [[ "$doctor_mode" == "true" && "$tools_given" -eq 0 ]]; then
@@ -1827,6 +2322,15 @@ main() {
     else
       printf 'Done. Skills installed for %s.\n' "${tools[*]}"
     fi
+  fi
+
+  if [[ "$save_mode" == "true" ]]; then
+    local saved_tools=() skills_csv=all
+    for tool in "${tools[@]}"; do
+      [[ " ${saved_tools[*]} " == *" $tool "* ]] || saved_tools+=("$tool")
+    done
+    (( requested_skill_count == 0 )) || skills_csv="$(IFS=,; printf '%s' "${skills[*]}")"
+    save_install_config "$(IFS=,; printf '%s' "${saved_tools[*]}")" "$link_mode" "$include_internal" "$skills_csv"
   fi
 }
 
