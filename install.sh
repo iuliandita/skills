@@ -177,6 +177,7 @@ Options:
   --include-internal  Include skills marked metadata.internal: true
   --doctor            Report skill names a harness can reach through more than
                       one directory (read-only; all known tools unless --tool)
+  --verbose           With --doctor, list each overlap the harness resolves
   --help              Show this help
 
 Symlink mode (--link):
@@ -690,19 +691,22 @@ legacy_cleanup_hint() {
 
 # ── Doctor ────────────────────────────────────────────────────────────
 run_doctor() {
-  local tool row rows=()
+  local verbose="$1" tool row rows=()
+  shift
   for tool in "$@"; do
     for row in "${DOCTOR_ROOTS[@]}"; do
       [[ "${row%%|*}" == "$tool" ]] && rows+=("$row")
     done
   done
-  python3 - "$(IFS=,; printf '%s' "$*")" "${rows[@]}" <<'PY'
+  python3 - "$verbose" "$(IFS=,; printf '%s' "$*")" "${rows[@]}" <<'PY'
 from pathlib import Path
+import os
 import re
 import sys
 
-tools = sys.argv[1].split(",")
-table = [row.split("|", 3) for row in sys.argv[2:]]
+verbose = sys.argv[1] == "true"
+tools = sys.argv[2].split(",")
+table = [row.split("|", 3) for row in sys.argv[3:]]
 
 
 YAML_ESCAPES = {"0": "\0", "a": "\a", "b": "\b", "t": "\t", "\t": "\t", "n": "\n",
@@ -764,8 +768,31 @@ def frontmatter_name(skill_md):
     return None
 
 
+HOME = os.environ.get("HOME", "")
+
+
+def tilde(path):
+    return "~" + path[len(HOME):] if HOME and path.startswith(HOME + "/") else path
+
+
+def merge(findings):
+    # A dir and a name finding describe one skill only when both the identifier
+    # and the full set of paths match; anything else keeps its label.
+    by_key = {}
+    for kind, ident, where in findings:
+        by_key.setdefault((ident, tuple(sorted(where.items()))), []).append((kind, ident, where))
+    merged = []
+    for group in by_key.values():
+        if len(group) == 2:
+            merged.append((group[0][1], group[0][2]))
+        else:
+            merged.extend((f"{kind} {ident}", where) for kind, ident, where in group)
+    return sorted(merged, key=lambda item: (item[0], sorted(item[1].values())))
+
+
 print("Checking the static root table; harness config toggles are not read.")
 blocking = 0
+blocking_tools = 0
 for tool in tools:
     print(f"\n[{tool}]")
     roots = []
@@ -796,25 +823,41 @@ for tool in tools:
             for key in identities:
                 if key[1] is not None:
                     found.setdefault(key, {}).setdefault(index, str(entry))
-    clean = True
+    hard, soft = [], {}
     for key in sorted(found):
         where = found[key]
         if len(where) < 2:
             continue
-        clean = False
         groups = {roots[index][1] for index in where}
-        paths = ", ".join(where[index] for index in sorted(where))
         if len(groups) == 1 and "" not in groups:
-            print(f"  [i] {key[0]} {key[1]}: {paths} (resolved by the harness)")
+            soft.setdefault(tuple(sorted(where)), []).append((*key, where))
         else:
-            blocking += 1
-            print(f"  [!] {key[0]} {key[1]}: {paths}")
-    if clean:
+            hard.append((*key, where))
+    if not hard and not soft:
         print("  no duplicates")
+        continue
+    hard = merge(hard)
+    if hard:
+        blocking += len(hard)
+        blocking_tools += 1
+    for label, where in hard:
+        print(f"  [!] {label}: {', '.join(where[index] for index in sorted(where))}")
+    for indexes in sorted(soft):
+        items = merge(soft[indexes])
+        where = ", ".join(tilde(roots[index][0]) for index in indexes)
+        print(f"  [i] {len(items)} finding(s) across {where}; {tool} resolves these")
+        if verbose:
+            line = ""
+            for label, _ in items:
+                if line and len(line) + len(label) > 90:
+                    print(f"      {line},")
+                    line = ""
+                line += f", {label}" if line else label
+            print(f"      {line}")
 
 print()
 if blocking:
-    print(f"{blocking} duplicate skill name(s) reachable through more than one directory.")
+    print(f"{blocking} blocking finding(s) across {blocking_tools} tool(s).")
     sys.exit(1)
 print("No blocking duplicates.")
 PY
@@ -903,7 +946,7 @@ list_skills() {
 main() {
   local force=false no_backup=false link_mode=false
   local check_mode=false show_list=false include_internal=false migrate_mode=false apply_migration=false
-  local doctor_mode=false
+  local doctor_mode=false doctor_verbose=false
   local dest_override=""
   local tools=() skills=()
 
@@ -929,6 +972,7 @@ main() {
       --no-backup)        no_backup=true ;;
       --include-internal) include_internal=true ;;
       --doctor)           doctor_mode=true ;;
+      --verbose)          doctor_verbose=true ;;
       --help|-h)          usage; exit 0 ;;
       -*)                 printf 'Unknown option: %s\n' "$1" >&2; usage; exit 1 ;;
       *)                  skills+=("$1") ;;
@@ -989,12 +1033,15 @@ main() {
   if [[ "$migrate_mode" == "true" && ( "$force" == "true" || "$no_backup" == "true" ) ]]; then
     printf '%s\n' "--force and --no-backup cannot be used with --migrate" >&2; exit 1
   fi
+  if [[ "$doctor_verbose" == "true" && "$doctor_mode" != "true" ]]; then
+    printf '%s\n' "--verbose requires --doctor" >&2; exit 1
+  fi
   if [[ "$doctor_mode" == "true" ]]; then
-    if [[ "$link_mode$show_list$check_mode$migrate_mode$apply_migration$force$no_backup" == *true* \
+    if [[ "$link_mode$show_list$check_mode$migrate_mode$apply_migration$force$no_backup$include_internal" == *true* \
       || -n "$dest_override" || "$requested_skill_count" -gt 0 ]]; then
-      printf '%s\n' "--doctor is read-only and accepts only --tool" >&2; exit 1
+      printf '%s\n' "--doctor is read-only and accepts only --tool and --verbose" >&2; exit 1
     fi
-    run_doctor "${tools[@]}"
+    run_doctor "$doctor_verbose" "${tools[@]}"
     exit 0
   fi
 

@@ -873,7 +873,7 @@ test_doctor_frontmatter_identity() {
   local status=0
   output="$(HOME="$tmp" "$ROOT/install.sh" --doctor --tool commandcode 2>&1)" || status=$?
   (( status == 1 )) || fail "doctor exited $status on malformed escapes, want 1: $output"
-  grep -q 'duplicate skill name(s) reachable' <<< "$output" || fail "doctor did not finish on malformed escapes: $output"
+  grep -q 'blocking finding(s) across 1 tool(s)' <<< "$output" || fail "doctor did not finish on malformed escapes: $output"
   if grep -q 'Traceback' <<< "$output"; then fail "doctor crashed on malformed escapes: $output"; fi
   grep -q '\[!\] name git: .*/.commandcode/skills/esc, .*/.agents/skills/plain' <<< "$output" || fail "doctor did not decode a YAML escape: $output"
   rm -rf "$tmp"
@@ -889,18 +889,131 @@ test_doctor_reports_duplicates_read_only() {
   printf '%s\n' '{"permission":{"skill":{"*":"deny"}}}' > "$tmp/.config/opencode/opencode.json"
   output="$(HOME="$tmp" "$ROOT/install.sh" --doctor --tool commandcode,opencode)" || fail "doctor failed on a clean layout"
   grep -q 'harness config toggles are not read' <<< "$output" || fail "doctor did not state its static scope"
-  grep -q '\[i\] dir docker: .*/.claude/skills/docker, .*/.agents/skills/docker' <<< "$output" || fail "doctor did not report the OpenCode compat overlap as info"
+  grep -qx '  \[i\] 1 finding(s) across ~/.claude/skills, ~/.agents/skills; opencode resolves these' <<< "$output" \
+    || fail "doctor did not collapse the OpenCode compat overlap into one info line: $output"
+  if grep -q 'docker' <<< "$(grep '\[i\]' <<< "$output")"; then fail "doctor listed info names without --verbose: $output"; fi
 
   make_legacy_commandcode "$tmp" git
   before="$(tree_hash "$tmp")"
   if output="$(HOME="$tmp" "$ROOT/install.sh" --doctor 2>&1)"; then
     fail "doctor passed with a planted duplicate"
   fi
-  grep -q '\[!\] dir git: .*/.commandcode/skills/git, .*/.agents/skills/git' <<< "$output" || fail "doctor did not name the duplicate paths"
+  grep -qx "  \\[!\\] git: $tmp/.commandcode/skills/git, $tmp/.agents/skills/git" <<< "$output" || fail "doctor did not name the duplicate paths: $output"
+  [[ "$(grep -c '\[!\]' <<< "$output")" == 1 ]] || fail "doctor reported the matching dir and name twice: $output"
+  grep -qx '1 blocking finding(s) across 1 tool(s).' <<< "$output" || fail "doctor summary did not count one finding: $output"
   [[ "$(tree_hash "$tmp")" == "$before" ]] || fail "doctor changed files"
   if HOME="$tmp" "$ROOT/install.sh" --doctor --link >/dev/null 2>&1; then
     fail "doctor accepted --link"
   fi
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+doctor_skill() {
+  mkdir -p "$1/$2"
+  printf '%s\n' '---' "name: $3" 'description: x' '---' > "$1/$2/SKILL.md"
+}
+
+test_doctor_merges_only_equivalent_findings() {
+  local tmp cc ag output status=0 expected
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  cc="$tmp/.commandcode/skills"
+  ag="$tmp/.agents/skills"
+  doctor_skill "$cc" alpha alpha; doctor_skill "$ag" alpha alpha
+  doctor_skill "$cc" beta bravo; doctor_skill "$ag" beta bravo
+  doctor_skill "$cc" gamma gamma; doctor_skill "$ag" gamma g2; doctor_skill "$ag" g3 gamma
+  doctor_skill "$cc" delta d1; doctor_skill "$ag" delta d2; doctor_skill "$cc" x delta; doctor_skill "$ag" y delta
+  output="$(HOME="$tmp" "$ROOT/install.sh" --doctor --tool commandcode 2>&1)" || status=$?
+  (( status == 1 )) || fail "doctor exited $status on blocking findings, want 1: $output"
+  expected="$(printf '%s\n' \
+    "  [!] alpha: $cc/alpha, $ag/alpha" \
+    "  [!] dir beta: $cc/beta, $ag/beta" \
+    "  [!] dir delta: $cc/delta, $ag/delta" \
+    "  [!] dir gamma: $cc/gamma, $ag/gamma" \
+    "  [!] name bravo: $cc/beta, $ag/beta" \
+    "  [!] name delta: $cc/x, $ag/y" \
+    "  [!] name gamma: $cc/gamma, $ag/g3")"
+  [[ "$(grep -F '[!]' <<< "$output")" == "$expected" ]] || fail "doctor merged or split findings wrongly: $output"
+  grep -qx '7 blocking finding(s) across 1 tool(s).' <<< "$output" || fail "doctor miscounted merged findings: $output"
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_doctor_groups_and_verbose() {
+  local tmp output mode status
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  doctor_skill "$tmp/.agents/skills" three three
+  doctor_skill "$tmp/.claude/skills" three three
+  doctor_skill "$tmp/.codex/skills" three three
+  doctor_skill "$tmp/.agents/skills" two two
+  doctor_skill "$tmp/.claude/skills" two two
+  doctor_skill "$tmp/.agents/skills" foo foo
+  doctor_skill "$tmp/.claude/skills" foo bar
+  output="$(HOME="$tmp" "$ROOT/install.sh" --doctor --tool omp)" || fail "doctor blocked on omp-resolved overlaps: $output"
+  grep -qx '  \[i\] 2 finding(s) across ~/.agents/skills, ~/.claude/skills; omp resolves these' <<< "$output" \
+    || fail "doctor did not bucket the two-root omp overlaps: $output"
+  grep -qx '  \[i\] 1 finding(s) across ~/.agents/skills, ~/.claude/skills, ~/.codex/skills; omp resolves these' <<< "$output" \
+    || fail "doctor did not bucket the three-root omp overlap: $output"
+  if grep -qE '^      ' <<< "$output"; then fail "doctor listed names without --verbose: $output"; fi
+  output="$(HOME="$tmp" "$ROOT/install.sh" --verbose --doctor --tool omp)" || fail "doctor --verbose blocked on omp overlaps: $output"
+  grep -qx '      dir foo, two' <<< "$output" || fail "doctor --verbose did not list the two-root findings with labels: $output"
+  grep -qx '      three' <<< "$output" || fail "doctor --verbose did not list the three-root finding: $output"
+
+  mkdir -p "$tmp/.config/opencode/skills"
+  doctor_skill "$tmp/.config/opencode/skills" three three
+  for mode in "" --verbose; do
+    status=0
+    output="$(HOME="$tmp" "$ROOT/install.sh" --doctor ${mode:+"$mode"} --tool opencode 2>&1)" || status=$?
+    (( status == 1 )) || fail "doctor $mode exited $status on a skill in all OpenCode roots, want 1: $output"
+    grep -qx "  \\[!\\] three: $tmp/.config/opencode/skills/three, $tmp/.claude/skills/three, $tmp/.agents/skills/three" <<< "$output" \
+      || fail "doctor $mode did not block the three-root OpenCode duplicate: $output"
+    [[ "$(grep -c '\[!\]' <<< "$output")" == 1 ]] || fail "doctor $mode split the OpenCode duplicate: $output"
+  done
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_doctor_orders_blocking_first_across_tools() {
+  local tmp output status=0 bang info
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  doctor_skill "$tmp/.agents/skills" shared shared
+  doctor_skill "$tmp/.claude/skills" shared shared
+  doctor_skill "$tmp/.agents/skills" clash clash
+  doctor_skill "$tmp/.config/opencode/skills" clash clash
+  doctor_skill "$tmp/.commandcode/skills" clash clash
+  output="$(HOME="$tmp" "$ROOT/install.sh" --doctor --tool commandcode,opencode 2>&1)" || status=$?
+  (( status == 1 )) || fail "doctor exited $status with blocking findings in two tools: $output"
+  grep -qx '2 blocking finding(s) across 2 tool(s).' <<< "$output" || fail "doctor miscounted blocking findings across tools: $output"
+  bang="$(grep -n '\[!\] clash:' <<< "$output" | tail -1 | cut -d: -f1)"
+  info="$(grep -n '\[i\] .*opencode resolves these' <<< "$output" | head -1 | cut -d: -f1)"
+  if [[ -z "$bang" || -z "$info" ]] || (( bang > info )); then
+    fail "doctor did not list blocking findings before info in opencode: $output"
+  fi
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_doctor_flag_rules_and_alias() {
+  local tmp output mode
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  if HOME="$tmp" "$ROOT/install.sh" --verbose --list >/dev/null 2>&1; then fail "--verbose accepted without --doctor"; fi
+  if output="$(HOME="$tmp" "$ROOT/install.sh" --list --verbose 2>&1)"; then fail "--verbose accepted after --list without --doctor"; fi
+  grep -q -- '--verbose requires --doctor' <<< "$output" || fail "--verbose rejection did not explain itself: $output"
+  if HOME="$tmp" "$ROOT/install.sh" --doctor --include-internal >/dev/null 2>&1; then fail "doctor accepted --include-internal"; fi
+  if HOME="$tmp" "$ROOT/install.sh" --include-internal --doctor >/dev/null 2>&1; then fail "doctor accepted a leading --include-internal"; fi
+
+  doctor_skill "$tmp/.agents/skills" docker docker
+  mkdir -p "$tmp/.commandcode"
+  ln -s "$tmp/.agents/skills" "$tmp/.commandcode/skills"
+  for mode in "" --verbose; do
+    output="$(HOME="$tmp" "$ROOT/install.sh" --doctor ${mode:+"$mode"} --tool commandcode)" || fail "doctor $mode blocked on a root alias: $output"
+    grep -q "$tmp/.agents/skills  (same directory as $tmp/.commandcode/skills)" <<< "$output" || fail "doctor $mode did not report the root alias: $output"
+    if grep -q '\[[!i]\]' <<< "$output"; then fail "doctor $mode reported the aliased root as a duplicate: $output"; fi
+  done
   rm -rf "$tmp"
   trap - RETURN
 }
@@ -1015,6 +1128,10 @@ test_legacy_cleanup_custom_canonical_needs_replacement
 test_opencode_link_migration_on_canonical_allows_replacement
 test_doctor_frontmatter_identity
 test_doctor_reports_duplicates_read_only
+test_doctor_merges_only_equivalent_findings
+test_doctor_groups_and_verbose
+test_doctor_flag_rules_and_alias
+test_doctor_orders_blocking_first_across_tools
 test_frontmatter_cache_selects_skills
 test_malformed_frontmatter_fails_install
 printf 'install tests passed\n'

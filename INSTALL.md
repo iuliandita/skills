@@ -190,9 +190,15 @@ The cleanup is skipped with `--dest` or when the tool's `*_SKILLS_DIR` override 
 a static table of the global directories each harness reads, not the harness's own config
 toggles, and changes nothing. It exits 1 on duplicates the harness does not resolve itself.
 
+Blocking duplicates come first, one `[!]` line per skill. When a skill's directory name and
+frontmatter name match across the same paths, it gets one line; otherwise the `dir` and `name`
+findings stay separate and labeled. Overlaps the harness resolves itself are counted in one
+`[i]` line per set of directories; add `--verbose` to list them.
+
 ```bash
 ./install.sh --doctor                            # all tools in the table
 ./install.sh --doctor --tool commandcode,opencode
+./install.sh --doctor --verbose --tool opencode  # also list harness-resolved overlaps
 ```
 
 Common aliases also work: `claude-code`, `openai-codex`, `github-copilot`, `gemini-cli`, `kiro-cli`, `qwen-code`, `kimi-cli`, `agy` (Antigravity CLI), `command-code`, `cmdc` (Command Code), and `oh-my-pi` (Oh My Pi).
