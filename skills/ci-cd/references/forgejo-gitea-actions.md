@@ -48,7 +48,7 @@ curl -s https://gitea.example.com/api/v1/repos/actions/checkout/git/refs/tags/v4
 - **Action marketplace compatibility** - most GitHub actions work (`actions/checkout`,
   `actions/setup-node`, `docker/*`). Marketplace actions that use GitHub-specific API
   calls silently fail.
-- **Runner labels** - no `ubuntu-latest`. Use the labels registered with `act_runner`
+- **Runner labels** - no `ubuntu-latest`. Use the labels registered with the runner (`forgejo-runner` or `gitea-runner`)
   (commonly `ubuntu-latest` mapped to a specific image in the runner config, or custom
   labels like `docker`).
 

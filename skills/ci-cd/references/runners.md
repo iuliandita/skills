@@ -221,12 +221,9 @@ when you want kernel-level isolation without the cost of a full VM.
 
 ## Gitea Runner (Gitea)
 
-Gitea's runner was renamed from `act_runner` to Gitea Runner
-(announced https://blog.gitea.com/release-of-runner-1.0.0/, 2026-05-05): binary
-`gitea-runner`, repo https://gitea.com/gitea/runner, image `gitea/runner`. There is no
-`act_runner` alias; older docs and scripts using `act_runner` refer to the same project
-pre-rename. Current release v4.0.0 (2026-09-24, breaking changes including cache routing
-changes); previous stable was v3.5.0.
+Binary `gitea-runner`, repo https://gitea.com/gitea/runner, image `gitea/runner`. There is
+no `act_runner` alias; older docs and scripts using `act_runner` refer to the same project
+pre-rename. Version pins live in `references/target-versions.md`.
 
 ### Install
 

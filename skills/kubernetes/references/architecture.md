@@ -160,7 +160,7 @@ Advantages over Ingress:
 ### kube-proxy
 
 - **nftables mode** is the future (available since 1.31).
-- **IPVS mode** deprecated in 1.35, removal targeted for a future release (no firm version committed).
+- **IPVS mode** deprecated in 1.35, disabled by default from 1.40 (re-enable with the `KubeProxyIPVS` feature gate) and removed in 1.43.
 - **iptables mode** still works but consider migration planning.
 
 ### Service Mesh
@@ -396,7 +396,7 @@ Keep these in mind when upgrading:
 | **containerd 2.0+** | 1.36+ | Last release supporting containerd 1.x is 1.35. |
 | **AppArmor via securityContext** | 1.34+ | Annotation auto-population stopped in 1.34; full removal in 1.36. Use `securityContext.appArmorProfile` field. |
 | **KMS v2** | Now | KMS v1 disabled by default since 1.29. Migrate to v2. |
-| **nftables kube-proxy** | Plan now | IPVS deprecated in 1.35, removal version TBD. |
+| **nftables kube-proxy** | Plan now | IPVS deprecated in 1.35, off by default in 1.40, removed in 1.43. |
 | **autoscaling/v2** | Now | v2beta1/v2beta2 removed in 1.25/1.26. |
 | **User namespaces** | 1.33+ (on by default) | `hostUsers: false` maps container UID 0 to unprivileged host UID. Huge for multi-tenancy/PCI. |
 | **Pod-level mTLS** | 1.35 beta | KEP-4317. Native X.509 certs for pods without service mesh. Future alternative to Istio/Cilium for zero-trust. |

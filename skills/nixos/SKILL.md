@@ -86,7 +86,7 @@ work, trust the live channel or flake lock over a stale table.
 - Terraform or OpenTofu infrastructure code - use **terraform**
 - CI/CD pipeline design for Nix-based builds (cachix push, build farm, pipeline stages) - use **ci-cd**
 - Offensive or privesc testing - use **privilege-escalation**
-- Repository-wide vulnerability audits spanning multiple hosts or codebases - use **security-audit**; NixOS host hardening stays in this skill
+- Repository-wide vulnerability audits of Nix code - use **security-audit**; NixOS host hardening stays in this skill
 - OPNsense or pfSense appliance work - use **opnsense-pfsense**
 
 ---
