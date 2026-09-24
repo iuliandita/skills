@@ -42,7 +42,11 @@ rm -rf /tmp/skills-install
 For OpenCode, the installer also updates `~/.config/opencode/opencode.json` so every installed
 skill has `permission.skill.<name>: "allow"`. This keeps installs visible when the user's config
 uses a deny-by-default policy such as `"permission": { "skill": { "*": "deny" } }`. Existing
-explicit `deny` entries are left alone.
+explicit `deny` entries are left alone. Each named `allow` entry overrides a wildcard `deny`
+for that skill, the same as adding it by hand; remove the entry or set it to `deny` to hide
+the skill again. Only skills that installed successfully are added. The file is rewritten
+through a temporary file and a rename, following a symlinked config to its target; if the
+update fails, the file is left unchanged and the install exits non-zero.
 
 ### Multi-tool with symlinks
 
@@ -234,6 +238,16 @@ It retains the last three backups per skill under
 Override that backup base with `SKILLS_BACKUP_DIR`. Backups support manual recovery;
 customizations are not merged into the replacement. Preserve edits in the source checkout
 before reinstalling if they must remain active.
+
+Each replacement is staged first and swapped in by rename, with a record under
+`<destination-parent>/.skills-txn/<destination-name>/<skill>/`. If any step fails, the
+installer puts the previous copy back, leaves that skill's lock entry unchanged, and exits
+non-zero. If the run is interrupted or the previous copy cannot be put back, the record, the
+previous copy, and the staged copy stay there; the next install run restores the previous
+copy and removes the staged one before doing anything else in that destination. When that
+recovery fails, the installer skips the rest of that destination, keeps the evidence, and
+continues with other destinations. A record is removed once the skill's lock entry is
+written, so an install that stopped before writing the lock is reconciled by the next run.
 
 If a source checkout moved or an existing lock is incompatible, a normal install saves
 that lock under the backup base's `.unverified-locks/` directory and starts a fresh lock.

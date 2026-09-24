@@ -225,6 +225,14 @@ skill_hash() {
   LC_ALL=C find "$dir" -type f -print0 | LC_ALL=C sort -z | xargs -0 cat 2>/dev/null | hash_tool
 }
 
+# Source digests are computed once per run and shared by staging checks and locks.
+declare -A SOURCE_DIGESTS=()
+
+cache_source_digest() {
+  [[ -n "${SOURCE_DIGESTS[$1]:-}" ]] && return 0
+  SOURCE_DIGESTS[$1]="$(skill_hash "$SKILLS_SRC/$1")" && [[ -n "${SOURCE_DIGESTS[$1]}" ]]
+}
+
 # ── Internal skill detection ──────────────────────────────────────────
 # Frontmatter is parsed once per run; per-skill python forks made installs slow.
 declare -A SKILL_INTERNAL=()
@@ -313,12 +321,12 @@ backup_skill() {
   local ts
   ts="$(date +%Y%m%d-%H%M%S)"
   local dest="$backup_base/$skill/$ts"
-  mkdir -p "$dest"
+  mkdir -p "$dest" || return 1
 
   if [[ -L "$dest_dir/$skill" ]]; then
-    cp -P "$dest_dir/$skill" "$dest/"
+    cp -P "$dest_dir/$skill" "$dest/" || return 1
   else
-    cp -r "$dest_dir/$skill/." "$dest/"
+    cp -r "$dest_dir/$skill/." "$dest/" || return 1
   fi
 
   # Prune old backups, keep last 3
@@ -411,6 +419,9 @@ PY
   printf '  [>] unverified lock backed up to %s; creating a fresh lock\n' "$backup"
 }
 
+# Skills whose lock records the last successful write_lock published.
+LOCK_PUBLISHED=()
+
 write_lock() {
   local lock_dir="$1"
   shift
@@ -418,32 +429,37 @@ write_lock() {
   local lock_file="$lock_dir/.skills-lock.json"
   local now
   now="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  LOCK_PUBLISHED=()
 
-  local updates=()
+  local updates=() published=()
   for skill in "${skills[@]}"; do
     local target="$lock_dir/$skill"
     [[ -L "$target" ]] && target="$(readlink -f "$target" 2>/dev/null || true)"
     [[ -d "$target" ]] || continue
     local source_target="$SKILLS_SRC/$skill"
     [[ -d "$source_target" ]] || continue
-    local target_hash source_hash
+    local target_hash
     target_hash="$(skill_hash "$target")"
-    source_hash="$(skill_hash "$source_target")"
-    [[ "$target_hash" == "$source_hash" ]] || continue
+    cache_source_digest "$skill" || continue
+    [[ -n "$target_hash" && "$target_hash" == "${SOURCE_DIGESTS[$skill]}" ]] || continue
     updates+=("$skill=$target_hash")
+    published+=("$skill")
   done
 
-  python3 - "$lock_file" "$SKILLS_SRC" "$now" "${updates[@]}" <<'PY'
+  python3 - "$lock_file" "$SKILLS_SRC" "$now" "${updates[@]}" <<'PY' || return 1
 import json
+import os
 import pathlib
 import re
 import sys
+import tempfile
 
 lock_path = pathlib.Path(sys.argv[1])
 source = pathlib.Path(sys.argv[2]).resolve(strict=True)
 updated_at = sys.argv[3]
 name = re.compile(r"^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$")
 skills = {}
+existing = None
 if lock_path.exists():
     try:
         existing = json.loads(lock_path.read_text(encoding="utf-8"))
@@ -463,16 +479,34 @@ for item in sys.argv[4:]:
             skills[skill] = {"hash": digest, "provenance": "source-equal-v1"}
         elif isinstance(previous, str):
             skills[skill] = digest
+skills = dict(sorted(skills.items()))
+if existing is not None and existing.get("source") == str(source) and existing["skills"] == skills:
+    sys.exit(0)
 payload = {
     "version": 1,
     "updated_at": updated_at,
     "source": str(source),
-    "skills": dict(sorted(skills.items())),
+    "skills": skills,
 }
-temp = lock_path.with_name(f".{lock_path.name}.tmp")
-temp.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
-temp.replace(lock_path)
+# Unique temp name: concurrent runs must not share one.
+fd, temp = tempfile.mkstemp(dir=lock_path.parent, prefix=f".{lock_path.name}.", suffix=".tmp")
+try:
+    with os.fdopen(fd, "w", encoding="utf-8") as f:
+        f.write(json.dumps(payload, indent=2) + "\n")
+    mask = os.umask(0)
+    os.umask(mask)
+    os.chmod(temp, 0o666 & ~mask)
+    if "lock" in os.environ.get("SKILLS_INSTALL_FAULT", "").split(","):
+        raise OSError("injected fault: lock")
+    os.replace(temp, lock_path)
+except BaseException as error:
+    try:
+        os.unlink(temp)
+    except OSError:
+        pass
+    raise SystemExit(f"Could not write {lock_path}: {error}")
 PY
+  LOCK_PUBLISHED=("${published[@]}")
 }
 
 read_lock_hash() {
@@ -498,55 +532,299 @@ validate_skill_name() {
   [[ "$1" =~ ^[a-z0-9]([a-z0-9-]*[a-z0-9])?$ ]]
 }
 
-install_copy() {
-  local skill="$1" dest_dir="$2" force="$3" no_backup="$4"
+# ── Replacement transactions ──────────────────────────────────────────
+# Each replacement of <dest>/<skill> runs under
+# <dest parent>/.skills-txn/<dest name>/<skill>/ holding `record`, `staging`
+# (the new entry) and `prev` (the old entry moved aside). The area sits outside
+# the discovery root and on the destination's filesystem, so moves are renames.
+# The record is key=value lines; unknown keys survive phase updates. It is
+# created before staging and removed only after the skill's lock record is
+# published, or after a successful rollback. Startup recovery restores a
+# missing working entry from `prev` and deletes leftover staging, but never
+# deletes a record.
+#
+# Return codes of replace_entry and recover_dest: 0 ok, 1 failed and rolled
+# back, 2 rollback or recovery failed: evidence is kept and the caller stops
+# using that destination for the rest of the run.
 
-  if [[ -d "$dest_dir/$skill" || -L "$dest_dir/$skill" ]]; then
+# Test-only fault injection. SKILLS_INSTALL_FAULT is a comma list of
+# stage|backup|promote|restore|lock|opencode, each optionally suffixed with
+# :<skill>, that makes that step fail deterministically.
+fault_hit() {
+  local point="$1" skill="${2:-}" item
+  local -a items=()
+  [[ -n "${SKILLS_INSTALL_FAULT:-}" ]] || return 1
+  IFS=',' read -ra items <<< "$SKILLS_INSTALL_FAULT"
+  for item in "${items[@]}"; do
+    if [[ "$item" == "$point" || ( -n "$skill" && "$item" == "$point:$skill" ) ]]; then
+      printf '  [!] injected fault: %s\n' "$item" >&2
+      return 0
+    fi
+  done
+  return 1
+}
+
+present() {
+  [[ -e "$1" || -L "$1" ]]
+}
+
+declare -A TXN_ROOTS=()
+TXN_ROOT=""
+
+# Set TXN_ROOT for a destination; cached for the run.
+txn_root() {
+  local dest_abs
+  if [[ -z "${TXN_ROOTS[$1]:-}" ]]; then
+    dest_abs="$(cd "$1" && pwd -P)" || return 1
+    TXN_ROOTS[$1]="${dest_abs%/*}/.skills-txn/${dest_abs##*/}"
+  fi
+  TXN_ROOT="${TXN_ROOTS[$1]}"
+}
+
+txn_write() {
+  local record="$1" tmp="$1.$$"
+  shift
+  if printf '%s\n' "$@" > "$tmp" && mv -f "$tmp" "$record"; then
+    return 0
+  fi
+  rm -f "$tmp"
+  return 1
+}
+
+txn_field() {
+  local key value
+  while IFS='=' read -r key value; do
+    if [[ "$key" == "$2" ]]; then
+      printf '%s\n' "$value"
+      return 0
+    fi
+  done < "$1"
+  return 1
+}
+
+txn_phase() {
+  local record="$1" phase="$2" line found=false
+  local -a lines=() out=()
+  mapfile -t lines < "$record" || return 1
+  for line in "${lines[@]}"; do
+    if [[ "$line" == phase=* ]]; then
+      out+=("phase=$phase")
+      found=true
+    else
+      out+=("$line")
+    fi
+  done
+  [[ "$found" == "true" ]] || out+=("phase=$phase")
+  txn_write "$record" "${out[@]}"
+}
+
+txn_finalize() {
+  local root txn
+  txn_root "$1" || return 1
+  root="$TXN_ROOT"
+  txn="$root/$2"
+  present "$txn" || return 0
+  rm -rf "$txn/prev" "$txn/staging" && rm -f "$txn/record" && rm -rf "$txn" || return 1
+  rmdir "$root" "${root%/*}" 2>/dev/null || true
+}
+
+stage_entry() {
+  local kind="$1" skill="$2" stage="$3" staged_hash
+  if [[ "$kind" == "link" ]]; then
+    ln -s "$CANONICAL_DIR/$skill" "$stage" && ! fault_hit stage "$skill" \
+      && [[ "$(readlink "$stage")" == "$CANONICAL_DIR/$skill" ]]
+    return
+  fi
+  mkdir "$stage" && ! fault_hit stage "$skill" && cp -r "$SKILLS_SRC/$skill/." "$stage/" || return 1
+  staged_hash="$(skill_hash "$stage")" || return 1
+  cache_source_digest "$skill" || return 1
+  [[ -n "$staged_hash" && "$staged_hash" == "${SOURCE_DIGESTS[$skill]}" ]]
+}
+
+txn_rollback() {
+  local skill="$1" work="$2" txn="$3"
+  if present "$txn/prev"; then
+    if present "$work"; then
+      printf '  [!] %s: both %s and %s exist; kept both and the record\n' "$skill" "$work" "$txn/prev"
+      return 2
+    fi
+    if fault_hit restore "$skill" || ! mv "$txn/prev" "$work"; then
+      printf '  [!] %s: could not restore the previous copy; kept it at %s with record %s\n' \
+        "$skill" "$txn/prev" "$txn/record"
+      return 2
+    fi
+    printf '  [<] %s previous copy restored\n' "$skill"
+  fi
+  if present "$txn/staging" && ! rm -rf "$txn/staging"; then
+    printf '  [!] %s: could not remove staging %s; kept record %s\n' "$skill" "$txn/staging" "$txn/record"
+    return 2
+  fi
+  rm -rf "$txn" || printf '  [!] %s: could not remove record %s\n' "$skill" "$txn/record"
+  rmdir "${txn%/*}" "${txn%/*/*}" 2>/dev/null || true
+  return 1
+}
+
+# Stage the new entry, move the old one aside, rename the new one into place.
+replace_entry() {
+  local kind="$1" skill="$2" dest="$3" backup="$4"
+  local root work="$dest/$skill" txn
+  txn_root "$dest" || { printf '  [!] %s: cannot resolve %s\n' "$skill" "$dest"; return 1; }
+  root="$TXN_ROOT"
+  txn="$root/$skill"
+
+  if present "$txn/prev"; then
+    if ! present "$work"; then
+      printf '  [!] %s: previous copy at %s still needs recovery\n' "$skill" "$txn/prev"
+      return 2
+    fi
+    rm -rf "$txn/prev" || { printf '  [!] %s: could not remove stale %s\n' "$skill" "$txn/prev"; return 2; }
+  fi
+  if present "$txn/staging" && ! rm -rf "$txn/staging"; then
+    printf '  [!] %s: could not remove stale %s\n' "$skill" "$txn/staging"
+    return 2
+  fi
+  if ! mkdir -p "$txn" || ! txn_write "$txn/record" version=1 "skill=$skill" "target=$work" \
+    "staging=$txn/staging" "backup=$txn/prev" phase=staging; then
+    printf '  [!] %s: could not write install record in %s\n' "$skill" "$txn"
+    return 1
+  fi
+
+  if ! stage_entry "$kind" "$skill" "$txn/staging"; then
+    printf '  [!] %s: staging failed; existing install left in place\n' "$skill"
+    txn_rollback "$skill" "$work" "$txn"
+    return
+  fi
+  if present "$work"; then
+    if [[ "$backup" == "true" ]]; then
+      if ! backup_skill "$skill" "$dest"; then
+        printf '  [!] %s: backup failed; existing install left in place\n' "$skill"
+        txn_rollback "$skill" "$work" "$txn"
+        return
+      fi
+      printf '  [>] %s backed up\n' "$skill"
+    fi
+    if ! txn_phase "$txn/record" swapping || fault_hit backup "$skill" || ! mv "$work" "$txn/prev"; then
+      printf '  [!] %s: could not move the existing install aside\n' "$skill"
+      txn_rollback "$skill" "$work" "$txn"
+      return
+    fi
+  fi
+  if present "$work" || fault_hit promote "$skill" || ! mv "$txn/staging" "$work"; then
+    printf '  [!] %s: could not move the new copy into place\n' "$skill"
+    txn_rollback "$skill" "$work" "$txn"
+    return
+  fi
+  txn_phase "$txn/record" promoted || printf '  [!] %s: could not update record %s\n' "$skill" "$txn/record"
+  if present "$txn/prev" && ! rm -rf "$txn/prev"; then
+    printf '  [!] %s: could not remove %s; it goes with the record\n' "$skill" "$txn/prev"
+  fi
+  return 0
+}
+
+# Settle interrupted or failed replacements left under a destination.
+recover_dest() {
+  local dest="$1" root entry skill work acted
+  txn_root "$dest" || { printf '  [!] cannot resolve %s\n' "$dest"; return 2; }
+  root="$TXN_ROOT"
+  [[ -d "$root" ]] || return 0
+  for entry in "$root"/*; do
+    [[ -d "$entry" && ! -L "$entry" ]] || continue
+    skill="${entry##*/}"
+    work="$dest/$skill"
+    if ! validate_skill_name "$skill"; then
+      printf '  [!] unexpected entry %s left in place\n' "$entry"
+      continue
+    fi
+    if [[ ! -f "$entry/record" ]]; then
+      if present "$entry/prev"; then
+        printf '  [!] %s: %s has no record; left in place\n' "$skill" "$entry/prev"
+        return 2
+      fi
+      rm -rf "$entry" || { printf '  [!] %s: could not remove %s\n' "$skill" "$entry"; return 2; }
+      continue
+    fi
+    if [[ "$(txn_field "$entry/record" skill)" != "$skill" ]]; then
+      printf '  [!] %s: record %s names another skill; left in place\n' "$skill" "$entry/record"
+      return 2
+    fi
+    acted=""
+    if present "$entry/prev" && ! present "$work"; then
+      if fault_hit restore "$skill" || ! mv "$entry/prev" "$work"; then
+        printf '  [!] %s: could not restore %s; kept it with record %s\n' "$skill" "$entry/prev" "$entry/record"
+        return 2
+      fi
+      acted="restored the previous copy"
+    fi
+    if present "$entry/staging"; then
+      if ! rm -rf "$entry/staging"; then
+        printf '  [!] %s: could not remove %s; kept record %s\n' "$skill" "$entry/staging" "$entry/record"
+        return 2
+      fi
+      acted="${acted:+$acted, }removed leftover staging"
+    fi
+    if [[ -n "$acted" ]]; then
+      txn_phase "$entry/record" recovered || { printf '  [!] %s: could not update %s\n' "$skill" "$entry/record"; return 2; }
+      printf '  [r] %s: %s\n' "$skill" "$acted"
+    else
+      printf '  [r] %s: install record kept until its lock entry is published\n' "$skill"
+    fi
+  done
+  return 0
+}
+
+# Write the lock, then drop the records of skills it published.
+publish_lock() {
+  local dest="$1" skill status=0
+  shift
+  if ! write_lock "$dest" "$@"; then
+    printf '  [!] could not write %s/.skills-lock.json; install records kept for the next run\n' "$dest"
+    return 1
+  fi
+  for skill in "${LOCK_PUBLISHED[@]}"; do
+    if ! txn_finalize "$dest" "$skill"; then
+      printf '  [!] %s: could not remove its install record\n' "$skill"
+      status=1
+    fi
+  done
+  return "$status"
+}
+
+install_copy() {
+  local skill="$1" dest_dir="$2" force="$3" no_backup="$4" backup=true
+
+  if present "$dest_dir/$skill"; then
     if [[ "$force" != "true" ]]; then
       printf '  [~] %s already exists (use --force to overwrite)\n' "$skill"
       return 0
     fi
-    if [[ "$no_backup" != "true" ]]; then
-      backup_skill "$skill" "$dest_dir"
-      printf '  [>] %s backed up\n' "$skill"
-    fi
-    rm -rf "${dest_dir:?}/${skill:?}"
   fi
-
-  mkdir -p "$dest_dir/$skill"
-  cp -r "$SKILLS_SRC/$skill/." "$dest_dir/$skill/"
+  [[ "$no_backup" != "true" ]] || backup=false
+  replace_entry copy "$skill" "$dest_dir" "$backup" || return
   printf '  [+] %s installed\n' "$skill"
 }
 
 create_link() {
-  local skill="$1" tool_dir="$2" force="$3" no_backup="$4"
+  local skill="$1" tool_dir="$2" force="$3" no_backup="$4" backup=false
+  local work="$tool_dir/$skill"
 
-  if [[ -e "$tool_dir/$skill" || -L "$tool_dir/$skill" ]]; then
-    if [[ -L "$tool_dir/$skill" ]]; then
-      local current_target
-      current_target="$(readlink "$tool_dir/$skill")"
-      if [[ "$current_target" == "$CANONICAL_DIR/$skill" ]]; then
-        printf '  [=] %s already linked\n' "$skill"
-        return 0
-      fi
-      # Symlink to wrong target - repoint it
-      ln -sfn "$CANONICAL_DIR/$skill" "$tool_dir/$skill"
-      printf '  [+] %s relinked\n' "$skill"
+  if [[ -L "$work" ]]; then
+    if [[ "$(readlink "$work")" == "$CANONICAL_DIR/$skill" ]]; then
+      printf '  [=] %s already linked\n' "$skill"
       return 0
     fi
+    replace_entry link "$skill" "$tool_dir" false || return
+    printf '  [+] %s relinked\n' "$skill"
+    return 0
+  fi
+  if [[ -e "$work" ]]; then
     # Real directory from a previous copy install
     if [[ "$force" != "true" ]]; then
       printf '  [~] %s exists as copy (use --force to convert to symlink)\n' "$skill"
       return 0
     fi
-    if [[ "$no_backup" != "true" ]]; then
-      backup_skill "$skill" "$tool_dir"
-      printf '  [>] %s backed up\n' "$skill"
-    fi
-    rm -rf "${tool_dir:?}/${skill:?}"
+    [[ "$no_backup" == "true" ]] || backup=true
   fi
-
-  ln -sfn "$CANONICAL_DIR/$skill" "$tool_dir/$skill"
+  replace_entry link "$skill" "$tool_dir" "$backup" || return
   printf '  [+] %s linked\n' "$skill"
 }
 
@@ -565,18 +843,23 @@ sync_opencode_permissions() {
   (( ${#synced_skills[@]} > 0 )) || return 0
 
   if ! command -v python3 &>/dev/null; then
-    printf '  [!] OpenCode permission sync skipped: python3 not found\n'
-    return 0
+    printf '  [!] OpenCode permission sync failed: python3 not found\n'
+    return 1
   fi
 
-  mkdir -p "$(dirname "$config_file")"
+  if ! mkdir -p "$(dirname "$config_file")"; then
+    printf '  [!] OpenCode permission sync failed: cannot create %s\n' "$(dirname "$config_file")"
+    return 1
+  fi
 
   if ! python3 - "$config_file" "${synced_skills[@]}" <<'PY'
 import json
 import os
 import sys
+import tempfile
 
-config_path = sys.argv[1]
+# Write through a symlinked config (dotfile managers) instead of replacing the link.
+config_path = os.path.realpath(sys.argv[1])
 skills = sys.argv[2:]
 
 if os.path.exists(config_path) and os.path.getsize(config_path) > 0:
@@ -607,13 +890,32 @@ for skill in skills:
         changed = True
 
 if changed or not os.path.exists(config_path):
-    with open(config_path, "w", encoding="utf-8") as f:
-        json.dump(config, f, indent=2)
-        f.write("\n")
+    if os.path.exists(config_path):
+        mode = os.stat(config_path).st_mode & 0o7777
+    else:
+        mask = os.umask(0)
+        os.umask(mask)
+        mode = 0o666 & ~mask
+    fd, temp = tempfile.mkstemp(dir=os.path.dirname(config_path), prefix=".opencode.", suffix=".tmp")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            json.dump(config, f, indent=2)
+            f.write("\n")
+        os.chmod(temp, mode)
+        if "opencode" in os.environ.get("SKILLS_INSTALL_FAULT", "").split(","):
+            print("  [!] injected fault: opencode", file=sys.stderr)
+            raise OSError("injected fault")
+        os.replace(temp, config_path)
+    except BaseException:
+        try:
+            os.unlink(temp)
+        except OSError:
+            pass
+        raise
 PY
   then
-    printf '  [!] OpenCode permission sync skipped: could not parse %s as JSON\n' "$config_file"
-    return 0
+    printf '  [!] OpenCode permission sync failed: could not update %s; it was left unchanged\n' "$config_file"
+    return 1
   fi
 
   printf '  [=] OpenCode permissions synced\n'
@@ -656,6 +958,58 @@ PY
   done < "$applied_file"
   (( ${#replacements[@]} > 0 )) || return 0
   sync_opencode_permissions "$OPENCODE_CONFIG_FILE" "${replacements[@]}"
+}
+
+# Install skills into one destination after settling leftover records. Sets
+# INSTALLED to the skills now in place (new or kept) and counts failures in
+# INSTALL_FAILURES. A failed rollback or recovery stops that destination only.
+INSTALLED=()
+INSTALL_FAILURES=0
+
+install_into() {
+  local kind="$1" dest="$2" force="$3" no_backup="$4" skill replacement rc stopped=false
+  shift 4
+  INSTALLED=()
+  if ! recover_dest "$dest"; then
+    stopped=true
+    (( INSTALL_FAILURES++ )) || true
+  fi
+  for skill in "$@"; do
+    if ! validate_skill_name "$skill"; then
+      printf '  [!] Invalid skill name: %s\n' "$skill"
+      (( INSTALL_FAILURES++ )) || true
+      continue
+    fi
+    if [[ ! -d "$SKILLS_SRC/$skill" ]]; then
+      printf '  [!] Unknown skill: %s\n' "$skill"
+      (( INSTALL_FAILURES++ )) || true
+      continue
+    fi
+    if [[ "$stopped" == "true" ]]; then
+      printf '  [!] %s not attempted: %s needs recovery first\n' "$skill" "$dest"
+      (( INSTALL_FAILURES++ )) || true
+      continue
+    fi
+    if [[ "$kind" == "copy" ]] && is_deprecated "$SKILLS_SRC/$skill"; then
+      replacement="${MIGRATION_REPLACEMENTS[$skill]:-}"
+      if [[ -n "$replacement" ]]; then
+        printf '  [!] %s is deprecated; use %s\n' "$skill" "$replacement"
+      else
+        printf '  [!] %s is deprecated and scheduled for removal\n' "$skill"
+      fi
+    fi
+    rc=0
+    if [[ "$kind" == "link" ]]; then
+      create_link "$skill" "$dest" "$force" "$no_backup" || rc=$?
+    else
+      install_copy "$skill" "$dest" "$force" "$no_backup" || rc=$?
+    fi
+    case "$rc" in
+      0) INSTALLED+=("$skill") ;;
+      2) stopped=true; (( INSTALL_FAILURES++ )) || true ;;
+      *) (( INSTALL_FAILURES++ )) || true ;;
+    esac
+  done
 }
 
 paths_match() {
@@ -1071,7 +1425,7 @@ main() {
   if [[ "$migrate_mode" == "true" ]]; then
     command -v python3 >/dev/null || { printf '%s\n' "Migration requires python3" >&2; exit 1; }
     [[ -f "$MIGRATOR" ]] || { printf 'Migration helper is unavailable: %s\n' "$MIGRATOR" >&2; exit 1; }
-    local migration_args=(--manifest "$MIGRATIONS_FILE" --source "$SKILLS_SRC")
+    local migration_args=(--manifest "$MIGRATIONS_FILE" --source "$SKILLS_SRC") sync_failed=0
     if [[ "$apply_migration" == "true" ]]; then
       migration_args+=(--apply)
       printf 'Applying recorded legacy-skill migration. Backups are always retained.\n\n'
@@ -1087,7 +1441,7 @@ main() {
       fi
       python3 "$MIGRATOR" "${migration_args[@]}" --dest "$CANONICAL_DIR" --backup-dir "${SKILLS_BACKUP_DIR:-$(dirname "$CANONICAL_DIR")/.skills-backups/$(basename "$CANONICAL_DIR")}" --protected-root "$CANONICAL_DIR" --preserve-shared-canonical "${canonical_args[@]}"
       if [[ -n "$canonical_applied" ]]; then
-        sync_migrated_opencode_permissions "$CANONICAL_DIR" "$canonical_applied"
+        sync_migrated_opencode_permissions "$CANONICAL_DIR" "$canonical_applied" || sync_failed=1
         rm -f "$canonical_applied"
       fi
       local -A migrated_destinations=()
@@ -1105,7 +1459,7 @@ main() {
         fi
         python3 "$MIGRATOR" "${migration_args[@]}" --dest "$tool_dir" --backup-dir "${SKILLS_BACKUP_DIR:-$(dirname "$tool_dir")/.skills-backups/$(basename "$tool_dir")}" --protected-root "$CANONICAL_DIR" --link-root "$CANONICAL_DIR" "${applied_args[@]}"
         if [[ "$apply_migration" == "true" && "$tool" == "opencode" ]]; then
-          sync_migrated_opencode_permissions "$tool_dir" "$applied_file"
+          sync_migrated_opencode_permissions "$tool_dir" "$applied_file" || sync_failed=1
           rm -f "$applied_file"
         fi
       done
@@ -1132,7 +1486,7 @@ main() {
           python3 "$MIGRATOR" "${migration_args[@]}" --dest "$tool_dir" --backup-dir "${SKILLS_BACKUP_DIR:-$(dirname "$tool_dir")/.skills-backups/$(basename "$tool_dir")}" --protected-root "$CANONICAL_DIR" "${applied_args[@]}"
         fi
         if [[ "$apply_migration" == "true" && "$tool" == "opencode" ]]; then
-          sync_migrated_opencode_permissions "$tool_dir" "$applied_file"
+          sync_migrated_opencode_permissions "$tool_dir" "$applied_file" || sync_failed=1
           rm -f "$applied_file"
         fi
       done
@@ -1153,10 +1507,12 @@ main() {
       done
       (( cleanup_failed == 0 )) || exit 1
     fi
+    (( sync_failed == 0 )) || exit 1
     exit 0
   fi
 
   # ── Install: link mode ──────────────────────────────────────────────
+  local failed=0
   if [[ "$link_mode" == "true" ]]; then
     printf 'Installing %d skill(s) via symlink\n' "${#skills[@]}"
     printf 'Canonical: %s\n\n' "$CANONICAL_DIR"
@@ -1165,55 +1521,34 @@ main() {
     migrate_legacy_backups "$CANONICAL_DIR"
 
     # Copy all skills to canonical dir first
-    local failed=0
-    for skill in "${skills[@]}"; do
-      if ! validate_skill_name "$skill"; then
-        printf '  [!] Invalid skill name: %s\n' "$skill"
-        (( failed++ )) || true
-        continue
-      fi
-      if [[ ! -d "$SKILLS_SRC/$skill" ]]; then
-        printf '  [!] Unknown skill: %s\n' "$skill"
-        (( failed++ )) || true
-        continue
-      fi
-      if is_deprecated "$SKILLS_SRC/$skill"; then
-        local replacement="${MIGRATION_REPLACEMENTS[$skill]:-}"
-        if [[ -n "$replacement" ]]; then
-          printf '  [!] %s is deprecated; use %s\n' "$skill" "$replacement"
-        else
-          printf '  [!] %s is deprecated and scheduled for removal\n' "$skill"
-        fi
-      fi
-      install_copy "$skill" "$CANONICAL_DIR" "$force" "$no_backup" || (( failed++ )) || true
-    done
+    install_into copy "$CANONICAL_DIR" "$force" "$no_backup" "${skills[@]}"
+    local canonical_ok=("${INSTALLED[@]}")
 
     # Create symlinks per tool
     for tool in "${tools[@]}"; do
-      local tool_dir
+      local tool_dir linked=()
       tool_dir="$(resolve_tool_path "$tool")"
       if [[ "$tool_dir" == "$CANONICAL_DIR" ]]; then
         printf '[%s] -> %s (matches canonical, skipping links)\n' "$tool" "$tool_dir"
+        linked=("${canonical_ok[@]}")
       else
         mkdir -p "$tool_dir"
         ensure_lock_source "$tool_dir"
         migrate_legacy_backups "$tool_dir"
         printf '[%s] -> %s\n' "$tool" "$tool_dir"
-        for skill in "${skills[@]}"; do
-          validate_skill_name "$skill" || continue
-          [[ -d "$SKILLS_SRC/$skill" ]] || continue
-          create_link "$skill" "$tool_dir" "$force" "$no_backup"
-        done
-        write_lock "$tool_dir" "${skills[@]}"
+        install_into link "$tool_dir" "$force" "$no_backup" "${canonical_ok[@]}"
+        linked=("${INSTALLED[@]}")
+        publish_lock "$tool_dir" "${linked[@]}" || (( failed++ )) || true
       fi
       if [[ "$tool" == "opencode" ]]; then
-        sync_opencode_permissions "$OPENCODE_CONFIG_FILE" "${skills[@]}"
+        sync_opencode_permissions "$OPENCODE_CONFIG_FILE" "${linked[@]}" || (( failed++ )) || true
       fi
       legacy_cleanup_hint "$tool"
       printf '\n'
     done
 
-    write_lock "$CANONICAL_DIR" "${skills[@]}"
+    publish_lock "$CANONICAL_DIR" "${canonical_ok[@]}" || (( failed++ )) || true
+    (( failed += INSTALL_FAILURES )) || true
 
     if (( failed > 0 )); then
       printf 'Done with %d error(s).\n' "$failed"
@@ -1223,8 +1558,6 @@ main() {
 
   # ── Install: copy mode ──────────────────────────────────────────────
   else
-    local failed=0
-
     for tool in "${tools[@]}"; do
       local dest
       if [[ -n "$dest_override" ]]; then
@@ -1237,36 +1570,17 @@ main() {
       migrate_legacy_backups "$dest"
 
       printf '[%s] -> %s\n' "$tool" "$dest"
-      for skill in "${skills[@]}"; do
-        if ! validate_skill_name "$skill"; then
-          printf '  [!] Invalid skill name: %s\n' "$skill"
-          (( failed++ )) || true
-          continue
-        fi
-        if [[ ! -d "$SKILLS_SRC/$skill" ]]; then
-          printf '  [!] Unknown skill: %s\n' "$skill"
-          (( failed++ )) || true
-          continue
-        fi
-        if is_deprecated "$SKILLS_SRC/$skill"; then
-          local replacement="${MIGRATION_REPLACEMENTS[$skill]:-}"
-          if [[ -n "$replacement" ]]; then
-            printf '  [!] %s is deprecated; use %s\n' "$skill" "$replacement"
-          else
-            printf '  [!] %s is deprecated and scheduled for removal\n' "$skill"
-          fi
-        fi
-        install_copy "$skill" "$dest" "$force" "$no_backup" || (( failed++ )) || true
-      done
+      install_into copy "$dest" "$force" "$no_backup" "${skills[@]}"
 
       if [[ "$tool" == "opencode" ]]; then
-        sync_opencode_permissions "$OPENCODE_CONFIG_FILE" "${skills[@]}"
+        sync_opencode_permissions "$OPENCODE_CONFIG_FILE" "${INSTALLED[@]}" || (( failed++ )) || true
       fi
 
-      write_lock "$dest" "${skills[@]}"
+      publish_lock "$dest" "${INSTALLED[@]}" || (( failed++ )) || true
       [[ -n "$dest_override" ]] || legacy_cleanup_hint "$tool"
       printf '\n'
     done
+    (( failed += INSTALL_FAILURES )) || true
 
     if (( failed > 0 )); then
       printf 'Done with %d error(s).\n' "$failed"

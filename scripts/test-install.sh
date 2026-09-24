@@ -1090,6 +1090,238 @@ test_malformed_frontmatter_fails_install() {
   trap - RETURN
 }
 
+# Replacement transaction tests run with an allowlisted environment.
+SAFE_PATH="$(for cmd in python3 git sha256sum; do dirname "$(command -v "$cmd")"; done | awk '!seen[$0]++' | paste -sd:):/usr/bin:/bin"
+
+isolated() {
+  local home="$1"
+  shift
+  env -i HOME="$home" PATH="$SAFE_PATH" LANG=C "$@"
+}
+
+digest() {
+  LC_ALL=C find "$1" -type f -print0 | LC_ALL=C sort -z | xargs -0 cat | sha256sum | cut -d' ' -f1
+}
+
+txn_area() {
+  printf '%s/.skills-txn/%s\n' "$(cd "$(dirname "$1")" && pwd -P)" "$(basename "$1")"
+}
+
+lock_entry() {
+  python3 - "$1/.skills-lock.json" "$2" <<'PY'
+import json
+import sys
+
+record = json.load(open(sys.argv[1], encoding="utf-8"))["skills"].get(sys.argv[2])
+print(record["hash"] if isinstance(record, dict) else record or "")
+PY
+}
+
+record_phase() {
+  sed -n 's/^phase=//p' "$1/record"
+}
+
+# Install docker, then change it so a replacement is observable.
+seed_modified_docker() {
+  local home="$1" dest="$2"
+  isolated "$home" "$ROOT/install.sh" --tool portable --dest "$dest" --no-backup docker >/dev/null
+  printf '%s\n' 'local edit' >> "$dest/docker/SKILL.md"
+}
+
+# A failure before promotion leaves the old copy, the lock, and no transaction behind.
+assert_untouched_after_fault() {
+  local label="$1" dest="$2" before="$3" lock_before="$4"
+  [[ "$(tree_hash "$dest/docker")" == "$before" ]] || fail "$label: working copy changed"
+  [[ "$(sha256sum < "$dest/.skills-lock.json")" == "$lock_before" ]] || fail "$label: lock changed"
+  [[ ! -e "$(txn_area "$dest")" ]] || fail "$label: transaction area left behind: $(find "$(txn_area "$dest")")"
+  if find "$dest" -maxdepth 1 -name '.skills-lock.json.*' | grep -q .; then fail "$label: lock temp left behind"; fi
+}
+
+assert_rerun_repairs() {
+  local label="$1" home="$2" dest="$3"
+  isolated "$home" "$ROOT/install.sh" --tool portable --dest "$dest" --force docker >/dev/null || fail "$label: clean rerun failed"
+  [[ "$(digest "$dest/docker")" == "$(digest "$ROOT/skills/docker")" ]] || fail "$label: rerun did not install the source copy"
+  [[ "$(lock_entry "$dest" docker)" == "$(digest "$ROOT/skills/docker")" ]] || fail "$label: rerun did not publish the lock"
+  [[ ! -e "$(txn_area "$dest")" ]] || fail "$label: rerun left the transaction area"
+}
+
+test_fault_before_promotion_keeps_previous_install() {
+  local tmp dest point before lock_before output status
+  tmp="$(mktemp -d)"
+  trap 'chmod -R u+w "$tmp"; rm -rf "$tmp"' RETURN
+  for point in stage backup promote; do
+    dest="$tmp/$point/skills"
+    seed_modified_docker "$tmp" "$dest"
+    before="$(tree_hash "$dest/docker")"
+    lock_before="$(sha256sum < "$dest/.skills-lock.json")"
+    status=0
+    output="$(isolated "$tmp" SKILLS_INSTALL_FAULT="$point" "$ROOT/install.sh" --tool portable --dest "$dest" --force docker 2>&1)" || status=$?
+    (( status == 1 )) || fail "$point fault exited $status, want 1: $output"
+    grep -q "injected fault: $point" <<< "$output" || fail "$point fault was not injected: $output"
+    grep -q 'Done with 1 error(s).' <<< "$output" || fail "$point fault did not report the error: $output"
+    assert_untouched_after_fault "$point fault" "$dest" "$before" "$lock_before"
+    assert_rerun_repairs "$point fault" "$tmp" "$dest"
+  done
+  [[ "$(grep -c 'previous copy restored' <<< "$output")" == 1 ]] || fail "promote fault did not restore: $output"
+
+  dest="$tmp/backup-dir/skills"
+  seed_modified_docker "$tmp" "$dest"
+  before="$(tree_hash "$dest/docker")"
+  lock_before="$(sha256sum < "$dest/.skills-lock.json")"
+  mkdir "$tmp/readonly"
+  chmod 555 "$tmp/readonly"
+  if output="$(isolated "$tmp" SKILLS_BACKUP_DIR="$tmp/readonly/backups" "$ROOT/install.sh" --tool portable --dest "$dest" --force docker 2>&1)"; then
+    fail "install succeeded although the backup could not be written"
+  fi
+  grep -q 'docker: backup failed' <<< "$output" || fail "backup failure was not reported: $output"
+  assert_untouched_after_fault "unwritable backup" "$dest" "$before" "$lock_before"
+  chmod -R u+w "$tmp"
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_restore_fault_keeps_evidence_and_stops_destination() {
+  local tmp a b txn old_digest status output before
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  a="$tmp/a/skills"
+  b="$tmp/b/skills"
+  seed_modified_docker "$tmp" "$a"
+  isolated "$tmp" "$ROOT/install.sh" --tool portable --dest "$a" --no-backup git >/dev/null
+  old_digest="$(digest "$a/docker")"
+  local git_before lock_before
+  git_before="$(tree_hash "$a/git")"
+  lock_before="$(sha256sum < "$a/.skills-lock.json")"
+
+  status=0
+  output="$(isolated "$tmp" CLAUDE_SKILLS_DIR="$a" CODEX_SKILLS_DIR="$b" SKILLS_INSTALL_FAULT=promote:docker,restore \
+    "$ROOT/install.sh" --tool claude,codex --force --no-backup docker git 2>&1)" || status=$?
+  (( status == 1 )) || fail "restore fault exited $status, want 1: $output"
+  txn="$(txn_area "$a")/docker"
+  [[ ! -e "$a/docker" ]] || fail "restore fault: working path should be missing until recovery"
+  [[ "$(digest "$txn/prev")" == "$old_digest" ]] || fail "restore fault did not keep the previous copy"
+  [[ "$(digest "$txn/staging")" == "$(digest "$ROOT/skills/docker")" ]] || fail "restore fault did not keep staging"
+  [[ "$(record_phase "$txn")" == swapping ]] || fail "restore fault record phase: $(record_phase "$txn")"
+  grep -qx "target=$a/docker" "$txn/record" || fail "record does not name the working path"
+  [[ "$(tree_hash "$a/git")" == "$git_before" ]] || fail "stopped destination still changed git"
+  grep -q "git not attempted: $a needs recovery first" <<< "$output" || fail "stopped destination did not report skipped skills: $output"
+  [[ "$(sha256sum < "$a/.skills-lock.json")" == "$lock_before" ]] || fail "stopped destination changed its lock"
+  [[ ! -e "$b/docker" && ! -e "$(txn_area "$b")" ]] || fail "other destination kept a failed docker install"
+  [[ "$(lock_entry "$b" git)" == "$(digest "$ROOT/skills/git")" ]] || fail "other destination did not proceed with git"
+
+  # Failing recovery repeats without changing the evidence.
+  before="$(tree_hash "$tmp/a")"
+  if output="$(isolated "$tmp" SKILLS_INSTALL_FAULT=restore "$ROOT/install.sh" --tool portable --dest "$a" docker git 2>&1)"; then
+    fail "install succeeded although recovery failed: $output"
+  fi
+  grep -q 'docker: could not restore' <<< "$output" || fail "recovery failure was not reported: $output"
+  [[ "$(tree_hash "$tmp/a")" == "$before" ]] || fail "failed recovery changed the destination"
+
+  # A clean run restores the old copy and keeps the record: the lock was never published for it.
+  output="$(isolated "$tmp" "$ROOT/install.sh" --tool portable --dest "$a" docker git 2>&1)" || fail "recovery run failed: $output"
+  grep -q 'docker: restored the previous copy, removed leftover staging' <<< "$output" || fail "recovery was not reported: $output"
+  [[ "$(digest "$a/docker")" == "$old_digest" ]] || fail "recovery did not restore the previous copy"
+  [[ ! -e "$txn/prev" && ! -e "$txn/staging" && "$(record_phase "$txn")" == recovered ]] || fail "recovery left the wrong evidence"
+  before="$(tree_hash "$tmp/a")"
+  isolated "$tmp" "$ROOT/install.sh" --tool portable --dest "$a" docker git >/dev/null || fail "repeat recovery run failed"
+  [[ "$(tree_hash "$tmp/a")" == "$before" ]] || fail "repeat recovery run changed files"
+
+  isolated "$tmp" "$ROOT/install.sh" --tool portable --dest "$a" --force --no-backup docker >/dev/null || fail "forced reinstall failed"
+  [[ "$(lock_entry "$a" docker)" == "$(digest "$ROOT/skills/docker")" && ! -e "$(txn_area "$a")" ]] || fail "forced reinstall did not reconcile the record"
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_lock_fault_leaves_records_until_publication() {
+  local tmp dest txn lock_before status output
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  dest="$tmp/agent/skills"
+  isolated "$tmp" "$ROOT/install.sh" --tool portable --dest "$dest" --no-backup docker git >/dev/null
+  printf '%s\n' 'local edit' >> "$dest/docker/SKILL.md"
+  printf '%s\n' 'local edit' >> "$dest/git/SKILL.md"
+  # Stale records, so the forced install has a lock change to publish.
+  python3 - "$dest/.skills-lock.json" <<'PY'
+import json
+import sys
+
+lock = json.load(open(sys.argv[1], encoding="utf-8"))
+for name in ("docker", "git"):
+    lock["skills"][name] = {"hash": "0" * 64, "provenance": "source-equal-v1"}
+json.dump(lock, open(sys.argv[1], "w", encoding="utf-8"))
+PY
+  lock_before="$(sha256sum < "$dest/.skills-lock.json")"
+  status=0
+  output="$(isolated "$tmp" SKILLS_INSTALL_FAULT=lock "$ROOT/install.sh" --tool portable --dest "$dest" --force --no-backup docker git 2>&1)" || status=$?
+  (( status == 1 )) || fail "lock fault exited $status, want 1: $output"
+  [[ "$(sha256sum < "$dest/.skills-lock.json")" == "$lock_before" ]] || fail "lock fault changed the lock"
+  if find "$dest" -maxdepth 1 -name '.skills-lock.json.*' | grep -q .; then fail "lock fault left a temp file"; fi
+  txn="$(txn_area "$dest")"
+  for skill in docker git; do
+    [[ "$(digest "$dest/$skill")" == "$(digest "$ROOT/skills/$skill")" ]] || fail "lock fault: $skill was not promoted"
+    [[ "$(record_phase "$txn/$skill")" == promoted ]] || fail "lock fault: $skill record missing or wrong phase"
+    [[ ! -e "$txn/$skill/prev" && ! -e "$txn/$skill/staging" ]] || fail "lock fault: $skill left transaction copies"
+  done
+
+  # Startup recovery keeps each record until that skill's lock entry is published.
+  output="$(isolated "$tmp" "$ROOT/install.sh" --tool portable --dest "$dest" docker 2>&1)" || fail "rerun after lock fault failed: $output"
+  grep -q 'git: install record kept until its lock entry is published' <<< "$output" || fail "pending record was not reported: $output"
+  [[ ! -e "$txn/docker" && "$(record_phase "$txn/git")" == promoted ]] || fail "rerun reconciled the wrong records"
+  [[ "$(lock_entry "$dest" docker)" == "$(digest "$ROOT/skills/docker")" ]] || fail "rerun did not publish docker"
+  isolated "$tmp" "$ROOT/install.sh" --tool portable --dest "$dest" git >/dev/null || fail "git rerun failed"
+  [[ ! -e "$txn" && "$(lock_entry "$dest" git)" == "$(digest "$ROOT/skills/git")" ]] || fail "git record was not reconciled"
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_opencode_fault_keeps_config_unchanged() {
+  local tmp config target before status output
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  config="$tmp/.config/opencode/opencode.json"
+  target="$tmp/dotfiles/opencode.json"
+  mkdir -p "$(dirname "$config")" "$(dirname "$target")"
+  printf '%s\n' '{"permission":{"skill":{"*":"deny"}}}' > "$target"
+  ln -s "$target" "$config"
+  before="$(sha256sum < "$target")"
+  status=0
+  output="$(isolated "$tmp" SKILLS_INSTALL_FAULT=opencode "$ROOT/install.sh" --tool opencode --no-backup docker 2>&1)" || status=$?
+  (( status == 1 )) || fail "opencode fault exited $status, want 1: $output"
+  grep -q 'OpenCode permission sync failed' <<< "$output" || fail "opencode fault was not reported: $output"
+  [[ "$(sha256sum < "$target")" == "$before" && -L "$config" ]] || fail "opencode fault changed the config"
+  if find "$tmp/dotfiles" "$(dirname "$config")" -name '.opencode.*' | grep -q .; then fail "opencode fault left a temp file"; fi
+  [[ "$(lock_entry "$tmp/.agents/skills" docker)" == "$(digest "$ROOT/skills/docker")" ]] || fail "opencode fault blocked the lock"
+
+  isolated "$tmp" "$ROOT/install.sh" --tool opencode --no-backup docker >/dev/null || fail "opencode rerun failed"
+  [[ -L "$config" ]] || fail "opencode sync replaced the config symlink"
+  python3 - "$target" <<'PY'
+import json
+import sys
+
+assert json.load(open(sys.argv[1], encoding="utf-8"))["permission"]["skill"] == {"*": "deny", "docker": "allow"}
+PY
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_link_fault_restores_previous_link() {
+  local tmp claude status output
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  claude="$tmp/.claude/skills"
+  isolated "$tmp" "$ROOT/install.sh" --tool claude --link --no-backup docker >/dev/null
+  ln -sfn "$tmp/elsewhere" "$claude/docker"
+  status=0
+  output="$(isolated "$tmp" SKILLS_INSTALL_FAULT=promote "$ROOT/install.sh" --tool claude --link docker 2>&1)" || status=$?
+  (( status == 1 )) || fail "link promote fault exited $status, want 1: $output"
+  [[ "$(readlink "$claude/docker")" == "$tmp/elsewhere" ]] || fail "link promote fault did not restore the previous link"
+  [[ ! -e "$(txn_area "$claude")" ]] || fail "link promote fault left the transaction area"
+  isolated "$tmp" "$ROOT/install.sh" --tool claude --link docker >/dev/null || fail "link rerun failed"
+  [[ "$(readlink "$claude/docker")" == "$tmp/.agents/skills/docker" ]] || fail "link rerun did not relink"
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
 test_backups_stay_outside_skill_root
 test_legacy_backups_are_migrated_outside_skill_root
 test_opencode_install_allows_installed_skills
@@ -1134,4 +1366,9 @@ test_doctor_flag_rules_and_alias
 test_doctor_orders_blocking_first_across_tools
 test_frontmatter_cache_selects_skills
 test_malformed_frontmatter_fails_install
+test_fault_before_promotion_keeps_previous_install
+test_restore_fault_keeps_evidence_and_stops_destination
+test_lock_fault_leaves_records_until_publication
+test_opencode_fault_keeps_config_unchanged
+test_link_fault_restores_previous_link
 printf 'install tests passed\n'
