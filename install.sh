@@ -659,7 +659,7 @@ acquire_install_lock() {
   [[ "$INSTALL_LOCK_HELD" == "false" ]] || return 0
   if ! command -v flock >/dev/null 2>&1; then
     if [[ "$required" == "required" ]]; then
-      printf 'flock (util-linux) is required for --save and --update; install it and rerun\n' >&2
+      printf 'flock (util-linux) is required for --save, --update, and --migrate --apply; install it and rerun\n' >&2
       exit 10
     fi
     printf '[!] flock not found; concurrent installer runs are not excluded\n' >&2
@@ -2745,7 +2745,10 @@ main() {
     exit 0
   fi
 
-  if [[ "$migrate_mode" != "true" || "$apply_migration" == "true" ]]; then
+  # Migration recovery rewrites install records, so apply never runs unlocked.
+  if [[ "$migrate_mode" == "true" && "$apply_migration" == "true" ]]; then
+    acquire_install_lock required
+  elif [[ "$migrate_mode" != "true" ]]; then
     acquire_install_lock
   fi
 

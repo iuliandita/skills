@@ -570,8 +570,8 @@ test_concurrent_applies_serialize() {
   trap - RETURN
 }
 
-test_installer_without_flock_still_serializes() {
-  local tmp dir file status=0 digest
+test_installer_migration_apply_requires_lock() {
+  local tmp dir file status digest debris
   tmp="$(mktemp -d)"
   trap 'rm -rf "$tmp"' RETURN
   mkdir -p "$tmp/skills" "$tmp/no-flock"
@@ -584,25 +584,88 @@ import sys
 with open(sys.argv[1], "w", encoding="utf-8") as f:
     json.dump({"version": 1, "source": sys.argv[2], "skills": {"anti-slop": {"hash": sys.argv[3], "provenance": "source-equal-v1"}}}, f)
 PY
+  # Record-less transaction debris: recovery deletes it, so it shows whether recovery ran.
+  debris="$tmp/.skills-txn/skills/code-simplification"
+  mkdir -p "$debris/staging"
+  printf '%s\n' debris > "$debris/staging/SKILL.md"
   for dir in ${SAFE_PATH//:/ }; do
     for file in "$dir"/*; do
       [[ "${file##*/}" == flock || -e "$tmp/no-flock/${file##*/}" || -L "$tmp/no-flock/${file##*/}" ]] || ln -s "$file" "$tmp/no-flock/${file##*/}"
     done
   done
 
+  status=0
+  env -i HOME="$TEST_HOME" PATH="$tmp/no-flock" LANG=C SKILLS_BACKUP_DIR="$tmp/backups" \
+    "$ROOT/install.sh" --tool portable --dest "$tmp/skills" --migrate --apply > "$tmp/out" 2>&1 || status=$?
+  (( status == 10 )) || fail "migration apply without flock exited $status, want 10: $(<"$tmp/out")"
+  grep -q 'flock (util-linux) is required for .*--migrate --apply' "$tmp/out" || fail "missing flock hint absent: $(<"$tmp/out")"
+  [[ "$(<"$debris/staging/SKILL.md")" == debris ]] || fail "migration apply without flock ran recovery"
+  [[ -d "$tmp/skills/anti-slop" && ! -e "$tmp/skills/code-simplification" && ! -e "$tmp/backups" ]] \
+    || fail "migration apply without flock changed files"
+  env -i HOME="$TEST_HOME" PATH="$tmp/no-flock" LANG=C \
+    "$ROOT/install.sh" --tool portable --dest "$tmp/skills" --migrate > "$tmp/out" 2>&1 \
+    || fail "migration preview needed flock: $(<"$tmp/out")"
+
   hold_lock "$tmp/held"
-  env -i HOME="$TEST_HOME" PATH="$tmp/no-flock" LANG=C SKILLS_LOCK_WAIT=1 SKILLS_BACKUP_DIR="$tmp/backups" \
+  status=0
+  env -i HOME="$TEST_HOME" PATH="$SAFE_PATH" LANG=C SKILLS_LOCK_WAIT=1 SKILLS_BACKUP_DIR="$tmp/backups" \
     "$ROOT/install.sh" --tool portable --dest "$tmp/skills" --migrate --apply > "$tmp/out" 2>&1 || status=$?
   release_lock
-  (( status == 3 )) || fail "install.sh without flock under a held lock exited $status, want 3: $(<"$tmp/out")"
-  grep -q 'flock not found' "$tmp/out" || fail "install.sh did not run without flock"
-  grep -q 'another install.sh run holds' "$tmp/out" || fail "migrator did not report the held lock"
-  [[ -d "$tmp/skills/anti-slop" && ! -e "$tmp/skills/code-simplification" ]] || fail "migration without flock changed files under a held lock"
+  (( status == 3 )) || fail "migration apply under a held lock exited $status, want 3: $(<"$tmp/out")"
+  [[ "$(<"$debris/staging/SKILL.md")" == debris ]] || fail "migration apply under a held lock ran recovery"
+  [[ -d "$tmp/skills/anti-slop" && ! -e "$tmp/skills/code-simplification" ]] || fail "migration apply under a held lock changed files"
 
-  env -i HOME="$TEST_HOME" PATH="$tmp/no-flock" LANG=C SKILLS_BACKUP_DIR="$tmp/backups" \
+  env -i HOME="$TEST_HOME" PATH="$SAFE_PATH" LANG=C SKILLS_BACKUP_DIR="$tmp/backups" \
     "$ROOT/install.sh" --tool portable --dest "$tmp/skills" --migrate --apply > "$tmp/out" 2>&1 \
-    || fail "install.sh without flock failed once the lock was free: $(<"$tmp/out")"
-  [[ ! -e "$tmp/skills/anti-slop" && -d "$tmp/skills/code-simplification" ]] || fail "migration without flock did not apply"
+    || fail "migration apply failed once the lock was free: $(<"$tmp/out")"
+  [[ ! -e "$debris" ]] || fail "locked migration apply did not recover transaction debris"
+  [[ ! -e "$tmp/skills/anti-slop" && -d "$tmp/skills/code-simplification" ]] || fail "locked migration apply did not migrate"
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+setup_legacy_dir() {
+  local tmp="$1"
+  mkdir -p "$tmp/source/x" "$tmp/canonical" "$tmp/tools/legacy" "$tmp/tools/new"
+  printf '%s\n' x > "$tmp/source/x/SKILL.md"
+  cp -r "$tmp/source/x" "$tmp/canonical/x"
+  ln -s "$tmp/canonical/x" "$tmp/tools/legacy/x"
+  ln -s "$tmp/canonical/x" "$tmp/tools/new/x"
+  write_lock "$tmp/tools/legacy" "$tmp/source" "x=$(hash_skill "$tmp/canonical/x")"
+}
+
+cleanup_legacy() {
+  run_migrator --source "$tmp/source" --legacy-dir "$tmp/tools/legacy" --new-dir "$tmp/tools/new" \
+    --link-root "$tmp/canonical" "$@"
+}
+
+test_legacy_cleanup_backup_outside_staging_area() {
+  local tmp backup status
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  setup_legacy_dir "$tmp"
+  cp "$tmp/tools/legacy/.skills-lock.json" "$tmp/lock-before"
+  ln -s "$tmp/tools/.skills-migrate-staging" "$tmp/alias"
+  for backup in "$tmp/tools/.skills-migrate-staging/legacy/backups" "$tmp/alias/legacy/backups" "$tmp/tools"; do
+    status=0
+    cleanup_legacy --backup-dir "$backup" --apply > "$tmp/out" 2>&1 || status=$?
+    (( status == 2 )) || fail "legacy backup $backup exited $status, want 2"
+    grep -q 'backup directory must be outside the migration staging area' "$tmp/out" || fail "legacy backup $backup rejection unclear"
+    [[ -L "$tmp/tools/legacy/x" && ! -e "$tmp/tools/.skills-migrate-staging" ]] || fail "legacy backup $backup rejection changed files"
+    cmp -s "$tmp/lock-before" "$tmp/tools/legacy/.skills-lock.json" || fail "legacy backup $backup rejection changed the lock"
+  done
+
+  # An accepted backup must survive a later ordinary migration, which clears the staging area.
+  cleanup_legacy --backup-dir "$tmp/tools/.skills-backups/legacy" --apply > "$tmp/out"
+  [[ ! -e "$tmp/tools/legacy/x" ]] || fail "legacy cleanup did not unlink"
+  make_fixture "$tmp/later"
+  mkdir -p "$tmp/tools/legacy/old"
+  cp -r "$tmp/later/source/old/." "$tmp/tools/legacy/old/"
+  write_lock "$tmp/tools/legacy" "$tmp/later/source" "old=$(hash_skill "$tmp/tools/legacy/old")"
+  run_migrator --manifest "$tmp/later/migrations.json" --source "$tmp/later/source" --dest "$tmp/tools/legacy" --apply > "$tmp/out"
+  grep -q 'APPLIED rename old -> new' "$tmp/out" || fail "later ordinary migration did not run"
+  [[ -L "$(find "$tmp/tools/.skills-backups/legacy/.legacy-dir-cleanup" -mindepth 2 -maxdepth 2 -name x)" ]] \
+    || fail "later ordinary migration removed the legacy cleanup backup"
   rm -rf "$tmp"
   trap - RETURN
 }
@@ -625,5 +688,6 @@ test_staging_area_clearing_is_scoped
 test_backup_inside_staging_area_is_rejected
 test_apply_holds_installer_lock
 test_concurrent_applies_serialize
-test_installer_without_flock_still_serializes
+test_installer_migration_apply_requires_lock
+test_legacy_cleanup_backup_outside_staging_area
 printf 'migration tests passed\n'

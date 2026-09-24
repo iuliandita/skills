@@ -165,6 +165,17 @@ def check_namespace(root: Path, area: Path) -> None:
             raise ValidationError(f"migration staging path is a symlink: {path}")
 
 
+def check_backup_outside_staging(backup_base: Path, *directories: Path) -> None:
+    """Staging areas are cleared by any later apply, so no backup may live in or around one."""
+    resolved = backup_base.resolve(strict=False)
+    if STAGING_NAMESPACE in resolved.parts:
+        raise ValidationError(f"backup directory must be outside the migration staging area: {resolved}")
+    for directory in directories:
+        root = directory.resolve(strict=False).parent / STAGING_NAMESPACE
+        if overlaps(resolved, root):
+            raise ValidationError(f"backup directory must be outside the migration staging area {root}")
+
+
 def clear_namespace(root: Path, area: Path) -> None:
     """Everything under the destination's staging area is migrator debris from an earlier run."""
     check_namespace(root, area)
@@ -513,8 +524,7 @@ def migrate(args: argparse.Namespace) -> int:
     namespace_root = destination.parent / STAGING_NAMESPACE
     namespace = namespace_root / destination.name
     check_namespace(namespace_root, namespace)
-    if overlaps(backup_base, namespace_root):
-        raise ValidationError(f"backup directory must be outside the migration staging area {namespace_root}")
+    check_backup_outside_staging(backup_base, destination)
     for other, label in ((destination, "destination"), (source, "source")):
         if path_is_within(other, backup_base):
             raise ValidationError(f"backup directory must not contain the {label}")
@@ -647,6 +657,7 @@ def cleanup_legacy_dir(args: argparse.Namespace) -> int:
     for other in (legacy_real, new_real, canonical, source):
         if backup_base == other or path_is_within(backup_base, other):
             raise ValidationError("backup directory must be outside the legacy, new, canonical, and source directories")
+    check_backup_outside_staging(backup_base, legacy_real, new_real)
     if args.apply:
         hold_installer_lock()
     lock_path = legacy / ".skills-lock.json"

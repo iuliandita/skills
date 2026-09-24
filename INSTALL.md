@@ -413,8 +413,8 @@ update source is the remote URL and branch recorded by `--save`: enabling `--upd
 authorizes running whatever future commits that branch receives, because each run executes
 the fetched `install.sh`. Editing the checkout while an update runs is unsupported.
 
-Runs exclude each other only when every participating run has `flock`. `--update` and
-`--save` require it; ordinary installs warn and proceed without it.
+Runs exclude each other only when every participating run has `flock`. `--update`,
+`--save`, and `--migrate --apply` require it; ordinary installs warn and proceed without it.
 
 ### Scheduling
 
@@ -516,9 +516,11 @@ existing entry; see [MIGRATION.md](MIGRATION.md#users-of-the-bundled-installer).
 Runs that change files (installs, `--update`, and `--migrate --apply`) take an exclusive lock on
 `${XDG_STATE_HOME:-~/.local/state}/iuliandita-skills/install.lock` with `flock`, waiting up
 to `SKILLS_LOCK_WAIT` seconds (default 30, or 0 for `--update`) and exiting with status 3 if another run still
-holds it. Without `flock` the installer prints a warning and proceeds; runs exclude each
-other only when every one of them has `flock`. The exception is `--migrate --apply`: its
-migration helper takes the same lock itself, so it still waits and exits 3 without `flock`.
+holds it. Without `flock` an install prints a warning and proceeds; runs exclude each
+other only when every one of them has `flock`. `--migrate --apply` requires `flock` and exits
+10 without it, before recovery or migration touches anything (earlier releases warned and
+proceeded). It holds the lock through recovery and the migration helper. A `--migrate`
+preview takes no lock.
 
 If a source checkout moved or an existing lock is incompatible, a normal install saves
 that lock under the backup base's `.unverified-locks/` directory and starts a fresh lock.

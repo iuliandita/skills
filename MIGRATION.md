@@ -100,14 +100,15 @@ atomic no-replace rename (Linux `renameat2`, macOS `renamex_np`) skip that skill
 non-zero instead of risking an overwrite. The lock file is replaced atomically, first to record
 the replacements and again after old entries have moved into the backup. An interrupted apply is
 finished by running it again: installed replacements are reused, and records of old entries
-already moved to the backup are pruned. Apply holds the installer lock itself, even when
-`flock` is missing or the helper runs directly, and exits 3 when another run holds it.
+already moved to the backup are pruned. `--migrate --apply` requires `flock` (exit 10 without
+it; earlier releases warned and proceeded) and holds the installer lock through recovery and the
+migration, exiting 3 when another run holds it. The helper also takes that lock when run directly.
 A dry run is not a reservation: apply checks the filesystem again. All current and historical
 lock hashes cover file bytes but not filenames; a pure filename change can go undetected, so back up
 and manually review renamed local files.
 
 Migration honors `SKILLS_BACKUP_DIR`, but the backup location must stay outside source,
-skill discovery directories, and the `.skills-migrate-staging` area. `--force` and `--no-backup` are not migration options.
+skill discovery directories, and any `.skills-migrate-staging` area, which later applies clear. `--force` and `--no-backup` are not migration options.
 
 In link mode, replacements are installed in the canonical directory and selected owned
 tool links are migrated. Old canonical directories remain because unselected tools may
