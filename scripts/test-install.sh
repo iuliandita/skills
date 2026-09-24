@@ -867,7 +867,11 @@ test_doctor_frontmatter_identity() {
   mkdir -p "$tmp/.commandcode/skills/surrogate" "$tmp/.agents/skills/surrogate2"
   printf '%s\n' '---' 'name: "\uD800"' 'description: x' '---' > "$tmp/.commandcode/skills/surrogate/SKILL.md"
   printf '%s\n' '---' 'name: "\uD800"' 'description: x' '---' > "$tmp/.agents/skills/surrogate2/SKILL.md"
-  output="$(HOME="$tmp" "$ROOT/install.sh" --doctor --tool commandcode)" || true
+  local status=0
+  output="$(HOME="$tmp" "$ROOT/install.sh" --doctor --tool commandcode 2>&1)" || status=$?
+  (( status == 1 )) || fail "doctor exited $status on malformed escapes, want 1: $output"
+  grep -q 'duplicate skill name(s) reachable' <<< "$output" || fail "doctor did not finish on malformed escapes: $output"
+  if grep -q 'Traceback' <<< "$output"; then fail "doctor crashed on malformed escapes: $output"; fi
   grep -q '\[!\] name git: .*/.commandcode/skills/esc, .*/.agents/skills/plain' <<< "$output" || fail "doctor did not decode a YAML escape: $output"
   rm -rf "$tmp"
   trap - RETURN
