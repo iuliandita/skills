@@ -52,8 +52,8 @@ repos:
 
       - id: installer-regression-tests
         name: test installer behavior
-        entry: ./scripts/test-install.sh
+        entry: bash -c './scripts/test-install.sh && ./scripts/test-setup.sh'
         language: system
         pass_filenames: false
-        files: ^(install\.sh|scripts/(test-install\.sh|skill-frontmatter\.py|skill-lib\.sh|migrate-skills\.py)|migrations\.json|\.pre-commit-config\.yaml)$
+        files: ^(install\.sh|scripts/(test-install\.sh|test-setup\.sh|skill-frontmatter\.py|skill-lib\.sh|migrate-skills\.py)|migrations\.json|\.pre-commit-config\.yaml)$
         stages: [pre-push]
