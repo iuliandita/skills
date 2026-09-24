@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.1.1](https://github.com/iuliandita/skills/compare/v2.1.0...v2.1.1) (2026-09-24)
+
+### Bug Fixes
+
+* **install:** install codex, commandcode, and opencode once into `~/.agents/skills`, which they already read, instead of a second copy that harnesses reported as duplicates. `--migrate` previews and `--migrate --apply` removes the old links after a backup, only when the lock records them and a verified replacement exists. New read-only `--doctor` reports skill names a harness can reach through more than one directory ([#215](https://github.com/iuliandita/skills/pull/215), [#212](https://github.com/iuliandita/skills/issues/212)).
+* **ci:** stop the whitespace check from shallowing full clones, which made the refiner phase-1 guard flag old commits once main moved; the guard now fails loudly when it cannot compute a merge base ([#214](https://github.com/iuliandita/skills/pull/214), [#211](https://github.com/iuliandita/skills/issues/211)).
+* **scripts:** keep fixture tests from acting on the caller's repository when git exports `GIT_DIR` ([#219](https://github.com/iuliandita/skills/pull/219), [#218](https://github.com/iuliandita/skills/issues/218)).
+
+### Performance Improvements
+
+* **install, lint:** parse skill frontmatter once per run and skip per-line forks in lint; a docs-only pre-push went from about 6 minutes to 25 seconds, and the installer tests run on pre-push only when installer files change ([#217](https://github.com/iuliandita/skills/pull/217), [#209](https://github.com/iuliandita/skills/issues/209), [#216](https://github.com/iuliandita/skills/issues/216)).
+
 ## [2.1.0](https://github.com/iuliandita/skills/compare/v2.0.1...v2.1.0) (2026-09-24)
 
 ### Features
