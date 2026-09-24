@@ -7,7 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Bug Fixes
 
 * **install:** report up-to-date skills as `[=] <skill> current` instead of asking for `--force`; copies that differ or cannot be verified are reported as such and never published to the lock file ([#230](https://github.com/iuliandita/skills/pull/230), [#229](https://github.com/iuliandita/skills/issues/229)).
-* **migrate:** write the migration lock and replacement skills atomically, retire legacy entries by rename, and let a rerun finish any interrupted migration. `install.sh --migrate --apply` now requires `flock` and holds the installer lock through recovery ([#231](https://github.com/iuliandita/skills/pull/231), [#224](https://github.com/iuliandita/skills/issues/224)).
+* **migrate:** atomically publish each replacement skill and lock-file update, back up and retire legacy entries, and resume interrupted migration runs. `install.sh --migrate --apply` now requires `flock` and holds the installer lock through recovery ([#231](https://github.com/iuliandita/skills/pull/231), [#224](https://github.com/iuliandita/skills/issues/224)).
 
 ## [2.2.0](https://github.com/iuliandita/skills/compare/v2.1.1...v2.2.0) (2026-09-24)
 
