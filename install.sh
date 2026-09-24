@@ -523,13 +523,13 @@ write_lock() {
     out="$(tree_digests "${paths[@]}")" || return 1
     mapfile -t trees <<< "$out"
   fi
-  # A tree entry is written only when the v2 digests agree too; otherwise the
-  # v1 record is still published and any older tree entry is dropped.
+  # A candidate is only published when the v2 tree digests agree too: a
+  # v1-equal but v2-differing tree (a rename or a symlink-target-only change,
+  # which the v1 content hash misses) is skipped entirely, not published
+  # without a tree entry, so its existing lock record is never touched.
   for i in "${!candidates[@]}"; do
     if [[ "${trees[2*i]:-}" =~ ^[0-9a-f]{64}$ && "${trees[2*i]}" == "${trees[2*i+1]:-}" ]]; then
       updates+=("${candidates[i]}=${hashes[i]}=${trees[2*i]}")
-    else
-      updates+=("${candidates[i]}=${hashes[i]}=-")
     fi
   done
 
@@ -1168,13 +1168,42 @@ publish_lock() {
   return "$status"
 }
 
+# An existing copy without --force is compared against the source with the
+# same v2 tree digest --update uses (tree_digests): equal is `current` and
+# stays eligible for lock publication; anything else -- a real difference or
+# a digest we could not compute -- is a successful skip. install_copy signals
+# a skip with rc 3 so install_into leaves it out of INSTALLED entirely: it
+# never reaches write_lock, so no v1 or v2 record is written or refreshed
+# for it and any existing record is left byte-identical.
+DIFFER_COUNT=0
+
+classify_installed_copy() {
+  local skill="$1" work="$2" out dst_tree="" src_tree=""
+  if out="$(tree_digests "$work" "$SKILLS_SRC/$skill")"; then
+    mapfile -t out <<< "$out"
+    dst_tree="${out[0]:-}"
+    src_tree="${out[1]:-}"
+  fi
+  if [[ "$dst_tree" =~ ^[0-9a-f]{64}$ && "$dst_tree" == "$src_tree" ]]; then
+    printf '  [=] %s current\n' "$skill"
+    return 0
+  fi
+  if [[ "$dst_tree" =~ ^[0-9a-f]{64}$ && "$src_tree" =~ ^[0-9a-f]{64}$ ]]; then
+    printf '  [~] %s differs from source (use --force to overwrite)\n' "$skill"
+  else
+    printf '  [~] %s already exists (use --force to overwrite)\n' "$skill"
+  fi
+  (( DIFFER_COUNT++ )) || true
+  return 1
+}
+
 install_copy() {
   local skill="$1" dest_dir="$2" force="$3" no_backup="$4" backup=true
 
   if present "$dest_dir/$skill"; then
     if [[ "$force" != "true" ]]; then
-      printf '  [~] %s already exists (use --force to overwrite)\n' "$skill"
-      return 0
+      classify_installed_copy "$skill" "$dest_dir/$skill" && return 0
+      return 3
     fi
   fi
   [[ "$no_backup" != "true" ]] || backup=false
@@ -1349,6 +1378,7 @@ install_into() {
   local kind="$1" dest="$2" force="$3" no_backup="$4" skill replacement rc stopped=false
   shift 4
   INSTALLED=()
+  DIFFER_COUNT=0
   if ! recover_dest "$dest"; then
     stopped=true
     (( INSTALL_FAILURES++ )) || true
@@ -1391,6 +1421,7 @@ install_into() {
     case "$rc" in
       0) INSTALLED+=("$skill") ;;
       2) stopped=true; (( INSTALL_FAILURES++ )) || true ;;
+      3) : ;; # existing copy classified differs/unverified: successful skip, left unpublished
       *) (( INSTALL_FAILURES++ )) || true ;;
     esac
   done
@@ -2831,6 +2862,7 @@ main() {
 
     # Copy all skills to canonical dir first
     install_into copy "$CANONICAL_DIR" "$force" "$no_backup" "${skills[@]}"
+    (( DIFFER_COUNT == 0 )) || printf '  %d skill(s) differ; use --force to overwrite\n' "$DIFFER_COUNT"
     local canonical_ok=("${INSTALLED[@]}")
 
     # Create symlinks per tool
@@ -2880,6 +2912,7 @@ main() {
 
       printf '[%s] -> %s\n' "$tool" "$dest"
       install_into copy "$dest" "$force" "$no_backup" "${skills[@]}"
+      (( DIFFER_COUNT == 0 )) || printf '  %d skill(s) differ; use --force to overwrite\n' "$DIFFER_COUNT"
 
       if [[ "$tool" == "opencode" ]]; then
         sync_opencode_permissions "$OPENCODE_CONFIG_FILE" "${INSTALLED[@]}" || (( failed++ )) || true
