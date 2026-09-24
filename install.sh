@@ -40,7 +40,7 @@ ALL_SKILLS=()
 SUPPORTED_TOOLS=(
   claude codex cursor windsurf opencode commandcode
   copilot gemini roo goose amp continue kiro cline warp
-  openclaw hermes qwen crush antigravity augment openhands trae qoder kimi
+  openclaw hermes qwen crush antigravity augment openhands trae qoder kimi omp
   portable
 )
 
@@ -51,6 +51,7 @@ declare -A TOOL_PATHS=(
   [windsurf]="${WINDSURF_SKILLS_DIR:-$HOME/.codeium/windsurf/skills}"
   [opencode]="${OPENCODE_SKILLS_DIR:-$HOME/.config/opencode/skills}"
   [copilot]="${COPILOT_SKILLS_DIR:-$HOME/.copilot/skills}"
+  # Legacy: Gemini CLI consumer accounts moved to antigravity.
   [gemini]="${GEMINI_SKILLS_DIR:-$HOME/.agents/skills}"
   [roo]="${ROO_SKILLS_DIR:-$HOME/.roo/skills}"
   [goose]="${GOOSE_SKILLS_DIR:-$HOME/.config/goose/skills}"
@@ -70,6 +71,8 @@ declare -A TOOL_PATHS=(
   [trae]="${TRAE_SKILLS_DIR:-$HOME/.trae/skills}"
   [qoder]="${QODER_SKILLS_DIR:-$HOME/.qoder/skills}"
   [kimi]="${KIMI_SKILLS_DIR:-$HOME/.agents/skills}"
+  # OMP_SKILLS_DIR is installer-only; omp discovers ~/.agents/skills natively.
+  [omp]="${OMP_SKILLS_DIR:-$HOME/.agents/skills}"
   [portable]="${PORTABLE_SKILLS_DIR:-$HOME/.skills}"
 )
 
@@ -86,6 +89,7 @@ declare -A TOOL_ALIASES=(
   [agy]=antigravity
   [command-code]=commandcode
   [cmdc]=commandcode
+  [oh-my-pi]=omp
 )
 
 supported_tools_text() {

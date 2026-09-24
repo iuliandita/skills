@@ -107,6 +107,102 @@ test_link_mode_writes_tool_lock_gemini() {
   trap - RETURN
 }
 
+test_omp_default_path() {
+  local tmp
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  HOME="$tmp" "$ROOT/install.sh" --tool omp --no-backup docker >/dev/null
+  if [[ ! -e "$tmp/.agents/skills/docker" ]]; then
+    fail "omp default path did not install to ~/.agents/skills"
+  fi
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_omp_skills_dir_override() {
+  local tmp override
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  override="$tmp/custom-omp"
+  HOME="$tmp" OMP_SKILLS_DIR="$override" "$ROOT/install.sh" --tool omp --no-backup docker >/dev/null
+  if [[ ! -e "$override/docker" ]]; then
+    fail "OMP_SKILLS_DIR override was not honored"
+  fi
+  if [[ -e "$tmp/.agents/skills/docker" ]]; then
+    fail "omp install with OMP_SKILLS_DIR override also wrote the default path"
+  fi
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_omp_link_mode_shares_canonical_dir() {
+  local tmp
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  HOME="$tmp" "$ROOT/install.sh" --tool omp --link --no-backup docker >/dev/null
+  if [[ -L "$tmp/.agents/skills/docker" ]]; then
+    fail "omp link mode created a self-symlink onto its own canonical dir"
+  fi
+  if [[ ! -d "$tmp/.agents/skills/docker" ]]; then
+    fail "omp link mode did not populate the canonical dir"
+  fi
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_omp_repeat_install_is_idempotent() {
+  local tmp
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  HOME="$tmp" "$ROOT/install.sh" --tool omp --no-backup docker >/dev/null
+  HOME="$tmp" "$ROOT/install.sh" --tool omp --no-backup docker >/dev/null
+  if [[ ! -f "$tmp/.agents/skills/docker/SKILL.md" ]]; then
+    fail "repeated omp install did not leave the skill intact"
+  fi
+  if [[ -e "$tmp/.agents/.skills-backups" ]]; then
+    fail "repeated omp install without --force created a backup"
+  fi
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_omp_check_mode() {
+  local tmp
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  HOME="$tmp" "$ROOT/install.sh" --tool omp --link --no-backup >/dev/null
+  HOME="$tmp" "$ROOT/install.sh" --check --tool omp >/dev/null
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_omp_and_gemini_share_destination() {
+  local tmp
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  HOME="$tmp" "$ROOT/install.sh" --tool omp,gemini --link --no-backup docker >/dev/null
+  if [[ ! -d "$tmp/.agents/skills/docker" ]]; then
+    fail "omp,gemini shared install did not populate ~/.agents/skills"
+  fi
+  if [[ -L "$tmp/.agents/skills/docker" ]]; then
+    fail "omp,gemini shared install created a self-symlink"
+  fi
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
 test_backup_preserves_top_level_symlink() {
   local tmp dest private backup_root
   tmp="$(mktemp -d)"
@@ -481,6 +577,12 @@ test_legacy_backups_are_migrated_outside_skill_root
 test_opencode_install_allows_installed_skills
 test_link_mode_writes_tool_lock
 test_link_mode_writes_tool_lock_gemini
+test_omp_default_path
+test_omp_skills_dir_override
+test_omp_link_mode_shares_canonical_dir
+test_omp_repeat_install_is_idempotent
+test_omp_check_mode
+test_omp_and_gemini_share_destination
 test_backup_preserves_top_level_symlink
 test_commandcode_and_agy_targets
 test_lock_preserves_unselected_records

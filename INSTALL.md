@@ -109,7 +109,7 @@ cp -r skills/kubernetes ~/.cursor/skills/kubernetes
 
 ## Supported targets
 
-The installer ships paths for 26 targets. All paths are overridable via `--dest` (single-tool mode) or per-tool environment variables (e.g., `CLAUDE_SKILLS_DIR`).
+The installer ships paths for 27 targets. All paths are overridable via `--dest` (single-tool mode) or per-tool environment variables (e.g., `CLAUDE_SKILLS_DIR`).
 
 Support in this table means **path support**: the installer knows where to copy or symlink the skill folders for that target. Runtime behavior is owned by the consuming tool. Activation rules, trigger matching, context limits, subagent support, and reference-file loading can differ between agents, even when they all read the same skill directory.
 
@@ -129,7 +129,7 @@ For important workflows, smoke-test the target tool after install:
 | OpenCode | `opencode` | `~/.config/opencode/skills` |
 | Command Code | `commandcode` | `~/.commandcode/skills` |
 | GitHub Copilot | `copilot` | `~/.copilot/skills` |
-| Gemini CLI | `gemini` | `~/.agents/skills` |
+| Gemini CLI (legacy; consumer accounts moved to Antigravity) | `gemini` | `~/.agents/skills` |
 | Roo Code | `roo` | `~/.roo/skills` |
 | Goose | `goose` | `~/.config/goose/skills` |
 | Amp | `amp` | `~/.config/agents/skills` |
@@ -147,9 +147,14 @@ For important workflows, smoke-test the target tool after install:
 | Trae | `trae` | `~/.trae/skills` |
 | Qoder | `qoder` | `~/.qoder/skills` |
 | Kimi Code CLI | `kimi` | `~/.agents/skills` |
+| Oh My Pi | `omp` | `~/.agents/skills` |
 | Portable | `portable` | `~/.skills` |
 
-Common aliases also work: `claude-code`, `openai-codex`, `github-copilot`, `gemini-cli`, `kiro-cli`, `qwen-code`, `kimi-cli`, `agy` (Antigravity CLI), `command-code`, and `cmdc` (Command Code).
+`OMP_SKILLS_DIR` only controls where the installer writes for `omp`; Oh My Pi itself
+natively discovers `~/.agents/skills` (and also `~/.omp/agent/skills`) without reading
+that variable.
+
+Common aliases also work: `claude-code`, `openai-codex`, `github-copilot`, `gemini-cli`, `kiro-cli`, `qwen-code`, `kimi-cli`, `agy` (Antigravity CLI), `command-code`, `cmdc` (Command Code), and `oh-my-pi` (Oh My Pi).
 
 For a target or project directory outside this table, use `--tool portable --dest /path/to/skills`.
 Verify that the consuming tool discovers skills at that destination.
@@ -245,7 +250,7 @@ skills/
       dockerfile-patterns.md
       ...
   ...
-install.sh                # installer (26 targets, symlink mode, lock file)
+install.sh                # installer (27 targets, symlink mode, lock file)
 scripts/
   lint-skills.sh          # collection linter
   validate-spec.sh        # Agent Skills spec validator
