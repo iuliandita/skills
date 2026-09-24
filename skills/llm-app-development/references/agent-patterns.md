@@ -52,8 +52,8 @@ def run_agent(user_query: str, tools: list[dict], max_iterations: int = 15) -> s
     while iterations < max_iterations:
         iterations += 1
         response = client.messages.create(
-            model="claude-sonnet-4-6",
-            max_tokens=4096,
+            model="claude-sonnet-5",
+            max_tokens=16000,  # thinking and tool calls share this cap
             tools=tools,
             messages=messages,
         )
@@ -64,6 +64,10 @@ def run_agent(user_query: str, tools: list[dict], max_iterations: int = 15) -> s
             # Extract final text response
             text_blocks = [b.text for b in response.content if b.type == "text"]
             return "\n".join(text_blocks)
+
+        if response.stop_reason != "tool_use":
+            # max_tokens, refusal, etc.; retrying with a trailing assistant turn returns 400
+            raise RuntimeError(f"unhandled stop_reason: {response.stop_reason}")
 
         if response.stop_reason == "tool_use":
             tool_results = []
@@ -101,15 +105,16 @@ effect only when idempotency or reconciliation proves doing so is safe.
 
 ```python
 MAX_ITERS, BUDGET_USD = 20, 5.00
+MAX_TOKENS = 16000  # thinking plus reply on current models
 TOOL_RETRY_MAX = 2  # transient failures only; retry then abort
 spent = 0.0
 
 for i in range(MAX_ITERS):
     # Price the serialized input plus max_tokens at the current model rates.
-    reserved = max_cost_of_next_call(msgs, tools=tools, max_tokens=1024)
+    reserved = max_cost_of_next_call(msgs, tools=tools, max_tokens=MAX_TOKENS)
     if spent + reserved > BUDGET_USD:
         raise BudgetExceeded(f"next call could exceed ${BUDGET_USD:.2f}")
-    resp = client.messages.create(model=MODEL, max_tokens=1024, tools=tools, messages=msgs)
+    resp = client.messages.create(model=MODEL, max_tokens=MAX_TOKENS, tools=tools, messages=msgs)
     spent += cost_of(resp.usage)  # input/output tokens * per-1M price
     if resp.stop_reason == "end_turn":
         return resp
@@ -222,7 +227,7 @@ support_agent = Agent(
     name="Support Agent",
     instructions="Help users with technical issues. Use the knowledge base.",
     tools=[search_knowledge_base],
-    model="gpt-5.5",
+    model="gpt-6-sol",
 )
 
 # Run the agent

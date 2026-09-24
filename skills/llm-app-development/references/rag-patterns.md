@@ -358,8 +358,10 @@ Rephrase the user query to improve retrieval coverage:
 def expand_query(original_query: str) -> list[str]:
     """Generate alternative phrasings for better retrieval coverage."""
     response = client.messages.create(
-        model="claude-haiku-4-5-20251001",
+        model="claude-sonnet-5",
         max_tokens=256,
+        thinking={"type": "disabled"},
+        output_config={"effort": "low"},
         messages=[{
             "role": "user",
             "content": (
@@ -368,7 +370,8 @@ def expand_query(original_query: str) -> list[str]:
             ),
         }],
     )
-    alternatives = response.content[0].text.strip().split("\n")
+    text = "".join(b.text for b in response.content if b.type == "text")
+    alternatives = text.strip().split("\n")
     return [original_query] + alternatives
 ```
 

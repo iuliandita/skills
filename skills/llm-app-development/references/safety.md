@@ -184,8 +184,10 @@ For RAG applications, flag responses that may contain fabricated information:
 def check_groundedness(response: str, context: str) -> dict:
     """Use an LLM to verify claims are grounded in context."""
     check = client.messages.create(
-        model="claude-haiku-4-5-20251001",
-        max_tokens=512,
+        model="claude-sonnet-5",
+        max_tokens=1024,
+        thinking={"type": "disabled"},
+        output_config={"effort": "low"},
         messages=[{
             "role": "user",
             "content": f"""Check if this response is fully grounded in the provided context.
@@ -198,7 +200,7 @@ Response: {response}
 Return JSON: {{"grounded": true/false, "unsupported_claims": ["claim1", ...]}}"""
         }],
     )
-    return json.loads(check.content[0].text)
+    return json.loads("".join(b.text for b in check.content if b.type == "text"))
 ```
 
 ---
@@ -293,10 +295,12 @@ def classify_content(text: str) -> ContentCategory:
     blocked_topics = ["weapons instructions", "illegal activities"]
     review_topics = ["medical advice", "legal advice", "financial advice"]
 
-    # Use a fast model for classification
+    # Cheap tier: Sonnet 5 at low effort with thinking off (Haiku 4.5 is retiring)
     result = client.messages.create(
-        model="claude-haiku-4-5-20251001",
+        model="claude-sonnet-5",
         max_tokens=50,
+        thinking={"type": "disabled"},
+        output_config={"effort": "low"},
         messages=[{
             "role": "user",
             "content": f"Classify this text: does it discuss any of these topics? "
@@ -304,7 +308,10 @@ def classify_content(text: str) -> ContentCategory:
                        f"Reply with: safe, needs_review, or blocked.\n\nText: {text}"
         }],
     )
-    return ContentCategory(result.content[0].text.strip().lower())
+    if result.stop_reason == "refusal":
+        return ContentCategory.NEEDS_REVIEW
+    label = "".join(b.text for b in result.content if b.type == "text")
+    return ContentCategory(label.strip().lower())
 ```
 
 ---

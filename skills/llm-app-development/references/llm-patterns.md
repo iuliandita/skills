@@ -31,13 +31,18 @@ client = anthropic.Anthropic()
 async_client = anthropic.AsyncAnthropic()
 
 response = client.messages.create(
-    model="claude-sonnet-4-6",
-    max_tokens=1024,
+    model="claude-sonnet-5",
+    max_tokens=4096,  # covers adaptive thinking plus the reply
     system="You are a helpful assistant.",
     messages=[{"role": "user", "content": "Hello"}],
 )
-print(response.content[0].text)
+# Thinking blocks can precede the text, so select by type, not position.
+print("".join(b.text for b in response.content if b.type == "text"))
 ```
+
+Claude 5-series models think by default. See the
+[Claude 5-series migration notes](target-versions.md#claude-5-series-migration) before porting
+older examples: sampling parameters, prefill, and manual thinking budgets return 400.
 
 ### Anthropic (TypeScript)
 
@@ -47,11 +52,14 @@ import Anthropic from "@anthropic-ai/sdk";
 const client = new Anthropic(); // reads ANTHROPIC_API_KEY
 
 const response = await client.messages.create({
-  model: "claude-sonnet-4-6",
-  max_tokens: 1024,
+  model: "claude-sonnet-5",
+  max_tokens: 4096,
   messages: [{ role: "user", content: "Hello" }],
 });
-console.log(response.content[0].type === "text" ? response.content[0].text : "");
+const textBlock = response.content.find(
+  (block): block is Anthropic.TextBlock => block.type === "text",
+);
+console.log(textBlock?.text ?? "");
 ```
 
 ### OpenAI Responses (Python)
@@ -75,8 +83,8 @@ print(response.output_text)
 Use `AsyncOpenAI` and await requests in async handlers. The output budget includes reasoning;
 handle incomplete responses rather than treating empty text as success. See the
 [Astra migration checklist](target-versions.md#astra-migration) before adapting older examples.
-The GPT-5.5 Chat Completions examples below illustrate that API; replacing their model ID
-alone is not an Astra migration, especially when adding tools.
+The GPT-6 Sol Chat Completions examples below illustrate that API without tools; Sol supports
+Chat Completions function calling only at `reasoning_effort: "none"`, so use Responses for tools.
 
 ### Vercel AI SDK (TypeScript)
 
@@ -85,9 +93,9 @@ import { generateText } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
 
 const { text } = await generateText({
-  model: anthropic("claude-sonnet-4-6"),
+  model: anthropic("claude-sonnet-5"),
   prompt: "Hello",
-  maxTokens: 1024,
+  maxOutputTokens: 4096,
 });
 ```
 
@@ -105,8 +113,8 @@ const { text } = await generateText({
 
 ```python
 with client.messages.stream(
-    model="claude-sonnet-4-6",
-    max_tokens=2048,
+    model="claude-sonnet-5",
+    max_tokens=4096,
     messages=[{"role": "user", "content": prompt}],
 ) as stream:
     for text in stream.text_stream:
@@ -121,8 +129,8 @@ print(f"\nTokens: {final_message.usage.input_tokens} in, {final_message.usage.ou
 
 ```typescript
 const stream = client.messages.stream({
-  model: "claude-sonnet-4-6",
-  max_tokens: 2048,
+  model: "claude-sonnet-5",
+  max_tokens: 4096,
   messages: [{ role: "user", content: prompt }],
 });
 
@@ -139,7 +147,7 @@ const finalMessage = await stream.finalMessage();
 
 ```python
 stream = client.chat.completions.create(
-    model="gpt-5.5",
+    model="gpt-6-sol",
     messages=[{"role": "user", "content": prompt}],
     stream=True,
 )
@@ -157,8 +165,8 @@ export async function POST(req: Request) {
   const { prompt } = await req.json();
 
   const stream = client.messages.stream({
-    model: "claude-sonnet-4-6",
-    max_tokens: 2048,
+    model: "claude-sonnet-5",
+    max_tokens: 4096,
     messages: [{ role: "user", content: prompt }],
   });
 
@@ -180,8 +188,8 @@ need a validated response body; use strict tool use when the model also needs to
 
 ```python
 response = client.messages.create(
-    model="claude-sonnet-4-6",
-    max_tokens=1024,
+    model="claude-sonnet-5",
+    max_tokens=4096,
     messages=[{"role": "user", "content": f"Extract info from: {text}"}],
     output_config={
         "format": {
@@ -206,16 +214,19 @@ response = client.messages.create(
 )
 
 import json
+if response.stop_reason != "end_turn":  # truncated or refused output is not valid JSON
+    raise RuntimeError(f"incomplete structured output: {response.stop_reason}")
 # Result is in the text content block
 data = json.loads(next(b.text for b in response.content if b.type == "text"))
 ```
 
-Strict tool use captures the schema in a tool definition instead:
+Strict tool use captures the schema in a tool definition instead. Forced `tool_choice` works
+on Sonnet 5 but returns 400 on Opus 5.5 and Fable 5.1; use `auto` or JSON outputs there.
 
 ```python
 response = client.messages.create(
-    model="claude-sonnet-4-6",
-    max_tokens=1024,
+    model="claude-sonnet-5",
+    max_tokens=4096,
     tools=[{
         "name": "extract_info",
         "description": "Extract structured information from the text",
@@ -248,7 +259,7 @@ data = tool_block.input  # already parsed dict
 
 ```python
 response = client.chat.completions.create(
-    model="gpt-5.5",
+    model="gpt-6-sol",
     messages=[{"role": "user", "content": f"Extract info from: {text}"}],
     response_format={
         "type": "json_schema",
@@ -320,12 +331,12 @@ MAX_ITERS, BUDGET_USD = 20, 5.00
 spent = 0.0
 for _ in range(MAX_ITERS):
     # Implement these accounting helpers from the selected model's rates.
-    reserved = max_cost_of_next_call(messages, tools=tools, max_tokens=4096)
+    reserved = max_cost_of_next_call(messages, tools=tools, max_tokens=16000)
     if spent + reserved > BUDGET_USD:
         raise RuntimeError("agent budget would be exceeded")
     response = client.messages.create(
-        model="claude-sonnet-4-6",
-        max_tokens=4096,
+        model="claude-sonnet-5",
+        max_tokens=16000,  # thinking and tool calls share this cap
         tools=tools,
         messages=messages,
     )
@@ -393,13 +404,17 @@ class Conversation:
         self._maybe_summarize()
 
         response = client.messages.create(
-            model="claude-sonnet-4-6",
+            model="claude-sonnet-5",
             system=self.system,
-            max_tokens=2048,
+            max_tokens=4096,
             messages=self.messages,
         )
+        if response.stop_reason != "end_turn":
+            self.messages.pop()  # drop the unanswered user turn
+            raise RuntimeError(f"incomplete turn: {response.stop_reason}")
 
-        assistant_text = response.content[0].text
+        # Without tools, prior thinking blocks may be dropped from history.
+        assistant_text = "".join(b.text for b in response.content if b.type == "text")
         self.messages.append({"role": "assistant", "content": assistant_text})
         return assistant_text
 
@@ -419,8 +434,8 @@ For repeated system prompts or large static contexts, use prompt caching to redu
 
 ```python
 response = client.messages.create(
-    model="claude-sonnet-4-6",
-    max_tokens=1024,
+    model="claude-sonnet-5",
+    max_tokens=4096,
     system=[
         {
             "type": "text",
@@ -430,7 +445,7 @@ response = client.messages.create(
     ],
     messages=messages,
 )
-# Cached tokens cost 90% less on subsequent requests within the TTL
+# Cache reads bill at a fraction of base input price within the TTL (ratio varies by model)
 ```
 
 ---
@@ -477,10 +492,11 @@ def call_with_retry(fn, max_retries=3):
 
 ### Anthropic
 
-- **Prompt caching**: mark static content with `cache_control` for 90% cost reduction on
+- **Prompt caching**: mark static content with `cache_control` for discounted cache reads on
   repeated prefixes. TTL is 5 minutes, refreshed on each cache hit.
-- **Extended thinking**: for complex reasoning, enable extended thinking with
-  `thinking={"type": "enabled", "budget_tokens": N}`. Available on Claude Sonnet 4+ and Opus.
+- **Thinking**: current models use adaptive thinking (on by default on Sonnet 5, always on for
+  Opus 5.5 and Fable 5.1). Control depth with `output_config={"effort": ...}`; manual
+  `budget_tokens` returns 400 on these models; Haiku 4.5 is the only current model that uses it.
 - **Batch API**: submit up to 100k requests for 50% cost reduction, results within 24 hours.
   Good for evals and data processing.
 - **Citations**: Claude can return source citations when given documents in the prompt.
