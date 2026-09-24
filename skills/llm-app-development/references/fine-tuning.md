@@ -242,6 +242,10 @@ client.fine_tuning.jobs.create(
 )
 ```
 
+OpenAI restricted fine-tuning eligibility in 2026. Check
+https://developers.openai.com/api/docs/deprecations and the current model page for which models
+are still fine-tunable before running a job against this example.
+
 Fine-tuning hyperparameters belong under `method.supervised.hyperparameters`; the top-level
 `hyperparameters` argument is deprecated in favor of `method`.
 

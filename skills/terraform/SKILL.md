@@ -35,6 +35,7 @@ changing pins or relying on a runtime feature.
 - CI/CD pipeline architecture; use **ci-cd**
 - Database schema, indexing, replication, or engine operations; use **databases**
 - Application security auditing; use **security-audit**
+- Proxmox VM/LXC provisioning specifics (bpg/proxmox provider, templates, cloud-init); use **virtualization** - this skill owns general HCL/module/state work
 
 ## AI Self-Check
 

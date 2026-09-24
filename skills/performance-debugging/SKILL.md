@@ -31,6 +31,7 @@ reproduced symptom.
 - Designing benchmark, load-test, soak-test, or capacity-test infrastructure; use **testing**
 - Diagnosing database query plans or database engine health; use **databases**
 - Changing Kubernetes limits, autoscaling, nodes, or infrastructure topology; use **kubernetes**
+- Consumer lag, queue backlog, or redelivery symptoms; use **message-queues**
 
 ## Workflow
 
@@ -47,7 +48,8 @@ Use the baseline to separate CPU saturation, allocation/GC pressure, heap retent
 I/O wait, queueing, and downstream latency. Choose the smallest discriminating profile or trace:
 CPU profile for hot compute, allocation profile for allocation rate, heap snapshot for retained
 objects, mutex/lock profile for contention, and a trace or dependency timing for waits outside the
-process. Capture a profile during the symptom, not only when idle.
+process. Capture a profile during the symptom, not only when idle. Read `references/profilers.md`
+for the standard tool and representative command per runtime and profile type.
 
 ### 3. Capture safely
 
@@ -92,6 +94,10 @@ See `references/output-contract.md` for the full contract.
   contract and write it to `docs/local/audits/performance-debugging/<YYYY-MM-DD>-<slug>.md`.
   Interactive diagnosis and implementation remain conversational.
 - **Severity scale:** `P0 | P1 | P2 | P3 | info`
+
+## Reference Files
+
+- `references/profilers.md` - standard profiler and representative command per runtime and profile type
 
 ## Sources
 

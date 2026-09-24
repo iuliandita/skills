@@ -468,6 +468,7 @@ See `references/output-contract.md` for the full contract.
 - **code-review** - for reviewing AI application code quality beyond AI-specific patterns.
 - **backend-api** - for the HTTP API layer wrapping AI features. Use backend-api for contract design, auth, and route structure; use this skill for the LLM integration within those handlers.
 - **code-simplification** - for auditing AI-generated application code for hallucinated APIs, over-abstraction, and slop patterns introduced by AI generation tools.
+- **testing** - for non-AI test infrastructure: unit/integration test harnesses and CI coverage gates. This skill covers model evaluation; testing covers the surrounding test harness.
 
 ## Rules
 

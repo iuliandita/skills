@@ -17,6 +17,10 @@ does not provide. Make the delivery contract explicit: who owns a message, when 
 to repeat, how poison messages stop blocking progress, and how recovery avoids replaying more than
 intended.
 
+**Target versions** (September 2026):
+- Apache Kafka **4.3.1** (2026-06-25; 4.x is KRaft-only, ZooKeeper removed since 4.0.0 released 2025-03-18)
+- RabbitMQ **4.3.6** current, **4.2.10** previous lane (https://www.rabbitmq.com/release-information)
+
 ## When to use
 
 - Designing Kafka, RabbitMQ, or compatible producer and consumer delivery behavior
@@ -31,6 +35,7 @@ intended.
 - Modeling a database transaction, schema, outbox table, or data-store recovery; use **databases**
 - Designing HTTP, GraphQL, or gRPC request contracts; use **backend-api**
 - Editing Kubernetes, Terraform, or broker deployment configuration; use the matching infrastructure skill
+- CPU, heap, allocation, or lock profiling of a producer or consumer process; use **performance-debugging**
 
 ## Workflow
 
