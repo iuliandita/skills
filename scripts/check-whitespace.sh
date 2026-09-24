@@ -16,7 +16,15 @@ cd "$ROOT"
 BASE_REF="${BASE_REF:-}"
 
 if [[ -n "$BASE_REF" ]]; then
-  git fetch --quiet origin "$BASE_REF" --depth=1
+  # Only shallow an already-shallow clone; a --depth=1 fetch on a full clone
+  # strands origin/$BASE_REF behind a boundary that breaks merge-base for every
+  # check that runs after this one, so deepen instead of shallowing further.
+  if [[ "$(git rev-parse --is-shallow-repository)" == "true" ]]; then
+    git fetch --quiet origin "$BASE_REF" --depth=1
+    git merge-base HEAD "origin/$BASE_REF" >/dev/null 2>&1 || git fetch --quiet --deepen=50 origin "$BASE_REF"
+  else
+    git fetch --quiet origin "$BASE_REF"
+  fi
   range="origin/$BASE_REF..HEAD"
 elif base="$(git merge-base HEAD origin/main 2>/dev/null)" && [[ "$base" != "$(git rev-parse HEAD)" ]]; then
   range="$base..HEAD"

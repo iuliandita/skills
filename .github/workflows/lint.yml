@@ -121,6 +121,9 @@ jobs:
       - name: Test private leak marker behavior
         run: ./scripts/test-private-skill-leaks.sh
 
+      - name: Test CI base ref checks
+        run: ./scripts/test-ci-base-checks.sh
+
       - name: Shellcheck scripts
         run: shellcheck install.sh scripts/*.sh
 
