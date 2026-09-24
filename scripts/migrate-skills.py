@@ -335,23 +335,140 @@ def migrate(args: argparse.Namespace) -> int:
     return 0
 
 
+def cleanup_legacy_dir(args: argparse.Namespace) -> int:
+    """Unlink installer-owned links in a dropped tool dir once the new dir serves the same skill."""
+    source = args.source.resolve(strict=True)
+    legacy = args.legacy_dir
+    if not legacy.is_dir():
+        return 0
+    legacy_real = legacy.resolve(strict=True)
+    new_real = args.new_dir.resolve(strict=False)
+    canonical = args.link_root.resolve(strict=False)
+    for other, label in ((new_real, "new directory"), (canonical, "canonical directory"), (source, "source")):
+        if legacy_real == other or path_is_within(legacy_real, other) or path_is_within(other, legacy_real):
+            print(f"SKIP all: legacy directory aliases the {label}")
+            return 0
+    backup_base = args.backup_dir.resolve(strict=False)
+    for other in (legacy_real, new_real, canonical, source):
+        if backup_base == other or path_is_within(backup_base, other):
+            raise ValidationError("backup directory must be outside the legacy, new, canonical, and source directories")
+    lock_path = legacy / ".skills-lock.json"
+    lock, reason = read_lock(lock_path, source)
+    if lock is None:
+        if reason in {"missing lock file", "lock source does not match requested source"}:
+            print(f"SKIP all: {reason}")
+            return 0
+        raise ValidationError(f"{lock_path}: {reason}")
+
+    removable: list[str] = []
+    stale: list[str] = []
+    for name in sorted(lock["skills"]):
+        path = legacy / name
+        if not path.exists() and not path.is_symlink():
+            stale.append(name)
+            continue
+        if not path.is_symlink():
+            print(f"SKIP {name}: not a symlink; left in place")
+            continue
+        try:
+            target = path.resolve(strict=True)
+        except OSError:
+            print(f"SKIP {name}: broken symlink; left in place")
+            continue
+        try:
+            expected = (canonical / name).resolve(strict=True)
+        except OSError:
+            expected = None
+        if expected is None or target != expected:
+            print(f"SKIP {name}: symlink does not point at the canonical skill; left in place")
+            continue
+        replacement = args.new_dir / name
+        try:
+            replaced = (replacement / "SKILL.md").is_file() and replacement.resolve(strict=True) == expected
+        except OSError:
+            replaced = False
+        if not replaced:
+            print(f"SKIP {name}: no verified replacement in {args.new_dir}")
+            continue
+        removable.append(name)
+    listed = set(lock["skills"])
+    for entry in sorted(legacy.iterdir()):
+        if not entry.name.startswith(".") and entry.name not in listed:
+            print(f"SKIP {entry.name}: not recorded in the lock; left in place")
+
+    if not removable and not stale:
+        print("NOOP: nothing to clean up")
+        return 0
+    if not args.apply:
+        for name in removable:
+            print(f"DRY-RUN unlink {name}: replacement verified in {args.new_dir}")
+        for name in stale:
+            print(f"DRY-RUN prune lock record {name}: path already absent")
+        return 0
+
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
+    backup = backup_base / ".legacy-dir-cleanup" / stamp
+    suffix = 1
+    while backup.exists() or backup.is_symlink():
+        suffix += 1
+        backup = backup_base / ".legacy-dir-cleanup" / f"{stamp}-{suffix}"
+    try:
+        backup.mkdir(parents=True)
+        shutil.copy2(lock_path, backup / ".skills-lock.json")
+        rows = []
+        for name in removable:
+            link_target = os.readlink(legacy / name)
+            (backup / name).symlink_to(link_target)
+            rows.append(f"{name}\t{legacy / name}\t{link_target}\n")
+        (backup / "links.tsv").write_text("".join(rows), encoding="utf-8")
+    except OSError as error:
+        raise ValidationError(f"backup failed, nothing removed: {error}") from error
+    print(f"BACKUP {backup}")
+
+    updates: dict[str, dict[str, str] | None] = {}
+    for name in removable:
+        (legacy / name).unlink()
+        updates[name] = None
+        print(f"APPLIED unlink {name}")
+    for name in stale:
+        updates[name] = None
+        print(f"APPLIED prune lock record {name}")
+    if all(name in updates for name in lock["skills"]):
+        lock_path.unlink()
+        print(f"APPLIED remove lock {lock_path}")
+    else:
+        write_lock(lock_path, lock, source, updates)
+    return 0
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--manifest", type=Path, required=True)
+    parser.add_argument("--manifest", type=Path)
     parser.add_argument("--source", type=Path, required=True)
-    parser.add_argument("--dest", type=Path, required=True)
+    parser.add_argument("--dest", type=Path)
+    parser.add_argument("--legacy-dir", type=Path)
+    parser.add_argument("--new-dir", type=Path)
     parser.add_argument("--link-root", type=Path)
     parser.add_argument("--protected-root", type=Path)
     parser.add_argument("--backup-dir", type=Path)
     parser.add_argument("--applied-file", type=Path)
     parser.add_argument("--preserve-shared-canonical", action="store_true")
     parser.add_argument("--apply", action="store_true")
-    return parser.parse_args()
+    args = parser.parse_args()
+    if args.legacy_dir is not None:
+        if args.new_dir is None or args.link_root is None or args.backup_dir is None:
+            parser.error("--legacy-dir requires --new-dir, --link-root, and --backup-dir")
+    elif args.manifest is None or args.dest is None:
+        parser.error("--manifest and --dest are required")
+    return args
 
 
 def main() -> int:
     try:
-        return migrate(parse_args())
+        args = parse_args()
+        if args.legacy_dir is not None:
+            return cleanup_legacy_dir(args)
+        return migrate(args)
     except (ValidationError, OSError) as error:
         print(f"ERROR: {error}", file=sys.stderr)
         return 2

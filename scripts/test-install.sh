@@ -235,8 +235,8 @@ test_commandcode_and_agy_targets() {
   trap 'rm -rf "$tmp"' RETURN
 
   HOME="$tmp" "$ROOT/install.sh" --tool commandcode --link --no-backup docker >/dev/null
-  if [[ ! -e "$tmp/.commandcode/skills/docker" ]]; then
-    fail "commandcode target did not install to ~/.commandcode/skills"
+  if [[ ! -d "$tmp/.agents/skills/docker" || -e "$tmp/.commandcode" ]]; then
+    fail "commandcode target did not install once into ~/.agents/skills"
   fi
 
   HOME="$tmp" "$ROOT/install.sh" --tool agy --link --no-backup docker >/dev/null
@@ -572,6 +572,241 @@ PY
   trap - RETURN
 }
 
+tree_hash() {
+  python3 - "$1" <<'PY'
+import hashlib
+import os
+import sys
+
+root = sys.argv[1]
+digest = hashlib.sha256()
+for directory, dirs, files in os.walk(root, followlinks=False):
+    dirs.sort()
+    for name in sorted(dirs + files):
+        path = os.path.join(directory, name)
+        digest.update(f"{os.path.relpath(path, root)}\0{os.lstat(path).st_mode:o}\0".encode())
+        if os.path.islink(path):
+            digest.update(os.readlink(path).encode())
+        elif os.path.isfile(path):
+            with open(path, "rb") as file:
+                digest.update(file.read())
+print(digest.hexdigest())
+PY
+}
+
+# Recreate the pre-#212 layout: commandcode links in ~/.commandcode/skills.
+make_legacy_commandcode() {
+  local home="$1"
+  shift
+  HOME="$home" COMMANDCODE_SKILLS_DIR="$home/.commandcode/skills" \
+    "$ROOT/install.sh" --tool commandcode --link --no-backup "$@" >/dev/null
+}
+
+lock_names() {
+  python3 -c 'import json,sys; print(" ".join(sorted(json.load(open(sys.argv[1]))["skills"])))' "$1"
+}
+
+test_remapped_tools_install_once_into_agents_dir() {
+  local tmp tool home
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  for tool in codex commandcode opencode; do
+    HOME="$tmp/$tool-copy" "$ROOT/install.sh" --tool "$tool" --no-backup docker >/dev/null
+    HOME="$tmp/$tool-link" "$ROOT/install.sh" --tool "$tool" --link --no-backup docker >/dev/null
+    for home in "$tmp/$tool-copy" "$tmp/$tool-link"; do
+      [[ -d "$home/.agents/skills/docker" && ! -L "$home/.agents/skills/docker" ]] || fail "$tool did not install into ~/.agents/skills"
+      [[ ! -e "$home/.codex/skills" && ! -e "$home/.commandcode" && ! -e "$home/.config/opencode/skills" ]] || fail "$tool created a second skill dir"
+    done
+  done
+  HOME="$tmp/override" CODEX_SKILLS_DIR="$tmp/override/.codex/skills" "$ROOT/install.sh" --tool codex --no-backup docker >/dev/null
+  [[ -d "$tmp/override/.codex/skills/docker" ]] || fail "CODEX_SKILLS_DIR override was not honored"
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_opencode_link_into_canonical_syncs_permissions() {
+  local tmp config before
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  config="$tmp/.config/opencode/opencode.json"
+  mkdir -p "$(dirname "$config")"
+  printf '%s\n' '{"permission":{"skill":{"*":"deny","git":"deny"}}}' > "$config"
+  HOME="$tmp" "$ROOT/install.sh" --tool opencode --link --no-backup docker git >/dev/null
+  python3 - "$config" <<'PY'
+import json
+import sys
+
+skills = json.load(open(sys.argv[1], encoding="utf-8"))["permission"]["skill"]
+assert skills == {"*": "deny", "git": "deny", "docker": "allow"}, skills
+PY
+  before="$(tree_hash "$tmp")"
+  HOME="$tmp" "$ROOT/install.sh" --tool opencode --link --migrate >/dev/null
+  [[ "$(tree_hash "$tmp")" == "$before" ]] || fail "opencode migration preview on shared canonical changed files"
+  HOME="$tmp" "$ROOT/install.sh" --tool opencode --link --migrate --apply >/dev/null
+  [[ -d "$tmp/.agents/skills/docker" ]] || fail "opencode migration apply on shared canonical removed a skill"
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_install_hints_at_legacy_cleanup() {
+  local tmp output
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  output="$(HOME="$tmp/clean" "$ROOT/install.sh" --tool commandcode --link --no-backup docker)"
+  if grep -q 'old link' <<< "$output"; then
+    fail "install printed a cleanup hint without legacy links"
+  fi
+  make_legacy_commandcode "$tmp/old" docker git
+  output="$(HOME="$tmp/old" "$ROOT/install.sh" --tool commandcode --no-backup docker)"
+  grep -q '2 old link(s) in .*/.commandcode/skills .*--migrate --tool commandcode' <<< "$output" || fail "install did not hint at legacy cleanup"
+  [[ -L "$tmp/old/.commandcode/skills/docker" ]] || fail "plain install removed a legacy link"
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_legacy_cleanup_end_to_end() {
+  local tmp old before output backup
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  old="$tmp/.commandcode/skills"
+  make_legacy_commandcode "$tmp" docker git ansible
+  rm -rf "$tmp/.agents/skills/ansible"
+  ln -s "$tmp/.agents/skills/docker" "$old/unlisted"
+  ln -s /nonexistent "$old/foreign"
+  mkdir "$old/user-skill"
+  printf '%s\n' 'mine' > "$old/user-skill/SKILL.md"
+
+  HOME="$tmp" "$ROOT/install.sh" --tool commandcode --link --no-backup docker >/dev/null
+  before="$(tree_hash "$tmp")"
+  output="$(HOME="$tmp" "$ROOT/install.sh" --tool commandcode --migrate)"
+  [[ "$(tree_hash "$tmp")" == "$before" ]] || fail "cleanup preview changed files"
+  grep -q 'DRY-RUN unlink docker' <<< "$output" || fail "preview did not list docker"
+  grep -q 'SKIP ansible: broken symlink' <<< "$output" || fail "preview did not report the broken link"
+
+  HOME="$tmp" "$ROOT/install.sh" --tool commandcode --migrate --apply >/dev/null
+  [[ ! -e "$old/docker" && ! -L "$old/docker" && ! -L "$old/git" ]] || fail "apply kept replaced links"
+  [[ -L "$old/ansible" && -L "$old/unlisted" && -L "$old/foreign" && -f "$old/user-skill/SKILL.md" ]] || fail "apply touched entries it does not own"
+  [[ "$(lock_names "$old/.skills-lock.json")" == "ansible" ]] || fail "lock does not match the remaining owned entries"
+  backup="$(find "$tmp/.commandcode/.skills-backups/skills/.legacy-dir-cleanup" -mindepth 1 -maxdepth 1 -type d)"
+  [[ -f "$backup/.skills-lock.json" && -L "$backup/docker" ]] || fail "backup is missing the lock or link"
+  [[ "$(cut -f1 "$backup/links.tsv" | tr '\n' ' ')" == "docker git " ]] || fail "backup record lists the wrong links"
+  [[ -d "$tmp/.agents/skills/docker" && -d "$tmp/.agents/skills/git" ]] || fail "apply touched the canonical dir"
+
+  before="$(tree_hash "$tmp")"
+  output="$(HOME="$tmp" "$ROOT/install.sh" --tool commandcode --migrate --apply)"
+  grep -q 'NOOP: nothing to clean up' <<< "$output" || fail "repeat apply was not a no-op"
+  [[ "$(tree_hash "$tmp")" == "$before" ]] || fail "repeat apply changed files"
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_legacy_cleanup_backup_failure_removes_nothing() {
+  local tmp before
+  tmp="$(mktemp -d)"
+  trap 'chmod -R u+w "$tmp"; rm -rf "$tmp"' RETURN
+  make_legacy_commandcode "$tmp" docker git
+  mkdir "$tmp/readonly"
+  chmod 555 "$tmp/readonly"
+  before="$(tree_hash "$tmp/.commandcode/skills")"
+  if HOME="$tmp" SKILLS_BACKUP_DIR="$tmp/readonly/backups" "$ROOT/install.sh" --tool commandcode --migrate --apply >/dev/null 2>&1; then
+    fail "apply succeeded although the backup could not be written"
+  fi
+  [[ "$(tree_hash "$tmp/.commandcode/skills")" == "$before" ]] || fail "failed backup still changed the legacy dir"
+  chmod -R u+w "$tmp"
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_legacy_cleanup_converges_after_interruption() {
+  local tmp old digest before
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  old="$tmp/.commandcode/skills"
+  make_legacy_commandcode "$tmp" docker git
+  mkdir "$old/kept"
+  printf '%s\n' 'copy' > "$old/kept/SKILL.md"
+  python3 - "$old/.skills-lock.json" <<'PY'
+import json
+import sys
+
+lock = json.load(open(sys.argv[1], encoding="utf-8"))
+lock["skills"]["kept"] = "0" * 64
+json.dump(lock, open(sys.argv[1], "w", encoding="utf-8"))
+PY
+  digest="$(sha256sum "$old/.skills-lock.json")"
+  rm "$old/docker"
+  [[ "$(sha256sum "$old/.skills-lock.json")" == "$digest" ]] || fail "fixture changed the lock"
+  HOME="$tmp" "$ROOT/install.sh" --tool commandcode --migrate --apply >/dev/null
+  [[ ! -L "$old/git" && -d "$old/kept" ]] || fail "retry did not converge"
+  [[ "$(lock_names "$old/.skills-lock.json")" == "kept" ]] || fail "retry left stale lock records"
+  before="$(tree_hash "$tmp")"
+  HOME="$tmp" "$ROOT/install.sh" --tool commandcode --migrate --apply >/dev/null
+  [[ "$(tree_hash "$tmp")" == "$before" ]] || fail "repeat apply after retry changed files"
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_legacy_cleanup_refuses_unsafe_layouts() {
+  local tmp old before output
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  old="$tmp/a/.commandcode/skills"
+  make_legacy_commandcode "$tmp/a" docker
+  python3 - "$old/.skills-lock.json" <<'PY'
+import json
+import sys
+
+lock = json.load(open(sys.argv[1], encoding="utf-8"))
+lock["skills"]["../../.agents/skills/docker"] = "0" * 64
+json.dump(lock, open(sys.argv[1], "w", encoding="utf-8"))
+PY
+  before="$(tree_hash "$tmp/a")"
+  if HOME="$tmp/a" "$ROOT/install.sh" --tool commandcode --migrate --apply >/dev/null 2>&1; then
+    fail "apply accepted a lock with a traversal name"
+  fi
+  [[ "$(tree_hash "$tmp/a")" == "$before" ]] || fail "traversal lock changed files"
+  printf '%s\n' '{not json' > "$old/.skills-lock.json"
+  if output="$(HOME="$tmp/a" "$ROOT/install.sh" --tool commandcode --migrate --apply 2>&1)"; then
+    fail "apply accepted a malformed lock"
+  fi
+  grep -q 'invalid lock file' <<< "$output" || fail "malformed lock error was unclear"
+  [[ -L "$old/docker" ]] || fail "malformed lock run removed a link"
+
+  make_legacy_commandcode "$tmp/b" docker
+  before="$(tree_hash "$tmp/b")"
+  HOME="$tmp/b" COMMANDCODE_SKILLS_DIR="$tmp/b/.commandcode/skills" "$ROOT/install.sh" --tool commandcode --migrate --apply >/dev/null
+  HOME="$tmp/b" "$ROOT/install.sh" --tool commandcode --dest "$tmp/b/.commandcode/skills" --migrate --apply >/dev/null
+  [[ -L "$tmp/b/.commandcode/skills/docker" ]] || fail "cleanup ran despite an override or --dest"
+
+  mkdir -p "$tmp/c/.agents/skills"
+  HOME="$tmp/c" "$ROOT/install.sh" --tool commandcode --no-backup docker >/dev/null
+  mkdir -p "$tmp/c/.commandcode"
+  ln -s "$tmp/c/.agents/skills" "$tmp/c/.commandcode/skills"
+  output="$(HOME="$tmp/c" "$ROOT/install.sh" --tool commandcode --migrate --apply)"
+  grep -q 'SKIP all: legacy directory aliases' <<< "$output" || fail "aliased legacy dir was not skipped"
+  [[ -d "$tmp/c/.agents/skills/docker" ]] || fail "aliased legacy dir cleanup removed the canonical skill"
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_legacy_cleanup_custom_canonical_needs_replacement() {
+  local tmp old canon
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  old="$tmp/.commandcode/skills"
+  canon="$tmp/canon"
+  SKILLS_CANONICAL_DIR="$canon" HOME="$tmp" COMMANDCODE_SKILLS_DIR="$old" \
+    "$ROOT/install.sh" --tool commandcode --link --no-backup docker git >/dev/null
+  SKILLS_CANONICAL_DIR="$canon" HOME="$tmp" "$ROOT/install.sh" --tool commandcode --migrate --apply >/dev/null
+  [[ -L "$old/docker" && -L "$old/git" ]] || fail "cleanup removed links without a replacement in ~/.agents/skills"
+  SKILLS_CANONICAL_DIR="$canon" HOME="$tmp" "$ROOT/install.sh" --tool commandcode --link --no-backup docker >/dev/null
+  SKILLS_CANONICAL_DIR="$canon" HOME="$tmp" "$ROOT/install.sh" --tool commandcode --migrate --apply >/dev/null
+  [[ ! -L "$old/docker" && -L "$old/git" ]] || fail "subset cleanup did not remove exactly the replaced link"
+  [[ "$(lock_names "$old/.skills-lock.json")" == "git" ]] || fail "subset cleanup lock is inconsistent"
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
 test_backups_stay_outside_skill_root
 test_legacy_backups_are_migrated_outside_skill_root
 test_opencode_install_allows_installed_skills
@@ -599,4 +834,12 @@ test_opencode_noop_apply_keeps_permissions_unchanged
 test_copy_migration_rejects_backup_inside_canonical_root
 test_migration_rejects_irrelevant_flags
 test_force_refreshes_active_legacy_hash_without_provenance_upgrade
+test_remapped_tools_install_once_into_agents_dir
+test_opencode_link_into_canonical_syncs_permissions
+test_install_hints_at_legacy_cleanup
+test_legacy_cleanup_end_to_end
+test_legacy_cleanup_backup_failure_removes_nothing
+test_legacy_cleanup_converges_after_interruption
+test_legacy_cleanup_refuses_unsafe_layouts
+test_legacy_cleanup_custom_canonical_needs_replacement
 printf 'install tests passed\n'

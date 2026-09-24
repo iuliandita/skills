@@ -46,10 +46,10 @@ SUPPORTED_TOOLS=(
 
 declare -A TOOL_PATHS=(
   [claude]="${CLAUDE_SKILLS_DIR:-$HOME/.claude/skills}"
-  [codex]="${CODEX_SKILLS_DIR:-$HOME/.codex/skills}"
+  [codex]="${CODEX_SKILLS_DIR:-$HOME/.agents/skills}"
   [cursor]="${CURSOR_SKILLS_DIR:-$HOME/.cursor/skills}"
   [windsurf]="${WINDSURF_SKILLS_DIR:-$HOME/.codeium/windsurf/skills}"
-  [opencode]="${OPENCODE_SKILLS_DIR:-$HOME/.config/opencode/skills}"
+  [opencode]="${OPENCODE_SKILLS_DIR:-$HOME/.agents/skills}"
   [copilot]="${COPILOT_SKILLS_DIR:-$HOME/.copilot/skills}"
   # Legacy: Gemini CLI consumer accounts moved to antigravity.
   [gemini]="${GEMINI_SKILLS_DIR:-$HOME/.agents/skills}"
@@ -65,7 +65,7 @@ declare -A TOOL_PATHS=(
   [qwen]="${QWEN_SKILLS_DIR:-$HOME/.qwen/skills}"
   [crush]="${CRUSH_SKILLS_DIR:-$HOME/.config/crush/skills}"
   [antigravity]="${ANTIGRAVITY_SKILLS_DIR:-$HOME/.gemini/config/skills}"
-  [commandcode]="${COMMANDCODE_SKILLS_DIR:-$HOME/.commandcode/skills}"
+  [commandcode]="${COMMANDCODE_SKILLS_DIR:-$HOME/.agents/skills}"
   [augment]="${AUGMENT_SKILLS_DIR:-$HOME/.augment/skills}"
   [openhands]="${OPENHANDS_SKILLS_DIR:-$HOME/.openhands/skills}"
   [trae]="${TRAE_SKILLS_DIR:-$HOME/.trae/skills}"
@@ -74,6 +74,19 @@ declare -A TOOL_PATHS=(
   # OMP_SKILLS_DIR is installer-only; omp discovers ~/.agents/skills natively.
   [omp]="${OMP_SKILLS_DIR:-$HOME/.agents/skills}"
   [portable]="${PORTABLE_SKILLS_DIR:-$HOME/.skills}"
+)
+
+# Earlier default dirs for tools that now install into ~/.agents/skills, which
+# they also read; --migrate cleans our old links there unless the override is set.
+declare -A LEGACY_TOOL_PATHS=(
+  [codex]="$HOME/.codex/skills"
+  [commandcode]="$HOME/.commandcode/skills"
+  [opencode]="$HOME/.config/opencode/skills"
+)
+declare -A LEGACY_TOOL_ENV=(
+  [codex]=CODEX_SKILLS_DIR
+  [commandcode]=COMMANDCODE_SKILLS_DIR
+  [opencode]=OPENCODE_SKILLS_DIR
 )
 
 OPENCODE_CONFIG_FILE="${OPENCODE_CONFIG_FILE:-$HOME/.config/opencode/opencode.json}"
@@ -138,7 +151,8 @@ Options:
   --link              Symlink mode: install once to canonical dir, symlink per tool
   --list              List available skills and install status
   --check             Compare installed skills against source via lock file
-  --migrate           Preview recorded legacy-skill migrations (use --apply to run)
+  --migrate           Preview recorded legacy-skill migrations and old tool-dir
+                      link cleanup (use --apply to run)
   --apply             Apply a migration preview; requires --migrate
   --force             Overwrite existing skills without prompting
   --no-backup         Skip backup of existing skills
@@ -612,6 +626,33 @@ paths_match() {
   [[ "$(readlink -f "$1")" == "$(readlink -f "$2")" ]]
 }
 
+# ── Legacy tool dirs ──────────────────────────────────────────────────
+legacy_cleanup_dir() {
+  local tool="$1"
+  local legacy="${LEGACY_TOOL_PATHS[$tool]:-}"
+  [[ -n "$legacy" && -d "$legacy" ]] || return 1
+  local env_name="${LEGACY_TOOL_ENV[$tool]}"
+  [[ -z "${!env_name:-}" ]] || return 1
+  printf '%s\n' "$legacy"
+}
+
+run_legacy_cleanup() {
+  local tool="$1" legacy="$2"
+  shift 2
+  python3 "$MIGRATOR" --source "$SKILLS_SRC" --legacy-dir "$legacy" \
+    --new-dir "$(resolve_tool_path "$tool")" --link-root "$CANONICAL_DIR" \
+    --backup-dir "${SKILLS_BACKUP_DIR:-$(dirname "$legacy")/.skills-backups/$(basename "$legacy")}" "$@"
+}
+
+legacy_cleanup_hint() {
+  local tool="$1" legacy output count
+  legacy="$(legacy_cleanup_dir "$tool")" || return 0
+  output="$(run_legacy_cleanup "$tool" "$legacy")" || return 0
+  count="$(grep -c '^DRY-RUN unlink ' <<< "$output" || true)"
+  (( count > 0 )) || return 0
+  printf '  [i] %d old link(s) in %s duplicate this install; preview cleanup with: install.sh --migrate --tool %s\n' "$count" "$legacy" "$tool"
+}
+
 # ── Check mode ────────────────────────────────────────────────────────
 check_updates() {
   local dest_dir="$1"
@@ -770,7 +811,6 @@ main() {
   if [[ "$migrate_mode" == "true" && ( "$force" == "true" || "$no_backup" == "true" ) ]]; then
     printf '%s\n' "--force and --no-backup cannot be used with --migrate" >&2; exit 1
   fi
-
   # Resolve primary destination (for --list, --check)
   local primary_dest
   if [[ -n "$dest_override" ]]; then
@@ -853,6 +893,22 @@ main() {
         fi
       done
     fi
+    if [[ -z "$dest_override" ]]; then
+      local cleanup_failed=0 legacy cleanup_args=()
+      local -A cleaned_dirs=()
+      [[ "$apply_migration" == "true" ]] && cleanup_args=(--apply)
+      for tool in "${tools[@]}"; do
+        legacy="$(legacy_cleanup_dir "$tool")" || continue
+        [[ -n "${cleaned_dirs[$legacy]:-}" ]] && continue
+        cleaned_dirs["$legacy"]=true
+        printf '\n[%s] old directory %s\n' "$tool" "$legacy"
+        if ! run_legacy_cleanup "$tool" "$legacy" "${cleanup_args[@]}"; then
+          printf '  [!] cleanup of %s failed\n' "$legacy" >&2
+          cleanup_failed=1
+        fi
+      done
+      (( cleanup_failed == 0 )) || exit 1
+    fi
     exit 0
   fi
 
@@ -894,21 +950,22 @@ main() {
       tool_dir="$(resolve_tool_path "$tool")"
       if [[ "$tool_dir" == "$CANONICAL_DIR" ]]; then
         printf '[%s] -> %s (matches canonical, skipping links)\n' "$tool" "$tool_dir"
-        continue
+      else
+        mkdir -p "$tool_dir"
+        ensure_lock_source "$tool_dir"
+        migrate_legacy_backups "$tool_dir"
+        printf '[%s] -> %s\n' "$tool" "$tool_dir"
+        for skill in "${skills[@]}"; do
+          validate_skill_name "$skill" || continue
+          [[ -d "$SKILLS_SRC/$skill" ]] || continue
+          create_link "$skill" "$tool_dir" "$force" "$no_backup"
+        done
+        write_lock "$tool_dir" "${skills[@]}"
       fi
-      mkdir -p "$tool_dir"
-      ensure_lock_source "$tool_dir"
-      migrate_legacy_backups "$tool_dir"
-      printf '[%s] -> %s\n' "$tool" "$tool_dir"
-      for skill in "${skills[@]}"; do
-        validate_skill_name "$skill" || continue
-        [[ -d "$SKILLS_SRC/$skill" ]] || continue
-        create_link "$skill" "$tool_dir" "$force" "$no_backup"
-      done
-      write_lock "$tool_dir" "${skills[@]}"
       if [[ "$tool" == "opencode" ]]; then
         sync_opencode_permissions "$OPENCODE_CONFIG_FILE" "${skills[@]}"
       fi
+      legacy_cleanup_hint "$tool"
       printf '\n'
     done
 
@@ -963,6 +1020,7 @@ main() {
       fi
 
       write_lock "$dest" "${skills[@]}"
+      [[ -n "$dest_override" ]] || legacy_cleanup_hint "$tool"
       printf '\n'
     done
 
