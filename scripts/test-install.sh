@@ -3,6 +3,9 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
+# Git hooks export GIT_DIR and friends; fixture repos must not inherit them.
+while IFS= read -r var; do unset "$var"; done < <(git rev-parse --local-env-vars)
+
 fail() {
   printf 'FAIL: %s\n' "$1" >&2
   exit 1
