@@ -330,25 +330,10 @@ Once CI is green, dispatch on `$FORGE`:
 | `bitbucket` | Web UI or REST API with `"merge_strategy": "squash"` (no subject/body field - set the commit message field manually) | `"close_source_branch": true` |
 | `unknown`/`bare` | Local: `git merge --no-ff` (or `--ff-only` after rebase) on base, push, `git branch -d` | N/A |
 
-For squash merges, always pass an explicit conventional subject and body instead of accepting
-the default. Without it, the forge falls back to the PR title as the commit subject, which is
-not always conventional-commit-shaped. Keep the PR number and the issue number distinct - the
-subject references the PR being merged, the body closes the issue it fixes:
-
-```bash
-# GitHub
-gh pr merge <PR_NUMBER> --squash --subject "type(scope): desc (#PR_NUMBER)" --body "Closes #ISSUE_NUMBER"
-# GitLab (single combined message field; put subject and body together)
-glab mr merge --squash --squash-message "type(scope): desc (#PR_NUMBER)
-
-Closes #ISSUE_NUMBER"
-# Forgejo
-fj pr merge <PR_NUMBER> --method squash --title "type(scope): desc (#PR_NUMBER)" --message "Closes #ISSUE_NUMBER"
-# Gitea
-tea pulls merge <PR_NUMBER> --style squash --title "type(scope): desc (#PR_NUMBER)" --message "Closes #ISSUE_NUMBER"
-# Bitbucket: no subject/body flag on the REST merge endpoint - set the squash commit message
-# by hand in the web UI merge dialog, or via the "message" field if scripting the API.
-```
+For squash merges, always pass an explicit conventional subject such as
+`type(scope): desc (#PR_NUMBER)` and a `Closes #ISSUE_NUMBER` body. Without it, the forge falls
+back to the PR title as the commit subject, which is not always conventional. Keep the PR and
+issue numbers distinct. Per-forge commands are in `references/finish.md`.
 
 Check the repo's merge convention before picking a style. If multiple are allowed, match recent merge history: `git log --merges --oneline "$BASE_BRANCH" | head -5`.
 

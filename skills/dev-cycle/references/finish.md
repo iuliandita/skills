@@ -551,7 +551,7 @@ MERGE_SHA=$(gh pr view "$PR_NUMBER" --json mergeCommit --jq '.mergeCommit.oid')
 # Note: --delete-branch in gh is --remove-source-branch in glab.
 # glab has one combined message field (--squash-message), not separate subject/body.
 glab mr merge --squash --remove-source-branch \
-  --squash-message "type(scope): desc (#$MR_IID)
+  --squash-message "type(scope): desc (!$MR_IID)
 
 Closes #ISSUE_NUMBER"
 glab mr merge --rebase --remove-source-branch
