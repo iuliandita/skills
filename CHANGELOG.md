@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.2.0](https://github.com/iuliandita/skills/compare/v2.1.1...v2.2.0) (2026-09-24)
+
+### Features
+
+* **install:** add `--detect`, which lists harness candidates from binaries on PATH and harness-owned config files without running anything, and `--save`, which stores the install selection and the checkout's source identity for later runs ([#226](https://github.com/iuliandita/skills/pull/226), [#204](https://github.com/iuliandita/skills/issues/204)).
+* **install:** add a cron-safe `--update` that fast-forwards the saved source to a pinned commit, hands off to the updated installer under the same lock, and replaces only skills whose content changed; local edits are kept and reported, and every outcome has a documented exit code ([#227](https://github.com/iuliandita/skills/pull/227), [#204](https://github.com/iuliandita/skills/issues/204)).
+
+### Bug Fixes
+
+* **install:** stage, record, and roll back skill replacements under a shared lock, recover interrupted runs, write the lock file and OpenCode config atomically, and exit non-zero whenever a step fails ([#225](https://github.com/iuliandita/skills/pull/225), [#223](https://github.com/iuliandita/skills/issues/223)).
+* **install:** make `--doctor` lead with blocking findings and collapse overlaps the harness resolves itself into counts, with `--verbose` for the full list ([#222](https://github.com/iuliandita/skills/pull/222), [#221](https://github.com/iuliandita/skills/issues/221)).
+
 ## [2.1.1](https://github.com/iuliandita/skills/compare/v2.1.0...v2.1.1) (2026-09-24)
 
 ### Bug Fixes
