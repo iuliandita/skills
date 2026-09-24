@@ -186,6 +186,15 @@ stay and are reported. Before unlinking, it saves the links and the old lock und
 if the backup fails, nothing is removed. The old lock is deleted once none of its entries remain.
 The cleanup is skipped with `--dest` or when the tool's `*_SKILLS_DIR` override is set.
 
+`--doctor` reports skill names a harness can reach through more than one directory. It checks
+a static table of the global directories each harness reads, not the harness's own config
+toggles, and changes nothing. It exits 1 on duplicates the harness does not resolve itself.
+
+```bash
+./install.sh --doctor                            # all tools in the table
+./install.sh --doctor --tool commandcode,opencode
+```
+
 Common aliases also work: `claude-code`, `openai-codex`, `github-copilot`, `gemini-cli`, `kiro-cli`, `qwen-code`, `kimi-cli`, `agy` (Antigravity CLI), `command-code`, `cmdc` (Command Code), and `oh-my-pi` (Oh My Pi).
 
 For a target or project directory outside this table, use `--tool portable --dest /path/to/skills`.

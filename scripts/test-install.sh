@@ -807,6 +807,31 @@ test_legacy_cleanup_custom_canonical_needs_replacement() {
   trap - RETURN
 }
 
+test_doctor_reports_duplicates_read_only() {
+  local tmp before output
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  HOME="$tmp" "$ROOT/install.sh" --tool claude,commandcode --link --no-backup docker >/dev/null
+  mkdir -p "$tmp/.config/opencode"
+  printf '%s\n' '{"permission":{"skill":{"*":"deny"}}}' > "$tmp/.config/opencode/opencode.json"
+  output="$(HOME="$tmp" "$ROOT/install.sh" --doctor --tool commandcode,opencode)" || fail "doctor failed on a clean layout"
+  grep -q 'harness config toggles are not read' <<< "$output" || fail "doctor did not state its static scope"
+  grep -q '\[i\] docker: .*/.claude/skills/docker, .*/.agents/skills/docker' <<< "$output" || fail "doctor did not report the OpenCode compat overlap as info"
+
+  make_legacy_commandcode "$tmp" git
+  before="$(tree_hash "$tmp")"
+  if output="$(HOME="$tmp" "$ROOT/install.sh" --doctor 2>&1)"; then
+    fail "doctor passed with a planted duplicate"
+  fi
+  grep -q '\[!\] git: .*/.commandcode/skills/git, .*/.agents/skills/git' <<< "$output" || fail "doctor did not name the duplicate paths"
+  [[ "$(tree_hash "$tmp")" == "$before" ]] || fail "doctor changed files"
+  if HOME="$tmp" "$ROOT/install.sh" --doctor --link >/dev/null 2>&1; then
+    fail "doctor accepted --link"
+  fi
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
 test_backups_stay_outside_skill_root
 test_legacy_backups_are_migrated_outside_skill_root
 test_opencode_install_allows_installed_skills
@@ -842,4 +867,5 @@ test_legacy_cleanup_backup_failure_removes_nothing
 test_legacy_cleanup_converges_after_interruption
 test_legacy_cleanup_refuses_unsafe_layouts
 test_legacy_cleanup_custom_canonical_needs_replacement
+test_doctor_reports_duplicates_read_only
 printf 'install tests passed\n'

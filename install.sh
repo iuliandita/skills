@@ -89,6 +89,24 @@ declare -A LEGACY_TOOL_ENV=(
   [opencode]=OPENCODE_SKILLS_DIR
 )
 
+# Global dirs each harness reads, for --doctor. Static; harness config is not read.
+# Row: tool|dir|dedupe group|evidence. Duplicates confined to roots of one group
+# are resolved by the harness itself and reported as info.
+DOCTOR_ROOTS=(
+  "claude|$HOME/.claude/skills||verified: Claude Code docs"
+  "codex|$HOME/.agents/skills||verified: Codex skills docs (0.156.1)"
+  "commandcode|$HOME/.commandcode/skills||verified: Command Code dist/cli.mjs user root"
+  "commandcode|$HOME/.agents/skills||verified: Command Code dist/cli.mjs compat root"
+  "opencode|$HOME/.config/opencode/skills||verified: OpenCode 2.0.14 config skill plugin"
+  "opencode|$HOME/.claude/skills|compat|verified: OpenCode 2.0.14 compatibility plugin, one skill per id"
+  "opencode|$HOME/.agents/skills|compat|verified: OpenCode 2.0.14 compatibility plugin, one skill per id"
+  "omp|$HOME/.agents/skills|omp|verified: Oh My Pi native discovery"
+  "omp|$HOME/.claude/skills|omp|inferred: Oh My Pi claude compat provider"
+  "omp|$HOME/.codex/skills|omp|inferred: Oh My Pi codex compat provider"
+  "antigravity|$HOME/.gemini/config/skills||verified: single global dir"
+  "hermes|$HOME/.hermes/skills||verified: single global dir"
+)
+
 OPENCODE_CONFIG_FILE="${OPENCODE_CONFIG_FILE:-$HOME/.config/opencode/opencode.json}"
 
 declare -A TOOL_ALIASES=(
@@ -157,6 +175,8 @@ Options:
   --force             Overwrite existing skills without prompting
   --no-backup         Skip backup of existing skills
   --include-internal  Include skills marked metadata.internal: true
+  --doctor            Report skill names a harness can reach through more than
+                      one directory (read-only; all known tools unless --tool)
   --help              Show this help
 
 Symlink mode (--link):
@@ -178,6 +198,7 @@ Examples:
   install.sh --check --tool cursor              # Check Cursor install
   install.sh --migrate                          # Preview legacy-skill migration
   install.sh --migrate --apply --tool codex     # Apply owned Codex migration
+  install.sh --doctor --tool commandcode,opencode
   install.sh --tool portable --dest ~/.skills
   install.sh --list
 EOF
@@ -653,6 +674,93 @@ legacy_cleanup_hint() {
   printf '  [i] %d old link(s) in %s duplicate this install; preview cleanup with: install.sh --migrate --tool %s\n' "$count" "$legacy" "$tool"
 }
 
+# ── Doctor ────────────────────────────────────────────────────────────
+run_doctor() {
+  local tool row rows=()
+  for tool in "$@"; do
+    for row in "${DOCTOR_ROOTS[@]}"; do
+      [[ "${row%%|*}" == "$tool" ]] && rows+=("$row")
+    done
+  done
+  python3 - "$(IFS=,; printf '%s' "$*")" "${rows[@]}" <<'PY'
+from pathlib import Path
+import re
+import sys
+
+tools = sys.argv[1].split(",")
+table = [row.split("|", 3) for row in sys.argv[2:]]
+name_re = re.compile(r"""^name:\s*["']?(.+?)["']?\s*$""")
+
+
+def frontmatter_name(skill_md):
+    try:
+        lines = skill_md.read_text(encoding="utf-8", errors="replace").splitlines()
+    except OSError:
+        return None
+    if not lines or lines[0].strip() != "---":
+        return None
+    for line in lines[1:]:
+        if line.strip() == "---":
+            return None
+        if match := name_re.match(line):
+            return match.group(1)
+    return None
+
+
+print("Checking the static root table; harness config toggles are not read.")
+blocking = 0
+for tool in tools:
+    print(f"\n[{tool}]")
+    roots = []
+    seen = {}
+    for _, path, group, evidence in (row for row in table if row[0] == tool):
+        real = Path(path).resolve(strict=False)
+        if real in seen:
+            print(f"  {path}  (same directory as {seen[real]})")
+            continue
+        seen[real] = path
+        roots.append((path, group))
+        print(f"  {path}  ({evidence})")
+    if not roots:
+        print("  not in the static root table; nothing to compare")
+        continue
+    if len(roots) < 2:
+        print("  single root; nothing to compare")
+        continue
+    found = {}
+    for index, (path, _) in enumerate(roots):
+        root = Path(path)
+        if not root.is_dir():
+            continue
+        for entry in sorted(root.iterdir()):
+            if entry.name.startswith(".") or not (entry / "SKILL.md").is_file():
+                continue
+            for key in {entry.name, frontmatter_name(entry / "SKILL.md")} - {None}:
+                found.setdefault(key, {}).setdefault(index, str(entry))
+    clean = True
+    for key in sorted(found):
+        where = found[key]
+        if len(where) < 2:
+            continue
+        clean = False
+        groups = {roots[index][1] for index in where}
+        paths = ", ".join(where[index] for index in sorted(where))
+        if len(groups) == 1 and "" not in groups:
+            print(f"  [i] {key}: {paths} (resolved by the harness)")
+        else:
+            blocking += 1
+            print(f"  [!] {key}: {paths}")
+    if clean:
+        print("  no duplicates")
+
+print()
+if blocking:
+    print(f"{blocking} duplicate skill name(s) reachable through more than one directory.")
+    sys.exit(1)
+print("No blocking duplicates.")
+PY
+}
+
 # ── Check mode ────────────────────────────────────────────────────────
 check_updates() {
   local dest_dir="$1"
@@ -736,6 +844,7 @@ list_skills() {
 main() {
   local force=false no_backup=false link_mode=false
   local check_mode=false show_list=false include_internal=false migrate_mode=false apply_migration=false
+  local doctor_mode=false
   local dest_override=""
   local tools=() skills=()
 
@@ -760,12 +869,21 @@ main() {
       --force)            force=true ;;
       --no-backup)        no_backup=true ;;
       --include-internal) include_internal=true ;;
+      --doctor)           doctor_mode=true ;;
       --help|-h)          usage; exit 0 ;;
       -*)                 printf 'Unknown option: %s\n' "$1" >&2; usage; exit 1 ;;
       *)                  skills+=("$1") ;;
     esac
     shift
   done
+
+  local tools_given="${#tools[@]}"
+  if [[ "$doctor_mode" == "true" && "$tools_given" -eq 0 ]]; then
+    local row
+    for row in "${DOCTOR_ROOTS[@]}"; do
+      [[ " ${tools[*]} " == *" ${row%%|*} "* ]] || tools+=("${row%%|*}")
+    done
+  fi
 
   # Default tool
   if (( ${#tools[@]} == 0 )); then
@@ -811,6 +929,15 @@ main() {
   if [[ "$migrate_mode" == "true" && ( "$force" == "true" || "$no_backup" == "true" ) ]]; then
     printf '%s\n' "--force and --no-backup cannot be used with --migrate" >&2; exit 1
   fi
+  if [[ "$doctor_mode" == "true" ]]; then
+    if [[ "$link_mode$show_list$check_mode$migrate_mode$apply_migration$force$no_backup" == *true* \
+      || -n "$dest_override" || "$requested_skill_count" -gt 0 ]]; then
+      printf '%s\n' "--doctor is read-only and accepts only --tool" >&2; exit 1
+    fi
+    run_doctor "${tools[@]}"
+    exit 0
+  fi
+
   # Resolve primary destination (for --list, --check)
   local primary_dest
   if [[ -n "$dest_override" ]]; then
