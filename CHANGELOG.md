@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.1.0](https://github.com/iuliandita/skills/compare/v2.0.1...v2.1.0) (2026-09-24)
+
+### Features
+
+* **install:** add the `omp` (Oh My Pi) target, installed to `~/.agents/skills` with an installer-only `OMP_SKILLS_DIR` override, and mark `gemini` as a legacy target ([#207](https://github.com/iuliandita/skills/pull/207), [#200](https://github.com/iuliandita/skills/issues/200)).
+* **scripts:** accept user-supplied private leak markers from a gitignored `private-patterns.txt` or `SKILLS_PRIVATE_PATTERNS`, and fail on scanner errors ([#210](https://github.com/iuliandita/skills/pull/210), [#202](https://github.com/iuliandita/skills/issues/202)).
+
+### Bug Fixes
+
+* **llm-app-development:** refresh model facts for Opus 5.5, Sonnet 5, GPT-6 Sol/Luna, and DeepSeek V4.1 Flash; fix examples for thinking-on-by-default responses, sampling-parameter rejections, and incomplete stops ([#205](https://github.com/iuliandita/skills/pull/205), [#198](https://github.com/iuliandita/skills/issues/198)).
+* **skill-refiner:** refresh harness detection for Antigravity, Command Code, Oh My Pi, Hermes, and OpenCode, with updated headless forms, recorded probe results, and exact process-name matching ([#206](https://github.com/iuliandita/skills/pull/206), [#199](https://github.com/iuliandita/skills/issues/199)).
+* **dev-cycle:** pass explicit conventional squash subjects and bodies per forge, and allow start through finish in one session on explicit request ([#208](https://github.com/iuliandita/skills/pull/208), [#201](https://github.com/iuliandita/skills/issues/201)).
+
 ## [2.0.1](https://github.com/iuliandita/skills/compare/v2.0.0...v2.0.1) (2026-09-20)
 
 ### Bug Fixes
