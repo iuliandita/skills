@@ -410,7 +410,9 @@ def execute_action(state):
 ```python
 AGENT_CONFIG = {
     "max_iterations": 20,           # prevent infinite loops
-    "max_tokens_per_turn": 4096,    # limit per-call cost
+    "max_tokens_per_turn": 4096,    # limit per-call cost; thinking and tool calls share this
+                                     # cap, so raise it (see 16000 in the loop examples above)
+                                     # when adaptive thinking is on
     "total_token_budget": 100_000,  # cap total conversation cost
     "timeout_seconds": 300,         # 5 min max for the full agent run
     "tool_timeout_seconds": 30,     # per-tool execution timeout

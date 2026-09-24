@@ -162,7 +162,7 @@ Put a budget check before batch or agent calls, not only after billing data arri
 
 ```python
 BUDGET_USD = 0.50  # per-request ceiling
-input_price, output_price = 3.00, 15.00  # per 1M tokens
+input_price, output_price = 2.00, 10.00  # Claude Sonnet 5, per 1M tokens
 total_tokens = count_tokens(messages)
 estimated = (total_tokens * input_price + max_tokens * output_price) / 1_000_000
 if estimated > BUDGET_USD:

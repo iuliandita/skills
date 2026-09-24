@@ -123,7 +123,7 @@ ollama create devops-assistant -f Modelfile
 ollama run devops-assistant
 ```
 
-### Ollama 0.19 features
+### Features since Ollama 0.19
 
 - MLX backend for Apple Silicon (1.6x prefill, ~2x decode speed improvement)
 - ROCm 7 support for AMD GPUs (requires updated drivers)

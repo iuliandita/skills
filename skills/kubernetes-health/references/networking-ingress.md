@@ -16,6 +16,25 @@ dig +noall +comments +answer +authority +time=3 +tries=1 <hostname>
 echo | openssl s_client -servername <hostname> -connect <hostname>:443 2>&1 | openssl x509 -noout -dates -issuer -subject 2>&1
 ```
 
+## Gateway API (read-only)
+
+Detect the CRDs before running Gateway API checks; skip this section cleanly if they are absent.
+
+```bash
+kubectl --context <context> get crd gateways.gateway.networking.k8s.io
+kubectl --context <context> get gateways,httproutes -A
+kubectl --context <context> get gateway -n <namespace> <gateway> -o jsonpath='{.status}'
+kubectl --context <context> get httproute -n <namespace> <route> -o jsonpath='{.status.parents}'
+kubectl --context <context> get gatewayclass -o wide
+```
+
+Check the Gateway's top-level conditions for `Accepted` and `Programmed`, and each entry in
+`status.listeners` for its own conditions. Check HTTPRoute `status.parents[].conditions` for `Accepted` and `ResolvedRefs`, and
+confirm `backendRefs` resolve to Services that exist (`kubectl get svc -n <namespace> <name>`). A
+`ResolvedRefs: False` condition means a route points at a missing or misnamed backend - the
+Gateway API equivalent of an ingress with no matching Service. Check `GatewayClass` status for a
+missing or unhealthy controller before assuming Gateway resources are simply unconfigured.
+
 Surface the DNS and TLS error, do not swallow it. `dig ... 2>/dev/null` and
 `openssl ... 2>/dev/null` turn "DNS server unreachable" and "connection refused" into the same blank
 output as "name does not exist," which reads as a clean check. Keep `2>&1` and read the message:

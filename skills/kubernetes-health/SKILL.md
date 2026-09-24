@@ -161,7 +161,7 @@ Return a concise report:
 
 - `references/kubernetes-core.md` - nodes, workloads, events, namespaces, and resource pressure
 - `references/helm-gitops.md` - Helm releases, GitOps controllers, and reconciliation state
-- `references/networking-ingress.md` - services, ingress, load balancers, DNS, and certificates
+- `references/networking-ingress.md` - services, ingress, Gateway API, load balancers, DNS, and certificates
 - `references/storage.md` - PVs, PVCs, CSI drivers, storage classes, and volume attachment
 - `references/monitoring-logs.md` - alerts, metrics availability, log triage, and noisy namespaces
 - `references/security.md` - read-only checks for RBAC, secrets exposure signals, image risk, and policy engines
