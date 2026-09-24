@@ -216,7 +216,7 @@ test_new_skill_is_installed() {
 }
 
 test_saved_duplicates_and_kept_renames() {
-  local lock
+  local lock output
   new_fixture --tool claude docker git
   lock="$H/.claude/skills/.skills-lock.json"
   conf_set skills docker,git,docker
@@ -226,17 +226,18 @@ test_saved_duplicates_and_kept_renames() {
   expect_rc 0 "duplicate saved skill"
   [[ "$(last_line)" =~ $OK_RANGE ]] || fail "duplicate saved skill processed twice: $OUT"
 
-  # Same content under another name: the v1 record is still published, the
-  # tree entry is dropped, and --update will not claim the copy.
+  # Same content under another name: the v2 tree digest differs (it encodes
+  # paths), so a plain reinstall reports it as differing and leaves the
+  # existing lock record byte-identical; --update will not claim the copy.
+  local lock_before
   mv "$H/.claude/skills/git/notes-a.md" "$H/.claude/skills/git/notes-z.md"
-  isolated "$H" "$F/repo/install.sh" --tool claude git >/dev/null || fail "plain reinstall failed"
-  python3 - "$lock" <<'PY' || fail "v1 record not published for a kept skill"
-import json
-import sys
-
-assert "git" in json.load(open(sys.argv[1], encoding="utf-8"))["skills"]
-PY
-  [[ "$(lock_tree "$lock" git)" == "-" ]] || fail "tree entry kept for a renamed copy"
+  lock_before="$(cat "$lock")"
+  output="$(isolated "$H" "$F/repo/install.sh" --tool claude git 2>&1)" || fail "plain reinstall failed"
+  grep -q '\[~\] git differs from source (use --force to overwrite)' <<< "$output" \
+    || fail "rename-only difference not reported: $output"
+  grep -q '1 skill(s) differ; use --force to overwrite' <<< "$output" \
+    || fail "differ count line missing: $output"
+  [[ "$(cat "$lock")" == "$lock_before" ]] || fail "lock record changed for an unpublished differing copy"
   printf 'upstream\n' >> "$F/dev/skills/git/SKILL.md"
   publish
   run_update

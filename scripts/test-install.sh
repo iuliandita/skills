@@ -177,6 +177,151 @@ test_omp_repeat_install_is_idempotent() {
   trap - RETURN
 }
 
+test_plain_install_reports_current_for_unchanged_copies() {
+  local tmp output lock_before lock_after
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  HOME="$tmp" "$ROOT/install.sh" --tool omp --no-backup docker git >/dev/null
+  lock_before="$(cat "$tmp/.agents/skills/.skills-lock.json")"
+  output="$(HOME="$tmp" "$ROOT/install.sh" --tool omp --no-backup docker git 2>&1)" \
+    || fail "reinstall of unchanged skills failed: $output"
+  grep -q '\[=\] docker current' <<< "$output" || fail "docker not reported current: $output"
+  grep -q '\[=\] git current' <<< "$output" || fail "git not reported current: $output"
+  grep -q -- '--force' <<< "$output" && fail "unchanged reinstall mentioned --force: $output"
+  lock_after="$(cat "$tmp/.agents/skills/.skills-lock.json")"
+  [[ "$lock_after" == "$lock_before" ]] || fail "lock changed for an all-current reinstall"
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_plain_install_reports_differs_for_locally_edited_copy() {
+  local tmp output lock_before lock_after
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  HOME="$tmp" "$ROOT/install.sh" --tool omp --no-backup docker git >/dev/null
+  printf 'local edit\n' >> "$tmp/.agents/skills/docker/SKILL.md"
+  lock_before="$(cat "$tmp/.agents/skills/.skills-lock.json")"
+  output="$(HOME="$tmp" "$ROOT/install.sh" --tool omp --no-backup docker git 2>&1)" \
+    || fail "reinstall with one differing skill failed: $output"
+  grep -q '\[~\] docker differs from source (use --force to overwrite)' <<< "$output" \
+    || fail "differing skill not reported: $output"
+  grep -q '\[=\] git current' <<< "$output" || fail "unaffected skill not reported current: $output"
+  (( "$(grep -c '\[~\]' <<< "$output")" == 1 )) || fail "expected exactly one differs line: $output"
+  grep -q '1 skill(s) differ; use --force to overwrite' <<< "$output" || fail "differ count line missing: $output"
+  lock_after="$(cat "$tmp/.agents/skills/.skills-lock.json")"
+  [[ "$lock_after" == "$lock_before" ]] || fail "lock changed though docker was left unpublished"
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_plain_install_leaves_unrecorded_differing_copy_unrecorded() {
+  local tmp output
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  mkdir -p "$tmp/.agents/skills/docker"
+  cp -r "$ROOT/skills/docker/." "$tmp/.agents/skills/docker/"
+  printf 'stray local copy\n' >> "$tmp/.agents/skills/docker/SKILL.md"
+  output="$(HOME="$tmp" "$ROOT/install.sh" --tool omp --no-backup docker 2>&1)" \
+    || fail "install over an unrecorded differing copy failed: $output"
+  grep -q '\[~\] docker' <<< "$output" || fail "unrecorded differing copy not reported: $output"
+  if [[ -f "$tmp/.agents/skills/.skills-lock.json" ]]; then
+    grep -q '"docker"' "$tmp/.agents/skills/.skills-lock.json" \
+      && fail "unrecorded differing copy gained a lock record: $(cat "$tmp/.agents/skills/.skills-lock.json")"
+  fi
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_plain_install_reports_rename_and_symlink_target_differences() {
+  local tmp src output lock lock_before
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  src="$tmp/repo"
+  mkdir -p "$src/scripts" "$src/skills"
+  cp "$ROOT/install.sh" "$ROOT/migrations.json" "$src/"
+  cp "$ROOT/scripts/skill-lib.sh" "$ROOT/scripts/skill-frontmatter.py" "$ROOT/scripts/migrate-skills.py" "$src/scripts/"
+  cp -R "$ROOT/skills/git" "$src/skills/git"
+  printf 'notes\n' > "$src/skills/git/notes-a.md"
+  ln -s SKILL.md "$src/skills/git/alias.md"
+
+  HOME="$tmp/home" "$src/install.sh" --tool omp --no-backup git >/dev/null
+  lock="$tmp/home/.agents/skills/.skills-lock.json"
+  lock_before="$(cat "$lock")"
+
+  # Rename-only: identical bytes at a different relative path. The v1
+  # content hash (which ignores paths) still matches the source; the v2
+  # tree digest (which encodes paths) does not.
+  mv "$tmp/home/.agents/skills/git/notes-a.md" "$tmp/home/.agents/skills/git/notes-z.md"
+  output="$(HOME="$tmp/home" "$src/install.sh" --tool omp --no-backup git 2>&1)" \
+    || fail "reinstall over a rename-only difference failed: $output"
+  grep -q '\[~\] git differs from source (use --force to overwrite)' <<< "$output" \
+    || fail "rename-only difference not reported: $output"
+  [[ "$(cat "$lock")" == "$lock_before" ]] || fail "lock changed for an unpublished rename-only difference"
+  mv "$tmp/home/.agents/skills/git/notes-z.md" "$tmp/home/.agents/skills/git/notes-a.md"
+
+  # Symlink-target-only: skill_hash (v1) never looks at symlinks at all, so
+  # only the v2 tree digest notices the retargeted link.
+  ln -sfn notes-a.md "$tmp/home/.agents/skills/git/alias.md"
+  output="$(HOME="$tmp/home" "$src/install.sh" --tool omp --no-backup git 2>&1)" \
+    || fail "reinstall over a symlink-target-only difference failed: $output"
+  grep -q '\[~\] git differs from source (use --force to overwrite)' <<< "$output" \
+    || fail "symlink-target-only difference not reported: $output"
+  [[ "$(cat "$lock")" == "$lock_before" ]] || fail "lock changed for an unpublished symlink-target-only difference"
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_plain_install_keeps_unverifiable_copy_unpublished() {
+  local tmp output lock_before lock_after status=0
+  if (( EUID == 0 )); then
+    printf 'SKIP: running as root, unreadable-file test not meaningful\n'
+    return
+  fi
+  tmp="$(mktemp -d)"
+  trap 'chmod -R u+rwX "$tmp"; rm -rf "$tmp"' RETURN
+
+  HOME="$tmp" "$ROOT/install.sh" --tool omp --no-backup docker >/dev/null
+  lock_before="$(cat "$tmp/.agents/skills/.skills-lock.json")"
+  chmod 000 "$tmp/.agents/skills/docker/SKILL.md"
+  output="$(HOME="$tmp" "$ROOT/install.sh" --tool omp --no-backup docker 2>&1)" || status=$?
+  chmod u+rw "$tmp/.agents/skills/docker/SKILL.md"
+  (( status == 0 )) || fail "unverifiable copy made the install fail ($status): $output"
+  grep -q '\[~\] docker already exists (use --force to overwrite)' <<< "$output" \
+    || fail "unverifiable copy not reported with the fallback wording: $output"
+  if grep -q '\[=\] docker current' <<< "$output"; then fail "unverifiable copy reported current: $output"; fi
+  lock_after="$(cat "$tmp/.agents/skills/.skills-lock.json")"
+  [[ "$lock_after" == "$lock_before" ]] || fail "lock changed for an unverifiable copy"
+
+  chmod -R u+rwX "$tmp"
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_force_still_overwrites_a_differing_copy() {
+  local tmp output
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  HOME="$tmp" "$ROOT/install.sh" --tool omp --no-backup docker >/dev/null
+  printf 'local edit\n' >> "$tmp/.agents/skills/docker/SKILL.md"
+  output="$(HOME="$tmp" "$ROOT/install.sh" --tool omp --no-backup --force docker 2>&1)" \
+    || fail "forced reinstall failed: $output"
+  grep -q '\[+\] docker installed' <<< "$output" || fail "forced reinstall did not report installed: $output"
+  cmp -s "$ROOT/skills/docker/SKILL.md" "$tmp/.agents/skills/docker/SKILL.md" \
+    || fail "forced reinstall did not restore source content"
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
 test_omp_check_mode() {
   local tmp
   tmp="$(mktemp -d)"
@@ -1604,6 +1749,12 @@ test_omp_default_path
 test_omp_skills_dir_override
 test_omp_link_mode_shares_canonical_dir
 test_omp_repeat_install_is_idempotent
+test_plain_install_reports_current_for_unchanged_copies
+test_plain_install_reports_differs_for_locally_edited_copy
+test_plain_install_leaves_unrecorded_differing_copy_unrecorded
+test_plain_install_reports_rename_and_symlink_target_differences
+test_plain_install_keeps_unverifiable_copy_unpublished
+test_force_still_overwrites_a_differing_copy
 test_omp_check_mode
 test_omp_and_gemini_share_destination
 test_backup_preserves_top_level_symlink
