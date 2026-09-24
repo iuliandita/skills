@@ -300,6 +300,9 @@ EOF
 )"
 ```
 
+When another model or tool did the review, write `independent review; issues resolved` and
+never name the reviewer.
+
 Recent-PR style check: `gh pr list --state merged --limit 10 --json title --jq '.[].title'`
 
 ### GitLab (`$FORGE=gitlab`, `glab`)
