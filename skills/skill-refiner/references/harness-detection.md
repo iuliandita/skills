@@ -6,20 +6,37 @@ How skill-refiner detects and validates AI CLI harnesses for cross-model peer re
 
 ## Detection Table
 
+`<P>` is the smoke-test prompt from Step 3.
+
 | Harness | Binary | Config Paths | Env Vars | Smoke Test | Verified |
 |---------|--------|-------------|----------|------------|----------|
-| Claude Code | `claude` | `~/.claude/settings.json` | `ANTHROPIC_API_KEY` | `claude -p "Reply with only the integer result of 17 * 3"` | yes |
-| Codex | `codex` | `~/.codex/config.toml` | `OPENAI_API_KEY` | `codex exec -s read-only "Reply with only the integer result of 17 * 3"` | yes |
-| Gemini CLI | `gemini` | `~/.gemini/settings.json` | `GEMINI_API_KEY` or `GOOGLE_API_KEY` | unverified; confirm the flag with `gemini --help` before use | no |
-| OpenCode | `opencode` | project-level `.opencode/` (unverified) | varies by provider | unverified; confirm the flag with `opencode --help` before use | no |
+| Claude Code | `claude` | `~/.claude/settings.json` | `ANTHROPIC_API_KEY` | `claude -p "<P>"` | yes (2026-09-24, 2.1.281) |
+| Codex | `codex` | `~/.codex/config.toml` | `OPENAI_API_KEY` | `codex exec [-m <model>] -s read-only --ephemeral --skip-git-repo-check -o <file> "<P>"` | yes (2026-09-24, 0.156.1) |
+| Antigravity CLI | `agy` | `~/.gemini/antigravity-cli/settings.json`; global skills `~/.gemini/config/skills/` | OAuth login | `agy -p "<P>"` (`--output-format text\|json\|stream-json`) | yes (2026-09-24, 1.2.10) |
+| OpenCode | `opencode` | `~/.config/opencode/opencode.json`; rules `~/.config/opencode/AGENTS.md` | varies by provider | `opencode run "<P>" </dev/null` | no: form ran, probe failed on provider credits (2026-09-24, 2.0.14) |
+| Command Code | `cmd` (alias `commandcode`) | `~/.commandcode/settings.json` | `COMMAND_CODE_API_KEY` or login | `cmd -p "<P>" --no-session --skip-onboarding` | yes (2026-09-24, 1.65.0) |
+| Oh My Pi | `omp` | `~/.omp/agent/config.yml` | varies by provider | `omp -p --no-session "<P>"` (`--mode json`, `--thinking off..max`) | no: probe failed on provider auth (2026-09-24, 18.3.0) |
+| Hermes | `hermes` | `~/.hermes/config.yaml` | `~/.hermes/.env` | `hermes chat -q "<P>" -Q` | yes (2026-09-24, 0.21.3) |
 | Aider | `aider` | `~/.aider.conf.yml` | `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` | unverified; confirm the flag with `aider --help` before use | no |
 | Goose | `goose` | `~/.config/goose/config.yaml` | varies by provider | unverified; confirm the flag with `goose --help` before use | no |
+| Gemini CLI (legacy) | `gemini` | `~/.gemini/settings.json` | `GEMINI_API_KEY` or `GOOGLE_API_KEY` | consumer accounts moved to `agy`; Google still supports enterprise licenses and paid API keys. The 0.42.0 probe here exited 55 (unsupported client) | no |
 
-**Important:** The Claude Code and Codex smoke tests are verified. The Gemini, OpenCode,
-Aider, and Goose entries are unverified: do not treat their commands as known-good. Before
-use, run `<binary> --help`, confirm the non-interactive flag, and only then build the smoke
-test around it. Do not invoke a secondary whose form cannot be confirmed. Harness CLIs
-evolve rapidly, so re-confirm even the verified forms on each run.
+**Important:** "yes" means the headless command form ran and answered in an isolated, timed
+probe on the listed date and version. It does not attest model identity; see Evaluator Identity
+and Evidence for that. Other rows are unverified, so do not treat their commands as known-good. Before
+using one, run `<binary> --help`, confirm the non-interactive flag, and only then build the
+smoke test around it. Do not invoke a secondary whose form cannot be confirmed. Harness CLIs
+evolve rapidly, so re-confirm even the verified forms on each run. Useful model and effort
+flags: `cmd --list-models` and `--effort`, `agy models` and `--effort`, `omp --thinking`,
+`hermes chat -m` and `--reasoning`.
+
+Codex prints the resolved model on stderr (the `model:` banner line); in the 2026-09-24 probe
+the banner said `gpt-6-sol` while the model called itself `gpt-6`, so use the banner, not the
+reply, as identity evidence.
+
+In the 2026-09-24 probes only the Codex banner gave harness-attested identity. The other
+verified harnesses printed no model line in headless text mode, so their identity stays unknown
+unless a run captures one (for example from a JSON output mode).
 
 ---
 
@@ -53,13 +70,14 @@ test decide. Skip before the smoke test only when the binary is absent (Step 1).
 Send a trivial prompt whose answer is a canary token the prompt itself does not contain, then
 confirm that token appears in the harness's actual model response - not in a banner, log line, or
 echoed prompt. Run the probe inside a private temp dir, on a read-only or no-tools sandbox where
-the harness supports one, and never send repository content:
+the harness supports one, and never send repository content. Close stdin: `codex exec` appends
+piped stdin to the prompt, and `opencode run` can hang in scripts when stdin stays open:
 
 ```bash
 tmp=$(mktemp -d)                          # private scratch, not the repo tree
 out="$tmp/out"; err="$tmp/err"
 cd "$tmp" || exit 1                       # probe runs in the temp dir, never the repo tree
-timeout 60 <smoke_test_command> >"$out" 2>"$err"; status=$?
+timeout 120 <smoke_test_command> </dev/null >"$out" 2>"$err"; status=$?  # closed stdin
 if [[ $status -ne 0 ]]; then
   result=skip                             # status 124 = timeout; any non-zero = failed run -> reject
 elif grep -Eq '(^|[^0-9])51([^0-9]|$)' "$out"; then
@@ -90,10 +108,14 @@ the smoke test cannot modify files.
 ```
 1. claude
 2. codex
-3. gemini
+3. agy
 4. opencode
-5. aider
-6. goose
+5. cmd
+6. omp
+7. hermes
+8. aider
+9. goose
+10. gemini (legacy; enterprise or paid API key setups)
 ```
 
 The primary harness may also host the reviewer in a fresh invocation or agent context.
@@ -102,13 +124,18 @@ different harness. Classify the actual resolved model identities before assignin
 
 ### Detecting the Primary Harness
 
-Check in order (the Claude Code and Codex signals are the verified ones; the Gemini and
-OpenCode env var names are approximate - verify against current CLI versions):
-1. Claude Code env var (e.g., `CLAUDE_CODE` or similar) - primary is claude
-2. Parent process name contains `codex` - primary is codex
-3. Gemini CLI env var (e.g., `GEMINI_CLI` or session marker) or parent process name contains `gemini` - primary is gemini
-4. OpenCode env var (e.g., `OPENCODE_SESSION` or similar) - primary is opencode
-5. If the signal is ambiguous, record the harness and model as unknown and use `cap 3`
+Check in order. Only the Claude Code env marker is verified (2026-09-24); for the rest, match
+the parent process executable or script basename (not a substring of the whole command line,
+which may show `node` or `python` with the tool's script path):
+1. `CLAUDECODE=1` in the environment - primary is claude
+2. Parent process is `codex` - primary is codex
+3. Parent process is `agy` or `antigravity` - primary is agy
+4. Parent process is `opencode` - primary is opencode
+5. Parent process is `command-code` or `commandcode` - primary is cmd
+6. Parent process is `omp` - primary is omp
+7. Parent process is `hermes` - primary is hermes
+8. Parent process is `gemini` - primary is legacy gemini
+9. If the signal is ambiguous, record the harness and model as unknown and use `cap 3`
    rather than guessing; inspect available runtime metadata, and ask only if the missing fact
    blocks an authorized invocation
 

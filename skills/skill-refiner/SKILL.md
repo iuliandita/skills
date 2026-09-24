@@ -3,7 +3,7 @@ name: skill-refiner
 description: >
   Improve skills through repeated scoring, behavioral tests, and peer review toward a requested quality target.
 license: MIT
-compatibility: "Requires: skill-creator skill, git. Optional: secondary AI harness (codex, claude, gemini, opencode) for cross-model review"
+compatibility: "Requires: skill-creator skill, git. Optional: secondary AI harness (claude, codex, agy, opencode, cmd, omp, hermes) for cross-model review"
 metadata:
   source: iuliandita/skills
   date_added: "2026-03-31"
