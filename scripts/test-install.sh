@@ -919,6 +919,7 @@ make_frontmatter_fixture() {
   write_fixture_skill "$repo" public $'---\nname: public\ndescription: d\nmetadata:\n  internal: false\n---'
   write_fixture_skill "$repo" bare $'---\ndescription: no name or metadata\n---'
   write_fixture_skill "$repo" private $'---\nname: private\ndescription: d\nmetadata:\n  internal: true\n---'
+  write_fixture_skill "$repo" team $'---\nname: team\ndescription: tracked but internal\nmetadata:\n  internal: true\n---'
   write_fixture_skill "$repo" ignored $'---\nname: ignored\ndescription: d\n---'
   write_fixture_skill "$repo" old $'---\nname: old\ndescription: d\nmetadata:\n  deprecated: true\n---'
   printf '%s\n' 'skills/private/' 'skills/ignored/' > "$repo/.gitignore"
@@ -937,7 +938,16 @@ test_frontmatter_cache_selects_skills() {
   [[ "$(installed_dirs "$tmp/default")" == "bare public" ]] || fail "default install picked: $(installed_dirs "$tmp/default")"
 
   HOME="$tmp" "$repo/install.sh" --tool portable --dest "$tmp/internal" --no-backup --include-internal >/dev/null
-  [[ "$(installed_dirs "$tmp/internal")" == "bare private public" ]] || fail "--include-internal picked: $(installed_dirs "$tmp/internal")"
+  [[ "$(installed_dirs "$tmp/internal")" == "bare private public team" ]] || fail "--include-internal picked: $(installed_dirs "$tmp/internal")"
+
+  # A tracked skill marked internal is discovered, left out of the default
+  # selection, and still installs when requested by name.
+  HOME="$tmp" "$repo/install.sh" --tool portable --dest "$tmp/listed" --list > "$tmp/list"
+  grep -q '^  team' "$tmp/list" || fail "tracked internal skill missing from --list"
+  HOME="$tmp" "$repo/install.sh" --tool portable --dest "$tmp/named" --no-backup team >/dev/null
+  [[ "$(installed_dirs "$tmp/named")" == "team" ]] || fail "named internal install picked: $(installed_dirs "$tmp/named")"
+  HOME="$tmp" "$repo/install.sh" --tool portable --dest "$tmp/named-internal" --no-backup --include-internal team >/dev/null
+  [[ "$(installed_dirs "$tmp/named-internal")" == "team" ]] || fail "named --include-internal install picked: $(installed_dirs "$tmp/named-internal")"
 
   output="$(HOME="$tmp" "$repo/install.sh" --tool portable --dest "$tmp/explicit" --no-backup old)"
   grep -q 'old is deprecated and scheduled for removal' <<< "$output" || fail "deprecated notice missing from cached lookup"
