@@ -263,6 +263,8 @@ def ask(question: str) -> str:
             + f"\n\nQuestion: {question}"
         )}],
     )
+    if response.stop_reason != "end_turn":  # max_tokens can be spent on thinking; refusal has no answer
+        raise RuntimeError(f"incomplete answer: {response.stop_reason}")
     # Thinking blocks can precede the text; select by type, not position.
     return "".join(b.text for b in response.content if b.type == "text")
 ```

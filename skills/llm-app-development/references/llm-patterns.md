@@ -214,6 +214,8 @@ response = client.messages.create(
 )
 
 import json
+if response.stop_reason != "end_turn":  # truncated or refused output is not valid JSON
+    raise RuntimeError(f"incomplete structured output: {response.stop_reason}")
 # Result is in the text content block
 data = json.loads(next(b.text for b in response.content if b.type == "text"))
 ```
