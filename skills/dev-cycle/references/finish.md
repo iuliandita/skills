@@ -378,20 +378,25 @@ Announce the URL to the user. Cannot auto-create the PR without the CLI or the B
 
 ### No forge CLI available (`$FORGE=unknown` or tool missing)
 
-Push the branch. Produce a shareable reference for manual review. **Let push errors surface** - auth failures, hook rejections, and permission errors are fixable; silencing them wastes time:
+Resolve the forge before pushing anything - a tool-missing case on a known forge and a
+genuinely unknown forge take different paths.
+
+**Tool missing on a known forge** (`$FORGE` is `github`, `gitlab`, `forgejo`, or `gitea` but
+its CLI isn't installed): push and give the manual PR URL. **Let push errors surface** - auth failures,
+hook rejections, and permission errors are fixable; silencing them wastes time:
 
 ```bash
 # Push will fail loudly on auth/hook/permission issues - that's correct.
-# Only fall through to bare-git path if there is genuinely no remote.
-if git remote get-url origin >/dev/null 2>&1; then
-  git push -u origin "$BRANCH_NAME"   # surface the real error if it fails
-  REMOTE_URL=$(git remote get-url origin | sed 's|\.git$||')
-  echo "Branch pushed to: $REMOTE_URL (branch: $BRANCH_NAME)"
-  echo "Review via the forge's web UI - skill doesn't know the PR URL pattern for self-hosted $FORGE."
-else
-  echo "No remote configured. Fall through to the Bare git (\$FORGE=bare) path below."
-fi
+git push -u origin "$BRANCH_NAME"   # surface the real error if it fails
+REMOTE_URL=$(git remote get-url origin | sed 's|\.git$||')
+echo "Branch pushed to: $REMOTE_URL (branch: $BRANCH_NAME)"
+echo "Review via the forge's web UI - skill doesn't know the PR URL pattern for $FORGE without its CLI."
 ```
+
+**`$FORGE=unknown`**: ask the user which forge this self-hosted instance runs (Forgejo,
+Gitea, GitLab, or other) per the forge table above. If the answer resolves to a supported
+forge, set `$FORGE` and route through that forge's flow. If it stays unresolved, follow the
+Bare git (`$FORGE=bare`) path below - no push.
 
 Tell the user what self-hosted forge this is so the skill can route correctly next time. Once identified, `$FORGE` can be set manually.
 
@@ -491,7 +496,7 @@ Announce the Pipelines URL to the user and wait for their confirmation. Do not m
 
 ### Self-hosted / unknown (`$FORGE=unknown`)
 
-Ask the user: "What CI is this repo wired to? (Jenkins, Drone, Woodpecker, Buildkite, Teamcity, in-repo Actions, other)". Give them the branch URL to watch. Do not assume green.
+Ask the user: "What CI is this repo wired to? (Jenkins, Drone, Woodpecker, Buildkite, Teamcity, in-repo Actions, other)". Give them the branch URL to watch if the branch was pushed; on the bare path, ask how CI is triggered. Do not assume green.
 
 ### Bare git (`$FORGE=bare`)
 
@@ -601,7 +606,7 @@ curl --fail --config "${BITBUCKET_CURL_CONFIG:?set a mode-0600 credential config
 
 ### Self-hosted / unknown (`$FORGE=unknown`)
 
-Use whatever merge UI/API the host provides. If none, fall through to the bare-git path.
+If the branch was pushed, use whatever merge UI/API the host provides. If it was not pushed or there is none, follow the bare-git path.
 
 ### Bare git (`$FORGE=bare`)
 

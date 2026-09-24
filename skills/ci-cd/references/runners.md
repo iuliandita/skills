@@ -8,13 +8,15 @@ common use as of 2026:
 | `actions-runner` | GitHub Actions (self-hosted) | C# / .NET | shell (default), container via action |
 | `gitlab-runner` | GitLab CI/CD | Go | shell, docker, docker-autoscaler, kubernetes, instance, ssh |
 | `forgejo-runner` | Forgejo Actions | Go (forked from `act`) | docker, host (shell), LXC, docker-in-docker |
-| `act_runner` | Gitea Actions | Go (from `act`) | docker, host (shell) |
+| `gitea-runner` (Gitea Runner, formerly `act_runner`) | Gitea Actions | Go (from `act`) | docker, host (shell) |
 | `woodpecker-agent` | Woodpecker CI | Go | docker, kubernetes, local (shell) |
 
-**`act_runner` vs `forgejo-runner`**: both descend from the `act` project. Forgejo forked
+**Gitea Runner vs `forgejo-runner`**: both descend from the `act` project. Forgejo forked
 in 2023 and the two have since diverged - different config defaults, different label syntax
 edges, different registration APIs. They are not interchangeable; pick the one that matches
-the forge you run.
+the forge you run. Gitea's runner was renamed from `act_runner` to Gitea Runner
+(announced https://blog.gitea.com/release-of-runner-1.0.0/, 2026-05-05); Forgejo's
+`forgejo-runner` is a separate project and was not renamed.
 
 ---
 
@@ -212,12 +214,16 @@ Backends are picked per-label via the `labels` list:
   lighter than a VM
 - `docker-in-docker` (via privileged container + dind sidecar) - for jobs that build images
 
-Forgejo exposes LXC as a first-class option that Gitea's `act_runner` does not. Useful
+Forgejo exposes LXC as a first-class option that Gitea Runner does not. Useful
 when you want kernel-level isolation without the cost of a full VM.
 
 ---
 
-## `act_runner` (Gitea)
+## Gitea Runner (Gitea)
+
+Binary `gitea-runner`, repo https://gitea.com/gitea/runner, image `gitea/runner`. There is
+no `act_runner` alias; older docs and scripts using `act_runner` refer to the same project
+pre-rename. Version pins live in `references/target-versions.md`.
 
 ### Install
 
@@ -226,24 +232,24 @@ official registry before using either container example.
 
 | OS | Command |
 |----|---------|
-| Binary | Download from `gitea.com/gitea/act_runner/releases`, nightly from `dl.gitea.com/act_runner/` |
-| Docker | `docker pull "${GITEA_RUNNER_IMAGE:?set to a reviewed tag@sha256 digest}"` |
+| Binary | Download from `gitea.com/gitea/runner/releases`, nightly from `dl.gitea.com/runner/` |
+| Docker | `docker pull "${GITEA_RUNNER_IMAGE:?set to a reviewed tag@sha256 digest}"` (image `gitea/runner`) |
 | Docker Compose | Example in upstream docs |
 
 ### Register
 
 ```bash
 # Interactive
-./act_runner register
+./gitea-runner register
 
 # Interactive registration; provision verified file/environment input for automation
-./act_runner register \
+./gitea-runner register \
   --instance https://gitea.example.com \
   --name "runner-01" \
   --labels "ubuntu-latest:docker://node:20-bookworm,ubuntu-22.04:docker://node:20-bookworm"
 
-# Ephemeral (v0.2.12+) - exits after one job
-./act_runner register --ephemeral ...
+# Ephemeral - exits after one job
+./gitea-runner register --ephemeral ...
 ```
 
 Tokens from **Site Administration -> Actions -> Runners** (instance), org settings, or
@@ -251,11 +257,11 @@ repo settings.
 
 ### Config location
 
-Generate with `./act_runner generate-config > config.yaml`. Structure is nearly identical
+Generate with `./gitea-runner generate-config > config.yaml`. Structure is nearly identical
 to `forgejo-runner`'s; differences worth knowing:
 
 - Default labels use `ubuntu-*` names directly (aligning with GitHub Actions expectations)
-- `act_runner` has a first-class `--ephemeral` flag on `register`; on `forgejo-runner`,
+- Gitea Runner has a first-class `--ephemeral` flag on `register`; on `forgejo-runner`,
   use a verified single-job exit lifecycle plus fresh per-job host/container state.
   A concurrency limit or daemon restart alone is not ephemerality.
 
@@ -401,7 +407,7 @@ than one beefy agent with high concurrency - failure of one agent takes fewer jo
 |--------|---------------|---------------|
 | `gitlab-runner` | Official deb/rpm/AUR | `brew install gitlab-runner` |
 | `forgejo-runner` | None - tarball or docker | tarball (`darwin-arm64`/`darwin-amd64`) |
-| `act_runner` | None - tarball or docker | Tarball or via docker (Apple Silicon requires rosetta-free binary) |
+| `gitea-runner` | None - tarball or docker | Tarball or via docker (Apple Silicon requires rosetta-free binary) |
 | `actions-runner` | None - GitHub-hosted tarball | Same tarball flow |
 | `woodpecker-agent` | None - docker is the norm | Docker via Colima/OrbStack or binary |
 
@@ -443,7 +449,7 @@ artifacts only.
 1. **Never run self-hosted runners on public repos without ephemeral mode.** Anyone who
    can open a PR can run code on your runner. This is how runner-as-backdoor attacks start.
 2. **Run the runner as a dedicated non-root user.** `gitlab-runner`, `forgejo-runner`,
-   `act_runner` all create dedicated users in their systemd units; verify the user has no
+   `gitea-runner` all create dedicated users in their systemd units; verify the user has no
    sudo and no access to other services' data.
 3. **Drop docker socket access if jobs don't need to build images.** Mounting
    `/var/run/docker.sock` is equivalent to giving the job root on the host.
@@ -456,7 +462,7 @@ artifacts only.
 ### Should-dos
 
 - **Ephemeral everywhere possible**: `gitlab-runner` + kubernetes/docker-autoscaler;
-  `actions-runner` with `--ephemeral`; `act_runner --ephemeral`; `forgejo-runner` with
+  `actions-runner` with `--ephemeral`; `gitea-runner --ephemeral`; `forgejo-runner` with
   a verified single-job exit wrapper plus fresh per-job host/container state; `woodpecker-agent` with k8s backend.
 - **Rootless container runtime**: rootless Podman + rootless Buildkit for image builds.
   Eliminates privileged containers entirely.

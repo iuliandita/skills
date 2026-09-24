@@ -69,7 +69,7 @@ every failure with file and line reference.
 - [ ] **SBOM generation**: release pipelines generate and attach SBOMs (SPDX or CycloneDX). Useful inventory evidence; mandatory only when an applicable control/policy requires this format.
 - [ ] **Minimal scope**: jobs have minimum required permissions, access only needed secrets, and run only needed steps.
 - [ ] **No `allow_failure` without justification**: if a job can fail, explain why in a comment.
-- [ ] **Version pinning on tools**: `node:22`, not `node:lts`. `python:3.13`, not `python:3`. Specific versions prevent silent breakage.
+- [ ] **Version pinning on tools**: specific versions over floating aliases - `node:22`, not `node:lts`; `python:3.13`, not `python:3`. Specific versions prevent silent breakage; the SHA pinning item above still applies.
 - [ ] **Trigger scoping**: `on: push` without branch/path filters runs on every push to every branch - scope to `branches: [main]` and/or `paths:` filters. Same for GitLab: `rules:` with `if` conditions, not bare `only: [pushes]`.
 - [ ] **No expression injection** (GitHub Actions): `${{ }}` expressions never used directly in `run:` blocks. Assign to `env:` first. `github.event.*` is attacker-controlled. Avoid `github.ref_name` in security-sensitive contexts (injectable via crafted tag/branch names).
 - [ ] **Self-hosted runners ephemeral on public/untrusted repos**: non-ephemeral shell runners on repos that accept outside PRs is the top self-hosted-runner compromise vector. Verify `--ephemeral` (GitHub, Gitea) or, on Forgejo, a verified single-job exit lifecycle plus fresh per-job host/container state - a capacity limit or daemon restart alone is not ephemerality. Add approval gates for outside contributors. See `references/runners.md`.
@@ -448,7 +448,7 @@ the OWASP Top 10 for Agentic Applications, read `references/supply-chain.md`
 - `references/github-actions.md` - GitHub Actions patterns, templates, and security hardening
 - `references/forgejo-gitea-actions.md` - Forgejo/Gitea Actions differences, troubleshooting, Woodpecker patterns, and Drone migration guidance
 - `references/gitlab-ci.md` - GitLab CI/CD 19.x patterns, SaaS vs self-managed differences, Catalog, Components, security
-- `references/runners.md` - Self-hosted runners (actions-runner, gitlab-runner, forgejo-runner, act_runner, woodpecker-agent) - install, register, executor choice, Linux vs macOS, security hardening
+- `references/runners.md` - Self-hosted runners (actions-runner, gitlab-runner, forgejo-runner, gitea-runner, woodpecker-agent) - install, register, executor choice, Linux vs macOS, security hardening
 - `references/best-practices.md` - Dependency updates (Dependabot/Renovate), layered linting, scanning matrix (secrets/SCA/container/IaC/SAST), review gates, merge queues, rollout order
 - `references/supply-chain.md` - supply chain security, incident timeline, SHA pinning, SBOM/SLSA, PCI-DSS compliance, image signing
 - `references/target-versions.md` - September 2026 version snapshot for forges, runners, CI systems, and supply-chain tools

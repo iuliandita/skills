@@ -70,7 +70,7 @@ Before declaring start-mode complete:
 - [ ] Size classification stated explicitly (small/medium/large) with the signals that drove it
 - [ ] For large work: a spec file was produced, or a brainstorming skill was invoked and its output captured
 - [ ] Handoff line told the user what skill(s) to reach for next (e.g., "this touches Postgres - use **databases** when modifying migrations")
-- [ ] No code was written in start mode unless the task was explicitly small
+- [ ] No code was written in start mode unless the task was explicitly small, or the user explicitly asked for the full cycle (start through finish, release, deploy) in this session, in which case start mode continues into finish without pausing at the handoff
 
 Before declaring finish-mode complete:
 
@@ -117,6 +117,7 @@ Pick the mode from user intent + repo state. Do not assume.
 | "ship", "wrap up", "merge this", "release", "finalize", feature branch active with commits ahead of base | **finish** |
 | Branch clean + no explicit signal | ask the user which mode |
 | User ran the skill with `start` or `finish` as an argument | honor the argument |
+| "full cycle", "start through finish", "release and deploy in one go" | **start**, then continue into finish without pausing at the handoff |
 
 If in doubt, determine the base branch first (`git symbolic-ref --quiet refs/remotes/origin/HEAD | sed 's|refs/remotes/origin/||'`), then:
 

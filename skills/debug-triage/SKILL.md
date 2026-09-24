@@ -112,7 +112,7 @@ Work outside-in along the request path. Each layer is owned by a domain skill fo
 | Database/cache | slow queries, connection pool exhaustion, eviction | **databases** |
 | Message broker | consumer lag, redelivery, dead letters | **message-queues** |
 | Identified application bottleneck | CPU, heap, lock contention, latency regression | **performance-debugging** |
-| Secrets / auth chain | 401/403, token expired, Vault path unreachable | **security-audit**; trace the Vault->IaC->runtime chain |
+| Secrets / auth chain | 401/403, token expired, Vault path unreachable | the failing runtime layer (**kubernetes-health**, **terraform**, **networking** as applicable) to trace the Vault->IaC->runtime chain; **security-audit** only for repository-side secret-handling review (repo-only, no live endpoints) |
 | Host / node | disk full, memory pressure, kernel/systemd unit down | the distro skill (**debian-ubuntu**, **rhel-fedora**, **arch-linux**, **nixos**) |
 | Config / deploy (GitOps) | broke right after a sync; drift from desired state | **kubernetes** / **terraform**, check the last change |
 
