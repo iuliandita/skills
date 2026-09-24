@@ -1,4 +1,4 @@
-# Deep-Grill Domain Lenses
+# Plan Review Domain Lenses
 
 Per-domain question banks. Each lens lists Phase 1 clarify questions (ordered upstream to
 downstream - resolve the top groups before the lower ones) and Phase 2 adversarial angles.
@@ -125,7 +125,8 @@ To extend plan-review for your own field (legal, data pipeline, game design, har
    decision that, if it flips, invalidates everything below it.
 3. Phase 2 angles should target what is *specific* to the domain - the failure modes a generic
    review would miss. If an angle applies to every domain, it belongs in Generic, not here.
-4. Add a one-row entry to the lens table in `SKILL.md` Step 1 so the new domain is detectable.
+4. `SKILL.md` Step 1 has no separate lens table - it loads whichever section here matches the
+   classified domain. No further registration is needed beyond adding the section to this file.
 
 Keep each lens to question prompts, not prose. The skill supplies the method; the lens supplies
 the domain-specific targets.

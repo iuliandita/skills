@@ -127,7 +127,11 @@ do not invoke the nonexistent path and do not claim structural compliance: repor
 gate as "unavailable" for that run and continue with AI Self-Check and behavior scoring. If the
 user asked for the structural gate specifically, stop and report it unavailable instead of
 substituting a score. When `SKILL_REFINER_HISTORY` is absent, start a fresh baseline and skip
-delta comparisons against prior runs rather than failing the run.
+delta comparisons against prior runs rather than failing the run. The same rule applies to the
+other `$SKILL_REFINER_GATE_DIR` helpers (`refiner-rubric-hash.sh`, `refiner-history-compact.sh`,
+`check-refiner-state.sh`): when one is absent, do not invoke it, record its result "unavailable"
+in the score ledger, skip the rubric-drift or state-integrity claim it would have supported, and
+continue.
 
 1. **Create feature branch**: `skill-refiner/YYYY-MM-DD-HHMMSS` from current HEAD.
    Preserve dirty worktrees; branching isolates the run, it does not imply cleanup. If already
@@ -142,13 +146,14 @@ delta comparisons against prior runs rather than failing the run.
    changes), model/harness change detection (flag if the primary or secondary model changed
    since last run - new model = new baseline, not a comparable delta), and skip analysis
    (don't re-attempt improvements that were already tried and reverted in a recent run).
-   Compute the current rubric hash with `scripts/refiner-rubric-hash.sh` (pass the collection
-   root as its argument when it is installed elsewhere) and record it. If it
+   Compute the current rubric hash with `$SKILL_REFINER_GATE_DIR/refiner-rubric-hash.sh` (pass the
+   collection root as its argument when it is installed elsewhere; if absent, mark it
+   "unavailable" per the note above and skip rubric-drift claims) and record it. If it
    differs from the most recent run's recorded `rubric_hash`, prior scores are not comparable:
    start a fresh baseline and do not compute deltas against the old run.
    Retention: the history keeps full detail for the most recent runs; older runs are compacted
-   into `.refiner-runs-archive.json` by `scripts/refiner-history-compact.sh`, run manually or
-   periodically, never per run.
+   into `.refiner-runs-archive.json` by `$SKILL_REFINER_GATE_DIR/refiner-history-compact.sh` (skip
+   if absent), run manually or periodically, never per run.
 3. **Build skill inventory**: enumerate published (non-gitignored) skills and parse YAML
    frontmatter. `metadata.deprecated` is deprecated when boolean `true` or a string equal
    to `true` after trimming and case-folding, including quoted values. Missing or false
@@ -179,10 +184,12 @@ delta comparisons against prior runs rather than failing the run.
 6. **If no authorized secondary is available**: **always fall back to self-review.** Spawn a fresh agent on
    the current harness with the review prompt template from `references/harness-detection.md`.
    Label as "same-model fresh-context review" only when identity is verified; otherwise use
-   "unknown-model fresh-context review". Review is penalty-only and identical in form at
-   baseline and every iteration: verified flags deduct `cap * weight` from the composite, with
-   cap 5 for a verified distinct model and cap 3 for same-model or unknown-model review. A
+   "unknown-model fresh-context review". Review is penalty-only and identical in form at every
+   iteration that has a diff to review: verified flags deduct `cap * weight` from the composite,
+   with cap 5 for a verified distinct model and cap 3 for same-model or unknown-model review. A
    clean review adds no bonus. Different harnesses alone do not establish model diversity.
+   **One exception**: at baseline (iteration 1) there is no diff yet, so cross-model review is
+   skipped and the baseline penalty is 0; ordinary scoring starts at iteration 2.
    Skipping review entirely is not an option - a fresh-context self-review is the minimum bar.
    If the harness doesn't support subagents, run the review prompt as a separate CLI
    invocation (`claude -p`, `codex exec`, `gemini -p`, etc.).
@@ -205,7 +212,7 @@ delta comparisons against prior runs rather than failing the run.
    - Execution provenance: load each complete candidate and its applicable references before
      answering its prompts. Resume truncated reads; a file listing or search is not a full read.
      Record loaded files per candidate. Never relabel copied unguided responses as a fresh run.
-   - Cross-model: skip on first iteration (no diff to review yet; penalty is 0)
+   - Cross-model: skip at baseline (see the exception in step 6)
 8. **Log baseline scores**: record per-skill and aggregate scores
    in a score ledger before any edits. The ledger must include structural gate (G),
    AI Self-Check (A), behavioral score (B), verified flag count and penalty, reviewer
@@ -409,12 +416,14 @@ delta comparisons against prior runs rather than failing the run.
     reviewer, and every reviewer that returned tool output instead of a verdict. When updating
     an existing history file, append the new object without reserializing the whole file; do not
     normalize or rewrite old entries just because a JSON writer changes escaping, commas, or
-    whitespace. Immediately after the append, run `scripts/check-refiner-state.sh`; if it exits
-    non-zero, do not commit, report the validation error, and fix the entry first. Commit with
-    the phase 3 summary only once the check exits 0.
+    whitespace. Immediately after the append, run `$SKILL_REFINER_GATE_DIR/check-refiner-state.sh`
+    (if absent, mark state-integrity "unavailable" per the Phase 0 note; the commit may proceed
+    with that label in the summary). If it exits non-zero, do not commit, report the validation
+    error, and fix the entry first. Commit with the phase 3 summary only once the check exits 0
+    or is recorded unavailable.
     Retention: the history keeps full detail for the most recent runs; older runs are compacted
-    into `.refiner-runs-archive.json` by `scripts/refiner-history-compact.sh`, run manually or
-    periodically, never per run.
+    into `.refiner-runs-archive.json` by `$SKILL_REFINER_GATE_DIR/refiner-history-compact.sh`, run
+    manually or periodically, never per run.
 25. **Announce branch**: remind user to review and merge when ready
 
 ## AI Self-Check
@@ -434,7 +443,7 @@ Before committing any skill modification, verify:
   judge noise does not license a deletion)
 - [ ] **Cross-references intact**: ordinary routing resolves to active published skills;
   only explicit migration references may name deprecated notices
-- [ ] **Target ~500 lines**: modified SKILL.md stays near 500 lines. Hard max 600
+- [ ] **Target 150-250 lines where practical**: per the skill-creator conventions. Hard max 600
 - [ ] **ASCII only**: no non-ASCII introduced beyond the single approved set in **skill-creator**'s `references/conventions.md`
 - [ ] **Immutability respected**: no phase-1 modification to evaluation criteria,
   canonical or local test cases, lint scripts, skill-creator, or skill-refiner

@@ -35,7 +35,7 @@ patterns activates reliably, reads clearly, and plays well with the rest of the 
 - Reviewing application code for correctness or bugs - use **code-review**
 - Auditing code for AI-generated patterns or style issues - use **code-simplification**
 - Running a full codebase audit across multiple dimensions - use **repo-audit**
-- Creating inline prompts within application code - use **prompt-generator**
+- Creating inline prompts within application code or LLM SDK integration code - use **llm-app-development**
 - Batch-improving a whole skill collection via evaluation loops - use **skill-refiner**
 - Choosing a skill for one request without editing skill files - use the host's normal skill selection.
 - Syncing or refreshing third-party skills from upstream - handle that directly in the repo workflow

@@ -92,8 +92,13 @@ intent or needs authority the user has not supplied.
 
 ## Report template
 
-Audit mode produces two surfaces, and they are shaped differently. Do not try to nest one
-inside the other.
+The expanded two-surface template below applies once a report exceeds the shared contract's
+small-report threshold (`references/output-contract.md`: more than three focused findings). At
+or under that threshold, skip the deliverable file and report inline per the contract - concise
+prose with priority, location, and suggested action, and say directly when there are no findings.
+
+Above the threshold, audit mode produces two surfaces, and they are shaped differently. Do not
+try to nest one inside the other.
 
 1. **In the transcript:** the monospace contract header, the category-grouped summary templated
    below, then the concise monospace conclusion. This is where before/after pairs go, because that

@@ -392,7 +392,7 @@ Rule of thumb: if you'd wake someone up at 2am over it, it's P0. If it can wait 
 
 #### P1 - Should Fix ([count] issues)
 
-🟡 **[confidence]%** `path/to/file:line` - [description]
+🟠 **[confidence]%** `path/to/file:line` - [description]
 
 [Explanation]
 
@@ -415,7 +415,7 @@ Rule of thumb: if you'd wake someone up at 2am over it, it's P0. If it can wait 
 [Explanation]
 
 #### Info ([count] notes)
-🔵 **[confidence]%** `path/to/file:line` - [description]
+⚪ **[confidence]%** `path/to/file:line` - [description]
 
 [Non-actionable observation]
 

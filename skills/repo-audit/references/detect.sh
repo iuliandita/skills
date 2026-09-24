@@ -139,7 +139,7 @@ check_manifest frontend-design 'astro|@sveltejs/kit|"svelte"|next|react|vue|vite
 check_manifest databases 'sequelize|typeorm|prisma|"knex"|drizzle-orm|mongoose|"pg"|mysql2'
 check_manifest i18n-localization 'react-i18next|vue-i18n|next-intl|@formatjs|i18next'
 check_manifest llm-app-development 'anthropic|openai|langchain|llama[-_]index|transformers|torch|tensorflow|ollama|chromadb|pinecone|weaviate|qdrant'
-check_manifest mcp '@modelcontextprotocol/sdk|fastmcp'
+check_manifest mcp "@modelcontextprotocol/(sdk|server|client|core)|fastmcp|^mcp([[<>=~!; ]|\$)|[\"']mcp[[<>=~!]"
 check_manifest message-queues 'kafkajs|amqplib|bullmq|celery|nats|@aws-sdk/client-sqs'
 check_manifest performance-debugging 'benchmark|autocannon|clinic|0x|k6|artillery|locust'
 
