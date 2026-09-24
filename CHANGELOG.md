@@ -11,7 +11,7 @@ All notable changes to this project will be documented in this file.
 
 ### Bug Fixes
 
-* **install:** stage, record, and roll back skill replacements under a shared lock, recover interrupted runs, write the lock file and OpenCode config atomically, and exit non-zero whenever a step fails ([#225](https://github.com/iuliandita/skills/pull/225), [#223](https://github.com/iuliandita/skills/issues/223)).
+* **install:** stage, record, and roll back skill replacements under a shared lock when `flock` is available, recover interrupted runs, write the lock file and OpenCode config atomically, and exit non-zero whenever a step fails ([#225](https://github.com/iuliandita/skills/pull/225), [#223](https://github.com/iuliandita/skills/issues/223)).
 * **install:** make `--doctor` lead with blocking findings and collapse overlaps the harness resolves itself into counts, with `--verbose` for the full list ([#222](https://github.com/iuliandita/skills/pull/222), [#221](https://github.com/iuliandita/skills/issues/221)).
 
 ## [2.1.1](https://github.com/iuliandita/skills/compare/v2.1.0...v2.1.1) (2026-09-24)
