@@ -16,7 +16,7 @@ bumps. Verify against provider docs before pinning. Prices are USD per million i
 | Anthropic | Flagship | `claude-opus-5-5` | $4/$20, 1M ctx, effort `low`..`max`, default `medium`. Adaptive thinking always on: `thinking: {type: "disabled"}` returns 400 |
 | Anthropic | Balanced | `claude-sonnet-5` | $2/$10, 1M ctx, default effort `high`. Adaptive thinking on by default. At `low` effort, the practical cheap tier |
 | Anthropic | Fast (retiring) | `claude-haiku-4-5` | $1/$5, 200K ctx, no effort control. Alias of `claude-haiku-4-5-20251001`. Retirement not sooner than 2026-10-15 |
-| Anthropic | Limited | `claude-mythos-5-1` | $10/$50, invitation-only access (Project Glasswing) |
+| Anthropic | Limited | `claude-mythos-5-1` | $10/$50, invitation-only access |
 | OpenAI | Apex | `gpt-6-astra` | $10/$50, effort `low`..`max` (`none` returns 400). Tools require Responses |
 | OpenAI | Flagship | `gpt-6-sol` | $2/$10 up to 272K input tokens (2x input, 1.5x output above). Effort `none`..`max`, default `medium` |
 | OpenAI | Cost tier | `gpt-6-luna` | $0.10/$0.50, effort `none`..`max`, default `medium`; `minimal` is not a listed level |

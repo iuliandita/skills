@@ -443,7 +443,7 @@ response = client.messages.create(
     ],
     messages=messages,
 )
-# Cached tokens cost 90% less on subsequent requests within the TTL
+# Cache reads bill at a fraction of base input price within the TTL (ratio varies by model)
 ```
 
 ---
@@ -490,7 +490,7 @@ def call_with_retry(fn, max_retries=3):
 
 ### Anthropic
 
-- **Prompt caching**: mark static content with `cache_control` for 90% cost reduction on
+- **Prompt caching**: mark static content with `cache_control` for discounted cache reads on
   repeated prefixes. TTL is 5 minutes, refreshed on each cache hit.
 - **Thinking**: current models use adaptive thinking (on by default on Sonnet 5, always on for
   Opus 5.5 and Fable 5.1). Control depth with `output_config={"effort": ...}`; manual

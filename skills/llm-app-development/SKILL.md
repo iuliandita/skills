@@ -398,7 +398,7 @@ monthly_cost = cost_per_request * requests_per_day * 30
 1. **Model routing** - use cheaper models for easy tasks, frontier models for hard ones.
    Route by task complexity, not by default.
 2. **Caching** - cache identical or semantically similar requests. Anthropic prompt caching
-   reduces repeated prefix costs by 90%.
+   bills cache reads at a fraction of the base input price; the ratio varies by model.
 3. **Prompt optimization** - shorter prompts cost less. Cut examples, compress instructions.
 4. **Batch APIs** - Anthropic and OpenAI offer 50% discounts for async batch processing.
 5. **Output length limits** - set `max_tokens` to what you actually need, not 4096 "just in case."

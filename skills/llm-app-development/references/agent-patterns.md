@@ -105,15 +105,16 @@ effect only when idempotency or reconciliation proves doing so is safe.
 
 ```python
 MAX_ITERS, BUDGET_USD = 20, 5.00
+MAX_TOKENS = 16000  # thinking plus reply on current models
 TOOL_RETRY_MAX = 2  # transient failures only; retry then abort
 spent = 0.0
 
 for i in range(MAX_ITERS):
     # Price the serialized input plus max_tokens at the current model rates.
-    reserved = max_cost_of_next_call(msgs, tools=tools, max_tokens=1024)
+    reserved = max_cost_of_next_call(msgs, tools=tools, max_tokens=MAX_TOKENS)
     if spent + reserved > BUDGET_USD:
         raise BudgetExceeded(f"next call could exceed ${BUDGET_USD:.2f}")
-    resp = client.messages.create(model=MODEL, max_tokens=1024, tools=tools, messages=msgs)
+    resp = client.messages.create(model=MODEL, max_tokens=MAX_TOKENS, tools=tools, messages=msgs)
     spent += cost_of(resp.usage)  # input/output tokens * per-1M price
     if resp.stop_reason == "end_turn":
         return resp
