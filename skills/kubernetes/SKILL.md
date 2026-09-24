@@ -41,6 +41,7 @@ This skill covers four domains depending on context:
 - Provisioning the cluster itself via IaC (use **terraform**)
 - Database engine configuration running on K8s (use **databases**)
 - Broad read-only cluster health checks, status reports, and post-maintenance diagnostics (use **kubernetes-health**)
+- Instrumentation, collection pipelines, alerts, and SLO design (use **observability**) - this skill owns Kubernetes object configuration
 
 ## AI Self-Check
 
@@ -325,7 +326,7 @@ Promotion: dev -> staging -> prod via PR-based promotion. No auto-sync to prod.
 
 **CNI**: Cilium (eBPF, greenfield) or Calico (brownfield/multi-OS/Windows). Cilium includes Hubble observability, L3-L7 policy, and optional sidecar-free service mesh.
 
-**kube-proxy**: nftables mode is the future. IPVS deprecated in 1.35, removal targeted for a future release (no firm version committed yet).
+**kube-proxy**: nftables mode is the future. IPVS deprecated in 1.35; the Kubernetes docs specify removal in 1.43 (https://kubernetes.io/docs/reference/networking/virtual-ips/).
 
 **Service mesh** (add only when needed):
 - **Istio ambient** (GA in 1.24): sidecarless L4 mTLS via ztunnel, optional L7 via waypoint proxies. The "sidecars are too expensive" argument is dead.
@@ -336,7 +337,7 @@ Promotion: dev -> staging -> prod via PR-based promotion. No auto-sync to prod.
 
 8 layers for production:
 1. **Cluster hardening**: CIS benchmark, API server audit logging, etcd encryption via KMS v2
-2. **Pod Security Standards**: **`enforce: restricted` is mandatory on all app namespaces** - no exceptions. Set `audit: restricted` and `warn: restricted` everywhere else for visibility into what would break before enforcing.
+2. **Pod Security Standards**: **`enforce: restricted` is the default for all app namespaces**. Restricted only permits adding `NET_BIND_SERVICE`, so images that start as root and need `SETUID`/`SETGID`/`CHOWN` should first be reconfigured or rebuilt to run non-root. If that is impossible, isolate them in a dedicated namespace enforcing `baseline` with a documented exception (owner, reason, review date), keeping `audit`/`warn` at `restricted` there too. Set `audit: restricted` and `warn: restricted` everywhere else for visibility into what would break before enforcing.
 3. **Admission control**: ValidatingAdmissionPolicy (CEL, native since 1.30) for standard policies; Kyverno for mutation/generation; OPA Gatekeeper for cross-platform orgs
 4. **Network policies**: default-deny ingress/egress per namespace; Cilium for L7 policies
 5. **RBAC**: namespace-scoped roles, no cluster-admin for apps, OIDC auth with MFA

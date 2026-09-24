@@ -238,7 +238,7 @@ The Trivy supply chain attack (CVE-2026-33634) demonstrated that **mutable Git t
 
 **Full Sealed Secrets reference**: scope modes, key management, PCI-DSS gaps, kubeseal patterns, ArgoCD integration, anti-patterns - see `references/sealed-secrets.md`.
 
-**CRITICAL: CVE-2026-22728** (Sealed Secrets < v0.36.0) - scope-widening via the rotate API. Upgrade immediately.
+**CVE-2026-22728** (Sealed Secrets < v0.36.0, Moderate, CVSS 4.9, GHSA-465p-v42x-3fmj) - scope-widening via the rotate API. Upgrade immediately.
 
 **Critical**: K8s Secrets are base64-encoded, not encrypted. Enable etcd encryption at rest via KMS v2. KMS v1 is deprecated (disabled by default since 1.29). This applies regardless of which secrets tool you use - once unsealed/synced, the Secret sits in etcd.
 
@@ -394,7 +394,7 @@ Keep these in mind when upgrading:
 |-------------|---------|--------|
 | **cgroup v2** | 1.36+ | `FailCgroupV1` defaults to true; kubelet fails to start on cgroup v1 nodes unless `failCgroupV1: false`. CentOS 7, RHEL 7, Ubuntu 18.04 affected. |
 | **containerd 2.0+** | 1.36+ | Last release supporting containerd 1.x is 1.35. |
-| **AppArmor via securityContext** | 1.34+ | Annotations removed. Use `securityContext.appArmorProfile` field. |
+| **AppArmor via securityContext** | 1.34+ | Annotation auto-population stopped in 1.34; full removal in 1.36. Use `securityContext.appArmorProfile` field. |
 | **KMS v2** | Now | KMS v1 disabled by default since 1.29. Migrate to v2. |
 | **nftables kube-proxy** | Plan now | IPVS deprecated in 1.35, removal version TBD. |
 | **autoscaling/v2** | Now | v2beta1/v2beta2 removed in 1.25/1.26. |

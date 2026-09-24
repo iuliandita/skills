@@ -48,7 +48,7 @@ work, trust the live channel or flake lock over a stale table.
 | nix-darwin | verify supported nixpkgs branch | Exact branch support was not verified; check the selected nix-darwin release |
 | Determinate Nix | downstream, flakes-on by default | validated distribution; parallel eval, lazy trees |
 | Lix | fork of Nix | compatibility-focused fork; Meson build, improved errors |
-| Kernel default for 26.05 | verify the selected nixpkgs revision | Linux 6.18 default and `linux_hardened` removal claims were not verified; inspect release notes and package options |
+| Kernel default for 26.05 | Linux 6.18 LTS | 26.05 defaults to Linux 6.18 LTS and removed `linux_hardened` (source: https://nixos.org/blog/announcements/2026/nixos-2605/); consistent with `references/hardware-desktop-and-kernel.md` |
 
 ## When to use
 
@@ -86,7 +86,7 @@ work, trust the live channel or flake lock over a stale table.
 - Terraform or OpenTofu infrastructure code - use **terraform**
 - CI/CD pipeline design for Nix-based builds (cachix push, build farm, pipeline stages) - use **ci-cd**
 - Offensive or privesc testing - use **privilege-escalation**
-- Defensive hardening and vuln review - use **security-audit**
+- Repository-wide vulnerability audits spanning multiple hosts or codebases - use **security-audit**; NixOS host hardening stays in this skill
 - OPNsense or pfSense appliance work - use **opnsense-pfsense**
 
 ---

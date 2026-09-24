@@ -161,7 +161,19 @@ Fix:
 boot.loader.systemd-boot.configurationLimit = 20;
 ```
 
-Then `sudo nix-collect-garbage -d` removes the underlying generations and their entries.
+Lowering `configurationLimit` alone does not free space; old generations are still GC roots
+until deleted. Delete the specific obsolete generations, keeping the known-good one:
+
+```bash
+sudo nix-env --delete-generations --profile /nix/var/nix/profiles/system 30 31 32
+# or keep only the last N:
+sudo nix-env --delete-generations --profile /nix/var/nix/profiles/system +5
+```
+
+Then run a plain `sudo nix-collect-garbage` (no `-d`) to reclaim the store paths those
+generations held, and `sudo nixos-rebuild boot` to rebuild the bootloader entries so the
+menu matches the surviving generations. See `references/rebuild-generations-and-rollback.md`
+for retention rules and which generation counts as known-good.
 
 ## `sops-nix` or `agenix` not decrypting on first boot
 

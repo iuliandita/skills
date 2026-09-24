@@ -378,16 +378,30 @@ Announce the URL to the user. Cannot auto-create the PR without the CLI or the B
 
 ### No forge CLI available (`$FORGE=unknown` or tool missing)
 
-Push the branch. Produce a shareable reference for manual review. **Let push errors surface** - auth failures, hook rejections, and permission errors are fixable; silencing them wastes time:
+Resolve the forge before pushing anything - a tool-missing case on a known forge and a
+genuinely unknown forge take different paths.
+
+**Tool missing on a known forge** (`$FORGE` is `forgejo` or `gitea` but `fj`/`tea` isn't
+installed): push and give the manual PR URL. **Let push errors surface** - auth failures,
+hook rejections, and permission errors are fixable; silencing them wastes time:
 
 ```bash
 # Push will fail loudly on auth/hook/permission issues - that's correct.
-# Only fall through to bare-git path if there is genuinely no remote.
+git push -u origin "$BRANCH_NAME"   # surface the real error if it fails
+REMOTE_URL=$(git remote get-url origin | sed 's|\.git$||')
+echo "Branch pushed to: $REMOTE_URL (branch: $BRANCH_NAME)"
+echo "Review via the forge's web UI - skill doesn't know the PR URL pattern for $FORGE without its CLI."
+```
+
+**`$FORGE=unknown`**: ask the user which forge this self-hosted instance runs (Forgejo,
+Gitea, GitLab, or other) per the forge table above. If the answer resolves to a supported
+forge, set `$FORGE` and route through that forge's flow. If it stays unresolved, follow the
+Bare git (`$FORGE=bare`) path below - no push:
+
+```bash
 if git remote get-url origin >/dev/null 2>&1; then
-  git push -u origin "$BRANCH_NAME"   # surface the real error if it fails
-  REMOTE_URL=$(git remote get-url origin | sed 's|\.git$||')
-  echo "Branch pushed to: $REMOTE_URL (branch: $BRANCH_NAME)"
-  echo "Review via the forge's web UI - skill doesn't know the PR URL pattern for self-hosted $FORGE."
+  echo "Forge still unresolved after asking. Do not push speculatively;"
+  echo "fall through to the Bare git (\$FORGE=bare) path below."
 else
   echo "No remote configured. Fall through to the Bare git (\$FORGE=bare) path below."
 fi

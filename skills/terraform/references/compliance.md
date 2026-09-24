@@ -381,7 +381,7 @@ states/
 **Each CDE state** gets:
 - Own S3 key prefix with separate KMS key
 - Own IAM role (pipeline can't reach non-CDE state and vice versa)
-- Own approval workflow (manual for CDE, auto for non-CDE dev)
+- Human approval for every apply, with CDE routed through a separate, restricted approver group
 - Own CloudTrail data events
 - Cross-state references via `terraform_remote_state` (read-only)
 
