@@ -6,9 +6,9 @@ against production.
 
 | Runtime / target | Profile type | Tool | Representative command |
 |---|---|---|---|
-| Linux (any compiled/native process) | CPU | perf | `perf record -g -p <pid>` then `perf report` |
-| Go | CPU | pprof (net/http/pprof) | `go tool pprof -http=: http://host/debug/pprof/profile?seconds=30` |
-| Go | heap | pprof | `go tool pprof -http=: http://host/debug/pprof/heap` |
+| Linux (any compiled/native process) | CPU | perf | `perf record -g -p <pid> -- sleep 30` then `perf report` |
+| Go | CPU | pprof (net/http/pprof) | `go tool pprof -http=: 'http://host/debug/pprof/profile?seconds=30'` |
+| Go | heap | pprof | `go tool pprof -http=: 'http://host/debug/pprof/heap'` |
 | Python | CPU | py-spy | `py-spy record -o out.svg --pid <pid>` |
 | JVM | CPU/allocation | async-profiler | `asprof -d 30 -f out.html <pid>` |
 | .NET | CPU/general trace | dotnet-trace | `dotnet-trace collect -p <pid>` |
