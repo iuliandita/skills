@@ -902,6 +902,68 @@ test_doctor_reports_duplicates_read_only() {
   trap - RETURN
 }
 
+write_fixture_skill() {
+  mkdir -p "$1/skills/$2"
+  printf '%s\n' "$3" > "$1/skills/$2/SKILL.md"
+}
+
+installed_dirs() {
+  find "$1" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort | paste -sd' '
+}
+
+make_frontmatter_fixture() {
+  local repo="$1"
+  mkdir -p "$repo/scripts"
+  cp "$ROOT/install.sh" "$repo/install.sh"
+  cp "$ROOT/scripts/skill-lib.sh" "$ROOT/scripts/skill-frontmatter.py" "$repo/scripts/"
+  write_fixture_skill "$repo" public $'---\nname: public\ndescription: d\nmetadata:\n  internal: false\n---'
+  write_fixture_skill "$repo" bare $'---\ndescription: no name or metadata\n---'
+  write_fixture_skill "$repo" private $'---\nname: private\ndescription: d\nmetadata:\n  internal: true\n---'
+  write_fixture_skill "$repo" ignored $'---\nname: ignored\ndescription: d\n---'
+  write_fixture_skill "$repo" old $'---\nname: old\ndescription: d\nmetadata:\n  deprecated: true\n---'
+  printf '%s\n' 'skills/private/' 'skills/ignored/' > "$repo/.gitignore"
+  git -C "$repo" init -q
+}
+
+test_frontmatter_cache_selects_skills() {
+  local tmp repo output
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  repo="$tmp/repo"
+  make_frontmatter_fixture "$repo"
+  export SKILLS_MIGRATIONS_FILE="$tmp/none.json"
+
+  HOME="$tmp" "$repo/install.sh" --tool portable --dest "$tmp/default" --no-backup >/dev/null
+  [[ "$(installed_dirs "$tmp/default")" == "bare public" ]] || fail "default install picked: $(installed_dirs "$tmp/default")"
+
+  HOME="$tmp" "$repo/install.sh" --tool portable --dest "$tmp/internal" --no-backup --include-internal >/dev/null
+  [[ "$(installed_dirs "$tmp/internal")" == "bare private public" ]] || fail "--include-internal picked: $(installed_dirs "$tmp/internal")"
+
+  output="$(HOME="$tmp" "$repo/install.sh" --tool portable --dest "$tmp/explicit" --no-backup old)"
+  grep -q 'old is deprecated and scheduled for removal' <<< "$output" || fail "deprecated notice missing from cached lookup"
+  unset SKILLS_MIGRATIONS_FILE
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_malformed_frontmatter_fails_install() {
+  local tmp repo output
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  repo="$tmp/repo"
+  make_frontmatter_fixture "$repo"
+  printf '%s\n' '---' 'name: broken' 'description: no closing marker' > "$repo/skills/public/SKILL.md"
+
+  if output="$(HOME="$tmp" SKILLS_MIGRATIONS_FILE="$tmp/none.json" "$repo/install.sh" --tool portable --dest "$tmp/dest" --no-backup 2>&1)"; then
+    fail "install accepted malformed frontmatter"
+  fi
+  grep -q "invalid frontmatter in $repo/skills/public/SKILL.md" <<< "$output" || fail "malformed frontmatter error did not name the file"
+  grep -q 'Cannot continue with invalid skill frontmatter' <<< "$output" || fail "installer did not stop on malformed frontmatter"
+  [[ ! -e "$tmp/dest" ]] || fail "install wrote files despite malformed frontmatter"
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
 test_backups_stay_outside_skill_root
 test_legacy_backups_are_migrated_outside_skill_root
 test_opencode_install_allows_installed_skills
@@ -940,4 +1002,6 @@ test_legacy_cleanup_custom_canonical_needs_replacement
 test_opencode_link_migration_on_canonical_allows_replacement
 test_doctor_frontmatter_identity
 test_doctor_reports_duplicates_read_only
+test_frontmatter_cache_selects_skills
+test_malformed_frontmatter_fails_install
 printf 'install tests passed\n'

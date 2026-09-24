@@ -225,18 +225,32 @@ skill_hash() {
 }
 
 # ── Internal skill detection ──────────────────────────────────────────
+# Frontmatter is parsed once per run; per-skill python forks made installs slow.
+declare -A SKILL_INTERNAL=()
+declare -A SKILL_DEPRECATED=()
+
+load_skill_metadata() {
+  local rows line dir
+  rows="$(python3 "$FRONTMATTER_PY" batch "$SKILLS_SRC")" || return 1
+  while IFS= read -r line; do
+    [[ -n "$line" ]] || continue
+    dir="${line%%$'\t'*}"
+    SKILL_DEPRECATED[$dir]="${line##*$'\t'}"
+    line="${line%$'\t'*}"
+    SKILL_INTERNAL[$dir]="${line##*$'\t'}"
+  done <<< "$rows"
+}
+
 is_internal() {
-  local skill_dir="$1"
+  local skill_dir="${1%/}"
   [[ -f "$skill_dir/SKILL.md" ]] || return 1
-  frontmatter_has "$skill_dir/SKILL.md" "metadata.internal" \
-    && [[ "$(frontmatter_get "$skill_dir/SKILL.md" "metadata.internal")" == "true" ]]
+  [[ "${SKILL_INTERNAL[${skill_dir##*/}]:-}" == "true" ]]
 }
 
 is_deprecated() {
-  local skill_dir="$1"
+  local skill_dir="${1%/}"
   [[ -f "$skill_dir/SKILL.md" ]] || return 1
-  frontmatter_has "$skill_dir/SKILL.md" "metadata.deprecated" \
-    && [[ "$(frontmatter_get "$skill_dir/SKILL.md" "metadata.deprecated")" == "true" ]]
+  [[ "${SKILL_DEPRECATED[${skill_dir##*/}]:-}" == "true" ]]
 }
 
 declare -A MIGRATION_ACTIONS=()
@@ -935,6 +949,7 @@ main() {
     tools=("${SKILLS_TOOL:-claude}")
   fi
 
+  load_skill_metadata || { printf '%s\n' "Cannot continue with invalid skill frontmatter" >&2; exit 1; }
   mapfile -t ALL_SKILLS < <(discover_skills "$include_internal")
   load_migrations || { printf '%s\n' "Cannot continue with an invalid migrations.json" >&2; exit 1; }
 
