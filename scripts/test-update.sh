@@ -481,7 +481,12 @@ test_fetch_timeout_and_signal() {
       'import os, signal, sys; signal.signal(signal.SIGINT, signal.SIG_DFL); os.execv(sys.argv[1], sys.argv[1:])' \
       "$F/repo/install.sh" --update >"$F/sig.out" 2>&1 &
     pid=$!
-    sleep 1
+    # Signal only once the fetch is running; earlier, SIGINT may still be ignored.
+    for _ in $(seq 1 100); do
+      grep -q 'update: fetching' "$F/sig.out" 2>/dev/null && break
+      sleep 0.1
+    done
+    grep -q 'update: fetching' "$F/sig.out" || fail "update never reached the fetch: $(cat "$F/sig.out")"
     start=$SECONDS
     kill "-${sig%%:*}" "$pid"
     wait "$pid" || rc=$?
