@@ -807,6 +807,60 @@ test_legacy_cleanup_custom_canonical_needs_replacement() {
   trap - RETURN
 }
 
+test_opencode_link_migration_on_canonical_allows_replacement() {
+  local tmp canonical digest config
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  canonical="$tmp/.agents/skills"
+  config="$tmp/.config/opencode/opencode.json"
+  mkdir -p "$canonical" "$(dirname "$config")"
+  cp -r "$ROOT/skills/anti-slop" "$canonical/anti-slop"
+  digest="$(LC_ALL=C find "$canonical/anti-slop" -type f -print0 | LC_ALL=C sort -z | xargs -0 cat | sha256sum | cut -d' ' -f1)"
+  python3 - "$canonical/.skills-lock.json" "$ROOT/skills" "$digest" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], "w", encoding="utf-8") as f:
+    json.dump({"version": 1, "source": sys.argv[2], "skills": {"anti-slop": {"hash": sys.argv[3], "provenance": "source-equal-v1"}}}, f)
+PY
+  printf '%s\n' '{"permission":{"skill":{"*":"deny"}}}' > "$config"
+  HOME="$tmp" "$ROOT/install.sh" --tool opencode --link --migrate --apply >/dev/null
+  [[ -d "$canonical/code-simplification" ]] || fail "canonical link migration did not install the replacement"
+  python3 - "$config" <<'PY'
+import json
+import sys
+
+skills = json.load(open(sys.argv[1], encoding="utf-8"))["permission"]["skill"]
+assert skills == {"*": "deny", "code-simplification": "allow"}, skills
+PY
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_doctor_frontmatter_identity() {
+  local tmp output
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  mkdir -p "$tmp/.commandcode/skills/foo" "$tmp/.agents/skills/baz" "$tmp/.agents/skills/qux" "$tmp/.agents/skills/quoted"
+  printf '%s\n' '---' 'name: bar # renamed' 'description: x' '---' > "$tmp/.commandcode/skills/foo/SKILL.md"
+  printf '%s\n' '---' "name: 'foo'" 'description: x' '---' > "$tmp/.agents/skills/baz/SKILL.md"
+  output="$(HOME="$tmp" "$ROOT/install.sh" --doctor --tool commandcode)" || fail "doctor matched a dir name against a frontmatter name: $output"
+
+  mkdir -p "$tmp/.commandcode/skills/docker-local"
+  printf '%s\n' '---' 'name: docker # shared skill' 'description: x' '---' > "$tmp/.commandcode/skills/docker-local/SKILL.md"
+  printf '%s\n' '---' 'name: "docker" # quoted' 'description: x' '---' > "$tmp/.agents/skills/qux/SKILL.md"
+  printf '%s\n' '---' 'name: "a # b"' 'description: x' '---' > "$tmp/.agents/skills/quoted/SKILL.md"
+  if output="$(HOME="$tmp" "$ROOT/install.sh" --doctor --tool commandcode)"; then
+    fail "doctor missed a frontmatter-name collision"
+  fi
+  grep -q '\[!\] name docker: .*/.commandcode/skills/docker-local, .*/.agents/skills/qux' <<< "$output" || fail "doctor did not report the frontmatter collision: $output"
+  if grep -q -E '# (shared|quoted)|\[!\] (dir|name) (foo|bar|baz|a)\b' <<< "$output"; then
+    fail "doctor kept a comment or reported a false collision: $output"
+  fi
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
 test_doctor_reports_duplicates_read_only() {
   local tmp before output
   tmp="$(mktemp -d)"
@@ -816,14 +870,14 @@ test_doctor_reports_duplicates_read_only() {
   printf '%s\n' '{"permission":{"skill":{"*":"deny"}}}' > "$tmp/.config/opencode/opencode.json"
   output="$(HOME="$tmp" "$ROOT/install.sh" --doctor --tool commandcode,opencode)" || fail "doctor failed on a clean layout"
   grep -q 'harness config toggles are not read' <<< "$output" || fail "doctor did not state its static scope"
-  grep -q '\[i\] docker: .*/.claude/skills/docker, .*/.agents/skills/docker' <<< "$output" || fail "doctor did not report the OpenCode compat overlap as info"
+  grep -q '\[i\] dir docker: .*/.claude/skills/docker, .*/.agents/skills/docker' <<< "$output" || fail "doctor did not report the OpenCode compat overlap as info"
 
   make_legacy_commandcode "$tmp" git
   before="$(tree_hash "$tmp")"
   if output="$(HOME="$tmp" "$ROOT/install.sh" --doctor 2>&1)"; then
     fail "doctor passed with a planted duplicate"
   fi
-  grep -q '\[!\] git: .*/.commandcode/skills/git, .*/.agents/skills/git' <<< "$output" || fail "doctor did not name the duplicate paths"
+  grep -q '\[!\] dir git: .*/.commandcode/skills/git, .*/.agents/skills/git' <<< "$output" || fail "doctor did not name the duplicate paths"
   [[ "$(tree_hash "$tmp")" == "$before" ]] || fail "doctor changed files"
   if HOME="$tmp" "$ROOT/install.sh" --doctor --link >/dev/null 2>&1; then
     fail "doctor accepted --link"
@@ -867,5 +921,7 @@ test_legacy_cleanup_backup_failure_removes_nothing
 test_legacy_cleanup_converges_after_interruption
 test_legacy_cleanup_refuses_unsafe_layouts
 test_legacy_cleanup_custom_canonical_needs_replacement
+test_opencode_link_migration_on_canonical_allows_replacement
+test_doctor_frontmatter_identity
 test_doctor_reports_duplicates_read_only
 printf 'install tests passed\n'

@@ -689,7 +689,17 @@ import sys
 
 tools = sys.argv[1].split(",")
 table = [row.split("|", 3) for row in sys.argv[2:]]
-name_re = re.compile(r"""^name:\s*["']?(.+?)["']?\s*$""")
+
+
+def yaml_scalar(raw):
+    raw = raw.strip()
+    if raw[:1] == "'":
+        match = re.match(r"'((?:[^']|'')*)'\s*(?:#.*)?$", raw)
+        return match.group(1).replace("''", "'") if match else None
+    if raw[:1] == '"':
+        match = re.match(r'"((?:[^"\\]|\\.)*)"\s*(?:#.*)?$', raw)
+        return re.sub(r"\\(.)", r"\1", match.group(1)) if match else None
+    return re.split(r"(?:^|\s)#", raw, maxsplit=1)[0].strip() or None
 
 
 def frontmatter_name(skill_md):
@@ -702,8 +712,8 @@ def frontmatter_name(skill_md):
     for line in lines[1:]:
         if line.strip() == "---":
             return None
-        if match := name_re.match(line):
-            return match.group(1)
+        if line.startswith("name:"):
+            return yaml_scalar(line[len("name:"):])
     return None
 
 
@@ -735,8 +745,10 @@ for tool in tools:
         for entry in sorted(root.iterdir()):
             if entry.name.startswith(".") or not (entry / "SKILL.md").is_file():
                 continue
-            for key in {entry.name, frontmatter_name(entry / "SKILL.md")} - {None}:
-                found.setdefault(key, {}).setdefault(index, str(entry))
+            identities = [("dir", entry.name), ("name", frontmatter_name(entry / "SKILL.md"))]
+            for key in identities:
+                if key[1] is not None:
+                    found.setdefault(key, {}).setdefault(index, str(entry))
     clean = True
     for key in sorted(found):
         where = found[key]
@@ -746,10 +758,10 @@ for tool in tools:
         groups = {roots[index][1] for index in where}
         paths = ", ".join(where[index] for index in sorted(where))
         if len(groups) == 1 and "" not in groups:
-            print(f"  [i] {key}: {paths} (resolved by the harness)")
+            print(f"  [i] {key[0]} {key[1]}: {paths} (resolved by the harness)")
         else:
             blocking += 1
-            print(f"  [!] {key}: {paths}")
+            print(f"  [!] {key[0]} {key[1]}: {paths}")
     if clean:
         print("  no duplicates")
 
@@ -972,7 +984,17 @@ main() {
       printf 'Previewing recorded legacy-skill migration. Re-run with --apply to change files.\n\n'
     fi
     if [[ "$link_mode" == "true" ]]; then
-      python3 "$MIGRATOR" "${migration_args[@]}" --dest "$CANONICAL_DIR" --backup-dir "${SKILLS_BACKUP_DIR:-$(dirname "$CANONICAL_DIR")/.skills-backups/$(basename "$CANONICAL_DIR")}" --protected-root "$CANONICAL_DIR" --preserve-shared-canonical
+      local canonical_applied="" canonical_args=()
+      if [[ "$apply_migration" == "true" && " ${tools[*]} " == *" opencode "* ]] \
+        && paths_match "$(resolve_tool_path opencode)" "$CANONICAL_DIR"; then
+        canonical_applied="$(mktemp)"
+        canonical_args=(--applied-file "$canonical_applied")
+      fi
+      python3 "$MIGRATOR" "${migration_args[@]}" --dest "$CANONICAL_DIR" --backup-dir "${SKILLS_BACKUP_DIR:-$(dirname "$CANONICAL_DIR")/.skills-backups/$(basename "$CANONICAL_DIR")}" --protected-root "$CANONICAL_DIR" --preserve-shared-canonical "${canonical_args[@]}"
+      if [[ -n "$canonical_applied" ]]; then
+        sync_migrated_opencode_permissions "$CANONICAL_DIR" "$canonical_applied"
+        rm -f "$canonical_applied"
+      fi
       local -A migrated_destinations=()
       for tool in "${tools[@]}"; do
         local tool_dir
