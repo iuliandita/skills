@@ -256,7 +256,7 @@ SLSA (Supply-chain Levels for Software Artifacts) is a framework for build integ
 | **Build L2** | Hosted build platform generates signed provenance | Verify producer and consumer requirements |
 | **Build L3** | Hardened build platform with isolation and protected signing | Evaluate platform guarantees |
 
-[SLSA v1.2 build levels](https://slsa.dev/spec/v1.2/levels) stop at L3. An attestation action
+[SLSA v1.2 build levels](https://slsa.dev/spec/v1.2/build-track-basics) stop at L3. An attestation action
 alone does not prove a level; verify the platform and consumer requirements. Example:
 
 ```yaml
