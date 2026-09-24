@@ -32,7 +32,7 @@ Post-change documentation sweep. Captures non-obvious knowledge into the right d
 - Prompt authoring or reusable skill-file maintenance - use **prompt-generator** or **skill-creator**
 - Full codebase audit across multiple domains - use **repo-audit** (it invokes update-docs as one pass)
 - Git commit messages, PR descriptions, release announcement copy, or tag operations - use **git**
-- Roadmap prioritisation and backlog shaping belongs to the **roadmap** skill; factual drift (stated version, shipped highlights, items mistakenly listed as planned) belongs here
+- Roadmap prioritisation and backlog shaping belongs to the **roadmap** skill; moving shipped `[planned]` / `[exploring]` items is roadmap Mode 2; stated version numbers and highlight prose belong here
 
 ---
 
@@ -53,7 +53,6 @@ Before presenting documentation updates, verify:
 - [ ] Size check run (`wc -c`) - instruction files under 40,000 chars
 - [ ] README / quality-evidence sections checked for stale dates, stale counts, and old run references
 - [ ] All roadmap files (committed AND gitignored) checked - their stated version/date matches current HEAD or latest tag
-- [ ] `[planned]` / `[exploring]` items that actually shipped have moved to Shipped Highlights, not left in the in-progress list
 - [ ] When private and public roadmaps both exist, both are updated, with the public one carrying user-visible highlights only and the private one carrying internal detail
 - [ ] **Docs match code**: commands, flags, config names, screenshots, and API examples are checked against the changed implementation
 - [ ] **Audience path checked**: README, changelog, API docs, runbooks, and migration notes are updated only where users need them
@@ -252,7 +251,7 @@ Map changes to documentation targets. Common instruction file names: `CLAUDE.md`
 | Merged PR with user-visible impact | Changelog, roadmap/status docs, release notes, affected feature/API/setup docs |
 | Version bumps / new release cut | `CHANGELOG.md`, release notes, `README.md`, install/upgrade docs, badges, package manager instructions |
 | Release cut or version bump (roadmap-side) | `ROADMAP.md` header (`Current` / `Updated`), Shipped Highlights section, status docs |
-| Multiple shipped features since last roadmap update | `ROADMAP.md` Shipped Highlights, Where-We-Are summary, `[planned]` / `[exploring]` items that actually shipped |
+| Multiple shipped features since last roadmap update | `ROADMAP.md` Shipped Highlights prose and Where-We-Are summary (item status moves belong to **roadmap** Mode 2) |
 | Gitignored private roadmap AND committed public roadmap both present | Update both - private gets the deeper internal detail, public gets the user-visible summary |
 | Strategy or sequencing changes | `ROADMAP.md`, status docs, milestone docs |
 

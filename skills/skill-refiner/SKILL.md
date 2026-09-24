@@ -212,8 +212,7 @@ continue.
    - Execution provenance: load each complete candidate and its applicable references before
      answering its prompts. Resume truncated reads; a file listing or search is not a full read.
      Record loaded files per candidate. Never relabel copied unguided responses as a fresh run.
-   - Cross-model: skip at baseline (iteration 1, no diff yet; penalty 0) - the one exception to
-     step 6's otherwise-identical review form; ordinary scoring starts at iteration 2.
+   - Cross-model: skip at baseline (see the exception in step 6)
 8. **Log baseline scores**: record per-skill and aggregate scores
    in a score ledger before any edits. The ledger must include structural gate (G),
    AI Self-Check (A), behavioral score (B), verified flag count and penalty, reviewer
@@ -418,9 +417,10 @@ continue.
     an existing history file, append the new object without reserializing the whole file; do not
     normalize or rewrite old entries just because a JSON writer changes escaping, commas, or
     whitespace. Immediately after the append, run `$SKILL_REFINER_GATE_DIR/check-refiner-state.sh`
-    (if absent, mark state-integrity "unavailable" per the Phase 0 note and continue); if it
-    exits non-zero, do not commit, report the validation error, and fix the entry first. Commit
-    with the phase 3 summary only once the check exits 0.
+    (if absent, mark state-integrity "unavailable" per the Phase 0 note; the commit may proceed
+    with that label in the summary). If it exits non-zero, do not commit, report the validation
+    error, and fix the entry first. Commit with the phase 3 summary only once the check exits 0
+    or is recorded unavailable.
     Retention: the history keeps full detail for the most recent runs; older runs are compacted
     into `.refiner-runs-archive.json` by `$SKILL_REFINER_GATE_DIR/refiner-history-compact.sh`, run
     manually or periodically, never per run.
