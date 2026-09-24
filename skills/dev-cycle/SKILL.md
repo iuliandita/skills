@@ -197,7 +197,7 @@ End start mode with a clear handoff:
 - Name whether **testing**, **update-docs**, and **security-audit** will apply at finish time. Justify
   any skipped handoff from the change scope.
 
-Do not continue into implementation - that's the user's next session.
+Do not continue into implementation - that's the user's next session, unless the user explicitly asked for the full cycle (start through finish, release, deploy) in this session, in which case continue.
 
 ---
 
@@ -323,12 +323,17 @@ Once CI is green, dispatch on `$FORGE`:
 
 | `$FORGE` | Merge command | Delete-branch flag |
 |----------|---------------|--------------------|
-| `github` | `gh pr merge --squash` / `--rebase` / `--merge` | `--delete-branch` |
-| `gitlab` | `glab mr merge --squash` / `--rebase` / (default = merge commit) | `--remove-source-branch` |
-| `forgejo` | `fj pr merge <pr> --method squash\|merge\|rebase\|rebase-merge --delete` | `--delete` removes the source branch |
-| `gitea` | `tea pulls merge <pr> --style squash\|merge\|rebase\|rebase-merge` | Delete via web UI or follow-up `git push origin --delete <branch>` |
-| `bitbucket` | Web UI or REST API with `"merge_strategy": "squash"` | `"close_source_branch": true` |
+| `github` | `gh pr merge --squash --subject "..." --body "..."` / `--rebase` / `--merge` | `--delete-branch` |
+| `gitlab` | `glab mr merge --squash --squash-message "..."` / `--rebase` / (default = merge commit) | `--remove-source-branch` |
+| `forgejo` | `fj pr merge <pr> --method squash --title "..." --message "..."` / `merge\|rebase\|rebase-merge` | `--delete` removes the source branch |
+| `gitea` | `tea pulls merge <pr> --style squash --title "..." --message "..."` / `merge\|rebase\|rebase-merge` | Delete via web UI or follow-up `git push origin --delete <branch>` |
+| `bitbucket` | Web UI or REST API with `"merge_strategy": "squash"` (no subject/body field - set the commit message field manually) | `"close_source_branch": true` |
 | `unknown`/`bare` | Local: `git merge --no-ff` (or `--ff-only` after rebase) on base, push, `git branch -d` | N/A |
+
+For squash merges, always pass an explicit conventional subject such as
+`type(scope): desc (#PR_NUMBER)` and a `Closes #ISSUE_NUMBER` body. Without it, the forge falls
+back to the PR title as the commit subject, which is not always conventional. Keep the PR and
+issue numbers distinct. Per-forge commands are in `references/finish.md`.
 
 Check the repo's merge convention before picking a style. If multiple are allowed, match recent merge history: `git log --merges --oneline "$BASE_BRANCH" | head -5`.
 
@@ -374,7 +379,9 @@ B5  git push -u origin feat/oauth-login
 B6  gh pr checks --watch --fail-fast     # then:
     gh pr view --json headRefOid,statusCheckRollup
     # Match the tested head SHA and inspect required check runs and legacy status contexts.
-B7  gh pr merge --squash --delete-branch
+B7  PR_NUMBER=$(gh pr view --json number --jq '.number')
+    gh pr merge "$PR_NUMBER" --squash --delete-branch \
+      --subject "feat(auth): OAuth login (#$PR_NUMBER)" --body "Closes #118"
 B8  # Set RELEASE_SHA to the verified merged release commit before tagging.
     git fetch --tags origin
     if git show-ref --verify --quiet refs/tags/v1.5.0; then
@@ -418,4 +425,4 @@ See `references/output-contract.md` for the full contract.
 7. **Release detection is conservative.** If no convention signals are present, skip. A missing `CHANGELOG.md` plus no tags means this isn't a release-cut situation - don't create one.
 8. **Don't bundle unrelated work.** If mid-finish you notice a bug outside the branch's scope, file it (roadmap skill or an issue) - don't sneak it into the PR.
 9. **Plain ASCII only.** No em-dashes, no `--` substitutes, no curly quotes, no decorative emoji. Functional status markers (`[OK]`, `[FAIL]`, severity emoji in reports from delegated skills) are fine.
-10. **Mode boundaries are sacred.** Start mode ends with a handoff, not implementation. Finish mode starts with verification, not committing new code. Don't blur them.
+10. **Mode boundaries are sacred.** Start mode ends with a handoff, not implementation. Finish mode starts with verification, not committing new code. Don't blur them - except when the user explicitly asks for the full cycle in one session (e.g. "do the full dev-cycle, release, deploy"): then run start through finish back to back, still starting finish with verification.

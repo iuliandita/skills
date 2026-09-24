@@ -300,6 +300,9 @@ EOF
 )"
 ```
 
+When another model or tool did the review, write `independent review; issues resolved` and
+never name the reviewer.
+
 Recent-PR style check: `gh pr list --state merged --limit 10 --json title --jq '.[].title'`
 
 ### GitLab (`$FORGE=gitlab`, `glab`)
@@ -521,6 +524,11 @@ git log --merges --oneline "$BASE_BRANCH" | head -5
 # If merges exist: project uses merge commits. If none: squash or rebase - check forge config.
 ```
 
+**Squash subject/body**: pass an explicit conventional subject and body rather than accepting
+the forge default. Without it, GitHub (and equivalents) falls back to the PR title as the
+squash commit subject, which is not always conventional-commit-shaped. Keep the PR number
+(what's being merged) and the issue number (what it closes) distinct.
+
 ### GitHub (`$FORGE=github`)
 
 ```bash
@@ -530,8 +538,9 @@ gh repo view --json mergeCommitAllowed,squashMergeAllowed,rebaseMergeAllowed
 # Capture the PR number before --delete-branch removes the branch this command resolves from
 PR_NUMBER=$(gh pr view --json number --jq '.number')
 
-# Pick one
-gh pr merge "$PR_NUMBER" --squash  --delete-branch   # most common
+# Pick one - squash needs an explicit subject/body or GitHub reuses the PR title
+gh pr merge "$PR_NUMBER" --squash --delete-branch \
+  --subject "type(scope): desc (#$PR_NUMBER)" --body "Closes #ISSUE_NUMBER"
 gh pr merge "$PR_NUMBER" --rebase  --delete-branch
 gh pr merge "$PR_NUMBER" --merge   --delete-branch   # merge commit
 
@@ -542,8 +551,12 @@ MERGE_SHA=$(gh pr view "$PR_NUMBER" --json mergeCommit --jq '.mergeCommit.oid')
 ### GitLab (`$FORGE=gitlab`)
 
 ```bash
-# Note: --delete-branch in gh is --remove-source-branch in glab
-glab mr merge --squash --remove-source-branch
+# Note: --delete-branch in gh is --remove-source-branch in glab.
+# glab has one combined message field (--squash-message), not separate subject/body.
+glab mr merge --squash --remove-source-branch \
+  --squash-message "type(scope): desc (!$MR_IID)
+
+Closes #ISSUE_NUMBER"
 glab mr merge --rebase --remove-source-branch
 # GitLab's default is "merge commit" if no flag is passed
 glab mr merge --remove-source-branch
@@ -555,7 +568,9 @@ Check project settings for allowed merge methods: `glab repo view --output json 
 
 ```bash
 # Methods: merge, rebase, rebase-merge, squash, manual. --delete removes the source branch.
-fj pr merge "$PR_NUMBER" --method squash --delete
+# --title/--message set the squash commit subject/body explicitly.
+fj pr merge "$PR_NUMBER" --method squash --delete \
+  --title "type(scope): desc (#$PR_NUMBER)" --message "Closes #ISSUE_NUMBER"
 ```
 
 Available methods depend on the repo's settings. If the method isn't allowed, the command errors - adjust and retry.
@@ -563,20 +578,25 @@ Available methods depend on the repo's settings. If the method isn't allowed, th
 ### Gitea (`$FORGE=gitea`)
 
 ```bash
-tea pulls merge "$PR_NUMBER" --style squash   # or: merge, rebase, rebase-merge, squash
+# --title/--message set the squash commit subject/body explicitly.
+tea pulls merge "$PR_NUMBER" --style squash \
+  --title "type(scope): desc (#$PR_NUMBER)" --message "Closes #ISSUE_NUMBER"
+# or: merge, rebase, rebase-merge, squash
 ```
 
 Available styles depend on the repo's settings. If the style isn't allowed, the command errors - adjust and retry.
 
 ### Bitbucket (`$FORGE=bitbucket`)
 
-Merge in the web UI (no official CLI). Or via REST API if scripted:
+Merge in the web UI (no official CLI) - set the squash commit message by hand in the merge
+dialog. Or via REST API if scripted; the merge endpoint has no dedicated subject/body field,
+only a generic `"message"` field:
 
 ```bash
 curl --fail --config "${BITBUCKET_CURL_CONFIG:?set a mode-0600 credential config}" -X POST \
   "https://api.bitbucket.org/2.0/repositories/$WORKSPACE_REPO/pullrequests/$PR_ID/merge" \
   -H 'Content-Type: application/json' \
-  -d '{"type":"pullrequest","close_source_branch":true,"merge_strategy":"squash"}'
+  -d '{"type":"pullrequest","close_source_branch":true,"merge_strategy":"squash","message":"type(scope): desc (#PR_ID)\n\nCloses #ISSUE_NUMBER"}'
 ```
 
 ### Self-hosted / unknown (`$FORGE=unknown`)
