@@ -857,6 +857,13 @@ test_doctor_frontmatter_identity() {
   if grep -q -E '# (shared|quoted)|\[!\] (dir|name) (foo|bar|baz|a)\b' <<< "$output"; then
     fail "doctor kept a comment or reported a false collision: $output"
   fi
+
+  mkdir -p "$tmp/.commandcode/skills/esc" "$tmp/.agents/skills/plain" "$tmp/.agents/skills/bad"
+  printf '%s\n' '---' 'name: "\u0067it"' 'description: x' '---' > "$tmp/.commandcode/skills/esc/SKILL.md"
+  printf '%s\n' '---' 'name: git' 'description: x' '---' > "$tmp/.agents/skills/plain/SKILL.md"
+  printf '%s\n' '---' 'name: "\q"' 'description: x' '---' > "$tmp/.agents/skills/bad/SKILL.md"
+  output="$(HOME="$tmp" "$ROOT/install.sh" --doctor --tool commandcode)" || true
+  grep -q '\[!\] name git: .*/.commandcode/skills/esc, .*/.agents/skills/plain' <<< "$output" || fail "doctor did not decode a YAML escape: $output"
   rm -rf "$tmp"
   trap - RETURN
 }

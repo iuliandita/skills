@@ -691,6 +691,36 @@ tools = sys.argv[1].split(",")
 table = [row.split("|", 3) for row in sys.argv[2:]]
 
 
+YAML_ESCAPES = {"0": "\0", "a": "\a", "b": "\b", "t": "\t", "\t": "\t", "n": "\n",
+                "v": "\v", "f": "\f", "r": "\r", "e": "\x1b", " ": " ", '"': '"',
+                "/": "/", "\\": "\\", "N": "\x85", "_": "\xa0", "L": "\u2028",
+                "P": "\u2029"}
+HEX_LEN = {"x": 2, "u": 4, "U": 8}
+
+
+def yaml_unescape(body):
+    out, i = [], 0
+    while i < len(body):
+        ch = body[i]
+        if ch != "\\":
+            out.append(ch)
+            i += 1
+            continue
+        code = body[i + 1]
+        if code in HEX_LEN:
+            digits = body[i + 2:i + 2 + HEX_LEN[code]]
+            if len(digits) != HEX_LEN[code] or not re.fullmatch(r"[0-9A-Fa-f]+", digits):
+                return None
+            out.append(chr(int(digits, 16)))
+            i += 2 + HEX_LEN[code]
+        elif code in YAML_ESCAPES:
+            out.append(YAML_ESCAPES[code])
+            i += 2
+        else:
+            return None
+    return "".join(out)
+
+
 def yaml_scalar(raw):
     raw = raw.strip()
     if raw[:1] == "'":
@@ -698,7 +728,7 @@ def yaml_scalar(raw):
         return match.group(1).replace("''", "'") if match else None
     if raw[:1] == '"':
         match = re.match(r'"((?:[^"\\]|\\.)*)"\s*(?:#.*)?$', raw)
-        return re.sub(r"\\(.)", r"\1", match.group(1)) if match else None
+        return yaml_unescape(match.group(1)) if match else None
     return re.split(r"(?:^|\s)#", raw, maxsplit=1)[0].strip() or None
 
 
