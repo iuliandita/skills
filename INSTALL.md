@@ -105,7 +105,7 @@ They also check freshness markers in public skills. Lines that claim currentness
 
 ```bash
 cp -r skills/kubernetes ~/.claude/skills/kubernetes
-cp -r skills/kubernetes ~/.codex/skills/kubernetes
+cp -r skills/kubernetes ~/.agents/skills/kubernetes
 cp -r skills/kubernetes ~/.cursor/skills/kubernetes
 ```
 
@@ -125,11 +125,11 @@ For important workflows, smoke-test the target tool after install:
 | Tool | Flag | Default path |
 |------|------|-------------|
 | Claude Code | `claude` | `~/.claude/skills` |
-| OpenAI Codex | `codex` | `~/.codex/skills` |
+| OpenAI Codex | `codex` | `~/.agents/skills` |
 | Cursor | `cursor` | `~/.cursor/skills` |
 | Windsurf | `windsurf` | `~/.codeium/windsurf/skills` |
-| OpenCode | `opencode` | `~/.config/opencode/skills` |
-| Command Code | `commandcode` | `~/.commandcode/skills` |
+| OpenCode | `opencode` | `~/.agents/skills` |
+| Command Code | `commandcode` | `~/.agents/skills` |
 | GitHub Copilot | `copilot` | `~/.copilot/skills` |
 | Gemini CLI (legacy; consumer accounts moved to Antigravity) | `gemini` | `~/.agents/skills` |
 | Roo Code | `roo` | `~/.roo/skills` |
@@ -155,6 +155,45 @@ For important workflows, smoke-test the target tool after install:
 `OMP_SKILLS_DIR` only controls where the installer writes for `omp`; Oh My Pi itself
 natively discovers `~/.agents/skills` (and also `~/.omp/agent/skills`) without reading
 that variable.
+
+### One copy per harness
+
+Codex, Command Code, OpenCode, and Oh My Pi all read `~/.agents/skills` on their own, so the
+installer puts their skills there and nowhere else. Installing into a second directory the
+same harness also reads made every skill show up twice (Command Code reports each one as
+shadowed). Older releases installed Codex into `~/.codex/skills`, Command Code into
+`~/.commandcode/skills`, and OpenCode into `~/.config/opencode/skills`. Codex versions that
+still read `~/.codex/skills` can keep that path with `CODEX_SKILLS_DIR=~/.codex/skills`.
+
+OpenCode also reads `~/.claude/skills`, so a Claude install is visible to OpenCode as well.
+OpenCode keeps one skill per name across `~/.claude/skills` and `~/.agents/skills`, so that
+overlap is harmless.
+
+To clean up after an older release, install first, then preview and apply the cleanup:
+
+```bash
+./install.sh --tool commandcode --link          # installs into ~/.agents/skills, hints at old links
+./install.sh --tool commandcode --migrate        # preview only; changes nothing
+./install.sh --tool commandcode --migrate --apply
+```
+
+The cleanup does not install anything. In the old directory it unlinks only entries that are
+symlinks recorded in that directory's `.skills-lock.json` from this checkout, point at the
+canonical copy of the same skill, and already have a replacement in `~/.agents/skills` that
+resolves to that same copy. Real directories, broken or foreign links, and unrecorded names
+stay and are reported. Before unlinking, it saves the links and the old lock under
+`<old-dir-parent>/.skills-backups/<old-dir-name>/.legacy-dir-cleanup/` (or `SKILLS_BACKUP_DIR`);
+if the backup fails, nothing is removed. The old lock is deleted once none of its entries remain.
+The cleanup is skipped with `--dest` or when the tool's `*_SKILLS_DIR` override is set.
+
+`--doctor` reports skill names a harness can reach through more than one directory. It checks
+a static table of the global directories each harness reads, not the harness's own config
+toggles, and changes nothing. It exits 1 on duplicates the harness does not resolve itself.
+
+```bash
+./install.sh --doctor                            # all tools in the table
+./install.sh --doctor --tool commandcode,opencode
+```
 
 Common aliases also work: `claude-code`, `openai-codex`, `github-copilot`, `gemini-cli`, `kiro-cli`, `qwen-code`, `kimi-cli`, `agy` (Antigravity CLI), `command-code`, `cmdc` (Command Code), and `oh-my-pi` (Oh My Pi).
 

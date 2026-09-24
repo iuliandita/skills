@@ -46,10 +46,10 @@ SUPPORTED_TOOLS=(
 
 declare -A TOOL_PATHS=(
   [claude]="${CLAUDE_SKILLS_DIR:-$HOME/.claude/skills}"
-  [codex]="${CODEX_SKILLS_DIR:-$HOME/.codex/skills}"
+  [codex]="${CODEX_SKILLS_DIR:-$HOME/.agents/skills}"
   [cursor]="${CURSOR_SKILLS_DIR:-$HOME/.cursor/skills}"
   [windsurf]="${WINDSURF_SKILLS_DIR:-$HOME/.codeium/windsurf/skills}"
-  [opencode]="${OPENCODE_SKILLS_DIR:-$HOME/.config/opencode/skills}"
+  [opencode]="${OPENCODE_SKILLS_DIR:-$HOME/.agents/skills}"
   [copilot]="${COPILOT_SKILLS_DIR:-$HOME/.copilot/skills}"
   # Legacy: Gemini CLI consumer accounts moved to antigravity.
   [gemini]="${GEMINI_SKILLS_DIR:-$HOME/.agents/skills}"
@@ -65,7 +65,7 @@ declare -A TOOL_PATHS=(
   [qwen]="${QWEN_SKILLS_DIR:-$HOME/.qwen/skills}"
   [crush]="${CRUSH_SKILLS_DIR:-$HOME/.config/crush/skills}"
   [antigravity]="${ANTIGRAVITY_SKILLS_DIR:-$HOME/.gemini/config/skills}"
-  [commandcode]="${COMMANDCODE_SKILLS_DIR:-$HOME/.commandcode/skills}"
+  [commandcode]="${COMMANDCODE_SKILLS_DIR:-$HOME/.agents/skills}"
   [augment]="${AUGMENT_SKILLS_DIR:-$HOME/.augment/skills}"
   [openhands]="${OPENHANDS_SKILLS_DIR:-$HOME/.openhands/skills}"
   [trae]="${TRAE_SKILLS_DIR:-$HOME/.trae/skills}"
@@ -74,6 +74,37 @@ declare -A TOOL_PATHS=(
   # OMP_SKILLS_DIR is installer-only; omp discovers ~/.agents/skills natively.
   [omp]="${OMP_SKILLS_DIR:-$HOME/.agents/skills}"
   [portable]="${PORTABLE_SKILLS_DIR:-$HOME/.skills}"
+)
+
+# Earlier default dirs for tools that now install into ~/.agents/skills, which
+# they also read; --migrate cleans our old links there unless the override is set.
+declare -A LEGACY_TOOL_PATHS=(
+  [codex]="$HOME/.codex/skills"
+  [commandcode]="$HOME/.commandcode/skills"
+  [opencode]="$HOME/.config/opencode/skills"
+)
+declare -A LEGACY_TOOL_ENV=(
+  [codex]=CODEX_SKILLS_DIR
+  [commandcode]=COMMANDCODE_SKILLS_DIR
+  [opencode]=OPENCODE_SKILLS_DIR
+)
+
+# Global dirs each harness reads, for --doctor. Static; harness config is not read.
+# Row: tool|dir|dedupe group|evidence. Duplicates confined to roots of one group
+# are resolved by the harness itself and reported as info.
+DOCTOR_ROOTS=(
+  "claude|$HOME/.claude/skills||verified: Claude Code docs"
+  "codex|$HOME/.agents/skills||verified: Codex skills docs (0.156.1)"
+  "commandcode|$HOME/.commandcode/skills||verified: Command Code dist/cli.mjs user root"
+  "commandcode|$HOME/.agents/skills||verified: Command Code dist/cli.mjs compat root"
+  "opencode|$HOME/.config/opencode/skills||verified: OpenCode 2.0.14 config skill plugin"
+  "opencode|$HOME/.claude/skills|compat|verified: OpenCode 2.0.14 compatibility plugin, one skill per id"
+  "opencode|$HOME/.agents/skills|compat|verified: OpenCode 2.0.14 compatibility plugin, one skill per id"
+  "omp|$HOME/.agents/skills|omp|verified: Oh My Pi native discovery"
+  "omp|$HOME/.claude/skills|omp|inferred: Oh My Pi claude compat provider"
+  "omp|$HOME/.codex/skills|omp|inferred: Oh My Pi codex compat provider"
+  "antigravity|$HOME/.gemini/config/skills||verified: single global dir"
+  "hermes|$HOME/.hermes/skills||verified: single global dir"
 )
 
 OPENCODE_CONFIG_FILE="${OPENCODE_CONFIG_FILE:-$HOME/.config/opencode/opencode.json}"
@@ -138,11 +169,14 @@ Options:
   --link              Symlink mode: install once to canonical dir, symlink per tool
   --list              List available skills and install status
   --check             Compare installed skills against source via lock file
-  --migrate           Preview recorded legacy-skill migrations (use --apply to run)
+  --migrate           Preview recorded legacy-skill migrations and old tool-dir
+                      link cleanup (use --apply to run)
   --apply             Apply a migration preview; requires --migrate
   --force             Overwrite existing skills without prompting
   --no-backup         Skip backup of existing skills
   --include-internal  Include skills marked metadata.internal: true
+  --doctor            Report skill names a harness can reach through more than
+                      one directory (read-only; all known tools unless --tool)
   --help              Show this help
 
 Symlink mode (--link):
@@ -164,6 +198,7 @@ Examples:
   install.sh --check --tool cursor              # Check Cursor install
   install.sh --migrate                          # Preview legacy-skill migration
   install.sh --migrate --apply --tool codex     # Apply owned Codex migration
+  install.sh --doctor --tool commandcode,opencode
   install.sh --tool portable --dest ~/.skills
   install.sh --list
 EOF
@@ -612,6 +647,165 @@ paths_match() {
   [[ "$(readlink -f "$1")" == "$(readlink -f "$2")" ]]
 }
 
+# ── Legacy tool dirs ──────────────────────────────────────────────────
+legacy_cleanup_dir() {
+  local tool="$1"
+  local legacy="${LEGACY_TOOL_PATHS[$tool]:-}"
+  [[ -n "$legacy" && -d "$legacy" ]] || return 1
+  local env_name="${LEGACY_TOOL_ENV[$tool]}"
+  [[ -z "${!env_name:-}" ]] || return 1
+  printf '%s\n' "$legacy"
+}
+
+run_legacy_cleanup() {
+  local tool="$1" legacy="$2"
+  shift 2
+  python3 "$MIGRATOR" --source "$SKILLS_SRC" --legacy-dir "$legacy" \
+    --new-dir "$(resolve_tool_path "$tool")" --link-root "$CANONICAL_DIR" \
+    --backup-dir "${SKILLS_BACKUP_DIR:-$(dirname "$legacy")/.skills-backups/$(basename "$legacy")}" "$@"
+}
+
+legacy_cleanup_hint() {
+  local tool="$1" legacy output count
+  legacy="$(legacy_cleanup_dir "$tool")" || return 0
+  output="$(run_legacy_cleanup "$tool" "$legacy")" || return 0
+  count="$(grep -c '^DRY-RUN unlink ' <<< "$output" || true)"
+  (( count > 0 )) || return 0
+  printf '  [i] %d old link(s) in %s duplicate this install; preview cleanup with: install.sh --migrate --tool %s\n' "$count" "$legacy" "$tool"
+}
+
+# ── Doctor ────────────────────────────────────────────────────────────
+run_doctor() {
+  local tool row rows=()
+  for tool in "$@"; do
+    for row in "${DOCTOR_ROOTS[@]}"; do
+      [[ "${row%%|*}" == "$tool" ]] && rows+=("$row")
+    done
+  done
+  python3 - "$(IFS=,; printf '%s' "$*")" "${rows[@]}" <<'PY'
+from pathlib import Path
+import re
+import sys
+
+tools = sys.argv[1].split(",")
+table = [row.split("|", 3) for row in sys.argv[2:]]
+
+
+YAML_ESCAPES = {"0": "\0", "a": "\a", "b": "\b", "t": "\t", "\t": "\t", "n": "\n",
+                "v": "\v", "f": "\f", "r": "\r", "e": "\x1b", " ": " ", '"': '"',
+                "/": "/", "\\": "\\", "N": "\x85", "_": "\xa0", "L": "\u2028",
+                "P": "\u2029"}
+HEX_LEN = {"x": 2, "u": 4, "U": 8}
+
+
+def yaml_unescape(body):
+    out, i = [], 0
+    while i < len(body):
+        ch = body[i]
+        if ch != "\\":
+            out.append(ch)
+            i += 1
+            continue
+        code = body[i + 1]
+        if code in HEX_LEN:
+            digits = body[i + 2:i + 2 + HEX_LEN[code]]
+            if len(digits) != HEX_LEN[code] or not re.fullmatch(r"[0-9A-Fa-f]+", digits):
+                return None
+            point = int(digits, 16)
+            if point > 0x10FFFF or 0xD800 <= point <= 0xDFFF:
+                return None
+            out.append(chr(point))
+            i += 2 + HEX_LEN[code]
+        elif code in YAML_ESCAPES:
+            out.append(YAML_ESCAPES[code])
+            i += 2
+        else:
+            return None
+    return "".join(out)
+
+
+def yaml_scalar(raw):
+    raw = raw.strip()
+    if raw[:1] == "'":
+        match = re.match(r"'((?:[^']|'')*)'\s*(?:#.*)?$", raw)
+        return match.group(1).replace("''", "'") if match else None
+    if raw[:1] == '"':
+        match = re.match(r'"((?:[^"\\]|\\.)*)"\s*(?:#.*)?$', raw)
+        return yaml_unescape(match.group(1)) if match else None
+    return re.split(r"(?:^|\s)#", raw, maxsplit=1)[0].strip() or None
+
+
+def frontmatter_name(skill_md):
+    try:
+        lines = skill_md.read_text(encoding="utf-8", errors="replace").splitlines()
+    except OSError:
+        return None
+    if not lines or lines[0].strip() != "---":
+        return None
+    for line in lines[1:]:
+        if line.strip() == "---":
+            return None
+        if line.startswith("name:"):
+            return yaml_scalar(line[len("name:"):])
+    return None
+
+
+print("Checking the static root table; harness config toggles are not read.")
+blocking = 0
+for tool in tools:
+    print(f"\n[{tool}]")
+    roots = []
+    seen = {}
+    for _, path, group, evidence in (row for row in table if row[0] == tool):
+        real = Path(path).resolve(strict=False)
+        if real in seen:
+            print(f"  {path}  (same directory as {seen[real]})")
+            continue
+        seen[real] = path
+        roots.append((path, group))
+        print(f"  {path}  ({evidence})")
+    if not roots:
+        print("  not in the static root table; nothing to compare")
+        continue
+    if len(roots) < 2:
+        print("  single root; nothing to compare")
+        continue
+    found = {}
+    for index, (path, _) in enumerate(roots):
+        root = Path(path)
+        if not root.is_dir():
+            continue
+        for entry in sorted(root.iterdir()):
+            if entry.name.startswith(".") or not (entry / "SKILL.md").is_file():
+                continue
+            identities = [("dir", entry.name), ("name", frontmatter_name(entry / "SKILL.md"))]
+            for key in identities:
+                if key[1] is not None:
+                    found.setdefault(key, {}).setdefault(index, str(entry))
+    clean = True
+    for key in sorted(found):
+        where = found[key]
+        if len(where) < 2:
+            continue
+        clean = False
+        groups = {roots[index][1] for index in where}
+        paths = ", ".join(where[index] for index in sorted(where))
+        if len(groups) == 1 and "" not in groups:
+            print(f"  [i] {key[0]} {key[1]}: {paths} (resolved by the harness)")
+        else:
+            blocking += 1
+            print(f"  [!] {key[0]} {key[1]}: {paths}")
+    if clean:
+        print("  no duplicates")
+
+print()
+if blocking:
+    print(f"{blocking} duplicate skill name(s) reachable through more than one directory.")
+    sys.exit(1)
+print("No blocking duplicates.")
+PY
+}
+
 # ── Check mode ────────────────────────────────────────────────────────
 check_updates() {
   local dest_dir="$1"
@@ -695,6 +889,7 @@ list_skills() {
 main() {
   local force=false no_backup=false link_mode=false
   local check_mode=false show_list=false include_internal=false migrate_mode=false apply_migration=false
+  local doctor_mode=false
   local dest_override=""
   local tools=() skills=()
 
@@ -719,12 +914,21 @@ main() {
       --force)            force=true ;;
       --no-backup)        no_backup=true ;;
       --include-internal) include_internal=true ;;
+      --doctor)           doctor_mode=true ;;
       --help|-h)          usage; exit 0 ;;
       -*)                 printf 'Unknown option: %s\n' "$1" >&2; usage; exit 1 ;;
       *)                  skills+=("$1") ;;
     esac
     shift
   done
+
+  local tools_given="${#tools[@]}"
+  if [[ "$doctor_mode" == "true" && "$tools_given" -eq 0 ]]; then
+    local row
+    for row in "${DOCTOR_ROOTS[@]}"; do
+      [[ " ${tools[*]} " == *" ${row%%|*} "* ]] || tools+=("${row%%|*}")
+    done
+  fi
 
   # Default tool
   if (( ${#tools[@]} == 0 )); then
@@ -770,6 +974,14 @@ main() {
   if [[ "$migrate_mode" == "true" && ( "$force" == "true" || "$no_backup" == "true" ) ]]; then
     printf '%s\n' "--force and --no-backup cannot be used with --migrate" >&2; exit 1
   fi
+  if [[ "$doctor_mode" == "true" ]]; then
+    if [[ "$link_mode$show_list$check_mode$migrate_mode$apply_migration$force$no_backup" == *true* \
+      || -n "$dest_override" || "$requested_skill_count" -gt 0 ]]; then
+      printf '%s\n' "--doctor is read-only and accepts only --tool" >&2; exit 1
+    fi
+    run_doctor "${tools[@]}"
+    exit 0
+  fi
 
   # Resolve primary destination (for --list, --check)
   local primary_dest
@@ -805,7 +1017,17 @@ main() {
       printf 'Previewing recorded legacy-skill migration. Re-run with --apply to change files.\n\n'
     fi
     if [[ "$link_mode" == "true" ]]; then
-      python3 "$MIGRATOR" "${migration_args[@]}" --dest "$CANONICAL_DIR" --backup-dir "${SKILLS_BACKUP_DIR:-$(dirname "$CANONICAL_DIR")/.skills-backups/$(basename "$CANONICAL_DIR")}" --protected-root "$CANONICAL_DIR" --preserve-shared-canonical
+      local canonical_applied="" canonical_args=()
+      if [[ "$apply_migration" == "true" && " ${tools[*]} " == *" opencode "* ]] \
+        && paths_match "$(resolve_tool_path opencode)" "$CANONICAL_DIR"; then
+        canonical_applied="$(mktemp)"
+        canonical_args=(--applied-file "$canonical_applied")
+      fi
+      python3 "$MIGRATOR" "${migration_args[@]}" --dest "$CANONICAL_DIR" --backup-dir "${SKILLS_BACKUP_DIR:-$(dirname "$CANONICAL_DIR")/.skills-backups/$(basename "$CANONICAL_DIR")}" --protected-root "$CANONICAL_DIR" --preserve-shared-canonical "${canonical_args[@]}"
+      if [[ -n "$canonical_applied" ]]; then
+        sync_migrated_opencode_permissions "$CANONICAL_DIR" "$canonical_applied"
+        rm -f "$canonical_applied"
+      fi
       local -A migrated_destinations=()
       for tool in "${tools[@]}"; do
         local tool_dir
@@ -853,6 +1075,22 @@ main() {
         fi
       done
     fi
+    if [[ -z "$dest_override" ]]; then
+      local cleanup_failed=0 legacy cleanup_args=()
+      local -A cleaned_dirs=()
+      [[ "$apply_migration" == "true" ]] && cleanup_args=(--apply)
+      for tool in "${tools[@]}"; do
+        legacy="$(legacy_cleanup_dir "$tool")" || continue
+        [[ -n "${cleaned_dirs[$legacy]:-}" ]] && continue
+        cleaned_dirs["$legacy"]=true
+        printf '\n[%s] old directory %s\n' "$tool" "$legacy"
+        if ! run_legacy_cleanup "$tool" "$legacy" "${cleanup_args[@]}"; then
+          printf '  [!] cleanup of %s failed\n' "$legacy" >&2
+          cleanup_failed=1
+        fi
+      done
+      (( cleanup_failed == 0 )) || exit 1
+    fi
     exit 0
   fi
 
@@ -894,21 +1132,22 @@ main() {
       tool_dir="$(resolve_tool_path "$tool")"
       if [[ "$tool_dir" == "$CANONICAL_DIR" ]]; then
         printf '[%s] -> %s (matches canonical, skipping links)\n' "$tool" "$tool_dir"
-        continue
+      else
+        mkdir -p "$tool_dir"
+        ensure_lock_source "$tool_dir"
+        migrate_legacy_backups "$tool_dir"
+        printf '[%s] -> %s\n' "$tool" "$tool_dir"
+        for skill in "${skills[@]}"; do
+          validate_skill_name "$skill" || continue
+          [[ -d "$SKILLS_SRC/$skill" ]] || continue
+          create_link "$skill" "$tool_dir" "$force" "$no_backup"
+        done
+        write_lock "$tool_dir" "${skills[@]}"
       fi
-      mkdir -p "$tool_dir"
-      ensure_lock_source "$tool_dir"
-      migrate_legacy_backups "$tool_dir"
-      printf '[%s] -> %s\n' "$tool" "$tool_dir"
-      for skill in "${skills[@]}"; do
-        validate_skill_name "$skill" || continue
-        [[ -d "$SKILLS_SRC/$skill" ]] || continue
-        create_link "$skill" "$tool_dir" "$force" "$no_backup"
-      done
-      write_lock "$tool_dir" "${skills[@]}"
       if [[ "$tool" == "opencode" ]]; then
         sync_opencode_permissions "$OPENCODE_CONFIG_FILE" "${skills[@]}"
       fi
+      legacy_cleanup_hint "$tool"
       printf '\n'
     done
 
@@ -963,6 +1202,7 @@ main() {
       fi
 
       write_lock "$dest" "${skills[@]}"
+      [[ -n "$dest_override" ]] || legacy_cleanup_hint "$tool"
       printf '\n'
     done
 
