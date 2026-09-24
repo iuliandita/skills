@@ -42,7 +42,11 @@ rm -rf /tmp/skills-install
 For OpenCode, the installer also updates `~/.config/opencode/opencode.json` so every installed
 skill has `permission.skill.<name>: "allow"`. This keeps installs visible when the user's config
 uses a deny-by-default policy such as `"permission": { "skill": { "*": "deny" } }`. Existing
-explicit `deny` entries are left alone.
+explicit `deny` entries are left alone. Each named `allow` entry overrides a wildcard `deny`
+for that skill, the same as adding it by hand; remove the entry or set it to `deny` to hide
+the skill again. Only skills that installed successfully are added. The file is rewritten
+through a temporary file and a rename, following a symlinked config to its target; if the
+update fails, the file is left unchanged and the install exits non-zero.
 
 ### Multi-tool with symlinks
 
@@ -234,6 +238,32 @@ It retains the last three backups per skill under
 Override that backup base with `SKILLS_BACKUP_DIR`. Backups support manual recovery;
 customizations are not merged into the replacement. Preserve edits in the source checkout
 before reinstalling if they must remain active.
+
+Each replacement is staged first and swapped in by rename, with a record under
+`<destination-parent>/.skills-txn/<destination-name>/<skill>/`. If any step fails, the
+installer puts the previous copy back, leaves that skill's lock entry unchanged, and exits
+non-zero. If the run is interrupted, or a step after the swap fails, the record, the
+previous copy, and the staged copy stay there. The next install run settles them before
+doing anything else in that destination: it keeps a swapped-in copy only if it matches the
+digest recorded before the swap, and otherwise puts the previous copy back. When that fails,
+the installer skips the rest of that destination, keeps the evidence, and continues with
+other destinations. A record is removed once the skill's lock entry is written, so an
+install that stopped before writing the lock is reconciled by the next run. A failed retry
+keeps the earlier record.
+
+Moves are renames only. A destination that is itself a mount point, so its `.skills-txn`
+area would be on another filesystem, is refused with an error instead of being copied into.
+
+These guarantees cover installs done by `install.sh`. `--migrate --apply` runs the same
+recovery first and refuses a destination while recovery fails or a skill it would touch
+still has an install record; reinstall that skill with `--force` to clear it. The migration
+helper's own copy of a replacement skill is not staged.
+
+Runs that change files (installs and `--migrate --apply`) take an exclusive lock on
+`${XDG_STATE_HOME:-~/.local/state}/iuliandita-skills/install.lock` with `flock`, waiting up
+to `SKILLS_LOCK_WAIT` seconds (default 30) and exiting with status 3 if another run still
+holds it. Without `flock` the installer prints a warning and proceeds; runs exclude each
+other only when every one of them has `flock`.
 
 If a source checkout moved or an existing lock is incompatible, a normal install saves
 that lock under the backup base's `.unverified-locks/` directory and starts a fresh lock.
