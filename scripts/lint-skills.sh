@@ -141,6 +141,8 @@ check_references() {
   for source in "${source_files[@]}"; do
     rel_source="${source#"$dir"/}"
     while IFS=$'\t' read -r line_no line; do
+      # Most lines have no reference; skip them without forking grep and sed.
+      [[ "$line" == *'`references/'* ]] || continue
       refs=$(grep -oP '`references/[^`]+`' <<< "$line" | sed "s/\`//g" || true)
       for ref in $refs; do
         # Skip template placeholders.
@@ -179,12 +181,14 @@ check_banned_words() {
     # - anti-ai-prose is the meta-reference for AI prose tells and must name them
     [[ "$(basename "$f")" == "conventions.md" ]] && continue
     [[ "$name" == "anti-ai-prose" ]] && continue
-    local basename_f
+    local basename_f prose
     basename_f=$(basename "$f")
+    # Skip fenced code blocks once per file, then match each word against it.
+    prose=$(awk '/^```/{skip=!skip; next} !skip{print NR": "$0}' "$f" || true)
     for word in "${BANNED_WORDS[@]}"; do
-      # Word-boundary match, case-insensitive, skip fenced code blocks
+      # Word-boundary match, case-insensitive
       local matches
-      matches=$(awk '/^```/{skip=!skip; next} !skip{print NR": "$0}' "$f" | grep -i "\\b${word}\\b" || true)
+      matches=$(grep -i "\\b${word}\\b" <<< "$prose" || true)
       if [[ -n "$matches" ]]; then
         warn "$name: banned word '$word' in $basename_f"
       fi
@@ -418,6 +422,11 @@ check_canonical_test_coverage() {
 # ── Main ────────────────────────────────────────────────────────────────
 echo "Linting skills in $SKILLS_DIR..."
 echo
+
+if [[ -d "$SKILLS_DIR" ]]; then
+  frontmatter_cache_load "$SKILLS_DIR" name description license metadata \
+    metadata.source metadata.date_added metadata.effort metadata.argument_hint metadata.internal
+fi
 
 check_no_symlinks "$SKILLS_DIR"
 check_canonical_test_coverage

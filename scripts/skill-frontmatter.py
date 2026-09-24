@@ -41,13 +41,7 @@ def get_value(data: dict[str, Any], path: str) -> Any:
 
 
 def print_value(value: Any) -> None:
-    if isinstance(value, bool):
-        print("true" if value else "false")
-        return
-    if isinstance(value, (dict, list)):
-        print(json.dumps(value, sort_keys=True))
-        return
-    print(value)
+    print(format_value(value))
 
 
 def parse_mapping(lines: list[str], start: int = 0, indent: int = 0) -> tuple[dict[str, Any], int]:
@@ -188,12 +182,95 @@ def parse_scalar(raw_value: str) -> Any:
     return raw_value
 
 
+def format_value(value: Any) -> str:
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    if isinstance(value, (dict, list)):
+        return json.dumps(value, sort_keys=True)
+    return str(value)
+
+
+def flag(data: dict[str, Any], path: str) -> str:
+    try:
+        return "true" if format_value(get_value(data, path)) == "true" else "false"
+    except KeyError:
+        return "false"
+
+
+def batch(skills_dir: str) -> int:
+    """Print dir, name, internal, deprecated as TSV for every skill dir."""
+    root = pathlib.Path(skills_dir)
+    if not root.is_dir():
+        print(f"batch: not a directory: {skills_dir}", file=sys.stderr)
+        return 2
+
+    rows: list[str] = []
+    for entry in sorted(root.iterdir(), key=lambda item: item.name):
+        skill_md = entry / "SKILL.md"
+        if entry.name.startswith(".") or not entry.is_dir() or not skill_md.is_file():
+            continue
+        try:
+            data = load_frontmatter(str(skill_md))
+            name = data.get("name")
+            name = "" if name is None else format_value(name)
+            if any(char in name for char in "\t\n\r"):
+                raise ValueError("name contains a tab or newline")
+        except (OSError, ValueError) as exc:
+            print(f"invalid frontmatter in {skill_md}: {exc}", file=sys.stderr)
+            return 1
+        rows.append("\t".join((entry.name, name, flag(data, "metadata.internal"), flag(data, "metadata.deprecated"))))
+
+    for row in rows:
+        print(row)
+    return 0
+
+
+def fields(skills_dir: str, paths: list[str]) -> int:
+    """Emit NUL-separated records: dir, valid, then has and value per path.
+
+    Mirrors the valid, has and get subcommands for every skill dir at once, so
+    shell callers can answer per-field lookups without a python fork each.
+    """
+    root = pathlib.Path(skills_dir)
+    if not root.is_dir():
+        print(f"fields: not a directory: {skills_dir}", file=sys.stderr)
+        return 2
+
+    out = sys.stdout.buffer
+    for entry in sorted(root.iterdir(), key=lambda item: item.name):
+        skill_md = entry / "SKILL.md"
+        if not entry.is_dir() or not skill_md.is_file():
+            continue
+        try:
+            data = load_frontmatter(str(skill_md))
+            record = [entry.name, "1"]
+        except (OSError, ValueError):
+            data = {}
+            record = [entry.name, "0"]
+        for path in paths:
+            try:
+                record += ["1", format_value(get_value(data, path))]
+            except KeyError:
+                record += ["0", ""]
+        out.write(b"".join(field.encode("utf-8", "surrogateescape") + b"\0" for field in record))
+    return 0
+
+
 def main(argv: list[str]) -> int:
     if len(argv) < 3:
-        print("usage: skill-frontmatter.py {valid|get|has} <file> [path]", file=sys.stderr)
+        print(
+            "usage: skill-frontmatter.py {valid|get|has} <file> [path] | batch <skills-dir>"
+            " | fields <skills-dir> <path>...",
+            file=sys.stderr,
+        )
         return 2
 
     command = argv[1]
+    if command == "batch":
+        return batch(argv[2])
+    if command == "fields":
+        return fields(argv[2], argv[3:])
+
     file_path = argv[2]
 
     try:

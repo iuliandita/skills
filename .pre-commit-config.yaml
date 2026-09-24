@@ -55,4 +55,5 @@ repos:
         entry: ./scripts/test-install.sh
         language: system
         pass_filenames: false
+        files: ^(install\.sh|scripts/(test-install\.sh|skill-frontmatter\.py|skill-lib\.sh|migrate-skills\.py)|migrations\.json|\.pre-commit-config\.yaml)$
         stages: [pre-push]
