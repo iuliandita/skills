@@ -68,6 +68,10 @@ validate_compatibility() {
 echo "Validating Agent Skills spec compliance in $SKILLS_DIR..."
 echo
 
+if [[ -d "$SKILLS_DIR" ]]; then
+  frontmatter_cache_load "$SKILLS_DIR" name description compatibility
+fi
+
 skill_count=0
 for skill_dir in "$SKILLS_DIR"/*/; do
   name=$(basename "$skill_dir")

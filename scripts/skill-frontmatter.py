@@ -225,14 +225,51 @@ def batch(skills_dir: str) -> int:
     return 0
 
 
+def fields(skills_dir: str, paths: list[str]) -> int:
+    """Emit NUL-separated records: dir, valid, then has and value per path.
+
+    Mirrors the valid, has and get subcommands for every skill dir at once, so
+    shell callers can answer per-field lookups without a python fork each.
+    """
+    root = pathlib.Path(skills_dir)
+    if not root.is_dir():
+        print(f"fields: not a directory: {skills_dir}", file=sys.stderr)
+        return 2
+
+    out = sys.stdout.buffer
+    for entry in sorted(root.iterdir(), key=lambda item: item.name):
+        skill_md = entry / "SKILL.md"
+        if not entry.is_dir() or not skill_md.is_file():
+            continue
+        try:
+            data = load_frontmatter(str(skill_md))
+            record = [entry.name, "1"]
+        except (OSError, ValueError):
+            data = {}
+            record = [entry.name, "0"]
+        for path in paths:
+            try:
+                record += ["1", format_value(get_value(data, path))]
+            except KeyError:
+                record += ["0", ""]
+        out.write(b"".join(field.encode("utf-8", "surrogateescape") + b"\0" for field in record))
+    return 0
+
+
 def main(argv: list[str]) -> int:
     if len(argv) < 3:
-        print("usage: skill-frontmatter.py {valid|get|has} <file> [path] | batch <skills-dir>", file=sys.stderr)
+        print(
+            "usage: skill-frontmatter.py {valid|get|has} <file> [path] | batch <skills-dir>"
+            " | fields <skills-dir> <path>...",
+            file=sys.stderr,
+        )
         return 2
 
     command = argv[1]
     if command == "batch":
         return batch(argv[2])
+    if command == "fields":
+        return fields(argv[2], argv[3:])
 
     file_path = argv[2]
 

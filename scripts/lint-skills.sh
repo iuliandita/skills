@@ -419,6 +419,11 @@ check_canonical_test_coverage() {
 echo "Linting skills in $SKILLS_DIR..."
 echo
 
+if [[ -d "$SKILLS_DIR" ]]; then
+  frontmatter_cache_load "$SKILLS_DIR" name description license metadata \
+    metadata.source metadata.date_added metadata.effort metadata.argument_hint metadata.internal
+fi
+
 check_no_symlinks "$SKILLS_DIR"
 check_canonical_test_coverage
 
