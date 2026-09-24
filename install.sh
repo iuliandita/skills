@@ -574,7 +574,7 @@ acquire_install_lock() {
 # destination for the rest of the run.
 
 # Test-only fault injection. SKILLS_INSTALL_FAULT is a comma list of
-# stage|backup|promote|record|cleanup|restore|lock|opencode|xdev, each
+# stage|backup|promote|record|cleanup|restore|rollback|lock|opencode|xdev, each
 # optionally suffixed with :<skill>, that makes that step fail.
 fault_hit() {
   local point="$1" skill="${2:-}" item
@@ -717,6 +717,11 @@ stage_entry() {
 # Put back what an attempt displaced: the previous entry, then an earlier record.
 txn_rollback() {
   local skill="$1" work="$2" txn="$3"
+  # Mark the rollback first: recovery must then treat the working copy as the old one.
+  if [[ -f "$txn/record" ]] && ! txn_set "$txn/record" phase=rollingback; then
+    printf '  [!] %s: could not mark record %s for rollback; left everything in place\n' "$skill" "$txn/record"
+    return 2
+  fi
   if present "$txn/prev"; then
     if present "$work"; then
       printf '  [!] %s: both %s and %s exist; kept both and the record\n' "$skill" "$work" "$txn/prev"
@@ -731,6 +736,10 @@ txn_rollback() {
   fi
   if present "$txn/staging" && ! rm -rf "$txn/staging"; then
     printf '  [!] %s: could not remove staging %s; kept record %s\n' "$skill" "$txn/staging" "$txn/record"
+    return 2
+  fi
+  if fault_hit rollback "$skill"; then
+    printf '  [!] %s: rollback interrupted; rerun the installer to finish it\n' "$skill"
     return 2
   fi
   if [[ -f "$txn/record.prior" ]]; then
@@ -784,7 +793,13 @@ replace_entry() {
     fi
     printf '  [>] %s backed up\n' "$skill"
   fi
-  if ! txn_set "$txn/record" phase=swapping "staged=$STAGED_DIGEST"; then
+  local previous=""
+  if present "$work" && ! previous="$(entry_digest "$work")"; then
+    printf '  [!] %s: could not hash the existing install\n' "$skill"
+    txn_rollback "$skill" "$work" "$txn"
+    return
+  fi
+  if ! txn_set "$txn/record" phase=swapping "staged=$STAGED_DIGEST" "previous=$previous"; then
     printf '  [!] %s: could not update record %s\n' "$skill" "$txn/record"
     txn_rollback "$skill" "$work" "$txn"
     return
@@ -817,8 +832,31 @@ note() {
   RECOVERY_NOTE="${RECOVERY_NOTE:+$RECOVERY_NOTE, }$1"
 }
 
+prev_verified() {
+  present "$1" && [[ -n "$2" && "$(entry_digest "$1")" == "$2" ]]
+}
+
+# Move a verified previous copy back to a missing working path.
+recover_prev() {
+  local skill="$1" work="$2" entry="$3" previous="$4"
+  present "$entry/prev" || return 0
+  if present "$work"; then
+    printf '  [!] %s: both %s and %s exist; left in place\n' "$skill" "$work" "$entry/prev"
+    return 1
+  fi
+  if ! prev_verified "$entry/prev" "$previous"; then
+    printf '  [!] %s: %s does not match the digest recorded before it was moved; left in place\n' "$skill" "$entry/prev"
+    return 1
+  fi
+  if fault_hit restore "$skill" || ! rename_path "$entry/prev" "$work"; then
+    printf '  [!] %s: could not restore %s; kept it with record %s\n' "$skill" "$entry/prev" "$entry/record"
+    return 1
+  fi
+  note "restored the previous copy"
+}
+
 recover_entry() {
-  local skill="$1" work="$2" entry="$3" phase staged rolled_back=false verified=false
+  local skill="$1" work="$2" entry="$3" phase staged previous rolled_back=false verified=false
   local record="$entry/record"
   RECOVERY_NOTE=""
 
@@ -840,9 +878,11 @@ recover_entry() {
   fi
   phase="$(txn_field "$record" phase)" || phase=""
   staged="$(txn_field "$record" staged)" || staged=""
+  previous="$(txn_field "$record" previous)" || previous=""
 
   case "$phase" in
     staging)
+      # Nothing was moved yet; the working copy is the original.
       rolled_back=true
       ;;
     swapping)
@@ -850,6 +890,10 @@ recover_entry() {
         # The promotion rename ran; keep its result only if it is what was staged.
         if [[ -n "$staged" && "$(entry_digest "$work")" == "$staged" ]]; then
           verified=true
+        elif ! prev_verified "$entry/prev" "$previous"; then
+          printf '  [!] %s: %s does not match the staged copy and no verified previous copy can replace it; left in place\n' \
+            "$skill" "$work"
+          return 2
         elif ! rename_path "$work" "$entry/staging"; then
           printf '  [!] %s: %s does not match the staged copy and could not be moved aside\n' "$skill" "$work"
           return 2
@@ -859,18 +903,14 @@ recover_entry() {
       fi
       if [[ "$verified" != "true" ]]; then
         rolled_back=true
-        if present "$entry/prev"; then
-          if present "$work"; then
-            printf '  [!] %s: both %s and %s exist; left in place\n' "$skill" "$work" "$entry/prev"
-            return 2
-          fi
-          if fault_hit restore "$skill" || ! rename_path "$entry/prev" "$work"; then
-            printf '  [!] %s: could not restore %s; kept it with record %s\n' "$skill" "$entry/prev" "$record"
-            return 2
-          fi
-          note "restored the previous copy"
-        fi
+        recover_prev "$skill" "$work" "$entry" "$previous" || return 2
       fi
+      ;;
+    rollingback)
+      # The working copy, if present, is the restored previous copy: keep it.
+      rolled_back=true
+      recover_prev "$skill" "$work" "$entry" "$previous" || return 2
+      note "finished an interrupted rollback"
       ;;
     promoted|recovered)
       ;;
@@ -885,9 +925,9 @@ recover_entry() {
     note "removed leftover staging"
   fi
   if present "$entry/prev"; then
-    # Only a finished promotion leaves prev behind with a working entry in place.
-    if ! present "$work"; then
-      printf '  [!] %s: %s exists without %s; left in place\n' "$skill" "$entry/prev" "$work"
+    # Only a finished promotion may drop the replaced copy.
+    if [[ "$verified" != "true" && "$phase" != "promoted" ]] || ! present "$work"; then
+      printf '  [!] %s: %s is still needed; left in place\n' "$skill" "$entry/prev"
       return 2
     fi
     if fault_hit cleanup "$skill" || ! rm -rf "$entry/prev"; then

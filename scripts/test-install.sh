@@ -1201,7 +1201,7 @@ test_restore_fault_keeps_evidence_and_stops_destination() {
   [[ ! -e "$a/docker" ]] || fail "restore fault: working path should be missing until recovery"
   [[ "$(digest "$txn/prev")" == "$old_digest" ]] || fail "restore fault did not keep the previous copy"
   [[ "$(digest "$txn/staging")" == "$(digest "$ROOT/skills/docker")" ]] || fail "restore fault did not keep staging"
-  [[ "$(record_phase "$txn")" == swapping ]] || fail "restore fault record phase: $(record_phase "$txn")"
+  [[ "$(record_phase "$txn")" == rollingback ]] || fail "restore fault record phase: $(record_phase "$txn")"
   grep -qx "target=$a/docker" "$txn/record" || fail "record does not name the working path"
   [[ "$(tree_hash "$a/git")" == "$git_before" ]] || fail "stopped destination still changed git"
   grep -q "git not attempted: $a needs recovery first" <<< "$output" || fail "stopped destination did not report skipped skills: $output"
@@ -1219,7 +1219,8 @@ test_restore_fault_keeps_evidence_and_stops_destination() {
 
   # A clean run restores the old copy and keeps the record: the lock was never published for it.
   output="$(isolated "$tmp" "$ROOT/install.sh" --tool portable --dest "$a" docker git 2>&1)" || fail "recovery run failed: $output"
-  grep -q 'docker: restored the previous copy, removed leftover staging' <<< "$output" || fail "recovery was not reported: $output"
+  grep -q 'docker: restored the previous copy, finished an interrupted rollback, removed leftover staging' <<< "$output" \
+    || fail "recovery was not reported: $output"
   [[ "$(digest "$a/docker")" == "$old_digest" ]] || fail "recovery did not restore the previous copy"
   [[ ! -e "$txn/prev" && ! -e "$txn/staging" && "$(record_phase "$txn")" == recovered ]] || fail "recovery left the wrong evidence"
   before="$(tree_hash "$tmp/a")"
@@ -1527,6 +1528,59 @@ test_post_promotion_failures_stop_and_reconcile() {
   trap - RETURN
 }
 
+test_interrupted_rollback_keeps_previous_copy() {
+  local tmp dest txn custom status=0 output before
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  dest="$tmp/agent/skills"
+  seed_modified_docker "$tmp" "$dest"
+  custom="$(digest "$dest/docker")"
+  output="$(isolated "$tmp" SKILLS_INSTALL_FAULT=promote:docker,rollback "$ROOT/install.sh" --tool portable --dest "$dest" --force --no-backup docker 2>&1)" || status=$?
+  (( status == 1 )) || fail "interrupted rollback exited $status, want 1: $output"
+  txn="$(txn_area "$dest")/docker"
+  [[ "$(digest "$dest/docker")" == "$custom" && "$(record_phase "$txn")" == rollingback ]] || fail "interrupted rollback state is wrong"
+  [[ ! -e "$txn/prev" && ! -e "$txn/staging" ]] || fail "interrupted rollback left copies behind"
+
+  output="$(isolated "$tmp" "$ROOT/install.sh" --tool portable --dest "$dest" docker 2>&1)" || fail "rerun after interrupted rollback failed: $output"
+  grep -q 'docker: finished an interrupted rollback' <<< "$output" || fail "interrupted rollback was not finished: $output"
+  [[ "$(digest "$dest/docker")" == "$custom" && "$(record_phase "$txn")" == recovered ]] || fail "rerun lost the previous copy"
+  before="$(tree_hash "$tmp/agent")"
+  isolated "$tmp" "$ROOT/install.sh" --tool portable --dest "$dest" docker >/dev/null || fail "repeat recovery failed"
+  [[ "$(tree_hash "$tmp/agent")" == "$before" ]] || fail "repeat recovery changed files"
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_unverified_copy_without_verified_prev_is_refused() {
+  local tmp dest txn case before output
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  for case in missing tampered; do
+    dest="$tmp/$case/skills"
+    seed_modified_docker "$tmp" "$dest"
+    if isolated "$tmp" SKILLS_INSTALL_FAULT=record "$ROOT/install.sh" --tool portable --dest "$dest" --force --no-backup docker >/dev/null 2>&1; then
+      fail "$case: record fault did not fail"
+    fi
+    txn="$(txn_area "$dest")/docker"
+    if [[ "$case" == missing ]]; then
+      rm -rf "$txn/prev"
+    else
+      printf '%s\n' 'changed' >> "$txn/prev/SKILL.md"
+    fi
+    printf '%s\n' 'partial' >> "$dest/docker/SKILL.md"
+    before="$(tree_hash "$tmp/$case")"
+    for _ in 1 2; do
+      if output="$(isolated "$tmp" "$ROOT/install.sh" --tool portable --dest "$dest" docker 2>&1)"; then
+        fail "$case: recovery accepted an unverified working copy: $output"
+      fi
+      grep -q 'no verified previous copy can replace it' <<< "$output" || fail "$case: refusal was unclear: $output"
+      [[ "$(tree_hash "$tmp/$case")" == "$before" ]] || fail "$case: refused recovery changed files"
+    done
+  done
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
 test_backups_stay_outside_skill_root
 test_legacy_backups_are_migrated_outside_skill_root
 test_opencode_install_allows_installed_skills
@@ -1582,4 +1636,6 @@ test_migration_recovers_before_apply
 test_failed_retry_keeps_earlier_record
 test_cross_device_destination_is_refused
 test_post_promotion_failures_stop_and_reconcile
+test_interrupted_rollback_keeps_previous_copy
+test_unverified_copy_without_verified_prev_is_refused
 printf 'install tests passed\n'
