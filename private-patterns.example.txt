@@ -1,0 +1,12 @@
+# Example for private-patterns.txt (repo root, gitignored, optional).
+#
+# scripts/check-private-skill-leaks.sh reads one literal string per line and
+# fails if any tracked or untracked-but-unignored file contains one,
+# case-insensitively. Blank lines and lines starting with # are skipped.
+#
+# Copy this file to private-patterns.txt and replace the example below with
+# your own markers (internal hostnames, cluster names, customer names, etc).
+# The line below is commented out and uses an RFC 2606 reserved example
+# domain, so this file itself can never trigger a match.
+#
+# internal-cluster.example.com

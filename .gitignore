@@ -5,6 +5,7 @@ AGENTS.md
 publish.sh
 skills/cluster-health/protected/
 skills/kubernetes-health/protected/
+/private-patterns.txt
 docs/local/
 SECURITY-AUDIT.md
 .codex
