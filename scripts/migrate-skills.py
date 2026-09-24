@@ -4,12 +4,18 @@
 from __future__ import annotations
 
 import argparse
+import ctypes
+import errno
+import fcntl
 import hashlib
 import json
 import os
 import re
 import shutil
+import stat
 import sys
+import tempfile
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -18,10 +24,171 @@ from typing import Any
 NAME_RE = re.compile(r"^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$")
 HASH_RE = re.compile(r"^[0-9a-f]{64}$")
 PROVENANCE = "source-equal-v1"
+STAGING_NAMESPACE = ".skills-migrate-staging"
+INHERITED_LOCK_FD = 9
+LOCK_BUSY_EXIT = 3
+# Test hooks only: comma-separated fault names, see scripts/test-migrate-skills.sh.
+FAULTS = frozenset(filter(None, os.environ.get("SKILLS_MIGRATE_FAULT", "").split(",")))
+NO_REPLACE_UNSUPPORTED = {errno.ENOSYS, errno.EINVAL, errno.ENOTSUP, errno.EOPNOTSUPP}
 
 
 class ValidationError(Exception):
     pass
+
+
+class LockBusy(Exception):
+    pass
+
+
+class NoReplaceUnavailable(Exception):
+    pass
+
+
+def crash(name: str) -> None:
+    if name in FAULTS:
+        sys.stdout.flush()
+        print(f"FAULT {name}", file=sys.stderr, flush=True)
+        os._exit(99)
+
+
+def overlaps(first: Path, second: Path) -> bool:
+    return first == second or path_is_within(first, second) or path_is_within(second, first)
+
+
+def installer_lock_path() -> Path:
+    state = os.environ.get("XDG_STATE_HOME") or os.path.join(os.environ.get("HOME") or str(Path.home()), ".local", "state")
+    return Path(state) / "iuliandita-skills" / "install.lock"
+
+
+def hold_installer_lock() -> None:
+    """Hold install.sh's lock before any change; flock(1) and fcntl.flock are both flock(2)."""
+    path = installer_lock_path()
+    try:
+        inherited = os.fstat(INHERITED_LOCK_FD)
+        current = os.stat(path)
+    except OSError:
+        inherited = current = None
+    if inherited is not None and current is not None and (inherited.st_dev, inherited.st_ino) == (current.st_dev, current.st_ino):
+        try:
+            # Succeeds without waiting only on the open file description our parent locked.
+            fcntl.flock(INHERITED_LOCK_FD, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            return
+        except BlockingIOError:
+            pass
+    wait = os.environ.get("SKILLS_LOCK_WAIT", "30")
+    if not re.fullmatch(r"[0-9]+", wait):
+        raise ValidationError(f"SKILLS_LOCK_WAIT must be a whole number of seconds: {wait}")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    os.chmod(path.parent, 0o700)
+    fd = os.open(path, os.O_WRONLY | os.O_APPEND | os.O_CREAT | os.O_CLOEXEC, 0o600)
+    deadline = time.monotonic() + int(wait)
+    while True:
+        try:
+            fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            break
+        except BlockingIOError:
+            if time.monotonic() >= deadline:
+                os.close(fd)
+                raise LockBusy(f"another install.sh run holds {path}; gave up after {wait}s (set SKILLS_LOCK_WAIT to wait longer)") from None
+            time.sleep(0.1)
+    # The descriptor stays open, and the lock held, until this process exits.
+    if "sleep-after-lock" in FAULTS:
+        print("FAULT sleep-after-lock", file=sys.stderr, flush=True)
+        time.sleep(2)
+
+
+def rename_noreplace(source: Path, target: Path) -> None:
+    """Rename that fails with EEXIST instead of replacing an existing target."""
+    if "force-enosys" in FAULTS:
+        raise OSError(errno.ENOSYS, "forced by SKILLS_MIGRATE_FAULT", str(target))
+    libc = ctypes.CDLL(None, use_errno=True)
+    if sys.platform.startswith("linux"):
+        func = getattr(libc, "renameat2", None)
+        if func is None:
+            raise OSError(errno.ENOSYS, "renameat2 is unavailable in this C library", str(target))
+        func.argtypes = [ctypes.c_int, ctypes.c_char_p, ctypes.c_int, ctypes.c_char_p, ctypes.c_uint]
+        func.restype = ctypes.c_int
+        at_fdcwd, rename_noreplace_flag = -100, 1
+        result = func(at_fdcwd, os.fsencode(source), at_fdcwd, os.fsencode(target), rename_noreplace_flag)
+    elif sys.platform == "darwin":
+        func = getattr(libc, "renamex_np", None)
+        if func is None:
+            raise OSError(errno.ENOSYS, "renamex_np is unavailable", str(target))
+        func.argtypes = [ctypes.c_char_p, ctypes.c_char_p, ctypes.c_uint]
+        func.restype = ctypes.c_int
+        rename_excl = 0x4
+        result = func(os.fsencode(source), os.fsencode(target), rename_excl)
+    else:
+        raise OSError(errno.ENOSYS, f"no atomic no-replace rename on {sys.platform}", str(target))
+    if result != 0:
+        error = ctypes.get_errno()
+        raise OSError(error, os.strerror(error), str(target))
+
+
+def _raise(error: OSError) -> None:
+    raise error
+
+
+def remove_tree(root: Path, fault: str | None = None) -> None:
+    for current, dirs, names in os.walk(root, topdown=False, onerror=_raise, followlinks=False):
+        for name in names:
+            os.unlink(os.path.join(current, name))
+            if fault:
+                crash(fault)
+        for name in dirs:
+            path = os.path.join(current, name)
+            if os.path.islink(path):
+                os.unlink(path)
+            else:
+                os.rmdir(path)
+    os.rmdir(root)
+
+
+def remove_entry(path: Path) -> None:
+    if path.is_symlink() or not path.is_dir():
+        path.unlink()
+    else:
+        shutil.rmtree(path)
+
+
+def fsync_dir(directory: Path) -> None:
+    fd = os.open(directory, os.O_RDONLY | os.O_DIRECTORY)
+    try:
+        os.fsync(fd)
+    finally:
+        os.close(fd)
+
+
+def check_namespace(root: Path, area: Path) -> None:
+    for path in (root, area):
+        if path.is_symlink():
+            raise ValidationError(f"migration staging path is a symlink: {path}")
+
+
+def clear_namespace(root: Path, area: Path) -> None:
+    """Everything under the destination's staging area is migrator debris from an earlier run."""
+    check_namespace(root, area)
+    if area.exists():
+        shutil.rmtree(area)
+
+
+def ensure_namespace(root: Path, area: Path, destination: Path) -> Path:
+    check_namespace(root, area)
+    area.mkdir(parents=True, exist_ok=True)
+    check_namespace(root, area)
+    if os.stat(area).st_dev != os.stat(destination).st_dev:
+        raise ValidationError(f"migration staging area {area} is on a different filesystem than {destination}")
+    return area
+
+
+def tidy_namespace(root: Path, area: Path) -> None:
+    for path in (area, root):
+        try:
+            path.rmdir()
+        except FileNotFoundError:
+            continue
+        except OSError:
+            return
 
 
 def path_is_within(path: Path, parent: Path) -> bool:
@@ -208,20 +375,53 @@ def replacement_ready(
     return True, None
 
 
-def install_replacement(destination: Path, replacement: str, source: Path, link_root: Path | None) -> None:
+def promote_replacement(
+    destination: Path, replacement: str, source: Path, link_root: Path | None, staging_area: Any
+) -> str | None:
+    """Install an absent replacement by staging it and renaming it into place without replacing.
+
+    Returns a skip reason, or None once the replacement is present and verified.
+    """
     target = destination / replacement
     if target.exists() or target.is_symlink():
-        return
-    if link_root is not None:
-        target.symlink_to(link_root / replacement)
-    else:
-        shutil.copytree(source / replacement, target, symlinks=True)
+        return None
+    staged = staging_area() / replacement
+    try:
+        if link_root is not None:
+            staged.symlink_to(link_root / replacement)
+            if staged.resolve(strict=True) != (link_root / replacement).resolve(strict=True):
+                raise OSError(f"staged replacement link does not resolve to {link_root / replacement}")
+        else:
+            shutil.copytree(source / replacement, staged, symlinks=True)
+            if safe_skill_tree(staged) or skill_hash(staged) != skill_hash(source / replacement):
+                raise OSError("staged replacement differs from source")
+        if "insert-target-dir" in FAULTS:
+            target.mkdir()
+            (target / "SKILL.md").write_text("inserted\n", encoding="utf-8")
+        if "insert-target-symlink" in FAULTS:
+            target.symlink_to("/nonexistent-inserted-target")
+        try:
+            rename_noreplace(staged, target)
+        except OSError as error:
+            if error.errno == errno.EEXIST:
+                return "replacement collision with existing differing new target"
+            if error.errno in NO_REPLACE_UNSUPPORTED:
+                raise NoReplaceUnavailable(
+                    f"atomic no-replace rename is unavailable ({error.strerror}); replacement {replacement} not installed"
+                ) from error
+            raise
+    finally:
+        if staged.exists() or staged.is_symlink():
+            remove_entry(staged)
+    crash("after-promote")
     ready, reason = replacement_ready(destination, replacement, source, link_root)
     if not ready:
         raise OSError(f"replacement verification failed: {reason}")
+    return None
 
 
-def backup_and_remove(path: Path, backup_base: Path, name: str) -> None:
+def retire(path: Path, backup_base: Path, name: str, staging_area: Any) -> None:
+    """Move a legacy entry into its backup; its working path is intact or absent, never partial."""
     backup_root = backup_base / name
     stamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
     backup = backup_root / stamp
@@ -233,12 +433,23 @@ def backup_and_remove(path: Path, backup_base: Path, name: str) -> None:
     saved = backup / name
     if path.is_symlink():
         link_target = path.resolve(strict=True)
-        saved.symlink_to(os.readlink(path))
         shutil.copytree(link_target, backup / f"{name}.target", symlinks=True)
+        saved.symlink_to(os.readlink(path))
         path.unlink()
-    else:
-        shutil.copytree(path, saved, symlinks=True)
-        shutil.rmtree(path)
+        return
+    try:
+        if "force-exdev" in FAULTS:
+            raise OSError(errno.EXDEV, "forced by SKILLS_MIGRATE_FAULT", str(saved))
+        os.rename(path, saved)
+        return
+    except OSError as error:
+        if error.errno != errno.EXDEV:
+            raise
+    # Backup on another filesystem: copy it, then delete only from the staging area.
+    shutil.copytree(path, saved, symlinks=True)
+    retiring = staging_area() / f".retiring-{name}"
+    os.rename(path, retiring)
+    remove_tree(retiring, "mid-retirement")
 
 
 def write_lock(path: Path, lock: dict[str, Any], source: Path, updates: dict[str, dict[str, str] | None]) -> None:
@@ -255,9 +466,29 @@ def write_lock(path: Path, lock: dict[str, Any], source: Path, updates: dict[str
     lock["skills"] = dict(sorted(skills.items()))
     lock["source"] = str(source)
     lock["updated_at"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-    temp = path.with_name(f".{path.name}.tmp")
-    temp.write_text(json.dumps(lock, indent=2, sort_keys=False) + "\n", encoding="utf-8")
-    temp.replace(path)
+    data = json.dumps(lock, indent=2, sort_keys=False) + "\n"
+    fd, temp_name = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".tmp", dir=path.parent)
+    temp = Path(temp_name)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as file:
+            if "fail-lock-write" in FAULTS:
+                raise OSError(errno.EIO, "forced by SKILLS_MIGRATE_FAULT", str(temp))
+            file.write(data)
+            file.flush()
+            os.fsync(file.fileno())
+        try:
+            mode = stat.S_IMODE(os.stat(path).st_mode)
+        except FileNotFoundError:
+            mode = 0o644
+        os.chmod(temp, mode)
+        os.replace(temp, path)
+    except BaseException:
+        try:
+            temp.unlink()
+        except FileNotFoundError:
+            pass
+        raise
+    fsync_dir(path.parent)
 
 
 def migrate(args: argparse.Namespace) -> int:
@@ -279,18 +510,62 @@ def migrate(args: argparse.Namespace) -> int:
         raise ValidationError("backup directory must be outside the canonical link root")
     if protected_root is not None and (backup_base == protected_root or path_is_within(backup_base, protected_root)):
         raise ValidationError("backup directory must be outside the protected root")
+    namespace_root = destination.parent / STAGING_NAMESPACE
+    namespace = namespace_root / destination.name
+    check_namespace(namespace_root, namespace)
+    if overlaps(backup_base, namespace_root):
+        raise ValidationError(f"backup directory must be outside the migration staging area {namespace_root}")
+    for other, label in ((destination, "destination"), (source, "source")):
+        if path_is_within(other, backup_base):
+            raise ValidationError(f"backup directory must not contain the {label}")
+    if overlaps(namespace_root, source) or (link_root is not None and overlaps(namespace_root, link_root)):
+        raise ValidationError(f"migration staging area {namespace_root} overlaps the source or canonical link root")
     manifest = read_manifest(args.manifest, source)
     lock_path = destination / ".skills-lock.json"
+    if args.apply:
+        hold_installer_lock()
+        clear_namespace(namespace_root, namespace)
+    try:
+        return migrate_locked(args, source, destination, link_root, backup_base, manifest, lock_path, namespace_root, namespace)
+    finally:
+        if args.apply:
+            tidy_namespace(namespace_root, namespace)
+
+
+def migrate_locked(
+    args: argparse.Namespace,
+    source: Path,
+    destination: Path,
+    link_root: Path | None,
+    backup_base: Path,
+    manifest: dict[str, dict[str, str | None]],
+    lock_path: Path,
+    namespace_root: Path,
+    namespace: Path,
+) -> int:
     lock, reason = read_lock(lock_path, source)
     if lock is None:
         print(f"SKIP all: {reason}")
         return 0
-    updates: dict[str, dict[str, str] | None] = {}
-    changed = False
+
+    def staging_area() -> Path:
+        return ensure_namespace(namespace_root, namespace, destination)
+
+    added: dict[str, dict[str, str] | None] = {}
+    retiring: list[tuple[str, str, str | None, Path]] = []
+    pruned: list[str] = []
+    failed = False
     for old_name, entry in manifest.items():
         old_path = destination / old_name
         owned, reason = owned_target(old_path, old_name, lock, link_root)
         if owned is None:
+            # A retirement that stopped before its lock update leaves a record for an absent path.
+            if reason == "already absent" and old_name in lock["skills"] and not args.preserve_shared_canonical:
+                if args.apply:
+                    pruned.append(old_name)
+                else:
+                    print(f"DRY-RUN prune lock record {old_name}: path already absent")
+                continue
             print(f"SKIP {old_name}: {reason}")
             continue
         action = str(entry["action"])
@@ -307,36 +582,52 @@ def migrate(args: argparse.Namespace) -> int:
             if not ready:
                 print(f"SKIP {old_name}: {ready_reason}")
                 continue
-        if args.preserve_shared_canonical:
-            if replacement is None:
-                print(f"SKIP {old_name}: shared canonical target retained; manual migration required")
-                continue
-            if args.apply:
-                install_replacement(destination, replacement, source, link_root)
-                updates[replacement] = {"hash": skill_hash(source / replacement), "provenance": PROVENANCE}
-                changed = True
-                print(f"APPLIED {action} {old_name} -> {replacement}: shared canonical target retained")
-            else:
-                print(f"DRY-RUN {action} {old_name} -> {replacement}: would install replacement; shared canonical target retained")
+        if args.preserve_shared_canonical and replacement is None:
+            print(f"SKIP {old_name}: shared canonical target retained; manual migration required")
             continue
-        if args.apply:
-            if replacement is not None:
-                install_replacement(destination, replacement, source, link_root)
-                updates[replacement] = {"hash": skill_hash(source / replacement), "provenance": PROVENANCE}
-            backup_and_remove(old_path, backup_base, old_name)
-            updates[old_name] = None
-            changed = True
-            detail = f" -> {replacement}" if replacement else ""
-            print(f"APPLIED {action} {old_name}{detail}")
-        else:
-            detail = f" -> {replacement}" if replacement else ""
-            print(f"DRY-RUN {action} {old_name}{detail}: would install/verify replacement before backup and retire")
-    if args.apply and changed:
-        write_lock(lock_path, lock, source, updates)
+        detail = f" -> {replacement}" if replacement else ""
+        if not args.apply:
+            if args.preserve_shared_canonical:
+                print(f"DRY-RUN {action} {old_name}{detail}: would install replacement; shared canonical target retained")
+            else:
+                print(f"DRY-RUN {action} {old_name}{detail}: would install/verify replacement before backup and retire")
+            continue
+        if replacement is not None:
+            try:
+                skip_reason = promote_replacement(destination, replacement, source, link_root, staging_area)
+            except NoReplaceUnavailable as error:
+                print(f"SKIP {old_name}: {error}")
+                failed = True
+                continue
+            if skip_reason:
+                print(f"SKIP {old_name}: {skip_reason}")
+                continue
+            added[replacement] = {"hash": skill_hash(source / replacement), "provenance": PROVENANCE}
+        if args.preserve_shared_canonical:
+            print(f"APPLIED {action} {old_name}{detail}: shared canonical target retained")
+            continue
+        retiring.append((old_name, action, replacement, old_path))
+
+    # Publish replacements before retiring anything, then drop retired and stale legacy records.
+    if added:
+        write_lock(lock_path, lock, source, added)
+    removed: dict[str, dict[str, str] | None] = {}
+    for old_name, action, replacement, old_path in retiring:
+        retire(old_path, backup_base, old_name, staging_area)
+        removed[old_name] = None
+        detail = f" -> {replacement}" if replacement else ""
+        print(f"APPLIED {action} {old_name}{detail}")
+    if retiring:
+        crash("after-retirement")
+    for old_name in pruned:
+        removed[old_name] = None
+        print(f"APPLIED prune lock record {old_name}: path already absent")
+    if removed:
+        write_lock(lock_path, lock, source, removed)
     if args.apply and args.applied_file:
-        replacements = sorted(name for name, record in updates.items() if record is not None)
+        replacements = sorted(added)
         args.applied_file.write_text("\n".join(replacements) + ("\n" if replacements else ""), encoding="utf-8")
-    return 0
+    return 1 if failed else 0
 
 
 def cleanup_legacy_dir(args: argparse.Namespace) -> int:
@@ -356,6 +647,8 @@ def cleanup_legacy_dir(args: argparse.Namespace) -> int:
     for other in (legacy_real, new_real, canonical, source):
         if backup_base == other or path_is_within(backup_base, other):
             raise ValidationError("backup directory must be outside the legacy, new, canonical, and source directories")
+    if args.apply:
+        hold_installer_lock()
     lock_path = legacy / ".skills-lock.json"
     lock, reason = read_lock(lock_path, source)
     if lock is None:
@@ -473,6 +766,9 @@ def main() -> int:
         if args.legacy_dir is not None:
             return cleanup_legacy_dir(args)
         return migrate(args)
+    except LockBusy as error:
+        print(f"ERROR: {error}", file=sys.stderr)
+        return LOCK_BUSY_EXIT
     except (ValidationError, OSError) as error:
         print(f"ERROR: {error}", file=sys.stderr)
         return 2

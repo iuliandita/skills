@@ -92,12 +92,22 @@ moved source checkout requires manual review rather than claiming ownership from
 current files against recorded hashes, installs and verifies the replacement first, and
 backs up old entries outside discovery before retiring them. Modified skills, protected
 overlays, unowned installations, and conflicting replacements require manual review.
+
+Apply stages each missing replacement under `<destination parent>/.skills-migrate-staging/`,
+verifies it, and renames it into place only if nothing exists there yet; an entry that appears
+in the meantime is reported as a conflicting replacement and left alone. Systems without an
+atomic no-replace rename (Linux `renameat2`, macOS `renamex_np`) skip that skill and exit
+non-zero instead of risking an overwrite. The lock file is replaced atomically, first to record
+the replacements and again after old entries have moved into the backup. An interrupted apply is
+finished by running it again: installed replacements are reused, and records of old entries
+already moved to the backup are pruned. Apply holds the installer lock itself, even when
+`flock` is missing or the helper runs directly, and exits 3 when another run holds it.
 A dry run is not a reservation: apply checks the filesystem again. All current and historical
 lock hashes cover file bytes but not filenames; a pure filename change can go undetected, so back up
 and manually review renamed local files.
 
-Migration honors `SKILLS_BACKUP_DIR`, but the backup location must stay outside source and
-skill discovery directories. `--force` and `--no-backup` are not migration options.
+Migration honors `SKILLS_BACKUP_DIR`, but the backup location must stay outside source,
+skill discovery directories, and the `.skills-migrate-staging` area. `--force` and `--no-backup` are not migration options.
 
 In link mode, replacements are installed in the canonical directory and selected owned
 tool links are migrated. Old canonical directories remain because unselected tools may

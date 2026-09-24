@@ -510,13 +510,15 @@ area would be on another filesystem, is refused with an error instead of being c
 These guarantees cover installs done by `install.sh`. `--migrate --apply` runs the same
 recovery first and refuses a destination while recovery fails or a skill it would touch
 still has an install record; reinstall that skill with `--force` to clear it. The migration
-helper's own copy of a replacement skill is not staged.
+helper stages replacements in its own `.skills-migrate-staging` area and never overwrites an
+existing entry; see [MIGRATION.md](MIGRATION.md#users-of-the-bundled-installer).
 
 Runs that change files (installs, `--update`, and `--migrate --apply`) take an exclusive lock on
 `${XDG_STATE_HOME:-~/.local/state}/iuliandita-skills/install.lock` with `flock`, waiting up
 to `SKILLS_LOCK_WAIT` seconds (default 30, or 0 for `--update`) and exiting with status 3 if another run still
 holds it. Without `flock` the installer prints a warning and proceeds; runs exclude each
-other only when every one of them has `flock`.
+other only when every one of them has `flock`. The exception is `--migrate --apply`: its
+migration helper takes the same lock itself, so it still waits and exits 3 without `flock`.
 
 If a source checkout moved or an existing lock is incompatible, a normal install saves
 that lock under the backup base's `.unverified-locks/` directory and starts a fresh lock.
