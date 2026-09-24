@@ -21,8 +21,9 @@ How skill-refiner detects and validates AI CLI harnesses for cross-model peer re
 | Goose | `goose` | `~/.config/goose/config.yaml` | varies by provider | unverified; confirm the flag with `goose --help` before use | no |
 | Gemini CLI (legacy) | `gemini` | `~/.gemini/settings.json` | `GEMINI_API_KEY` or `GOOGLE_API_KEY` | consumer accounts moved to `agy`; Google still supports enterprise licenses and paid API keys. The 0.42.0 probe here exited 55 (unsupported client) | no |
 
-**Important:** "yes" rows passed an isolated, timed headless probe on the listed date and
-version; other rows are unverified, so do not treat their commands as known-good. Before
+**Important:** "yes" means the headless command form ran and answered in an isolated, timed
+probe on the listed date and version. It does not attest model identity; see Evaluator Identity
+and Evidence for that. Other rows are unverified, so do not treat their commands as known-good. Before
 using one, run `<binary> --help`, confirm the non-interactive flag, and only then build the
 smoke test around it. Do not invoke a secondary whose form cannot be confirmed. Harness CLIs
 evolve rapidly, so re-confirm even the verified forms on each run. Useful model and effort
@@ -33,10 +34,9 @@ Codex prints the resolved model on stderr (the `model:` banner line); in the 202
 the banner said `gpt-6-sol` while the model called itself `gpt-6`, so use the banner, not the
 reply, as identity evidence.
 
-Probe receipts (2026-09-24, default models, prompt "Reply with exactly one line: OK <your model id>"):
-`claude` replied `OK claude-opus-5-5[1m]`; `codex` banner `model: gpt-6-sol`; `agy` replied
-`OK Gemini 3.8 Flash`; `cmd` and `hermes` replied `OK deepseek/deepseek-v4.1-flash`. Self-reported
-names are weak evidence; prefer a banner or log line from the harness when one exists.
+In the 2026-09-24 probes only the Codex banner gave harness-attested identity. The other
+verified harnesses printed no model line in headless text mode, so their identity stays unknown
+unless a run captures one (for example from a JSON output mode).
 
 ---
 
