@@ -19,7 +19,7 @@ How skill-refiner detects and validates AI CLI harnesses for cross-model peer re
 | Hermes | `hermes` | `~/.hermes/config.yaml` | `~/.hermes/.env` | `hermes chat -q "<P>" -Q` | yes (2026-09-24, 0.21.3) |
 | Aider | `aider` | `~/.aider.conf.yml` | `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` | unverified; confirm the flag with `aider --help` before use | no |
 | Goose | `goose` | `~/.config/goose/config.yaml` | varies by provider | unverified; confirm the flag with `goose --help` before use | no |
-| Gemini CLI (legacy) | `gemini` | `~/.gemini/settings.json` | `GEMINI_API_KEY` or `GOOGLE_API_KEY` | deprecated 2026-06-18 for `agy`; the 0.42.0 probe exited 55 (unsupported client) | no |
+| Gemini CLI (legacy) | `gemini` | `~/.gemini/settings.json` | `GEMINI_API_KEY` or `GOOGLE_API_KEY` | deprecated upstream for `agy`; the 0.42.0 probe exited 55 (unsupported client) | no |
 
 **Important:** "yes" rows passed an isolated, timed headless probe on the listed date and
 version; other rows are unverified, so do not treat their commands as known-good. Before
@@ -120,15 +120,16 @@ different harness. Classify the actual resolved model identities before assignin
 ### Detecting the Primary Harness
 
 Check in order. Only the Claude Code env marker is verified (2026-09-24); for the rest, match
-the parent process command line, which may show `node` or `python` with the tool's script path:
+the parent process executable or script basename (not a substring of the whole command line,
+which may show `node` or `python` with the tool's script path):
 1. `CLAUDECODE=1` in the environment - primary is claude
-2. Parent process contains `codex` - primary is codex
-3. Parent process contains `agy` or `antigravity` - primary is agy
-4. Parent process contains `opencode` - primary is opencode
-5. Parent process contains `command-code` or `commandcode` - primary is cmd
-6. Parent process contains `omp` - primary is omp
-7. Parent process contains `hermes` - primary is hermes
-8. Parent process contains `gemini` - primary is legacy gemini
+2. Parent process is `codex` - primary is codex
+3. Parent process is `agy` or `antigravity` - primary is agy
+4. Parent process is `opencode` - primary is opencode
+5. Parent process is `command-code` or `commandcode` - primary is cmd
+6. Parent process is `omp` - primary is omp
+7. Parent process is `hermes` - primary is hermes
+8. Parent process is `gemini` - primary is legacy gemini
 9. If the signal is ambiguous, record the harness and model as unknown and use `cap 3`
    rather than guessing; inspect available runtime metadata, and ask only if the missing fact
    blocks an authorized invocation
