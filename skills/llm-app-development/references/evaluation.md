@@ -60,9 +60,25 @@ comparison, assertions, and red teaming in a single tool.
 description: "Customer support bot evaluation"
 
 providers:
-  - id: anthropic:messages:claude-sonnet-5
+  - id: anthropic:messages:claude-sonnet-5-5
     config:
-      max_tokens: 4096  # Sonnet 5 rejects non-default temperature/top_p/top_k
+      effort: medium
+      max_tokens: 4096  # thinking plus text; omit sampling controls
+      showThinking: false  # grade the answer, not progress or reasoning summaries
+  - id: openai:responses:gpt-6.1-sol
+    config:
+      reasoning:
+        effort: medium
+      max_output_tokens: 4096
+
+defaultTest:
+  options:
+    provider:
+      id: openai:responses:gpt-6.1-sol
+      config:
+        reasoning:
+          effort: low
+        max_output_tokens: 4096
 
 prompts:
   - |
@@ -102,12 +118,28 @@ npx promptfoo eval
 
 # Compare models
 npx promptfoo eval --providers \
-  anthropic:messages:claude-sonnet-5 \
-  openai:chat:gpt-6-sol
+  anthropic:messages:claude-sonnet-5-5 \
+  openai:responses:gpt-6.1-sol
 
 # View results
 npx promptfoo view
 ```
+
+Keep explicit provider configurations in the comparison file so CLI overrides do not lose
+effort or output budgets. Retain `claude-sonnet-5` and `gpt-6-sol` as named migration baselines
+when comparing old and new behavior; do not replace historical result labels. Use the same
+dataset, prompt, tools, rubric, and fixed grading provider/configuration for every candidate.
+Record grader cost separately. See [provider options](https://www.promptfoo.dev/docs/providers/anthropic/)
+and [grading configuration](https://www.promptfoo.dev/docs/configuration/expected-outputs/model-graded/).
+
+Sweep two or three supported effort levels instead of assuming matching labels produce
+matching quality or token use. For Sonnet 5.5, start at `medium` for well-specified agent work
+and compare `high`; use `between_tools` only at `high` or below. For GPT-6.1 Sol, start at
+`medium` and compare `low` or `high`; `none` and `minimal` are unsupported. Preserve an old
+effective effort where supported, and report any compatibility change alongside results.
+Measure cold and warm provider caches separately; disable Promptfoo's local response cache
+with `--no-cache` for fresh API measurements. A cached local result proves neither latency
+nor current provider behavior.
 
 ### Assertion types
 
@@ -151,23 +183,54 @@ npx promptfoo view
 
 ### Cost and latency
 
-- **Tokens per request**: input + output tokens
-- **Cost per request**: tokens * price
+- **Tokens per task**: all calls, retries, thinking/reasoning, and worker usage
+- **Cost per task**: uncached input, cache reads/writes, output, paid tools, and retries
 - **Time to first token (TTFT)**: for streaming responses
 - **Total latency**: end-to-end response time
+
+Sonnet 5.5 and Sonnet 5 have the same $2/$10 standard per-token rates; savings require
+measured changes in usage or task success. GPT-6.1 Sol cache reads are $0.10/MTok versus
+old Sol's $0.20, while base input/output remain $2/$10. Above 272K input tokens, GPT rates
+double for all input/cache tokens and rise 50% for all output in that request. Include cache
+write charges and processing-tier/regional premiums. See [Sonnet pricing](https://platform.claude.com/docs/en/models/sonnet-5-5/overview)
+and [GPT pricing](https://developers.openai.com/api/docs/models/gpt-6.1-sol).
 
 ### Request-level cost guard
 
 Put a budget check before batch or agent calls, not only after billing data arrives:
 
 ```python
-BUDGET_USD = 0.50  # per-request ceiling
-input_price, output_price = 2.00, 10.00  # Claude Sonnet 5, per 1M tokens
-total_tokens = count_tokens(messages)
-estimated = (total_tokens * input_price + max_tokens * output_price) / 1_000_000
-if estimated > BUDGET_USD:
-    raise BudgetExceeded(f"Estimated ${estimated:.4f} exceeds ceiling ${BUDGET_USD}")
+# Standard GPT-6.1 Sol rates; all input categories are disjoint.
+def sol_cost(input_tokens: int, cached_tokens: int, cache_write_tokens: int,
+             output_tokens: int) -> float:
+    ordinary = input_tokens - cached_tokens - cache_write_tokens
+    if min(ordinary, cached_tokens, cache_write_tokens, output_tokens) < 0:
+        raise ValueError("Invalid token accounting")
+    long_request = input_tokens > 272_000
+    input_multiplier = 2 if long_request else 1
+    output_multiplier = 1.5 if long_request else 1
+    return (input_multiplier * (ordinary * 2 + cached_tokens * 0.10
+                               + cache_write_tokens * 2.50)
+            + output_tokens * 10 * output_multiplier) / 1_000_000
+
+BUDGET_USD = 0.50
+# Conservative cache-write reservation; do not assume a future cache hit.
+input_count = count_tokens(serialized_request)
+reserved = sol_cost(input_count, 0, input_count, max_output_tokens)
+if reserved > BUDGET_USD:
+    raise BudgetExceeded(f"Next call could exceed ${BUDGET_USD:.2f}")
 ```
+
+After completion, use `usage.input_tokens` minus `cached_tokens` and `cache_write_tokens`
+for ordinary GPT input, with both details read from `usage.input_tokens_details`; use
+`usage.output_tokens`, including reasoning. Sonnet's `input_tokens` already excludes cache
+reads/writes: price it at $2/MTok, add `cache_read_input_tokens` at $0.20, 5-minute creation
+tokens at $2.50 and 1-hour creation tokens at $4, then output at $10. Do not charge cache
+creation tokens again as ordinary input. See [GPT cache accounting](https://developers.openai.com/api/docs/guides/prompt-caching)
+and [Claude cache usage](https://platform.claude.com/docs/en/build-with-claude/prompt-caching).
+Count the complete serialized request with provider-aware token counting. This guard covers
+one Standard GPT call, not an entire agent tree or paid tools. Reserve those separately,
+reconcile billed attempts, and retain reservations when usage is unknown after a timeout.
 
 ---
 
@@ -190,7 +253,7 @@ Supplement manual datasets with LLM-generated test cases:
 ```python
 # Generate test cases from your documentation
 response = client.messages.create(
-    model="claude-sonnet-5",
+    model="claude-sonnet-5-5",
     max_tokens=16000,  # 20 pairs plus adaptive thinking
     messages=[{
         "role": "user",
@@ -346,6 +409,19 @@ def eval_agent_task(task: str, expected_outcome: dict, max_iterations: int = 20)
         "outcome_matches": check_outcome(result, expected_outcome),
     }
 ```
+
+Record requested and actual response model IDs, effective effort, thinking mode, iterations,
+refusal/stop details, cache categories, and fallback attempts from the trace. A successful
+fallback is a result from that actual model, not evidence the requested model passed. Keep
+fallback disabled for isolated model comparisons; evaluate production fallback separately
+under the same quality contract. See [Sonnet fallback](https://platform.claude.com/docs/en/models/sonnet-5-5/migration-guide).
+
+For native Responses delegation, compare single-agent and delegated runs on identical tasks.
+Grade only the root `final_answer` and check required evidence, completeness, and permissions.
+Aggregate usage across the whole run and all continuation requests without double-counting
+response-level totals and per-agent breakdowns. Record spawned agents, peak concurrency,
+worker/tool failures, retries, final outcome, and wall-clock latency. A concurrency cap is
+not a token or cost ceiling; lower latency alone does not establish an improvement.
 
 ### Recovery from errors
 

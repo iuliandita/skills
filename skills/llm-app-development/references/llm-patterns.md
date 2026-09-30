@@ -31,7 +31,7 @@ client = anthropic.Anthropic()
 async_client = anthropic.AsyncAnthropic()
 
 response = client.messages.create(
-    model="claude-sonnet-5",
+    model="claude-sonnet-5-5",
     max_tokens=4096,  # covers adaptive thinking plus the reply
     system="You are a helpful assistant.",
     messages=[{"role": "user", "content": "Hello"}],
@@ -52,7 +52,7 @@ import Anthropic from "@anthropic-ai/sdk";
 const client = new Anthropic(); // reads ANTHROPIC_API_KEY
 
 const response = await client.messages.create({
-  model: "claude-sonnet-5",
+  model: "claude-sonnet-5-5",
   max_tokens: 4096,
   messages: [{ role: "user", content: "Hello" }],
 });
@@ -70,21 +70,24 @@ from openai import OpenAI
 client = OpenAI()  # reads OPENAI_API_KEY
 
 response = client.responses.create(
-    model="gpt-6-astra",
+    model="gpt-6.1-sol",
     input="Explain why a queue needs a retry limit in one sentence.",
     reasoning={"effort": "low"},
     max_output_tokens=4096,
 )
 if response.status != "completed":
     raise RuntimeError(f"Response did not complete: {response.status}")
+if not response.output_text.strip():
+    raise RuntimeError("Response returned no text; inspect output for refusals")
 print(response.output_text)
 ```
 
 Use `AsyncOpenAI` and await requests in async handlers. The output budget includes reasoning;
 handle incomplete responses rather than treating empty text as success. See the
-[Astra migration checklist](target-versions.md#astra-migration) before adapting older examples.
-The GPT-6 Sol Chat Completions examples below illustrate that API without tools; Sol supports
-Chat Completions function calling only at `reasoning_effort: "none"`, so use Responses for tools.
+[GPT-6.1 Sol migration checklist](target-versions.md#gpt-61-sol-migration) before adapting
+older examples. Use Responses for tools; GPT-6.1 Sol's Chat Completions support has no tools.
+Escalate to Astra only when Sol falls short on measured task quality; check its
+[migration checklist](target-versions.md#astra-migration) and account access first.
 
 ### Vercel AI SDK (TypeScript)
 
@@ -93,7 +96,7 @@ import { generateText } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
 
 const { text } = await generateText({
-  model: anthropic("claude-sonnet-5"),
+  model: anthropic("claude-sonnet-5-5"),
   prompt: "Hello",
   maxOutputTokens: 4096,
 });
@@ -113,7 +116,7 @@ const { text } = await generateText({
 
 ```python
 with client.messages.stream(
-    model="claude-sonnet-5",
+    model="claude-sonnet-5-5",
     max_tokens=4096,
     messages=[{"role": "user", "content": prompt}],
 ) as stream:
@@ -129,7 +132,7 @@ print(f"\nTokens: {final_message.usage.input_tokens} in, {final_message.usage.ou
 
 ```typescript
 const stream = client.messages.stream({
-  model: "claude-sonnet-5",
+  model: "claude-sonnet-5-5",
   max_tokens: 4096,
   messages: [{ role: "user", content: prompt }],
 });
@@ -143,18 +146,35 @@ for await (const event of stream) {
 const finalMessage = await stream.finalMessage();
 ```
 
+These examples stream final text. In Sonnet 5.5 tool loops, longer progress notes arrive in
+`thinking` blocks and are empty by default. With adaptive thinking, use `display: "updates"`
+and the `thinking-display-updates-2026-08-18` beta header to render progress; `between_tools`
+returns those summaries without a `display` field. See the
+[migration guide](https://platform.claude.com/docs/en/models/sonnet-5-5/migration-guide#text-between-tool-calls).
+
 ### OpenAI streaming (Python)
 
 ```python
-stream = client.chat.completions.create(
-    model="gpt-6-sol",
-    messages=[{"role": "user", "content": prompt}],
+stream = client.responses.create(
+    model="gpt-6.1-sol",
+    input=prompt,
+    reasoning={"effort": "low"},
+    max_output_tokens=4096,
     stream=True,
 )
 
-for chunk in stream:
-    if chunk.choices[0].delta.content:
-        print(chunk.choices[0].delta.content, end="", flush=True)
+final_response = None
+for event in stream:
+    if event.type == "response.output_text.delta":
+        print(event.delta, end="", flush=True)
+    elif event.type in {"response.completed", "response.incomplete", "response.failed"}:
+        final_response = event.response
+    elif event.type == "error":
+        raise RuntimeError(event.message)
+if final_response is None or final_response.status != "completed":
+    raise RuntimeError("Stream did not complete; inspect terminal response")
+if not final_response.output_text.strip():
+    raise RuntimeError("Stream returned no text; inspect output for refusals")
 ```
 
 ### Server-Sent Events (SSE) for web apps
@@ -165,7 +185,7 @@ export async function POST(req: Request) {
   const { prompt } = await req.json();
 
   const stream = client.messages.stream({
-    model: "claude-sonnet-5",
+    model: "claude-sonnet-5-5",
     max_tokens: 4096,
     messages: [{ role: "user", content: prompt }],
   });
@@ -182,88 +202,97 @@ export async function POST(req: Request) {
 
 ### Anthropic - structured output
 
-Anthropic exposes two mechanisms: JSON outputs (`output_config.format` with
-`type: json_schema`) and strict tool use (`strict: true`). Prefer JSON outputs when you only
-need a validated response body; use strict tool use when the model also needs to call tools.
+Use JSON outputs (`output_config.format`) for a validated response body, and strict tools
+when the model needs to call tools. Both use a
+[JSON Schema subset](https://platform.claude.com/docs/en/build-with-claude/structured-outputs#json-schema-limitations):
+objects require `additionalProperties: false`; raw schemas cannot use numerical bounds or
+`maxItems`. Keep those constraints in application validation rather than removing them.
 
 ```python
-response = client.messages.create(
-    model="claude-sonnet-5",
-    max_tokens=4096,
-    messages=[{"role": "user", "content": f"Extract info from: {text}"}],
-    output_config={
-        "format": {
-            "type": "json_schema",
-            "schema": {
-                "type": "object",
-                "properties": {
-                    "name": {"type": "string"},
-                    "age": {"type": "integer", "minimum": 0, "maximum": 150},
-                    "email": {"type": "string", "format": "email"},
-                    "topics": {
-                        "type": "array",
-                        "items": {"type": "string"},
-                        "maxItems": 10,
-                    },
-                },
-                "required": ["name", "email"],
-                "additionalProperties": False,
-            },
+from copy import deepcopy
+import json
+from jsonschema import FormatChecker, validate
+
+WIRE_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "name": {"type": "string"},
+        "age": {"type": "integer", "description": "Age from 0 to 150"},
+        "email": {"type": "string", "format": "email"},
+        "topics": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "At most 10 topics",
         },
     },
-)
+    "required": ["name", "email"],
+    "additionalProperties": False,
+}
+APPLICATION_SCHEMA = deepcopy(WIRE_SCHEMA)
+APPLICATION_SCHEMA["properties"]["age"].update(minimum=0, maximum=150)
+APPLICATION_SCHEMA["properties"]["topics"]["maxItems"] = 10
 
-import json
-if response.stop_reason != "end_turn":  # truncated or refused output is not valid JSON
+response = client.messages.create(
+    model="claude-sonnet-5-5",
+    max_tokens=4096,
+    messages=[{"role": "user", "content": f"Extract info from: {text}"}],
+    output_config={"format": {"type": "json_schema", "schema": WIRE_SCHEMA}},
+)
+if response.stop_reason != "end_turn":
     raise RuntimeError(f"incomplete structured output: {response.stop_reason}")
-# Result is in the text content block
-data = json.loads(next(b.text for b in response.content if b.type == "text"))
+text_output = "".join(b.text for b in response.content if b.type == "text")
+if not text_output.strip():
+    raise RuntimeError("structured output returned no text")
+data = json.loads(text_output)
+validate(data, APPLICATION_SCHEMA, format_checker=FormatChecker())
 ```
 
-Strict tool use captures the schema in a tool definition instead. Forced `tool_choice` works
-on Sonnet 5 but returns 400 on Opus 5.5 and Fable 5.1; use `auto` or JSON outputs there.
+This example needs `jsonschema`. Validation failures must reach the application's error or
+retry policy. For reasoning-heavy JSON tasks, use adaptive thinking at `high` effort with an
+instruction to think first, or evaluate `xhigh`; `between_tools` does no up-front thinking
+without tools. Never accept a `max_tokens` response even if its text is valid JSON. See
+[Sonnet 5.5 prompting guidance](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/prompting-claude-sonnet-5-5#reasoning-tasks-with-json-output).
+
+Strict tool use reuses the schemas and validator above. Sonnet 5.5 rejects forced `any`/`tool`
+choices; use `auto` and say when the tool applies. `strict` constrains tool input, but doesn't
+guarantee a call. Handle a text-only reply explicitly. For extraction alone, prefer JSON outputs.
 
 ```python
 response = client.messages.create(
-    model="claude-sonnet-5",
+    model="claude-sonnet-5-5",
     max_tokens=4096,
     tools=[{
         "name": "extract_info",
         "description": "Extract structured information from the text",
         "strict": True,
-        "input_schema": {
-            "type": "object",
-            "properties": {
-                "name": {"type": "string"},
-                "age": {"type": "integer", "minimum": 0, "maximum": 150},
-                "email": {"type": "string", "format": "email"},
-                "topics": {
-                    "type": "array",
-                    "items": {"type": "string"},
-                    "maxItems": 10,
-                }
-            },
-            "required": ["name", "email"]
-        }
+        "input_schema": WIRE_SCHEMA,
     }],
-    tool_choice={"type": "tool", "name": "extract_info"},
-    messages=[{"role": "user", "content": f"Extract info from: {text}"}],
+    tool_choice={"type": "auto"},
+    messages=[{
+        "role": "user",
+        "content": f"Extract info from the following text using extract_info: {text}",
+    }],
 )
-
-# Result is in the tool_use content block
-tool_block = next(b for b in response.content if b.type == "tool_use")
-data = tool_block.input  # already parsed dict
+if response.stop_reason != "tool_use":
+    raise RuntimeError(f"expected extraction tool call: {response.stop_reason}")
+tool_blocks = [b for b in response.content if b.type == "tool_use"]
+if len(tool_blocks) != 1 or tool_blocks[0].name != "extract_info":
+    raise RuntimeError("expected exactly one extract_info call")
+data = tool_blocks[0].input
+validate(data, APPLICATION_SCHEMA, format_checker=FormatChecker())
 ```
 
-### OpenAI - response_format with json_schema
+### OpenAI - Responses with json_schema
 
 ```python
-response = client.chat.completions.create(
-    model="gpt-6-sol",
-    messages=[{"role": "user", "content": f"Extract info from: {text}"}],
-    response_format={
-        "type": "json_schema",
-        "json_schema": {
+response = client.responses.create(
+    model="gpt-6.1-sol",
+    input=f"Extract info from: {text}",
+    reasoning={"effort": "low"},
+    max_output_tokens=4096,
+    text={
+        "format": {
+            "type": "json_schema",
             "name": "extract_info",
             "strict": True,
             "schema": {
@@ -279,8 +308,12 @@ response = client.chat.completions.create(
         },
     },
 )
+if response.status != "completed":
+    raise RuntimeError(f"incomplete structured output: {response.status}")
+if not response.output_text.strip():
+    raise RuntimeError("no structured output; inspect output for refusals")
 import json
-data = json.loads(response.choices[0].message.content)
+data = json.loads(response.output_text)
 ```
 
 ### Vercel AI SDK - structured output
@@ -293,7 +326,7 @@ import { anthropic } from "@ai-sdk/anthropic";
 import { z } from "zod";
 
 const { output } = await generateText({
-  model: anthropic("claude-sonnet-5"),
+  model: anthropic("claude-sonnet-5-5"),
   output: Output.object({
     schema: z.object({
       name: z.string(),
@@ -335,7 +368,7 @@ for _ in range(MAX_ITERS):
     if spent + reserved > BUDGET_USD:
         raise RuntimeError("agent budget would be exceeded")
     response = client.messages.create(
-        model="claude-sonnet-5",
+        model="claude-sonnet-5-5",
         max_tokens=16000,  # thinking and tool calls share this cap
         tools=tools,
         messages=messages,
@@ -376,7 +409,8 @@ else:
 ### Tool design guidelines
 
 - **Specific over general.** `search_docs(query)` beats `do_anything(action, params)`.
-- **Tight schemas.** Add `maxLength`, `minimum`, `maximum`, `enum` constraints.
+- **Tight schemas.** Use provider-supported constraints such as `enum`; enforce unsupported
+  length or numerical limits in application validation, especially with strict tools.
 - **Clear descriptions.** The model uses the description to decide when to call the tool.
   Be precise about what it does and doesn't do.
 - **10-15 tools max.** Beyond that, models struggle with tool selection. Group related
@@ -392,6 +426,12 @@ else:
 
 For multi-turn conversations, manage the message history carefully:
 
+This text-only example drops prior thinking. Tool loops retain signed thinking blocks and
+must keep their earlier history, system prompt, and tools unchanged when replaying them on
+Sonnet 5.5. Use append-only updates or documented compaction/binding controls rather than
+applying this summary replacement to tool histories. See
+[preserved thinking](https://platform.claude.com/docs/en/build-with-claude/preserved-thinking).
+
 ```python
 class Conversation:
     def __init__(self, system: str, max_turns: int = 50):
@@ -404,7 +444,7 @@ class Conversation:
         self._maybe_summarize()
 
         response = client.messages.create(
-            model="claude-sonnet-5",
+            model="claude-sonnet-5-5",
             system=self.system,
             max_tokens=4096,
             messages=self.messages,
@@ -432,9 +472,12 @@ class Conversation:
 
 For repeated system prompts or large static contexts, use prompt caching to reduce costs:
 
+Sonnet 5.5 requires at least 512 cacheable tokens. Per million tokens, cache reads cost $0.20,
+5-minute writes $2.50, and 1-hour writes $4; the default TTL is 5 minutes and cache hits refresh it.
+
 ```python
 response = client.messages.create(
-    model="claude-sonnet-5",
+    model="claude-sonnet-5-5",
     max_tokens=4096,
     system=[
         {
@@ -494,9 +537,11 @@ def call_with_retry(fn, max_retries=3):
 
 - **Prompt caching**: mark static content with `cache_control` for discounted cache reads on
   repeated prefixes. TTL is 5 minutes, refreshed on each cache hit.
-- **Thinking**: current models use adaptive thinking (on by default on Sonnet 5, always on for
+- **Thinking**: current models use adaptive thinking (on by default on Sonnet 5.5, always on for
   Opus 5.5 and Fable 5.1). Control depth with `output_config={"effort": ...}`; manual
   `budget_tokens` returns 400 on these models; Haiku 4.5 is the only current model that uses it.
+  On Sonnet 5.5, replace `disabled` with `between_tools` at `high` effort or below; use adaptive
+  thinking for `xhigh`/`max` or per-message effort changes.
 - **Batch API**: submit up to 100k requests for 50% cost reduction, results within 24 hours.
   Good for evals and data processing.
 - **Citations**: Claude can return source citations when given documents in the prompt.

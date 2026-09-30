@@ -187,6 +187,21 @@ When the target model is known, adapt format to its strengths:
 
 Aggressive shouting ("CRITICAL!", "YOU MUST", "NEVER EVER") usually hurts more than it helps. Use calm, explicit instructions.
 
+For a model upgrade, compare the existing prompt with a shorter variant on the same tasks,
+using fixed success criteria and the same evaluator. Preserve evidence requirements, untrusted
+input boundaries, and the user's scope. Add model-specific rules only for observed failures;
+a newer model is not a reason to add more scaffolding.
+
+When the user wants bounded agent work, state completion and stop conditions: finish the
+requested change and relevant checks, then stop. Name when clarification is necessary and
+which actions need approval. Measure unnecessary pauses, repeated checks, and unrelated edits
+alongside answer quality. Keep effort settings in the host/API configuration, not prose that
+pretends to control them. Sonnet 5.5 guidance starts well-specified agent work at `medium` and
+harder work at `high`; re-evaluate these settings rather than copying the old effort level.
+See [Sonnet prompting](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/prompting-claude-sonnet-5-5).
+The [GPT-6 family guidance](https://developers.openai.com/api/docs/guides/latest-model)
+describes Astra observations; test its recommendations on the selected model before adopting them.
+
 ### Structured Output Guidance
 
 When the prompt is for agent consumption (not human reading), specify output format explicitly:

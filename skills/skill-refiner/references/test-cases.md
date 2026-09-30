@@ -558,6 +558,25 @@ Quality signals:
 - Enforces cost ceiling before each LLM call
 - Does not suggest LangChain when a simple custom loop suffices
 
+**Test 3: Replacement-model compatibility**
+Prompt: "Migrate Sonnet 5 label classification and forced-tool extraction to Sonnet 5.5, and GPT-6 Sol Chat tool calls at none effort to gpt-6.1-sol. Preserve the existing output contracts."
+Quality signals:
+- Uses claude-sonnet-5-5 with between_tools at low/medium/high for no-up-front-thinking classification
+- Replaces forced Anthropic tool selection with JSON output or auto tool selection, and handles a reply with no tool call
+- Sends supported wire schemas and retains domain validation in application code or a schema-transforming SDK helper
+- Moves new Sol tool calls to Responses, replaces unsupported none effort with low, and preserves reasoning/tool continuation items
+- Handles refusals, truncation, missing text, and invalid labels without treating them as successful classifications
+- Treats API migration smoke tests separately from quality, cost, and latency comparisons
+
+**Test 4: Native delegation boundaries**
+Prompt: "Use gpt-6.1-sol native Responses delegation for a tool agent. Give one worker a cheaper model and email tools, another read-only tools, and cap the whole run at $5 using concurrency three."
+Quality signals:
+- Explains that native workers share the request model and tools, so per-worker models and permissions require application orchestration
+- Does not claim concurrency bounds total agent count, tree depth, tokens, or spend
+- Keeps side-effect authorization and total-cost enforcement in the application
+- Preserves worker call IDs and output items, and returns only the root final answer
+- Measures worker failures, shared-state contention, completion, and total usage across the tree
+
 ### localize
 **Test 1: Explicit legacy invocation**
 Prompt: "Use localize for this task."
@@ -1072,6 +1091,15 @@ Quality signals:
 - Updates ordinary routing expectations to the verified active replacement only in phase 2
 - Keeps the explicit old-name invocation as a migration test outside ordinary trigger scoring
 - Does not claim that a semantic routing test proves native harness discovery or search ranking
+
+**Test 10: Mid-run provider fallback**
+Prompt: "Score this review: the initial banner names Sonnet 5.5, but the provider response returns Sonnet 5 after fallback. The primary also used Sonnet 5."
+Quality signals:
+- Uses returned provider identity as evidence of the actual evaluation call rather than the initial banner or requested model
+- Records fallback and billed iterations when available, without inventing missing usage
+- Classifies the reviewer as same-model fresh-context at cap 3 if both calls have verified Sonnet 5 identity
+- Marks identity unknown when per-call fallback evidence is unavailable
+- Does not relabel historical scores after an upgrade or claim mixed-model runs are pure Sonnet 5.5 evaluations
 
 ### skill-router
 **Test 1: Explicit legacy invocation**

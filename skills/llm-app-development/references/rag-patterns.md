@@ -358,9 +358,9 @@ Rephrase the user query to improve retrieval coverage:
 def expand_query(original_query: str) -> list[str]:
     """Generate alternative phrasings for better retrieval coverage."""
     response = client.messages.create(
-        model="claude-sonnet-5",
+        model="claude-sonnet-5-5",
         max_tokens=256,
-        thinking={"type": "disabled"},
+        thinking={"type": "between_tools"},
         output_config={"effort": "low"},
         messages=[{
             "role": "user",
@@ -370,7 +370,11 @@ def expand_query(original_query: str) -> list[str]:
             ),
         }],
     )
+    if response.stop_reason != "end_turn":
+        raise RuntimeError(f"incomplete query expansion: {response.stop_reason}")
     text = "".join(b.text for b in response.content if b.type == "text")
+    if not text.strip():
+        raise RuntimeError("query expansion returned no text")
     alternatives = text.strip().split("\n")
     return [original_query] + alternatives
 ```
