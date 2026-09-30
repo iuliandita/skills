@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.4.0](https://github.com/iuliandita/skills/compare/v2.3.0...v2.4.0) (2026-09-30)
+
+### Features
+
+* **llm:** update active examples to Sonnet 5.5 and GPT-6.1 Sol; add conversation-state, native Responses delegation, cache accounting, model comparison, and actual fallback identity guidance ([#246](https://github.com/iuliandita/skills/pull/246), [#245](https://github.com/iuliandita/skills/issues/245)).
+
+### Bug Fixes
+
+* **llm:** send supported raw Anthropic schemas and validate domain constraints in application code; handle refusals, incomplete responses, invalid labels, and missing or unexpected tool calls; add executable checks for the Markdown examples ([#246](https://github.com/iuliandita/skills/pull/246), [#244](https://github.com/iuliandita/skills/issues/244)).
+
 ## [2.3.0](https://github.com/iuliandita/skills/compare/v2.2.1...v2.3.0) (2026-09-25)
 
 ### Features
