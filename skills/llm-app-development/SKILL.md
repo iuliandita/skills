@@ -53,8 +53,9 @@ AI tools consistently produce the same mistakes when generating AI application c
 - [ ] API keys loaded from environment variables, never hardcoded
 - [ ] Streaming responses handled with proper error boundaries and cleanup
 - [ ] Token limits respected - input truncation or chunking for long contexts
-- [ ] Structured output uses the provider's native schema enforcement (Anthropic tool_use,
-  OpenAI response_format), not post-hoc parsing with regex
+- [ ] Structured output uses native schema enforcement (Anthropic `output_config.format` or
+  strict tools, OpenAI Responses `text.format` or Chat Completions `response_format`), with
+  application validation for constraints the provider cannot enforce
 - [ ] Tool use / function calling validates tool results before passing back to the model
 - [ ] Retry logic uses exponential backoff with jitter, not fixed delays
 - [ ] Rate limit errors (429) handled distinctly from server errors (5xx)
@@ -66,7 +67,8 @@ AI tools consistently produce the same mistakes when generating AI application c
 - [ ] Cost estimation done before batch operations (token count * price * volume)
 - [ ] No synchronous LLM calls in request handlers - always async with timeouts
 - [ ] PII stripped or masked before sending to external model APIs
-- [ ] Temperature set intentionally (0 for deterministic tasks, higher for creative)
+- [ ] Sampling settings are intentional only where the selected model supports them; use
+  effort and native schemas on models that reject temperature or other sampling controls
 - [ ] **Provider drift checked**: Responses/Agents/SDK examples use current provider surfaces, not deprecated patterns - specifically verify no use of `openai.beta.assistants.create` (Assistants API, superseded by Responses/Agents API) or other Assistants-era surfaces
 - [ ] **RAG evidence bounded**: retrieval thresholds, citations, and empty-result behavior are defined before generation
 - [ ] **Pipeline delivered end to end**: a requested RAG or agent build ships ingestion and chunking, the embedding adapter, indexing, retrieval, and the generation handler as runnable code, not a schema plus a retrieval query with the rest left as TODO
@@ -147,7 +149,7 @@ import anthropic
 client = anthropic.Anthropic()
 
 with client.messages.stream(
-    model="claude-sonnet-5",
+    model="claude-sonnet-5-5",
     max_tokens=4096,  # covers adaptive thinking plus the reply
     messages=[{"role": "user", "content": prompt}],
 ) as stream:
@@ -160,7 +162,7 @@ with client.messages.stream(
 Use native provider mechanisms, not regex parsing of free-text responses.
 
 - **Anthropic**: `tool_use` with JSON schema (add `strict: true` to guarantee validation), or `output_config: { format: { type: "json_schema", ... } }`
-- **OpenAI**: `response_format: { type: "json_schema", json_schema: {...} }`
+- **OpenAI**: Responses `text.format: { type: "json_schema", ... }`, or Chat Completions `response_format: { type: "json_schema", json_schema: {...} }` where supported
 - **Vercel AI SDK**: `generateText()` with `output: Output.object({ schema })` and a Zod schema
 
 ### Tool use / function calling
@@ -255,7 +257,7 @@ def ask(question: str) -> str:
     if not context:
         return "No relevant documents found."
     response = client.messages.create(
-        model="claude-sonnet-5",
+        model="claude-sonnet-5-5",
         max_tokens=4096,
         messages=[{"role": "user", "content": (
             f"Answer based on these documents:\n\n"

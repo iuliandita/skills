@@ -155,4 +155,5 @@ test_scoped_audit_detection() (
 )
 
 test_scoped_audit_detection
+python3 "$ROOT/scripts/test-llm-examples.py"
 printf 'All skill content tests passed.\n'

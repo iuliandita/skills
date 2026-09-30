@@ -52,8 +52,9 @@ def run_agent(user_query: str, tools: list[dict], max_iterations: int = 15) -> s
     while iterations < max_iterations:
         iterations += 1
         response = client.messages.create(
-            model="claude-sonnet-5",
+            model="claude-sonnet-5-5",
             max_tokens=16000,  # thinking and tool calls share this cap
+            output_config={"effort": "medium"},
             tools=tools,
             messages=messages,
         )
@@ -91,6 +92,12 @@ def run_agent(user_query: str, tools: list[dict], max_iterations: int = 15) -> s
 
     return "Agent reached maximum iterations without completing the task."
 ```
+
+For Sonnet 5.5, preserve the full content blocks and append tool results without rewriting
+earlier history. Thinking signatures can bind blocks to that history. Use automatic tool
+choice; forced `any`/`tool` choices return 400. Progress between tools arrives in `thinking`
+blocks, not ordinary text; see [provider state and progress](llm-patterns.md) and the
+[Sonnet 5.5 migration guide](https://platform.claude.com/docs/en/models/sonnet-5-5/migration-guide).
 
 ### Cost-bounded loop variant
 
@@ -213,10 +220,14 @@ result = app.invoke({"messages": [("user", "Continue from where we left off")]},
 
 ## 4. OpenAI Agents SDK
 
-Lightweight multi-agent framework with built-in tracing and handoffs:
+Lightweight multi-agent framework with built-in tracing and handoffs. The Python SDK uses
+Responses by default; make that path explicit for GPT-6.1 Sol tools and do not override it
+with Chat Completions. See [SDK models](https://openai.github.io/openai-agents-python/models/).
 
 ```python
-from agents import Agent, Runner, function_tool
+from agents import Agent, Runner, function_tool, set_default_openai_api
+
+set_default_openai_api("responses")
 
 @function_tool
 def search_knowledge_base(query: str) -> str:
@@ -227,7 +238,7 @@ support_agent = Agent(
     name="Support Agent",
     instructions="Help users with technical issues. Use the knowledge base.",
     tools=[search_knowledge_base],
-    model="gpt-6-sol",
+    model="gpt-6.1-sol",
 )
 
 # Run the agent
@@ -244,12 +255,14 @@ billing_agent = Agent(
     name="Billing Agent",
     instructions="Handle billing and subscription questions.",
     tools=[get_invoice, update_subscription],
+    model="gpt-6.1-sol",
 )
 
 triage_agent = Agent(
     name="Triage Agent",
     instructions="Route to the appropriate specialist agent.",
     handoffs=[support_agent, billing_agent],
+    model="gpt-6.1-sol",
 )
 
 # Triage agent decides which specialist handles the request
@@ -262,6 +275,51 @@ result = Runner.run_sync(triage_agent, user_message)
 - Need multi-agent handoffs with minimal code
 - Want built-in tracing for debugging
 - Simple agent workflows without complex state machines
+
+### Native Responses delegation (beta)
+
+The [Responses multi-agent beta](https://developers.openai.com/api/docs/guides/responses-multi-agent)
+lets GPT-6.1 Sol coordinate hosted subagents. This is separate from SDK handoffs: all hosted
+agents share the request's model and tools, so use application orchestration when workers
+need different model tiers or permissions. Enable it only for independent, bounded tasks.
+
+```python
+from openai import OpenAI
+
+client = OpenAI()
+response = client.beta.responses.create(
+    model="gpt-6.1-sol",
+    input="Compare these proposals with two subagents, then reconcile their findings: " + proposals,
+    reasoning={"effort": "medium"},
+    multi_agent={"enabled": True, "max_concurrent_subagents": 2},
+    betas=["responses_multi_agent=v1"],
+)
+if response.status != "completed":
+    raise RuntimeError(f"Response did not complete: {response.status}")
+answer = "".join(
+    part.text
+    for item in response.output
+    if item.type == "message" and item.agent is not None
+    and item.agent.agent_name == "/root" and item.phase == "final_answer"
+    for part in item.content if part.type == "output_text"
+)
+if not answer:
+    raise RuntimeError("No root final answer")
+print(answer)
+```
+
+This example has no application functions. When adding them, execute `function_call` items
+from any agent, return matching `function_call_output` items, and preserve all output items
+for continuation. HTTP needs another Responses request; WebSockets can inject results into
+the active response. Hosted `multi_agent_call` actions are executed by the service, not your
+function dispatcher. Render the root final answer separately from worker messages.
+
+Concurrency limits count every descendant, excluding the root; the default is three. They
+do not cap total agents, tree depth, tokens, or cost. Enforce application deadlines and budget
+policy across the run and track total usage, retries, and failures. `max_tool_calls`,
+`reasoning.summary`, and `/responses/compact` are unsupported with this beta. Automatic
+server-side compaction is enabled independently for each agent. Keep beta schemas and
+injected coordination instructions in mind when upgrading; custom instructions are additive.
 
 ---
 
@@ -312,8 +370,9 @@ User -> [Agent A, Agent B, Agent C] -> Synthesizer -> User
 | Pipeline | Sequential processing (draft -> review -> publish) | Medium |
 | Debate / critique | High-stakes decisions, quality-critical output | High |
 
-**Start with a single agent.** Split into multi-agent only when a single agent can't handle
-the tool count (>15) or needs genuinely different reasoning strategies for subtasks.
+**Start with a single agent.** Split when independent work or separate context improves
+measured completion time or quality. Avoid competing writes to shared state, and compare
+whole-run cost as well as latency.
 
 ---
 
@@ -325,6 +384,15 @@ The message history itself. Manage by:
 - Trimming old messages when context gets large
 - Summarizing conversation history periodically
 - Keeping a sliding window of recent messages
+
+Choose the history policy for the provider. Text-only conversation summaries can be useful;
+they do not replace provider reasoning or tool state. Sonnet 5.5 tool loops must preserve
+bound thinking blocks and append-only history, or use the provider's supported compaction
+path. With Responses, preserve reasoning and encrypted compaction items, or continue via
+`previous_response_id`; do not manually prune that chain. See
+[Responses compaction](https://developers.openai.com/api/docs/guides/compaction) and
+[provider state guidance](llm-patterns.md). Native multi-agent uses automatic per-agent
+compaction rather than the standalone `/responses/compact` endpoint.
 
 ### Working memory (scratchpad)
 

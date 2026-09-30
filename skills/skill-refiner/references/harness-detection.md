@@ -146,8 +146,9 @@ reasoning effort, harness name and version, and a redacted evidence reference. U
 invocation metadata and the effective config/override source. Record requested settings
 separately when they differ from actual settings. Do not copy credentials or private endpoints.
 
-Identity is verified only when it comes from raw harness output captured verbatim and stored
-with the run, such as the harness's own model/version line in the invocation transcript.
+Identity is verified only when it comes from raw harness output or provider response metadata
+captured verbatim and stored with the run, such as the harness's model/version line or the
+provider's returned model ID.
 Requested flags, config defaults, role names, and the model's self-description are not
 attestation: a CLI binary, `--model` request, skill `metadata.effort`, or a model naming itself
 does not prove which model or effort executed. If resolution or override precedence cannot be
@@ -155,7 +156,16 @@ attested, mark the field unknown with a reason; use `not applicable` only when e
 establishes that the setting is unsupported. Keep evidence linked to the specific evaluation so
 later config changes cannot rewrite its identity.
 
-When identity cannot be attested from raw harness output, the review uses `cap 3` and the
+If a provider or harness can fall back mid-run, an initial banner alone does not attest every
+evaluation call. Capture returned model IDs and fallback markers for each call, plus billed
+iteration usage when available. For Claude API evaluations, inspect `model` and
+`usage.iterations`; see [refusals and fallback](https://platform.claude.com/docs/en/build-with-claude/refusals-and-fallback).
+Record mixed-model runs as such and do not attribute their scores to the requested model.
+If fallback identity is unavailable, mark it unknown and apply the existing unknown-model
+review classification. A model upgrade needs a fresh baseline; never rename a historical
+receipt or score to make it appear current.
+
+When identity cannot be attested from raw harness output or provider metadata, the review uses `cap 3` and the
 fallback is recorded as a control failure in the run history (see SKILL.md Phase 3 step 24).
 An unattested reviewer never earns `cap 5`.
 

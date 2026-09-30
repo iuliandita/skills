@@ -162,6 +162,12 @@ except ValidationError:
 
 Models sometimes refuse to answer. Detect and handle gracefully:
 
+Use provider refusal fields first, such as Anthropic `stop_reason: "refusal"`; text matching
+below is only a fallback for providers without a refusal signal. Sonnet 5.5 refusals can
+return HTTP 200 with a `stop_details.category`. Optional server-side fallback can serve a
+different model, so record the returned model and per-attempt usage, not just the requested
+model. See [refusals and fallback](https://platform.claude.com/docs/en/build-with-claude/refusals-and-fallback).
+
 ```python
 REFUSAL_PATTERNS = [
     "I cannot",
@@ -181,13 +187,30 @@ def is_refusal(response: str) -> bool:
 For RAG applications, flag responses that may contain fabricated information:
 
 ```python
+import json
+
 def check_groundedness(response: str, context: str) -> dict:
     """Use an LLM to verify claims are grounded in context."""
     check = client.messages.create(
-        model="claude-sonnet-5",
-        max_tokens=1024,
-        thinking={"type": "disabled"},
-        output_config={"effort": "low"},
+        model="claude-sonnet-5-5",
+        max_tokens=4096,
+        thinking={"type": "adaptive"},
+        system="Think the problem through before you answer.",
+        output_config={
+            "effort": "high",
+            "format": {
+                "type": "json_schema",
+                "schema": {
+                    "type": "object",
+                    "properties": {
+                        "grounded": {"type": "boolean"},
+                        "unsupported_claims": {"type": "array", "items": {"type": "string"}},
+                    },
+                    "required": ["grounded", "unsupported_claims"],
+                    "additionalProperties": False,
+                },
+            },
+        },
         messages=[{
             "role": "user",
             "content": f"""Check if this response is fully grounded in the provided context.
@@ -195,12 +218,15 @@ List any claims NOT supported by the context.
 
 Context: {context}
 
-Response: {response}
-
-Return JSON: {{"grounded": true/false, "unsupported_claims": ["claim1", ...]}}"""
+Response: {response}"""
         }],
     )
-    return json.loads("".join(b.text for b in check.content if b.type == "text"))
+    if check.stop_reason != "end_turn":
+        raise RuntimeError(f"incomplete groundedness check: {check.stop_reason}")
+    text = "".join(b.text for b in check.content if b.type == "text")
+    if not text.strip():
+        raise RuntimeError("groundedness check returned no text")
+    return json.loads(text)
 ```
 
 ---
@@ -295,11 +321,11 @@ def classify_content(text: str) -> ContentCategory:
     blocked_topics = ["weapons instructions", "illegal activities"]
     review_topics = ["medical advice", "legal advice", "financial advice"]
 
-    # Cheap tier: Sonnet 5 at low effort with thinking off (Haiku 4.5 is retiring)
+    # Low-cost classifier: Sonnet 5.5 with no up-front thinking
     result = client.messages.create(
-        model="claude-sonnet-5",
+        model="claude-sonnet-5-5",
         max_tokens=50,
-        thinking={"type": "disabled"},
+        thinking={"type": "between_tools"},
         output_config={"effort": "low"},
         messages=[{
             "role": "user",
@@ -308,10 +334,13 @@ def classify_content(text: str) -> ContentCategory:
                        f"Reply with: safe, needs_review, or blocked.\n\nText: {text}"
         }],
     )
-    if result.stop_reason == "refusal":
+    if result.stop_reason != "end_turn":
         return ContentCategory.NEEDS_REVIEW
     label = "".join(b.text for b in result.content if b.type == "text")
-    return ContentCategory(label.strip().lower())
+    try:
+        return ContentCategory(label.strip().lower())
+    except ValueError:
+        return ContentCategory.NEEDS_REVIEW
 ```
 
 ---
@@ -412,6 +441,10 @@ Hash or encrypt these if they need to be stored for debugging.
 ## 7. Input Sanitization
 
 ### Length limits
+
+Apply these limits to text-only input before the first request. Do not trim or rewrite earlier
+history while replaying Sonnet 5.5 signed thinking blocks: keep tool conversations append-only
+or follow the [preserved-thinking controls](https://platform.claude.com/docs/en/build-with-claude/preserved-thinking).
 
 ```python
 MAX_INPUT_LENGTH = 10_000  # characters
