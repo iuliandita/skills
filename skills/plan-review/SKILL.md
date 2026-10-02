@@ -37,10 +37,10 @@ Use both lenses by default: identify who benefits, who pays, what becomes hard t
 ## Workflow
 
 1. **Classify:** determine whether the target is unresolved (clarification) or already settled (critique), the domain, stakeholders, reversibility, evidence, and missing context. Inspect available files and load the relevant question bank from `references/domains.md` before asking. State material assumptions.
-2. **Clarify unresolved plans:** walk upstream decisions before dependent ones. In interactive use, ask one question at a time and include a recommended answer and reason. Sort every unresolved item into: decision, sharp open question, not-yet-specified fog, or prerequisite.
+2. **Clarify unresolved plans:** walk upstream decisions before dependent ones. Give each question a recommended answer and reason; question pacing for interactive and headless use is in Rules. Sort every unresolved item into: decision, sharp open question, not-yet-specified fog, or prerequisite.
 3. **Record decisions:** write the resolved choices, reasons, options rejected, constraints, open questions, fog, prerequisites, owner/trigger, and next action using `references/decision-record.md`. A precise blocked question is open; an unformulable future concern is fog.
-4. **Challenge the plan:** identify load-bearing assumptions, failure and abuse paths, incentives under pressure, cost bearers, operational/security/reputation risks, and a three-month pre-mortem. For every material risk, accept it with rationale, mitigate it, or reopen the invalidated upstream decision.
-5. **Critique settled decisions:** load `references/jekyll.md`, `references/hyde.md`, or `references/dual-lens.md` for the selected lens; start an unqualified critique in dual mode. Do not relitigate settled choices without evidence; record the evidence, changed condition, owner, and decision that must reopen. Follow with constructive constraints that keep user benefit, reliability, trust, and changeability.
+4. **Challenge the plan:** identify load-bearing assumptions, failure and abuse paths, incentives under pressure, cost bearers, operational/security/reputation risks, and a three-month pre-mortem. For every material risk, accept it with rationale or mitigate it; if it invalidates an upstream decision, return to Step 2 for that decision and update the record.
+5. **Critique settled decisions:** load `references/jekyll.md`, `references/hyde.md`, or `references/dual-lens.md` for the selected lens; start an unqualified critique with the dual lens. Load `references/operator-patterns.md` only when the user asks for a founder, operator, or tech-leader comparison. Do not relitigate settled choices without evidence; record the evidence, changed condition, owner, and decision that must reopen. Follow with constructive constraints that keep user benefit, reliability, trust, and changeability.
 6. **Recommend:** state the path, tradeoff, guardrail, next action, and review trigger. Use the smallest output that makes the decision actionable.
 
 ## AI Self-Check
@@ -57,7 +57,7 @@ Use both lenses by default: identify who benefits, who pays, what becomes hard t
 - `references/domains.md` - domain question banks.
 - `references/decision-record.md` - durable clarification artifact.
 - `references/dual-lens.md` - user-benefit, incentives, and adversarial critique.
-- `references/jekyll.md`, `references/hyde.md`, and `references/operator-patterns.md` - on-demand constructive, adversarial, and operator lenses.
+- `references/jekyll.md` and `references/hyde.md` - constructive and adversarial lenses for Step 5; `references/operator-patterns.md` - operator patterns, only for an explicit leader comparison.
 - `references/output-contract.md` - required reporting format.
 
 ## Output Contract

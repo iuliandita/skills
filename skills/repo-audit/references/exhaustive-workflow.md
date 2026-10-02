@@ -1,6 +1,6 @@
 # Exhaustive Audit Workflow
 
-Run up to 31 audit agents against a repo in 5 sequential waves. This is the broadest application-repo dispatch plan (3 Wave 2 + up to 23 conditional Wave 3 lenses + 2 Wave 4 + 3 Wave 5), not the total skill count. Wave 1 detects the tech stack, Waves 2-5 dispatch only matching audit skills, and each wave reports before the next begins.
+Run up to 31 audit agents against a repo in 5 sequential waves. This is the broadest application-repo dispatch plan (3 Wave 2 + up to 23 conditional Wave 3 lanes + 2 Wave 4 + 3 Wave 5), not the total skill count. Wave 1 detects the tech stack, Waves 2-5 dispatch only matching audit skills, and each wave reports before the next begins.
 
 The five waves are: Reconnaissance; Code Quality (code-review, code-simplification, anti-ai-prose); Domain-Specific (detected skills only); Security (security-audit then vulnerability-research); and Docs & Hygiene (update-docs, roadmap, git).
 
@@ -13,7 +13,6 @@ For a quick 4-skill sweep, use **quick mode** instead.
 - When to use
 - When NOT to use
 - AI Self-Check
-- Best Practices
 - Workflow
 - Reference Files
 - Output Contract
@@ -22,7 +21,7 @@ For a quick 4-skill sweep, use **quick mode** instead.
 
 ## When to use
 
-- Major pre-release quality gate where you want every applicable audit lens
+- Major pre-release quality gate where you want every applicable audit lane
 - First audit of an unfamiliar codebase - understand what's there and what needs fixing
 - Periodic deep health check on a repo you maintain
 - Onboarding to a new project - the wave reports build a mental model fast
@@ -64,13 +63,17 @@ workflow (waves + persistence + routing), not just the wave dispatch phase.
 - [ ] **Evidence retained**: findings cite files, commands, outputs, or source docs instead of impressions
 - [ ] Cross-cutting agent hygiene applied - see `references/agent-hygiene.md`
 
-## Best Practices
-
-- State residual risk and skipped areas explicitly.
-- Separate confirmed findings from hypotheses and follow-up tasks.
-- Do not mutate the repo during an audit unless the user requested fixes.
-
 ## Workflow
+
+Copy this checklist and track progress; the order is fixed (Rule 2):
+
+- [ ] Step 0: Preflight, with `docs/local/` ignore protection verified
+- [ ] Step 1: Wave 1 recon summary shown before any dispatch
+- [ ] Steps 2-5: Waves 2-5, each presented before the next starts
+- [ ] Step 6: Priority-ordered summary
+- [ ] Steps 7-8: `DEEP-AUDIT.md` and `DEEP-AUDIT-TASKS.md` written after the backup is verified
+- [ ] Step 9: Size-based routing announced
+- [ ] AI Self-Check passed (any failed item: fix it and return to the step that produced it)
 
 ### Step 0: Preflight
 
@@ -79,8 +82,8 @@ separately; report unavailable context instead of masking failures with `; true`
 
 Before dispatch or artifact writes, ensure `docs/local/` is ignored. Add the bare
 `docs/local/` entry to `.gitignore` if needed and verify with `git check-ignore`. Check
-that intended artifact paths are not already tracked; stop artifact writes if protection
-is ineffective. Preserve existing reports and task progress in a dated backup before replacement.
+that intended artifact paths are not already tracked. If `git check-ignore -q docs/local/audits/DEEP-AUDIT.md`
+fails, stop artifact writes, fix the ignore entry, and repeat this check before continuing. Preserve existing reports and task progress in a dated backup before replacement.
 
 If full-access agent dispatch is unavailable, run every assigned skill sequentially in the root
 context. Preserve wave order, separate native result sections, and report the compatibility limit.
@@ -98,7 +101,8 @@ a narrower target.
 
 Detect which Wave 3 skills apply by scanning for file patterns. Read the detection table in
 `references/detection-patterns.md`, then invoke the shipped `references/detect.sh` from the audited
-repository root. It outputs matched skill names, one per line. If the user specified a scope, pass
+repository root, exactly as `bash <skill-dir>/references/detect.sh [scope]` (`<skill-dir>` is this
+skill's installed directory). It outputs matched skill names, one per line. If the user specified a scope, pass
 it as the script's first argument to filter detection to that subtree (`git ls-files --
 path/to/scope` instead of the full repo). If the shipped detector cannot run, report the command and
 failure before performing the table's manual equivalent; do not silently replace detector evidence.
@@ -106,12 +110,13 @@ failure before performing the table's manual equivalent; do not silently replace
 After detection, present the recon summary before proceeding. Compute
 `{unmatched_skills}` as the 23 Wave 3 candidates minus the matched set.
 Compute `{count}` by summing: 3 (Wave 2) + matched Wave 3 skills + 2 (Wave 4) +
-3 (Wave 5). Example: if 6 Wave 3 skills match, count = 3 + 6 + 2 + 3 = 14. If the matched Wave 3 set is too broad for the user's goal, recommend a scoped repo-audit or **quick mode** instead of pretending every lens is equally valuable.
+3 (Wave 5). Example: if 6 Wave 3 skills match, count = 3 + 6 + 2 + 3 = 14. If the matched Wave 3 set is too broad for the user's goal, recommend a scoped repo-audit or **quick mode** instead of pretending every lane is equally valuable.
 
 In scoped mode, separate Wave 3 matches into two lines: skills matched by files
 within the scoped subtree, and skills matched only by repo-root manifests
 (candidate matches from workspace-root dependencies). Derive the split by repeating scoped
-detection with `REPO_AUDIT_ROOT_MANIFESTS=0` and comparing the two output sets. Confirm candidates against
+detection as `REPO_AUDIT_ROOT_MANIFESTS=0 bash <skill-dir>/references/detect.sh <scope>` and
+comparing the two output sets. Confirm candidates against
 actual scoped imports, configuration, or shared build dependencies before dispatch.
 Record irrelevant root-only matches as skipped.
 
@@ -465,16 +470,15 @@ Read `references/exclusions.md` before changing Wave 3 routing.
 
 ## Rules
 
-1. **Capability-based workers.** Every worker needs independent context, repository read access, the audit's required tools, and the assigned instructions. Prefer specialized read-only reviewers that meet those requirements; do not hardcode a harness role name.
-2. **Custom skills only.** Load skills from the iuliandita/skills collection through the native skill-loading mechanism. If native loading is unavailable, include the assigned skill instructions in the worker prompt. If a skill is unavailable, skip it rather than substituting a manual review.
-3. **Wave order is sacred.** Execute waves 1-2-3-4-5 in sequence. Never reorder, skip, or merge waves. Within a wave, agents run in parallel (except Wave 4 which is sequential).
-4. **Present before proceeding.** Each wave's results are shown to the user before the next wave starts. No buffering all results to the end.
-5. **Detection gates Wave 3.** Only dispatch Wave 3 skills whose file patterns matched in the recon sweep. Do not run terraform on a repo with no .tf files.
-6. **Security is sequential.** security-audit completes before vulnerability-research starts. Vulnerability-research receives security-audit findings as input context.
-7. **Read-only audit, with explicit artifact exceptions.** No agent modifies source code, commits, or alters the repo's working tree. The only permitted writes are: (a) audit artifacts under `docs/local/audits/`, including `DEEP-AUDIT.md`, `DEEP-AUDIT-TASKS.md`, and the dated `security-audit/` report, (b) Step 9b plan files under `docs/local/specs/` and `docs/local/plans/`, and (c) a one-line addition to `.gitignore` if `docs/local/` is not already covered.
-8. **Preserve native formats.** Each skill produces its own report format. Do not normalize, merge, or editorialize across reports. Cross-wave synthesis is allowed only in three specific places: the Step 6 terminal summary, the headline verdict + scorecard of `DEEP-AUDIT.md`, and the phased ordering of `DEEP-AUDIT-TASKS.md`. Everywhere else, native format is preserved verbatim.
-9. **Don't stack with quick mode.** When exhaustive mode is selected, it supersedes quick mode's coverage. Do not also invoke quick mode.
-10. **Respect scope.** When the user specifies a scope, pass it to every agent and filter detection patterns to that scope's file tree.
-11. **Always persist `DEEP-AUDIT.md` and `DEEP-AUDIT-TASKS.md`.** These two files are mandatory output of every run, regardless of audit size or whether an execution plan is generated. Write them under `docs/local/audits/`. Ensure `docs/local/` is in `.gitignore` first - these artifacts can contain sensitive security detail.
-12. **Brainstorming handoff is a recommendation, not an auto-invocation.** If a brainstorming/ideation skill is present in the host harness, announce the recommended invocation and stop - the user drives that step. When no brainstorming skill exists, proceed directly to Step 9b plan-file generation (this is deterministic file writing, not skill invocation). Only in headless / non-interactive mode, when neither option is available, fall back to Step 9c (stop and let the user continue in a follow-up session).
-13. **Don't hardcode a specific brainstorming skill.** The skill collection is tool-agnostic (Claude, Codex, Opencode, others). Match by pattern (`*brainstorm*`, `*ideation*`, `*explore*`) rather than by a single hardcoded name like `superpowers:brainstorming`.
+1. **Custom skills only.** Load skills from the iuliandita/skills collection through the native skill-loading mechanism. If native loading is unavailable, include the assigned skill instructions in the worker prompt. If a skill is unavailable, skip it rather than substituting a manual review.
+2. **Wave order is sacred.** Execute waves 1-2-3-4-5 in sequence. Never reorder, skip, or merge waves. Within a wave, agents run in parallel (except Wave 4 which is sequential).
+3. **Present before proceeding.** Each wave's results are shown to the user before the next wave starts. No buffering all results to the end.
+4. **Detection gates Wave 3.** Only dispatch Wave 3 skills whose file patterns matched in the recon sweep. Do not run terraform on a repo with no .tf files.
+5. **Security is sequential.** security-audit completes before vulnerability-research starts. Vulnerability-research receives security-audit findings as input context.
+6. **Read-only audit, with explicit artifact exceptions.** No agent modifies source code, commits, or alters the repo's working tree. The only permitted writes are: (a) audit artifacts under `docs/local/audits/`, including `DEEP-AUDIT.md`, `DEEP-AUDIT-TASKS.md`, and the dated `security-audit/` report, (b) Step 9b plan files under `docs/local/specs/` and `docs/local/plans/`, and (c) a one-line addition to `.gitignore` if `docs/local/` is not already covered.
+7. **Preserve native formats.** Each skill produces its own report format. Do not normalize, merge, or editorialize across reports. Cross-wave synthesis is allowed only in three specific places: the Step 6 terminal summary, the headline verdict + scorecard of `DEEP-AUDIT.md`, and the phased ordering of `DEEP-AUDIT-TASKS.md`. Everywhere else, native format is preserved verbatim.
+8. **Don't stack with quick mode.** When exhaustive mode is selected, it supersedes quick mode's coverage. Do not also invoke quick mode.
+9. **Respect scope.** When the user specifies a scope, pass it to every agent and filter detection patterns to that scope's file tree.
+10. **Always persist `DEEP-AUDIT.md` and `DEEP-AUDIT-TASKS.md`.** These two files are mandatory output of every run, regardless of audit size or whether an execution plan is generated. Write them under `docs/local/audits/`. Ensure `docs/local/` is in `.gitignore` first - these artifacts can contain sensitive security detail.
+11. **Brainstorming handoff is a recommendation, not an auto-invocation.** If a brainstorming/ideation skill is present in the host harness, announce the recommended invocation and stop - the user drives that step. When no brainstorming skill exists, proceed directly to Step 9b plan-file generation (this is deterministic file writing, not skill invocation). Only in headless / non-interactive mode, when neither option is available, fall back to Step 9c (stop and let the user continue in a follow-up session).
+12. **Don't hardcode a specific brainstorming skill.** The skill collection is tool-agnostic (Claude, Codex, Opencode, others). Match by pattern (`*brainstorm*`, `*ideation*`, `*explore*`) rather than by a single hardcoded name like `superpowers:brainstorming`.

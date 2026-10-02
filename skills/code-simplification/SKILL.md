@@ -2,7 +2,7 @@
 name: code-simplification
 description: "Review code for dead code, duplication, overengineering, invented APIs, and weak tests. Report safe reductions; no edits."
 license: MIT
-compatibility: "None - works on any codebase"
+compatibility: "Works on any codebase. Optional: git (diff scope), rg (no-reference searches), and the project's configured non-mutating linters"
 metadata:
   source: iuliandita/skills
   date_added: "2026-09-20"
@@ -39,8 +39,8 @@ Smaller code is not automatically better. A finding needs a concrete maintenance
 2. **Establish context:** read instructions, manifests, runtime versions, public exports, registries, route/CLI/plugin discovery, and existing validation. For maintainability mode, load `references/maintainability-patterns.md` and each relevant language or infrastructure reference; for reduction mode, load `references/patterns.md` and `references/reduction-patterns.md`. Load `references/research-sources.md` only when citations help.
 3. **Make a maintainability pass:** inspect scripts and configuration before running any baseline tooling. Run only configured, non-mutating check commands; never use `--fix`, `--write`, `apply`, or an unknown script. Then inspect comments, naming, types, wrappers, error handling, dependencies, API/config claims, and tests. Verify suspicious APIs with local types, schemas, lockfiles, `--help`, or primary documentation before calling them invented.
 4. **Make a safe-reduction pass:** search for dead and superseded code, leftovers, clones, one-literal-per-function copies, redundant parsers, thin wrappers, and inert catches. Read each candidate, a caller, and relevant tests.
-5. **Prove or defer:** a deletion needs no-reference proof that rules out public APIs, reflection, dynamic dispatch, DI, serialization, route/CLI/plugin registration, conditional builds, and test discovery. Preserve boundary guards, recoveries, retries, cleanup, observability, compatibility, and intentional provider divergence.
-6. **Classify:** use `Do now` only for mechanically proven, behavior-preserving reductions; `Do with tests` when focused validation is missing; `Defer` for broad, hot-path, or uncertain work; `Leave alone` when the current shape carries a contract.
+5. **Prove or defer:** search with `rg -n` (use `grep -rn` when `command -v rg` fails). A deletion needs no-reference proof that rules out public APIs, reflection, dynamic dispatch, DI, serialization, route/CLI/plugin registration, conditional builds, and test discovery. Preserve boundary guards, recoveries, retries, cleanup, observability, compatibility, and intentional provider divergence.
+6. **Classify:** use `Do now` only for mechanically proven, behavior-preserving reductions; `Do with tests` when focused validation is missing; `Defer` for broad, hot-path, or uncertain work; `Leave alone` when the current shape carries a contract. Also classify maintainability findings as Noise, Lies, or Soul and as Fix, Consider, or Fine (defined in `references/maintainability-patterns.md`); project conventions and framework idioms override generic style rules.
 7. **Report:** write an audit deliverable using `references/report-templates.md`. Group repeated examples into one finding and include location, evidence, invariant, proposed shape, tradeoff, and validation needed.
 
 ## AI Self-Check
@@ -55,7 +55,7 @@ Smaller code is not automatically better. A finding needs a concrete maintenance
 ## References
 
 - `references/maintainability-patterns.md` - quality, grounding, test, and language prompts.
-- `references/language-patterns.md` - condensed cross-language quality and preservation prompts.
+- `references/language-patterns.md` - condensed cross-language quality and preservation prompts; read for a quick mixed-language pass, then open the detailed file for any language with candidate findings.
 - `references/typescript.md`, `python.md`, `shell.md`, `rust.md`, `docker.md`, and `iac.md` - detailed language and infrastructure prompts.
 - `references/patterns.md` - detailed safe-reduction classification and no-reference guidance.
 - `references/research-sources.md` - optional source context when citations help.
@@ -80,4 +80,3 @@ Use `references/output-contract.md`.
 - Keep distinct DTOs across trust, lifecycle, persistence, queue/event, and response boundaries unless a shared validated contract is explicit.
 - Preserve performance-sensitive explicit code until measurement supports a change.
 - Route correctness and security findings instead of laundering them into simplification.
-- Classify maintainability findings as Noise, Lies, or Soul and as Fix, Consider, or Fine; project conventions and framework idioms override generic style rules.

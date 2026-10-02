@@ -144,7 +144,7 @@ Also check git history: `git log --all --diff-filter=A -- '*.env*'`
 
 ### CI/CD Workflows
 
-*See pass 9 in the main audit skill for workflow-level checks.*
+Workflow-level checks are a checklist, not grep patterns: see `references/hardening-checklists.md` (CI/CD & Supply Chain, Pass 9).
 
 ### Supply Chain: Image Pinning
 
