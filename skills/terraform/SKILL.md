@@ -91,6 +91,7 @@ destroys with the owner.
 ```bash
 terraform fmt -check -recursive
 terraform validate
+for t in tflint checkov conftest; do command -v "$t" >/dev/null || echo "$t not installed: report as skipped"; done
 tflint --recursive
 checkov -d . --framework terraform
 terraform plan -out=plan.tfplan
@@ -122,12 +123,10 @@ See `references/output-contract.md` for the full contract.
 
 ## Rules
 
-1. **Run `fmt` and `validate` for every HCL change.**
-2. **Pin providers, modules, and CI actions.** Commit the dependency lock file.
-3. **Protect state and secrets.** Encrypt, lock, restrict, and audit state; never commit credentials.
-4. **Use least privilege and explicit lifecycle controls.** Do not hide a destructive replacement.
-5. **Do not use provisioners.** Use declarative infrastructure, user data, or **ansible**.
-6. **Separate high-risk/CDE state.** Give it an independent backend, identity, and approval boundary.
-7. **Use OIDC for CI where supported.** Keep plan and apply identities separate and narrowly scoped.
-8. **Review and archive the plan before every apply.**
-9. **AI does not own `terraform apply`.** A human reviews the concrete plan and authorizes the change.
+1. **Pin providers, modules, and CI actions.** Commit the dependency lock file.
+2. **Protect state and secrets.** Encrypt, lock, restrict, and audit state; never commit credentials.
+3. **Use least privilege and explicit lifecycle controls.** Do not hide a destructive replacement.
+4. **Do not use provisioners.** Use declarative infrastructure, user data, or **ansible**.
+5. **Separate high-risk/CDE state.** Give it an independent backend, identity, and approval boundary.
+6. **Use OIDC for CI where supported.** Keep plan and apply identities separate and narrowly scoped.
+7. **AI does not own `terraform apply`.** A human reviews the concrete plan, the plan is archived, and the human authorizes the change.

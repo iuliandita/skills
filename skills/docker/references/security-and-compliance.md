@@ -28,11 +28,20 @@ Security hardening, vulnerability management, supply chain integrity, and PCI-DS
 | CVE-2026-2664 | Medium | Docker Desktop | gRPC-FUSE kernel module out-of-bounds read | Desktop 4.62.0+ |
 | CVE-2025-13743 | Low | Docker Desktop | Expired Hub PATs leaked in diagnostic bundles via error object serialization | Desktop 4.54.0+ |
 | CVE-2026-28400 | 7.5 High | Model Runner | Runtime flag injection via _configure endpoint - arbitrary file overwrite, container escape | Desktop 4.62.0+ |
+| CVE-2026-5843 | 8.8 High | Model Runner (MLX) | Container-to-host code execution via MLX-LM `model_file` importlib load from untrusted models | Desktop 4.71.0+ |
+| CVE-2026-5817 | 8.8 High | Model Runner (vllm-metal) | Container-to-host RCE via unsandboxed `trust_remote_code` tokenizer load | Desktop 4.68.0+ |
 | CVE-2026-33747 | High | BuildKit | Malicious frontend causes file escape outside BuildKit storage root | BuildKit v0.28.1 |
 | CVE-2026-33748 | High | BuildKit | Git URL #ref:subdir validation bypass - access to restricted files | BuildKit v0.28.1 |
 | CVE-2026-92543 | High | Docker Engine | Malicious DNS response makes registry connections skip TLS verification or fall back to HTTP, exposing credentials | Engine 29.8.2+ |
 | CVE-2026-93318 | High | BuildKit | Malicious image poisons build cache with layer DiffIDs that do not match layer contents | BuildKit v0.33.1 (Engine 29.8.2) |
 | CVE-2026-94603 | Critical | Podman | `podman run` on a checkpoint image disables all sandboxing, including user-specified settings | Podman 6.1.3, 5.8.8 |
+
+**Additional fixes checked September 10, 2026**: [CVE-2026-17106](https://github.com/moby/go-archive/security/advisories/GHSA-hfg8-hc9c-6c3h)
+allows archive extraction outside the destination; the advisory lists go-archive < 0.2.2
+as affected and 0.3.0 as patched (rechecked 2026-10-03). Docker Engine 29.7.0 includes the fix (unverified).
+[CVE-2026-15793](https://github.com/moby/buildkit/security/advisories/GHSA-hw3h-2gp9-cxpv)
+affects BuildKit 0.30.0-0.31.1 custom frontends using Git checkout bundles; fixed in
+0.31.2. Ordinary Dockerfile builds are unaffected by that specific issue.
 
 ### Verification commands
 

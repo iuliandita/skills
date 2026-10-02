@@ -96,6 +96,13 @@ AI tools consistently produce the same Ansible mistakes. **Before returning any 
 
 ## Workflow
 
+Copy this checklist and track progress:
+- [ ] Step 1: Domain identified
+- [ ] Step 2: Requirements gathered (target OS, privilege, connection, secrets, inventory)
+- [ ] Step 3: Playbook, role, or config built
+- [ ] Step 4: Syntax check, lint, and `--check --diff` clean (on any failure, fix and return to Step 3)
+- [ ] Production checklist and AI Self-Check passed
+
 ### Step 1: Determine the domain
 
 Based on the request:
@@ -123,17 +130,18 @@ Before writing YAML, determine:
 
 ### Step 3: Build
 
-Follow the domain-specific section below. Always apply the production checklist (Step 4) and AI self-check before finishing.
+Follow the domain-specific section below. Always run Step 4, the production checklist in `references/production-checklist.md`, and the AI self-check before finishing.
 
 ### Step 4: Validate
 
-Run syntax check, lint, and `--check --diff` in order. On any failure, fix the reported issue and rerun from the syntax check; finish only when all three are clean.
+Run syntax check, lint, and `--check --diff` in order. On any failure, fix the reported issue, return to Step 3, and rerun from the syntax check; finish only when all three are clean.
 
 ```bash
 # Syntax check (fast, no connection needed)
 ansible-playbook playbook.yml --syntax-check
 
 # Lint (use production profile for strictest checks)
+command -v ansible-lint >/dev/null || echo "ansible-lint not installed: report lint as skipped"
 ansible-lint --profile production playbook.yml
 
 # Dry run (needs inventory + connectivity)
@@ -143,6 +151,7 @@ ansible-playbook playbook.yml --check --diff
 For roles only, add Molecule when a scenario exists:
 
 ```bash
+command -v molecule >/dev/null || echo "molecule not installed: report role tests as skipped"
 molecule test                          # full cycle: create, converge, verify, destroy
 molecule converge                      # just apply (dev loop)
 molecule verify                        # run verification only
@@ -306,63 +315,6 @@ Read `references/compliance.md` for the full PCI-DSS 4.0 requirements mapping to
 
 ---
 
-## Production Checklist
-
-### Playbooks
-
-- [ ] FQCNs on every module (`ansible.builtin.*`, `community.general.*`, etc.)
-- [ ] Every task has a descriptive `name:`
-- [ ] `become: true` only where needed (not play-level unless every task requires it)
-- [ ] `no_log: true` on all tasks handling secrets
-- [ ] Variables quoted: `"{{ var }}"` not `{{ var }}`
-- [ ] No `command`/`shell` when a module exists
-- [ ] `changed_when`/`failed_when` on all `command`/`shell` tasks
-- [ ] Handlers have unique names and `notify:` strings match exactly
-- [ ] Tags on logical task groups
-- [ ] `--check` mode works (no tasks that break in check mode without `check_mode: false`)
-- [ ] Idempotent - running twice produces no changes on the second run
-- [ ] No `state: latest` in production (pin package versions)
-- [ ] `ansible-lint --profile production` passes clean
-
-### Roles
-
-- [ ] All variables prefixed with role name (`nginx_port`, not `port`)
-- [ ] `defaults/main.yml` for all user-configurable values
-- [ ] `meta/main.yml` with dependencies, platforms, and minimum ansible version
-- [ ] Molecule test scenario with converge + idempotence + verify
-- [ ] README with usage examples and variable documentation
-- [ ] No hardcoded values in `tasks/` (everything parameterized)
-- [ ] `handlers/main.yml` for service restarts (not inline restarts in tasks)
-
-### Operations
-
-- [ ] Inventory separated by environment (production, staging, dev)
-- [ ] `group_vars/` and `host_vars/` for environment-specific config
-- [ ] Vault-encrypted secrets in dedicated `vault.yml` files
-- [ ] Vault password via `--vault-password-file` (not interactive prompt in CI)
-- [ ] SSH key-based auth (no `ansible_ssh_pass` in inventory)
-- [ ] EE image pinned to specific tag (not `:latest`)
-- [ ] ansible.cfg committed with sane defaults (no `host_key_checking = False` in production)
-- [ ] Collections pinned in `requirements.yml` with version constraints
-- [ ] `ansible-lint` in CI pipeline (production profile)
-
-### Compliance (PCI-DSS 4.0)
-
-- [ ] CIS benchmark role applied and tested (Req 2.2)
-- [ ] SSH hardened: key-only auth, no root login, idle timeout (Req 2.2.7)
-- [ ] Firewall rules managed as code (Req 1)
-- [ ] Auditd rules deployed for CDE systems (Req 10.2)
-- [ ] Log forwarding to immutable SIEM (Req 10.4.1.1)
-- [ ] FIM agent deployed and configured (AIDE/OSSEC) (Req 11.5)
-- [ ] All secrets Vault-encrypted, `no_log: true` everywhere (Req 8.6.2)
-- [ ] Password policies enforced via PAM (Req 8.3.6)
-- [ ] Playbook execution logged and archived (Req 10, Req 6)
-- [ ] Anti-malware deployed on all in-scope systems (Req 5.2)
-- [ ] NTP configured for consistent timestamps (Req 10.6)
-- [ ] Unnecessary services disabled (Req 2.2.4)
-
----
-
 ## Deprecations and Breaking Changes
 
 ### ansible-core 2.20
@@ -426,6 +378,7 @@ fixed-version range, so do not assume the target pin alone proves remediation.
 ## Reference Files
 
 - `references/playbook-patterns.md` - playbook and task patterns for common automation work
+- `references/production-checklist.md` - playbook, role, operations, and PCI-DSS checklists; run before finishing any build or review
 - `references/roles-and-collections.md` - role anatomy, collection structure, Galaxy patterns, and Molecule workflows
 - `references/operations-and-execution.md` - inventory layout, ansible.cfg, execution environments, CI/CD integration, and navigator usage
 - `references/vault-and-secrets.md` - Vault usage, secret handling, and external secret-manager integration
@@ -467,16 +420,11 @@ See `references/output-contract.md` for the full contract.
 
 These are non-negotiable. Violating any of these is a bug.
 
-1. **FQCNs everywhere.** `ansible.builtin.copy`, not `copy`. No exceptions.
-2. **Idempotent by default.** Every task must be safe to run multiple times. `command`/`shell` tasks need `creates`/`removes` or `changed_when`.
-3. **`no_log: true` on secrets.** Every task handling passwords, tokens, API keys, or sensitive data. CVE-2024-8775 proved the cost of forgetting this.
-4. **No `command`/`shell` when a module exists.** Modules are idempotent, tested, and portable. Shell commands are none of those.
-5. **Variables over hardcoded values.** IPs, paths, package versions, usernames, ports - all variables with defaults.
-6. **Quote Jinja2 variables.** `"{{ var }}"`, not `{{ var }}`. Bare braces break YAML parsing.
-7. **Vault for secrets.** Not plaintext in `group_vars`, not `ansible_ssh_pass` in inventory, not environment variables in playbooks.
-8. **Test with Molecule.** Every role gets a Molecule scenario with converge + idempotence check + verification.
-9. **Pin collection versions.** In `requirements.yml` and EE definitions. Unpinned collections are a supply chain risk.
-10. **`ansible-lint` clean.** Production profile. In CI. On every change.
-11. **Separate inventory per environment.** Production, staging, dev. Never a single inventory with `--limit` for environment selection.
-12. **`--check --diff` before apply.** Review what will change before applying, especially in CI/CD.
-13. **Run the AI self-check.** Every generated playbook gets verified against the checklist above before returning.
+1. **Idempotent by default.** Every task must be safe to run multiple times. `command`/`shell` tasks need `creates`/`removes` or `changed_when`.
+2. **`no_log: true` on secrets.** Every task handling passwords, tokens, API keys, or sensitive data. CVE-2024-8775 proved the cost of forgetting this.
+3. **Vault for secrets.** Not plaintext in `group_vars`, not `ansible_ssh_pass` in inventory, not environment variables in playbooks.
+4. **Test with Molecule.** Every role gets a Molecule scenario with converge + idempotence check + verification.
+5. **Pin collection versions.** In `requirements.yml` and EE definitions. Unpinned collections are a supply chain risk.
+6. **`ansible-lint` clean.** Production profile. In CI. On every change.
+7. **Separate inventory per environment.** Production, staging, dev. Never a single inventory with `--limit` for environment selection.
+8. **`--check --diff` before apply.** Review what will change before applying, especially in CI/CD.

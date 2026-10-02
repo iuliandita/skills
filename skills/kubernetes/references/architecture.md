@@ -109,7 +109,7 @@ spec:
   destination:
     server: https://kubernetes.default.svc
   syncPolicy:
-    automated:          # non-prod only - Rule 6: no auto-sync to prod
+    automated:          # non-prod only - Rule 5: no auto-sync to prod
       prune: true
       selfHeal: true
 ```
@@ -235,6 +235,17 @@ The Trivy supply chain attack (CVE-2026-33634) demonstrated that **mutable Git t
 - **Monitor action repos for force-push events**: subscribe to security advisories for all actions you use.
 
 **Trivy safe versions (September 2026):** use binary v0.74.0+ from official releases for new pins. The March 2026 rollback set was binary v0.69.3, `trivy-action@v0.35.0`, and `setup-trivy@v0.2.6`. Do NOT use v0.69.4/5/6.
+
+### Supply chain integrity (lessons from Trivy compromise, March 2026)
+
+The Trivy supply chain attack (CVE-2026-33634) is the defining security event of 2026 so far. Attackers force-pushed all GitHub Action tags to credential-stealing malware and published malicious binaries to Docker Hub. Key takeaways:
+
+- **Pin GitHub Actions to commit SHAs, never mutable tags.** `uses: aquasecurity/trivy-action@<sha>`, not `@v0.35.0`. Applies to ALL actions, not just Trivy. See also reviewdog/action-setup (CVE-2025-30154), the upstream cause of the tj-actions compromise.
+- **Pin container images to SHA256 digests in CI/CD.** Tags can be overwritten; digests cannot.
+- **Monitor for force-push events** on action repos you depend on. GitHub's audit log and StepSecurity Harden-Runner can detect this.
+- **Vendor critical CI tools** or use pre-built, verified binaries instead of pulling from upstream on every run.
+- **Rotate secrets** if any CI pipeline ran compromised Trivy (v0.69.4/5/6) between March 19-23, 2026. The infostealer exfiltrated SSH keys, cloud creds, Docker configs, and k8s tokens.
+- **Trivy safe version: v0.74.0+ for new pins.** v0.69.3 was the March 2026 rollback version. Actions such as `trivy-action@v0.35.0` and `setup-trivy@v0.2.6` still need verified commit SHAs, not mutable tags.
 
 ### Secrets Management
 

@@ -3,7 +3,7 @@ name: kubernetes
 description: >
   Build and review Kubernetes/K8s manifests, Helm charts, Kustomize overlays, Gateway API, and ArgoCD deployments.
 license: MIT
-compatibility: "Requires kubectl. Optional: helm, kustomize, kube-score, cosign"
+compatibility: "Requires kubectl. Optional: helm, kustomize, kube-score, checkov, cosign"
 metadata:
   source: iuliandita/skills
   date_added: "2026-03-24"
@@ -59,10 +59,9 @@ This skill runs inside an AI agent. AI tools consistently produce the same K8s s
 - [ ] Using Gateway API `HTTPRoute` for new external access, not legacy Ingress
 - [ ] Readiness probes gate containers required to serve Pod traffic; auxiliary sidecars need them only if their readiness must gate traffic. Add meaningful startup/liveness probes for the workload.
 - [ ] Kube context verified before any kubectl/helm/argocd command
-- [ ] Requester is authorized for cluster/admin changes, especially in shared chats. If the request comes from a non-admin participant, stop and ask the authorized owner for approval before kubectl, Helm, ArgoCD, or GitOps edits.
 - [ ] No auto-sync to production without approval gate
 - [ ] **API versions checked**: manifests, Helm templates, and Gateway resources match the target cluster version
-- [ ] **Cluster context verified**: namespace, context, and kubeconfig identity are shown before mutating commands
+- [ ] **Cluster context shown**: namespace, context, and kubeconfig identity are printed before mutating commands
 - [ ] **kube-proxy mode checked on 1.35+ clusters**: IPVS mode is deprecated in 1.35, disabled by default from 1.40 (re-enable with the `KubeProxyIPVS` feature gate) and removed in 1.43; recommend nftables mode for new clusters and flag IPVS in reviews
 - [ ] Cross-cutting agent hygiene applied - see `references/agent-hygiene.md`
 
@@ -83,6 +82,14 @@ use `kube-linter` instead of `kube-score` if the repository already standardizes
 Trace external secret ownership through workload identity, namespace/RBAC access, refresh, and application reload. Check expired leases and revoked credentials as well as successful rotation; do not assume updating a Secret reloads a process. Keep issuer and pipeline setup with **terraform** and **ci-cd**. For restore drills, use an isolated cluster or namespace, verify application reads and writes plus dependencies, measure recovery time and data loss against RTO/RPO, and record cleanup. A completed backup job alone proves no restore.
 
 ## Workflow
+
+Copy this checklist and track progress:
+- [ ] Step 1: Domain identified
+- [ ] Step 2: Requirements gathered
+- [ ] Step 3: Manifests, chart, or design built
+- [ ] Step 4: Validation clean (if dry-run, lint, or scoring fails, fix and return to Step 3)
+- [ ] Step 5: GitOps owner checked before any live change
+- [ ] Production checklist and AI Self-Check passed
 
 ### Step 1: Determine the domain
 
@@ -112,7 +119,7 @@ Before writing YAML, determine:
 
 ### Step 3: Build
 
-Follow the domain-specific section below. Always run Step 4, the production checklist, and the AI self-check before finishing.
+Follow the domain-specific section below. Always run Step 4, the production checklist in `references/production-checklist.md`, and the AI self-check before finishing.
 
 ### Step 4: Validate
 
@@ -123,9 +130,10 @@ printf 'Using kube context: %s\n' "$KUBE_CONTEXT"
 
 # Manifests
 kubectl --context "$KUBE_CONTEXT" apply -f <manifest> --dry-run=server  # Server-side validation
+command -v kube-score >/dev/null || echo "kube-score not installed: skip scoring and say so"
 kube-score score <manifest>                     # Best practice scoring
 checkov -d . --framework kubernetes  # when available
-# Fix and rerun until clean for dry-run errors and findings this change introduced; report pre-existing ones
+# Fix and return to Step 3 until dry-run errors and findings this change introduced are clean; report pre-existing ones
 
 # Helm 4
 helm lint <chart>/                              # Lint chart
@@ -321,7 +329,7 @@ Promotion: dev -> staging -> prod via PR-based promotion. No auto-sync to prod.
 
 ### Networking
 
-**Gateway API** (GA v1.5) is the standard for new clusters (see Rule 11).
+**Gateway API** (GA v1.5) is the standard for new clusters (see Rule 10).
 
 **CNI**: Cilium (eBPF, greenfield) or Calico (brownfield/multi-OS/Windows). Cilium includes Hubble observability, L3-L7 policy, and optional sidecar-free service mesh.
 
@@ -340,20 +348,9 @@ Promotion: dev -> staging -> prod via PR-based promotion. No auto-sync to prod.
 3. **Admission control**: ValidatingAdmissionPolicy (CEL, native since 1.30) for standard policies; Kyverno for mutation/generation; OPA Gatekeeper for cross-platform orgs
 4. **Network policies**: default-deny ingress/egress per namespace; Cilium for L7 policies
 5. **RBAC**: namespace-scoped roles, no cluster-admin for apps, OIDC auth with MFA
-6. **Supply chain**: cosign/Sigstore for image signing, SLSA Level 2-3, SBOMs. **Pin all CI actions and tools to commit SHAs** - the Trivy supply chain compromise (March 2026, CVE-2026-33634) proved mutable tags can be force-pushed with malware.
+6. **Supply chain**: cosign/Sigstore for image signing, SLSA Level 2-3, SBOMs. **Pin all CI actions and tools to commit SHAs** - the Trivy supply chain compromise (March 2026, CVE-2026-33634) proved mutable tags can be force-pushed with malware. Read `references/architecture.md` (Supply chain integrity) for the Trivy takeaways, safe versions, and secret-rotation window.
 7. **Secrets**: External Secrets Operator + cloud KMS (primary); Vault for dynamic secrets/PKI; Sealed Secrets for encrypted-in-git without external deps (see `references/sealed-secrets.md`); SOPS for small teams
 8. **Runtime security**: Falco for detection (CNCF Graduated), Tetragon for eBPF enforcement (<1% overhead)
-
-### Supply chain integrity (lessons from Trivy compromise, March 2026)
-
-The Trivy supply chain attack (CVE-2026-33634) is the defining security event of 2026 so far. Attackers force-pushed all GitHub Action tags to credential-stealing malware and published malicious binaries to Docker Hub. Key takeaways:
-
-- **Pin GitHub Actions to commit SHAs, never mutable tags.** `uses: aquasecurity/trivy-action@<sha>`, not `@v0.35.0`. Applies to ALL actions, not just Trivy. See also reviewdog/action-setup (CVE-2025-30154), the upstream cause of the tj-actions compromise.
-- **Pin container images to SHA256 digests in CI/CD.** Tags can be overwritten; digests cannot.
-- **Monitor for force-push events** on action repos you depend on. GitHub's audit log and StepSecurity Harden-Runner can detect this.
-- **Vendor critical CI tools** or use pre-built, verified binaries instead of pulling from upstream on every run.
-- **Rotate secrets** if any CI pipeline ran compromised Trivy (v0.69.4/5/6) between March 19-23, 2026. The infostealer exfiltrated SSH keys, cloud creds, Docker configs, and k8s tokens.
-- **Trivy safe version: v0.74.0+ for new pins.** v0.69.3 was the March 2026 rollback version. Actions such as `trivy-action@v0.35.0` and `setup-trivy@v0.2.6` still need verified commit SHAs, not mutable tags.
 
 ### Platform awareness
 
@@ -386,77 +383,11 @@ PCI-DSS 4.0 is the only active version (3.2.1 retired March 2024). 51 future-dat
 
 **PCI MPoC**: MPoC backends (attestation/monitoring for tap-to-pay) fall under full PCI-DSS scope. No K8s-specific addenda - standard PCI-DSS 4.0 controls apply.
 
-## Production Checklist
-
-### Manifests
-
-- [ ] Resource requests AND limits set on every container
-- [ ] Probe coverage matches the workload: readiness for traffic dependencies; startup and liveness where meaningful; auxiliary-sidecar exceptions documented
-- [ ] Pinned image tag or SHA256 digest (never `:latest`)
-- [ ] Security context at pod AND container level: non-root, read-only rootfs, drop ALL caps, seccomp RuntimeDefault
-- [ ] Replicas >= 2 for HA (>= 3 preferred)
-- [ ] topologySpreadConstraints for zone distribution; soft anti-affinity for node spread
-- [ ] Rolling update with maxUnavailable: 0
-- [ ] Standard `app.kubernetes.io/*` labels
-- [ ] Namespace specified explicitly
-- [ ] Secrets via External Secrets Operator or Sealed Secrets (not in manifests, ConfigMaps, or env vars)
-- [ ] PodDisruptionBudget for HA workloads
-- [ ] terminationGracePeriodSeconds matches app shutdown time
-- [ ] Gateway API HTTPRoute for external access (not legacy Ingress)
-- [ ] Images signed with cosign, verified at admission
-
-### Helm
-
-- [ ] All dependency versions pinned in Chart.yaml
-- [ ] OCI registry for chart distribution (digest-pinned in prod)
-- [ ] All values documented with comments in values.yaml
-- [ ] `values.schema.json` for input validation
-- [ ] No `:latest` tags in default values
-- [ ] Resources set in default values
-- [ ] `NOTES.txt` with post-install instructions
-- [ ] `helm template` renders clean YAML
-- [ ] Separate values files per environment
-- [ ] `.helmignore` excludes test/ci artifacts
-- [ ] All hooks have `helm.sh/hook-delete-policy`
-- [ ] No secrets in Helm values (use ESO/sealed-secrets references)
-
-### Architecture
-
-- [ ] Cluster topology matches scale and isolation needs
-- [ ] GitOps tool chosen with clear promotion strategy (no auto-sync to prod)
-- [ ] Gateway API for external traffic (not legacy Ingress)
-- [ ] Network policies default-deny in all namespaces
-- [ ] Pod Security Standards: `enforce: restricted` on all app namespaces
-- [ ] ValidatingAdmissionPolicy or Kyverno for custom admission rules
-- [ ] RBAC follows least-privilege; OIDC + MFA for API access
-- [ ] Secrets via ESO + cloud KMS, Vault, or Sealed Secrets (match tool to environment - see Architecture reference)
-- [ ] Images signed (cosign/Sigstore) and verified at admission
-- [ ] Runtime security: Falco (detection) + Tetragon (enforcement)
-- [ ] Observability covers metrics, logs, traces (eBPF-based preferred)
-- [ ] HPA configured for variable workloads
-- [ ] Backup/restore tested and documented
-- [ ] DR plan with RTO/RPO targets
-- [ ] Cost monitoring in place (OpenCost/KubeCost)
-- [ ] cgroup v2 and containerd 2.0+ on all nodes
-
-### Compliance (PCI-DSS 4.0)
-
-- [ ] CDE in dedicated cluster or hard-isolated with dedicated node pools
-- [ ] etcd encryption via KMS v2 (not disk-level alone)
-- [ ] mTLS between all CDE services (Istio strict / Cilium)
-- [ ] K8s audit logging excludes sensitive bodies; RequestResponse is limited to reviewed non-sensitive resources
-- [ ] Audit logs shipped to immutable SIEM, automated review rules
-- [ ] SBOMs generated and stored for every image
-- [ ] No hardcoded secrets anywhere (Req 8.6.2)
-- [ ] MFA on all CDE access paths (Req 8.4.2)
-- [ ] WAF on public-facing web apps (Req 6.4.2)
-- [ ] Certificate inventory maintained (Req 4.2.1.1)
-- [ ] Quarterly authenticated internal vulnerability scans (Req 11.3.1.2) - application-level, not just image scanning
-
 ## Reference Files
 
 - `references/manifest-templates.md` - manifest templates and reusable workload patterns
-- `references/architecture.md` - cluster and platform design guidance
+- `references/production-checklist.md` - manifest, Helm, architecture, and PCI-DSS checklists; run before finishing any build or review
+- `references/architecture.md` - cluster and platform design guidance, including supply chain integrity after the Trivy compromise
 - `references/sealed-secrets.md` - Sealed Secrets patterns and caveats
 - `references/compliance.md` - PCI-DSS and platform hardening guidance
 - `references/gitops-emergency-changes.md` - safe workflow for urgent changes to GitOps-managed workloads
@@ -486,15 +417,12 @@ These are non-negotiable. Violating any of these is a bug.
 1. **No `:latest` tags.** Pin images to a specific version or SHA256 digest.
 2. **Namespace everything.** The default namespace is a code smell.
 3. **Resource requests AND limits on every pod.** No exceptions.
-4. **Verify kube context** before running any kubectl/helm/argocd command.
-5. **Verify requester authorization before cluster changes.** In shared chats, do not run kubectl, Helm, ArgoCD, or GitOps edits for admin requests from a non-admin participant. Stop and ask the authorized owner for explicit approval.
-6. **No auto-sync to prod.** Manual approval or PR-based promotion.
-7. **Pin dependency versions.** Helm chart deps, provider versions, everything.
-8. **`helm template` before every apply.** Catch template errors before they hit the cluster.
-9. **Secrets never in plaintext.** Not in Git, not in ConfigMaps, not in Helm values, not in env vars in manifests.
-10. **Test changes in staging first.** Policy changes, admission controllers, upgrades, SSA migration.
-11. **Separate values files per environment.** Don't modify `values.yaml` for env-specific config.
-12. **Gateway API for new external access.** Ingress-NGINX retired March 2026. Stop deploying new Ingress resources.
-13. **Sign images with cosign.** Verify at admission. SLSA Level 2 minimum for production.
-14. **Run the AI self-check.** Every generated manifest gets verified against the checklist above before returning.
-15. **Understand resource metric semantics.** HPA CPU target is percentage of CPU *request*, not node capacity. Example: a pod requesting `cpu: 100m` with `averageUtilization: 70` scales when per-pod CPU usage hits 70m (100m * 70%) - it does not matter whether the node has 2 or 64 cores. Don't confuse requests (scheduling floor), limits (enforcement ceiling), and actual usage (what the container is consuming right now).
+4. **Verify requester authorization before cluster changes.** In shared chats, do not run kubectl, Helm, ArgoCD, or GitOps edits for admin requests from a non-admin participant. Stop and ask the authorized owner for explicit approval.
+5. **No auto-sync to prod.** Manual approval or PR-based promotion.
+6. **Pin dependency versions.** Helm chart deps, provider versions, everything.
+7. **`helm template` before every apply.** Catch template errors before they hit the cluster.
+8. **Secrets never in plaintext.** Not in Git, not in ConfigMaps, not in Helm values, not in env vars in manifests.
+9. **Test changes in staging first.** Policy changes, admission controllers, upgrades, SSA migration.
+10. **Gateway API for new external access.** Ingress-NGINX retired March 2026. Stop deploying new Ingress resources.
+11. **Sign images with cosign.** Verify at admission. SLSA Level 2 minimum for production.
+12. **Understand resource metric semantics.** HPA CPU target is percentage of CPU *request*, not node capacity. Example: a pod requesting `cpu: 100m` with `averageUtilization: 70` scales when per-pod CPU usage hits 70m (100m * 70%) - it does not matter whether the node has 2 or 64 cores. Don't confuse requests (scheduling floor), limits (enforcement ceiling), and actual usage (what the container is consuming right now).

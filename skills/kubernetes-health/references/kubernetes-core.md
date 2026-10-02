@@ -78,6 +78,7 @@ Use Bash with jq for this check. Set the confirmed context and requested window 
 ```bash
 : "${CONTEXT:?confirmed context}" "${WINDOW_SECONDS:?requested window in seconds}"
 case "$WINDOW_SECONDS" in ''|*[!0-9]*) echo 'Invalid window' >&2; exit 1;; esac
+command -v jq >/dev/null || { echo "jq not installed: report the event-window check as a coverage gap" >&2; exit 1; }
 EVENT_CUTOFF=$(($(date +%s) - WINDOW_SECONDS))
 event_data=$(kubectl --context "$CONTEXT" get events -A -o json) || exit 1
 printf '%s' "$event_data" | jq --argjson cutoff "$EVENT_CUTOFF" '
