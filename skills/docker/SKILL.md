@@ -15,7 +15,7 @@ metadata:
 
 Write, review, and architect Dockerfiles, Compose stacks, and container workflows - from single-service dev setups to multi-arch production pipelines with image signing and compliance gates. The goal is minimal, secure, reproducible images that a team can maintain and a QSA can audit.
 
-**Target versions**: September 2026 snapshot. Read `references/target-versions.md` before
+**Target versions**: October 2026 snapshot. Read `references/target-versions.md` before
 pinning Docker, Compose, BuildKit, containerd, Podman, Buildah, or runc.
 
 This skill covers Dockerfiles, Compose, container hardening, supply chain, registry/CI
@@ -266,20 +266,23 @@ Read `references/security-and-compliance.md` for the full PCI-DSS 4.0 container 
 | CVE-2026-33634 | Trivy | Critical | Supply chain - malware in Docker Hub images (v0.69.4-6) | Trivy v0.74.0+ for new pins; v0.69.3 only as rollback |
 | CVE-2026-2664 | Docker Desktop | Medium | gRPC-FUSE kernel module OOB read | Desktop 4.62.0+ |
 | CVE-2025-13743 | Docker Desktop | Low | Expired Hub PATs leaked in diagnostics bundles | Desktop 4.54.0 |
-| CVE-2026-28400 | Model Runner | 7.5 High | Runtime flag injection - arbitrary file overwrite, container escape | Desktop 4.61.0+ |
+| CVE-2026-28400 | Model Runner | 7.5 High | Runtime flag injection - arbitrary file overwrite, container escape | Desktop 4.62.0+ |
 | CVE-2026-5843 | Model Runner (MLX) | 8.8 High | Container-to-host code execution via MLX-LM `model_file` importlib load from untrusted models | Desktop 4.71.0+ |
 | CVE-2026-5817 | Model Runner (vllm-metal) | 8.8 High | Container-to-host RCE via unsandboxed `trust_remote_code` tokenizer load | Desktop 4.68.0+ |
 | CVE-2026-33747 | BuildKit | High | Malicious frontend file escape outside storage root | BuildKit v0.28.1 |
 | CVE-2026-33748 | BuildKit | High | Git URL validation bypass - restricted file access | BuildKit v0.28.1 |
+| CVE-2026-92543 | Docker Engine | High | Malicious DNS response makes registry connections skip TLS verification or fall back to HTTP | Engine 29.8.2 |
+| CVE-2026-93318 | BuildKit | High | Build cache poisoning via unvalidated image layer DiffIDs | BuildKit v0.33.1 (Engine 29.8.2) |
+| CVE-2026-94603 | Podman | Critical | `podman run` on a checkpoint image disables all sandboxing | Podman 6.1.3, 5.8.8 |
 
 **Additional fixes checked September 10, 2026**: [CVE-2026-17106](https://github.com/moby/go-archive/security/advisories/GHSA-hfg8-hc9c-6c3h)
-allows archive extraction outside the destination; the advisory lists go-archive < 0.3.0
-as affected and 0.3.0 as patched. Docker Engine 29.7.0 includes the fix.
+allows archive extraction outside the destination; the advisory lists go-archive < 0.2.2
+as affected and 0.3.0 as patched (rechecked 2026-10-03). Docker Engine 29.7.0 includes the fix (unverified).
 [CVE-2026-15793](https://github.com/moby/buildkit/security/advisories/GHSA-hw3h-2gp9-cxpv)
 affects BuildKit 0.30.0-0.31.1 custom frontends using Git checkout bundles; fixed in
 0.31.2. Ordinary Dockerfile builds are unaffected by that specific issue.
 
-**Action items**: upgrade runc to >= 1.4.0, BuildKit to >= 0.31.2, Docker Desktop to >= 4.71.0 (prefer the current 4.90.0 snapshot), never pull Trivy v0.69.4/5/6. Pin ALL CI tool images to SHA256 digests.
+**Action items**: upgrade runc to >= 1.4.0, BuildKit to >= 0.33.1, Docker Desktop to >= 4.71.0 (prefer the current 4.93.0 snapshot), Docker Engine to >= 29.8.2, Podman to >= 6.1.3 or 5.8.8, never pull Trivy v0.69.4/5/6. Pin ALL CI tool images to SHA256 digests.
 
 ### Hardened Compose baseline
 
@@ -385,7 +388,7 @@ See AI Self-Check above for the full build-time checklist (Dockerfile correctnes
 ### Deploy-time additions
 
 - [ ] runc >= 1.4.0 (CVE-2025-31133/52565/52881 patched)
-- [ ] BuildKit >= 0.31.2 (includes CVE-2026-15793 and CVE-2026-33747/33748 fixes)
+- [ ] BuildKit >= 0.33.1 (includes CVE-2026-15793, CVE-2026-33747/33748, and CVE-2026-93318 fixes)
 - [ ] Docker Desktop >= 4.71.0 (adds CVE-2026-5817/5843 Model Runner container-to-host RCE fixes; see the table above for the earlier CVE-2025-9074 and CVE-2026-28400 floors)
 - [ ] Trivy v0.74.0+ from official releases (v0.69.4-6 COMPROMISED)
 - [ ] Images signed with cosign, verified at deploy

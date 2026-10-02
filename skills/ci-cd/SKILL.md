@@ -17,7 +17,7 @@ Write, review, and architect CI/CD pipelines across GitHub Actions, GitLab CI/CD
 Actions, Gitea Actions, and Woodpecker. The goal is secure, fast, auditable pipelines that
 satisfy both engineering needs and compliance requirements (PCI-DSS 4.0).
 
-**Target versions**: September 2026 snapshot. Read `references/target-versions.md` before
+**Target versions**: October 2026 snapshot. Read `references/target-versions.md` before
 pinning forge, runner, CI, or supply-chain tool versions.
 
 This skill covers workflow design, security, compliance, cross-platform migration,

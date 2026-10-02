@@ -15,21 +15,23 @@ metadata:
 
 Write, structure, and maintain tests across unit, integration, E2E, accessibility, and performance layers. The goal is tests that catch regressions, document behavior, and run fast in CI - not tests that exist to inflate coverage numbers.
 
-**Target versions** (September 2026):
-- Vitest **5.0.1**, Jest **30.5.1**
-- Playwright **1.63.0**, Cypress **16.0.0** (both Vitest and Cypress are major upgrades; review migration notes)
+**Target versions** (October 2026):
+- Vitest **5.0.3**, Jest **30.5.2**
+- Playwright **1.63.0**, Cypress **16.1.1** (both Vitest and Cypress are major upgrades; review migration notes)
 - pytest **9.1.1**, pytest-cov **7.1.0**
 - Go **1.27.1** (testing stdlib, `testing/synctest` GA)
-- Rust **1.98.1** (`cargo test`, cargo-nextest **0.9.146**)
+- Rust **1.99.0** (`cargo test`, cargo-nextest **0.9.146**)
 - Testing Library **16.3.3** (`@testing-library/react`)
 - axe-core **4.13.0** (`@axe-core/playwright`)
 - Grafana k6 **2.3.0**
 
-Security check (2026-09-10): [GHSA-2h32-95rg-cppp](https://github.com/vitest-dev/vitest/security/advisories/GHSA-2h32-95rg-cppp)
+Security check (2026-10-02): [GHSA-2h32-95rg-cppp](https://github.com/vitest-dev/vitest/security/advisories/GHSA-2h32-95rg-cppp)
 is critical browser-runner script injection that can expose the API token and lead to local code
 execution. It affects `@vitest/browser` >=4.0.17,<4.1.6 and >=5.0.0-beta.0,<5.0.0-beta.3;
 fixes are 4.1.6 and 5.0.0-beta.3. Keep browser packages aligned with the stable runner and do not
-open untrusted runner URLs while the server is active.
+open untrusted runner URLs while the server is active. Later critical browser-mode advisories
+([GHSA-g8mr-85jm-7xhm](https://github.com/advisories/GHSA-g8mr-85jm-7xhm), [GHSA-p63j-vcc4-9vmv](https://github.com/advisories/GHSA-p63j-vcc4-9vmv))
+raise the 4.x floor to 4.1.10 and the 3.x floor to 3.2.7; stable 5.0.x is not affected.
 
 ## When to use
 

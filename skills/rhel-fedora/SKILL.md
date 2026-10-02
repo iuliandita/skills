@@ -21,7 +21,7 @@ account for vendor quirks such as subscription-manager, CentOS Stream drift, Ora
 Amazon's cloud-first defaults, and SELinux or firewalld behavior that people love to blame on
 the wrong layer.
 
-**Versions worth pinning** (verified September 2026):
+**Versions worth pinning** (verified October 2026):
 
 Only pin versions here when they materially affect compatibility or troubleshooting shape. For
 ordinary package work, prefer the live distro lane and repo state over a stale package table.
@@ -39,7 +39,7 @@ ordinary package work, prefer the live distro lane and repo state over a stale p
 | SELinux | verify live | policy package and mode matter more than memorized version strings |
 | DNF | verify live | Fedora moves faster than enterprise lanes; DNF 5 vs legacy expectations matter |
 | Podman | verify live | rootless and quadlet behavior depend on the shipped distro lane |
-| Kernel security | verify live via RHSA/FEDORA tracker | patch high-severity privesc CVEs promptly; mid-2026 examples to confirm fixed: Copy Fail CVE-2026-31431 (CISA KEV, exploited), Dirty Frag CVE-2026-43284/43500, Fragnesia CVE-2026-46300 (ESP-in-TCP, public PoC, not in CISA KEV), ptrace CVE-2026-46333 |
+| Kernel security | verify live via RHSA/FEDORA tracker | patch high-severity privesc CVEs promptly; mid-2026 examples to confirm fixed: Copy Fail CVE-2026-31431 (CISA KEV, exploited), Dirty Frag CVE-2026-43284/43500, Fragnesia CVE-2026-46300 (ESP-in-TCP, public PoC, not in CISA KEV), ptrace CVE-2026-46333; newer: CVE-2026-53266 (netfilter ebtables SNAT, CISA KEV 2026-09-18, Red Hat Important, no RHEL errata listed at the 2026-10-02 check) |
 
 For kernel advisories, use the exact vendor package and support stream. Red Hat rates
 [Copy Fail CVE-2026-31431](https://access.redhat.com/security/cve/CVE-2026-31431)

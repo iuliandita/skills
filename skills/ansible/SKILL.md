@@ -15,10 +15,10 @@ metadata:
 
 Write, review, and architect Ansible automation - from single playbooks to multi-tier, compliance-hardened infrastructure management. The goal is idempotent, auditable, maintainable automation that works the same locally and in CI/CD.
 
-**Target versions** (September 2026):
+**Target versions** (October 2026):
 - ansible-core **2.21.4** (current stable, Python 3.12+ controller); verify managed-node Python support and branch EOL in the [support matrix](https://docs.ansible.com/projects/ansible-core/devel/reference_appendices/release_and_maintenance.html) before pinning
-- ansible (community package) **14.3.1** (depends on ansible-core 2.21)
-- molecule **26.8.0**, ansible-lint **26.8.0**, ansible-navigator **26.8.0** (CalVer)
+- ansible (community package) **14.4.0** (depends on ansible-core 2.21)
+- molecule **26.9.0**, ansible-lint **26.9.0**, ansible-navigator **26.9.0** (CalVer)
 - ansible-builder **3.1.1** (EE definition v3)
 - AWX 24.6.1 (last formal release Jul 2024; upstream AWX releases paused for a major refactor, devel branch active - track ansible/awx; awx-operator ~2.19.x still ships for K8s deploys). Verify current AWX/AAP release status before recommending a specific version or install path.
 - AAP 2.7 (current stream); verify supported installation methods and patch builds in the [vendor lifecycle documentation](https://access.redhat.com/support/policy/updates/ansible-automation-platform) before deployment

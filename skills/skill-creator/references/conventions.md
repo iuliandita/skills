@@ -19,7 +19,7 @@ when creating or reviewing skills to ensure consistency.
 7.7. Scripts and Dependencies
 7.8. Model Portability
 8. Trigger Description Patterns
-9. Skill Inventory (September 2026)
+9. Skill Inventory (October 2026)
 
 ---
 
@@ -640,7 +640,7 @@ brevity; routing trials provide evidence about selection quality.
 
 ---
 
-## 9. Skill Inventory (September 2026)
+## 9. Skill Inventory (October 2026)
 
 ### Active skills (43)
 

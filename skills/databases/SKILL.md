@@ -15,14 +15,14 @@ metadata:
 
 Configure, tune, design schemas, migrate, back up, and review database engines - from single-node dev setups to PCI-compliant production clusters. The goal is correct, performant, durable databases that survive failures, pass audits, and don't wake you up at 3am.
 
-**Target versions** (September 2026):
+**Target versions** (October 2026):
 - PostgreSQL **18.6** (EOL 2030-11; August 13, 2026 release), back-branches: 17.11, 16.15, 15.19, 14.24; PostgreSQL 19 Beta 4 is for testing only
-- MongoDB **8.0.32** (GA, EOL 2029-10); 8.0.32 fixes CVE-2026-89099 and is the security floor for the 8.0 lane. The rapid lane is Atlas-only with a short window - verify live before pinning
-- MariaDB **11.8.9** (LTS, EOL 2028-06); 12.x rolling GA is quarterly and EOLs at each successor - verify live
-- MySQL **8.4.12** (LTS; August 18, 2026 release); the innovation lane has a short support window - verify live
+- MongoDB **9.0.2** (new major, GA 2026-09-28, EOL 2031-10); 8.0 lane **8.0.34** (EOL 2029-10); 8.0.32 fixes CVE-2026-89099 and is the security floor for the 8.0 lane. The rapid lane is Atlas-only with a short window - verify live before pinning
+- MariaDB **11.8.9** (LTS, EOL 2028-06), **12.3.3** (LTS, EOL 2029-06); 13.x rolling GA is quarterly and EOLs at each successor - verify live
+- MySQL **8.4.12** (LTS; August 18, 2026 release), **9.7.3** (9.7 LTS lane; August 18, 2026 release); the innovation lane has a short support window - verify live
 - Redis **8.10.2**; Valkey **9.1.2** (9.0.6 on the 9.0 lane) - verify live before pinning
-- SQL Server **2025 RTM + CU8** (released 2026-08-13)
-- PgBouncer **1.25.2**, Pgpool-II **4.7.2**, ProxySQL **3.0.10** (ProxySQL 3.0.9+ fixes CVE-2026-48772/48773/48774)
+- SQL Server **2025 RTM + CU9** (released 2026-09-15)
+- PgBouncer **1.26.0** (fixes CVE-2026-19888/6668/6669), Pgpool-II **4.7.3**, ProxySQL **3.0.11** (3.0.9+ fixes CVE-2026-48772/48773; CVE-2026-48774 affects the 4.0 lane, fixed in 4.0.9)
 
 This skill covers these domains depending on context:
 - **Configuration** - engine settings, authentication, TLS, tuning parameters
@@ -419,6 +419,6 @@ These are non-negotiable. Violating any of these is a bug.
 10. **Disk-level encryption is insufficient for PCI-DSS 4.0.** Req 3.5.1.2 requires TDE, column-level, or application-layer encryption.
 11. **Patch MongoBleed (CVE-2025-14847).** Self-hosted MongoDB < 8.0.17 / 7.0.28 / 6.0.27 is actively exploitable with no authentication required.
 12. **Patch MongoDB compression DoS (CVE-2026-25611).** Pre-auth DoS via crafted OP_COMPRESSED messages. Default config affected (compression enabled since 3.6). Fixed in 8.0.18+ / 8.2.4+ / 7.0.29+.
-13. **Patch PgBouncer.** PgBouncer < 1.25.1 (CVE-2025-12819) can allow unauthenticated SQL execution when `track_extra_parameters` includes `search_path` AND `auth_user` is set (both non-default). The May 2026 1.25.2 release adds further fixes (CVE-2026-6664/6665/6666/6667: integer overflow, SCRAM, null-deref, KILL_CLIENT authz). Upgrade to 1.25.2+ - the fixes are low-risk.
+13. **Patch PgBouncer.** PgBouncer < 1.25.1 (CVE-2025-12819) can allow unauthenticated SQL execution when `track_extra_parameters` includes `search_path` AND `auth_user` is set (both non-default). The May 2026 1.25.2 release adds further fixes (CVE-2026-6664/6665/6666/6667: integer overflow, SCRAM, null-deref, KILL_CLIENT authz). The September 2026 1.26.0 release fixes CVE-2026-19888 (unauthenticated crash via a SCRAM client-final-message without a nonce), CVE-2026-6668 (pre-auth hang from packet buffer overflow at default `max_packet_size`), and CVE-2026-6669 (unbounded server SCRAM iterations). Upgrade to 1.26.0+ - the fixes are low-risk.
 14. **Chunk bulk inserts.** Never build a single `INSERT ... VALUES` with an unbounded row list. Compute batch size from the lowest host-parameter ceiling across supported backends (`floor(limit / columns_per_row)`). Wrap chunks in one transaction when atomicity matters.
 15. **Run the AI self-check.** Every generated migration, schema, or config gets verified against the checklist above before returning.

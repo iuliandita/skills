@@ -1,7 +1,7 @@
 # CI/CD Supply Chain Security
 
 Cross-platform supply chain hardening patterns, incident timeline, and PCI-DSS 4.0 compliance.
-Reviewed September 2026 - post-Trivy compromise and the TeamPCP npm/PyPI worm wave.
+Reviewed October 2026 - post-Trivy compromise, the TeamPCP npm/PyPI worm wave, and its September action re-activation.
 
 ## Contents
 
@@ -52,7 +52,7 @@ they inform every recommendation in this document.
 - **Lesson**: even security tools' own CI is a target. "We trust our scanning tool" is circular reasoning.
 
 **Known safe Trivy versions**:
-- Current new pins (September 2026): binary v0.74.0+ from official releases, pinned by checksum or image digest
+- Current new pins (October 2026): binary v0.74.0+ (current v0.75.0) from official releases, pinned by checksum or image digest
 - March 2026 rollback: binary v0.69.2 or v0.69.3
 - `trivy-action`: **v0.35.0** was the March rollback tag; pin the verified commit SHA, not the tag
 - `setup-trivy`: v0.2.6 was the March rollback tag; pin the verified commit SHA, not the tag
@@ -67,6 +67,7 @@ exfiltration mechanism was triggered.
 - April 29: four official SAP `@sap/*` npm packages poisoned (09:55-12:14 UTC). April 30: PyTorch `lightning` PyPI 2.6.2/2.6.3. May 11: 84 malicious versions across 42 `@tanstack/*` packages (19:20-19:26 UTC). Mistral AI, UiPath, OpenSearch also hit.
 - Harvests GitHub/npm tokens, CI/CD secrets, cloud creds, and API keys; ~1,800 developers across npm + PyPI (and PHP).
 - **Lesson**: a single compromised maintainer namespace fans out to a whole package family within minutes. Pin by digest, enable npm trusted publishing / provenance, and scope CI tokens narrowly.
+- **September 2026 re-activation**: `actions-cool/issues-helper` and `actions-cool/maintain-one-comment`, disabled in May with malicious tags, were re-enabled on September 16 with those tags intact; workflows pinned to the tags ran the payload again until GitHub blocked the repos on September 25 ([Socket write-up](https://socket.dev/blog/mini-shai-hulud-actions)). A disabled action is not a cleaned one: SHA-pin and remove references to compromised actions.
 
 ### HackerBot-Claw (February 2026)
 
@@ -111,14 +112,14 @@ image: aquasec/trivy:latest
 
 # DO
 image:
-  name: aquasec/trivy:0.74.0@sha256:<digest>
+  name: aquasec/trivy:0.75.0@sha256:<digest>
 ```
 
 ### How (Docker images in any CI)
 
 ```bash
 # Get the digest
-docker inspect --format='{{index .RepoDigests 0}}' aquasec/trivy:0.74.0
+docker inspect --format='{{index .RepoDigests 0}}' aquasec/trivy:0.75.0
 
 # Pin to digest
 image: aquasec/trivy@sha256:abc123def456...
@@ -237,7 +238,7 @@ Choose the format supported by your inventory tooling and documented control evi
 **GitLab CI (syft)**:
 ```yaml
 generate-sbom:
-  image: anchore/syft:1.42
+  image: anchore/syft:1.54
   script:
     - syft $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA -o spdx-json=sbom.spdx.json
   artifacts:

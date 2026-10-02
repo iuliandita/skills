@@ -20,14 +20,16 @@ Built from real production pain - the hardest part of i18n is not translation bu
 every string that needs it, and making sure translations read naturally in context rather
 than as mechanical word-by-word output.
 
-**Target versions (September 2026):** react-i18next 17.0.13, vue-i18n 11.4.10, next-intl 4.14.2,
-i18next 26.4.2. Missing-key persistence snapshots: i18next-http-middleware 3.9.8 and
-i18next-fs-backend 2.6.7 (latest status unverified on 2026-09-10; check the package registry
-before pinning). Require at least the following verified security fixes: critical missing-key prototype-pollution
+**Target versions (October 2026):** react-i18next 17.0.15, vue-i18n 11.4.13, next-intl 4.14.9,
+i18next 26.4.2. Missing-key persistence: i18next-http-middleware 3.9.9 and
+i18next-fs-backend 2.6.8 (npm latest on 2026-10-02). Require at least the following verified security fixes: critical missing-key prototype-pollution
 fixes first shipped in middleware 3.9.7 ([CVE-2026-48714](https://github.com/i18next/i18next-http-middleware/security/advisories/GHSA-f49m-vf83-692w), affected <3.9.7)
 and filesystem backend 2.6.6 ([CVE-2026-48713](https://github.com/i18next/i18next-fs-backend/security/advisories/GHSA-2933-q333-qg83), affected <2.6.6).
+Later high-severity prototype-pollution fixes raise the floors to middleware 3.9.9
+([GHSA-r4j4-5cw9-pwgj](https://github.com/i18next/i18next-http-middleware/security/advisories/GHSA-r4j4-5cw9-pwgj), affected <=3.9.8)
+and filesystem backend 2.6.8 ([GHSA-cchx-rhgv-92hj](https://github.com/i18next/i18next-fs-backend/security/advisories/GHSA-cchx-rhgv-92hj), affected <=2.6.7).
 Do not expose missing-key persistence to untrusted users; disable `saveMissing` where unnecessary.
-Advisory ranges checked 2026-09-10.
+Advisory ranges checked 2026-10-02.
 
 ## When to use
 

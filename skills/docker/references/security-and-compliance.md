@@ -1,6 +1,6 @@
 # Container Security & PCI-DSS 4.0 Compliance
 
-Security hardening, vulnerability management, supply chain integrity, and PCI-DSS 4.0 mapping for containerized environments. Reviewed September 2026.
+Security hardening, vulnerability management, supply chain integrity, and PCI-DSS 4.0 mapping for containerized environments. Reviewed October 2026.
 
 ## Contents
 
@@ -27,9 +27,12 @@ Security hardening, vulnerability management, supply chain integrity, and PCI-DS
 | CVE-2026-33634 | Critical | Trivy | Supply chain - credential-stealing malware in aquasec/trivy Docker Hub images v0.69.4-6 | Trivy v0.74.0+ for new pins; v0.69.3 only as rollback |
 | CVE-2026-2664 | Medium | Docker Desktop | gRPC-FUSE kernel module out-of-bounds read | Desktop 4.62.0+ |
 | CVE-2025-13743 | Low | Docker Desktop | Expired Hub PATs leaked in diagnostic bundles via error object serialization | Desktop 4.54.0+ |
-| CVE-2026-28400 | 7.5 High | Model Runner | Runtime flag injection via _configure endpoint - arbitrary file overwrite, container escape | Desktop 4.61.0+ |
+| CVE-2026-28400 | 7.5 High | Model Runner | Runtime flag injection via _configure endpoint - arbitrary file overwrite, container escape | Desktop 4.62.0+ |
 | CVE-2026-33747 | High | BuildKit | Malicious frontend causes file escape outside BuildKit storage root | BuildKit v0.28.1 |
 | CVE-2026-33748 | High | BuildKit | Git URL #ref:subdir validation bypass - access to restricted files | BuildKit v0.28.1 |
+| CVE-2026-92543 | High | Docker Engine | Malicious DNS response makes registry connections skip TLS verification or fall back to HTTP, exposing credentials | Engine 29.8.2+ |
+| CVE-2026-93318 | High | BuildKit | Malicious image poisons build cache with layer DiffIDs that do not match layer contents | BuildKit v0.33.1 (Engine 29.8.2) |
+| CVE-2026-94603 | Critical | Podman | `podman run` on a checkpoint image disables all sandboxing, including user-specified settings | Podman 6.1.3, 5.8.8 |
 
 ### Verification commands
 
