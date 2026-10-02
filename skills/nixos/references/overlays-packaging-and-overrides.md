@@ -4,6 +4,16 @@ When you need a package that nixpkgs does not carry, a different version than wh
 cached, or a patch upstream will not take - overlays, overrides, and hand-written
 derivations are the toolbox.
 
+## Contents
+
+- `override` vs `overrideAttrs`
+- Overlays
+- Writing a derivation
+- Language-specific helpers
+- Fetchers
+- Unfree and insecure gates
+- Common mistakes
+
 ## `override` vs `overrideAttrs`
 
 - **`override { ... }`** - changes the *arguments* passed to a package's function (build

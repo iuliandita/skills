@@ -15,6 +15,9 @@ when creating or reviewing skills to ensure consistency.
 6. Cross-Skill Patterns
 7. AI Self-Check Patterns
 7.5. Diagnostic Skill Pitfalls
+7.6. Workflow Reliability Patterns
+7.7. Scripts and Dependencies
+7.8. Model Portability
 8. Trigger Description Patterns
 9. Skill Inventory (September 2026)
 
@@ -40,7 +43,7 @@ gotcha with that specific Helm chart version, the compliance requirement that is
 | Component | Budget | Why |
 |-----------|--------|-----|
 | Frontmatter (`name` + `description`) | description usually 80-120 characters | catalog entries share the host's context budget |
-| SKILL.md body | 150-250 lines preferred, 600 hard max, <5k tokens recommended | loaded when the skill activates |
+| SKILL.md body | 150-250 lines preferred, 500 hard max, <5k tokens recommended | loaded when the skill activates |
 | Reference files | unlimited per file, but keep individual files focused | loaded on demand |
 
 Prefer concise examples over verbose explanations. A 5-line code block that shows the pattern
@@ -58,6 +61,17 @@ Match how prescriptive the skill is to how fragile the task is:
 
 Think of the agent walking a path: a narrow bridge with cliffs needs guardrails (low freedom),
 an open field allows many routes (high freedom).
+
+Set freedom **per step**, not per skill. One skill can draft prose with high freedom and then
+create an invoice or delete a resource with low freedom. For each step ask "what breaks if the
+agent does this differently?" Nothing much: keep it heuristic. Something consequential (money,
+deletion, production state, a strict output format): give the exact command and say "run exactly
+this; do not add flags", or ship a script. Low freedom usually means a script or exact command,
+not more prose.
+
+**Defaults over menus.** Name one default and an escape hatch ("use pdfplumber; for scanned PDFs
+use OCR instead"), not a list of equivalent tools. Option lists push the choice back onto the
+agent and vary across models.
 
 **Examples from this collection:**
 - **High freedom**: code-review workflow - "check these ten buckets" gives categories but lets the
@@ -168,7 +182,7 @@ Keep their canonical test coverage and installer integrity checks through the re
 | **high** | multi-step domain with on-demand references | ansible, docker, kubernetes, terraform, etc. (see Skill Inventory) | Full workflow, AI self-check, checklists, multiple references |
 
 `effort` is a qualitative signal of a skill's depth and expected complexity, not a measured token
-count. The SKILL.md body targets 150-250 lines where practical (600 hard max); references carry the
+count. The SKILL.md body targets 150-250 lines where practical (500 hard max); references carry the
 rest and load on demand, so a high-effort skill's larger total footprint lives mostly outside the
 always-loaded body.
 
@@ -294,6 +308,15 @@ thorough.
 - **Anti-hallucination**: every tool name, CLI flag, version number, and API endpoint must be
   verified via web search or registry check before including in a skill. AI models hallucinate
   these constantly. "I'm pretty sure" is not verification - search or don't include it.
+- **One term per concept**: pick "finding" or "issue", "reference" or "doc", and keep it across
+  SKILL.md and references. Mixed terms read as different things to some models.
+- **No time-conditional instructions**: never "before June 2026 use X, after use Y". State the
+  current method; move legacy behavior to an "Old patterns" section, collapsed with
+  `<details>` where the host renders it. Dated `Target versions` pins are fine: they record when
+  a fact was verified, they do not branch behavior on the calendar.
+- **Portable paths and tool names**: forward slashes only (`references/<topic>.md`), relative to
+  the skill directory. Name MCP tools fully qualified (`server:tool`, e.g. `github:create_issue`)
+  because unqualified names fail when several servers are connected.
 
 ### Tables
 
@@ -333,7 +356,7 @@ metadata:
 
 ### When to create reference files
 
-- Move lengthy examples and conditional domain detail to references; prefer 150-250 core lines (hard max 600)
+- Move lengthy examples and conditional domain detail to references; prefer 150-250 core lines (hard max 500)
 - Multiple variants of the same pattern (e.g., GitHub Actions vs GitLab CI)
 - Large checklists or template libraries
 - Supplementary content that's only needed in specific scenarios
@@ -361,10 +384,22 @@ Read `references/github-actions.md` for GitHub Actions patterns,
 templates, and security hardening.
 ```
 
+### One level deep
+
+Name every reference file directly in SKILL.md. An agent that reaches a file through another
+reference (`SKILL.md -> advanced.md -> details.md`) often previews it partially, for example with
+`head -100`, and misses what sits lower down. Cross-links between references are fine as long as
+SKILL.md also names the target. `scripts/lint-skills.sh` enforces this in this collection.
+
+Organize by domain or variant (one `references/<platform>.md` per CI platform, say) so a
+question about one never loads the other, and name files for their content, not `doc2.md`.
+
 ### Reference file headers
 
-Reference files don't need frontmatter. Start with a `#` title and optionally a table of
-contents for files over 300 lines.
+Reference files don't need frontmatter. Start with a `#` title. Files over 100 lines open with a
+`## Contents` list of their sections so a partial read still sees the whole scope. Generate and
+refresh it with `scripts/gen-ref-toc.py` rather than by hand; lint fails on a missing or stale
+list. A hand-written `## Table of Contents` near the top is also accepted.
 
 ---
 
@@ -501,6 +536,78 @@ service names, wrong paths, or wrong assumptions. The fix is twofold:
 
 Negative constraints ("don't do X") are weak for LLMs. Comprehensive positive definitions
 ("do exactly these things") are the real defense.
+
+---
+
+## 7.6 Workflow Reliability Patterns
+
+Use these where step order or output quality matters. Skip them for open-ended advice; a
+checklist on order-independent work only adds tokens.
+
+**Progress checklist.** For multi-step workflows where order matters, give a checklist the agent
+copies into its reply and ticks off. Keep each item a goal, not a script, and add a short paragraph
+per step below it:
+
+```markdown
+Copy this checklist and track progress:
+- [ ] Step 1: Inventory the inputs
+- [ ] Step 2: Draft the change
+- [ ] Step 3: Validate (run the check; fix and repeat until it passes)
+- [ ] Step 4: Verify the result against the original request
+```
+
+**Explicit loop-back.** A failing check must name where to go: "If validation fails, fix the
+reported fields and return to Step 3." Without it, agents tick a failed step and move on.
+
+**Validate-fix-repeat.** Pair generated output with a validator and loop until it passes. The
+validator can be a script (`python scripts/validate.py out/`) or a reference the agent checks
+against (a style guide, a voice document, a checklist). Proceed only when it passes.
+
+**Plan-validate-execute.** For batch, destructive, or high-stakes operations, have the agent write
+the intended changes to a structured file (`changes.json`), validate that plan, then apply and
+verify. Make validator errors specific ("field 'signature_date' not found; available: ...").
+
+**Templates and examples.** Say whether a template is strict ("use exactly this structure") or a
+default ("adapt sections as needed"). When style matters more than structure, give 2-3
+input/output pairs instead of describing the style.
+
+**Conditional workflow.** At a decision point, route explicitly: "Creating new content? Follow
+the creation workflow. Editing? Follow the editing workflow."
+
+**Learning loop.** When a run fails for a reason the skill does not cover yet, the agent proposes
+the missing rule at the end of the run; it lands only after the user approves (Mode 5).
+
+## 7.7 Scripts and Dependencies
+
+- **Prefer a script for deterministic or fragile operations.** It behaves the same on every model,
+  costs no context to run (only its output is read), and saves regenerating code each time.
+- **Say execute or read.** "Run `scripts/check.sh <dir>`" (execute) versus "see
+  `scripts/check.sh` for the algorithm" (read). Execution is the default.
+- **Solve, don't defer.** Scripts handle expected errors with a clear message or a safe default
+  instead of crashing and leaving the agent to guess. Fail loud on real errors.
+- **No unexplained constants.** Comment why a timeout, retry count, or threshold has its value.
+- **Do not assume tools are installed.** List required tools in `compatibility` and put a detect
+  or install line beside the step that needs it (`command -v jq || echo "install jq"`,
+  `pip install pypdf`). An agent skips the install when the tool is present; a fresh machine
+  works on day one.
+- **Portable invocation.** Relative forward-slash paths from the skill directory; no
+  harness-specific install paths.
+
+## 7.8 Model Portability
+
+Skills here run on several harnesses and model families, from small fast models to flagship
+reasoning models. A skill's effect depends on the model reading it.
+
+- **Name the tiers you target and test each one.** Small or fast tier: does the skill give enough
+  guidance? Flagship tier: does it over-explain, or does output get worse than without the skill?
+- **Fix the right way.** A step the small tier misses needs clearer wording or a script. An
+  instruction the flagship does better without gets cut. Instructions written to force older
+  models through steps (numbered micro-steps, ALL CAPS) often hurt current flagship models.
+- **Compare against a no-skill baseline.** Content that does not beat the baseline on any test is
+  a cut candidate.
+- **Do not add a model field to frontmatter.** It is not part of the Agent Skills spec and unknown
+  keys break some uploads. Record tested tiers in the review or refiner run report; use
+  `compatibility` only for a real capability requirement (e.g., vision or a large context window).
 
 ---
 

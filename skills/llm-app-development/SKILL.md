@@ -82,7 +82,6 @@ AI tools consistently produce the same mistakes when generating AI application c
 
 ## Best Practices
 
-- Prefer raw provider SDKs until orchestration complexity justifies LangGraph, LlamaIndex, or LangChain.
 - Keep model, tool, retrieval, and safety decisions configurable per environment; avoid hardcoding preview model names in application logic.
 - Treat model output as untrusted input: validate structure, refusal states, tool arguments, and downstream side effects.
 
@@ -113,9 +112,6 @@ Pick the lightest tool that solves the problem:
 4. **LangGraph / OpenAI Agents SDK** - stateful agent frameworks. Use when you need cycles,
    persistence, human-in-the-loop, or multi-agent coordination.
 
-**The anti-pattern**: importing LangChain to make a single API call. That's like importing
-Django to serve a static HTML file.
-
 ### Step 3: Implement
 
 Follow the domain-specific sections below. Read the appropriate reference file for detailed
@@ -130,7 +126,8 @@ Start with the project's existing evals and representative success, failure, and
 cases for the changed behavior. Prefer deterministic assertions where they prove the contract;
 add paid judge or cost checks only when they answer a material question. Preserve required CI
 gates, track regressions, and expand the dataset when failures expose missing coverage. A small
-prompt fix does not require a new framework or an arbitrary minimum case count.
+prompt fix does not require a new framework or an arbitrary minimum case count. If a case
+fails, fix the cause and return to Step 3; repeat until the required cases pass.
 
 Read `references/evaluation.md` for promptfoo setup, assertion types, CI integration (GitHub
 Actions example), RAG-specific evals, agent evals, and red teaming patterns.

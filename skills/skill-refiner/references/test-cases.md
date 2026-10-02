@@ -12,6 +12,11 @@ canonical headings and explicit legacy-invocation cases, evaluated for notice
 integrity as pass/fail rather than ordinary quality scores or improvement targets.
 See `references/evaluation-criteria.md`.
 
+## Contents
+
+- Test Case Format
+- Test Cases
+
 ---
 
 ## Test Case Format

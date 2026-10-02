@@ -4,6 +4,13 @@ Read this reference for portable syntax, cleanup or signal handling, interactive
 management, or a Zsh completion. Read the shell-specific reference first when a feature differs
 between Bash, Zsh, POSIX sh, or Fish.
 
+## Contents
+
+- Cross-shell comparison
+- Portable syntax and safety
+- Jobs and interactive process control
+- Zsh completion skeleton
+
 ## Cross-shell comparison
 
 | Feature | POSIX sh | Bash | Zsh | Fish |

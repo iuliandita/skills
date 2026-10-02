@@ -3,6 +3,16 @@
 Operational guidance for common plugins. Not exhaustive - for unlisted plugins,
 inspect via `pkg info <name>` and check `/usr/local/etc/` for their configs.
 
+## Contents
+
+- Security
+- Networking
+- IDS/IPS
+- Monitoring
+- Virtualization
+- Plugin interaction gotchas
+- OPNsense Release Notes (25.1 / 25.7 / 26.1)
+
 ## Security
 
 ### os-crowdsec (CrowdSec)

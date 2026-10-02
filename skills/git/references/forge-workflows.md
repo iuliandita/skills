@@ -4,6 +4,14 @@ Patterns for GitHub, GitLab, and Forgejo - PRs/MRs, releases, branch protection,
 
 Research date: September 2026.
 
+## Contents
+
+- GitHub
+- GitLab
+- Forgejo
+- Cross-Forge Patterns
+- Merge Strategies
+
 ---
 
 ## GitHub
@@ -67,8 +75,8 @@ gh release create v2.0.0-rc.1 --prerelease --title "v2.0.0-rc.1"
 
 ### GitHub branch protection (rulesets)
 
-GitHub is migrating from "branch protection rules" to "repository rulesets" (GA since 2024).
-Rulesets are more flexible (org-level, tag rules, bypass lists) and the recommended approach.
+Use repository rulesets for new protection. They support org-level scope, tag rules, and bypass
+lists. Old pattern: classic branch protection rules still work; migrate them when touching them.
 
 Key ruleset settings for production branches:
 - **Require pull request**: min 1 approval, dismiss stale reviews, require review from code owners
@@ -366,7 +374,7 @@ git push origin v1.2.3
 fj release --help
 ```
 
-When `fj release` is not yet an option in your installed version, fall back to the REST
+When the installed `fj` lacks `fj release`, fall back to the REST
 API section below - `POST /api/v1/repos/{owner}/{repo}/releases` is stable.
 
 For projects that prefer one command to tag + release, `fj tag` (new in v0.4.0) manages

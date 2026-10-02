@@ -3,6 +3,17 @@
 Arch storage advice gets dangerous when people collapse Btrfs, LUKS, TRIM, hibernation, and boot
 artifacts into one vague "recovery" story. Keep them separate.
 
+## Contents
+
+- First checks
+- Btrfs basics
+- Snapper and rollback
+- TRIM
+- LUKS and encrypted-root realities
+- Hibernation and resume
+- Common failure splits
+- What NOT to do
+
 ## First checks
 
 ```bash

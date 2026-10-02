@@ -2,6 +2,20 @@
 
 Bug patterns specific to Python. Focused on correctness - not style (see code-simplification) or security (see security-audit).
 
+## Contents
+
+- Mutable Default Arguments
+- Exception Handling Bugs
+- Iterator & Generator Bugs
+- Scope & Binding Bugs
+- Import & Module Bugs
+- Async / Await Bugs
+- Data Structure Bugs
+- Type Hint Bugs
+- Dataclass & Pydantic Bugs
+- Attribute Typo Bugs
+- Numeric & String Bugs
+
 ---
 
 ## Mutable Default Arguments

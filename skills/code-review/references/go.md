@@ -2,6 +2,18 @@
 
 Bug patterns specific to Go. Focused on correctness - not style (see code-simplification) or security (see security-audit).
 
+## Contents
+
+- Goroutine Lifecycle & Leak Detection
+- Nil Interface vs Nil Pointer
+- Defer Ordering & Closure Capture
+- Channel Patterns & Deadlock
+- Error Wrapping & Sentinel Errors
+- Context Cancellation Patterns
+- Data Races & Shared State
+- Loop Variable Capture (Pre-Go 1.22)
+- Struct & Interface Gotchas
+
 ---
 
 ## Goroutine Lifecycle & Leak Detection

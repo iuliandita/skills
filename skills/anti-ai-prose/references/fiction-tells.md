@@ -1,9 +1,9 @@
 # Fiction and line-editing tells
 
 Deep-dive reference for the checks in `SKILL.md` that matter most in fiction and other
-long-form prose: invented character names, adverb density, and forced synonym variation.
-The first is fiction-only; the last two apply to any prose but earn their detail here
-because line editors hit them hardest in narrative text.
+long-form prose: adverb density, forced synonym variation, and character names. Character
+names are fiction-only; the other two apply to any prose but earn their detail here because
+line editors hit them hardest in narrative text.
 
 ---
 

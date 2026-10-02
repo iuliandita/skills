@@ -2,11 +2,19 @@
 
 Podman, Buildah, Skopeo, and containerd patterns. Reviewed September 2026.
 
+## Contents
+
+- Podman (v6.1.1)
+- Buildah (v1.45.0)
+- Skopeo
+- containerd (v2.3.4)
+- Decision Matrix
+
 ---
 
 ## Podman (v6.1.1)
 
-Daemonless, rootless container engine. CLI-compatible with Docker. `alias docker=podman` works for most commands. Adopted by 40% of Fortune 500 (2025 survey).
+Daemonless, rootless container engine. CLI-compatible with Docker. `alias docker=podman` works for most commands.
 
 ### Key differences from Docker
 
@@ -289,8 +297,8 @@ nerdctl supports BuildKit, Compose, rootless mode, and most Docker CLI flags. Us
 | Scenario | Recommended |
 |----------|-------------|
 | Local development (macOS/Windows) | **Docker Desktop** (includes Docker Engine, BuildKit, Compose, Scout) |
-| Local development (Linux) | **Docker Engine** or **Podman** (preference) |
-| CI/CD image builds | **Docker** (BuildKit) or **Buildah** (daemonless) |
+| Local development (Linux) | **Docker Engine**; **Podman** on rootless-first hosts |
+| CI/CD image builds | **Docker** (BuildKit); **Buildah** where no daemon can run |
 | Rootless-first environment | **Podman** |
 | RHEL/OpenShift | **Podman + Buildah + Skopeo** |
 | Registry mirroring / air-gap | **Skopeo** |

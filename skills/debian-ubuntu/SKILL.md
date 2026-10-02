@@ -222,11 +222,13 @@ only if the first layer is clean.
 apt-cache policy package_name
 systemctl status unit_name
 journalctl -u unit_name -b
-command -v update-grub >/dev/null 2>&1 && update-grub
-command -v grub-install >/dev/null 2>&1 && grub-install --version
+ls -l /boot/vmlinuz-* /boot/initrd.img-*
 ```
 
-Reboot only when the boot path is understood and at least one known-good entry remains.
+If kernel or boot files changed, first confirm every kernel above has an initrd and run
+`sudo update-initramfs -u -k <version>` for any that are missing. Then run `sudo update-grub` only
+when GRUB is the confirmed loader (`command -v update-grub`), and confirm the entries with
+`grep -E "menuentry|initrd" /boot/grub/grub.cfg`. Reboot only when the boot path is understood and at least one known-good entry remains.
 
 ---
 

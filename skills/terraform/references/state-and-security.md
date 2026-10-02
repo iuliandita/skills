@@ -2,6 +2,16 @@
 
 State backends, locking, encryption, OIDC federation, and CI/CD pipeline patterns.
 
+## Contents
+
+- State Backends
+- OIDC Federation (zero static credentials in CI)
+- CI/CD Pipeline Pattern
+- Secrets Management
+- Drift Detection
+- State Surgery
+- Audit Trail Architecture
+
 ---
 
 ## State Backends
@@ -229,6 +239,9 @@ provider "aws" {
 PCI Req 11.5 requires change detection. Manual `terraform plan` is necessary but insufficient.
 
 ### Approaches
+
+Default to a scheduled `terraform plan -detailed-exitcode` in CI (exit code 2 means drift); add the
+others when the platform or compliance scope calls for them.
 
 | Approach | Frequency | Effort |
 |----------|-----------|--------|

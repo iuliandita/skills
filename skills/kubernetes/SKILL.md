@@ -66,16 +66,14 @@ This skill runs inside an AI agent. AI tools consistently produce the same K8s s
 - [ ] **kube-proxy mode checked on 1.35+ clusters**: IPVS mode is deprecated in 1.35, disabled by default from 1.40 (re-enable with the `KubeProxyIPVS` feature gate) and removed in 1.43; recommend nftables mode for new clusters and flag IPVS in reviews
 - [ ] Cross-cutting agent hygiene applied - see `references/agent-hygiene.md`
 
-Run generated manifests through `kube-score`, `kubelinter`, or `checkov` when available.
+Run generated manifests through `kube-score score <manifest>` and `checkov` (Step 4) when available;
+use `kube-linter` instead of `kube-score` if the repository already standardizes on it.
 
-## Performance
+## Performance and Operating Practices
 
 - Set requests and limits from measured workload behavior; missing requests damage scheduling and autoscaling.
 - Use server-side dry-run and diff before apply; avoid repeated full-cluster renders during tight loops.
 - Scope watches, logs, and `kubectl get` calls by namespace/labels in large clusters.
-
-## Best Practices
-
 - Prefer declarative GitOps or reviewed manifests over live imperative changes for production.
 - Back up CRDs and custom resources before upgrades or operator changes.
 - Use policy gates for privileged pods, hostPath, broad RBAC, and mutable image tags.
@@ -114,7 +112,7 @@ Before writing YAML, determine:
 
 ### Step 3: Build
 
-Follow the domain-specific section below. Always apply the production checklist (Step 4) and AI self-check before finishing.
+Follow the domain-specific section below. Always run Step 4, the production checklist, and the AI self-check before finishing.
 
 ### Step 4: Validate
 
@@ -126,7 +124,8 @@ printf 'Using kube context: %s\n' "$KUBE_CONTEXT"
 # Manifests
 kubectl --context "$KUBE_CONTEXT" apply -f <manifest> --dry-run=server  # Server-side validation
 kube-score score <manifest>                     # Best practice scoring
-checkov -d . --framework kubernetes             # Security/compliance scan
+checkov -d . --framework kubernetes  # when available
+# Fix and rerun until clean for dry-run errors and findings this change introduced; report pre-existing ones
 
 # Helm 4
 helm lint <chart>/                              # Lint chart
@@ -329,7 +328,7 @@ Promotion: dev -> staging -> prod via PR-based promotion. No auto-sync to prod.
 **kube-proxy**: nftables mode is the future. IPVS deprecated in 1.35, disabled by default from 1.40 (re-enable with the `KubeProxyIPVS` feature gate) and removed in 1.43 (https://kubernetes.io/docs/reference/networking/virtual-ips/).
 
 **Service mesh** (add only when needed):
-- **Istio ambient** (GA in 1.24): sidecarless L4 mTLS via ztunnel, optional L7 via waypoint proxies. The "sidecars are too expensive" argument is dead.
+- **Istio ambient** (GA in 1.24): sidecarless L4 mTLS via ztunnel, optional L7 via waypoint proxies.
 - **Cilium**: mTLS via WireGuard/IPsec, no mesh abstraction. Simpler but less L7 control.
 - **Linkerd**: stable builds now vendor-only (Buoyant). Source is Apache 2.0 but you build your own or pay.
 
@@ -360,7 +359,6 @@ The Trivy supply chain attack (CVE-2026-33634) is the defining security event of
 
 - **cgroup v2 required** on K8s 1.36+ (`FailCgroupV1` defaults to true; kubelet won't start on cgroup v1 unless `failCgroupV1: false`). Nodes on cgroup v1 (CentOS 7, RHEL 7, Ubuntu 18.04) will fail.
 - **containerd 2.0 required** on K8s 1.36+. Last release supporting containerd 1.x is 1.35.
-- **K8s 1.36 launches April 22, 2026** - containerd 2.0 required on all nodes. IPVS kube-proxy mode is removed in 1.43 (nftables is the replacement).
 - **AppArmor annotation auto-population stopped** in 1.34; full removal in 1.36. Use `securityContext.appArmorProfile` field.
 - **DRA (Dynamic Resource Allocation)** GA in 1.34 for GPU/FPGA/hardware scheduling. Replaces device plugin model.
 - **User namespaces** (`hostUsers: false`) enabled by default since K8s 1.33. Maps container UID 0 to unprivileged host UID. Huge for PCI multi-tenancy - container breakout doesn't yield host root.

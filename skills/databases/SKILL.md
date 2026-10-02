@@ -122,7 +122,6 @@ AI tools consistently produce the same database mistakes. **Before returning any
 - Tune connection pools to database capacity; more app connections can reduce throughput.
 - Batch writes and migrations in bounded chunks to avoid lock escalation, replication lag, and runaway transactions.
 
-
 ---
 
 ## Best Practices
@@ -133,7 +132,6 @@ AI tools consistently produce the same database mistakes. **Before returning any
   RTO/RPO, then record the source backup, checks, and cleanup without overwriting live data.
 - Separate online, background, and analytical workloads where query shape or latency differs.
 - Prefer additive migrations with backfills and compatibility windows for zero-downtime services.
-
 
 ## Workflow
 
@@ -178,7 +176,7 @@ Follow the domain-specific section below. Always apply the production checklist 
 2. PG blocked queries: `SELECT blocked.pid AS blocked_pid, blocked.query AS blocked_query, blocking.pid AS blocking_pid, blocking.query AS blocking_query FROM pg_stat_activity blocked JOIN pg_locks bl ON bl.pid = blocked.pid JOIN pg_locks kl ON kl.locktype = bl.locktype AND kl.database IS NOT DISTINCT FROM bl.database AND kl.relation IS NOT DISTINCT FROM bl.relation AND kl.page IS NOT DISTINCT FROM bl.page AND kl.tuple IS NOT DISTINCT FROM bl.tuple AND kl.transactionid IS NOT DISTINCT FROM bl.transactionid AND kl.pid != bl.pid JOIN pg_stat_activity blocking ON blocking.pid = kl.pid WHERE NOT bl.granted AND kl.granted;`
 3. MySQL: `SHOW ENGINE INNODB STATUS\G` - look for `LATEST DETECTED DEADLOCK` section. Also: `SELECT * FROM performance_schema.data_lock_waits;` (MySQL 8.0+).
 4. MongoDB: `db.currentOp({"waitingForLock": true})` and check `mongod` log for `LockTimeout` entries.
-5. Inspect the blocker owner, transaction age, and impact. Prefer query cancellation when appropriate; terminate the exact backend/thread only with explicit authorization after assessing rollback impact. Then address the cause of the lock.
+5. Inspect the blocker owner, transaction age, and impact. Prefer query cancellation (PG: `SELECT pg_cancel_backend(<pid>);`); terminate the exact backend/thread (PG: `pg_terminate_backend(<pid>)`, MySQL: `KILL <thread_id>`) only with explicit authorization after assessing rollback impact. Then address the cause of the lock.
 
 **Connection pooler sizing** (second most common):
 1. Determine backend budget: `max_connections` minus reserved connections and operational headroom = available; budget replication workers/senders separately.
@@ -195,6 +193,8 @@ Follow the domain-specific section below. Always apply the production checklist 
 5. Run during low-traffic window if the operation takes locks (even brief ones).
 
 ### Step 4: Validate
+
+If a check fails, fix the config, query, or migration and rerun the check before proceeding.
 
 ```bash
 # PostgreSQL

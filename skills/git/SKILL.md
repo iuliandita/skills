@@ -3,7 +3,7 @@ name: git
 description: >
   Manage git commits, branches, conflicts, rebases, PRs/MRs, tags, releases, and GitHub/GitLab/Forgejo/Gitea workflows.
 license: MIT
-compatibility: "Requires git. Optional: gh (GitHub CLI), glab (GitLab CLI), fj (Forgejo CLI)"
+compatibility: "Requires git. Optional: gh (GitHub CLI), glab (GitLab CLI), fj (Forgejo CLI), git-filter-repo, git-cliff"
 metadata:
   source: iuliandita/skills
   date_added: "2026-03-24"
@@ -252,10 +252,10 @@ General flow:
    For alpha/pre-release: `gh release create vX.Y.Z-alpha.N --prerelease --title "vX.Y.Z-alpha.N"`
 6. **Verify**: check that CI/CD picked up the tag and started the release pipeline.
 
-**Changelog generation**: conventional commits feed tools like `git-cliff`, `release-please`,
-or `conventional-changelog` to auto-generate changelogs from commit history. GitHub's
-`gh release create --generate-notes` also works (uses PR titles since last tag). The `!`
-breaking change marker and consistent scopes make these tools significantly more useful.
+**Changelog generation**: default to the project's existing tool. With none, use
+`gh release create --generate-notes` (PR titles since the last tag) on GitHub, or `git-cliff`
+when the project keeps a committed `CHANGELOG.md`. The `!` marker and consistent scopes make
+either output more useful.
 
 ### Step 3d: Recovery operations
 

@@ -4,6 +4,15 @@ September 2026 snapshot. Refreshed 2026-09-10 against provider docs, PyPI, npm, 
 and GitHub Security Advisories.
 Verify current releases before pinning.
 
+## Contents
+
+- Model families
+- Claude 5-series migration
+- GPT-6.1 Sol migration
+- Astra migration
+- SDKs, runtimes, and tooling
+- Security update (checked 2026-09-10)
+
 ## Model families
 
 Sonnet 5.5 and GPT-6.1 Sol facts checked 2026-09-30 against provider docs; other model facts

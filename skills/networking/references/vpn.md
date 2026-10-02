@@ -1,5 +1,14 @@
 # VPN and Overlay Network Configuration
 
+## Contents
+
+- WireGuard
+- OpenVPN
+- IPsec / strongSwan
+- Overlay Networks
+- Cloudflare Tunnels
+- VPN Security Considerations
+
 ## WireGuard
 
 WireGuard is the default choice for new VPN deployments. Minimal attack surface (~4000 lines of

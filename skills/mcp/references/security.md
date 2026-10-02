@@ -3,6 +3,17 @@
 Deep security guidance for MCP server development. Read this when implementing OAuth,
 hardening tool handlers, or reviewing MCP code for vulnerabilities.
 
+## Contents
+
+- Known CVEs
+- SDK advisory update (checked 2026-09-25)
+- OAuth 2.1 Authorization
+- Stateless Core and Legacy Sessions (Streamable HTTP)
+- Injection Prevention Details
+- Tool Poisoning and Rug Pull Attacks
+- Injection Test Payloads
+- Elicitation Security
+
 ---
 
 ## Known CVEs
@@ -321,14 +332,7 @@ unintended operations, or leaking internal details in error messages.
 
 Elicitation allows servers to request structured input from users mid-operation (spec 2025-06-18+).
 
-**Schema restrictions** (limited to flat objects with primitive fields):
-- `string` (optional `format`: email, uri, date, date-time)
-- `number` / `integer` (with `minimum`, `maximum`)
-- `boolean`
-- `enum` (string with `enum`; use `anyOf` with `title` for labeled choices)
-- `array` of enum strings (for multi-select)
-
-No nested objects. Keep schemas simple for broad client support.
+Schema restrictions (flat objects, primitive fields only) are listed in SKILL.md Step 5.
 
 **Servers MUST NOT:**
 - Request passwords, tokens, API keys, or credentials via elicitation

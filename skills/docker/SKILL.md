@@ -3,7 +3,7 @@ name: docker
 description: >
   Build and debug Dockerfiles, Compose, Docker/Podman containers, and BuildKit images; review container security.
 license: MIT
-compatibility: "Requires docker or podman. Optional: docker compose, buildkit, cosign, trivy"
+compatibility: "Requires docker or podman. Optional: docker compose, buildkit, cosign, trivy, syft"
 metadata:
   source: iuliandita/skills
   date_added: "2026-03-24"
@@ -17,10 +17,6 @@ Write, review, and architect Dockerfiles, Compose stacks, and container workflow
 
 **Target versions**: September 2026 snapshot. Read `references/target-versions.md` before
 pinning Docker, Compose, BuildKit, containerd, Podman, Buildah, or runc.
-
-**Portable metadata:** keep file-routing patterns in the description and scope sections. `paths`
-is a Claude Code-local extension, not portable Agent Skills metadata, and can make claude.ai uploads
-or Skills API packages fail validation.
 
 This skill covers Dockerfiles, Compose, container hardening, supply chain, registry/CI
 patterns, and runtime migration across Docker, Podman, Buildah, Skopeo, and containerd.
@@ -106,27 +102,27 @@ Before writing anything, determine:
 
 ### Step 3: Build
 
-Follow the domain-specific section below. Always apply the production checklist (Step 4) and AI self-check before finishing.
+Follow the domain-specific section below. Before finishing, run Step 4, the `## Production Checklist`, and the AI self-check.
 
 ### Step 4: Validate
 
+Fix each failure and rerun from `docker build --check` until all checks pass and no unaccepted
+HIGH/CRITICAL findings remain. Report any tool that was unavailable.
+
 ```bash
 # Dockerfile
+docker build --check .                # lint without building
 docker build -t test-build .          # Use --no-cache only when investigating stale cache or clean-build reproducibility
 docker history test-build --format "{{.Size}}\t{{.CreatedBy}}" | head -15
-docker scout quickview test-build     # vulnerability overview
-docker scout cves test-build          # detailed CVE list
 
 # Compose
 docker compose config                 # validate and render
 docker compose --dry-run up           # dry-run startup (Compose v5)
 
-# Security
-docker scout cves --only-severity critical,high <image>
-cosign verify --key <key> <image>     # verify signature
+# Security (Trivy default; Grype or Docker Scout if the repo already uses them)
+trivy image --severity HIGH,CRITICAL --exit-code 1 <image>   # use v0.74.0+; never v0.69.4-6
 syft <image> -o spdx-json             # generate SBOM
-grype <image>                         # vulnerability scan (alternative to Scout)
-trivy image <image>                   # use v0.74.0+; never v0.69.4-6
+cosign verify --key <key> <image>     # verify signature
 ```
 
 ## Dockerfile
@@ -169,7 +165,7 @@ CMD ["dist/index.js"]
 
 **BuildKit features** (require `# syntax=docker/dockerfile:1` or `DOCKER_BUILDKIT=1`):
 
-- **Cache mounts**: `RUN --mount=type=cache,target=/root/.npm npm ci` - persists package cache across builds, up to 70% faster rebuilds
+- **Cache mounts**: `RUN --mount=type=cache,target=/root/.npm npm ci` - persists package cache across builds
 - **Secret mounts**: `RUN --mount=type=secret,id=npmrc,target=/root/.npmrc npm ci` - secrets never baked into layers
 - **Heredocs**: multi-line scripts without backslash hell
 
@@ -332,10 +328,10 @@ For a hardened Dockerfile pattern, see `references/dockerfile-patterns.md` (Lang
 ### Supply chain security
 
 - **Sign images** with cosign (Sigstore): `cosign sign --key cosign.key <image>@<digest>`
-- **Generate SBOMs** at build time: `docker scout sbom <image>` or `syft <image> -o spdx-json`
+- **Generate SBOMs** at build time: `syft <image> -o spdx-json`
 - **Verify at deploy**: `cosign verify --key cosign.pub <image>@<digest>`
 - **Pin CI tool images to SHA256 digests.** Mutable tags are a proven attack vector (Trivy March 2026, tj-actions/reviewdog March 2025).
-- **Use Docker Scout** or Grype for continuous vulnerability monitoring.
+- **Rescan published images on a schedule** with the CI scanner or registry-side scanning.
 - **Trivy**: use v0.74.0+ from official releases for new pins. v0.69.3 was the March 2026 rollback version. v0.69.4-6 contained credential-stealing malware. If any CI pipeline ran compromised Trivy between March 19-23, 2026, rotate ALL secrets.
 
 ### PCI-DSS 4.0 container requirements (summary)
@@ -456,7 +452,7 @@ See `references/output-contract.md` for the full contract.
 6. **Meaningful service healthchecks.** Use Dockerfile, Compose, or orchestrator probes for long-running services; use exit status for one-shot jobs and document external monitoring.
 7. **Pin CI tools to SHA256 digests.** Mutable tags are compromised supply chain vectors (Trivy CVE-2026-33634 March 2026, tj-actions CVE-2025-30066 (upstream: reviewdog CVE-2025-30154) March 2025).
 8. **Trivy v0.74.0+ for new pins.** v0.69.3 was the March 2026 rollback version; v0.69.4-6 contained credential-stealing malware. If you ran it, rotate secrets.
-9. **Compose: no `version:` field.** It's deprecated and removed. Just delete it.
+9. **Compose: no `version:` field.** It is obsolete and ignored. Delete it.
 10. **Clean apt cache in the same RUN layer.** `apt-get update && apt-get install -y ... && rm -rf /var/lib/apt/lists/*` - all one `RUN`.
 11. **`.dockerignore` is not optional.** `.git`, `node_modules`, `.env`, secrets, test fixtures, docs - all excluded.
 12. **Resource limits on production containers.** Memory and CPU limits prevent noisy neighbors and OOM cascading.

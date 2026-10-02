@@ -244,9 +244,8 @@ const { t } = useI18n()
 // <button>{{ t('auth.signIn') }}</button>
 ```
 
-For Next.js use `next-intl`; for others see `references/audit-patterns.md`.
-
-Read `references/audit-patterns.md` for framework-specific patterns on where strings hide.
+For Next.js use `next-intl`. Read `references/audit-patterns.md` for framework-specific patterns
+on where strings hide.
 
 ### Step 3: Audit and extract strings
 
@@ -288,10 +287,8 @@ aria-labels, then placeholders...) is the #1 i18n time sink.
 | Document title | `document.title = 'Settings'` | Not in the component tree |
 | Server response text | `{ error: 'Invalid email' }` | Lives in API layer, not frontend |
 
-See `references/audit-patterns.md` for false positives to skip (console.log, CSS classes,
-data attributes, route patterns, etc.).
-
-Read `references/audit-patterns.md` for grep commands that catch each category.
+Read `references/audit-patterns.md` for grep commands per category and false positives to skip
+(console.log, CSS classes, data attributes, route patterns).
 
 ### Step 4: Generate translations
 
@@ -312,7 +309,8 @@ broken in every language. Read `references/translation-quality.md` for the full 
    names, service names, technical identifiers).
 4. **Translate in batches, validate between batches.** One locale at a time. Don't translate
    all 15 locales then discover a systematic error.
-5. **Validate every batch** before committing (see Step 5).
+5. **Validate every batch** before committing (see Step 5). Fix the reported keys and re-run
+   until validation passes before starting the next batch.
 
 Use the full prompt template from `references/translation-quality.md` - it includes
 app context, voice register, protected terms, preservation rules, and explicit "do not"

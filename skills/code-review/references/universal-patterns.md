@@ -2,6 +2,19 @@
 
 Use these cross-language categories before diving into language-specific checks.
 
+## Contents
+
+- 1. Logic Errors
+- 2. Null or Undefined Hazards
+- 3. Error-Handling Gaps
+- 4. Race Conditions and State
+- 5. Resource Management
+- 6. Edge Cases and Boundaries
+- 7. API Contract Issues
+- 8. Performance Traps
+- 9. Convention Violations That Matter
+- 10. Test Correctness
+
 ## 1. Logic Errors
 
 The most dangerous category: code that runs without errors but produces wrong results.

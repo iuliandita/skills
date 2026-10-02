@@ -1,12 +1,16 @@
 # Operations and Execution
 
-This reference covers the practical day-2 mechanics around running Ansible reliably:
+Day-2 mechanics for running Ansible reliably.
 
-- inventory structure
-- `ansible.cfg`
-- execution environments
-- CI/CD integration
-- `ansible-navigator`
+## Contents
+
+- Inventory
+- ansible.cfg
+- Execution Environments
+- Vault and Secrets
+- CI/CD Integration
+- Shell Profile Rollouts
+- ansible-navigator
 
 ## Inventory
 

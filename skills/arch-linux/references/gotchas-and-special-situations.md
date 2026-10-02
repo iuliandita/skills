@@ -2,6 +2,13 @@
 
 Arch and CachyOS break in recurring, boring ways. Check these before inventing a new explanation.
 
+## Contents
+
+- The biggest recurring gotchas
+- Special situations worth recognizing fast
+- What to check first when...
+- What NOT to do
+
 ## The biggest recurring gotchas
 
 ### Partial upgrades

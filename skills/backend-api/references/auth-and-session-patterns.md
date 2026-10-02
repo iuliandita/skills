@@ -2,6 +2,16 @@
 
 Use this file when the main skill needs current HTTP API auth guidance.
 
+## Contents
+
+- Start From the Client Type
+- Sessions vs Bearer Tokens
+- OAuth/OIDC Rules
+- BFF / Token-Mediating Backend
+- API Keys
+- Refresh Tokens
+- Authorization Boundaries
+
 ## Start From the Client Type
 
 | Client | Default | Avoid by default |

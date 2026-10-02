@@ -68,6 +68,3 @@ confirm actual scoped use before dispatch.
   Inspect ambiguous fixtures before dispatch.
 - **Large repos (>5000 files)**: the detection script is fast (grep on file list, not file
   contents) but the dependency manifest checks read files. No file-count caps silently omit later manifests. Report unreadable tracked files as coverage gaps.
-- **Shebang detection**: the table notes shebang matching for `shell-scripting` but the script
-  does not implement it (would require reading file contents, significantly slower). The
-  `*.sh`/`*.bash`/`Makefile`/`scripts/` patterns catch the vast majority of cases.

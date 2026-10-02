@@ -3,7 +3,7 @@ name: testing
 description: >
   Write unit, integration, E2E, load, and accessibility tests; debug fixtures, mocks, coverage, and flaky suites.
 license: MIT
-compatibility: "Requires one or more of: vitest, jest, pytest, go test, cargo test, playwright"
+compatibility: "Requires one or more of: vitest, jest, pytest, go test, cargo test, playwright; k6 for load tests"
 metadata:
   source: iuliandita/skills
   date_added: "2026-04-02"
@@ -74,7 +74,7 @@ AI tools consistently produce the same testing mistakes. **Before returning any 
 - [ ] No `sleep()` or fixed delays for async waits - use polling, retries, or event-based waits
 - [ ] Coverage threshold is realistic (80% line coverage is a good default; 100% is a lie)
 - [ ] Snapshot tests have been reviewed manually before committing (blind `--update` is a bug factory)
-- [ ] E2E selectors use `data-testid`, `role`, or accessible names - not CSS classes or DOM structure
+- [ ] E2E selectors use role or accessible name first, `data-testid` as a last resort - not CSS classes or DOM structure
 - [ ] **Runner APIs current**: pytest, Vitest, Jest, Playwright, and Testing Library examples match current runner behavior
 - [ ] **Flake source identified**: retries are not used to hide nondeterminism without diagnosis
 - [ ] Cross-cutting agent hygiene applied - see `references/agent-hygiene.md`
@@ -146,6 +146,7 @@ Follow the language-specific patterns below. Universal principles:
   full suite when required or when the affected surface warrants it; do not add tests that
   mirror reversible, low-impact edits. Repeat or broaden passing checks only for new changes,
   failures, or unresolved concerns.
+- If a new test fails for a reason other than the behavior under test, fix the test or fixture and return to Step 3
 - Check coverage delta: new code should be covered, but don't chase vanity numbers
 - Run in CI if possible - tests that pass locally but fail in CI are the worst kind
 
@@ -370,6 +371,4 @@ See `references/output-contract.md` for the full contract.
 3. **Isolate test state.** Each test creates its own data, runs independently, and cleans up after itself. Shared mutable state between tests is the #1 cause of order-dependent failures.
 4. **Fix or quarantine flaky tests immediately.** A test suite people ignore is worse than no test suite. Track flaky tests, fix root causes, don't just retry.
 5. **Don't test the framework.** Testing that React renders a div, or that Express routes to a handler, is testing someone else's code. Test YOUR logic.
-6. **Run the AI self-check.** Every generated test gets verified against the checklist before returning. AI-generated tests love to test implementation details, use `sleep()`, and share state.
-7. **Match the existing framework.** Don't introduce Vitest into a Jest project or pytest into a unittest project without the user explicitly asking for a migration.
-8. **Snapshot tests require manual review.** Never auto-update snapshots (`-u` / `--update`) without reviewing the diff. Blind snapshot updates are equivalent to deleting the test.
+6. **Snapshot tests require manual review.** Never auto-update snapshots (`-u` / `--update`) without reviewing the diff. Blind snapshot updates are equivalent to deleting the test.

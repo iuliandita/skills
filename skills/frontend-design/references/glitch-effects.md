@@ -5,6 +5,18 @@ Glitch as accent, not theme. Used on technical interfaces - terminals, dashboard
 Use these effects only when the brief warrants them. A technical product alone is not a
 reason to add glitch. Prefer one restrained accent and preserve readable state information.
 
+## Contents
+
+- When glitch is appropriate
+- When glitch is wrong
+- RGB split (chromatic aberration)
+- Scanlines
+- Type displacement (text glitch)
+- Controlled stutter (frame skip)
+- Glitch on hover
+- Restraint rules
+- What NOT to do
+
 ---
 
 ## When glitch is appropriate

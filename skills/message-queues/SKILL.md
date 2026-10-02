@@ -73,7 +73,10 @@ oldest-message age, DLQ rate, and Kafka consumer-group lag. A rising backlog wit
 throughput suggests insufficient capacity or increased input; high in-flight work plus slow acks
 suggests downstream saturation; repeating message IDs suggest a retry or idempotency defect.
 Inspect one correlation/message ID across producer, broker, consumer, and effect records before
-changing prefetch, scaling consumers, resetting offsets, purging queues, or replaying data.
+changing prefetch, scaling consumers, resetting offsets, purging queues, or replaying data. Read-only
+starting points (both CLIs ship with the broker; check `command -v` first):
+`kafka-consumer-groups.sh --bootstrap-server <host:port> --describe --group <group>` and
+`rabbitmqctl list_queues name messages_ready messages_unacknowledged consumers`.
 
 ### 5. Recover with a scoped, measurable plan
 
@@ -81,7 +84,15 @@ Choose a finite message range, target consumer group/queue, idempotency protecti
 side effects, stop condition, and before/after lag or backlog measurement. Test replay on a
 non-production copy or a quarantined message first. Offset reset, purge, requeue, or broad replay
 changes delivery state: obtain explicit authorization after presenting the exact scope and rollback
-or containment plan.
+or containment plan. For a Kafka offset reset, show the dry run first and execute only the approved,
+unchanged command (with `--execute` in place of `--dry-run`); the group must have no active members.
+Before `--execute`, capture current offsets as the rollback record:
+
+```bash
+kafka-consumer-groups.sh --bootstrap-server <host:port> --describe --group <group> > offsets-before.txt
+kafka-consumer-groups.sh --bootstrap-server <host:port> --group <group> \
+  --topic <topic>:<partitions> --reset-offsets --to-offset <offset> --dry-run
+```
 
 ## AI Self-Check
 
@@ -93,6 +104,7 @@ or containment plan.
 - [ ] Backpressure limits in-flight work rather than hiding saturation with unbounded buffers
 - [ ] Lag/backlog diagnosis includes ingress, egress, age, retries, and downstream latency
 - [ ] Any destructive recovery action has an exact scope, expected effects, measurement, and approval
+- [ ] Cross-cutting agent hygiene applied - see `references/agent-hygiene.md`
 
 ## Output Contract
 

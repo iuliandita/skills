@@ -50,9 +50,7 @@ Before returning any generated or modified prompt file, verify:
 - [ ] **Output format specified**: if the prompt expects structured output, the format is explicit (JSON schema, XML tags, delimiters)
 - [ ] **Evaluator criteria explicit**: evaluator prompts define pass/fail criteria, required evidence, and common failure modes
 - [ ] **Delegation contract clear**: delegation prompts define ownership, scope, files, allowed edits, and expected final answer shape
-- [ ] **Model-appropriate syntax**: avoid model-specific features (assistant prefills, `\n\nHuman:` formatting) in model-agnostic prompts. XML delimiters and markdown headers are both fine for structure across models
-- [ ] **Injection boundary set**: untrusted source text is delimited and never treated as instructions
-- [ ] **Model lock-in avoided**: provider-specific syntax appears only when the user named that provider
+- [ ] **Model-appropriate syntax**: provider-specific features (assistant prefills, `\n\nHuman:` formatting) appear only when the user named that provider. XML delimiters and markdown headers are both fine across models
 - [ ] Cross-cutting agent hygiene applied - see `references/agent-hygiene.md`
 
 ---
@@ -68,8 +66,6 @@ Before returning any generated or modified prompt file, verify:
 
 ## Best Practices
 
-- Preserve the user's intent; do not add hidden policy, tone, or scope changes.
-- Name variables consistently and define every required input.
 - Include success criteria for complex prompts so outputs can be evaluated.
 - Match the prompt family to the intended use; see `references/prompt-families.md`.
 - For evaluator prompts, use a rubric with observable evidence; see `references/evaluator-prompts.md`.
@@ -104,10 +100,11 @@ Most of the time, skip this step entirely.
    - **Reusable template**: include a variables table and stable `{{VARIABLE_NAME}}` placeholders.
    - **Evaluator prompt**: define rubric dimensions, pass/fail threshold, failure examples, and required evidence.
    - **Delegation prompt**: define task, ownership, files in scope, files out of scope, allowed edits, and output contract.
-2. For an inline draft or review request, present the prompt in conversation without writing files.
-3. If the user requested creating, saving, or editing a local file, complete that write using
+2. Check the draft against the AI Self-Check. Fix any failed item and re-check until all pass.
+3. For an inline draft or review request, present the prompt in conversation without writing files.
+4. If the user requested creating, saving, or editing a local file, complete that write using
    the existing authorization. Otherwise, save only after the user asks to save the draft.
-4. Revisions: edit in place, don't create new files.
+5. Revisions: edit in place, don't create new files.
 
 ### Step 4: Save
 

@@ -3,6 +3,20 @@
 Production-ready patterns for GitHub Actions workflows. Updated for September 2026: ubuntu-24.04
 runners, arm64 GA, artifact v4, attestations, SHA pinning enforcement.
 
+## Contents
+
+- Runner Environment
+- Workflow Structure
+- Security Hardening
+- OIDC and Keyless Authentication
+- Artifact Attestations
+- Reusable Workflows
+- Caching
+- Matrix Strategies
+- Concurrency Control
+- Security Scanning Template
+- Common Gotchas
+
 ---
 
 ## Runner Environment

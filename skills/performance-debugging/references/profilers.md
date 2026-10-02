@@ -1,8 +1,8 @@
 # Profilers by Runtime
 
-Pick the tool that matches the runtime and the profile type chosen in Workflow step 2. These are
-standard, widely used tools; verify installed versions and flags with `--help` before running
-against production.
+Pick the tool that matches the runtime and the profile type chosen in Workflow step 2. None of
+these ship with a base OS: detect the tool first (`command -v perf`, `command -v py-spy`, ...) and
+check flags with `--help` before running against production.
 
 | Runtime / target | Profile type | Tool | Representative command |
 |---|---|---|---|
@@ -13,8 +13,8 @@ against production.
 | JVM | CPU/allocation | async-profiler | `asprof -d 30 -f out.html <pid>` |
 | .NET | CPU/general trace | dotnet-trace | `dotnet-trace collect -p <pid>` |
 | Node.js | CPU | node --cpu-prof | `node --cpu-prof --cpu-prof-dir=. app.js` |
-| Native (C/C++/Rust) | heap/allocation | valgrind massif | `valgrind --tool=massif ./binary` |
-| Native (C/C++/Rust) | heap/allocation | heaptrack | `heaptrack ./binary` |
+| Native (C/C++/Rust) | heap/allocation | heaptrack (default) | `heaptrack ./binary` |
+| Native (C/C++/Rust) | heap/allocation | valgrind massif (fallback) | `valgrind --tool=massif ./binary` |
 
 Notes:
 
@@ -30,6 +30,6 @@ Notes:
   PerfView/`speedscope` as needed.
 - `node --cpu-prof` writes a `.cpuprofile` file on process exit (or `SIGINT`); open it in Chrome
   DevTools or a `.cpuprofile` viewer.
-- massif requires re-running the target under the tool, so reproduce the workload while it runs.
-  heaptrack can also attach to a running process (`heaptrack --pid <pid>`), but only tracks
-  allocations made after attaching.
+- heaptrack can also attach to a running process (`heaptrack --pid <pid>`), but only tracks
+  allocations made after attaching. Use massif when heaptrack is unavailable; it requires
+  re-running the target under the tool, so reproduce the workload while it runs.

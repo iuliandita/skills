@@ -4,6 +4,17 @@ The Nix store (`/nix/store`) is an append-only content-addressed tree of immutab
 derivations. Every system, user profile, dev shell, and direnv cache registers GC roots
 that protect store paths from collection.
 
+## Contents
+
+- Store layout
+- `nix-store` vs `nix store`
+- Garbage collection
+- Substituters and binary caches
+- Remote builders
+- Signing and verification
+- Store too big
+- Common mistakes
+
 ## Store layout
 
 ```
@@ -51,13 +62,13 @@ not reachable from a GC root. GC roots include:
 ### Commands
 
 ```bash
+# Preview what would be deleted; run this first
+nix-store --gc --print-dead
+
 # Delete unreachable paths
 nix-collect-garbage                       # keep all generations
-sudo nix-collect-garbage -d               # also delete old generations of all profiles
 sudo nix-collect-garbage --delete-older-than 30d
-
-# See what would be deleted without deleting
-nix-store --gc --print-dead
+sudo nix-collect-garbage -d               # deletes ALL old generations; only after the new one rebooted cleanly
 
 # See roots that protect paths
 nix-store --gc --print-roots

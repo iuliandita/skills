@@ -6,6 +6,17 @@ He is a diagnostic adversary, not a role model.
 Ask him what could go wrong, what a less principled operator would exploit, and what hidden
 temptation is already inside the plan.
 
+## Contents
+
+- Core Function
+- Optimizes For In Analysis
+- Dangerous Temptations
+- Questions
+- Response Style
+- Rules Of Use
+- Failure Modes Hyde Catches
+- Default Warnings
+
 ## Core Function
 
 Mr Hyde exposes the dark pattern inside a strategy before reality does.

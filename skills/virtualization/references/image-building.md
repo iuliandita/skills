@@ -410,7 +410,7 @@ setups:
 
 ```bash
 # Debian
-wget https://cloud.debian.org/images/cloud/trixie/daily/latest/debian-13-generic-amd64.qcow2
+wget https://cloud.debian.org/images/cloud/trixie/latest/debian-13-generic-amd64.qcow2
 
 # Ubuntu
 wget https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img
@@ -442,7 +442,7 @@ For organizations that need customized base images:
 ```bash
 # Download cloud image to Proxmox node
 cd /var/lib/vz/template/iso/
-wget https://cloud.debian.org/images/cloud/trixie/daily/latest/debian-13-generic-amd64.qcow2
+wget https://cloud.debian.org/images/cloud/trixie/latest/debian-13-generic-amd64.qcow2
 
 # Create template VM
 qm create 9000 --name debian-13-template --memory 2048 --cores 2 \

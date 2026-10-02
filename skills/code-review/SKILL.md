@@ -116,7 +116,7 @@ Before manual review, run standard tooling to clear obvious issues - but only wh
 - Reviewing a small diff (< 5 files) - linting the whole project for a 3-file change is wasted effort
 - The user just wants a quick review, not a full audit
 
-**When a tool isn't installed:** Don't silently skip it. Tell the user which tools are missing so they can install them. Example: "shellcheck isn't installed - consider `pacman -S shellcheck` for shell script linting." This is a one-time heads-up, not a blocker - continue the review without it.
+**When a tool isn't installed** (check with `command -v <tool>`): don't skip it silently. Tell the user once which tools are missing, with the package name and install command (for example "shellcheck isn't installed - consider `pacman -S shellcheck`"), then continue the review without it.
 
 Linters catch syntax, imports, and known anti-patterns mechanically. This skill focuses on what automated tools miss: logic errors, edge cases, incorrect assumptions, and subtle bugs that require understanding intent. Don't burn time and tokens on linter output - move to the actual review.
 
@@ -178,7 +178,7 @@ Rate every potential issue on a confidence scale of 0-100:
 
 For each significant code change, ask: **What are the three most likely failure modes?** This question catches architecture-level bugs that line-by-line review misses - especially in AI-generated code where individual lines look fine but the overall design has gaps.
 
-Before assigning a score, run the AI Self-Check list above: full context, tests, git blame, explaining comments, cited evidence, the adversarial argument against the finding, and a constructed failing case for anything P0. If you cannot cite the evidence or construct the failing input, lower the score rather than reporting it.
+Before assigning a score, run the AI Self-Check list above. If you cannot cite the evidence or construct the failing input, lower the score rather than reporting it.
 
 Never assert API or stdlib behavior from memory: 18% of "high-confidence" AI review suggestions contain factual errors about framework behavior, so look up whether a function is stable-sorted, returns a view, or handles null before making it a finding.
 
@@ -491,6 +491,4 @@ See `references/output-contract.md` for the full contract.
 - **Don't duplicate other skills.** Style issues belong to code-simplification. Security vulnerabilities belong to security-audit. If you're unsure whether a finding is a bug or a style issue, ask: "would this cause incorrect behavior?" If no, skip it.
 - **One finding per bug, not per occurrence.** If the same pattern appears in 5 files, report it once with a note about scope. Don't pad the report.
 - **Show the fix.** Every finding must include a concrete code fix, not just a description of the problem. If you can't show a fix, the finding isn't specific enough.
-- **Verify before scoring.** Before assigning 80+, check: is there a test covering this? Does git blame show this is new or old? Is there a comment explaining why?
-- **Report missing tools.** When a linter or checker isn't installed, tell the user the package name and install command so they can set it up.
 - **Don't repeat dismissed findings.** If the user acknowledged or dismissed a finding in this session, don't re-report it on subsequent invocations. They heard you the first time.

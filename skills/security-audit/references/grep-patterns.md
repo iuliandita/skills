@@ -2,6 +2,15 @@
 
 Consolidated search patterns for manual audit passes. Use the host's available file-search capability, such as a built-in search tool, `rg`, or `grep`, and scope it to the target files.
 
+## Contents
+
+- Secret Scanning Fallback (Pass 1)
+- Authentication & Authorization (Pass 5)
+- Injection & Input Validation (Pass 6)
+- Cryptography & Data Protection (Pass 7)
+- Container & Infrastructure (Pass 8)
+- CI/CD & Supply Chain (Pass 9)
+
 ## Secret Scanning Fallback (Pass 1)
 
 Use these only when betterleaks/gitleaks/trufflehog are all unavailable.

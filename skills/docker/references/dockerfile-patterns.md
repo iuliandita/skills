@@ -2,6 +2,16 @@
 
 Production-ready templates with multi-stage builds, non-root users, health checks, and BuildKit features. Updated for Docker Engine 29.x / BuildKit 0.28.
 
+## Contents
+
+- BuildKit Feature Reference
+- Base Image Decision Matrix
+- Language Templates
+- .dockerignore Template
+- Multi-Platform Builds
+- Image Tagging Strategy
+- Common Gotchas
+
 ---
 
 ## BuildKit Feature Reference
@@ -38,7 +48,7 @@ Heredocs work in `RUN` and `COPY`. Do NOT work in `CMD`, `ENTRYPOINT`, or `ENV`.
 
 ### Cache mounts
 
-Persist package manager caches across builds (up to 70% faster rebuilds):
+Persist package manager caches across builds:
 
 ```dockerfile
 # Node.js / Bun

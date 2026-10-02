@@ -119,7 +119,6 @@ Before returning any generated network configuration, verify:
 - Use packet captures with narrow filters and time windows to avoid huge captures and privacy spill.
 - Prefer persistent nftables sets, DNS caches, and proxy connection reuse where appropriate.
 
-
 ---
 
 ## Best Practices
@@ -127,7 +126,6 @@ Before returning any generated network configuration, verify:
 - Diagnose before changing: capture current routes, rules, addresses, and resolver state.
 - Change one layer at a time: DNS, routing, firewall, proxy, VPN, or application.
 - Keep emergency access open when editing firewall, VPN, or default-route configuration remotely.
-
 
 ## Workflow
 
@@ -162,11 +160,24 @@ Read the appropriate reference file for detailed patterns. Key principles:
   `haproxy -c`).
 - **One change at a time.** Over SSH, save the exact rules/routes/manager configuration being
   changed and schedule a tested restoration command before applying. A generic networking
-  restart is not a rollback. Verify the timer exists; cancel it only after a second session
-  confirms management access and the intended allowed/blocked traffic.
+  restart is not a rollback. Verify the timer exists with
+  `systemctl list-timers nft-rollback.timer`; cancel it only after a second session
+  confirms management access and the intended allowed/blocked traffic. For nftables, run exactly:
+  ```bash
+  nft -c -f new.nft                                  # syntax check; stop on error
+  { echo 'flush ruleset'; nft list ruleset; } > /root/nft-rollback.nft
+  systemd-run --on-active=5m --unit=nft-rollback \
+    nft -f /root/nft-rollback.nft                   # one atomic transaction
+  nft -f new.nft
+  systemctl list-timers nft-rollback.timer           # confirm the rollback is armed
+  systemctl stop nft-rollback.timer                  # only after the second-session check
+  ```
 - **Log what you changed.** Network debugging is 10x harder when you don't know what changed.
 
 ### Step 4: Validate
+
+If a check fails, restore the saved configuration (or let the rollback timer fire), fix the
+change, and return to Step 3.
 
 | What to validate | How |
 |-----------------|-----|
@@ -195,7 +206,6 @@ Read the appropriate reference file for detailed patterns. Key principles:
 | `nft` | nftables rule management | `nft list ruleset`, `nft monitor trace` |
 | `wg` | WireGuard status | `wg show`, `wg showconf wg0` |
 | `resolvectl` | systemd-resolved status | `resolvectl status`, `resolvectl query domain` |
-| `doggo` | Modern dig alternative | `doggo example.com A @8.8.8.8 --json` |
 | `nmap` | Port scanning, service detection | `nmap -sV -p 1-1024 target` |
 | `socat` | Multipurpose relay | `socat TCP-LISTEN:8080,fork TCP:backend:80` |
 

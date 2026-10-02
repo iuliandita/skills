@@ -3,6 +3,14 @@
 Use this for Ubuntu HWE, Ubuntu release upgrades, Mint, Pop!_OS, Devuan, Kali, and other
 Debian-derived distro specifics that materially change package, boot, or service behavior.
 
+## Contents
+
+- Checks
+- Distro notes
+- Ubuntu 24.04 -> 26.04 operational differences
+- What is out of scope
+- Notes
+
 ## Checks
 - `cat /etc/os-release`
 - `lsb_release -a 2>&1 || true`

@@ -3,7 +3,7 @@ name: ansible
 description: >
   Write, review, and debug Ansible playbooks, roles, inventories, Ansible Vault, Molecule tests, and AWX/AAP.
 license: MIT
-compatibility: "Requires ansible-core; target controller Python 3.12+. Check managed-node support separately. Optional: ansible-lint, molecule"
+compatibility: "Requires ansible-core; target controller Python 3.12+. Check managed-node support separately. Optional: ansible-lint, molecule, ansible-navigator"
 metadata:
   source: iuliandita/skills
   date_added: "2026-03-24"
@@ -74,8 +74,6 @@ AI tools consistently produce the same Ansible mistakes. **Before returning any 
 - [ ] No `ansible.builtin.template` with `src:` pointing to a non-`.j2` file (confusing, even if it works)
 - [ ] `changed_when`/`failed_when` set on `command`/`shell` tasks to prevent false change reports
 - [ ] Tags present on logical task groups for selective execution
-
-Run generated playbooks through `ansible-lint` (production profile) when available.
 - [ ] **Collection docs checked**: module arguments and return values match the installed collection version
 - [ ] **Idempotence proven**: changed/ok behavior is verified with check mode or a second run where practical
 - [ ] Cross-cutting agent hygiene applied - see `references/agent-hygiene.md`
@@ -88,7 +86,6 @@ Run generated playbooks through `ansible-lint` (production profile) when availab
 - Gather only required facts and cache facts where supported for slow or high-latency environments.
 - Prefer native modules over shell loops so Ansible can batch work, diff safely, and report idempotence.
 
-
 ---
 
 ## Best Practices
@@ -96,7 +93,6 @@ Run generated playbooks through `ansible-lint` (production profile) when availab
 - Pin collection versions in `requirements.yml` for production automation.
 - Run destructive playbooks with `--check --diff` first and require a human-reviewed limit for production hosts.
 - Keep Vault values out of diffs, logs, callback output, and generated examples.
-
 
 ## Workflow
 
@@ -115,7 +111,7 @@ Most real tasks blend domains. Start with the playbook, extract to roles when re
 
 Before writing YAML, determine:
 - **Target OS**: RHEL/CentOS, Ubuntu/Debian, Alpine, Windows - affects module choices
-- **Python version on targets**: ansible-core 2.20 requires Python 3.9+ on managed nodes
+- **Python version on targets**: check managed-node support for the pinned ansible-core in the support matrix linked under Target versions
 - **Privilege escalation**: `become` method (sudo, su, doas, runas for Windows)
 - **Connection**: SSH (default), WinRM (Windows), local, network_cli (network devices)
 - **Idempotency**: every task must be safe to run multiple times
@@ -131,6 +127,8 @@ Follow the domain-specific section below. Always apply the production checklist 
 
 ### Step 4: Validate
 
+Run syntax check, lint, and `--check --diff` in order. On any failure, fix the reported issue and rerun from the syntax check; finish only when all three are clean.
+
 ```bash
 # Syntax check (fast, no connection needed)
 ansible-playbook playbook.yml --syntax-check
@@ -140,14 +138,21 @@ ansible-lint --profile production playbook.yml
 
 # Dry run (needs inventory + connectivity)
 ansible-playbook playbook.yml --check --diff
+```
 
-# Molecule (role testing)
+For roles only, add Molecule when a scenario exists:
+
+```bash
 molecule test                          # full cycle: create, converge, verify, destroy
 molecule converge                      # just apply (dev loop)
 molecule verify                        # run verification only
+```
 
+Any non-check run applies changes. Run it only with `--limit`, and get human approval before targeting production hosts:
+
+```bash
 # Navigator (EE-based execution)
-ansible-navigator run playbook.yml --mode stdout --eei <ee-image>
+ansible-navigator run playbook.yml --mode stdout --eei <ee-image> --limit <hosts>
 ```
 
 ---
@@ -369,7 +374,7 @@ Read `references/compliance.md` for the full PCI-DSS 4.0 requirements mapping to
 - `passlib_or_crypt` API from encrypt utility
 
 **Deprecations (removal in 2.24)**:
-- `INJECT_FACTS_AS_VARS` defaults to True but will flip to False. Access facts via `ansible_facts['hostname']` instead of `ansible_hostname`. Start migrating now.
+- `INJECT_FACTS_AS_VARS` defaults to True but will flip to False. Access facts via `ansible_facts['hostname']` instead of `ansible_hostname`.
 - `ansible.module_utils._text` imports (`to_bytes`, `to_native`, `to_text`) - use `ansible.module_utils.common.text.converters` instead
 - `vars` internal variable cache
 
@@ -400,7 +405,6 @@ is a high-severity collection-install argument injection, missed by the role-ins
 CVE-2026-11332. Review git sources in `requirements.yml`; use trusted Galaxy/Automation Hub
 sources and the vendor's fixed build. The retrieved vendor record does not establish an upstream
 fixed-version range, so do not assume the target pin alone proves remediation.
-
 
 ### Supply chain
 

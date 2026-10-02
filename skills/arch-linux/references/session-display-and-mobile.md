@@ -3,6 +3,16 @@
 Many "desktop bugs" on Arch are really session-startup bugs. Before touching PipeWire, portals, or
 GPU drivers, identify how the session is started and what owns the environment.
 
+## Contents
+
+- First checks
+- Display manager routing
+- Hyprland session glue
+- Suspend and resume
+- Power profiles and laptop tuning
+- Hybrid graphics
+- What NOT to do
+
 ## First checks
 
 ```bash

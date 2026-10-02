@@ -2,6 +2,15 @@
 
 Bug patterns specific to Java, with focus on Quarkus and Spring Boot. Focused on correctness - not style (see code-simplification) or security (see security-audit).
 
+## Contents
+
+- Quarkus-Specific
+- Spring Boot
+- General Java
+- Modern Java (17+)
+- Build & Dependencies
+- AI-Generated Java Code
+
 ---
 
 ## Quarkus-Specific

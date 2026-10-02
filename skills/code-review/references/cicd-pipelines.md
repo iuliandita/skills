@@ -2,6 +2,14 @@
 
 Bug patterns specific to CI/CD pipeline configurations. Focused on correctness bugs that cause failed deployments, data loss, or security incidents - not style or formatting.
 
+## Contents
+
+- GitLab CI/CD
+- GitHub Actions
+- Forgejo Actions
+- ArgoCD Advanced Patterns
+- Terraform Advanced
+
 ---
 
 ## GitLab CI/CD
@@ -166,7 +174,7 @@ permissions:
 ### Artifact v4 Breaking Changes
 
 **Detect:**
-- Workflows still using `actions/upload-artifact@v3` or `actions/download-artifact@v3` - v3 was deprecated April 2024 and stopped working January 30, 2025
+- Workflows still using `actions/upload-artifact@v3` or `actions/download-artifact@v3` - v3 no longer works (retired January 30, 2025)
 - Hidden files (`.env`, `.config`, credentials) were included by default in v3 but excluded in v4 - workflows relying on hidden file upload break silently
 - v4 on GitHub Enterprise Server (GHES) - not supported on older GHES versions; must use v3
 - Artifact names with special characters that worked in v3 but fail in v4

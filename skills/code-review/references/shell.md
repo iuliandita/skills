@@ -2,6 +2,17 @@
 
 Bug patterns specific to Bash and POSIX shell scripts. Focused on correctness - not style (see code-simplification) or security (see security-audit).
 
+## Contents
+
+- Word Splitting & Globbing
+- Exit Code Masking
+- Variable Bugs
+- Signal & Cleanup Bugs
+- Portability Bugs
+- Quoting & Escaping Edge Cases
+- Arithmetic Bugs
+- Test/Conditional Bugs
+
 ---
 
 ## Word Splitting & Globbing

@@ -2,6 +2,19 @@
 
 Kali ships in several shapes. The recovery path depends on which shape the user is actually using.
 
+## Contents
+
+- Official image types
+- ARM and SBC images
+- Installed system vs live media
+- Persistence questions
+- Verification discipline
+- Build a persistent live USB
+- Recovery pattern
+- Purple and specialized images
+- VM notes
+- What not to do
+
 ## Official image types
 
 Kali 2026.2 image directories include:

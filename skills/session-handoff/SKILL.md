@@ -127,20 +127,8 @@ pasting it.
 
 ## Performance
 
-- Favor pointers over pasted content; a handoff that reproduces files defeats its own purpose.
-- Keep the doc short enough to land in the next session's high-attention window (degradation
-  sets in well before a context window is technically full).
 - Write one handoff per next-session purpose. Fanning out to three parallel sessions means
   three focused handoffs, not one doc the readers must filter.
-
-## Best Practices
-
-- Lead with purpose. Everything else serves the one job the next session has to do.
-- Pair every locked decision with its reason so the next session inherits the conclusion, not
-  the debate.
-- Tag confidence honestly: mark unverified beliefs as `assumed` so the next session does not
-  build on sand.
-- Redact before you write, not after. Secrets that reach the file have already leaked.
 
 ## Workflow
 
@@ -204,6 +192,8 @@ skill fits the implementation). This primes the fresh session to start with the 
 instead of rediscovering it.
 
 #### Step 6: Write the file
+
+Check the draft against the AI Self-Check first. Fix any failed item and re-check until all pass.
 
 **Disposable (default).** Write to `.handoff/YYYY-MM-DD-{slug}.md` in the working directory and
 keep it out of version control:

@@ -1,11 +1,25 @@
 # Framework Picker
 
-Pinned to September 2026. Update versions when refreshing the skill. Hallucinating stale framework versions in build output is the fastest way to embarrass an AI build.
+Pinned to September 2026. Update versions when refreshing the skill.
 
 Use this picker only when choosing a stack. Existing project choices and explicit user
 requirements take precedence over the preferences below. Visual refinement does not authorize
 framework upgrades or migrations. Verify dated suggestions against current primary docs before
 new dependency selection; choose based on the actual application and team constraints.
+
+## Contents
+
+- Decision tree
+- Astro 7.3.2 (Cloudflare-owned since January 16, 2026)
+- SvelteKit 2.70.3 + Svelte 5.57.0
+- Vite 8.2.2 + plain TS
+- Next.js 16.3.6 + React 19.3.0
+- Styling when Tailwind is selected
+- Animation
+- Touch and gestures
+- Modern reset
+- Build verification before shipping
+- Compatibility and selection cautions
 
 ---
 
@@ -48,8 +62,10 @@ product. Compare alternatives against concrete requirements rather than a fixed 
 content, and routing changes. Check the [publisher advisories](https://github.com/withastro/astro/security/advisories)
 for each applicable XSS/SSRF fixed range; a blanket 7.1.0 security floor is not verified.
 
+Commands below use bun. If `command -v bun` finds nothing or the project uses another package
+manager, run the npm/pnpm equivalent.
+
 ```bash
-# Bun-first (preferred per repo convention)
 bun create astro@latest
 ```
 
@@ -206,11 +222,8 @@ See `references/mobile-touch.md` for patterns.
 
 ## Modern reset
 
-Don't ship without one. Options:
-
-- **Josh Comeau's reset** - opinionated, well-explained
-- **Andy Bell's modern reset** - minimal, opinionated about defaults
-- Hand-rolled - fine if you understand each rule
+Don't ship without one. Default to **Andy Bell's modern reset** (minimal). Josh Comeau's reset or
+a hand-rolled one is fine when the project already uses it.
 
 Tailwind v4 includes Preflight (its own reset). Don't double-stack resets.
 
@@ -237,7 +250,7 @@ bun run build
 bun run build
 ```
 
-If the build fails, ship the fix, not the failure. AI builds love to ship code that "should work".
+If a check or build fails, fix it and rerun until all pass.
 
 ---
 

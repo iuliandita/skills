@@ -3,6 +3,14 @@
 home-manager manages user-level configuration declaratively. nix-darwin does the same for
 macOS system settings. Both compose with NixOS or run standalone.
 
+## Contents
+
+- home-manager: three modes
+- nix-darwin: declarative macOS
+- nix-darwin gotchas
+- Picking a mode by scenario
+- Common mistakes
+
 ## home-manager: three modes
 
 | Mode | Activated by | Rebuild command | When to pick |
@@ -210,8 +218,8 @@ sudo nix run nix-darwin/nix-darwin-26.05#darwin-rebuild -- switch --flake ~/.con
 
 - Apple Silicon is `aarch64-darwin`; Intel is `x86_64-darwin`. Rosetta is available but
   costs rebuilds.
-- `nix.enable = true` (newer) replaces `services.nix-daemon.enable = true` (older). Pick
-  one; the release notes tell you which.
+- Use `nix.enable = true`, or `false` on Determinate (which manages its own daemon). Old
+  configs use `services.nix-daemon.enable = true`; replace it rather than setting both.
 - macOS security occasionally blocks the Nix daemon after an OS upgrade. Reinstall the
   Determinate installer or re-run the uninstall/reinstall dance if `nix` goes missing.
 - Homebrew via `homebrew = { enable = true; ... }` uses the actual Homebrew binary; nix-darwin

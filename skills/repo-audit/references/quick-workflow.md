@@ -13,6 +13,16 @@ The four audits:
 
 Each audit runs in its own parallel agent/subprocess with a fresh context window, so they don't compete for tokens or bias each other's findings.
 
+## Contents
+
+- When to use
+- When NOT to use
+- AI Self-Check
+- Workflow
+- Output Contract
+- Related Skills
+- Rules
+
 ## When to use
 
 - Running a repo-wide quality gate before merge, release, or handoff
@@ -50,21 +60,6 @@ Verify:
 
 ---
 
-## Performance
-
-- Run inventory and changed-file analysis before invoking every review mode.
-- Escalate only confirmed high-risk areas to deeper sweeps.
-
-
----
-
-## Best Practices
-
-- Lead with actionable findings and severity; keep summaries secondary.
-- Separate code bugs, security issues, slop, and docs drift so owners can act.
-- Do not claim a full audit if the pass was sampled or tool-limited.
-
-
 ## Workflow
 
 ### Step 0: Preflight
@@ -99,10 +94,10 @@ Spawn four workers concurrently. Each worker runs one custom skill against the s
 **Fallback:** If native skill loading is unavailable, include the target skill's instructions in that worker's prompt. If the skill itself is unavailable, perform the corresponding manual review and note the substitution in the output header.
 
 **If parallel execution is unavailable** (restricted sandbox, no subagent support): run
-sequentially in this order: Security Audit, Code Review, Slop Check, Docs Sweep. Security
+sequentially in this order: Security Audit, Code Review, Code Simplification, Docs Sweep. Security
 first because those findings are most time-sensitive. If any agent exceeds 5 minutes wall-clock, note the timeout in the output header and continue with the remaining agents.
 
-**If agent dispatch is unavailable** (non-Claude harness, no subagent API): run each audit
+**If agent dispatch is unavailable** (no subagent API): run each audit
 sequentially in separate CLI sessions, invoking each skill manually in its own conversation.
 
 Pass this context block to every agent, substituting the `{placeholders}` from preflight:
@@ -129,7 +124,7 @@ Scope: {scope}. ({scope} defaults to "full codebase" if the user did not specify
 Return the complete report.
 ```
 
-#### Agent 2: Slop Check
+#### Agent 2: Code Simplification
 
 ```
 {context_block}
@@ -199,7 +194,7 @@ Scope: {scope}
 
 ---
 
-## 2. Slop Check
+## 2. Code Simplification
 
 {agent 2 output verbatim}
 
@@ -270,7 +265,7 @@ See `references/output-contract.md` for the full contract.
 - **Parallel dispatch is strongly preferred.** Run all four agents concurrently when the environment supports it. If parallel execution is unavailable, run sequentially (security first - see Step 2).
 - **Don't editorialize.** Present each report as the skill produced it. No unsolicited synthesis across reports.
 - **Respect each skill's output format.** The code-simplification skill has its own format. The security audit writes its dated local deliverable. The code reviewer and docs sweep have their formats. Don't normalize them into a single style.
-- **Don't duplicate work.** If a finding appears in multiple reports (e.g., dead code in both slop check and code review), that's fine - independent auditors catching the same thing is signal, not noise.
+- **Don't duplicate work.** If a finding appears in multiple reports (e.g., dead code in both code simplification and code review), that's fine - independent auditors catching the same thing is signal, not noise.
 - **Preflight is fast.** The parallel git commands in Step 0 should take under 2 seconds. Don't skip them - the agent prompts are much better with context.
 - **Large repos.** If file count exceeds 1000, mention to the user that this will take a while. Don't reduce scope unless asked.
 - **Security report privacy.** The security audit writes vulnerability details under `docs/local/audits/security-audit/`. Verify the enclosing `docs/local/` directory is gitignored before the report is written.

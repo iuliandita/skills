@@ -3,6 +3,20 @@
 Cross-platform supply chain hardening patterns, incident timeline, and PCI-DSS 4.0 compliance.
 Reviewed September 2026 - post-Trivy compromise and the TeamPCP npm/PyPI worm wave.
 
+## Contents
+
+- Incident Timeline
+- SHA Pinning
+- Image Signing (Sigstore / cosign)
+- SBOM Generation
+- SLSA Provenance
+- Workflow Linting
+- Secret Management in CI
+- PCI-DSS CI/CD Assessment Boundaries
+- AI-Age Supply Chain Risks
+- Post-Compromise Incident Response
+- Quick Reference: Pipeline Security Checklist
+
 ---
 
 ## Incident Timeline
@@ -365,7 +379,6 @@ controls. Do not invent a universal reviewer count, 90-day artifact retention, o
 mandate from these requirements. A customized approach needs its own documented assessment;
 no generic pipeline can declare equivalence or compliance by itself.
 
-
 ## AI-Age Supply Chain Risks
 
 ### Slopsquatting
@@ -418,8 +431,8 @@ had a 2-hour window, and automated exfiltration begins within seconds.
 ### 1. Contain (first 30 minutes)
 
 - **Disable affected workflows.** Remove or comment out the compromised action/image reference
-  in all repos. Push directly to protected branches if needed (this is the exception to
-  "no direct pushes").
+  in all repos. With the owner's explicit approval, push directly to protected branches if
+  needed (this is the exception to "no direct pushes").
 - **Revoke exposed secrets.** Every secret accessible to the compromised workflow is burned.
   Rotate immediately:
   - Cloud credentials (AWS keys, GCP service accounts, Azure SPs)
@@ -452,8 +465,8 @@ had a 2-hour window, and automated exfiltration begins within seconds.
   that are also malicious (as seen with Trivy v0.69.4/5/6).
 - **Rebuild affected artifacts.** Any image, package, or binary built during the attack window
   must be rebuilt from clean inputs and re-signed.
-- **Revoke compromised artifacts.** Delete or yank published packages that were built during
-  the window. For container images, delete the tag and digest from the registry.
+- **Revoke compromised artifacts.** After the owner approves the exact list, delete or yank
+  published packages that were built during the window. For container images, delete the tag and digest from the registry.
 - **Update SBOM.** Regenerate SBOMs for all affected releases to reflect the rebuilt artifacts.
 
 ### 4. Harden (within 1 week)

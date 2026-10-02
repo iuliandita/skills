@@ -4,6 +4,17 @@ Read this reference when choosing Terraform versus OpenTofu, writing resource/mo
 state, designing account boundaries, or selecting policy checks. Read the linked state, compliance,
 and production-checklist references for their specialist procedures.
 
+## Contents
+
+- Runtime choice
+- HCL boundaries
+- Refactors and state moves
+- S3 review
+- Modules and tests
+- Operations and account boundaries
+- Policy and supply chain checks
+- Sources
+
 ## Runtime choice
 
 Choose Terraform for HCP/TFE, Stacks, or vendor support. Choose OpenTofu for client-side state
@@ -75,12 +86,9 @@ boundary, and unpinned production module sources.
 ## Refactors and state moves
 
 Use `import` blocks for declarative imports and `moved` blocks for a reviewed move within one state.
-`moved` cannot cross state files. For a cross-state move, freeze both applies, back up both states
-with restrictive permissions, add the destination HCL and remove the source HCL, then use an approved
-migration path (`state mv` where supported, or state removal plus import). Validate both plans before
-and after; neither may create, destroy, or drift unexpectedly. Never `state push` a pre-move backup
-as a casual rollback because it can undo a completed move. Treat a stale-lock override as a last resort
-with the exact known lock ID.
+`moved` cannot cross state files; for a cross-state move, follow the State Surgery procedure in
+`references/state-and-security.md`. Never `state push` a pre-move backup as a casual rollback because
+it can undo a completed move. Treat a stale-lock override as a last resort with the exact known lock ID.
 
 ```hcl
 import {
@@ -93,21 +101,6 @@ moved {
   to   = module.compute.aws_instance.web
 }
 ```
-
-For a cross-state move, freeze both applies and back up first. This is state mutation, so perform it
-only with approved scope and exact backend/workspace identities:
-
-```bash
-set -euo pipefail
-umask 077
-terraform -chdir=source state pull > source-backup.tfstate
-terraform -chdir=destination state pull > destination-backup.tfstate
-terraform -chdir=source state rm aws_instance.web
-terraform -chdir=destination import aws_instance.web i-0abc1234def56789
-```
-
-Stage source removal and destination configuration before the state writes. Run `fmt`, `validate`,
-and plans in both directories before and after; block concurrent applies for both states.
 
 ## S3 review
 
@@ -159,8 +152,8 @@ states/
 
 ## Policy and supply chain checks
 
-Run `fmt` and `validate` on every change. Use TFLint for provider-aware linting, Checkov or Trivy for
-IaC policy/security scanning, and Conftest/OPA or Sentinel only when the organization owns matching
+Run `fmt` and `validate` on every change. Use TFLint for provider-aware linting, Checkov for IaC
+policy/security scanning (Trivy where the repository already runs it), and Conftest/OPA or Sentinel only when the organization owns matching
 policy. Pin providers and actions; commit the dependency lock file. Module sources lack the provider
 lock file's hash verification, so use trusted registries or exact reviewed tags. Review the current
 status of scanners and any security advisory before adding or changing their pins.

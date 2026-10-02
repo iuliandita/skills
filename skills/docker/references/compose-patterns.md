@@ -2,6 +2,18 @@
 
 Production-ready Compose patterns for Docker Compose v5.5+ (no `version:` field). Reviewed September 2026.
 
+## Contents
+
+- Full-Stack Template (App + Database + Cache)
+- Dev/Prod Separation
+- Docker Compose Watch (Hot Reload)
+- AI/ML Stack Template
+- Networking Patterns
+- Health Check Patterns
+- Resource Limits Reference
+- Logging Configuration
+- Common Gotchas
+
 ---
 
 ## Full-Stack Template (App + Database + Cache)

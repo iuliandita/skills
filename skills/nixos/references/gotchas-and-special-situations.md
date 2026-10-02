@@ -3,6 +3,28 @@
 The failures that explain most "why is this broken?" sessions. Work through the top of the
 list first; exotic causes come after the boring ones are ruled out.
 
+## Contents
+
+- Channels vs flakes drift
+- Stale flake.lock
+- `nix-env -i` polluting the user profile
+- Options that no longer exist
+- Overlay collision
+- `hardware-configuration.nix` out of sync
+- Kernel swap killed out-of-tree modules
+- GC nuked a dev shell
+- `--impure` creep
+- Secrets ended up in the store
+- `nix flake check` passes, `nixos-rebuild` fails
+- systemd-boot entry spam
+- `sops-nix` or `agenix` not decrypting on first boot
+- Determinate `nix-daemon` commands fail
+- Home-manager file already exists
+- nix-darwin: macOS defaults not applied
+- Rebuild succeeds, service fails to start
+- Cache miss cascade
+- Things that look broken but are not
+
 ## Channels vs flakes drift
 
 Symptom: `nixos-rebuild switch` uses an older `nixpkgs` than the user expects, or vice

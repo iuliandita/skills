@@ -3,6 +3,12 @@
 Techniques for extracting VPN credentials, IaC secrets, and cloud metadata for lateral movement
 and privilege escalation.
 
+## Contents
+
+- VPN Credentials
+- SSH Agent Hijacking
+- IaC Secrets Exposure
+
 ---
 
 ## VPN Credentials

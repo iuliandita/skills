@@ -3,7 +3,7 @@ name: mcp
 description: >
   Build and debug Model Context Protocol (MCP) servers, clients, tools, resources, and OAuth integrations.
 license: MIT
-compatibility: Requires Node.js or Python runtime
+compatibility: "Requires Node.js or Python runtime; uv for the Python dev inspector"
 metadata:
   source: iuliandita/skills
   date_added: "2026-03-30"
@@ -292,8 +292,8 @@ async function safeExistingPath(base: string, userInput: string): Promise<string
 
 ```typescript
 // BEFORE (vulnerable - user controls path directly)
-server.tool("read_file", "Read a project file",
-  { path: z.string() },
+server.registerTool("read_file",
+  { description: "Read a project file", inputSchema: z.object({ path: z.string() }) },
   async ({ path: filePath }) => {
     const data = await readFile(filePath, "utf-8"); // path traversal
     return { content: [{ type: "text", text: data }] };
@@ -301,8 +301,8 @@ server.tool("read_file", "Read a project file",
 );
 
 // AFTER (safe - resolved path validated against allowed base)
-server.tool("read_file", "Read a project file",
-  { path: z.string().max(500) },
+server.registerTool("read_file",
+  { description: "Read a project file", inputSchema: z.object({ path: z.string().max(500) }) },
   async ({ path: filePath }) => {
     try {
       const safe = await safeExistingPath("/srv/project", filePath);
@@ -374,7 +374,8 @@ uv run mcp dev server.py
 ```
 
 Test each tool handler with: valid inputs (happy path), missing required fields,
-malicious inputs (injection, path traversal, oversized payloads), concurrent requests.
+malicious inputs (injection, path traversal, oversized payloads), concurrent requests. If a case
+fails, fix the handler (Step 3) and rerun every case until all pass.
 
 Read `references/security.md` for specific injection test payloads.
 
@@ -467,4 +468,3 @@ See `references/output-contract.md` for the full contract.
 7. **Bind local servers to 127.0.0.1.** Never `0.0.0.0` for local-only servers.
 8. **Validate Origin headers** on all streamable HTTP requests.
 9. **Handle shutdown gracefully.** Register signal handlers. Clean up resources.
-10. **Run the AI Self-Check.** Every generated MCP server gets verified against the checklist.

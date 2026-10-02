@@ -10,6 +10,19 @@ OBS problem. The core path is:
 
 This is why Discord, Teams, and OBS can all fail for what looks like the same reason on Wayland.
 
+## Contents
+
+- First checks
+- Wayland screen sharing model
+- Desktop routing
+- Discord and Teams
+- OBS on Arch
+- Hardware encoding
+- Virtual cameras
+- CachyOS angle
+- Common failure splits
+- What NOT to do
+
 ## First checks
 
 Start with session facts and portal health:

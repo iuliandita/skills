@@ -4,6 +4,15 @@ How to produce machine translations that read naturally in context rather than a
 word-by-word output. Covers prompting strategy, voice consistency, protected terms, and
 validation.
 
+## Contents
+
+- Context-Aware Translation
+- Voice Consistency
+- Protected Terms
+- Placeholder Validation
+- Complete Validation Script
+- Translation Batch Strategy
+
 ---
 
 ## Context-Aware Translation
@@ -343,13 +352,14 @@ function validateAll(
 
 ### CI integration
 
-Add to the project's test or lint script:
+Add to the project's test or lint script. The example runs TypeScript with `tsx` (a dev
+dependency); use the project's existing TS runner if it has one:
 
 ```json
 {
   "scripts": {
-    "i18n:check": "bun scripts/i18n-check.ts",
-    "pretest": "bun run i18n:check"
+    "i18n:check": "tsx scripts/i18n-check.ts",
+    "pretest": "npm run i18n:check"
   }
 }
 ```

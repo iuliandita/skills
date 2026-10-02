@@ -2,6 +2,18 @@
 
 This reference keeps the operational FreeBSD appliance detail out of the main skill body.
 
+## Contents
+
+- FreeBSD, not Linux
+- Key commands
+- Config model
+- IPv6
+- Plugins and packages
+- Standard operating procedures
+- Updates and maintenance
+- Backup, restore, and disaster recovery
+- HA and CARP
+
 ## FreeBSD, not Linux
 
 Translate Linux reflexes before doing anything:

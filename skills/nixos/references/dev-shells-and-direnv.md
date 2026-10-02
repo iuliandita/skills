@@ -4,6 +4,15 @@ Per-project reproducible environments are one of Nix's practical wins. The old w
 `shell.nix`; the new way is `flake.nix` dev shells. Pair either with `nix-direnv` for
 transparent `cd`-to-activate behavior.
 
+## Contents
+
+- Classic shell.nix
+- Flake dev shells
+- direnv + nix-direnv
+- Dev-shell hygiene
+- Patterns
+- Common mistakes
+
 ## Classic shell.nix
 
 ```nix

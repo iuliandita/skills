@@ -2,6 +2,16 @@
 
 Security hardening, vulnerability management, supply chain integrity, and PCI-DSS 4.0 mapping for containerized environments. Reviewed September 2026.
 
+## Contents
+
+- 2025-2026 CVE Reference
+- The Trivy Supply Chain Compromise (March 2026)
+- Image Scanning Tool Matrix
+- Image Signing Workflow
+- Runtime Hardening
+- PCI-DSS 4.0 Container Requirements
+- Public Custom Image Publishing
+
 ---
 
 ## 2025-2026 CVE Reference
@@ -108,8 +118,7 @@ The attackers are a cloud-native threat group active 2025-2026, known for Docker
 # 1. Build with attestations
 docker buildx build --provenance=true --sbom=true -t $IMAGE --push .
 
-# 2. Scan (use multiple tools for coverage)
-docker scout cves $IMAGE --exit-code --only-severity critical,high
+# 2. Scan (fail on HIGH/CRITICAL)
 trivy image --severity HIGH,CRITICAL --exit-code 1 $IMAGE    # pinned v0.74.0+ binary or image digest
 
 # 3. Sign (keyless via Sigstore OIDC in CI)
@@ -151,10 +160,7 @@ cosign verify --key cosign.pub ghcr.io/org/app@sha256:<digest>
 ### SBOM generation and attachment
 
 ```bash
-# Docker Scout (built-in)
-docker scout sbom ghcr.io/org/app:1.0.0
-
-# Syft (standalone)
+# Syft
 syft ghcr.io/org/app:1.0.0 -o spdx-json > sbom.spdx.json
 syft ghcr.io/org/app:1.0.0 -o cyclonedx-json > sbom.cdx.json
 

@@ -4,6 +4,18 @@ Use this reference when auditing an OPNsense device or suggesting improvements.
 Items are grouped by category. Not everything applies to every deployment -
 tailor recommendations to the device's role and hardware constraints.
 
+## Contents
+
+- DNS (Unbound)
+- Firewall
+- WireGuard VPN
+- Web GUI / SSH Hardening
+- CrowdSec
+- Firmware & Maintenance
+- HA / CARP
+- Network Segmentation
+- Monitoring & Alerting
+
 ## DNS (Unbound)
 
 - [ ] **DNSSEC enabled** + "Harden DNSSEC data" - validates upstream responses,

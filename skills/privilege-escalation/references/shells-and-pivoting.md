@@ -3,6 +3,16 @@
 Quick reference for establishing reverse shells, pivoting through compromised hosts, and
 transferring files during engagements.
 
+## Contents
+
+- Reverse Shell One-Liners
+- Shell Upgrade (TTY)
+- Listener Setup (Attacker Side)
+- SSH Tunneling
+- Tunneling Tools
+- Internal Network Scanning (No Nmap)
+- File Transfer Methods
+
 ---
 
 ## Reverse Shell One-Liners

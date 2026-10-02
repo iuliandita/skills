@@ -4,6 +4,21 @@ NixOS ships more kernel choices than most distros and needs explicit modules for
 hardware paths. `nixos-hardware` carries community profiles; the bundled modules handle
 common cases.
 
+## Contents
+
+- Picking a kernel
+- nixos-hardware
+- Firmware
+- GPU
+- Desktop: Wayland vs X11
+- Steam, Gamescope, and gaming
+- Screen capture on Wayland
+- PipeWire (audio, capture)
+- Fonts
+- Input
+- Bluetooth
+- Common mistakes
+
 ## Picking a kernel
 
 `boot.kernelPackages` is the knob. Defaults to the LTS kernel that nixpkgs tracks for the

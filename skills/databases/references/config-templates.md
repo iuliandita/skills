@@ -2,6 +2,14 @@
 
 Copy-pasteable configuration templates for PostgreSQL, MongoDB, MySQL/MariaDB, and MSSQL. Three variants: dev (permissive, verbose logging), prod (hardened, tuned), and PCI-CDE (compliance-ready).
 
+## Contents
+
+- PostgreSQL
+- MongoDB
+- MySQL / MariaDB
+- MSSQL
+- PgBouncer
+
 ---
 
 ## PostgreSQL

@@ -2,6 +2,14 @@
 
 Use this reference for Roadmap Mode 3.
 
+## Contents
+
+- Step 1: Identify Targets
+- Step 2: Gather Intelligence
+- Step 3: Analyze Fit
+- Step 3.5: Present Findings
+- Step 4: Update Roadmap
+
 ## Step 1: Identify Targets
 
 Accept GitHub or GitLab repo URLs, `owner/repo` references, project names to search for,

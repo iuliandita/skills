@@ -133,11 +133,6 @@ Pick the framework that matches the codebase and team constraints. Do not switch
 | **Express** | Thin Node.js services, custom middleware stacks, existing mature codebases | No built-in structure, validation scattered across middleware, inconsistent error handling |
 | **NestJS** | Larger TypeScript services that benefit from modules, guards, pipes, interceptors, and DI | Over-abstraction, decorator-heavy indirection, hiding simple flows behind too many layers |
 
-Framework rules:
-- **FastAPI** - keep dependencies explicit, use response models, and centralize exception handling
-- **Express** - keep routing, validation, auth, and business logic separated; add one error middleware path
-- **NestJS** - keep controllers thin, move auth into guards, validation into pipes, and cross-cutting behavior into interceptors or filters
-
 ### Step 3: Design the contract first
 
 Define the API contract before writing handlers:
@@ -215,7 +210,8 @@ Convert the contract into framework code without letting the framework dictate t
 
 ### Step 6: Validate behavior and docs
 
-Before returning the result:
+Before returning the result, run these checks. On a failure, fix it and return to Step 3 for a
+contract defect or Step 5 for an implementation defect, then recheck:
 - Compare OpenAPI docs against the real routes
 - Verify auth requirements per endpoint
 - Check all non-2xx responses, not just the happy path

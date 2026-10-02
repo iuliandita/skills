@@ -297,11 +297,10 @@ and, for opaque errors, `--print-build-logs`:
 nixos-rebuild switch --flake .#host --show-trace --print-build-logs 2>&1 | tail -200
 ```
 
-When a problem looks "flake-only," compare one clean baseline:
-
-- delete `flake.lock` and re-lock, or
-- roll one input back to its previous rev via `nix flake lock --override-input`, or
-- build the same output on another machine with the same `flake.lock` to isolate hardware vs config.
+When a problem looks "flake-only," default to rolling the suspect input back to its previous rev
+with `nix flake lock --override-input`. To isolate hardware from config, build the same output on
+another machine with the same `flake.lock`. Re-lock from scratch only as a last resort, after
+committing the current `flake.lock`.
 
 ---
 

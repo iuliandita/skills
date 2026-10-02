@@ -6,6 +6,20 @@ Encrypt Kubernetes Secrets for safe Git storage. The controller decrypts them in
 
 **CVE-2026-22728** (Moderate, CVSS 4.9, GHSA-465p-v42x-3fmj; fixed in v0.36.0). The `/v1/rotate` endpoint accepted untrusted annotations - an attacker could inject `sealedsecrets.bitnami.com/cluster-wide: "true"` into a victim's SealedSecret, submit it to the rotate endpoint, and receive back a re-encrypted SealedSecret with cluster-wide scope. The attacker could then retarget it (change name/namespace) to decrypt the original secret values in any namespace they control. Upgrade past v0.35.x immediately.
 
+## Contents
+
+- When to Use Sealed Secrets
+- Architecture
+- Sealing Scope Modes
+- Key Management
+- kubeseal CLI Patterns
+- GitOps Integration
+- PCI-DSS 4.0 Compliance
+- Security Hardening
+- Helm Installation (Production)
+- Common Failures
+- Anti-Patterns
+
 ---
 
 ## When to Use Sealed Secrets

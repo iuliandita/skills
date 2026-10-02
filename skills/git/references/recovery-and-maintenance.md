@@ -4,6 +4,18 @@ Reflog, bisect, rerere, filter-repo, stash, worktree, submodules, large repo opt
 
 Research date: September 2026.
 
+## Contents
+
+- Recovery Operations
+- Stash
+- History Rewriting
+- Rerere - remember conflict resolutions
+- Worktrees
+- Submodules vs Subtrees
+- Large Repository Optimization
+- Useful Aliases
+- Housekeeping Checklist
+
 ---
 
 ## Recovery Operations

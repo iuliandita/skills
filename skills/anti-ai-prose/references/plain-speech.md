@@ -10,6 +10,15 @@ Folded in from [poteto/plugins](https://github.com/poteto/plugins) `pstack/skill
 (MIT), which contributed the abstract-metaphor-noun list, the concreteness test, the actor
 test, the sentence-load test, and the voice-restoration guidance.
 
+## Contents
+
+- 1. Abstract metaphor nouns
+- 2. Say the concrete thing
+- 3. Passive voice with an unnamed actor
+- 4. Dense sentence stacking
+- 5. Restoring voice
+- What NOT to flag from this reference
+
 ---
 
 ## 1. Abstract metaphor nouns

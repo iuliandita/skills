@@ -2,6 +2,20 @@
 
 Detailed procedures for finishing a unit of work - from verification through merge and release.
 
+## Contents
+
+- When this reference loads
+- Step B1 details: Pre-close audit and forge detection
+- Step B2 details: Lint, type, test
+- Step B3 details: Doc and version sync
+- Step B4 details: Final code review
+- Step B5 details: Push and PR
+- Step B6 details: Watch CI
+- Step B7 details: Merge
+- Step B8 details: Release
+- Rollback playbook
+- Failure modes and recovery
+
 ## When this reference loads
 
 Load when the user invokes **dev-cycle** in finish mode (see SKILL.md Step 0). Not needed in start mode.
@@ -113,7 +127,7 @@ Check in order - first match wins. If no language manifest matches, **keep going
 | `package.json` with `"lint"`/`"typecheck"`/`"test"` scripts | `bun run lint && bun run typecheck && bun test` (or npm/pnpm/yarn) |
 | `package.json` without lint/test scripts | Check for `eslint`, `tsc`, `jest`/`vitest` in devDependencies; run directly |
 | `pyproject.toml` + `ruff` config | `ruff check . && ruff format --check . && mypy . && pytest` |
-| `pyproject.toml` without ruff | `flake8 \|\| pylint` + `mypy` + `pytest` |
+| `pyproject.toml` without ruff | the configured linter (`flake8` or `pylint`) + `mypy` + `pytest` |
 | `go.mod` | `gofmt -l . && go vet ./... && go test ./...` |
 | `Cargo.toml` | `cargo fmt --check && cargo clippy -- -D warnings && cargo test` |
 | `Gemfile` | `bundle exec rubocop && bundle exec rspec` |
@@ -402,7 +416,7 @@ Tell the user what self-hosted forge this is so the skill can route correctly ne
 
 ### Bare git (`$FORGE=bare`, no remote at all)
 
-No push, no PR. Two share options:
+No push, no PR. Default to format-patch; use a bundle when the reviewer needs the branch history:
 
 ```bash
 # Option A: format-patch - email-friendly, works with `git am` to apply
@@ -506,7 +520,7 @@ No CI to watch. If the user has a local CI harness (pre-push hook, cron, `act`, 
 
 1. Read the failing job's logs. Don't guess.
 2. Identify root cause: flaky test, real bug, env drift, timeout, missing secret.
-3. For real bugs: fix locally, push, re-watch.
+3. For real bugs: fix locally, re-run the Step B2 checks, push, and return to Step B6.
 4. For flakiness: confirm by rerunning identical commit. If confirmed flaky, rerun the job and note it in the PR. Do not fix a real bug by calling it "flaky".
 5. For env drift (CI has different versions than local): update lockfiles or CI config.
 
@@ -754,7 +768,7 @@ NEW_VERSION="X.Y.Z"
 : "${MERGE_SHA:?set to the merge commit produced in Step B7}"
 RELEASE_SHA=$(git rev-parse "$MERGE_SHA^{commit}") || exit 1
 
-# git tag -l always exits 0 - check for non-empty output instead
+# git tag -l always exits 0, so guard with rev-parse --verify
 if git rev-parse --verify --quiet "refs/tags/v$NEW_VERSION" >/dev/null; then
   echo "tag v$NEW_VERSION already exists; stop and investigate"; exit 1
 fi
@@ -919,7 +933,7 @@ Never force-push to the base branch. Never delete a published tag.
 | Failure | Recovery |
 |---------|----------|
 | Tests red after Step B2 | Block merge/release; fix in-scope failures and re-run affected checks. Report baseline failures and complete independent authorized preparation. |
-| CI red in Step B6 | Read logs, fix, push. Return to B6. |
+| CI red in Step B6 | Read logs, fix, re-run B2 checks, push. Return to B6. |
 | PR feedback requires refactor | Loop back to B2 (tests), B4 (review) after changes. |
 | Merge conflict at B7 | Rebase onto latest base, resolve, push, return to B6 (CI rerun). |
 | Tag already exists at B8 | Investigate - is this a retry of a completed release? If so, stop (already released). If a mistake, discuss with user before any destructive action. |

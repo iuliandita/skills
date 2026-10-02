@@ -4,6 +4,17 @@ Package hygiene is the difference between a boring Arch box and an afternoon los
 Favor official repos first, `paru` second, and raw AUR build inspection whenever something looks
 off.
 
+## Contents
+
+- Native package flow
+- Hard rules for Arch package work
+- `paru` stance
+- Manual AUR workflow
+- AUR package replaced by official repos
+- `.pacnew`, `.pacsave`, and config drift
+- Mirror and keyring issues
+- What NOT to do
+
 ## Native package flow
 
 | Task | Command | Notes |

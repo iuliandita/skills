@@ -3,6 +3,13 @@
 Optional auto-trigger setups for roadmap updates. The skill's built-in activity detection
 (Step 0) works without any of this - these are for users who want push-based reminders.
 
+## Contents
+
+- Claude Code Hook
+- GitHub Actions
+- Git Hook (local fallback)
+- Choosing an approach
+
 ---
 
 ## Claude Code Hook

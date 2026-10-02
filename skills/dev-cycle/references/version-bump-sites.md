@@ -2,6 +2,16 @@
 
 Where versions live across common ecosystems, and how to find them. Referenced from Step B3 in SKILL.md.
 
+## Contents
+
+- When this reference loads
+- Philosophy
+- Detection script
+- Site catalog
+- Strategy by change type
+- Confirming the diff
+- Gotchas
+
 ## When this reference loads
 
 Load in finish mode during the doc/version sync step. Not needed in start mode.

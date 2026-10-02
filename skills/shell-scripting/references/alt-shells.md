@@ -3,6 +3,13 @@
 > Syntax overviews and gotchas for Fish, tcsh/csh, Nushell, and other non-mainstream shells.
 > These are not daily drivers for most users, but you'll encounter them in specific contexts.
 
+## Contents
+
+- Fish (4.9.3)
+- Tcsh / Csh (6.24)
+- Nushell (0.115.1)
+- Brief: Other Shells
+
 ---
 
 ## Fish (4.9.3)
@@ -382,8 +389,8 @@ shell that's also a real programming language.
 ### Oils (OSH + YSH, 0.37)
 
 OSH is a bash-compatible shell (runs bash scripts correctly). YSH is the "upgrade path" - a
-new language that fixes bash's worst problems while keeping the shell paradigm. 8 releases
-shipped in the 6 months before September 2025, so the project is moving fast.
+new language that fixes bash's worst problems while keeping the shell paradigm. Releases are
+frequent; check the installed version against the release notes before relying on newer syntax.
 
 ```ysh
 # YSH - bash-like but with real data types

@@ -1,5 +1,15 @@
 # Bash / Shell Slop Patterns
 
+## Contents
+
+- Missing Safety (Lies)
+- Useless Use of Cat (Noise)
+- Stale Patterns (Lies)
+- Over-Defensive Patterns (Soul)
+- Verbose Patterns (Noise)
+- Script Structure (Soul)
+- AI-Native Tells (Lies + Soul)
+
 ## Missing Safety (Lies)
 
 The #1 shell slop tell: no error handling discipline.

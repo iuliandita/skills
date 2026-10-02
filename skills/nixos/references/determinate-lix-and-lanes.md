@@ -5,6 +5,16 @@ Three Nix CLI/daemon implementations coexist: upstream Nix (NixOS/nix), Determin
 workflows but diverge at the edges. Name the lane before suggesting daemon flags, daemon
 service names, or CLI behaviors that differ.
 
+## Contents
+
+- Upstream Nix
+- Determinate Nix
+- Lix
+- Coexistence and switching
+- Lane-specific gotchas
+- Checking which lane you are on
+- Common mistakes
+
 ## Upstream Nix
 
 - Repo: [NixOS/nix](https://github.com/NixOS/nix)

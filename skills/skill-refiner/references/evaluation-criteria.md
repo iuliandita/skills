@@ -7,6 +7,16 @@ thresholds mean, and how the adaptive loop makes decisions.
 (`test-cases.md` and `test-cases-local.md`); new cases land only in phase 2 or a separate
 reviewed change.
 
+## Contents
+
+- Scoring Eligibility
+- Scoring Model
+- Component Scoring
+- Thresholds
+- Flag Definitions
+- Regression Test Criteria (Lint Scripts - Phase 2 Only)
+- Simplicity Criterion
+
 ---
 
 ## Scoring Eligibility
@@ -137,6 +147,14 @@ Every deduction must cite an unmet listed quality signal or a concrete accuracy,
 relevance, or actionability defect. Do not reserve points solely because execution is simulated,
 the evaluator is cautious, or a live runtime is unavailable. Record an unavailable runtime as a
 verification limit unless the skill itself falsely claims that runtime behavior was verified.
+
+**Baseline lift and model tiers (diagnostic, not scored).** At the baseline sweep, run each
+case once without the skill in a fresh context and record whether the with-skill output beats
+it. Record the executor model tier (small, balanced, flagship) for every grading, and run at
+least one case per targeted skill on an authorized smaller-tier model when one is available.
+These signals pick improvement targets, not points: content with no lift over the no-skill run
+is a cut candidate under the Simplicity Criterion, and a step the small tier misses is an
+actionability defect to clarify or turn into a script. The composite formula is unchanged.
 
 ### Cross-Model Review (penalty-only)
 

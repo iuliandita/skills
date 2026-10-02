@@ -3,6 +3,17 @@
 Kali package health starts with one question: which branch model is this machine following?
 If you skip that question, every later fix is guesswork.
 
+## Contents
+
+- Branch model
+- Healthy source-list patterns
+- Core checks
+- Upgrade stance
+- Mirrors and signatures
+- Common package-state failures
+- Recovery pattern
+- What not to do
+
 ## Branch model
 
 Official Kali docs describe these main lanes:
@@ -104,7 +115,7 @@ metapackage owns the executable.
 1. Confirm the intended branch.
 2. Clean up source lists until one main lane wins.
 3. Update package metadata.
-4. Run `apt full-upgrade`.
+4. Simulate with `apt-get -s full-upgrade`, review removals, then run `sudo apt full-upgrade`.
 5. Re-check the exact package and binary.
 
 ## What not to do

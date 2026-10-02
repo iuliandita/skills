@@ -3,7 +3,7 @@ name: kubernetes-health
 description: >
   Check live Kubernetes cluster health with read-only diagnostics: nodes, pods, storage, networking, and GitOps.
 license: MIT
-compatibility: "Requires kubectl. Optional: helm, jq, openssl, dig, ssh"
+compatibility: "Requires kubectl; jq for the event-window check. Optional: helm, openssl, dig, ssh"
 metadata:
   source: iuliandita/skills
   date_added: "2026-03-30"
@@ -46,8 +46,6 @@ Before running checks or reporting results, verify:
 - [ ] Time window is bounded and stated in the report
 - [ ] Protected registry contents are not printed unless the user asks for those exact details
 - [ ] Findings include evidence, impact, and next action
-- [ ] **Cluster target explicit**: kubeconfig context, namespace, and environment are named before any query
-- [ ] **Read-only posture kept**: health checks do not mutate resources or restart workloads unless the user explicitly escalates
 - [ ] **No improvisation**: reference checks or verified read-only follow-ups used confirmed object names and supported flags; missing coverage was reported
 - [ ] **Stderr is visible**: diagnostic commands surface their failure reason instead of masking it with `2>/dev/null`; a missing tool, permission gap, or wrong context is reported, not silently treated as a clean result
 - [ ] Cross-cutting agent hygiene applied - see `references/agent-hygiene.md`

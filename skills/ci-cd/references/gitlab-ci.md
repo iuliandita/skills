@@ -3,6 +3,24 @@
 Production-ready patterns for GitLab CI/CD pipelines. Updated for GitLab 19.3 (September 2026):
 CI/CD Catalog GA, Components with typed inputs, rules-based workflows.
 
+## Contents
+
+- Current State (2026)
+- gitlab.com (SaaS) vs Self-Managed
+- Pipeline Structure
+- CI/CD Components (Catalog)
+- Rules (replacing only/except)
+- Caching Strategies
+- Needs (DAG Pipelines)
+- Multi-Environment Deployment
+- Security Scanning
+- Variables and Secrets
+- Terraform Pipeline
+- glab CLI Integration
+- Common Gotchas
+- Monorepo Pipeline (Three Services + Shared Lib)
+- Compliance evidence on GitLab
+
 ---
 
 ## Current State (2026)

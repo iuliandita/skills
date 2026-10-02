@@ -2,6 +2,15 @@
 
 Bug patterns specific to database usage in application code. Focused on correctness - not schema design, performance tuning, or style. Covers PostgreSQL, MongoDB, MySQL/MariaDB, and MSSQL, plus ORM pitfalls.
 
+## Contents
+
+- General SQL Bugs (All Engines)
+- PostgreSQL-Specific
+- MongoDB-Specific
+- MySQL / MariaDB-Specific
+- MSSQL-Specific
+- ORM Pitfalls
+
 ---
 
 ## General SQL Bugs (All Engines)

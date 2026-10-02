@@ -2,6 +2,19 @@
 
 Core Linux privilege escalation vectors. Ordered by reliability and safety - start from the top.
 
+## Contents
+
+- 1. Automated Enumeration
+- 2. Sudo Abuse
+- 3. SUID/SGID Binary Exploitation
+- 4. Linux Capabilities
+- 5. Cron Job Exploitation
+- 6. Kernel Exploits
+- 7. PATH Hijacking
+- 8. NFS Exploitation
+- 9. Writable Sensitive Files
+- 10. Wildcard Injection
+
 ---
 
 ## 1. Automated Enumeration

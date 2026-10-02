@@ -48,12 +48,12 @@ Module streams are a classic source of weird package solver behavior.
 ```bash
 dnf module list package_name 2>&1 || true
 dnf module info package_name:stream 2>&1 || true
-dnf module reset package_name 2>&1 || true
 ```
 
 Rules:
 - verify whether a module is actually in play before resetting anything
-- document the active stream before changing it
+- document the active stream before changing it, then run `sudo dnf module reset package_name`
+  without `|| true` and report any failure
 - be careful with PostgreSQL, Node.js, PHP, and container tools on older enterprise lanes
 
 ## Local RPM handling

@@ -252,7 +252,7 @@ When a bug looks "desktop-only," compare one clean baseline:
 | Symptom | First checks |
 |---------|-------------|
 | Package weirdness after install | Partial upgrade? `pacman -Syu` first. For a conflict, run `pacman -Qo /exact/path` first. Fix or remove an unowned manual file; report an owned-file conflict. Use `--overwrite exact/path` (package-archive path without the leading `/`) only when that verified file is intentionally being replaced; never use `'*'` or an inferred glob. |
-| Service fails after update | `.pacnew` merge needed? `pacdiff` or `DIFFPROG=nvim pacdiff`. Check unit overrides and `journalctl -b` |
+| Service fails after update | `.pacnew` merge needed? `pacdiff` (from `pacman-contrib`), or `DIFFPROG='nvim -d' pacdiff`. Check unit overrides and `journalctl -b` |
 | Won't boot after kernel work | Confirm root/subvolume, separate boot and ESP mounts, installed kernel, active initramfs generator and bootloader. Inspect available snapshots before changing boot artifacts. Follow `references/boot-kernel-and-recovery.md`; use the confirmed generator/loader for CachyOS too. |
 | CachyOS unstable after repo tuning | CPU capability, repo tier, forked `pacman` |
 | AUR build failure | `PKGBUILD`, keys, pinned deps, repo conflicts |

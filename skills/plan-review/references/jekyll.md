@@ -6,6 +6,17 @@ Use him when ambition needs to become durable usefulness.
 He is not caution for its own sake. He asks whether the thing can earn trust, scale cleanly,
 respect users, and keep working after the initial excitement is gone.
 
+## Contents
+
+- Core Function
+- Optimizes For
+- Resists
+- Operating Principles
+- Questions
+- Response Style
+- Failure Modes Jekyll Catches
+- Default Advice
+
 ## Core Function
 
 Dr Jekyll turns strong ideas into systems that can compound.

@@ -1,5 +1,15 @@
 # Dockerfile & Container Slop Patterns
 
+## Contents
+
+- Fat Images (Noise)
+- Layer Waste (Noise)
+- Security Smells (Lies)
+- Compose Bloat (Noise)
+- Stale Patterns (Lies)
+- Docker Compose Anti-Patterns (Noise + Lies)
+- Hardened Compose Baseline (reference template)
+
 ## Fat Images (Noise)
 
 The #1 Dockerfile sin. Production images carrying build tools, package caches, and dev dependencies.

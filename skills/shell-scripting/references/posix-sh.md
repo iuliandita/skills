@@ -4,6 +4,19 @@
 > sh, bash in POSIX mode, and zsh in sh-emulation mode. When you need a script that runs
 > everywhere - Alpine containers, Debian, macOS, BSDs, embedded systems - this is the reference.
 
+## Contents
+
+- 1. What IS and ISN'T POSIX
+- 2. Script Template
+- 3. Parameter Expansion (POSIX Subset)
+- 4. Conditionals
+- 5. Arithmetic
+- 6. No Arrays - Workarounds
+- 7. Portable Idioms
+- 8. Which "sh" Am I?
+- 9. Signal Handling
+- 10. Common Mistakes
+
 ---
 
 ## 1. What IS and ISN'T POSIX

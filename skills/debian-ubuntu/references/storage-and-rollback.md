@@ -3,6 +3,17 @@
 Use this for ext4, Btrfs, LUKS, LVM, TRIM, hibernation/resume, and snapshot-based rollback on
 Debian/Ubuntu. Snapshots are not backups: a snapshot on the same disk dies with the disk.
 
+## Contents
+
+- Inspect first
+- LUKS (encrypted volumes)
+- LVM
+- ext4 and Btrfs
+- TRIM (SSD)
+- Hibernation and resume
+- Snapshot rollback (Timeshift)
+- Notes
+
 ## Inspect first
 
 ```bash

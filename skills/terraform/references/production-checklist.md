@@ -13,7 +13,7 @@ Pre-deploy verification for Terraform configurations. Run through every section 
 - [ ] All variables typed with descriptions; secrets marked `sensitive`
 - [ ] Tags on every taggable resource (Name, Environment, Owner, ManagedBy, pci_scope)
 - [ ] Encryption enabled on all storage resources (RDS, EBS, ElastiCache)
-- [ ] S3 buckets: public access block (all four `true`), SSE-KMS, versioning, access logging, lifecycle rules, bucket policy denying non-SSL - see main skill S3 review checklist
+- [ ] S3 buckets: public access block (all four `true`), SSE-KMS, versioning, access logging, lifecycle rules, bucket policy denying non-SSL - see the S3 review in `implementation-patterns.md`
 - [ ] IMDSv2 enforced on all EC2 instances (`http_tokens = "required"`)
 - [ ] Security groups: no `0.0.0.0/0` ingress except port 443 on public ALBs
 - [ ] IAM policies follow least-privilege - no `"Action": "*"` or `"Resource": "*"`

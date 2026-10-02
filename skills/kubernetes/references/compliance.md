@@ -4,6 +4,16 @@ PCI-DSS 4.0/4.0.1 requirement mapping to Kubernetes controls. PCI-DSS 3.2.1 was 
 
 Key shift: PCI-DSS 4.0 is outcome-based with a "customized approach" - prove your K8s controls meet the objective, not that you followed a specific recipe. Continuous compliance replaces annual point-in-time assessment.
 
+## Contents
+
+- Requirements Mapped to K8s Controls
+- CDE Isolation Patterns
+- K8s Audit Policy for CDE
+- etcd Encryption for PCI
+- PCI MPoC (Mobile Payments on COTS)
+- Compliance Tooling
+- Actionable Checklist
+
 ---
 
 ## Requirements Mapped to K8s Controls

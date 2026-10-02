@@ -13,6 +13,16 @@ Two common options:
 
 Both integrate with home-manager and nix-darwin via their own modules.
 
+## Contents
+
+- sops-nix
+- agenix
+- Picking between them
+- Home-manager module
+- What not to do
+- Rotation
+- Common mistakes
+
 ## sops-nix
 
 ### Install

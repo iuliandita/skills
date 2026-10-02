@@ -2,6 +2,16 @@
 
 How to decide whether a unit of work is small (dive in), medium (judgment call), or large (brainstorm/spec).
 
+## Contents
+
+- When this reference loads
+- Philosophy
+- The table
+- Examples
+- Ambiguity resolution questions
+- Edge cases
+- What to do with the classification
+
 ## When this reference loads
 
 Load in start mode (Step A2 in SKILL.md). Not needed in finish mode.

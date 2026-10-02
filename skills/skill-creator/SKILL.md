@@ -58,8 +58,12 @@ Before returning any generated or modified skill, verify against this list:
 - [ ] **Rules section at the end**: the real non-negotiable constraints in imperative form; add only constraints the skill genuinely needs and do not invent rules to fill the section
 - [ ] **Style compliant**: no banned words and only the approved non-ASCII set, both defined
   in `references/conventions.md`; no em-dashes, curly quotes, or `--` substitutes in prose.
-- [ ] **Target 150-250 lines where practical**: if over 500, extract to `references/` with clear pointers. Hard max 600
-- [ ] **Reference files use `references/` relative paths**: not hardcoded or tool-specific paths
+- [ ] **Body under 500 lines** (150-250 preferred): SKILL.md reads as a table of contents; detail lives in `references/`
+- [ ] **References one level deep**: every reference file is named in SKILL.md with when-to-read guidance, uses a `references/` relative forward-slash path, and opens with a contents list when over 100 lines (`scripts/gen-ref-toc.py` where the collection has it)
+- [ ] **Freedom matches fragility per step**: destructive, irreversible, or format-critical steps give exact commands or scripts; judgment steps stay heuristic; one default plus an escape hatch instead of a menu of options
+- [ ] **Order-dependent workflows are checkable**: a copyable progress checklist, a validate-fix-repeat loop with an explicit "return to step N", and plan-validate-execute for batch or destructive operations; order-independent work skips the checklist
+- [ ] **Dependencies explicit**: required tools appear in `compatibility` and in a detect-or-install line beside the step that needs them; bundled scripts say whether to execute or read them
+- [ ] **Durable wording**: no time-conditional instructions (legacy behavior goes in an "Old patterns" section), one term per concept, fully qualified MCP tool names (`server:tool`)
 - [ ] **All references verified**: every tool, CLI flag, IaC resource, and example command
   confirmed against actual docs, `--help`, or registries - not assumed from training data.
   Specifically: tools exist and aren't deprecated/renamed, CLI flags are real, Terraform
@@ -71,26 +75,11 @@ Before returning any generated or modified skill, verify against this list:
   deprecated notices appear only in explicit migration references
 - [ ] **AI-age awareness**: if the skill generates code, config, or structured files (including skill files), include an AI self-check section
 - [ ] **Context budget justified**: every section earns its token cost (see `references/conventions.md`)
-- [ ] **Forward-tested** (high-effort skills, when feasible): during review, a subagent used the skill on a realistic task without leaked context. This is a process check on the reviewer, not a content requirement on the skill - the skill does not need a "forward-test" section. The reviewer notes what was tested or skipped and why.
-- [ ] **Current source checked**: dated versions, CLI flags, API names, and support windows are verified against primary docs before repeating them
+- [ ] **Forward-tested** (high-effort skills, when feasible): during review, a fresh agent used the skill on a realistic task without leaked context, on the smallest model tier the skill targets when one is available, and beat a no-skill baseline. This is a process check on the reviewer, not a content requirement on the skill. The reviewer notes what was tested or skipped and why.
 - [ ] **Hidden state identified**: local config, credentials, caches, contexts, branches, cluster targets, or previous runs are made explicit before acting
 - [ ] **Verification is real**: final checks exercise the actual runtime, parser, service, or integration point instead of only linting prose or happy paths
 - [ ] **Routing overlap checked**: new or edited skills do not steal triggers from better-matched existing skills
 - [ ] **Spec claims verified**: frontmatter, metadata, and compatibility guidance match the current Agent Skills specification
-
-## Performance
-
-- Keep `SKILL.md` compact; move deep examples into references loaded on demand.
-- Prefer precise triggers over broad keyword lists that cause unnecessary skill loading.
-- Run lint/spec checks before prose polishing so structural failures surface early.
-
-## Best Practices
-
-- Write skills as operational instructions, not essays about a domain.
-- Include clear When to use/When NOT to use routing and realistic AI self-checks.
-- Keep public skills tool-agnostic unless a tool is intrinsic to the skill.
-- Treat install/copy/link steps as environment-specific. If skills are sourced directly from a
-  repo, edit and verify there instead of distributing to tool dirs unless asked.
 
 ## Workflow
 
@@ -150,24 +139,24 @@ Understand what the skill should do. Extract from conversation context:
 If the user already described the workflow in the conversation (e.g., "turn what we just did into a
 skill"), extract the steps, tools used, corrections made, and patterns observed.
 
+**Baseline before drafting.** Run 2-3 representative tasks without the skill in a fresh context
+(or reuse the conversation that motivated it) and record what the agent got wrong or had to be
+told. Those gaps become the evaluation cases; write only enough content to close them.
+
 #### Step 2: Research the domain
 
 Before drafting, gather context:
 1. **Check existing active skills** for overlap (if a collection is available) - read the "When to use"
    / "When NOT to use" of potentially related skills. Don't create a skill that duplicates
    existing coverage.
-2. **Verify tools exist** - for every tool, library, CLI, or platform the skill references,
-   confirm it exists, is not deprecated or renamed, and is actively maintained. Search the web
-   or check the project's GitHub/registry page. AI models hallucinate tool names, flag names,
-   and API endpoints - treat every claim as unverified until checked. If a tool was replaced
-   (e.g., CDKTF is deprecated in favor of native HCL, Ingress is frozen with new features
-   going to Gateway API), reference the current recommended approach.
-3. **Check versions** - search for the latest stable release of every tool mentioned. Don't
-   guess or rely on training data - versions go stale fast. Pin them with dates so staleness
-   is detectable later (e.g., "Docker Engine 29.3.0 (March 2026)").
-4. **Check security** - search for recent CVEs, supply chain incidents, or known vulnerabilities
-   relevant to the domain. The custom skill collection tracks these actively - verify current
-   advisories rather than relying on specific CVE numbers from training data.
+2. **Verify tools exist** - confirm every tool, library, CLI, flag, and API endpoint against its
+   registry, docs, or `--help`; it must exist and not be deprecated or renamed. Models invent
+   plausible names. If a tool was replaced (e.g., CDKTF by native HCL, Ingress by Gateway API),
+   reference the current approach.
+3. **Check versions** - search the latest stable release of each tool and pin it with a date
+   (e.g., "Docker Engine 29.3.0 (March 2026)") so staleness is detectable.
+4. **Check security** - search current CVEs and supply chain incidents for the domain instead of
+   repeating CVE numbers from training data.
 5. **Check compliance** - add it only when the skill's audience is subject to a named framework
    (PCI-DSS 4.0 for cardholder data, HIPAA, SOC 2, GDPR); never a blanket PCI-DSS mandate on every
    infrastructure, container, or CI/CD skill. Note it as optional when the audience is unknown.
@@ -186,16 +175,16 @@ Key elements every custom skill needs:
 
 For tool/platform skills, include a **Target versions** block with pinned versions and dates.
 
-**Writing guidelines:**
-- Imperative form in instructions ("Check the config", not "You should check the config")
-- Explain **why**, not just **what** - models generalize from motivation
-- Don't use ALL CAPS for emphasis unless it's genuinely critical. Calm, direct instructions
-  outperform shouting across most modern models.
-- Include "What NOT to flag" or "What NOT to do" sections where false positives are likely
-- Use tables for reference data, prose for workflows, checklists for validation
-- Consider headless execution: skills may run in non-interactive contexts (Claude Code `--bare`,
-  Cursor Automations, Codex `exec`). Avoid blocking on user confirmation in steps that could
-  run unattended - provide sensible defaults or document assumptions instead
+**Writing guidelines** (detail in `references/conventions.md` Sections 1, 4, 5, and 7.6-7.8):
+- Imperative, calm, and brief; explain **why**; add only what a capable model does not already know
+- Set freedom per step: ask "what breaks if the agent does this step differently?" Nothing much
+  means heuristics; consequential means an exact command or a script
+- Give one default with an escape hatch, not a list of equivalent tools
+- Give order-dependent work a copyable checklist with loop-back, and a validator to run until it passes
+- Split detail into domain-organized references linked directly from SKILL.md
+- Include "What NOT to flag" or "What NOT to do" where false positives are likely
+- Consider headless execution (Codex `exec`, `claude -p`, `cmd -p`): provide defaults instead of
+  blocking on confirmation in steps that could run unattended
 
 #### Step 4: Validate the draft
 
@@ -232,10 +221,17 @@ Use it for high-effort skills and for medium-effort skills with multi-step or sc
 Skip it for low-effort wrappers, unavailable subagents, production-only access, long-running
 infra, missing credentials, or explicit user opt-out; note the skip reason.
 
-1. Pick 2-3 realistic tasks, including one edge case.
-2. Launch with a real-user prompt and raw artifacts only.
-3. Check whether the agent followed the workflow, missed steps, or hallucinated.
+1. Pick 2-3 realistic tasks, including one edge case; reuse the baseline tasks from Step 1.
+2. Launch with a real-user prompt and raw artifacts only, on each model tier the skill targets
+   when available. The smallest tier answers "is there enough guidance?"; the flagship answers
+   "does the skill over-explain or make output worse than the baseline?"
+3. Check whether the agent followed the workflow, missed steps, or hallucinated, and how it
+   navigated: read order, references it missed or never opened, files it reread (promote those
+   into SKILL.md).
 4. Clean up artifacts between iterations.
+
+If the small tier misses a step, make the step clearer or turn it into a script. If the flagship
+does better without an instruction, cut it.
 
 If forward-testing only succeeds with leaked context, tighten the skill instead of weakening
 the test.
@@ -252,22 +248,21 @@ Read the SKILL.md and all reference files. No skipping - the whole point is catc
 - Frontmatter completeness (name, description, license, metadata.source, metadata.date_added, metadata.effort)
 - Section presence (When to use, When NOT to use, Workflow, Rules)
 - AI Self-Check section (required for skills that generate code/config)
-- Reference file paths resolve (check `references/` directory)
+- Reference file paths resolve, every reference is named in SKILL.md, and references over 100
+  lines open with a contents list
 - Related Skills section present and accurate (when the skill interacts with other skills)
-- Target 150-250 lines where practical (SKILL.md body), hard max 600
+- Body under 500 lines (150-250 preferred)
+
+**Reliability checks:**
+- Each workflow step's freedom matches its fragility; destructive or format-critical steps are
+  exact commands or scripts, and option lists have a default
+- Order-dependent workflows carry a checklist and a validation loop with an explicit return step
+- Dependencies are declared and detectable; no time-conditional instructions; one term per concept
 
 **Content checks:**
-- Tools exist? Every tool, CLI, library, or platform named in the skill must be verified as
-  real, not deprecated, and not renamed. Search the web or check the project's GitHub/registry.
-  AI hallucinates tool names, CLI flags, and API endpoints constantly - treat every reference
-  as unverified until confirmed. If a tool was replaced, the skill should reference the
-  replacement (e.g., CDKTF deprecated in favor of native HCL, Ingress frozen with Gateway API
-  as the recommended path forward, lazy_static superseded by std::sync::LazyLock).
-- CLI flags and IaC resources real? Verify flags/subcommands against actual `--help` or docs.
-  For Terraform: confirm provider names and resource type arguments against the registry. For
-  Ansible: confirm module names and parameters against `ansible-doc` or Galaxy. For Helm:
-  confirm chart values against upstream `values.yaml`. For K8s: confirm API fields against
-  the target API version. AI invents plausible-sounding arguments for all of these.
+- Tools, CLI flags, and IaC resources real? Verify each against the registry, `--help`,
+  `ansible-doc`, upstream `values.yaml`, or the target API version, as in Mode 1 Step 2. If a
+  tool was replaced, the skill should reference the replacement.
 - Version numbers current? Search the web for latest stable versions of tools that appear in
   normative claims (pinned versions, "Target versions" blocks, compatibility fields). Don't
   verify every passing mention - focus on versions that drive behavior or could mislead.
@@ -287,11 +282,8 @@ Read the SKILL.md and all reference files. No skipping - the whole point is catc
 - Are there patterns that would produce AI slop? (excessive MUSTs, over-defensive instructions,
   generic naming in examples)
 
-**Compliance checks** (only for skills whose audience is subject to a named framework):
-- PCI-DSS 4.0 mapping only when the skill's audience handles cardholder data (Mode 1, Step
-  2.5); never a blanket mandate on infrastructure, container, or CI/CD skills.
-- Future-dated requirements (mandatory since March 31, 2025) reflected where PCI-DSS applies?
-- No hardcoded secrets in examples?
+**Compliance checks:** framework mappings (e.g., PCI-DSS 4.0) only where the audience is subject
+to them (Mode 1 Step 2), never as a blanket mandate; no hardcoded secrets in examples.
 
 **Script-runner reality check:** verify helper script input shape. If a single-skill run reports zero skills or odd output, re-run against the collection root and filter for the target.
 
@@ -365,17 +357,10 @@ Flag pairs that share significant trigger keywords without mutual disambiguation
 
 #### Step 4: Freshness sweep
 
-Flag skills where the last modification (per git history, or file mtime if git is unavailable)
-is >30 days old AND the skill covers fast-moving domains. The lists below are illustrative,
-not exhaustive; derive the sets from the live inventory each run.
-
-**Fast-moving examples** (>30 days = stale risk): docker, kubernetes, ci-cd, terraform, ansible,
-databases, git, security-audit, code-review (AI-age patterns section), mcp, networking, arch-linux
-
-**Slow-moving examples** (>30 days = probably fine): opnsense-pfsense, shell-scripting,
-prompt-generator, update-docs, skill-creator, repo-audit, code-simplification, privilege-escalation
-
-If conventions change significantly, reclassify skill-creator as fast-moving until they stabilize.
+Flag skills last modified (git history, else mtime) more than 30 days ago that cover
+fast-moving domains (e.g., docker, kubernetes, ci-cd, terraform, databases, git, mcp,
+security-audit). Derive the set from the live inventory each run; treat skill-creator as
+fast-moving while conventions are changing.
 
 For each stale high-effort skill, search the web for:
 - New major/minor releases of referenced tools
@@ -462,9 +447,10 @@ instead of inventing a composite.
 ## Reference Files
 
 - `references/conventions.md` - the complete convention guide: frontmatter fields, structural
-  patterns by effort tier, style rules (ASCII, banned words), reference file organization,
-  cross-skill patterns, AI Self-Check patterns, and a snapshot inventory of the upstream
-  collection (useful as a reference, not an authoritative list for other repos)
+  patterns by effort tier, style rules, reference organization, cross-skill patterns, AI
+  Self-Check patterns, workflow reliability, scripts and dependencies, model portability, and a
+  snapshot inventory of the upstream collection (an example, not authoritative for other repos)
+- `references/agent-hygiene.md` - cross-cutting hygiene for any agent run (shared, generated)
 
 ## Output Contract
 

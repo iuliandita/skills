@@ -1,5 +1,13 @@
 # Network Troubleshooting and Performance Tuning
 
+## Contents
+
+- Troubleshooting Methodology
+- Tool Deep-Dives
+- Common Issues
+- Performance Tuning
+- TLS Certificate Management
+
 ## Troubleshooting Methodology
 
 Work bottom-up through the network stack:
@@ -394,10 +402,9 @@ and audit `authorized_keys`/CA-signed cert principals.
 
 ### Let's Encrypt with certbot
 
-**45-day certificate rollout timeline:**
-- Now: 90-day certs (default), 6-day short-lived certs available; opt-in 45-day `tlsserver` profile live since May 13, 2026
-- Feb 2027: default changes to 64-day certs (10-day authorization reuse)
-- Feb 2028: default changes to 45-day certs
+Do not hardcode a 90-day renewal assumption. Let's Encrypt default lifetimes shorten to 64 days
+(Feb 2027) and 45 days (Feb 2028); opt-in 45-day `tlsserver` and 6-day profiles already exist.
+Rely on certbot's installed timer and ARI-driven renewal.
 
 Certbot 5.4.0 supports IP address certificates (`--ip-address`) and ARI (ACME Renewal
 Information) for smarter renewal timing.
@@ -434,11 +441,10 @@ openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 365 -node
 
 ### mTLS (mutual TLS)
 
-**Breaking change (2025-2027):** Major public CAs (Sectigo from Sep 2025) are removing the
-Client Authentication EKU from SSL/TLS certificates. By Feb 2027, public CA certs won't work
-for mTLS at all. **You must use a private CA** for mTLS client certificates - step-ca, cfssl,
-Vault PKI, or plain OpenSSL. This affects VPNs, mTLS, Wi-Fi onboarding, and any system using
-public CA certs for client auth.
+Public CAs are removing the Client Authentication EKU from SSL/TLS certificates (completing by
+Feb 2027), so do not use public CA certificates for client auth (mTLS, VPNs, Wi-Fi onboarding).
+Use a **private CA**: step-ca for managed issuance and rotation, or the OpenSSL commands below
+for a one-off.
 
 ```bash
 # Create private CA

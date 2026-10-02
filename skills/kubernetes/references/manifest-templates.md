@@ -2,6 +2,21 @@
 
 Production-ready, copy-pasteable YAML templates. Workload containers include security context, appropriate probes, resource limits, and standard labels. Auxiliary sidecars need a readiness probe only when their readiness should gate Pod traffic. Updated for K8s 1.35-1.37+.
 
+## Contents
+
+- Deployment
+- Deployment with Native Sidecar (K8s 1.33+)
+- Gateway API HTTPRoute (replaces Ingress)
+- Service
+- ConfigMap
+- PersistentVolumeClaim
+- StatefulSet
+- CronJob
+- HorizontalPodAutoscaler
+- PodDisruptionBudget
+- NetworkPolicy (default deny + allow)
+- Pod Security Standards (namespace labels)
+
 ---
 
 ## Deployment

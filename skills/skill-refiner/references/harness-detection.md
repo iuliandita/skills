@@ -2,6 +2,15 @@
 
 How skill-refiner detects and validates AI CLI harnesses for cross-model peer review.
 
+## Contents
+
+- Detection Table
+- Three-Step Probe
+- Auto-Detection Priority
+- Config Override
+- Review Prompt Template
+- Flag Adjudication Protocol
+
 ---
 
 ## Detection Table

@@ -3,6 +3,16 @@
 Read before any repair attempt or any change to a production unit. Most entries here come from a
 real recovery; the rest are DSM behaviors that reliably mislead.
 
+## Contents
+
+- Never do these on a damaged Synology btrfs volume
+- The circularity, stated once
+- Diagnostic hygiene
+- Shell traps on DSM
+- Behavior of a damaged volume
+- DSM behaviors that mislead
+- Remote work discipline
+
 ## Never do these on a damaged Synology btrfs volume
 
 - **`btrfs check --repair --init-extent-tree`.** Observed: completes a full scan, then writes a

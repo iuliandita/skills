@@ -4,6 +4,15 @@ Credential management, commit signing setup, secret scanning, CVE reference, and
 
 Research date: September 2026.
 
+## Contents
+
+- Commit Signing Setup
+- Credential Management
+- Secret Scanning
+- Git CVE Reference (2024-2026)
+- Git Security Hardening
+- Git LFS
+
 ---
 
 ## Commit Signing Setup

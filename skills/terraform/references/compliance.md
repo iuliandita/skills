@@ -2,6 +2,15 @@
 
 PCI-DSS 4.0 requirements mapped to Terraform controls, policy-as-code patterns, and CDE infrastructure architecture.
 
+## Contents
+
+- PCI Requirements Mapped to Terraform
+- Policy-as-Code
+- CDE State Isolation
+- CVEs and Incidents (2026)
+- PCI MPoC Backend Infrastructure
+- Tagging Strategy for Audit
+
 ---
 
 ## PCI Requirements Mapped to Terraform
@@ -303,14 +312,8 @@ resource "aws_config_config_rule" "encrypted_volumes" {
 ### Checkov (recommended, static analysis)
 
 ```bash
-# Run PCI-specific checks
+# Run PCI-specific checks (checkov has no PCI framework flag; use an explicit --check list)
 checkov -d . --framework terraform --check CKV_AWS_16,CKV_AWS_17,CKV_AWS_19,CKV_AWS_145
-
-# Or use the PCI framework
-# Note: checkov 3.3.17 has no --compliance flag and no pci_dss_v4 identifier (verified
-# against `checkov --help` and the Checkov CLI Command Reference). Use the explicit
-# --check list above, or --policy-metadata-filter with a Prisma Cloud API key.
-# checkov -d . --framework terraform --compliance pci_dss_v4
 ```
 
 Key PCI checks:

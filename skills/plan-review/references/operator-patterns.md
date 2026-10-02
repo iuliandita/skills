@@ -3,6 +3,16 @@
 Distilled patterns from software, AI, product, design, and engineering leaders. Use these as
 diagnostic lenses, not as biography or hero worship.
 
+## Contents
+
+- How To Use These Patterns
+- Pattern Selection Rules
+- Business And Platform Patterns
+- AI-Era Patterns
+- Design And Product Patterns
+- Code And Engineering Patterns
+- Dual-Lens Pattern Template
+
 ## How To Use These Patterns
 
 Use the white-ball pattern to identify the real upside. Use the black-ball pattern to identify

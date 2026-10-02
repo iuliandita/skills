@@ -76,9 +76,10 @@ Use explicit error handling that the selected shell supports. Keep scripts non-i
 task needs interaction, and use `--` before user-controlled paths for commands that accept it.
 Preview destructive expansions before `rm`, `mv`, `chmod`, `chown`, or recursive edits.
 
-Run the parser for the target (`bash -n`, `zsh -n`, or `sh -n`) and ShellCheck for sh/Bash where
-available. A completion also needs a real Tab press after `compinit`; parsing alone does not test
-discovery. Report commands run and any unavailable checks.
+Run the parser for the target (`bash -n`, `zsh -n`, or `sh -n`) and, for sh/Bash, ShellCheck when
+`command -v shellcheck` finds it. Fix every reported error and rerun until both pass. A completion
+also needs a real Tab press after `compinit`; parsing alone does not test discovery. Report commands
+run and any unavailable checks.
 
 ## Verification Checklist
 

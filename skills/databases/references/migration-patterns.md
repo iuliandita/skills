@@ -2,6 +2,18 @@
 
 Cross-engine type mappings, zero-downtime schema changes, migration tooling, and SQL dialect differences. Opinionated toward safety - if a pattern risks data loss, it's called out.
 
+## Contents
+
+- Cross-Engine Type Mapping: MySQL -> PostgreSQL
+- Cross-Engine Type Mapping: PostgreSQL -> MySQL
+- Cross-Engine Type Mapping: MSSQL -> PostgreSQL
+- Cross-Engine: Relational -> MongoDB
+- Zero-Downtime Schema Changes
+- Cross-Engine Migration Process
+- ORM Migration Tooling
+- SQL Syntax Differences
+- Large Table Migration Patterns
+
 ---
 
 ## Cross-Engine Type Mapping: MySQL -> PostgreSQL
@@ -685,6 +697,10 @@ SELECT * FROM t WHERE col IS NOT DISTINCT FROM NULL;
 ---
 
 ## Large Table Migration Patterns
+
+For large MySQL tables, default to gh-ost (trigger-free, pausable, testable on a replica); use
+pt-online-schema-change when row-based binlogs are unavailable or the table has foreign keys.
+Run either tool without `--execute` (gh-ost noop mode) or with `--dry-run` (pt-osc) first.
 
 ### pt-online-schema-change (MySQL)
 

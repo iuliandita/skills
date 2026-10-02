@@ -187,8 +187,8 @@ Follow the domain-specific reference file. Key principles:
 
 The fastest path to a production-ready VM. Skip Packer and ISO installs for standard setups.
 
-1. Download a cloud image to the Proxmox node (note: the URL below points to a daily/testing image; prefer a stable release image - daily images may have cloud-init metadata gaps causing first-boot surprises):
-   `wget -P /var/lib/vz/template/iso/ https://cloud.debian.org/images/cloud/trixie/daily/latest/debian-13-generic-amd64.qcow2`
+1. Download a stable cloud image to the Proxmox node (not `daily/`, which can have cloud-init gaps):
+   `wget -P /var/lib/vz/template/iso/ https://cloud.debian.org/images/cloud/trixie/latest/debian-13-generic-amd64.qcow2`
 2. Create the VM shell:
    `qm create 100 --name myvm --memory 2048 --cores 2 --cpu host --net0 virtio,bridge=vmbr0 --agent enabled=1 --scsihw virtio-scsi-single`
 3. Import and attach the disk with SSD optimizations:

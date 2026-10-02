@@ -3,6 +3,19 @@
 Kernel and boot work on Arch is one subsystem: package manager, initramfs generator, bootloader,
 microcode, and optional UKI signing all have to agree.
 
+## Contents
+
+- First questions
+- Fast fact-gathering
+- Initramfs generator rules
+- systemd-boot basics
+- GRUB basics
+- Unified kernel images
+- Secure Boot
+- Live ISO recovery
+- Snapshot + Boot Recovery Checklist (Btrfs + UKI)
+- What NOT to do
+
 ## First questions
 
 - Which kernel package is installed?
