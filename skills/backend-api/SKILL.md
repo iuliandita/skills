@@ -96,19 +96,23 @@ Before returning API code, route design, or OpenAPI output, verify:
 - Set timeouts and body limits at the framework, proxy, and client layers.
 - Measure p95/p99 latency and error rates for changed endpoints before optimizing internals.
 
-
 ---
 
 ## Best Practices
 
-- Design idempotency for retries on create, payment, provisioning, and webhook endpoints.
-- Generate or validate OpenAPI from the implementation contract and keep examples executable.
 - Use explicit auth scopes and tenancy checks in handlers, not only in route grouping or UI state.
-
 
 ## Workflow
 
 **Build vs. Review:** when reviewing an existing service, still walk the same steps. Determine the API boundary, audit the contract, trace auth, then compare the implementation against the published behavior instead of jumping straight into handler code.
+
+Order matters: the contract precedes handlers. Copy and track:
+- [ ] Step 1: Boundary, callers, stability promise, and house style known
+- [ ] Step 2: Framework pattern matches the codebase
+- [ ] Step 3: Contract (resources, methods, schemas, errors, pagination, versioning) defined
+- [ ] Step 4: Auth model chosen from the client type
+- [ ] Step 5: Framework surface implemented against the contract
+- [ ] Step 6: Behavior and docs validated (on failure, return to Step 3 or Step 5)
 
 ### Step 1: Determine the boundary
 
@@ -235,9 +239,8 @@ contract defect or Step 5 for an implementation defect, then recheck:
 
 ### OpenAPI authoring
 
-- OpenAPI `3.2.1` is the current spec, but much of the framework and Swagger ecosystem still centers on `3.1.x`
-- Default to authoring for `3.1` compatibility unless the actual toolchain in the project proves `3.2` support end-to-end
-- Do not advertise `3.2` features in generated specs just because the top-level standard moved
+Author for `3.1` unless the project's toolchain proves `3.2` support end to end; see "OpenAPI Version
+Choice" in `references/http-api-patterns.md`.
 
 ### Error model
 
@@ -405,11 +408,8 @@ See `references/output-contract.md` for the full contract.
 
 1. **Contract before handlers.** Design the resource model, schemas, errors, and auth boundary before writing route code.
 2. **Do not let transport leak persistence.** Database tables, ORM entities, and internal enums are not public API contracts.
-3. **Pick one error format.** Prefer RFC 9457 and apply it consistently.
-4. **Use current auth guidance.** Authorization code + PKCE for public OAuth clients, sessions or BFF patterns for first-party browser apps, no implicit flow, no password grant.
-5. **Keep framework structure boring.** Thin controllers or routes, explicit validation, explicit auth, centralized error handling.
-6. **Backward compatibility is a feature.** New fields are cheap; breaking clients is expensive.
-7. **Write for real retries.** Assume clients, proxies, and job runners will replay requests.
-8. **Apply protocol-specific rules.** REST is the default focus; GraphQL and gRPC require their own
+3. **Keep framework structure boring.** Thin controllers or routes, explicit validation, explicit auth, centralized error handling.
+4. **Backward compatibility is a feature.** New fields are cheap; breaking clients is expensive.
+5. **Write for real retries.** Assume clients, proxies, and job runners will replay requests.
+6. **Apply protocol-specific rules.** REST is the default focus; GraphQL and gRPC require their own
    schema, compatibility, deadline, and streaming checks from the linked reference.
-9. **Match service conventions unless migrating them.** A one-off endpoint with a different error, auth, or pagination model is usually a contract bug.

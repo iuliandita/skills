@@ -3,6 +3,7 @@ name: message-queues
 description: >
   Design, diagnose, and safely operate brokered delivery with Kafka, RabbitMQ, and compatible queues: acknowledgements, retries, dead letters, ordering, lag, and replay.
 license: MIT
+compatibility: "Optional, broker-dependent: kafka-consumer-groups.sh (Kafka) or rabbitmqctl (RabbitMQ) for live diagnosis and recovery"
 metadata:
   source: iuliandita/skills
   date_added: "2026-09-20"
@@ -51,7 +52,7 @@ outbox/inbox protocol.
 For a representative message, trace publish -> broker acceptance -> delivery -> durable business
 effect -> acknowledgement/offset commit. Then trace process crash after the effect, timeout, malformed
 payload, dependency outage, and retry exhaustion. Place the acknowledgement only after the durable
-effect, and make duplicate delivery harmless.
+effect (auto-ack or early commit trades reliability for loss), and make duplicate delivery harmless.
 
 ### 3. Bound pressure and failure handling
 
@@ -74,19 +75,20 @@ throughput suggests insufficient capacity or increased input; high in-flight wor
 suggests downstream saturation; repeating message IDs suggest a retry or idempotency defect.
 Inspect one correlation/message ID across producer, broker, consumer, and effect records before
 changing prefetch, scaling consumers, resetting offsets, purging queues, or replaying data. Read-only
-starting points (both CLIs ship with the broker; check `command -v` first):
+starting points (the CLIs ship with the broker; detect with `command -v kafka-consumer-groups.sh rabbitmqctl`):
 `kafka-consumer-groups.sh --bootstrap-server <host:port> --describe --group <group>` and
 `rabbitmqctl list_queues name messages_ready messages_unacknowledged consumers`.
 
 ### 5. Recover with a scoped, measurable plan
 
-Choose a finite message range, target consumer group/queue, idempotency protection, expected
-side effects, stop condition, and before/after lag or backlog measurement. Test replay on a
-non-production copy or a quarantined message first. Offset reset, purge, requeue, or broad replay
-changes delivery state: obtain explicit authorization after presenting the exact scope and rollback
-or containment plan. For a Kafka offset reset, show the dry run first and execute only the approved,
-unchanged command (with `--execute` in place of `--dry-run`); the group must have no active members.
-Before `--execute`, capture current offsets as the rollback record:
+Offset reset, purge, requeue, and broad replay change delivery state. Copy and track:
+
+- [ ] Scoped: finite message range, target group/queue, idempotency protection, side effects, stop condition
+- [ ] Baselined: lag or backlog recorded; for Kafka, current offsets captured as the rollback record
+- [ ] Rehearsed: replay on a non-production copy or a quarantined message; Kafka reset run with `--dry-run`
+- [ ] Approved: exact command, scope, and rollback or containment plan explicitly authorized
+- [ ] Executed unchanged: Kafka swaps only `--dry-run` for `--execute`; the group must have no active members
+- [ ] Verified: lag/backlog re-measured; if it diverges from the stop condition, halt and return to Scoped
 
 ```bash
 kafka-consumer-groups.sh --bootstrap-server <host:port> --describe --group <group> > offsets-before.txt
@@ -129,11 +131,9 @@ See `references/output-contract.md` for the full contract.
 
 1. **Assume at-least-once delivery unless the complete boundary proves otherwise.** Consumers must
    tolerate duplicates; producer retries need stable message IDs.
-2. **Acknowledge after the durable effect.** Auto-ack or early commit trades reliability for loss.
-3. **Make retries bounded and observable.** Include jitter/delay where supported; route poison
+2. **Make retries bounded and observable.** Include jitter/delay where supported; route poison
    messages away from the hot path.
-4. **Treat replay as a new execution.** It can recreate effects, so use idempotency and scope it.
-5. **Measure age as well as count.** A small backlog containing old messages can be more urgent than
+3. **Measure age as well as count.** A small backlog containing old messages can be more urgent than
    a large fresh burst.
-6. **Do not alter live broker state during diagnosis.** Read metrics, logs, and configuration first;
+4. **Do not alter live broker state during diagnosis.** Read metrics, logs, and configuration first;
    request approval for offset resets, purges, requeues, topology edits, or production replay.

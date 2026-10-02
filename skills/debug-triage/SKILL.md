@@ -72,6 +72,12 @@ Diagnostic work fails in specific ways. Before reporting a localization or runni
 Run the checks listed for the candidate layers. Do not improvise checks with assumed service names
 or paths; if a layer needs coverage not listed here, note it as a gap and ask, do not invent it.
 
+Copy and track:
+- [ ] Step 1: Symptom scoped (what, since when, recent change, blast radius, kube context)
+- [ ] Step 2: Candidate layers listed (usually 2-4)
+- [ ] Step 3: Discriminating checks run; each exclusion backed by evidence
+- [ ] Step 4: Implicated layer, evidence, and owner skill stated
+
 ### Step 1: Scope the symptom
 
 Pin the observable failure before touching anything. Capture: what is failing (endpoint, job,
@@ -87,7 +93,8 @@ not one. List them; do not commit to a favorite.
 ### Step 3: Run the cheapest discriminating check
 
 For the candidate layers, run the check that excludes the most layers per command (see the
-discriminating-signal table). After each result, eliminate only failure modes the evidence excludes. Stop at a supported localization or report unresolved competing layers; do not force one layer to remain. Report *why* each layer was excluded, with the evidence.
+discriminating-signal table). After each result, eliminate only failure modes the evidence excludes. Stop at a supported localization or report unresolved competing layers; do not force one layer to remain. Report *why* each layer was excluded, with the evidence. If more than one layer remains and a cheaper
+discriminating check exists, repeat Step 3; if every candidate is excluded, return to Step 2.
 
 ### Step 4: Localize and hand off
 
@@ -118,8 +125,9 @@ Work outside-in along the request path. Each layer is owned by a domain skill fo
 
 ## Discriminating-signal table
 
-Pick the check that splits the candidate set fastest. These are starting points - adapt the
-service names and paths to the actual stack, and surface errors rather than masking them. Run
+Pick the check that splits the candidate set fastest. Detect tools first (`command -v dig curl
+openssl ss kubectl`); a missing tool is a coverage gap, not a failed layer. These are starting
+points - adapt the service names and paths to the actual stack, and surface errors rather than masking them. Run
 reachability checks from the right network vantage point - inside the cluster or namespace for
 ClusterIP services and split-horizon DNS, not from a laptop - or a wrong exclusion follows. For a
 *degraded* symptom (slow, no errors) the discriminators shift from up/down to fast/slow and
@@ -141,14 +149,6 @@ replica), then chase only the resource that split implicates.
 Read metrics for what they measure, not what they seem to say (e.g. K8s HPA `targetCPU` is a
 percentage of the CPU *request*, not raw CPU; `df` is allocation, not live content). When a
 resource is on a schedule (backups, rotations), judge freshness against that schedule.
-
-## What NOT to do
-
-- Do not propose a fix before a layer is localized with evidence.
-- Do not run state-changing commands (restart, failover, scale, flush, apply) as part of triage;
-  name them as actions and get explicit confirmation.
-- Do not mask command failures with `2>/dev/null`; a failed check is a finding.
-- Do not invent service names, namespaces, or paths; if coverage is missing, ask.
 
 ## Output Contract
 
@@ -179,14 +179,7 @@ See `references/output-contract.md` for the full contract.
    change. No guessed fixes on unknown layers.
 2. **One layer at a time, cheapest check first.** Choose each check to exclude the most layers per
    command; drop ruled-out layers and state why.
-3. **Differentiate failure modes.** Unreachable, denied, and absent are different findings - never
-   collapse them.
-4. **Surface errors.** No `2>/dev/null` on diagnostic commands; an empty or failed result is
-   reported, not assumed benign.
-5. **Read-only by default.** Triage observes; any state-changing action is flagged for explicit
-   confirmation, never run silently.
-6. **Run listed checks, do not improvise.** Adapt names and paths to the stack; if a needed check
-   is not covered, note the gap and ask rather than inventing one.
-7. **Hand off explicitly.** Output the implicated layer, the evidence, and the exact skill (or
-   `systematic-debugging`) to continue with.
-8. **Run the AI Self-Check** before reporting a localization.
+3. **Read-only by default.** Triage observes; any state-changing action (restart, failover, scale,
+   flush, apply) is flagged for explicit confirmation, never run silently.
+4. **Do not invent service names, namespaces, or paths.** Adapt listed checks to the stack; if a
+   needed check is not covered, note the gap and ask.
