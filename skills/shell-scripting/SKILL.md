@@ -3,7 +3,7 @@ name: shell-scripting
 description: >
   Write and debug Bash, Zsh, POSIX sh, and Fish scripts, commands, quoting, dotfiles, and shell completions.
 license: MIT
-compatibility: "Use sh, Bash, or Zsh for POSIX examples; Fish and Nushell require their dedicated syntax"
+compatibility: "Use sh, Bash, or Zsh for POSIX examples; Fish and Nushell require their dedicated syntax. Optional: shellcheck, dash (strict POSIX check)"
 metadata:
   source: iuliandita/skills
   date_added: "2026-03-25"
@@ -120,10 +120,9 @@ See `references/output-contract.md` for the full contract.
 
 ## Rules
 
+The AI Self-Check covers quoting, wrong-shell syntax, and error handling; these are the two
+constraints everything else depends on:
+
 1. **Detect the shell first.** Do not assume Bash from a code-looking request.
-2. **Load the matching reference.** Similar shell syntax is a source of subtle failures.
-3. **Use the declared shell's idioms.** Do not write pseudo-portable mixed Bash/Zsh/sh.
-4. **Quote by default and handle errors explicitly.** Treat intentional splitting or ignored failures
-   as exceptions that need a reason.
-5. **Do not expose secrets or run destructive expansions blindly.** Use secure input paths and preview
+2. **Do not expose secrets or run destructive expansions blindly.** Use secure input paths and preview
    exact targets before a state-changing command.

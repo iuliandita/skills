@@ -98,13 +98,6 @@ Before declaring finish-mode complete:
 - Keep commits batch-sized by review concern - one logical change per commit - so bisect, revert, and blame stay useful on a branch with many commits.
 - Invoke existing project scripts (`Makefile`, `justfile`, `scripts/`) instead of reconstructing ad hoc command sequences; those scripts encode project conventions that ad hoc commands silently skip.
 
-## Best Practices
-
-- Create the feature branch before any implementation edits; untracked local changes that predate the branch are easy to accidentally bundle into the wrong commit.
-- Do not force-push, squash, or merge without explicit user intent - each has a different history rewrite consequence that's hard to undo after others have pulled.
-- Put concrete verification evidence (test counts, lint output, CI run URL) in PRs and final summaries rather than vague "tests pass" claims; reviewers cannot approve what they cannot verify.
-
-
 ## Workflow
 
 ### Step 0: Detect mode
@@ -275,7 +268,7 @@ Docs and versions get left behind. Address in two parts:
 
 **Refresh affected gitignored docs too.** Include relevant instruction and companion files when this branch changes their guidance. Keep private edits local. Do not sweep unrelated private automation or configuration; stage only reviewed public documentation.
 
-**Part 2 - Version-bump sites**. First read the current version from the primary source (see `references/version-bump-sites.md` for the detection script - it checks `package.json`, `pyproject.toml`, `Cargo.toml`, then falls back to the latest semver tag). If no primary source exists, ask the user what the current version is before proceeding.
+**Part 2 - Version-bump sites**. The detection script needs `jq` and `rg` (`command -v jq rg >/dev/null || echo "install jq and ripgrep"`). First read the current version from the primary source (see `references/version-bump-sites.md` for the detection script - it checks `package.json`, `pyproject.toml`, `Cargo.toml`, then falls back to the latest semver tag). If no primary source exists, ask the user what the current version is before proceeding.
 
 Then find and update version strings. Common sites:
 
@@ -313,7 +306,7 @@ Delegate to the **git** skill - it handles forge routing. If unavailable, dispat
 | `unknown` (self-hosted) | push + announce branch URL; ask user what forge this is |
 | `bare` (no remote) | `git format-patch` or `git bundle` - share file with reviewer |
 
-No AI attribution trailers. No "Generated with Claude Code" lines. Strip them from any commit-helper template before committing.
+No AI attribution in commit messages, PR titles/bodies, or release notes: no `Co-Authored-By` trailers, no "Generated with Claude Code" lines, no robot emoji. Strip them from any commit-helper template before committing.
 
 ### Step B6: Watch CI
 
@@ -371,7 +364,7 @@ If release-capable:
 2. Guard against existing tag via `git rev-parse --verify --quiet "refs/tags/v$NEW_VERSION"` (note: `git tag -l` always exits 0 so it cannot be used as a guard).
 3. Tag the merge commit on `$BASE_BRANCH` and push.
 4. Create a forge-native release object (`gh release create`, `glab release create`, `fj release`, `tea releases create`) - Bitbucket and bare have no platform release object; the tag itself IS the release.
-5. Watch the release workflow with the forge-appropriate exit-status flag. **Every forge has a default-exit trap** (see Rule 6 and `references/finish.md` for per-forge commands).
+5. Watch the release workflow with the forge-appropriate exit-status flag. **Every forge has a default-exit trap** (see the "Inspect CI output" rule and `references/finish.md` for per-forge commands).
 
 Full procedures, extract-changelog function, and per-forge release-watch commands in `references/finish.md`.
 
@@ -430,13 +423,14 @@ See `references/output-contract.md` for the full contract.
 
 ## Rules
 
+The AI Self-Check and the workflow steps carry the per-step guards (no `--no-verify` or
+force-push, no AI attribution, release authorization, conservative release detection). These add:
+
 1. **Read before edit.** Always read files you're about to modify in the current session. No exceptions.
-2. **Never force-push, never `--no-verify`, never skip failing tests.** If a hook or test is in the way, fix the underlying issue. Destructive shortcuts are a red flag, not a convenience.
-3. **Delegate, don't reimplement.** `git`, `testing`, `code-review`, `update-docs`, and brainstorming skills know their domains better than this skill does. Call them.
-4. **No AI attribution in git artifacts.** No `Co-Authored-By` trailers, no "Generated with Claude Code" lines, no robot emoji in commit messages, PR titles/bodies, or release notes. Strip from any commit-helper templates before committing.
-5. **Preserve release authorization.** Announce the version, bump sites, and concrete plan. Existing authorization remains valid within its scope; ask before pushing the tag only when that authority is missing or scope changes.
-6. **Inspect CI output, don't infer it.** Every forge's watch command has a default-exit trap: `gh run watch` exits 0 on workflow failure without `--exit-status`; `gh pr checks --watch` returns when done, not only when green; `glab ci status --live` prints but doesn't always exit non-zero on pipeline failure. After any watch, verify with an explicit status query (`gh pr view --json statusCheckRollup`, `glab api projects/$PROJECT_ID/pipelines/$PIPELINE_ID`, or web-UI confirmation for forges without a CLI). Confirm every check actually passed.
-7. **Release detection is conservative.** If no convention signals are present, skip. A missing `CHANGELOG.md` plus no tags means this isn't a release-cut situation - don't create one.
-8. **Don't bundle unrelated work.** If mid-finish you notice a bug outside the branch's scope, file it (roadmap skill or an issue) - don't sneak it into the PR.
-9. **Plain ASCII only.** No em-dashes, no `--` substitutes, no curly quotes, no decorative emoji. Functional status markers (`[OK]`, `[FAIL]`, severity emoji in reports from delegated skills) are fine.
-10. **Mode boundaries are sacred.** Start mode ends with a handoff, not implementation. Finish mode starts with verification, not committing new code. Don't blur them - except when the user explicitly asks for the full cycle in one session (e.g. "do the full dev-cycle, release, deploy"): then run start through finish back to back, still starting finish with verification.
+2. **Delegate, don't reimplement.** `git`, `testing`, `code-review`, `update-docs`, and brainstorming skills know their domains better than this skill does. Call them.
+3. **Inspect CI output, don't infer it.** Every forge's watch command has a default-exit trap: `gh run watch` exits 0 on workflow failure without `--exit-status`; `gh pr checks --watch` returns when done, not only when green; `glab ci status --live` prints but doesn't always exit non-zero on pipeline failure. After any watch, verify with an explicit status query (`gh pr view --json statusCheckRollup`, `glab api projects/$PROJECT_ID/pipelines/$PIPELINE_ID`, or web-UI confirmation for forges without a CLI). Confirm every check actually passed.
+4. **Squash and merge only with explicit intent.** Each fixes history in a way that is hard to undo after others pull; a finish-mode request is that intent, a start-mode request is not. Force-push stays off-limits (AI Self-Check).
+5. **Show evidence, not claims.** Put concrete verification (test counts, lint output, CI run URL) in PRs and final summaries; reviewers cannot approve what they cannot verify.
+6. **Don't bundle unrelated work.** If mid-finish you notice a bug outside the branch's scope, file it (roadmap skill or an issue) - don't sneak it into the PR.
+7. **Plain ASCII only.** No em-dashes, no `--` substitutes, no curly quotes, no decorative emoji. Functional status markers (`[OK]`, `[FAIL]`, severity emoji in reports from delegated skills) are fine.
+8. **Mode boundaries are sacred.** Start mode ends with a handoff, not implementation. Finish mode starts with verification, not committing new code. Don't blur them - except when the user explicitly asks for the full cycle in one session (e.g. "do the full dev-cycle, release, deploy"): then run start through finish back to back, still starting finish with verification.

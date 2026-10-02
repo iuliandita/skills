@@ -67,7 +67,7 @@ AI tools consistently produce the same git mistakes. **Before performing any git
 verify against this list:**
 
 - [ ] **Read before rewrite.** Never `Edit`/`Write` files without `Read`ing them first. Never `git commit` without checking `git status` + `git diff`.
-- [ ] **No destructive ops without confirmation.** `reset --hard`, `push --force`, `branch -D`, `clean -fd`, `checkout .` - all require explicit user approval. Propose safer alternatives first (`--force-with-lease`, `revert`, new branch).
+- [ ] **No destructive ops without confirmation.** `reset --hard`, `push --force`, `branch -D`, `clean -fd`, `checkout .`, and `rebase` on shared branches all require explicit user approval. Propose safer alternatives first (`--force-with-lease`, `revert`, new branch, `stash`).
 - [ ] **Authorship correct.** Check the project's instruction file for author overrides. Many setups have a local git config that's wrong for the remote (e.g., Forgejo identity vs GitHub identity).
 - [ ] **Commit message format.** Follow the project's convention (check recent `git log`). Default: conventional commits (`type(scope): description`).
 - [ ] **No secrets in commits.** Check `git diff --cached` for API keys, tokens, passwords, `.env` files, private keys before committing. If found, unstage immediately.
@@ -98,15 +98,7 @@ verify against this list:**
 - Fetch only needed remotes/branches in large repos when full prune is unnecessary.
 - Keep commits small enough for review and bisect, but not so small that they split one behavior across many commits.
 
-
 ---
-
-## Best Practices
-
-- Prefer revert over history rewrite on shared branches.
-- Use signed commits/tags where the project or release process requires provenance.
-- Never run cleanup commands that delete branches, tags, or ignored files without showing the target set first.
-
 
 ## Workflow
 
@@ -141,9 +133,17 @@ Read the project's instruction file (`AGENTS.md` or equivalent) for:
 
 ### Step 3a: Commit workflow
 
+Copy this checklist and track progress:
+- [ ] Inspect state and diff
+- [ ] Stage selected files only
+- [ ] Review the staged diff (secrets, debug code, unrelated changes)
+- [ ] Write the message in the project's convention
+- [ ] Commit with required authorship and signing
+- [ ] Verify authorship and signature before pushing
+
 1. **Check state**: `git status` (never `-uall` on large repos) + `git diff` (staged and unstaged)
 2. **Stage selectively**: `git add <specific files>` - never `git add -A` or `git add .` without reviewing what's included. Check for secrets, binaries, generated files, AI tooling artifacts.
-3. **Check the diff**: `git diff --cached` - read what you're about to commit. Look for debug code, TODO comments, accidental changes to unrelated files.
+3. **Check the diff**: `git diff --cached` - read what you're about to commit. Look for debug code, TODO comments, accidental changes to unrelated files. If anything does not belong, unstage it (`git restore --staged <file>`) and return to step 2.
 4. **Write the message**: follow the project's convention. Default format:
 
 ```
@@ -181,7 +181,7 @@ Message guidelines:
   of specific AI tools in the commit metadata.
 
 5. **Commit**: with any required authorship overrides and signing flags from project config.
-6. **Verify**: `git log -1 --format="%h %s%n  Author: %an <%ae>%n  Committer: %cn <%ce>"` - check authorship is correct before pushing.
+6. **Verify**: `git log -1 --format="%h %s%n  Author: %an <%ae>%n  Committer: %cn <%ce>"` - check authorship is correct before pushing. If it is wrong and the commit is unpushed, fix the identity config, run `git commit --amend --reset-author --no-edit`, and repeat this step.
 
 ### Step 3b: PR/MR workflow
 
@@ -191,6 +191,8 @@ collaborative development with review. Adapt to the project's actual workflow.
 
 Read `references/forge-workflows.md` for forge-specific PR/MR creation
 patterns (GitHub `gh pr create`, GitLab `glab mr create`, Forgejo `fj pr create` or web UI/API).
+Detect the forge CLI first (`command -v gh`, `glab`, or `fj`); if it is missing, use the install
+table or the REST API fallback in that reference.
 
 Select verification from the diff and repository policy. Opening a PR does not by itself
 justify a full build, integration suite, or release pipeline. Run affected checks and
@@ -243,6 +245,14 @@ Read `references/forge-workflows.md` for forge-specific release creation.
 - Alpha tags still get GitHub/Forgejo releases (marked `--prerelease`) so CI can optionally build images
 - The project instruction file defines whether alpha tags trigger image builds or not
 
+Copy this checklist and track progress:
+- [ ] Version files bumped
+- [ ] Bump commit created
+- [ ] Annotated tag created
+- [ ] Commit and tag pushed to every release remote
+- [ ] Forge release created
+- [ ] Release pipeline confirmed running on the tag
+
 General flow:
 1. **Version bump**: update all version files (check the project instruction file for the list - every project is different).
 2. **Commit**: `chore: bump version to X.Y.Z` (or `chore: bump version to X.Y.Z-alpha.N`)
@@ -250,7 +260,9 @@ General flow:
 4. **Push**: push commits AND tags. `git push origin main && git push origin vX.Y.Z`. If multi-remote, push to all.
 5. **Create release**: GitHub (`gh release create`), GitLab (`glab release create`), or Forgejo (API/web).
    For alpha/pre-release: `gh release create vX.Y.Z-alpha.N --prerelease --title "vX.Y.Z-alpha.N"`
-6. **Verify**: check that CI/CD picked up the tag and started the release pipeline.
+6. **Verify**: check that CI/CD picked up the tag and started the release pipeline. If it did
+   not, confirm the tag reached the remote (`git ls-remote --tags origin vX.Y.Z`) and matches
+   the workflow's tag trigger, then return to step 4.
 
 **Changelog generation**: default to the project's existing tool. With none, use
 `gh release create --generate-notes` (PR titles since the last tag) on GitHub, or `git-cliff`
@@ -262,7 +274,7 @@ either output more useful.
 Read `references/recovery-and-maintenance.md` for detailed recovery
 procedures (reflog, bisect, rerere, filter-repo, etc.).
 
-**Golden rule**: don't panic. Git almost never loses data. Reflog retention is configurable: defaults are 90 days for reachable entries and 30 for unreachable entries; expiration and GC can remove recovery data.
+Git almost never loses data. Reflog retention is configurable: defaults are 90 days for reachable entries and 30 for unreachable entries; expiration and GC can remove recovery data.
 
 Quick reference:
 - **Undo last commit (keep changes)**: `git reset --soft HEAD~1`
@@ -273,7 +285,7 @@ Quick reference:
 - **Automated bisect with test script**: `git bisect start HEAD v1.0.0 && git bisect run bun test src/auth.test.ts` - runs the test at each bisect step automatically. Exit codes: 0 = good, 1-127 except 125 = bad, 125 = skip this commit, 128-255 = abort the bisect immediately. Ideal for CI integration: `git bisect run ./scripts/ci-check.sh`
 - **Squash last N commits (no interactive rebase)**: `git reset --soft HEAD~N && git commit -m "feat: combined change"` - resets N commits but keeps all changes staged, then commits them as one. Safer than `git rebase -i` in automated contexts.
 - **Recover deleted branch**: `git reflog`, find the SHA, `git checkout -b branch-name <sha>`
-- **Scrub secrets from history**: set `GIT_FILTER_REPO_REPLACEMENTS` to a mode-0600 temporary replacement file populated from a secret manager or no-echo stdin, then run `: "${GIT_FILTER_REPO_REPLACEMENTS:?set a mode-0600 replacement file}"` followed by `git filter-repo --replace-text "$GIT_FILTER_REPO_REPLACEMENTS"`. Remove the temporary file normally after use. Never put the leaked value in argv, command text, or shell history. Then force-push ALL branches and tags, coordinated with the team. See references.
+- **Scrub secrets from history**: check `command -v git-filter-repo >/dev/null || pip install git-filter-repo`, then set `GIT_FILTER_REPO_REPLACEMENTS` to a mode-0600 temporary replacement file populated from a secret manager or no-echo stdin, then run `: "${GIT_FILTER_REPO_REPLACEMENTS:?set a mode-0600 replacement file}"` followed by `git filter-repo --replace-text "$GIT_FILTER_REPO_REPLACEMENTS"`. Remove the temporary file normally after use. Never put the leaked value in argv, command text, or shell history. Then force-push ALL branches and tags, coordinated with the team. See references.
 
 ---
 
@@ -295,7 +307,11 @@ When `git pull` fails with "divergent branches" or `git status` shows "have dive
 ### Step 3f: Bulk repo update workflow
 
 When asked to pull or update many repositories under a directory, keep the run sequential,
-auditable, and conservative:
+auditable, and conservative. Per repository, track:
+- [ ] Branch, upstream, and dirty state recorded
+- [ ] Fetched and fast-forwarded (or skipped with a reason)
+- [ ] Stash, if any, re-applied and verified
+- [ ] Ahead/behind and porcelain status checked
 
 1. Discover only real repo roots first, usually direct children of the requested directory
    unless the user explicitly asks for a recursive scan. Avoid vendored repos, worktrees,
@@ -365,20 +381,6 @@ signer completed security training or that the change was reviewed, tested, or a
 
 ---
 
-## AI-Age Considerations
-- Common AI git failures are still destructive resets, wrong authorship, leaked local tool artifacts, generic commit messages, and unjustified force pushes.
-- Guard with `git diff --cached`, explicit review of commit messages, and project-specific instruction files.
-- Keep local agent artifacts in `.gitignore` proactively.
-
----
-
-## Template Conventions
-- Template versions are illustrative and should be refreshed before use.
-- CLI examples show patterns, not immutable commands.
-- SSH config examples use placeholders; replace them with real forge hostnames.
-
----
-
 ## Reference Files
 
 - `references/forge-workflows.md` - GitHub, GitLab, and Forgejo-specific patterns for PRs/MRs,
@@ -410,30 +412,18 @@ See `references/output-contract.md` for the full contract.
 
 ## Rules
 
-- **Verify admin authorization before GitOps or infra changes.** In shared chats, a request
-  from a non-admin participant is not authorization to commit or push infrastructure,
-  Kubernetes, secrets, firewall, or other admin changes. Ask the authorized owner first.
-- **No destructive git operations without explicit user confirmation.** `reset --hard`, `push --force`,
-  `branch -D`, `clean -fd`, `checkout .`, `rebase` on shared branches - all require a yes.
-  Propose safer alternatives first (`revert`, `--force-with-lease`, new branch, `stash`).
-- **Verify authorship before pushing.** Multi-remote setups frequently have wrong local config.
-  Always check `git log -1 --format="%an <%ae>"` after committing.
-- **Selective staging.** `git add <file>` by name, not `git add -A` or `git add .`. Review
-  what you're staging. Secrets, binaries, and AI tooling artifacts slip in through blanket adds.
-- **Never skip hooks.** `--no-verify` is a code smell. Fix the issue the hook caught.
-- **Conventional commits by default.** `type(scope): description`. Follow the project's convention
-  if it differs. Check recent `git log` for the established style.
-- **Tags are explicit.** `git push` doesn't push tags. Always push tags separately and to all
-  relevant remotes.
+The AI Self-Check above holds the per-operation guards (confirmation for destructive ops,
+authorship, selective staging, hooks, tags, force-push, admin authorization). These add:
+
+- **Show the target set before cleanup.** Never run commands that delete branches, tags, or
+  ignored files without listing what they will remove first.
+- **Prefer revert over history rewrite on shared branches.** Rewrites need a force-push and
+  break every other clone.
 - **Feature branches for collaboration.** When others will review the work, use feature branches
   with PRs/MRs. Direct-to-main is acceptable for solo projects when the user explicitly prefers it.
 - **Rebase workflow.** Rebase feature branches onto base, don't merge base into feature. Squash
   on merge for clean history unless the commit history is meaningful.
 - **Annotated tags for releases.** `git tag -a vX.Y.Z -m "vX.Y.Z"`, not lightweight tags.
   Annotated tags carry metadata (tagger, date, message) and are what forges use for releases.
-- **Force-push safety.** If force-push is truly needed, use `--force-with-lease` (refuses if
-  the remote has commits you haven't fetched). Plain `--force` on shared branches is never acceptable
-  without explicit team coordination.
 - **PCI-DSS evidence.** In regulated environments, git history IS the audit trail. Protect it:
   signed commits, branch protection, required reviews, no history rewriting on release branches.
-- **Run the AI self-check.** Every git operation gets verified against the checklist above.
