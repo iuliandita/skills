@@ -17,5 +17,7 @@ exclude = [
   "^https://git\\.lix\\.systems/",
   # Serves the anti-ai-prose Elara citation; reachable in a browser, times out from CI runners.
   "^https://namerology\\.com/",
+  # Synology advisories cited by synology-dsm; reachable in a browser, 403 from CI runners.
+  "^https://www\\.synology\\.com/[a-z-]+/security/advisory/",
   "^https://github\\.com/iuliandita/skills/compare/v[0-9]+\\.[0-9]+\\.[0-9]+\\.\\.\\.v[0-9]+\\.[0-9]+\\.[0-9]+$"
 ]
