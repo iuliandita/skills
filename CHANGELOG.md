@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.5.0](https://github.com/iuliandita/skills/compare/v2.4.0...v2.5.0) (2026-10-03)
+
+### Features
+
+* **skills:** adopt the updated skill-authoring best practices: SKILL.md bodies capped at 500 lines, references linked one level deep, generated contents lists on references over 100 lines (`scripts/gen-ref-toc.py`), with lint enforcement and updated meta skills ([#249](https://github.com/iuliandita/skills/pull/249), [#248](https://github.com/iuliandita/skills/issues/248)).
+
+### Bug Fixes
+
+* **skills:** refresh version markers to October 2026 after re-verifying pins, support windows, model IDs, and advisory floors; correct drifted facts (mkinitcpio 42.2, bpg/proxmox 0.115.0, Python `mcp` 2.3.0, Claude Agent SDK 0.3.288, Transformers PyTorch 2.5+ floor, Docker Desktop 4.62.0 floor for CVE-2026-28400, BuildKit 0.33.1 action floor, go-archive and ProxySQL advisory ranges, Caddy advisory fix version) and mark unconfirmable claims as unverified ([#249](https://github.com/iuliandita/skills/pull/249)).
+
 ## [2.4.0](https://github.com/iuliandita/skills/compare/v2.3.0...v2.4.0) (2026-09-30)
 
 ### Features
