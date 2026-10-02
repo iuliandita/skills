@@ -3,7 +3,7 @@ name: frontend-design
 description: >
   Design, build, and critique frontend UI/UX: layouts, CSS, Tailwind, landing pages, and visual polish.
 license: MIT
-compatibility: "None - works on any frontend stack"
+compatibility: "Works on any frontend stack. Optional: a browser or screenshot tool for rendered inspection"
 metadata:
   source: iuliandita/skills
   date_added: "2026-04-26"
@@ -85,6 +85,14 @@ Keep it to one or two sentences tied to visible details. Distinguish a taste jud
 usability defect, and respect explicit brand choices without repeatedly arguing the point.
 
 ## Workflow
+
+For Build and Refine, copy this checklist and track progress (Critique uses Steps 1, 4, and 5):
+
+- [ ] Step 1: Brief and mode established
+- [ ] Step 2: Visual direction chosen (new build or substantial redesign)
+- [ ] Step 3: Interface built with real content, states, and accessible controls
+- [ ] Step 4: Rendered and inspected; if a material defect remains, fix it and return to Step 4
+- [ ] Step 5: Result delivered with actual checks and limitations
 
 ### Step 1: Establish the brief and mode
 
@@ -203,12 +211,6 @@ in severity-ranked findings; keep info notes outside the fix-ticket table.
 - Keep interaction feedback local when it needs no server state
 - Measure expensive effects and runtime cost before adding animation libraries
 
-## Best Practices
-
-- Preserve explicit brand direction and established product conventions
-- Prefer clear task flows and content-specific decisions over decorative novelty
-- Keep references optional and self-contained; no external skill is required at runtime
-
 ## Reference Files
 
 - `references/ai-tells.md` - diagnostic prompts for generic composition
@@ -243,10 +245,6 @@ See `references/output-contract.md` for the full contract.
 2. Follow explicit user direction. Explain a concrete usability tradeoff when needed;
    do not demand an override for a legitimate aesthetic preference.
 3. Derive the design from content and context. Never impose a universal palette, font, or effect.
-4. Preserve honest content, accessible controls, responsive behavior, and relevant states.
-5. Keep changes within scope. A visual task does not authorize stack migrations or new features.
-6. Verify unfamiliar APIs against installed versions and current primary documentation.
-7. Inspect the rendered result when possible; distinguish observed results from assumptions.
-8. Give candid, specific design judgments. Critique the interface, not the designer;
-   keep first impressions brief and never turn taste alone into a release blocker.
-9. Use plain ASCII in skill prose and generated code comments.
+4. Keep changes within scope. A visual task does not authorize stack migrations or new features.
+5. Critique the interface, not the designer; never turn taste alone into a release blocker.
+6. Use plain ASCII in skill prose and generated code comments.

@@ -189,7 +189,7 @@ Run a contrast checker on every text-on-surface combination per theme:
 | Necessary icons and graphical UI | 3:1; decorative graphics are excluded |
 | Disabled text | not subject to WCAG, but should be visibly distinguishable from active text |
 
-Tools: WebAIM contrast checker, browser devtools accessibility panel, `npx pa11y` for CI.
+Default to the browser devtools accessibility panel; use `npx pa11y` in CI and the WebAIM contrast checker for one-off color pairs.
 
 ---
 

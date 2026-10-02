@@ -3,7 +3,7 @@ name: update-docs
 description: >
   Update README, changelogs, API docs, and runbooks after changes; find and fix documentation drift.
 license: MIT
-compatibility: "Requires git. Optional: wc (for size audits)"
+compatibility: "Requires git. Optional: python3 (link check), wc (size audits)"
 metadata:
   source: iuliandita/skills
   date_added: "2026-03-25"
@@ -64,17 +64,10 @@ Before presenting documentation updates, verify:
 
 ---
 
-## Performance
+## Practices
 
-- Diff the code first, then update affected docs; avoid broad rewrites unrelated to the change.
 - Prefer generated API/schema docs where the project already has generation tooling.
 - Keep examples minimal but runnable so future verification is cheap.
-
-
----
-
-## Best Practices
-
 - Document behavior changes, deprecations, migration steps, and rollback notes in the place users will look.
 - Remove stale instructions instead of appending contradictory notes.
 - Keep changelog entries user-facing and avoid internal implementation noise.
@@ -84,16 +77,16 @@ Before presenting documentation updates, verify:
 
 **Audit-only mode:** When invoked by repo-audit or asked to report/check docs, inspect applicable Steps 1-7, including companion shape and drift, without editing. Skip commit Step 8. Scope all checks to documentation affected by the requested change; private configuration and unrelated roadmaps are not an automatic sweep target.
 
-1. Identify changes
-1.5. Roadmap freshness check
-1.6. Evidence freshness check
-2. Categorize doc impact
-3. Check whether the repo's docs surface is missing or too thin
-4. Update affected docs (or report what needs updating in audit-only mode)
-5. Verify internal links
-6. Audit instruction-file bloat
-7. Sync companion instruction files
-8. Commit doc changes
+Copy this checklist and track progress:
+
+- [ ] 1. Identify changes (1.5 roadmap freshness, 1.6 evidence freshness)
+- [ ] 2. Categorize doc impact
+- [ ] 3. Check whether the repo's docs surface is missing or too thin
+- [ ] 4. Update affected docs (or report what needs updating in audit-only mode)
+- [ ] 5. Verify internal links; if any link is broken, fix it and return to Step 5
+- [ ] 6. Audit instruction-file bloat
+- [ ] 7. Sync companion instruction files
+- [ ] 8. Commit doc changes
 
 ### 1. Identify What Changed
 
@@ -114,86 +107,9 @@ Scan for changes in: configuration, infrastructure, service deployments, scripts
 
 ### 1.5. Roadmap Freshness Check
 
-Roadmaps drift the hardest because they restate facts the code, tags, and commit history already prove. Run this check whenever the repo has a roadmap - committed OR gitignored. If no roadmap is found, the step is silent and you move on; absence of `ROADMAP.md` is not an error.
+Roadmaps drift the hardest because they restate facts the code, tags, and commit history already prove. Run this check whenever the repo has a roadmap - committed OR gitignored. If none is found, the step is silent; absence of `ROADMAP.md` is not an error.
 
-```bash
-# Discover all roadmap files (tracked AND gitignored). Normalize the leading ./ from find
-# so it doesn't duplicate paths returned by git ls-files.
-ROADMAPS=$(
-  { git ls-files '*ROADMAP*' '*roadmap*' 2>/dev/null
-    find . -maxdepth 4 -iname 'ROADMAP*' -not -path '*/node_modules/*' -not -path '*/.git/*' 2>/dev/null \
-      | sed 's|^\./||'
-  } | sort -u
-)
-
-if [[ -n "$ROADMAPS" ]]; then
-  # Resolve the source-of-truth version (try common manifests in order)
-  REPO_VER=""
-  [[ -f package.json   ]] && REPO_VER=$(node -p "require('./package.json').version ?? ''" 2>/dev/null)
-  [[ -z "$REPO_VER" && -f Cargo.toml     ]] && REPO_VER=$(grep -m1 '^version' Cargo.toml     | sed -E 's/.*"([^"]+)".*/\1/')
-  [[ -z "$REPO_VER" && -f pyproject.toml ]] && REPO_VER=$(grep -m1 '^version' pyproject.toml | sed -E 's/.*"([^"]+)".*/\1/')
-  [[ -z "$REPO_VER" && -f setup.py       ]] && REPO_VER=$(grep -oE "version=['\"][^'\"]+" setup.py | sed -E "s/.*['\"]//")
-  LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null)
-  HEAD_DATE=$(git log -1 --format=%cs HEAD 2>/dev/null)
-
-  # For each roadmap, parse the stated Current/Updated/Version header and compare
-  while read -r rm; do
-    [[ -f "$rm" ]] || continue
-    STATED=$(grep -hE '^>.*(Current|Updated|Version)' "$rm" 2>/dev/null | head -3)
-    RM_VER=$(printf '%s' "$STATED"  | grep -oE 'v?[0-9]+\.[0-9]+\.[0-9]+' | head -1)
-    RM_DATE=$(printf '%s' "$STATED" | grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}'  | head -1)
-    [[ -z "$RM_VER$RM_DATE" ]] && continue  # no parseable header, skip silently
-
-    # Informational counts (used in the drift output, not as triggers - commit count is a
-    # bad proxy for staleness when an agentic /loop session can ship 5 commits in 20 min).
-    COMMITS=0; TAGS=0
-    if [[ -n "$RM_VER" ]]; then
-      COMMITS=$(git rev-list --count "${RM_VER}..HEAD" 2>/dev/null || echo 0)
-      TAGS=$(git tag --sort=v:refname 2>/dev/null | awk -v r="$RM_VER" 'found{c++} $0==r{found=1} END{print c+0}')
-    fi
-
-    # Tags cut AFTER the roadmap's stated date - the cleanest "you shipped, roadmap is
-    # behind" signal. Releases are deliberate punctuation; arbitrary commits are not.
-    NEWER_TAGS=$(git for-each-ref --sort=-creatordate \
-      --format='%(creatordate:short) %(refname:short)' refs/tags 2>/dev/null \
-      | awk -v d="${RM_DATE:-9999-99-99}" '$1 > d {print $2}')
-    NEW_TAG_COUNT=$(printf '%s\n' "$NEWER_TAGS" | grep -c .)
-
-    # Calendar-day staleness fallback for projects that do not tag releases. Portable across
-    # GNU date (Linux) and BSD date (macOS).
-    DAYS_BEHIND=0
-    if [[ -n "$RM_DATE" && -n "$HEAD_DATE" ]]; then
-      H=$(date -d "$HEAD_DATE" +%s 2>/dev/null || date -j -f %Y-%m-%d "$HEAD_DATE" +%s 2>/dev/null)
-      R=$(date -d "$RM_DATE"   +%s 2>/dev/null || date -j -f %Y-%m-%d "$RM_DATE"   +%s 2>/dev/null)
-      [[ -n "$H" && -n "$R" ]] && DAYS_BEHIND=$(( (H - R) / 86400 ))
-    fi
-
-    # Drift if ANY of: stated version older than latest tag; one or more releases cut since
-    # the header date; or >14 calendar days since the header date with no release activity.
-    DRIFT=0
-    [[ -n "$RM_VER" && -n "$LAST_TAG" && "$(printf '%s\n' "$RM_VER" "$LAST_TAG" | sort -V | tail -1)" != "$RM_VER" ]] && DRIFT=1
-    [[ "$NEW_TAG_COUNT" -gt 0 ]] && DRIFT=1
-    [[ "$DAYS_BEHIND" -gt 14 ]] && DRIFT=1
-
-    if [[ "$DRIFT" -eq 1 ]]; then
-      echo "ROADMAP DRIFT: $rm states ${RM_VER:-?} / ${RM_DATE:-?}; HEAD is ${LAST_TAG:-v$REPO_VER} / $HEAD_DATE; $COMMITS commits, $TAGS tags between, $NEW_TAG_COUNT releases since header date, ${DAYS_BEHIND}d calendar gap."
-      # Feed the drift range into Step 2 - widens the diff window beyond `git log -10`
-      [[ -n "$RM_VER" ]] && RANGE="${RM_VER}..HEAD"
-    fi
-  done <<< "$ROADMAPS"
-fi
-```
-
-**Why tags-and-days, not commit-count:** an agentic session can ship many commits without touching anything the roadmap tracks. A release tag is a deliberate event the roadmap should reflect, and 14 calendar days without an updated header is real staleness regardless of commit volume. Commit count stays only as context in the drift output.
-
-**Side-channel staleness:** the header check is structural - it flags drift in stated metadata, not the *substance* of the roadmap. Roadmaps often contain time-stamped sections like `Scanned 2026-04-10`, `Last refreshed 2026-04-10`, `as of 2026-04-10`, or `Weekly refresh covers ...`. Surface those as **separate observations** when the date is older than HEAD by more than a week:
-
-```bash
-echo "$ROADMAPS" | while read -r rm; do
-  [[ -f "$rm" ]] || continue
-  grep -nE '([Ss]canned|[Ll]ast [Rr]efreshed|[Aa]s of|[Ww]eekly refresh)[^0-9]*[0-9]{4}-[0-9]{2}-[0-9]{2}' "$rm" 2>/dev/null
-done
-```
+Run the script in `references/roadmap-freshness.md`. It discovers every roadmap file (tracked and gitignored), parses each `Current` / `Updated` / `Version` header, and reports `ROADMAP DRIFT` when the stated version is older than the latest tag, a release was cut after the header date, or the header is more than 14 calendar days behind HEAD. On drift it widens `RANGE` for Step 2. The reference also has the side-channel check for stale `Scanned` / `as of` dates inside the roadmap body; report those as separate observations.
 
 Do NOT fabricate refreshed content. The user wants staleness called out so they can decide whether to refresh manually, not invented data.
 
@@ -420,20 +336,22 @@ See `references/output-contract.md` for the full contract.
 - **git** - for commit message conventions and PR descriptions. Update-docs covers project
   documentation files; git covers version control operations.
 
+## Reference Files
+
+- `references/roadmap-freshness.md` - the roadmap drift script and side-channel date check; run it in Step 1.5
+- `references/agent-hygiene.md` - cross-cutting checks applied before returning (generated)
+- `references/output-contract.md` - report format for every invocation (generated)
+
 ---
 
 ## Common Mistakes
 
 - **Documenting everything**: Avoid repeating implementation inventories. Include a default when readers need it to configure or use the product correctly.
-- **Stale counts**: "13 dashboards" becomes wrong when you add one. Use "N dashboards" or keep the count accurate.
 - **Stale quality evidence**: README claims like "latest run", "current score", or "39/39 skills" must be checked against the source artifact in the same session.
 - **Orphaned gotchas**: A gotcha about a bug that was fixed 3 months ago is noise. Prune regularly.
 - **Assuming every merge needs docs**: A merged PR is a strong hint, not an automatic docs task. Check for actual drift.
 - **Forgetting non-README surfaces**: API changes belong in `API.md`; release deltas belong in `CHANGELOG.md`; feature drift belongs in feature docs.
-- **Missing the companion sync**: If the project keeps multiple instruction files, keep them aligned after changes.
 - **Over-documenting migrations**: Once a migration is complete and verified, condense to a one-liner and remove the step-by-step procedure.
-- **Dangling links**: Renaming a doc without updating references elsewhere creates dead links that erode trust in documentation.
-- **Bootstrapping without consent**: If the repo lacks docs, suggest a minimal docs surface; don't silently create a documentation tree the user did not ask for.
 - **Deleting deprecated docs too early**: Follow repository and explicit user policy; no-reference evidence does not waive its grace period. Use the two-completed-release fallback above only when neither defines retirement conditions.
 - **Skipping the roadmap header check**: A roadmap with `Current: v0.27` while HEAD is on `v0.43` is the loudest possible drift signal. Always parse and compare the header before deciding whether the roadmap needs updates.
 - **Treating a gitignored roadmap as out of scope**: Private roadmaps drift hardest because nobody complains about them publicly. Run the freshness check against ALL roadmaps the `find` command surfaces, not just tracked ones.
@@ -446,6 +364,3 @@ See `references/output-contract.md` for the full contract.
 - **Treat merged PRs and releases as doc-drift signals, not guarantees.** Verify likely impact before editing.
 - **Prefer the right existing doc over the nearest convenient one.** Put API changes in API docs, release deltas in changelogs, and planning changes in roadmap/status docs.
 - **Do not rewrite healthy docs for style alone.** Keep edits tied to real operational value.
-- **Offer docs bootstrap suggestions when the repo is under-documented, but keep them dismissable.**
-- **Keep companion instruction files aligned.** If the repo maintains more than one instruction surface, update the others or note the drift explicitly.
-- **Prefer stable wording over brittle counts.** Avoid numbers and one-off migration prose that will rot immediately.

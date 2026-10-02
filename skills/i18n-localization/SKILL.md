@@ -103,20 +103,15 @@ code, catalogs, or translations, verify against this list:**
 
 ---
 
-## Performance
+## Practices
 
 - Load locale bundles per route or language instead of shipping every catalog to every user.
 - Cache compiled ICU messages where the framework supports it.
-- Detect hardcoded strings with static scans before manual review.
-
-
----
-
-## Best Practices
-
 - Keep source strings stable and meaningful; do not use English copy as an implicit key if text changes often.
 - Use translators' notes for placeholders, gender, tone, and domain-specific terms.
 - Never concatenate translated fragments where grammar can change by language.
+- Do not translate code identifiers, CSS classes, data attributes, technical log messages, or
+  developer-facing strings; they stay in the source language.
 
 
 ## Workflow
@@ -130,6 +125,15 @@ authorized; an existing request to fix or add i18n supplies that authority.
 - Already have i18n, checking completeness? Start at Step 1 (assess), then Step 3 (audit).
 - Just need translations for new keys? Jump to Step 4.
 - Just validating catalogs? Jump to Step 5.
+
+For setup or extraction work, copy this checklist and track progress:
+
+- [ ] Step 1: Current state assessed (framework, catalogs, partial i18n)
+- [ ] Step 2: Infrastructure in place (skip when it already exists)
+- [ ] Step 3: Strings extracted file by file
+- [ ] Step 4: Translations generated one locale at a time
+- [ ] Step 5: Catalogs validated; if validation fails, fix the reported keys and return to Step 5
+- [ ] Step 6: Validation wired into CI
 
 ### Step 1: Assess current state
 
@@ -168,7 +172,7 @@ If no i18n system exists, set one up. If one exists, skip to Step 3.
 
 | Decision | Options | Guidance |
 |----------|---------|----------|
-| Catalog format | JSON, YAML, TS objects | TS objects give type safety without tooling. JSON works with most libraries |
+| Catalog format | JSON, YAML, TS objects | Default to JSON (works with most libraries); use TS objects when the project wants key types without extra tooling |
 | Key structure | flat, nested, dot-notation | Dot-notation (`auth.signIn`) balances readability and grep-ability |
 | Interpolation | positional `{0}`, named `{name}`, ICU | Named for readability. Positional is simpler for machine translation |
 | Pluralization | separate keys, ICU MessageFormat | Separate keys work for 2-form languages (English, German). Use ICU for Slavic and Arabic: Russian and Polish each have 4 CLDR plural categories (one/few/many/other), Arabic has 6. Picking "singular/plural" keys up front will force a rewrite later |
@@ -417,29 +421,9 @@ See `references/output-contract.md` for the full contract.
 
 ## Rules
 
-1. **Audit file by file, not category by category.** Extract ALL strings from a file before
-   moving to the next. The "one more pass" loop is the #1 i18n time sink.
-2. **Source locale is the type authority.** All message key types derive from the source
-   catalog. Other locales conform to it, not the other way around.
-3. **Validate before committing translations.** Never commit machine-translated catalogs
+1. **Validate before committing translations.** Never commit machine-translated catalogs
    without running placeholder and completeness checks.
-4. **Never return empty strings for missing keys.** The fallback chain must end at the
-   source locale value or the key itself - never empty, null, or a crash.
-5. **Preserve brand names exactly.** Product names, service names, and proper nouns must
-   match the source. Maintain a protected terms list per project.
-6. **Maintain voice consistency per language.** Pick formal or informal register for each
-   target language and enforce it across the entire catalog. Mixing registers makes the
-   app feel incoherent.
-7. **Translate for the app's context, not word-by-word.** UI strings should read like a
-   native speaker wrote them for this specific application.
-8. **Add validation to CI early.** A script that fails on missing keys prevents drift from
+2. **Add validation to CI early.** A script that fails on missing keys prevents drift from
    day one. Don't defer this.
-9. **Don't translate what shouldn't be translated.** Code identifiers, CSS classes, data
-   attributes, technical log messages, and developer-facing strings stay in the source
-   language.
-10. **Use native orthography in locale catalogs.** Translated strings must use proper
-    Unicode characters for the target language - umlauts, accents, cedillas, CJK characters,
-    full-width punctuation, etc. ASCII-only rules from global or project config apply to
-    source code and prose, not to translation output. Writing "hinzugefuegt" instead of
-    proper German umlauts, or "nino" instead of Spanish n-with-tilde, is a translation
-    bug, not a style choice.
+3. **Native orthography overrides ASCII-only config in locale catalogs.** "hinzugefuegt"
+   instead of proper German umlauts is a translation bug, not a style choice.
