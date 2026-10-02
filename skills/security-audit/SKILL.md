@@ -3,7 +3,7 @@ name: security-audit
 description: >
   Audit code for vulnerabilities: auth flaws, exposed secrets, OWASP risks, and dependency/supply-chain threats.
 license: MIT
-compatibility: "Optional: betterleaks, gitleaks, trivy, semgrep, bandit, checkov, scorecard"
+compatibility: "Optional: betterleaks, gitleaks, trufflehog, trivy, semgrep, bandit, pip-audit, govulncheck, cargo-audit, checkov, scorecard"
 metadata:
   source: iuliandita/skills
   date_added: "2026-03-25"
@@ -17,10 +17,10 @@ Structured, multi-pass security audit. Combines automated tooling with manual pa
 
 Patterns drawn from real OSS incidents (unauthenticated admin endpoints, credential exfiltration, zip slip, auth bypass whitelists, Trivy supply chain compromise) and OpenSSF/SLSA/OWASP standards.
 
-**Target versions** (September 2026, release check 2026-09-25):
-- Semgrep 1.178.0, Bandit 1.9.4
-- Gitleaks 8.30.1, [Betterleaks 1.8.1](https://github.com/betterleaks/betterleaks/releases/tag/v1.8.1) (same author as Gitleaks), TruffleHog 3.97.9
-- Trivy 0.74.0 (0.69.4-0.69.6 was compromised - see known incidents; upgrade past the 0.69.x window)
+**Target versions** (October 2026, release check 2026-10-02):
+- Semgrep 1.179.0, Bandit 1.9.4
+- Gitleaks 8.30.1, [Betterleaks 1.9.0](https://github.com/betterleaks/betterleaks/releases/tag/v1.9.0) (same author as Gitleaks), TruffleHog 3.97.9
+- Trivy 0.75.0 (0.69.4-0.69.6 was compromised - see known incidents; upgrade past the 0.69.x window)
 - OpenSSF Scorecard 5.5.0 (v6 in proposal stage)
 - OWASP Top 10:2025 (confirmed January 2026), OWASP Agentic Top 10:2026 (released December 2025)
 
@@ -90,7 +90,7 @@ Before returning any security audit report, verify:
 
 1. Detect project language(s) and framework(s) from manifest files (`package.json`, `requirements.txt`, `go.mod`, `Cargo.toml`, etc.)
 2. Check which tools are available (run in parallel, capturing each exit status or the list of missing tools; do not mask failures with `; true`):
-   - `command -v semgrep`, `command -v betterleaks`, `command -v gitleaks`, `command -v trufflehog`, `command -v trivy`, `command -v scorecard`, `command -v checkov`
+   - `command -v semgrep` and `command -v bandit` (Step 5 static analysis), `command -v betterleaks`, `command -v gitleaks`, `command -v trufflehog`, `command -v trivy`, `command -v scorecard`, `command -v checkov`, plus the ecosystem auditor for Step 3 (`pip-audit`, `govulncheck`, `cargo-audit`)
 3. Missing tools: note as "skipped (not installed)" in the report. Don't install without asking. **Critical tools** (at least one must be available): `betterleaks` or `gitleaks` or `trufflehog` (secret scanning), `semgrep` (static analysis). If all critical tools are missing, warn that the audit will be manual-only and significantly less thorough.
 4. Determine scope: user-specified files > uncommitted changes (offer choice) > full repo.
 5. Record current commit SHA for the report.
@@ -117,7 +117,7 @@ Find known CVEs in dependencies and assess supply chain risk.
 - **npm** (`package-lock.json`): `npm audit --audit-level=high --omit=dev`
 - **pnpm** (`pnpm-lock.yaml`): `pnpm audit --audit-level high --prod`
 - **yarn** (`yarn.lock`): `yarn npm audit --severity high` (Berry) or `yarn audit --level high` (Classic)
-- **Python**: `pip-audit --format json` or `safety check --json`
+- **Python**: `pip-audit --format json` (use `safety check --json` only when pip-audit is unavailable)
 - **Go**: `govulncheck ./...`
 - **Rust**: `cargo audit --json` - also check for `unsafe` blocks without `// SAFETY:` comments, `transmute` misuse, unvalidated FFI boundaries
 - **General**: `trivy fs --scanners vuln .` (use Trivy 0.74.0+ from official releases, or 0.69.3 only as a March 2026 incident rollback; never use 0.69.4-0.69.6)
@@ -139,10 +139,10 @@ Confirm the affected artifact and execution path before assigning severity. Mali
 For active incident triage, use `references/hardening-checklists.md` for repo-wide package,
 IOC, local-runtime, and remote-repo checks.
 
-**Scanner security recheck** (September 2026, 2026-09-10):
+**Scanner security recheck** (October 2026, 2026-10-02):
 [CVE-2026-63328](https://github.com/aquasecurity/trivy/security/advisories/GHSA-8rc5-4fr6-64pw)
 affects Trivy before 0.72.0 when installing an attacker-controlled plugin; it permits writes
-outside the plugin directory. The 0.74.0 target includes the fix. This is separate from the
+outside the plugin directory. The 0.75.0 target includes the fix. This is separate from the
 March supply-chain compromise; only install trusted plugins.
 
 ### Step 4: Agentic AI & Supply Chain (Pass 3 - Manual)

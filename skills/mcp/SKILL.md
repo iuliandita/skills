@@ -3,7 +3,7 @@ name: mcp
 description: >
   Build and debug Model Context Protocol (MCP) servers, clients, tools, resources, and OAuth integrations.
 license: MIT
-compatibility: Requires Node.js or Python runtime
+compatibility: "Requires Node.js or Python runtime; uv for the Python dev inspector"
 metadata:
   source: iuliandita/skills
   date_added: "2026-03-30"
@@ -17,10 +17,10 @@ Build, review, and debug MCP servers that expose tools, resources, and prompts t
 assistants. The goal is secure, well-structured servers that follow the protocol spec and don't
 become yet another server with preventable injection vulnerabilities.
 
-**Target versions** (September 2026):
+**Target versions** (October 2026):
 - MCP specification: 2026-07-28 (current stable; stateless core, extensions framework, and no initialize/session handshake)
-- TypeScript SDK: `@modelcontextprotocol/server`, `@modelcontextprotocol/client`, and `@modelcontextprotocol/core` 2.1.0 (the monolithic `@modelcontextprotocol/sdk` 1.30.1 is the legacy line; both 2026-09-23 releases add HTTP body and JSON-RPC batch limits)
-- Python SDK: mcp 2.2.0 (2.x stable; review the v1-to-v2 migration guide)
+- TypeScript SDK: `@modelcontextprotocol/server`, `@modelcontextprotocol/client`, and `@modelcontextprotocol/core` 2.3.0 (the monolithic `@modelcontextprotocol/sdk` 1.32.0 is the legacy line; both 2026-10-02 releases restrict client redirects to the same origin, and 2.3.0 serves one connection per `Server` instance). Client floors for the high-severity OAuth credential-redirect advisory ([CVE-2026-104850](https://github.com/modelcontextprotocol/typescript-sdk/security/advisories/GHSA-6qxp-vccf-f47h)) are client 2.2.0 and sdk 1.31.0
+- Python SDK: mcp 2.3.0 (2.x stable; review the v1-to-v2 migration guide). 2.2.0 (or 1.30.0 on 1.x) is the floor for the high-severity OAuth credential-redirect and unreclaimed-session advisories ([GHSA-qx49-fqc8-xw99](https://github.com/modelcontextprotocol/python-sdk/security/advisories/GHSA-qx49-fqc8-xw99), [CVE-2026-59951](https://github.com/modelcontextprotocol/python-sdk/security/advisories/GHSA-84m7-p3x7-pcfv))
 - Protocol transports: stdio and Streamable HTTP. The standalone HTTP+SSE transport is deprecated and available only as a temporary legacy bridge
 
 ## When to use
@@ -292,8 +292,8 @@ async function safeExistingPath(base: string, userInput: string): Promise<string
 
 ```typescript
 // BEFORE (vulnerable - user controls path directly)
-server.tool("read_file", "Read a project file",
-  { path: z.string() },
+server.registerTool("read_file",
+  { description: "Read a project file", inputSchema: z.object({ path: z.string() }) },
   async ({ path: filePath }) => {
     const data = await readFile(filePath, "utf-8"); // path traversal
     return { content: [{ type: "text", text: data }] };
@@ -301,8 +301,8 @@ server.tool("read_file", "Read a project file",
 );
 
 // AFTER (safe - resolved path validated against allowed base)
-server.tool("read_file", "Read a project file",
-  { path: z.string().max(500) },
+server.registerTool("read_file",
+  { description: "Read a project file", inputSchema: z.object({ path: z.string().max(500) }) },
   async ({ path: filePath }) => {
     try {
       const safe = await safeExistingPath("/srv/project", filePath);
@@ -374,7 +374,8 @@ uv run mcp dev server.py
 ```
 
 Test each tool handler with: valid inputs (happy path), missing required fields,
-malicious inputs (injection, path traversal, oversized payloads), concurrent requests.
+malicious inputs (injection, path traversal, oversized payloads), concurrent requests. If a case
+fails, fix the handler (Step 3) and rerun every case until all pass.
 
 Read `references/security.md` for specific injection test payloads.
 
@@ -467,4 +468,3 @@ See `references/output-contract.md` for the full contract.
 7. **Bind local servers to 127.0.0.1.** Never `0.0.0.0` for local-only servers.
 8. **Validate Origin headers** on all streamable HTTP requests.
 9. **Handle shutdown gracefully.** Register signal handlers. Clean up resources.
-10. **Run the AI Self-Check.** Every generated MCP server gets verified against the checklist.

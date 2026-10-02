@@ -4,6 +4,11 @@ Everything here applies to **audit mode** only - a file, paste, diff, or directo
 for review. Inline mode (filtering your own conversational output) runs none of it: no scoping,
 no severity, no report.
 
+## Contents
+
+- Workflow
+- Report template
+
 ## Workflow
 
 ### Step 1: Scope the audit

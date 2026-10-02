@@ -3,6 +3,17 @@
 NixOS is a module system written in Nix. `configuration.nix` is one module; everything you
 import is one too. A module has three things that matter: `imports`, `options`, and `config`.
 
+## Contents
+
+- /etc/nixos layout
+- Minimal configuration.nix
+- Module anatomy
+- mkMerge, mkForce, mkDefault, mkIf, mkOverride
+- Assertions and warnings
+- Option types
+- Exploring options
+- Common mistakes
+
 ## /etc/nixos layout
 
 A traditional channel-based install:

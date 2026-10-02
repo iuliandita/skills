@@ -2,6 +2,12 @@
 
 Detailed checklists for passes 7-9. Read this file when executing those passes.
 
+## Contents
+
+- Cryptography & Data Protection (Pass 7)
+- Container & Infrastructure (Pass 8)
+- CI/CD & Supply Chain (Pass 9)
+
 ## Cryptography & Data Protection (Pass 7)
 
 - [ ] **TLS verification**: is `rejectUnauthorized: false` or `NODE_TLS_REJECT_UNAUTHORIZED=0` used? If so, is it opt-in per-connection and documented, not global?
@@ -49,7 +55,7 @@ Detailed checklists for passes 7-9. Read this file when executing those passes.
 ### Terraform (skip if not applicable)
 
 **Automated** (if available):
-- `trivy config --tf-vars terraform.tfvars .` or `checkov -d .`
+- `checkov -d . --framework terraform`; use `trivy config --tf-vars terraform.tfvars .` instead where the repository already runs Trivy
 
 **Manual**:
 - [ ] State backend uses encryption at rest? (S3 SSE, GCS CMEK, Azure Blob encryption)

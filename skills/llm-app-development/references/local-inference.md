@@ -364,8 +364,8 @@ sudo cmake --install build --prefix /usr/local
 ### Pin model files reproducibly
 
 ```bash
-# Pin both file and revision (HF commit SHA)
-huggingface-cli download \
+# Pin both file and revision (HF commit SHA); `hf` ships with `pip install -U huggingface_hub`
+hf download \
   unsloth/Qwen3-30B-A3B-GGUF Qwen3-30B-A3B-Q4_K_M.gguf \
   --revision d5b1d57bd0b504ac62ae6c725904e96ef228dc74 \
   --local-dir /var/lib/llama/models

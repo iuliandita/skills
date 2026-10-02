@@ -1,5 +1,17 @@
 # Python Slop Patterns
 
+## Contents
+
+- Class-for-Everything Disease (Soul)
+- Stale Patterns (Lies)
+- Type Hint Abuse (Noise)
+- Verbose Patterns (Noise)
+- Dependency Creep (Lies)
+- God-Module Refactoring (Soul)
+- Cross-Language Tells in Python (Lies)
+- Error Handling (Noise + Lies)
+- AI-Native Tells (Lies + Soul)
+
 ## Class-for-Everything Disease (Soul)
 
 The Java brain transplant. Python modules are already namespaces - you don't need a class to group functions.

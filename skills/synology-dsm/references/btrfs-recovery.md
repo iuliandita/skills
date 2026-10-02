@@ -192,8 +192,8 @@ implementation immediately.
 ## 8. GPL source: the highest-value move
 
 Synology publishes occasional `<version>-<build>` source drops, not one per build. The whole
-archive is nine entries: `7.3-86009`, `7.2-72806`, `7.2-64570`, `7.1.1-42962`, `7.0-41890`,
-`6.2-25556`, `6.1-15284`, `6.1-15152`, `1.3-9346` - and as of September 2026 there is no 7.4 drop. If the target build has no matching entry, read the closest
+archive is ten entries: `7.4-90080`, `7.3-86009`, `7.2-72806`, `7.2-64570`, `7.1.1-42962`, `7.0-41890`,
+`6.2-25556`, `6.1-15284`, `6.1-15152`, `1.3-9346` - as of October 2026 the only 7.4 drop is `7.4-90080`. If the target build has no matching entry, read the closest
 lower family and treat every constant taken from it as provisional (see the build-sensitivity
 note at the top of this file).
 

@@ -1,11 +1,16 @@
 # Decision Record Template
 
-The deliverable plan-review writes at the end of a grill. One file per session at
+The deliverable plan-review writes at the end of a clarification. One file per session at
 `docs/local/deliverables/plan-review/<YYYY-MM-DD>-<slug>.md`. Pure markdown - renders in GitHub,
 GitLab, VS Code, and Obsidian.
 
 It is both the design (the resolved choices) and the spec (what to build and what to watch). Keep
 it tight: a record someone can act on, not a transcript of the interview.
+
+## Contents
+
+- Template
+- Notes
 
 ---
 
@@ -15,10 +20,10 @@ it tight: a record someone can act on, not a transcript of the interview.
 # Plan Review: <topic> - <YYYY-MM-DD>
 
 - **Domain:** <code | infra | fiction | decision | generic>
-- **Plan grilled:** <one line on what was interrogated>
+- **Plan reviewed:** <one line on what was interrogated>
 - **Decisions:** <N resolved>  ·  **Surviving risks:** <N>  ·  **Open questions:** <N>  ·  **Fog:** <N>  ·  **Prerequisites:** <N>
 
-> _Headless one-pass grill (omit this line when interactive):_ no user answered in real time.
+> _Headless one-pass clarification (omit this line when interactive):_ no user answered in real time.
 > The tree below was emitted in one pass with a recommended answer per node; items that could
 > not be verified from the codebase or files are flagged inline as **assumptions**, not facts.
 
@@ -101,13 +106,14 @@ up so an API can be judged, build a throwaway prototype to settle a feel questio
 - **Risk priorities** use the shared `P0 | P1 | P2 | P3` scale.
 - **Keep alternatives brief.** One line on what was rejected is enough; the record captures the
   decision, not the full debate.
-- **Open questions are not failures.** A grill that ends with three honest open questions and an
-  owner for each beats one that pretends everything is resolved.
+- **Open questions are not failures.** A clarification that ends with three honest open questions
+  and an owner for each beats one that pretends everything is resolved.
 - **Fog is not an open question.** An open question is sharp and unanswered; a fog patch cannot even
   be phrased sharply yet. If you can write the question, move it up to Open questions. A do-first
   action that unblocks any of these is a **prerequisite** - log the action there, and log what it
   unblocks (a decision, an open question, or fog) separately.
 - **If a Phase 2 risk reopened a decision**, the record shows the *final* resolved decision, not
   the intermediate one that was overturned.
-- **Headless one-pass grills** keep the blockquote note under the header and tag each unverified
-  node as an assumption. Interactive grills delete the note - every node was answered live.
+- **Headless one-pass clarifications** keep the blockquote note under the header and tag each
+  unverified node as an assumption. Interactive clarifications delete the note - every node was
+  answered live.

@@ -1,5 +1,14 @@
 # Network Segmentation: VLANs, nftables, Namespaces, IPv6
 
+## Contents
+
+- VLANs (802.1Q)
+- nftables Firewall
+- Network Namespaces
+- Subnetting
+- Linux Bridge
+- Dynamic Routing (FRRouting)
+
 ## VLANs (802.1Q)
 
 VLANs segment a physical network into isolated broadcast domains. On Linux, VLAN interfaces are

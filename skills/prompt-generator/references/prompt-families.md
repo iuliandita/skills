@@ -3,6 +3,14 @@
 Pick the family from how the prompt will be used, not from how the user phrased the request. The
 family determines structure, what must be specified, and the most common ways the prompt fails.
 
+## Contents
+
+- System Prompts
+- Task Prompts
+- Reusable Templates
+- Code-Review Prompts
+- Delegation Prompts
+
 ## System Prompts
 
 Use for durable behavior, role, boundaries, and output contracts that hold across many runs. Keep

@@ -184,7 +184,7 @@ if [[ -n "$ROADMAPS" ]]; then
 fi
 ```
 
-**Why tags-and-days, not commit-count:** commit count was the obvious proxy for staleness in pre-agentic days. It is unusable now - a `/loop` or agentic refactor session can ship 5+ commits in under an hour without touching anything the roadmap should track. Tags and calendar days are velocity-independent: a release tag is a deliberate event the roadmap should reflect, and 14 calendar days without an updated header is real staleness regardless of how many commits passed through. Commit count survives only as informational context in the drift output.
+**Why tags-and-days, not commit-count:** an agentic session can ship many commits without touching anything the roadmap tracks. A release tag is a deliberate event the roadmap should reflect, and 14 calendar days without an updated header is real staleness regardless of commit volume. Commit count stays only as context in the drift output.
 
 **Side-channel staleness:** the header check is structural - it flags drift in stated metadata, not the *substance* of the roadmap. Roadmaps often contain time-stamped sections like `Scanned 2026-04-10`, `Last refreshed 2026-04-10`, `as of 2026-04-10`, or `Weekly refresh covers ...`. Surface those as **separate observations** when the date is older than HEAD by more than a week:
 
@@ -258,7 +258,7 @@ Map changes to documentation targets. Common instruction file names: `CLAUDE.md`
 **When to write an ADR:** If the decision affects multiple components, constrains future options, or reverses a previous decision, it's worth a dedicated Architecture Decision Record. If it's a one-liner ("switched from X to Y because Z"), a short bullet in the project's instruction file is enough.
 
 **Gotcha placement heuristic:**
-- One-liner gotcha (e.g., "VIP refuses k8s traffic - use direct IP") -> `CLAUDE.md` bullet.
+- One-liner gotcha (e.g., "VIP refuses k8s traffic - use direct IP") -> project instruction file bullet.
 - Multi-step procedure (e.g., "rotating a cert requires drain, replace, reload in order") -> dedicated runbook section.
 - Time-critical pre/post-deploy action (e.g., "Redis FLUSHALL must run after deploy but before traffic is routed back") -> checklist at the top of the runbook, not buried in a section.
 
@@ -341,7 +341,7 @@ sys.exit(1 if failed else 0)
 PYLINK
 ```
 
-If files moved, search incoming references as well. Report unsupported link forms as unchecked, not passed.
+Fix each `BROKEN LINK` and rerun until the check exits 0. If files moved, search incoming references as well. Report unsupported link forms as unchecked, not passed.
 
 ### 6. Audit Project Instruction Files for Bloat
 

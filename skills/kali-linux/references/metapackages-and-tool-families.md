@@ -5,6 +5,15 @@ Research date: September 2026
 Kali is easier to manage when you think in bundles and workflows instead of one giant package dump.
 The official metapackage docs and `kali-meta` page are the map.
 
+## Contents
+
+- Big-picture install bundles
+- Desktop and system metapackages
+- Workflow-oriented tool families
+- kali-tweaks
+- Tool pages worth remembering
+- Safe routing boundaries
+
 ## Big-picture install bundles
 
 | Metapackage | What it does | Good default |

@@ -2,6 +2,14 @@
 
 Module design, testing, versioning, and registry strategies for production Terraform/OpenTofu.
 
+## Contents
+
+- Module Structure
+- Testing
+- Versioning Strategy
+- Registry Patterns
+- Anti-Patterns
+
 ---
 
 ## Module Structure

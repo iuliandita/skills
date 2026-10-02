@@ -124,7 +124,7 @@ Low confidence. Build only with real demand signal.
 
 ### {owner/repo}
 
-- {Feature} ({relevant | weak signal | noise}) - {evidence}
+- {Feature} ({strong signal | weak signal | noise}) - {evidence}
 - User demand: {issue links, discussion quotes, vote counts}
 
 ## Parked
@@ -201,7 +201,7 @@ If no ROADMAP.md exists yet or a successful activity query returns no recent act
 Otherwise, check for recent project activity:
 
 ```bash
-# Detect forge CLI: gh (GitHub), glab (GitLab), or git-only fallback
+command -v gh; command -v glab   # forge CLI: gh (GitHub), glab (GitLab), or git-only
 # GitHub
 gh pr list --state merged --limit 10 \
   --json number,title,mergedAt
@@ -309,7 +309,7 @@ For confirmed matches:
 2. Add attribution in the shipped-item shape from Item format: `- area | PR #N, vX.Y.Z (date)` (include both when a PR and release apply)
 3. Move to the "Shipped" section (create it if missing), grouped by version or date
 
-Update the "Last updated" line in the header.
+Update the `Updated:` date in the header.
 
 ---
 

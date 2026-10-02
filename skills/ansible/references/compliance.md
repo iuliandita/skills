@@ -3,6 +3,14 @@
 PCI-DSS 4.0 requirements mapping, CIS benchmarks, Ansible-Lockdown, hardening patterns,
 and audit logging for regulated environments.
 
+## Contents
+
+- PCI-DSS 4.0 Requirements Mapping
+- CIS Benchmarks with Ansible-Lockdown
+- Hardening Playbook Patterns
+- Audit Logging for Ansible Itself
+- Compliance Verification Playbook
+
 ---
 
 ## PCI-DSS 4.0 Requirements Mapping
@@ -25,7 +33,7 @@ became mandatory March 31, 2025. Ansible enforces configuration-level controls o
 | 8.6.2 | No hardcoded credentials | Ansible Vault for all secrets, `no_log: true` |
 | 10.2 | Audit logs capture events | Deploy and configure auditd with PCI-relevant rules |
 | 10.3 | Audit logs protected | Log file permissions, integrity monitoring |
-| 10.4.1.1 | Automated log review | Deploy log shippers (Filebeat, Promtail), alert rules |
+| 10.4.1.1 | Automated log review | Deploy log shippers (Filebeat, Alloy), alert rules |
 | 10.6 | Time synchronization | NTP/chrony configuration via template |
 | 11.5 | Change detection / FIM | Deploy AIDE/OSSEC, configure baselines, alerting |
 
@@ -83,8 +91,8 @@ New benchmarks merged within 2-4 weeks of CIS/STIG release.
 
 **Not supported**: Alpine Linux. CIS has not published a benchmark for Alpine, and neither
 ansible-lockdown nor `devsec.hardening` officially support it. Alpine's minimal attack surface
-(musl, BusyBox, no systemd, no PAM by default) makes it smaller by default, but still requiring threat-model-specific hardening and verification, but for formal
-compliance you need a custom hardening role. Alternatives: run `lynis audit system` (supports
+(musl, BusyBox, no systemd, no PAM by default) shrinks the attack surface but still needs
+threat-model-specific hardening and verification; formal compliance needs a custom hardening role. Alternatives: run `lynis audit system` (supports
 Alpine) for an auditable checklist, apply `devsec.hardening.ssh_hardening` (partially works
 since sshd config is distro-agnostic - test it), and handle the rest with targeted tasks
 (sysctl, iptables/nftables, service minimization via `rc-update del`).

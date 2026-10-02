@@ -4,6 +4,18 @@ Every `nixos-rebuild switch` produces a **generation**: an immutable snapshot in
 `/nix/var/nix/profiles/system-<N>-link`. Previous generations stay around until GC. This is
 the whole safety model.
 
+## Contents
+
+- Rebuild verbs
+- Useful flags
+- Generations
+- Boot entries
+- Rollback flow when things break
+- `dry-activate` before big changes
+- build-vm
+- Remote deploys
+- Common mistakes
+
 ## Rebuild verbs
 
 | Verb | Builds | Activates now | Adds boot entry | Use when |

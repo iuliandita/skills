@@ -3,6 +3,23 @@
 > Patterns and features for Bash 5.3 on Linux and macOS. Covers what you need beyond the
 > universal patterns in the main skill - bash-specific features, gotchas, and idioms.
 
+## Contents
+
+- Section Routing
+- 1. Script Template
+- 2. Parameter Expansion
+- 3. Arrays
+- 4. Conditionals
+- 5. Process Substitution and Subshells
+- 6. Heredocs and Here Strings
+- 7. Reading Input and Parsing
+- 8. Functions
+- 9. Error Handling
+- 10. Bash 5.x Features
+- 11. Bash-isms to Avoid in POSIX sh
+- 12. Debugging
+- 13. Coprocesses (bash 4.0+)
+
 ---
 
 ## Section Routing

@@ -128,7 +128,8 @@ example.
 4. **Report and fix.** Group by category, show the concrete rewrite, keep every rewrite shorter or
    more specific than the original. Apply authorized fixes and record newly discovered issues
    that affect the same scope. Ask only when the fix would change the author's intent or expand
-   the authorized work; a separate audit is unnecessary for routine discoveries.
+   the authorized work; a separate audit is unnecessary for routine discoveries. Before returning,
+   check the report against the AI Self-Check; fix any failed item and re-check.
 
 ---
 
@@ -174,8 +175,6 @@ and (or start the sentence with the content).
 - Flagged word in a context where a plain verb would work (`showcase the features` -> `show the features`)
 
 **Fix:** Replace with the plain alternative. If the sentence gets weaker after replacement, the original was padding - cut the whole phrase.
-
-See "What NOT to Flag" below for domain exceptions (horticulture `landscape`, child welfare `foster`, networking `realm`, etc.).
 
 #### Character names (fiction)
 
@@ -238,7 +237,6 @@ Alice becomes `the protagonist`, `the young woman`, `the eponymous heroine`. Fix
 or a pronoun. Repetition beats forced variation.
 
 Detect lists, worked fixes, and exceptions for both: `references/fiction-tells.md`.
-
 
 #### Superficial participle tails
 

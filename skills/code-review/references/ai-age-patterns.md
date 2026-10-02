@@ -8,6 +8,15 @@ Treat the catalog as investigation prompts. Style-only patterns route to **code-
 exploitable flaws to **security-audit**. Historical study percentages are not evidence that
 a particular snippet is generated or defective; verify a concrete failure and its API context.
 
+## Contents
+
+- AI-Generated Code Smells
+- Agentic AI Patterns
+- LLM SDK Common Bugs
+- MCP (Model Context Protocol) Bugs
+- MCP Security Breach Timeline (Reference)
+- AI Code Review Process Adjustments
+
 ---
 
 ## AI-Generated Code Smells
@@ -208,7 +217,7 @@ Prompt injection is #1 on the OWASP Top 10 for LLM Applications 2025. Found in o
 - Prompt caching not supported through Anthropic's OpenAI SDK compatibility layer - code using the compatibility layer silently misses caching benefits
 - System/developer messages in OpenAI-compatible mode - Anthropic hoists and concatenates them to the beginning since only a single initial system message is supported; multi-system-message patterns break
 - Extended thinking with tool use requires the final assistant message to start with a thinking block preceding tool_use/tool_result blocks - wrong ordering causes validation errors
-- Streaming operations over 10 minutes - Anthropic now strongly recommends streaming for long operations; non-streaming calls may timeout
+- Streaming operations over 10 minutes - Anthropic recommends streaming for long operations; non-streaming calls may timeout
 - Missing handling for `overloaded_error` (529) during streaming - retries on the same request don't help if the error is capacity-related
 - Rate limits measured in RPM + ITPM + OTPM (input/output tokens per minute separately) - tracking only RPM misses token-based limits
 
@@ -336,12 +345,4 @@ When reviewing code in a codebase that uses AI assistants (Copilot, Cursor, Clau
 - Multiple approaches to the same problem in the same file (AI regenerated parts with different prompts)
 - Suspiciously polished boilerplate with subtle logic errors buried inside
 
-### Metrics to Track
-
-- AI-generated PRs: expect 10.83 issues/PR avg vs 6.45 for human-only
-- Readability issues: 3x+ higher in AI code
-- Security issues: up to 2.74x higher
-- Performance (I/O): 8x higher
-- AI code usage at 84% adoption in 2025, but developer trust at only 29%
-
-Sources for statistics: CodeRabbit State of AI vs Human Code Generation Report, Stack Overflow Developer Survey 2025.
+Sources for statistics: CodeRabbit State of AI vs Human Code Generation Report.

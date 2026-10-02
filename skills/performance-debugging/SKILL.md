@@ -83,6 +83,7 @@ meaningful user-facing metric regresses, even if a microbenchmark improves.
 - [ ] Results report p50 plus p95/p99, throughput, errors, and relevant CPU/memory measures
 - [ ] Result variability, sample count, and meaningful regressions are disclosed
 - [ ] Production capture or load changes have bounded scope and explicit authorization
+- [ ] Cross-cutting agent hygiene applied - see `references/agent-hygiene.md`
 
 ## Output Contract
 

@@ -3,6 +3,17 @@
 Use this file when the main skill needs concrete API design rules without turning `SKILL.md`
 into a full HTTP textbook.
 
+## Contents
+
+- Resource Modeling
+- Method Semantics
+- Versioning
+- OpenAPI Version Choice
+- Pagination
+- Filtering and Sorting
+- Idempotency
+- Problem Details
+
 ## Resource Modeling
 
 Prefer nouns and relationships:
@@ -14,11 +25,8 @@ Prefer nouns and relationships:
 | User sessions | `GET /users/{userId}/sessions` | `GET /sessions?userId=123` when nesting is clearer |
 | Start workflow | `POST /orders/{orderId}/cancel` for explicit domain commands | Smuggling commands into vague updates |
 
-Two decent patterns for commands:
-- Treat the command as a subresource: `POST /orders/{orderId}/cancel`
-- Model the resulting resource explicitly: `POST /refunds`
-
-Pick one pattern and stay consistent.
+Default to a command subresource (`POST /orders/{orderId}/cancel`). Model the resulting resource
+instead (`POST /refunds`) when it has its own lifecycle. Keep one pattern across the service.
 
 ## Method Semantics
 
@@ -73,7 +81,7 @@ Do not cut a new version for:
 
 ## OpenAPI Version Choice
 
-The current OpenAPI Specification is `3.2.0`, but many framework-integrated docs and Swagger
+The current OpenAPI Specification is `3.2.1`, but many framework-integrated docs and Swagger
 toolchains still target `3.1.x` most comfortably.
 
 Practical rule:
@@ -150,7 +158,7 @@ RFC 9457 gives a standard error shape:
 {
   "type": "https://api.example.com/problems/insufficient-balance",
   "title": "Insufficient balance",
-  "status": 409,
+  "status": 422,
   "detail": "Account acc_123 cannot fund order ord_456.",
   "instance": "/orders/ord_456/payments/pay_789"
 }

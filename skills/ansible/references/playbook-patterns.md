@@ -3,6 +3,21 @@
 Copy-pasteable task patterns for common operations. All examples use FQCNs and follow production
 conventions (idempotent, `no_log` where needed, `changed_when`/`failed_when` on shell tasks).
 
+## Contents
+
+- Package Management
+- File Operations
+- Service Management
+- User and Group Management
+- Firewall Management
+- SSH Hardening
+- Cron Jobs
+- Command and Shell Tasks (When Modules Don't Exist)
+- Jinja2 Template Patterns
+- Wait and Verification Patterns
+- Delegation and Serial Execution
+- Async Tasks
+
 ---
 
 ## Package Management
@@ -523,8 +538,6 @@ without testing systemd's parsing; validate the generated unit with `systemd-ana
     validate: "sshd -t -f %s"
   become: true
   notify: Restart sshd
-
-
 ```
 
 ---

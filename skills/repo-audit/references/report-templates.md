@@ -2,6 +2,13 @@
 
 Templates used by Steps 7, 8, and 9. Read this before writing the audit artifacts.
 
+## Contents
+
+- DEEP-AUDIT.md template
+- DEEP-AUDIT-TASKS.md template
+- Master execution plan template (Step 9b, vanilla-harness fallback only)
+- Per-phase execution plan template (Step 9b, vanilla-harness fallback only)
+
 ---
 
 ## DEEP-AUDIT.md template
@@ -116,7 +123,7 @@ brainstorming skill is available. Required sections:
    minor version bump or release; distinguish proposed execution from actions the user
    already authorized. Preserve existing reports and task progress before replacing files.
 4. **Testing Gates by Phase Type** - which test commands each phase must pass.
-5. **Delegation Model** - who runs what (Claude, Codex, human), when to handoff.
+5. **Delegation Model** - which agent or human runs each phase, and when to hand off.
 6. **Phase Section Template** - one section per phase with: goal, audit tasks covered, files
    touched, test gates, version mapping, release tag, detailed subphase breakdown.
 7. **Quick-Reference Appendix** - one-line per phase summary for at-a-glance navigation.

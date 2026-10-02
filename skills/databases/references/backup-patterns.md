@@ -2,6 +2,22 @@
 
 Copy-pasteable backup strategies, PITR setup, retention policies, encryption, verification procedures, and monitoring for PostgreSQL, MongoDB, MySQL/MariaDB, and MSSQL.
 
+## Contents
+
+- The 3-2-1 Rule
+- Cross-Engine Backup Strategy Decision Matrix
+- PostgreSQL 18
+- MongoDB 8.0
+- MySQL 8.4 LTS / MariaDB 11.8
+- MSSQL 2025
+- Backup Schedule Recommendations
+- Retention Policies
+- Backup Encryption
+- Monitoring Backup Freshness
+- Managed Database Backups
+- Kubernetes Database Backup Patterns
+- Universal Backup Script Template
+
 ---
 
 ## The 3-2-1 Rule
@@ -405,7 +421,8 @@ mongorestore \
 
 ### PITR Setup
 
-MongoDB PITR requires oplog-based continuous backup. Three approaches:
+MongoDB PITR requires oplog-based continuous backup. Default: Atlas backup on Atlas, PBM
+(Option 3) for self-hosted; use manual oplog tailing only when neither is available.
 
 **Option 1: MongoDB Ops Manager / Atlas (managed)**
 - Atlas has built-in continuous backup with PITR. Just enable it.

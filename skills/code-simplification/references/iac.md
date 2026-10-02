@@ -2,6 +2,14 @@
 
 Covers Terraform, Ansible, Helm, and Kubernetes manifests.
 
+## Contents
+
+- Terraform
+- Ansible
+- Helm
+- Kubernetes Manifests
+- Proxmox / LXC / VM IaC Patterns
+
 ---
 
 ## Terraform

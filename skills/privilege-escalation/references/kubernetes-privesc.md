@@ -3,6 +3,19 @@
 Techniques for escalating privileges within Kubernetes clusters - from compromised pod to
 cluster-admin, from node access to secret extraction, from RBAC misconfig to full control.
 
+## Contents
+
+- Quick Assessment: What Can I Do?
+- 1. ServiceAccount Token Abuse
+- 2. RBAC Abuse
+- 3. Pod-Based Escalation
+- 4. etcd Direct Access
+- 5. Kubelet API Abuse
+- 6. Node-to-Cluster Escalation
+- 7. Pod Security Standards Bypass
+- 8. Notable Kubernetes CVEs (2024-2026)
+- 9. Kubernetes Enumeration Tools
+
 ---
 
 ## Quick Assessment: What Can I Do?

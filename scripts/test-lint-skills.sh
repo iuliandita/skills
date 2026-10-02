@@ -39,7 +39,7 @@ metadata:
 
 ## Workflow
 
-1. Run the lint fixture.
+1. Run the lint fixture. Fixture references, when present: details.md, shared.md, test-cases.md.
 
 ## Rules
 
@@ -488,11 +488,81 @@ test_skill_over_hard_max_lines_fails() {
   output="$("$ROOT/scripts/lint-skills.sh" "$tmp/skills" 2>&1)" || status=$?
   if (( status == 0 )); then
     printf '%s\n' "$output" >&2
-    fail "lint-skills.sh passed despite SKILL.md over the hard max of 600 lines"
+    fail "lint-skills.sh passed despite SKILL.md over the hard max of 500 lines"
   fi
-  if [[ "$output" != *"hard max 600"* ]]; then
+  if [[ "$output" != *"hard max 500"* ]]; then
     printf '%s\n' "$output" >&2
     fail "lint-skills.sh did not report the SKILL.md hard-max violation"
+  fi
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_unlinked_reference_fails() {
+  local tmp skill_dir output status
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  skill_dir="$tmp/skills/lint-fixture"
+  write_minimal_skill "$skill_dir" "lint-fixture"
+  printf '# Orphan\n\nOnly reachable through another reference.\n' > "$skill_dir/references/orphan.md"
+
+  status=0
+  output="$("$ROOT/scripts/lint-skills.sh" "$tmp/skills" 2>&1)" || status=$?
+  if (( status == 0 )); then
+    printf '%s\n' "$output" >&2
+    fail "lint-skills.sh passed despite a reference not linked from SKILL.md"
+  fi
+  if [[ "$output" != *"references/orphan.md is not linked from SKILL.md"* ]]; then
+    printf '%s\n' "$output" >&2
+    fail "lint-skills.sh did not report the unlinked reference"
+  fi
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_long_reference_needs_contents() {
+  local tmp skill_dir ref output status i
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  skill_dir="$tmp/skills/lint-fixture"
+  write_minimal_skill "$skill_dir" "lint-fixture"
+  printf '\nRead `references/long.md` for details.\n' >> "$skill_dir/SKILL.md"
+  ref="$skill_dir/references/long.md"
+  printf '# Long\n\n' > "$ref"
+  for i in 1 2 3; do
+    printf '## Section %s\n\n' "$i" >> "$ref"
+    for ((j = 0; j < 40; j++)); do printf 'line\n' >> "$ref"; done
+  done
+
+  status=0
+  output="$("$ROOT/scripts/lint-skills.sh" "$tmp/skills" 2>&1)" || status=$?
+  if (( status == 0 )); then
+    printf '%s\n' "$output" >&2
+    fail "lint-skills.sh passed despite a long reference without a contents list"
+  fi
+  if [[ "$output" != *"missing or stale '## Contents' list"* ]]; then
+    printf '%s\n' "$output" >&2
+    fail "lint-skills.sh did not report the missing contents list"
+  fi
+
+  python3 "$ROOT/scripts/gen-ref-toc.py" "$skill_dir" > /dev/null
+  if ! grep -q '^- Section 3$' "$ref"; then
+    fail "gen-ref-toc.py did not list the reference headings"
+  fi
+  cp "$ref" "$tmp/once.md"
+  python3 "$ROOT/scripts/gen-ref-toc.py" "$skill_dir" > /dev/null
+  if ! cmp -s "$ref" "$tmp/once.md"; then
+    fail "gen-ref-toc.py is not idempotent"
+  fi
+  status=0
+  output="$("$ROOT/scripts/lint-skills.sh" "$tmp/skills" 2>&1)" || status=$?
+  if (( status != 0 )); then
+    printf '%s\n' "$output" >&2
+    fail "lint-skills.sh still failed after gen-ref-toc.py added the contents list"
   fi
 
   rm -rf "$tmp"
@@ -574,6 +644,8 @@ test_missing_rules_section_fails
 test_missing_frontmatter_field_fails
 test_non_ascii_character_fails
 test_skill_over_hard_max_lines_fails
+test_unlinked_reference_fails
+test_long_reference_needs_contents
 test_banned_word_is_reported
 test_canonical_section_without_test_case_fails
 printf 'lint tests passed\n'

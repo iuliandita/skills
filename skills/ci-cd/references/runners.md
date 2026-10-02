@@ -18,6 +18,19 @@ the forge you run. Gitea's runner was renamed from `act_runner` to Gitea Runner
 (announced https://blog.gitea.com/release-of-runner-1.0.0/, 2026-05-05); Forgejo's
 `forgejo-runner` is a separate project and was not renamed.
 
+## Contents
+
+- Choosing an Executor
+- `gitlab-runner`
+- `forgejo-runner`
+- Gitea Runner (Gitea)
+- `actions-runner` (GitHub Actions, self-hosted)
+- `woodpecker-agent`
+- Linux vs macOS Differences
+- Security Hardening
+- Common Failure Modes
+- Cross-References
+
 ---
 
 ## Choosing an Executor

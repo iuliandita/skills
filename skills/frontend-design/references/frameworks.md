@@ -1,21 +1,35 @@
 # Framework Picker
 
-Pinned to September 2026. Update versions when refreshing the skill. Hallucinating stale framework versions in build output is the fastest way to embarrass an AI build.
+Pinned to October 2026. Update versions when refreshing the skill.
 
 Use this picker only when choosing a stack. Existing project choices and explicit user
 requirements take precedence over the preferences below. Visual refinement does not authorize
 framework upgrades or migrations. Verify dated suggestions against current primary docs before
 new dependency selection; choose based on the actual application and team constraints.
 
+## Contents
+
+- Decision tree
+- Astro 7.3.5 (Cloudflare-owned since January 16, 2026)
+- SvelteKit 3.0.0 + Svelte 5.57.1
+- Vite 8.3.2 + plain TS
+- Next.js 16.3.8 + React 19.3.0
+- Styling when Tailwind is selected
+- Animation
+- Touch and gestures
+- Modern reset
+- Build verification before shipping
+- Compatibility and selection cautions
+
 ---
 
 ## Decision tree
 
 1. **No-build, single HTML file demo, codepen-style?** -> Plain HTML + CSS + JS, no framework. State the constraint at the top of the file.
-2. **Static content, marketing site, blog, docs?** -> **Astro 7.3.2**
-3. **Interactive app, bundle size matters, you want runes?** -> **SvelteKit 2.70.3** + Svelte 5.57.0
-4. **Small app, no SSR needed, want Vite directly?** -> **Vite 8.2.2** + plain TypeScript or a thin layer (Lit, Solid, vanilla)
-5. **React ecosystem, rendering needs, or team familiarity fit the product?** -> **Next.js 16.3.6** + **React 19.3.0**
+2. **Static content, marketing site, blog, docs?** -> **Astro 7.3.5**
+3. **Interactive app, bundle size matters, you want runes?** -> **SvelteKit 3.0.0** + Svelte 5.57.1
+4. **Small app, no SSR needed, want Vite directly?** -> **Vite 8.3.2** + plain TypeScript or a thin layer (Lit, Solid, vanilla)
+5. **React ecosystem, rendering needs, or team familiarity fit the product?** -> **Next.js 16.3.8** + **React 19.3.0**
 
 For a new project, weigh rendering needs, ecosystem dependencies, team experience, and operating cost before selecting Next.js or an alternative.
 
@@ -24,7 +38,7 @@ product. Compare alternatives against concrete requirements rather than a fixed 
 
 ---
 
-## Astro 7.3.2 (Cloudflare-owned since January 16, 2026)
+## Astro 7.3.5 (Cloudflare-owned since January 16, 2026)
 
 **When.** Content-heavy: marketing pages, docs, blogs, portfolios, landing sites, hybrid sites with islands of interactivity.
 
@@ -48,14 +62,16 @@ product. Compare alternatives against concrete requirements rather than a fixed 
 content, and routing changes. Check the [publisher advisories](https://github.com/withastro/astro/security/advisories)
 for each applicable XSS/SSRF fixed range; a blanket 7.1.0 security floor is not verified.
 
+Commands below use bun. If `command -v bun` finds nothing or the project uses another package
+manager, run the npm/pnpm equivalent.
+
 ```bash
-# Bun-first (preferred per repo convention)
 bun create astro@latest
 ```
 
 ---
 
-## SvelteKit 2.70.3 + Svelte 5.57.0
+## SvelteKit 3.0.0 + Svelte 5.57.1
 
 **When.** Interactive apps where bundle size and runtime cost matter. Apps where the team wants explicit reactivity.
 
@@ -94,7 +110,7 @@ bunx sv create --install bun
 
 ---
 
-## Vite 8.2.2 + plain TS
+## Vite 8.3.2 + plain TS
 
 **When.** Small apps, demos, tools where you want a build but no framework opinions. Single-page tools, internal dashboards with one or two views.
 
@@ -121,7 +137,7 @@ bun create vite@latest
 
 ---
 
-## Next.js 16.3.6 + React 19.3.0
+## Next.js 16.3.8 + React 19.3.0
 
 **When.** React ecosystem dependencies, team familiarity, or a need for Server Components
 and Server Actions make it a suitable fit.
@@ -143,7 +159,7 @@ and Server Actions make it a suitable fit.
 - You want explicit reactivity (Svelte 5 runes are clearer)
 - Bundle size matters (Next is the heaviest in this list)
 
-**Note.** Next.js 15 is still maintained but Next.js 16 stable shipped October 21, 2025. Use 16.3.6 or later for new projects (16.2.0-16.3.5 are affected by GHSA-vcvr-r3jv-pc5j). Middleware was renamed to `proxy.ts` in 16 to clarify the network boundary.
+**Note.** Next.js 15 is still maintained but Next.js 16 stable shipped October 21, 2025. Use 16.3.8 or later for new projects (16.2.0-16.3.5 are affected by GHSA-vcvr-r3jv-pc5j; 16.3.8 fixes the September 30 advisories, including SSRF GHSA-cjq9-62q9-8jv4). Middleware was renamed to `proxy.ts` in 16 to clarify the network boundary.
 
 An established team stack is a legitimate constraint. Keep it unless the user requests a migration or a concrete requirement makes it unsuitable.
 
@@ -206,11 +222,8 @@ See `references/mobile-touch.md` for patterns.
 
 ## Modern reset
 
-Don't ship without one. Options:
-
-- **Josh Comeau's reset** - opinionated, well-explained
-- **Andy Bell's modern reset** - minimal, opinionated about defaults
-- Hand-rolled - fine if you understand each rule
+Don't ship without one. Default to **Andy Bell's modern reset** (minimal). Josh Comeau's reset or
+a hand-rolled one is fine when the project already uses it.
 
 Tailwind v4 includes Preflight (its own reset). Don't double-stack resets.
 
@@ -237,7 +250,7 @@ bun run build
 bun run build
 ```
 
-If the build fails, ship the fix, not the failure. AI builds love to ship code that "should work".
+If a check or build fails, fix it and rerun until all pass.
 
 ---
 

@@ -3,6 +3,25 @@
 > Patterns and gotchas for Zsh 5.9.2 on Linux and macOS. Focuses on where Zsh diverges
 > from Bash - the stuff that silently breaks.
 
+## Contents
+
+- Section Routing
+- Verification Checklist
+- 1. Globbing Differences (The Big One)
+- 2. Array Handling (Silently Different)
+- 3. Parameter Expansion Differences
+- 4. Escape / Quoting Issues
+- 5. Script Portability
+- 6. Startup File Load Order
+- 7. Prompt / .zshrc Patterns
+- 8. Completion System
+- 9. Autoloading Functions and FPATH
+- 10. Zsh Script Template
+- 11. Key Gotchas Summary (Bash -> Zsh)
+- 12. Zsh-Only Power Features
+- 13. Release-Specific Features
+- 14. macOS-Specific Notes
+
 ---
 
 ## Section Routing

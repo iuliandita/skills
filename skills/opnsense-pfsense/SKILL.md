@@ -16,8 +16,8 @@ metadata:
 Manage, troubleshoot, and harden OPNsense and pfSense firewalls via SSH. Both are FreeBSD-based,
 pf-powered firewall distributions - most concepts, commands, and patterns apply to both.
 
-**Target versions** (September 2026):
-- OPNsense CE: 26.7.4_1 (current Community Edition hotfix, "Xenial Xenops"). Business Edition remains a separate even-quarter lane - do not quote the BE number as the CE version
+**Target versions** (October 2026):
+- OPNsense CE: 26.7.5 (current Community Edition update, released 2026-09-30, "Xenial Xenops"). Business Edition remains a separate even-quarter lane - do not quote the BE number as the CE version
 - pfSense CE: 2.9.0 / pfSense Plus: 26.07
 - CrowdSec: v1.8.1
 
@@ -124,8 +124,12 @@ sockstat -4l             # listening sockets
 ### Step 2: Back up config
 
 Before any change that modifies rules, services, plugins, or firmware:
-- OPNsense: GUI export (System > Configuration > Backups), the `/api/core/backup/download/this` API endpoint, or copy `/conf/config.xml`. There is no `configctl` action that exports the config
-- pfSense: GUI export (Diagnostics > Backup & Restore) or copy `/cf/conf/config.xml`
+- Default over SSH: copy the config file to a timestamped name, then pull that copy off-box
+  with `scp`. OPNsense: `` cp /conf/config.xml /root/config-`date +%Y%m%d-%H%M%S`.xml ``. pfSense:
+  same with `/cf/conf/config.xml`
+- Alternatives: GUI export (OPNsense System > Configuration > Backups, pfSense Diagnostics >
+  Backup & Restore) or the OPNsense `/api/core/backup/download/this` endpoint. There is no
+  `configctl` action that exports the config
 - For major upgrades on virtualized firewalls, pair config backup with a hypervisor snapshot
 
 Skip this step only for read-only operations (diagnostics, log review, status checks).
@@ -145,6 +149,9 @@ After every change, confirm the firewall is healthy:
 - Logs: check `/var/log/filter.log`, service logs, and CrowdSec/Suricata if active
 - Service status: `service -e` (works on both, FreeBSD base) plus `pluginctl -s <name> status` for OPNsense plugin services. `configctl` with no arguments lists the available configd actions; there is no `configctl service list`
 - State table: `pfctl -si | grep entries` - watch for unexpected drops or state exhaustion
+
+If any check fails, revert the change (or restore the Step 2 backup), confirm the device is
+healthy again, then return to Step 3 with a corrected change.
 
 ---
 

@@ -3,7 +3,7 @@ name: ci-cd
 description: >
   Build, review, and debug CI/CD pipelines and runners: GitHub Actions, GitLab CI, Forgejo/Gitea, and Woodpecker.
 license: MIT
-compatibility: "Optional: gh (GitHub CLI), glab (GitLab CLI), fj (Forgejo CLI)"
+compatibility: "Optional: gh (GitHub CLI), glab (GitLab CLI), fj (Forgejo CLI), actionlint"
 metadata:
   source: iuliandita/skills
   date_added: "2026-03-24"
@@ -17,12 +17,8 @@ Write, review, and architect CI/CD pipelines across GitHub Actions, GitLab CI/CD
 Actions, Gitea Actions, and Woodpecker. The goal is secure, fast, auditable pipelines that
 satisfy both engineering needs and compliance requirements (PCI-DSS 4.0).
 
-**Target versions**: September 2026 snapshot. Read `references/target-versions.md` before
+**Target versions**: October 2026 snapshot. Read `references/target-versions.md` before
 pinning forge, runner, CI, or supply-chain tool versions.
-
-**Portable metadata:** keep file-routing patterns in the description and scope sections. `paths`
-is a Claude Code-local extension, not portable Agent Skills metadata, and can make claude.ai uploads
-or Skills API packages fail validation.
 
 This skill covers workflow design, security, compliance, cross-platform migration,
 runners, dependency updates, scanning, review gates, and rollout order.
@@ -146,9 +142,13 @@ include an explicit deployment job or a clearly marked deployment placeholder. N
 environment and authorization/protection requirement. Label test/build-only output as incomplete
 for deployment. Do not add a deploy stage to a CI-only request.
 
-### Step 5: Verify against AI Self-Check
+### Step 5: Validate
 
-Run through the checklist above before returning any generated config.
+Lint generated config (`actionlint` for GitHub/Forgejo/Gitea Actions, `glab ci lint` for GitLab),
+fix and rerun until clean, then run the AI Self-Check above. Report any linter you could not run.
+actionlint only auto-discovers `.github/workflows`; pass `.forgejo/workflows/*.yml` paths
+explicitly. Declare custom runner labels under `self-hosted-runner.labels` in `actionlint.yaml`;
+never change `runs-on` only to satisfy the linter.
 
 ## Cross-Platform Patterns
 

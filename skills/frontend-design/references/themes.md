@@ -8,6 +8,14 @@ The palette and fonts below illustrate token structure, not a default visual ide
 values from the brief and verify each actual text/surface combination before reuse.
 Do not create an alternate theme solely with `filter: invert()` without inspecting the result.
 
+## Contents
+
+- The pattern
+- Initialize and choose a theme
+- Per-theme considerations
+- Contrast targets
+- Native controls and persistence
+
 ---
 
 ## The pattern

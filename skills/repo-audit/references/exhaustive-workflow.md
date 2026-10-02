@@ -8,6 +8,18 @@ After the waves, Steps 7-9 persist findings to `docs/local/audits/DEEP-AUDIT.md`
 
 For a quick 4-skill sweep, use **quick mode** instead.
 
+## Contents
+
+- When to use
+- When NOT to use
+- AI Self-Check
+- Best Practices
+- Workflow
+- Reference Files
+- Output Contract
+- Related Skills
+- Rules
+
 ## When to use
 
 - Major pre-release quality gate where you want every applicable audit lens
@@ -51,12 +63,6 @@ workflow (waves + persistence + routing), not just the wave dispatch phase.
 - [ ] **Scope bounded**: audit waves match the repo type and user request, not every possible skill
 - [ ] **Evidence retained**: findings cite files, commands, outputs, or source docs instead of impressions
 - [ ] Cross-cutting agent hygiene applied - see `references/agent-hygiene.md`
-
-## Performance
-
-- Inventory first, then choose high-risk slices; avoid full exhaustive scans when focused evidence answers the question.
-- Run cheap global searches before expensive test suites or dynamic analysis.
-- Batch findings by subsystem and severity so review effort scales with risk.
 
 ## Best Practices
 
@@ -364,7 +370,7 @@ Derive a phased, checkbox-tracked action list at `docs/local/audits/DEEP-AUDIT-T
 from DEEP-AUDIT.md content. This is the artifact users tick off during execution.
 
 Follow the task-list template in `references/report-templates.md`: task entry format,
-priority markers (🔴🟡🔵), finding ID cross-references, the 12-phase ordering heuristic,
+the five priority markers, finding ID cross-references, the 12-phase ordering heuristic,
 and the trailing effort-rollup / minimum-release-cut sections.
 
 ### Step 9: Route to planning

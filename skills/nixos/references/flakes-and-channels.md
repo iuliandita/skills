@@ -3,6 +3,16 @@
 Two ways to point a NixOS system at a specific `nixpkgs`. Flakes pin explicitly via a
 lockfile; channels pin implicitly via whatever `nix-channel --update` last fetched.
 
+## Contents
+
+- Channels (the older way)
+- Flakes (the newer, de-facto standard)
+- Channels vs flakes, practical tradeoffs
+- Alternatives to flakes without flakes
+- Registry
+- Pure vs impure evaluation
+- Common footguns
+
 ## Channels (the older way)
 
 ```bash

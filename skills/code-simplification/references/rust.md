@@ -2,6 +2,17 @@
 
 Light reference. Rust's compiler catches a lot of slop at compile time, but AI-generated Rust has its own tells.
 
+## Contents
+
+- Clone Abuse (Soul)
+- Error Type Proliferation (Soul)
+- Overly Generic Trait Bounds (Noise)
+- Verbose Patterns (Noise)
+- Unsafe Overuse (Lies)
+- Stale Patterns (Lies)
+- Dependency Creep (Noise)
+- Supply Chain Risk (Lies)
+
 ## Clone Abuse (Soul)
 
 The biggest AI-Rust tell. Models reach for `.clone()` to make the borrow checker shut up.

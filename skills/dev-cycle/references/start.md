@@ -2,6 +2,16 @@
 
 Detailed procedures for starting a unit of work. Referenced from the main SKILL.md.
 
+## Contents
+
+- When this reference loads
+- Step A1 details: Clean state + pull latest
+- Step A2 details: Size classification
+- Step A3 details: Branch naming
+- Step A4 details: Brainstorming fallback chain
+- Step A5 details: Handoff
+- Edge cases
+
 ## When this reference loads
 
 Load when the user invokes **dev-cycle** and the mode resolves to `start` (see SKILL.md Step 0). Not needed in finish mode.

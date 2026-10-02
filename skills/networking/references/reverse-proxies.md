@@ -1,5 +1,13 @@
 # Reverse Proxy Configuration Patterns
 
+## Contents
+
+- Caddy
+- Nginx
+- Traefik
+- HAProxy
+- Common Patterns
+
 ## Caddy
 
 Caddy's killer feature is automatic HTTPS via ACME (Let's Encrypt / ZeroSSL). Minimal config,
@@ -394,9 +402,9 @@ defaults
 
 ### mTLS (mutual TLS to backend)
 
-**Breaking change (2025-2027):** public CAs are removing the Client Authentication EKU from
-TLS certificates. By Feb 2027, public CA certs won't work for mTLS. Use a **private CA**
-(step-ca, cfssl, Vault PKI, OpenSSL) for all mTLS client certificates.
+Public CAs are removing the Client Authentication EKU from TLS certificates (completing by
+Feb 2027), so do not use public CA certificates for mTLS. Issue mTLS client certificates from a
+**private CA**: step-ca by default, or Vault PKI where Vault already runs.
 
 ```nginx
 # Nginx

@@ -21,7 +21,7 @@ Focus on Debian stable and Ubuntu LTS first, then layer in derivative-specific b
 workflows, snap confinement, Ubuntu HWE, and explicit checks for derivatives that diverge on
 init, packaging defaults, or intended use.
 
-**Versions worth pinning** (verified September 2026):
+**Versions worth pinning** (verified October 2026):
 
 Only pin versions here when they materially affect compatibility or troubleshooting shape. For
 ordinary Debian and Ubuntu package work, prefer the live distro lane and package policy over a
@@ -31,7 +31,7 @@ stale package-version table.
 |-----------|---------|----------------|
 | Debian stable | 13 (trixie) | current stable baseline and repo behavior |
 | Ubuntu LTS | 26.04 (Resolute Raccoon) | current LTS baseline for most Ubuntu guidance |
-| Ubuntu interim lane | verify live | interim releases move fast; check the active upgrade path instead of memorizing one short-lived codename |
+| Ubuntu interim lane | verify live (25.10 EOL July 2026; 26.10 "Stonking Stingray" due 2026-10-15) | interim releases move fast; check the active upgrade path instead of memorizing one short-lived codename |
 | Ubuntu HWE lane | verify live | kernel metapackage and hardware-enablement behavior matter more than one exact kernel number |
 | NVIDIA driver branch | verify live | proprietary branch choice affects Wayland, gaming, and DKMS behavior |
 | Mesa stack | verify live | AMD and Intel graphics behavior tracks the shipped Mesa lane |
@@ -42,6 +42,11 @@ is a high-priority Linux IPv6 flaw that Canonical lists as CISA KEV. Ubuntu 26.0
 `linux` package is fixed in `7.0.0-31.31`; Ubuntu 24.04's `linux-hwe-7.0` is fixed in
 `7.0.0-31.31~24.04.1`. The 24.04 `linux` lane remains marked vulnerable in that record.
 Check the exact release and kernel package; these are not universal kernel version floors.
+
+Security recheck (2026-10-02): [CVE-2026-53266](https://ubuntu.com/security/CVE-2026-53266)
+(netfilter ebtables SNAT, high, CISA KEV 2026-09-18) has the same fixed versions: `linux`
+`7.0.0-31.31` on 26.04 and `linux-hwe-7.0` `7.0.0-31.31~24.04.1` on 24.04, while the 24.04
+`linux` lane is still listed as vulnerable.
 
 ## When to use
 
@@ -222,11 +227,13 @@ only if the first layer is clean.
 apt-cache policy package_name
 systemctl status unit_name
 journalctl -u unit_name -b
-command -v update-grub >/dev/null 2>&1 && update-grub
-command -v grub-install >/dev/null 2>&1 && grub-install --version
+ls -l /boot/vmlinuz-* /boot/initrd.img-*
 ```
 
-Reboot only when the boot path is understood and at least one known-good entry remains.
+If kernel or boot files changed, first confirm every kernel above has an initrd and run
+`sudo update-initramfs -u -k <version>` for any that are missing. Then run `sudo update-grub` only
+when GRUB is the confirmed loader (`command -v update-grub`), and confirm the entries with
+`grep -E "menuentry|initrd" /boot/grub/grub.cfg`. Reboot only when the boot path is understood and at least one known-good entry remains.
 
 ---
 

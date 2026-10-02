@@ -17,13 +17,13 @@ Build and refine interfaces with a visual direction grounded in the product, its
 and its content. Make typography, composition, imagery, and interaction work together;
 preserve the user's brand and the existing application's conventions.
 
-**Target versions** (September 2026 - pinned so staleness is visible):
+**Target versions** (October 2026 - pinned so staleness is visible):
 
-- Astro 7.3.2 (major: Rust compiler, Vite 8, advanced routing; verify advisory-specific fixed ranges before migration)
-- SvelteKit 2.70.3 + Svelte 5.57.0 runes
+- Astro 7.3.5 (major: Rust compiler, Vite 8, advanced routing; verify advisory-specific fixed ranges before migration)
+- SvelteKit 3.0.0 + Svelte 5.57.1 runes (SvelteKit 3 is a major released 2026-10-01: TypeScript 6+, Node 22.17+; review migration notes)
 - Tailwind CSS v4.3.3
-- Vite 8.2.2
-- React 19.3.0 + Next.js 16.3.6 (heavier option, only when team is React-locked)
+- Vite 8.3.2
+- React 19.3.0 + Next.js 16.3.8 (heavier option, only when team is React-locked)
 - @use-gesture/react 10.3.1 (modern; Hammer.js considered legacy)
 
 The [August 2026 Next.js security release](https://nextjs.org/blog/august-2026-security-release)
@@ -31,7 +31,10 @@ fixes critical AVIF image-optimization RCE and Windows mixed-router RCE (CVE-202
 Its patched LTS releases are 15.5.24 and 16.3.3. The [September 22 out-of-band release](https://nextjs.org/blog/nextjs-security-update-september-22-2026)
 fixes a critical Node.js `ImageResponse` (`next/og`) RCE (GHSA-vcvr-r3jv-pc5j) affecting
 `>=16.2.0 <16.3.6`; the floor is 16.3.6 (15.5.26 adds hardening only; 15.x is not affected).
-Check each advisory's deployment conditions when assessing an existing app (checked 2026-09-25).
+The [September 30 security release](https://github.com/vercel/next.js/releases/tag/v16.3.8) fixes
+high-severity Image Optimization SSRF (CVE-2026-94483) plus medium cache-poisoning and cache-leak
+advisories; the floors are 16.3.8 and 15.5.27.
+Check each advisory's deployment conditions when assessing an existing app (checked 2026-10-02).
 
 The version list is a reference for new-project selection, not an upgrade instruction.
 Inspect installed packages and follow the project's stack. Verify current documentation when

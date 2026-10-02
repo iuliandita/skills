@@ -1,7 +1,21 @@
 # GitHub Actions: Patterns & Templates
 
-Production-ready patterns for GitHub Actions workflows. Updated for September 2026: ubuntu-24.04
+Production-ready patterns for GitHub Actions workflows. Updated for October 2026: ubuntu-24.04
 runners, arm64 GA, artifact v4, attestations, SHA pinning enforcement.
+
+## Contents
+
+- Runner Environment
+- Workflow Structure
+- Security Hardening
+- OIDC and Keyless Authentication
+- Artifact Attestations
+- Reusable Workflows
+- Caching
+- Matrix Strategies
+- Concurrency Control
+- Security Scanning Template
+- Common Gotchas
 
 ---
 
@@ -9,17 +23,17 @@ runners, arm64 GA, artifact v4, attestations, SHA pinning enforcement.
 
 | Label | OS | Architecture | Notes |
 |-------|----|-------------|-------|
-| `ubuntu-latest` | Verify current alias | x86_64 | Alias mapping was not confirmed on September 10, 2026; use an explicit OS label. |
+| `ubuntu-latest` | Ubuntu 24.04 | x86_64 | Alias confirmed in actions/runner-images on October 2, 2026; still prefer an explicit OS label. |
 | `ubuntu-24.04` | Ubuntu 24.04 | x86_64 | Explicit pin (recommended). |
 | `ubuntu-22.04` | Ubuntu 22.04 | x86_64 | Will be deprecated eventually. |
 | `ubuntu-24.04-arm` | Ubuntu 24.04 | arm64 | GA Aug 2025 (public), Jan 2026 (private). 4 vCPU public, 2 vCPU private. |
 | `ubuntu-22.04-arm` | Ubuntu 22.04 | arm64 | Same availability. |
 | `macos-15` | macOS 15 | Apple Silicon | M-series. |
-| `windows-latest` | Windows Server 2022 | x86_64 | |
+| `windows-latest` | Windows Server 2025 | x86_64 | Per actions/runner-images, October 2, 2026. |
 
 **No `ubuntu-latest-arm` label exists.** Use explicit `ubuntu-24.04-arm`.
 
-**Pricing (verified September 2026)**: hosted runner prices dropped up to 39% on Jan 1, 2026. A planned
+**Pricing (verified October 2026)**: hosted runner prices dropped up to 39% on Jan 1, 2026. A planned
 $0.002/min self-hosted runner fee was announced but **postponed indefinitely** after community
 backlash. Public repo usage remains free.
 
@@ -527,7 +541,7 @@ security:
         sarif_file: trivy.sarif
 ```
 
-**Trivy safe versions (September 2026)**: use binary v0.74.0+ from official releases and pin
+**Trivy safe versions (October 2026)**: use binary v0.74.0+ from official releases and pin
 actions to full commit SHAs. The March 2026 rollback set was binary v0.69.3,
 `trivy-action@v0.35.0`, and `setup-trivy@v0.2.6`. Do NOT use v0.69.4/5/6
 (compromised by TeamPCP).

@@ -1,12 +1,20 @@
 # Alternative Container Runtimes
 
-Podman, Buildah, Skopeo, and containerd patterns. Reviewed September 2026.
+Podman, Buildah, Skopeo, and containerd patterns. Reviewed October 2026.
+
+## Contents
+
+- Podman (v6.1.3)
+- Buildah (v1.45.0)
+- Skopeo
+- containerd (v2.3.4)
+- Decision Matrix
 
 ---
 
-## Podman (v6.1.1)
+## Podman (v6.1.3)
 
-Daemonless, rootless container engine. CLI-compatible with Docker. `alias docker=podman` works for most commands. Adopted by 40% of Fortune 500 (2025 survey).
+Daemonless, rootless container engine. CLI-compatible with Docker. `alias docker=podman` works for most commands.
 
 ### Key differences from Docker
 
@@ -245,10 +253,11 @@ skopeo list-tags docker://ghcr.io/org/myapp
 
 Low-level container runtime. Kubernetes uses it directly. Docker Engine uses it under the hood.
 
-### Key facts (September 2026)
+### Key facts (October 2026)
 
-- **containerd 2.3.0** was released in April 2026 as the first annual LTS release, supported for 2+ years
-- **containerd 2.2.3** remains a supported 2.2 patch release through November 2026
+- **containerd 2.3.0** was released in April 2026 as the first annual LTS release, supported until April 30, 2028 (current patch 2.3.6)
+- **containerd 2.4** (September 16, 2026; current 2.4.1) is the newest regular release, supported until May 16, 2027
+- **containerd 2.2** (current 2.2.9) remains supported through November 6, 2026
 - **K8s 1.36+** will require containerd 2.0+ (1.x support dropped)
 - containerd 2.0 removed Docker-schemaV1 image support, CRI v1alpha2, and several deprecated APIs
 - Migration from 1.6/1.7 to 2.0 is supported with built-in migration tools
@@ -289,8 +298,8 @@ nerdctl supports BuildKit, Compose, rootless mode, and most Docker CLI flags. Us
 | Scenario | Recommended |
 |----------|-------------|
 | Local development (macOS/Windows) | **Docker Desktop** (includes Docker Engine, BuildKit, Compose, Scout) |
-| Local development (Linux) | **Docker Engine** or **Podman** (preference) |
-| CI/CD image builds | **Docker** (BuildKit) or **Buildah** (daemonless) |
+| Local development (Linux) | **Docker Engine**; **Podman** on rootless-first hosts |
+| CI/CD image builds | **Docker** (BuildKit); **Buildah** where no daemon can run |
 | Rootless-first environment | **Podman** |
 | RHEL/OpenShift | **Podman + Buildah + Skopeo** |
 | Registry mirroring / air-gap | **Skopeo** |

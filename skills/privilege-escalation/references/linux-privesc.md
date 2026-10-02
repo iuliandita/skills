@@ -2,6 +2,19 @@
 
 Core Linux privilege escalation vectors. Ordered by reliability and safety - start from the top.
 
+## Contents
+
+- 1. Automated Enumeration
+- 2. Sudo Abuse
+- 3. SUID/SGID Binary Exploitation
+- 4. Linux Capabilities
+- 5. Cron Job Exploitation
+- 6. Kernel Exploits
+- 7. PATH Hijacking
+- 8. NFS Exploitation
+- 9. Writable Sensitive Files
+- 10. Wildcard Injection
+
 ---
 
 ## 1. Automated Enumeration
@@ -37,7 +50,7 @@ Watch for processes running as root (UID=0) that execute scripts or binaries you
 ### Linux Exploit Suggester
 
 ```bash
-curl -L https://raw.githubusercontent.com/mzet-/linux-exploit-suggester/master/linux-exploit-suggester.sh -o /tmp/les.sh
+curl -L https://raw.githubusercontent.com/The-Z-Labs/linux-exploit-suggester/master/linux-exploit-suggester.sh -o /tmp/les.sh
 chmod +x /tmp/les.sh && /tmp/les.sh
 ```
 
@@ -337,7 +350,7 @@ cat /proc/version
 
 ### Notable Kernel CVEs
 
-September 2026 advisory check (2026-09-10): [CVE-2026-53362](https://ubuntu.com/security/CVE-2026-53362)
+October 2026 advisory check (2026-10-02): [CVE-2026-53362](https://ubuntu.com/security/CVE-2026-53362)
 is a high-priority IPv6 memory-corruption issue listed in CISA KEV according to Canonical.
 Check the distribution's exact kernel package and backport status; there is no universal
 kernel-version cutoff across vendor branches. This is patch-triage guidance, not a validated

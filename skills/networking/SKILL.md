@@ -17,26 +17,26 @@ Configure, troubleshoot, and optimize Linux networking infrastructure. Covers DN
 VPNs, firewalls (nftables), VLANs, subnetting, high availability, dynamic routing, and network
 performance tuning.
 
-**Target versions** (September 2026):
+**Target versions** (October 2026):
 
 | Tool | Version | Notes |
 |------|---------|-------|
-| Caddy | 2.11.4 | Auto-HTTPS, Caddyfile + JSON API |
+| Caddy | 2.11.6 | Auto-HTTPS, Caddyfile + JSON API; GHSA-6365-7ppr-5r92 is fixed since 2.11.5 |
 | Nginx | 1.30.5 stable / 1.31.6 mainline | Patched for CVE-2026-90439; includes fixes for CVE-2026-42533/60005/56434 |
 | Traefik | 3.7.13 (v2 lane 2.11.57) | Gateway API native, v2 EOL approaching |
-| HAProxy | 3.4.5 LTS / 3.3.14 stable / 3.2.23 LTS | 3.4 LTS EOL 2031-Q2 |
+| HAProxy | 3.4.6 LTS / 3.3.16 stable / 3.2.25 LTS | 3.4 LTS EOL 2031-Q2 |
 | WireGuard tools | 1.0.20260223 | Kernel module + userspace tools |
 | strongSwan | 6.1.0 (fixes CVE-2026-78133 and ten others, 2026-09-07) | swanctl config (legacy ipsec.conf deprecated) |
 | nftables | 1.1.7 | iptables successor, default on modern distros |
 | keepalived | 2.4.3 | VRRP + health checks |
 | Unbound | 1.26.1 | Security floor after the 2026-09-16 advisories |
 | CoreDNS | 1.14.7 | K8s default DNS, plugin-based |
-| FRRouting | 10.7.1 (retained, unverified) | Verify the current publisher release before targeting this pin |
+| FRRouting | 10.7.1 | Released 2026-08-31 alongside 10.6.2/10.5.5/10.4.5 |
 | Tailscale / Headscale | Headscale 0.29.4 | Self-hosted control server |
 | cloudflared | 2026.9.3 | Cloudflare Tunnel (outbound-only) |
 | OpenVPN | 2.7.7 / 2.6.23 LTS | 2.7.x: multi-socket, DCO; 2.6 is the LTS branch |
 
-Security recheck (2026-09-16): nginx's [publisher advisories](https://nginx.org/en/security_advisories.html)
+Security recheck (2026-10-02): nginx's [publisher advisories](https://nginx.org/en/security_advisories.html)
 rate CVE-2026-90439 (HTTP/3 buffer overflow) medium: affected 1.29.2-1.31.5, fixed in
 1.30.5+ or 1.31.6+. CVE-2026-42533 (map/regex buffer overflow) major: affected
 0.9.6-1.31.2, fixed in 1.30.4+ or 1.31.3+; CVE-2026-60005 and CVE-2026-56434 were
@@ -119,7 +119,6 @@ Before returning any generated network configuration, verify:
 - Use packet captures with narrow filters and time windows to avoid huge captures and privacy spill.
 - Prefer persistent nftables sets, DNS caches, and proxy connection reuse where appropriate.
 
-
 ---
 
 ## Best Practices
@@ -127,7 +126,6 @@ Before returning any generated network configuration, verify:
 - Diagnose before changing: capture current routes, rules, addresses, and resolver state.
 - Change one layer at a time: DNS, routing, firewall, proxy, VPN, or application.
 - Keep emergency access open when editing firewall, VPN, or default-route configuration remotely.
-
 
 ## Workflow
 
@@ -162,11 +160,24 @@ Read the appropriate reference file for detailed patterns. Key principles:
   `haproxy -c`).
 - **One change at a time.** Over SSH, save the exact rules/routes/manager configuration being
   changed and schedule a tested restoration command before applying. A generic networking
-  restart is not a rollback. Verify the timer exists; cancel it only after a second session
-  confirms management access and the intended allowed/blocked traffic.
+  restart is not a rollback. Verify the timer exists with
+  `systemctl list-timers nft-rollback.timer`; cancel it only after a second session
+  confirms management access and the intended allowed/blocked traffic. For nftables, run exactly:
+  ```bash
+  nft -c -f new.nft                                  # syntax check; stop on error
+  { echo 'flush ruleset'; nft list ruleset; } > /root/nft-rollback.nft
+  systemd-run --on-active=5m --unit=nft-rollback \
+    nft -f /root/nft-rollback.nft                   # one atomic transaction
+  nft -f new.nft
+  systemctl list-timers nft-rollback.timer           # confirm the rollback is armed
+  systemctl stop nft-rollback.timer                  # only after the second-session check
+  ```
 - **Log what you changed.** Network debugging is 10x harder when you don't know what changed.
 
 ### Step 4: Validate
+
+If a check fails, restore the saved configuration (or let the rollback timer fire), fix the
+change, and return to Step 3.
 
 | What to validate | How |
 |-----------------|-----|
@@ -195,7 +206,6 @@ Read the appropriate reference file for detailed patterns. Key principles:
 | `nft` | nftables rule management | `nft list ruleset`, `nft monitor trace` |
 | `wg` | WireGuard status | `wg show`, `wg showconf wg0` |
 | `resolvectl` | systemd-resolved status | `resolvectl status`, `resolvectl query domain` |
-| `doggo` | Modern dig alternative | `doggo example.com A @8.8.8.8 --json` |
 | `nmap` | Port scanning, service detection | `nmap -sV -p 1-1024 target` |
 | `socat` | Multipurpose relay | `socat TCP-LISTEN:8080,fork TCP:backend:80` |
 

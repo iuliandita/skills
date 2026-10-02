@@ -1,8 +1,24 @@
-# Code Slimming: Pattern Recognition Guide
+# Safe Reduction: Pattern Recognition Guide
 
-Pattern-by-pattern recognition aids for classifying a slimming candidate by its shape.
+Pattern-by-pattern recognition aids for classifying a reduction candidate by its shape.
 Consult this when a candidate's category is unclear. The operational workflow,
 no-reference discipline, and rules live in `SKILL.md`; this file is the recall layer.
+
+## Contents
+
+- Dead code and unused symbols
+- Superseded and replaced code
+- Leftover files
+- Exact and intra-file clones
+- Commented-out code and comment walls
+- Per-element function copies
+- Inert try/catch and defensive scaffolding
+- Repeated boundary parsing
+- Near-twin adapters
+- Duplicate data shapes
+- Wrapper layers
+- Oversized helper modules
+- Performance-sensitive reduction
 
 ## Dead code and unused symbols
 
@@ -62,7 +78,7 @@ to flag - a catch that only rethrows unchanged, catch-log-rethrow only after pro
 Distinguish these from behavior-carrying catches: swallow-and-continue, error conversion or
 wrapping into typed errors, retries, fallbacks, and cleanup in `finally`. Removing a swallowing
 catch changes propagation - that is `Do with tests` at best, and a swallowed error that hides a bug
-is a code-review finding, not a slimming one. The same discipline applies to needless defensive
+is a code-review finding, not a reduction one. The same discipline applies to needless defensive
 null checks on values a type system or upstream contract already guarantees - flag only with the
 guarantee cited.
 
@@ -99,7 +115,7 @@ metrics, feature flags, compatibility shims, dependency inversion, or fault isol
 Large `utils`, `helpers`, `common`, `shared`, or `misc` modules are often junk drawers. Recommend
 splitting by domain concern or moving helpers closer to their only caller.
 
-## Performance-sensitive slimming
+## Performance-sensitive reduction
 
 Shorter code can be slower. Centralized generic code can add allocation, dynamic dispatch, reflection,
 bundle weight, cache misses, or indirect calls. In hot paths, require measurement or classify as

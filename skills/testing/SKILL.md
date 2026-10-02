@@ -3,7 +3,7 @@ name: testing
 description: >
   Write unit, integration, E2E, load, and accessibility tests; debug fixtures, mocks, coverage, and flaky suites.
 license: MIT
-compatibility: "Requires one or more of: vitest, jest, pytest, go test, cargo test, playwright"
+compatibility: "Requires one or more of: vitest, jest, pytest, go test, cargo test, playwright; k6 for load tests"
 metadata:
   source: iuliandita/skills
   date_added: "2026-04-02"
@@ -15,21 +15,23 @@ metadata:
 
 Write, structure, and maintain tests across unit, integration, E2E, accessibility, and performance layers. The goal is tests that catch regressions, document behavior, and run fast in CI - not tests that exist to inflate coverage numbers.
 
-**Target versions** (September 2026):
-- Vitest **5.0.1**, Jest **30.5.1**
-- Playwright **1.63.0**, Cypress **16.0.0** (both Vitest and Cypress are major upgrades; review migration notes)
+**Target versions** (October 2026):
+- Vitest **5.0.3**, Jest **30.5.2**
+- Playwright **1.63.0**, Cypress **16.1.1** (both Vitest and Cypress are major upgrades; review migration notes)
 - pytest **9.1.1**, pytest-cov **7.1.0**
 - Go **1.27.1** (testing stdlib, `testing/synctest` GA)
-- Rust **1.98.1** (`cargo test`, cargo-nextest **0.9.146**)
+- Rust **1.99.0** (`cargo test`, cargo-nextest **0.9.146**)
 - Testing Library **16.3.3** (`@testing-library/react`)
 - axe-core **4.13.0** (`@axe-core/playwright`)
 - Grafana k6 **2.3.0**
 
-Security check (2026-09-10): [GHSA-2h32-95rg-cppp](https://github.com/vitest-dev/vitest/security/advisories/GHSA-2h32-95rg-cppp)
+Security check (2026-10-02): [GHSA-2h32-95rg-cppp](https://github.com/vitest-dev/vitest/security/advisories/GHSA-2h32-95rg-cppp)
 is critical browser-runner script injection that can expose the API token and lead to local code
 execution. It affects `@vitest/browser` >=4.0.17,<4.1.6 and >=5.0.0-beta.0,<5.0.0-beta.3;
 fixes are 4.1.6 and 5.0.0-beta.3. Keep browser packages aligned with the stable runner and do not
-open untrusted runner URLs while the server is active.
+open untrusted runner URLs while the server is active. Later critical browser-mode advisories
+([GHSA-g8mr-85jm-7xhm](https://github.com/advisories/GHSA-g8mr-85jm-7xhm), [GHSA-p63j-vcc4-9vmv](https://github.com/advisories/GHSA-p63j-vcc4-9vmv))
+raise the 4.x floor to 4.1.10 and the 3.x floor to 3.2.7; stable 5.0.x is not affected.
 
 ## When to use
 
@@ -74,7 +76,7 @@ AI tools consistently produce the same testing mistakes. **Before returning any 
 - [ ] No `sleep()` or fixed delays for async waits - use polling, retries, or event-based waits
 - [ ] Coverage threshold is realistic (80% line coverage is a good default; 100% is a lie)
 - [ ] Snapshot tests have been reviewed manually before committing (blind `--update` is a bug factory)
-- [ ] E2E selectors use `data-testid`, `role`, or accessible names - not CSS classes or DOM structure
+- [ ] E2E selectors use role or accessible name first, `data-testid` as a last resort - not CSS classes or DOM structure
 - [ ] **Runner APIs current**: pytest, Vitest, Jest, Playwright, and Testing Library examples match current runner behavior
 - [ ] **Flake source identified**: retries are not used to hide nondeterminism without diagnosis
 - [ ] Cross-cutting agent hygiene applied - see `references/agent-hygiene.md`
@@ -146,6 +148,7 @@ Follow the language-specific patterns below. Universal principles:
   full suite when required or when the affected surface warrants it; do not add tests that
   mirror reversible, low-impact edits. Repeat or broaden passing checks only for new changes,
   failures, or unresolved concerns.
+- If a new test fails for a reason other than the behavior under test, fix the test or fixture and return to Step 3
 - Check coverage delta: new code should be covered, but don't chase vanity numbers
 - Run in CI if possible - tests that pass locally but fail in CI are the worst kind
 
@@ -370,6 +373,4 @@ See `references/output-contract.md` for the full contract.
 3. **Isolate test state.** Each test creates its own data, runs independently, and cleans up after itself. Shared mutable state between tests is the #1 cause of order-dependent failures.
 4. **Fix or quarantine flaky tests immediately.** A test suite people ignore is worse than no test suite. Track flaky tests, fix root causes, don't just retry.
 5. **Don't test the framework.** Testing that React renders a div, or that Express routes to a handler, is testing someone else's code. Test YOUR logic.
-6. **Run the AI self-check.** Every generated test gets verified against the checklist before returning. AI-generated tests love to test implementation details, use `sleep()`, and share state.
-7. **Match the existing framework.** Don't introduce Vitest into a Jest project or pytest into a unittest project without the user explicitly asking for a migration.
-8. **Snapshot tests require manual review.** Never auto-update snapshots (`-u` / `--update`) without reviewing the diff. Blind snapshot updates are equivalent to deleting the test.
+6. **Snapshot tests require manual review.** Never auto-update snapshots (`-u` / `--update`) without reviewing the diff. Blind snapshot updates are equivalent to deleting the test.

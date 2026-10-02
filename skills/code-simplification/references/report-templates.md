@@ -4,6 +4,11 @@ Deliverable body templates for Workflow Step 7. Field semantics (behavior invari
 evidence, action labels, `Risk`) are defined in `SKILL.md` Steps 5-6. Format the final wrapper
 according to `references/output-contract.md`.
 
+## Contents
+
+- Audit with findings
+- Zero findings
+
 ## Audit with findings
 
 ```markdown
@@ -73,12 +78,12 @@ Fix applied: not applicable; retain current behavior.
 - Low-value or risky opportunities: 1
 - Merge blockers: none from this audit lens
 - Residual risk / skipped areas: [large dirs, generated files, expensive checks, external services]
-- Net recommendation: [slim / defer / leave mostly unchanged], based on risk-adjusted maintenance value, not LOC delta
+- Net recommendation: [reduce / defer / leave mostly unchanged], based on risk-adjusted maintenance value, not LOC delta
 ```
 
 ## Zero findings
 
-If no useful slimming opportunities are found, say so explicitly:
+If no useful reduction opportunities are found, say so explicitly:
 
 ```markdown
 ## P2 - Nice to fix

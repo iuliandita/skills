@@ -2,6 +2,14 @@
 
 Patterns for browser-based testing with Playwright (primary) and Cypress (secondary). Covers E2E test architecture, accessibility automation with axe-core, visual regression via screenshot comparison, and CI integration.
 
+## Contents
+
+- Playwright E2E Patterns
+- Cypress (secondary)
+- Accessibility Testing
+- Visual Regression Testing
+- CI Integration for Browser Tests
+
 ---
 
 ## Playwright E2E Patterns
@@ -11,10 +19,8 @@ Playwright is the default E2E tool. Supports Chromium, Firefox, and WebKit. Test
 ### Project setup
 
 ```bash
-# Install
+# Install (use `bun create playwright` instead if the project uses bun)
 npm init playwright@latest
-# or
-bun create playwright
 
 # Run tests
 npx playwright test

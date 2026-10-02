@@ -2,6 +2,17 @@
 
 Deep-dive reference for cluster design, GitOps strategy, security architecture, and operational patterns. Updated for K8s 1.35-1.37 and Helm 4.
 
+## Contents
+
+- Cluster Topology Decision Matrix
+- GitOps Strategy
+- Networking
+- Security Architecture
+- Observability Stack
+- Cost Optimization Playbook
+- Disaster Recovery
+- Platform Requirements (K8s 1.35+)
+
 ---
 
 ## Cluster Topology Decision Matrix
@@ -98,7 +109,7 @@ spec:
   destination:
     server: https://kubernetes.default.svc
   syncPolicy:
-    automated:          # non-prod only - Critical Rule #5: no auto-sync to prod
+    automated:          # non-prod only - Rule 6: no auto-sync to prod
       prune: true
       selfHeal: true
 ```
@@ -109,7 +120,7 @@ spec:
 - Multi-source Applications (mature since ArgoCD 2.6) for separating chart version from env values.
 - `ignoreMissingValueFiles: true` for default/override patterns with ApplicationSets.
 - OCI charts: omit `oci://` prefix in ArgoCD's `repoURL`.
-- Wildcard valueFiles (documented in current Argo CD docs as of September 2026 recheck): `valueFiles: ["values/*.yaml"]`.
+- Wildcard valueFiles (documented in current Argo CD docs as of October 2026 recheck): `valueFiles: ["values/*.yaml"]`.
 - **Anti-pattern**: `randAlphaNum` or other random functions in Helm templates - causes perpetual OutOfSync.
 
 ### Promotion Strategy
@@ -169,7 +180,7 @@ Add only when needed - complexity cost is real.
 
 | Mesh | Architecture | Status |
 |------|-------------|--------|
-| **Istio ambient** (v1.24+ GA) | ztunnel (node-level L4 mTLS) + optional waypoint proxies (L7) | Sidecarless mTLS with near-zero overhead. The "sidecars are too expensive" argument is dead. |
+| **Istio ambient** (v1.24+ GA) | ztunnel (node-level L4 mTLS) + optional waypoint proxies (L7) | Sidecarless mTLS with near-zero overhead. |
 | **Cilium** | eBPF, no sidecar, no ztunnel | mTLS via WireGuard/IPsec. Simpler but less L7 control. |
 | **Linkerd** | Rust micro-proxy sidecars | CNCF Graduated. Stable builds now vendor-only (Buoyant, Feb 2024). Source Apache 2.0 but you build or pay. Adoption cooling. |
 
@@ -185,7 +196,7 @@ Add only when needed - complexity cost is real.
 
 3. **OPA Gatekeeper** (v3.22+, OPA is CNCF Graduated) - Rego-based, cross-platform. Best when you need the same policy engine across K8s and non-K8s systems.
 
-4. **Cedar** (AWS OSS) - unifies RBAC authorization + admission. Rust rewrite in progress. Not production-ready for K8s yet. Watch this space.
+4. **Cedar** (AWS OSS) - unifies RBAC authorization + admission. Rust rewrite in progress. Not production-ready for K8s yet.
 
 ### Runtime Security
 
@@ -340,7 +351,7 @@ Unsafe for:
 
 ### DRA (Dynamic Resource Allocation) - GA in K8s 1.34
 
-New API for claiming specialized hardware (GPUs, FPGAs, network devices). Replaces the old device plugin model. 20-35% GPU cost reduction through flexible allocation. Use `ResourceClaim`, `ResourceClaimTemplate`, `DeviceClass` resources.
+New API for claiming specialized hardware (GPUs, FPGAs, network devices). Replaces the old device plugin model. Use `ResourceClaim`, `ResourceClaimTemplate`, `DeviceClass` resources.
 
 ---
 

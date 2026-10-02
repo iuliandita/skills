@@ -6,6 +6,17 @@ Use these during Step 3 of the i18n workflow.
 These patterns catch the most common sources of missed strings. Run them against `src/` (or
 your project's source directory). Adapt file extensions to your project.
 
+## Contents
+
+- Universal Patterns (any framework)
+- React / JSX Patterns
+- Vue Template Patterns
+- Svelte Template Patterns
+- Angular Template Patterns
+- Vanilla JS / TS Patterns
+- False Positives to Skip
+- Post-Audit Verification
+
 ---
 
 ## Universal Patterns (any framework)

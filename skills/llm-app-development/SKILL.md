@@ -17,7 +17,7 @@ Build, review, and architect applications that use AI models - from single-API c
 multi-agent systems with RAG pipelines. The goal is production-grade AI apps that are reliable,
 cost-effective, and don't hallucinate their way into an incident.
 
-**Target versions**: September 2026 snapshot. Read `references/target-versions.md` before
+**Target versions**: October 2026 snapshot. Read `references/target-versions.md` before
 pinning model IDs (Claude/OpenAI/DeepSeek families), SDKs, runtimes, vector stores, or evaluation tools.
 Unfamiliar model names or versions are not evidence of fabrication: verify them against primary
 provider docs, installed binaries (`--version`/`--help`), and package sources before rejecting them.
@@ -82,7 +82,6 @@ AI tools consistently produce the same mistakes when generating AI application c
 
 ## Best Practices
 
-- Prefer raw provider SDKs until orchestration complexity justifies LangGraph, LlamaIndex, or LangChain.
 - Keep model, tool, retrieval, and safety decisions configurable per environment; avoid hardcoding preview model names in application logic.
 - Treat model output as untrusted input: validate structure, refusal states, tool arguments, and downstream side effects.
 
@@ -113,9 +112,6 @@ Pick the lightest tool that solves the problem:
 4. **LangGraph / OpenAI Agents SDK** - stateful agent frameworks. Use when you need cycles,
    persistence, human-in-the-loop, or multi-agent coordination.
 
-**The anti-pattern**: importing LangChain to make a single API call. That's like importing
-Django to serve a static HTML file.
-
 ### Step 3: Implement
 
 Follow the domain-specific sections below. Read the appropriate reference file for detailed
@@ -130,7 +126,8 @@ Start with the project's existing evals and representative success, failure, and
 cases for the changed behavior. Prefer deterministic assertions where they prove the contract;
 add paid judge or cost checks only when they answer a material question. Preserve required CI
 gates, track regressions, and expand the dataset when failures expose missing coverage. A small
-prompt fix does not require a new framework or an arbitrary minimum case count.
+prompt fix does not require a new framework or an arbitrary minimum case count. If a case
+fails, fix the cause and return to Step 3; repeat until the required cases pass.
 
 Read `references/evaluation.md` for promptfoo setup, assertion types, CI integration (GitHub
 Actions example), RAG-specific evals, agent evals, and red teaming patterns.
@@ -444,7 +441,7 @@ PII detection setup, and content policy implementation.
 - `references/fine-tuning.md` - data prep, PEFT/LoRA, training evaluation, full vs parameter-efficient methods
 - `references/local-inference.md` - quantization, model selection, GPU memory, production serving config
 - `references/safety.md` - prompt injection defense, output validation, PII handling, content filtering, audit logging
-- `references/target-versions.md` - September 2026 snapshot: Claude/OpenAI/DeepSeek model families, AI SDKs, runtimes, vector stores, and eval tools
+- `references/target-versions.md` - October 2026 snapshot: Claude/OpenAI/DeepSeek model families, AI SDKs, runtimes, vector stores, and eval tools
 
 ## Output Contract
 

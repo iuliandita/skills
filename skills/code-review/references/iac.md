@@ -2,6 +2,15 @@
 
 Bug patterns specific to Terraform, Ansible, Helm, and Kubernetes manifests. Focused on correctness - not style (see code-simplification) or security (see security-audit).
 
+## Contents
+
+- Terraform
+- Ansible
+- Helm
+- Kubernetes Manifests
+- ArgoCD / GitOps
+- Docker / Containerfiles
+
 ---
 
 ## Terraform

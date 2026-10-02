@@ -32,7 +32,7 @@ disposable dev shells, fleet-wide configuration without a separate config-manage
 and a single language for a workstation, a server, a container image, a NixOS VM, and a
 macOS laptop via nix-darwin.
 
-**Versions worth pinning** (September 2026; verification exceptions marked below):
+**Versions worth pinning** (October 2026):
 
 Pin versions only when they shape compatibility or troubleshooting. For ordinary package
 work, trust the live channel or flake lock over a stale table.
@@ -41,11 +41,11 @@ work, trust the live channel or flake lock over a stale table.
 |-----------|-----------------|----------------|
 | NixOS stable | 26.05 "Yarara" (May 2026) | current stable, released 2026-05-30, maintained until 2026-12-31 |
 | NixOS previous stable | 25.11 "Xantusia" (Nov 2025) | EOL 2026-06-30; upgrade off it now |
-| NixOS upcoming | 26.11 (schedule unverified) | Verify the release calendar; do not target an unreleased version for production |
-| Nix (CLI / daemon) | 2.34.9 | stable upstream; verify the packaged distro lane before upgrading |
-| `nixos-rebuild-ng` | verify installed implementation | Python rewrite; default status for the selected release was not verified |
+| NixOS upcoming | 26.11 "Zokor" (planned 2026-11-23) | Branch-off 2026-11-16 per the release schedule (NixOS/nixpkgs#567567); do not target an unreleased version for production |
+| Nix (CLI / daemon) | 2.35.2 | stable upstream; verify the packaged distro lane before upgrading |
+| `nixos-rebuild-ng` | only implementation in 26.05 | Python rewrite; default since 25.11, Bash implementation and `system.rebuild.enableNg` removed in 26.05 |
 | home-manager | release-26.05 (May 2026) | matches NixOS 26.05; unstable tracks nixos-unstable |
-| nix-darwin | verify supported nixpkgs branch | Exact branch support was not verified; check the selected nix-darwin release |
+| nix-darwin | nix-darwin-26.05 | release branch matching nixpkgs 26.05; `master` tracks nixpkgs-unstable |
 | Determinate Nix | downstream, flakes-on by default | validated distribution; parallel eval, lazy trees |
 | Lix | fork of Nix | compatibility-focused fork; Meson build, improved errors |
 | Kernel default for 26.05 | Linux 6.18 LTS | 26.05 defaults to Linux 6.18 LTS and removed `linux_hardened` (source: https://nixos.org/blog/announcements/2026/nixos-2605/); consistent with `references/hardware-desktop-and-kernel.md` |
@@ -297,11 +297,10 @@ and, for opaque errors, `--print-build-logs`:
 nixos-rebuild switch --flake .#host --show-trace --print-build-logs 2>&1 | tail -200
 ```
 
-When a problem looks "flake-only," compare one clean baseline:
-
-- delete `flake.lock` and re-lock, or
-- roll one input back to its previous rev via `nix flake lock --override-input`, or
-- build the same output on another machine with the same `flake.lock` to isolate hardware vs config.
+When a problem looks "flake-only," default to rolling the suspect input back to its previous rev
+with `nix flake lock --override-input`. To isolate hardware from config, build the same output on
+another machine with the same `flake.lock`. Re-lock from scratch only as a last resort, after
+committing the current `flake.lock`.
 
 ---
 

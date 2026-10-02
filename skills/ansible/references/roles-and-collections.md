@@ -2,6 +2,15 @@
 
 Detailed patterns for role development, collection packaging, Galaxy usage, and testing with Molecule.
 
+## Contents
+
+- Role Anatomy
+- Collection Structure
+- requirements.yml
+- Molecule Testing
+- Galaxy Best Practices
+- Import vs Include
+
 ---
 
 ## Role Anatomy
@@ -508,7 +517,7 @@ Replace each `<reviewed-digest>` with the approved image digest before running t
 ```bash
 # Full test cycle (recommended for CI)
 molecule test
-# Sequence: dependency -> lint -> cleanup -> destroy -> syntax -> create ->
+# Sequence: dependency -> cleanup -> destroy -> syntax -> create ->
 #           prepare -> converge -> idempotence -> side_effect -> verify ->
 #           cleanup -> destroy
 

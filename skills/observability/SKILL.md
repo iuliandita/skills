@@ -39,7 +39,6 @@ in that file). Do not restate version numbers here.
 
 - Profiling and optimizing an identified application bottleneck - use **performance-debugging**.
 - Broker acknowledgement, redelivery, dead-letter, or replay semantics - use **message-queues**.
-
 - Checking whether a live cluster is healthy right now (point-in-time, read-only diagnostics) -
   use **kubernetes-health**
 - Writing or reviewing Kubernetes manifests, Helm charts, or the Prometheus Operator CRDs as
@@ -94,7 +93,7 @@ questions - do not instrument everything because you can.
 |---|---|
 | Metrics | Prometheus scrape, or OTLP metrics through the OTel Collector to a Prometheus-compatible store |
 | Traces | OpenTelemetry SDK -> OTLP -> Collector -> Tempo (or vendor backend) |
-| Logs | Structured JSON -> agent (Alloy/OTel) -> Loki |
+| Logs | Structured JSON -> OTel Collector -> Loki (Alloy where a Grafana agent is already deployed) |
 | Unified pipeline | OpenTelemetry Collector as the single ingest/route/transform layer |
 
 Prefer OTLP and the OTel Collector as the vendor-neutral seam: instrument once, re-route backends
@@ -121,23 +120,21 @@ dashboard JSON. Limit output to the requested signals and the detected stack.
   already counts.
 - **Alerts and SLOs**: write symptom-based alert rules, define SLOs with explicit windows, back
   them with multi-window multi-burn-rate alerts, route by severity in Alertmanager.
-- **Dashboards**: keep them as code (provisioned JSON or grafonnet) so they are reviewable and
-  reproducible, not click-built.
+- **Dashboards**: keep them as code (provisioned JSON by default; grafonnet when generating many
+  similar dashboards) so they are reviewable and reproducible, not click-built.
 
 ### Step 4: Validate
 
+Run the matching validator for every artifact produced. On failure, fix the artifact and rerun
+until it passes:
+
 - `promtool check config` / `promtool check rules` for Prometheus config and rules
-- `promtool test rules` for unit tests on alerting/recording rules against sample series
+- `promtool test rules` for rule-test fixtures against sample series
 - `otelcol validate --config` for Collector pipelines
 - `amtool config routes test` / `amtool check-config` for Alertmanager routing
+- A JSON parser plus the target provisioning/import check (when available) for dashboard JSON
 - Confirm a test signal traverses the full path (emit -> collect -> store -> query -> alert) on at
   least one service before declaring coverage
-- Start with `references/runnable-examples.md` when a task needs compact Collector, SLO-rule,
-  rule-test, or dashboard artifacts that can be passed to the validators above.
-- Run the matching validator for every artifact produced. Validate Collector configuration with
-  `otelcol validate --config`, Prometheus rules with `promtool check rules`, rule-test fixtures with
-  `promtool test rules`, and dashboard JSON with a JSON parser plus the target provisioning/import
-  check when that backend is available.
 - Report the validator results: name each command you ran and its outcome, and list any check
   skipped because the tool or backend was unavailable. Never present an unrun check as passing.
 

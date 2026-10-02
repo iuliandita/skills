@@ -4,6 +4,14 @@ NixOS can own the disk layout, the persistence model, and the install process
 declaratively. This reference covers disko (declarative partitioning), impermanence
 (root-on-tmpfs), nixos-anywhere (remote install over SSH), and image generators.
 
+## Contents
+
+- disko
+- Impermanence
+- nixos-anywhere
+- Image generators
+- Common mistakes
+
 ## disko
 
 [disko](https://github.com/nix-community/disko) describes disks as a Nix expression and

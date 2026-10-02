@@ -16,6 +16,15 @@ and whether you want CI baked into Gitea or run as a separate service.
 Do not run both Gitea Actions and Woodpecker for the same repo; pick one. Running both
 means two sets of webhooks, two runners, double the secret surface.
 
+## Contents
+
+- Gitea Actions
+- Forgejo Actions troubleshooting
+- Woodpecker CI
+- Choosing between Gitea Actions and Woodpecker
+- Drone (legacy)
+- Cross-references
+
 ---
 
 ## Gitea Actions
@@ -48,9 +57,9 @@ curl -s https://gitea.example.com/api/v1/repos/actions/checkout/git/refs/tags/v4
 - **Action marketplace compatibility** - most GitHub actions work (`actions/checkout`,
   `actions/setup-node`, `docker/*`). Marketplace actions that use GitHub-specific API
   calls silently fail.
-- **Runner labels** - no `ubuntu-latest`. Use the labels registered with the runner (`forgejo-runner` or `gitea-runner`)
-  (commonly `ubuntu-latest` mapped to a specific image in the runner config, or custom
-  labels like `docker`).
+- **Runner labels** - `runs-on` matches labels registered with the runner (`forgejo-runner`
+  or `gitea-runner`). `ubuntu-latest` works only if the runner config maps it to an image;
+  custom labels like `docker` are common.
 
 ## Forgejo Actions troubleshooting
 
@@ -235,8 +244,7 @@ steps:
 ## Drone (legacy)
 
 Drone was the original Gitea CI pairing. Harness acquired it in 2021 and effectively stopped
-maintaining the OSS edition. Existing deployments work; do not start new Drone installs in
-2026. Woodpecker is a community fork that kept the project alive and diverged significantly;
+maintaining the OSS edition. Existing deployments work; do not start new Drone installs. Woodpecker is a community fork that kept the project alive and diverged significantly;
 the YAML is related but not drop-in compatible.
 
 ---

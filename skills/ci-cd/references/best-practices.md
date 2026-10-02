@@ -4,20 +4,23 @@ Opinionated patterns for building CI/CD pipelines that stay useful over time. Fo
 **integration decisions** - what to run, where, when, and how strictly - not on tool
 tutorials. Tools change; the patterns don't.
 
-Scope: dependency updates, linting, scanning, review gates, and rollout. For tool-specific
-usage, see:
+Scope: dependency updates, linting, scanning, review gates, and rollout. Tool-specific
+references are listed under Cross-references.
 
-- SHA pinning, SBOM, cosign: `supply-chain.md`
-- Platform-specific syntax: `github-actions.md`, `gitlab-ci.md`, `forgejo-gitea-actions.md`
-- Self-hosted runners: `runners.md`
-- Code-level security findings and OWASP-style audits: the **security-audit** skill
-- PR review mechanics: the **code-review** skill
+## Contents
+
+- 1. Dependency Update Strategy
+- 2. Linting: Pre-commit -> CI -> Blocking
+- 3. Scanning: What, When, Where
+- 4. Review Gates and Policy-as-Code
+- 5. Rollout Order
+- Cross-references
 
 ---
 
 ## 1. Dependency Update Strategy
 
-Automated dependency updates are not optional in 2026. The question is only which bot,
+Automated dependency updates are not optional. The question is only which bot,
 what frequency, and what auto-merges.
 
 ### Dependabot vs Renovate
@@ -118,8 +121,8 @@ different job:
 
 ### Layer 1: Pre-commit (local, optional but recommended)
 
-Catch the obvious stuff before the commit ever happens. Use `prek` (Rust, 10x faster) or
-`pre-commit` (Python, bigger ecosystem). Shared config at `.pre-commit-config.yaml`:
+Catch the obvious stuff before the commit ever happens. Use `pre-commit`; `prek` is a faster
+drop-in that reads the same `.pre-commit-config.yaml`:
 
 ```yaml
 repos:
@@ -200,7 +203,7 @@ pipeline stages for different reasons.
 
 ### Scanning matrix
 
-| Scanner type | Tool (2026 default) | Pre-commit | On PR | On merge to main | Pre-release | Continuous |
+| Scanner type | Default tool (alternative) | Pre-commit | On PR | On merge to main | Pre-release | Continuous |
 |--------------|--------------------|-----------:|:-----:|:----------------:|:-----------:|:----------:|
 | Secret scanning | `gitleaks` (or `trufflehog`) | Yes | Yes | Yes | - | Yes (push-protection) |
 | SCA (library CVEs) | Trivy `fs` or Grype | - | Yes | Yes | Yes | Yes (cron) |
@@ -223,7 +226,8 @@ nightly cron or pre-release job; they take minutes and block nothing useful on a
 
 ### Container scanning: Trivy vs Grype
 
-Both are good. Pick one per pipeline and stick with it.
+Default to Trivy; choose Grype when severity gates need EPSS/KEV risk scoring. Use one per
+pipeline.
 
 - **Trivy** - one binary, scans images + filesystems + IaC + secrets + licenses. Good
   default for teams who want fewer tools. After the 2026 TeamPCP incident, pin to a

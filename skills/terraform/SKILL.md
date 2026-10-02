@@ -81,8 +81,12 @@ before introducing a new pattern.
 
 ### 3. Build and validate without applying
 
-Run the relevant checks from the affected stack. A passing syntax check is not a safe infrastructure
-change: inspect planned creates, changes, replacements, imports, and destroys with the owner.
+Run the relevant checks in order from the affected stack (use `tofu` for an OpenTofu stack). If `fmt`
+or `validate` fails, or `tflint`/`checkov` reports a finding the change introduced, fix it and
+rerun from `fmt`; plan only after `validate` passes. Report pre-existing `tflint`/`checkov`
+findings instead of blocking `plan` on them. A passing syntax check is
+not a safe infrastructure change: inspect planned creates, changes, replacements, imports, and
+destroys with the owner.
 
 ```bash
 terraform fmt -check -recursive

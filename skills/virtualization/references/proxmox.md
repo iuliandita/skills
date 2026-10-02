@@ -190,7 +190,7 @@ support - attach a cloud-init drive and configure via API/CLI.
 
 ```bash
 # 1. Download a cloud image
-wget https://cloud.debian.org/images/cloud/trixie/daily/latest/debian-13-generic-amd64.qcow2
+wget https://cloud.debian.org/images/cloud/trixie/latest/debian-13-generic-amd64.qcow2
 
 # 2. Create a VM from the cloud image
 qm create 9000 --name debian-13-template --memory 2048 --cores 2 \

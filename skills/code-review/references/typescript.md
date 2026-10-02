@@ -2,6 +2,15 @@
 
 Bug patterns specific to TypeScript and JavaScript. These focus on correctness - not style (see code-simplification) or security (see security-audit).
 
+## Contents
+
+- Promise & Async Pitfalls
+- Type System Gaps
+- Closure & Scope Traps
+- React-Specific Bugs
+- Node.js-Specific Bugs
+- Common JavaScript Gotchas
+
 ---
 
 ## Promise & Async Pitfalls

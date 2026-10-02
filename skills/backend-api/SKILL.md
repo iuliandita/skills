@@ -16,18 +16,19 @@ metadata:
 Design and review HTTP APIs that stay coherent as they grow. Focus on contracts, auth
 boundaries, error models, and framework structure for Python and Node.js services.
 
-**Target versions** (September 2026):
-- FastAPI **0.141.1**
+**Target versions** (October 2026):
+- FastAPI **0.142.2**
 - Express **5.2.1** (published 2025-12-01)
-- NestJS **12.0.1** (major release; check migration notes before upgrading)
-- OpenAPI Specification **3.2.0** (published 2025-09-19)
+- NestJS **12.1.2** (major release; check migration notes before upgrading; 12.0.2+ fixes high-severity [microservice](https://github.com/nestjs/nest/security/advisories/GHSA-m8vh-jmq9-5rjg) and [Fastify middleware-bypass](https://github.com/nestjs/nest/security/advisories/GHSA-9c5c-9qcx-q35q) advisories)
+- OpenAPI Specification **3.2.1** (published 2026-09-10)
 - HTTP Semantics: **RFC 9110** (June 2022)
 - Problem Details for HTTP APIs: **RFC 9457** (July 2023)
 - OAuth 2.0 Security Best Current Practice: **RFC 9700** (January 2025)
 
-Security check (2026-09-10): Express/NestJS upload stacks using Multer <2.3.0 are affected by
+Security check (2026-10-02): Express/NestJS upload stacks using Multer <2.3.0 are affected by
 high-severity multipart denial of service, [CVE-2026-82333](https://github.com/expressjs/multer/security/advisories/GHSA-535w-7cp7-47q4).
-Upgrade Multer to 2.3.0+ and bound `limits.fieldArrayIndexLimit` to application needs; checking
+Upgrade Multer to 2.4.0+ (2.4.0 also fixes medium-severity aborted-upload disk exhaustion,
+[CVE-2026-88932](https://github.com/expressjs/multer/security/advisories/GHSA-3pph-fpjx-jg34)) and bound `limits.fieldArrayIndexLimit` to application needs; checking
 only the top-level framework version misses vulnerable middleware.
 
 This skill works across these concerns:
@@ -133,11 +134,6 @@ Pick the framework that matches the codebase and team constraints. Do not switch
 | **Express** | Thin Node.js services, custom middleware stacks, existing mature codebases | No built-in structure, validation scattered across middleware, inconsistent error handling |
 | **NestJS** | Larger TypeScript services that benefit from modules, guards, pipes, interceptors, and DI | Over-abstraction, decorator-heavy indirection, hiding simple flows behind too many layers |
 
-Framework rules:
-- **FastAPI** - keep dependencies explicit, use response models, and centralize exception handling
-- **Express** - keep routing, validation, auth, and business logic separated; add one error middleware path
-- **NestJS** - keep controllers thin, move auth into guards, validation into pipes, and cross-cutting behavior into interceptors or filters
-
 ### Step 3: Design the contract first
 
 Define the API contract before writing handlers:
@@ -215,7 +211,8 @@ Convert the contract into framework code without letting the framework dictate t
 
 ### Step 6: Validate behavior and docs
 
-Before returning the result:
+Before returning the result, run these checks. On a failure, fix it and return to Step 3 for a
+contract defect or Step 5 for an implementation defect, then recheck:
 - Compare OpenAPI docs against the real routes
 - Verify auth requirements per endpoint
 - Check all non-2xx responses, not just the happy path
@@ -238,7 +235,7 @@ Before returning the result:
 
 ### OpenAPI authoring
 
-- OpenAPI `3.2.0` is the current spec, but much of the framework and Swagger ecosystem still centers on `3.1.x`
+- OpenAPI `3.2.1` is the current spec, but much of the framework and Swagger ecosystem still centers on `3.1.x`
 - Default to authoring for `3.1` compatibility unless the actual toolchain in the project proves `3.2` support end-to-end
 - Do not advertise `3.2` features in generated specs just because the top-level standard moved
 

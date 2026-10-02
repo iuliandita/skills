@@ -8,6 +8,17 @@ Linux gaming on Arch is mostly about stack alignment, not magic tweaks. The hard
 - Wayland, Xwayland, and Gamescope interaction
 - knowing when CachyOS is helping and when it is just adding another variable
 
+## Contents
+
+- First checks
+- Vendor routing
+- Hybrid graphics on laptops
+- Steam and Proton
+- Gamescope, MangoHud, GameMode
+- Why CachyOS gets gaming attention
+- Things users often forget
+- What NOT to do
+
 ## First checks
 
 Start here before touching launch options:

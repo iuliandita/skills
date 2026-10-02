@@ -253,12 +253,16 @@ technique library covering:
 
 Once you've escalated, pivot to other systems.
 
+**Stop before any pivot whose destination is outside the authorized scope.** Confirm the
+destination host, network, or account is named in the engagement scope or rules of
+engagement. If it is not, do not connect; report the reachable path instead.
+
 Read `references/shells-and-pivoting.md` for:
 
 1. **Reverse shells** - bash, python, perl, netcat, php, ruby, powershell
 2. **SSH tunneling** - local forwarding (-L), remote forwarding (-R), dynamic SOCKS (-D), ProxyJump chains
 3. **SSH agent hijacking** - stealing SSH_AUTH_SOCK from other users for key reuse
-4. **Port forwarding** - chisel, ligolo-ng, socat, SSH as SOCKS proxy
+4. **Port forwarding** - use SSH tunneling (item 2) by default when the pivot runs sshd; for hosts without SSH, use chisel for an HTTP/SOCKS tunnel or ligolo-ng for a routed TUN interface
 5. **Internal network scanning** - quick TCP sweep without nmap
 6. **File transfer** - curl, wget, nc, python http.server, base64 encoding
 
@@ -359,12 +363,12 @@ See `references/output-contract.md` for the full contract.
 ## Related Skills
 
 - **security-audit** - defensive counterpart. Finds vulnerabilities through SAST, dependency scanning, and config review. This skill exploits them. Use security-audit for hardening; use privilege-escalation for proving exploitability.
-- **networking** - configures and troubleshoots VPNs, DNS, proxies, firewalls. Lockpick's VPN section extracts credentials and keys from existing configs for lateral movement. Use networking for setup; use privilege-escalation for exploitation.
-- **kubernetes** - writes and reviews k8s manifests and Helm charts. Lockpick's k8s section attacks the cluster from inside a compromised pod. Use kubernetes for building; use privilege-escalation for breaking.
-- **docker** - Dockerfile and Compose authoring. Lockpick's container section escapes from running containers. Use docker for building images; use privilege-escalation for escaping them.
-- **opnsense-pfsense** - OPNsense/pfSense firewall management. Lockpick doesn't cover network-level firewall testing.
-- **ansible** - playbook and role authoring. Lockpick's IaC section targets Ansible vault cracking and credential extraction, not playbook writing.
-- **terraform** - IaC authoring. Lockpick's IaC section targets state file secret extraction, not Terraform module design.
+- **networking** - configures and troubleshoots VPNs, DNS, proxies, firewalls. This skill's VPN section extracts credentials and keys from existing configs for lateral movement. Use networking for setup; use privilege-escalation for exploitation.
+- **kubernetes** - writes and reviews k8s manifests and Helm charts. This skill's k8s section attacks the cluster from inside a compromised pod. Use kubernetes for building; use privilege-escalation for breaking.
+- **docker** - Dockerfile and Compose authoring. This skill's container section escapes from running containers. Use docker for building images; use privilege-escalation for escaping them.
+- **opnsense-pfsense** - OPNsense/pfSense firewall management. This skill does not cover network-level firewall testing.
+- **ansible** - playbook and role authoring. This skill's IaC section targets Ansible vault cracking and credential extraction, not playbook writing.
+- **terraform** - IaC authoring. This skill's IaC section targets state file secret extraction, not Terraform module design.
 
 ---
 

@@ -6,6 +6,15 @@ downstream - resolve the top groups before the lower ones) and Phase 2 adversari
 These are prompts for *your* questioning, not a script to read aloud. Skip what the plan already
 answers, explore the codebase for anything checkable, and always offer a recommended answer.
 
+## Contents
+
+- Code / design
+- Infra change
+- Fiction draft
+- Decision / strategy
+- Generic
+- Adding a domain lens
+
 ---
 
 ## Code / design

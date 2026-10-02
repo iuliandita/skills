@@ -7,6 +7,21 @@ conventions. Aim for 44 x 44 CSS px touch targets. Prefer Pointer Events for cus
 and a combined gesture library binding when coordination is needed. Examples below are
 independent patterns; adapt their layout and controls to the actual task.
 
+## Contents
+
+- The 44 px rule
+- Mobile-first markup
+- Pointer Events: the modern foundation
+- Swipe carousels: scroll-snap, no JS
+- `@use-gesture/react` for rich gestures
+- Long-press
+- Pull-to-refresh
+- Hover replacement on touch
+- Forms on mobile
+- Mobile-specific layout patterns
+- Performance on mobile
+- Mobile review priorities
+
 ---
 
 ## The 44 px rule

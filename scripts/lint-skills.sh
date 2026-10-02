@@ -123,7 +123,7 @@ check_length() {
   local file="$1" name="$2"
   local lines
   lines=$(wc -l < "$file")
-  local warn_msg="$name: SKILL.md is $lines lines (target <500, extract to references/ if possible)"
+  local warn_msg="$name: SKILL.md is $lines lines (near the 500 hard max; extract to references/)"
   skill_length_check "$file" "$name" error warn "$warn_msg"
 }
 
@@ -167,6 +167,30 @@ check_references() {
       done
     done < <(awk '/^```/{skip=!skip; next} !skip{print NR "\t" $0}' "$source")
   done
+}
+
+# ── Reference depth and contents lists ─────────────────────────────────
+# Agents may read a reference reached through another reference only partially,
+# so every reference file must be named directly in SKILL.md (one level deep).
+check_reference_depth() {
+  local file="$1" name="$2" dir="$3" ref_file base
+  for ref_file in "$dir"/references/*.md; do
+    [[ -f "$ref_file" ]] || continue
+    base="$(basename "$ref_file")"
+    if ! grep -qF "$base" "$file"; then
+      error "$name: references/$base is not linked from SKILL.md (keep references one level deep)"
+    fi
+  done
+}
+
+# Long references need a contents list near the top so a partial read still sees
+# their full scope. scripts/gen-ref-toc.py owns the generated lists.
+check_reference_toc() {
+  local name="$1" dir="$2" line
+  [[ -d "$dir/references" ]] || return 0
+  while IFS= read -r line; do
+    [[ -n "$line" ]] && error "$name: ${line#"$dir"/}"
+  done < <(python3 "$SCRIPT_DIR/gen-ref-toc.py" --check "${dir%/}" || true)
 }
 
 # ── Banned word check (warning only) ──────────────────────────────────
@@ -451,6 +475,8 @@ for skill_dir in "$SKILLS_DIR"/*/; do
   check_ascii "$skill_file" "$name"
   check_length "$skill_file" "$name"
   check_references "$skill_file" "$name" "$skill_dir"
+  check_reference_depth "$skill_file" "$name" "$skill_dir"
+  check_reference_toc "$name" "$skill_dir"
   check_private_refs "$skill_dir" "$name"
   check_ai_self_check "$skill_file" "$name"
   check_generic_self_check_ratio "$skill_file" "$name"

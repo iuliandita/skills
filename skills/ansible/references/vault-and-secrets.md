@@ -2,6 +2,14 @@
 
 Patterns for Ansible Vault, HashiCorp Vault integration, and secrets management in CI/CD.
 
+## Contents
+
+- Ansible Vault
+- HashiCorp Vault Integration
+- CI/CD Secrets Patterns
+- Secret Rotation
+- Anti-Patterns
+
 ---
 
 ## Ansible Vault

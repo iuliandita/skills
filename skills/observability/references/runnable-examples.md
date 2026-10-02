@@ -3,6 +3,12 @@
 Use these compact artifacts as starting points. Replace service names and endpoints, then run the
 named parser before returning them.
 
+## Contents
+
+- OpenTelemetry Collector
+- Prometheus SLO rules and tests
+- Grafana dashboard JSON
+
 ## OpenTelemetry Collector
 
 ```yaml

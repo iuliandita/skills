@@ -1,5 +1,16 @@
 # DNS Configuration and Troubleshooting
 
+## Contents
+
+- DNS Server Comparison
+- Unbound Configuration
+- Split-Horizon DNS
+- DNSSEC
+- DNS-over-HTTPS (DoH) and DNS-over-TLS (DoT)
+- DNS Troubleshooting
+- DNS in Kubernetes
+- Common DNS Attacks (defensive awareness)
+
 ## DNS Server Comparison
 
 | Server | Role | Best for | Config style |
@@ -163,6 +174,9 @@ supports them.
 | DoQ | 853/UDP | QUIC | No | Emerging, limited support |
 
 ### Hosting your own DoH/DoT endpoint
+
+Default to Unbound for DoT (the recommended resolver above) and CoreDNS for DoH; use AdGuard Home
+when the LAN already runs it.
 
 **Option 1**: CoreDNS native DoH listener
 

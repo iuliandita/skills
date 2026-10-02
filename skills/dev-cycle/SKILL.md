@@ -3,7 +3,7 @@ name: dev-cycle
 description: >
   Run a requested full development workflow: branch, implement, check, review, PR, merge, and release.
 license: MIT
-compatibility: "Requires git. Optional forge CLIs by host: gh (GitHub), glab (GitLab), fj (Forgejo), tea (Gitea). Bitbucket uses web UI or REST API. Bare git (no remote) works via format-patch/bundle. Delegates to git, testing, code-review, update-docs, and a brainstorming skill if installed."
+compatibility: "Requires git. Optional forge CLIs by host: gh (GitHub), glab (GitLab), fj (Forgejo), tea (Gitea). Bitbucket uses web UI or REST API. Bare git (no remote) works via format-patch/bundle. Uses jq for JSON output and rg (ripgrep) for version search. Delegates to git, testing, code-review, update-docs, and a brainstorming skill if installed."
 metadata:
   source: iuliandita/skills
   date_added: "2026-04-14"
@@ -206,6 +206,19 @@ Do not continue into implementation - that's the user's next session, unless the
 
 Detailed steps live in `references/finish.md`. Summary:
 
+Copy this checklist and track progress:
+
+```
+- [ ] B1: Forge, base branch, and branch scope confirmed
+- [ ] B2: Checks and required gates pass (fix and re-run until green)
+- [ ] B3: Docs and version sites synced; tests re-run if version strings changed
+- [ ] B4: Code review on BASE..HEAD; blocking fixes return to B2
+- [ ] B5: Pushed and PR/MR opened
+- [ ] B6: CI verified green by explicit status query; failures return to B2
+- [ ] B7: Merged with an explicit conventional subject; merge SHA recorded
+- [ ] B8: Release cut and workflow verified, or skipped with the signal count
+```
+
 ### Step B1: Pre-close audit and forge detection
 
 First, detect the forge - every later step (push, PR, CI watch, merge, release) dispatches on it. See `references/finish.md` Step B1 for the full detection block. Short version: read `git remote get-url origin`, pattern-match on host, set `$FORGE` to one of `github | gitlab | forgejo | gitea | bitbucket | unknown | bare`. Forgejo uses the Forgejo CLI (`fj`); Gitea gets its own value and uses the Gitea community CLI (`tea`).
@@ -316,7 +329,7 @@ Dispatch on `$FORGE`. Every tool has a watch trap - default exit code may not re
 | `unknown` | Ask user which CI is wired (Jenkins, Drone, Woodpecker, Buildkite, Teamcity) and point them at the URL | Assume nothing |
 | `bare` | No remote CI; rely on B2 local output | N/A |
 
-If CI fails, fix the root cause - don't retry hoping for flakiness to resolve. If genuinely flaky (rerunning the identical commit passes), rerun and note it in the PR body.
+If CI fails, fix the root cause, return to Step B2, then push and watch again - don't retry hoping for flakiness to resolve. If genuinely flaky (rerunning the identical commit passes), rerun and note it in the PR body.
 
 ### Step B7: Merge
 

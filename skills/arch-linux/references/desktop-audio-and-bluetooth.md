@@ -3,6 +3,15 @@
 Arch does not hide the desktop stack from you. When graphics, portals, audio, or Bluetooth break,
 the fix usually comes from identifying the active session model and then checking the right layer.
 
+## Contents
+
+- X11 vs Wayland
+- Desktop environment and compositor routing
+- PipeWire and WirePlumber
+- PipeWire plus Bluetooth audio
+- BlueZ basics
+- What NOT to do
+
 ## X11 vs Wayland
 
 | Stack | Best fit | Common failure mode | First checks |

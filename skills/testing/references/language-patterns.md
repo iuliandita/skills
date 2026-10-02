@@ -2,6 +2,13 @@
 
 Idiomatic test patterns for JS/TS, Python, Go, and Rust. Each section covers test structure, mocking, async testing, table-driven tests, and common pitfalls.
 
+## Contents
+
+- JavaScript / TypeScript (Vitest, Jest)
+- Python (pytest)
+- Go (testing stdlib)
+- Rust (cargo test, cargo-nextest)
+
 ---
 
 ## JavaScript / TypeScript (Vitest, Jest)

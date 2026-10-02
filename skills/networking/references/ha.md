@@ -1,5 +1,15 @@
 # High Availability: keepalived, VRRP, Floating IPs
 
+## Contents
+
+- keepalived (VRRP)
+- HAProxy + keepalived (classic HA pattern)
+- Split-brain prevention
+- Floating IPs on bare metal vs cloud
+- Multiple VIPs
+- Troubleshooting keepalived
+- Corosync + Pacemaker (when keepalived isn't enough)
+
 ## keepalived (VRRP)
 
 keepalived implements VRRP (Virtual Router Redundancy Protocol) to provide automatic failover
