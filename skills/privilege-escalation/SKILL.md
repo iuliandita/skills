@@ -253,12 +253,16 @@ technique library covering:
 
 Once you've escalated, pivot to other systems.
 
+**Stop before any pivot whose destination is outside the authorized scope.** Confirm the
+destination host, network, or account is named in the engagement scope or rules of
+engagement. If it is not, do not connect; report the reachable path instead.
+
 Read `references/shells-and-pivoting.md` for:
 
 1. **Reverse shells** - bash, python, perl, netcat, php, ruby, powershell
 2. **SSH tunneling** - local forwarding (-L), remote forwarding (-R), dynamic SOCKS (-D), ProxyJump chains
 3. **SSH agent hijacking** - stealing SSH_AUTH_SOCK from other users for key reuse
-4. **Port forwarding** - chisel, ligolo-ng, socat, SSH as SOCKS proxy
+4. **Port forwarding** - use SSH tunneling (item 2) by default when the pivot runs sshd; for hosts without SSH, use chisel for an HTTP/SOCKS tunnel or ligolo-ng for a routed TUN interface
 5. **Internal network scanning** - quick TCP sweep without nmap
 6. **File transfer** - curl, wget, nc, python http.server, base64 encoding
 
