@@ -54,7 +54,10 @@ initramfs first (so the image exists), then `update-grub` (so the menu entry poi
 
 ```bash
 dpkg-query -W -f='${binary:Package}\n' 'linux-image*' 2>&1 || true
+uname -r                              # the running kernel: never purge this one
+apt-get -s --purge autoremove         # review what autoremove would take
 sudo apt --purge autoremove           # removes old kernels kept by autoremove policy
+sudo apt purge linux-image-<old-version>   # one specific old kernel; read the removal list
 ```
 
 - Keep at least one known-good kernel besides the newest. Never purge the running kernel
@@ -68,7 +71,7 @@ sudo apt --purge autoremove           # removes old kernels kept by autoremove p
 ## Reinstall GRUB (only after confirming firmware type and ESP)
 
 ```bash
-# EFI systems:
+# EFI systems (match --bootloader-id to the existing entry in `efibootmgr -v`: ubuntu, debian, ...):
 sudo grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=ubuntu
 # BIOS/legacy systems (disk, not partition):
 sudo grub-install /dev/sda

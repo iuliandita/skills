@@ -37,10 +37,34 @@ grubby --default-kernel 2>&1 || true
 
 If the issue is a newly installed kernel, inspect all entries before setting defaults.
 
+## Removing a kernel
+
+`installonly_limit` in `/etc/dnf/dnf.conf` controls how many kernels DNF keeps. To remove one
+specific old kernel, confirm it is not the running one and read the transaction before answering
+yes:
+
+```bash
+uname -r
+rpm -q kernel-core
+sudo dnf remove kernel-core-<old-version>
+```
+
 ## Recovery stance
 
 - Prefer booting the previous kernel before editing blind.
-- From rescue media, mount root and EFI correctly before chrooting.
+- From rescue media, mount root and EFI correctly before chrooting. The installer's rescue mode
+  can mount the system under `/mnt/sysimage` for `chroot /mnt/sysimage`; by hand, open LUKS
+  (`cryptsetup open`) and activate LVM (`vgchange -ay`) first:
+
+  ```bash
+  sudo mount /dev/<root> /mnt
+  sudo mount /dev/<boot> /mnt/boot          # only if /boot is separate in fstab
+  sudo mount /dev/<esp> /mnt/boot/efi       # EFI systems
+  for d in /dev /dev/pts /proc /sys /run; do sudo mount --bind "$d" "/mnt$d"; done
+  sudo chroot /mnt
+  # inside: dracut -f --kver "$TARGET_KVER"; grubby --info=ALL
+  ```
+
 - Verify the initramfs and boot entry for the exact kernel you expect.
 - Do not erase older kernels until the new one actually boots.
 

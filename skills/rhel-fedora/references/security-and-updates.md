@@ -32,7 +32,8 @@ ss -ltnp
 ```
 
 Use `-a` only when the port has no mapping. If it already has a different type, review the owner
-before intentionally changing it with `-m`.
+before intentionally changing it with `-m`. Exposure changes are consequential: show the zone,
+port, and SELinux mapping to the user and get confirmation before running the block below.
 
 ```bash
 : "${SERVICE_ZONE:?set SERVICE_ZONE to the active zone for the service interface}"

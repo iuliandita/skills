@@ -37,7 +37,15 @@ find /etc/apt -maxdepth 2 -type f \( -path /etc/apt/sources.list -o -path '/etc/
   -exec grep -HnEv '^[[:space:]]*(#|$)' {} +
 ```
 
-Expected shape is one clear Kali lane, not a soup of Kali plus random Debian suites.
+Expected shape is one clear Kali lane, not a soup of Kali plus random Debian suites. The default
+rolling entry from Kali's docs is:
+
+```text
+deb http://http.kali.org/kali kali-rolling main contrib non-free non-free-firmware
+```
+
+Source-list edits change every later transaction. Back up first
+(`sudo cp -a /etc/apt /root/apt-backup`), show the diff, and get confirmation before writing.
 
 ### Snapshot users
 If the user wants calmer behavior, verify they intentionally track the snapshot lane rather than

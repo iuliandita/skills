@@ -65,8 +65,8 @@ These are useful because they reduce friction, not because they change how the s
 
 ### Resource and disk inspection
 
-- `btop` or `bottom` for interactive process and resource views
-- `ncdu` or `dust` for disk-usage triage
+- `btop` for interactive process and resource views (`bottom` if the user prefers it)
+- `ncdu` for disk-usage triage (`dust` for a non-interactive tree)
 
 ### Arch-specific quality-of-life
 

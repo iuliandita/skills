@@ -13,6 +13,7 @@ off.
 - AUR package replaced by official repos
 - `.pacnew`, `.pacsave`, and config drift
 - Mirror and keyring issues
+- Removing packages and cleaning the cache
 - What NOT to do
 
 ## Native package flow
@@ -117,7 +118,8 @@ Typical pattern:
 find /etc -type f \( -name '*.pacnew' -o -name '*.pacsave' \) -print
 ```
 
-If `pacman-contrib` is installed, use `pacdiff` to review and merge safely.
+Use `pacdiff` from `pacman-contrib` to review and merge safely
+(`command -v pacdiff >/dev/null || sudo pacman -S --needed pacman-contrib`).
 
 ## Mirror and keyring issues
 
@@ -137,6 +139,31 @@ sudo pacman -Fy
 
 Use a mirror tool only after you confirm the current mirrorlist is the problem. On CachyOS, also
 check whether Arch mirrors and Cachy mirrors are both configured as expected.
+
+Default tool: `reflector` on Arch, `cachyos-rate-mirrors` on CachyOS. Back up the list first,
+then force a full refresh so the new mirrors are actually used:
+
+```bash
+command -v reflector >/dev/null || sudo pacman -S --needed reflector
+sudo cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.bak
+sudo reflector --latest 20 --protocol https --sort rate --save /etc/pacman.d/mirrorlist
+sudo pacman -Syyu
+```
+
+## Removing packages and cleaning the cache
+
+Removal is consequential: show the list, confirm, then remove only reviewed names.
+
+```bash
+pacman -Qdt                                # orphans: review each one
+sudo pacman -Rns reviewed_package_name     # read the removal list before answering yes
+command -v paccache >/dev/null || sudo pacman -S --needed pacman-contrib
+paccache -dk2                              # dry run: what would go, keeping 2 versions
+sudo paccache -rk2                         # remove, keeping 2 versions for rollback
+```
+
+Do not pipe `pacman -Qdtq` straight into `pacman -Rns -`, and do not remove a kernel package
+unless another known-good kernel and boot entry remain.
 
 ## What NOT to do
 

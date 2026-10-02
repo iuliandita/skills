@@ -3,6 +3,17 @@
 Use this reference when the problem is package state, repo config, package provenance, module
 streams, local RPMs, or third-party repo drift.
 
+## Contents
+
+- Gather package facts first
+- Package principles
+- Repo sanity checks
+- Modules and AppStream
+- Local RPM handling
+- Fedora-specific notes
+- Release upgrades
+- Enterprise-lane notes
+
 ## Gather package facts first
 
 ```bash
@@ -83,6 +94,34 @@ For third-party release RPMs and repo keys, verify the key fingerprint and sourc
 - Fedora multimedia, Steam, and proprietary-driver work often depends on RPM Fusion state; verify it before debugging package availability or akmods.
 - `updates-testing` is for targeted use, not for permanent random enablement.
 - Release upgrades often expose lagging third-party repos first.
+
+## Release upgrades
+
+Consequential. Back up or snapshot first, keep console access, disable or verify third-party repos
+for the target release, show the plan, and get explicit confirmation before each transaction.
+
+Fedora, from a fully updated current release:
+
+```bash
+sudo dnf upgrade --refresh
+dnf system-upgrade --help >/dev/null 2>&1 || sudo dnf install dnf-plugin-system-upgrade   # DNF4 hosts only
+sudo dnf system-upgrade download --releasever=<target>
+sudo dnf system-upgrade reboot
+```
+
+RHEL major upgrades use Red Hat's `leapp` path; resolve every inhibitor before upgrading:
+
+```bash
+sudo dnf install leapp-upgrade
+sudo leapp preupgrade
+less /var/log/leapp/leapp-report.txt   # fix inhibitors, then rerun preupgrade until clean
+sudo leapp upgrade
+sudo reboot
+```
+
+Clones use their vendor's documented path (for example AlmaLinux ELevate); do not run RHEL
+`leapp` instructions on a clone without that vendor's guidance. After any path, confirm
+`/etc/os-release`, `systemctl --failed`, `grubby --default-kernel`, and enabled repos.
 
 ## Enterprise-lane notes
 

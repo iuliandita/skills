@@ -8,6 +8,7 @@ Debian-derived distro specifics that materially change package, boot, or service
 - Checks
 - Distro notes
 - Ubuntu 24.04 -> 26.04 operational differences
+- Release upgrades
 - What is out of scope
 - Notes
 
@@ -99,6 +100,39 @@ Ubuntu 24.04 LTS users inherit 24.10, 25.04, 25.10, and 26.04 changes.
 - Explicitly confirm repo model, release base, and service stack first.
 - This bucket can include Zorin OS, elementary OS, and MX Linux, but only if the underlying issue is still ordinary apt, boot, or service administration.
 - If the distro's identity changes the package manager, service stack, or operating model, stop pretending it is just Ubuntu with a different wallpaper.
+
+## Release upgrades
+
+Consequential and slow to undo. Back up or snapshot first, keep console access, show the plan,
+and get explicit confirmation before each transaction. Never skip a release.
+
+Ubuntu (and flavors), from a fully updated current release:
+
+```bash
+sudo apt update && sudo apt full-upgrade     # finish the current release first
+apt-mark showhold                            # holds can block or distort the jump
+grep '^Prompt=' /etc/update-manager/release-upgrades   # lts or normal decides what is offered
+command -v do-release-upgrade >/dev/null || sudo apt install ubuntu-release-upgrader-core
+sudo do-release-upgrade
+```
+
+Over SSH, `do-release-upgrade` warns and starts a fallback sshd on port 1022; keep that port
+reachable or use a console. Mint and Pop!_OS use their own upgrade tools; check their docs.
+
+Debian, one release at a time:
+
+```bash
+sudo apt update && sudo apt full-upgrade     # current release fully updated
+sudo cp -a /etc/apt /root/apt-backup         # keep the old sources
+# Change the codename to the next release in sources.list and every *.list / *.sources file.
+sudo apt update
+apt-get -s full-upgrade                      # review removals before going further
+sudo apt upgrade --without-new-pkgs          # minimal upgrade first
+sudo apt full-upgrade
+```
+
+After either path: confirm `/etc/os-release`, `systemctl --failed`, the boot entries, and that
+third-party repos were re-enabled only for releases they support.
 
 ## What is out of scope
 - RPM-family distros such as RHEL, Fedora, Rocky, AlmaLinux, Oracle Linux, and Amazon Linux

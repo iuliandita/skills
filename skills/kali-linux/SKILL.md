@@ -73,42 +73,32 @@ Before returning Kali commands or tool recommendations, verify:
 
 - [ ] **Kali lane identified**: rolling install, last-snapshot, live USB, VM image, Purple image, NetHunter, or a custom lab box. Advice diverges fast.
 - [ ] **Not flattened into plain Debian**: do not give generic Debian advice without checking Kali branches, metapackages, and package origin first.
-- [ ] **Branch model understood**: `kali-rolling` vs `kali-last-snapshot` vs partial or development branches such as `kali-experimental`, `kali-bleeding-edge`, and `kali-dev`. Do not mix them casually.
+- [ ] **Branch model understood**: `kali-rolling` vs `kali-last-snapshot` vs partial or development branches such as `kali-experimental`, `kali-bleeding-edge`, and `kali-dev`. Do not mix them casually. Branch, snapshot, metapackage, and NetHunter advice matches official docs.
 - [ ] **Repo state is clean**: no blind Debian repo additions, no stale image assumptions, no broken `kali-archive-keyring`, and no contradictory source lists.
 - [ ] **Upgrade path is coherent**: prefer `apt update` plus `apt full-upgrade` on Kali when package transitions matter. Do not cargo-cult `apt upgrade` and call it done.
 - [ ] **Image mode identified**: installed system, live media, persistence-backed live media, VM image, or mobile image. Recovery steps differ.
 - [ ] **Metapackage scope is intentional**: do not suggest `kali-linux-everything` when a focused `kali-tools-*` bundle is the sane answer.
 - [ ] **Tool family matches the task**: information gathering, vulnerability assessment, web, passwords, wireless, reverse engineering, exploitation, post-exploitation, forensics, reporting, or labs.
-- [ ] **Authorization boundary respected**: Kali tool recommendations still require authorized scope. A tool index is not permission.
+- [ ] **Authorization boundary respected**: Kali tool recommendations still require authorized scope. A tool index is not permission; offensive tooling stays in authorized labs, CTFs, or owned systems.
 - [ ] **Lab packages are treated as intentionally vulnerable**: `kali-linux-labs` exists for controlled practice, not for everyday workstation installs.
 - [ ] **Wireless and hardware path is real**: chipset, firmware, monitor mode, injection support, SDR stack, USB passthrough, and kernel modules match the actual hardware.
 - [ ] **GPU and capture stack is coherent**: VM passthrough, host acceleration, PipeWire, browser capture, and desktop session line up before blaming the tool.
 - [ ] **NetHunter is not treated like normal desktop Kali**: mobile kernels, Android host constraints, rootless vs full chroot shape, and missing systemd-style tooling can change which checks even make sense.
 - [ ] **Correct handoff chosen**: route post-foothold escalation or related authorized paths to **privilege-escalation**. Route original vulnerability discovery to **vulnerability-research**.
 - [ ] **Diagnostic errors are not silenced**: do not hide useful failure output with `2>/dev/null` on commands whose error reason matters. Use `2>&1 || true` when gathering.
-- [ ] **Channel checked**: kali-rolling, snapshots, metapackages, and NetHunter advice matches official docs
-- [ ] **Lab boundary explicit**: offensive tooling stays in authorized labs, CTFs, or owned systems
 - [ ] Cross-cutting agent hygiene applied - see `references/agent-hygiene.md`
 
 ---
 
-## Performance
-
-- Install task-specific metapackages instead of full tool collections when disk, bandwidth, or update time matters.
-- Use snapshots or pinned images for repeatable labs rather than debugging rolling drift mid-exercise.
-- Keep wordlists, captures, and VM disks outside small root partitions.
-
-
----
-
-## Best Practices
-
-- Do not treat Kali as a hardened daily-driver server by default.
-- Snapshot before major upgrades, GPU/wireless driver work, or live persistence changes.
-- Separate client data, lab artifacts, and exploit tooling with clear storage boundaries.
-
-
 ## Workflow
+
+The steps are ordered. Copy this checklist and track progress:
+
+- [ ] Step 1: Kali lane identified
+- [ ] Step 2: Current state gathered
+- [ ] Step 3: Matching reference loaded
+- [ ] Step 4: One layer changed; consequential changes confirmed first
+- [ ] Step 5: Validated (on failure, fix and return to Step 4)
 
 ### Step 1: Identify the Kali lane first
 
@@ -207,6 +197,14 @@ only if the first layer is clean.
 - Fix hardware support and firmware before blaming monitor mode, injection, SDR, or Bluetooth tools.
 - Pick the smallest metapackage that matches the workflow instead of installing everything.
 - Keep labs and production separate. Prefer snapshots, throwaway VMs, and isolated USB media.
+- Snapshot before major upgrades, GPU/wireless driver work, or live persistence changes.
+
+**Consequential changes** (`full-upgrade` with removals, branch or source-list changes, large
+metapackage installs or removals, writing or repartitioning USB media, kernel and DKMS driver
+work): show the exact command and what it will do (simulated transaction, source-list diff, or
+target device), get explicit confirmation, run it, then go to Step 5. In unattended runs, stop at
+the plan. Exact commands live in `references/packages-branches-and-repos.md` (upgrades, branch
+recovery) and `references/images-live-persistence-and-recovery.md` (live USB and persistence).
 
 ### Step 5: Validate before closing
 
@@ -220,8 +218,8 @@ command -v nmap 2>/dev/null || true
 command -v aircrack-ng 2>/dev/null || true
 ```
 
-Reboot only when the boot path, persistence story, or kernel change is understood and at least
-one known-good recovery path remains.
+If a check fails, fix the layer it points to and return to Step 4. Reboot only when the boot path,
+persistence story, or kernel change is understood and at least one known-good recovery path remains.
 
 ---
 
@@ -270,7 +268,8 @@ When the problem smells like "Kali is broken," check the boring causes first:
 - **Prefer focused metapackages.** `kali-tools-*` bundles beat `kali-linux-everything` unless the box truly exists to be a giant toolbox.
 - **Treat Kali as a workflow distro, not just a package repo.** Image choice, persistence, hardware, and scope matter as much as package names.
 - **Stay package-focused when the ask is package-focused.** Installing `nuclei`, `burpsuite`, `hashcat`, or reversing tools stays here until the question turns into defensive review, offensive workflow, or novel vulnerability research.
-- **Labs should be disposable.** Snapshots, throwaway VMs, and isolated media beat hand-maintaining a single sacred pentest laptop forever.
+- **Labs should be disposable.** Snapshots, throwaway VMs, and isolated media beat hand-maintaining a single sacred pentest laptop forever. Use snapshots or pinned images for repeatable labs rather than debugging rolling drift mid-exercise.
+- **Kali is not a hardened daily-driver server by default.** Keep wordlists, captures, and VM disks outside small root partitions.
 - **Tool families come before individual tool bikeshedding.** Pick the category, then the tool, then the package.
 - **Wireless and SDR work are hardware stories first.** Chipset support, firmware, passthrough, power, and monitor-mode reality matter more than menu entries.
 - **Route offensive depth correctly.** Kali can install the tools, but **privilege-escalation** owns exploitation workflow and **vulnerability-research** owns novel bug discovery.
@@ -328,13 +327,7 @@ See `references/output-contract.md` for the full contract.
 
 ## Rules
 
-1. **Identify the Kali lane before prescribing commands.** Installed rolling, snapshot, live media, VM image, Purple, and NetHunter differ where it matters.
-2. **Do not treat Kali like generic Debian with a dragon wallpaper.** Branches, metapackages, images, and hardware expectations change the answer.
-3. **Do not mix branches casually.** `kali-rolling`, `kali-last-snapshot`, `kali-experimental`, `kali-bleeding-edge`, and `kali-dev` each have a purpose. Random mixing usually ends in package pain.
-4. **Prefer focused metapackages over giant installs.** Install the tool family that matches the job before reaching for `kali-linux-everything`.
-5. **Keep lab and production separate.** Practice targets, vulnerable apps, and offensive tooling belong on disposable systems or isolated boxes.
-6. **Respect scope.** Recommending Kali tools is not permission to use them outside authorized environments.
-7. **Treat hardware claims as hardware claims.** Monitor mode, injection, SDR capture, HID, and GPU acceleration depend on actual chipsets, firmware, and passthrough support.
-8. **Live USB and persistence are their own failure domain.** Do not debug them like a normal installed root filesystem.
-9. **Hand off correctly.** Once the work becomes exploitation methodology, use **privilege-escalation**. Once it becomes original vulnerability research, use **vulnerability-research**.
-10. **Reach for common Kali failure patterns before exotic explanations.** Stale keyrings, branch drift, metapackage sprawl, persistence corruption, and unsupported hardware explain a large share of the mess.
+1. **Confirm consequential changes before running them.** Show the exact command and its plan, wait for an explicit yes, then verify. Unattended runs stop at the plan.
+2. **Respect scope.** Recommending Kali tools is not permission to use them outside authorized environments.
+3. **Keep lab and production separate.** Practice targets, vulnerable apps, and offensive tooling belong on disposable systems or isolated boxes. Separate client data, lab artifacts, and exploit tooling with clear storage boundaries.
+4. **Hand off correctly.** Once the work becomes exploitation methodology, use **privilege-escalation**. Once it becomes original vulnerability research, use **vulnerability-research**.

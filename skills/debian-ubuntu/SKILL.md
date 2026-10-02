@@ -3,7 +3,7 @@ name: debian-ubuntu
 description: >
   Administer Debian, Ubuntu, Mint, and Pop!_OS: apt, dpkg, upgrades, boot, drivers, and desktop issues.
 license: MIT
-compatibility: Requires Debian, Ubuntu, or Debian-based distro with apt
+compatibility: "Requires Debian, Ubuntu, or a Debian-based distro with apt. Optional: ubuntu-release-upgrader-core (do-release-upgrade), ppa-purge, needrestart, fwupd"
 metadata:
   source: iuliandita/skills
   date_added: "2026-04-22"
@@ -86,14 +86,14 @@ Security recheck (2026-10-02): [CVE-2026-53266](https://ubuntu.com/security/CVE-
 
 Before returning Debian or Ubuntu commands, verify:
 
-- [ ] **Distro and release identified**: Debian stable/testing/unstable, Ubuntu LTS/interim, Mint, Pop!_OS, Devuan, Kali, or another derivative. Advice diverges quickly.
+- [ ] **Distro and release identified**: Debian stable/testing/unstable, Ubuntu LTS/interim, Mint, Pop!_OS, Devuan, Kali, or another derivative, and its current support lifecycle and enabled repositories. Advice diverges quickly.
 - [ ] **Init system identified**: do not assume systemd on Devuan or other Debian derivatives without checking PID 1, service manager, and boot tooling first.
 - [ ] **Release model respected**: do not suggest `apt upgrade` when `apt full-upgrade` or `apt dist-upgrade` is required for package transitions. Do not suggest `apt dist-upgrade` casually on Ubuntu without context.
 - [ ] **Ubuntu 24.04 -> 26.04 delta accounted for**: Ubuntu 24.04 LTS upgraders inherit 24.10, 25.04, 25.10, and 26.04 changes. Do not treat 26.04 as a small point refresh of 24.04.
 - [ ] **Repository state clean**: no broken apt lists, missing GPG keys, or mixed releases without pinning.
 - [ ] **Boot stack identified**: GRUB vs other loader, EFI vs BIOS, initramfs generator, and kernel metapackage before changing boot files.
-- [ ] **Fallback path exists**: do not remove the only known-good kernel or break the only boot entry on a remote system.
-- [ ] **PPA trust boundary respected**: review PPA source, key, and maintenance status before adding.
+- [ ] **Fallback path exists**: do not remove the only known-good kernel or break the only boot entry, especially on a remote or encrypted system.
+- [ ] **Third-party repo trust boundary respected**: review PPA source, key, and maintenance status before adding; make snaps, vendor repos, and pin priorities explicit.
 - [ ] **systemd scope is correct**: distinguish system units from user units and use `systemctl --user` only when appropriate.
 - [ ] **Wayland stack is coherent**: compositor, portal backend, Xwayland compatibility, and user-session services line up.
 - [ ] **Session startup path identified**: display manager, greeter, or TTY launch path known before debugging env propagation.
@@ -110,29 +110,19 @@ Before returning Debian or Ubuntu commands, verify:
 - [ ] **Diagnostic errors are not silenced**: do not mask failures with `2>/dev/null` on commands whose error reason matters. Use `2>&1 || true` to surface errors without aborting.
 - [ ] **Firmware updates are not conflated with package updates**: `fwupd` and vendor tools (e.g., `system76-firmware`) are separate from `apt upgrade`.
 - [ ] **Debian alternatives are checked**: when a command behaves oddly, verify `update-alternatives` for that binary.
-- [ ] **Release support checked**: Debian/Ubuntu/Mint/Pop advice matches current lifecycle and enabled repositories
-- [ ] **Third-party repo risk handled**: PPAs, snaps, vendor repos, and pin priorities are explicit
 - [ ] Cross-cutting agent hygiene applied - see `references/agent-hygiene.md`
 
 ---
 
-## Performance
-
-- Use `apt-cache policy`, `apt list --upgradable`, and targeted installs before broad reinstall attempts.
-- Keep package index updates scoped; repeated `apt update` in scripts wastes time and load.
-- For slow upgrades, identify held packages and phased updates before forcing resolver choices.
-
-
----
-
-## Best Practices
-
-- Do not mix Debian releases or Ubuntu series unless apt pinning is deliberate and documented.
-- Snapshot or back up before release upgrades, kernel changes, filesystem work, or bootloader repair.
-- Prefer distro packages for core system components; isolate vendor repos to the packages they own.
-
-
 ## Workflow
+
+The steps are ordered. Copy this checklist and track progress:
+
+- [ ] Step 1: Distro lane identified
+- [ ] Step 2: Current state gathered
+- [ ] Step 3: Matching reference loaded
+- [ ] Step 4: One layer changed; consequential changes confirmed first
+- [ ] Step 5: Validated (on failure, fix and return to Step 4)
 
 ### Step 1: Identify the distro lane first
 
@@ -220,6 +210,14 @@ only if the first layer is clean.
 - On Ubuntu, separate "vanilla Debian behavior" from "Ubuntu snap/HWE/PPA behavior."
 - On Pop!_OS, separate "Ubuntu behavior" from "System76 firmware and power behavior."
 - Prefer reversible steps: package holds, backup kernels, `apt-mark`, saved configs.
+- Snapshot or back up before release upgrades, kernel changes, filesystem work, or bootloader repair.
+
+**Consequential changes** (release upgrades, `full-upgrade` with removals, kernel removal, GRUB
+reinstall, PPA purge, LUKS or LVM changes): show the exact command and what it will do (simulated
+transaction with `apt-get -s`, removal list, or target device), get explicit confirmation, run it,
+then go to Step 5. In unattended runs, stop at the plan. Exact commands live in
+`references/derivatives-and-hwe.md` (release upgrades), `references/boot-kernel-and-recovery.md`
+(kernels, GRUB, live-media chroot), and `references/storage-and-rollback.md` (LUKS, LVM).
 
 ### Step 5: Validate before closing
 
@@ -233,7 +231,8 @@ ls -l /boot/vmlinuz-* /boot/initrd.img-*
 If kernel or boot files changed, first confirm every kernel above has an initrd and run
 `sudo update-initramfs -u -k <version>` for any that are missing. Then run `sudo update-grub` only
 when GRUB is the confirmed loader (`command -v update-grub`), and confirm the entries with
-`grep -E "menuentry|initrd" /boot/grub/grub.cfg`. Reboot only when the boot path is understood and at least one known-good entry remains.
+`grep -E "menuentry|initrd" /boot/grub/grub.cfg`. If a check fails, fix the layer it points to and
+return to Step 4. Reboot only when the boot path is understood and at least one known-good entry remains.
 
 ---
 
@@ -280,7 +279,8 @@ When a bug looks desktop-only, compare one clean baseline:
 - **Ubuntu Desktop assumptions changed in 26.04.** Stock Ubuntu Desktop is Wayland-only, and the old `Software & Updates` GUI is no longer installed by default on new installs. GUI-first troubleshooting advice from 24.04-era blog posts may be wrong on fresh 26.04 systems.
 - **Use systemd-native tools first.** Reach for `systemctl`, `journalctl`, `timedatectl`, and `localectl` before distro wrappers.
 - **Treat PPAs as exceptions, not defaults.** Review maintainer, signing key, freshness, and package origin before adding one. Remove dead PPAs promptly.
-- **Prefer distro packages before third-party repos.** Use Debian backports, Ubuntu official repos, or vendor packages first; escalate to PPAs only when the distro lane is genuinely insufficient.
+- **Prefer distro packages before third-party repos.** Use Debian backports, Ubuntu official repos, or vendor packages first; escalate to PPAs only when the distro lane is genuinely insufficient. Isolate vendor repos to the packages they own.
+- **Narrow before broad.** Use `apt-cache policy`, `apt list --upgradable`, and targeted installs before broad reinstall attempts. For slow upgrades, identify held packages and phased updates before forcing resolver choices. Keep package index updates scoped; repeated `apt update` in scripts wastes time and load.
 - **Treat snaps as sandboxed first.** Interface and confinement issues explain more snap failures than package bugs.
 - **GRUB and initramfs are one subsystem.** Kernel metapackage, `update-initramfs`, `update-grub`, and EFI fallback all have to agree.
 - **Desktop failures are often session failures.** On Wayland, user units, portals, and session env matter as much as the package list.
@@ -356,17 +356,6 @@ See `references/output-contract.md` for the full contract.
 
 ## Rules
 
-1. **Identify the distro and release before prescribing commands.** Debian stable, testing, sid, Ubuntu LTS or interim, Mint, Pop!_OS, Devuan, and Kali differ where it matters: repos, init systems, kernels, and recovery assumptions.
-2. **No mixed-release advice without pinning context.** Adding `testing` or `sid` sources to Debian stable without apt pinning is usually wrong.
-3. **Keep PPAs in perspective.** Prefer distro packages, Debian backports, or vendor-supported repos first. Use PPAs only when the distro lane is genuinely insufficient, and verify package origin before adding one.
-4. **Know the boot chain before touching it.** Confirm GRUB stage, ESP mount, kernel metapackage, initramfs hooks, and EFI fallback path first.
-5. **Never remove the last known-good kernel path casually.** Especially on remote or encrypted systems.
-6. **Prefer systemd-native diagnostics.** `systemctl`, `journalctl`, and `update-grub` usually tell you more than distro wrappers or generic forum folklore.
-7. **Ubuntu 26.04 changed some desktop defaults in ways that affect support.** Do not assume a stock Ubuntu Xorg session, the old `Software & Updates` GUI, or 24.04-era desktop app names are still present on fresh installs.
-8. **Identify the installed Ubuntu kernel lane.** HWE can be a Desktop install default or an explicit choice. Check the release-qualified metapackage and validate driver compatibility before changing lanes.
-9. **For Wayland issues, inspect the user session first.** Portals, user units, and Xwayland compatibility usually matter more than package reinstall churn.
-10. **For gaming issues, identify the GPU vendor and userspace first.** Driver branch, Vulkan stack, `i386` multilib, and launch wrappers usually explain more than random tweak cargo cults.
-11. **For capture issues, debug portals and PipeWire before app folklore.** OBS, browser WebRTC, Discord, and Teams often fail at the screencast path.
-12. **AppArmor can silently break things.** On Ubuntu, check `aa-status` and AppArmor denials when a service or binary mysteriously fails.
-13. **Do not oversell hibernation or resume.** These depend on exact swap layout, initramfs resume hook, and Secure Boot state.
-14. **Reach for common Debian/Ubuntu failure patterns before exotic explanations.** Mixed repos, stale PPAs, DKMS drift, AppArmor denials, HWE metapackage mismatch, and snap confinement explain a large share of the chaos.
+1. **Confirm consequential changes before running them.** Show the exact command and its plan, wait for an explicit yes, then verify. Unattended runs stop at the plan.
+2. **Identify the installed Ubuntu kernel lane.** HWE can be a Desktop install default or an explicit choice. Check the release-qualified metapackage and validate driver compatibility before changing lanes.
+3. **Never skip a release.** Debian and Ubuntu upgrades go one supported step at a time (Ubuntu LTS-to-LTS is one supported step); finish the current release with `full-upgrade` first.
