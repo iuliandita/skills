@@ -134,6 +134,14 @@ pasting it.
 
 ### Mode 1: Author a handoff (default)
 
+Copy this checklist and track progress:
+- [ ] Step 1: Next session's purpose named
+- [ ] Step 2: Decisions recorded with rationale
+- [ ] Step 3: State tagged `verified`, `assumed`, or `blocked`
+- [ ] Step 4: Pointers confirmed and secrets redacted
+- [ ] Step 5: Next steps and skills listed
+- [ ] Step 6: Self-Check passes (fix the failing item in its step and re-check), file written
+
 #### Step 1: Name the next session's purpose
 
 State, in one or two sentences, what the next session is for. If the user gave a purpose as the
@@ -259,19 +267,7 @@ See `references/output-contract.md` for the full contract.
 
 ## Rules
 
-1. **Purpose first.** Every handoff opens with the next session's job in one or two sentences.
-   No purpose, no handoff.
-2. **Every decision carries its why.** A locked decision without a rationale invites
+1. **Every decision carries its why.** A locked decision without a rationale invites
    relitigation. Record the reason or do not lock it.
-3. **Pointers, not paste.** Reference artifacts; never copy file contents into the handoff.
-4. **Tag confidence.** Mark state `verified`, `assumed`, or `blocked`. Never present an
-   assumption as a fact.
-5. **Redact secrets.** Strip API keys, passwords, tokens, PII, credential-bearing URLs, and sensitive topology before writing.
-6. **Gitignore by default.** Ensure `.handoff/` is gitignored unless the user asks to commit
-   the doc.
-7. **Keep it small.** The handoff must fit the next session's high-attention window. Cut detail
-   and lean on pointers before it grows large.
-8. **Do not relitigate on resume.** Treat a handoff's locked decisions as settled; flag a
-   wrong one to the user instead of silently reopening it.
-9. **Headless mode.** In non-interactive contexts (`--bare`, Cursor Automations, Codex `exec`):
+2. **Headless mode.** In non-interactive contexts (`--bare`, Cursor Automations, Codex `exec`):
    write to `.handoff/`, add the gitignore entry without prompting, and report the path.

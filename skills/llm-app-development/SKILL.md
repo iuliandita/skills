@@ -87,6 +87,12 @@ AI tools consistently produce the same mistakes when generating AI application c
 
 ## Workflow
 
+Copy this checklist and track progress:
+- [ ] Step 1: Architecture pattern chosen
+- [ ] Step 2: Lightest sufficient abstraction chosen
+- [ ] Step 3: Implemented, AI Self-Check passes
+- [ ] Step 4: Evals pass (on failure, fix the cause and return to Step 3)
+
 ### Step 1: Determine the architecture pattern
 
 | Need | Pattern | Start with |
@@ -204,12 +210,7 @@ A mediocre model with great retrieval beats a frontier model with bad retrieval.
 Use the same model for indexing and querying. Mixing models produces meaningless similarity
 scores.
 
-| Model | Dimensions | Best for |
-|-------|-----------|----------|
-| `text-embedding-3-large` (OpenAI) | 3072 (or lower via `dimensions`) | General-purpose, scalable |
-| `voyage-3-large` (Voyage AI) | 1024 | Code and technical content |
-| `embed-v4.0` (Cohere) | 1024 | Multilingual, compression |
-| Open-source (e5-mistral, gte-Qwen2) | Varies | Air-gapped / self-hosted |
+Read `references/rag-patterns.md` section 4 for the embedding model comparison.
 
 ### Retrieval patterns
 
@@ -221,14 +222,7 @@ scores.
 4. **Query expansion** - rephrase the user query using an LLM before retrieval. Helps when
    user queries are vague or use different terminology than the source docs.
 
-### Vector store selection
-
-| Store | Type | Best for |
-|-------|------|----------|
-| pgvector | PostgreSQL extension | Already using Postgres, <10M vectors |
-| Qdrant | Self-hosted or cloud | Production self-hosted, hybrid search |
-| Pinecone | Managed only | Zero-ops, serverless scaling |
-| ChromaDB | Embedded / local | Prototyping, small datasets |
+Pick a vector store from the selection table in `references/rag-patterns.md` section 5.
 
 ### Minimal RAG example (Python + pgvector)
 
@@ -353,34 +347,12 @@ training, and when to use full fine-tuning vs parameter-efficient methods.
 | llama.cpp / llama-cpp-python | Minimal deps, quantized models, CPU-only | No (CPU), optional GPU |
 | TGI (HF Text Generation Inference) | HF model hub integration | Yes |
 
-### CPU-only inference with llama.cpp
+CPU-only llama.cpp is viable for dense models that fit in RAM and MoE models with low active
+params. Pass server API keys with `--api-key-file <path>`, never `--api-key <value>`, which
+leaks into `/proc/<pid>/cmdline`.
 
-CPU inference is viable - sometimes preferable - for: dense models that fit in RAM (7-13B
-at Q4 hits 5-10 t/s on modern x86), **MoE models with low active params** (Qwen3-30B-A3B
-at Q4 reaches 13+ t/s even on a 2013-era Xeon - active params dominate decode), and
-air-gapped or compliance-bound environments. Key gotchas:
-
-- **ISA cliff**: pre-Haswell CPUs lack AVX2/FMA/BMI2. PyTorch >= 2.1, TF >= 2.8, JAX, and
-  Ollama prebuilts SIGILL. llama.cpp from source with `-DGGML_AVX2=OFF -DGGML_FMA=OFF
-  -DGGML_BMI2=OFF` works.
-- **GGUF quants**: `Q4_K_M` is the default sweet spot. `Q5_K_M` for +25% memory and quality.
-  `IQ4_XS` for tighter budgets. Avoid Q2/Q3 - quality cliff is real.
-- **Reproducible models**: pin both filename and HF commit SHA. Bare repo+filename pulls
-  "whatever the author serves now" - silent runtime changes on rebase.
-- **`--mlock`** page-faults the GGUF into RAM at start. Sum GGUF sizes for capacity planning.
-- **Threading**: `-t = physical_cores - 4` (decode, memory-bandwidth-bound), `-tb = logical`
-  (prefill, compute-bound).
-- **API keys**: `--api-key-file <path>`, never `--api-key <value>` on the command line - leaks
-  into `/proc/<pid>/cmdline` via systemd env expansion.
-
-### Benchmarking
-
-Fixed prompt suite (chat-short, chat-long, code-simple, code-complex, reasoning), warmup pass,
-record latency + decode t/s at fixed `max_tokens` and temperature. Re-run after model swaps,
-llama.cpp version bumps, or build-flag changes. Compare **decode t/s**, not raw latency.
-
-Read `references/local-inference.md` for the full llama.cpp build walkthrough (per-CPU-generation
-flags), HF SHA-pinned model download, systemd-per-model deployment, NUMA tuning, mlock memory
+Read `references/local-inference.md` for CPU-only fit and gotchas, the llama.cpp build per CPU
+generation, SHA-pinned model download, systemd-per-model deployment, NUMA tuning, mlock
 budgeting, benchmark methodology, and production serving configuration.
 
 ## Cost Optimization
@@ -418,7 +390,6 @@ PII detection setup, and content policy implementation.
 ## Production Checklist
 
 - [ ] API keys in environment variables or secret manager (never in code)
-- [ ] Retry logic with exponential backoff and jitter on all LLM calls
 - [ ] Timeouts set on all LLM calls (model inference can hang)
 - [ ] Rate limiting on AI-powered endpoints
 - [ ] Cost monitoring and alerting (daily spend, per-request cost tracking)
@@ -427,7 +398,6 @@ PII detection setup, and content policy implementation.
 - [ ] Model fallback chain configured (primary -> secondary -> error response)
 - [ ] Input validation and prompt injection defense
 - [ ] Output validation before returning to users
-- [ ] PII scrubbed from external API calls
 - [ ] Max token limits set per request type
 - [ ] Health checks on model endpoints (especially self-hosted)
 - [ ] A/B testing infrastructure for prompt and model changes
@@ -473,19 +443,7 @@ See `references/output-contract.md` for the full contract.
 
 1. **Start with the simplest approach.** Direct SDK calls before frameworks. Prompt engineering
    before fine-tuning. Single agent before multi-agent. Complexity is a cost.
-2. **Never hardcode API keys.** Environment variables or secret managers. No exceptions.
-3. **Always stream user-facing responses.** Buffered LLM responses feel broken. Stream.
-4. **Set token limits explicitly.** `max_tokens` on every call. Unbounded generation wastes
+2. **Set token limits explicitly.** `max_tokens` on every call. Unbounded generation wastes
    money and risks timeouts.
-5. **Match embedding models.** Same model for indexing and querying. Mixing models produces
-   meaningless similarity scores that silently degrade retrieval quality.
-6. **Validate model output.** Check for refusals, empty content, malformed structured output.
-   Models fail in creative ways - handle all of them.
-7. **Budget before you batch.** Calculate cost before running batch operations. A 100k-row
-   embedding job at the wrong model can cost thousands.
-8. **Evaluate with data, not vibes.** Structured evals with datasets and metrics. "It looks
-   good" is not a quality gate.
-9. **Cap agent iterations.** Set a max loop count. Runaway agents burn budget and produce
+3. **Cap agent iterations.** Set a max loop count. Runaway agents burn budget and produce
    garbage. 10-20 iterations is a reasonable default.
-10. **Run the AI self-check.** Every generated AI/ML code gets verified against the checklist
-    above before returning.

@@ -99,8 +99,6 @@ Audit only:
 - Read the whole piece before flagging - density is a per-500-word ratio and a sample cannot produce it. Sampling decides whether a *directory* is worth auditing, not how a document scores.
 - Group repeated issues by pattern instead of near-duplicate comments on every paragraph, and prioritize high-visibility text: titles, summaries, intros, conclusions, user-facing docs.
 
----
-
 ## Best Practices
 
 - Flag exact phrases and structural patterns, not vibes.
@@ -184,14 +182,9 @@ setting and continuity checks.
 
 #### Abstract metaphor nouns
 
-Nouns that read as technical but stand in for a plainer word: `substrate`, `wedge`, `vector`,
-`locus`, `vantage`, `nexus`, `primitive` (as noun), `harness` (as metaphor), `surface` (as in
-"API surface"), `bedrock`, `scaffolding` (as metaphor), `modality`, `paradigm`, `gold-plating`.
-
-**Detect:** the noun carries no measurement, no referent, and no consequence. **Fix:** name the
-concrete thing - `substrate` -> `base`, `wedge in` -> `add`, `vector` -> `way`. **Exception:** each
-is a term of art somewhere (`vector` in linear algebra, `locus` in genetics); full table in
-`references/plain-speech.md`.
+Nouns that read as technical but stand in for a plainer word (`substrate`, `vector`,
+`paradigm`). Name the concrete thing. List, detect test, and terms-of-art exceptions:
+`references/plain-speech.md` section 1.
 
 ### 2. Syntax Tells
 
@@ -238,42 +231,16 @@ or a pronoun. Repetition beats forced variation.
 
 Detect lists, worked fixes, and exceptions for both: `references/fiction-tells.md`.
 
-#### Superficial participle tails
+#### Plain-speech syntax checks
 
-A sentence ending in a comma plus an `-ing` clause that restates what the sentence already
-said, implying consequence without asserting one: `..., highlighting the need for X`, `...,
-ensuring reliability`, `..., reflecting a broader shift`, `..., showcasing the team's
-expertise`, `..., underscoring its importance`.
+Four structural tells with no wordlist; each needs a rewrite, not a substitution. Read
+`references/plain-speech.md` for the detect test, fix, and exceptions of each before flagging:
 
-**Detect:** cut the clause. If nothing is lost, it was decoration. **Fix:** delete the tail; if
-the consequence is real, promote it to its own sentence with a stated mechanism - `..., ensuring
-reliability` -> `Retries cover the transient failures.`
-
-#### False ranges
-
-`from X to Y` where X and Y do not sit on a shared scale, implying comprehensive coverage of
-what is really two examples: `everything from authentication to deployment`, `from startups to
-enterprises` with no middle named.
-
-**Detect:** test for a meaningful midpoint. `from 10ms to 2s` is a real range, `from CI to
-observability` is not. **Fix:** list the items directly - `covers authentication and deployment`.
-
-#### Passive voice with an unnamed actor
-
-`is/are/was/were + past participle` that drops the actor: `queries are validated`, `errors are
-logged`. Ask who does it; if the answer is in the document but not the sentence, name it.
-
-**Fix:** promote the actor to subject - `the compiler validates queries`. **Exception:** passive
-is correct when the actor is unknown, irrelevant, or withheld on purpose (incident writeups,
-scientific method sections). See `references/plain-speech.md`.
-
-#### Dense sentence stacking
-
-Three or more clauses chained with commas, `and`, `which`, and `while`. Length is not the tell,
-backtracking is: flag sentences needing a second pass to locate the verb.
-
-**Fix:** Split at the clause boundary, or drop the clause carrying the least. One idea per
-sentence. Worked before/after in `references/plain-speech.md`.
+- **Superficial participle tails** (`..., ensuring reliability`): cut the tail, or state the
+  consequence as its own sentence with a mechanism
+- **False ranges** (`everything from authentication to deployment`): list the items directly
+- **Passive voice with an unnamed actor** (`errors are logged`): name the actor
+- **Dense sentence stacking**: split sentences that need a second pass to locate the verb
 
 ### 3. Tonal Tells
 
@@ -384,13 +351,9 @@ is unknown and why: `The 2026 figures are not published yet`.
 
 #### Feeling instead of mechanism
 
-Prose naming an impression rather than a fact the reader can act on. Ask what the sentence tells
-the reader to do or know: `the database stays close at hand`, `SQL you can read`, `types that
-follow your schema` all fail that test.
-
-**Fix:** Replace with the mechanism, a number, or an instruction. `.toSQL() returns the exact
-string sent to the database.` If no concrete restatement exists, cut the sentence. Table and
-exceptions in `references/plain-speech.md`.
+Prose naming an impression rather than a fact the reader can act on (`SQL you can read`).
+Replace with the mechanism, a number, or an instruction, or cut the sentence. Table and
+exceptions in `references/plain-speech.md` section 2.
 
 ### 4. Formatting Tells
 
@@ -419,8 +382,6 @@ acknowledged complexity, first person where it fits, and specifics. Long form in
 `references/plain-speech.md`. In **audit mode** voice notes are `Consider`-level, never `Fix`:
 voice belongs to the author, so never rewrite a piece into your own under the banner of
 removing AI tells. In **inline mode** apply this to your own drafting instead of reporting it.
-
----
 
 ## What NOT to Flag
 
@@ -454,7 +415,7 @@ Inline mode has no output format: the cleaned prose is the output.
 ## Reference Files
 
 - `references/audit-mode.md` - audit workflow, scoping, density and severity scales, report template, worked example
-- `references/plain-speech.md` - abstract metaphor nouns, the concreteness and actor tests, sentence splitting, voice restoration
+- `references/plain-speech.md` - abstract metaphor nouns, the concreteness and actor tests, sentence splitting, voice restoration, participle tails, false ranges
 - `references/fiction-tells.md` - character-name clarity, adverb crutch, elegant variation
 - `references/formatting-tells.md` - the formatting long tail
 - `references/agent-hygiene.md` - cross-cutting agent hygiene shared across the collection
@@ -478,17 +439,7 @@ See `references/output-contract.md` for the full contract.
 - **repo-audit** - orchestrates code-review, code-simplification, security-audit, and update-docs. Quick mode omits anti-ai-prose; exhaustive mode includes it in code quality.
 - **code-review** - logic and correctness. Anti-ai-prose only touches prose.
 
----
-
 ## Rules
 
-1. **Read the full piece before flagging.** A single `delve` in a 10,000-word book is not a pattern. Three in a paragraph is. Context determines severity.
-2. **Never edit quoted material.** Original words from other authors stay as written.
-3. **Respect genre conventions.** Travel writing, marketing, fiction, and academic prose have legitimate conventions that overlap with AI tells. Flag only when the writing is worse for the device, not because it matches a pattern.
-4. **Make the rewrite earn its words.** Prefer shorter, clearer, or more specific prose. Necessary explanation or accessibility detail can justify added length; never invent facts.
-5. **Stay within the authorized scope.** Apply reported fixes and record related discoveries. Ask before changing author intent or expanding the work; routine in-scope corrections do not need a separate audit.
-6. **Keep the voice of the author.** The goal is prose that sounds like a specific human, not a generic "good writing" rewrite. If you do not know the author's voice, flag only the mechanical tells.
-7. **Do not pad the report.** If there are three findings, list three. Not five. Not one inflated to three.
-8. **Inline mode is silent.** Applying these rules to your own output produces cleaner prose and nothing else: no report, no findings, no deliverable, no note that the skill ran. A user who wanted an audit will ask for one.
-9. **In your own output, drop the density thresholds.** They exist to stop overflagging someone else's long document. One chat artifact in your own reply is one too many.
-10. **Run the AI Self-Check.** The two mode items apply to every response; the rest before returning an audit.
+1. **Make the rewrite earn its words.** Prefer shorter, clearer, or more specific prose. Necessary explanation or accessibility detail can justify added length; never invent facts.
+2. **Keep the voice of the author.** The goal is prose that sounds like a specific human, not a generic "good writing" rewrite. If you do not know the author's voice, flag only the mechanical tells.
