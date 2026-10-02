@@ -3,7 +3,7 @@ name: virtualization
 description: >
   Manage VMs: Proxmox, QEMU/KVM, libvirt, XCP-ng, VMware/ESXi; debug hypervisors, storage, and GPU passthrough.
 license: MIT
-compatibility: "Varies by hypervisor. Proxmox: pvesh, qm, pct. Libvirt: virsh, virt-install. Optional: packer, terraform"
+compatibility: "Varies by hypervisor. Proxmox: pvesh, qm, pct. Libvirt: virsh, virt-install. Optional: packer, terraform, fio, cloud-localds"
 metadata:
   source: iuliandita/skills
   date_added: "2026-04-02"
@@ -106,15 +106,6 @@ generated VM config, Terraform HCL, or Packer template, verify against this list
 
 ---
 
-## Performance
-
-- Choose storage format and cache mode based on workload: latency, snapshots, thin provisioning, and backup behavior differ.
-- Right-size vCPU, NUMA, memory ballooning, and I/O queues from measured host pressure.
-- Use templates and cloud-init for repeatable VM creation instead of manual clone drift.
-
-
----
-
 ## Best Practices
 
 - Snapshot before guest-agent, disk, boot, passthrough, or hypervisor upgrades, but do not treat snapshots as backups.
@@ -128,6 +119,15 @@ Restore a representative guest to an isolated network without duplicate producti
 
 ## Workflow
 
+For changes to an existing VM or host, copy this checklist and track progress:
+
+```markdown
+- [ ] Step 1: Task identified and matching reference read (plus `references/gotchas.md`)
+- [ ] Step 2: Hypervisor, guest OS, storage, and backup state recorded
+- [ ] Step 3: Change applied on a non-critical VM first
+- [ ] Step 4: Validation passed (fix and return to Step 3 on any failure)
+```
+
 ### Step 1: Identify the task
 
 | Task | Start with | Reference |
@@ -135,8 +135,8 @@ Restore a representative guest to an isolated network without duplicate producti
 | **Proxmox VM creation** | CLI (qm) or API (pvesh), cloud-init | `references/proxmox.md` |
 | **Terraform provisioning** | bpg/proxmox provider, lifecycle rules | `references/proxmox.md` (Terraform section) |
 | **Image building** | Packer + cloud-init templates | `references/image-building.md` |
-| **libvirt/KVM management** | virsh, XML domain definitions | `references/libvirt-qemu-kvm.md` |
-| **GPU/PCI passthrough** | IOMMU groups, vfio-pci | `references/proxmox.md` (PCI section) |
+| **libvirt/KVM management** | virsh, XML domain definitions | `references/libvirt-qemu-kvm.md` (section 8: quick start) |
+| **GPU/PCI passthrough** | IOMMU groups, vfio-pci | `references/proxmox.md` (section 7, incl. Windows 11 + NVIDIA quick path) |
 | **Performance tuning** | Disk, memory, CPU config | This file + references |
 | **Migration to Proxmox** | From VMware, XCP-ng, or bare metal | `references/proxmox.md` |
 
@@ -180,6 +180,10 @@ Follow the domain-specific reference file. Key principles:
 | Network connectivity | `ping gateway`, check `ip addr` matches cloud-init config |
 | Memory | `free -h` in guest matches expected (not balloon-reduced) |
 | Live migration | Test with `qm migrate <vmid> <target> --online` on non-critical VM first |
+
+`fio` is often missing in guests: `command -v fio >/dev/null || apt install fio` (Debian/Ubuntu).
+If any check fails, fix the config and return to Step 3; a hardware-level fix needs a fresh
+QEMU start, not a guest reboot.
 
 ---
 
@@ -317,35 +321,6 @@ plans that shrink or recreate the disk.
 
 ---
 
-## GPU / PCI Passthrough Quick Reference
-
-Full details (IOMMU groups, ACS override, Terraform patterns) in `references/proxmox.md`.
-The minimum viable path for a Windows 11 + NVIDIA desktop GPU on Proxmox VE 9.x:
-
-1. **Host prereqs.** Enable VT-d / AMD-Vi in BIOS. Add `intel_iommu=on` (or `amd_iommu=on`)
-   plus `iommu=pt` to the kernel command line (`/etc/kernel/cmdline` on PVE with systemd-boot,
-   `/etc/default/grub` on legacy). Run `proxmox-boot-tool refresh` (or `update-grub`) and reboot.
-2. **Bind to vfio-pci.** `lspci -nn | grep -i nvidia` to find vendor:device IDs, then:
-   `echo "options vfio-pci ids=10de:XXXX,10de:YYYY" > /etc/modprobe.d/vfio-pci.conf` (GPU +
-   its audio function). Blacklist `nouveau` and `nvidia`. `update-initramfs -u` and reboot.
-   Verify with `lspci -nnk | grep -A3 NVIDIA` - driver in use must be `vfio-pci`.
-3. **VM settings for Windows 11.** Machine type `q35`, BIOS `ovmf` (add an EFI disk), TPM v2.0
-   state disk, `cpu: host`, `hidden=1` to dodge NVIDIA's Code 43 on older drivers. Example:
-   `qm set 100 --machine q35 --bios ovmf --cpu host,hidden=1 --efidisk0 local-lvm:1,format=raw`
-4. **Attach the GPU.** Prefer hardware mappings (PVE 8.1+) for migration safety:
-   `pvesh create /cluster/mapping/pci --id gpu-rtx4070 --map 'node=pve1,path=0000:01:00.0'`
-   then `qm set 100 --hostpci0 mapping=gpu-rtx4070,pcie=1,x-vga=1`. Legacy form:
-   `--hostpci0 01:00,pcie=1,x-vga=1`. Drop `x-vga` for compute-only passthrough.
-5. **Check IOMMU groups** with `find /sys/kernel/iommu_groups/ -type l | sort -V` before
-   anything else - every device in the target group gets passed through together. Single-GPU
-   hosts need early vfio binding (initramfs) or the host driver claims it first.
-
-**Reset bug:** NVIDIA consumer cards (including RTX 4070) usually reset cleanly, but verify
-with two successive VM restarts before production. AMD RX 5000/6000 series often need the
-`vendor-reset` kernel module or `pcie_port_pm=off`. If the second VM start hangs, you hit it.
-
----
-
 ## Memory Management
 
 **Ballooning - the short version:** Don't use it unless you've tested it on your exact
@@ -372,41 +347,6 @@ the configured minimum and `memory:`. Size memory correctly at creation time.
 
 ---
 
-## libvirt/QEMU Quick Start
-
-For libvirt/KVM without Proxmox, the fastest path to a running VM:
-
-```bash
-# Download a Debian cloud image and resize it
-wget -O /var/lib/libvirt/images/myvm.qcow2 \
-  https://cloud.debian.org/images/cloud/bookworm/latest/debian-12-generic-amd64.qcow2
-qemu-img resize /var/lib/libvirt/images/myvm.qcow2 20G
-
-# Boot from the cloud image with cloud-init
-virt-install --name myvm --ram 2048 --vcpus 2 --cpu host \
-  --disk path=/var/lib/libvirt/images/myvm.qcow2,bus=virtio \
-  --network network=default,model=virtio \
-  --cloud-init user-data=user-data.yaml,meta-data=meta-data.yaml \
-  --import --os-variant debian12 --noautoconsole
-```
-
-Build the cloud-init ISO with `cloud-localds cidata.iso user-data.yaml meta-data.yaml` and attach
-it as a second disk, or use the `--cloud-init` flag shown above (virt-install 4.0+).
-
-**Reusable template pattern:** keep the downloaded cloud image as a read-only golden image
-(`/var/lib/libvirt/images/debian-13-template.qcow2`) and create each VM disk as a qcow2
-overlay backed by it - `qemu-img create -f qcow2 -b debian-13-template.qcow2 -F qcow2
-myvm.qcow2`. Overlays only store per-VM changes and boot in seconds. Regenerate the base
-when you need a new OS minor. Validate first boot with `cloud-init status --wait` inside
-the guest. Never set `password:` or `chpasswd:` with plaintext values in user-data - use
-`ssh_authorized_keys` and rely on `lock_passwd: true` (the cloud-image default).
-
-`virsh list --all` to confirm state; `virsh console myvm` to attach. For full XML domain
-definitions, network and storage pool management, and virsh lifecycle commands, see
-`references/libvirt-qemu-kvm.md`.
-
----
-
 ## Hypervisor Selection
 
 | Hypervisor | Type | Best for | Avoid when |
@@ -428,10 +368,11 @@ but non-trivial for large estates.
 ## Reference Files
 
 - `references/proxmox.md` - Proxmox VE deep-dive: API, CLI, storage, clustering, HA,
-  live migration, PCI passthrough, Proxmox Backup Server, and Terraform (bpg/proxmox
-  provider patterns, lifecycle gotchas, cloud-init)
+  live migration, PCI passthrough (including the Windows 11 + NVIDIA quick path), Proxmox
+  Backup Server, and Terraform (bpg/proxmox provider patterns, lifecycle gotchas, cloud-init)
 - `references/libvirt-qemu-kvm.md` - libvirt/QEMU/KVM: virsh commands, XML domain
-  definitions, QEMU command-line, KVM modules, disk formats, networking
+  definitions, QEMU command-line, KVM modules, disk formats, networking, and a cloud-image
+  quick start for libvirt without Proxmox
 - `references/image-building.md` - Packer templates, cloud-init configuration,
   cloud image workflows, template management
 - `references/gotchas.md` - Battle-tested pitfalls and failure modes from production
@@ -467,24 +408,16 @@ See `references/output-contract.md` for the full contract.
 
 ## Rules
 
-These are non-negotiable. Violating any of these is a bug.
-
-1. **virtio for everything.** Disk (virtio-scsi), network (virtio-net). IDE and e1000 are
-   for legacy OS compatibility only.
-2. **CPU type `host` in production.** Emulated types hide features. Only use emulated types
-   for live migration across heterogeneous CPU generations.
-3. **Shutdown/start for hardware changes, not reboot.** Guest reboot doesn't restart QEMU.
+1. **Shutdown/start for hardware changes, not reboot.** Guest reboot doesn't restart QEMU.
    Shut down gracefully, verify stopped state, then start; forced stop needs separate justification.
-4. **One owner of disk size.** Either grow via `disk.size` in bpg/proxmox with `disk` not
+2. **One owner of disk size.** Either grow via `disk.size` in bpg/proxmox with `disk` not
    ignored, or grow with `qm resize` on the host with `disk` ignored - never both. Finish with
    growpart plus resize2fs or xfs_growfs in the guest.
-5. **Disable ballooning by default.** Enable only after testing on the specific guest OS.
-6. **Monitor thin pool data_percent.** Alert at 80%, critical at 90%. At 100%, all I/O fails.
-7. **nohup for long migrations.** SSH disconnect kills foreground `qm migrate`.
-8. **`prevent_destroy` + `ignore_changes` on Terraform VMs.** Protect against accidental
+3. **Disable ballooning by default.** Enable only after testing on the specific guest OS.
+4. **Monitor thin pool data_percent.** Alert at 80%, critical at 90%. At 100%, all I/O fails.
+5. **nohup for long migrations.** SSH disconnect kills foreground `qm migrate`.
+6. **`prevent_destroy` + `ignore_changes` on Terraform VMs.** Protect against accidental
    destruction, and ignore `node_name` and the generated MAC so live migration does not read as
-   drift. Add `disk` to `ignore_changes` only on the host-owned resize path (rule 4).
-9. **Run the AI self-check.** Every generated VM config gets verified against the checklist
-   above before returning.
-10. **Test before production.** New VM configs, passthrough setups, storage backends - test
-    on a non-critical VM first.
+   drift. Add `disk` to `ignore_changes` only on the host-owned resize path (rule 2).
+7. **Test before production.** New VM configs, passthrough setups, storage backends - test
+   on a non-critical VM first.

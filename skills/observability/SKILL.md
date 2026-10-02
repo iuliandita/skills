@@ -18,9 +18,6 @@ them. This skill builds the standing pipeline - instrumentation, metrics, traces
 logs, alert rules, SLOs, and dashboards-as-code - and audits a repo for the gaps that leave a
 service blind.
 
-It produces config (exporters, recording/alerting rules, OTLP pipelines, dashboard JSON), so
-the AI Self-Check applies.
-
 **Target versions**: see `references/versions.md` (verified per the receipt date
 in that file). Do not restate version numbers here.
 
@@ -79,6 +76,15 @@ rule, pipeline, or dashboard, verify:
 
 ## Workflow
 
+When building artifacts, copy this checklist and track progress:
+
+```markdown
+- [ ] Step 1: Questions and signal set named per service
+- [ ] Step 2: Collection path chosen from the defaults table
+- [ ] Step 3: Requested artifacts written for the detected stack
+- [ ] Step 4: Every validator run and passing (fix and return to Step 3 on failure)
+```
+
 ### Step 1: Identify the signals and the questions
 
 Pin down what the system must answer before choosing tools. For each service: what does "broken"
@@ -125,8 +131,9 @@ dashboard JSON. Limit output to the requested signals and the detected stack.
 
 ### Step 4: Validate
 
-Run the matching validator for every artifact produced. On failure, fix the artifact and rerun
-until it passes:
+Run the matching validator for every artifact produced. On failure, fix the artifact, return to
+Step 3, and rerun until it passes. Detect the tools first and record any missing one as skipped:
+`for t in promtool amtool otelcol jq; do command -v "$t" >/dev/null || echo "missing: $t"; done`
 
 - `promtool check config` / `promtool check rules` for Prometheus config and rules
 - `promtool test rules` for rule-test fixtures against sample series
@@ -245,17 +252,7 @@ See `references/output-contract.md` for the full contract.
    metric labels. Bounded label sets only.
 2. **Validate before returning.** Run `promtool`, `otelcol validate`, and `amtool` on generated
    config and rules; do not ship unverified PromQL or routing.
-3. **Alert on symptoms with runbooks.** Every alert is actionable, has `for:` and severity, and
-   links a runbook. No cause-only or non-actionable pages.
-4. **SLO-back the alerts.** Define SLOs with explicit windows and use multi-window multi-burn-rate
-   alerting, not single static thresholds.
-5. **Propagate context.** Configure W3C trace propagation, `service.name`, and `trace_id`/`span_id`
-   in logs so signals correlate.
-6. **No secrets in telemetry.** No tokens, PII, auth headers, or full bodies in labels, span
+3. **No secrets in telemetry.** No tokens, PII, auth headers, or full bodies in labels, span
    attributes, or log fields.
-7. **Dashboards as code.** Provision from version control; never treat a click-built dashboard as
+4. **Dashboards as code.** Provision from version control; never treat a click-built dashboard as
    the source of truth.
-8. **Run the AI Self-Check** before returning any generated instrumentation, rule, pipeline, or
-   dashboard.
-9. **Verify versions and signal names.** Confirm exporter/receiver names, PromQL functions, and
-   panel types against current docs; pin versions with dates.

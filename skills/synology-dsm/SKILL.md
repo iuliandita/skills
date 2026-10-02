@@ -91,7 +91,6 @@ in this order, rather than being skipped:
 - [ ] Backup or snapshot state verified before any repair, not after
 - [ ] **Hidden state identified**: DSM version, model, package dependencies, mounted volumes, and prior repair attempts are made explicit before acting
 - [ ] **Verification is real**: checks exercise the actual mount, service, or filesystem rather than reading a DSM banner
-- [ ] **Routing overlap checked**: generic Linux, container, and network tasks are routed to the matching skill
 - [ ] **Spec claims verified**: claims about DSM behavior are checked against the appliance or Synology's GPL kernel source, not recalled
 - [ ] Cross-cutting agent hygiene applied - see `references/agent-hygiene.md`
 
@@ -122,9 +121,10 @@ These are rules, not suggestions. Each one has destroyed a real volume.
 6. **Never enable Telnet, including as an SSH workaround.** CVE-2026-32746 is an unauthenticated
    RCE in DSM's telnetd (CVSS 9.8). If SSH is unusable, use the console or DSM's UI.
 
-Confirm with the user before any RAID repair, volume delete, DSM update, disk removal, or
-package uninstall. All of these are outward-facing or irreversible. When running unattended with
-no one to ask, stop and report what needs approval - never proceed on a default.
+Confirm with the user before any RAID repair, volume delete, DSM update, disk removal,
+package uninstall, or reboot of a production unit. All of these are outward-facing or
+irreversible. When running unattended with no one to ask, stop and report what needs approval -
+never proceed on a default.
 
 ---
 
@@ -154,6 +154,16 @@ indexing, logs, SMART, notifications).
 ---
 
 ## Workflow
+
+Copy this checklist and track progress (an unmountable volume follows "Recovery first moves"):
+
+```markdown
+- [ ] Step 1: DSM version, build, and platform recorded
+- [ ] Step 2: Storage stack read bottom-up (disks, md, LVM, btrfs)
+- [ ] Step 3: Symptom routed to the matching reference
+- [ ] Step 4: Blast radius and rollback stated before any write
+- [ ] Step 5: Result verified on the runtime (on failure, return to Step 2)
+```
 
 ### Step 1: Identify the appliance before anything else
 
@@ -221,7 +231,7 @@ The elevated shell opens the log and detaches the survey; inspect that log for e
 filesystem as clean. **`-type f` does not fix that**: `find` answers `-type` from the `d_type`
 that `readdir` already returned and skips the `stat` entirely. Use a predicate that needs inode
 data - `-size +0`, `-printf '%s\n'`, `-newer <ref>` - and let stderr through instead of
-discarding it, since the EIO lines are the finding.
+discarding it, since the EIO lines are the finding. If verification fails, return to Step 2.
 
 ---
 
@@ -254,8 +264,8 @@ beats purity. After that attempt, everything goes through the overlay.
    overlay and a mounted origin are mutually exclusive, so this is a branch point, not a step
    that stacks on top of step 3.
 6. **Read the GPL kernel source** for the nearest published release family when the cheap options
-   fail (the archive carries families such as `7.3-86009`, `7.2-72806`, `7.1.1-42962`, not every
-   build; 7.4 has no drop yet):
+   fail (the archive carries families such as `7.4-90080`, `7.3-86009`, `7.2-72806`, `7.1.1-42962`,
+   not every build; the full list is in `references/btrfs-recovery.md` section 8):
    `https://archive.synology.com/download/ToolChain/Synology%20NAS%20GPL%20Source/<VER>-<BUILD>/`
    Extract `fs/btrfs/` and read `ctree.h`, `disk-io.c`, `super.c`, `usrquota.c`. It converts a
    black box into a documented system, and twenty minutes there beats hours of probing.
@@ -359,26 +369,16 @@ See `references/output-contract.md` for the full contract.
 
 ## Rules
 
-1. **Identify the DSM version and platform before advising anything.** Behavior differs across
-   DSM 6, 7.1, 7.2, 7.3, and 7.4.
-2. **No repair without an overlay.** Any operation that can write to a damaged volume runs
-   against a dm-snapshot overlay first.
-3. **Never `--init-extent-tree`, never `clear_cache` on a damaged volume.** Both destroy volumes,
-   and the `clear_cache` ban is unconditional.
-4. **Read Synology's GPL kernel source for the exact build before deep recovery work when it is
+The hard refusals above are rules too; this list adds the constraints they do not cover.
+
+1. **Read Synology's GPL kernel source for the exact build before deep recovery work when it is
    published.** If no exact drop exists, the closest lower published release family may guide
    read-only investigation only; treat every constant and behavior as provisional, do not use it
    to justify a write or repair, and stop for the exact source or recovery-lab advice when it
    disagrees with observed DSM behavior.
-5. **Treat mainline-tool corruption reports as unverified.** Synology's private root flags and
+2. **Treat mainline-tool corruption reports as unverified.** Synology's private root flags and
    trees are rejected by mainline's tree-checker. Confirm damage against the DSM kernel's own
    behavior before acting on a stock-tool verdict.
-6. **Damage surveys need an inode-reading predicate.** `find` bare or with `-type f` reads no
-   inodes and reports a corrupt volume as clean. Use `-size +0` or `-printf '%s\n'`.
-7. **Confirm before destructive or outward-facing actions**: RAID repair, volume delete, disk
-   removal, package uninstall, DSM update, reboot of a production unit.
-8. **Detach long-running jobs.** `setsid nohup ... < /dev/null &`, with the logic in a script
-   file so `pkill -f` patterns cannot match your own command line.
-9. **Suspect the diagnostic first when it returns nothing.** Empty output on a damaged system is
+3. **Suspect the diagnostic first when it returns nothing.** Empty output on a damaged system is
    usually a broken check, not a clean result.
-10. **Snapshots are not backups.** Verify a restore path off the unit before touching storage.
+4. **Snapshots are not backups.** Verify a restore path off the unit before touching storage.

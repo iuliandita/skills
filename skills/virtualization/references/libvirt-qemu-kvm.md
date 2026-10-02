@@ -14,6 +14,7 @@ with raw KVM on Linux hosts, OpenStack compute nodes, or custom virtualization s
 5. Disk Formats and Management
 6. Networking
 7. CPU Features and Topology
+8. libvirt/QEMU Quick Start
 
 ---
 
@@ -439,3 +440,37 @@ virt-install --name myvm --memory 2048 --vcpus 2 \
   --os-variant debian12 \
   --noautoconsole
 ```
+
+---
+
+## 8. libvirt/QEMU Quick Start
+
+For libvirt/KVM without Proxmox, the fastest path to a running VM:
+
+```bash
+# Download a Debian cloud image and resize it
+wget -O /var/lib/libvirt/images/myvm.qcow2 \
+  https://cloud.debian.org/images/cloud/bookworm/latest/debian-12-generic-amd64.qcow2
+qemu-img resize /var/lib/libvirt/images/myvm.qcow2 20G
+
+# Boot from the cloud image with cloud-init
+virt-install --name myvm --ram 2048 --vcpus 2 --cpu host \
+  --disk path=/var/lib/libvirt/images/myvm.qcow2,bus=virtio \
+  --network network=default,model=virtio \
+  --cloud-init user-data=user-data.yaml,meta-data=meta-data.yaml \
+  --import --os-variant debian12 --noautoconsole
+```
+
+Build the cloud-init ISO with `cloud-localds cidata.iso user-data.yaml meta-data.yaml` and attach
+it as a second disk, or use the `--cloud-init` flag shown above (virt-install 4.0+).
+
+**Reusable template pattern:** keep the downloaded cloud image as a read-only golden image
+(`/var/lib/libvirt/images/debian-13-template.qcow2`) and create each VM disk as a qcow2
+overlay backed by it - `qemu-img create -f qcow2 -b debian-13-template.qcow2 -F qcow2
+myvm.qcow2`. Overlays only store per-VM changes and boot in seconds. Regenerate the base
+when you need a new OS minor. Validate first boot with `cloud-init status --wait` inside
+the guest. Never set `password:` or `chpasswd:` with plaintext values in user-data - use
+`ssh_authorized_keys` and rely on `lock_passwd: true` (the cloud-image default).
+
+`virsh list --all` to confirm state; `virsh console myvm` to attach. Full XML domain definitions,
+network and storage pool management, and virsh lifecycle commands are in the sections above.

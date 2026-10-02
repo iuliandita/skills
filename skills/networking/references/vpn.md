@@ -269,7 +269,7 @@ pools {
 secrets {
   eap-user1 {
     id = user1
-    secret = "strong-password-here"
+    secret = "<EAP_USER1_SECRET>"    # render from a protected secret file; never commit it
   }
 }
 ```

@@ -46,8 +46,9 @@ before selecting a firmware image; CE, Plus, and Business Edition have separate 
 
 Before returning any firewall commands, verify:
 
-- [ ] Platform confirmed (OPNsense vs pfSense) - commands differ between them
-- [ ] No commands that could lock out SSH or management access
+- [ ] Platform and version confirmed (OPNsense vs pfSense, appliance and plugin versions) -
+  commands differ between them
+- [ ] No commands that could lock out SSH or management access; rollback path stated
 - [ ] Config backup taken (or reminded) before destructive changes
 - [ ] `pfctl` rules tested with `-n` (dry run) before applying
 - [ ] Service names correct for the target platform (`configctl` vs `service`)
@@ -62,8 +63,6 @@ Before returning any firewall commands, verify:
   drops from the client side
 - [ ] VLAN interface assigned before adding rules - unassigned VLANs pass no traffic through
   the firewall even if the trunk is tagged correctly
-- [ ] **Platform/version checked**: OPNsense, pfSense, FreeBSD, pf, and plugin commands match the appliance version
-- [ ] **Lockout path prevented**: remote firewall changes preserve management access and rollback
 - [ ] Cross-cutting agent hygiene applied - see `references/agent-hygiene.md`
 
 ---
@@ -74,17 +73,23 @@ Before returning any firewall commands, verify:
 - Use aliases/tables for large address sets instead of expanding repetitive rules.
 - Check state table, DNSBL, IDS/IPS, and plugin load before blaming WAN latency.
 
-
 ---
 
 ## Best Practices
 
-- Export configuration before rule, NAT, VPN, CARP, or package changes.
 - Make HA changes one node at a time and verify CARP state before touching the peer.
 - Keep emergency console or out-of-band access available for management-plane changes.
 
-
 ## Workflow
+
+For any change (skip for read-only diagnostics), copy this checklist and track progress:
+
+```markdown
+- [ ] Step 1: Platform and target device confirmed
+- [ ] Step 2: Config backup taken and copied off-box
+- [ ] Step 3: Change dry-run (`pfctl -n`), blast radius stated, then applied
+- [ ] Step 4: Verified (on failure: revert, confirm healthy, return to Step 3)
+```
 
 ### Step 1: Detect platform
 
@@ -220,10 +225,7 @@ config system, REST API, IPv6 gotchas, SOPs, and recovery procedures.
 
 ## Operations and Common Tasks
 
-- Identify the target device explicitly before changing anything.
-- Back up config before risky changes or upgrades.
 - Check plugin or package layers early because they often explain traffic behavior that looks like a firewall-rule problem.
-- Treat firmware, plugin, backup, and HA work as operational procedures, not casual single commands.
 - Use `references/plugins.md` for plugin specifics and `references/hardening.md` for hardening and CARP guidance.
 
 ---
@@ -270,8 +272,6 @@ These exist because bricking a firewall remotely means driving to wherever it is
   and may require physical console access if something goes wrong.
 - **Always** confirm destructive changes: rule deletions, service disables, plugin removals,
   state table flushes (`pfctl -Fa`).
-- **Estimate blast radius**: if a change could cause network disruption beyond the target device,
-  warn the user with specifics (e.g., "this will drop all VPN tunnels for ~30s").
 - **OPNsense CrowdSec**: don't delete decisions or bouncers without understanding why they exist.
   A ban that looks wrong might be catching a real attack.
 - **pfSense pfBlockerNG**: don't disable feed lists without understanding what they block.
