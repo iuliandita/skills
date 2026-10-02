@@ -50,7 +50,7 @@ Watch for processes running as root (UID=0) that execute scripts or binaries you
 ### Linux Exploit Suggester
 
 ```bash
-curl -L https://raw.githubusercontent.com/mzet-/linux-exploit-suggester/master/linux-exploit-suggester.sh -o /tmp/les.sh
+curl -L https://raw.githubusercontent.com/The-Z-Labs/linux-exploit-suggester/master/linux-exploit-suggester.sh -o /tmp/les.sh
 chmod +x /tmp/les.sh && /tmp/les.sh
 ```
 

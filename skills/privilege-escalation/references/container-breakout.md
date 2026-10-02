@@ -220,6 +220,8 @@ Not technically a "container escape" but commonly found during Linux privesc enu
 | CVE | Component | Impact | Versions Affected |
 |-----|-----------|--------|-------------------|
 | CVE-2024-21626 | runc (Leaky Vessels) | Container escape via leaked fd to host | runc >= 1.0.0-rc93 and <= 1.1.11 |
+| CVE-2025-52565 | runc | Container escape via `/dev/console` mount and related races | runc <= 1.2.7, <= 1.3.2, or <= 1.4.0-rc.2 |
+| CVE-2025-52881 | runc | Container escape and DoS via arbitrary write gadgets and procfs write redirects | runc <= 1.2.7, <= 1.3.2, or <= 1.4.0-rc.2 |
 | CVE-2025-31133 | runc | Masked-path mount race permits host file writes | runc <= 1.2.7, <= 1.3.2, or <= 1.4.0-rc.2 |
 | CVE-2026-41579 | runc | Malicious `/dev` symlink can modify limited host paths | runc <= 1.3.5, <= 1.4.2, or <= 1.5.0-rc.2 |
 | CVE-2024-23651 | BuildKit | Race condition in mount cache | BuildKit < 0.12.5 |
@@ -229,9 +231,11 @@ Not technically a "container escape" but commonly found during Linux privesc enu
 | CVE-2024-24557 | Docker/Moby | Build cache poisoning | Docker < 25.0.2 |
 | CVE-2022-0492 | Linux kernel | cgroup v1 release_agent escape | kernel < 5.17 |
 
-Version ranges verified September 2026 against the upstream runc advisories for
+Version ranges verified October 2026 against the upstream runc advisories for
 [CVE-2024-21626](https://github.com/opencontainers/runc/security/advisories/GHSA-xr7r-f8xq-vfvv),
-[CVE-2025-31133](https://github.com/opencontainers/runc/security/advisories/GHSA-9493-h29p-rfm2), and
+[CVE-2025-31133](https://github.com/opencontainers/runc/security/advisories/GHSA-9493-h29p-rfm2),
+[CVE-2025-52565](https://github.com/opencontainers/runc/security/advisories/GHSA-qw9x-cqr3-wc7r),
+[CVE-2025-52881](https://github.com/opencontainers/runc/security/advisories/GHSA-cgrx-mc8f-2prm), and
 [CVE-2026-41579](https://github.com/opencontainers/runc/security/advisories/GHSA-xjvp-4fhw-gc47).
 Use the advisory ranges rather than comparing only the newest release line.
 
