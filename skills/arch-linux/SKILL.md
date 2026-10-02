@@ -17,7 +17,7 @@ Administer Arch Linux and Arch-style systems without falling into rolling-releas
 Focus on vanilla Arch first, then layer in CachyOS behavior, `paru` workflow, systemd-native
 service management, boot recovery, kernel handling, and derivative-specific cautions.
 
-**Versions worth pinning** (September 2026):
+**Versions worth pinning** (October 2026):
 
 Only pin versions here when they materially affect compatibility or troubleshooting shape. For
 ordinary rolling packages, prefer the current repo state over stale version tables.
@@ -26,16 +26,16 @@ are repository-specific. Check the enabled Arch or CachyOS repository before com
 
 | Component | Version | Why it matters |
 |-----------|---------|----------------|
-| systemd | 261.2 | boot and session behavior |
-| mkinitcpio | 41.1 | initramfs pipeline changed enough to matter |
-| dracut | 111 | alternative initramfs pipeline with different expectations |
+| systemd | 262 | boot and session behavior |
+| mkinitcpio | 42.2 | initramfs pipeline changed enough to matter |
+| dracut | 111 (Arch; upstream 112) | alternative initramfs pipeline with different expectations |
 | linux-cachyos | verify enabled CachyOS repo | kernel and module compatibility |
 | linux-cachyos-eevdf | verify enabled CachyOS repo | alternate kernel lane with different behavior surface |
 | Hyprland | 0.56.2 | old 0.4x and early 0.5x guidance is frequently stale here |
 | xdg-desktop-portal-hyprland | 1.4.1 | Wayland portal behavior depends on this layer |
-| PipeWire | 1.6.8 | audio and capture stack anchor |
-| WirePlumber | 0.5.17 (Arch; check derivative repo) | policy layer paired with PipeWire behavior |
-| nvidia-utils | 610.57.04 | driver branch matters for gaming and Wayland breakage |
+| PipeWire | 1.6.9 | audio and capture stack anchor |
+| WirePlumber | 0.5.18 (Arch; check derivative repo) | policy layer paired with PipeWire behavior |
+| nvidia-utils | 615.71.09 | driver branch matters for gaming and Wayland breakage |
 
 ## When to use
 

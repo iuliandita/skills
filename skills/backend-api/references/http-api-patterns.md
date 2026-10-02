@@ -73,7 +73,7 @@ Do not cut a new version for:
 
 ## OpenAPI Version Choice
 
-The current OpenAPI Specification is `3.2.0`, but many framework-integrated docs and Swagger
+The current OpenAPI Specification is `3.2.1`, but many framework-integrated docs and Swagger
 toolchains still target `3.1.x` most comfortably.
 
 Practical rule:

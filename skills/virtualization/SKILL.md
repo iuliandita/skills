@@ -18,24 +18,24 @@ setups to multi-node clusters with HA, live migration, and GPU passthrough. The 
 production-ready VM infrastructure with correct storage, memory, and CPU config that won't
 bite you at 3 AM.
 
-**Target versions** (September 2026; verification exceptions marked below):
+**Target versions** (October 2026):
 
 | Tool | Version | Release date | Notes |
 |------|---------|-------------|-------|
 | Proxmox VE | 9.2 | May 2026 | Current production lane; review upgrade notes from 9.1 |
 | Proxmox Backup Server | 4.2 | Apr 2026 | Dedup, incremental, prune policies |
-| bpg/proxmox (Terraform) | 0.114.0 | Sep 2026 | Primary Proxmox IaC provider |
-| QEMU | 11.1.1 | Sep 2026 | Stable 11.1 maintenance release |
-| libvirt | 12.7.0 | Sep 2026 | Hypervisor abstraction layer |
+| bpg/proxmox (Terraform) | 0.115.0 | Oct 2026 | Primary Proxmox IaC provider |
+| QEMU | 11.1.2 | Sep 2026 | Stable 11.1 maintenance release |
+| libvirt | 12.8.0 | Oct 2026 | Hypervisor abstraction layer |
 | XCP-ng | 8.3 LTS | Oct 2024 | Xen-based, LTS since Jun 2025, EOL Nov 2028 |
-| VMware ESXi | 8.0 U3k (25595708) | Jul 2026 | Security floor for the 8.0 U3 lane; check the appliance lane |
-| VirtualBox | 7.2.14 (retained, unverified) | Unverified | Verify the current publisher release before targeting this pin |
+| VMware ESXi | 8.0 U3k (25595708) | Jul 2026 | Security floor for the 8.0 U3 lane (build number unverified October 2026); check the appliance lane |
+| VirtualBox | 7.2.20 | Sep 2026 | Current 7.2 maintenance release |
 | Packer | 1.16.1 | Sep 2026 | Image builder, multi-platform |
-| cloud-init | 26.2 | Aug 2026 | Instance initialization standard |
+| cloud-init | 26.2 | Jul 2026 | Instance initialization standard |
 
 Security recheck (2026-09-10): [VMSA-2026-0006](https://brcm.tech/vmsa-2026-0006)
-addresses critical CVE-2026-47876 in ESX. The 8.0 fixed builds are
-ESXi80U3k-25595708 or ESXi80U2f-25626445; select the matching update lane.
+addresses critical CVE-2026-47876 (ESX VMXNET3 VM escape, CVSS 9.3). The 8.0 fixed builds are
+ESXi80U3k-25595708 or ESXi80U2f-25626445 (build numbers unverified October 2026: the Broadcom advisory is not fetchable); select the matching update lane.
 The advisory also covers critical vCenter CVE-2026-59309/CVE-2026-59310;
 patch vCenter separately using its response matrix. ESX/vCenter 7.0 require
 Broadcom extended-support guidance rather than assuming an 8.0 patch applies.
