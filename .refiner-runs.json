@@ -6702,8 +6702,8 @@
  "iterations": 1,
  "termination": "single authoring-rules pass over every active non-meta, non-offensive skill at user request; not threshold-targeted",
  "review_flags": {
-  "minor": 14,
-  "major": 11
+  "minor": 15,
+  "major": 14
  },
  "control_failures": [
   "Not a scored refiner run: AI Self-Check component not graded and no composites computed; behavioral graded once (k=1) for 8 of 39 skills instead of min-of-3 for all.",
