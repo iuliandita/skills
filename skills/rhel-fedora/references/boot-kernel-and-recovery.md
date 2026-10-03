@@ -62,7 +62,7 @@ sudo dnf remove kernel-core-<old-version>
   sudo mount /dev/<esp> /mnt/boot/efi       # EFI systems
   for d in /dev /dev/pts /proc /sys /run; do sudo mount --bind "$d" "/mnt$d"; done
   sudo chroot /mnt
-  # inside: rpm -q kernel-core; TARGET_KVER='<version from that list>'; ls /lib/modules/"$TARGET_KVER" && dracut -f --kver "$TARGET_KVER"; grubby --info=ALL
+  # inside: rpm -q --qf '%{VERSION}-%{RELEASE}.%{ARCH}\n' kernel-core; TARGET_KVER='<one line from that list>'; ls /lib/modules/"$TARGET_KVER" && dracut -f --kver "$TARGET_KVER"; grubby --info=ALL
   ```
 
 - Verify the initramfs and boot entry for the exact kernel you expect.

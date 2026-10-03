@@ -23,7 +23,7 @@ Security hardening, vulnerability management, supply chain integrity, and PCI-DS
 | CVE-2025-9074 | 9.3 | Docker Desktop | Container escape via unauthenticated Engine API (192.168.65.7:2375) | Desktop 4.44.3+ |
 | CVE-2025-31133 | High | runc | Container escape via /dev/null symlink race | runc 1.2.8, 1.3.3, 1.4.0-rc.3 |
 | CVE-2025-52565 | High | runc | Container escape via /dev/console mount race | runc 1.2.8, 1.3.3, 1.4.0-rc.3 |
-| CVE-2025-52881 | High | runc | Host procfs writes via /proc redirect (DoS/escape) | runc 1.2.8, 1.3.3, 1.4.0-rc.3 |
+| CVE-2025-52881 | High | runc | procfs write redirect bypasses LSM relabel; host procfs writes (DoS/escape) | runc 1.2.8, 1.3.3, 1.4.0-rc.3 |
 | CVE-2026-33634 | Critical | Trivy | Supply chain - credential-stealing malware in aquasec/trivy Docker Hub images v0.69.4-6 | Trivy v0.74.0+ for new pins; v0.69.3 only as rollback |
 | CVE-2026-2664 | Medium | Docker Desktop | gRPC-FUSE kernel module out-of-bounds read | Desktop 4.62.0+ |
 | CVE-2025-13743 | Low | Docker Desktop | Expired Hub PATs leaked in diagnostic bundles via error object serialization | Desktop 4.54.0+ |

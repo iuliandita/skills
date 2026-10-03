@@ -144,14 +144,18 @@ Default tool: `reflector` on Arch, `cachyos-rate-mirrors` on CachyOS (it ranks b
 `mirrorlist` and the Cachy mirrorlists, so do not run reflector there). Back up the list first,
 then force a full refresh so the new mirrors are actually used:
 
+CachyOS:
+
 ```bash
-# CachyOS
 sudo cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.bak
 sudo cp /etc/pacman.d/cachyos-mirrorlist /etc/pacman.d/cachyos-mirrorlist.bak
 sudo cachyos-rate-mirrors
 sudo pacman -Syyu
+```
 
-# Arch
+Arch:
+
+```bash
 command -v reflector >/dev/null || sudo pacman -S --needed reflector
 sudo cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.bak
 sudo reflector --latest 20 --protocol https --sort rate --save /etc/pacman.d/mirrorlist

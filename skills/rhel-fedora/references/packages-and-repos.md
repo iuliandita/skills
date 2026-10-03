@@ -104,9 +104,10 @@ Fedora, from a fully updated current release:
 
 ```bash
 sudo dnf upgrade --refresh
-# dnf5 has system-upgrade built in; the plugin is needed only on DNF4
-sudo dnf5 system-upgrade download --releasever=<target>
-sudo dnf5 system-upgrade reboot
+# dnf5 has system-upgrade built in; DNF4 needs the plugin
+if command -v dnf5 >/dev/null; then DNF=dnf5; else sudo dnf install dnf-plugin-system-upgrade; DNF=dnf; fi
+sudo "$DNF" system-upgrade download --releasever=<target>
+sudo "$DNF" system-upgrade reboot
 ```
 
 RHEL major upgrades use Red Hat's `leapp` path; resolve every inhibitor before upgrading:
