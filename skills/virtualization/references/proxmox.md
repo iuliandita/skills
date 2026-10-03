@@ -474,27 +474,20 @@ variable "hostpci" {
   shutdown. The device becomes unusable until the host reboots. Check the PVE community
   wiki for your specific GPU model.
 
-### GPU / PCI Passthrough Quick Reference
+### Windows 11 + NVIDIA desktop GPU (Proxmox VE 9.x)
 
-The minimum viable path for a Windows 11 + NVIDIA desktop GPU on Proxmox VE 9.x:
+Follow the steps above (IOMMU groups, vfio-pci binding, hardware mapping), plus:
 
-1. **Host prereqs.** Enable VT-d / AMD-Vi in BIOS. Add `intel_iommu=on` (or `amd_iommu=on`)
-   plus `iommu=pt` to the kernel command line (`/etc/kernel/cmdline` on PVE with systemd-boot,
-   `/etc/default/grub` on legacy). Run `proxmox-boot-tool refresh` (or `update-grub`) and reboot.
-2. **Bind to vfio-pci.** `lspci -nn | grep -i nvidia` to find vendor:device IDs, then:
-   `echo "options vfio-pci ids=10de:XXXX,10de:YYYY" > /etc/modprobe.d/vfio-pci.conf` (GPU +
-   its audio function). Blacklist `nouveau` and `nvidia`. `update-initramfs -u` and reboot.
-   Verify with `lspci -nnk | grep -A3 NVIDIA` - driver in use must be `vfio-pci`.
-3. **VM settings for Windows 11.** Machine type `q35`, BIOS `ovmf` (add an EFI disk), TPM v2.0
+1. **Kernel command line.** Add `iommu=pt` next to `intel_iommu=on` / `amd_iommu=on` in
+   `/etc/kernel/cmdline` (PVE with systemd-boot) or `/etc/default/grub` (legacy), then
+   `proxmox-boot-tool refresh` (or `update-grub`) and reboot. Single-GPU hosts need the early
+   vfio binding in initramfs or the host driver claims the card first.
+2. **VM settings for Windows 11.** Machine type `q35`, BIOS `ovmf` (add an EFI disk), TPM v2.0
    state disk, `cpu: host`, `hidden=1` to dodge NVIDIA's Code 43 on older drivers. Example:
    `qm set 100 --machine q35 --bios ovmf --cpu host,hidden=1 --efidisk0 local-lvm:1,format=raw`
-4. **Attach the GPU.** Prefer hardware mappings (PVE 8.1+) for migration safety:
-   `pvesh create /cluster/mapping/pci --id gpu-rtx4070 --map 'node=pve1,path=0000:01:00.0'`
-   then `qm set 100 --hostpci0 mapping=gpu-rtx4070,pcie=1,x-vga=1`. Legacy form:
-   `--hostpci0 01:00,pcie=1,x-vga=1`. Drop `x-vga` for compute-only passthrough.
-5. **Check IOMMU groups** with `find /sys/kernel/iommu_groups/ -type l | sort -V` before
-   anything else - every device in the target group gets passed through together. Single-GPU
-   hosts need early vfio binding (initramfs) or the host driver claims it first.
+3. **Attach the GPU** through its mapping: `qm set 100 --hostpci0 mapping=gpu-rtx4070,pcie=1,x-vga=1`.
+   Legacy form without a mapping: `--hostpci0 01:00,pcie=1,x-vga=1`. Drop `x-vga` for
+   compute-only passthrough.
 
 **Reset bug:** NVIDIA consumer cards (including RTX 4070) usually reset cleanly, but verify
 with two successive VM restarts before production. AMD RX 5000/6000 series often need the

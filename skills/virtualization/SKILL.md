@@ -181,7 +181,7 @@ Follow the domain-specific reference file. Key principles:
 | Memory | `free -h` in guest matches expected (not balloon-reduced) |
 | Live migration | Test with `qm migrate <vmid> <target> --online` on non-critical VM first |
 
-`fio` is often missing in guests: `command -v fio >/dev/null || apt install fio` (Debian/Ubuntu).
+`fio` is often missing in guests: `command -v fio >/dev/null || echo "fio missing: sudo apt install fio (Debian/Ubuntu)"`.
 If any check fails, fix the config and return to Step 3; a hardware-level fix needs a fresh
 QEMU start, not a guest reboot.
 

@@ -268,7 +268,7 @@ Docs and versions get left behind. Address in two parts:
 
 **Refresh affected gitignored docs too.** Include relevant instruction and companion files when this branch changes their guidance. Keep private edits local. Do not sweep unrelated private automation or configuration; stage only reviewed public documentation.
 
-**Part 2 - Version-bump sites**. The detection script needs `jq` and `rg` (`command -v jq rg >/dev/null || echo "install jq and ripgrep"`). First read the current version from the primary source (see `references/version-bump-sites.md` for the detection script - it checks `package.json`, `pyproject.toml`, `Cargo.toml`, then falls back to the latest semver tag). If no primary source exists, ask the user what the current version is before proceeding.
+**Part 2 - Version-bump sites**. The detection script needs `jq` and `rg` (`for t in jq rg; do command -v "$t" >/dev/null || echo "missing: $t"; done`). First read the current version from the primary source (see `references/version-bump-sites.md` for the detection script - it checks `package.json`, `pyproject.toml`, `Cargo.toml`, then falls back to the latest semver tag). If no primary source exists, ask the user what the current version is before proceeding.
 
 Then find and update version strings. Common sites:
 

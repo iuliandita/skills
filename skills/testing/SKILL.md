@@ -293,7 +293,7 @@ Don't run load tests against production without explicit approval. Don't run the
 - **Playwright**: `--shard=1/4` for splitting across CI runners. `--workers=4` for parallel within a runner.
 - **pytest**: `pytest-xdist` with `-n auto` for CPU-based parallelism.
 - **Go**: `go test -parallel N` per package, `-p N` for package-level parallelism.
-- **Rust**: `cargo nextest run` for per-test process isolation and parallelism (`cargo nextest --version >/dev/null 2>&1 || cargo install cargo-nextest`).
+- **Rust**: `cargo nextest run` for per-test process isolation and parallelism (`cargo nextest --version >/dev/null 2>&1 || echo "cargo-nextest missing: cargo install cargo-nextest"`).
 
 ### Flaky test management
 

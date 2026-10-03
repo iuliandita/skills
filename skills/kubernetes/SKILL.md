@@ -355,7 +355,7 @@ Promotion: dev -> staging -> prod via PR-based promotion. No auto-sync to prod.
 3. **Admission control**: ValidatingAdmissionPolicy (CEL, native since 1.30) for standard policies; Kyverno for mutation/generation; OPA Gatekeeper for cross-platform orgs
 4. **Network policies**: default-deny ingress/egress per namespace; Cilium for L7 policies
 5. **RBAC**: namespace-scoped roles, no cluster-admin for apps, OIDC auth with MFA
-6. **Supply chain**: cosign/Sigstore for image signing, SLSA Level 2-3, SBOMs. **Pin all CI actions and tools to commit SHAs** - the Trivy supply chain compromise (March 2026, CVE-2026-33634) proved mutable tags can be force-pushed with malware. Read `references/architecture.md` (Supply chain integrity) for the Trivy takeaways, safe versions, and secret-rotation window.
+6. **Supply chain**: cosign/Sigstore for image signing, SLSA Level 2-3, SBOMs. **Pin all CI actions and tools to commit SHAs** - the Trivy supply chain compromise (March 2026, CVE-2026-33634) proved mutable tags can be force-pushed with malware. Read `references/architecture.md` (CI/CD Supply Chain Hardening) for the Trivy takeaways, safe versions, and secret-rotation window.
 7. **Secrets**: External Secrets Operator + cloud KMS (primary); Vault for dynamic secrets/PKI; Sealed Secrets for encrypted-in-git without external deps (see `references/sealed-secrets.md`); SOPS for small teams
 8. **Runtime security**: Falco for detection (CNCF Graduated), Tetragon for eBPF enforcement (<1% overhead)
 
