@@ -13,7 +13,7 @@ metadata:
 
 # Databases: Production Configuration & Operations
 
-Configure, tune, design schemas, migrate, back up, and review database engines - from single-node dev setups to PCI-compliant production clusters. The goal is correct, performant, durable databases that survive failures, pass audits, and don't wake you up at 3am.
+Configure, tune, design schemas, migrate, back up, and review database engines - from single-node dev setups to PCI-compliant production clusters. The goal is correct, performant, durable databases that survive failures and pass audits.
 
 **Target versions** (October 2026):
 - PostgreSQL **18.6** (EOL 2030-11; August 13, 2026 release), back-branches: 17.11, 16.15, 15.19, 14.24; PostgreSQL 19 Beta 4 is for testing only
@@ -101,7 +101,7 @@ AI tools consistently produce the same database mistakes. **Before returning any
 - [ ] Bulk inserts are chunked - never pass an unbounded array into a single `INSERT ... VALUES` statement
 - [ ] Chunk size computed as `floor(max_host_parameters / columns_per_row)`, where host-parameter limits are: PostgreSQL 65,535, MySQL 65,535, SQLite 32,766 (default `SQLITE_MAX_VARIABLE_NUMBER`), MSSQL 2,100
 - [ ] When the app targets multiple backends, chunk size uses the lowest limit across all supported engines
-- [ ] Chunked writes stay inside one transaction when replace-all semantics are required (DELETE + INSERT pattern)
+- [ ] Chunked writes stay inside one transaction when atomicity matters (always for replace-all DELETE + INSERT); otherwise make each chunk idempotent so a failed run can resume.
 - [ ] Tests assert that multiple insert calls fire when row count crosses the safe chunk threshold
 
 ### General
@@ -116,22 +116,12 @@ AI tools consistently produce the same database mistakes. **Before returning any
 
 ---
 
-## Performance
-
-- Use `EXPLAIN`/`EXPLAIN ANALYZE` with realistic parameters before adding indexes.
-- Tune connection pools to database capacity; more app connections can reduce throughput.
-- Batch writes and migrations in bounded chunks to avoid lock escalation, replication lag, and runaway transactions.
-
----
-
 ## Best Practices
 
-- Take restorable backups before schema changes and verify restore procedures periodically.
 - Run restore drills in an isolated destination; verify application reads/writes, consistency,
   encryption-key access, and PITR boundary. Measure elapsed recovery and data loss against
   RTO/RPO, then record the source backup, checks, and cleanup without overwriting live data.
 - Separate online, background, and analytical workloads where query shape or latency differs.
-- Prefer additive migrations with backfills and compatibility windows for zero-downtime services.
 
 ## Workflow
 
@@ -164,7 +154,7 @@ Follow the domain-specific section below. Always apply the production checklist 
 **Common operations - quick-start patterns:**
 
 **Query optimization** (the most frequent request):
-1. Get the plan: `EXPLAIN (ANALYZE, BUFFERS, FORMAT TEXT) SELECT ...;` (PG), `EXPLAIN FORMAT=TREE ...;` (MySQL 8.0+), `db.collection.explain('executionStats').find(...)` (MongoDB).
+1. Get the plan with realistic parameters: `EXPLAIN (ANALYZE, BUFFERS, FORMAT TEXT) SELECT ...;` (PG), `EXPLAIN FORMAT=TREE ...;` (MySQL 8.0+), `db.collection.explain('executionStats').find(...)` (MongoDB).
 2. Look for: `Seq Scan` on large tables (PG) / `Full Table Scan` (MySQL) / `COLLSCAN` (MongoDB), `Nested Loop` with high row estimates, `Sort` spilling to disk (`Sort Method: external merge`), and `Rows Removed by Filter` >> `Rows` returned.
 2a. Before assuming an index problem, verify semantic correctness: check JOIN conditions for column mismatches, confirm WHERE clause predicates don't unintentionally filter nulls, and verify LEFT JOIN semantics aren't silently converted to INNER JOIN by outer-table filters.
 3. Check index usage: `SELECT schemaname, relname, idx_scan, seq_scan FROM pg_stat_user_tables WHERE seq_scan > 100 ORDER BY seq_scan DESC;` (PG; adjust `schemaname = 'public'` filter for non-public schemas) or `SELECT * FROM sys.schema_unused_indexes;` (MySQL performance_schema).
@@ -192,9 +182,26 @@ Follow the domain-specific section below. Always apply the production checklist 
 4. Test the selected recovery path against representative populated data; do not require a lossy down migration.
 5. Run during low-traffic window if the operation takes locks (even brief ones).
 
+**Destructive or production-changing operations** (production DDL, `DROP`/`TRUNCATE`, restores
+using `--clean`, `--drop`, or a replaced data directory, failover, backend termination) follow
+plan-validate-execute. Copy and track:
+
+- [ ] Target confirmed: run the identity query on the exact connection you will use and show it
+- [ ] Backup confirmed: a restorable backup of the target exists; record its ID or path
+- [ ] Plan written: exact command, expected effect, lock/runtime estimate, recovery path (DDL: safety check done)
+- [ ] Rehearsed: tool dry run (pt-osc `--dry-run`, gh-ost without `--execute`) or the operation on a non-prod copy; for restores, restore into a scratch instance (`pg_restore --list` only inspects archive contents and is not a rehearsal; see `references/backup-patterns.md` Backup Verification)
+- [ ] Approved: the user explicitly approved that exact command text and target
+- [ ] Executed unchanged: no added flags, no retargeting; then validate (Step 4)
+
+Identity queries: PG `SELECT current_database(), inet_server_addr(), pg_is_in_recovery();`,
+MySQL/MariaDB `SELECT @@hostname, DATABASE(), @@read_only;`, MSSQL `SELECT @@SERVERNAME, DB_NAME();`,
+MongoDB `db.getName()` plus `db.hello().isWritablePrimary`.
+
 ### Step 4: Validate
 
-If a check fails, fix the config, query, or migration and rerun the check before proceeding.
+Detect the client first (`command -v psql mongosh mysql sqlcmd`); a missing client is a gap to
+report, not a passed check. If a check fails, fix the config, query, or migration and return to
+Step 3. After a failed destructive operation, stop and re-plan; never improvise a second one.
 
 ```bash
 # PostgreSQL
@@ -228,9 +235,6 @@ sqlcmd -Q "DBCC CHECKDB ('dbname') WITH NO_INFOMSGS;"  # integrity check
 - **MSSQL**: memory limits, TempDB layout, Query Store, and backup or restore discipline
 - **Redis/Valkey**: cache-versus-durable-data classification, memory/eviction safety, persistence,
   replication, ACL/TLS, and stream consumer recovery. Read `references/redis-valkey.md`.
-
-Read `references/config-templates.md` for copy-pasteable engine configs and `references/backup-patterns.md`
-for recovery specifics.
 
 ---
 
@@ -280,7 +284,6 @@ Read `references/migration-patterns.md` for cross-engine type mapping, ORM migra
 
 ## Pooling, Backup, and Platform Choice
 
-- PostgreSQL pooling is usually non-negotiable; use PgBouncer unless a concrete reason says otherwise.
 - Backup discipline means restore testing, encryption, retention limits, and monitoring backup freshness.
 - Managed databases reduce toil but do not remove shared-responsibility or compliance review.
 - Self-hosted databases buy control at the cost of HA, patching, and operational burden.
@@ -371,10 +374,10 @@ Read `references/migration-patterns.md` for cross-engine type mapping, ORM migra
 
 ## Reference Files
 
-- `references/config-templates.md` - engine configuration templates
-- `references/backup-patterns.md` - backup, restore, and PITR patterns
-- `references/migration-patterns.md` - cross-engine migration patterns and type-mapping guidance
-- `references/redis-valkey.md` - Redis/Valkey data, memory, persistence, replication, and stream safeguards
+- `references/config-templates.md` - read when writing engine, pg_hba, role, or PgBouncer config
+- `references/backup-patterns.md` - read before any backup, restore, PITR, or retention change
+- `references/migration-patterns.md` - read for cross-engine moves, type mapping, ORM tooling, or large-table DDL
+- `references/redis-valkey.md` - read whenever Redis or Valkey holds data, sessions, or streams
 
 ---
 
@@ -405,20 +408,14 @@ See `references/output-contract.md` for the full contract.
 
 ## Rules
 
-These are non-negotiable. Violating any of these is a bug.
-
 1. **Backups without restore tests are not backups.** Test restores monthly. Document the procedure.
 2. **No `trust` auth in `pg_hba.conf`.** Not in dev, not in Docker, not anywhere. Use `scram-sha-256`.
-3. **MySQL strict mode ON.** `STRICT_TRANS_TABLES` prevents silent data truncation. Without it, MySQL silently corrupts your data.
-4. **TLS enforced, not just available.** `require_secure_transport`, `hostssl`, `requireTLS`. Connections without TLS are a finding.
-5. **Connection pooler for PostgreSQL.** PG's process-per-connection model doesn't scale without one. Use PgBouncer.
-6. **Indexes on foreign keys in PostgreSQL.** PG doesn't auto-create them. Missing FK indexes cause sequential scans on JOINs and cascading DELETEs.
-7. **`utf8mb4` for MySQL, always.** `utf8` is a lie - it's 3-byte only, can't store emoji or many CJK characters.
-8. **`timestamptz` for PostgreSQL, always.** Bare `timestamp` stores no timezone, breaks when server timezone changes.
-9. **Parameterized queries everywhere.** String concatenation for SQL is a bug, not a shortcut. Doubly true for AI-generated code.
-10. **Disk-level encryption is insufficient for PCI-DSS 4.0.** Req 3.5.1.2 requires TDE, column-level, or application-layer encryption.
-11. **Patch MongoBleed (CVE-2025-14847).** Self-hosted MongoDB < 8.0.17 / 7.0.28 / 6.0.27 is actively exploitable with no authentication required.
-12. **Patch MongoDB compression DoS (CVE-2026-25611).** Pre-auth DoS via crafted OP_COMPRESSED messages. Default config affected (compression enabled since 3.6). Fixed in 8.0.18+ / 8.2.4+ / 7.0.29+.
-13. **Patch PgBouncer.** PgBouncer < 1.25.1 (CVE-2025-12819) can allow unauthenticated SQL execution when `track_extra_parameters` includes `search_path` AND `auth_user` is set (both non-default). The May 2026 1.25.2 release adds further fixes (CVE-2026-6664/6665/6666/6667: integer overflow, SCRAM, null-deref, KILL_CLIENT authz). The September 2026 1.26.0 release fixes CVE-2026-19888 (unauthenticated crash via a SCRAM client-final-message without a nonce), CVE-2026-6668 (pre-auth hang from packet buffer overflow at default `max_packet_size`), and CVE-2026-6669 (unbounded server SCRAM iterations). Upgrade to 1.26.0+ - the fixes are low-risk.
-14. **Chunk bulk inserts.** Never build a single `INSERT ... VALUES` with an unbounded row list. Compute batch size from the lowest host-parameter ceiling across supported backends (`floor(limit / columns_per_row)`). Wrap chunks in one transaction when atomicity matters.
-15. **Run the AI self-check.** Every generated migration, schema, or config gets verified against the checklist above before returning.
+3. **Connection pooler for PostgreSQL.** PG's process-per-connection model doesn't scale without one. Use PgBouncer unless a concrete reason says otherwise.
+4. **Indexes on foreign keys in PostgreSQL.** PG doesn't auto-create them. Missing FK indexes cause sequential scans on JOINs and cascading DELETEs.
+5. **`utf8mb4` for MySQL, always.** `utf8` is a lie - it's 3-byte only, can't store emoji or many CJK characters.
+6. **`timestamptz` for PostgreSQL, always.** Bare `timestamp` stores no timezone, breaks when server timezone changes.
+7. **Disk-level encryption is insufficient for PCI-DSS 4.0.** Req 3.5.1.2 requires TDE, column-level, or application-layer encryption.
+8. **Patch MongoBleed (CVE-2025-14847).** Self-hosted MongoDB < 8.0.17 / 7.0.28 / 6.0.27 is actively exploitable with no authentication required.
+9. **Patch MongoDB compression DoS (CVE-2026-25611).** Pre-auth DoS via crafted OP_COMPRESSED messages. Default config affected (compression enabled since 3.6). Fixed in 8.0.18+ / 8.2.4+ / 7.0.29+.
+10. **Patch PgBouncer.** PgBouncer < 1.25.1 (CVE-2025-12819) can allow unauthenticated SQL execution when `track_extra_parameters` includes `search_path` AND `auth_user` is set (both non-default). The May 2026 1.25.2 release adds further fixes (CVE-2026-6664/6665/6666/6667: integer overflow, SCRAM, null-deref, KILL_CLIENT authz). The September 2026 1.26.0 release fixes CVE-2026-19888 (unauthenticated crash via a SCRAM client-final-message without a nonce), CVE-2026-6668 (pre-auth hang from packet buffer overflow at default `max_packet_size`), and CVE-2026-6669 (unbounded server SCRAM iterations). Upgrade to 1.26.0+ - the fixes are low-risk.
+11. **No destructive command without an approved exact command.** Drops, destructive restores, failovers, and backend terminations run only as the approved text against the confirmed target.

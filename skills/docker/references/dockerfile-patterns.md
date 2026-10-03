@@ -1,6 +1,6 @@
 # Dockerfile Patterns & Templates
 
-Production-ready templates with multi-stage builds, non-root users, health checks, and BuildKit features. Updated for Docker Engine 29.x / BuildKit 0.28.
+Production-ready templates with multi-stage builds, non-root users, health checks, and BuildKit features. Updated for Docker Engine 29.x / BuildKit 0.33.1.
 
 ## Contents
 

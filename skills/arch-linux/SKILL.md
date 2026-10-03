@@ -3,7 +3,7 @@ name: arch-linux
 description: >
   Administer Arch Linux, CachyOS, EndeavourOS, and Manjaro: pacman, AUR, upgrades, boot, GPU, and desktop issues.
 license: MIT
-compatibility: Requires Arch Linux, CachyOS, or Arch-based distro with pacman
+compatibility: "Requires Arch Linux, CachyOS, or an Arch-based distro with pacman. Optional: paru, pacman-contrib (pacdiff, paccache), reflector, sbctl, snapper"
 metadata:
   source: iuliandita/skills
   date_added: "2026-03-26"
@@ -74,8 +74,8 @@ Before returning Arch or CachyOS commands, verify:
 - [ ] **No partial upgrades**: do not suggest `pacman -Sy <pkg>` on Arch-style systems. Use a full upgrade path or stop.
 - [ ] **Distro identified first**: Arch, CachyOS, EndeavourOS, and Manjaro are not interchangeable once repos diverge.
 - [ ] **Boot stack identified**: know the bootloader, ESP mountpoint, kernel package, and initramfs generator before changing kernel or boot files.
-- [ ] **Fallback path exists**: do not remove or replace the only known-good kernel or boot entry on a remote system.
-- [ ] **AUR trust boundary respected**: review `PKGBUILD` and related files before building. Treat `paru` as convenience, not as proof of safety.
+- [ ] **Fallback path exists**: do not remove or replace the only known-good kernel or boot entry, especially on a remote or encrypted system.
+- [ ] **AUR trust boundary respected**: review `PKGBUILD`, install scripts, and maintainer changes before building. Treat `paru` as convenience, not as proof of safety.
 - [ ] **systemd scope is correct**: distinguish system units from user units and use `systemctl --user` only when appropriate.
 - [ ] **Wayland stack is coherent**: compositor, portal backend, Xwayland compatibility, and user-session services line up.
 - [ ] **Session startup path is identified**: display manager, greeter, or TTY launch path is known before debugging environment propagation or autostart.
@@ -93,26 +93,19 @@ Before returning Arch or CachyOS commands, verify:
 - [ ] **Snapshots are not backups**: on Btrfs systems, snapshots help with rollback but do not replace real backups.
 - [ ] **Conflicting files use exact path**: `--overwrite` uses the verified package-archive path without its leading `/`, never a blanket `'*'` glob
 - [ ] **Mirror and repo state checked**: package advice matches current Arch/CachyOS repos and local mirror sync status
-- [ ] **AUR trust handled**: PKGBUILDs, install scripts, and maintainer changes are reviewed before build/install
 - [ ] Cross-cutting agent hygiene applied - see `references/agent-hygiene.md`
 
 ---
 
-## Performance
-
-- Use `pacman -Syu` before large installs to avoid partial-upgrade churn and repeated dependency resolution.
-- Keep package cache cleanup deliberate; retain at least one known-good package version when rollback may matter.
-- For slow mirrors, rank mirrors before troubleshooting package-manager performance.
-
-
-## Best Practices
-
-- Never recommend partial upgrades on Arch-family systems.
-- Snapshot or otherwise preserve rollback paths before kernel, bootloader, filesystem, or GPU driver changes.
-- Read pacman hooks and `.pacnew` files after major updates; do not assume config merges happened automatically.
-
-
 ## Workflow
+
+The steps are ordered. Copy this checklist and track progress:
+
+- [ ] Step 1: Distro lane identified
+- [ ] Step 2: Current state gathered
+- [ ] Step 3: Matching reference loaded
+- [ ] Step 4: One layer changed; consequential changes confirmed first
+- [ ] Step 5: Validated (on failure, fix and return to Step 4)
 
 ### Step 1: Identify the distro lane first
 
@@ -189,6 +182,15 @@ Do not load every reference by default. Pick the one that matches the failure mo
 - **mkinitcpio vs dracut**: check `pacman -Q mkinitcpio dracut` to determine which is installed. mkinitcpio is Arch default; CachyOS may use dracut. Do not mix them - pick the installed one and use its config/hooks exclusively.
 - On CachyOS, separate "vanilla Arch behavior" from "optimized repo or custom kernel behavior."
 - Prefer reversible steps: snapshots, package cache, fallback kernels, saved configs.
+- Snapshot or otherwise preserve rollback paths before kernel, bootloader, filesystem, or GPU driver changes.
+
+**Consequential changes** (kernel or bootloader work, package or kernel removal, full upgrades
+with file conflicts, mirrorlist replacement, snapshot rollback): show the exact command and what
+it will do (transaction, removal list, or target device), get explicit confirmation, run it, then
+go to Step 5. In unattended runs, stop at the plan. Exact commands live in
+`references/packages-and-aur.md` (upgrades, conflicts, removals, mirrors) and
+`references/boot-kernel-and-recovery.md` (kernel, initramfs, bootloader, Secure Boot, live-ISO and
+Btrfs snapshot recovery).
 
 ### Step 5: Validate before closing
 
@@ -199,7 +201,8 @@ journalctl -u unit_name -b
 bootctl status
 ```
 
-Reboot only when the boot path is understood and at least one known-good entry remains.
+If a check fails, fix the layer it points to and return to Step 4. Reboot only when the boot path
+is understood and at least one known-good entry remains.
 
 ---
 
@@ -239,7 +242,9 @@ When a bug looks "desktop-only," compare one clean baseline:
 
 ## Default Decisions
 
-- **Arch means full upgrades.** Package skew is often self-inflicted. Resolve sync state first.
+- **Arch means full upgrades.** Package skew is often self-inflicted. Resolve sync state first; run `pacman -Syu` before large installs.
+- **Keep package cache cleanup deliberate.** Retain at least one known-good package version when rollback may matter. For slow mirrors, rank mirrors before troubleshooting package-manager performance.
+- **Read pacman hooks and `.pacnew` files after major updates.** Do not assume config merges happened automatically.
 - **Use systemd-native tools first.** Reach for `systemctl`, `journalctl`, `bootctl`, `timedatectl`, and `localectl` before distro wrappers.
 - **Use `paru` for convenience, not for trust.** When an AUR package misbehaves, drop to `PKGBUILD`, `makepkg`, and the resulting package file.
 - **Treat kernel and boot work as one subsystem.** Kernel package, initramfs generator, bootloader, microcode, and UKI signing all have to agree.
@@ -309,16 +314,6 @@ See `references/output-contract.md` for the full contract.
 
 ## Rules
 
-1. **Identify the distro before prescribing commands.** Arch, CachyOS, EndeavourOS, and Manjaro differ where it matters most: repos, wrappers, and recovery assumptions.
-2. **No partial upgrade advice.** If the fix begins with `pacman -Sy <pkg>`, it is probably wrong.
-3. **Keep `paru`, but keep perspective.** Use it as the default AUR helper because the user does, then drop to raw AUR packaging when the failure gets real.
-4. **Know the boot chain before touching it.** Confirm loader, ESP, kernel package, initramfs generator, and signing path first.
-5. **Never remove the last known-good kernel path casually.** Especially on remote or encrypted systems.
-6. **Prefer systemd-native diagnostics.** `systemctl`, `journalctl`, and `bootctl` usually tell you more than distro wrappers or generic forum folklore.
-7. **CachyOS performance features are opt-in complexity.** Treat optimized repos, custom kernels, and scheduler tooling as additions that must be validated, not magic defaults.
-8. **For Hyprland and Wayland issues, inspect the user session first.** Portals, user units, and Xwayland compatibility usually matter more than package reinstall churn.
-9. **For gaming issues, identify the GPU vendor and userspace first.** Driver branch, Vulkan stack, multilib, and launch wrappers usually explain more than random tweak cargo cults.
-10. **For Wayland capture issues, debug portals and PipeWire before app folklore.** OBS, browser WebRTC, Discord, and Teams often fail at the screencast path, not at "Linux video" in general.
-11. **Treat display manager, lock screen, and idle helpers as separate layers.** GDM, SDDM, greetd, `hyprlock`, and `hypridle` can fail independently.
-12. **Do not oversell snapshots or resume hooks.** Btrfs rollback, hibernation, and encrypted-root recovery all depend on the exact boot and storage layout.
-13. **Reach for common Arch failure patterns before exotic explanations.** Partial upgrades, DKMS drift, portal mismatch, stale AUR packages, and bad session startup explain a large share of the chaos.
+1. **Confirm consequential changes before running them.** Show the exact command and its plan, wait for an explicit yes, then verify. Unattended runs stop at the plan.
+2. **CachyOS performance features are opt-in complexity.** Treat optimized repos, custom kernels, and scheduler tooling as additions that must be validated, not magic defaults.
+3. **Treat display manager, lock screen, and idle helpers as separate layers.** GDM, SDDM, greetd, `hyprlock`, and `hypridle` can fail independently.

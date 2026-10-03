@@ -2,7 +2,7 @@
 
 Run four independent audits in parallel and present each report separately. One command that catches bugs, slop, security issues, and stale docs across the entire codebase without invoking each skill manually.
 
-**This is the fast path.** Fixed four passes, predictable cost, fire-and-forget before a merge. When you need exhaustive coverage across every applicable lens (up to 31 agents, conditional domain waves, persisted findings, generated tasks), use **repo-audit exhaustive mode**. Quick mode is the pre-merge reflex; exhaustive mode is the deliberate, heavyweight audit.
+**This is the fast path.** Fixed four passes, predictable cost, fire-and-forget before a merge. When you need exhaustive coverage across every applicable lane (up to 31 agents, conditional domain waves, persisted findings, generated tasks), use **repo-audit exhaustive mode**. Quick mode is the pre-merge reflex; exhaustive mode is the deliberate, heavyweight audit.
 
 The four audits:
 
@@ -27,7 +27,7 @@ Each audit runs in its own parallel agent/subprocess with a fresh context window
 
 - Running a repo-wide quality gate before merge, release, or handoff
 - Auditing an unfamiliar codebase across correctness, security, slop, and docs in one pass
-- Getting a broad review when the user explicitly wants multiple audit lenses at once
+- Getting a broad review when the user explicitly wants multiple audit lanes at once
 
 ## When NOT to use
 
@@ -35,7 +35,7 @@ Each audit runs in its own parallel agent/subprocess with a fresh context window
 - Style/slop cleanup without the other audit passes - use **code-simplification**
 - A dedicated security review only - use **security-audit**
 - A documentation-only maintenance sweep - use **update-docs**
-- A comprehensive audit across all applicable lenses (up to 31 audit agents, including 23 conditional Wave 3 domain lenses) - use **repo-audit exhaustive mode**
+- A comprehensive audit across all applicable lanes (up to 31 audit agents, including 23 conditional Wave 3 domain lanes) - use **repo-audit exhaustive mode**
 - Auditing the skill collection for consistency or quality - use **skill-creator**
 - CI/CD pipeline design or pipeline-config review - use **ci-cd**
 
@@ -89,7 +89,7 @@ Spawn four workers concurrently. Each worker runs one custom skill against the s
 
 **Worker capability selection (critical):** Each worker needs independent context, repository read access, the tools required by its assigned audit, and the native ability to load the target skill or receive its full instructions. Prefer a specialized read-only reviewer role when it meets those requirements. Exact role names are harness-specific examples, never requirements.
 
-**Skill invocation:** Each worker loads the named custom skill through the harness's native skill-loading mechanism as its first action. Custom skills from the user's installed collection take priority over built-in reviewers or platform-provided audit modes. Assign one lens per worker: `code-review`, `code-simplification`, `security-audit`, and `update-docs`.
+**Skill invocation:** Each worker loads the named custom skill through the harness's native skill-loading mechanism as its first action. Custom skills from the user's installed collection take priority over built-in reviewers or platform-provided audit modes. Assign one lane per worker: `code-review`, `code-simplification`, `security-audit`, and `update-docs`.
 
 **Fallback:** If native skill loading is unavailable, include the target skill's instructions in that worker's prompt. If the skill itself is unavailable, perform the corresponding manual review and note the substitution in the output header.
 
@@ -260,8 +260,7 @@ See `references/output-contract.md` for the full contract.
 
 ## Rules
 
-- **Capability-based workers.** Every worker needs independent context, repository read access, the audit's required tools, and the assigned instructions. Prefer specialized read-only reviewers that meet those requirements; do not hardcode a harness role name.
-- **Custom skills first.** Each worker loads its assigned custom skill (`code-review`, `code-simplification`, `security-audit`, `update-docs`) through the native skill-loading mechanism as its first action. Include the skill instructions in the prompt when native loading is unavailable; fall back to manual review only if the skill is not installed.
+- **Workers and skill loading** follow Step 2: capability-based workers, custom skills first, manual review only when a skill is not installed.
 - **Parallel dispatch is strongly preferred.** Run all four agents concurrently when the environment supports it. If parallel execution is unavailable, run sequentially (security first - see Step 2).
 - **Don't editorialize.** Present each report as the skill produced it. No unsolicited synthesis across reports.
 - **Respect each skill's output format.** The code-simplification skill has its own format. The security audit writes its dated local deliverable. The code reviewer and docs sweep have their formats. Don't normalize them into a single style.

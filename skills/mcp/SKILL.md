@@ -77,19 +77,23 @@ When generating or reviewing MCP server code, verify each item before presenting
 - Use resources for reusable context instead of returning the same large payload from every tool call.
 - Batch read-only lookups where latency matters, but keep side-effecting tools separate and auditable.
 
-
----
-
 ## Best Practices
 
 - Treat MCP servers as security boundaries: authenticate, authorize, and log side effects explicitly.
 - Make tool names and schemas stable; version breaking changes instead of changing semantics in place.
 - Require user confirmation for tools that spend money, mutate infrastructure, delete data, or expose secrets.
 
-
 ## Workflow
 
 **Build vs. Review:** Steps 1-6 are for building new servers. When reviewing existing MCP server code: (1) scope using Step 1 questions - what tools, transport, and auth does the server use; (2) audit each tool handler against Step 3 injection vectors and the AI Self-Check; (3) cross-reference the Common Mistakes section for patterns AI models frequently introduce.
+
+Copy this checklist when building a server and track progress:
+- [ ] Step 1: Purpose, tools, transport, and auth decided
+- [ ] Step 2: Server scaffolded with graceful shutdown
+- [ ] Step 3: Every tool handler validates input with no interpolation
+- [ ] Step 4: Transport configured and hardened
+- [ ] Step 5: Elicitation handles accept, decline, and cancel
+- [ ] Step 6: Inspector and malicious-input tests pass (on failure, fix and return to Step 3)
 
 ### Step 1: Determine the server's purpose
 
@@ -275,7 +279,7 @@ Injection is the top MCP vulnerability class. Every tool handler is an attack su
 
 ```typescript
 import path from "node:path";
-import { readFile, realpath } from "node:fs/promises";
+import { realpath } from "node:fs/promises";
 
 async function safeExistingPath(base: string, userInput: string): Promise<string> {
   const baseReal = await realpath(base);
@@ -288,33 +292,8 @@ async function safeExistingPath(base: string, userInput: string): Promise<string
 }
 ```
 
-**Before/after - applying safeExistingPath() to a vulnerable tool handler:**
-
-```typescript
-// BEFORE (vulnerable - user controls path directly)
-server.registerTool("read_file",
-  { description: "Read a project file", inputSchema: z.object({ path: z.string() }) },
-  async ({ path: filePath }) => {
-    const data = await readFile(filePath, "utf-8"); // path traversal
-    return { content: [{ type: "text", text: data }] };
-  }
-);
-
-// AFTER (safe - resolved path validated against allowed base)
-server.registerTool("read_file",
-  { description: "Read a project file", inputSchema: z.object({ path: z.string().max(500) }) },
-  async ({ path: filePath }) => {
-    try {
-      const safe = await safeExistingPath("/srv/project", filePath);
-      const data = await readFile(safe, "utf-8");
-      return { content: [{ type: "text", text: data }] };
-    } catch (error: unknown) {
-      console.error("read_file failed", error);
-      return { isError: true, content: [{ type: "text", text: "Read failed." }] };
-    }
-  }
-);
-```
+Read `references/security.md` (Path traversal) for a before/after tool handler using this
+helper and the pattern for creating new files.
 
 **SSRF prevention** (when tools fetch URLs from user input):
 - Block private IP ranges: `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`
@@ -366,6 +345,9 @@ requesting input and allow decline/cancel at any time. Handle all three response
 ### Step 6: Test the server
 
 ```bash
+command -v npx >/dev/null || echo "install Node.js to get npx for the Inspector"
+command -v uv >/dev/null || echo "install uv for the Python dev inspector"
+
 # Test with MCP Inspector (official debugging tool)
 npx @modelcontextprotocol/inspector your-server-command
 
@@ -383,25 +365,10 @@ Read `references/security.md` for specific injection test payloads.
 
 ## Tool Poisoning and Rug Pull Defense
 
-These attacks target tool metadata, not tool execution.
-
-**Tool poisoning**: malicious instructions hidden in tool `description` fields manipulate the
-AI model into exfiltrating data or calling unintended tools. Descriptions are visible to the
-model but often hidden from users in the UI.
-
-**Rug pull attacks**: server changes tool definitions after initial approval - clean version
-during onboarding, malicious version later.
-
-**Server-side defenses:**
-- Write clear, honest tool descriptions - no hidden instructions
-- Do not include executable logic or injection payloads in descriptions
-- Keep descriptions minimal and factual
-- Treat `annotations` as advisory (untrusted on the client side)
-
-**Client-side defenses** (document for consumers of your server):
-- Display tool descriptions to users before granting access
-- Hash tool schemas at approval time; alert on changes between sessions
-- Limit cross-server tool access
+These attacks target tool metadata, not tool execution: hidden instructions in tool
+descriptions, or definitions that change after approval. Write honest, minimal descriptions
+with no embedded instructions, and read `references/security.md` (Tool Poisoning and Rug Pull
+Attacks) for the attack example and the server-side and client-side defenses.
 
 ---
 
@@ -429,7 +396,8 @@ AI models consistently make these errors when generating MCP server code:
 ## Reference Files
 
 - `references/security.md` - OAuth 2.1 details, known CVEs, injection test payloads,
-  SSRF prevention, session management, and tool poisoning defense
+  path traversal and SSRF prevention, session management, and tool poisoning defense. Read it
+  when implementing auth, hardening handlers, or reviewing a server
 
 ## Output Contract
 
@@ -463,8 +431,3 @@ See `references/output-contract.md` for the full contract.
    covering what the tool does and its parameters - not implementation details.
 4. **Authenticate when handling user data.** Use OAuth 2.1 with PKCE for remote servers that
    access user data. Auth is optional per spec but strongly recommended.
-5. **Return structured errors.** MCP error codes + human-readable messages. No stack traces.
-6. **Test with malicious inputs.** Injection payloads, path traversal, oversized inputs.
-7. **Bind local servers to 127.0.0.1.** Never `0.0.0.0` for local-only servers.
-8. **Validate Origin headers** on all streamable HTTP requests.
-9. **Handle shutdown gracefully.** Register signal handlers. Clean up resources.

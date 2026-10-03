@@ -171,16 +171,10 @@ Read the existing structure first. If it doesn't match this format:
 
 ---
 
-## Performance
+## Prioritization Practices
 
-- Keep roadmap edits small and frequent; avoid rewriting the whole backlog for one new idea.
 - Limit active P0/P1 items so prioritization remains meaningful.
 - Group duplicate ideas and link evidence instead of copying long notes repeatedly.
-
----
-
-## Best Practices
-
 - Tie each near-term item to a clear user, business, or technical outcome.
 - Record exit criteria before implementation starts.
 - Separate commitments from experiments so speculative work does not crowd delivery.
@@ -267,6 +261,13 @@ Trigger: user says "update roadmap", asks to check off items, or after a PR merg
 
 If no ROADMAP.md exists, redirect to Mode 1 (bootstrap) first.
 
+Copy this checklist and track progress:
+
+- [ ] Step 1: Recent activity gathered (or named PRs fetched)
+- [ ] Step 2: Matches presented and confirmed
+- [ ] Step 3: Confirmed items moved to Shipped with attribution; header date updated
+- [ ] Step 4: File re-read; if a confirmed item is still in an active tier or lacks attribution, fix it and return to Step 4
+
 #### Step 1: Gather recent activity
 
 ```bash
@@ -310,6 +311,11 @@ For confirmed matches:
 3. Move to the "Shipped" section (create it if missing), grouped by version or date
 
 Update the `Updated:` date in the header.
+
+#### Step 4: Verify the edit
+
+Re-read ROADMAP.md. Each confirmed item appears once, under Shipped, with its PR or release
+attribution, and unconfirmed items are untouched. Fix any miss and repeat this step.
 
 ---
 
@@ -399,19 +405,10 @@ See `references/output-contract.md` for the full contract.
 
 1. **Gitignore by default.** Ensure ROADMAP.md is in .gitignore before creating or writing it.
    Skip only if the user explicitly asks to track it in git.
-2. **Don't rewrite the file.** Edits are additive or targeted. Don't reformat, reorder, or
-   restructure sections the user didn't ask to change.
-3. **Attribute competitive intel.** Every idea from another repo gets a source tag. Never
+2. **Attribute competitive intel.** Every idea from another repo gets a source tag. Never
    present external features as original ideas.
-4. **Ask before checking off.** Present matches and let the user confirm. Don't auto-complete
+3. **Ask before checking off.** Present matches and let the user confirm. Don't auto-complete
    roadmap items based on fuzzy matches alone.
-5. **One offer per session.** Ask about competitive scanning at most once. If declined, drop it.
-6. **No priority inflation.** Default to P1 when priority is unclear. P0 is reserved for
-   genuine blockers, not aspirational items.
-7. **Preserve user voice.** Keep the user's phrasing when adding ideas. Clean up only when
-   genuinely unclear.
-8. **Work within existing structure.** If a ROADMAP.md exists, adapt to its format. Suggest
-   structural changes through review mode, not silently during adds or updates.
-9. **Headless mode.** In non-interactive contexts (`--bare`, Cursor Automations, Codex
+4. **Headless mode.** In non-interactive contexts (`--bare`, Cursor Automations, Codex
    `exec`): skip confirmation prompts, apply only exact matches in Mode 2, add only
    strong-signal items in Mode 3, and don't offer competitive scans in Mode 1.

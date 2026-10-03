@@ -53,14 +53,11 @@ Before running checks or reporting results, verify:
 ## Performance
 
 - Start with cluster-wide signals before loading symptom-specific references.
-- Bound logs, events, and object listings by namespace, time window, or selectors.
 - Prefer summarized evidence over dumping raw Kubernetes output into context.
 
 ## Best Practices
 
-- Treat the current kube context as hidden state until it is explicitly named.
 - Separate health evidence from remediation; fixes require a separate escalation.
-- Report permission gaps and missing CRDs as diagnostic findings, not silent skips.
 - Start with the reference checks. Use verified read-only follow-ups against discovered objects when needed to establish health; never guess service names, namespaces, paths, or flags.
 - Do not read a metric's status without knowing what the metric measures. The reference files state what each signal does and does NOT represent; misreading a percentage or a stale value produces a confidently wrong report.
 
@@ -104,6 +101,13 @@ kubernetes-health [context-or-alias] [timewindow]
 - `timewindow` defaults to `2h`; use bounded values such as `30m`, `1h`, `2h`, `6h`, or `24h`.
 
 ## Workflow
+
+Copy this checklist and track progress:
+- [ ] Step 1: Target context resolved (explicit or confirmed)
+- [ ] Step 2: Context and time window stated; read-only scope confirmed
+- [ ] Step 3: Sweep run (on a wrong-context or unreachable-cluster error, return to Step 1)
+- [ ] Step 4: Findings classified GREEN/YELLOW/RED
+- [ ] Step 5: Report returned with evidence and next actions
 
 ### Step 1: Resolve target
 
@@ -183,9 +187,5 @@ See `references/output-contract.md` for the full contract.
 ## Rules
 
 1. Read only. Do not mutate cluster state unless the user explicitly changes the task.
-2. Use `--context <context>` on every `kubectl` command and `--kube-context <context>` on every `helm` command.
-3. Cap output before putting it in context.
-4. Never guess a cluster target from a vague request.
-5. Keep protected overlay details out of public reports unless the user asks for those exact details.
-6. Report failed checks as findings; do not hide missing tools, missing CRDs, or permission errors.
-7. **Use reference checks and verified read-only follow-ups against the confirmed target.** Discover object names, verify flags, and report missing coverage. Mutation still requires explicit escalation.
+2. Report failed checks as findings; do not hide missing tools, missing CRDs, or permission errors.
+3. **Use reference checks and verified read-only follow-ups against the confirmed target.** Discover object names, verify flags, and report missing coverage. Mutation still requires explicit escalation.

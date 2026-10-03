@@ -61,7 +61,6 @@ Before returning any generated or modified prompt file, verify:
 - Use variables for repeated dynamic content instead of duplicating long blocks.
 - Prefer explicit output schemas over long narrative instructions when structure matters.
 
-
 ---
 
 ## Best Practices
@@ -69,7 +68,6 @@ Before returning any generated or modified prompt file, verify:
 - Include success criteria for complex prompts so outputs can be evaluated.
 - Match the prompt family to the intended use; see `references/prompt-families.md`.
 - For evaluator prompts, use a rubric with observable evidence; see `references/evaluator-prompts.md`.
-
 
 ## Workflow
 
@@ -83,7 +81,7 @@ The user will give you rough notes, bullet points, or a stream-of-consciousness 
 - **Constraints**: Any rules, format requirements, or behavioral boundaries mentioned
 - **Variables**: Any dynamic content that should become `{{PLACEHOLDERS}}`
 
-Don't overthink this. Don't add things the user didn't mention. The goal is to **faithfully structure their intent**, not to "improve" it with your own ideas.
+Don't add things the user didn't mention. The goal is to **faithfully structure their intent**, not to "improve" it with your own ideas.
 
 ### Step 2: Clarify only if stuck
 
@@ -154,8 +152,6 @@ Optional frontmatter additions: `tags: [...]`, `related: [NNN-other.md]` - only 
 ---
 
 ## Structuring Guidelines
-
-These are for YOU when structuring the user's notes. Not a knowledge dump - just the non-obvious stuff.
 
 **Route by prompt family.** Simple task prompts should stay inline. Reusable prompts need variables.
 Evaluator prompts need rubrics and failure cases. Delegation prompts need ownership and return
@@ -301,6 +297,4 @@ See `references/output-contract.md` for the full contract.
 2. **Honor existing authorization.** A request to create, save, or edit a local prompt file
    authorizes that write. Inline drafts and reviews stay in conversation. Follow the user's
    explicit instructions over this skill's defaults; retain approval for destructive or external actions.
-3. **Scale structure to complexity.** Simple = lean. Complex = structured. Never the reverse.
-4. **Respect their voice.** If the rough notes have a specific tone or personality, preserve it in the structured version.
-5. **Run the AI Self-Check.** Every generated prompt file gets verified against the checklist before returning.
+3. **Respect their voice.** If the rough notes have a specific tone or personality, preserve it in the structured version.

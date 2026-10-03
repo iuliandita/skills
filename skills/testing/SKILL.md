@@ -3,7 +3,7 @@ name: testing
 description: >
   Write unit, integration, E2E, load, and accessibility tests; debug fixtures, mocks, coverage, and flaky suites.
 license: MIT
-compatibility: "Requires one or more of: vitest, jest, pytest, go test, cargo test, playwright; k6 for load tests"
+compatibility: "Requires one or more of: vitest, jest, pytest, go test, cargo test, playwright. Optional: k6 (load tests), @axe-core/playwright, pytest-xdist, cargo-nextest"
 metadata:
   source: iuliandita/skills
   date_added: "2026-04-02"
@@ -47,7 +47,6 @@ raise the 4.x floor to 4.1.10 and the 3.x floor to 3.2.7; stable 5.0.x is not af
 
 - Profiling and optimizing an identified application bottleneck - use **performance-debugging**.
 - Broker acknowledgement, redelivery, dead-letter, or replay semantics - use **message-queues**.
-
 - Reviewing existing test quality or correctness as part of a code review - use **code-review**
 - Security-specific testing (penetration testing, OWASP checks) - use **security-audit**
 - Cleaning up verbose/sloppy test code - use **code-simplification**
@@ -89,17 +88,15 @@ AI tools consistently produce the same testing mistakes. **Before returning any 
 - Use fixtures and test data builders to avoid repeated expensive setup.
 - Shard or parallelize only after isolating shared state, ports, databases, and clocks.
 
-
 ---
 
-## Best Practices
-
-- Test behavior through stable public interfaces, not implementation details.
-- Use stable roles/test IDs for UI tests; do not select generated CSS classes.
-- Every regression fix gets a failing test that would have caught the bug.
-
-
 ## Workflow
+
+Copy this checklist and track progress:
+- [ ] Step 1: Scope and existing framework identified
+- [ ] Step 2: Test layer chosen
+- [ ] Step 3: Test written (for a bug fix, confirmed failing before the fix)
+- [ ] Step 4: Affected checks pass; failures not caused by the behavior under test fixed via Step 3
 
 ### Step 1: Determine scope
 
@@ -237,7 +234,7 @@ def build_user(**overrides) -> User:
 
 Catch WCAG violations automatically. Not a replacement for manual testing, but catches the mechanical stuff (missing alt text, broken ARIA, contrast ratios, keyboard traps).
 
-Use `@axe-core/playwright` - run `new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa"]).analyze()` and assert zero violations. Run axe scans on every page/component. Exclude known issues with `.exclude()` and track them as tech debt, not permanent exceptions.
+Use `@axe-core/playwright` (if missing, add it as a dev dependency with the repo's package manager: `npm install -D`, `pnpm add -D`, `yarn add -D`, or `bun add -d` `@axe-core/playwright`) - run `new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa"]).analyze()` and assert zero violations. Run axe scans on every page/component. Exclude known issues with `.exclude()` and track them as tech debt, not permanent exceptions.
 
 Own repeatable accessibility regression checks here; use **frontend-design** to repair interaction design and semantics. Record manual keyboard and screen-reader coverage separately from automated scan results.
 
@@ -253,10 +250,12 @@ Two categories: **micro-benchmarks** (is this function fast enough?) and **load 
 
 - **Go**: `func BenchmarkX(b *testing.B)` - built into the stdlib
 - **Rust**: `cargo bench` with criterion (`criterion = "0.6"`)
-- **JS/TS**: `vitest bench` or `tinybench`
-- **Python**: `pytest-benchmark` or `timeit`
+- **JS/TS**: `vitest bench` (use `tinybench` directly outside Vitest)
+- **Python**: `pytest-benchmark` (`timeit` for a one-off measurement)
 
 ### Load testing (k6)
+
+Detect first: `command -v k6 >/dev/null || echo "k6 missing"`.
 
 ```javascript
 // k6 load test
@@ -294,7 +293,7 @@ Don't run load tests against production without explicit approval. Don't run the
 - **Playwright**: `--shard=1/4` for splitting across CI runners. `--workers=4` for parallel within a runner.
 - **pytest**: `pytest-xdist` with `-n auto` for CPU-based parallelism.
 - **Go**: `go test -parallel N` per package, `-p N` for package-level parallelism.
-- **Rust**: `cargo nextest run` for per-test process isolation and parallelism.
+- **Rust**: `cargo nextest run` for per-test process isolation and parallelism (`cargo nextest --version >/dev/null 2>&1 || echo "cargo-nextest missing: cargo install cargo-nextest"`).
 
 ### Flaky test management
 
@@ -311,7 +310,7 @@ Flaky tests erode trust. Fix or quarantine immediately.
      fonts, and worker count as CI first; compare `--headed` only to isolate rendering differences. Check CPU, memory, and worker contention on
      the CI runner before changing timeouts.
    - **Vitest/Jest**: shared module state between test files. Use `--pool forks` (Vitest) or
-     `--runInBand` to isolate. Check for leaked timers (`vi.useFakeTimers` not restored).
+     `--runInBand` (Jest) to isolate. Check for leaked timers (`vi.useFakeTimers` not restored).
    - **pytest**: database state leaking between tests. Use `@pytest.mark.usefixtures("db")`
      with transactional rollback. Check for global state mutation in fixtures.
    - **Go**: `t.Parallel()` tests sharing package-level state. Use `t.Cleanup` for teardown.
@@ -368,9 +367,8 @@ See `references/output-contract.md` for the full contract.
 
 ## Rules
 
-1. **Test behavior, not implementation.** Tests coupled to internal structure break on every refactor and catch zero bugs. If a test mocks 8 things and asserts a method was called with specific args, it's testing the mock, not the code.
-2. **No `sleep()` in tests.** Use `waitFor`, `Eventually`, `poll`, retry loops, or event-based synchronization. Fixed delays are flaky by definition.
-3. **Isolate test state.** Each test creates its own data, runs independently, and cleans up after itself. Shared mutable state between tests is the #1 cause of order-dependent failures.
-4. **Fix or quarantine flaky tests immediately.** A test suite people ignore is worse than no test suite. Track flaky tests, fix root causes, don't just retry.
-5. **Don't test the framework.** Testing that React renders a div, or that Express routes to a handler, is testing someone else's code. Test YOUR logic.
-6. **Snapshot tests require manual review.** Never auto-update snapshots (`-u` / `--update`) without reviewing the diff. Blind snapshot updates are equivalent to deleting the test.
+The AI Self-Check holds the per-test guards (behavior over implementation, no `sleep()`,
+isolated state, flake diagnosis, reviewed snapshots). This adds:
+
+- **Don't test the framework.** Testing that React renders a div, or that Express routes to a
+  handler, is testing someone else's code. Test YOUR logic.

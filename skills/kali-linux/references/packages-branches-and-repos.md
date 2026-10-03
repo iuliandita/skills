@@ -38,6 +38,22 @@ find /etc/apt -maxdepth 2 -type f \( -path /etc/apt/sources.list -o -path '/etc/
 ```
 
 Expected shape is one clear Kali lane, not a soup of Kali plus random Debian suites.
+The default since Kali 2026.2 is `/etc/apt/sources.list.d/kali.sources`:
+
+```text
+Types: deb
+URIs: http://http.kali.org/kali/
+Suites: kali-rolling
+Components: main contrib non-free non-free-firmware
+Signed-By: /usr/share/keyrings/kali-archive-keyring.gpg
+```
+
+Installs older than 2026.2 use the one-line `/etc/apt/sources.list` entry
+`deb http://http.kali.org/kali kali-rolling main contrib non-free non-free-firmware`;
+`apt modernize-sources` converts it.
+
+Source-list edits change every later transaction. Back up first
+(`sudo cp -a /etc/apt /root/apt-backup`), show the diff, and get confirmation before writing.
 
 ### Snapshot users
 If the user wants calmer behavior, verify they intentionally track the snapshot lane rather than

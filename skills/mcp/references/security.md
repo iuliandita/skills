@@ -186,6 +186,34 @@ async function safeExistingPath(base: string, userInput: string): Promise<string
 }
 ```
 
+**Before/after - applying safeExistingPath() to a vulnerable tool handler:**
+
+```typescript
+// BEFORE (vulnerable - user controls path directly)
+server.registerTool("read_file",
+  { description: "Read a project file", inputSchema: z.object({ path: z.string() }) },
+  async ({ path: filePath }) => {
+    const data = await readFile(filePath, "utf-8"); // path traversal
+    return { content: [{ type: "text", text: data }] };
+  }
+);
+
+// AFTER (safe - resolved path validated against allowed base)
+server.registerTool("read_file",
+  { description: "Read a project file", inputSchema: z.object({ path: z.string().max(500) }) },
+  async ({ path: filePath }) => {
+    try {
+      const safe = await safeExistingPath("/srv/project", filePath);
+      const data = await readFile(safe, "utf-8");
+      return { content: [{ type: "text", text: data }] };
+    } catch (error: unknown) {
+      console.error("read_file failed", error);
+      return { isError: true, content: [{ type: "text", text: "Read failed." }] };
+    }
+  }
+);
+```
+
 New files do not exist yet, so they cannot be passed to `realpath`. Keep writes to a server-owned
 canonical parent and accept one leaf name, not an arbitrary nested path:
 

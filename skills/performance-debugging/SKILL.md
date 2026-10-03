@@ -3,6 +3,7 @@ name: performance-debugging
 description: >
   Diagnose a known application's CPU, heap, allocation, lock, and latency regressions with profiles, reproducible baselines, and measured verification.
 license: MIT
+compatibility: "Optional, runtime-dependent profiler: perf, go tool pprof, py-spy, async-profiler, dotnet-trace, or heaptrack"
 metadata:
   source: iuliandita/skills
   date_added: "2026-09-20"
@@ -34,6 +35,13 @@ reproduced symptom.
 - Consumer lag, queue backlog, or redelivery symptoms; use **message-queues**
 
 ## Workflow
+
+Copy and track; each step depends on the previous one:
+- [ ] 1. Symptom and reproducible baseline captured
+- [ ] 2. Hypotheses ranked; discriminating profile chosen
+- [ ] 3. Profile captured safely during the symptom
+- [ ] 4. One causal factor changed
+- [ ] 5. Result measured on the same workload (if it does not improve or a user-facing metric regresses, return to Step 2)
 
 ### 1. Define the symptom and baseline
 
@@ -70,8 +78,8 @@ and track any tradeoff such as memory for CPU or tail latency for throughput.
 Repeat the same workload after warm-up. Report sample count, median and tail latency, throughput,
 errors, CPU, allocation/heap, and the variance or confidence limits available from the runner.
 Keep or add a small representative regression benchmark when the project has a benchmark convention;
-otherwise record the reproducible command and baseline artifact. Roll back or investigate when a
-meaningful user-facing metric regresses, even if a microbenchmark improves.
+otherwise record the reproducible command and baseline artifact. When a meaningful user-facing
+metric regresses, even if a microbenchmark improves, roll back the change and return to Step 2.
 
 ## AI Self-Check
 
@@ -96,10 +104,6 @@ See `references/output-contract.md` for the full contract.
   Interactive diagnosis and implementation remain conversational.
 - **Severity scale:** `P0 | P1 | P2 | P3 | info`
 
-## Reference Files
-
-- `references/profilers.md` - standard profiler and representative command per runtime and profile type
-
 ## Sources
 
 - [OpenTelemetry instrumentation](https://opentelemetry.io/docs/concepts/instrumentation/) - standing
@@ -109,10 +113,6 @@ See `references/output-contract.md` for the full contract.
 
 ## Rules
 
-1. **Reproduce before optimizing.** Capture an observable baseline under a stated workload.
-2. **Profile the bottleneck, not a guess.** Use the profile type that distinguishes the hypothesis.
-3. **Optimize one variable at a time.** Multi-change patches destroy causal evidence.
-4. **Protect the tail.** Always compare p95/p99 and error rate with throughput, not average latency alone.
-5. **Keep profiling and load generation separate.** A profile explains a known symptom; a load test
-   establishes capacity under a designed workload; instrumentation provides ongoing visibility.
-6. **Do not run disruptive profiling or load against production without explicit authorization.**
+1. **Optimize one variable at a time.** Multi-change patches destroy causal evidence.
+2. **Protect the tail.** Always compare p95/p99 and error rate with throughput, not average latency alone.
+3. **Do not run disruptive profiling or load against production without explicit authorization.**

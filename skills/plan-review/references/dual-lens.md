@@ -20,7 +20,7 @@ Next action: ...
 Review trigger: ...
 ```
 
-## Mode selection
+## Lens selection
 
 Use **Jekyll** for "make this durable" or constructive operating advice. Use **Hyde** for "red-team this", abuse-path, dark-pattern, or ruthless-risk review. Use **dual** for an unqualified advisor or decision review: Hyde identifies the trap, Jekyll preserves the upside under a concrete constraint, then make the final call.
 

@@ -62,6 +62,12 @@ identity ownership to **ci-cd**.
 
 ## Workflow
 
+Copy this checklist and track progress:
+- [ ] Step 1: Scope determined (account, backend, state boundary, secrets)
+- [ ] Step 2: Relevant references read (state-and-security before any state command)
+- [ ] Step 3: fmt, validate, tflint, checkov clean for introduced findings (on failure, fix and return to Step 3)
+- [ ] Plan reviewed with the owner; no apply by the agent
+
 ### 1. Determine the scope
 
 Identify the provider/account boundary, environment, resource dependencies, backend and lock design,
@@ -91,10 +97,10 @@ destroys with the owner.
 ```bash
 terraform fmt -check -recursive
 terraform validate
-tflint --recursive
-checkov -d . --framework terraform
+if command -v tflint >/dev/null; then tflint --recursive; else echo "tflint not installed: lint NOT run; report it as unverified"; fi
+if command -v checkov >/dev/null; then checkov -d . --framework terraform; else echo "checkov not installed: policy scan NOT run; report it as unverified"; fi
 terraform plan -out=plan.tfplan
-terraform show -json plan.tfplan | conftest test -
+if command -v conftest >/dev/null; then terraform show -json plan.tfplan | conftest test -; else echo "conftest not installed: policy gate NOT run; report it as unverified"; fi
 ```
 
 Report checks that ran, their results, and any unavailable tool. `plan`, state operations, and a
@@ -122,12 +128,10 @@ See `references/output-contract.md` for the full contract.
 
 ## Rules
 
-1. **Run `fmt` and `validate` for every HCL change.**
-2. **Pin providers, modules, and CI actions.** Commit the dependency lock file.
-3. **Protect state and secrets.** Encrypt, lock, restrict, and audit state; never commit credentials.
-4. **Use least privilege and explicit lifecycle controls.** Do not hide a destructive replacement.
-5. **Do not use provisioners.** Use declarative infrastructure, user data, or **ansible**.
-6. **Separate high-risk/CDE state.** Give it an independent backend, identity, and approval boundary.
-7. **Use OIDC for CI where supported.** Keep plan and apply identities separate and narrowly scoped.
-8. **Review and archive the plan before every apply.**
-9. **AI does not own `terraform apply`.** A human reviews the concrete plan and authorizes the change.
+1. **Pin providers, modules, and CI actions.** Commit the dependency lock file.
+2. **Protect state and secrets.** Encrypt, lock, restrict, and audit state; never commit credentials.
+3. **Use least privilege and explicit lifecycle controls.** Do not hide a destructive replacement.
+4. **Do not use provisioners.** Use declarative infrastructure, user data, or **ansible**.
+5. **Separate high-risk/CDE state.** Give it an independent backend, identity, and approval boundary.
+6. **Use OIDC for CI where supported.** Keep plan and apply identities separate and narrowly scoped.
+7. **AI does not own `terraform apply`.** A human reviews the concrete plan, the plan is archived, and the human authorizes the change.

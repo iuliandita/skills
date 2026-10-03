@@ -52,7 +52,7 @@ AI tools consistently produce the same Docker mistakes. **Before returning any g
 - [ ] No secrets in `ENV`, `ARG`, or `COPY` - use `--mount=type=secret` or runtime injection
 - [ ] Production base image resolved to a SHA256 digest; illustrative major/minor tags in templates must be resolved before release
 - [ ] Long-running production services have a meaningful health probe in the image or orchestrator; one-shot jobs use exit status
-- [ ] `.dockerignore` exists and excludes `.git`, `node_modules`, `.env`, `__pycache__`, etc.
+- [ ] `.dockerignore` exists and excludes `.git`, `node_modules`, `.env`, secrets, `__pycache__`, test fixtures, etc.
 - [ ] No `ADD` for local files (use `COPY` - `ADD` auto-extracts and fetches URLs)
 - [ ] Compose: no `version:` field (obsolete, ignored, and emits a deprecation warning in current Compose - omit it)
 - [ ] Compose: `depends_on` uses `condition: service_healthy`, not bare ordering
@@ -77,6 +77,13 @@ AI tools consistently produce the same Docker mistakes. **Before returning any g
 - Preview prune and volume-removal commands; persistent data must never be collateral cleanup.
 
 ## Workflow
+
+Copy this checklist and track progress:
+- [ ] Step 1: Domain identified
+- [ ] Step 2: Context gathered (runtime, environment, base image, secrets, compliance)
+- [ ] Step 3: Dockerfile, Compose, or config built
+- [ ] Step 4: Validation clean (on any failure, fix and return to Step 3)
+- [ ] Production Checklist and AI Self-Check passed
 
 ### Step 1: Determine the domain
 
@@ -106,8 +113,8 @@ Follow the domain-specific section below. Before finishing, run Step 4, the `## 
 
 ### Step 4: Validate
 
-Fix each failure and rerun from `docker build --check` until all checks pass and no unaccepted
-HIGH/CRITICAL findings remain. Report any tool that was unavailable.
+On any failure, fix it, return to Step 3, and rerun from `docker build --check` until all checks
+pass and no unaccepted HIGH/CRITICAL findings remain. Report any tool that was unavailable.
 
 ```bash
 # Dockerfile
@@ -120,7 +127,11 @@ docker compose config                 # validate and render
 docker compose --dry-run up           # dry-run startup (Compose v5)
 
 # Security (Trivy default; Grype or Docker Scout if the repo already uses them)
-trivy image --severity HIGH,CRITICAL --exit-code 1 <image>   # use v0.74.0+; never v0.69.4-6
+if command -v trivy >/dev/null; then
+  trivy image --severity HIGH,CRITICAL --exit-code 1 <image>   # use v0.74.0+; never v0.69.4-6
+else
+  echo "trivy not installed: image scan NOT run; report it as unverified"
+fi
 syft <image> -o spdx-json             # generate SBOM
 cosign verify --key <key> <image>     # verify signature
 ```
@@ -257,30 +268,7 @@ Read `references/security-and-compliance.md` for the full PCI-DSS 4.0 container 
 
 ### Critical vulnerabilities (2025-2026)
 
-| CVE | Component | Severity | Impact | Fixed in |
-|-----|-----------|----------|--------|----------|
-| CVE-2025-9074 | Docker Desktop | 9.3 Critical | Container escape via unauthenticated Engine API | Desktop 4.44.3 |
-| CVE-2025-31133 | runc | High | Container escape via /dev/null symlink race | runc 1.2.8, 1.3.3, 1.4.0-rc.3 |
-| CVE-2025-52565 | runc | High | Container escape via /dev/console mount race | runc 1.2.8, 1.3.3, 1.4.0-rc.3 |
-| CVE-2025-52881 | runc | High | Host procfs writes via /proc redirect (DoS/escape) | runc 1.2.8, 1.3.3, 1.4.0-rc.3 |
-| CVE-2026-33634 | Trivy | Critical | Supply chain - malware in Docker Hub images (v0.69.4-6) | Trivy v0.74.0+ for new pins; v0.69.3 only as rollback |
-| CVE-2026-2664 | Docker Desktop | Medium | gRPC-FUSE kernel module OOB read | Desktop 4.62.0+ |
-| CVE-2025-13743 | Docker Desktop | Low | Expired Hub PATs leaked in diagnostics bundles | Desktop 4.54.0 |
-| CVE-2026-28400 | Model Runner | 7.5 High | Runtime flag injection - arbitrary file overwrite, container escape | Desktop 4.62.0+ |
-| CVE-2026-5843 | Model Runner (MLX) | 8.8 High | Container-to-host code execution via MLX-LM `model_file` importlib load from untrusted models | Desktop 4.71.0+ |
-| CVE-2026-5817 | Model Runner (vllm-metal) | 8.8 High | Container-to-host RCE via unsandboxed `trust_remote_code` tokenizer load | Desktop 4.68.0+ |
-| CVE-2026-33747 | BuildKit | High | Malicious frontend file escape outside storage root | BuildKit v0.28.1 |
-| CVE-2026-33748 | BuildKit | High | Git URL validation bypass - restricted file access | BuildKit v0.28.1 |
-| CVE-2026-92543 | Docker Engine | High | Malicious DNS response makes registry connections skip TLS verification or fall back to HTTP | Engine 29.8.2 |
-| CVE-2026-93318 | BuildKit | High | Build cache poisoning via unvalidated image layer DiffIDs | BuildKit v0.33.1 (Engine 29.8.2) |
-| CVE-2026-94603 | Podman | Critical | `podman run` on a checkpoint image disables all sandboxing | Podman 6.1.3, 5.8.8 |
-
-**Additional fixes checked September 10, 2026**: [CVE-2026-17106](https://github.com/moby/go-archive/security/advisories/GHSA-hfg8-hc9c-6c3h)
-allows archive extraction outside the destination; the advisory lists go-archive < 0.2.2
-as affected and 0.3.0 as patched (rechecked 2026-10-03). Docker Engine 29.7.0 includes the fix (unverified).
-[CVE-2026-15793](https://github.com/moby/buildkit/security/advisories/GHSA-hw3h-2gp9-cxpv)
-affects BuildKit 0.30.0-0.31.1 custom frontends using Git checkout bundles; fixed in
-0.31.2. Ordinary Dockerfile builds are unaffected by that specific issue.
+The full CVE table (Docker Desktop, runc, Trivy, Model Runner, BuildKit, Engine, Podman, go-archive) with impacts and fixed versions lives in `references/security-and-compliance.md`; read it when reviewing versions or answering a CVE question.
 
 **Action items**: upgrade runc to >= 1.4.0, BuildKit to >= 0.33.1, Docker Desktop to >= 4.71.0 (prefer the current 4.93.0 snapshot), Docker Engine to >= 29.8.2, Podman to >= 6.1.3 or 5.8.8, never pull Trivy v0.69.4/5/6. Pin ALL CI tool images to SHA256 digests.
 
@@ -389,7 +377,7 @@ See AI Self-Check above for the full build-time checklist (Dockerfile correctnes
 
 - [ ] runc >= 1.4.0 (CVE-2025-31133/52565/52881 patched)
 - [ ] BuildKit >= 0.33.1 (includes CVE-2026-15793, CVE-2026-33747/33748, and CVE-2026-93318 fixes)
-- [ ] Docker Desktop >= 4.71.0 (adds CVE-2026-5817/5843 Model Runner container-to-host RCE fixes; see the table above for the earlier CVE-2025-9074 and CVE-2026-28400 floors)
+- [ ] Docker Desktop >= 4.71.0 (adds CVE-2026-5817/5843 Model Runner container-to-host RCE fixes; see the CVE table in `references/security-and-compliance.md` for the earlier CVE-2025-9074 and CVE-2026-28400 floors)
 - [ ] Trivy v0.74.0+ from official releases (v0.69.4-6 COMPROMISED)
 - [ ] Images signed with cosign, verified at deploy
 - [ ] SBOM generated for every production image
@@ -417,9 +405,9 @@ See AI Self-Check above for the full build-time checklist (Dockerfile correctnes
 
 - `references/dockerfile-patterns.md` - Dockerfile templates and build patterns
 - `references/compose-patterns.md` - Compose patterns and common stack layouts
-- `references/security-and-compliance.md` - container hardening, compliance guidance, and safe public custom image publishing
+- `references/security-and-compliance.md` - full 2025-2026 CVE table, Trivy compromise lessons, scanning and signing, container hardening, compliance guidance, and safe public custom image publishing
 - `references/alternative-runtimes.md` - Podman, Buildah, Skopeo, and related runtime patterns
-- `references/target-versions.md` - September 2026 version snapshot for Docker, Compose, BuildKit, containerd, Podman, Buildah, and runc
+- `references/target-versions.md` - October 2026 version snapshot for Docker, Compose, BuildKit, containerd, Podman, Buildah, and runc
 
 ## Output Contract
 
@@ -450,13 +438,7 @@ See `references/output-contract.md` for the full contract.
 1. **Resolve production images to digests.** Template tags illustrate image families; they are mutable and do not establish reproducibility.
 2. **Multi-stage builds for compiled/transpiled languages.** Build tools do not belong in production images.
 3. **Non-root user.** Every production container must run as non-root (numeric UID for K8s compat).
-4. **No secrets in layers.** Not in `ENV`, not in `ARG`, not in `COPY`. Use `--mount=type=secret` or runtime injection.
-5. **Deps before source.** Copy dependency manifests first, install, then copy source. Layer cache depends on it.
-6. **Meaningful service healthchecks.** Use Dockerfile, Compose, or orchestrator probes for long-running services; use exit status for one-shot jobs and document external monitoring.
-7. **Pin CI tools to SHA256 digests.** Mutable tags are compromised supply chain vectors (Trivy CVE-2026-33634 March 2026, tj-actions CVE-2025-30066 (upstream: reviewdog CVE-2025-30154) March 2025).
-8. **Trivy v0.74.0+ for new pins.** v0.69.3 was the March 2026 rollback version; v0.69.4-6 contained credential-stealing malware. If you ran it, rotate secrets.
-9. **Compose: no `version:` field.** It is obsolete and ignored. Delete it.
-10. **Clean apt cache in the same RUN layer.** `apt-get update && apt-get install -y ... && rm -rf /var/lib/apt/lists/*` - all one `RUN`.
-11. **`.dockerignore` is not optional.** `.git`, `node_modules`, `.env`, secrets, test fixtures, docs - all excluded.
-12. **Resource limits on production containers.** Memory and CPU limits prevent noisy neighbors and OOM cascading.
-13. **Run the AI self-check.** Every generated Dockerfile/Compose gets verified against the checklist above before returning.
+4. **Meaningful service healthchecks.** Use Dockerfile, Compose, or orchestrator probes for long-running services; use exit status for one-shot jobs and document external monitoring.
+5. **Pin CI tools to SHA256 digests.** Mutable tags are compromised supply chain vectors (Trivy CVE-2026-33634 March 2026, tj-actions CVE-2025-30066 (upstream: reviewdog CVE-2025-30154) March 2025).
+6. **Trivy v0.74.0+ for new pins.** v0.69.3 was the March 2026 rollback version; v0.69.4-6 contained credential-stealing malware. If you ran it, rotate secrets.
+7. **Resource limits on production containers.** Memory and CPU limits prevent noisy neighbors and OOM cascading.

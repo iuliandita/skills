@@ -309,7 +309,7 @@ Runtime monitoring of network egress and file system access in CI jobs. Detected
 attack anomalies.
 
 ```yaml
-- uses: step-security/harden-runner@<sha>  # v2.14.2 (v2.12.0 min - CVE-2025-32955)
+- uses: step-security/harden-runner@<sha>  # v2.21.1 (v2.12.0 min - CVE-2025-32955)
   with:
     egress-policy: audit
 ```

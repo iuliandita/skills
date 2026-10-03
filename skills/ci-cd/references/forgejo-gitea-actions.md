@@ -18,6 +18,7 @@ means two sets of webhooks, two runners, double the secret surface.
 
 ## Contents
 
+- Forgejo Actions patterns
 - Gitea Actions
 - Forgejo Actions troubleshooting
 - Woodpecker CI
@@ -27,11 +28,151 @@ means two sets of webhooks, two runners, double the secret surface.
 
 ---
 
+## Forgejo Actions patterns
+
+Forgejo workflow templates and operations. The key-differences table lives in `SKILL.md`.
+
+### Forgejo workflow template
+
+```yaml
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  ci:
+    runs-on: docker                    # self-hosted runner label
+    container:
+      image: oven/bun:1.2             # pin to minor version minimum
+    steps:
+      - uses: actions/checkout@<sha>  # pin to SHA; resolves from Forgejo mirror
+      - run: bun install --frozen-lockfile
+      - run: bun run lint
+      - run: bun run typecheck
+      - run: bun run test
+```
+
+### Forgejo action SHA discovery
+
+Forgejo resolves actions from its own mirror or a configured upstream, not from github.com.
+Finding the correct SHA for a self-hosted mirror requires different steps than GitHub.
+
+**Find the SHA on your Forgejo instance**:
+```bash
+# List tags and their SHAs from the Forgejo mirror
+git ls-remote https://forgejo.example.com/actions/checkout.git 'refs/tags/v4*'
+
+# Or use the Forgejo API to get a tag's commit SHA
+curl -s https://forgejo.example.com/api/v1/repos/actions/checkout/git/refs/tags/v4.2.2 \
+  | jq -r '.object.sha'
+```
+
+**If your instance mirrors from code.forgejo.org** (the default upstream):
+```bash
+git ls-remote https://code.forgejo.org/actions/checkout.git 'refs/tags/v4*'
+```
+
+**Verify a SHA matches what you expect**:
+```bash
+# Clone at the specific SHA and inspect
+git clone --depth 1 https://forgejo.example.com/actions/checkout.git /tmp/checkout-verify
+cd /tmp/checkout-verify
+git checkout <sha>
+# Review action.yml and dist/ - compare against the known-good upstream release
+```
+
+**Key differences from GitHub SHA discovery**:
+- The same action (e.g., `actions/checkout`) may have different SHAs on Forgejo mirrors vs GitHub
+  because Forgejo forks maintain their own commits
+- `code.forgejo.org/actions/*` repos are Forgejo-maintained forks, not exact copies of GitHub repos
+- Always verify SHAs against your own instance, not against github.com
+- If the action repo is not mirrored yet, an admin must add it to the Forgejo mirror list
+
+### Forgejo-specific gotchas
+
+- **No `ubuntu-latest`** - `runs-on` maps to your registered runner labels (e.g., `docker`)
+- **Missing tools** - Forgejo runner containers are lean. Add `apt-get install` for git, curl, etc.
+- **TLS certs** - if Forgejo uses self-signed or internal CA certs, configure the runner's trust
+  store (`GIT_SSL_CAINFO=/path/to/ca-bundle.crt`) or install the CA into the container image.
+  `GIT_SSL_NO_VERIFY=true` is a last resort for dev/test only - never normalize TLS bypass in production
+- **Third-party actions** - many GitHub Marketplace actions use GitHub-specific API calls and will silently fail
+- **Secrets in Forgejo** - `${{ secrets.* }}` works, but no environment-level scoping
+- **`permissions:` not enforced** - Forgejo parses the field but does not restrict the workflow token.
+  The token always has full read-write access (read-only for fork PRs only). Don't assume
+  least-privilege from `permissions:` alone - it has no effect on Forgejo.
+
+### Managing Forgejo Actions with `fj`
+
+The community Forgejo CLI (`fj`, v0.4.1+) covers the day-to-day Actions surface: listing
+runs, dispatching workflows, and managing variables/secrets. It is much faster than the web
+UI for bulk secret updates and scriptable for one-shot runs. For installation and authentication, use the CLI's official docs and protected credential store. The **git** skill is an optional neighbor.
+
+```bash
+# List recent runs (for a quick "is CI green on main?" check)
+fj actions tasks
+
+# Trigger a workflow_dispatch run without opening the browser
+fj actions dispatch publish.yaml main --inputs version=1.2.3
+
+# Bulk variable/secret management (writes to the repo scope)
+fj actions variables create CACHE_BUCKET gs://my-bucket
+# Create secrets in the authenticated forge UI unless CLI help verifies stdin/file input.
+# Do not pass secret values as positional arguments.
+```
+
+**What `fj` does not do yet** (as of 0.4.1): stream runner logs, re-run failed jobs, cancel
+running tasks. For those, use the web UI or hit `/api/v1/repos/{owner}/{repo}/actions/tasks/{id}`
+directly. Log streaming across the fleet still belongs in your observability stack, not `fj`.
+
+**On Gitea instead of Forgejo?** Use `tea` (`gitea.com/gitea/tea`) - the Gitea CLI covers
+a similar surface (issues, PRs, releases) against any Gitea 1.20+ instance. Gitea Actions
+lacks `fj`-equivalent CLI tooling; use the web UI or API. If you're running Forgejo,
+prefer `fj` - it tracks Forgejo-specific behavior (AGit, Forgejo Actions quirks) that
+`tea` does not.
+
+### Forgejo release workflow pattern
+
+```yaml
+name: Release
+on:
+  push:
+    tags: ['v*']
+
+jobs:
+  build-and-push:
+    runs-on: docker
+    container:
+      image: catthehacker/ubuntu:act-24.04    # heavier image for multi-tool needs
+    # Private-forge TLS: mount your CA and set GIT_SSL_CAINFO=/path/to/ca.crt.
+    # GIT_SSL_NO_VERIFY is a dev/test-only last resort - never commit it to a release pipeline.
+    steps:
+      - uses: actions/checkout@<sha>  # pin to SHA; resolves from Forgejo mirror
+      - name: Login to registry
+        env:
+          TOKEN: ${{ secrets.REGISTRY_TOKEN }}
+          HOST: ${{ secrets.REGISTRY_HOST }}
+          USER: ${{ secrets.REGISTRY_USER }}
+        run: echo "$TOKEN" | docker login "$HOST" -u "$USER" --password-stdin
+      - name: Build and push
+        env:
+          REGISTRY: ${{ secrets.REGISTRY_HOST }}/${{ secrets.REGISTRY_IMAGE }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          docker build -t "$REGISTRY:$TAG" .
+          docker push "$REGISTRY:$TAG"
+```
+
+**Note**: use secrets for registry host/image to avoid hardcoding private domains in git history.
+
+---
+
 ## Gitea Actions
 
 Same `act`-based engine as Forgejo Actions, same GitHub Actions syntax subset, same SHA
-pinning and action resolution concerns. All Forgejo Actions guidance in `SKILL.md` applies,
-with these differences:
+pinning and action resolution concerns. All Forgejo Actions guidance (the `SKILL.md` key-differences
+table and the Forgejo Actions patterns section above) applies, with these differences:
 
 | Aspect | Forgejo Actions | Gitea Actions |
 |--------|-----------------|---------------|
@@ -251,6 +392,6 @@ the YAML is related but not drop-in compatible.
 
 ## Cross-references
 
-- Forgejo Actions patterns (same engine, mostly transferable): `SKILL.md` Forgejo section
+- Forgejo Actions patterns (same engine, mostly transferable): Forgejo Actions patterns section above and the `SKILL.md` key-differences table
 - GitHub Actions supply chain hardening: `references/github-actions.md`
 - Supply chain incident patterns: `references/supply-chain.md`

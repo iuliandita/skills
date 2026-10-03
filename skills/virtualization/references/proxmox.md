@@ -426,7 +426,8 @@ migration to nodes with different PCI topologies.
 
 ```bash
 # Create mapping via API
-pvesh create /cluster/mapping/pci --id gpu-quadro --map 'node=pve3,path=0000:01:00.0'
+pvesh create /cluster/mapping/pci --id gpu-quadro --map 'node=pve3,path=0000:01:00.0,id=10de:XXXX'
+# id = vendor:device from lspci -nn (required; Proxmox uses it to detect hardware changes)
 ```
 
 ### VM configuration
@@ -473,6 +474,27 @@ variable "hostpci" {
 - **Reset bug:** Some GPUs (older AMD, some NVIDIA Quadro) don't reset properly on VM
   shutdown. The device becomes unusable until the host reboots. Check the PVE community
   wiki for your specific GPU model.
+
+### Windows 11 + NVIDIA desktop GPU (Proxmox VE 9.x)
+
+Follow the steps above (IOMMU groups, vfio-pci binding, hardware mapping), plus:
+
+1. **Kernel command line.** Add `iommu=pt` next to `intel_iommu=on` / `amd_iommu=on` in
+   `/etc/kernel/cmdline` (PVE with systemd-boot) or `/etc/default/grub` (legacy), then
+   `proxmox-boot-tool refresh` (or `update-grub`) and reboot. Single-GPU hosts need the early
+   vfio binding in initramfs or the host driver claims the card first.
+2. **VM settings for Windows 11.** Machine type `q35`, BIOS `ovmf` (add an EFI disk), TPM v2.0
+   state disk, `cpu: host`, `hidden=1` to dodge NVIDIA's Code 43 on older drivers. Example:
+   `qm set 100 --machine q35 --bios ovmf --cpu host,hidden=1 --efidisk0 local-lvm:1,format=raw`
+3. **Attach the GPU** through a hardware mapping:
+   `pvesh create /cluster/mapping/pci --id gpu-rtx4070 --map 'node=pve1,path=0000:01:00.0,id=10de:XXXX'` (`id` is the vendor:device from `lspci -nn`), then
+   `qm set 100 --hostpci0 mapping=gpu-rtx4070,pcie=1,x-vga=1`.
+   Legacy form without a mapping: `--hostpci0 01:00,pcie=1,x-vga=1`. Drop `x-vga` for
+   compute-only passthrough.
+
+**Reset bug:** NVIDIA consumer cards (including RTX 4070) usually reset cleanly, but verify
+with two successive VM restarts before production. AMD RX 5000/6000 series often need the
+`vendor-reset` kernel module or `pcie_port_pm=off`. If the second VM start hangs, you hit it.
 
 ---
 

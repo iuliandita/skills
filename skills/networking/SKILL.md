@@ -119,15 +119,16 @@ Before returning any generated network configuration, verify:
 - Use packet captures with narrow filters and time windows to avoid huge captures and privacy spill.
 - Prefer persistent nftables sets, DNS caches, and proxy connection reuse where appropriate.
 
----
-
-## Best Practices
-
-- Diagnose before changing: capture current routes, rules, addresses, and resolver state.
-- Change one layer at a time: DNS, routing, firewall, proxy, VPN, or application.
-- Keep emergency access open when editing firewall, VPN, or default-route configuration remotely.
-
 ## Workflow
+
+For any change, copy this checklist and track progress:
+
+```markdown
+- [ ] Step 1: Task type identified and matching reference read
+- [ ] Step 2: Current state captured (addresses, routes, firewall, DNS manager, VPNs)
+- [ ] Step 3: One change applied with a saved config and an armed rollback
+- [ ] Step 4: Validated (on failure: restore, fix, return to Step 3)
+```
 
 ### Step 1: Identify the task type
 
@@ -177,7 +178,8 @@ Read the appropriate reference file for detailed patterns. Key principles:
 ### Step 4: Validate
 
 If a check fails, restore the saved configuration (or let the rollback timer fire), fix the
-change, and return to Step 3.
+change, and return to Step 3. Detect missing tools first:
+`for t in dig mtr tcpdump iperf3 nft wg; do command -v "$t" >/dev/null || echo "missing: $t"; done`
 
 | What to validate | How |
 |-----------------|-----|
@@ -227,6 +229,8 @@ file only when a task needs the literal mapping.
 | **Traefik** | Docker/K8s, dynamic backends | Automatic (ACME) | Labels / file / K8s CRDs | Yes (TCP/UDP) |
 | **HAProxy** | Pure load balancing, L4/L7 | Manual | haproxy.cfg | Yes (native) |
 
+Default to Caddy for a new single-host setup; keep the proxy already deployed when there is one.
+
 ### Caddy reverse proxy quick start
 
 ```
@@ -261,6 +265,8 @@ health checks, rate limiting, and WebSocket/gRPC proxying.
 | **IPsec (strongSwan)** | Good | Most complex | IKEv2 | Site-to-site, standards compliance |
 | **Tailscale/Headscale** | Fast (WG underneath) | Zero config | WG + DERP relays | Overlay mesh, remote access |
 | **Nebula** | Fast | Low | Certificate-based | Large mesh, Slack-scale |
+
+Default to WireGuard; choose another only for a need in its "Best for" column.
 
 ### WireGuard site-to-site quick start
 
@@ -396,19 +402,7 @@ See `references/output-contract.md` for the full contract.
 
 ## Rules
 
-1. **Ask which interface.** Never assume `eth0`. Modern Linux uses predictable interface names.
-   Check with `ip link` or ask the user.
-2. **Test before persisting.** Network misconfigs can lock you out of remote machines. Apply
-   changes temporarily, verify connectivity (especially SSH), then persist.
-3. **MTU matters.** VPN tunnels, VXLAN, and PPPoE all reduce effective MTU. Mismatched MTU
-   causes silent packet drops that are painful to debug. Always calculate and set explicitly.
-4. **Check who manages DNS.** systemd-resolved, NetworkManager, and manual /etc/resolv.conf
-   fight each other. Identify the active manager before making DNS changes.
-5. **Verify the existing firewall.** Check `nft list ruleset` and `iptables-save` before
+1. **Verify the existing firewall.** Check `nft list ruleset` and `iptables-save` before
    adding rules. Mixing nftables and iptables on the same system causes unpredictable behavior.
-6. **No plaintext on untrusted segments.** TLS 1.2+ for all services. If something needs to
+2. **No plaintext on untrusted segments.** TLS 1.2+ for all services. If something needs to
    cross an untrusted network without TLS, tunnel it through a VPN.
-7. **Subnet overlap kills VPNs.** Before assigning VPN address ranges, inventory all LAN
-   subnets and existing VPN ranges. Overlapping ranges cause routing black holes.
-8. **Defer to specialized skills.** OPNsense/pfSense -> opnsense-pfsense. K8s networking -> kubernetes.
-   Container networking -> docker. Cloud infra -> terraform. Pentesting -> privilege-escalation.

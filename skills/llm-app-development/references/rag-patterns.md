@@ -143,6 +143,15 @@ Start with 512-1024 tokens. Adjust based on eval results, not intuition.
 
 ## 4. Embedding Pipelines
 
+### Embedding model selection
+
+| Model | Dimensions | Best for |
+|-------|-----------|----------|
+| `text-embedding-3-large` (OpenAI) | 3072 (or lower via `dimensions`) | General-purpose, scalable |
+| `voyage-3-large` (Voyage AI) | 1024 | Code and technical content |
+| `embed-v4.0` (Cohere) | 1024 | Multilingual, compression |
+| Open-source (e5-mistral, gte-Qwen2) | Varies | Air-gapped / self-hosted |
+
 ### Batch embedding
 
 Always batch embedding calls. Single-document embedding is wasteful:
@@ -193,6 +202,15 @@ Filter on metadata before vector search to reduce search space and improve relev
 ---
 
 ## 5. Vector Store Setup
+
+### Vector store selection
+
+| Store | Type | Best for |
+|-------|------|----------|
+| pgvector | PostgreSQL extension | Already using Postgres, <10M vectors |
+| Qdrant | Self-hosted or cloud | Production self-hosted, hybrid search |
+| Pinecone | Managed only | Zero-ops, serverless scaling |
+| ChromaDB | Embedded / local | Prototyping, small datasets |
 
 ### pgvector (PostgreSQL)
 

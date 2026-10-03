@@ -1,6 +1,6 @@
 # Report and Task-List Templates
 
-Templates used by Steps 7, 8, and 9. Read this before writing the audit artifacts.
+Templates used by Steps 7, 8, and 9 of `references/exhaustive-workflow.md`. Read this before writing the audit artifacts.
 
 ## Contents
 

@@ -1,10 +1,9 @@
 # Plain speech: concreteness, actor, sentence load, voice
 
 Deep-dive reference for the plain-speech checks in `SKILL.md`: abstract metaphor nouns,
-the concreteness test, the actor test, sentence load, and voice restoration. The last four
-are structural rather than lexical - no wordlist catches them, and each needs a rewrite
-rather than a substitution. Two further plain-speech checks, superficial participle tails
-and false ranges, are fully covered in `SKILL.md` and have no deep dive here.
+the concreteness test, the actor test, sentence load, voice restoration, superficial
+participle tails, and false ranges. All but the first are structural rather than lexical - no
+wordlist catches them, and each needs a rewrite rather than a substitution.
 
 Folded in from [poteto/plugins](https://github.com/poteto/plugins) `pstack/skills/unslop`
 (MIT), which contributed the abstract-metaphor-noun list, the concreteness test, the actor
@@ -17,6 +16,8 @@ test, the sentence-load test, and the voice-restoration guidance.
 - 3. Passive voice with an unnamed actor
 - 4. Dense sentence stacking
 - 5. Restoring voice
+- 6. Superficial participle tails
+- 7. False ranges
 - What NOT to flag from this reference
 
 ---
@@ -148,6 +149,30 @@ replacement should carry these:
 the author's call. Flag mechanical tells as findings; offer voice suggestions as options
 and say so explicitly. Do not rewrite a piece into your own voice under the banner of
 removing AI tells.
+
+---
+
+## 6. Superficial participle tails
+
+A sentence ending in a comma plus an `-ing` clause that restates what the sentence already
+said, implying consequence without asserting one: `..., highlighting the need for X`, `...,
+ensuring reliability`, `..., reflecting a broader shift`, `..., showcasing the team's
+expertise`, `..., underscoring its importance`.
+
+**Detect:** cut the clause. If nothing is lost, it was decoration. **Fix:** delete the tail; if
+the consequence is real, promote it to its own sentence with a stated mechanism - `..., ensuring
+reliability` -> `Retries cover the transient failures.`
+
+---
+
+## 7. False ranges
+
+`from X to Y` where X and Y do not sit on a shared scale, implying comprehensive coverage of
+what is really two examples: `everything from authentication to deployment`, `from startups to
+enterprises` with no middle named.
+
+**Detect:** test for a meaningful midpoint. `from 10ms to 2s` is a real range, `from CI to
+observability` is not. **Fix:** list the items directly - `covers authentication and deployment`.
 
 ---
 

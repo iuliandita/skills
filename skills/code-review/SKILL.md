@@ -3,7 +3,7 @@ name: code-review
 description: >
   Review code and diffs for correctness: bugs, regressions, edge cases, races, and resource leaks.
 license: MIT
-compatibility: "None - works on any codebase"
+compatibility: "Works on any codebase. Optional: git (diff scope, blame) and the project's own linters (tsc, eslint, ruff, mypy, shellcheck, terraform, ansible-lint)"
 metadata:
   source: iuliandita/skills
   date_added: "2026-03-25"
@@ -45,34 +45,18 @@ Every finding answers one of:
 
 Before reporting any finding at >= 80% confidence, verify:
 
-- [ ] **Read full context**: read the entire function/file, not just the flagged line
+- [ ] **Read full context**: read the entire function/file, not just the flagged line, plus the callers when the bug depends on how it is called. A pattern that looks wrong in isolation might be correct in context
 - [ ] **Check for tests**: is there a test covering this case? Is the test correct?
 - [ ] **Check git blame**: is this new code or battle-tested? Exclude pre-existing issues only in a diff-scoped review
 - [ ] **Check for explaining comments**: comments establish intent; check that the implementation actually satisfies that intent
-- [ ] **Cite the evidence**: exact file, line, and code that proves the issue. No citation = no finding
+- [ ] **Cite the evidence**: exact file, line, and code in the agreed review scope that proves the issue. No citation = no finding
 - [ ] **Adversarial self-check**: argue against each finding. If the counter-argument is convincing, drop it
-- [ ] **Construct a failing case**: for P0 findings, describe the specific input or sequence that triggers the bug
-- [ ] **Verify API/stdlib claims**: AI code review suggestions frequently contain factual errors about framework behavior. If unsure, look it up
+- [ ] **Construct a failing case**: every finding describes a plausible failing input, race, leak, or regression; for P0 findings, give the specific input or sequence that triggers the bug
+- [ ] **Verify API/stdlib claims**: never assert API or stdlib behavior from memory. 18% of "high-confidence" AI review suggestions contain factual errors about framework behavior, so look up whether a function is stable-sorted, returns a view, or handles null before making it a finding
 - [ ] **Boundary values on numeric inputs flagged**: trace zero, negative, and overflow values through the actual input contract and callers; require a reachable failure before assigning confidence
-- [ ] **Line references verified**: every finding points to code in the agreed review scope
-- [ ] **Behavioral claim proven**: findings describe a plausible failing input, race, leak, or regression
 - [ ] Cross-cutting agent hygiene applied - see `references/agent-hygiene.md`
 
 ---
-
-## Performance
-
-- Start with changed public interfaces, shared utilities, migrations, and concurrency boundaries.
-- Use tests and static analysis to validate suspected issues instead of reading the entire repo linearly.
-- Merge duplicate findings into one high-signal comment with affected locations.
-
----
-
-## Best Practices
-
-- Lead with bugs and risks, not style preferences.
-- Do not request rewrites unless the current structure blocks correctness or maintainability.
-- Call out missing tests only when a specific behavior or risk needs coverage.
 
 ## Workflow
 
@@ -82,13 +66,8 @@ Default scope based on context:
 - If invoked right after writing code in this session -> **self-check** (review what you just wrote)
 - If there are uncommitted changes (`git diff --name-only`) -> **recent changes**
 - If the user specifies files/dirs/commits -> **targeted review**
+- If the user asks for the whole codebase -> **full codebase review**, prioritized as in "Prioritizing in Large Codebases" and reported by category
 - Otherwise -> ask the user
-
-Available scopes:
-- **Full codebase review** - scan everything, report by category
-- **Recent changes** - check git diff or specific commits
-- **Specific files/dirs** - targeted review
-- **Self-check** - review code you just wrote in this session
 
 **Large diffs (> 500 lines):** Chunk by file. Review each file with its surrounding context, then do a cross-file pass looking for integration issues (mismatched types across boundaries, inconsistent error handling, broken call chains). Large diffs are also a code smell worth noting in Observations.
 
@@ -178,9 +157,7 @@ Rate every potential issue on a confidence scale of 0-100:
 
 For each significant code change, ask: **What are the three most likely failure modes?** This question catches architecture-level bugs that line-by-line review misses - especially in AI-generated code where individual lines look fine but the overall design has gaps.
 
-Before assigning a score, run the AI Self-Check list above. If you cannot cite the evidence or construct the failing input, lower the score rather than reporting it.
-
-Never assert API or stdlib behavior from memory: 18% of "high-confidence" AI review suggestions contain factual errors about framework behavior, so look up whether a function is stable-sorted, returns a view, or handles null before making it a finding.
+Before assigning a score, run the AI Self-Check list above. If you cannot cite the evidence or construct the failing input, return to Step 4 for that finding or lower the score rather than reporting it.
 
 ### Step 6: Report
 
@@ -222,7 +199,7 @@ For full codebase reviews on repos with 100+ files, you can't read everything. P
 
 Skip: vendored code, generated files, test fixtures/snapshots, documentation, static assets.
 
-For targeted reviews (diff/specific files), read the full files being changed plus their immediate callers/callees. Context matters - a function that looks fine in isolation might be called incorrectly.
+For targeted reviews (diff/specific files), start with changed public interfaces, shared utilities, migrations, and concurrency boundaries, then read the full files being changed plus their immediate callers/callees. Context matters - a function that looks fine in isolation might be called incorrectly. Use tests and static analysis to validate suspected issues instead of reading the entire repo linearly.
 
 ---
 
@@ -349,6 +326,8 @@ For Rust and other languages without dedicated reference files: apply the univer
 - **TODOs with issue references** - `// TODO(#1234)` shows awareness, not negligence.
 - **Generated / vendored code** - lock files, compiled output, auto-generated types, vendored deps, ORM migrations.
 - **Previously reviewed code** - if invoked multiple times in a session, focus on changes since the last review.
+- **Rewrite requests** - do not request rewrites unless the current structure blocks correctness or maintainability.
+- **Missing tests in general** - call out missing tests only when a specific behavior or risk needs coverage.
 
 ---
 
@@ -368,80 +347,7 @@ Rule of thumb: if you'd wake someone up at 2am over it, it's P0. If it can wait 
 
 ## Output Format
 
-### When issues are found:
-
-````markdown
-## Code Review: [scope]
-
-### Findings
-
-#### P0 - Must Fix ([count] issues)
-
-🔴 **[confidence]%** `path/to/file:line` - [description]
-
-[Why this is wrong and what will happen if it isn't fixed]
-**Triggers when:** [specific input, sequence, or condition that causes the bug]
-
-```[language]
-// before
-[code snippet]
-
-// after
-[fixed code snippet]
-```
-
-#### P1 - Should Fix ([count] issues)
-
-🟠 **[confidence]%** `path/to/file:line` - [description]
-
-[Explanation]
-
-```[language]
-// before
-[code snippet]
-
-// after
-[fixed code snippet]
-```
-
-#### P2 - Nice to Fix ([count] issues)
-🟡 **[confidence]%** `path/to/file:line` - [description]
-
-[Explanation]
-
-#### P3 - Backlog ([count] issues)
-🔵 **[confidence]%** `path/to/file:line` - [description]
-
-[Explanation]
-
-#### Info ([count] notes)
-⚪ **[confidence]%** `path/to/file:line` - [description]
-
-[Non-actionable observation]
-
-### Observations
-
-[Patterns noticed below the 80% threshold but worth mentioning as a group. This is where higher-level insights go - "error handling is inconsistent across the API handlers", "no input validation on any of the CLI commands", "the test suite mocks the database everywhere so nothing tests actual queries." These aggregate observations are often more valuable than individual findings.]
-
-### Summary
-- X findings across Y files (P0: Z, P1: W, P2: V, P3: U, info: T)
-- [1-2 sentences on overall code health as it relates to correctness]
-````
-
-### When no issues are found:
-
-````markdown
-## Code Review: [scope]
-
-No issues found above the confidence threshold.
-
-**Checked:** [list what was reviewed - e.g., "14 files, focused on API handlers and auth middleware"]
-**Linters:** [what ran, what was missing - e.g., "eslint clean, shellcheck not installed (`pacman -S shellcheck`)"]
-
-[Optional: 1-2 sentences noting anything positive - well-structured error handling, good test coverage, etc.]
-````
-
-Keep it tight. Show the bug, show the fix, move on. Long explanations only when the bug is subtle and the reader needs to understand *why* it's wrong.
+Use the report templates in `references/report-format.md`: one for findings grouped by severity with before/after fixes, one for a clean review that still lists what was checked and which linters ran or were missing. Read it before writing the final report.
 
 ---
 
@@ -457,6 +363,7 @@ Keep it tight. Show the bug, show the fix, move on. Long explanations only when 
 - `references/cicd-pipelines.md` - CI/CD bug patterns
 - `references/ai-age-patterns.md` - AI-age correctness patterns and hallucination-driven bugs
 - `references/databases.md` - application-level database bug patterns
+- `references/report-format.md` - report templates for findings and clean reviews (read at Step 6)
 
 ---
 
@@ -487,8 +394,8 @@ See `references/output-contract.md` for the full contract.
 
 ## Rules
 
-- **Read before flagging.** Never flag code you haven't read in full context. Read the function, the file, and the callers if needed. A pattern that looks wrong in isolation might be correct in context.
-- **Don't duplicate other skills.** Style issues belong to code-simplification. Security vulnerabilities belong to security-audit. If you're unsure whether a finding is a bug or a style issue, ask: "would this cause incorrect behavior?" If no, skip it.
-- **One finding per bug, not per occurrence.** If the same pattern appears in 5 files, report it once with a note about scope. Don't pad the report.
+- **Read before flagging.** Never flag code you haven't read in full context (see the AI Self-Check).
+- **Bug or style?** If you're unsure whether a finding is a bug or a style issue, ask: "would this cause incorrect behavior?" If no, skip it; style and vulnerabilities route as in "What NOT to Flag".
+- **One finding per bug, not per occurrence.** If the same pattern appears in 5 files, report it once with the affected locations. Don't pad the report.
 - **Show the fix.** Every finding must include a concrete code fix, not just a description of the problem. If you can't show a fix, the finding isn't specific enough.
 - **Don't repeat dismissed findings.** If the user acknowledged or dismissed a finding in this session, don't re-report it on subsequent invocations. They heard you the first time.

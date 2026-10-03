@@ -96,12 +96,12 @@ work, trust the live channel or flake lock over a stale table.
 Before returning NixOS or Nix commands, verify:
 
 - [ ] **Lane identified**: NixOS install, Nix on non-NixOS Linux, Nix on macOS (nix-darwin or plain Nix), WSL, Determinate Nix, or Lix. Advice diverges fast.
-- [ ] **Channels vs flakes decided**: confirm which the user has before prescribing `nix-channel`, `nixos-rebuild --flake`, or `nix flake update`. Mixing without intent creates channel-lock drift.
+- [ ] **Channels vs flakes decided**: confirm which the user has (and stable vs unstable, home-manager, or nix-darwin context) before prescribing `nix-channel`, `nixos-rebuild --flake`, or `nix flake update`. Mixing without intent creates channel-lock drift.
 - [ ] **Flake status is current**: flakes remain nominally experimental on upstream Nix but are enabled by default on Determinate Nix; recommend enabling `experimental-features = nix-command flakes` where the user is already using flakes.
 - [ ] **`nix-env -i` is not the answer**: installing into the per-user profile hides state from `configuration.nix` and breaks reproducibility. Use declarative `environment.systemPackages`, `home.packages`, or an ad-hoc `nix shell` instead.
 - [ ] **No partial upgrade advice**: on flakes-based systems, do not bump a single input without running `nixos-rebuild --flake` after; on channels, do not change only `nixos` without updating dependent channels too.
 - [ ] **Rebuild verb is intentional**: `switch`, `test`, `boot`, `dry-activate`, `build-vm`, and `build` differ. `test` does not persist the boot entry; `boot` does not activate now; `switch` does both.
-- [ ] **Known-good generation preserved**: never remove the last known-good generation, and never `nix-collect-garbage -d` on a system that just booted a new generation without verifying the new one survives a reboot.
+- [ ] **Known-good generation preserved**: identify the rollback generation, boot entries, and store or cache state before changes. Never remove the last known-good generation, and never `nix-collect-garbage -d` on a system that just booted a new generation; boot the new generation twice before pruning.
 - [ ] **GC roots respected**: dev shells, direnv caches, and CI artifacts often hold GC roots. Do not recommend aggressive GC without checking `nix-store --gc --print-roots` first.
 - [ ] **Unfree / insecure gates named explicitly**: set `nixpkgs.config.allowUnfree = true;` or `allowUnfreePredicate`, and list insecure packages under `permittedInsecurePackages`. Do not default to `NIXPKGS_ALLOW_UNFREE=1` as the permanent answer.
 - [ ] **Hardware module present**: for fresh installs, `hardware-configuration.nix` must be regenerated with `nixos-generate-config` and not hand-edited for filesystem UUIDs. For laptops, check nixos-hardware profile.
@@ -114,29 +114,19 @@ Before returning NixOS or Nix commands, verify:
 - [ ] **Determinate / Lix advice scoped**: Determinate's `determinate-nixd` and Lix's CLI diverge from upstream in subtle places. Name the lane before suggesting daemon or CLI flags.
 - [ ] **Diagnostic errors are not silenced**: do not hide useful output with `2>/dev/null` when the error text is the evidence. Use `2>&1 || true` when gathering.
 - [ ] **Version pins justified**: if a pinned `system.stateVersion` is suggested, explain why; do not change `stateVersion` on an existing system casually - it controls migration semantics.
-- [ ] **Channel/flake checked**: advice matches stable, unstable, flake, home-manager, or nix-darwin context
-- [ ] **Rollback identified**: generation rollback, boot entries, and store/cache state are understood before changes
 - [ ] Cross-cutting agent hygiene applied - see `references/agent-hygiene.md`
 
 ---
 
-## Performance
-
-- Use binary caches and substituters deliberately; local source builds can dominate iteration time.
-- Evaluate and build targeted attributes before rebuilding entire systems where possible.
-- Garbage-collect only after confirming new generations boot and required roots are preserved.
-
-
----
-
-## Best Practices
-
-- Keep hardware, secrets, user packages, and service modules separated enough to review changes safely.
-- Commit flake lock and configuration changes together for reproducible rebuilds.
-- Do not delete old generations or store paths until rollback is no longer needed.
-
-
 ## Workflow
+
+The steps are ordered. Copy this checklist and track progress:
+
+- [ ] Step 1: Nix lane identified
+- [ ] Step 2: Current state gathered
+- [ ] Step 3: Matching reference loaded
+- [ ] Step 4: One layer changed; consequential changes confirmed first
+- [ ] Step 5: Validated (on failure, fix and return to Step 4)
 
 ### Step 1: Identify the Nix lane first
 
@@ -250,6 +240,14 @@ Do not load every reference by default. Pick the one that matches the failure mo
 - Keep overlays composable: scope to `final: prev: { ... }`, not mutating `pkgs` in-place.
 - Validate before GC: `nix-store --gc --print-roots | grep <path>` before deleting.
 
+**Consequential changes** (generation deletion and GC, kernel or bootloader changes, disko
+`--mode destroy`, image writes with `dd`, nixos-anywhere installs, secret re-keying): show the
+exact command and what it will do (generations kept, dry-activate output, or target device), get
+explicit confirmation, run it, then go to Step 5. In unattended runs, stop at the plan. Exact
+commands live in `references/rebuild-generations-and-rollback.md` (rollback, generation pruning),
+`references/store-gc-and-builders.md` (GC), `references/disko-impermanence-and-imaging.md` (disks,
+images, remote installs), and `references/secrets-sops-and-agenix.md` (re-keying).
+
 ### Step 5: Validate before closing
 
 ```bash
@@ -266,7 +264,8 @@ nix-store --verify --check-contents 2>&1 | tail -20
 df -h /nix/store
 ```
 
-Reboot only when the boot path is understood and at least one known-good generation remains.
+If a check fails, fix the layer it points to and return to Step 4. Reboot only when the boot path
+is understood and at least one known-good generation remains.
 
 ---
 
@@ -310,6 +309,8 @@ committing the current `flake.lock`.
 - **Flakes when the user already has them.** Do not migrate users off channels mid-troubleshoot. Do not migrate users onto flakes without naming tradeoffs (still experimental upstream, lockfile commits become a habit, registry overrides differ).
 - **Generations are the rollback.** Before debugging, confirm the previous generation boots. That is cheaper than chasing ghosts.
 - **Store hygiene is boring and scheduled.** Enable `nix.gc.automatic` and `nix.settings.auto-optimise-store = true;` rather than manual sweeps.
+- **Build narrow, cache deliberately.** Evaluate and build targeted attributes before rebuilding entire systems where possible; use binary caches and substituters deliberately, since local source builds can dominate iteration time.
+- **Keep the config reviewable.** Separate hardware, secrets, user packages, and service modules enough to review changes safely. Commit `flake.nix` and `flake.lock` before a flake rebuild, and keep input bumps in their own commit.
 - **home-manager has three modes.** Standalone, NixOS module, nix-darwin module. Pick one per host and stay there.
 - **nix-darwin is opinionated.** macOS system settings, LaunchDaemons, and Homebrew coexistence are what it owns. Do not treat it like NixOS with a different kernel.
 - **Disko and impermanence are declarative recovery.** They shine on fresh installs and nixos-anywhere deploys; retrofitting them onto a live system is a different, harder problem.
@@ -385,18 +386,5 @@ See `references/output-contract.md` for the full contract.
 
 ## Rules
 
-1. **Identify the Nix lane before prescribing commands.** NixOS vs Nix-on-host, channels vs flakes, Determinate vs upstream vs Lix, standalone vs module home-manager - all change the answer.
-2. **Declarative beats imperative.** If the fix is `nix-env -i`, reach for `environment.systemPackages`, `home.packages`, or `nix shell` instead. Hidden profile state is a footgun.
-3. **Know the rebuild verb.** `switch`, `test`, `boot`, `dry-activate`, `build-vm`, and `build` are not interchangeable. `test` does not persist across reboot; `boot` does not activate now.
-4. **Preserve a known-good generation.** Never GC aggressively right after a rebuild. Boot the new generation twice before pruning.
-5. **Flakes are intentional.** Enable `nix-command flakes` where the user already uses them; do not push migration during troubleshooting.
-6. **GC roots are real state.** Dev shells, direnv caches, and CI pins hold them. Check before mass deletion.
-7. **Secrets never in the store.** Use sops-nix or agenix with activation-time decryption; anything else ends up world-readable in `/nix/store`.
-8. **Module options must exist in the user's nixpkgs tag.** 24.05/24.11/25.05/25.11/26.05 drift is real; confirm with `nix repl` or the options search before recommending.
-9. **Overlays compose, not mutate.** `final: prev: { ... }` scope. Do not recommend global profile-level overlays on flake systems.
-10. **Kernel and initrd agree.** Do not flip `boot.kernelPackages` on ZFS, NVIDIA, or custom-module systems without a fallback.
-11. **Do not touch `system.stateVersion` casually.** It controls migration semantics and is not a "version bump" field.
-12. **Disko and impermanence are install-time decisions.** Retrofit is a different, harder conversation.
-13. **home-manager mode is sticky.** Pick standalone, NixOS module, or darwin module per host and stay there.
-14. **Determinate and Lix diverge at the edges.** Name the lane before suggesting daemon or CLI flags.
-15. **Reach for common Nix failure patterns before exotic explanations.** Channel/flake mixing, stale lock, overlay collision, option drift, GC of an active dev shell, and unfree/insecure gates explain a large share of the chaos.
+1. **Confirm consequential changes before running them.** Show the exact command and its plan, wait for an explicit yes, then verify. Unattended runs stop at the plan.
+2. **Secrets never in the store.** Use sops-nix or agenix with activation-time decryption; anything else ends up world-readable in `/nix/store`.

@@ -107,6 +107,7 @@ groups:
 ```
 
 ```yaml
+# slo-rules.test.yaml
 rule_files:
 - slo-rules.yaml
 evaluation_interval: 1m

@@ -321,6 +321,26 @@ curl http://localhost:8000/v1/models
 When `pip install llama-cpp-python` or `ollama` prebuilts crash with SIGILL, you're hitting
 the AVX2 cliff. Build from source with the right cmake flags for your CPU generation.
 
+### CPU-only inference with llama.cpp
+
+CPU inference is viable - sometimes preferable - for: dense models that fit in RAM (7-13B
+at Q4 hits 5-10 t/s on modern x86), **MoE models with low active params** (Qwen3-30B-A3B
+at Q4 reaches 13+ t/s even on a 2013-era Xeon - active params dominate decode), and
+air-gapped or compliance-bound environments. Key gotchas:
+
+- **ISA cliff**: pre-Haswell CPUs lack AVX2/FMA/BMI2. PyTorch >= 2.1, TF >= 2.8, JAX, and
+  Ollama prebuilts SIGILL. llama.cpp from source with `-DGGML_AVX2=OFF -DGGML_FMA=OFF
+  -DGGML_BMI2=OFF` works.
+- **GGUF quants**: `Q4_K_M` is the default sweet spot. `Q5_K_M` for +25% memory and quality.
+  `IQ4_XS` for tighter budgets. Avoid Q2/Q3 - quality cliff is real.
+- **Reproducible models**: pin both filename and HF commit SHA. Bare repo+filename pulls
+  "whatever the author serves now" - silent runtime changes on rebase.
+- **`--mlock`** page-faults the GGUF into RAM at start. Sum GGUF sizes for capacity planning.
+- **Threading**: `-t = physical_cores - 4` (decode, memory-bandwidth-bound), `-tb = logical`
+  (prefill, compute-bound).
+- **API keys**: `--api-key-file <path>`, never `--api-key <value>` on the command line - leaks
+  into `/proc/<pid>/cmdline` via systemd env expansion.
+
 ### Detect ISA support
 
 ```bash
@@ -379,7 +399,7 @@ runtime behavior.
 ```bash
 llama-server \
   --model /var/lib/llama/models/Qwen3-30B-A3B-Q4_K_M.gguf \
-  --host 0.0.0.0 --port 8080 \
+  --host 127.0.0.1 --port 8080 \
   --ctx-size 32768 --cache-reuse 256 \
   --threads 28 --threads-batch 32 \
   --temp 0.7 --top-k 20 --top-p 0.8 \
@@ -387,6 +407,8 @@ llama-server \
 ```
 
 Endpoint is OpenAI-compatible at `/v1/chat/completions`. Point any OpenAI client at it.
+Keep the loopback bind and put a reverse proxy or firewall in front for remote clients; bind
+`0.0.0.0` only on a trusted network, and keep the API key either way.
 
 ### One systemd unit per model
 

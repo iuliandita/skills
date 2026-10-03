@@ -304,13 +304,13 @@ Runtime network egress monitoring. Detected the tj-actions attack anomalies.
 
 ```yaml
 steps:
-  - uses: step-security/harden-runner@<sha>  # v2.14.2 (v2.12.0 min - CVE-2025-32955)
+  - uses: step-security/harden-runner@<sha>  # v2.21.1 (v2.12.0 min - CVE-2025-32955)
     with:
       egress-policy: audit    # or 'block' for strict mode
   # ... rest of steps
 ```
 
-**Note**: Harden-Runner v2.12.0+ required (latest: v2.14.2, March 2026). Earlier versions had
+**Note**: Harden-Runner v2.12.0+ required (latest: v2.21.1, August 2026). Earlier versions had
 a bypass vulnerability (CVE-2025-32955) - Docker group privilege escalation could restore
 sudoers and evade detection.
 

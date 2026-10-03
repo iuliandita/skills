@@ -3,7 +3,7 @@ name: rhel-fedora
 description: >
   Administer Fedora/RHEL, Rocky, AlmaLinux, CentOS, and Amazon Linux: dnf, SELinux, boot, and desktop issues.
 license: MIT
-compatibility: Requires Fedora, RHEL, or RHEL-family distro with dnf, yum, or rpm
+compatibility: "Requires Fedora, RHEL, or a RHEL-family distro with dnf, yum, or rpm. Optional: policycoreutils-python-utils (semanage), setroubleshoot-server, leapp-upgrade, fwupd"
 metadata:
   source: iuliandita/skills
   date_added: "2026-04-22"
@@ -87,16 +87,16 @@ Do not transfer Ubuntu kernel patch floors to RHEL, Fedora, or a downstream clon
 Before returning Fedora or RHEL-family commands, verify:
 
 - [ ] **Distro lane identified**: Fedora, CentOS Stream, RHEL, Rocky, AlmaLinux, Oracle Linux, Amazon Linux, or another derivative. Advice diverges fast.
-- [ ] **Release lane identified**: Fedora stable vs Rawhide/Branched, RHEL 8 vs 9 vs 10, AL2023 vs old Amazon Linux 2, Oracle Linux with RHCK vs UEK.
+- [ ] **Release lane identified**: Fedora stable vs Rawhide/Branched, RHEL 8 vs 9 vs 10, AL2023 vs old Amazon Linux 2, Oracle Linux with RHCK vs UEK, and the lane's current lifecycle status.
 - [ ] **Package path identified**: `dnf`, legacy `yum`, plain `rpm`, or `microdnf`. If the host is rpm-ostree or image-mode, stop and route away instead of treating it like a normal DNF-managed host.
 - [ ] **Repo provenance understood**: base repos, EPEL, CRB/PowerTools/CodeReady Builder, COPR, vendor repos, and third-party release RPMs are not interchangeable.
-- [ ] **Fedora speed respected**: Fedora guidance that is fine on 42 can be stale or wrong on Rawhide and too new for enterprise clones.
+- [ ] **Fedora speed respected**: Fedora guidance that is fine on the current stable release can be stale or wrong on Rawhide and too new for enterprise clones.
 - [ ] **Enterprise conservatism respected**: do not blindly transplant Fedora COPR, raw upstream kernels, or random GitHub RPM repos onto production RHEL-family hosts.
 - [ ] **SELinux considered early**: if the symptom smells like permission, bind mount, custom service, rootless container, or web app weirdness, check AVCs before disabling SELinux.
-- [ ] **SELinux fix is correct**: distinguish labeling (`restorecon`, `semanage fcontext`) from booleans (`setsebool`) and custom policy (`audit2allow`). Do not cargo-cult `setenforce 0`.
+- [ ] **SELinux fix is correct**: distinguish labeling (`restorecon`, `semanage fcontext`) from booleans (`setsebool`) and custom policy (`audit2allow`). Do not cargo-cult `setenforce 0`, and never disable SELinux enforcement or firewalld permanently as a shortcut.
 - [ ] **firewalld scope is correct**: runtime vs permanent rules, active zone, interface binding, and rich rules are understood before changing exposure.
 - [ ] **Boot stack identified**: GRUB, EFI mountpoint, kernel package, `dracut`, Secure Boot state, and `grubby` path are known before changing boot files.
-- [ ] **Fallback path exists**: do not remove the only known-good kernel or boot entry on a remote system.
+- [ ] **Fallback path exists**: do not remove the only known-good kernel or boot entry, especially on a remote, encrypted, or cloud system.
 - [ ] **Vendor kernel path identified**: Oracle UEK vs RHCK, Amazon kernel choices, and NVIDIA akmods/DKMS expectations matter.
 - [ ] **Subscription state known**: on RHEL, entitlement and repo enablement may be the real problem, not package naming.
 - [ ] **Module streams handled consciously**: if AppStream or module streams are involved, verify the active stream before suggesting installs, resets, or downgrades.
@@ -107,29 +107,19 @@ Before returning Fedora or RHEL-family commands, verify:
 - [ ] **Upgrade path is real**: Fedora `dnf system-upgrade`, RHEL `leapp`, and clone major-version jumps have different support stories. Do not improvise an in-place major upgrade path.
 - [ ] **Diagnostic errors are not silenced**: do not hide useful failure output with `2>/dev/null` on commands whose errors matter. Use `2>&1 || true` when gathering.
 - [ ] **Version table treated as a hint, not gospel**: if the pinned table is getting old, verify distro release and key package versions live before leaning on it.
-- [ ] **Lifecycle checked**: RHEL, Fedora, Rocky, Alma, CentOS Stream, and Amazon Linux guidance matches the target release
-- [ ] **SELinux/firewalld context preserved**: fixes do not disable enforcement permanently as a shortcut
 - [ ] Cross-cutting agent hygiene applied - see `references/agent-hygiene.md`
 
 ---
 
-## Performance
-
-- Use `dnf repoquery`, `dnf history`, and targeted transactions before broad package churn.
-- Keep metadata/cache refresh intentional; repeated full refreshes slow automation.
-- For service issues, inspect journal, SELinux AVCs, and firewalld zones before reinstalling packages.
-
-
----
-
-## Best Practices
-
-- Snapshot or back up before release upgrades, bootloader work, storage changes, or major SELinux relabels.
-- Prefer policy modules or correct labels over `setenforce 0` as a permanent fix.
-- Do not mix clone/vendor repositories without explicit priority and compatibility decisions.
-
-
 ## Workflow
+
+The steps are ordered. Copy this checklist and track progress:
+
+- [ ] Step 1: Distro lane identified
+- [ ] Step 2: Current state gathered
+- [ ] Step 3: Matching reference loaded
+- [ ] Step 4: One layer changed; consequential changes confirmed first
+- [ ] Step 5: Validated (on failure, fix and return to Step 4)
 
 ### Step 1: Identify the distro lane first
 
@@ -242,6 +232,15 @@ read-only commands and runtime/permanent verification.
 - On Oracle Linux, confirm UEK vs RHCK before chasing driver and storage symptoms.
 - On Amazon Linux, separate cloud-image defaults and AWS repo choices from generic RHEL folklore.
 - Prefer reversible steps: keep old kernels, save `.repo` files, snapshot if available, preserve SELinux context fixes in policy rather than one-off `chcon` hacks.
+- Snapshot or back up before release upgrades, bootloader work, storage changes, or major SELinux relabels.
+
+**Consequential changes** (release upgrades, kernel removal, `dracut` or bootloader rebuilds,
+module stream resets, SELinux policy or port mappings, firewalld exposure, LUKS or LVM changes):
+show the exact command and what it will do (DNF transaction, removal list, zone and port, or
+target device), get explicit confirmation, run it, then go to Step 5. In unattended runs, stop at
+the plan. Exact commands live in `references/packages-and-repos.md` (transactions, modules,
+release upgrades), `references/boot-kernel-and-recovery.md` (kernels, `dracut`, rescue chroot), and
+`references/security-and-updates.md` (SELinux and firewalld changes).
 
 ### Step 5: Validate before closing
 
@@ -256,7 +255,8 @@ firewall-cmd --list-all
 grubby --default-kernel
 ```
 
-Reboot only when the boot path is understood and at least one known-good entry remains.
+If a check fails, fix the layer it points to and return to Step 4. Reboot only when the boot path
+is understood and at least one known-good entry remains.
 
 ---
 
@@ -302,7 +302,8 @@ When a bug looks desktop-only, compare one clean baseline:
 
 - **Fedora means fast change.** Verify the exact release and avoid stale blog-fix cargo cults.
 - **RHEL means support boundaries matter.** Check entitlements, supported repos, and documented upgrade paths before inventing one.
-- **Clones are close, not identical in process.** Rocky, AlmaLinux, Oracle Linux, and Amazon Linux can share RPM names while differing in policy, repos, kernels, and support tooling.
+- **Clones are close, not identical in process.** Rocky, AlmaLinux, Oracle Linux, and Amazon Linux can share RPM names while differing in policy, repos, kernels, and support tooling. Do not mix clone or vendor repositories without explicit priority and compatibility decisions.
+- **Narrow before broad.** Use `dnf repoquery`, `dnf history`, and targeted transactions before broad package churn; for service issues, inspect the journal, SELinux AVCs, and firewalld zones before reinstalling packages. Keep metadata and cache refreshes intentional; repeated full refreshes slow automation.
 - **Use systemd-native tools first.** Reach for `systemctl`, `journalctl`, `loginctl`, and `timedatectl` before wrappers.
 - **Treat SELinux as signal, not as the enemy.** AVC denials usually tell you exactly which layer is wrong.
 - **Treat `firewalld` as stateful plumbing.** Zone, runtime, permanent state, and service definitions all matter.
@@ -379,16 +380,6 @@ See `references/output-contract.md` for the full contract.
 
 ## Rules
 
-1. **Identify the distro and release lane before prescribing commands.** Fedora, CentOS Stream, RHEL, Rocky, AlmaLinux, Oracle Linux, and Amazon Linux differ where it matters: repos, kernels, support tooling, and upgrade paths.
-2. **Do not flatten Fedora and RHEL into one thing.** Fedora is the fast lane. Enterprise clones are not just "older Fedora" with different branding.
-3. **Know the package origin before changing package state.** Repo enablement, release RPMs, module streams, and third-party repos explain a lot of RPM-family chaos.
-4. **Treat SELinux denials as first-class evidence.** Check AVCs before disabling enforcement or blaming the app.
-5. **Use the right SELinux fix.** Prefer proper labeling, booleans, or policy modules over permanent `setenforce 0` and random `chcon` drift.
-6. **Know the boot chain before touching it.** Confirm GRUB stage, EFI mount, kernel package, `dracut`, Secure Boot, and `grubby` state first.
-7. **Never remove the last known-good kernel path casually.** Especially on remote, encrypted, or cloud systems.
-8. **Prefer systemd-native diagnostics.** `systemctl`, `journalctl`, `loginctl`, and `grubby` usually tell you more than forum folklore.
-9. **Be conservative with third-party repos.** COPR on Fedora, EPEL on enterprise clones, vendor RPM repos, and release packages all change the support boundary.
-10. **For desktop and capture issues, inspect the user session first.** Portals, PipeWire, user units, and Xwayland compatibility usually matter more than random reinstall churn.
-11. **For gaming issues, identify the GPU vendor, kernel lane, and userspace first.** Driver branch, Vulkan stack, multilib, Secure Boot, and launch wrappers usually explain more than tweak cargo cults.
-12. **Do not improvise major upgrades.** Fedora major jumps, RHEL `leapp`, and clone major-version moves require a documented path or a rebuild plan.
-13. **Reach for common RPM-family failure patterns before exotic explanations.** Repo drift, SELinux labeling mistakes, module stream confusion, akmods or DKMS drift, and kernel-lane mismatch explain a large share of the chaos.
+1. **Confirm consequential changes before running them.** Show the exact command and its plan, wait for an explicit yes, then verify. Unattended runs stop at the plan.
+2. **Do not improvise major upgrades.** Fedora major jumps, RHEL `leapp`, and clone major-version moves require a documented path or a rebuild plan.
+3. **Be conservative with third-party repos.** COPR on Fedora, EPEL on enterprise clones, vendor RPM repos, and release packages all change the support boundary.

@@ -1,7 +1,7 @@
 # Exhaustive Domain Detection Patterns
 
 File-pattern matching table for determining which domain-specific skills to run.
-Each match proposes a candidate lens; confirm relevance to the requested scope.
+Each match proposes a candidate lane; confirm relevance to the requested scope.
 
 ## Detection Method
 
