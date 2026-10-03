@@ -62,6 +62,12 @@ identity ownership to **ci-cd**.
 
 ## Workflow
 
+Copy this checklist and track progress:
+- [ ] Step 1: Scope determined (account, backend, state boundary, secrets)
+- [ ] Step 2: Relevant references read (state-and-security before any state command)
+- [ ] Step 3: fmt, validate, tflint, checkov clean for introduced findings (on failure, fix and return to Step 3)
+- [ ] Plan reviewed with the owner; no apply by the agent
+
 ### 1. Determine the scope
 
 Identify the provider/account boundary, environment, resource dependencies, backend and lock design,
@@ -91,11 +97,10 @@ destroys with the owner.
 ```bash
 terraform fmt -check -recursive
 terraform validate
-for t in tflint checkov conftest; do command -v "$t" >/dev/null || echo "$t not installed: report as skipped"; done
-tflint --recursive
-checkov -d . --framework terraform
+if command -v tflint >/dev/null; then tflint --recursive; else echo "tflint not installed: lint NOT run; report it as unverified"; fi
+if command -v checkov >/dev/null; then checkov -d . --framework terraform; else echo "checkov not installed: policy scan NOT run; report it as unverified"; fi
 terraform plan -out=plan.tfplan
-terraform show -json plan.tfplan | conftest test -
+if command -v conftest >/dev/null; then terraform show -json plan.tfplan | conftest test -; else echo "conftest not installed: policy gate NOT run; report it as unverified"; fi
 ```
 
 Report checks that ran, their results, and any unavailable tool. `plan`, state operations, and a

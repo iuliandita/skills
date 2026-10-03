@@ -382,3 +382,5 @@ The hard refusals above are rules too; this list adds the constraints they do no
 3. **Suspect the diagnostic first when it returns nothing.** Empty output on a damaged system is
    usually a broken check, not a clean result.
 4. **Snapshots are not backups.** Verify a restore path off the unit before touching storage.
+5. **Detach long jobs from a script file, not an inline command,** so `pkill -f` cannot match
+   your own shell (`references/dsm-cli.md`).

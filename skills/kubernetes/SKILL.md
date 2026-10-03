@@ -130,9 +130,16 @@ printf 'Using kube context: %s\n' "$KUBE_CONTEXT"
 
 # Manifests
 kubectl --context "$KUBE_CONTEXT" apply -f <manifest> --dry-run=server  # Server-side validation
-command -v kube-score >/dev/null || echo "kube-score not installed: skip scoring and say so"
-kube-score score <manifest>                     # Best practice scoring
-checkov -d . --framework kubernetes  # when available
+if command -v kube-score >/dev/null; then
+  kube-score score <manifest>                   # Best practice scoring
+else
+  echo "kube-score not installed: scoring NOT run; report it as unverified"
+fi
+if command -v checkov >/dev/null; then
+  checkov -d . --framework kubernetes
+else
+  echo "checkov not installed: policy scan NOT run; report it as unverified"
+fi
 # Fix and return to Step 3 until dry-run errors and findings this change introduced are clean; report pre-existing ones
 
 # Helm 4

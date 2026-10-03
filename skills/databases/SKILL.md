@@ -101,7 +101,7 @@ AI tools consistently produce the same database mistakes. **Before returning any
 - [ ] Bulk inserts are chunked - never pass an unbounded array into a single `INSERT ... VALUES` statement
 - [ ] Chunk size computed as `floor(max_host_parameters / columns_per_row)`, where host-parameter limits are: PostgreSQL 65,535, MySQL 65,535, SQLite 32,766 (default `SQLITE_MAX_VARIABLE_NUMBER`), MSSQL 2,100
 - [ ] When the app targets multiple backends, chunk size uses the lowest limit across all supported engines
-- [ ] Chunked writes stay inside one transaction when replace-all semantics are required (DELETE + INSERT pattern)
+- [ ] Chunked writes stay inside one transaction when atomicity matters (always for replace-all DELETE + INSERT); otherwise make each chunk idempotent so a failed run can resume.
 - [ ] Tests assert that multiple insert calls fire when row count crosses the safe chunk threshold
 
 ### General
@@ -189,7 +189,7 @@ plan-validate-execute. Copy and track:
 - [ ] Target confirmed: run the identity query on the exact connection you will use and show it
 - [ ] Backup confirmed: a restorable backup of the target exists; record its ID or path
 - [ ] Plan written: exact command, expected effect, lock/runtime estimate, recovery path (DDL: safety check done)
-- [ ] Rehearsed: tool dry run (pt-osc `--dry-run`, gh-ost without `--execute`, `pg_restore --list`) or a non-prod copy
+- [ ] Rehearsed: tool dry run (pt-osc `--dry-run`, gh-ost without `--execute`) or the operation on a non-prod copy; for restores, restore into a scratch instance (`pg_restore --list` only inspects archive contents and is not a rehearsal; see `references/backup-patterns.md` Backup Verification)
 - [ ] Approved: the user explicitly approved that exact command text and target
 - [ ] Executed unchanged: no added flags, no retargeting; then validate (Step 4)
 

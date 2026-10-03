@@ -21,9 +21,9 @@ Security hardening, vulnerability management, supply chain integrity, and PCI-DS
 | CVE | CVSS | Component | Impact | Fixed in |
 |-----|------|-----------|--------|----------|
 | CVE-2025-9074 | 9.3 | Docker Desktop | Container escape via unauthenticated Engine API (192.168.65.7:2375) | Desktop 4.44.3+ |
-| CVE-2025-31133 | High | runc | Mount manipulation (/dev/null symlink) enables host procfs writes | runc 1.2.8, 1.3.3, 1.4.0-rc.3 |
-| CVE-2025-52565 | High | runc | /dev/console race condition grants premature mount access | runc 1.2.8, 1.3.3, 1.4.0-rc.3 |
-| CVE-2025-52881 | High | runc | procfs write redirect bypasses LSM relabel, host procfs writes | runc 1.2.8, 1.3.3, 1.4.0-rc.3 |
+| CVE-2025-31133 | High | runc | Container escape via /dev/null symlink race | runc 1.2.8, 1.3.3, 1.4.0-rc.3 |
+| CVE-2025-52565 | High | runc | Container escape via /dev/console mount race | runc 1.2.8, 1.3.3, 1.4.0-rc.3 |
+| CVE-2025-52881 | High | runc | Host procfs writes via /proc redirect (DoS/escape) | runc 1.2.8, 1.3.3, 1.4.0-rc.3 |
 | CVE-2026-33634 | Critical | Trivy | Supply chain - credential-stealing malware in aquasec/trivy Docker Hub images v0.69.4-6 | Trivy v0.74.0+ for new pins; v0.69.3 only as rollback |
 | CVE-2026-2664 | Medium | Docker Desktop | gRPC-FUSE kernel module out-of-bounds read | Desktop 4.62.0+ |
 | CVE-2025-13743 | Low | Docker Desktop | Expired Hub PATs leaked in diagnostic bundles via error object serialization | Desktop 4.54.0+ |
@@ -52,9 +52,9 @@ docker info | grep -E "runc|containerd" ; true
 runc --version 2>/dev/null | head -1 ; true
 containerd --version 2>/dev/null ; true
 
-# runc must be >= 1.2.8 or >= 1.3.3 or >= 1.4.0
+# runc must be >= 1.4.0 (CVE-2025-31133/52565/52881; 1.4.3+ also fixes GHSA-xjvp-4fhw-gc47)
 # containerd should be >= 2.2.2
-# BuildKit must be >= 0.28.1 (CVE-2026-33747/33748 patched)
+# BuildKit must be >= 0.33.1 (CVE-2026-33747/33748, CVE-2026-93318 patched)
 docker buildx inspect                 # Selected builder's nodes and BuildKit daemon versions
 # If unavailable or missing a daemon version, report unknown; the Buildx CLI version is not BuildKit.
 

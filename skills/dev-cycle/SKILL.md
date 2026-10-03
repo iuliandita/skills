@@ -424,13 +424,15 @@ See `references/output-contract.md` for the full contract.
 ## Rules
 
 The AI Self-Check and the workflow steps carry the per-step guards (no `--no-verify` or
-force-push, no AI attribution, release authorization, conservative release detection). These add:
+force-push, no AI attribution). These add:
 
 1. **Read before edit.** Always read files you're about to modify in the current session. No exceptions.
 2. **Delegate, don't reimplement.** `git`, `testing`, `code-review`, `update-docs`, and brainstorming skills know their domains better than this skill does. Call them.
 3. **Inspect CI output, don't infer it.** Every forge's watch command has a default-exit trap: `gh run watch` exits 0 on workflow failure without `--exit-status`; `gh pr checks --watch` returns when done, not only when green; `glab ci status --live` prints but doesn't always exit non-zero on pipeline failure. After any watch, verify with an explicit status query (`gh pr view --json statusCheckRollup`, `glab api projects/$PROJECT_ID/pipelines/$PIPELINE_ID`, or web-UI confirmation for forges without a CLI). Confirm every check actually passed.
 4. **Squash and merge only with explicit intent.** Each fixes history in a way that is hard to undo after others pull; a finish-mode request is that intent, a start-mode request is not. Force-push stays off-limits (AI Self-Check).
-5. **Show evidence, not claims.** Put concrete verification (test counts, lint output, CI run URL) in PRs and final summaries; reviewers cannot approve what they cannot verify.
-6. **Don't bundle unrelated work.** If mid-finish you notice a bug outside the branch's scope, file it (roadmap skill or an issue) - don't sneak it into the PR.
-7. **Plain ASCII only.** No em-dashes, no `--` substitutes, no curly quotes, no decorative emoji. Functional status markers (`[OK]`, `[FAIL]`, severity emoji in reports from delegated skills) are fine.
-8. **Mode boundaries are sacred.** Start mode ends with a handoff, not implementation. Finish mode starts with verification, not committing new code. Don't blur them - except when the user explicitly asks for the full cycle in one session (e.g. "do the full dev-cycle, release, deploy"): then run start through finish back to back, still starting finish with verification.
+5. **Preserve release authorization.** Announce the version, bump sites, and concrete plan. Existing authorization remains valid within its scope; ask before pushing the tag only when that authority is missing or scope changes.
+6. **Show evidence, not claims.** Put concrete verification (test counts, lint output, CI run URL) in PRs and final summaries; reviewers cannot approve what they cannot verify.
+7. **Don't bundle unrelated work.** If mid-finish you notice a bug outside the branch's scope, file it (roadmap skill or an issue) - don't sneak it into the PR.
+8. **Release detection is conservative.** If no convention signals are present, skip. A missing `CHANGELOG.md` plus no tags means this isn't a release-cut situation - don't create one.
+9. **Plain ASCII only.** No em-dashes, no `--` substitutes, no curly quotes, no decorative emoji. Functional status markers (`[OK]`, `[FAIL]`, severity emoji in reports from delegated skills) are fine.
+10. **Mode boundaries are sacred.** Start mode ends with a handoff, not implementation. Finish mode starts with verification, not committing new code. Don't blur them - except when the user explicitly asks for the full cycle in one session (e.g. "do the full dev-cycle, release, deploy"): then run start through finish back to back, still starting finish with verification.

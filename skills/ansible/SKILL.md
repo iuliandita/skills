@@ -141,8 +141,11 @@ Run syntax check, lint, and `--check --diff` in order. On any failure, fix the r
 ansible-playbook playbook.yml --syntax-check
 
 # Lint (use production profile for strictest checks)
-command -v ansible-lint >/dev/null || echo "ansible-lint not installed: report lint as skipped"
-ansible-lint --profile production playbook.yml
+if command -v ansible-lint >/dev/null; then
+  ansible-lint --profile production playbook.yml
+else
+  echo "ansible-lint not installed: lint NOT run; report it as unverified"
+fi
 
 # Dry run (needs inventory + connectivity)
 ansible-playbook playbook.yml --check --diff
@@ -151,10 +154,13 @@ ansible-playbook playbook.yml --check --diff
 For roles only, add Molecule when a scenario exists:
 
 ```bash
-command -v molecule >/dev/null || echo "molecule not installed: report role tests as skipped"
-molecule test                          # full cycle: create, converge, verify, destroy
-molecule converge                      # just apply (dev loop)
-molecule verify                        # run verification only
+if command -v molecule >/dev/null; then
+  molecule test                        # full cycle: create, converge, verify, destroy
+  # molecule converge                  # just apply (dev loop)
+  # molecule verify                    # run verification only
+else
+  echo "molecule not installed: role tests NOT run; report them as unverified"
+fi
 ```
 
 Any non-check run applies changes. Run it only with `--limit`, and get human approval before targeting production hosts:

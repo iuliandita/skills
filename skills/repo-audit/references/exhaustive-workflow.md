@@ -82,8 +82,10 @@ separately; report unavailable context instead of masking failures with `; true`
 
 Before dispatch or artifact writes, ensure `docs/local/` is ignored. Add the bare
 `docs/local/` entry to `.gitignore` if needed and verify with `git check-ignore`. Check
-that intended artifact paths are not already tracked. If `git check-ignore -q docs/local/audits/DEEP-AUDIT.md`
-fails, stop artifact writes, fix the ignore entry, and repeat this check before continuing. Preserve existing reports and task progress in a dated backup before replacement.
+that intended artifact paths are not already tracked (`git ls-files docs/local/` must be empty)
+and that each is ignored (`git check-ignore -q <path>` for DEEP-AUDIT.md, DEEP-AUDIT-TASKS.md,
+the security-audit/ report, and Step 9b plan paths). If any path is tracked or not ignored, stop
+artifact writes, fix the protection, and repeat this check before continuing. Preserve existing reports and task progress in a dated backup before replacement.
 
 If full-access agent dispatch is unavailable, run every assigned skill sequentially in the root
 context. Preserve wave order, separate native result sections, and report the compatibility limit.

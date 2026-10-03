@@ -399,7 +399,7 @@ runtime behavior.
 ```bash
 llama-server \
   --model /var/lib/llama/models/Qwen3-30B-A3B-Q4_K_M.gguf \
-  --host 0.0.0.0 --port 8080 \
+  --host 127.0.0.1 --port 8080 \
   --ctx-size 32768 --cache-reuse 256 \
   --threads 28 --threads-batch 32 \
   --temp 0.7 --top-k 20 --top-p 0.8 \
@@ -407,6 +407,8 @@ llama-server \
 ```
 
 Endpoint is OpenAI-compatible at `/v1/chat/completions`. Point any OpenAI client at it.
+Keep the loopback bind and put a reverse proxy or firewall in front for remote clients; bind
+`0.0.0.0` only on a trusted network, and keep the API key either way.
 
 ### One systemd unit per model
 

@@ -238,7 +238,7 @@ The Trivy supply chain attack (CVE-2026-33634) demonstrated that **mutable Git t
 
 ### Supply chain integrity (lessons from Trivy compromise, March 2026)
 
-The Trivy supply chain attack (CVE-2026-33634) is the defining security event of 2026 so far. Attackers force-pushed all GitHub Action tags to credential-stealing malware and published malicious binaries to Docker Hub. Key takeaways:
+In the Trivy supply chain attack (CVE-2026-33634, March 2026), attackers force-pushed all GitHub Action tags to credential-stealing malware and published malicious binaries to Docker Hub. Key takeaways:
 
 - **Pin GitHub Actions to commit SHAs, never mutable tags.** `uses: aquasecurity/trivy-action@<sha>`, not `@v0.35.0`. Applies to ALL actions, not just Trivy. See also reviewdog/action-setup (CVE-2025-30154), the upstream cause of the tj-actions compromise.
 - **Pin container images to SHA256 digests in CI/CD.** Tags can be overwritten; digests cannot.

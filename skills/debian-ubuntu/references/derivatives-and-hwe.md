@@ -124,7 +124,7 @@ Debian, one release at a time:
 ```bash
 sudo apt update && sudo apt full-upgrade     # current release fully updated
 sudo cp -a /etc/apt /root/apt-backup         # keep the old sources
-# Change the codename to the next release in sources.list and every *.list / *.sources file.
+# Disable third-party sources (comment out or rename to .disabled), then change the codename to the next release in sources.list and the remaining Debian *.list / *.sources files.
 sudo apt update
 apt-get -s full-upgrade                      # review removals before going further
 sudo apt upgrade --without-new-pkgs          # minimal upgrade first

@@ -127,8 +127,11 @@ docker compose config                 # validate and render
 docker compose --dry-run up           # dry-run startup (Compose v5)
 
 # Security (Trivy default; Grype or Docker Scout if the repo already uses them)
-command -v trivy >/dev/null || echo "trivy not installed: report the scan as skipped"
-trivy image --severity HIGH,CRITICAL --exit-code 1 <image>   # use v0.74.0+; never v0.69.4-6
+if command -v trivy >/dev/null; then
+  trivy image --severity HIGH,CRITICAL --exit-code 1 <image>   # use v0.74.0+; never v0.69.4-6
+else
+  echo "trivy not installed: image scan NOT run; report it as unverified"
+fi
 syft <image> -o spdx-json             # generate SBOM
 cosign verify --key <key> <image>     # verify signature
 ```
