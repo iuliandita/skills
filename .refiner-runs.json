@@ -6664,5 +6664,489 @@
   "changes": "Full v2 creator audit and independent source/behavior baselines for all active skills; separate migration-notice checks. Regular candidate reverted under major review veto. Approved meta patch strengthens execution provenance, grade validation, and review checkpoints, and corrects active Kali routing. Refiner composite 86.5656 to 90.6291 (+4.0635); clean meta peer review. No other source changes retained.",
   "meta_commit": "27cbb6b77fbec3b3095face8c8f37e266b2177c9",
   "issue": 195
+},
+{
+ "schema": 2,
+ "rubric_hash": "62b746b3a798016c013e2b06c8cc1fe2ec10bca4dfbb9525d3415e097e1feb76",
+ "run_id": "2026-10-03-issue-254-authoring-rules",
+ "branch": "skill-refiner/2026-10-03-014639",
+ "date": "2026-10-03",
+ "primary": {
+  "provider": "Anthropic",
+  "resolved_model": "claude-opus-5-5",
+  "effective_effort": null,
+  "harness": "Claude Code",
+  "version": "2.1.287",
+  "evidence": "CLAUDECODE=1 and claude --version 2.1.287; model ID from harness session context, no raw API response metadata captured"
+ },
+ "secondary": {
+  "provider": "OpenAI",
+  "resolved_model": "gpt-6.1-sol",
+  "effective_effort": null,
+  "harness": "codex",
+  "version": "0.160.0",
+  "evidence": "codex exec stderr banner 'model: gpt-6.1-sol' on the canary probe and all 10 review calls"
+ },
+ "reviewer_classification": "cross-model",
+ "cap": 5,
+ "config": {
+  "iterations": 1,
+  "threshold": 85,
+  "mode": "auto",
+  "plateau": 2
+ },
+ "pool_size": 39,
+ "published": 62,
+ "active": 43,
+ "notices": 19,
+ "iterations": 1,
+ "termination": "single authoring-rules pass over every active non-meta, non-offensive skill at user request; not threshold-targeted",
+ "review_flags": {
+  "minor": 14,
+  "major": 11
+ },
+ "control_failures": [
+  "Not a scored refiner run: AI Self-Check component not graded and no composites computed; behavioral graded once (k=1) for 8 of 39 skills instead of min-of-3 for all.",
+  "Two offensive skills excluded by user instruction and never opened.",
+  "skill-creator and skill-refiner excluded: just updated by the user; phase 2 not entered.",
+  "Flags adjudicated by one fresh-context adjudicator per batch rather than one context per flag.",
+  "One contested major (synology-dsm script-file detach hint) resolved conservatively by restoring the hint instead of escalating.",
+  "Second-round flags on the fix commit were accepted and fixed directly without separate adjudication.",
+  "Executors used Sonnet (balanced tier); no small-tier or no-skill baseline runs."
+ ],
+ "skills": {
+  "ansible": {
+   "before": {
+    "structural": "pass"
+   },
+   "after": {
+    "structural": "pass"
+   },
+   "changed": true,
+   "test_source": "structural gates only; not behaviorally scored this run"
+  },
+  "anti-ai-prose": {
+   "before": {
+    "structural": "pass",
+    "behavioral": 79
+   },
+   "after": {
+    "structural": "pass",
+    "behavioral": 87
+   },
+   "changed": true,
+   "test_source": "canonical test-cases.md; one blind A/B grading (k=1) of main vs branch",
+   "executor_tiers": [
+    "balanced"
+   ]
+  },
+  "arch-linux": {
+   "before": {
+    "structural": "pass"
+   },
+   "after": {
+    "structural": "pass"
+   },
+   "changed": true,
+   "test_source": "structural gates only; not behaviorally scored this run"
+  },
+  "backend-api": {
+   "before": {
+    "structural": "pass"
+   },
+   "after": {
+    "structural": "pass"
+   },
+   "changed": true,
+   "test_source": "structural gates only; not behaviorally scored this run"
+  },
+  "ci-cd": {
+   "before": {
+    "structural": "pass",
+    "behavioral": 90
+   },
+   "after": {
+    "structural": "pass",
+    "behavioral": 93.5
+   },
+   "changed": true,
+   "test_source": "canonical test-cases.md; one blind A/B grading (k=1) of main vs branch",
+   "executor_tiers": [
+    "balanced"
+   ]
+  },
+  "code-review": {
+   "before": {
+    "structural": "pass",
+    "behavioral": 90
+   },
+   "after": {
+    "structural": "pass",
+    "behavioral": 89
+   },
+   "changed": true,
+   "test_source": "canonical test-cases.md; one blind A/B grading (k=1) of main vs branch",
+   "executor_tiers": [
+    "balanced"
+   ]
+  },
+  "code-simplification": {
+   "before": {
+    "structural": "pass"
+   },
+   "after": {
+    "structural": "pass"
+   },
+   "changed": true,
+   "test_source": "structural gates only; not behaviorally scored this run"
+  },
+  "databases": {
+   "before": {
+    "structural": "pass",
+    "behavioral": 85
+   },
+   "after": {
+    "structural": "pass",
+    "behavioral": 89
+   },
+   "changed": true,
+   "test_source": "canonical test-cases.md; one blind A/B grading (k=1) of main vs branch",
+   "executor_tiers": [
+    "balanced"
+   ]
+  },
+  "debian-ubuntu": {
+   "before": {
+    "structural": "pass",
+    "behavioral": 89
+   },
+   "after": {
+    "structural": "pass",
+    "behavioral": 89
+   },
+   "changed": true,
+   "test_source": "canonical test-cases.md; one blind A/B grading (k=1) of main vs branch",
+   "executor_tiers": [
+    "balanced"
+   ]
+  },
+  "debug-triage": {
+   "before": {
+    "structural": "pass"
+   },
+   "after": {
+    "structural": "pass"
+   },
+   "changed": true,
+   "test_source": "structural gates only; not behaviorally scored this run"
+  },
+  "dev-cycle": {
+   "before": {
+    "structural": "pass"
+   },
+   "after": {
+    "structural": "pass"
+   },
+   "changed": true,
+   "test_source": "structural gates only; not behaviorally scored this run"
+  },
+  "docker": {
+   "before": {
+    "structural": "pass"
+   },
+   "after": {
+    "structural": "pass"
+   },
+   "changed": true,
+   "test_source": "structural gates only; not behaviorally scored this run"
+  },
+  "frontend-design": {
+   "before": {
+    "structural": "pass"
+   },
+   "after": {
+    "structural": "pass"
+   },
+   "changed": true,
+   "test_source": "structural gates only; not behaviorally scored this run"
+  },
+  "git": {
+   "before": {
+    "structural": "pass",
+    "behavioral": 87.5
+   },
+   "after": {
+    "structural": "pass",
+    "behavioral": 85
+   },
+   "changed": true,
+   "test_source": "canonical test-cases.md; one blind A/B grading (k=1) of main vs branch",
+   "executor_tiers": [
+    "balanced"
+   ]
+  },
+  "i18n-localization": {
+   "before": {
+    "structural": "pass"
+   },
+   "after": {
+    "structural": "pass"
+   },
+   "changed": true,
+   "test_source": "structural gates only; not behaviorally scored this run"
+  },
+  "kali-linux": {
+   "before": {
+    "structural": "pass"
+   },
+   "after": {
+    "structural": "pass"
+   },
+   "changed": true,
+   "test_source": "structural gates only; not behaviorally scored this run"
+  },
+  "kubernetes": {
+   "before": {
+    "structural": "pass",
+    "behavioral": 91.5
+   },
+   "after": {
+    "structural": "pass",
+    "behavioral": 94
+   },
+   "changed": true,
+   "test_source": "canonical test-cases.md; one blind A/B grading (k=1) of main vs branch",
+   "executor_tiers": [
+    "balanced"
+   ]
+  },
+  "kubernetes-health": {
+   "before": {
+    "structural": "pass"
+   },
+   "after": {
+    "structural": "pass"
+   },
+   "changed": true,
+   "test_source": "structural gates only; not behaviorally scored this run"
+  },
+  "llm-app-development": {
+   "before": {
+    "structural": "pass"
+   },
+   "after": {
+    "structural": "pass"
+   },
+   "changed": true,
+   "test_source": "structural gates only; not behaviorally scored this run"
+  },
+  "mcp": {
+   "before": {
+    "structural": "pass"
+   },
+   "after": {
+    "structural": "pass"
+   },
+   "changed": true,
+   "test_source": "structural gates only; not behaviorally scored this run"
+  },
+  "message-queues": {
+   "before": {
+    "structural": "pass"
+   },
+   "after": {
+    "structural": "pass"
+   },
+   "changed": true,
+   "test_source": "structural gates only; not behaviorally scored this run"
+  },
+  "networking": {
+   "before": {
+    "structural": "pass"
+   },
+   "after": {
+    "structural": "pass"
+   },
+   "changed": true,
+   "test_source": "structural gates only; not behaviorally scored this run"
+  },
+  "nixos": {
+   "before": {
+    "structural": "pass"
+   },
+   "after": {
+    "structural": "pass"
+   },
+   "changed": true,
+   "test_source": "structural gates only; not behaviorally scored this run"
+  },
+  "observability": {
+   "before": {
+    "structural": "pass"
+   },
+   "after": {
+    "structural": "pass"
+   },
+   "changed": true,
+   "test_source": "structural gates only; not behaviorally scored this run"
+  },
+  "opnsense-pfsense": {
+   "before": {
+    "structural": "pass"
+   },
+   "after": {
+    "structural": "pass"
+   },
+   "changed": true,
+   "test_source": "structural gates only; not behaviorally scored this run"
+  },
+  "performance-debugging": {
+   "before": {
+    "structural": "pass"
+   },
+   "after": {
+    "structural": "pass"
+   },
+   "changed": true,
+   "test_source": "structural gates only; not behaviorally scored this run"
+  },
+  "plan-review": {
+   "before": {
+    "structural": "pass"
+   },
+   "after": {
+    "structural": "pass"
+   },
+   "changed": true,
+   "test_source": "structural gates only; not behaviorally scored this run"
+  },
+  "prompt-generator": {
+   "before": {
+    "structural": "pass"
+   },
+   "after": {
+    "structural": "pass"
+   },
+   "changed": true,
+   "test_source": "structural gates only; not behaviorally scored this run"
+  },
+  "repo-audit": {
+   "before": {
+    "structural": "pass"
+   },
+   "after": {
+    "structural": "pass"
+   },
+   "changed": true,
+   "test_source": "structural gates only; not behaviorally scored this run"
+  },
+  "rhel-fedora": {
+   "before": {
+    "structural": "pass"
+   },
+   "after": {
+    "structural": "pass"
+   },
+   "changed": true,
+   "test_source": "structural gates only; not behaviorally scored this run"
+  },
+  "roadmap": {
+   "before": {
+    "structural": "pass"
+   },
+   "after": {
+    "structural": "pass"
+   },
+   "changed": true,
+   "test_source": "structural gates only; not behaviorally scored this run"
+  },
+  "security-audit": {
+   "before": {
+    "structural": "pass"
+   },
+   "after": {
+    "structural": "pass"
+   },
+   "changed": true,
+   "test_source": "structural gates only; not behaviorally scored this run"
+  },
+  "session-handoff": {
+   "before": {
+    "structural": "pass"
+   },
+   "after": {
+    "structural": "pass"
+   },
+   "changed": true,
+   "test_source": "structural gates only; not behaviorally scored this run"
+  },
+  "shell-scripting": {
+   "before": {
+    "structural": "pass"
+   },
+   "after": {
+    "structural": "pass"
+   },
+   "changed": true,
+   "test_source": "structural gates only; not behaviorally scored this run"
+  },
+  "synology-dsm": {
+   "before": {
+    "structural": "pass"
+   },
+   "after": {
+    "structural": "pass"
+   },
+   "changed": true,
+   "test_source": "structural gates only; not behaviorally scored this run"
+  },
+  "terraform": {
+   "before": {
+    "structural": "pass"
+   },
+   "after": {
+    "structural": "pass"
+   },
+   "changed": true,
+   "test_source": "structural gates only; not behaviorally scored this run"
+  },
+  "testing": {
+   "before": {
+    "structural": "pass"
+   },
+   "after": {
+    "structural": "pass"
+   },
+   "changed": true,
+   "test_source": "structural gates only; not behaviorally scored this run"
+  },
+  "update-docs": {
+   "before": {
+    "structural": "pass",
+    "behavioral": 86
+   },
+   "after": {
+    "structural": "pass",
+    "behavioral": 87
+   },
+   "changed": true,
+   "test_source": "canonical test-cases.md; one blind A/B grading (k=1) of main vs branch",
+   "executor_tiers": [
+    "balanced"
+   ]
+  },
+  "virtualization": {
+   "before": {
+    "structural": "pass"
+   },
+   "after": {
+    "structural": "pass"
+   },
+   "changed": true,
+   "test_source": "structural gates only; not behaviorally scored this run"
+  }
+ },
+ "changes": "Applied the October skill-creator authoring rules (per-step freedom, defaults over menus, progress checklists with loop-back, detect-or-install lines, Rules limited to real constraints, verbatim moves to keep SKILL.md under 450 lines) to 39 skills; restored guards and corrected commands found by cross-model review; aligned reference facts with SKILL.md pins.",
+ "issue": 254
 }
 ]
