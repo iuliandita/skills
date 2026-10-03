@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.5.1](https://github.com/iuliandita/skills/compare/v2.5.0...v2.5.1) (2026-10-03)
+
+### Refactoring
+
+* **skills:** apply the current authoring rules to the 39 active non-meta skills: progress checklists with explicit loop-back for order-dependent workflows, one default instead of tool menus, detect-before-run checks for optional tools, Rules sections limited to real constraints, and verbatim moves into references so every SKILL.md stays under 450 lines ([#255](https://github.com/iuliandita/skills/pull/255), [#254](https://github.com/iuliandita/skills/issues/254)).
+
+### Bug Fixes
+
+* **skills:** fix issues found by independent review: restore dev-cycle release-authorization and first-release rules, the repo-audit tracked-artifact stop, and the databases bulk-write atomicity rule; correct the rhel rescue-chroot dracut target, the debian third-party source step, the pg_restore rehearsal claim, and the Proxmox PCI mapping command (missing required `id`); fix synology-dsm stating DSM 7.4 had no fix release ([#255](https://github.com/iuliandita/skills/pull/255)).
+* **skills:** align reference facts with verified sources: Kali deb822 sources since 2026.2, dnf5 system-upgrade with the DNF4 path kept, Harden-Runner v2.21.1, Nix 2.35.2, docker runc 1.4.0 and BuildKit 0.33.1 floors, and the CachyOS mirror tool; bind the llama-server example to loopback ([#255](https://github.com/iuliandita/skills/pull/255)).
+
 ## [2.5.0](https://github.com/iuliandita/skills/compare/v2.4.0...v2.5.0) (2026-10-03)
 
 ### Features
