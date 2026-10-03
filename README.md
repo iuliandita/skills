@@ -60,6 +60,8 @@ Ask your agent to use a skill by name, or describe a task that matches its trigg
 
 Each `SKILL.md` defines when to use the skill, when to route elsewhere, and how to perform the work. Supporting references ship inside the same directory. Skills are instructions; they do not install the tools, credentials, or services a task requires.
 
+Order-dependent workflows carry a progress checklist that sends the agent back to a named step when a check fails. In operational skills, consequential steps (deletions, upgrades, bootloader, firewall, or production changes) show the exact command and wait for confirmation. Optional tools are detected before use; a missing one is reported as a check that did not run, not as a pass.
+
 Audit and review skills share a report format. Small reviews use compact chat output; larger audits include findings and evidence in a saved report. Reports default to `docs/local/`, with the user's requested output format and location taking precedence. Keep that directory ignored when reports contain private project details.
 
 ## Compatibility
@@ -91,6 +93,8 @@ Every skill must work when installed alone: runtime file references stay inside 
 ./scripts/gen-contract-refs.sh
 ./scripts/check-contract-sync.sh
 ```
+
+`SKILL.md` files stay at 500 lines or fewer (lint warns above 450), and every reference is linked directly from `SKILL.md`. After editing a reference over 100 lines, run `python3 scripts/gen-ref-toc.py` to refresh its generated contents list; the linter fails on a missing or stale one.
 
 New skills must also be registered in the repository-audit coverage check or its [exclusions table](skills/repo-audit/references/exclusions.md). Run the repository's `scripts/check-*.sh` gates before pushing.
 

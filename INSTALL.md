@@ -568,7 +568,7 @@ Each skill follows the [Agent Skills specification](https://agentskills.io/speci
 
 - **`SKILL.md` with YAML frontmatter** - `name`, `description`, `license`, optional `compatibility` for environment requirements, and `metadata` for custom fields. The frontmatter is what agents read at startup to decide which skills to activate.
 - **Compact body** - the core instructions loaded when the skill is activated. Prefer 150-250 lines where practical, 500 hard max. Kept lean so it doesn't eat the context window.
-- **Reference files** in `references/` - detailed pattern libraries, compliance checklists, manifest templates. The agent reads these on-demand when the task requires depth. Expert-level detail without paying the token cost upfront. Every reference is linked directly from `SKILL.md`, and files over 100 lines open with a contents list so a partial read still sees their scope.
+- **Reference files** in `references/` - detailed pattern libraries, compliance checklists, manifest templates. The agent reads these on-demand when the task requires depth. Expert-level detail without paying the token cost upfront. Every reference is linked directly from `SKILL.md`, and files over 100 lines open with a contents list so a partial read still sees their scope. `scripts/gen-ref-toc.py` writes those lists; `scripts/lint-skills.sh` fails when one is missing or stale.
 - **Argument hints** (`metadata.argument_hint`) - tells agents what arguments a skill expects (e.g., `<file-or-pattern>`, `[iterations]`). Angle brackets for required, square brackets for optional.
 - **Precise trigger descriptions** - usually 80-120 characters, with the task and distinctive terms first. The warning above 120 is advisory; hosts can still shorten entries to fit a shared catalog budget.
 - **Cross-skill awareness** - skills know about each other. Routing hints (`Not for X (use Y)`) prevent collisions. The security-audit skill defers to privilege-escalation on offensive work; docker defers to kubernetes on cluster networking.
@@ -595,6 +595,8 @@ scripts/
   validate-spec.sh        # Agent Skills spec validator
   test-install.sh         # installer regression tests
   check-*.sh              # repository-specific safety and freshness checks
+  gen-contract-refs.sh    # regenerates shipped output-contract copies
+  gen-ref-toc.py          # generates reference contents lists
   skill-frontmatter.py    # frontmatter parser used by linters
   skill-lib.sh            # shared shell helpers
 .refiner-runs.json        # skill-refiner run history (repo root, single file)
