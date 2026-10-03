@@ -426,7 +426,8 @@ migration to nodes with different PCI topologies.
 
 ```bash
 # Create mapping via API
-pvesh create /cluster/mapping/pci --id gpu-quadro --map 'node=pve3,path=0000:01:00.0'
+pvesh create /cluster/mapping/pci --id gpu-quadro --map 'node=pve3,path=0000:01:00.0,id=10de:XXXX'
+# id = vendor:device from lspci -nn (required; Proxmox uses it to detect hardware changes)
 ```
 
 ### VM configuration
@@ -486,7 +487,7 @@ Follow the steps above (IOMMU groups, vfio-pci binding, hardware mapping), plus:
    state disk, `cpu: host`, `hidden=1` to dodge NVIDIA's Code 43 on older drivers. Example:
    `qm set 100 --machine q35 --bios ovmf --cpu host,hidden=1 --efidisk0 local-lvm:1,format=raw`
 3. **Attach the GPU** through a hardware mapping:
-   `pvesh create /cluster/mapping/pci --id gpu-rtx4070 --map 'node=pve1,path=0000:01:00.0'`, then
+   `pvesh create /cluster/mapping/pci --id gpu-rtx4070 --map 'node=pve1,path=0000:01:00.0,id=10de:XXXX'` (`id` is the vendor:device from `lspci -nn`), then
    `qm set 100 --hostpci0 mapping=gpu-rtx4070,pcie=1,x-vga=1`.
    Legacy form without a mapping: `--hostpci0 01:00,pcie=1,x-vga=1`. Drop `x-vga` for
    compute-only passthrough.
