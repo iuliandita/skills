@@ -232,7 +232,7 @@ The Trivy supply chain attack (CVE-2026-33634) demonstrated that **mutable Git t
 - **Use Dependabot/Renovate** to update pinned SHAs - automation makes SHA-pinning sustainable.
 - **Enable StepSecurity Harden-Runner** or equivalent to detect unexpected network connections and file system access in CI jobs.
 - **Separate CI secrets by environment**: staging pipeline should NOT have access to production credentials.
-- **Monitor action repos for force-push events**: subscribe to security advisories for all actions you use.
+- **Monitor action repos for force-push events**: subscribe to security advisories for all actions you use; GitHub's audit log and StepSecurity Harden-Runner can detect them.
 - **Vendor critical CI tools** or use pre-built, verified binaries instead of pulling from upstream on every run.
 - **Rotate secrets** if any CI pipeline ran compromised Trivy (v0.69.4/5/6) between March 19-23, 2026. The infostealer exfiltrated SSH keys, cloud creds, Docker configs, and k8s tokens.
 
