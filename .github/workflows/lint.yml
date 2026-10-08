@@ -184,13 +184,13 @@ jobs:
 
       - name: Install lychee
         env:
-          LYCHEE_VERSION: "0.23.0"
-          LYCHEE_SHA256: "1fcb6ccf10d04c22b8c5873c5b9cb7be32ee7423e12169d6f1a79a6f1962ef81"
+          LYCHEE_VERSION: "0.24.2"
+          LYCHEE_SHA256: "1f4e0ef7f6554a6ed33dd7ac144fb2e1bbed98598e7af973042fc5cd43951c9a"
         run: |
           mkdir -p "$HOME/.local/bin"
           curl -fsSLo /tmp/lychee.tar.gz "https://github.com/lycheeverse/lychee/releases/download/lychee-v${LYCHEE_VERSION}/lychee-x86_64-unknown-linux-gnu.tar.gz"
           echo "${LYCHEE_SHA256}  /tmp/lychee.tar.gz" | sha256sum --check
-          tar -xzf /tmp/lychee.tar.gz -C "$HOME/.local/bin" lychee
+          tar -xzf /tmp/lychee.tar.gz -C "$HOME/.local/bin" --strip-components=1 lychee-x86_64-unknown-linux-gnu/lychee
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
       - name: Check links
