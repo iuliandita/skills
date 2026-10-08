@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.6.0](https://github.com/iuliandita/skills/compare/v2.5.2...v2.6.0) (2026-10-08)
+
+### Features
+
+* **scripts:** check catalog docs against the skill tree and installer: lint fails when README or MIGRATION.md skill counts, README skill links, README or INSTALL.md target counts, or the INSTALL.md target table drift from the skills and `install.sh`, or when an active skill names a retired skill; `check-migrations.py` requires every old name in MIGRATION.md's table ([#266](https://github.com/iuliandita/skills/pull/266), [#258](https://github.com/iuliandita/skills/issues/258)).
+* **scripts:** require docs for skill removals and installer changes with `check-docs-impact.sh`, an offline PR-range check wired into CI, a pre-push hook, and the release steps; other installer or gate-script changes need a docs change or a `Docs-Impact: none - <reason>` commit trailer ([#267](https://github.com/iuliandita/skills/pull/267), [#258](https://github.com/iuliandita/skills/issues/258)).
+
+### Bug Fixes
+
+* **skills:** retire the 19 v2 old-name migration notices after the transition window. Updating the collection does not remove stale local copies of old names; migrate them with the steps in [MIGRATION.md](https://github.com/iuliandita/skills/blob/main/MIGRATION.md) ([#265](https://github.com/iuliandita/skills/pull/265), [#203](https://github.com/iuliandita/skills/issues/203)).
+* **vulnerability-research:** bump the Semgrep pin to 1.180.0 ([#264](https://github.com/iuliandita/skills/pull/264), [#241](https://github.com/iuliandita/skills/issues/241)).
+
 ## [2.5.2](https://github.com/iuliandita/skills/compare/v2.5.1...v2.5.2) (2026-10-08)
 
 ### Bug Fixes
