@@ -89,6 +89,11 @@ jobs:
           BASE_REF: ${{ github.base_ref }}
         run: ./scripts/check-refiner-phase1-guard.sh
 
+      - name: Check docs impact
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: ./scripts/check-docs-impact.sh
+
   shell-and-python:
     runs-on: ubuntu-24.04
     steps:
@@ -129,6 +134,9 @@ jobs:
 
       - name: Test CI base ref checks
         run: ./scripts/test-ci-base-checks.sh
+
+      - name: Test docs-impact check
+        run: ./scripts/test-docs-impact.sh
 
       - name: Shellcheck scripts
         run: shellcheck install.sh scripts/*.sh

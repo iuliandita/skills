@@ -98,6 +98,8 @@ Every skill must work when installed alone: runtime file references stay inside 
 
 New skills must also be registered in the repository-audit coverage check or its [exclusions table](skills/repo-audit/references/exclusions.md). Run the repository's `scripts/check-*.sh` gates before pushing.
 
+`scripts/check-docs-impact.sh` compares the PR range against its base. Removing or renaming a skill needs a `migrations.json` entry and a `MIGRATION.md` change, and removing an installer target needs an `INSTALL.md` note. Other installer or gate-script changes need a doc change or a `Docs-Impact: none - <specific reason>` commit trailer.
+
 ## License
 
 [MIT](LICENSE)

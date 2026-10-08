@@ -50,6 +50,13 @@ repos:
         pass_filenames: false
         stages: [pre-push]
 
+      - id: docs-impact-check
+        name: docs follow installer, tooling, and skill removals
+        entry: ./scripts/check-docs-impact.sh
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
+
       - id: installer-regression-tests
         name: test installer behavior
         entry: bash -c './scripts/test-install.sh && ./scripts/test-setup.sh && ./scripts/test-update.sh'

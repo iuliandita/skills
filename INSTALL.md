@@ -636,6 +636,7 @@ Release steps (start with a clean checkout and update `main` with `git pull --ff
 3. Switch to `main`, run `git pull --ff-only`, and verify that `HEAD` is the merged release
    preparation commit and that its checks passed. If `main` advanced, reconcile the notes
    through another PR before tagging. Do not commit or push directly to `main`.
+   Run `./scripts/check-docs-impact.sh --release vPREV` before tagging.
 4. Save the merged changelog section to a notes file outside the checkout, such as
    `/tmp/skills-release-notes.md`. Review it against the commits since `vPREV`.
 5. Tag the verified commit with `git tag -a vX.Y.Z -m "vX.Y.Z"`, then push only that tag with

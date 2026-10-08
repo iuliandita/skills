@@ -83,7 +83,8 @@ clone_fixture() {
   mkdir -p "$clone/scripts"
   cp "$ROOT/scripts/check-whitespace.sh" "$clone/scripts/check-whitespace.sh"
   cp "$ROOT/scripts/check-refiner-phase1-guard.sh" "$clone/scripts/check-refiner-phase1-guard.sh"
-  chmod +x "$clone/scripts/check-whitespace.sh" "$clone/scripts/check-refiner-phase1-guard.sh"
+  cp "$ROOT/scripts/check-docs-impact.sh" "$clone/scripts/check-docs-impact.sh"
+  chmod +x "$clone/scripts/check-whitespace.sh" "$clone/scripts/check-refiner-phase1-guard.sh" "$clone/scripts/check-docs-impact.sh"
   printf '%s\n' "$clone"
 }
 
@@ -177,7 +178,49 @@ test_unrelated_history_base_fails_loudly() {
   trap - RETURN
 }
 
+test_docs_impact_passes_on_merge_ref() {
+  local tmp clone status output
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  build_base_repo "$tmp"
+  clone="$(clone_fixture "$tmp")"
+  checkout_merge_ref "$clone"
+
+  status=0
+  output="$(cd "$clone" && BASE_REF=main bash scripts/check-docs-impact.sh 2>&1)" || status=$?
+  (( status == 0 )) || { printf '%s\n' "$output" >&2; fail "docs-impact check failed on a clean PR merge ref"; }
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_docs_impact_unrelated_history_fails_loudly() {
+  local tmp clone status output
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  build_base_repo "$tmp"
+  clone="$(clone_fixture "$tmp")"
+
+  git_q "$clone" checkout -q --orphan orphan-head
+  git_q "$clone" rm -rq --cached . >/dev/null 2>&1 || true
+  write_file "$clone/orphan.md" "unrelated history"
+  git_q "$clone" add -A
+  git_q "$clone" commit -q -m "chore: unrelated root commit"
+
+  status=0
+  output="$(cd "$clone" && BASE_REF=main bash scripts/check-docs-impact.sh 2>&1)" || status=$?
+  (( status != 0 )) || { printf '%s\n' "$output" >&2; fail "docs-impact check passed on an orphan/unrelated history base"; }
+  [[ "$output" == *"merge-base"* ]] || { printf '%s\n' "$output" >&2; fail "docs-impact check did not report the missing merge-base"; }
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
 test_full_clone_stays_full_and_guard_passes
 test_phase1_commit_touching_immutable_path_fails
 test_unrelated_history_base_fails_loudly
-printf 'CI base check tests passed (3 cases)\n'
+test_docs_impact_passes_on_merge_ref
+test_docs_impact_unrelated_history_fails_loudly
+printf 'CI base check tests passed (5 cases)\n'
