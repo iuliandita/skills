@@ -3,6 +3,6 @@
   "private": true,
   "description": "Pinned markdownlint-cli2 for the Quality Gates markdown job",
   "devDependencies": {
-    "markdownlint-cli2": "0.22.0"
+    "markdownlint-cli2": "0.23.3"
   }
 }
