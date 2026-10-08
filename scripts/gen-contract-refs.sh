@@ -33,6 +33,7 @@ for target_name in "${SHARED_FILE_NAMES[@]}"; do
   for dir in "$ROOT"/skills/*/; do
     name="$(basename "$dir")"
     [[ "$name" == _* ]] && continue          # skip _shared and other build inputs
+    git -C "$ROOT" check-ignore -q "$dir" 2>/dev/null && continue  # private local skills
     [[ -f "$dir/SKILL.md" ]] || continue
     [[ "$(frontmatter_get "$dir/SKILL.md" metadata.deprecated)" == "true" ]] && continue
     mkdir -p "$dir/references"
