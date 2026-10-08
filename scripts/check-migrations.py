@@ -19,6 +19,35 @@ spec.loader.exec_module(frontmatter)
 NAME = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*")
 
 
+def check_migration_doc(root: Path, mappings: dict) -> None:
+    """Every manifest key needs a row in MIGRATION.md's old-names table naming its replacement."""
+    rows: dict[str, str] = {}
+    in_section = False
+    for line in (root / "MIGRATION.md").read_text().splitlines():
+        if line.startswith("## "):
+            in_section = line.strip() == "## Old names and replacements"
+            continue
+        if not in_section:
+            continue
+        if not line.startswith("|"):
+            continue
+        cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
+        if len(cells) < 2 or set(cells[0]) <= set("-: ") or cells[0] == "Old name":
+            continue
+        for old in cells[0].split(","):
+            rows[old.strip()] = cells[1]
+    for old, item in mappings.items():
+        if old not in rows:
+            raise ValueError(f"{old}: missing from MIGRATION.md old names table")
+        replacement = item["replacement"]
+        cell = rows[old]
+        if replacement is None:
+            if "Removed" not in cell:
+                raise ValueError(f"{old}: MIGRATION.md row must say Removed")
+        elif replacement not in re.findall(r"[a-z0-9]+(?:-[a-z0-9]+)*", cell):
+            raise ValueError(f"{old}: MIGRATION.md row must name replacement {replacement}")
+
+
 def validate(root: Path, retire: bool = False) -> None:
     manifest = json.loads((root / "migrations.json").read_text())
     if manifest.get("version") != 1:
@@ -72,6 +101,7 @@ def validate(root: Path, retire: bool = False) -> None:
                 raise ValueError(f"{old}: notice must name its replacement")
         elif not eligible:
             raise ValueError(f"{old}: notice removed before published grace period elapsed")
+    check_migration_doc(root, mappings)
     for notice in (root / "skills").glob("*/SKILL.md"):
         data = frontmatter.load_frontmatter(str(notice))
         if str(data.get("metadata", {}).get("deprecated", "")).lower() == "true" and notice.parent.name not in mappings:
