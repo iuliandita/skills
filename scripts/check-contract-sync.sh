@@ -39,6 +39,7 @@ for target_name in "${SHARED_FILE_NAMES[@]}"; do
   for dir in "$ROOT"/skills/*/; do
     name="$(basename "$dir")"
     [[ "$name" == _* ]] && continue
+    git -C "$ROOT" check-ignore -q "$dir" 2>/dev/null && continue
     [[ -f "$dir/SKILL.md" ]] || continue
     [[ "$(frontmatter_get "$dir/SKILL.md" metadata.deprecated)" == "true" ]] && continue
     copy="$dir/references/$target_name"
@@ -59,7 +60,7 @@ done
 # The generated copies (references/<name>.md for each SHARED_FILE_NAMES
 # entry) are exempt: their content is the source file itself, governed by
 # the drift check above, not authored per skill.
-shared_refs="$(grep -rn 'skills/_shared/' "$ROOT"/skills/*/SKILL.md "$ROOT"/skills/*/references/*.md 2>/dev/null \
+shared_refs="$(git -C "$ROOT" grep -n --untracked 'skills/_shared/' -- 'skills/*/SKILL.md' 'skills/*/references/*.md' \
   | grep -vE "$exempt_pattern" || true)"
 if [[ -n "$shared_refs" ]]; then
   printf '[!] runtime reference to skills/_shared/ (use local references/<name>.md instead):\n' >&2
