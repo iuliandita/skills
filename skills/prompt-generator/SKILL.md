@@ -192,6 +192,10 @@ alongside answer quality. Keep effort settings in the host/API configuration, no
 pretends to control them. Sonnet 5.5 guidance starts well-specified agent work at `medium` and
 harder work at `high`; re-evaluate these settings rather than copying the old effort level.
 See [Sonnet prompting](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/prompting-claude-sonnet-5-5).
+Haiku 5.5 at `low` effort skips searches, stops early in long agent prompts, and skips
+verification more often: give it the current date for search tasks and explicit completion and
+check criteria. If it needs `xhigh`/`max`, compare against Sonnet 5.5
+([Haiku prompting](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/prompting-claude-haiku-5-5)).
 The [GPT-6 family guidance](https://developers.openai.com/api/docs/guides/latest-model)
 describes Astra observations; test its recommendations on the selected model before adopting them.
 

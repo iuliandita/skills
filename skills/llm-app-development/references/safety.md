@@ -321,11 +321,11 @@ def classify_content(text: str) -> ContentCategory:
     blocked_topics = ["weapons instructions", "illegal activities"]
     review_topics = ["medical advice", "legal advice", "financial advice"]
 
-    # Low-cost classifier: Sonnet 5.5 with no up-front thinking
+    # Low-cost classifier: Haiku 5.5 with thinking off (allowed at high effort or below)
     result = client.messages.create(
-        model="claude-sonnet-5-5",
+        model="claude-haiku-5-5",
         max_tokens=50,
-        thinking={"type": "between_tools"},
+        thinking={"type": "disabled"},
         output_config={"effort": "low"},
         messages=[{
             "role": "user",

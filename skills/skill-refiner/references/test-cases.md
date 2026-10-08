@@ -582,6 +582,15 @@ Quality signals:
 - Preserves worker call IDs and output items, and returns only the root final answer
 - Measures worker failures, shared-state contention, completion, and total usage across the tree
 
+**Test 5: Cheap-tier Haiku migration**
+Prompt: "Move our Haiku 4.5 ticket router (temperature 0, budget_tokens 1024, prefilled `{`, reads content[0].text) to the newest Haiku. It runs on Bedrock through the Claude Code haiku alias too."
+Quality signals:
+- Targets claude-haiku-5-5 and does not keep Haiku 4.5 as a fallback, since it is superseded and retiring
+- Removes temperature, budget_tokens, and the prefill; uses effort or disabled thinking at high or below, plus structured output
+- Selects text blocks by type, sizes max_tokens for thinking, and handles refusal and max_tokens stops as failures
+- Recounts tokens and cost for the new tokenizer and the 100K input pricing threshold
+- Notes that the haiku alias still resolves to Haiku 4.5 on Bedrock, checks Haiku 5.5 availability there, and pins an explicit model ID instead of the alias
+
 ### localize
 **Test 1: Explicit legacy invocation**
 Prompt: "Use localize for this task."

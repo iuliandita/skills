@@ -537,9 +537,10 @@ def call_with_retry(fn, max_retries=3):
 
 - **Prompt caching**: mark static content with `cache_control` for discounted cache reads on
   repeated prefixes. TTL is 5 minutes, refreshed on each cache hit.
-- **Thinking**: current models use adaptive thinking (on by default on Sonnet 5.5, always on for
-  Opus 5.5 and Fable 5.1). Control depth with `output_config={"effort": ...}`; manual
-  `budget_tokens` returns 400 on these models; Haiku 4.5 is the only current model that uses it.
+- **Thinking**: current models use adaptive thinking (on by default on Sonnet 5.5 and Haiku 5.5,
+  always on for Opus 5.5 and Fable 5.1). Control depth with `output_config={"effort": ...}`;
+  manual `budget_tokens` returns 400 on these models. Only the retiring Haiku 4.5 still uses it.
+  On Haiku 5.5, `thinking: {"type": "disabled"}` works at `high` effort or below.
   On Sonnet 5.5, replace `disabled` with `between_tools` at `high` effort or below; use adaptive
   thinking for `xhigh`/`max` or per-message effort changes.
 - **Batch API**: submit up to 100k requests for 50% cost reduction, results within 24 hours.
