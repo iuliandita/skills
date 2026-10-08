@@ -1,0 +1,46 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Etc/UTC
+    cooldown:
+      default-days: 7
+    groups:
+      actions:
+        patterns: ["*"]
+    commit-message:
+      prefix: "deps(ci)"
+
+  - package-ecosystem: pip
+    directory: /.github/tools/semgrep
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Etc/UTC
+    cooldown:
+      default-days: 7
+    groups:
+      semgrep:
+        patterns: ["*"]
+    commit-message:
+      prefix: "deps(ci)"
+
+  - package-ecosystem: npm
+    directory: /.github/tools/markdownlint
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Etc/UTC
+    cooldown:
+      default-days: 7
+    groups:
+      markdownlint:
+        patterns: ["*"]
+    commit-message:
+      prefix: "deps(ci)"
