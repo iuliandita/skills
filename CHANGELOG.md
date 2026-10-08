@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.6.1](https://github.com/iuliandita/skills/compare/v2.6.0...v2.6.1) (2026-10-09)
+
+### Bug Fixes
+
+* **ci:** close the Tool Pins tracking issue once every checksum-pinned binary is current again ([#276](https://github.com/iuliandita/skills/pull/276), [#275](https://github.com/iuliandita/skills/issues/275)).
+
+### Dependencies
+
+* **ci:** bump semgrep from 1.161.0 to 1.178.0 ([#270](https://github.com/iuliandita/skills/pull/270)).
+* **ci:** bump markdownlint-cli2 from 0.22.0 to 0.23.3 ([#274](https://github.com/iuliandita/skills/pull/274)).
+* **ci:** bump lychee from 0.23.0 to 0.24.2 and follow its new release archive layout ([#278](https://github.com/iuliandita/skills/pull/278), [#277](https://github.com/iuliandita/skills/issues/277)).
+
 ## [2.6.0](https://github.com/iuliandita/skills/compare/v2.5.2...v2.6.0) (2026-10-08)
 
 ### Features
