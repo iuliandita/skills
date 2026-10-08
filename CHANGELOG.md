@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.5.2](https://github.com/iuliandita/skills/compare/v2.5.1...v2.5.2) (2026-10-08)
+
+### Bug Fixes
+
+* **llm-app-development:** add Haiku 5.5 (`claude-haiku-5-5`) as the current fast Anthropic tier with its pricing, limits, effort levels, and breaking changes from Haiku 4.5; mark Haiku 4.5 superseded and retiring; move the low-cost classifier example to Haiku 5.5; add Haiku 5.5 prompting caveats to prompt-generator and a migration test case to skill-refiner ([#260](https://github.com/iuliandita/skills/pull/260), [#259](https://github.com/iuliandita/skills/issues/259)).
+* **scripts:** skip gitignored local skills in the contract-sync check and generator, so private skills no longer fail the commit hooks or receive generated files ([#262](https://github.com/iuliandita/skills/pull/262), [#261](https://github.com/iuliandita/skills/issues/261)).
+
 ## [2.5.1](https://github.com/iuliandita/skills/compare/v2.5.0...v2.5.1) (2026-10-03)
 
 ### Refactoring
