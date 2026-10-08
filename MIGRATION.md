@@ -1,8 +1,9 @@
 # Catalog migration
 
-The collection now has 43 active skills. Nineteen old names remain temporarily as small
-deprecation notices. Updated notices explain the replacement or removal; they do not run
-the former workflow or silently install another skill.
+The collection now has 43 active skills. The nineteen old names shipped as small deprecation
+notices from v2.0.0 and were retired after the transition window. Updating the collection does
+not remove stale local copies of old names; migrate them with the steps below. Old tags still
+contain the notices.
 
 ## Old names and replacements
 

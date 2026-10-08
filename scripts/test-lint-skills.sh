@@ -401,6 +401,33 @@ EOF
   trap - RETURN
 }
 
+test_overlay_only_skill_dir_is_skipped() {
+  local tmp output status
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  git -C "$tmp" init -q
+  printf '%s\n' 'skills/retired/protected/' > "$tmp/.gitignore"
+  write_minimal_skill "$tmp/skills/alpha" "alpha"
+  mkdir -p "$tmp/skills/retired/protected" "$tmp/skills/draft"
+  printf '%s\n' 'private' > "$tmp/skills/retired/protected/notes.md"
+  printf '%s\n' 'draft' > "$tmp/skills/draft/notes.md"
+
+  status=0
+  output="$(cd "$tmp" && "$ROOT/scripts/lint-skills.sh" "$tmp/skills" 2>&1)" || status=$?
+  if [[ "$output" == *"retired: no SKILL.md"* ]]; then
+    printf '%s\n' "$output" >&2
+    fail "lint-skills.sh flagged a directory holding only an ignored overlay"
+  fi
+  if (( status == 0 )) || [[ "$output" != *"draft: no SKILL.md"* ]]; then
+    printf '%s\n' "$output" >&2
+    fail "lint-skills.sh did not flag a non-ignored directory without SKILL.md"
+  fi
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
 test_missing_rules_section_fails() {
   local tmp skill_dir output status
   tmp="$(mktemp -d)"
@@ -642,6 +669,7 @@ test_canonical_test_catalog_ignores_private_skills
 test_canonical_test_catalog_ignores_headings_outside_cases_and_fences
 test_missing_rules_section_fails
 test_missing_frontmatter_field_fails
+test_overlay_only_skill_dir_is_skipped
 test_non_ascii_character_fails
 test_skill_over_hard_max_lines_fails
 test_unlinked_reference_fails

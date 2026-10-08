@@ -461,6 +461,11 @@ for skill_dir in "$SKILLS_DIR"/*/; do
   [[ "$name" == ".backups" || "$name" == ".cook" ]] && continue
   [[ "$name" == _* ]] && continue
   git check-ignore -q "$skill_dir" 2>/dev/null && continue
+  # A retired skill can leave only an ignored private overlay behind.
+  if visible_files="$(git ls-files --cached --others --exclude-standard -- "$skill_dir" 2>/dev/null)" \
+    && [[ -z "$visible_files" ]]; then
+    continue
+  fi
 
   skill_file="$skill_dir/SKILL.md"
   if [[ ! -f "$skill_file" ]]; then

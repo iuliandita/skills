@@ -48,7 +48,7 @@ one that works:
    and `observability` are all plain sentence-boundary splits.
 2. **Reorder.** If a bold block (version pins, warnings) sits above the
    prose, move the prose above it without editing either block's content.
-   `localize` is this case. A variant applies when no split lands inside the
+   `i18n-localization` (then named `localize`) was this case. A variant applies when no split lands inside the
    110-350 window: `kali-linux` moved an existing later sentence to open the
    paragraph instead, again with no words added or removed.
 3. **Write new copy - last resort.** Only when the paragraph is genuinely

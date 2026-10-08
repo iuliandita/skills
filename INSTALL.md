@@ -479,7 +479,8 @@ Or check what changed first:
 
 The first example updates two copied skills for Codex; the second checks and updates all
 skills in the canonical directory and maintains links for the selected tools. Omitting skill
-names installs all active skills. Explicit old names install deprecation notices. Omitting `--tool` uses `SKILLS_TOOL`, or Claude if unset.
+names installs all active skills. Retired old names are no longer installable; see
+[MIGRATION.md](MIGRATION.md). Omitting `--tool` uses `SKILLS_TOOL`, or Claude if unset.
 
 The installer backs up existing skills before overwriting unless `--no-backup` is set.
 It retains the last three backups per skill under
@@ -529,7 +530,7 @@ unselected entries from the old lock. Review the saved lock for any remaining ma
 
 ## Renamed and removed skills
 
-See [MIGRATION.md](MIGRATION.md) for the complete mapping, temporary deprecation notices,
+See [MIGRATION.md](MIGRATION.md) for the complete mapping,
 copy/link migration, npx instructions, and private-overlay preservation. Normal updates
 do not prune old names. Preview `./install.sh --tool codex --migrate`, then use `--apply`
 only after reviewing the proposed changes. The helper verifies installer ownership and
