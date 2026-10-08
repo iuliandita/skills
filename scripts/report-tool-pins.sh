@@ -8,7 +8,8 @@ set -euo pipefail
 #
 # Usage: report-tool-pins.sh [--issue]
 #   Prints one line per pin and exits 0. With --issue, opens or updates a
-#   single tracking issue when any pin is behind (needs GH_TOKEN with issues: write).
+#   single tracking issue while any pin is behind and closes it once all are
+#   current (needs GH_TOKEN with issues: write).
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WORKFLOW="$ROOT/.github/workflows/lint.yml"
@@ -51,7 +52,17 @@ for tool in LYCHEE ACTIONLINT GITLEAKS; do
 done
 
 [[ "${1:-}" == "--issue" ]] || exit 0
-(( ${#stale[@]} > 0 )) || exit 0
+
+existing="$(gh issue list --state open --search "\"$ISSUE_TITLE\" in:title" --json number,title \
+  --jq ".[] | select(.title == \"$ISSUE_TITLE\") | .number" | head -n 1)"
+
+if (( ${#stale[@]} == 0 )); then
+  if [[ -n "$existing" ]]; then
+    gh issue close "$existing" --comment "All checksum-pinned CI binaries match their latest release."
+    echo "Closed issue #$existing"
+  fi
+  exit 0
+fi
 
 body="$(mktemp)"
 trap 'rm -f "$body"' EXIT
@@ -63,8 +74,6 @@ trap 'rm -f "$body"' EXIT
   echo "Update the version and the matching *_SHA256 value from the release's published checksums, then let Quality Gates run. Reported by the weekly tool-pins workflow."
 } > "$body"
 
-existing="$(gh issue list --state open --search "\"$ISSUE_TITLE\" in:title" --json number,title \
-  --jq ".[] | select(.title == \"$ISSUE_TITLE\") | .number" | head -n 1)"
 if [[ -n "$existing" ]]; then
   gh issue edit "$existing" --body-file "$body" >/dev/null
   echo "Updated issue #$existing"
