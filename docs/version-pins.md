@@ -54,7 +54,8 @@ Those checks remain part of review.
 ## Staleness budget
 
 **120 days.** If `checked_at` is more than 120 days before the date CI runs,
-`scripts/check-version-receipts.sh` fails for that skill. Re-verify every pin
+`scripts/check-version-receipts.sh` reports that skill. CI treats the age as
+advisory and shows a warning; receipt structure stays a required check. Re-verify every pin
 against its `source` and bump `checked_at`, or remove pins that are no longer
 worth tracking. Override the budget locally with
 `SKILLS_PIN_MAX_AGE_DAYS` (days) if you need to test a different threshold.

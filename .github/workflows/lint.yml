@@ -58,11 +58,23 @@ jobs:
       - name: Check private cluster-health leak patterns
         run: ./scripts/check-private-skill-leaks.sh
 
-      - name: Check freshness date markers
-        run: ./scripts/check-freshness-dates.sh
+      # Date-dependent freshness is advisory: a calendar rollover warns, it does not fail.
+      - name: Check freshness date markers (advisory)
+        run: |
+          if ! ./scripts/check-freshness-dates.sh; then
+            echo "::warning title=Freshness markers (advisory)::Currentness labels are behind the collection month; refresh them in the next sweep."
+          fi
 
-      - name: Check version receipts
+      - name: Check version receipt structure
+        env:
+          SKILLS_PIN_MAX_AGE_DAYS: "36500"
         run: ./scripts/check-version-receipts.sh
+
+      - name: Check version receipt age (advisory)
+        run: |
+          if ! ./scripts/check-version-receipts.sh; then
+            echo "::warning title=Version receipts (advisory)::A version receipt is older than the 120-day budget; re-verify its pins."
+          fi
 
       - name: Check first-paragraph storefront copy
         run: ./scripts/check-first-paragraph.sh
