@@ -637,11 +637,19 @@ Release steps (start with a clean checkout and update `main` with `git pull --ff
    preparation commit and that its checks passed. If `main` advanced, reconcile the notes
    through another PR before tagging. Do not commit or push directly to `main`.
    Run `./scripts/check-docs-impact.sh --release vPREV` before tagging.
-4. Save the merged changelog section to a notes file outside the checkout, such as
-   `/tmp/skills-release-notes.md`. Review it against the commits since `vPREV`.
+4. Review the merged changelog section against the commits since `vPREV`.
 5. Tag the verified commit with `git tag -a vX.Y.Z -m "vX.Y.Z"`, then push only that tag with
    `git push origin vX.Y.Z`.
-6. Publish with `gh release create vX.Y.Z --verify-tag --title "vX.Y.Z" --notes-file /tmp/skills-release-notes.md`.
+6. The tag push runs `.github/workflows/release.yml`, which checks that the tag is on `main`
+   and publishes the GitHub release from the `CHANGELOG.md` section. Follow it with
+   `gh run watch <run-id> --exit-status` and confirm the release with `gh release view vX.Y.Z`.
+   It fails when the changelog has no section for the version.
+
+Dependabot proposes weekly updates for the pinned workflow actions and for the semgrep and
+markdownlint-cli2 manifests under `.github/tools/`, after a 7-day cooldown. The
+checksum-pinned binaries in `lint.yml` (lychee, actionlint, gitleaks) are outside its reach;
+the weekly Tool Pins workflow runs `scripts/report-tool-pins.sh` and keeps one issue open
+while any of them is behind. Quality Gates also runs weekly on a schedule.
 
 ## Requirements
 

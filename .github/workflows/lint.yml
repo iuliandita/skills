@@ -18,6 +18,7 @@ on:
       - ".markdownlint-cli2.jsonc"
       - "lychee.toml"
       - ".github/workflows/**"
+      - ".github/tools/**"
   pull_request:
     paths:
       - "skills/**"
@@ -34,6 +35,11 @@ on:
       - ".markdownlint-cli2.jsonc"
       - "lychee.toml"
       - ".github/workflows/**"
+      - ".github/tools/**"
+  schedule:
+    # Weekly run catches link rot and new semgrep findings between changes.
+    - cron: "0 5 * * 1"
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -151,7 +157,9 @@ jobs:
 
       - name: Install markdownlint-cli2
         run: |
-          npm install --prefix "$RUNNER_TEMP/markdownlint-cli2" markdownlint-cli2@0.22.0
+          mkdir -p "$RUNNER_TEMP/markdownlint-cli2"
+          cp .github/tools/markdownlint/package.json .github/tools/markdownlint/package-lock.json "$RUNNER_TEMP/markdownlint-cli2/"
+          npm ci --prefix "$RUNNER_TEMP/markdownlint-cli2" --ignore-scripts --no-audit --no-fund
           echo "$RUNNER_TEMP/markdownlint-cli2/node_modules/.bin" >> "$GITHUB_PATH"
 
       - name: Lint Markdown
@@ -224,7 +232,7 @@ jobs:
       - name: Install semgrep
         run: |
           python3 -m venv "$RUNNER_TEMP/semgrep-venv"
-          "$RUNNER_TEMP/semgrep-venv/bin/pip" install --quiet semgrep==1.161.0
+          "$RUNNER_TEMP/semgrep-venv/bin/pip" install --quiet --require-hashes -r .github/tools/semgrep/requirements.txt
           echo "$RUNNER_TEMP/semgrep-venv/bin" >> "$GITHUB_PATH"
 
       - name: Secret scan

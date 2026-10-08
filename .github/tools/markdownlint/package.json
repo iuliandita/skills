@@ -1,0 +1,8 @@
+{
+  "name": "skills-markdownlint",
+  "private": true,
+  "description": "Pinned markdownlint-cli2 for the Quality Gates markdown job",
+  "devDependencies": {
+    "markdownlint-cli2": "0.22.0"
+  }
+}
