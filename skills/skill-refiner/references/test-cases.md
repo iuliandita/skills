@@ -38,14 +38,6 @@ Quality signals:
 
 ## Test Cases
 
-### ai-ml
-**Test 1: Explicit legacy invocation**
-Prompt: "Use ai-ml for this task."
-Quality signals:
-- Explains the deprecation briefly.
-- Names llm-app-development and checks whether it is installed before routing.
-- Does not silently install a skill, read sibling files, or delete user customizations.
-
 ### ansible
 **Test 1: Role creation**
 Prompt: "Create an Ansible role that installs and configures Nginx as a reverse proxy with TLS termination. Target: Ubuntu 24.04."
@@ -100,22 +92,6 @@ Quality signals:
 - Does not mix the two modes: no silent rewrite of the file in place of a report
 - Respects house style from CLAUDE.md/AGENTS.md over the skill's own pattern rules
 
-### anti-slop
-**Test 1: Explicit legacy invocation**
-Prompt: "Use anti-slop for this task."
-Quality signals:
-- Explains the deprecation briefly.
-- Names code-simplification and checks whether it is installed before routing.
-- Does not silently install a skill, read sibling files, or delete user customizations.
-
-### arch-btw
-**Test 1: Explicit legacy invocation**
-Prompt: "Use arch-btw for this task."
-Quality signals:
-- Explains the deprecation briefly.
-- Names arch-linux and checks whether it is installed before routing.
-- Does not silently install a skill, read sibling files, or delete user customizations.
-
 ### arch-linux
 **Test 1: Package management**
 Prompt: "I'm getting 'error: failed to commit transaction (conflicting files)' when running pacman -Syu on CachyOS."
@@ -162,14 +138,6 @@ Quality signals:
 - Cursor is opaque to the client (encoded/signed), not a raw DB offset or row number
 - Handles empty and end-of-cursor states explicitly
 
-### browse
-**Test 1: Explicit legacy invocation**
-Prompt: "Use browse for this task."
-Quality signals:
-- Explains the deprecation briefly.
-- Explains that the skill was removed without a replacement and does not run the old workflow.
-- Does not silently install a skill, read sibling files, or delete user customizations.
-
 ### ci-cd
 **Test 1: Pipeline review**
 Prompt: "Review this GitHub Actions workflow:\n\nname: Deploy\non: push\njobs:\n  deploy:\n    runs-on: ubuntu-latest\n    steps:\n    - uses: actions/checkout@main\n    - run: npm install\n    - run: npm run build\n    - run: aws s3 sync dist/ s3://my-bucket/"
@@ -188,14 +156,6 @@ Quality signals:
 - Handles selective builds (only rebuild changed services)
 - Caches pip/venv aggressively
 - Mentions shared library as a dependency
-
-### cluster-health
-**Test 1: Explicit legacy invocation**
-Prompt: "Use cluster-health for this task."
-Quality signals:
-- Explains the deprecation briefly.
-- Names kubernetes-health and checks whether it is installed before routing.
-- Does not silently install a skill, read sibling files, or delete user customizations.
 
 ### code-review
 **Test 1: Bug detection**
@@ -260,22 +220,6 @@ Quality signals:
 - Evaluates coupling, performance, readability, and validation before assigning an action label
 - Routes correctness or security discoveries to their owning skills instead of mixing lanes
 
-### code-slimming
-**Test 1: Explicit legacy invocation**
-Prompt: "Use code-slimming for this task."
-Quality signals:
-- Explains the deprecation briefly.
-- Names code-simplification and checks whether it is installed before routing.
-- Does not silently install a skill, read sibling files, or delete user customizations.
-
-### command-prompt
-**Test 1: Explicit legacy invocation**
-Prompt: "Use command-prompt for this task."
-Quality signals:
-- Explains the deprecation briefly.
-- Names shell-scripting and checks whether it is installed before routing.
-- Does not silently install a skill, read sibling files, or delete user customizations.
-
 ### databases
 **Test 1: Query optimization**
 Prompt: "This PostgreSQL query is slow (8 seconds on 2M rows):\n\nSELECT u.name, COUNT(o.id) as order_count\nFROM users u\nLEFT JOIN orders o ON o.user_id = u.id\nWHERE o.created_at > NOW() - INTERVAL '30 days'\nGROUP BY u.name\nORDER BY order_count DESC\nLIMIT 20;"
@@ -332,22 +276,6 @@ Quality signals:
 - Narrows one layer at a time and distinguishes evidence from inference
 - Routes the localized component to the matching domain skill or systematic debugging method
 
-### deep-audit
-**Test 1: Explicit legacy invocation**
-Prompt: "Use deep-audit for this task."
-Quality signals:
-- Explains the deprecation briefly.
-- Names repo-audit and checks whether it is installed before routing.
-- Does not silently install a skill, read sibling files, or delete user customizations.
-
-### deep-grill
-**Test 1: Explicit legacy invocation**
-Prompt: "Use deep-grill for this task."
-Quality signals:
-- Explains the deprecation briefly.
-- Names plan-review and checks whether it is installed before routing.
-- Does not silently install a skill, read sibling files, or delete user customizations.
-
 ### dev-cycle
 **Test 1: Start mode on a large feature**
 Prompt: "Let's start working on OAuth login for the app."
@@ -399,14 +327,6 @@ Quality signals:
 - Flags hardcoded secret in environment (use secrets or env file)
 - Flags :latest and untagged postgres image
 
-### firewall-appliance
-**Test 1: Explicit legacy invocation**
-Prompt: "Use firewall-appliance for this task."
-Quality signals:
-- Explains the deprecation briefly.
-- Names opnsense-pfsense and checks whether it is installed before routing.
-- Does not silently install a skill, read sibling files, or delete user customizations.
-
 ### frontend-design
 **Test 1: Build a product UI**
 Prompt: "Build a responsive SaaS dashboard for support agents triaging tickets. It needs dark and light themes, a ticket queue, filters, and keyboard-friendly actions."
@@ -426,14 +346,6 @@ Quality signals:
 - Replaces generic visuals with product-state-first recommendations
 - Checks accessibility, mobile, contrast, and motion risk, not only taste
 
-### full-review
-**Test 1: Explicit legacy invocation**
-Prompt: "Use full-review for this task."
-Quality signals:
-- Explains the deprecation briefly.
-- Names repo-audit and checks whether it is installed before routing.
-- Does not silently install a skill, read sibling files, or delete user customizations.
-
 ### git
 **Test 1: Commit message generation**
 Prompt: "Generate a commit message for this diff:\n\ndiff --git a/src/auth/middleware.go b/src/auth/middleware.go\n--- a/src/auth/middleware.go\n+++ b/src/auth/middleware.go\n@@ -42,7 +42,12 @@\n-    token := r.Header.Get(\"Authorization\")\n+    token := r.Header.Get(\"Authorization\")\n+    if token == \"\" {\n+        token = r.URL.Query().Get(\"token\")\n+    }\n+    if token == \"\" {\n+        http.Error(w, \"unauthorized\", http.StatusUnauthorized)\n+        return\n+    }"
@@ -450,14 +362,6 @@ Quality signals:
 - Suggests keeping both dependencies (if compatible)
 - Mentions running install after resolution
 - Does not suggest --force or --ours/--theirs blindly
-
-### handoff
-**Test 1: Explicit legacy invocation**
-Prompt: "Use handoff for this task."
-Quality signals:
-- Explains the deprecation briefly.
-- Names session-handoff and checks whether it is installed before routing.
-- Does not silently install a skill, read sibling files, or delete user customizations.
 
 ### i18n-localization
 **Test 1: Audit React app for i18n gaps**
@@ -479,14 +383,6 @@ Quality signals:
 - Translations read naturally for the app's domain (music discovery), not mechanical word-for-word
 - Does not translate brand names or technical identifiers
 - Notes a validation step (placeholder check, completeness check) before commit
-
-### jekyll-hyde
-**Test 1: Explicit legacy invocation**
-Prompt: "Use jekyll-hyde for this task."
-Quality signals:
-- Explains the deprecation briefly.
-- Names plan-review and checks whether it is installed before routing.
-- Does not silently install a skill, read sibling files, or delete user customizations.
 
 ### kali-linux
 **Test 1: Kali branch and metapackage hygiene**
@@ -591,22 +487,6 @@ Quality signals:
 - Recounts tokens and cost for the new tokenizer and the 100K input pricing threshold
 - Notes that the haiku alias still resolves to Haiku 4.5 on Bedrock, checks Haiku 5.5 availability there, and pins an explicit model ID instead of the alias
 
-### localize
-**Test 1: Explicit legacy invocation**
-Prompt: "Use localize for this task."
-Quality signals:
-- Explains the deprecation briefly.
-- Names i18n-localization and checks whether it is installed before routing.
-- Does not silently install a skill, read sibling files, or delete user customizations.
-
-### lockpick
-**Test 1: Explicit legacy invocation**
-Prompt: "Use lockpick for this task."
-Quality signals:
-- Explains the deprecation briefly.
-- Names privilege-escalation and checks whether it is installed before routing.
-- Does not silently install a skill, read sibling files, or delete user customizations.
-
 ### mcp
 **Test 1: Server implementation**
 Prompt: "Build an MCP server that exposes a 'search-docs' tool. It should accept a query string and return matching documentation snippets from a local markdown directory."
@@ -673,14 +553,6 @@ Quality signals:
 - Recommends activation-time secrets such as sops-nix or agenix
 - Checks disko, filesystem, subvolume, and impermanence layout before rollback advice
 - Separates Nix build concerns from runtime Docker or Kubernetes deployment concerns
-
-### nixos-btw
-**Test 1: Explicit legacy invocation**
-Prompt: "Use nixos-btw for this task."
-Quality signals:
-- Explains the deprecation briefly.
-- Names nixos and checks whether it is installed before routing.
-- Does not silently install a skill, read sibling files, or delete user customizations.
 
 ### observability
 **Test 1: Build a service signal pipeline**
@@ -926,14 +798,6 @@ Quality signals:
 - Drops noise entirely rather than padding the Competitive Intel section
 - Does not fabricate reaction counts or user demand data
 
-### routine-writer
-**Test 1: Explicit legacy invocation**
-Prompt: "Use routine-writer for this task."
-Quality signals:
-- Explains the deprecation briefly.
-- Explains that the skill was removed without a replacement and does not run the old workflow.
-- Does not silently install a skill, read sibling files, or delete user customizations.
-
 ### security-audit
 **Test 1: Code vulnerability scan**
 Prompt: "Audit this Express.js route:\n\napp.get('/user/:id', (req, res) => {\n  const query = `SELECT * FROM users WHERE id = ${req.params.id}`;\n  db.query(query, (err, result) => {\n    res.json(result);\n  });\n});"
@@ -1115,14 +979,6 @@ Quality signals:
 - Marks identity unknown when per-call fallback evidence is unavailable
 - Does not relabel historical scores after an upgrade or claim mixed-model runs are pure Sonnet 5.5 evaluations
 
-### skill-router
-**Test 1: Explicit legacy invocation**
-Prompt: "Use skill-router for this task."
-Quality signals:
-- Explains the deprecation briefly.
-- Explains that the skill was removed without a replacement and does not run the old workflow.
-- Does not silently install a skill, read sibling files, or delete user customizations.
-
 ### synology-dsm
 **Test 1: Routine package and service administration**
 Prompt: "A package on my DSM 7 NAS keeps restarting after I disable it over SSH. Diagnose it without uninstalling anything."
@@ -1267,11 +1123,3 @@ Quality signals:
 - Examines unsafe innerHTML usage patterns in React components
 - Tests DOMPurify configuration (ALLOWED_TAGS, RETURN_DOM)
 - Does not limit analysis to standard reflected/stored XSS patterns
-
-### zero-day
-**Test 1: Explicit legacy invocation**
-Prompt: "Use zero-day for this task."
-Quality signals:
-- Explains the deprecation briefly.
-- Names vulnerability-research and checks whether it is installed before routing.
-- Does not silently install a skill, read sibling files, or delete user customizations.

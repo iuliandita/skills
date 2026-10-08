@@ -11,6 +11,41 @@ fail() {
   exit 1
 }
 
+write_legacy_notice() {
+  mkdir -p "$1"
+  cat > "$1/SKILL.md" <<'NOTICE'
+---
+name: anti-slop
+description: >
+  Deprecated name. Use code-simplification; load this notice only when anti-slop is explicitly requested.
+license: MIT
+metadata:
+  source: iuliandita/skills
+  date_added: "2026-09-20"
+  effort: low
+  deprecated: "true"
+---
+
+# Deprecated: anti-slop
+
+This old skill name is retained temporarily to explain the catalog migration. It provides migration guidance only and does not contain the former task workflow.
+
+Use **code-simplification** instead.
+NOTICE
+}
+
+# Minimal installer source tree that still carries a deprecated notice, so the
+# tests do not depend on a retired skill existing in the real source tree.
+make_legacy_source() {
+  local src="$1"
+  mkdir -p "$src/scripts" "$src/skills"
+  cp "$ROOT/install.sh" "$ROOT/migrations.json" "$src/"
+  cp "$ROOT/scripts/skill-lib.sh" "$ROOT/scripts/skill-frontmatter.py" "$ROOT/scripts/migrate-skills.py" "$src/scripts/"
+  cp -r "$ROOT/skills/code-simplification" "$src/skills/code-simplification"
+  cp -r "$ROOT/skills/docker" "$src/skills/docker"
+  write_legacy_notice "$src/skills/anti-slop"
+}
+
 test_backups_stay_outside_skill_root() {
   local tmp dest backup_root
   tmp="$(mktemp -d)"
@@ -428,36 +463,40 @@ PY
 }
 
 test_deprecated_selection_and_notice() {
-  local tmp output
+  local tmp output src
   tmp="$(mktemp -d)"
   trap 'rm -rf "$tmp"' RETURN
+  src="$tmp/src"
+  make_legacy_source "$src"
 
-  "$ROOT/install.sh" --tool portable --dest "$tmp/default" --no-backup >/dev/null
+  "$src/install.sh" --tool portable --dest "$tmp/default" --no-backup >/dev/null
   [[ ! -e "$tmp/default/anti-slop" ]] || fail "default install selected a deprecated skill"
-  output="$("$ROOT/install.sh" --tool portable --dest "$tmp/explicit" --no-backup anti-slop)"
+  output="$("$src/install.sh" --tool portable --dest "$tmp/explicit" --no-backup anti-slop)"
   grep -q 'anti-slop is deprecated' <<< "$output" || fail "explicit deprecated install did not show notice"
-  "$ROOT/install.sh" --tool portable --dest "$tmp/explicit" --list > "$tmp/list"
+  "$src/install.sh" --tool portable --dest "$tmp/explicit" --list > "$tmp/list"
   grep -q 'anti-slop.*deprecated' "$tmp/list" || fail "list did not mark deprecated skill"
   rm -rf "$tmp"
   trap - RETURN
 }
 
 test_check_reports_legacy_manifest_skill() {
-  local tmp digest output
+  local tmp digest output src
   tmp="$(mktemp -d)"
   trap 'rm -rf "$tmp"' RETURN
+  src="$tmp/src"
+  make_legacy_source "$src"
 
   mkdir -p "$tmp/skills"
-  cp -r "$ROOT/skills/anti-slop" "$tmp/skills/anti-slop"
+  write_legacy_notice "$tmp/skills/anti-slop"
   digest="$(LC_ALL=C find "$tmp/skills/anti-slop" -type f -print0 | LC_ALL=C sort -z | xargs -0 cat | sha256sum | cut -d' ' -f1)"
-  python3 - "$tmp/skills/.skills-lock.json" "$ROOT/skills" "$digest" <<'PY'
+  python3 - "$tmp/skills/.skills-lock.json" "$src/skills" "$digest" <<'PY'
 import json
 import sys
 
 with open(sys.argv[1], "w", encoding="utf-8") as f:
     json.dump({"version": 1, "source": sys.argv[2], "skills": {"anti-slop": sys.argv[3]}}, f)
 PY
-  if output="$("$ROOT/install.sh" --tool portable --dest "$tmp/skills" --check 2>&1)"; then
+  if output="$("$src/install.sh" --tool portable --dest "$tmp/skills" --check 2>&1)"; then
     fail "check accepted a legacy manifest skill"
   fi
   grep -q 'anti-slop.*legacy installed' <<< "$output" || fail "check did not report legacy manifest skill"
@@ -479,30 +518,32 @@ test_invalid_manifest_stops_installer() {
 }
 
 test_installer_migration_dry_run_and_apply() {
-  local tmp digest
+  local tmp digest src
   tmp="$(mktemp -d)"
   trap 'rm -rf "$tmp"' RETURN
+  src="$tmp/src"
+  make_legacy_source "$src"
 
   mkdir -p "$tmp/skills"
-  cp -r "$ROOT/skills/anti-slop" "$tmp/skills/anti-slop"
+  write_legacy_notice "$tmp/skills/anti-slop"
   digest="$(LC_ALL=C find "$tmp/skills/anti-slop" -type f -print0 | LC_ALL=C sort -z | xargs -0 cat | sha256sum | cut -d' ' -f1)"
-  python3 - "$tmp/skills/.skills-lock.json" "$ROOT/skills" "$digest" <<'PY'
+  python3 - "$tmp/skills/.skills-lock.json" "$src/skills" "$digest" <<'PY'
 import json
 import sys
 
 with open(sys.argv[1], "w", encoding="utf-8") as f:
     json.dump({"version": 1, "source": sys.argv[2], "skills": {"anti-slop": {"hash": sys.argv[3], "provenance": "source-equal-v1"}}}, f)
 PY
-  "$ROOT/install.sh" --tool portable --dest "$tmp/skills" --migrate > "$tmp/dry-run"
+  "$src/install.sh" --tool portable --dest "$tmp/skills" --migrate > "$tmp/dry-run"
   [[ -d "$tmp/skills/anti-slop" ]] || fail "installer migration dry run retired old skill"
   [[ ! -e "$tmp/skills/code-simplification" ]] || fail "installer migration dry run installed replacement"
-  SKILLS_BACKUP_DIR="$tmp/migration-backups" "$ROOT/install.sh" --tool portable --dest "$tmp/skills" --migrate --apply > "$tmp/apply"
+  SKILLS_BACKUP_DIR="$tmp/migration-backups" "$src/install.sh" --tool portable --dest "$tmp/skills" --migrate --apply > "$tmp/apply"
   [[ ! -e "$tmp/skills/anti-slop" ]] || fail "installer migration apply did not retire old skill"
   [[ -d "$tmp/skills/code-simplification" ]] || fail "installer migration apply did not install replacement"
   if ! find "$tmp/migration-backups/anti-slop" -type f -name SKILL.md -print -quit | grep -q .; then
     fail "installer migration did not honor SKILLS_BACKUP_DIR"
   fi
-  if output="$(LC_ALL=en_US.utf8 "$ROOT/install.sh" --tool portable --dest "$tmp/skills" --check 2>&1)"; then
+  if output="$(LC_ALL=en_US.utf8 "$src/install.sh" --tool portable --dest "$tmp/skills" --check 2>&1)"; then
     fail "check accepted incomplete migration fixture"
   fi
   grep -q 'code-simplification.*current' <<< "$output" || fail "locale check did not recognize migrated replacement"
@@ -511,14 +552,16 @@ PY
 }
 
 test_skipped_custom_skill_keeps_old_lock_and_migration_skips_it() {
-  local tmp output
+  local tmp output src
   tmp="$(mktemp -d)"
   trap 'rm -rf "$tmp"' RETURN
+  src="$tmp/src"
+  make_legacy_source "$src"
 
-  "$ROOT/install.sh" --tool portable --dest "$tmp/skills" --no-backup anti-slop >/dev/null
+  "$src/install.sh" --tool portable --dest "$tmp/skills" --no-backup anti-slop >/dev/null
   printf '%s\n' 'custom local change' >> "$tmp/skills/anti-slop/SKILL.md"
-  "$ROOT/install.sh" --tool portable --dest "$tmp/skills" --no-backup anti-slop >/dev/null
-  "$ROOT/install.sh" --tool portable --dest "$tmp/skills" --migrate --apply > "$tmp/migration"
+  "$src/install.sh" --tool portable --dest "$tmp/skills" --no-backup anti-slop >/dev/null
+  "$src/install.sh" --tool portable --dest "$tmp/skills" --migrate --apply > "$tmp/migration"
   [[ -d "$tmp/skills/anti-slop" ]] || fail "migration retired a skipped custom skill"
   [[ ! -e "$tmp/skills/code-simplification" ]] || fail "migration installed replacement for custom skill"
   output="$(<"$tmp/migration")"
@@ -559,14 +602,16 @@ PY
 }
 
 test_copy_mode_migrates_each_selected_tool_destination() {
-  local tmp digest
+  local tmp digest src
   tmp="$(mktemp -d)"
   trap 'rm -rf "$tmp"' RETURN
+  src="$tmp/src"
+  make_legacy_source "$src"
   mkdir -p "$tmp/claude" "$tmp/codex"
-  cp -r "$ROOT/skills/anti-slop" "$tmp/claude/anti-slop"
-  cp -r "$ROOT/skills/anti-slop" "$tmp/codex/anti-slop"
+  write_legacy_notice "$tmp/claude/anti-slop"
+  write_legacy_notice "$tmp/codex/anti-slop"
   digest="$(LC_ALL=C find "$tmp/claude/anti-slop" -type f -print0 | LC_ALL=C sort -z | xargs -0 cat | sha256sum | cut -d' ' -f1)"
-  python3 - "$tmp/claude/.skills-lock.json" "$tmp/codex/.skills-lock.json" "$ROOT/skills" "$digest" <<'PY'
+  python3 - "$tmp/claude/.skills-lock.json" "$tmp/codex/.skills-lock.json" "$src/skills" "$digest" <<'PY'
 import json
 import sys
 
@@ -574,7 +619,7 @@ for path in sys.argv[1:3]:
     with open(path, "w", encoding="utf-8") as f:
         json.dump({"version": 1, "source": sys.argv[3], "skills": {"anti-slop": {"hash": sys.argv[4], "provenance": "source-equal-v1"}}}, f)
 PY
-  CLAUDE_SKILLS_DIR="$tmp/claude" CODEX_SKILLS_DIR="$tmp/codex" "$ROOT/install.sh" --tool claude,codex --migrate --apply >/dev/null
+  CLAUDE_SKILLS_DIR="$tmp/claude" CODEX_SKILLS_DIR="$tmp/codex" "$src/install.sh" --tool claude,codex --migrate --apply >/dev/null
   for destination in "$tmp/claude" "$tmp/codex"; do
     [[ ! -e "$destination/anti-slop" && -d "$destination/code-simplification" ]] || fail "copy migration missed $destination"
   done
@@ -583,14 +628,16 @@ PY
 }
 
 test_copy_canonical_migration_preserves_legacy_target() {
-  local tmp canonical digest
+  local tmp canonical digest src
   tmp="$(mktemp -d)"
   trap 'rm -rf "$tmp"' RETURN
+  src="$tmp/src"
+  make_legacy_source "$src"
   canonical="$tmp/canonical"
   mkdir -p "$canonical" "$tmp/unselected"
-  cp -r "$ROOT/skills/anti-slop" "$canonical/anti-slop"
+  write_legacy_notice "$canonical/anti-slop"
   digest="$(LC_ALL=C find "$canonical/anti-slop" -type f -print0 | LC_ALL=C sort -z | xargs -0 cat | sha256sum | cut -d' ' -f1)"
-  python3 - "$canonical/.skills-lock.json" "$ROOT/skills" "$digest" <<'PY'
+  python3 - "$canonical/.skills-lock.json" "$src/skills" "$digest" <<'PY'
 import json
 import sys
 
@@ -598,7 +645,7 @@ with open(sys.argv[1], "w", encoding="utf-8") as f:
     json.dump({"version": 1, "source": sys.argv[2], "skills": {"anti-slop": {"hash": sys.argv[3], "provenance": "source-equal-v1"}}}, f)
 PY
   ln -s "$canonical/anti-slop" "$tmp/unselected/anti-slop"
-  GEMINI_SKILLS_DIR="$canonical" SKILLS_CANONICAL_DIR="$canonical" "$ROOT/install.sh" --tool gemini --migrate --apply >/dev/null
+  GEMINI_SKILLS_DIR="$canonical" SKILLS_CANONICAL_DIR="$canonical" "$src/install.sh" --tool gemini --migrate --apply >/dev/null
   [[ -d "$canonical/anti-slop" && -d "$canonical/code-simplification" ]] || fail "canonical migration retired shared legacy target"
   [[ -e "$tmp/unselected/anti-slop/SKILL.md" ]] || fail "canonical migration broke an unselected tool link"
   rm -rf "$tmp"
@@ -606,13 +653,15 @@ PY
 }
 
 test_opencode_migration_syncs_apply_only() {
-  local tmp digest config_before config_after
+  local tmp digest config_before config_after src
   tmp="$(mktemp -d)"
   trap 'rm -rf "$tmp"' RETURN
+  src="$tmp/src"
+  make_legacy_source "$src"
   mkdir -p "$tmp/skills" "$tmp/config"
-  cp -r "$ROOT/skills/anti-slop" "$tmp/skills/anti-slop"
+  write_legacy_notice "$tmp/skills/anti-slop"
   digest="$(LC_ALL=C find "$tmp/skills/anti-slop" -type f -print0 | LC_ALL=C sort -z | xargs -0 cat | sha256sum | cut -d' ' -f1)"
-  python3 - "$tmp/skills/.skills-lock.json" "$ROOT/skills" "$digest" <<'PY'
+  python3 - "$tmp/skills/.skills-lock.json" "$src/skills" "$digest" <<'PY'
 import json
 import sys
 
@@ -621,10 +670,10 @@ with open(sys.argv[1], "w", encoding="utf-8") as f:
 PY
   config_before='{"permission":{"skill":{"*":"deny","custom":"deny"}}}'
   printf '%s\n' "$config_before" > "$tmp/config/opencode.json"
-  OPENCODE_SKILLS_DIR="$tmp/skills" OPENCODE_CONFIG_FILE="$tmp/config/opencode.json" "$ROOT/install.sh" --tool opencode --migrate >/dev/null
+  OPENCODE_SKILLS_DIR="$tmp/skills" OPENCODE_CONFIG_FILE="$tmp/config/opencode.json" "$src/install.sh" --tool opencode --migrate >/dev/null
   config_after="$(<"$tmp/config/opencode.json")"
   [[ "$config_after" == "$config_before" ]] || fail "OpenCode migration dry run changed permissions"
-  OPENCODE_SKILLS_DIR="$tmp/skills" OPENCODE_CONFIG_FILE="$tmp/config/opencode.json" "$ROOT/install.sh" --tool opencode --migrate --apply >/dev/null
+  OPENCODE_SKILLS_DIR="$tmp/skills" OPENCODE_CONFIG_FILE="$tmp/config/opencode.json" "$src/install.sh" --tool opencode --migrate --apply >/dev/null
   python3 - "$tmp/config/opencode.json" <<'PY'
 import json
 import sys
@@ -956,15 +1005,17 @@ test_legacy_cleanup_custom_canonical_needs_replacement() {
 }
 
 test_opencode_link_migration_on_canonical_allows_replacement() {
-  local tmp canonical digest config
+  local tmp canonical digest config src
   tmp="$(mktemp -d)"
   trap 'rm -rf "$tmp"' RETURN
+  src="$tmp/src"
+  make_legacy_source "$src"
   canonical="$tmp/.agents/skills"
   config="$tmp/.config/opencode/opencode.json"
   mkdir -p "$canonical" "$(dirname "$config")"
-  cp -r "$ROOT/skills/anti-slop" "$canonical/anti-slop"
+  write_legacy_notice "$canonical/anti-slop"
   digest="$(LC_ALL=C find "$canonical/anti-slop" -type f -print0 | LC_ALL=C sort -z | xargs -0 cat | sha256sum | cut -d' ' -f1)"
-  python3 - "$canonical/.skills-lock.json" "$ROOT/skills" "$digest" <<'PY'
+  python3 - "$canonical/.skills-lock.json" "$src/skills" "$digest" <<'PY'
 import json
 import sys
 
@@ -972,7 +1023,7 @@ with open(sys.argv[1], "w", encoding="utf-8") as f:
     json.dump({"version": 1, "source": sys.argv[2], "skills": {"anti-slop": {"hash": sys.argv[3], "provenance": "source-equal-v1"}}}, f)
 PY
   printf '%s\n' '{"permission":{"skill":{"*":"deny"}}}' > "$config"
-  HOME="$tmp" "$ROOT/install.sh" --tool opencode --link --migrate --apply >/dev/null
+  HOME="$tmp" "$src/install.sh" --tool opencode --link --migrate --apply >/dev/null
   [[ -d "$canonical/code-simplification" ]] || fail "canonical link migration did not install the replacement"
   python3 - "$config" <<'PY'
 import json
@@ -1530,37 +1581,39 @@ test_installer_lock_contention_and_missing_flock() {
 }
 
 test_migration_recovers_before_apply() {
-  local tmp dest txn custom output
+  local tmp dest txn custom output src
   tmp="$(mktemp -d)"
   trap 'rm -rf "$tmp"' RETURN
+  src="$tmp/src"
+  make_legacy_source "$src"
   dest="$tmp/agent/skills"
-  isolated "$tmp" "$ROOT/install.sh" --tool portable --dest "$dest" --no-backup code-simplification anti-slop >/dev/null
+  isolated "$tmp" "$src/install.sh" --tool portable --dest "$dest" --no-backup code-simplification anti-slop >/dev/null
   printf '%s\n' 'local edit' >> "$dest/code-simplification/SKILL.md"
   custom="$(digest "$dest/code-simplification")"
-  if isolated "$tmp" SKILLS_INSTALL_FAULT=promote:code-simplification,restore "$ROOT/install.sh" \
+  if isolated "$tmp" SKILLS_INSTALL_FAULT=promote:code-simplification,restore "$src/install.sh" \
     --tool portable --dest "$dest" --force --no-backup code-simplification >/dev/null 2>&1; then
     fail "promote and restore faults did not fail the install"
   fi
   txn="$(txn_area "$dest")/code-simplification"
   [[ ! -e "$dest/code-simplification" && "$(digest "$txn/prev")" == "$custom" ]] || fail "fixture did not leave the copy in prev"
 
-  if output="$(isolated "$tmp" SKILLS_INSTALL_FAULT=restore "$ROOT/install.sh" --tool portable --dest "$dest" --migrate --apply 2>&1)"; then
+  if output="$(isolated "$tmp" SKILLS_INSTALL_FAULT=restore "$src/install.sh" --tool portable --dest "$dest" --migrate --apply 2>&1)"; then
     fail "migration ran although recovery failed: $output"
   fi
   grep -q "refusing to migrate $dest until its install records are recovered" <<< "$output" || fail "migration refusal was unclear: $output"
   [[ ! -e "$dest/code-simplification" && "$(digest "$txn/prev")" == "$custom" && -d "$dest/anti-slop" ]] \
     || fail "refused migration changed the destination"
 
-  if output="$(isolated "$tmp" "$ROOT/install.sh" --tool portable --dest "$dest" --migrate --apply 2>&1)"; then
+  if output="$(isolated "$tmp" "$src/install.sh" --tool portable --dest "$dest" --migrate --apply 2>&1)"; then
     fail "migration ran with an unpublished record for a replacement: $output"
   fi
   grep -q 'code-simplification has an unpublished install record' <<< "$output" || fail "record refusal was unclear: $output"
   [[ "$(digest "$dest/code-simplification")" == "$custom" && -d "$dest/anti-slop" ]] || fail "migration refusal lost the customized copy"
 
-  isolated "$tmp" "$ROOT/install.sh" --tool portable --dest "$dest" --force --no-backup code-simplification >/dev/null \
+  isolated "$tmp" "$src/install.sh" --tool portable --dest "$dest" --force --no-backup code-simplification >/dev/null \
     || fail "forced reinstall failed"
-  isolated "$tmp" "$ROOT/install.sh" --tool portable --dest "$dest" --migrate --apply >/dev/null || fail "migration failed after reconciliation"
-  [[ ! -e "$dest/anti-slop" && "$(digest "$dest/code-simplification")" == "$(digest "$ROOT/skills/code-simplification")" ]] \
+  isolated "$tmp" "$src/install.sh" --tool portable --dest "$dest" --migrate --apply >/dev/null || fail "migration failed after reconciliation"
+  [[ ! -e "$dest/anti-slop" && "$(digest "$dest/code-simplification")" == "$(digest "$src/skills/code-simplification")" ]] \
     || fail "migration did not complete after reconciliation"
   rm -rf "$tmp"
   trap - RETURN

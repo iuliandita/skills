@@ -570,14 +570,51 @@ test_concurrent_applies_serialize() {
   trap - RETURN
 }
 
+write_legacy_notice() {
+  mkdir -p "$1"
+  cat > "$1/SKILL.md" <<'NOTICE'
+---
+name: anti-slop
+description: >
+  Deprecated name. Use code-simplification; load this notice only when anti-slop is explicitly requested.
+license: MIT
+metadata:
+  source: iuliandita/skills
+  date_added: "2026-09-20"
+  effort: low
+  deprecated: "true"
+---
+
+# Deprecated: anti-slop
+
+This old skill name is retained temporarily to explain the catalog migration. It provides migration guidance only and does not contain the former task workflow.
+
+Use **code-simplification** instead.
+NOTICE
+}
+
+# Minimal installer source tree that still carries a deprecated notice, so the
+# tests do not depend on a retired skill existing in the real source tree.
+make_legacy_source() {
+  local src="$1"
+  mkdir -p "$src/scripts" "$src/skills"
+  cp "$ROOT/install.sh" "$ROOT/migrations.json" "$src/"
+  cp "$ROOT/scripts/skill-lib.sh" "$ROOT/scripts/skill-frontmatter.py" "$ROOT/scripts/migrate-skills.py" "$src/scripts/"
+  cp -r "$ROOT/skills/code-simplification" "$src/skills/code-simplification"
+  cp -r "$ROOT/skills/docker" "$src/skills/docker"
+  write_legacy_notice "$src/skills/anti-slop"
+}
+
 test_installer_migration_apply_requires_lock() {
-  local tmp dir file status digest debris
+  local tmp dir file status digest debris src
   tmp="$(mktemp -d)"
   trap 'rm -rf "$tmp"' RETURN
+  src="$tmp/src"
+  make_legacy_source "$src"
   mkdir -p "$tmp/skills" "$tmp/no-flock"
-  cp -r "$ROOT/skills/anti-slop" "$tmp/skills/anti-slop"
+  write_legacy_notice "$tmp/skills/anti-slop"
   digest="$(hash_skill "$tmp/skills/anti-slop")"
-  python3 - "$tmp/skills/.skills-lock.json" "$ROOT/skills" "$digest" <<'PY'
+  python3 - "$tmp/skills/.skills-lock.json" "$src/skills" "$digest" <<'PY'
 import json
 import sys
 
@@ -596,27 +633,27 @@ PY
 
   status=0
   env -i HOME="$TEST_HOME" PATH="$tmp/no-flock" LANG=C SKILLS_BACKUP_DIR="$tmp/backups" \
-    "$ROOT/install.sh" --tool portable --dest "$tmp/skills" --migrate --apply > "$tmp/out" 2>&1 || status=$?
+    "$src/install.sh" --tool portable --dest "$tmp/skills" --migrate --apply > "$tmp/out" 2>&1 || status=$?
   (( status == 10 )) || fail "migration apply without flock exited $status, want 10: $(<"$tmp/out")"
   grep -q 'flock (util-linux) is required for .*--migrate --apply' "$tmp/out" || fail "missing flock hint absent: $(<"$tmp/out")"
   [[ "$(<"$debris/staging/SKILL.md")" == debris ]] || fail "migration apply without flock ran recovery"
   [[ -d "$tmp/skills/anti-slop" && ! -e "$tmp/skills/code-simplification" && ! -e "$tmp/backups" ]] \
     || fail "migration apply without flock changed files"
   env -i HOME="$TEST_HOME" PATH="$tmp/no-flock" LANG=C \
-    "$ROOT/install.sh" --tool portable --dest "$tmp/skills" --migrate > "$tmp/out" 2>&1 \
+    "$src/install.sh" --tool portable --dest "$tmp/skills" --migrate > "$tmp/out" 2>&1 \
     || fail "migration preview needed flock: $(<"$tmp/out")"
 
   hold_lock "$tmp/held"
   status=0
   env -i HOME="$TEST_HOME" PATH="$SAFE_PATH" LANG=C SKILLS_LOCK_WAIT=1 SKILLS_BACKUP_DIR="$tmp/backups" \
-    "$ROOT/install.sh" --tool portable --dest "$tmp/skills" --migrate --apply > "$tmp/out" 2>&1 || status=$?
+    "$src/install.sh" --tool portable --dest "$tmp/skills" --migrate --apply > "$tmp/out" 2>&1 || status=$?
   release_lock
   (( status == 3 )) || fail "migration apply under a held lock exited $status, want 3: $(<"$tmp/out")"
   [[ "$(<"$debris/staging/SKILL.md")" == debris ]] || fail "migration apply under a held lock ran recovery"
   [[ -d "$tmp/skills/anti-slop" && ! -e "$tmp/skills/code-simplification" ]] || fail "migration apply under a held lock changed files"
 
   env -i HOME="$TEST_HOME" PATH="$SAFE_PATH" LANG=C SKILLS_BACKUP_DIR="$tmp/backups" \
-    "$ROOT/install.sh" --tool portable --dest "$tmp/skills" --migrate --apply > "$tmp/out" 2>&1 \
+    "$src/install.sh" --tool portable --dest "$tmp/skills" --migrate --apply > "$tmp/out" 2>&1 \
     || fail "migration apply failed once the lock was free: $(<"$tmp/out")"
   [[ ! -e "$debris" ]] || fail "locked migration apply did not recover transaction debris"
   [[ ! -e "$tmp/skills/anti-slop" && -d "$tmp/skills/code-simplification" ]] || fail "locked migration apply did not migrate"
