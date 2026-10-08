@@ -654,6 +654,139 @@ test_canonical_section_without_test_case_fails() {
   trap - RETURN
 }
 
+# Full docs-drift fixture: git repo with README, INSTALL, MIGRATION, install.sh,
+# migrations.json and two active skills (alpha, beta). Callers mutate it after.
+make_docs_fixture() {
+  local tmp="$1"
+  git init -q "$tmp"
+  write_minimal_skill "$tmp/skills/alpha" "alpha"
+  write_minimal_skill "$tmp/skills/beta" "beta"
+  printf '2 active skills.\n[a](skills/alpha/SKILL.md) [b](skills/beta/SKILL.md)\nPaths for 2 targets.\n' > "$tmp/README.md"
+  printf 'The installer ships paths for 2 targets.\n\n## Supported targets\n\n| Tool | Flag | Default path |\n|------|------|----|\n| One | `one` | `~/.one` |\n| Two | `two` (alias `t`) | `~/.two` |\n\n## Next\n' > "$tmp/INSTALL.md"
+  printf 'The collection now has 2 active skills.\n' > "$tmp/MIGRATION.md"
+  printf '#!/usr/bin/env bash\nSUPPORTED_TOOLS=(\n  one # first\n  two\n)\n' > "$tmp/install.sh"
+  printf '{"skills": {"gone": {"action": "remove", "replacement": null}}}\n' > "$tmp/migrations.json"
+}
+
+# Run lint on a docs fixture; expect failure containing $2, or success when $2 is empty.
+expect_docs_lint() {
+  local tmp="$1" expected="$2" label="$3" output status=0
+  output="$(cd "$tmp" && "$ROOT/scripts/lint-skills.sh" "$tmp/skills" 2>&1)" || status=$?
+  if [[ -z "$expected" ]]; then
+    if (( status != 0 )); then
+      printf '%s\n' "$output" >&2
+      fail "lint-skills.sh failed: $label"
+    fi
+    return 0
+  fi
+  if (( status == 0 )); then
+    printf '%s\n' "$output" >&2
+    fail "lint-skills.sh passed: $label"
+  fi
+  if [[ "$output" != *"$expected"* ]]; then
+    printf '%s\n' "$output" >&2
+    fail "lint-skills.sh did not report '$expected': $label"
+  fi
+}
+
+test_docs_fixture_passes() {
+  local tmp; tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' RETURN
+  make_docs_fixture "$tmp"
+  expect_docs_lint "$tmp" "" "complete docs fixture"
+  rm -rf "$tmp"; trap - RETURN
+}
+
+test_docs_skipped_without_readme_and_installer() {
+  local tmp; tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' RETURN
+  make_docs_fixture "$tmp"
+  printf '99 active skills.\n' > "$tmp/README.md"
+  rm "$tmp/install.sh"
+  expect_docs_lint "$tmp" "" "collection docs check should be skipped without install.sh"
+  rm -rf "$tmp"; trap - RETURN
+}
+
+test_readme_active_count_mismatch_fails() {
+  local tmp; tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' RETURN
+  make_docs_fixture "$tmp"
+  sed -i 's/^2 active skills/3 active skills/' "$tmp/README.md"
+  expect_docs_lint "$tmp" "README.md says 3 active skills but 2 are active" "README count"
+  rm -rf "$tmp"; trap - RETURN
+}
+
+test_migration_active_count_mismatch_fails() {
+  local tmp; tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' RETURN
+  make_docs_fixture "$tmp"
+  sed -i 's/has 2 active/has 5 active/' "$tmp/MIGRATION.md"
+  expect_docs_lint "$tmp" "MIGRATION.md says 5 active skills" "MIGRATION count"
+  rm -rf "$tmp"; trap - RETURN
+}
+
+test_readme_missing_skill_link_fails() {
+  local tmp; tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' RETURN
+  make_docs_fixture "$tmp"
+  sed -i 's# \[b\](skills/beta/SKILL.md)##' "$tmp/README.md"
+  expect_docs_lint "$tmp" "README.md does not link active skill 'beta'" "missing link"
+  rm -rf "$tmp"; trap - RETURN
+}
+
+test_readme_unknown_skill_link_fails() {
+  local tmp; tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' RETURN
+  make_docs_fixture "$tmp"
+  printf '[x](skills/ghost/SKILL.md)\n' >> "$tmp/README.md"
+  expect_docs_lint "$tmp" "README.md links unknown or inactive skill 'ghost'" "unknown link"
+  rm -rf "$tmp"; trap - RETURN
+}
+
+test_targets_count_mismatch_fails() {
+  local tmp; tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' RETURN
+  make_docs_fixture "$tmp"
+  sed -i 's/for 2 targets/for 3 targets/' "$tmp/INSTALL.md"
+  expect_docs_lint "$tmp" "INSTALL.md says 3 targets but install.sh supports 2" "INSTALL targets count"
+  rm -rf "$tmp"; trap - RETURN
+}
+
+test_readme_targets_count_mismatch_fails() {
+  local tmp; tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' RETURN
+  make_docs_fixture "$tmp"
+  sed -i 's/for 2 targets/for 4 targets/' "$tmp/README.md"
+  expect_docs_lint "$tmp" "README.md says 4 targets but install.sh supports 2" "README targets count"
+  rm -rf "$tmp"; trap - RETURN
+}
+
+test_install_table_missing_tool_fails() {
+  local tmp; tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' RETURN
+  make_docs_fixture "$tmp"
+  sed -i '/^| Two /d' "$tmp/INSTALL.md"
+  expect_docs_lint "$tmp" "supported-targets table is missing tool 'two'" "missing table row"
+  rm -rf "$tmp"; trap - RETURN
+}
+
+test_bold_old_skill_name_fails() {
+  local tmp; tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' RETURN
+  make_docs_fixture "$tmp"
+  printf '\nSee **gone** for details.\n' >> "$tmp/skills/alpha/SKILL.md"
+  expect_docs_lint "$tmp" "alpha: SKILL.md mentions retired skill name '**gone**'" "bold old name"
+  rm -rf "$tmp"; trap - RETURN
+}
+
+test_gitignored_skill_not_counted() {
+  local tmp; tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' RETURN
+  make_docs_fixture "$tmp"
+  write_minimal_skill "$tmp/skills/private" "private"
+  printf 'skills/private/\n' > "$tmp/.gitignore"
+  expect_docs_lint "$tmp" "" "gitignored skill must not count as active"
+  rm -rf "$tmp"; trap - RETURN
+}
+
+test_deprecated_skill_not_counted() {
+  local tmp; tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' RETURN
+  make_docs_fixture "$tmp"
+  write_minimal_skill "$tmp/skills/gone" "gone"
+  sed -i 's/^  effort: low/  effort: low\n  deprecated: "true"/' "$tmp/skills/gone/SKILL.md"
+  expect_docs_lint "$tmp" "" "deprecated skill must not count as active"
+  rm -rf "$tmp"; trap - RETURN
+}
+
 test_reference_files_are_scanned
 test_reference_examples_are_ignored
 test_unrelated_bold_does_not_mask_missing_reference
@@ -676,4 +809,16 @@ test_unlinked_reference_fails
 test_long_reference_needs_contents
 test_banned_word_is_reported
 test_canonical_section_without_test_case_fails
+test_docs_fixture_passes
+test_docs_skipped_without_readme_and_installer
+test_readme_active_count_mismatch_fails
+test_migration_active_count_mismatch_fails
+test_readme_missing_skill_link_fails
+test_readme_unknown_skill_link_fails
+test_targets_count_mismatch_fails
+test_readme_targets_count_mismatch_fails
+test_install_table_missing_tool_fails
+test_bold_old_skill_name_fails
+test_gitignored_skill_not_counted
+test_deprecated_skill_not_counted
 printf 'lint tests passed\n'

@@ -443,17 +443,143 @@ check_canonical_test_coverage() {
   done
 }
 
+# ── Documentation drift checks ─────────────────────────────────────────
+# Active = public skill dir (same rules as the main loop) whose frontmatter
+# metadata.deprecated is not "true". Prints one name per line.
+list_active_skills() {
+  local skill_dir name visible_files dep
+  for skill_dir in "$SKILLS_DIR"/*/; do
+    name=$(basename "$skill_dir")
+    [[ "$name" == ".backups" || "$name" == ".cook" ]] && continue
+    [[ "$name" == _* ]] && continue
+    git check-ignore -q "$skill_dir" 2>/dev/null && continue
+    if visible_files="$(git ls-files --cached --others --exclude-standard -- "$skill_dir" 2>/dev/null)" \
+      && [[ -z "$visible_files" ]]; then
+      continue
+    fi
+    [[ -f "$skill_dir/SKILL.md" ]] || continue
+    dep="$(frontmatter_get "$skill_dir/SKILL.md" "metadata.deprecated" 2>/dev/null || true)"
+    [[ "$dep" == "true" ]] && continue
+    echo "$name"
+  done
+}
+
+# Old skill names from migrations.json, one per line (empty when absent).
+list_old_skill_names() {
+  local manifest="$SKILLS_DIR/../migrations.json"
+  [[ -f "$manifest" ]] || return 0
+  python3 -c 'import json,sys; print("\n".join(json.load(open(sys.argv[1]))["skills"]))' "$manifest"
+}
+
+# Number of entries in install.sh's SUPPORTED_TOOLS array, names one per line.
+list_supported_tools() {
+  awk '
+    /^SUPPORTED_TOOLS=\(/ {f=1; sub(/^SUPPORTED_TOOLS=\(/, "")}
+    f {
+      sub(/#.*/, "")
+      closed = ($0 ~ /\)/)
+      sub(/\).*/, "")
+      n = split($0, t, /[[:space:]]+/)
+      for (i = 1; i <= n; i++) if (t[i] != "") print t[i]
+      if (closed) exit
+    }
+  ' "$1"
+}
+
+check_collection_docs() {
+  local root="$SKILLS_DIR/.."
+  local readme="$root/README.md" install="$root/install.sh" install_doc="$root/INSTALL.md" migration="$root/MIGRATION.md"
+  [[ -f "$readme" && -f "$install" ]] || return 0
+
+  local name file n
+  declare -A active=() linked=()
+  while IFS= read -r name; do
+    [[ -n "$name" ]] && active["$name"]=1
+  done < <(list_active_skills)
+  local active_count=${#active[@]}
+
+  for file in "$readme" "$migration"; do
+    [[ -f "$file" ]] || continue
+    while IFS= read -r n; do
+      [[ -n "$n" ]] || continue
+      (( n == active_count )) || error "$(basename "$file") says $n active skills but $active_count are active"
+    done < <(grep -oE '[0-9]+ active skills' "$file" | grep -oE '^[0-9]+' || true)
+  done
+
+  while IFS= read -r name; do
+    [[ -n "$name" ]] && linked["$name"]=1
+  done < <(grep -oE 'skills/[A-Za-z0-9._-]+/SKILL\.md' "$readme" | sed -E 's#^skills/##; s#/SKILL\.md$##' || true)
+  for name in "${!active[@]}"; do
+    [[ -n "${linked[$name]:-}" ]] || error "README.md does not link active skill '$name' (skills/$name/SKILL.md)"
+  done
+  for name in "${!linked[@]}"; do
+    [[ -n "${active[$name]:-}" ]] || error "README.md links unknown or inactive skill '$name'"
+  done
+
+  local -a tools=()
+  while IFS= read -r name; do
+    [[ -n "$name" ]] && tools+=("$name")
+  done < <(list_supported_tools "$install")
+  local tool_count=${#tools[@]}
+
+  for file in "$readme" "$install_doc"; do
+    [[ -f "$file" ]] || continue
+    while IFS= read -r n; do
+      [[ -n "$n" ]] || continue
+      (( n == tool_count )) || error "$(basename "$file") says $n targets but install.sh supports $tool_count"
+    done < <(grep -oE '[0-9]+ targets' "$file" | grep -oE '^[0-9]+' || true)
+  done
+
+  if [[ -f "$install_doc" ]]; then
+    # Backticked tokens in the Flag column (2nd cell) of the table under "## Supported targets".
+    local doc_tools tool
+    doc_tools="$(awk -F'|' '
+      /^## / {f = ($0 ~ /^## Supported targets/); next}
+      f && /^\|/ {
+        cell = $3
+        while (match(cell, /`[^`]+`/)) {
+          print substr(cell, RSTART + 1, RLENGTH - 2)
+          cell = substr(cell, RSTART + RLENGTH)
+        }
+      }
+    ' "$install_doc")"
+    for tool in "${tools[@]}"; do
+      grep -qxF -- "$tool" <<< "$doc_tools" || error "INSTALL.md supported-targets table is missing tool '$tool'"
+    done
+  fi
+}
+
+# Active skills must name current skills in bold, not retired old names.
+check_old_name_mentions() {
+  local file="$1" name="$2" old dep
+  [[ ${#OLD_SKILL_NAMES[@]} -gt 0 ]] || return 0
+  dep="$(frontmatter_get "$file" "metadata.deprecated" 2>/dev/null || true)"
+  [[ "$dep" == "true" ]] && return 0
+  for old in "${OLD_SKILL_NAMES[@]}"; do
+    if grep -qF -- "**$old**" "$file"; then
+      error "$name: SKILL.md mentions retired skill name '**$old**' (see migrations.json)"
+    fi
+  done
+}
+
 # ── Main ────────────────────────────────────────────────────────────────
 echo "Linting skills in $SKILLS_DIR..."
 echo
 
 if [[ -d "$SKILLS_DIR" ]]; then
   frontmatter_cache_load "$SKILLS_DIR" name description license metadata \
-    metadata.source metadata.date_added metadata.effort metadata.argument_hint metadata.internal
+    metadata.source metadata.date_added metadata.effort metadata.argument_hint metadata.internal \
+    metadata.deprecated
 fi
 
 check_no_symlinks "$SKILLS_DIR"
 check_canonical_test_coverage
+check_collection_docs
+
+OLD_SKILL_NAMES=()
+while IFS= read -r old_name; do
+  [[ -n "$old_name" ]] && OLD_SKILL_NAMES+=("$old_name")
+done < <(list_old_skill_names)
 
 skill_count=0
 for skill_dir in "$SKILLS_DIR"/*/; do
@@ -487,6 +613,7 @@ for skill_dir in "$SKILLS_DIR"/*/; do
   check_generic_self_check_ratio "$skill_file" "$name"
   check_banned_words "$skill_dir" "$name"
   check_prose_double_dash "$skill_dir" "$name"
+  check_old_name_mentions "$skill_file" "$name"
   (( skill_count++ )) || true
 done
 
