@@ -1,7 +1,7 @@
 # AI/ML Target Versions
 
 October 2026 snapshot. Refreshed 2026-10-02 against provider docs, PyPI, npm, GitHub releases,
-and GitHub Security Advisories.
+and GitHub Security Advisories; Haiku 5.5 added 2026-10-08.
 Verify current releases before pinning.
 
 ## Contents
@@ -26,7 +26,8 @@ bumps. Verify against provider docs before pinning. Prices are USD per million i
 | Anthropic | Frontier | `claude-fable-5-1` | $10/$50, 1M ctx, default effort `high`. Use when Opus 5.5 at higher effort still falls short |
 | Anthropic | Flagship | `claude-opus-5-5` | $4/$20, 1M ctx, effort `low`..`max`, default `medium`. Adaptive thinking always on: `thinking: {type: "disabled"}` returns 400 |
 | Anthropic | Balanced | `claude-sonnet-5-5` | Released 2026-09-28; $2/$10, 1M ctx, 128K output. Effort `low`, `medium`, `high` (API default), `xhigh`, `max`; adaptive thinking on by default |
-| Anthropic | Fast (retiring) | `claude-haiku-4-5` | $1/$5, 200K ctx, no effort control. Alias of `claude-haiku-4-5-20251001`. Retirement not sooner than 2026-10-15 |
+| Anthropic | Fast | `claude-haiku-5-5` | Released 2026-10-07 (checked 2026-10-08); $0.10/$0.50 up to 100K input tokens, $0.50/$2.50 above. 1M ctx, 128K output, cutoff Jun 2026. Effort `low`..`max`, default `medium`; adaptive thinking on by default |
+| Anthropic | Superseded (retiring) | `claude-haiku-4-5` | Do not use in new code; migrate to `claude-haiku-5-5`, which is cheaper and more capable. $1/$5, 200K ctx, no effort control. Alias of `claude-haiku-4-5-20251001`. Still callable; retirement not sooner than 2026-10-15 |
 | Anthropic | Limited | `claude-mythos-5-1` | $10/$50, invitation-only access (Project Glasswing) |
 | OpenAI | Apex | `gpt-6-astra` | $10/$50, effort `low`..`max` (`none` returns 400). Tools require Responses |
 | OpenAI | Flagship | `gpt-6.1-sol` | Released 2026-09-29; $2/$10, 1,050,000 ctx, 128K output. Above 272K input, full request costs 2x input/cache and 1.5x output. Effort `low`..`max`, default `medium`; no `none`/`minimal`. Tools require Responses |
@@ -74,6 +75,27 @@ and [thinking docs](https://platform.claude.com/docs/en/build-with-claude/thinki
   Re-run effort and task-cost baselines; levels are recalibrated, not equivalent to Sonnet 5.
 - Computer use on the Claude API and Google Cloud requires `computer_toolset_20260801`, not
   `computer_20251124`. Advisor pairings also change; check the migration guide before adopting.
+
+Haiku 4.5 to Haiku 5.5, checked 2026-10-08 against
+[what's new in Haiku 5.5](https://platform.claude.com/docs/en/models/haiku-5-5/whats-new-haiku-5-5):
+
+- `budget_tokens`, non-default `temperature`/`top_p`/`top_k`, and assistant prefill now return
+  errors. Use effort and adaptive thinking; end `messages` with a user turn.
+- Thinking is on by default and counts toward `max_tokens`, so small limits can stop after a
+  `thinking` block. Select blocks by `type`. `thinking: {type: "disabled"}` works only at
+  `high` effort or below; `xhigh`/`max` return 400.
+- The newer tokenizer counts about 30% more tokens for the same text than Haiku 4.5. Recount
+  prompts, `max_tokens`, and cost estimates before comparing prices.
+- Handle `stop_reason: "refusal"`; there is no server-side fallback. Computer use needs
+  `computer_toolset_20260801` instead of `computer_20250124`.
+- At `low` effort it skips searches, stops early in long agent prompts, and skips verification
+  more often. Pass the current date for search tasks. If a task needs `xhigh`/`max`, compare
+  cost and quality against Sonnet 5.5 at lower effort
+  ([prompting guide](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/prompting-claude-haiku-5-5)).
+- In Claude Code, the `haiku` alias resolves to Haiku 5.5 only on the Anthropic API. Bedrock,
+  Google Cloud, Microsoft Foundry, and Claude Platform on AWS still resolve it to Haiku 4.5
+  ([model config](https://code.claude.com/docs/en/model-config)). Check that provider's Haiku 5.5
+  availability and pin its model ID explicitly instead of relying on the alias.
 
 DeepSeek thinking mode ignores `temperature`; with `tools`, pass `reasoning_content` back on
 every later request ([thinking mode](https://api-docs.deepseek.com/guides/thinking_mode)).

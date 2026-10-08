@@ -93,8 +93,8 @@ def check_classifier() -> None:
         result = namespace["classify_content"]("test text")
         assert result.value == expected, (stop, expected, result)
         request = calls[0]
-        assert request["model"] == "claude-sonnet-5-5"
-        assert request["thinking"] == {"type": "between_tools"}
+        assert request["model"] == "claude-haiku-5-5"
+        assert request["thinking"] == {"type": "disabled"}
         assert request["output_config"]["effort"] == "low"
 
 
