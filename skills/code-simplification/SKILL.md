@@ -75,7 +75,7 @@ Use `references/output-contract.md`.
 ## Rules
 
 - Do not edit source, write tests, or present a recommendation as an authorized change.
-- Test bloat is a reducible finding. Look for near-duplicate tests that should be one parametrized test, tests of glue, getters, or config, tests that restate the implementation, over-mocked tests that pass while real code is broken, and tests with weak or no assertions. Report each like any other finding: a safe reduction with the same evidence rules, the suggested merge or removal, and the behavior that stays covered. Never propose adding tests as a simplification.
+- Test bloat is a reducible finding. Look for near-duplicate tests that should be one parametrized test, tests of glue, getters, or config, tests that restate the implementation, over-mocked tests that pass while real code is broken, and tests with weak or no assertions. Report each like any other finding: a safe reduction with the same evidence rules, the suggested merge, removal, or stronger assertion (when the test is the only coverage of a behavior), and the behavior that stays covered. Keep adapter, logging, and contract tests when call shape is the contract. Never propose adding tests as a simplification; validation for a `Do with tests` reduction is not one.
 - Do not flag security controls, validation at external boundaries, intentional compatibility layers, cleanup in `finally`, retries, logging/metrics/tracing, feature flags, or policy boundaries merely because they add code.
 - Do not call a symbol unused from a static search alone. Treat generated output as owned by its generator or schema.
 - Keep distinct DTOs across trust, lifecycle, persistence, queue/event, and response boundaries unless a shared validated contract is explicit.

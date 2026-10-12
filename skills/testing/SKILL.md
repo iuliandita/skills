@@ -207,7 +207,7 @@ fakeNow.mockReturnValue(START + 1001);
 expect(isExpired(START, 1000, fakeNow)).toBe(true);
 ```
 
-For cached fetches, cover the two observable paths separately:
+For cached fetches, cover the observable paths (one parametrized or sequential test when they share setup):
 - Cache miss: the HTTP boundary is called once and the returned value is cached.
 - Cache hit: the cached value is returned and the HTTP boundary is not called.
 - TTL expiry: advance an injected or fake clock, then assert one refresh instead of sleeping.
@@ -338,7 +338,6 @@ Keep these as CI gate guidance for projects that already set coverage gates; oth
 |--------|-----------|-----|
 | Line coverage | 80% | Catches obvious gaps |
 | Branch coverage | 70% | Catches untested conditions |
-| New code coverage | 90% | Prevents coverage erosion |
 
 A threshold is a CI gate, not a goal: never add a test just to move the number. Enforce via `vitest --coverage --coverage.thresholds.lines=80`, `pytest --cov --cov-fail-under=80`, or `go test -coverprofile` + threshold script.
 
@@ -385,6 +384,5 @@ isolated state, flake diagnosis, reviewed snapshots). This adds:
 
 - **Don't test the framework.** Testing that React renders a div, or that Express routes to a
   handler, is testing someone else's code. Test YOUR logic.
-- **Test bloat.** Many near-duplicate tests of one behavior (parametrize instead), tests that
-  restate the implementation, and over-mocked tests that pass while the real code is broken.
-  More tests are not more safety; each test must fail when a behavior it names breaks.
+- **Test bloat.** Near-duplicate tests of one behavior, tests that restate the implementation,
+  and over-mocked tests. See Proportionality.

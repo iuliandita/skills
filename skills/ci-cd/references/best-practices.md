@@ -412,7 +412,7 @@ not what's tested. Reasonable patterns:
   A guard rail against erosion, not a reason to add tests.
 - **Per-PR coverage floor**: changed lines in the PR must hit some threshold
   (`codecov` / `coverallsapp` support this as "patch coverage"). Keeps new code from
-  shipping unexercised without re-testing legacy; never pad tests to hit it.
+  shipping unexercised without re-testing legacy; exempt glue and config-only changes, and never pad tests to hit it.
 - **No overall threshold on untested legacy code**. Don't demand 80% coverage on a
   codebase that has 15% - you'll get tests written to cover lines, not behavior.
 

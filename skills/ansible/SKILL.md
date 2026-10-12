@@ -296,7 +296,7 @@ Read `references/roles-and-collections.md` for detailed role anatomy, collection
 - Put user-tunable values in `defaults/main.yml`, not `vars/main.yml`.
 - Use FQCNs everywhere.
 - Prefix role variables to avoid collisions.
-- Treat Molecule idempotence checks as mandatory, not optional polish.
+- Treat Molecule idempotence checks as mandatory for roles that have a scenario, not optional polish.
 
 ---
 

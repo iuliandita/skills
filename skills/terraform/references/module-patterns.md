@@ -263,6 +263,6 @@ Terraform modules fetched from registries have **no cryptographic hash verificat
 - **Wrapper modules**: a module that wraps a single resource and just passes through variables. Use the resource directly.
 - **God modules**: a "platform" module that creates VPC + ECS + RDS + ALB + everything. Split by resource type and lifecycle.
 - **Variable sprawl**: module has 40 variables, most with defaults nobody changes. Provide opinionated defaults, expose only what varies.
-- **No tests**: modules without `terraform test` or Terratest. Untested modules are untrustworthy modules.
+- **No tests for logic**: conditionals, validation rules, or derived values with no `terraform test` or Terratest coverage. A thin wrapper with none of these needs none.
 - **Using `count` for on/off**: `count = var.enabled ? 1 : 0` forces index-based references (`module.foo[0].id`). OpenTofu has `enabled` meta-argument. In Terraform, use `for_each` with a set: `for_each = var.create ? toset(["this"]) : toset([])`.
 - **Not committing the lock file**: `.terraform.lock.hcl` is your provider supply chain protection. Commit it.
