@@ -158,6 +158,8 @@ run "validates_tags" {
 }
 ```
 
+Assert what the module computes or enforces (conditionals, validation rules, derived values). Asserting that an input lands in a resource attribute only tests the provider; the runs above show syntax, not what to cover.
+
 Run with: `terraform test` (or `terraform test -parallelism=4` for speed)
 
 ### Mocking (TF 1.7+ / OT 1.8+)

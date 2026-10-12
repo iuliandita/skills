@@ -40,7 +40,7 @@ raise the 4.x floor to 4.1.10 and the 3.x floor to 3.2.7; stable 5.0.x is not af
 - Designing test architecture for a project (fixture strategies, factory patterns, test data)
 - Setting up test infrastructure in CI (parallelization, sharding, coverage gates)
 - Choosing testing tools or migrating between test frameworks
-- Implementing TDD workflow
+- Choosing the smallest test set that protects a change
 - Adding accessibility or visual regression tests to an existing suite
 
 ## When NOT to use
@@ -60,12 +60,25 @@ raise the 4.x floor to 4.1.10 and the 3.x floor to 3.2.7; stable 5.0.x is not af
 
 ---
 
+## Proportionality
+
+Size the suite to the change. This overrides any urge to test every function or to chase a count.
+
+- One test per behavior, plus the realistic failure modes (bad input, boundary, error path). Distinct inputs of one behavior are one parametrized test.
+- Skip tests for glue, wiring, config, getters, and behavior the framework or type system already guarantees.
+- Past ~5 new tests, or when the tests are longer than the code under test, state why each earns its place or cut.
+- Bug fix: one regression test that fails before the fix. Not a suite.
+- Prefer the fewest tests that would fail if the behavior broke.
+
+---
+
 ## AI Self-Check
 
 AI tools consistently produce the same testing mistakes. **Before returning any generated test code, verify against this list:**
 
 - [ ] Tests assert behavior, not implementation - no testing private methods or internal state
-- [ ] Each test has exactly one reason to fail (single assertion concept, not single `assert` call)
+- [ ] Each test has exactly one reason to fail (single assertion concept, not single `assert` call); distinct inputs of the same behavior go in one parametrized test, not separate tests
+- [ ] Test count is proportional to the change (see Proportionality); no near-duplicates, no tests of glue or framework behavior
 - [ ] Test names describe the scenario and expected outcome, not the method name
 - [ ] Mocks/stubs are scoped to the test - no shared mutable mock state across tests
 - [ ] No hardcoded ports, paths, or timestamps that break on other machines or in CI
@@ -73,7 +86,7 @@ AI tools consistently produce the same testing mistakes. **Before returning any 
 - [ ] Test data is isolated - each test creates its own state, no dependency on test execution order
 - [ ] Cleanup happens even when assertions fail (use `afterEach`/`teardown`/`t.Cleanup`/`Drop`)
 - [ ] No `sleep()` or fixed delays for async waits - use polling, retries, or event-based waits
-- [ ] Coverage threshold is realistic (80% line coverage is a good default; 100% is a lie)
+- [ ] Coverage threshold is realistic (80% line coverage is a good default; 100% is a lie), and coverage was not the reason any test was added
 - [ ] Snapshot tests have been reviewed manually before committing (blind `--update` is a bug factory)
 - [ ] E2E selectors use role or accessible name first, `data-testid` as a last resort - not CSS classes or DOM structure
 - [ ] **Runner APIs current**: pytest, Vitest, Jest, Playwright, and Testing Library examples match current runner behavior
@@ -101,8 +114,8 @@ Copy this checklist and track progress:
 ### Step 1: Determine scope
 
 Based on context:
-- **New feature** -> write tests alongside or before the code (TDD when appropriate)
-- **Bug fix** -> write a failing test first that reproduces the bug, then fix
+- **New feature** -> test the behaviors that matter, alongside or after the code; not every function
+- **Bug fix** -> write one failing test first that reproduces the bug, then fix
 - **Existing untested code** -> prioritize critical paths, not 100% coverage
 - **Test infrastructure** -> set up runners, CI config, coverage gates
 
@@ -115,11 +128,11 @@ Identify the project's existing test framework from config files (`vitest.config
 | **Unit** | Single function/module in isolation | ms | Pure logic, utilities, data transforms, state machines |
 | **Integration** | Multiple modules, real dependencies | seconds | API handlers, database queries, service boundaries |
 | **E2E** | Full user flows through the UI | seconds-minutes | Critical paths, checkout flows, auth, onboarding |
-| **Accessibility** | WCAG compliance, screen reader compat | seconds | Every user-facing component/page |
+| **Accessibility** | WCAG compliance, screen reader compat | seconds | User-facing components/pages the change touches |
 | **Visual** | Screenshot comparison | seconds | UI components after style changes |
 | **Performance** | Load, latency, throughput | minutes | Before releases, after arch changes |
 
-**The testing pyramid still holds**: many unit tests, fewer integration tests, fewest E2E tests. Invert it and your CI takes 45 minutes and everyone ignores test failures.
+**The pyramid is about where a test sits, not a quota.** Push each check to the cheapest layer that would still catch the failure; do not write tests to fill the layers. Invert it (slow E2E checks for logic a unit test covers) and CI takes 45 minutes and everyone ignores failures. Prefer the fewest tests that would fail if the behavior broke.
 
 ### Step 3: Write the test
 
@@ -146,14 +159,14 @@ Follow the language-specific patterns below. Universal principles:
   mirror reversible, low-impact edits. Repeat or broaden passing checks only for new changes,
   failures, or unresolved concerns.
 - If a new test fails for a reason other than the behavior under test, fix the test or fixture and return to Step 3
-- Check coverage delta: new code should be covered, but don't chase vanity numbers
+- Check coverage delta as a signal for missed behavior, not a target: new code is not a reason to chase a number, and coverage is never a reason to add a test
 - Run in CI if possible - tests that pass locally but fail in CI are the worst kind
 
 ---
 
 ## TDD Workflow
 
-Use TDD when the behavior is well-defined upfront. Skip it when exploring or prototyping.
+Optional. Use red-green for bug fixes and non-trivial logic where the behavior is well-defined upfront. It does not mean no code without a test or a test for every function. Skip it when exploring or prototyping.
 
 1. **Red**: write a test that fails (confirm it fails for the right reason)
 2. **Green**: write the minimum code to make the test pass (ugly is fine)
@@ -234,7 +247,7 @@ def build_user(**overrides) -> User:
 
 Catch WCAG violations automatically. Not a replacement for manual testing, but catches the mechanical stuff (missing alt text, broken ARIA, contrast ratios, keyboard traps).
 
-Use `@axe-core/playwright` (if missing, add it as a dev dependency with the repo's package manager: `npm install -D`, `pnpm add -D`, `yarn add -D`, or `bun add -d` `@axe-core/playwright`) - run `new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa"]).analyze()` and assert zero violations. Run axe scans on every page/component. Exclude known issues with `.exclude()` and track them as tech debt, not permanent exceptions.
+Use `@axe-core/playwright` (if missing, add it as a dev dependency with the repo's package manager: `npm install -D`, `pnpm add -D`, `yarn add -D`, or `bun add -d` `@axe-core/playwright`) - run `new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa"]).analyze()` and assert zero violations. Scope axe scans to the pages or components the change touches, not the whole app on every change. Exclude known issues with `.exclude()` and track them as tech debt, not permanent exceptions.
 
 Own repeatable accessibility regression checks here; use **frontend-design** to repair interaction design and semantics. Record manual keyboard and screen-reader coverage separately from automated scan results.
 
@@ -319,7 +332,7 @@ Flaky tests erode trust. Fix or quarantine immediately.
 
 ### Coverage thresholds
 
-Set coverage gates in CI. Reasonable defaults:
+Keep these as CI gate guidance for projects that already set coverage gates; otherwise do not introduce one for a small change. Reasonable defaults:
 
 | Metric | Threshold | Why |
 |--------|-----------|-----|
@@ -327,7 +340,7 @@ Set coverage gates in CI. Reasonable defaults:
 | Branch coverage | 70% | Catches untested conditions |
 | New code coverage | 90% | Prevents coverage erosion |
 
-Enforce via `vitest --coverage --coverage.thresholds.lines=80`, `pytest --cov --cov-fail-under=80`, or `go test -coverprofile` + threshold script.
+A threshold is a CI gate, not a goal: never add a test just to move the number. Enforce via `vitest --coverage --coverage.thresholds.lines=80`, `pytest --cov --cov-fail-under=80`, or `go test -coverprofile` + threshold script.
 
 **Minimal CI example (pytest + GitHub Actions)**:
 ```yaml
@@ -372,3 +385,6 @@ isolated state, flake diagnosis, reviewed snapshots). This adds:
 
 - **Don't test the framework.** Testing that React renders a div, or that Express routes to a
   handler, is testing someone else's code. Test YOUR logic.
+- **Test bloat.** Many near-duplicate tests of one behavior (parametrize instead), tests that
+  restate the implementation, and over-mocked tests that pass while the real code is broken.
+  More tests are not more safety; each test must fail when a behavior it names breaks.

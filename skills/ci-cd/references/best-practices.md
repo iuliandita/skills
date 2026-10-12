@@ -409,10 +409,10 @@ See [GitHub's required-check guidance](https://docs.github.com/en/pull-requests/
 not what's tested. Reasonable patterns:
 
 - **No regression below baseline**: block if coverage drops more than 0.5% from main.
-  Rewards adding tests without demanding perfection.
+  A guard rail against erosion, not a reason to add tests.
 - **Per-PR coverage floor**: changed lines in the PR must hit some threshold
-  (`codecov` / `coverallsapp` support this as "patch coverage"). Forces new code to be
-  tested without re-testing legacy.
+  (`codecov` / `coverallsapp` support this as "patch coverage"). Keeps new code from
+  shipping unexercised without re-testing legacy; never pad tests to hit it.
 - **No overall threshold on untested legacy code**. Don't demand 80% coverage on a
   codebase that has 15% - you'll get tests written to cover lines, not behavior.
 

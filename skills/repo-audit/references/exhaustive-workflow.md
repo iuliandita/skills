@@ -234,7 +234,7 @@ Scope: {scope}. Return the complete report.
 
 | Skill | Override |
 |-------|---------|
-| `testing` | Audit test quality, coverage gaps, flaky test patterns, and missing test scenarios. Do not write new tests - report only. |
+| `testing` | Audit test quality, coverage gaps, flaky test patterns, missing test scenarios, and test bloat (near-duplicates, glue tests, over-mocking). Do not write new tests - report only. |
 | `shell-scripting` | Audit shell scripts, dotfile config, and .env patterns for correctness, portability, and security. |
 | `frontend-design` | Audit frontend UI/UX implementation, visual hierarchy, accessibility, responsive behavior, framework drift, and AI design tells. Do not redesign or edit - report only. |
 | `i18n-localization` | Audit i18n completeness. Find hardcoded user-facing strings, validate locale catalogs, check for missing translations. |

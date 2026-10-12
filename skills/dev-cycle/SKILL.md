@@ -235,7 +235,8 @@ If the branch has no commits or the diff is empty, stop - there's nothing to shi
 
 Use the **testing** skill to run checks appropriate to the changed behavior and every required
 repository gate. Delegate only when the check workload benefits from a separate worker.
-Do not add tests that merely mirror a reversible, low-impact edit. After checks pass, expand
+Do not add tests that merely mirror a reversible, low-impact edit; keep new tests proportional
+to the change. After checks pass, expand
 or repeat them only for new changes, failures, or unresolved concerns.
 
 If the testing skill isn't installed, detect the toolchain. Check in order - first match wins. If no language manifest matches, **continue** to task runners and custom scripts; don't give up:
