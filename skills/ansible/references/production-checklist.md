@@ -23,7 +23,7 @@ Run before finishing any playbook, role, operations, or compliance task (Workflo
 - [ ] All variables prefixed with role name (`nginx_port`, not `port`)
 - [ ] `defaults/main.yml` for all user-configurable values
 - [ ] `meta/main.yml` with dependencies, platforms, and minimum ansible version
-- [ ] Molecule test scenario with converge + idempotence + verify
+- [ ] Molecule test scenario with converge + idempotence + verify (shared or non-trivial roles)
 - [ ] README with usage examples and variable documentation
 - [ ] No hardcoded values in `tasks/` (everything parameterized)
 - [ ] `handlers/main.yml` for service restarts (not inline restarts in tasks)

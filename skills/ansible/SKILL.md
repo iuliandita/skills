@@ -296,7 +296,7 @@ Read `references/roles-and-collections.md` for detailed role anatomy, collection
 - Put user-tunable values in `defaults/main.yml`, not `vars/main.yml`.
 - Use FQCNs everywhere.
 - Prefix role variables to avoid collisions.
-- Treat Molecule idempotence checks as mandatory, not optional polish.
+- Treat Molecule idempotence checks as mandatory for roles that have a scenario, not optional polish.
 
 ---
 
@@ -429,7 +429,7 @@ These are non-negotiable. Violating any of these is a bug.
 1. **Idempotent by default.** Every task must be safe to run multiple times. `command`/`shell` tasks need `creates`/`removes` or `changed_when`.
 2. **`no_log: true` on secrets.** Every task handling passwords, tokens, API keys, or sensitive data. CVE-2024-8775 proved the cost of forgetting this.
 3. **Vault for secrets.** Not plaintext in `group_vars`, not `ansible_ssh_pass` in inventory, not environment variables in playbooks.
-4. **Test with Molecule.** Every role gets a Molecule scenario with converge + idempotence check + verification.
+4. **Test with Molecule.** Shared or non-trivial roles get a Molecule scenario with converge + idempotence check + verification of the role's observable outcome, not of every task.
 5. **Pin collection versions.** In `requirements.yml` and EE definitions. Unpinned collections are a supply chain risk.
 6. **`ansible-lint` clean.** Production profile. In CI. On every change.
 7. **Separate inventory per environment.** Production, staging, dev. Never a single inventory with `--limit` for environment selection.
