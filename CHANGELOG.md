@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.6.2](https://github.com/iuliandita/skills/compare/v2.6.1...v2.6.2) (2026-10-12)
+
+### Bug Fixes
+
+* **testing:** keep suites proportional to the change: the testing skill now sizes tests to the change (one per behavior, parametrized variants, none for glue, config, or framework-guaranteed behavior), treats coverage gates as guidance rather than a reason to add tests, and makes TDD optional; code-simplification reports test bloat as a safe reduction without proposing new tests; dev-cycle, ci-cd, ansible, terraform, and repo-audit wording follows ([#281](https://github.com/iuliandita/skills/pull/281), [#280](https://github.com/iuliandita/skills/issues/280)).
+
 ## [2.6.1](https://github.com/iuliandita/skills/compare/v2.6.0...v2.6.1) (2026-10-09)
 
 ### Bug Fixes
