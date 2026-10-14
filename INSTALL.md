@@ -654,3 +654,9 @@ while any of them is behind. Quality Gates also runs weekly on a schedule.
 ## Requirements
 
 Any AI coding tool that supports the [Agent Skills standard](https://agentskills.io). See [Supported targets](#supported-targets) for installer path targets. Treat new or less common agents as path-supported until you verify that the tool activates and applies the skills as expected.
+
+## Contributions and documentation
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for source/generated boundaries, required checks,
+docs-impact exclusions and compatibility evidence, and the [documentation index](docs/README.md)
+for authoring and version receipts. Report security problems through [SECURITY.md](SECURITY.md).

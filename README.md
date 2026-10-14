@@ -103,3 +103,12 @@ New skills must also be registered in the repository-audit coverage check or its
 ## License
 
 [MIT](LICENSE)
+
+## Project and support
+
+Made by [iuliandita](https://iuliandita.com). [Other projects](https://iuliandita.com/projects/).
+
+See [installation and recovery](INSTALL.md), [contributing](CONTRIBUTING.md),
+[documentation](docs/README.md), and [private security reporting](SECURITY.md).
+
+[agents](https://github.com/iuliandita/agents) provides global prompts and role definitions; [mods](https://github.com/iuliandita/mods) provides Claude Code hooks. Installing one collection does not install the others.

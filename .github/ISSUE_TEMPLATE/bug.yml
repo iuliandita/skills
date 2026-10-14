@@ -1,0 +1,36 @@
+name: Bug report
+description: Report a reproducible collection problem.
+body:
+  - type: markdown
+    attributes:
+      value: "For suspected vulnerabilities, use SECURITY.md and private security reporting. Redact secrets and private paths."
+  - type: input
+    id: version
+    attributes:
+      label: Collection version or commit
+    validations:
+      required: true
+  - type: input
+    id: tools
+    attributes:
+      label: Tool or harness, versions, OS and surface
+    validations:
+      required: true
+  - type: input
+    id: install
+    attributes:
+      label: Install mode, destination scope and affected component
+      description: Copy, symlink, marketplace or clone; user, project or local scope as applicable.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction, expected behavior and actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Redacted logs and check results
+      description: Remove credentials, private hosts and personal file paths.
