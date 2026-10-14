@@ -31,6 +31,30 @@ jobs:
             exit 1
           fi
 
+      - name: Check cumulative release documentation impact
+        run: |
+          previous=""
+          if git rev-parse --verify --quiet "${GITHUB_SHA}^" >/dev/null; then
+            # Strict version tags only; unrelated histories and this commit's tags are excluded.
+            tags="$(git tag --merged "${GITHUB_SHA}^" --sort=-version:refname)"
+            mapfile -t candidates < <(
+              printf '%s\n' "$tags" | awk '/^v[0-9]+\.[0-9]+\.[0-9]+$/'
+            )
+            previous="${candidates[0]:-}"
+          fi
+          if [ -z "$previous" ]; then
+            mapfile -t roots < <(git rev-list --max-parents=0 "$GITHUB_SHA")
+            if [ "${#roots[@]}" -ne 1 ]; then
+              echo "::error::First release requires one history root for the initial-state baseline"
+              exit 1
+            fi
+            previous="${roots[0]}"
+            echo "No previous version tag; checking all changes since initial-state commit $previous"
+          else
+            echo "Checking cumulative documentation impact since $previous"
+          fi
+          ./scripts/check-docs-impact.sh --release "$previous"
+
       - name: Extract release notes from CHANGELOG.md
         env:
           TAG: ${{ github.ref_name }}

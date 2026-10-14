@@ -640,10 +640,23 @@ Release steps (start with a clean checkout and update `main` with `git pull --ff
 4. Review the merged changelog section against the commits since `vPREV`.
 5. Tag the verified commit with `git tag -a vX.Y.Z -m "vX.Y.Z"`, then push only that tag with
    `git push origin vX.Y.Z`.
-6. The tag push runs `.github/workflows/release.yml`, which checks that the tag is on `main`
-   and publishes the GitHub release from the `CHANGELOG.md` section. Follow it with
+6. The tag push runs `.github/workflows/release.yml`, which checks that the tag is on `main`,
+   checks cumulative documentation impact, and publishes the GitHub release from the
+   `CHANGELOG.md` section. Follow it with
    `gh run watch <run-id> --exit-status` and confirm the release with `gh release view vX.Y.Z`.
    It fails when the changelog has no section for the version.
+
+The release documentation gate uses the highest strict `vX.Y.Z` version tag reachable from the
+release commit's parent. Tags on the current commit and unrelated branches are excluded; full
+history and tags are fetched by checkout. The check covers that baseline through the tagged
+commit, so a later version/changelog commit cannot hide an earlier skill or tool removal.
+When there is no prior version tag, the unique root commit is the explicit initial-state baseline:
+all subsequent history is checked, and histories with multiple roots fail rather than skipping.
+A single-commit first release has no changes beyond that initial state. For a manual first-release
+check, pass that root commit to `./scripts/check-docs-impact.sh --release <root-commit>`.
+The existing R1/R2 migration and target-path obligations remain blocking; R3/R4 documentation
+obligations remain warnings in release mode. This gate checks obligations, not prose quality,
+activation, or the completeness of release notes. Review those before tagging.
 
 Dependabot proposes weekly updates for the pinned workflow actions and for the semgrep and
 markdownlint-cli2 manifests under `.github/tools/`, after a 7-day cooldown. The
