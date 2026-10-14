@@ -1,0 +1,16 @@
+name: Feature request
+description: Describe a concrete collection need.
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem and affected workflow
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior and compatibility impact
+      description: Include affected tools, versions, surfaces and install scope.
+    validations:
+      required: true

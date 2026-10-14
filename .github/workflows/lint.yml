@@ -13,6 +13,9 @@ on:
       - "migrations.json"
       - "README.md"
       - "SECURITY.md"
+      - "CONTRIBUTING.md"
+      - ".github/ISSUE_TEMPLATE/**"
+      - ".github/pull_request_template.md"
       - "docs/**"
       - ".pre-commit-config.yaml"
       - ".markdownlint-cli2.jsonc"
@@ -30,6 +33,9 @@ on:
       - "migrations.json"
       - "README.md"
       - "SECURITY.md"
+      - "CONTRIBUTING.md"
+      - ".github/ISSUE_TEMPLATE/**"
+      - ".github/pull_request_template.md"
       - "docs/**"
       - ".pre-commit-config.yaml"
       - ".markdownlint-cli2.jsonc"
@@ -44,12 +50,18 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: quality-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   collection:
     runs-on: ubuntu-24.04
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          persist-credentials: false
           fetch-depth: 0
 
       - name: Check protected overlay guardrail
@@ -114,8 +126,11 @@ jobs:
 
   shell-and-python:
     runs-on: ubuntu-24.04
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Check shell syntax
         run: |
@@ -164,8 +179,11 @@ jobs:
 
   markdown:
     runs-on: ubuntu-24.04
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Install markdownlint-cli2
         run: |
@@ -179,8 +197,11 @@ jobs:
 
   links:
     runs-on: ubuntu-24.04
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Install lychee
         env:
@@ -197,7 +218,7 @@ jobs:
         run: |
           mapfile -t markdown_files < <(
             {
-              printf '%s\n' README.md SECURITY.md
+              printf '%s\n' README.md SECURITY.md CONTRIBUTING.md
               printf '%s\n' CHANGELOG.md INSTALL.md MIGRATION.md
               find skills docs -type f -name '*.md' 2>/dev/null
             } | sort -u
@@ -206,8 +227,11 @@ jobs:
 
   workflow:
     runs-on: ubuntu-24.04
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Install actionlint
         env:
@@ -225,9 +249,11 @@ jobs:
 
   security:
     runs-on: ubuntu-24.04
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          persist-credentials: false
           fetch-depth: 0
 
       - name: Install gitleaks

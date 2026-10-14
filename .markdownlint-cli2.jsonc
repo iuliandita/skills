@@ -17,6 +17,7 @@
     "MIGRATION.md",
     "README.md",
     "SECURITY.md",
+    "CONTRIBUTING.md",
     "skills/**/*.md",
     "docs/**/*.md"
   ]
