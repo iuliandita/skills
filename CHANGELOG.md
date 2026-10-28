@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.1](https://github.com/iuliandita/skills/compare/v2.7.0...v2.7.1) (2026-10-28)
+
+### Bug Fixes
+
+* **install:** a fifth backup taken in the same second no longer reuses a pruned counter and prunes itself ([#357](https://github.com/iuliandita/skills/pull/357), [#308](https://github.com/iuliandita/skills/issues/308)).
+
+### Performance
+
+* lint, contract checks and the installer start far fewer subprocesses: `lint-skills.sh` 20.5 s to 10.9 s, `install.sh --check` 1.41 s to 0.27 s, with identical output ([#357](https://github.com/iuliandita/skills/pull/357), [#308](https://github.com/iuliandita/skills/issues/308)).
+
 ## [2.7.0](https://github.com/iuliandita/skills/compare/v2.6.4...v2.7.0) (2026-10-28)
 
 ### Features
