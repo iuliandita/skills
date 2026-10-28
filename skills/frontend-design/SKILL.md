@@ -23,7 +23,7 @@ preserve the user's brand and the existing application's conventions.
 - SvelteKit 3.0.0 + Svelte 5.57.1 runes (SvelteKit 3 is a major released 2026-10-01: TypeScript 6+, Node 22.17+; review migration notes)
 - Tailwind CSS v4.3.3
 - Vite 8.3.2
-- React 19.3.0 + Next.js 16.3.8 (heavier option, only when team is React-locked)
+- React 19.3.0 + Next.js 16.4.3 (heavier option, only when team is React-locked)
 - @use-gesture/react 10.3.1 (modern; Hammer.js considered legacy)
 
 The [August 2026 Next.js security release](https://nextjs.org/blog/august-2026-security-release)
@@ -33,8 +33,11 @@ fixes a critical Node.js `ImageResponse` (`next/og`) RCE (GHSA-vcvr-r3jv-pc5j) a
 `>=16.2.0 <16.3.6`; the floor is 16.3.6 (15.5.26 adds hardening only; 15.x is not affected).
 The [September 30 security release](https://github.com/vercel/next.js/releases/tag/v16.3.8) fixes
 high-severity Image Optimization SSRF (CVE-2026-94483) plus medium cache-poisoning and cache-leak
-advisories; the floors are 16.3.8 and 15.5.27.
-Check each advisory's deployment conditions when assessing an existing app (checked 2026-10-02).
+advisories (floors 16.3.8 / 15.5.27). The [October 14 security release](https://github.com/vercel/next.js/releases/tag/v16.4.1)
+fixes critical unauthenticated RCEs in SVG Image Optimization (GHSA-2464-fhr4-w9xw, 15.x and 16.x)
+and `use cache` typed arrays (GHSA-673q-mjm6-r5xr, 16.x only) plus high Server Actions DoS
+(GHSA-p3m5-59mp-jv5r); the floors are now 16.4.1 and 15.5.28.
+Check each advisory's deployment conditions when assessing an existing app (checked 2026-10-28).
 
 The version list is a reference for new-project selection, not an upgrade instruction.
 Inspect installed packages and follow the project's stack. Verify current documentation when
