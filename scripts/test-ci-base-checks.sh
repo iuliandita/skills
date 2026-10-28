@@ -133,7 +133,7 @@ test_full_clone_stays_full_and_guard_passes() {
 }
 
 test_phase1_commit_touching_immutable_path_fails() {
-  local tmp clone status output
+  local target="$1" tmp clone status output
   tmp="$(mktemp -d)"
   trap 'rm -rf "$tmp"' RETURN
 
@@ -141,15 +141,44 @@ test_phase1_commit_touching_immutable_path_fails() {
   clone="$(clone_fixture "$tmp")"
   checkout_merge_ref "$clone"
 
-  write_file "$clone/skills/skill-refiner/SKILL.md" "phase-1 iteration touching the immutable set"
-  git_q "$clone" add -A
+  write_file "$clone/$target" "phase-1 iteration touching the immutable set"
+  git_q "$clone" add -A "$target"
   git_q "$clone" commit -q -m "refactor(skill-refiner): iteration 1"
 
   status=0
   output="$(cd "$clone" && BASE_REF=main bash scripts/check-refiner-phase1-guard.sh 2>&1)" || status=$?
-  (( status != 0 )) || { printf '%s\n' "$output" >&2; fail "guard passed despite a phase-1 commit touching skills/skill-refiner"; }
-  [[ "$output" == *"skills/skill-refiner/SKILL.md"* ]] \
-    || { printf '%s\n' "$output" >&2; fail "guard did not name the offending file"; }
+  (( status != 0 )) || { printf '%s\n' "$output" >&2; fail "guard passed despite a phase-1 commit touching $target"; }
+  [[ "$output" == *"$target"* ]] \
+    || { printf '%s\n' "$output" >&2; fail "guard did not name the offending file $target"; }
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+# A branch commit that drops an entry from the guard's list must not let a
+# later phase-1 commit edit that path: the base revision's list still applies.
+test_guard_list_shrink_uses_base_list() {
+  local tmp clone status output guard="scripts/check-refiner-phase1-guard.sh"
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  build_base_repo "$tmp"
+  clone="$(clone_fixture "$tmp")"
+  git_q "$clone" add "$guard"
+  git_q "$clone" commit -q -m "chore: track the guard"
+  git_q "$clone" checkout -qb shrink
+
+  sed -i '/^  "scripts\/lint-skills.sh"$/d' "$clone/$guard"
+  git_q "$clone" commit -qam "chore: relax the guard"
+  write_file "$clone/scripts/lint-skills.sh" "weakened lint"
+  git_q "$clone" add scripts/lint-skills.sh
+  git_q "$clone" commit -q -m "refactor(skill-refiner): iteration 1"
+
+  status=0
+  output="$(cd "$clone" && BASE_REF=main bash "$guard" 2>&1)" || status=$?
+  (( status != 0 )) || { printf '%s\n' "$output" >&2; fail "guard passed after its list was shrunk on the branch"; }
+  [[ "$output" == *"scripts/lint-skills.sh"* ]] \
+    || { printf '%s\n' "$output" >&2; fail "guard did not name scripts/lint-skills.sh"; }
 
   rm -rf "$tmp"
   trap - RETURN
@@ -219,8 +248,10 @@ test_docs_impact_unrelated_history_fails_loudly() {
 }
 
 test_full_clone_stays_full_and_guard_passes
-test_phase1_commit_touching_immutable_path_fails
+test_phase1_commit_touching_immutable_path_fails skills/skill-refiner/SKILL.md
+test_phase1_commit_touching_immutable_path_fails scripts/skill-lib.sh
+test_guard_list_shrink_uses_base_list
 test_unrelated_history_base_fails_loudly
 test_docs_impact_passes_on_merge_ref
 test_docs_impact_unrelated_history_fails_loudly
-printf 'CI base check tests passed (5 cases)\n'
+printf 'CI base check tests passed (7 cases)\n'
