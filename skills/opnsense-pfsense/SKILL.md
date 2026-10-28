@@ -107,7 +107,7 @@ talking to. Key differences at a glance:
 | Quick rule add | N/A | `easyrule pass wan tcp <src> <dst> <port>` |
 | IP blocking | CrowdSec (`os-crowdsec`) | pfBlockerNG |
 | Root shell | `csh` | `tcsh` (same heredoc workaround applies) |
-| IDS/IPS config | `/var/log/suricata/*.log`, eve.json | `/var/log/suricata/suricata.log`, eve.json |
+| IDS/IPS config | `/var/log/suricata/*.log`, eve.json | `/var/log/suricata/suricata_<iface><uuid>/eve.json` (per interface) |
 | Firmware CLI | `configctl firmware check/status` | `pfSense-upgrade` (metadata refresh: `pkg-static update`) + GUI |
 | Template engine | `configd` + `configctl template` | PHP-generated configs |
 | REST API | Yes, built in (`/api/`, key/secret auth) | Unofficial `pfSense-pkg-RESTAPI` package (optional third-party install) |

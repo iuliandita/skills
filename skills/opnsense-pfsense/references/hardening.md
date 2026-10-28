@@ -166,9 +166,10 @@ Without monitoring, you only find out something is broken when users complain.
 - [ ] **Disk usage alerts** - especially `/var` on small-disk devices (eMMC, CF cards).
       Suricata and CrowdSec logs fill disks fast. Monitor with Telegraf disk plugin
       or a cron script checking `df -h /var`
-- [ ] **State table monitoring** - `pfctl -si | grep entries` shows current state count.
-      Alert when approaching `net.pf.states_limit` (FreeBSD default 100000). Full state tables
-      silently drop new connections
+- [ ] **State table monitoring** - `pfctl -si | grep entries` shows the current state count.
+      OPNsense sizes the maximum from about 10% of RAM by default; check or change it under
+      Firewall > Settings > Firewall Maximum States, and alert at a percentage of that value.
+      Full state tables silently drop new connections
 - [ ] **Certificate expiry monitoring** - if using ACME/Let's Encrypt, monitor cert
       expiry dates. A silently-failed renewal is worse than no ACME at all
 - [ ] **CrowdSec bouncer health** - `cscli bouncers list` shows last pull time.
