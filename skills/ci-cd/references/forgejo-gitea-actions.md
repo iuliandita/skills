@@ -62,16 +62,16 @@ Finding the correct SHA for a self-hosted mirror requires different steps than G
 **Find the SHA on your Forgejo instance**:
 ```bash
 # List tags and their SHAs from the Forgejo mirror
-git ls-remote https://forgejo.example.com/actions/checkout.git 'refs/tags/v4*'
+git ls-remote https://forgejo.example.com/actions/checkout.git 'refs/tags/v7*'  # or whatever major your mirror carries
 
 # Or use the Forgejo API to get a tag's commit SHA
-curl -s https://forgejo.example.com/api/v1/repos/actions/checkout/git/refs/tags/v4.2.2 \
+curl -s https://forgejo.example.com/api/v1/repos/actions/checkout/git/refs/tags/v7.0.1 \
   | jq -r '.object.sha'
 ```
 
 **If your instance mirrors from code.forgejo.org** (the default upstream):
 ```bash
-git ls-remote https://code.forgejo.org/actions/checkout.git 'refs/tags/v4*'
+git ls-remote https://code.forgejo.org/actions/checkout.git 'refs/tags/v7*'  # or whatever major your mirror carries
 ```
 
 **Verify a SHA matches what you expect**:
@@ -186,7 +186,7 @@ table and the Forgejo Actions patterns section above) applies, with these differ
 Same pattern as Forgejo: `git ls-remote` against your instance's mirror, or the API:
 
 ```bash
-curl -s https://gitea.example.com/api/v1/repos/actions/checkout/git/refs/tags/v4.2.2 \
+curl -s https://gitea.example.com/api/v1/repos/actions/checkout/git/refs/tags/v7.0.1 \
   | jq -r '.object.sha'
 ```
 

@@ -98,10 +98,10 @@ SHA commits are immutable content-addressed objects. They cannot be redirected.
 
 ```yaml
 # DO NOT
-- uses: actions/checkout@v4
+- uses: actions/checkout@v7
 
 # DO
-- uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+- uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
 ```
 
 ### How (GitLab CI/CD)

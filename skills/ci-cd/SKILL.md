@@ -264,7 +264,7 @@ It reuses the workflow syntax but makes no compatibility guarantees.
 | **`permissions:`** | Controls GITHUB_TOKEN scope | **Not enforced** - token always has full rw (read-only for fork PRs) |
 | **`continue-on-error:`** (job level) | Allows job failure without failing workflow | **Not supported** - step-level only |
 | **Runner images** | Managed `ubuntu-24.04` with 200+ tools | Self-hosted, typically lean Debian/Alpine |
-| **Action resolution** | `actions/checkout@v4` -> github.com | Resolves from Forgejo mirror (configurable) |
+| **Action resolution** | `actions/checkout@v7` -> github.com | Resolves from Forgejo mirror (configurable) |
 | **OIDC** | `permissions: id-token: write` | `enable-openid-connect` key |
 | **Workflow call defaults** | `inputs.<id>.default` populated | **Always empty** |
 | **Matrix + dynamic runs-on** | Supported | Supported since v14.0 |
@@ -307,7 +307,7 @@ for assessment boundaries and primary sources.
 - **`@<sha>`** in GitHub Actions templates is a placeholder. Replace with the real 40-character
   commit SHA for the indicated version. Look up SHAs on the action's releases page or use
   Dependabot to manage them automatically.
-- **Image tags** in templates use floating minor versions (e.g., `oven/bun:1.2`, `docker:27.5`)
+- **Image tags** in templates use floating minor versions (e.g., `oven/bun:1.2`, `docker:29.9`)
   for readability. For production, pin to a specific patch version or SHA256 digest. The templates
   show the minimum acceptable granularity, not the ideal.
 
