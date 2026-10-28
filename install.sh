@@ -244,7 +244,7 @@ cache_source_digest() {
 # changes count (skill_hash misses both). A path that is itself a symlink
 # prints link:<hash of target>; a missing path prints -, an unreadable one !.
 tree_digests() {
-  python3 - "$@" <<'PY'
+  python3 -I - "$@" <<'PY'
 import hashlib
 import os
 import stat
@@ -342,7 +342,7 @@ declare -A MIGRATION_REPLACEMENTS=()
 load_migrations() {
   [[ -f "$MIGRATIONS_FILE" ]] || return 0
   local rows old action replacement
-  if ! rows="$(python3 - "$MIGRATIONS_FILE" <<'PY'
+  if ! rows="$(python3 -I - "$MIGRATIONS_FILE" <<'PY'
 import json
 import re
 import sys
@@ -451,7 +451,7 @@ backup_unverified_lock() {
   local backup_base
   backup_base="$(backup_base_for "$lock_dir")"
 
-  python3 - "$lock_file" "$lock_dir" "$backup_base" <<'PY'
+  python3 -I - "$lock_file" "$lock_dir" "$backup_base" <<'PY'
 from datetime import datetime, timezone
 from pathlib import Path
 import shutil
@@ -483,7 +483,7 @@ ensure_lock_source() {
   local lock_dir="$1"
   local lock_file="$lock_dir/.skills-lock.json"
   [[ -f "$lock_file" ]] || return 0
-  if python3 - "$lock_file" "$SKILLS_SRC" <<'PY'
+  if python3 -I - "$lock_file" "$SKILLS_SRC" <<'PY'
 import json
 from pathlib import Path
 import sys
@@ -550,7 +550,7 @@ write_lock() {
   # Records keep their v1 shape for --check and the migration helper. The v2
   # tree digest lives in `trees`, bound to the record's v1 hash so an entry a
   # v1-only writer left stale stops matching instead of vouching for it.
-  out="$(python3 - "$lock_file" "$SKILLS_SRC" "$now" "${updates[@]}" <<'PY'
+  out="$(python3 -I - "$lock_file" "$SKILLS_SRC" "$now" "${updates[@]}" <<'PY'
 import json
 import os
 import pathlib
@@ -633,7 +633,7 @@ PY
 read_lock_hash() {
   local lock_file="$1" skill="$2"
   [[ -f "$lock_file" ]] || return 0
-  python3 - "$lock_file" "$skill" <<'PY'
+  python3 -I - "$lock_file" "$skill" <<'PY'
 import json
 import sys
 
@@ -743,7 +743,7 @@ rename_path() {
   if [[ "$MV_NO_COPY" == "yes" ]]; then
     mv --no-copy -T -- "$1" "$2"
   else
-    python3 -c 'import os, sys; os.rename(sys.argv[1], sys.argv[2])' "$1" "$2"
+    python3 -I -c 'import os, sys; os.rename(sys.argv[1], sys.argv[2])' "$1" "$2"
   fi
 }
 
@@ -757,7 +757,7 @@ txn_root() {
   if [[ -z "${TXN_ROOTS[$1]:-}" ]]; then
     dest_abs="$(cd "$1" && pwd -P)" || { printf '  [!] cannot resolve %s\n' "$1"; return 1; }
     root="${dest_abs%/*}/.skills-txn/${dest_abs##*/}"
-    if fault_hit xdev || ! python3 - "$dest_abs" "$root" <<'PY'
+    if fault_hit xdev || ! python3 -I - "$dest_abs" "$root" <<'PY'
 import os
 import sys
 
@@ -1281,7 +1281,7 @@ sync_opencode_permissions() {
     return 1
   fi
 
-  if ! python3 - "$config_file" "${synced_skills[@]}" <<'PY'
+  if ! python3 -I - "$config_file" "${synced_skills[@]}" <<'PY'
 import json
 import os
 import sys
@@ -1373,7 +1373,7 @@ sync_migrated_opencode_permissions() {
     target_hash="$(skill_hash "$target")"
     source_hash="$(skill_hash "$SKILLS_SRC/$replacement")"
     [[ "$target_hash" == "$source_hash" ]] || continue
-    lock_hash="$(python3 - "$lock_file" "$replacement" "$SKILLS_SRC" <<'PY'
+    lock_hash="$(python3 -I - "$lock_file" "$replacement" "$SKILLS_SRC" <<'PY'
 import json
 from pathlib import Path
 import sys
@@ -1497,7 +1497,7 @@ run_doctor() {
       [[ "${row%%|*}" == "$tool" ]] && rows+=("$row")
     done
   done
-  python3 - "$verbose" "$(IFS=,; printf '%s' "$*")" "${rows[@]}" <<'PY'
+  python3 -I - "$verbose" "$(IFS=,; printf '%s' "$*")" "${rows[@]}" <<'PY'
 from pathlib import Path
 import os
 import re
@@ -1688,7 +1688,7 @@ DETECT_MARKERS=(
 )
 
 run_detect() {
-  python3 - "$HOME" "${PATH-}" "$(IFS=,; printf '%s' "${SUPPORTED_TOOLS[*]}")" "${DETECT_MARKERS[@]}" <<'PY'
+  python3 -I - "$HOME" "${PATH-}" "$(IFS=,; printf '%s' "${SUPPORTED_TOOLS[*]}")" "${DETECT_MARKERS[@]}" <<'PY'
 import os
 import sys
 
@@ -1796,7 +1796,7 @@ reject_override_env() {
 CONFIG_FAIL_EXIT=""
 
 saved_config_py() {
-  python3 - "$@" <<'PY'
+  python3 -I - "$@" <<'PY'
 import errno
 import os
 import re
@@ -2324,7 +2324,7 @@ run_update() {
 
 # Per-skill lock state for one destination: "none -", "v1 -", or "v2 <digest>".
 lock_tree_records() {
-  python3 - "$@" <<'PY'
+  python3 -I - "$@" <<'PY'
 import json
 import re
 import sys
@@ -2501,7 +2501,7 @@ run_apply_update() {
     || update_fail 1 "--apply-update is internal to --update"
   # The lock arrives as fd 9 from the coordinator; reopening the path would
   # take a new, unheld description, so only the inherited one is checked.
-  if ! python3 -c 'import os, sys
+  if ! python3 -I -c 'import os, sys
 a, b = os.fstat(9), os.stat(sys.argv[1])
 sys.exit((a.st_dev, a.st_ino) != (b.st_dev, b.st_ino))' "$(install_lock_dir)/install.lock" 2>/dev/null \
     || ! flock -n "$INSTALL_LOCK_FD" 2>/dev/null; then
