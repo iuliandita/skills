@@ -916,8 +916,113 @@ test_deprecated_skill_not_counted() {
   rm -rf "$tmp"; trap - RETURN
 }
 
+test_ere_literal_pipe_is_flagged() {
+  local tmp skill_dir output status
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  skill_dir="$tmp/skills/lint-fixture"
+  write_minimal_skill "$skill_dir" "lint-fixture"
+  cat >> "$skill_dir/SKILL.md" <<'EOF'
+
+```bash
+pgrep -f 'nginx\|apache'
+```
+EOF
+
+  status=0
+  output="$("$ROOT/scripts/lint-skills.sh" "$tmp/skills" 2>&1)" || status=$?
+  if (( status == 0 )); then
+    printf '%s\n' "$output" >&2
+    fail "lint-skills.sh passed despite '\\|' in a pgrep pattern"
+  fi
+  if [[ "$output" != *"inside an ERE pattern"* ]]; then
+    printf '%s\n' "$output" >&2
+    fail "lint-skills.sh did not report the ERE literal-pipe match"
+  fi
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_ere_alternation_is_allowed() {
+  local tmp skill_dir output status
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  skill_dir="$tmp/skills/lint-fixture"
+  write_minimal_skill "$skill_dir" "lint-fixture"
+  cat >> "$skill_dir/SKILL.md" <<'EOF'
+
+```bash
+grep -iE 'http://|https://' access.log
+rg 'nginx|apache' .
+pgrep -f 'nginx|apache'
+```
+EOF
+
+  status=0
+  output="$("$ROOT/scripts/lint-skills.sh" "$tmp/skills" 2>&1)" || status=$?
+  if (( status != 0 )); then
+    printf '%s\n' "$output" >&2
+    fail "lint-skills.sh flagged '|' alternation in an ERE pattern"
+  fi
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_bre_alternation_is_allowed() {
+  local tmp skill_dir output status
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  skill_dir="$tmp/skills/lint-fixture"
+  write_minimal_skill "$skill_dir" "lint-fixture"
+  cat >> "$skill_dir/SKILL.md" <<'EOF'
+
+```bash
+grep 'password\|secret' config
+```
+EOF
+
+  status=0
+  output="$("$ROOT/scripts/lint-skills.sh" "$tmp/skills" 2>&1)" || status=$?
+  if (( status != 0 )); then
+    printf '%s\n' "$output" >&2
+    fail "lint-skills.sh flagged '\\|' in a BRE pattern"
+  fi
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_table_pipe_escape_is_allowed() {
+  local tmp skill_dir output status
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  skill_dir="$tmp/skills/lint-fixture"
+  write_minimal_skill "$skill_dir" "lint-fixture"
+  printf '\n| Vector | `grep -E docker\\|kube` |\n' >> "$skill_dir/SKILL.md"
+
+  status=0
+  output="$("$ROOT/scripts/lint-skills.sh" "$tmp/skills" 2>&1)" || status=$?
+  if (( status != 0 )); then
+    printf '%s\n' "$output" >&2
+    fail "lint-skills.sh flagged a Markdown table pipe escape as an ERE pattern"
+  fi
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
 test_reference_files_are_scanned
 test_reference_examples_are_ignored
+test_ere_literal_pipe_is_flagged
+test_ere_alternation_is_allowed
+test_bre_alternation_is_allowed
+test_table_pipe_escape_is_allowed
 test_unrelated_bold_does_not_mask_missing_reference
 test_real_cross_skill_reference_is_accepted
 test_generic_self_check_ratio_within_cap_passes

@@ -284,6 +284,27 @@ check_prose_double_dash() {
   done
 }
 
+# ── ERE literal-pipe check ─────────────────────────────────────────────
+# grep -E, rg, and pgrep use extended regular expressions, where '|' is
+# alternation and '\|' matches a literal pipe. A stray '\|' in one of those
+# patterns silently matches nothing. Scan fenced command examples only:
+# '\|' in a Markdown table is cell escaping, not a pattern.
+check_ere_literal_pipe() {
+  local dir="$1" name="$2" f line_no line cmd_re offset
+  cmd_re='(^|[^[:alnum:]_-])(grep[[:space:]]+-[A-Za-z]*E[A-Za-z]*|grep[[:space:]]+--extended-regexp|rg|pgrep)([^[:alnum:]_-]|$)'
+  for f in "$dir"/SKILL.md "$dir"/references/*.md; do
+    [[ -f "$f" ]] || continue
+    while IFS=$'\t' read -r line_no line; do
+      [[ "$line" == *'\|'* ]] || continue
+      offset=$(grep -Pbo "$cmd_re" <<< "$line" | head -1 | cut -d: -f1 || true)
+      [[ -n "$offset" ]] || continue
+      if [[ "${line:offset}" == *'\|'* ]]; then
+        error "$name: '\\|' inside an ERE pattern in $(basename "$f"):$line_no (use '|' for alternation)"
+      fi
+    done < <(awk '/^```/{skip=!skip; next} skip{print NR "\t" $0}' "$f")
+  done
+}
+
 # Descriptions begin with useful task language, not collection decoration.
 check_desc_prefix() {
   local file="$1" name="$2" desc
@@ -651,6 +672,7 @@ for skill_dir in "$SKILLS_DIR"/*/; do
   check_generic_self_check_ratio "$skill_file" "$name"
   check_banned_words "$skill_dir" "$name"
   check_prose_double_dash "$skill_dir" "$name"
+  check_ere_literal_pipe "$skill_dir" "$name"
   check_old_name_mentions "$skill_file" "$name"
   (( skill_count++ )) || true
 done
