@@ -338,7 +338,7 @@ Read `references/migration-patterns.md` for cross-engine type mapping, ORM migra
 
 - [ ] `security.authorization: enabled` (never run without auth)
 - [ ] Replica set with 3+ members (not standalone in production)
-- [ ] Write concern `w: "majority"` (default in 8.0+)
+- [ ] Write concern `w: "majority"` (implicit default since 5.0; arbiter topologies can fall back to `w: 1`, so set it explicitly)
 - [ ] Schema validation (`$jsonSchema`) on critical collections
 - [ ] Patched against MongoBleed (CVE-2025-14847) - 8.0.17+ / 7.0.28+ / 6.0.27+
 - [ ] Patched against CVE-2026-89099 - 8.0.32+ ([release notes](https://www.mongodb.com/docs/v8.0/release-notes/8.0/))
@@ -349,7 +349,7 @@ Read `references/migration-patterns.md` for cross-engine type mapping, ORM migra
 ### MSSQL-Specific
 
 - [ ] `Max Server Memory` set explicitly (not unlimited)
-- [ ] `MAXDOP` set to core count per NUMA node
+- [ ] `MAXDOP` per Microsoft guidance: <= logical processors per (soft-)NUMA node, capped at 8 on single-NUMA servers; multi-NUMA with >16 LPs/node uses half the LPs per node, max 16
 - [ ] `Cost Threshold for Parallelism` raised from default 5
 - [ ] TempDB files = min(CPU cores, 8), equal size
 - [ ] Query Store enabled

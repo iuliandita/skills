@@ -418,15 +418,10 @@ bun run drizzle-kit generate
 cat drizzle/XXXX_migration_name.sql
 
 # 4. Validate DDL preconditions; add guards only for intentionally rerunnable operations
-# Drizzle generates bare DDL that crashes on re-run:
-#   ALTER TABLE users ADD COLUMN email TEXT;
-# Fix to:
-#   ALTER TABLE users ADD COLUMN IF NOT EXISTS email TEXT;
-#
-# Same for DROP:
-#   ALTER TABLE users DROP COLUMN old_field;
-# Fix to:
-#   ALTER TABLE users DROP COLUMN IF EXISTS old_field;
+# Drizzle generates bare DDL (ALTER TABLE users ADD COLUMN email TEXT;). Keep it bare:
+# a re-run failure means the runner journal and the schema disagree - reconcile that
+# (see gotchas below) instead of adding IF [NOT] EXISTS guards.
+# Guard only scripts that are deliberately rerunnable and that validate the existing object.
 
 # 5. Run migration
 bun run drizzle-kit migrate
