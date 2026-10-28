@@ -34,10 +34,14 @@ if [[ -n "$ROADMAPS" ]]; then
 
     # Informational counts (used in the drift output, not as triggers - commit count is a
     # bad proxy for staleness when an agentic /loop session can ship 5 commits in 20 min).
-    COMMITS=0; TAGS=0
-    if [[ -n "$RM_VER" ]]; then
-      COMMITS=$(git rev-list --count "${RM_VER}..HEAD" 2>/dev/null || echo 0)
-      TAGS=$(git tag --sort=v:refname 2>/dev/null | awk -v r="$RM_VER" 'found{c++} $0==r{found=1} END{print c+0}')
+    # Resolve the stated version to an existing tag (as written, then with/without `v`).
+    COMMITS=0; TAGS=0; RM_REF=""
+    for c in ${RM_VER:+"$RM_VER" "v${RM_VER#v}" "${RM_VER#v}"}; do
+      git rev-parse -q --verify "refs/tags/$c" >/dev/null && { RM_REF="$c"; break; }
+    done
+    if [[ -n "$RM_REF" ]]; then
+      COMMITS=$(git rev-list --count "${RM_REF}..HEAD" 2>/dev/null || echo 0)
+      TAGS=$(git tag --sort=v:refname 2>/dev/null | awk -v r="$RM_REF" 'found{c++} $0==r{found=1} END{print c+0}')
     fi
 
     # Tags cut AFTER the roadmap's stated date - the cleanest "you shipped, roadmap is
@@ -66,7 +70,7 @@ if [[ -n "$ROADMAPS" ]]; then
     if [[ "$DRIFT" -eq 1 ]]; then
       echo "ROADMAP DRIFT: $rm states ${RM_VER:-?} / ${RM_DATE:-?}; HEAD is ${LAST_TAG:-v$REPO_VER} / $HEAD_DATE; $COMMITS commits, $TAGS tags between, $NEW_TAG_COUNT releases since header date, ${DAYS_BEHIND}d calendar gap."
       # Feed the drift range into Step 2 - widens the diff window beyond `git log -10`
-      [[ -n "$RM_VER" ]] && RANGE="${RM_VER}..HEAD"
+      [[ -n "$RM_REF" ]] && RANGE="${RM_REF}..HEAD"
     fi
   done <<< "$ROADMAPS"
 fi

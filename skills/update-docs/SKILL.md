@@ -96,12 +96,23 @@ Check git diff and conversation context to understand what was modified:
 # Uncommitted changes
 git diff --name-only
 
-# Compare against the roadmap's stated version, falling back to last tag, falling back to last 10
+# Compare against the roadmap's stated version (as written, then with/without `v`),
+# falling back to the last tag, falling back to the last 10 commits
 ROADMAP_VER=$(grep -hoE 'Current:?\s*v?[0-9]+\.[0-9]+\.[0-9]+' ROADMAP.md docs/ROADMAP.md 2>/dev/null | head -1 | grep -oE 'v?[0-9]+\.[0-9]+\.[0-9]+')
-LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null)
-RANGE="${ROADMAP_VER:-${LAST_TAG}}..HEAD"
-git log --oneline "$RANGE" 2>/dev/null || git log --oneline -10
+LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || true)
+BASE=""
+for c in ${ROADMAP_VER:+"$ROADMAP_VER" "v${ROADMAP_VER#v}" "${ROADMAP_VER#v}"} "$LAST_TAG"; do
+  [[ -n "$c" ]] && git rev-parse -q --verify "refs/tags/$c" >/dev/null && { BASE="$c"; break; }
+done
+if [[ -n "$BASE" ]]; then
+  git log --oneline "$BASE..HEAD"   # empty output = no commits since $BASE
+else
+  echo "No matching tag; showing last 10 commits"
+  git log --oneline -10
+fi
 ```
+
+With a resolved `$BASE`, an empty log means no commits since that tag, not a failed lookup.
 
 Scan for changes in: configuration, infrastructure, service deployments, scripts, CI workflows, network/IP assignments, service versions, and anything operational.
 
