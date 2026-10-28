@@ -18,6 +18,8 @@ source "$(dirname "${BASH_SOURCE[0]}")/contract-lib.sh"
 # shellcheck source=./scripts/skill-lib.sh
 source "$(dirname "${BASH_SOURCE[0]}")/skill-lib.sh"
 
+frontmatter_cache_load "$ROOT/skills" metadata.deprecated
+
 total=0
 for target_name in "${SHARED_FILE_NAMES[@]}"; do
   src="$ROOT/skills/_shared/$target_name"
