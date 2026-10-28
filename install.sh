@@ -386,16 +386,26 @@ PY
 }
 
 # ── Backup ────────────────────────────────────────────────────────────
+backup_base_for() {
+  local dest_dir="$1"
+  if [[ -n "${SKILLS_BACKUP_DIR:-}" ]]; then
+    printf '%s/%s-%s\n' "$SKILLS_BACKUP_DIR" "$(basename "$dest_dir")" "$(readlink -f "$dest_dir" | hash_tool | cut -c1-12)"
+  else
+    printf '%s/.skills-backups/%s\n' "$(dirname "$dest_dir")" "$(basename "$dest_dir")"
+  fi
+}
+
 backup_skill() {
   local skill="$1" dest_dir="$2"
-  local backup_parent backup_name backup_base
-  backup_parent="$(dirname "$dest_dir")"
-  backup_name="$(basename "$dest_dir")"
-  backup_base="${SKILLS_BACKUP_DIR:-$backup_parent/.skills-backups/$backup_name}"
+  local backup_base
+  backup_base="$(backup_base_for "$dest_dir")"
   local ts
   ts="$(date +%Y%m%d-%H%M%S)"
-  local dest="$backup_base/$skill/$ts"
-  mkdir -p "$dest" || return 1
+  local dest n=0
+  mkdir -p "$backup_base/$skill" || return 1
+  until dest="$backup_base/$skill/$ts-$(printf %02d "$n")"; mkdir "$dest" 2>/dev/null; do
+    (( ++n < 100 )) || return 1
+  done
 
   if [[ -L "$dest_dir/$skill" ]]; then
     cp -P "$dest_dir/$skill" "$dest/" || return 1
@@ -417,14 +427,20 @@ migrate_legacy_backups() {
   local legacy_dir="$dest_dir/.backups"
   [[ -d "$legacy_dir" || -L "$legacy_dir" ]] || return 0
 
-  local backup_parent backup_name backup_base ts dest
-  backup_parent="$(dirname "$dest_dir")"
-  backup_name="$(basename "$dest_dir")"
-  backup_base="${SKILLS_BACKUP_DIR:-$backup_parent/.skills-backups/$backup_name}"
+  local backup_base ts dest n=0
+  backup_base="$(backup_base_for "$dest_dir")"
   ts="$(date +%Y%m%d-%H%M%S)"
-  dest="$backup_base/.legacy/$ts"
-
-  mkdir -p "$(dirname "$dest")" && mv "$legacy_dir" "$dest" || return 1
+  mkdir -p "$backup_base/.legacy" || return 1
+  until dest="$backup_base/.legacy/$ts-$(printf %02d "$n")"; mkdir "$dest" 2>/dev/null; do
+    (( ++n < 100 )) || return 1
+  done
+  if [[ -L "$legacy_dir" ]]; then
+    rmdir "$dest" && mv "$legacy_dir" "$dest" || return 1
+    [[ -L "$dest" ]] || { printf '  [!] legacy .backups link landed inside %s\n' "$dest"; return 1; }
+  else
+    find "$legacy_dir" -mindepth 1 -maxdepth 1 -exec mv {} "$dest/" \;
+    rmdir "$legacy_dir" || return 1
+  fi
   printf '  [>] legacy .backups moved to %s\n' "$dest"
 }
 
@@ -432,10 +448,8 @@ migrate_legacy_backups() {
 backup_unverified_lock() {
   local lock_dir="$1"
   local lock_file="$lock_dir/.skills-lock.json"
-  local backup_parent backup_name backup_base
-  backup_parent="$(dirname "$lock_dir")"
-  backup_name="$(basename "$lock_dir")"
-  backup_base="${SKILLS_BACKUP_DIR:-$backup_parent/.skills-backups/$backup_name}"
+  local backup_base
+  backup_base="$(backup_base_for "$lock_dir")"
 
   python3 - "$lock_file" "$lock_dir" "$backup_base" <<'PY'
 from datetime import datetime, timezone
@@ -458,7 +472,7 @@ suffix = 1
 while backup.exists():
     suffix += 1
     backup = backup_base / ".unverified-locks" / f"{stamp}-{suffix}.skills-lock.json"
-backup.parent.mkdir(parents=True)
+backup.parent.mkdir(parents=True, exist_ok=True)
 shutil.copy2(lock_file, backup)
 lock_file.unlink()
 print(backup)
@@ -2902,19 +2916,30 @@ main() {
 
   # ── Install: copy mode ──────────────────────────────────────────────
   else
+    local -A copy_done=()
     for tool in "${tools[@]}"; do
-      local dest
+      local dest key
       if [[ -n "$dest_override" ]]; then
         dest="$dest_override"
       else
         dest="$(resolve_tool_path "$tool")"
       fi
       mkdir -p "$dest"
+      key="$(readlink -f "$dest")"
+      if [[ -v 'copy_done[$key]' ]]; then
+        printf '[%s] -> %s (same directory as an earlier tool; already installed)\n' "$tool" "$dest"
+        read -r -a INSTALLED <<< "${copy_done[$key]}"
+        if [[ "$tool" == "opencode" ]]; then
+          sync_opencode_permissions "$OPENCODE_CONFIG_FILE" "${INSTALLED[@]}" || (( failed++ )) || true
+        fi
+        continue
+      fi
       ensure_lock_source "$dest"
       migrate_legacy_backups "$dest"
 
       printf '[%s] -> %s\n' "$tool" "$dest"
       install_into copy "$dest" "$force" "$no_backup" "${skills[@]}"
+      copy_done[$key]="${INSTALLED[*]}"
       (( DIFFER_COUNT == 0 )) || printf '  %d skill(s) differ; use --force to overwrite\n' "$DIFFER_COUNT"
 
       if [[ "$tool" == "opencode" ]]; then

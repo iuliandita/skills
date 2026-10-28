@@ -68,6 +68,64 @@ test_backups_stay_outside_skill_root() {
   trap - RETURN
 }
 
+test_backup_override_separates_destinations() {
+  local tmp count
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  HOME="$tmp" "$ROOT/install.sh" --tool claude --no-backup docker >/dev/null
+  HOME="$tmp" "$ROOT/install.sh" --tool cursor --no-backup docker >/dev/null
+  HOME="$tmp" SKILLS_BACKUP_DIR="$tmp/b" "$ROOT/install.sh" --tool claude,cursor --force docker >/dev/null
+  count="$(find "$tmp/b" -mindepth 1 -maxdepth 1 -type d -name 'skills-*' | wc -l)"
+  [[ "$count" -eq 2 ]] || fail "expected two destination backup folders"
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_unverified_lock_backups_are_unique() {
+  local tmp dest i
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  dest="$tmp/s"
+  for i in 1 2; do
+    mkdir -p "$dest"
+    printf '%s\n' '{"version":1,"source":"/nope","skills":{}}' > "$dest/.skills-lock.json"
+    HOME="$tmp" "$ROOT/install.sh" --tool portable --dest "$dest" --no-backup docker >/dev/null
+  done
+  [[ "$(find "$tmp/.skills-backups/s/.unverified-locks" -type f | wc -l)" -eq 2 ]] || fail "expected two lock backups"
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_shared_destination_is_installed_once() {
+  local tmp output
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  HOME="$tmp" "$ROOT/install.sh" --tool codex --no-backup docker >/dev/null
+  echo EDIT >> "$tmp/.agents/skills/docker/SKILL.md"
+  output="$(HOME="$tmp" "$ROOT/install.sh" --tool codex,opencode,gemini,commandcode --force docker)"
+  [[ "$(grep -c 'docker backed up' <<< "$output")" -eq 1 ]] || fail "shared destination backed up more than once"
+  [[ "$(grep -l EDIT "$tmp"/.agents/.skills-backups/skills/docker/*/SKILL.md | wc -l)" -eq 1 ]] || fail "edited backup missing"
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_backup_retention_keeps_three_unique() {
+  local tmp dest root i newest
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  dest="$tmp/s"; root="$tmp/.skills-backups/s/docker"
+  HOME="$tmp" "$ROOT/install.sh" --tool portable --dest "$dest" --no-backup docker >/dev/null
+  for i in 1 2 3 4 5; do
+    echo "EDIT$i" >> "$dest/docker/SKILL.md"
+    HOME="$tmp" "$ROOT/install.sh" --tool portable --dest "$dest" --force docker >/dev/null
+  done
+  [[ "$(find "$root" -mindepth 1 -maxdepth 1 -type d | wc -l)" -eq 3 ]] || fail "expected three backups"
+  newest="$(find "$root" -mindepth 1 -maxdepth 1 -type d | sort | tail -1)"
+  grep -q EDIT5 "$newest/SKILL.md" || fail "newest backup lacks last edit"
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
 test_legacy_backups_are_migrated_outside_skill_root() {
   local tmp dest migrated_root
   tmp="$(mktemp -d)"
@@ -88,6 +146,30 @@ test_legacy_backups_are_migrated_outside_skill_root() {
     fail "expected migrated legacy backup under $migrated_root"
   fi
 
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_legacy_backup_migration_keeps_layout_on_collision() {
+  local tmp dest root date_cmd
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  dest="$tmp/agent/skills"; root="$tmp/agent/.skills-backups/skills/.legacy"
+  date_cmd="$(command -v date)"
+  mkdir -p "$tmp/bin" "$root/20260101-000000-00" "$dest/.backups/docker/legacy" "$tmp/elsewhere"
+  # shellcheck disable=SC2016
+  printf '#!/bin/sh\n[ "$1" = +%%Y%%m%%d-%%H%%M%%S ] && { echo 20260101-000000; exit 0; }\nexec %s "$@"\n' "$date_cmd" > "$tmp/bin/date"
+  chmod +x "$tmp/bin/date"
+  echo keep > "$root/20260101-000000-00/keep"
+  echo legacy > "$dest/.backups/docker/legacy/SKILL.md"
+  echo hidden > "$dest/.backups/.hidden"
+  HOME="$tmp" PATH="$tmp/bin:$PATH" "$ROOT/install.sh" --tool portable --dest "$dest" --no-backup docker >/dev/null
+  [[ "$(find "$root/20260101-000000-00" -mindepth 1 | wc -l)" -eq 1 && -f "$root/20260101-000000-00/keep" ]] || fail "collision overwrote existing backup"
+  [[ -f "$root/20260101-000000-01/docker/legacy/SKILL.md" && -f "$root/20260101-000000-01/.hidden" && ! -e "$root/20260101-000000-01/.backups" && ! -e "$dest/.backups" ]] || fail "legacy backup layout changed"
+  echo untouched > "$tmp/elsewhere/keep"
+  ln -s "$tmp/elsewhere" "$dest/.backups"
+  HOME="$tmp" PATH="$tmp/bin:$PATH" "$ROOT/install.sh" --tool portable --dest "$dest" --no-backup docker >/dev/null
+  [[ -L "$root/20260101-000000-02" && "$(readlink "$root/20260101-000000-02")" == "$tmp/elsewhere" && "$(cat "$tmp/elsewhere/keep")" == untouched ]] || fail "legacy symlink migration changed target"
   rm -rf "$tmp"
   trap - RETURN
 }
@@ -1794,7 +1876,12 @@ test_unverified_copy_without_verified_prev_is_refused() {
 }
 
 test_backups_stay_outside_skill_root
+test_backup_override_separates_destinations
+test_unverified_lock_backups_are_unique
+test_shared_destination_is_installed_once
+test_backup_retention_keeps_three_unique
 test_legacy_backups_are_migrated_outside_skill_root
+test_legacy_backup_migration_keeps_layout_on_collision
 test_opencode_install_allows_installed_skills
 test_link_mode_writes_tool_lock
 test_link_mode_writes_tool_lock_gemini
