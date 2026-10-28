@@ -22,6 +22,10 @@ on:
       - "lychee.toml"
       - ".github/workflows/**"
       - ".github/tools/**"
+      - ".refiner-runs.json"
+      - ".refiner-ledger.md"
+      - ".gitignore"
+      - ".gitleaks.toml"
   pull_request:
     paths:
       - "skills/**"
@@ -42,16 +46,21 @@ on:
       - "lychee.toml"
       - ".github/workflows/**"
       - ".github/tools/**"
+      - ".refiner-runs.json"
+      - ".refiner-ledger.md"
+      - ".gitignore"
+      - ".gitleaks.toml"
   schedule:
     # Weekly run catches link rot and new semgrep findings between changes.
     - cron: "0 5 * * 1"
   workflow_dispatch:
+  workflow_call:
 
 permissions:
   contents: read
 
 concurrency:
-  group: quality-${{ github.workflow }}-${{ github.ref }}
+  group: quality-${{ github.workflow }}-${{ github.ref == 'refs/heads/main' && github.sha || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -112,16 +121,19 @@ jobs:
       - name: Check whitespace and merge markers
         env:
           BASE_REF: ${{ github.base_ref }}
+          BASE_SHA: ${{ github.event_name == 'push' && github.event.before || '' }}
         run: ./scripts/check-whitespace.sh
 
       - name: Check refiner phase-1 immutability guard
         env:
           BASE_REF: ${{ github.base_ref }}
+          BASE_SHA: ${{ github.event_name == 'push' && github.event.before || '' }}
         run: ./scripts/check-refiner-phase1-guard.sh
 
       - name: Check docs impact
         env:
           BASE_REF: ${{ github.base_ref }}
+          BASE_SHA: ${{ github.event_name == 'push' && github.event.before || '' }}
         run: ./scripts/check-docs-impact.sh
 
   shell-and-python:

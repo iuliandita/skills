@@ -247,6 +247,102 @@ test_docs_impact_unrelated_history_fails_loudly() {
   trap - RETURN
 }
 
+# Reproduces a push to main (issue #297): a --no-ff merge whose branch adds
+# trailing whitespace lands on main and origin/main already points at it, so
+# only BASE_SHA (the push event's "before") gives the checks a real range.
+# Sets PUSH_CLONE and PRE_PUSH_SHA.
+push_merge_to_main() {
+  local tmp="$1"
+  build_base_repo "$tmp"
+  PUSH_CLONE="$(clone_fixture "$tmp")"
+  PRE_PUSH_SHA="$(git_q "$PUSH_CLONE" rev-parse HEAD)"
+  [[ "$PRE_PUSH_SHA" == "$NEW_MAIN_SHA" ]] || fail "fixture clone did not start on the main tip"
+
+  git_q "$PUSH_CLONE" checkout -qb dirty
+  printf 'trailing space \n' > "$PUSH_CLONE/dirty.md"
+  git_q "$PUSH_CLONE" add dirty.md
+  git_q "$PUSH_CLONE" commit -q -m "docs: dirty note"
+  git_q "$PUSH_CLONE" checkout -q main
+  git_q "$PUSH_CLONE" merge -q --no-ff -m "merge: dirty into main" dirty
+  git_q "$PUSH_CLONE" update-ref refs/remotes/origin/main HEAD
+}
+
+test_push_base_sha_checks_the_pushed_range() {
+  local tmp status output range
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  push_merge_to_main "$tmp"
+  range="$PRE_PUSH_SHA..HEAD"
+
+  status=0
+  output="$(cd "$PUSH_CLONE" && bash scripts/check-whitespace.sh 2>&1)" || status=$?
+  (( status == 0 )) || { printf '%s\n' "$output" >&2; fail "fixture: whitespace check without BASE_SHA was expected to miss the merge"; }
+
+  status=0
+  output="$(cd "$PUSH_CLONE" && BASE_SHA="$PRE_PUSH_SHA" bash scripts/check-whitespace.sh 2>&1)" || status=$?
+  (( status != 0 )) || { printf '%s\n' "$output" >&2; fail "whitespace check passed a pushed merge that adds trailing whitespace"; }
+  [[ "$output" == *"dirty.md"* ]] || { printf '%s\n' "$output" >&2; fail "whitespace check did not name the offending file"; }
+
+  status=0
+  output="$(cd "$PUSH_CLONE" && BASE_SHA="$PRE_PUSH_SHA" bash scripts/check-refiner-phase1-guard.sh 2>&1)" || status=$?
+  (( status == 0 )) || { printf '%s\n' "$output" >&2; fail "phase-1 guard failed on a clean pushed range"; }
+  [[ "$output" == *"($range)"* ]] || { printf '%s\n' "$output" >&2; fail "phase-1 guard did not check the pushed range"; }
+
+  status=0
+  output="$(cd "$PUSH_CLONE" && BASE_SHA="$PRE_PUSH_SHA" bash scripts/check-docs-impact.sh 2>&1)" || status=$?
+  (( status == 0 )) || { printf '%s\n' "$output" >&2; fail "docs-impact check failed on a clean pushed range"; }
+  [[ "$output" == *"($range,"* ]] || { printf '%s\n' "$output" >&2; fail "docs-impact check did not check the pushed range"; }
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_push_zero_base_sha_keeps_fallback() {
+  local tmp status output zero="0000000000000000000000000000000000000000"
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  push_merge_to_main "$tmp"
+
+  status=0
+  output="$(cd "$PUSH_CLONE" && BASE_SHA="$zero" bash scripts/check-whitespace.sh 2>&1)" || status=$?
+  if (( status != 0 )) || [[ "$output" != *"(last commit)"* ]]; then
+    printf '%s\n' "$output" >&2
+    fail "whitespace check did not treat an all-zero BASE_SHA as unset"
+  fi
+
+  for script in check-refiner-phase1-guard.sh check-docs-impact.sh; do
+    status=0
+    output="$(cd "$PUSH_CLONE" && BASE_SHA="$zero" bash "scripts/$script" 2>&1)" || status=$?
+    if (( status != 0 )) || [[ "$output" != *"No comparable base"* ]]; then
+      printf '%s\n' "$output" >&2
+      fail "$script did not treat an all-zero BASE_SHA as unset"
+    fi
+  done
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_push_missing_base_sha_fails_loudly() {
+  local tmp status output missing="1111111111111111111111111111111111111111"
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  push_merge_to_main "$tmp"
+
+  for script in check-whitespace.sh check-refiner-phase1-guard.sh check-docs-impact.sh; do
+    status=0
+    output="$(cd "$PUSH_CLONE" && BASE_SHA="$missing" bash "scripts/$script" 2>&1)" || status=$?
+    (( status != 0 )) || { printf '%s\n' "$output" >&2; fail "$script passed with a BASE_SHA missing from the clone"; }
+    [[ "$output" == *"BASE_SHA"* ]] || { printf '%s\n' "$output" >&2; fail "$script did not report the missing BASE_SHA"; }
+  done
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
 test_full_clone_stays_full_and_guard_passes
 test_phase1_commit_touching_immutable_path_fails skills/skill-refiner/SKILL.md
 test_phase1_commit_touching_immutable_path_fails scripts/skill-lib.sh
@@ -254,4 +350,7 @@ test_guard_list_shrink_uses_base_list
 test_unrelated_history_base_fails_loudly
 test_docs_impact_passes_on_merge_ref
 test_docs_impact_unrelated_history_fails_loudly
-printf 'CI base check tests passed (7 cases)\n'
+test_push_base_sha_checks_the_pushed_range
+test_push_zero_base_sha_keeps_fallback
+test_push_missing_base_sha_fails_loudly
+printf 'CI base check tests passed (10 cases)\n'

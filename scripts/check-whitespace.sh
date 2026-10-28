@@ -7,13 +7,23 @@ set -euo pipefail
 # locally. It is the one gate the rest of scripts/ does not cover, so a clean
 # local run used to still fail CI.
 #
-# Compares against origin/<base> on a PR, otherwise against the merge base with
-# the default branch, otherwise just the last commit.
+# Compares against origin/<base> on a PR, otherwise against BASE_SHA (the push
+# event's previous tip; all zeros means unset), otherwise against the merge base
+# with the default branch, otherwise just the last commit.
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
 BASE_REF="${BASE_REF:-}"
+BASE_SHA="${BASE_SHA:-}"
+if [[ "$BASE_SHA" =~ ^0+$ ]]; then
+  # A push that creates a ref reports an all-zero "before" sha.
+  BASE_SHA=""
+fi
+if [[ -z "$BASE_REF" && -n "$BASE_SHA" ]] && ! git rev-parse --verify --quiet "${BASE_SHA}^{commit}" >/dev/null; then
+  echo "ERROR: BASE_SHA '${BASE_SHA}' is not a commit in this clone" >&2
+  exit 1
+fi
 
 if [[ -n "$BASE_REF" ]]; then
   # --depth on a full clone writes .git/shallow and breaks merge-base for later checks.
@@ -24,6 +34,8 @@ if [[ -n "$BASE_REF" ]]; then
     git fetch --quiet origin "$BASE_REF"
   fi
   range="origin/$BASE_REF..HEAD"
+elif [[ -n "$BASE_SHA" ]]; then
+  range="$BASE_SHA..HEAD"
 elif base="$(git merge-base HEAD origin/main 2>/dev/null)" && [[ "$base" != "$(git rev-parse HEAD)" ]]; then
   range="$base..HEAD"
 else
