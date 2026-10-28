@@ -175,7 +175,7 @@ review classification. A model upgrade needs a fresh baseline; never rename a hi
 receipt or score to make it appear current.
 
 When identity cannot be attested from raw harness output or provider metadata, the review uses `cap 3` and the
-fallback is recorded as a control failure in the run history (see SKILL.md Phase 3 step 24).
+fallback is recorded as a control failure in the run history (see Phase 3 step 24 in `references/phase-2-3-meta-and-summary.md`).
 An unattested reviewer never earns `cap 5`.
 
 | Attested identity | Review classification | Cap |
@@ -237,10 +237,10 @@ context and the diff.
 **Known issue**: Codex in `exec` mode may run tools (lint, validate) instead of producing
 text-only review output. If the secondary returns tool output instead of a
 NO_FLAGS/MINOR_FLAG/MAJOR_FLAG response, fall back to self-review: spawn a fresh agent
-on the primary harness with the review prompt template (see Phase 0, Step 6 in SKILL.md).
+on the primary harness with the review prompt template (see Phase 0, Step 6 in `references/phase-0-setup.md`).
 Classify the fallback as same-model or unknown-model fresh-context review using its attested
 evidence, apply `cap 3`, and record the fallback as a control failure in the run history
-(SKILL.md Phase 3 step 24). No bonus weight is restored when a distinct reviewer is unavailable.
+(Phase 3 step 24 in `references/phase-2-3-meta-and-summary.md`). No bonus weight is restored when a distinct reviewer is unavailable.
 
 **Peer review is mandatory.** Probe the secondary first, then run the privacy/authorization
 preflight before transmitting source. If no authorized secondary is available or the secondary

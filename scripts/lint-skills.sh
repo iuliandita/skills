@@ -149,6 +149,15 @@ check_length() {
   lines=$(wc -l < "$file")
   local warn_msg="$name: SKILL.md is $lines lines (near the 500 hard max; extract to references/)"
   skill_length_check "$file" "$name" error warn "$warn_msg"
+
+  # Activation size: spec guidance keeps the body under ~5000 tokens.
+  # Estimate tokens as chars/4 of the body after frontmatter. Advisory only.
+  local body_bytes body_tokens
+  body_bytes=$(awk 'n>=2; /^---$/ && n<2 {n++}' "$file" | wc -c)
+  body_tokens=$(( body_bytes / 4 ))
+  if (( body_tokens > 5000 )); then
+    warn "$name: SKILL.md body is ~$body_tokens tokens (spec guidance ~5000; move detail to references/)"
+  fi
 }
 
 # ── Reference file checks ──────────────────────────────────────────────

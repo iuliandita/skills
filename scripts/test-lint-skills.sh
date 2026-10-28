@@ -526,6 +526,32 @@ test_skill_over_hard_max_lines_fails() {
   trap - RETURN
 }
 
+test_skill_over_token_guidance_warns() {
+  local tmp skill_dir output status i
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  skill_dir="$tmp/skills/lint-fixture"
+  write_minimal_skill "$skill_dir" "lint-fixture"
+  for ((i = 0; i < 250; i++)); do
+    printf '%099d\n' 0 >> "$skill_dir/SKILL.md"
+  done
+
+  status=0
+  output="$("$ROOT/scripts/lint-skills.sh" "$tmp/skills" 2>&1)" || status=$?
+  if (( status != 0 )); then
+    printf '%s\n' "$output" >&2
+    fail "lint-skills.sh failed on a SKILL.md body over the token guidance"
+  fi
+  if [[ "$output" != *"~"* || "$output" != *"tokens"* ]]; then
+    printf '%s\n' "$output" >&2
+    fail "lint-skills.sh did not warn about the SKILL.md body token estimate"
+  fi
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
 test_unlinked_reference_fails() {
   local tmp skill_dir output status
   tmp="$(mktemp -d)"
@@ -908,6 +934,7 @@ test_missing_frontmatter_field_fails
 test_overlay_only_skill_dir_is_skipped
 test_non_ascii_character_fails
 test_skill_over_hard_max_lines_fails
+test_skill_over_token_guidance_warns
 test_unlinked_reference_fails
 test_long_reference_needs_contents
 test_unreadable_reference_fails
