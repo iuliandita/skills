@@ -485,7 +485,8 @@ names installs all active skills. Retired old names are no longer installable; s
 The installer backs up existing skills before overwriting unless `--no-backup` is set.
 It retains the last three backups per skill under
 `<destination-parent>/.skills-backups/<destination-name>/`, outside the skill discovery root.
-Override that backup base with `SKILLS_BACKUP_DIR`. Backups support manual recovery;
+With `SKILLS_BACKUP_DIR`, backups go to `<SKILLS_BACKUP_DIR>/<destination-name>-<hash>/`,
+and tools sharing one directory are installed into it once per run. Backups support manual recovery;
 customizations are not merged into the replacement. Preserve edits in the source checkout
 before reinstalling if they must remain active.
 
