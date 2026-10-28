@@ -25,9 +25,10 @@ boundaries, error models, and framework structure for Python and Node.js service
 - Problem Details for HTTP APIs: **RFC 9457** (July 2023)
 - OAuth 2.0 Security Best Current Practice: **RFC 9700** (January 2025)
 
-Security check (2026-10-02): Express/NestJS upload stacks using Multer <2.3.0 are affected by
+Security check (2026-10-28): Express/NestJS upload stacks using Multer <2.3.0 are affected by
 high-severity multipart denial of service, [CVE-2026-82333](https://github.com/expressjs/multer/security/advisories/GHSA-535w-7cp7-47q4).
-Upgrade Multer to 2.4.0+ (2.4.0 also fixes medium-severity aborted-upload disk exhaustion,
+Upgrade Multer to 2.5.0+ (2.5.0 fixes high-severity DoS from a pending async `fileFilter` after
+request teardown, [CVE-2026-113872](https://github.com/expressjs/multer/security/advisories/GHSA-q7qp-rjg7-q26m); 2.4.0 fixed medium-severity aborted-upload disk exhaustion,
 [CVE-2026-88932](https://github.com/expressjs/multer/security/advisories/GHSA-3pph-fpjx-jg34)) and bound `limits.fieldArrayIndexLimit` to application needs; checking
 only the top-level framework version misses vulnerable middleware.
 
