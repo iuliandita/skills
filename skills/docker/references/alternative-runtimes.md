@@ -4,15 +4,15 @@ Podman, Buildah, Skopeo, and containerd patterns. Reviewed October 2026.
 
 ## Contents
 
-- Podman (v6.1.3)
-- Buildah (v1.45.0)
+- Podman (v6.1.4)
+- Buildah (v1.46.0)
 - Skopeo
-- containerd (v2.3.4)
+- containerd (v2.3.7)
 - Decision Matrix
 
 ---
 
-## Podman (v6.1.3)
+## Podman (v6.1.4)
 
 Daemonless, rootless container engine. CLI-compatible with Docker. `alias docker=podman` works for most commands.
 
@@ -159,7 +159,7 @@ docker compose up -d
 
 ---
 
-## Buildah (v1.45.0)
+## Buildah (v1.46.0)
 
 Build OCI images without a daemon. Can build from Dockerfiles or programmatically via CLI commands.
 
@@ -249,15 +249,15 @@ skopeo list-tags docker://ghcr.io/org/myapp
 
 ---
 
-## containerd (v2.3.4)
+## containerd (v2.3.7)
 
 Low-level container runtime. Kubernetes uses it directly. Docker Engine uses it under the hood.
 
 ### Key facts (October 2026)
 
-- **containerd 2.3.0** was released in April 2026 as the first annual LTS release, supported until April 30, 2028 (current patch 2.3.6)
-- **containerd 2.4** (September 16, 2026; current 2.4.1) is the newest regular release, supported until May 16, 2027
-- **containerd 2.2** (current 2.2.9) remains supported through November 6, 2026
+- **containerd 2.3.0** was released in April 2026 as the first annual LTS release, supported until April 30, 2028 (current patch 2.3.7)
+- **containerd 2.4** (September 16, 2026; current 2.4.2) is the newest regular release, supported until May 16, 2027
+- **containerd 2.2** (current 2.2.10) remains supported through November 6, 2026
 - **K8s 1.36+** will require containerd 2.0+ (1.x support dropped)
 - containerd 2.0 removed Docker-schemaV1 image support, CRI v1alpha2, and several deprecated APIs
 - Migration from 1.6/1.7 to 2.0 is supported with built-in migration tools
