@@ -121,6 +121,45 @@ PY
   trap - RETURN
 }
 
+test_link_mode_never_links_canonical_onto_itself() {
+  local tmp output
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  output="$(HOME="$tmp" SKILLS_CANONICAL_DIR="$tmp/.agents/skills/" "$ROOT/install.sh" --tool codex --link --force --no-backup docker)"
+  [[ -f "$tmp/.agents/skills/docker/SKILL.md" && ! -L "$tmp/.agents/skills/docker" ]] || fail "trailing slash linked canonical onto itself"
+  grep -q 'matches canonical, skipping links' <<< "$output" || fail "trailing slash canonical match not reported"
+
+  mkdir -p "$tmp/other"
+  mv "$tmp/.agents/skills" "$tmp/other/skills"
+  rmdir "$tmp/.agents"
+  ln -s "$tmp/other" "$tmp/.agents"
+  output="$(HOME="$tmp" CODEX_SKILLS_DIR="$tmp/.agents/skills" SKILLS_CANONICAL_DIR="$tmp/other/skills" "$ROOT/install.sh" --tool codex --link --force --no-backup docker)"
+  [[ -f "$tmp/other/skills/docker/SKILL.md" && ! -L "$tmp/other/skills/docker" ]] || fail "symlinked path linked canonical onto itself"
+  grep -q 'matches canonical, skipping links' <<< "$output" || fail "symlinked canonical match not reported"
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_link_mode_keeps_foreign_symlink_without_force() {
+  local tmp backup
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  mkdir -p "$tmp/mine" "$tmp/.claude/skills"
+  ln -s "$tmp/mine" "$tmp/.claude/skills/docker"
+  HOME="$tmp" "$ROOT/install.sh" --tool claude --link docker >/dev/null
+  [[ "$(readlink "$tmp/.claude/skills/docker")" == "$tmp/mine" ]] || fail "foreign symlink replaced without force"
+  HOME="$tmp" "$ROOT/install.sh" --tool claude --link --force docker >/dev/null
+  [[ "$(readlink "$tmp/.claude/skills/docker")" == "$tmp/.agents/skills/docker" ]] || fail "foreign symlink not replaced with force"
+  backup="$(find "$tmp/.claude/.skills-backups" -type l -name docker)"
+  [[ -n "$backup" && "$(readlink "$backup")" == "$tmp/mine" ]] || fail "foreign symlink not backed up"
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
 test_link_mode_writes_tool_lock() {
   local tmp
   tmp="$(mktemp -d)"
@@ -1509,11 +1548,11 @@ test_link_fault_restores_previous_link() {
   isolated "$tmp" "$ROOT/install.sh" --tool claude --link --no-backup docker >/dev/null
   ln -sfn "$tmp/elsewhere" "$claude/docker"
   status=0
-  output="$(isolated "$tmp" SKILLS_INSTALL_FAULT=promote "$ROOT/install.sh" --tool claude --link docker 2>&1)" || status=$?
+  output="$(isolated "$tmp" SKILLS_INSTALL_FAULT=promote "$ROOT/install.sh" --tool claude --link --force --no-backup docker 2>&1)" || status=$?
   (( status == 1 )) || fail "link promote fault exited $status, want 1: $output"
   [[ "$(readlink "$claude/docker")" == "$tmp/elsewhere" ]] || fail "link promote fault did not restore the previous link"
   [[ ! -e "$(txn_area "$claude")" ]] || fail "link promote fault left the transaction area"
-  isolated "$tmp" "$ROOT/install.sh" --tool claude --link docker >/dev/null || fail "link rerun failed"
+  isolated "$tmp" "$ROOT/install.sh" --tool claude --link --force --no-backup docker >/dev/null || fail "link rerun failed"
   [[ "$(readlink "$claude/docker")" == "$tmp/.agents/skills/docker" ]] || fail "link rerun did not relink"
   rm -rf "$tmp"
   trap - RETURN
@@ -1796,6 +1835,8 @@ test_unverified_copy_without_verified_prev_is_refused() {
 test_backups_stay_outside_skill_root
 test_legacy_backups_are_migrated_outside_skill_root
 test_opencode_install_allows_installed_skills
+test_link_mode_never_links_canonical_onto_itself
+test_link_mode_keeps_foreign_symlink_without_force
 test_link_mode_writes_tool_lock
 test_link_mode_writes_tool_lock_gemini
 test_omp_default_path

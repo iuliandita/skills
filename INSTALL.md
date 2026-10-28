@@ -51,6 +51,7 @@ update fails, the file is left unchanged and the install exits non-zero.
 ### Multi-tool with symlinks
 
 Install once to a canonical directory, symlink everywhere. Update the canonical copy and every tool sees the change.
+An existing symlink that points elsewhere is left alone unless you use `--force`, which backs it up first.
 
 ```bash
 git clone https://github.com/iuliandita/skills.git /tmp/skills-install

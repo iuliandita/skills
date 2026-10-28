@@ -1215,14 +1215,21 @@ create_link() {
   local skill="$1" tool_dir="$2" force="$3" no_backup="$4" backup=false
   local work="$tool_dir/$skill"
 
+  if paths_match "$tool_dir" "$CANONICAL_DIR"; then
+    printf '  [!] %s: %s is the canonical directory; refusing to link it onto itself\n' "$skill" "$tool_dir"
+    return 1
+  fi
+
   if [[ -L "$work" ]]; then
-    if [[ "$(readlink "$work")" == "$CANONICAL_DIR/$skill" ]]; then
+    if [[ "$(readlink "$work")" == "$CANONICAL_DIR/$skill" ]] || paths_match "$work" "$CANONICAL_DIR/$skill"; then
       printf '  [=] %s already linked\n' "$skill"
       return 0
     fi
-    replace_entry link "$skill" "$tool_dir" false || return
-    printf '  [+] %s relinked\n' "$skill"
-    return 0
+    if [[ "$force" != "true" ]]; then
+      printf '  [~] %s is a symlink to %s (use --force to replace it)\n' "$skill" "$(readlink "$work")"
+      return 3
+    fi
+    [[ "$no_backup" == "true" ]] || backup=true
   fi
   if [[ -e "$work" ]]; then
     # Real directory from a previous copy install
@@ -2872,7 +2879,7 @@ main() {
     for tool in "${tools[@]}"; do
       local tool_dir linked=()
       tool_dir="$(resolve_tool_path "$tool")"
-      if [[ "$tool_dir" == "$CANONICAL_DIR" ]]; then
+      if paths_match "$tool_dir" "$CANONICAL_DIR"; then
         printf '[%s] -> %s (matches canonical, skipping links)\n' "$tool" "$tool_dir"
         linked=("${canonical_ok[@]}")
       else
