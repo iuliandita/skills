@@ -11,7 +11,7 @@ Verify current releases before pinning.
 - GPT-6.1 Sol migration
 - Astra migration
 - SDKs, runtimes, and tooling
-- Security update (checked 2026-10-02)
+- Security update (checked 2026-10-28)
 
 ## Model families
 
@@ -156,7 +156,7 @@ adopt them only when the application can manage pending results and continuation
 | LangGraph | 1.2.12 | Stateful agent graphs, cycles, persistence |
 | LlamaIndex | 0.14.25 | RAG framework, 300+ integrations |
 | Transformers | 5.18.0 | Model inference, fine-tuning, PyTorch 2.5+ required |
-| vLLM | 0.30.0 | 0.28.0 is the minimum floor for the high-severity fixes (GHSA-3c86-2m5g-59q7, GHSA-25q3-v2hm-8vpf); 0.30.0 also fixes later medium/low advisories; review release notes before upgrading multi-tenant deployments |
+| vLLM | 0.32.0 | 0.32.0 is the floor for the high-severity fixes (GHSA-h3rc-j82p-2c3h EPS/Ghostscript RCE, GHSA-6757-hggm-hp2w; 0.31.0 fixed GHSA-h3rc-6mm3-gc2m and GHSA-823j-m4cj-hmjf); review release notes before upgrading multi-tenant deployments |
 | Ollama | 0.35.1 | Do not trust unreviewed GGUF files; see the advisory qualification below |
 | pgvector (extension) | 0.8.7 | PostgreSQL extension, not the `pgvector` Python client; HNSW + IVFFlat |
 | Qdrant | 1.19.1 | Self-hosted vector DB, hybrid search |
@@ -164,7 +164,8 @@ adopt them only when the application can manage pending results and continuation
 | ChromaDB | 1.5.9 | Lightweight vector DB, local-first |
 | promptfoo | 0.123.1 | LLM eval framework, red teaming |
 
-## Security update (checked 2026-10-02)
+## Security update (checked 2026-10-28)
 
+- vLLM 0.30.0 passes untrusted image bytes to Pillow format autodetection, so EPS reaches host Ghostscript ([GHSA-h3rc-j82p-2c3h](https://github.com/vllm-project/vllm/security/advisories/GHSA-h3rc-j82p-2c3h), high); fixed in 0.32.0. Also remove Ghostscript from inference images.
 - vLLM versions before 0.28.0 are affected by [LlavaOnevision2 model-code execution despite `trust_remote_code=False`](https://github.com/vllm-project/vllm/security/advisories/GHSA-3c86-2m5g-59q7) and [embedding/pooling input denial of service](https://github.com/vllm-project/vllm/security/advisories/GHSA-25q3-v2hm-8vpf). Both are fixed in 0.28.0; retain reviewed model sources and revisions after patching.
 - [CVE-2026-65315](https://github.com/advisories/GHSA-9hhj-2jwx-r87p) describes Ollama GGUF allocation denial of service. The retrieved advisory has unknown affected/patched release ranges; do not infer that 0.35.1 fixes it. Restrict model upload/create/pull access and accept only reviewed model files while checking publisher remediation.
