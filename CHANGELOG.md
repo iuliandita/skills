@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.0](https://github.com/iuliandita/skills/compare/v2.6.4...v2.7.0) (2026-10-28)
+
+### Features
+
+* **lint:** warn when a SKILL.md body exceeds the ~5000-token activation guidance; databases and skill-refiner move detail into references to fit (databases ~4670 tokens, skill-refiner ~5430, with the rest planned in #309) ([#321](https://github.com/iuliandita/skills/pull/321), [#309](https://github.com/iuliandita/skills/issues/309)).
+* **repo-audit:** `detect.sh` matches exact dependency names per manifest format and covers Go, Rust, Ruby and PHP manifests; keywords, substrings and `.github`/vendored manifests no longer activate lanes ([#316](https://github.com/iuliandita/skills/pull/316), [#300](https://github.com/iuliandita/skills/issues/300)).
+
+### Bug Fixes
+
+* **ci:** shell syntax checks parse every script instead of only `install.sh` ([#316](https://github.com/iuliandita/skills/pull/316), [#300](https://github.com/iuliandita/skills/issues/300)).
+* **skills:** update-docs resolves roadmap versions to existing tags with or without `v`; repo-audit exhaustive runs write dated DEEP-AUDIT files and stay read-only; skill-refiner, skill-creator and prompt-generator instructions run as written and match the output contract ([#317](https://github.com/iuliandita/skills/pull/317), [#301](https://github.com/iuliandita/skills/issues/301)).
+* **ci:** docs-impact, deep-audit coverage and version-receipt checks no longer pass on wrong matches; audit coverage is derived from `detect.sh` ([#324](https://github.com/iuliandita/skills/pull/324)).
+
 ## [2.6.4](https://github.com/iuliandita/skills/compare/v2.6.3...v2.6.4) (2026-10-28)
 
 ### Bug Fixes
