@@ -222,8 +222,48 @@ metadata:
   trap - RETURN
 }
 
+test_spec_keys_and_metadata_strings() {
+  local tmp output status row label field expected
+  local -a cases=(
+    "unknown key|paths: src/|unknown top-level key 'paths'"
+    "boolean metadata|metadata:
+  internal: true|metadata.internal must be a string"
+    "float metadata|metadata:
+  version: 1.0|metadata.version must be a string"
+  )
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  for row in "${cases[@]}"; do
+    IFS='|' read -r -d '' label field expected <<< "$row" || true
+    expected="${expected%$'\n'}"
+    rm -rf "$tmp/skills"
+    write_frontmatter "$tmp/skills" fixture "name: fixture
+description: A fixture skill.
+$field"
+    run_validator "$tmp/skills" output status
+    if (( status == 0 )) || [[ "$output" != *"$expected"* ]]; then
+      printf '%s\n' "$output" >&2
+      fail "validator accepted $label"
+    fi
+  done
+  rm -rf "$tmp/skills"
+  write_frontmatter "$tmp/skills" fixture 'name: fixture
+description: A fixture skill.
+metadata:
+  internal: "true"
+  version: "1.0"'
+  run_validator "$tmp/skills" output status
+  if (( status != 0 )); then
+    printf '%s\n' "$output" >&2
+    fail "validator rejected quoted metadata strings"
+  fi
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
 test_license_is_optional
 test_frontmatter_parsing
+test_spec_keys_and_metadata_strings
 test_description_advisory_boundary
 test_description_through_1024_passes
 test_description_over_1024_fails

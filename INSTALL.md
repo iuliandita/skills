@@ -75,7 +75,7 @@ SKILLS_CANONICAL_DIR=~/my-skills ./install.sh --tool claude,roo --link
 
 ### Local private overlays
 
-Skills declaring `metadata.internal: true` and gitignored locally are skipped by default. Pass `--include-internal` to install them too.
+Skills declaring `metadata.internal: "true"` and gitignored locally are skipped by default. Pass `--include-internal` to install them too.
 
 ```bash
 ./install.sh --tool claude,codex,opencode --link --include-internal --force
@@ -89,7 +89,7 @@ Before using `--force`, copy any overlay that exists only in the installed skill
 `skills/kubernetes-health/protected/` in the source checkout. Forced installs replace the whole
 skill directory; they do not preserve or merge installed-only files into the new copy.
 
-`kubernetes-health` is public, so it no longer needs `--include-internal`; that flag is only for separate gitignored skills with `metadata.internal: true`.
+`kubernetes-health` is public, so it no longer needs `--include-internal`; that flag is only for separate gitignored skills with `metadata.internal: "true"`.
 
 `scripts/check-private-skill-leaks.sh` scans public files for private markers, additively drawn from the `protected/private-patterns.txt` overlays above, a gitignored `private-patterns.txt` at the repo root (see `private-patterns.example.txt`), and a file path in `SKILLS_PRIVATE_PATTERNS`. CI never sees your local overlay or root file; it only sees markers you explicitly supply it, typically by writing a repository secret to a file and pointing `SKILLS_PRIVATE_PATTERNS` at it.
 

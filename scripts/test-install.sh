@@ -1231,7 +1231,7 @@ make_frontmatter_fixture() {
   write_fixture_skill "$repo" public $'---\nname: public\ndescription: d\nmetadata:\n  internal: false\n---'
   write_fixture_skill "$repo" bare $'---\ndescription: no name or metadata\n---'
   write_fixture_skill "$repo" private $'---\nname: private\ndescription: d\nmetadata:\n  internal: true\n---'
-  write_fixture_skill "$repo" team $'---\nname: team\ndescription: tracked but internal\nmetadata:\n  internal: true\n---'
+  write_fixture_skill "$repo" team $'---\nname: team\ndescription: tracked but internal\nmetadata:\n  internal: "true"\n---'
   write_fixture_skill "$repo" ignored $'---\nname: ignored\ndescription: d\n---'
   write_fixture_skill "$repo" old $'---\nname: old\ndescription: d\nmetadata:\n  deprecated: true\n---'
   printf '%s\n' 'skills/private/' 'skills/ignored/' > "$repo/.gitignore"

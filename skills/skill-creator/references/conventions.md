@@ -160,6 +160,8 @@ user confirmation in steps that could run unattended.
 | `metadata.source` | `owner/repo` or `custom` | identifies the publishing collection or an unpublished local skill |
 | `metadata.date_added` | ISO date string | staleness detection |
 | `metadata.effort` | `low`, `medium`, `high` | signals expected token usage and complexity |
+| `metadata.internal` | `"true"` or `"false"` (quoted: metadata values are strings) | marks a local skill the installer skips unless `--include-internal` |
+| `metadata.deprecated` | `"true"` or `"false"` (quoted) | marks a deprecated notice kept for migration |
 
 ### Lifecycle status
 

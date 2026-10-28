@@ -12,7 +12,7 @@ MIGRATOR="${SKILLS_MIGRATOR:-$SCRIPT_DIR/scripts/migrate-skills.py}"
 
 # Discover skills dynamically: scan skills/ for dirs with SKILL.md.
 # Gitignored skills are excluded unless --include-internal is active and the
-# skill declares metadata.internal: true.
+# skill declares metadata.internal: "true".
 discover_skills() {
   local include_internal="${1:-false}"
   local skills=()
@@ -174,7 +174,7 @@ Options:
   --apply             Apply a migration preview; requires --migrate
   --force             Overwrite existing skills without prompting
   --no-backup         Skip backup of existing skills
-  --include-internal  Include skills marked metadata.internal: true
+  --include-internal  Include skills marked metadata.internal: "true"
   --doctor            Report skill names a harness can reach through more than
                       one directory (read-only; all known tools unless --tool)
   --verbose           With --doctor, list each overlap the harness resolves
