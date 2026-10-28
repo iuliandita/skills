@@ -16,7 +16,7 @@ metadata:
 Configure, tune, design schemas, migrate, back up, and review database engines - from single-node dev setups to PCI-compliant production clusters. The goal is correct, performant, durable databases that survive failures and pass audits.
 
 **Target versions** (October 2026):
-- PostgreSQL **18.6** (EOL 2030-11; August 13, 2026 release), back-branches: 17.11, 16.15, 15.19, 14.24; PostgreSQL 19 Beta 4 is for testing only
+- PostgreSQL **18.6** (EOL 2030-11; August 13, 2026 release), back-branches: 17.11, 16.15, 15.19, 14.24 (EOL 2026-11-12 - plan the upgrade off 14 now); PostgreSQL 19 RC 1 (2026-10-15) is for testing only
 - MongoDB **9.0.2** (new major, GA 2026-09-28, EOL 2031-10); 8.0 lane **8.0.34** (EOL 2029-10); 8.0.32 fixes CVE-2026-89099 and is the security floor for the 8.0 lane. The rapid lane is Atlas-only with a short window - verify live before pinning
 - MariaDB **11.8.9** (LTS, EOL 2028-06), **12.3.3** (LTS, EOL 2029-06); 13.x rolling GA is quarterly and EOLs at each successor - verify live
 - MySQL **8.4.12** (LTS; August 18, 2026 release), **9.7.3** (9.7 LTS lane; August 18, 2026 release); the innovation lane has a short support window - verify live
@@ -340,7 +340,7 @@ Read `references/migration-patterns.md` for cross-engine type mapping, ORM migra
 - [ ] Replica set with 3+ members (not standalone in production)
 - [ ] Write concern `w: "majority"` (default in 8.0+)
 - [ ] Schema validation (`$jsonSchema`) on critical collections
-- [ ] Patched against MongoBleed (CVE-2025-14847) - 8.0.17+
+- [ ] Patched against MongoBleed (CVE-2025-14847) - 8.0.17+ / 7.0.28+ / 6.0.27+
 - [ ] Patched against CVE-2026-89099 - 8.0.32+ ([release notes](https://www.mongodb.com/docs/v8.0/release-notes/8.0/))
 - [ ] Patched against CVE-2026-25611 (pre-auth DoS via compression) - 8.0.18+ / 8.2.4+ / 7.0.29+
 - [ ] On the June 11, 2026 MongoDB security release (CVE-2026-11933) - 8.0.26+
