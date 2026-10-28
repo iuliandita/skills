@@ -237,7 +237,51 @@ test_link_mode_keeps_foreign_symlink_without_force() {
   [[ "$(readlink "$tmp/.claude/skills/docker")" == "$tmp/.agents/skills/docker" ]] || fail "foreign symlink not replaced with force"
   backup="$(find "$tmp/.claude/.skills-backups" -type l -name docker)"
   [[ -n "$backup" && "$(readlink "$backup")" == "$tmp/mine" ]] || fail "foreign symlink not backed up"
+  rm -rf "$tmp"
+  trap - RETURN
+}
 
+test_opencode_string_permissions_are_preserved() {
+  local tmp config case output
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  config="$tmp/.config/opencode/opencode.json"
+  mkdir -p "$(dirname "$config")"
+  for case in global skill invalid; do
+    case "$case" in
+      global) printf '%s\n' '{"permission":"ask"}' > "$config" ;;
+      skill) printf '%s\n' '{"permission":{"bash":"deny","skill":"deny"}}' > "$config" ;;
+      invalid) printf '%s\n' '{"permission":["x"]}' > "$config" ;;
+    esac
+    cp "$config" "$tmp/before.json"
+    if [[ "$case" == invalid ]]; then
+      if output="$(HOME="$tmp" "$ROOT/install.sh" --tool opencode --no-backup docker 2>&1)"; then
+        fail "invalid OpenCode permission was accepted"
+      fi
+      grep -q 'OpenCode permission sync failed' <<< "$output" || fail "OpenCode failure was not reported"
+      cmp "$tmp/before.json" "$config" || fail "invalid OpenCode permission was changed"
+    else
+      HOME="$tmp" "$ROOT/install.sh" --tool opencode --no-backup docker >/dev/null
+      python3 - "$config" "$case" <<'PYTEST'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as f:
+    permission = json.load(f)["permission"]
+if sys.argv[2] == "global":
+    assert list(permission) == ["*", "skill"]
+    assert permission["*"] == "ask"
+    expected = "ask"
+else:
+    assert permission["bash"] == "deny"
+    expected = "deny"
+skill = permission["skill"]
+assert list(skill) == ["*", "docker"]
+assert skill == {"*": expected, "docker": "allow"}
+PYTEST
+    fi
+  done
   rm -rf "$tmp"
   trap - RETURN
 }
@@ -1924,6 +1968,7 @@ test_legacy_backup_migration_keeps_layout_on_collision
 test_opencode_install_allows_installed_skills
 test_link_mode_never_links_canonical_onto_itself
 test_link_mode_keeps_foreign_symlink_without_force
+test_opencode_string_permissions_are_preserved
 test_link_mode_writes_tool_lock
 test_link_mode_writes_tool_lock_gemini
 test_omp_default_path
