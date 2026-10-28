@@ -315,7 +315,7 @@ Actions -> Runners -> New self-hosted runner**):
 ```bash
 mkdir actions-runner && cd actions-runner
 curl -o runner.tar.gz -L \
-  "https://github.com/actions/runner/releases/download/v2.322.0/actions-runner-linux-x64-2.322.0.tar.gz"
+  "https://github.com/actions/runner/releases/download/v2.338.2/actions-runner-linux-x64-2.338.2.tar.gz"
 tar xzf runner.tar.gz
 ./config.sh \
   --url https://github.com/your-org/your-repo \
@@ -325,6 +325,9 @@ tar xzf runner.tar.gz
   --disableupdate
 ./run.sh
 ```
+
+With `--disableupdate` you must still roll a new runner version within 30 days of each release or
+GitHub stops queueing jobs to the runner; watch actions/runner releases.
 
 **macOS (Apple Silicon)**: identical flow, pick `osx-arm64` tarball. For Intel Macs, pick
 `osx-x64`. Both require Xcode Command Line Tools (`xcode-select --install`) for most
@@ -481,8 +484,8 @@ artifacts only.
   Eliminates privileged containers entirely.
 - **Forward runner logs off-host**: log lines are evidence of compromise. On-host logs get
   wiped by attackers or by the ephemeral teardown.
-- **Pin runner binary versions**. `--disableupdate` (GitHub), pinned apt versions
-  (GitLab), pinned container tags (Forgejo/Gitea/Woodpecker). Auto-update is a supply
+- **Pin runner binary versions**. `--disableupdate` (GitHub; still update within 30 days of
+  each runner release), pinned apt versions (GitLab), pinned container tags (Forgejo/Gitea/Woodpecker). Auto-update is a supply
   chain vector.
 - **Monitor for stuck runners**. Jobs that hang forever are a sign of DoS or compromise
   attempts.

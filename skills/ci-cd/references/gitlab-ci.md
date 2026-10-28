@@ -231,9 +231,9 @@ build:
 ```yaml
 build-image:
   stage: build
-  image: docker:29.3
+  image: docker:29.9
   services:
-    - docker:29.3-dind
+    - docker:29.9-dind
   variables:
     DOCKER_TLS_CERTDIR: "/certs"
   before_script:
@@ -730,9 +730,9 @@ variables:
 
 .docker-build:
   stage: build
-  image: docker:29.3
+  image: docker:29.9
   services:
-    - docker:29.3-dind
+    - docker:29.9-dind
   before_script:
     - printf '%s\n' "$CI_REGISTRY_PASSWORD" | docker login --username "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
   script:

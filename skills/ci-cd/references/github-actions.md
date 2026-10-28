@@ -57,7 +57,7 @@ jobs:
   ci:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@<sha>        # v4
+      - uses: actions/checkout@<sha>        # v7
       - uses: oven-sh/setup-bun@<sha>          # v2
         with:
           bun-version: '1.2'
@@ -193,10 +193,10 @@ exploited tag force-pushing to redirect thousands of repos to malicious code.
 
 ```yaml
 # vulnerable: tag can be force-pushed at any time
-- uses: actions/checkout@v4
+- uses: actions/checkout@v7
 
 # secure: immutable commit reference
-- uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+- uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
 ```
 
 **Add version comments** for human readability. Use Dependabot or Renovate to auto-update SHAs:
