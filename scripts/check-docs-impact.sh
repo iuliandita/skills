@@ -17,7 +17,8 @@ set -euo pipefail
 #
 # Usage: check-docs-impact.sh [base] | --release <prev-tag>
 # Base resolution matches check-refiner-phase1-guard.sh: argument, else BASE_REF,
-# else merge base with main or origin/main. install.sh is parsed, never sourced.
+# else BASE_SHA (push "before"; all zeros means unset), else merge base with main
+# or origin/main. install.sh is parsed, never sourced.
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
@@ -35,6 +36,15 @@ else
   arg_base="${1:-}"
 fi
 BASE_REF="${arg_base:-${BASE_REF:-}}"
+BASE_SHA="${BASE_SHA:-}"
+if [[ "$BASE_SHA" =~ ^0+$ ]]; then
+  # A push that creates a ref reports an all-zero "before" sha.
+  BASE_SHA=""
+fi
+if [[ -z "$BASE_REF" && -n "$BASE_SHA" ]] && ! git rev-parse --verify --quiet "${BASE_SHA}^{commit}" >/dev/null; then
+  echo "ERROR: BASE_SHA '${BASE_SHA}' is not a commit in this clone" >&2
+  exit 1
+fi
 
 ref_exists() {
   git rev-parse --verify --quiet "${1}^{commit}" >/dev/null 2>&1
@@ -58,6 +68,8 @@ resolve_base() {
 base=""
 if [[ -n "$BASE_REF" ]]; then
   resolve_base "$BASE_REF" "origin/$BASE_REF"
+elif [[ -n "$BASE_SHA" ]]; then
+  resolve_base "$BASE_SHA"
 else
   resolve_base main origin/main
 fi

@@ -12,13 +12,14 @@ set -euo pipefail
 # allowed to edit those files, so only commits whose subject matches the phase-1
 # iteration marker are checked.
 #
-# Base resolution: optional first argument, else BASE_REF, else the merge base
-# with main or origin/main. The script only reads refs and never mutates the
-# repository. It exits 0 with an explicit message when no base ref resolves at
-# all, or running on the base branch itself: the check is a diff guard and
-# cannot run without a commit range. If a base ref resolves but no merge-base
-# with HEAD can be computed (shallow clone, unrelated history), it exits 1
-# instead of silently falling back to a non-ancestor tip.
+# Base resolution: optional first argument, else BASE_REF, else BASE_SHA (the
+# push event's previous tip; all zeros means unset, a missing commit exits 1),
+# else the merge base with main or origin/main. The script only reads refs and
+# never mutates the repository. It exits 0 with an explicit message when no base
+# ref resolves at all, or running on the base branch itself: the check is a diff
+# guard and cannot run without a commit range. If a base ref resolves but no
+# merge-base with HEAD can be computed (shallow clone, unrelated history), it
+# exits 1 instead of silently falling back to a non-ancestor tip.
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
@@ -42,6 +43,15 @@ IMMUTABLE_PATHS=(
 PHASE1_SUBJECT='^refactor\(skill-refiner\): iteration'
 
 BASE_REF="${1:-${BASE_REF:-}}"
+BASE_SHA="${BASE_SHA:-}"
+if [[ "$BASE_SHA" =~ ^0+$ ]]; then
+  # A push that creates a ref reports an all-zero "before" sha.
+  BASE_SHA=""
+fi
+if [[ -z "$BASE_REF" && -n "$BASE_SHA" ]] && ! git rev-parse --verify --quiet "${BASE_SHA}^{commit}" >/dev/null; then
+  echo "ERROR: BASE_SHA '${BASE_SHA}' is not a commit in this clone" >&2
+  exit 1
+fi
 
 ref_exists() {
   git rev-parse --verify --quiet "${1}^{commit}" >/dev/null 2>&1
@@ -65,6 +75,8 @@ resolve_base() {
 base=""
 if [[ -n "$BASE_REF" ]]; then
   resolve_base "$BASE_REF" "origin/$BASE_REF"
+elif [[ -n "$BASE_SHA" ]]; then
+  resolve_base "$BASE_SHA"
 else
   resolve_base main origin/main
 fi
