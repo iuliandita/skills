@@ -111,7 +111,7 @@ Also check git history: `git log --all --diff-filter=A -- '*.env*'`
 - `verify_ssl.*false|ssl_verify.*false|insecure.*true` - TLS verification disabled for Proxmox API (`*.py`, `*.tf`, `*.yml`)
 
 ### Shell / Cloud-Init
-- `curl.*|\s*bash|wget.*|\s*sh|curl.*|\s*sh` - Pipe-to-shell (no integrity check) (`*.sh`, `*.yaml`, `*.cfg`)
+- `curl.*\|\s*(bash|sh)|wget.*\|\s*(bash|sh)` - Pipe-to-shell (no integrity check) (`*.sh`, `*.yaml`, `*.cfg`)
 - `chmod\s+777|chmod\s+-R\s+777` - World-writable permissions (`*.sh`)
 
 ## CI/CD & Supply Chain (Pass 9)
