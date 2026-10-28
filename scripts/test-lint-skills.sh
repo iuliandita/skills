@@ -917,7 +917,7 @@ test_deprecated_skill_not_counted() {
 }
 
 test_ere_literal_pipe_is_flagged() {
-  local tmp skill_dir output status
+  local tmp skill_dir output status count
   tmp="$(mktemp -d)"
   trap 'rm -rf "$tmp"' RETURN
 
@@ -925,20 +925,28 @@ test_ere_literal_pipe_is_flagged() {
   write_minimal_skill "$skill_dir" "lint-fixture"
   cat >> "$skill_dir/SKILL.md" <<'EOF'
 
-```bash
-pgrep -f 'nginx\|apache'
-```
+  ```bash
+  grep -E 'a\|b' f
+  grep -i -E 'a\|b' f
+  grep --extended-regexp 'a\|b' f
+  egrep 'a\|b' f
+  rg 'a\|b' .
+  pgrep -f 'a\|b'
+  pkill -f 'a\|b'
+  grep -E -e 'a\|b' f
+  ```
 EOF
 
   status=0
   output="$("$ROOT/scripts/lint-skills.sh" "$tmp/skills" 2>&1)" || status=$?
   if (( status == 0 )); then
     printf '%s\n' "$output" >&2
-    fail "lint-skills.sh passed despite '\\|' in a pgrep pattern"
+    fail "lint-skills.sh passed despite literal-pipe patterns in ERE commands"
   fi
-  if [[ "$output" != *"inside an ERE pattern"* ]]; then
+  count="$(grep -c 'inside an ERE pattern' <<< "$output" || true)"
+  if [[ "$count" != "8" ]]; then
     printf '%s\n' "$output" >&2
-    fail "lint-skills.sh did not report the ERE literal-pipe match"
+    fail "lint-skills.sh reported $count of 8 literal-pipe patterns"
   fi
 
   rm -rf "$tmp"
@@ -958,6 +966,12 @@ test_ere_alternation_is_allowed() {
 grep -iE 'http://|https://' access.log
 rg 'nginx|apache' .
 pgrep -f 'nginx|apache'
+grep -E a\|b f
+grep -E 'a\\|b' f
+grep -E 'a|b' f | grep 'c\|d'
+grep -E 'a' f; grep 'c\|d' f
+rg -F 'a\|b' .
+echo 'rg'; echo 'a\|b'
 ```
 EOF
 
@@ -965,7 +979,7 @@ EOF
   output="$("$ROOT/scripts/lint-skills.sh" "$tmp/skills" 2>&1)" || status=$?
   if (( status != 0 )); then
     printf '%s\n' "$output" >&2
-    fail "lint-skills.sh flagged '|' alternation in an ERE pattern"
+    fail "lint-skills.sh flagged valid ERE alternation, BRE, fixed strings, or an unrelated command"
   fi
 
   rm -rf "$tmp"
@@ -983,6 +997,7 @@ test_bre_alternation_is_allowed() {
 
 ```bash
 grep 'password\|secret' config
+grep -e 'a\|b' f
 ```
 EOF
 
@@ -1004,13 +1019,68 @@ test_table_pipe_escape_is_allowed() {
 
   skill_dir="$tmp/skills/lint-fixture"
   write_minimal_skill "$skill_dir" "lint-fixture"
-  printf '\n| Vector | `grep -E docker\\|kube` |\n' >> "$skill_dir/SKILL.md"
+  printf '\n| Vector | `grep -E docker\\|kube` |\n\nProse mentioning `grep -E a\\|b` outside a fence.\n' >> "$skill_dir/SKILL.md"
 
   status=0
   output="$("$ROOT/scripts/lint-skills.sh" "$tmp/skills" 2>&1)" || status=$?
   if (( status != 0 )); then
     printf '%s\n' "$output" >&2
-    fail "lint-skills.sh flagged a Markdown table pipe escape as an ERE pattern"
+    fail "lint-skills.sh flagged a Markdown table escape or prose outside a fence"
+  fi
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_ere_literal_pipe_in_reference_is_flagged() {
+  local tmp skill_dir output status
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  skill_dir="$tmp/skills/lint-fixture"
+  write_minimal_skill "$skill_dir" "lint-fixture"
+  cat >> "$skill_dir/references/details.md" <<'EOF'
+
+```bash
+grep -E 'a\|b' f
+```
+EOF
+
+  status=0
+  output="$("$ROOT/scripts/lint-skills.sh" "$tmp/skills" 2>&1)" || status=$?
+  if (( status == 0 )); then
+    printf '%s\n' "$output" >&2
+    fail "lint-skills.sh did not scan a reference file for literal-pipe patterns"
+  fi
+  if [[ "$output" != *"details.md"* || "$output" != *"inside an ERE pattern"* ]]; then
+    printf '%s\n' "$output" >&2
+    fail "lint-skills.sh did not report the reference file literal-pipe match"
+  fi
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_ere_multiline_command_is_flagged() {
+  local tmp skill_dir output status
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  skill_dir="$tmp/skills/lint-fixture"
+  write_minimal_skill "$skill_dir" "lint-fixture"
+  cat >> "$skill_dir/SKILL.md" <<'EOF'
+
+```bash
+grep -E 'a' \
+  'x\|y'
+```
+EOF
+
+  status=0
+  output="$("$ROOT/scripts/lint-skills.sh" "$tmp/skills" 2>&1)" || status=$?
+  if (( status == 0 )); then
+    printf '%s\n' "$output" >&2
+    fail "lint-skills.sh missed a literal pipe on a continuation line"
   fi
 
   rm -rf "$tmp"
@@ -1023,6 +1093,8 @@ test_ere_literal_pipe_is_flagged
 test_ere_alternation_is_allowed
 test_bre_alternation_is_allowed
 test_table_pipe_escape_is_allowed
+test_ere_literal_pipe_in_reference_is_flagged
+test_ere_multiline_command_is_flagged
 test_unrelated_bold_does_not_mask_missing_reference
 test_real_cross_skill_reference_is_accepted
 test_generic_self_check_ratio_within_cap_passes
