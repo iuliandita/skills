@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.6.4](https://github.com/iuliandita/skills/compare/v2.6.3...v2.6.4) (2026-10-28)
+
+### Bug Fixes
+
+* **frontend-design:** raise the Next.js floors to 16.4.1 and 15.5.28 for the October 14 security release ([#325](https://github.com/iuliandita/skills/pull/325), [#302](https://github.com/iuliandita/skills/issues/302)).
+* **testing:** raise the Vitest floors to 5.0.5 and 4.1.12 for the October 21 advisories ([#326](https://github.com/iuliandita/skills/pull/326), [#302](https://github.com/iuliandita/skills/issues/302)).
+* **testing:** axe examples include the WCAG 2.1 level A rules, and tool pins are current ([#347](https://github.com/iuliandita/skills/pull/347), [#307](https://github.com/iuliandita/skills/issues/307)).
+* **mcp:** raise the TypeScript SDK floors for the October 20 advisories ([#327](https://github.com/iuliandita/skills/pull/327), [#302](https://github.com/iuliandita/skills/issues/302)).
+* **mcp:** align the skill with the 2026-07-28 spec and Python SDK 2.x ([#345](https://github.com/iuliandita/skills/pull/345), [#305](https://github.com/iuliandita/skills/issues/305)).
+* **backend-api:** raise the Multer floor to 2.5.0 ([#328](https://github.com/iuliandita/skills/pull/328), [#302](https://github.com/iuliandita/skills/issues/302)).
+* **llm-app-development:** raise the vLLM floor to 0.32.0 ([#329](https://github.com/iuliandita/skills/pull/329), [#302](https://github.com/iuliandita/skills/issues/302)), and update the Anthropic SDK pins, the NDJSON stream label and the retry example ([#335](https://github.com/iuliandita/skills/pull/335), [#307](https://github.com/iuliandita/skills/issues/307)).
+* **synology-dsm:** raise the DSM 7.2.x floors for SA-26:13 ([#330](https://github.com/iuliandita/skills/pull/330), [#302](https://github.com/iuliandita/skills/issues/302)).
+* **databases:** note PostgreSQL 14 EOL and 19 RC 1, and give the full MongoBleed floors ([#331](https://github.com/iuliandita/skills/pull/331), [#302](https://github.com/iuliandita/skills/issues/302)); CloudNativePG backups use the Barman Cloud plugin instead of the removed in-tree store ([#348](https://github.com/iuliandita/skills/pull/348), [#307](https://github.com/iuliandita/skills/issues/307)).
+* **skills:** copy-paste configs in docker, ansible, kubernetes, virtualization, networking, terraform and ci-cd run as written ([#332](https://github.com/iuliandita/skills/pull/332), [#303](https://github.com/iuliandita/skills/issues/303)).
+* **networking, git:** destructive commands get guardrails; history rewrites record remote refs and a recovery bundle first, then push with a lease on each recorded ref ([#346](https://github.com/iuliandita/skills/pull/346), [#304](https://github.com/iuliandita/skills/issues/304)).
+* **skills:** correct stale platform facts in the OS and tool skills ([#334](https://github.com/iuliandita/skills/pull/334), [#306](https://github.com/iuliandita/skills/issues/306)).
+* **docker:** SBOM attestation uses current cosign commands, and runtime versions are current ([#349](https://github.com/iuliandita/skills/pull/349), [#307](https://github.com/iuliandita/skills/issues/307)).
+* **i18n-localization:** vue-i18n examples use composition mode, interpolation uses the library instead of `.replace()`, and plurals follow CLDR ([#336](https://github.com/iuliandita/skills/pull/336), [#307](https://github.com/iuliandita/skills/issues/307)).
+* **debug-triage:** live auth failures no longer route to security-audit, which only covers repository review ([#337](https://github.com/iuliandita/skills/pull/337), [#307](https://github.com/iuliandita/skills/issues/307)).
+* **dev-cycle:** use the Jest 30 test path flag, and mode detection sets the base branch ([#338](https://github.com/iuliandita/skills/pull/338), [#307](https://github.com/iuliandita/skills/issues/307)).
+* **performance-debugging:** correct the py-spy and dotnet-trace duration flags ([#339](https://github.com/iuliandita/skills/pull/339), [#307](https://github.com/iuliandita/skills/issues/307)).
+* **ci-cd:** pin the current actions/checkout, Docker image tags and runner version, and note the runner auto-update caveat ([#340](https://github.com/iuliandita/skills/pull/340), [#307](https://github.com/iuliandita/skills/issues/307)).
+
 ## [2.6.3](https://github.com/iuliandita/skills/compare/v2.6.2...v2.6.3) (2026-10-28)
 
 ### Bug Fixes
