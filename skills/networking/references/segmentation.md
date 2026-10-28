@@ -100,9 +100,16 @@ nftables replaced iptables as the default Linux firewall. Key differences:
 
 ### Basic stateful firewall
 
+This file owns only `table inet filter`. `flush ruleset` would also delete Docker,
+libvirt, kube-proxy and firewalld tables. Every base chain on a hook runs and a drop in
+any table is final, so on container/VM hosts accept their bridges in `forward`.
+Over SSH, apply it only with the timed rollback in SKILL.md Step 3.
+
 ```
 #!/usr/sbin/nft -f
-flush ruleset
+# Replace only this table, atomically: declare (no-op if present), delete, redefine
+table inet filter
+delete table inet filter
 
 table inet filter {
   chain input {
@@ -218,14 +225,13 @@ table inet filter {
 ### Persisting rules
 
 ```bash
-# Save current ruleset
-nft list ruleset > /etc/nftables.conf
-
-# Load on boot (systemd)
-systemctl enable nftables    # Loads /etc/nftables.conf on boot
-
-# Or manual load
-nft -f /etc/nftables.conf
+# Persist the validated source file, never a `nft list ruleset` dump (that captures
+# generated Docker/kube-proxy tables and has no table reset header).
+nft -c -f new.nft                                   # syntax check; stop on error
+install -m 0600 new.nft /etc/nftables.conf          # RHEL: /etc/sysconfig/nftables.conf
+systemctl enable nftables                           # loads the file on boot
+# Debian/RHEL units run `nft flush ruleset` on stop: do not stop/restart nftables on
+# container hosts; apply changes with the SKILL.md Step 3 rollback sequence instead.
 ```
 
 ### nftables vs iptables
