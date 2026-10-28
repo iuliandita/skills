@@ -127,10 +127,9 @@ vrrp_instance VI_1 {
 ```
 
 **How weight works:**
-- Node starts with `priority 100`
-- If `check_haproxy` fails (weight -20): effective priority = 80
-- If `check_http` also fails (weight -30): effective priority = 50
-- Backup node with priority 90 takes over (90 > 50)
+- `check_haproxy` fails: 100-20=80 < 90, so the backup takes over.
+- Both checks fail: 50.
+- This holds only if the backup tracks the same scripts and they pass.
 
 ### Notify scripts (run on state transition)
 
@@ -147,20 +146,15 @@ vrrp_instance VI_1 {
 ```bash
 #!/usr/bin/env bash
 # /etc/keepalived/notify.sh
+# Keep haproxy running on BOTH nodes. Stopping it on BACKUP fails check_haproxy there
+# (90-20=70 < 80), so the VIP would never fail over. HAProxy binds the VIP on the
+# BACKUP via net.ipv4.ip_nonlocal_bind=1 in /etc/sysctl.d/.
 set -euo pipefail
 STATE=$1
 case $STATE in
-  MASTER)
-    logger "keepalived: became MASTER, starting services"
-    systemctl start haproxy
-    ;;
-  BACKUP)
-    logger "keepalived: became BACKUP, stopping services"
-    systemctl stop haproxy
-    ;;
-  FAULT)
-    logger "keepalived: entered FAULT state"
-    ;;
+  MASTER) logger "keepalived: became MASTER" ;;
+  BACKUP) logger "keepalived: became BACKUP" ;;
+  FAULT)  logger "keepalived: entered FAULT state" ;;
 esac
 ```
 
@@ -333,7 +327,7 @@ tcpdump -i enp0s3 -nn proto 112
 | VIP fails over but clients can't reach it | Gratuitous ARP not received | Check switch ARP settings, verify same L2 segment |
 | Constant flapping (MASTER/BACKUP) | Health check script is flaky | Increase `fall`/`rise` values, check script reliability |
 | keepalived starts but no VIP | Config error, interface name wrong | Check `journalctl -u keepalived`, verify interface name matches |
-| VIP works but service doesn't | Service not running on new MASTER | Add notify scripts to start/stop services on transition |
+| VIP works but service doesn't | Service not running on new MASTER | Run the service on all nodes (ip_nonlocal_bind=1); use notify only for side effects |
 
 ---
 

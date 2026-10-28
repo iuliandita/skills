@@ -292,7 +292,7 @@ lint-workflows:
   runs-on: ubuntu-24.04
   steps:
     - uses: actions/checkout@<sha>
-    - uses: woodruffw/zizmor-action@<sha>
+    - uses: zizmorcore/zizmor-action@<sha>
 ```
 
 Zizmor is a static analysis linter specifically for GitHub Actions. Low false-positive rate.

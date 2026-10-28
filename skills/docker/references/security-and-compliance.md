@@ -310,7 +310,7 @@ COPY .env /app/.env
 
 ## PCI-DSS 4.0 Container Requirements
 
-PCI-DSS 4.0 is the only active version (3.2.1 retired March 2024). All future-dated requirements became mandatory March 31, 2025.
+PCI-DSS 4.0.1 is the only active version (4.0 retired December 31, 2024; 3.2.1 retired March 2024). All future-dated requirements became mandatory March 31, 2025.
 
 ### Requirements mapped to container controls
 

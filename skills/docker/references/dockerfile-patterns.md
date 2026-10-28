@@ -151,7 +151,7 @@ RUN --mount=type=cache,target=/root/.npm \
 COPY . .
 RUN npm run build && npm prune --omit=dev
 
-FROM gcr.io/distroless/nodejs22-debian12
+FROM gcr.io/distroless/nodejs22-debian13
 WORKDIR /app
 COPY --from=build --chown=1001:1001 /app/dist ./dist
 COPY --from=build --chown=1001:1001 /app/node_modules ./node_modules
@@ -159,7 +159,7 @@ COPY --from=build --chown=1001:1001 /app/package.json ./
 USER 1001
 EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD ["node", "-e", "fetch('http://localhost:3000/health').then(r=>r.ok?process.exit(0):process.exit(1)).catch(()=>process.exit(1))"]
+  CMD ["/nodejs/bin/node", "-e", "fetch('http://localhost:3000/health').then(r=>r.ok?process.exit(0):process.exit(1)).catch(()=>process.exit(1))"]
 CMD ["dist/index.js"]
 ```
 
@@ -213,7 +213,7 @@ EXPOSE 8080
 ENTRYPOINT ["/app"]
 ```
 
-`CGO_ENABLED=0` for scratch/distroless. `-ldflags="-s -w"` strips debug info (~30% smaller). No `HEALTHCHECK` in a `scratch` image: it ships no probe binary. Distroless has no shell either, so a probe there must be exec form calling a binary the image actually ships (the Node.js template above calls its bundled `node`). When neither exists, use Compose `healthcheck:` or K8s probes instead.
+`CGO_ENABLED=0` for scratch/distroless. `-ldflags="-s -w"` strips debug info (~30% smaller). No `HEALTHCHECK` in a `scratch` image: it ships no probe binary. Distroless has no shell either, so a probe there must be exec form calling a binary the image actually ships (the Node.js template above calls `/nodejs/bin/node` by absolute path: distroless puts node off PATH). When neither exists, use Compose `healthcheck:` or K8s probes instead.
 
 ### Python
 
@@ -260,7 +260,7 @@ RUN --mount=type=cache,target=/usr/local/cargo/registry \
     --mount=type=cache,target=/app/target \
     cargo build --release && cp target/release/myapp /usr/local/bin/
 
-FROM gcr.io/distroless/cc-debian12
+FROM gcr.io/distroless/cc-debian13
 COPY --from=build /usr/local/bin/myapp /app
 USER 65534:65534
 EXPOSE 8080
@@ -400,5 +400,5 @@ For variant builds (alpine, distroless), use separate Dockerfile targets or `--b
 - **Distroless has no shell**: `docker exec -it ... sh` won't work. Use ephemeral debug containers or Chainguard dev variants for debugging.
 - **Scratch has no CA certs**: copy `/etc/ssl/certs/ca-certificates.crt` from the build stage for HTTPS.
 - **Go `CGO_ENABLED=0`**: required for scratch/distroless. With CGO enabled, you need glibc in the runtime image.
-- **Multi-arch + distroless**: Google distroless images support amd64 + arm64. Chainguard Wolfi images support both too. When using `--platform` in multi-stage builds, the build stage platform and runtime stage platform are independent - `FROM --platform=$BUILDPLATFORM golang:1.26 AS build` cross-compiles on the host arch, then `FROM gcr.io/distroless/static-debian12` uses the target arch automatically.
+- **Multi-arch + distroless**: Google distroless images support amd64 + arm64. Chainguard Wolfi images support both too. When using `--platform` in multi-stage builds, the build stage platform and runtime stage platform are independent - `FROM --platform=$BUILDPLATFORM golang:1.26 AS build` cross-compiles on the host arch, then `FROM gcr.io/distroless/static-debian13` uses the target arch automatically.
 - **pip `--no-cache-dir` vs cache mounts**: pick one approach. With `--mount=type=cache,target=/root/.cache/pip`, pip caches to the mount (fast rebuilds) - don't add `--no-cache-dir` or it defeats the mount. Without cache mounts, use `--no-cache-dir` to avoid caching in the image layer.

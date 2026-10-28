@@ -325,7 +325,7 @@ table inet filter {
     iif lo accept
     tcp dport 22 accept
     icmp type echo-request accept
-    icmpv6 type { echo-request, nd-neighbor-solicit, nd-router-advert } accept
+    icmpv6 type { echo-request, nd-neighbor-solicit, nd-neighbor-advert, nd-router-advert } accept
   }
   chain forward { type filter hook forward priority 0; policy drop; }
   chain output { type filter hook output priority 0; policy accept; }

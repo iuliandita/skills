@@ -15,7 +15,7 @@ and audit logging for regulated environments.
 
 ## PCI-DSS 4.0 Requirements Mapping
 
-PCI-DSS 4.0 is the only active version (3.2.1 retired March 2024). 51 future-dated requirements
+PCI-DSS 4.0.1 is the only active version (4.0 retired December 31, 2024; 3.2.1 retired March 2024). 51 future-dated requirements
 became mandatory March 31, 2025. Ansible enforces configuration-level controls on managed systems.
 
 ### Where Ansible is the primary enforcement tool
@@ -177,9 +177,12 @@ MaxAuthTries {{ ssh_max_auth_tries | default(3) }}
 MaxSessions {{ ssh_max_sessions | default(2) }}
 LoginGraceTime {{ ssh_login_grace_time | default(60) }}
 
-# Session
+# Session: ClientAlive* only drops dead peers (CountMax 0 disables that on OpenSSH 8.2+).
+# Idle-session timeout (PCI-DSS 8.2.8, 15 min) needs ChannelTimeout/UnusedConnectionTimeout (OpenSSH 9.2+).
 ClientAliveInterval {{ ssh_alive_interval | default(300) }}
-ClientAliveCountMax {{ ssh_alive_count_max | default(0) }}
+ClientAliveCountMax {{ ssh_alive_count_max | default(3) }}
+ChannelTimeout session={{ ssh_idle_timeout | default('15m') }}
+UnusedConnectionTimeout {{ ssh_idle_timeout | default('15m') }}
 
 # Access control
 {% if ssh_allow_users is defined %}
