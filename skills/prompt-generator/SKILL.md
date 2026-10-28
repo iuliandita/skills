@@ -107,10 +107,11 @@ Most of the time, skip this step entirely.
 ### Step 4: Save
 
 1. Use an exact user-specified filename unchanged. Otherwise resolve output directory:
-   user-specified directory > `docs/local/prompts/` > `docs/` > ask
-2. Only when no filename was specified, scan for `NNN-*.md` files, increment the highest
-   number, zero-pad to 3 digits, and infer a topic slug (e.g., `code-review`).
-3. Write to the specified filename or the resolved `<output-dir>/NNN-slug.md`.
+   user-specified directory > `docs/local/prompts/` (only if `git check-ignore` confirms
+   it) > ask. Never save drafts to tracked `docs/`.
+2. Only when no filename was specified, name the file `<YYYY-MM-DD>-<slug>.md` with an inferred
+   topic slug (e.g., `code-review`); append `-2`, `-3`, etc. if that name exists.
+3. Write to the specified filename or the resolved `<output-dir>/<YYYY-MM-DD>-<slug>.md`.
 
 ---
 
@@ -145,7 +146,7 @@ Only include sections that apply. A simple prompt with no variables skips the Va
 The frontmatter block applies to the saved file only. An inline draft or a review output has no
 frontmatter, because there is no persisted artifact to describe.
 
-Optional frontmatter additions: `tags: [...]`, `related: [NNN-other.md]` - only when genuinely useful.
+Optional frontmatter additions: `tags: [...]`, `related: [<YYYY-MM-DD>-other.md]` - only when genuinely useful.
 
 **Target model values**: `claude`, `gpt`, `gemini`, `llama`, `mistral`, `model-agnostic`
 

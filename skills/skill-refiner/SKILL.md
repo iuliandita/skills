@@ -233,10 +233,10 @@ continue.
     j. Major flag upheld: hard revert; contested major flag: escalate to the human (circuit breaker)
     k. **Karpathy gate**: compute the lower-bound composite for the change and for the
        pre-change version with the same formula. Keep only when the lower-bound composite
-       strictly improves by at least the plateau delta (2 points) over the previous lower-bound
-       composite, or when it preserves that composite while reducing complexity or lines with
-       no behavior change; unverifiable point-estimate moves never keep a change. Otherwise
-       revert.
+       strictly improves by at least the plateau delta (`--plateau`, default 2 points) over the
+       previous lower-bound composite, or when it preserves that composite while reducing
+       complexity or lines with no behavior change; unverifiable point-estimate moves never
+       keep a change. Otherwise revert.
 12. **Commit iteration**: one commit with all improvements from this iteration
     Format: `refactor(skill-refiner): iteration N - skill1(+X), skill2(+Y)`
 13. **Regression sweep, then log iteration summary**: every iteration, after the improvement
@@ -378,8 +378,8 @@ Before committing any skill modification, verify:
 - [ ] **Spec valid**: validate-spec.sh exits 0 for the modified skill
 - [ ] **Score improved**: a change is kept only when its lower-bound composite (minimum of
   k >= 3 fresh-context gradings per component) strictly improves by at least the plateau delta
-  (2 points), or when it preserves that composite while reducing complexity or lines with no
-  behavior change
+  (`--plateau`, default 2 points), or when it preserves that composite while reducing
+  complexity or lines with no behavior change
 - [ ] **No content regression**: change does not remove critical sections, warnings,
   or cross-references without replacement
 - [ ] **Simplicity maintained**: change does not add unnecessary complexity for marginal gains,
@@ -421,10 +421,10 @@ See `references/output-contract.md` for the full contract.
 - **skill-creator** - the evaluation and improvement engine. skill-refiner invokes
   skill-creator's review mode (Mode 2) for scoring and its improve mode for
   generating changes. skill-creator handles individual skill quality; skill-refiner
-  handles iteration, prioritization, and orchestration. Primary dependency.
-- **repo-audit** - one-off collection audit across code-review, code-simplification,
-  security-audit, and update-docs. Use **repo-audit** for a single pass over
-  application code; use skill-refiner for iterative improvement of skill files.
+  handles iteration, prioritization, and orchestration. Primary dependency. For a one-off
+  skill-collection audit without iteration, use skill-creator Mode 3 directly.
+- **repo-audit** - application-code audits only (code, security, docs); it does not audit
+  the skill collection.
 - **code-simplification** - code quality patterns. skill-refiner may invoke code-simplification
   principles through skill-creator during improvement, but does not call code-simplification
   directly. Different domain: code-simplification audits application code, skill-refiner
@@ -442,9 +442,9 @@ See `references/output-contract.md` for the full contract.
    iteration commit that touches this set, so the rule is not self-enforced.
 2. **Karpathy gate**: only lower-bound improvements at or above the noise floor survive.
    Keep a change only when its lower-bound composite strictly improves by at least the
-   plateau delta (2 points) over the previous lower-bound composite, or when it preserves
-   that composite while reducing complexity or lines with no behavior change. Revert
-   otherwise; unverifiable point-estimate moves never keep a change.
+   plateau delta (`--plateau`, default 2 points) over the previous lower-bound composite,
+   or when it preserves that composite while reducing complexity or lines with no behavior
+   change. Revert otherwise; unverifiable point-estimate moves never keep a change.
 3. **Independent flag adjudication**: never take peer flags at face value, and never let the
    context that authored the change adjudicate them. A fresh context independent of the author
    decides each flag: an upheld minor deducts penalty weight, a disputed minor is logged and left
