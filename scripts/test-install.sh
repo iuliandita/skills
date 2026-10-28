@@ -1036,6 +1036,22 @@ PY
   trap - RETURN
 }
 
+test_embedded_python_ignores_cwd_modules() {
+  local tmp module
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  mkdir -p "$tmp/cwd"
+  for module in json os; do
+    printf 'open("%s", "w").close()\n' "$tmp/pwned" > "$tmp/cwd/$module.py"
+  done
+  (cd "$tmp/cwd" && HOME="$tmp" "$ROOT/install.sh" --list >/dev/null)
+  (cd "$tmp/cwd" && HOME="$tmp" "$ROOT/install.sh" --tool opencode --no-backup docker >/dev/null)
+  [[ ! -e "$tmp/pwned" ]] || fail "embedded Python imported a module from cwd"
+  ! grep -nE 'python3 -(c | |$)' "$ROOT/install.sh" || fail "embedded Python invocation is not isolated"
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
 test_doctor_frontmatter_identity() {
   local tmp output
   tmp="$(mktemp -d)"
@@ -1835,6 +1851,7 @@ test_legacy_cleanup_converges_after_interruption
 test_legacy_cleanup_refuses_unsafe_layouts
 test_legacy_cleanup_custom_canonical_needs_replacement
 test_opencode_link_migration_on_canonical_allows_replacement
+test_embedded_python_ignores_cwd_modules
 test_doctor_frontmatter_identity
 test_doctor_reports_duplicates_read_only
 test_doctor_merges_only_equivalent_findings
