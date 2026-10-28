@@ -27,6 +27,10 @@ FILES=(
   "$SELF_CHECK_FILE"
   "scripts/lint-skills.sh"
   "scripts/validate-spec.sh"
+  "scripts/skill-lib.sh"
+  "scripts/skill-frontmatter.py"
+  "scripts/gen-ref-toc.py"
+  "scripts/contract-lib.sh"
 )
 
 for rel in "${FILES[@]}"; do
@@ -51,4 +55,8 @@ ai_self_check_section() {
   ai_self_check_section
   cat "$ROOT/scripts/lint-skills.sh"
   cat "$ROOT/scripts/validate-spec.sh"
+  cat "$ROOT/scripts/skill-lib.sh"
+  cat "$ROOT/scripts/skill-frontmatter.py"
+  cat "$ROOT/scripts/gen-ref-toc.py"
+  cat "$ROOT/scripts/contract-lib.sh"
 } | sha256sum | awk '{ print $1 }'
