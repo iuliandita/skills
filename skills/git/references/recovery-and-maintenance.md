@@ -205,6 +205,12 @@ pip install git-filter-repo
 # Or: pacman -S git-filter-repo
 # Or: brew install git-filter-repo
 
+# Needs explicit approval: this rewrites every shared branch and tag.
+# Before rewriting: record the remote state and keep a recovery bundle (it still
+# contains the secret: mode 0600, delete once the rewrite is verified).
+git ls-remote origin 'refs/heads/*' 'refs/tags/*' | grep -v '\^{}$' > ../remote-before.txt
+git bundle create ../pre-rewrite.bundle --all && chmod 600 ../pre-rewrite.bundle
+
 # Remove a file from entire history
 git filter-repo --invert-paths --path secrets.env
 
@@ -223,14 +229,17 @@ git filter-repo --path-rename old_name/:new_name/
 # Filter by message (remove commits matching pattern)
 git filter-repo --message-callback 'return message.replace(b"INTERNAL", b"REDACTED")'
 
-# After filter-repo: force-push everything
+# After filter-repo:
+# Push each rewritten ref with an explicit lease on its recorded value. Plain
+# --force-with-lease fails here: filter-repo deleted the remote-tracking refs.
 git remote add origin <url>  # filter-repo removes remotes for safety
-git push origin --force --all
-git push origin --force --tags
+while read -r sha ref; do
+  git push origin --force-with-lease="$ref:$sha" "$ref:$ref"
+done < ../remote-before.txt
 ```
 
 **After history rewriting:**
-1. All team members must re-clone or `git fetch --all && git reset --hard origin/main`
+1. Coordinate with the team before pushing. Everyone re-clones. Anyone with unpushed work first runs `git bundle create ~/pre-rewrite.bundle --all`, then cherry-picks their own commits onto the fresh clone. Do not `reset --hard` an old clone: it discards unpushed work, fixes only that one branch, and leaves the other branches and tags on the old history, where a later push brings the secret back.
 2. Forge caches may retain old objects. GitHub: contact support for immediate purge.
    GitLab: `git gc` runs automatically. Forgejo: varies by version.
 3. Tags referencing rewritten commits become dangling. Recreate them.

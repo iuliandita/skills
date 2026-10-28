@@ -237,6 +237,13 @@ When a secret is found in git history:
 2. **Scrub from history** using `git-filter-repo`:
 
 ```bash
+# Needs explicit approval: this rewrites every shared branch and tag.
+# Before rewriting: record the remote state and keep a recovery bundle (it still
+# contains the secret: mode 0600, delete once the rewrite is verified).
+url=$(git remote get-url origin)
+git ls-remote origin 'refs/heads/*' 'refs/tags/*' | grep -v '\^{}$' > ../remote-before.txt
+git bundle create ../pre-rewrite.bundle --all && chmod 600 ../pre-rewrite.bundle
+
 # Populate this mode-0600 temporary file from a secret manager or no-echo stdin.
 : "${GIT_FILTER_REPO_REPLACEMENTS:?set a mode-0600 replacement file}"
 git filter-repo --replace-text "$GIT_FILTER_REPO_REPLACEMENTS"
@@ -246,13 +253,16 @@ unset GIT_FILTER_REPO_REPLACEMENTS
 # Or remove entire files that contained secrets
 git filter-repo --invert-paths --path .env.production
 
-# Force-push all branches and tags
-git push origin --force --all
-git push origin --force --tags
+# filter-repo removed the origin remote.
+# Push each rewritten ref with an explicit lease on its recorded value. Plain
+# --force-with-lease fails here: filter-repo deleted the remote-tracking refs.
+git remote add origin "$url"
+while read -r sha ref; do
+  git push origin --force-with-lease="$ref:$sha" "$ref:$ref"
+done < ../remote-before.txt
 ```
 
-3. **Coordinate with team** - force-push rewrites history. Everyone needs to re-clone or
-   `git fetch --all && git reset --hard origin/main`.
+3. **Coordinate with team** - force-push rewrites history. Coordinate with the team before pushing. Everyone re-clones. Anyone with unpushed work first runs `git bundle create ~/pre-rewrite.bundle --all`, then cherry-picks their own commits onto the fresh clone. Do not `reset --hard` an old clone: it discards unpushed work, fixes only that one branch, and leaves the other branches and tags on the old history, where a later push brings the secret back.
 4. **Update forge** - GitHub/GitLab cache old objects. Contact support for immediate purge,
    or wait for GC (varies by forge).
 5. **Add to `.gitignore`** to prevent recurrence.
