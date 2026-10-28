@@ -175,7 +175,7 @@ If no i18n system exists, set one up. If one exists, skip to Step 3.
 | Catalog format | JSON, YAML, TS objects | Default to JSON (works with most libraries); use TS objects when the project wants key types without extra tooling |
 | Key structure | flat, nested, dot-notation | Dot-notation (`auth.signIn`) balances readability and grep-ability |
 | Interpolation | positional `{0}`, named `{name}`, ICU | Named for readability. Positional is simpler for machine translation |
-| Pluralization | separate keys, ICU MessageFormat | Separate keys work for 2-form languages (English, German). Use ICU for Slavic and Arabic: Russian and Polish each have 4 CLDR plural categories (one/few/many/other), Arabic has 6. Picking "singular/plural" keys up front will force a rewrite later |
+| Pluralization | separate keys, ICU MessageFormat | Never hard-code singular/plural keys. Use the library's CLDR plural support: i18next native suffixes (`_one/_few/_many/_other`, via Intl.PluralRules; polyfill on Hermes) or ICU MessageFormat (FormatJS, vue-i18n, next-intl). Russian/Polish need 4 CLDR categories, Arabic 6. |
 | Locale detection | browser, URL path, cookie, header | Browser detection for first visit, persisted preference after |
 | Fallback | source locale, then key | Always. Never return empty or crash on missing key |
 | Voice register | formal, informal | Decide per target language upfront. Document the choice |
@@ -242,7 +242,7 @@ return <button>{t('auth.signIn')}</button>
 // 2. src/i18n.ts
 import { createI18n } from 'vue-i18n'
 import en from './locales/en.json'
-export const i18n = createI18n({ locale: 'en', fallbackLocale: 'en', messages: { en } })
+export const i18n = createI18n({ legacy: false, locale: 'en', fallbackLocale: 'en', messages: { en } })  // Composition mode; legacy is the deprecated v11 default and is removed in v12
 
 // 3. In any component
 import { useI18n } from 'vue-i18n'
@@ -268,8 +268,9 @@ aria-labels, then placeholders...) is the #1 i18n time sink.
    file has any instances.
 3. Add keys to the source catalog. Use dot-notation: `namespace.context.label`.
 4. Replace hardcoded strings with `t()` calls (or the project's equivalent).
-5. Convert template literals: `` `${name} connected` `` becomes
-   `t('service.connected').replace('{0}', name)` or the library's interpolation syntax.
+5. Convert template literals: `` `${name} connected` `` becomes `t('service.connected', { name })`
+   with catalog text `{{name}} connected` (i18next) or `{name} connected` (vue-i18n/ICU). Never
+   `.replace()` on translated output; it bypasses escaping and breaks word order.
 
 **String categories quick reference:**
 
