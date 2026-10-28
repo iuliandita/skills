@@ -602,7 +602,7 @@ scripts/
   validate-spec.sh        # Agent Skills spec validator
   test-install.sh         # installer regression tests
   check-*.sh              # repository-specific safety and freshness checks
-  gen-contract-refs.sh    # regenerates shipped output-contract copies
+  gen-contract-refs.sh    # regenerates shipped output-contract and agent-hygiene copies
   gen-ref-toc.py          # generates reference contents lists
   skill-frontmatter.py    # frontmatter parser used by linters
   skill-lib.sh            # shared shell helpers

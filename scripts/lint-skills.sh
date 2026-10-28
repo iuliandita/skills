@@ -304,8 +304,8 @@ check_ai_self_check() {
 #
 # Match on the full item text, not the bold label: an item that reuses a
 # label like "Routing overlap checked" with its own hand-written body (e.g.
-# skill-router's overlap check, or synology-dsm's DSM-specific checks) is
-# authored content, not injected filler, and must not be flagged.
+# synology-dsm's DSM-specific checks) is authored content, not injected
+# filler, and must not be flagged.
 #
 # skill-refiner and skill-creator are exempt only because verification is their domain; phase-1 changes to this list remain subject to scripts/check-refiner-phase1-guard.sh, not self-enforced.
 GENERIC_SELF_CHECK_ITEMS=(
@@ -354,8 +354,7 @@ check_generic_self_check_ratio() {
 # ── Collection-wide symlink check ──────────────────────────────────────
 # Reject committed symlinks under skills/. install.sh's skill_hash uses
 # `find` without -L so symlinks are no longer followed, but a committed
-# symlink would still confuse downstream tooling. See SECURITY-AUDIT.md
-# SEC-007.
+# symlink would still confuse downstream tooling.
 check_no_symlinks() {
   local dir="$1"
   local found
