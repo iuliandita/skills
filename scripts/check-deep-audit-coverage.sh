@@ -5,6 +5,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 # shellcheck source=./scripts/skill-lib.sh
 source "$ROOT/scripts/skill-lib.sh"
+frontmatter_cache_load "$ROOT/skills" metadata.deprecated
 
 mapfile -t public_skills < <(
   git -C "$ROOT" ls-files 'skills/*/SKILL.md' \

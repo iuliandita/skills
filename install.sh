@@ -15,17 +15,24 @@ MIGRATOR="${SKILLS_MIGRATOR:-$SCRIPT_DIR/scripts/migrate-skills.py}"
 # skill declares metadata.internal: "true".
 discover_skills() {
   local include_internal="${1:-false}"
-  local skills=()
+  local skills=() names=() dir name
+  local -A ignored=()
   for dir in "$SKILLS_SRC"/*/; do
     [[ -f "$dir/SKILL.md" ]] || continue
-    local name
-    name="$(basename "$dir")"
-    # Skip gitignored skills - if not in a git repo, include everything.
-    if git -C "$SKILLS_SRC" rev-parse --git-dir &>/dev/null; then
-      if git -C "$SKILLS_SRC" check-ignore -q "$name" 2>/dev/null; then
-        if [[ "$include_internal" != "true" ]] || ! is_internal "$dir"; then
-          continue
-        fi
+    name="${dir%/}"
+    names+=("${name##*/}")
+  done
+  # Skip gitignored skills - if not in a git repo, include everything.
+  # One check-ignore over all names instead of one git process per skill.
+  if (( ${#names[@]} )) && git -C "$SKILLS_SRC" rev-parse --git-dir &>/dev/null; then
+    while IFS= read -r -d '' name; do
+      ignored[$name]=1
+    done < <(printf '%s\0' "${names[@]}" | git -C "$SKILLS_SRC" check-ignore -z --stdin 2>/dev/null || true)
+  fi
+  for name in "${names[@]}"; do
+    if [[ -n "${ignored[$name]:-}" ]]; then
+      if [[ "$include_internal" != "true" ]] || ! is_internal "$SKILLS_SRC/$name/"; then
+        continue
       fi
     fi
     skills+=("$name")
@@ -638,21 +645,26 @@ PY
   [[ -z "$out" ]] || mapfile -t LOCK_PUBLISHED <<< "$out"
 }
 
-read_lock_hash() {
-  local lock_file="$1" skill="$2"
+# Print NUL-separated skill/hash pairs from a lock file in one python run, only
+# for skills whose record carries a hash.
+read_lock_hashes() {
+  local lock_file="$1"
+  shift
   [[ -f "$lock_file" ]] || return 0
-  python3 -I - "$lock_file" "$skill" <<'PY'
+  python3 -I - "$lock_file" "$@" <<'PY'
 import json
 import sys
 
-try:
-    value = json.load(open(sys.argv[1], encoding="utf-8"))["skills"].get(sys.argv[2])
-    if isinstance(value, str):
-        print(value)
-    elif isinstance(value, dict) and isinstance(value.get("hash"), str):
-        print(value["hash"])
-except (OSError, ValueError, TypeError, json.JSONDecodeError):
-    pass
+out = sys.stdout.buffer
+for skill in sys.argv[2:]:
+    try:
+        value = json.load(open(sys.argv[1], encoding="utf-8"))["skills"].get(skill)
+        if isinstance(value, dict):
+            value = value.get("hash")
+        if isinstance(value, str) and value.rstrip("\n"):
+            out.write(skill.encode() + b"\0" + value.rstrip("\n").encode("utf-8", "surrogateescape") + b"\0")
+    except (OSError, ValueError, TypeError, json.JSONDecodeError):
+        pass
 PY
 }
 
@@ -1201,9 +1213,40 @@ publish_lock() {
 # for it and any existing record is left byte-identical.
 DIFFER_COUNT=0
 
+# Tree digests prefetched for the current install_into pass, keyed by path.
+# Only clean 64-hex digests are kept; anything else falls back to a per-skill
+# call so its error output appears where it did before.
+declare -A TREE_DIGESTS=()
+
+# Hash every existing copy in a destination and its source in one python run
+# instead of one run per skill. Args: <dest_dir> <skill>...
+prefetch_tree_digests() {
+  local dest_dir="$1" skill out i
+  shift
+  local -a paths=() digests=()
+  TREE_DIGESTS=()
+  for skill in "$@"; do
+    validate_skill_name "$skill" || continue
+    [[ -d "$SKILLS_SRC/$skill" ]] || continue
+    present "$dest_dir/$skill" || continue
+    paths+=("$dest_dir/$skill" "$SKILLS_SRC/$skill")
+  done
+  (( ${#paths[@]} )) || return 0
+  out="$(tree_digests "${paths[@]}" 2>/dev/null)" || return 0
+  mapfile -t digests <<< "$out"
+  (( ${#digests[@]} == ${#paths[@]} )) || return 0
+  for i in "${!paths[@]}"; do
+    [[ "${digests[i]}" =~ ^[0-9a-f]{64}$ ]] && TREE_DIGESTS[${paths[i]}]="${digests[i]}"
+  done
+  return 0
+}
+
 classify_installed_copy() {
   local skill="$1" work="$2" out dst_tree="" src_tree=""
-  if out="$(tree_digests "$work" "$SKILLS_SRC/$skill")"; then
+  if [[ -n "${TREE_DIGESTS[$work]:-}" && -n "${TREE_DIGESTS[$SKILLS_SRC/$skill]:-}" ]]; then
+    dst_tree="${TREE_DIGESTS[$work]}"
+    src_tree="${TREE_DIGESTS[$SKILLS_SRC/$skill]}"
+  elif out="$(tree_digests "$work" "$SKILLS_SRC/$skill")"; then
     mapfile -t out <<< "$out"
     dst_tree="${out[0]:-}"
     src_tree="${out[1]:-}"
@@ -1422,6 +1465,9 @@ install_into() {
   if ! recover_dest "$dest"; then
     stopped=true
     (( INSTALL_FAILURES++ )) || true
+  fi
+  if [[ "$kind" == "copy" && "$force" != "true" && "$stopped" != "true" ]]; then
+    prefetch_tree_digests "$dest" "$@"
   fi
   for skill in "$@"; do
     if ! validate_skill_name "$skill"; then
@@ -2128,14 +2174,27 @@ check_updates() {
 
   printf 'Checking for updates...\n\n'
 
-  local outdated=0 current=0 missing=0 legacy=0
+  local outdated=0 current=0 missing=0 legacy=0 tmp i
+  local -a checked=() pairs=()
+  local -A lock_hashes=()
   for skill in "${ALL_SKILLS[@]}"; do
     [[ -d "$SKILLS_SRC/$skill" ]] || continue
     is_deprecated "$SKILLS_SRC/$skill" && continue
+    checked+=("$skill")
+  done
+  # One python run reads every lock hash instead of one per skill.
+  tmp="$(mktemp)"
+  read_lock_hashes "$lock_file" "${checked[@]}" > "$tmp"
+  mapfile -d '' -t pairs < "$tmp"
+  rm -f "$tmp"
+  for (( i = 0; i + 1 < ${#pairs[@]}; i += 2 )); do
+    lock_hashes[${pairs[i]}]="${pairs[i+1]}"
+  done
 
+  for skill in "${checked[@]}"; do
     local src_hash installed_hash
     src_hash="$(skill_hash "$SKILLS_SRC/$skill")"
-    installed_hash="$(read_lock_hash "$lock_file" "$skill")"
+    installed_hash="${lock_hashes[$skill]:-}"
 
     if [[ -z "$installed_hash" ]]; then
       printf '  [?] %-24s not installed\n' "$skill"

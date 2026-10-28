@@ -16,6 +16,8 @@ source "$(dirname "${BASH_SOURCE[0]}")/contract-lib.sh"
 # shellcheck source=./scripts/skill-lib.sh
 source "$(dirname "${BASH_SOURCE[0]}")/skill-lib.sh"
 
+frontmatter_cache_load "$ROOT/skills" metadata.deprecated
+
 fail=0
 exempt_pattern=""
 for n in "${SHARED_FILE_NAMES[@]}"; do

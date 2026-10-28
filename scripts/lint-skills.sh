@@ -234,28 +234,30 @@ check_reference_toc() {
 # ── Banned word check (warning only) ──────────────────────────────────
 BANNED_WORDS=(delve tapestry nuanced multifaceted utilize commence facilitate synergy leverage holistic empower seamless innovative)
 
+BANNED_WORDS_RE="\\b($(IFS='|'; echo "${BANNED_WORDS[*]}"))\\b"
+
 check_banned_words() {
   local dir="$1" name="$2"
+  # anti-ai-prose is the meta-reference for AI prose tells and must name them.
+  [[ "$name" == "anti-ai-prose" ]] && return 0
+  local f basename_f word hit
+  local -A found
   for f in "$dir"/SKILL.md "$dir"/references/*.md; do
     [[ -f "$f" ]] || continue
-    # Skip files that legitimately catalog banned words as examples.
-    # - skill-creator's conventions.md lists the banned vocabulary
-    # - anti-ai-prose is the meta-reference for AI prose tells and must name them
-    [[ "$(basename "$f")" == "conventions.md" ]] && continue
-    [[ "$name" == "anti-ai-prose" ]] && continue
-    local basename_f prose
-    basename_f=$(basename "$f")
-    # Skip fenced code blocks once per file, then match each word against it.
-    prose=$(awk '/^```/{skip=!skip; next} !skip{print NR": "$0}' "$f" || true)
+    basename_f="${f##*/}"
+    # skill-creator's conventions.md lists the banned vocabulary.
+    [[ "$basename_f" == "conventions.md" ]] && continue
+    # One grep per file finds every banned word outside fenced code blocks
+    # (word-boundary, case-insensitive); warnings keep BANNED_WORDS order.
+    found=()
+    while IFS= read -r hit; do
+      found["${hit,,}"]=1
+    done < <(awk '/^```/{skip=!skip; next} !skip' "$f" | grep -oiE "$BANNED_WORDS_RE" || true)
     for word in "${BANNED_WORDS[@]}"; do
-      # Word-boundary match, case-insensitive
-      local matches
-      matches=$(grep -i "\\b${word}\\b" <<< "$prose" || true)
-      if [[ -n "$matches" ]]; then
-        warn "$name: banned word '$word' in $basename_f"
-      fi
+      [[ -n "${found[$word]:-}" ]] && warn "$name: banned word '$word' in $basename_f"
     done
   done
+  return 0
 }
 
 # ── Prose double-dash check ────────────────────────────────────────────
