@@ -56,7 +56,7 @@ Smaller code is not automatically better. A finding needs a concrete maintenance
 
 - `references/maintainability-patterns.md` - quality, grounding, test, and language prompts.
 - `references/language-patterns.md` - condensed cross-language quality and preservation prompts; read for a quick mixed-language pass, then open the detailed file for any language with candidate findings.
-- `references/typescript.md`, `python.md`, `shell.md`, `rust.md`, `docker.md`, and `iac.md` - detailed language and infrastructure prompts.
+- `references/typescript.md`, `references/python.md`, `references/shell.md`, `references/rust.md`, `references/docker.md`, and `references/iac.md` - detailed language and infrastructure prompts.
 - `references/patterns.md` - detailed safe-reduction classification and no-reference guidance.
 - `references/research-sources.md` - optional source context when citations help.
 - `references/reduction-patterns.md` - dead-code and behavior-preserving reduction proofs.

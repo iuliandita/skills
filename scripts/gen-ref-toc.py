@@ -30,8 +30,7 @@ TOC_MIN_LINES = 100
 # How far from the top a hand-written table of contents may start and still count
 # as visible to a partial read.
 TOC_SEARCH_LINES = 40
-# Generated per-skill copies of skills/_shared/*; their source owns their shape.
-SHARED_COPIES = {"output-contract.md", "agent-hygiene.md"}
+CONTRACT_LIB = Path(__file__).resolve().parent / "contract-lib.sh"
 
 GENERATED_HEADING = "## Contents"
 MANUAL_TOC = re.compile(r"^#{2,3}\s+(table of contents|contents)\s*$", re.I)
@@ -53,9 +52,28 @@ def headings(lines: list[str], level: str) -> list[str]:
     return out
 
 
+def shared_copies() -> set[str]:
+    """Generated per-skill copies of skills/_shared/*, as listed in contract-lib.sh."""
+    names: set[str] = set()
+    in_block = False
+    for ln in CONTRACT_LIB.read_text(encoding="utf-8").splitlines():
+        if ln.startswith("SHARED_FILE_NAMES=("):
+            in_block = True
+        elif in_block and ln.strip() == ")":
+            break
+        elif in_block and ln.strip():
+            names.add(ln.strip().strip("\"'"))
+    if not names:
+        sys.exit(f"gen-ref-toc: no SHARED_FILE_NAMES parsed from {CONTRACT_LIB}")
+    return names
+
+
 def generated_start(lines: list[str]) -> int:
-    """Index of a generated block: `## Contents`, a blank line, then `- ` bullets."""
-    for i, ln in enumerate(lines[: len(lines) - 2]):
+    """Index of a generated block: `## Contents`, a blank line, then `- ` bullets.
+
+    Only the top of the file is searched; a deeper `## Contents` belongs to the author.
+    """
+    for i, ln in enumerate(lines[: min(len(lines) - 2, TOC_SEARCH_LINES)]):
         if ln.rstrip() == GENERATED_HEADING and not lines[i + 1].strip() and lines[i + 2].startswith("- "):
             return i
     return -1
@@ -146,7 +164,8 @@ def collect(paths: list[Path]) -> list[Path]:
                     files.extend(sorted((skill / "references").glob("*.md")))
         else:
             sys.exit(f"gen-ref-toc: no such path: {p}")
-    return [f for f in files if f.name not in SHARED_COPIES and not is_ignored(f)]
+    shared = shared_copies()
+    return [f for f in files if f.name not in shared and not is_ignored(f)]
 
 
 def main() -> int:
@@ -155,9 +174,14 @@ def main() -> int:
     ap.add_argument("paths", nargs="*", type=Path, default=[Path("skills")])
     args = ap.parse_args()
 
-    drift = 0
+    drift = unreadable = 0
     for f in collect(args.paths):
-        text = f.read_text(encoding="utf-8")
+        try:
+            text = f.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError) as exc:
+            unreadable += 1
+            print(f"{f}: unreadable reference ({exc})")
+            continue
         lines = text.split("\n")
         trailing = lines[-1] == ""
         if trailing:
@@ -171,7 +195,7 @@ def main() -> int:
         else:
             f.write_text("\n".join(new) + ("\n" if trailing else ""), encoding="utf-8")
             print(f"updated {f}")
-    return 1 if args.check and drift else 0
+    return 1 if unreadable or (args.check and drift) else 0
 
 
 if __name__ == "__main__":

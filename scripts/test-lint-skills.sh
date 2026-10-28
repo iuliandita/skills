@@ -39,7 +39,7 @@ metadata:
 
 ## Workflow
 
-1. Run the lint fixture. Fixture references, when present: details.md, shared.md, test-cases.md.
+1. Run the lint fixture. Fixture references, when present: references/details.md, references/shared.md, references/test-cases.md.
 
 ## Rules
 
@@ -596,6 +596,109 @@ test_long_reference_needs_contents() {
   trap - RETURN
 }
 
+test_unreadable_reference_fails() {
+  local tmp skill_dir output status
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  skill_dir="$tmp/skills/lint-fixture"
+  write_minimal_skill "$skill_dir" "lint-fixture"
+  printf '\nRead `references/bad.md` for details.\n' >> "$skill_dir/SKILL.md"
+  printf '# Bad\n\n\xff\xfe not utf-8\n' > "$skill_dir/references/bad.md"
+
+  status=0
+  output="$("$ROOT/scripts/lint-skills.sh" "$tmp/skills" 2>&1)" || status=$?
+  if (( status == 0 )); then
+    printf '%s\n' "$output" >&2
+    fail "lint-skills.sh passed despite a non-UTF-8 reference"
+  fi
+  if [[ "$output" != *"references/bad.md: unreadable reference"* ]]; then
+    printf '%s\n' "$output" >&2
+    fail "lint-skills.sh did not report the unreadable reference"
+  fi
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_reference_link_needs_exact_path() {
+  local tmp skill_dir output status
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  skill_dir="$tmp/skills/lint-fixture"
+  write_minimal_skill "$skill_dir" "lint-fixture"
+  printf '\nRead `references/anti-patterns.md` for details.\n' >> "$skill_dir/SKILL.md"
+  printf '# Anti-patterns\n' > "$skill_dir/references/anti-patterns.md"
+  printf '# Patterns\n' > "$skill_dir/references/patterns.md"
+
+  status=0
+  output="$("$ROOT/scripts/lint-skills.sh" "$tmp/skills" 2>&1)" || status=$?
+  if (( status == 0 )) || [[ "$output" != *"references/patterns.md is not linked from SKILL.md"* ]]; then
+    printf '%s\n' "$output" >&2
+    fail "lint-skills.sh treated references/patterns.md as linked by references/anti-patterns.md"
+  fi
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_author_contents_section_survives() {
+  local tmp skill_dir ref i j
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  skill_dir="$tmp/skills/lint-fixture"
+  write_minimal_skill "$skill_dir" "lint-fixture"
+  ref="$skill_dir/references/long.md"
+  printf '# Long\n\n' > "$ref"
+  for i in 1 2 3; do
+    printf '## Section %s\n\n' "$i" >> "$ref"
+    for ((j = 0; j < 40; j++)); do printf 'line\n' >> "$ref"; done
+  done
+  printf '## Contents\n\n- author item one\n- author item two\n' >> "$ref"
+
+  python3 "$ROOT/scripts/gen-ref-toc.py" "$skill_dir" > /dev/null
+  if ! grep -q '^- author item two$' "$ref"; then
+    fail "gen-ref-toc.py removed an author's '## Contents' section deep in the file"
+  fi
+  if ! python3 "$ROOT/scripts/gen-ref-toc.py" --check "$skill_dir" > /dev/null; then
+    fail "gen-ref-toc.py --check reported drift right after writing"
+  fi
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_reference_non_ascii_outside_code_fails() {
+  local tmp skill_dir output status
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  skill_dir="$tmp/skills/lint-fixture"
+  write_minimal_skill "$skill_dir" "lint-fixture"
+  printf '\nRead `references/details.md` for details.\n' >> "$skill_dir/SKILL.md"
+  printf '# Details\n\n```text\n\xe2\x9c\x93 fenced\n```\n\nInline `\xc3\xbc` code.\n' > "$skill_dir/references/details.md"
+
+  status=0
+  output="$("$ROOT/scripts/lint-skills.sh" "$tmp/skills" 2>&1)" || status=$?
+  if (( status != 0 )); then
+    printf '%s\n' "$output" >&2
+    fail "lint-skills.sh rejected non-ASCII inside a reference fence or code span"
+  fi
+
+  printf '\n\xe2\x9c\x93 done\n' >> "$skill_dir/references/details.md"
+  status=0
+  output="$("$ROOT/scripts/lint-skills.sh" "$tmp/skills" 2>&1)" || status=$?
+  if (( status == 0 )) || [[ "$output" != *"non-ASCII character at references/details.md:"* ]]; then
+    printf '%s\n' "$output" >&2
+    fail "lint-skills.sh passed despite non-ASCII in reference prose"
+  fi
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
 # Banned words are warning-only by design, so the mutation cannot force a
 # non-zero exit without also making every existing warning an error. The test
 # asserts the check fires and names the word, which is the failure signal.
@@ -807,6 +910,10 @@ test_non_ascii_character_fails
 test_skill_over_hard_max_lines_fails
 test_unlinked_reference_fails
 test_long_reference_needs_contents
+test_unreadable_reference_fails
+test_reference_link_needs_exact_path
+test_author_contents_section_survives
+test_reference_non_ascii_outside_code_fails
 test_banned_word_is_reported
 test_canonical_section_without_test_case_fails
 test_docs_fixture_passes
