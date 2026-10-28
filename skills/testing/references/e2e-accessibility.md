@@ -225,7 +225,7 @@ import AxeBuilder from "@axe-core/playwright";
 test("homepage passes WCAG 2.1 AA", async ({ page }) => {
   await page.goto("/");
   const results = await new AxeBuilder({ page })
-    .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
+    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
     .analyze();
   expect(results.violations).toEqual([]);
 });
@@ -244,7 +244,7 @@ test("dashboard is accessible (known issues excluded)", async ({ page }) => {
   await page.goto("/dashboard");
   const results = await new AxeBuilder({ page })
     .exclude("#third-party-widget")  // tracked in JIRA-1234
-    .withTags(["wcag2a", "wcag2aa"])
+    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
     .analyze();
   expect(results.violations).toEqual([]);
 });
@@ -261,7 +261,7 @@ test("dashboard is accessible (known issues excluded)", async ({ page }) => {
 | `wcag22aa` | WCAG 2.2 | AA (latest) |
 | `best-practice` | axe best practices | beyond WCAG |
 
-Target `wcag21aa` at minimum. Add `wcag22aa` for new projects.
+Target WCAG 2.1 AA at minimum: pass `wcag2a`, `wcag2aa`, `wcag21a`, `wcag21aa` (tags are not cumulative). Add `wcag22aa` for new projects.
 
 ### Custom accessibility fixtures
 
@@ -277,7 +277,7 @@ type A11yFixtures = {
 export const test = base.extend<A11yFixtures>({
   makeAxeBuilder: async ({ page }, use) => {
     await use(() =>
-      new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa"])
+      new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
     );
   },
 });
@@ -447,7 +447,7 @@ jobs:
 
 ```yaml
 e2e:
-  image: mcr.microsoft.com/playwright:v1.63.0-noble
+  image: mcr.microsoft.com/playwright:v1.64.1-noble
   stage: test
   script:
     - npm ci
@@ -478,7 +478,7 @@ for (const path of pages) {
   test(`a11y: ${path}`, async ({ page }) => {
     await page.goto(path);
     const results = await new AxeBuilder({ page })
-      .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
+      .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
       .analyze();
 
     // Log violations for debugging
@@ -494,7 +494,7 @@ for (const path of pages) {
 ### Docker for consistent test environments
 
 ```dockerfile
-FROM mcr.microsoft.com/playwright:v1.63.0-noble
+FROM mcr.microsoft.com/playwright:v1.64.1-noble
 
 WORKDIR /app
 COPY package*.json ./

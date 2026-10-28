@@ -17,12 +17,12 @@ Write, structure, and maintain tests across unit, integration, E2E, accessibilit
 
 **Target versions** (October 2026):
 - Vitest **5.0.5**, Jest **30.5.2**
-- Playwright **1.63.0**, Cypress **16.1.1** (both Vitest and Cypress are major upgrades; review migration notes)
-- pytest **9.1.1**, pytest-cov **7.1.0**
-- Go **1.27.1** (testing stdlib, `testing/synctest` GA)
-- Rust **1.99.0** (`cargo test`, cargo-nextest **0.9.146**)
+- Playwright **1.64.1**, Cypress **16.1.1** (both Vitest and Cypress are major upgrades; review migration notes)
+- pytest **9.2.0**, pytest-cov **7.1.0**
+- Go **1.27.3** (testing stdlib, `testing/synctest` GA)
+- Rust **1.99.0** (`cargo test`, cargo-nextest **0.9.150**)
 - Testing Library **16.3.3** (`@testing-library/react`)
-- axe-core **4.13.0** (`@axe-core/playwright`)
+- axe-core **4.14.0** (`@axe-core/playwright`)
 - Grafana k6 **2.3.0**
 
 Security check (2026-10-28): [GHSA-2h32-95rg-cppp](https://github.com/vitest-dev/vitest/security/advisories/GHSA-2h32-95rg-cppp)
@@ -252,7 +252,7 @@ def build_user(**overrides) -> User:
 
 Catch WCAG violations automatically. Not a replacement for manual testing, but catches the mechanical stuff (missing alt text, broken ARIA, contrast ratios, keyboard traps).
 
-Use `@axe-core/playwright` (if missing, add it as a dev dependency with the repo's package manager: `npm install -D`, `pnpm add -D`, `yarn add -D`, or `bun add -d` `@axe-core/playwright`) - run `new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa"]).analyze()` and assert zero violations. Scope axe scans to the pages or components the change touches, not the whole app on every change. Exclude known issues with `.exclude()` and track them as tech debt, not permanent exceptions.
+Use `@axe-core/playwright` (if missing, add it as a dev dependency with the repo's package manager: `npm install -D`, `pnpm add -D`, `yarn add -D`, or `bun add -d` `@axe-core/playwright`) - run `new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze()` and assert zero violations. Scope axe scans to the pages or components the change touches, not the whole app on every change. Exclude known issues with `.exclude()` and track them as tech debt, not permanent exceptions.
 
 Own repeatable accessibility regression checks here; use **frontend-design** to repair interaction design and semantics. Record manual keyboard and screen-reader coverage separately from automated scan results.
 
@@ -267,7 +267,7 @@ Two categories: **micro-benchmarks** (is this function fast enough?) and **load 
 ### Micro-benchmarks
 
 - **Go**: `func BenchmarkX(b *testing.B)` - built into the stdlib
-- **Rust**: `cargo bench` with criterion (`criterion = "0.6"`)
+- **Rust**: `cargo bench` with criterion (`criterion = "0.8"`)
 - **JS/TS**: `vitest bench` (use `tinybench` directly outside Vitest)
 - **Python**: `pytest-benchmark` (`timeit` for a one-off measurement)
 
