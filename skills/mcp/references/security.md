@@ -6,7 +6,7 @@ hardening tool handlers, or reviewing MCP code for vulnerabilities.
 ## Contents
 
 - Known CVEs
-- SDK advisory update (checked 2026-09-25)
+- SDK advisory update (checked 2026-10-28)
 - OAuth 2.1 Authorization
 - Stateless Core and Legacy Sessions (Streamable HTTP)
 - Injection Prevention Details
@@ -32,9 +32,10 @@ server can have multiple path and access control flaws at once.
 
 ---
 
-## SDK advisory update (checked 2026-09-25)
+## SDK advisory update (checked 2026-10-28)
 
 - [TypeScript SDK cross-client response leak](https://github.com/modelcontextprotocol/typescript-sdk/security/advisories/GHSA-345p-7cg4-v4c7): legacy `@modelcontextprotocol/sdk` >=1.10.0,<=1.25.3; fixed in 1.26.0. Avoid sharing server/transport instances across clients; verify concurrent-client isolation.
+- [TypeScript SDK October 20 advisories](https://github.com/modelcontextprotocol/typescript-sdk/security/advisories): cross-client message delivery on shared server/transport instances (GHSA-jm63-cq47-j5jp, high; server <2.3.0), validation memory exhaustion from one in-limit request (GHSA-46jr-4wx8-v453, high; sdk <1.32.0, server <2.3.0), experimental tasks not bound to their session (GHSA-22jm-h49p-29qw, high; sdk <1.32.0), bearer tokens for another service accepted (GHSA-rvq5-wwqv-78pq, medium; sdk <1.32.0, server <2.3.0, server-legacy <2.3.1, express <2.0.2), and client cross-origin redirects (GHSA-6prh-2h8m-c8cw, medium; sdk <1.32.0, client <2.3.0). Floors: server/client 2.3.0, sdk 1.32.0. Validate token audience and never share a `Server` or transport across clients.
 - [Python SDK session principal bypass](https://github.com/modelcontextprotocol/python-sdk/security/advisories/GHSA-jpw9-pfvf-9f58): `mcp` <=1.27.1; fixed in 1.27.2. Affects authenticated stateful HTTP transports, not stdio or stateless HTTP. Bind sessions to the authenticated user, including the token subject when users share an OAuth client.
 - [Python SDK WebSocket origin check](https://advisories.gitlab.com/pypi/mcp/CVE-2026-59950/) (CVE-2026-59950, high): the deprecated WebSocket server transport in `mcp` <1.28.1 skipped Host/Origin validation; fixed in 1.28.1. Prefer stdio or Streamable HTTP with `TransportSecuritySettings`.
 - [Go SDK localhost DNS rebinding](https://github.com/modelcontextprotocol/go-sdk/security/advisories/GHSA-xw59-hvm2-8pj6): versions <1.4.0; fixed in 1.4.0. Affects unauthenticated localhost HTTP servers, not stdio. Keep Host/Origin validation and authentication enabled.
