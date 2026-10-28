@@ -94,7 +94,7 @@ Before declaring finish-mode complete:
 
 ## Performance
 
-- Run the narrowest meaningful checks (e.g., `--testPathPattern` or `go test ./pkg/...`) during iteration, then every required repository gate once before finishing. Running the full suite on every edit wastes minutes per cycle.
+- Run the narrowest meaningful checks (e.g., `--testPathPatterns` or `go test ./pkg/...`) during iteration, then every required repository gate once before finishing. Running the full suite on every edit wastes minutes per cycle.
 - Keep commits batch-sized by review concern - one logical change per commit - so bisect, revert, and blame stay useful on a branch with many commits.
 - Invoke existing project scripts (`Makefile`, `justfile`, `scripts/`) instead of reconstructing ad hoc command sequences; those scripts encode project conventions that ad hoc commands silently skip.
 
@@ -115,8 +115,10 @@ Pick the mode from user intent + repo state. Do not assume.
 If in doubt, determine the base branch first (`git symbolic-ref --quiet refs/remotes/origin/HEAD | sed 's|refs/remotes/origin/||'`), then:
 
 ```bash
+BASE_BRANCH=$(git symbolic-ref --quiet refs/remotes/origin/HEAD | sed 's|refs/remotes/origin/||')
 git branch --show-current
-git log --oneline @{u}.. 2>/dev/null || git log --oneline "$BASE_BRANCH"..HEAD
+git log --oneline "origin/$BASE_BRANCH"..HEAD   # commits ahead of base: the mode signal
+git log --oneline @{u}.. 2>/dev/null            # unpushed commits, if an upstream exists
 ```
 
 A feature branch with commits ahead of base strongly signals finish mode.
