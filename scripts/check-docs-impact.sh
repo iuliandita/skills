@@ -7,8 +7,9 @@ set -euo pipefail
 #   R1 (hard)  removed/renamed active skill: key in migrations.json at HEAD and
 #              a MIGRATION.md change in the range.
 #   R2 (hard)  tool removed from install.sh SUPPORTED_TOOLS: an added INSTALL.md
-#              line naming it. Changed TOOL_PATHS default for an existing tool:
-#              LEGACY_TOOL_PATHS[tool] at HEAD holds the old default.
+#              line naming its backticked id (`tool`). Changed TOOL_PATHS
+#              default for an existing tool: LEGACY_TOOL_PATHS[tool] at HEAD
+#              holds the old default.
 #   R3         install.sh changed: INSTALL.md or README.md changed.
 #   R4         scripts/{check-*,gen-*,lint-*,validate-*} added/deleted:
 #              README.md or docs/skill-authoring.md changed.
@@ -214,8 +215,8 @@ if git cat-file -e "$base:install.sh" 2>/dev/null && git cat-file -e "HEAD:insta
   while IFS= read -r tool; do
     [[ -n "$tool" ]] || continue
     grep -Fxq -- "$tool" <<<"$head_tools" && continue
-    if ! grep -Fwiq -- "$tool" <<<"$install_added"; then
-      finding error R2 "tool '${tool}' removed from SUPPORTED_TOOLS (install.sh) without an added INSTALL.md line mentioning it"
+    if ! grep -Fq -- "\`$tool\`" <<<"$install_added"; then
+      finding error R2 "tool '${tool}' removed from SUPPORTED_TOOLS (install.sh) without an added INSTALL.md line naming \`${tool}\`"
     fi
   done <<<"$base_tools"
 

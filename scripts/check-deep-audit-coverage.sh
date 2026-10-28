@@ -15,39 +15,42 @@ mapfile -t public_skills < <(
       done
 )
 
-wave_skills=(
-  llm-app-development
-  ansible
-  anti-ai-prose
-  arch-linux
-  backend-api
-  ci-cd
-  code-review
-  code-simplification
-  shell-scripting
-  databases
-  debian-ubuntu
-  docker
-  opnsense-pfsense
-  frontend-design
-  git
-  kubernetes
-  i18n-localization
-  mcp
-  message-queues
-  performance-debugging
-  networking
-  nixos
-  observability
-  rhel-fedora
-  roadmap
-  security-audit
-  terraform
-  testing
-  update-docs
-  virtualization
-  vulnerability-research
+# Wave lanes are derived from repo-audit itself: conditional lanes from the
+# shipped detector, always-run lanes from the workflow's Related Skills list.
+detect_file="$ROOT/skills/repo-audit/references/detect.sh"
+workflow_file="$ROOT/skills/repo-audit/references/exhaustive-workflow.md"
+for f in "$detect_file" "$workflow_file"; do
+  if [[ ! -f "$f" ]]; then
+    echo "ERROR: repo-audit file not found: $f" >&2
+    exit 1
+  fi
+done
+
+mapfile -t detect_skills < <(
+  grep -oE 'matched\+=\([a-z0-9-]+\)|^[[:space:]]*check_manifest [a-z][a-z0-9-]*' "$detect_file" \
+    | sed -E 's/^matched\+=\(([a-z0-9-]+)\)$/\1/; s/^[[:space:]]*check_manifest //' \
+    | sort -u
 )
+mapfile -t always_skills < <(
+  grep -E '^- .* - Wave [245] participants\.$' "$workflow_file" \
+    | grep -oE '\*\*[a-z0-9-]+\*\*' | tr -d '*' | sort -u
+)
+mapfile -t candidate_skills < <(
+  grep -E '^- .* - Wave 3 candidates' "$workflow_file" \
+    | grep -oE '\*\*[a-z0-9-]+\*\*' | tr -d '*' | sort -u
+)
+
+require_parsed() {
+  if (( $2 == 0 )); then
+    echo "ERROR: parsed no $1 (format changed?)" >&2
+    exit 1
+  fi
+}
+require_parsed "detected lanes from $detect_file" "${#detect_skills[@]}"
+require_parsed "Wave 2/4/5 participants from $workflow_file" "${#always_skills[@]}"
+require_parsed "Wave 3 candidates from $workflow_file" "${#candidate_skills[@]}"
+
+wave_skills=("${always_skills[@]}" "${detect_skills[@]}")
 
 # Single source of truth: the exclusion table in repo-audit's references.
 # Each excluded skill is the first column of a table row, wrapped in **bold**.
@@ -80,6 +83,19 @@ contains() {
   done
   return 1
 }
+
+for skill in "${detect_skills[@]}"; do
+  if ! contains "$skill" "${candidate_skills[@]}"; then
+    echo "ERROR: detect.sh matches $skill but exhaustive-workflow.md does not list it as a Wave 3 candidate"
+    errors=$((errors + 1))
+  fi
+done
+for skill in "${candidate_skills[@]}"; do
+  if ! contains "$skill" "${detect_skills[@]}"; then
+    echo "ERROR: exhaustive-workflow.md lists Wave 3 candidate $skill but detect.sh never matches it"
+    errors=$((errors + 1))
+  fi
+done
 
 for skill in "${public_skills[@]}"; do
   if ! contains "$skill" "${wave_skills[@]}" && ! contains "$skill" "${excluded_skills[@]}"; then
