@@ -1,7 +1,7 @@
 # AI/ML Target Versions
 
 October 2026 snapshot. Refreshed 2026-10-02 against provider docs, PyPI, npm, GitHub releases,
-and GitHub Security Advisories; Haiku 5.5 added 2026-10-08.
+and GitHub Security Advisories; Haiku 5.5 added 2026-10-08. Anthropic SDKs rechecked 2026-10-28.
 Verify current releases before pinning.
 
 ## Contents
@@ -60,7 +60,8 @@ and [thinking docs](https://platform.claude.com/docs/en/build-with-claude/thinki
   `medium`, or `high` effort only. That type takes no other fields; use adaptive thinking for
   `xhigh`/`max`, per-message effort changes, or reasoning tasks without tools.
 - Non-default `temperature`, `top_p`, or `top_k`, manual `budget_tokens` thinking, and assistant
-  prefill return 400. Use effort, prompting, and structured outputs instead.
+  prefill return 400. On API 2026-10-21 (Python SDK 2.x / TS 1.x), sending them at all returns
+  400. Use effort, prompting, and structured outputs instead.
 - Forced `tool_choice` (`any`/`tool`) returns 400 on Sonnet 5.5 as on Opus 5.5, Fable 5.1, and
   Mythos 5.1. Use `auto` plus strict tools and handle no-call replies, or `output_config.format`
   for extraction. Raw schemas need the provider's supported subset plus application validation.
@@ -80,7 +81,8 @@ Haiku 4.5 to Haiku 5.5, checked 2026-10-08 against
 [what's new in Haiku 5.5](https://platform.claude.com/docs/en/models/haiku-5-5/whats-new-haiku-5-5):
 
 - `budget_tokens`, non-default `temperature`/`top_p`/`top_k`, and assistant prefill now return
-  errors. Use effort and adaptive thinking; end `messages` with a user turn.
+  errors. On API 2026-10-21 (Python SDK 2.x / TS 1.x), sending them at all returns 400. Use
+  effort and adaptive thinking; end `messages` with a user turn.
 - Thinking is on by default and counts toward `max_tokens`, so small limits can stop after a
   `thinking` block. Select blocks by `type`. `thinking: {type: "disabled"}` works only at
   `high` effort or below; `xhigh`/`max` return 400.
@@ -146,8 +148,8 @@ adopt them only when the application can manage pending results and continuation
 
 | Component | Version | Notes |
 |-----------|---------|-------|
-| Anthropic Python SDK | 1.11.0 | Major release; review migration notes before upgrading |
-| Anthropic TS SDK | 0.131.0 | Claude models, streaming, tool use, structured output |
+| Anthropic Python SDK | 2.3.0 | 2.0.0 switched to API 2026-10-21: temperature/top_p/top_k removed (400), MessageParam is a per-role union; on Bedrock only Claude 4.7+ supports it. Follow the 2026-10-21 migration guide |
+| Anthropic TS SDK | 1.3.0 | 1.0.0 switched to API 2026-10-21 (same breaking changes); upgrade @anthropic-ai/bedrock-sdk / vertex-sdk / foundry-sdk to v1 together |
 | Claude Agent SDK (TS) | 0.3.288 | Programmatic agent building with Claude Code capabilities |
 | OpenAI Python SDK | 3.24.0 | Major release; GPT-6/GPT-5.6 models and Responses API |
 | OpenAI Agents SDK | 0.23.1 | Multi-agent orchestration, tracing, sessions |
