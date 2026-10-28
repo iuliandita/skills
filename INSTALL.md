@@ -47,6 +47,9 @@ for that skill, the same as adding it by hand; remove the entry or set it to `de
 the skill again. Only skills that installed successfully are added. The file is rewritten
 through a temporary file and a rename, following a symlinked config to its target; if the
 update fails, the file is left unchanged and the install exits non-zero.
+A string `permission` or `permission.skill` (for example, `"permission": "ask"`) is first rewritten
+to its object form with `"*"` first, preserving the original policy for everything else; any other
+non-object value fails the sync and leaves the file unchanged.
 
 ### Multi-tool with symlinks
 

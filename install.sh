@@ -1300,15 +1300,24 @@ else:
 if not isinstance(config, dict):
     raise ValueError("OpenCode config root must be a JSON object")
 
+ACTIONS = {"allow", "ask", "deny"}
 permission = config.get("permission")
-if not isinstance(permission, dict):
+if permission is None:
     permission = {}
-    config["permission"] = permission
+elif isinstance(permission, str) and permission in ACTIONS:
+    permission = {"*": permission, "skill": {"*": permission}}
+if not isinstance(permission, dict):
+    raise ValueError("permission must be an object or allow/ask/deny")
+config["permission"] = permission
 
 skill_permission = permission.get("skill")
-if not isinstance(skill_permission, dict):
+if skill_permission is None:
     skill_permission = {}
-    permission["skill"] = skill_permission
+elif isinstance(skill_permission, str) and skill_permission in ACTIONS:
+    skill_permission = {"*": skill_permission}
+if not isinstance(skill_permission, dict):
+    raise ValueError("permission.skill must be an object or allow/ask/deny")
+permission["skill"] = skill_permission
 
 changed = False
 for skill in skills:
