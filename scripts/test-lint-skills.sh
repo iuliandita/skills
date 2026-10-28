@@ -1087,6 +1087,109 @@ EOF
   trap - RETURN
 }
 
+test_ere_shell_wrappers_are_flagged() {
+  local tmp skill_dir output status count
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  skill_dir="$tmp/skills/lint-fixture"
+  write_minimal_skill "$skill_dir" "lint-fixture"
+  cat >> "$skill_dir/SKILL.md" <<'EOF'
+
+```bash
+if grep -qE "a\|b" f; then echo y; fi
+FOO=1 grep -E "a\|b" f
+x=$(grep -E "a\|b" f)
+while ! grep -E "a\|b" f; do :; done
+```
+EOF
+
+  status=0
+  output="$("$ROOT/scripts/lint-skills.sh" "$tmp/skills" 2>&1)" || status=$?
+  if (( status == 0 )); then
+    printf '%s\n' "$output" >&2
+    fail "lint-skills.sh missed a literal pipe behind a shell keyword, assignment, or substitution"
+  fi
+  count="$(grep -c 'inside an ERE pattern' <<< "$output" || true)"
+  if [[ "$count" != "4" ]]; then
+    printf '%s\n' "$output" >&2
+    fail "lint-skills.sh reported $count of 4 wrapped literal-pipe patterns"
+  fi
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_ere_fence_variants_are_scanned() {
+  local tmp skill_dir output status count
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  skill_dir="$tmp/skills/lint-fixture"
+  write_minimal_skill "$skill_dir" "lint-fixture"
+  cat >> "$skill_dir/SKILL.md" <<'EOF'
+
+  ~~~
+  grep -E 'a\|b' f
+  ~~~
+
+````
+grep -E 'c\|d' f
+```
+grep -E 'e\|f' f
+````
+EOF
+
+  status=0
+  output="$("$ROOT/scripts/lint-skills.sh" "$tmp/skills" 2>&1)" || status=$?
+  if (( status == 0 )); then
+    printf '%s\n' "$output" >&2
+    fail "lint-skills.sh skipped a literal pipe in a tilde, indented, or long fence"
+  fi
+  count="$(grep -c 'inside an ERE pattern' <<< "$output" || true)"
+  if [[ "$count" != "3" ]]; then
+    printf '%s\n' "$output" >&2
+    fail "lint-skills.sh reported $count of 3 fence-variant literal-pipe patterns"
+  fi
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_ere_backslash_parity_and_matcher_order() {
+  local tmp skill_dir output status count
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  skill_dir="$tmp/skills/lint-fixture"
+  write_minimal_skill "$skill_dir" "lint-fixture"
+  cat >> "$skill_dir/SKILL.md" <<'EOF'
+
+```bash
+grep -E 'a\\\|b' f
+grep -F -E 'a\|b' f
+grep -E -F 'a\|b' f
+rg -F 'a\|b' .
+grep -E 'a\\|b' f
+```
+EOF
+
+  status=0
+  output="$("$ROOT/scripts/lint-skills.sh" "$tmp/skills" 2>&1)" || status=$?
+  if (( status == 0 )); then
+    printf '%s\n' "$output" >&2
+    fail "lint-skills.sh missed an odd backslash run or a later -E matcher"
+  fi
+  count="$(grep -c 'inside an ERE pattern' <<< "$output" || true)"
+  if [[ "$count" != "2" ]]; then
+    printf '%s\n' "$output" >&2
+    fail "lint-skills.sh reported $count of 2 backslash-parity/option-order patterns"
+  fi
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
 test_reference_files_are_scanned
 test_reference_examples_are_ignored
 test_ere_literal_pipe_is_flagged
@@ -1095,6 +1198,9 @@ test_bre_alternation_is_allowed
 test_table_pipe_escape_is_allowed
 test_ere_literal_pipe_in_reference_is_flagged
 test_ere_multiline_command_is_flagged
+test_ere_shell_wrappers_are_flagged
+test_ere_fence_variants_are_scanned
+test_ere_backslash_parity_and_matcher_order
 test_unrelated_bold_does_not_mask_missing_reference
 test_real_cross_skill_reference_is_accepted
 test_generic_self_check_ratio_within_cap_passes

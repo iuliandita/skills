@@ -306,6 +306,7 @@ import sys
 ERE_COMMANDS = {"grep", "egrep", "rg", "pgrep", "pkill"}
 SEPARATORS = {"|", ";", "&&", "||", "&"}
 PREFIXES = {"sudo", "doas", "command", "time", "nohup", "nice"}
+KEYWORDS = {"if", "then", "elif", "else", "while", "until", "do", "done", "fi", "esac", "!", "("}
 
 
 def split_segments(tokens):
@@ -332,6 +333,9 @@ def command_start(tokens):
             continue
         if token == "#":
             return len(tokens)
+        if token in KEYWORDS or re.match(r"^[A-Za-z_][A-Za-z0-9_]*=", token):
+            i += 1
+            continue
         if token in PREFIXES:
             i += 1
             while i < len(tokens) and tokens[i].startswith("-"):
