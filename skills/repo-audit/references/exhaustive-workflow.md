@@ -4,7 +4,7 @@ Run up to 31 audit agents against a repo in 5 sequential waves. This is the broa
 
 The five waves are: Reconnaissance; Code Quality (code-review, code-simplification, anti-ai-prose); Domain-Specific (detected skills only); Security (security-audit then vulnerability-research); and Docs & Hygiene (update-docs, roadmap, git).
 
-After the waves, Steps 7-9 persist findings to `docs/local/audits/DEEP-AUDIT.md`, write `DEEP-AUDIT-TASKS.md`, and route SMALL audits to the task list or LARGE audits to a brainstorming skill or generated plans under `docs/local/specs/` and `docs/local/plans/`.
+After the waves, Steps 7-9 persist findings to the DEEP-AUDIT report (`docs/local/audits/repo-audit/<YYYY-MM-DD>-deep-audit.md`), write the matching task list (`<YYYY-MM-DD>-deep-audit-tasks.md`), and route SMALL audits to the task list or LARGE audits to a brainstorming skill or generated plans under `docs/local/specs/` and `docs/local/plans/`.
 
 For a quick 4-skill sweep, use **quick mode** instead.
 
@@ -51,9 +51,9 @@ workflow (waves + persistence + routing), not just the wave dispatch phase.
 - [ ] Each skill's native report format was preserved - no normalization across reports
 - [ ] Failed or timed-out agents noted with reason, not silently dropped
 - [ ] `docs/local/` added to `.gitignore` before writing any audit artifacts (verified with `git check-ignore`)
-- [ ] `docs/local/audits/DEEP-AUDIT.md` written consolidating all wave findings in their native format
+- [ ] `docs/local/audits/repo-audit/<YYYY-MM-DD>-deep-audit.md` written consolidating all wave findings in their native format
 - [ ] Security-audit used its canonical dated path under `docs/local/audits/security-audit/`
-- [ ] `docs/local/audits/DEEP-AUDIT-TASKS.md` written with phased checklist (priority, effort, files, rationale per task)
+- [ ] `docs/local/audits/repo-audit/<YYYY-MM-DD>-deep-audit-tasks.md` written with phased checklist (priority, effort, files, rationale per task)
 - [ ] Task-list size assessed; routing decision announced (SMALL: direct action list, LARGE: brainstorming handoff or vanilla-harness plan generation)
 - [ ] If LARGE and a brainstorming skill is available, user was told to invoke it manually (no silent auto-invocation)
 - [ ] If LARGE and no brainstorming skill is available, execution-plan files written to `docs/local/specs/` and `docs/local/plans/` using the standard naming convention
@@ -71,7 +71,7 @@ Copy this checklist and track progress; the order is fixed (Rule 2):
 - [ ] Step 1: Wave 1 recon summary shown before any dispatch
 - [ ] Steps 2-5: Waves 2-5, each presented before the next starts
 - [ ] Step 6: Priority-ordered summary
-- [ ] Steps 7-8: `DEEP-AUDIT.md` and `DEEP-AUDIT-TASKS.md` written after the backup is verified
+- [ ] Steps 7-8: dated DEEP-AUDIT report and task list written to new files (no prior run overwritten)
 - [ ] Step 9: Size-based routing announced
 - [ ] AI Self-Check passed (any failed item: fix it and return to the step that produced it)
 
@@ -83,9 +83,9 @@ separately; report unavailable context instead of masking failures with `; true`
 Before dispatch or artifact writes, ensure `docs/local/` is ignored. Add the bare
 `docs/local/` entry to `.gitignore` if needed and verify with `git check-ignore`. Check
 that intended artifact paths are not already tracked (`git ls-files docs/local/` must be empty)
-and that each is ignored (`git check-ignore -q <path>` for DEEP-AUDIT.md, DEEP-AUDIT-TASKS.md,
+and that each is ignored (`git check-ignore -q <path>` for the dated DEEP-AUDIT report and task list,
 the security-audit/ report, and Step 9b plan paths). If any path is tracked or not ignored, stop
-artifact writes, fix the protection, and repeat this check before continuing. Preserve existing reports and task progress in a dated backup before replacement.
+artifact writes, fix the protection, and repeat this check before continuing.
 
 If full-access agent dispatch is unavailable, run every assigned skill sequentially in the root
 context. Preserve wave order, separate native result sections, and report the compatibility limit.
@@ -357,24 +357,30 @@ Waves completed: {N}/5 | Skills run: {N}/{total_matched} | Failed: {N}
 Priority order: security fixes > correctness bugs > test gaps > slop/prose cleanup >
 code-simplification opportunities > domain-specific issues > doc updates > hygiene.
 
-### Step 7: Persist DEEP-AUDIT.md
+### Step 7: Persist the DEEP-AUDIT report
 
 Consolidate every wave's findings into a single durable report at
-`docs/local/audits/DEEP-AUDIT.md`. The terminal summary in Step 6 is ephemeral;
-this file is the source of truth that Step 8 and downstream planning work from.
+`docs/local/audits/repo-audit/<YYYY-MM-DD>-deep-audit.md`. The terminal summary in Step 6
+is ephemeral; this file is the source of truth that Step 8 and downstream planning work from.
 
-1. **Recheck artifact protection** from Step 0 and back up existing reports and task progress.
+1. **Recheck artifact protection** from Step 0.
 
-2. **Create the target directory.** `mkdir -p docs/local/audits/`.
+2. **Create the target directory.** `mkdir -p docs/local/audits/repo-audit/`.
 
-3. **Write `docs/local/audits/DEEP-AUDIT.md`.** Follow the DEEP-AUDIT.md template in
+3. **Pick unused names.** Each run writes new files; never overwrite an earlier run. If
+   `<YYYY-MM-DD>-deep-audit.md` or `<YYYY-MM-DD>-deep-audit-tasks.md` already exists for
+   today, append the first free suffix to both (`-deep-audit-2.md` with
+   `-deep-audit-tasks-2.md`, then `-3`).
+
+4. **Write the report.** Follow the DEEP-AUDIT report template in
    `references/report-templates.md` (metadata header, headline verdict, scorecard,
-   per-wave sections preserving native format). Replace a prior file only after its backup is verified.
+   per-wave sections preserving native format).
 
-### Step 8: Generate DEEP-AUDIT-TASKS.md
+### Step 8: Generate the DEEP-AUDIT task list
 
-Derive a phased, checkbox-tracked action list at `docs/local/audits/DEEP-AUDIT-TASKS.md`
-from DEEP-AUDIT.md content. This is the artifact users tick off during execution.
+Derive a phased, checkbox-tracked action list at
+`docs/local/audits/repo-audit/<YYYY-MM-DD>-deep-audit-tasks.md` (same date and suffix as the
+Step 7 report) from the report content. This is the artifact users tick off during execution.
 
 Follow the task-list template in `references/report-templates.md`: task entry format,
 the five priority markers, finding ID cross-references, the 12-phase ordering heuristic,
@@ -382,12 +388,12 @@ and the trailing effort-rollup / minimum-release-cut sections.
 
 ### Step 9: Route to planning
 
-Assess the size and severity of `DEEP-AUDIT-TASKS.md` and announce the chosen path
+Assess the size and severity of the task list and announce the chosen path
 before acting.
 
 **SMALL** (all three must hold): `<=10 tasks` AND `<=2 phases` AND zero P0 findings.
 - No execution plan needed.
-- Present the final summary + path to `DEEP-AUDIT-TASKS.md`. Work can start directly
+- Present the final summary + path to the task list. Work can start directly
   from the checkboxes.
 - Stop here.
 
@@ -402,13 +408,13 @@ OR any P0 finding):
   `superpowers:brainstorming`, `gsd-explore`, `brainstorm`). If found, announce:
 
   > LARGE audit ({N} tasks, {M} phases). Recommend invoking `{skill-name}` with
-  > `docs/local/audits/DEEP-AUDIT-TASKS.md` as input to produce an execution master
-  > plan in `docs/local/specs/` and per-phase plans in `docs/local/plans/`.
+  > `docs/local/audits/repo-audit/<YYYY-MM-DD>-deep-audit-tasks.md` as input to produce an
+  > execution master plan in `docs/local/specs/` and per-phase plans in `docs/local/plans/`.
 
   Do not auto-invoke. Brainstorming skills are interactive and the user must drive.
 
   **9b. Vanilla harness fallback (when no brainstorming skill is available).** Generate
-  the plan files directly from `DEEP-AUDIT-TASKS.md`. Follow the master-plan and
+  the plan files directly from the task list. Follow the master-plan and
   per-phase templates in `references/report-templates.md`. Write:
 
   - `docs/local/specs/{YYYY-MM-DD}-audit-execution-master-plan.md`
@@ -421,8 +427,8 @@ OR any P0 finding):
   intent and no brainstorming skill is available, write the two audit files, announce
   the recommendation, and stop. The user will pick up in a follow-up session.
 
-Never silently auto-invoke a skill. Never skip writing `DEEP-AUDIT.md` and
-`DEEP-AUDIT-TASKS.md` just because a LARGE plan is being generated - those two files
+Never silently auto-invoke a skill. Never skip writing the DEEP-AUDIT report and
+task list just because a LARGE plan is being generated - those two files
 are always produced first and are the input to any planning path.
 
 ### Step 10: Handle Failures
@@ -446,7 +452,7 @@ but preserves the wave ordering.
 
 - `references/detection-patterns.md` - Wave 3 file-pattern table and edge cases. Read before Step 1.
 - `references/detect.sh` - shipped Wave 3 detector. Invoke it from the audited repository root.
-- `references/report-templates.md` - templates for `DEEP-AUDIT.md`, `DEEP-AUDIT-TASKS.md`, and Step 9b plan files.
+- `references/report-templates.md` - templates for the DEEP-AUDIT report, its task list, and Step 9b plan files.
 - `references/exclusions.md` - skills deliberately excluded from wave dispatch and why.
 
 ## Output Contract
@@ -456,7 +462,7 @@ See `references/output-contract.md` for the full contract.
 - **Skill name:** REPO-AUDIT
 - **Deliverable bucket:** `audits`
 - **Mode:** follow `references/output-contract.md`; preserve native lane reports in the consolidated artifacts.
-- **Deliverable path:** `docs/local/audits/DEEP-AUDIT.md` (consolidated findings) and `docs/local/audits/DEEP-AUDIT-TASKS.md` (phased task list). Step 9b also writes `docs/local/specs/` and `docs/local/plans/` files when a full execution plan is generated.
+- **Deliverable path:** `docs/local/audits/repo-audit/<YYYY-MM-DD>-deep-audit.md` (consolidated findings) and `docs/local/audits/repo-audit/<YYYY-MM-DD>-deep-audit-tasks.md` (phased task list), with `-2`/`-3` suffixes on collision. Step 9b also writes `docs/local/specs/` and `docs/local/plans/` files when a full execution plan is generated.
 - **Severity scale:** `P0 | P1 | P2 | P3 | info` (see `references/output-contract.md`).
 
 ## Related Skills
@@ -477,10 +483,10 @@ Read `references/exclusions.md` before changing Wave 3 routing.
 3. **Present before proceeding.** Each wave's results are shown to the user before the next wave starts. No buffering all results to the end.
 4. **Detection gates Wave 3.** Only dispatch Wave 3 skills whose file patterns matched in the recon sweep. Do not run terraform on a repo with no .tf files.
 5. **Security is sequential.** security-audit completes before vulnerability-research starts. Vulnerability-research receives security-audit findings as input context.
-6. **Read-only audit, with explicit artifact exceptions.** No agent modifies source code, commits, or alters the repo's working tree. The only permitted writes are: (a) audit artifacts under `docs/local/audits/`, including `DEEP-AUDIT.md`, `DEEP-AUDIT-TASKS.md`, and the dated `security-audit/` report, (b) Step 9b plan files under `docs/local/specs/` and `docs/local/plans/`, and (c) a one-line addition to `.gitignore` if `docs/local/` is not already covered.
-7. **Preserve native formats.** Each skill produces its own report format. Do not normalize, merge, or editorialize across reports. Cross-wave synthesis is allowed only in three specific places: the Step 6 terminal summary, the headline verdict + scorecard of `DEEP-AUDIT.md`, and the phased ordering of `DEEP-AUDIT-TASKS.md`. Everywhere else, native format is preserved verbatim.
+6. **Read-only audit, with explicit artifact exceptions.** No agent modifies source code, commits, or alters the repo's working tree. The only permitted writes are: (a) audit artifacts under `docs/local/audits/`, including the dated DEEP-AUDIT report and task list under `repo-audit/` and the dated `security-audit/` report, (b) Step 9b plan files under `docs/local/specs/` and `docs/local/plans/`, and (c) a one-line addition to `.gitignore` if `docs/local/` is not already covered.
+7. **Preserve native formats.** Each skill produces its own report format. Do not normalize, merge, or editorialize across reports. Cross-wave synthesis is allowed only in three specific places: the Step 6 terminal summary, the headline verdict + scorecard of the DEEP-AUDIT report, and the phased ordering of its task list. Everywhere else, native format is preserved verbatim.
 8. **Don't stack with quick mode.** When exhaustive mode is selected, it supersedes quick mode's coverage. Do not also invoke quick mode.
 9. **Respect scope.** When the user specifies a scope, pass it to every agent and filter detection patterns to that scope's file tree.
-10. **Always persist `DEEP-AUDIT.md` and `DEEP-AUDIT-TASKS.md`.** These two files are mandatory output of every run, regardless of audit size or whether an execution plan is generated. Write them under `docs/local/audits/`. Ensure `docs/local/` is in `.gitignore` first - these artifacts can contain sensitive security detail.
+10. **Always persist the DEEP-AUDIT report and task list.** These two files are mandatory output of every run, regardless of audit size or whether an execution plan is generated. Write them as new dated files under `docs/local/audits/repo-audit/`; never overwrite an earlier run. Ensure `docs/local/` is in `.gitignore` first - these artifacts can contain sensitive security detail.
 11. **Brainstorming handoff is a recommendation, not an auto-invocation.** If a brainstorming/ideation skill is present in the host harness, announce the recommended invocation and stop - the user drives that step. When no brainstorming skill exists, proceed directly to Step 9b plan-file generation (this is deterministic file writing, not skill invocation). Only in headless / non-interactive mode, when neither option is available, fall back to Step 9c (stop and let the user continue in a follow-up session).
 12. **Don't hardcode a specific brainstorming skill.** The skill collection is tool-agnostic (Claude, Codex, Opencode, others). Match by pattern (`*brainstorm*`, `*ideation*`, `*explore*`) rather than by a single hardcoded name like `superpowers:brainstorming`.
