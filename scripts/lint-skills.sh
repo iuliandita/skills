@@ -102,6 +102,9 @@ check_sections() {
 }
 
 # ── ASCII checks ────────────────────────────────────────────────────────
+# Approved non-ASCII: middle dot and the emoji status indicators.
+ASCII_ALLOWED='\x{00B7}\x{1F534}\x{1F7E0}\x{1F7E2}\x{1F7E1}\x{1F535}\x{26AA}\x{26A1}\x{1F3AF}\x{1F480}'
+
 check_ascii() {
   local file="$1" name="$2"
   local bad_lines
@@ -110,12 +113,33 @@ check_ascii() {
     while IFS= read -r line; do
       # Strip allowed emoji status indicators, then check for remaining non-ASCII
       local stripped
-      stripped=$(echo "$line" | perl -CSD -pe 's/[\x{00B7}\x{1F534}\x{1F7E0}\x{1F7E2}\x{1F7E1}\x{1F535}\x{26AA}\x{26A1}\x{1F3AF}\x{1F480}]//g' 2>/dev/null || echo "$line")
+      stripped=$(echo "$line" | ALLOWED="$ASCII_ALLOWED" perl -CSD -pe 's/[$ENV{ALLOWED}]//g' 2>/dev/null || echo "$line")
       if echo "$stripped" | grep -Pq '[^\x00-\x7F]' 2>/dev/null; then
         error "$name: non-ASCII character at $line"
       fi
     done <<< "$bad_lines"
   fi
+}
+
+# References: same rule, but fenced blocks and inline code spans may show
+# literal characters (e.g. locale examples).
+check_ascii_refs() {
+  local dir="$1" name="$2" refs=() f hit
+  for f in "$dir"/references/*.md; do
+    [[ -f "$f" ]] && refs+=("$f")
+  done
+  (( ${#refs[@]} )) || return 0
+  while IFS= read -r hit; do
+    [[ -n "$hit" ]] && error "$name: non-ASCII character at ${hit#"$dir"/}"
+  done < <(ALLOWED="$ASCII_ALLOWED" perl -CSD -ne '
+    if (/^\s*(```|~~~)/) { $fence = !$fence }
+    elsif (!$fence) {
+      (my $s = $_) =~ s/(`+).*?\1//g;
+      $s =~ s/[$ENV{ALLOWED}]//g;
+      if ($s =~ /[^\x00-\x7F]/) { chomp; print "$ARGV:$.:$_\n" }
+    }
+    if (eof) { $fence = 0; close ARGV }
+  ' "${refs[@]}")
 }
 
 # ── Line count check ───────────────────────────────────────────────────
@@ -177,7 +201,7 @@ check_reference_depth() {
   for ref_file in "$dir"/references/*.md; do
     [[ -f "$ref_file" ]] || continue
     base="$(basename "$ref_file")"
-    if ! grep -qF "$base" "$file"; then
+    if ! grep -qF "references/$base" "$file"; then
       error "$name: references/$base is not linked from SKILL.md (keep references one level deep)"
     fi
   done
@@ -186,11 +210,16 @@ check_reference_depth() {
 # Long references need a contents list near the top so a partial read still sees
 # their full scope. scripts/gen-ref-toc.py owns the generated lists.
 check_reference_toc() {
-  local name="$1" dir="$2" line
+  local name="$1" dir="$2" line out rc=0
   [[ -d "$dir/references" ]] || return 0
-  while IFS= read -r line; do
-    [[ -n "$line" ]] && error "$name: ${line#"$dir"/}"
-  done < <(python3 "$SCRIPT_DIR/gen-ref-toc.py" --check "${dir%/}" || true)
+  out="$(python3 "$SCRIPT_DIR/gen-ref-toc.py" --check "${dir%/}")" || rc=$?
+  if (( rc == 1 )) && [[ -n "$out" ]]; then
+    while IFS= read -r line; do
+      [[ -n "$line" ]] && error "$name: ${line#"$dir"/}"
+    done <<< "$out"
+  elif (( rc != 0 )); then
+    error "$name: gen-ref-toc.py --check failed (rc=$rc)"
+  fi
 }
 
 # ── Banned word check (warning only) ──────────────────────────────────
@@ -602,6 +631,7 @@ for skill_dir in "$SKILLS_DIR"/*/; do
   check_desc_prefix "$skill_file" "$name"
   check_sections "$skill_file" "$name"
   check_ascii "$skill_file" "$name"
+  check_ascii_refs "$skill_dir" "$name"
   check_length "$skill_file" "$name"
   check_references "$skill_file" "$name" "$skill_dir"
   check_reference_depth "$skill_file" "$name" "$skill_dir"
