@@ -579,8 +579,9 @@ echo "${name@U}"               # HELLO (uppercase)
 echo "${name@u}"               # Hello (capitalize first)
 echo "${name@L}"               # hello (lowercase)
 
-# BASH_REMATCH is now readonly inside [[ =~ ]]
-# (prevents accidental modification)
+# BASH_REMATCH is no longer readonly (5.1): scripts can assign to or unset it
+
+# readline 8.1: bracketed paste enabled by default
 
 # loadable builtins: sleep is now a builtin (faster in loops)
 enable -f /usr/lib/bash/sleep sleep
@@ -594,7 +595,7 @@ declare -i num=42
 echo "${num@a}"                # i (integer attribute)
 declare -A map=()
 echo "${map@a}"                # A (associative array)
-# Also: improved set -e in subshells, bracketed paste mode on by default
+# Also: improved set -e in subshells
 ```
 
 ### Bash 5.3 (July 2025)
@@ -603,7 +604,7 @@ The biggest release since 5.0. Headline feature: non-forking command substitutio
 
 ```bash
 # Non-forking command substitution - runs in current shell, no fork+pipe
-# Analogous to zsh's ${ } (see zsh reference Section 13)
+# zsh gains a similar ${ ... } / ${| ... } only in the unreleased 5.10 line; stable 5.9.x lacks it (zsh reference Section 13)
 
 # ${ cmd; } - captures stdout without forking
 result=${ printf '%s' "hello"; }    # note: space after { and ; before }

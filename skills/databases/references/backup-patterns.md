@@ -555,7 +555,7 @@ mysqldump --defaults-extra-file="${DB_CLIENT_CONFIG:?mode-0600 client option fil
   --source-data=2 \
   | zstd -6 > "/backup/all_$(date +%Y%m%d_%H%M%S).sql.zst"
 
-# MariaDB equivalent (mariadb-dump, same flags minus --set-gtid-purged)
+# MariaDB equivalent (mariadb-dump: no --set-gtid-purged; MariaDB uses --master-data, not MySQL's --source-data)
 mariadb-dump --defaults-extra-file="${DB_CLIENT_CONFIG:?mode-0600 client option file}" \
   --host=localhost \
   --user=backup_user \
@@ -563,7 +563,7 @@ mariadb-dump --defaults-extra-file="${DB_CLIENT_CONFIG:?mode-0600 client option 
   --routines \
   --triggers \
   --events \
-  --source-data=2 \
+  --master-data=2 \
   --databases mydb \
   | zstd -6 > "/backup/mydb_$(date +%Y%m%d_%H%M%S).sql.zst"
 ```

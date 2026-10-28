@@ -130,7 +130,8 @@ systemctl --failed
 journalctl -b -p warning..alert
 findmnt /boot
 findmnt /efi
-bootctl status
+bootctl status 2>&1 || true
+pacman -Q limine limine-snapper-sync grub 2>&1 || true   # CachyOS defaults to Limine
 lsblk -f
 echo "Session=$XDG_SESSION_TYPE Desktop=$XDG_CURRENT_DESKTOP"
 loginctl list-sessions 2>&1 || true
@@ -198,7 +199,7 @@ Btrfs snapshot recovery).
 pacman -Qk package_name
 systemctl status unit_name
 journalctl -u unit_name -b
-bootctl status
+bootctl status    # systemd-boot only; on Limine check /etc/default/limine and limine-snapper-sync.service
 ```
 
 If a check fails, fix the layer it points to and return to Step 4. Reboot only when the boot path

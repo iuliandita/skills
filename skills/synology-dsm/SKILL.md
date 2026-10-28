@@ -170,7 +170,7 @@ Copy this checklist and track progress (an unmountable volume follows "Recovery 
 ```sh
 cat /etc.defaults/VERSION                  # productversion, buildnumber, majorversion
 grep unique /etc.defaults/synoinfo.conf    # platform, e.g. synology_avoton_415+
-uname -a                                   # kernel (3.10.x or 4.4.x on most models)
+uname -a                                   # kernel (3.10.x, 4.4.x, or 5.10.x depending on platform)
 synopkg list --name                        # installed packages
 ```
 
