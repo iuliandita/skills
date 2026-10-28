@@ -120,7 +120,7 @@ The attackers are a cloud-native threat group active 2025-2026, known for Docker
 | **Trivy** (v0.74.0+) | Images, IaC, repos, SBOM | Generate | No | Yes | Multi-purpose. Pin exact version and digest |
 | **Grype** (Anchore) | Images | No | No | Yes | Fast CVE scanner. Pair with Syft |
 | **Syft** (Anchore) | N/A | Generate | No | Yes | SBOM generator. SPDX + CycloneDX |
-| **Cosign** (Sigstore) | N/A | Attach | Yes | Yes | Keyless OCI signing. Industry standard |
+| **Cosign** (Sigstore) | N/A | Attest | Yes | Yes | Keyless OCI signing. Industry standard |
 | **Snyk Container** | Images, code | Generate | No | Free tier | Commercial, fix suggestions |
 | **Clair** | Images | No | No | Yes | CVE matching. Maintained but older |
 
@@ -136,9 +136,9 @@ trivy image --severity HIGH,CRITICAL --exit-code 1 $IMAGE    # pinned v0.74.0+ b
 # 3. Sign (keyless via Sigstore OIDC in CI)
 cosign sign $IMAGE@sha256:$DIGEST
 
-# 4. Generate and attach SBOM
+# 4. Generate and attest SBOM
 syft $IMAGE -o spdx-json > sbom.spdx.json
-cosign attach sbom --sbom sbom.spdx.json $IMAGE@sha256:$DIGEST
+cosign attest --yes --type spdxjson --predicate sbom.spdx.json $IMAGE@sha256:$DIGEST
 
 # 5. Deploy (admission controller verifies signature)
 ```
@@ -176,9 +176,9 @@ cosign verify --key cosign.pub ghcr.io/org/app@sha256:<digest>
 syft ghcr.io/org/app:1.0.0 -o spdx-json > sbom.spdx.json
 syft ghcr.io/org/app:1.0.0 -o cyclonedx-json > sbom.cdx.json
 
-# Attach SBOM to image
-cosign attach sbom --sbom sbom.spdx.json ghcr.io/org/app@sha256:<digest>
-cosign sign --attachment sbom ghcr.io/org/app@sha256:<digest>
+# Attest SBOM to image (signed in-toto attestation; `cosign attach sbom` / `sign --attachment` are deprecated, removed in cosign v4)
+cosign attest --yes --type spdxjson --predicate sbom.spdx.json ghcr.io/org/app@sha256:<digest>
+cosign verify-attestation --type spdxjson <identity flags> ghcr.io/org/app@sha256:<digest>
 ```
 
 SBOM generation is becoming mandatory in many regulatory contexts (US Executive Order, NIS2, PCI-DSS 4.0 Req 6.3.2).
@@ -310,7 +310,7 @@ COPY .env /app/.env
 
 ## PCI-DSS 4.0 Container Requirements
 
-PCI-DSS 4.0 is the only active version (3.2.1 retired March 2024). All future-dated requirements became mandatory March 31, 2025.
+PCI-DSS 4.0.1 is the only active version (4.0 retired December 31, 2024; 3.2.1 retired March 2024). All future-dated requirements became mandatory March 31, 2025.
 
 ### Requirements mapped to container controls
 

@@ -31,7 +31,7 @@ This is what ships in `nixos` for every standard NixOS release.
 - Docs: [docs.determinate.systems](https://docs.determinate.systems/determinate-nix/)
 - Downstream distribution of upstream Nix with validated backports and feature work
 - Flakes and `nix-command` enabled by default
-- Daemon: `determinate-nixd` (not `nix-daemon`)
+- Daemon binary: `determinate-nixd`; on Linux it runs as `nix-daemon.service` (ExecStart replaced) plus `determinate-nixd.socket`; on macOS as launchd `systems.determinate.nix-daemon`
 - Features: parallel evaluation, lazy trees, native Linux builder for macOS
 - SOC 2 Type II-validated release process; defined CVE process
 
@@ -60,7 +60,7 @@ upstream Nix daemon.
 
 - Inside NixOS, upstream is the integrated path
 - CI that already has a working upstream pipeline
-- Tooling that expects `nix-daemon` by name
+- Tooling that expects the upstream macOS launchd label `org.nixos.nix-daemon`
 
 ## Lix
 
@@ -75,7 +75,7 @@ upstream Nix daemon.
 
 - Improved error messages, especially for eval traces
 - Backported fixes and performance improvements that stalled upstream
-- Uses `nix-daemon` like upstream (unlike Determinate's `determinate-nixd`)
+- Uses the upstream `nix-daemon` binary (Determinate keeps the unit name but swaps the binary)
 - Co-installable with upstream for experimentation in most cases
 
 ### When to recommend Lix
@@ -132,8 +132,7 @@ Switching to Determinate on NixOS is less common - Determinate targets non-NixOS
 
 ### Determinate
 
-- Some documentation and tooling assumes `nix-daemon` as the service name. On Determinate,
-  the daemon is `determinate-nixd`.
+- On Linux the service is still `nix-daemon.service`, but ExecStart runs `determinate-nixd`; check `systemctl cat nix-daemon` instead of assuming the upstream binary.
 - The Determinate store may be initialized with options that upstream does not set; reading
   `nix config show` before assuming defaults is wise.
 - `determinate-nixd upgrade` is separate from a NixOS `nixos-rebuild switch`; it upgrades
@@ -167,12 +166,12 @@ command -v determinate-nixd >/dev/null && echo "Determinate present"
 
 # daemon check (Linux)
 systemctl status nix-daemon 2>&1 || true
-systemctl status determinate-nixd 2>&1 || true
+systemctl cat nix-daemon.service 2>&1 | grep ExecStart || true   # determinate-nixd => Determinate
 ```
 
 ## Common mistakes
 
-- Recommending `nix-daemon` restart commands on a Determinate system (wrong service name).
+- Recommending `systemctl restart determinate-nixd` on Linux (the unit is `nix-daemon.service`).
 - Assuming Lix has a flake behavior difference it does not. Lix and upstream agree on
   flake semantics; start troubleshooting elsewhere.
 - Mixing installers. Pick one, uninstall cleanly, then install the other.

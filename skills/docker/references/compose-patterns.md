@@ -92,7 +92,7 @@ services:
       - /tmp
       - /run/postgresql
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql   # PG18+: PGDATA=/var/lib/postgresql/18/docker
     environment:
       POSTGRES_DB_FILE: /run/secrets/db_name
       POSTGRES_USER_FILE: /run/secrets/db_user
@@ -220,6 +220,7 @@ docker compose -f compose.yaml -f compose.prod.yaml up -d
 services:
   app:
     restart: always
+    ports: !reset []   # replicas cannot share a fixed host port; publish via a reverse proxy
     deploy:
       replicas: 2
       resources:
@@ -274,19 +275,9 @@ Actions:
 services:
   agent:
     build: .
-    environment:
-      - MODEL_ENDPOINT=http://model-runner:8080/v1
-      - OPENAI_BASE_URL=http://model-runner:8080/v1
-    # Model Runner provider services don't expose healthcheck endpoints;
-    # bare depends_on is acceptable here (no service_healthy possible)
-    depends_on:
-      - model-runner
-
-  model-runner:
-    provider:
-      type: model
-      options:
-        model: ai/llama3.2:3B-Q8_0
+    models:
+      llm:
+        endpoint_var: OPENAI_BASE_URL
 
   # GPU inference (vLLM)
   inference:
@@ -307,6 +298,10 @@ services:
       - ./models:/models:ro
     ports:
       - "8000:8000"
+
+models:
+  llm:
+    model: ai/llama3.2:3B-Q8_0
 ```
 
 ---

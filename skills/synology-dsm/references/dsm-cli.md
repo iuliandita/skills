@@ -68,7 +68,7 @@ Put the logic in a script file so a later `pkill -f <pattern>` cannot match your
 ```sh
 cat /etc.defaults/VERSION                  # productversion, buildnumber, majorversion  (verified)
 grep unique /etc.defaults/synoinfo.conf    # platform id, e.g. synology_avoton_415+     (verified)
-uname -a                                   # kernel line (3.10.x or 4.4.x)              (verified)
+uname -a                                   # kernel line (3.10.x, 4.4.x or 5.10.x)      (verified)
 ```
 
 `/etc.defaults/` holds shipped defaults; `/etc/` holds the live copy that DSM regenerates. Edits

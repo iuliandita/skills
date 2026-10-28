@@ -88,8 +88,8 @@ Before returning any generated network configuration, verify:
   1450). Mismatched MTU causes silent packet drops
 - [ ] **DNS resolver order**: systemd-resolved vs /etc/resolv.conf vs NetworkManager - check
   which DNS manager is active before modifying
-- [ ] **Firewall persistence**: nftables rules need `nft list ruleset > /etc/nftables.conf` or
-  a service to persist across reboots. Raw `nft add` commands are ephemeral
+- [ ] **Firewall persistence**: install the validated rules file as /etc/nftables.conf and
+  enable nftables.service to persist across reboots. Raw `nft add` commands are ephemeral
 - [ ] **Port conflicts checked**: reverse proxy ports (80, 443) may conflict with existing
   services. Verify with `ss -tlnp`
 - [ ] **TLS versions**: minimum TLS 1.2 for all services. TLS 1.3 preferred where supported
@@ -325,7 +325,7 @@ table inet filter {
     iif lo accept
     tcp dport 22 accept
     icmp type echo-request accept
-    icmpv6 type { echo-request, nd-neighbor-solicit, nd-router-advert } accept
+    icmpv6 type { echo-request, nd-neighbor-solicit, nd-neighbor-advert, nd-router-advert } accept
   }
   chain forward { type filter hook forward priority 0; policy drop; }
   chain output { type filter hook output priority 0; policy accept; }

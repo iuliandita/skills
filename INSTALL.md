@@ -47,10 +47,14 @@ for that skill, the same as adding it by hand; remove the entry or set it to `de
 the skill again. Only skills that installed successfully are added. The file is rewritten
 through a temporary file and a rename, following a symlinked config to its target; if the
 update fails, the file is left unchanged and the install exits non-zero.
+A string `permission` or `permission.skill` (for example, `"permission": "ask"`) is first rewritten
+to its object form with `"*"` first, preserving the original policy for everything else; any other
+non-object value fails the sync and leaves the file unchanged.
 
 ### Multi-tool with symlinks
 
 Install once to a canonical directory, symlink everywhere. Update the canonical copy and every tool sees the change.
+An existing symlink that points elsewhere is left alone unless you use `--force`, which backs it up first.
 
 ```bash
 git clone https://github.com/iuliandita/skills.git /tmp/skills-install
@@ -75,7 +79,7 @@ SKILLS_CANONICAL_DIR=~/my-skills ./install.sh --tool claude,roo --link
 
 ### Local private overlays
 
-Skills declaring `metadata.internal: true` and gitignored locally are skipped by default. Pass `--include-internal` to install them too.
+Skills declaring `metadata.internal: "true"` and gitignored locally are skipped by default. Pass `--include-internal` to install them too.
 
 ```bash
 ./install.sh --tool claude,codex,opencode --link --include-internal --force
@@ -89,7 +93,7 @@ Before using `--force`, copy any overlay that exists only in the installed skill
 `skills/kubernetes-health/protected/` in the source checkout. Forced installs replace the whole
 skill directory; they do not preserve or merge installed-only files into the new copy.
 
-`kubernetes-health` is public, so it no longer needs `--include-internal`; that flag is only for separate gitignored skills with `metadata.internal: true`.
+`kubernetes-health` is public, so it no longer needs `--include-internal`; that flag is only for separate gitignored skills with `metadata.internal: "true"`.
 
 `scripts/check-private-skill-leaks.sh` scans public files for private markers, additively drawn from the `protected/private-patterns.txt` overlays above, a gitignored `private-patterns.txt` at the repo root (see `private-patterns.example.txt`), and a file path in `SKILLS_PRIVATE_PATTERNS`. CI never sees your local overlay or root file; it only sees markers you explicitly supply it, typically by writing a repository secret to a file and pointing `SKILLS_PRIVATE_PATTERNS` at it.
 
@@ -267,7 +271,7 @@ Claude).
 
 `--save` covers default paths only. It is refused with `--dest` (exit 1) and when any of
 `*_SKILLS_DIR`, `SKILLS_CANONICAL_DIR`, `SKILLS_BACKUP_DIR`, `OPENCODE_CONFIG_FILE`, or
-`SKILLS_TOOL` is set (exit 2). A bare run that finds a saved config also exits 2 while any
+`SKILLS_TOOL`, `SKILLS_MIGRATOR`, or `SKILLS_MIGRATIONS_FILE` is set (exit 2). A bare run that finds a saved config also exits 2 while any
 of those variables is set. `--save` requires `flock` and takes the installer lock before it
 touches the config, holding it through the install and the save.
 
@@ -330,10 +334,11 @@ branch tracks a remote, then schedule the update:
    many seconds instead.
 2. Loads the saved config under the same rules as a bare install. A missing or invalid
    config, or any override variable (`*_SKILLS_DIR`, `SKILLS_CANONICAL_DIR`,
-   `SKILLS_BACKUP_DIR`, `OPENCODE_CONFIG_FILE`, `SKILLS_TOOL`), means exit 2.
+   `SKILLS_BACKUP_DIR`, `OPENCODE_CONFIG_FILE`, `SKILLS_TOOL`, `SKILLS_MIGRATOR`, or
+   `SKILLS_MIGRATIONS_FILE`), means exit 2.
 3. Checks the source: the checkout is the saved `source_repo`, it is on the saved branch,
    the branch's remote, that remote's URL, and the upstream ref match the saved values, and
-   `git status --porcelain` is empty (untracked files count).
+   `git status --porcelain --untracked-files=all` is empty (untracked files count).
 4. Fetches the saved upstream ref under `timeout -k 10 ${SKILLS_UPDATE_TIMEOUT:-300}`, with
    hooks disabled, and pins the result to a commit SHA. HEAD must be an ancestor of that
    commit; local commits or a rewritten upstream mean exit 4.
@@ -385,7 +390,7 @@ update: partial 1a2b3c4d5e6f..7a8b9c0d1e2f changed=2 skipped=1
 | 5 | Fetch failed or timed out, or the fast-forward failed |
 | 6 | Finished, but some skills were skipped (see above) |
 | 7 | The lock or config directory cannot be created or opened |
-| 8 | The updated installer could not be started; HEAD is at the new commit, rerun |
+| 8 | The updated installer could not be started (missing or does not parse); HEAD is at the new commit, rerun |
 | 10 | `flock`, `timeout`, `git`, or `python3` is missing |
 | 130, 143 | Interrupted by SIGINT or SIGTERM |
 
@@ -485,7 +490,8 @@ names installs all active skills. Retired old names are no longer installable; s
 The installer backs up existing skills before overwriting unless `--no-backup` is set.
 It retains the last three backups per skill under
 `<destination-parent>/.skills-backups/<destination-name>/`, outside the skill discovery root.
-Override that backup base with `SKILLS_BACKUP_DIR`. Backups support manual recovery;
+With `SKILLS_BACKUP_DIR`, backups go to `<SKILLS_BACKUP_DIR>/<destination-name>-<hash>/`,
+and tools sharing one directory are installed into it once per run. Backups support manual recovery;
 customizations are not merged into the replacement. Preserve edits in the source checkout
 before reinstalling if they must remain active.
 
@@ -515,7 +521,7 @@ helper stages replacements in its own `.skills-migrate-staging` area and never o
 existing entry; see [MIGRATION.md](MIGRATION.md#users-of-the-bundled-installer).
 
 Runs that change files (installs, `--update`, and `--migrate --apply`) take an exclusive lock on
-`${XDG_STATE_HOME:-~/.local/state}/iuliandita-skills/install.lock` with `flock`, waiting up
+`${XDG_STATE_HOME:-~/.local/state}/iuliandita-skills/install.lock` (a relative value is ignored) with `flock`, waiting up
 to `SKILLS_LOCK_WAIT` seconds (default 30, or 0 for `--update`) and exiting with status 3 if another run still
 holds it. Without `flock` an install prints a warning and proceeds; runs exclude each
 other only when every one of them has `flock`. `--migrate --apply` requires `flock` and exits
@@ -596,7 +602,7 @@ scripts/
   validate-spec.sh        # Agent Skills spec validator
   test-install.sh         # installer regression tests
   check-*.sh              # repository-specific safety and freshness checks
-  gen-contract-refs.sh    # regenerates shipped output-contract copies
+  gen-contract-refs.sh    # regenerates shipped output-contract and agent-hygiene copies
   gen-ref-toc.py          # generates reference contents lists
   skill-frontmatter.py    # frontmatter parser used by linters
   skill-lib.sh            # shared shell helpers

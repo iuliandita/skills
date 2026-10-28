@@ -21,7 +21,7 @@ dnf --version 2>&1 || yum --version 2>&1 || true
 dnf repolist --enabled 2>&1 || yum repolist enabled 2>&1 || true
 dnf repoquery package_name 2>&1 || true
 dnf info package_name 2>&1 || true
-dnf module list --enabled 2>&1 || true
+dnf module list --enabled 2>&1 || true   # RHEL 8/9 only
 rpm -q package_name
 rpm -qi package_name
 rpm -V package_name
@@ -41,7 +41,7 @@ rpm -qa | sort | head -50
 ```bash
 grep -R "^\[\|^enabled=\|^baseurl=\|^metalink=" /etc/yum.repos.d/ 2>&1 || true
 dnf repolist all 2>&1 || true
-dnf config-manager --dump 2>&1 || true
+if dnf --version 2>/dev/null | grep -q dnf5; then dnf --dump-main-config; else dnf config-manager --dump; fi
 subscription-manager repos --list-enabled 2>&1 || true
 ```
 
@@ -54,7 +54,7 @@ Check for:
 
 ## Modules and AppStream
 
-Module streams are a classic source of weird package solver behavior.
+Module streams only matter on RHEL 8/9 and clones (or third-party modular repos). RHEL 10 ships no modular content, and Fedora stopped shipping modular repos in Fedora 39; skip this section there. On 8/9 they are a classic source of weird solver behavior.
 
 ```bash
 dnf module list package_name 2>&1 || true

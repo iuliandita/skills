@@ -12,7 +12,13 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  gates:
+    permissions:
+      contents: read
+    uses: ./.github/workflows/lint.yml
+
   publish:
+    needs: gates
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:

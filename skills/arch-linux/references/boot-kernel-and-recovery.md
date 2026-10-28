@@ -10,6 +10,7 @@ microcode, and optional UKI signing all have to agree.
 - Initramfs generator rules
 - systemd-boot basics
 - GRUB basics
+- Limine basics
 - Unified kernel images
 - Secure Boot
 - Live ISO recovery
@@ -20,7 +21,7 @@ microcode, and optional UKI signing all have to agree.
 
 - Which kernel package is installed?
 - Which initramfs generator is in play: `mkinitcpio` or `dracut`?
-- Which bootloader is in charge: systemd-boot, GRUB, direct UEFI, something else?
+- Which bootloader is in charge: systemd-boot, GRUB, Limine (CachyOS default), direct UEFI, something else?
 - Where is the ESP mounted: `/efi`, `/boot`, or `/boot/efi`?
 - Is Secure Boot in scope?
 
@@ -28,13 +29,13 @@ microcode, and optional UKI signing all have to agree.
 
 ```bash
 uname -r
-pacman -Q mkinitcpio dracut systemd sbctl
+pacman -Q mkinitcpio dracut systemd sbctl limine limine-snapper-sync
 findmnt /boot
 findmnt /efi
 bootctl status
 ```
 
-If `bootctl status` makes no sense, you may not be on systemd-boot at all. Confirm before acting.
+If `bootctl status` makes no sense, you may not be on systemd-boot at all (CachyOS installs default to Limine). Confirm before acting.
 
 ## Initramfs generator rules
 
@@ -80,6 +81,24 @@ sudo grub-mkconfig -o /boot/grub/grub.cfg
 
 Do not mix systemd-boot instructions into a GRUB system because both use very different artifact and config paths.
 
+## Limine basics
+
+CachyOS selects Limine by default (2601 release, January 2026); on Btrfs it enables
+`limine-snapper-sync`, which writes Snapper snapshots into the Limine menu.
+
+```bash
+pacman -Q limine limine-entry-tool limine-mkinitcpio-hook limine-snapper-sync 2>&1 || true
+systemctl status limine-snapper-sync.service
+cat /etc/default/limine
+sudo limine-update          # apply /etc/default/limine changes, regenerate kernel entries
+sudo limine-snapper-sync    # refresh snapshot entries in limine.conf
+```
+
+- Edit `/etc/default/limine`, not generated entries in `limine.conf` on the ESP.
+- `/boot` must be FAT; snapshot entries consume ESP space (CachyOS sizes /boot at 4192 MB).
+- To roll back, boot the snapshot entry from the Limine menu, then run `limine-snapper-restore`.
+- `bootctl` does not apply to Limine hosts.
+
 ## Unified kernel images
 
 UKIs are valid on Arch, but they add one more layer to keep straight.
@@ -122,6 +141,7 @@ If the system broke after a package interruption, also inspect package integrity
 
 When a Btrfs system with UKIs will not boot, work through these steps in order from a live USB.
 Adjust device paths and subvolume names to match the actual layout.
+On Limine + limine-snapper-sync, try booting the snapshot entry and limine-snapper-restore before the manual steps below.
 
 ```bash
 # 1. Mount the Btrfs root subvolume

@@ -11,7 +11,7 @@ report corruption on a volume that otherwise behaves.
 derived data, mainline's tree-checker rejecting private flags) hold across Synology builds. The
 exact numbers do not necessarily: flag bit positions, tree objectids, the set of accepted mount
 options, and the userspace `btrfs` version were read from one build's GPL source
-(DSM 7.1.1-42962, avoton, 3.10 kernel). Newer platforms ship a 4.4 kernel line. Before acting on
+(DSM 7.1.1-42962, avoton, 3.10 kernel). Most DSM 7.x platforms ship a 4.4 kernel; newer ones (e.g. epyc7002/7003, geminilakenk, r1000nk, v1000nk, rtd1619b) ship 5.10. Before acting on
 a specific constant, confirm it in the GPL source for the target build (section 8) - that is
 cheap and it is the whole reason to download the source.
 
@@ -199,7 +199,7 @@ note at the top of this file).
 
 ```
 https://archive.synology.com/download/ToolChain/Synology%20NAS%20GPL%20Source/<VER>-<BUILD>/
-https://global.synologydownload.com/download/ToolChain/Synology%20NAS%20GPL%20Source/<VER>-<BUILD>/<platform>/linux-3.10.x.txz
+https://global.synologydownload.com/download/ToolChain/Synology%20NAS%20GPL%20Source/<VER>-<BUILD>/<platform>/linux-<KVER>.x.txz
 ```
 
 Find version and platform:
@@ -216,14 +216,14 @@ than patched mainline. List the platform directory before assuming you have to p
 only what is needed:
 
 ```sh
-tar xf linux-3.10.x.txz --wildcards '*/fs/btrfs/*'
-tar xf linux-3.10.x.txz --wildcards '*/include/uapi/linux/btrfs.h'
+tar xf linux-<KVER>.x.txz --wildcards '*/fs/btrfs/*'
+tar xf linux-<KVER>.x.txz --wildcards '*/include/uapi/linux/btrfs.h'
 ```
 
 Reading `fs/btrfs/{ctree.h,disk-io.c,super.c,usrquota.c}` for twenty minutes produced more than
 hours of black-box probing. **Do this early, not late.**
 
-Newer platforms ship a 4.4.x kernel rather than 3.10.x; the archive path lists what exists for
+DSM platforms ship 3.10.x, 4.4.x or 5.10.x; the archive path lists what exists for
 that build. Verify the kernel line with `uname -r` before guessing the filename.
 
 ## 9. The dm-snapshot overlay

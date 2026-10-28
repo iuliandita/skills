@@ -16,7 +16,7 @@ metadata:
 Configure, tune, design schemas, migrate, back up, and review database engines - from single-node dev setups to PCI-compliant production clusters. The goal is correct, performant, durable databases that survive failures and pass audits.
 
 **Target versions** (October 2026):
-- PostgreSQL **18.6** (EOL 2030-11; August 13, 2026 release), back-branches: 17.11, 16.15, 15.19, 14.24; PostgreSQL 19 Beta 4 is for testing only
+- PostgreSQL **18.6** (EOL 2030-11; August 13, 2026 release), back-branches: 17.11, 16.15, 15.19, 14.24 (EOL 2026-11-12 - plan the upgrade off 14 now); PostgreSQL 19 RC 1 (2026-10-15) is for testing only
 - MongoDB **9.0.2** (new major, GA 2026-09-28, EOL 2031-10); 8.0 lane **8.0.34** (EOL 2029-10); 8.0.32 fixes CVE-2026-89099 and is the security floor for the 8.0 lane. The rapid lane is Atlas-only with a short window - verify live before pinning
 - MariaDB **11.8.9** (LTS, EOL 2028-06), **12.3.3** (LTS, EOL 2029-06); 13.x rolling GA is quarterly and EOLs at each successor - verify live
 - MySQL **8.4.12** (LTS; August 18, 2026 release), **9.7.3** (9.7 LTS lane; August 18, 2026 release); the innovation lane has a short support window - verify live
@@ -151,51 +151,9 @@ Before writing SQL or config, determine these. If the user doesn't specify, use 
 
 Follow the domain-specific section below. Always apply the production checklist and AI self-check before finishing.
 
-**Common operations - quick-start patterns:**
-
-**Query optimization** (the most frequent request):
-1. Get the plan with realistic parameters: `EXPLAIN (ANALYZE, BUFFERS, FORMAT TEXT) SELECT ...;` (PG), `EXPLAIN FORMAT=TREE ...;` (MySQL 8.0+), `db.collection.explain('executionStats').find(...)` (MongoDB).
-2. Look for: `Seq Scan` on large tables (PG) / `Full Table Scan` (MySQL) / `COLLSCAN` (MongoDB), `Nested Loop` with high row estimates, `Sort` spilling to disk (`Sort Method: external merge`), and `Rows Removed by Filter` >> `Rows` returned.
-2a. Before assuming an index problem, verify semantic correctness: check JOIN conditions for column mismatches, confirm WHERE clause predicates don't unintentionally filter nulls, and verify LEFT JOIN semantics aren't silently converted to INNER JOIN by outer-table filters.
-3. Check index usage: `SELECT schemaname, relname, idx_scan, seq_scan FROM pg_stat_user_tables WHERE seq_scan > 100 ORDER BY seq_scan DESC;` (PG; adjust `schemaname = 'public'` filter for non-public schemas) or `SELECT * FROM sys.schema_unused_indexes;` (MySQL performance_schema).
-4. If a missing index is the fix, create it with `CONCURRENTLY` (PG): `CREATE INDEX CONCURRENTLY idx_orders_customer ON orders (customer_id);` or `ALGORITHM=INPLACE, LOCK=NONE` (MySQL).
-5. Re-run `EXPLAIN ANALYZE` to confirm the planner uses the new index and that estimated vs actual rows are close.
-
-**Lock contention / deadlock diagnosis** (second most common "it's stuck" scenario):
-1. PG: `SELECT pid, age(xact_start), query, wait_event_type, wait_event FROM pg_stat_activity WHERE state != 'idle' AND wait_event IS NOT NULL ORDER BY age(xact_start) DESC;`
-2. PG blocked queries: `SELECT blocked.pid AS blocked_pid, blocked.query AS blocked_query, blocking.pid AS blocking_pid, blocking.query AS blocking_query FROM pg_stat_activity blocked JOIN pg_locks bl ON bl.pid = blocked.pid JOIN pg_locks kl ON kl.locktype = bl.locktype AND kl.database IS NOT DISTINCT FROM bl.database AND kl.relation IS NOT DISTINCT FROM bl.relation AND kl.page IS NOT DISTINCT FROM bl.page AND kl.tuple IS NOT DISTINCT FROM bl.tuple AND kl.transactionid IS NOT DISTINCT FROM bl.transactionid AND kl.pid != bl.pid JOIN pg_stat_activity blocking ON blocking.pid = kl.pid WHERE NOT bl.granted AND kl.granted;`
-3. MySQL: `SHOW ENGINE INNODB STATUS\G` - look for `LATEST DETECTED DEADLOCK` section. Also: `SELECT * FROM performance_schema.data_lock_waits;` (MySQL 8.0+).
-4. MongoDB: `db.currentOp({"waitingForLock": true})` and check `mongod` log for `LockTimeout` entries.
-5. Inspect the blocker owner, transaction age, and impact. Prefer query cancellation (PG: `SELECT pg_cancel_backend(<pid>);`); terminate the exact backend/thread (PG: `pg_terminate_backend(<pid>)`, MySQL: `KILL <thread_id>`) only with explicit authorization after assessing rollback impact. Then address the cause of the lock.
-
-**Connection pooler sizing** (second most common):
-1. Determine backend budget: `max_connections` minus reserved connections and operational headroom = available; budget replication workers/senders separately.
-2. PgBouncer `default_pool_size` per user/db pair: budget the sum across every active user/database pool and PgBouncer instance within available backend capacity.
-3. Set `max_client_conn` to the total connections your app fleet will open (all instances combined).
-4. Use `transaction` pool mode for stateless web apps. Switch to `session` mode (which supports all PostgreSQL features) when the app needs session-level state: temp tables, advisory locks, `SET`, or prepared statements on PgBouncer older than 1.21 (1.21+ supports prepared statements in transaction mode via `max_prepared_statements`).
-5. Validate: `psql -h pgbouncer-host -p 6432 pgbouncer -c "SHOW POOLS;"` - watch `sv_active` vs `sv_idle` under load.
-
-**Migration safety check** (before running any DDL in production):
-1. Identify versioned migration versus rerunnable operation; validate preconditions and preserve drift detection.
-2. Check table size, write traffic, operation rewrite/lock behavior, and runtime budget; choose batching or supported concurrent indexing where needed.
-3. Verify backward compatibility: can the current app version still function after this DDL runs?
-4. Test the selected recovery path against representative populated data; do not require a lossy down migration.
-5. Run during low-traffic window if the operation takes locks (even brief ones).
-
-**Destructive or production-changing operations** (production DDL, `DROP`/`TRUNCATE`, restores
-using `--clean`, `--drop`, or a replaced data directory, failover, backend termination) follow
-plan-validate-execute. Copy and track:
-
-- [ ] Target confirmed: run the identity query on the exact connection you will use and show it
-- [ ] Backup confirmed: a restorable backup of the target exists; record its ID or path
-- [ ] Plan written: exact command, expected effect, lock/runtime estimate, recovery path (DDL: safety check done)
-- [ ] Rehearsed: tool dry run (pt-osc `--dry-run`, gh-ost without `--execute`) or the operation on a non-prod copy; for restores, restore into a scratch instance (`pg_restore --list` only inspects archive contents and is not a rehearsal; see `references/backup-patterns.md` Backup Verification)
-- [ ] Approved: the user explicitly approved that exact command text and target
-- [ ] Executed unchanged: no added flags, no retargeting; then validate (Step 4)
-
-Identity queries: PG `SELECT current_database(), inet_server_addr(), pg_is_in_recovery();`,
-MySQL/MariaDB `SELECT @@hostname, DATABASE(), @@read_only;`, MSSQL `SELECT @@SERVERNAME, DB_NAME();`,
-MongoDB `db.getName()` plus `db.hello().isWritablePrimary`.
+Read `references/build-patterns.md` before building: it has the quick-start patterns for query
+optimization (PostgreSQL, MySQL, MongoDB plans), lock and deadlock diagnosis, PgBouncer sizing, and
+migration safety, plus the required checklist before any destructive or production-changing operation.
 
 ### Step 4: Validate
 
@@ -248,35 +206,8 @@ sqlcmd -Q "DBCC CHECKDB ('dbname') WITH NO_INFOMSGS;"  # integrity check
 
 ### Major version upgrades
 
-Three approaches, pick by downtime tolerance:
-
-| Method | Downtime | Best for |
-|--------|----------|----------|
-| `pg_upgrade --link` | Minutes (metadata copy) | Small-to-medium DBs where brief downtime is acceptable |
-| Logical replication | Seconds (cutover only) | Large DBs, zero-downtime requirement, PG 10+ to any higher |
-| `pg_dump` / `pg_restore` | Hours (full copy) | Cross-engine, major schema changes, or when logical replication is impractical |
-
-**Zero-downtime with logical replication** (PG -> PG):
-1. Confirm the source runs `wal_level = logical` (`SHOW wal_level;`). It can only be set at server start, so a source still on `replica` needs a restart scheduled before the migration window. Also confirm free `max_replication_slots`/`max_wal_senders` and a `pg_hba.conf` rule for the subscriber's role (logical replication connects to the database itself, not the `replication` pseudo-database), then stand up the new version instance alongside the primary
-2. Create publication on source: `CREATE PUBLICATION upgrade_pub FOR ALL TABLES;`
-3. Create subscription on target, pointing at the source/publisher: `CREATE SUBSCRIPTION upgrade_sub CONNECTION 'host=source-db.internal dbname=app user=repl' PUBLICATION upgrade_pub;` - omit `password=` so libpq reads the subscriber's mode-0600 `~/.pgpass`; an inline password is stored in `pg_subscription` and appears in catalog dumps and logs
-4. Wait for initial sync + catchup (monitor `pg_stat_subscription`, replication lag)
-5. Inventory sequences and prepare their synchronization; logical replication does not copy their values
-6. Test application against the new version (read traffic, connection pooler split). **Monitor during split-test**: query latency p50/p95/p99 (compare old vs new - regression means planner stats or config drift), error rates by query type (new version may have stricter behavior), connection pool saturation (`SHOW POOLS` in PgBouncer - watch `cl_waiting`), replication lag trend (should stay flat or decrease, never grow during read-only test), and memory/CPU on the new instance. Run for at least one full traffic cycle (24h if your workload is diurnal). Abort and route back to old primary if error rate exceeds baseline or p99 latency degrades >20%.
-7. Cutover: fence source writes and drain transactions, verify target replay reached the final source WAL position, synchronize final sequence values, then route writes to the target
-8. Verify application health and retain the source for the agreed rollback window; decommission only after that window and explicit authorization
-
-**Rollback procedure** (if replication stalls or validation fails):
-- **Lag not reaching zero**: Check `pg_stat_subscription` for `last_msg_send_time` vs `last_msg_receipt_time` delta. Common causes: long-running transactions on source blocking WAL send, tables missing primary keys (forces full-row comparison), or network throughput limits. If lag is stuck, check `pg_replication_slots` on the source for `active = false` - an inactive slot means no current receiver is using it, not proof of a dropped subscription. Inspect target subscription/workers and logs; do not recreate it blindly or proceed with cutover.
-- **Application validation fails on new version**: Route all traffic back to the old primary (update pooler config). The old primary never stopped accepting writes, so no data is lost. Drop the subscription on the new instance: `DROP SUBSCRIPTION upgrade_sub;` - this also drops the replication slot on the source. Investigate, fix, and restart from step 3.
-- **Post-cutover rollback** (writes already went to new primary): This is the hard case. Options: (a) set up reverse logical replication from new -> old before decommissioning the old primary (plan this before cutover if RTO requires it), or (b) restore old primary from backup + WAL and accept data loss for the cutover window. Option (a) requires the old primary to still be running. **Decision point**: if you need rollback after cutover, test a reverse-replication/failback plan in step 6 before routing write traffic; prevent loops and never permit concurrent independent writers.
-
-**Key pitfalls** (check all of these before starting):
-- Tables need primary keys or `REPLICA IDENTITY FULL` - check first: `SELECT c.relname FROM pg_class c JOIN pg_namespace n ON c.relnamespace = n.oid WHERE n.nspname = 'public' AND c.relkind = 'r' AND NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid = c.oid AND contype = 'p');`
-- DDL is not replicated - schema changes during migration need manual sync on both sides
-- Large objects (`lo`) are not replicated
-- Sequence values drift - copy final values after source write fencing/drain and before any target writes
-- A lagging or inactive slot pins WAL on the source - watch `pg_replication_slots.wal_status` and free disk, and set `max_slot_wal_keep_size` deliberately (the default keeps WAL without bound and can fill the source volume; a bounded value invalidates the slot instead and forces a resync)
+Before any PostgreSQL major version upgrade, read `references/version-upgrades.md` for the method
+choice (`pg_upgrade`, logical replication, dump/restore), the zero-downtime runbook, rollback, and pitfalls.
 
 Read `references/migration-patterns.md` for cross-engine type mapping, ORM migration tooling, and detailed migration patterns.
 
@@ -306,69 +237,10 @@ Read `references/migration-patterns.md` for cross-engine type mapping, ORM migra
 - [ ] Dead/unused indexes identified and removed
 - [ ] Character encoding correct (`utf8mb4` for MySQL, `UTF8` for PG)
 
-### PostgreSQL-Specific
-
-- [ ] `pg_hba.conf`: `hostssl` only, `scram-sha-256` only, CIDR-restricted
-- [ ] `shared_buffers` = 25% RAM, `effective_cache_size` = 75% RAM
-- [ ] `work_mem` sized for concurrency (PG default is 4MB; allocated per sort/hash operation, not per connection - multiply by concurrent queries x operations to estimate peak memory)
-- [ ] `random_page_cost = 1.1` for SSD storage
-- [ ] `statement_timeout` set per-role (not globally - migrations need longer)
-- [ ] `idle_in_transaction_session_timeout` assessed per role/workload; default 0 disables it
-- [ ] `pg_stat_statements` enabled
-- [ ] Autovacuum tuned for large tables (`autovacuum_vacuum_scale_factor`)
-- [ ] WAL archiving enabled for PITR (`archive_mode = on` + pgBackRest/Barman, or managed backup)
-- [ ] Foreign key columns have indexes
-- [ ] pgAudit installed and configured (if PCI scope)
-- [ ] Patched against CVE-2026-2005 (pgcrypto heap buffer overflow, RCE) - 18.2+ / 17.8+ / 16.12+ / 15.16+ / 14.21+
-- [ ] On the [August 13 PostgreSQL security update](https://www.postgresql.org/support/security/): 18.6 / 17.11 / 16.15 / 15.19 / 14.24 or later in the chosen supported lane. Earlier minors are affected by high-impact server and client issues including CVE-2026-16239 (cursor type confusion), CVE-2026-19385 (pg_dump overflow), and CVE-2026-18408 (psql execution via untrusted dump origin). Update backup/restore clients too. CVE-2026-16238 specifically affects PostgreSQL 18 before 18.6.
-- [ ] On the May 14, 2026 PostgreSQL update (CVE-2026-6473/6475/6476/6477/6478: integer-wraparound under-sized allocation, intarray/ltree field overflow, pg_createsubscriber SQL injection, libpq lo_*/path traversal, MD5 password timing leak) - 18.4+ / 17.10+ / 16.14+ / 15.18+ / 14.23+
-
-### MySQL/MariaDB-Specific
-
-- [ ] `sql_mode` includes `STRICT_TRANS_TABLES` (prevents silent data truncation)
-- [ ] `innodb_buffer_pool_size` = 70% RAM
-- [ ] `innodb_flush_log_at_trx_commit = 1` for durability
-- [ ] `require_secure_transport = ON`
-- [ ] `character-set-server = utf8mb4`
-- [ ] Binary log enabled for PITR (`log_bin = ON`)
-- [ ] `innodb_file_per_table = ON`
-- [ ] MariaDB patched against CVE-2026-32710 (JSON_SCHEMA_VALID crash/RCE) - 11.8.6+ / 11.4.10+
-
-### MongoDB-Specific
-
-- [ ] `security.authorization: enabled` (never run without auth)
-- [ ] Replica set with 3+ members (not standalone in production)
-- [ ] Write concern `w: "majority"` (default in 8.0+)
-- [ ] Schema validation (`$jsonSchema`) on critical collections
-- [ ] Patched against MongoBleed (CVE-2025-14847) - 8.0.17+
-- [ ] Patched against CVE-2026-89099 - 8.0.32+ ([release notes](https://www.mongodb.com/docs/v8.0/release-notes/8.0/))
-- [ ] Patched against CVE-2026-25611 (pre-auth DoS via compression) - 8.0.18+ / 8.2.4+ / 7.0.29+
-- [ ] On the June 11, 2026 MongoDB security release (CVE-2026-11933) - 8.0.26+
-- [ ] TLS enabled (`net.tls.mode: requireTLS`)
-
-### MSSQL-Specific
-
-- [ ] `Max Server Memory` set explicitly (not unlimited)
-- [ ] `MAXDOP` set to core count per NUMA node
-- [ ] `Cost Threshold for Parallelism` raised from default 5
-- [ ] TempDB files = min(CPU cores, 8), equal size
-- [ ] Query Store enabled
-- [ ] Recovery model = FULL for production databases
-- [ ] TDE enabled for CDE databases
-- [ ] Patched against CVE-2026-21262 (privilege escalation) - March 2026 CU+
-
-### Compliance (PCI-DSS 4.0)
-
-- [ ] Encryption at rest: TDE or column-level (disk-level alone insufficient per Req 3.5.1.2)
-- [ ] Encryption in transit: TLS 1.2+ enforced on all connections (Req 4)
-- [ ] Audit logging: pgAudit/audit plugin, shipped to immutable SIEM (Req 10)
-- [ ] Key management: keys in HSM/KMS, not alongside data (Req 3.6)
-- [ ] Key rotation follows each key owner/vendor-defined cryptoperiod and compromise response; do not invent universal numeric PCI intervals
-- [ ] Access control: separate roles, no shared accounts, MFA for CDE access (Req 7, 8)
-- [ ] Data masking: PAN display limited to last 4 digits (Req 3.3)
-- [ ] No cardholder data in non-prod environments (Req 6.5.4)
-- [ ] Quarterly access review documented (Req 7.2.5)
-- [ ] Vulnerability scanning includes database engine, not just containers (Req 11.3)
+Then read `references/production-checklist.md` for the engine-specific checks (PostgreSQL,
+MySQL/MariaDB, MongoDB, MSSQL) and the PCI-DSS 4.0 compliance checks before finishing any review,
+config, or production change. Its CVE patch floors are minimums; for current releases use
+the **Target versions** block at the top.
 
 ---
 
@@ -378,6 +250,9 @@ Read `references/migration-patterns.md` for cross-engine type mapping, ORM migra
 - `references/backup-patterns.md` - read before any backup, restore, PITR, or retention change
 - `references/migration-patterns.md` - read for cross-engine moves, type mapping, ORM tooling, or large-table DDL
 - `references/redis-valkey.md` - read whenever Redis or Valkey holds data, sessions, or streams
+- `references/version-upgrades.md` - read before any PostgreSQL major version upgrade
+- `references/build-patterns.md` - read in Step 3 for query, lock, pooler, and migration-safety patterns, and before any destructive operation
+- `references/production-checklist.md` - read with the All Engines checklist for engine-specific and PCI-DSS 4.0 checks
 
 ---
 

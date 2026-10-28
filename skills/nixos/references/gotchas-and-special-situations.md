@@ -18,7 +18,7 @@ list first; exotic causes come after the boring ones are ruled out.
 - `nix flake check` passes, `nixos-rebuild` fails
 - systemd-boot entry spam
 - `sops-nix` or `agenix` not decrypting on first boot
-- Determinate `nix-daemon` commands fail
+- Determinate daemon unit confusion
 - Home-manager file already exists
 - nix-darwin: macOS defaults not applied
 - Rebuild succeeds, service fails to start
@@ -210,15 +210,16 @@ Fix:
 - Verify the decrypted file appears in `/run/secrets/<name>` or `/run/agenix/<name>`
   after activation.
 
-## Determinate `nix-daemon` commands fail
+## Determinate daemon unit confusion
 
-Symptom: `systemctl restart nix-daemon` says "unit not found" on a Determinate install.
+Symptom: `systemctl restart determinate-nixd` says "unit not found" on a Determinate Linux install.
 
-Cause: the daemon is `determinate-nixd`, not `nix-daemon`.
+Cause: on Linux the unit is still `nix-daemon.service`; Determinate replaces its ExecStart with `determinate-nixd ... daemon` and adds `determinate-nixd.socket`. macOS uses launchd label `systems.determinate.nix-daemon`.
 
 Fix:
 ```bash
-sudo systemctl restart determinate-nixd
+sudo systemctl restart nix-daemon.service
+systemctl cat nix-daemon.service | grep ExecStart   # determinate-nixd => Determinate
 determinate-nixd status
 ```
 

@@ -100,9 +100,16 @@ nftables replaced iptables as the default Linux firewall. Key differences:
 
 ### Basic stateful firewall
 
+This file owns only `table inet filter`. `flush ruleset` would also delete Docker,
+libvirt, kube-proxy and firewalld tables. Every base chain on a hook runs and a drop in
+any table is final, so on container/VM hosts accept their bridges in `forward`.
+Over SSH, apply it only with the timed rollback in SKILL.md Step 3.
+
 ```
 #!/usr/sbin/nft -f
-flush ruleset
+# Replace only this table, atomically: declare (no-op if present), delete, redefine
+table inet filter
+delete table inet filter
 
 table inet filter {
   chain input {
@@ -218,14 +225,13 @@ table inet filter {
 ### Persisting rules
 
 ```bash
-# Save current ruleset
-nft list ruleset > /etc/nftables.conf
-
-# Load on boot (systemd)
-systemctl enable nftables    # Loads /etc/nftables.conf on boot
-
-# Or manual load
-nft -f /etc/nftables.conf
+# Persist the validated source file, never a `nft list ruleset` dump (that captures
+# generated Docker/kube-proxy tables and has no table reset header).
+nft -c -f new.nft                                   # syntax check; stop on error
+install -m 0600 new.nft /etc/nftables.conf          # RHEL: /etc/sysconfig/nftables.conf
+systemctl enable nftables                           # loads the file on boot
+# Debian/RHEL units run `nft flush ruleset` on stop: do not stop/restart nftables on
+# container hosts; apply changes with the SKILL.md Step 3 rollback sequence instead.
 ```
 
 ### nftables vs iptables
@@ -418,7 +424,16 @@ interface enp0s4
 
 ### Basic BGP
 
+`frr defaults traditional` enables `bgp ebgp-requires-policy` (RFC 8212): an eBGP peer with no in/out route-map exchanges nothing and shows `(Policy)` in `show bgp summary`.
+
 ```
+ip prefix-list PL-OUT seq 10 permit 10.0.1.0/24
+ip prefix-list PL-IN  seq 10 permit 10.0.2.0/24
+route-map RM-OUT permit 10
+  match ip address prefix-list PL-OUT
+route-map RM-IN permit 10
+  match ip address prefix-list PL-IN
+
 router bgp 65001
   bgp router-id 10.0.1.1
   neighbor 10.0.2.1 remote-as 65002
@@ -426,6 +441,8 @@ router bgp 65001
   address-family ipv4 unicast
     network 10.0.1.0/24
     neighbor 10.0.2.1 activate
+    neighbor 10.0.2.1 route-map RM-IN in
+    neighbor 10.0.2.1 route-map RM-OUT out
   exit-address-family
 ```
 

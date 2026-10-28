@@ -6,7 +6,7 @@ hardening tool handlers, or reviewing MCP code for vulnerabilities.
 ## Contents
 
 - Known CVEs
-- SDK advisory update (checked 2026-09-25)
+- SDK advisory update (checked 2026-10-28)
 - OAuth 2.1 Authorization
 - Stateless Core and Legacy Sessions (Streamable HTTP)
 - Injection Prevention Details
@@ -32,9 +32,10 @@ server can have multiple path and access control flaws at once.
 
 ---
 
-## SDK advisory update (checked 2026-09-25)
+## SDK advisory update (checked 2026-10-28)
 
 - [TypeScript SDK cross-client response leak](https://github.com/modelcontextprotocol/typescript-sdk/security/advisories/GHSA-345p-7cg4-v4c7): legacy `@modelcontextprotocol/sdk` >=1.10.0,<=1.25.3; fixed in 1.26.0. Avoid sharing server/transport instances across clients; verify concurrent-client isolation.
+- [TypeScript SDK October 20 advisories](https://github.com/modelcontextprotocol/typescript-sdk/security/advisories): cross-client message delivery on shared server/transport instances (GHSA-jm63-cq47-j5jp, high; server <2.3.0), validation memory exhaustion from one in-limit request (GHSA-46jr-4wx8-v453, high; sdk <1.32.0, server <2.3.0), experimental tasks not bound to their session (GHSA-22jm-h49p-29qw, high; sdk <1.32.0), bearer tokens for another service accepted (GHSA-rvq5-wwqv-78pq, medium; sdk <1.32.0, server <2.3.0, server-legacy <2.3.1, express <2.0.2), and client cross-origin redirects (GHSA-6prh-2h8m-c8cw, medium; sdk <1.32.0, client <2.3.0). Floors: server/client 2.3.0, sdk 1.32.0. Validate token audience and never share a `Server` or transport across clients.
 - [Python SDK session principal bypass](https://github.com/modelcontextprotocol/python-sdk/security/advisories/GHSA-jpw9-pfvf-9f58): `mcp` <=1.27.1; fixed in 1.27.2. Affects authenticated stateful HTTP transports, not stdio or stateless HTTP. Bind sessions to the authenticated user, including the token subject when users share an OAuth client.
 - [Python SDK WebSocket origin check](https://advisories.gitlab.com/pypi/mcp/CVE-2026-59950/) (CVE-2026-59950, high): the deprecated WebSocket server transport in `mcp` <1.28.1 skipped Host/Origin validation; fixed in 1.28.1. Prefer stdio or Streamable HTTP with `TransportSecuritySettings`.
 - [Go SDK localhost DNS rebinding](https://github.com/modelcontextprotocol/go-sdk/security/advisories/GHSA-xw59-hvm2-8pj6): versions <1.4.0; fixed in 1.4.0. Affects unauthenticated localhost HTTP servers, not stdio. Keep Host/Origin validation and authentication enabled.
@@ -51,8 +52,14 @@ the MCP spec but strongly recommended when tools access user-specific resources.
 - MCP servers act as OAuth 2.1 resource servers
 - Implement OAuth 2.0 Protected Resource Metadata (RFC 9728) for discovery
 - All clients MUST use PKCE (Proof Key for Code Exchange)
-- Client ID Metadata Documents are the preferred client identification method
-- Dynamic Client Registration (DCR) is a fallback, not a requirement
+- Client ID Metadata Documents (CIMD) are the standard client registration method
+- Dynamic Client Registration (DCR) is deprecated in 2026-07-28 in favor of CIMD; it remains only
+  for backward compatibility and is eligible for removal in the first revision on or after 2027-07-28
+- Clients record the validated authorization server `issuer` before redirecting and, when the
+  response carries `iss` (RFC 9207, SEP-2468), compare it by exact string match before redeeming
+  the code; reject a missing `iss` when metadata sets `authorization_response_iss_parameter_supported`
+- Client credentials are bound to the issuer that minted them (SEP-2352): key stored credentials by
+  `issuer`, never reuse them with another authorization server, and re-register when it changes
 - Validate token audience - reject tokens not issued for your server
 - Use minimal scopes
 
@@ -319,8 +326,9 @@ The model follows the hidden instruction because it treats the description as au
 Server presents clean tool definitions during onboarding, then changes them after approval.
 The modified definitions contain poisoned instructions.
 
-**Defense:** Pin and hash tool schemas at approval time. Diff `tools/list` results on each
-session start. Alert users on any metadata change. Require re-approval for modified tools.
+**Defense:** Pin and hash tool schemas at approval time. Diff every fresh `tools/list` result
+(after `ttlMs` expiry or a list-changed notification) against the approved hash; 2026-07-28 has no
+sessions to anchor on. Alert users on any metadata change. Require re-approval for modified tools.
 
 ---
 
@@ -359,6 +367,8 @@ unintended operations, or leaking internal details in error messages.
 ## Elicitation Security
 
 Elicitation allows servers to request structured input from users mid-operation (spec 2025-06-18+).
+In 2026-07-28 it travels as a multi round-trip request (`resultType: "input_required"`, retried
+with `inputResponses`), not a server-initiated `elicitation/create` request.
 
 Schema restrictions (flat objects, primitive fields only) are listed in SKILL.md Step 5.
 
@@ -366,6 +376,8 @@ Schema restrictions (flat objects, primitive fields only) are listed in SKILL.md
 - Request passwords, tokens, API keys, or credentials via elicitation
 - Present fake "re-authenticate" or "session expired" dialogs
 - Auto-submit responses without user interaction
+- Trust `inputResponses` or an echoed `requestState` without validation; integrity-protect (HMAC or
+  AEAD) any `requestState` that affects authorization, resource access, or business logic
 - Send excessive elicitation requests (rate limit)
 
 **Clients SHOULD:**

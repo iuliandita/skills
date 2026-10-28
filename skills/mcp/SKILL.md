@@ -19,8 +19,8 @@ become yet another server with preventable injection vulnerabilities.
 
 **Target versions** (October 2026):
 - MCP specification: 2026-07-28 (current stable; stateless core, extensions framework, and no initialize/session handshake)
-- TypeScript SDK: `@modelcontextprotocol/server`, `@modelcontextprotocol/client`, and `@modelcontextprotocol/core` 2.3.0 (the monolithic `@modelcontextprotocol/sdk` 1.32.0 is the legacy line; both 2026-10-02 releases restrict client redirects to the same origin, and 2.3.0 serves one connection per `Server` instance). Client floors for the high-severity OAuth credential-redirect advisory ([CVE-2026-104850](https://github.com/modelcontextprotocol/typescript-sdk/security/advisories/GHSA-6qxp-vccf-f47h)) are client 2.2.0 and sdk 1.31.0
-- Python SDK: mcp 2.3.0 (2.x stable; review the v1-to-v2 migration guide). 2.2.0 (or 1.30.0 on 1.x) is the floor for the high-severity OAuth credential-redirect and unreclaimed-session advisories ([GHSA-qx49-fqc8-xw99](https://github.com/modelcontextprotocol/python-sdk/security/advisories/GHSA-qx49-fqc8-xw99), [CVE-2026-59951](https://github.com/modelcontextprotocol/python-sdk/security/advisories/GHSA-84m7-p3x7-pcfv))
+- TypeScript SDK: `@modelcontextprotocol/server`, `@modelcontextprotocol/client`, and `@modelcontextprotocol/core` 2.4.0 (the monolithic `@modelcontextprotocol/sdk` 1.32.2 is the legacy line; the 2026-10-02 releases restrict client redirects to the same origin, and 2.3.0+ serves one connection per `Server` instance). Security floors: server and client 2.3.0, sdk 1.32.0, server-legacy 2.3.1, express 2.0.2 (October 20 advisories, see references/security.md); these supersede the OAuth credential-redirect floors ([CVE-2026-104850](https://github.com/modelcontextprotocol/typescript-sdk/security/advisories/GHSA-6qxp-vccf-f47h)) of client 2.2.0 / sdk 1.31.0
+- Python SDK: mcp 2.3.0 (2.x stable; review the v1-to-v2 migration guide). 2.2.0 (or 1.30.0 on 1.x) is the floor for the high-severity OAuth credential-redirect (GHSA-qx49) and medium unreclaimed-session (CVE-2026-59951) advisories ([GHSA-qx49-fqc8-xw99](https://github.com/modelcontextprotocol/python-sdk/security/advisories/GHSA-qx49-fqc8-xw99), [CVE-2026-59951](https://github.com/modelcontextprotocol/python-sdk/security/advisories/GHSA-84m7-p3x7-pcfv))
 - Protocol transports: stdio and Streamable HTTP. The standalone HTTP+SSE transport is deprecated and available only as a temporary legacy bridge
 
 ## When to use
@@ -50,7 +50,7 @@ When generating or reviewing MCP server code, verify each item before presenting
 
 - [ ] All tool handler inputs validated server-side (no raw string interpolation into
   shell commands, SQL, file paths, or URLs)
-- [ ] Every tool ships a non-empty, accurate, concise description in `tools/list` (FastMCP takes it
+- [ ] Every tool ships a non-empty, accurate, concise description in `tools/list` (MCPServer takes it
   from the docstring, so an undocumented function registers an empty description; some clients
   truncate long ones)
 - [ ] Resource URIs use a defined scheme and are validated before use
@@ -102,7 +102,7 @@ Before writing code, clarify:
 - **What resources will it serve?** Resources = read-only data the AI can access.
 - **What transport?** stdio for local CLI integration, streamable HTTP for remote/production.
 - **What authentication?** None for stdio. OAuth 2.1 recommended for remote servers handling user data.
-- **What language?** TypeScript (most mature SDK) or Python (simpler, FastMCP).
+- **What language?** TypeScript (most mature SDK) or Python (simpler, `MCPServer`; FastMCP in SDK 1.x).
 
 ### Step 2: Scaffold the server
 
@@ -228,24 +228,26 @@ void main().catch((error: unknown) => {
 pinned server instance and transport. Keep all stdio diagnostics on stderr; stdout is the protocol
 channel.
 
-**Python** (FastMCP for quick prototyping):
+**Python** (`MCPServer`, the SDK 2.x rename of FastMCP, for quick prototyping):
 
 ```python
 import json, re
-from mcp.server.fastmcp import FastMCP
+from typing import Annotated
+from pydantic import Field
+from mcp.server.mcpserver import MCPServer
+from mcp.server.mcpserver.exceptions import ToolError
 
-mcp = FastMCP("my-server")
+mcp = MCPServer("my-server", version="1.0.0")
 docs = [{"title": "Getting started", "body": "Install the server and connect over stdio."}]
 config = {"mode": "read-only"}
 
 @mcp.tool()
-def search_docs(query: str, limit: int = 10) -> dict[str, list[dict[str, str]]]:
+def search_docs(query: Annotated[str, Field(min_length=1, max_length=200)],
+                limit: Annotated[int, Field(ge=1, le=20)] = 10) -> dict[str, list[dict[str, str]]]:
     """Search documentation; return bounded title/snippet matches."""
-    if not 1 <= len(query) <= 200 or not 1 <= limit <= 20:
-        raise ValueError("Require a 1-200 character query and limit 1-20")
     needle = re.sub(r"[^\w\s-]", "", query).strip().casefold()
     if not any(char.isalnum() for char in needle):
-        raise ValueError("Query must contain a letter or number")
+        raise ToolError("Query must contain a letter or number")
     matches = [doc for doc in docs if needle in f"{doc['title']}\n{doc['body']}".casefold()]
     return {"matches": [{"title": doc["title"][:120], "snippet": doc["body"][:240]}
                         for doc in matches[:limit]]}
@@ -258,6 +260,9 @@ def get_config() -> str:
 if __name__ == "__main__":
     mcp.run()
 ```
+
+`mcp.server.fastmcp` raises `ModuleNotFoundError` on mcp 2.x. Raise `ToolError` for failures the
+model should read; any other exception reaches it only as `Error executing tool <name>`.
 
 ### Step 3: Implement tools securely
 
@@ -313,21 +318,29 @@ The standalone HTTP+SSE transport (spec 2024-11-05) is deprecated; use Streamabl
 remote servers. MCP 2026-07-28 removes the initialize/session handshake from the core protocol.
 Use the SDK migration helpers when one endpoint must also serve legacy 2025 clients.
 Auth is optional per spec but strongly recommended for servers handling user data. When
-implementing auth, use OAuth 2.1 with PKCE. Prefer Client ID Metadata Documents over Dynamic
-Client Registration (DCR is a fallback, not a requirement).
+implementing auth, use OAuth 2.1 with PKCE and Client ID Metadata Documents. Dynamic Client
+Registration is deprecated in 2026-07-28 (backward compatibility only). Clients validate the
+RFC 9207 `iss` response parameter and key stored client credentials by issuer.
 
 **Streamable HTTP security:**
 - Bind to `127.0.0.1` for local servers (never `0.0.0.0`)
 - Validate `Origin` header on all requests (DNS rebinding prevention)
 - Treat every 2026-07-28 request as self-contained; do not require `MCP-Session-Id`
 - Client sends `MCP-Protocol-Version: 2026-07-28` plus identity and capabilities in `_meta`
+- Client sends `Mcp-Method` on every POST and `Mcp-Name` on `tools/call`, `resources/read`, and
+  `prompts/get`; reject missing or body-mismatched values with `-32020` (HeaderMismatch)
 - Consider using `createMcpExpressApp()` / `createMcpHonoApp()` for built-in DNS rebinding
   protection - these ship from the separate `@modelcontextprotocol/express` and
   `@modelcontextprotocol/hono` packages, not the runtime-neutral core package
 
 ### Step 5: Handle elicitation safely
 
-MCP elicitation lets servers request structured input from users mid-task.
+MCP elicitation lets servers request structured input from users mid-task. In 2026-07-28 it is
+a multi round-trip request: a `tools/call`, `prompts/get`, or `resources/read` handler returns
+`resultType: "input_required"` with `inputRequests` (and optional `requestState`), and the client
+retries the same call with `inputResponses` under the same keys. Use the SDK helpers (TypeScript
+`inputRequired()`, Python `Resolve(...)` + `Elicit`); push-style `elicitInput()` / `ctx.elicit()`
+fail on 2026-07-28 connections. Sampling, roots, and logging are deprecated (SEP-2577).
 
 **Schema restrictions** - elicitation schemas are limited to flat objects with primitive fields:
 - `string` (with optional `format`: email, uri, date, date-time)
@@ -338,7 +351,8 @@ MCP elicitation lets servers request structured input from users mid-task.
 
 No nested objects. Keep schemas simple for broad client support.
 
-**Security**: never request credentials via elicitation. Clients should show which server is
+**Security**: never request credentials via form-mode elicitation; use URL mode. Treat
+`inputResponses` and echoed `requestState` as untrusted input. Clients should show which server is
 requesting input and allow decline/cancel at any time. Handle all three responses: `accept`
 (with data), `decline`, and `cancel`.
 
@@ -396,7 +410,7 @@ AI models consistently make these errors when generating MCP server code:
 ## Reference Files
 
 - `references/security.md` - OAuth 2.1 details, known CVEs, injection test payloads,
-  path traversal and SSRF prevention, session management, and tool poisoning defense. Read it
+  path traversal and SSRF prevention, stateless transport and legacy sessions, and tool poisoning defense. Read it
   when implementing auth, hardening handlers, or reviewing a server
 
 ## Output Contract

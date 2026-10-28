@@ -2,6 +2,69 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.1](https://github.com/iuliandita/skills/compare/v2.7.0...v2.7.1) (2026-10-28)
+
+### Bug Fixes
+
+* **install:** a fifth backup taken in the same second no longer reuses a pruned counter and prunes itself ([#357](https://github.com/iuliandita/skills/pull/357), [#308](https://github.com/iuliandita/skills/issues/308)).
+
+### Performance
+
+* lint, contract checks and the installer start far fewer subprocesses: `lint-skills.sh` 20.5 s to 10.9 s, `install.sh --check` 1.41 s to 0.27 s, with identical output ([#357](https://github.com/iuliandita/skills/pull/357), [#308](https://github.com/iuliandita/skills/issues/308)).
+
+## [2.7.0](https://github.com/iuliandita/skills/compare/v2.6.4...v2.7.0) (2026-10-28)
+
+### Features
+
+* **lint:** warn when a SKILL.md body exceeds the ~5000-token activation guidance; databases and skill-refiner move detail into references to fit (databases ~4670 tokens, skill-refiner ~5430, with the rest planned in #309) ([#321](https://github.com/iuliandita/skills/pull/321), [#309](https://github.com/iuliandita/skills/issues/309)).
+* **repo-audit:** `detect.sh` matches exact dependency names per manifest format and covers Go, Rust, Ruby and PHP manifests; keywords, substrings and `.github`/vendored manifests no longer activate lanes ([#316](https://github.com/iuliandita/skills/pull/316), [#300](https://github.com/iuliandita/skills/issues/300)).
+
+### Bug Fixes
+
+* **ci:** shell syntax checks parse every script instead of only `install.sh` ([#316](https://github.com/iuliandita/skills/pull/316), [#300](https://github.com/iuliandita/skills/issues/300)).
+* **skills:** update-docs resolves roadmap versions to existing tags with or without `v`; repo-audit exhaustive runs write dated DEEP-AUDIT files and stay read-only; skill-refiner, skill-creator and prompt-generator instructions run as written and match the output contract ([#317](https://github.com/iuliandita/skills/pull/317), [#301](https://github.com/iuliandita/skills/issues/301)).
+* **ci:** docs-impact, deep-audit coverage and version-receipt checks no longer pass on wrong matches; audit coverage is derived from `detect.sh` ([#324](https://github.com/iuliandita/skills/pull/324)).
+
+## [2.6.4](https://github.com/iuliandita/skills/compare/v2.6.3...v2.6.4) (2026-10-28)
+
+### Bug Fixes
+
+* **frontend-design:** raise the Next.js floors to 16.4.1 and 15.5.28 for the October 14 security release ([#325](https://github.com/iuliandita/skills/pull/325), [#302](https://github.com/iuliandita/skills/issues/302)).
+* **testing:** raise the Vitest floors to 5.0.5 and 4.1.12 for the October 21 advisories ([#326](https://github.com/iuliandita/skills/pull/326), [#302](https://github.com/iuliandita/skills/issues/302)).
+* **testing:** axe examples include the WCAG 2.1 level A rules, and tool pins are current ([#347](https://github.com/iuliandita/skills/pull/347), [#307](https://github.com/iuliandita/skills/issues/307)).
+* **mcp:** raise the TypeScript SDK floors for the October 20 advisories ([#327](https://github.com/iuliandita/skills/pull/327), [#302](https://github.com/iuliandita/skills/issues/302)).
+* **mcp:** align the skill with the 2026-07-28 spec and Python SDK 2.x ([#345](https://github.com/iuliandita/skills/pull/345), [#305](https://github.com/iuliandita/skills/issues/305)).
+* **backend-api:** raise the Multer floor to 2.5.0 ([#328](https://github.com/iuliandita/skills/pull/328), [#302](https://github.com/iuliandita/skills/issues/302)).
+* **llm-app-development:** raise the vLLM floor to 0.32.0 ([#329](https://github.com/iuliandita/skills/pull/329), [#302](https://github.com/iuliandita/skills/issues/302)), and update the Anthropic SDK pins, the NDJSON stream label and the retry example ([#335](https://github.com/iuliandita/skills/pull/335), [#307](https://github.com/iuliandita/skills/issues/307)).
+* **synology-dsm:** raise the DSM 7.2.x floors for SA-26:13 ([#330](https://github.com/iuliandita/skills/pull/330), [#302](https://github.com/iuliandita/skills/issues/302)).
+* **databases:** note PostgreSQL 14 EOL and 19 RC 1, and give the full MongoBleed floors ([#331](https://github.com/iuliandita/skills/pull/331), [#302](https://github.com/iuliandita/skills/issues/302)); CloudNativePG backups use the Barman Cloud plugin instead of the removed in-tree store ([#348](https://github.com/iuliandita/skills/pull/348), [#307](https://github.com/iuliandita/skills/issues/307)).
+* **skills:** copy-paste configs in docker, ansible, kubernetes, virtualization, networking, terraform and ci-cd run as written ([#332](https://github.com/iuliandita/skills/pull/332), [#303](https://github.com/iuliandita/skills/issues/303)).
+* **networking, git:** destructive commands get guardrails; history rewrites record remote refs and a recovery bundle first, then push with a lease on each recorded ref ([#346](https://github.com/iuliandita/skills/pull/346), [#304](https://github.com/iuliandita/skills/issues/304)).
+* **skills:** correct stale platform facts in the OS and tool skills ([#334](https://github.com/iuliandita/skills/pull/334), [#306](https://github.com/iuliandita/skills/issues/306)).
+* **docker:** SBOM attestation uses current cosign commands, and runtime versions are current ([#349](https://github.com/iuliandita/skills/pull/349), [#307](https://github.com/iuliandita/skills/issues/307)).
+* **i18n-localization:** vue-i18n examples use composition mode, interpolation uses the library instead of `.replace()`, and plurals follow CLDR ([#336](https://github.com/iuliandita/skills/pull/336), [#307](https://github.com/iuliandita/skills/issues/307)).
+* **debug-triage:** live auth failures no longer route to security-audit, which only covers repository review ([#337](https://github.com/iuliandita/skills/pull/337), [#307](https://github.com/iuliandita/skills/issues/307)).
+* **dev-cycle:** use the Jest 30 test path flag, and mode detection sets the base branch ([#338](https://github.com/iuliandita/skills/pull/338), [#307](https://github.com/iuliandita/skills/issues/307)).
+* **performance-debugging:** correct the py-spy and dotnet-trace duration flags ([#339](https://github.com/iuliandita/skills/pull/339), [#307](https://github.com/iuliandita/skills/issues/307)).
+* **ci-cd:** pin the current actions/checkout, Docker image tags and runner version, and note the runner auto-update caveat ([#340](https://github.com/iuliandita/skills/pull/340), [#307](https://github.com/iuliandita/skills/issues/307)).
+
+## [2.6.3](https://github.com/iuliandita/skills/compare/v2.6.2...v2.6.3) (2026-10-28)
+
+### Bug Fixes
+
+* **install:** keep earlier backups when several tools or runs back up the same skill: each destination gets its own backup folder, including under `SKILLS_BACKUP_DIR`, each backup gets a unique folder, and tools sharing one directory are installed into it once per run ([#341](https://github.com/iuliandita/skills/pull/341), [#292](https://github.com/iuliandita/skills/issues/292)).
+* **install:** link mode no longer links the canonical directory onto itself through a trailing slash or symlinked path, and keeps a symlink it did not create unless `--force` is given, backing it up first ([#342](https://github.com/iuliandita/skills/pull/342), [#293](https://github.com/iuliandita/skills/issues/293)).
+* **install:** preserve string-form OpenCode `permission` and `permission.skill` values when syncing skills ([#344](https://github.com/iuliandita/skills/pull/344)).
+* **install:** run the installer's embedded Python helpers in isolated mode ([#350](https://github.com/iuliandita/skills/pull/350)).
+* **install:** `--update` counts untracked files even with `status.showUntrackedFiles=no`, exits 8 when the updated installer is missing or does not parse, ignores a relative `XDG_STATE_HOME`, and treats `SKILLS_MIGRATOR` and `SKILLS_MIGRATIONS_FILE` as overrides ([#352](https://github.com/iuliandita/skills/pull/352), [#295](https://github.com/iuliandita/skills/issues/295)).
+* **test:** the install tests no longer inherit the developer's installer override variables ([#351](https://github.com/iuliandita/skills/pull/351), [#294](https://github.com/iuliandita/skills/issues/294)).
+* **lint:** the frontmatter parser rejects YAML it would misread, and `deprecated`/`internal` flags use one trim-and-case-fold rule everywhere ([#319](https://github.com/iuliandita/skills/pull/319)).
+* **lint:** reject out-of-spec frontmatter keys and metadata values ([#320](https://github.com/iuliandita/skills/pull/320), [#298](https://github.com/iuliandita/skills/issues/298)).
+* **lint:** reference checks fail on generator crashes and substring-only link matches, and reference prose is checked for non-ASCII ([#323](https://github.com/iuliandita/skills/pull/323)).
+* **ci:** run the quality gates on every gated change and before release ([#315](https://github.com/iuliandita/skills/pull/315), [#297](https://github.com/iuliandita/skills/issues/297)).
+* **ci:** guard the helper scripts the gates run ([#313](https://github.com/iuliandita/skills/pull/313), [#296](https://github.com/iuliandita/skills/issues/296)).
+* **docs:** add contributor, reporting and documentation entry points, and check cumulative documentation impact at release ([#291](https://github.com/iuliandita/skills/pull/291), [#289](https://github.com/iuliandita/skills/issues/289), [#290](https://github.com/iuliandita/skills/issues/290)).
+
 ## [2.6.2](https://github.com/iuliandita/skills/compare/v2.6.1...v2.6.2) (2026-10-12)
 
 ### Bug Fixes

@@ -241,7 +241,7 @@ tags:
   - hardening
 dependencies:
   ansible.posix: ">=1.5.0"
-  community.general: ">=8.0.0"
+  community.general: ">=12.0.0"
 repository: https://github.com/myorg/ansible-infrastructure
 issues: https://github.com/myorg/ansible-infrastructure/issues
 build_ignore:
@@ -311,13 +311,15 @@ collections:
   - name: ansible.posix
     version: ">=1.5.0,<2.0.0"
   - name: community.general
-    version: ">=9.0.0,<10.0.0"
+    version: ">=13.0.0,<14.0.0"
   - name: community.crypto
     version: ">=2.0.0"
   - name: kubernetes.core
     version: ">=4.0.0"
   - name: hashicorp.vault
-    version: ">=1.0.0"
+    version: ">=1.2.0"
+  - name: community.hashi_vault
+    version: ">=7.0.0"
 
   # Private collection from Automation Hub
   - name: myorg.infrastructure

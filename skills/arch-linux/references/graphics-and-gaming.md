@@ -26,7 +26,7 @@ Start here before touching launch options:
 ```bash
 lspci -k | grep -Ei 'vga|3d|display'
 uname -r
-pacman -Q mesa vulkan-radeon vulkan-intel nvidia-utils nvidia-open linux-firmware steam gamescope mangohud gamemode 2>&1 || true
+pacman -Q mesa vulkan-radeon vulkan-intel nvidia-utils nvidia-open nvidia-580xx-utils linux-firmware steam gamescope mangohud gamemode 2>&1 || true
 journalctl -b | grep -Ei 'nvrm|nvidia|amdgpu|i915|xe|drm|vulkan'
 ```
 
@@ -85,7 +85,8 @@ NVIDIA is the neverending Linux footgun source because more layers have to agree
 Main stance:
 
 - `nvidia-utils` is the userspace anchor.
-- `nvidia-open` exists, but it is not a universal answer. Hardware generation and support expectations still matter.
+- Since the 590 driver (Arch news 2025-12-20) `nvidia` was replaced by `nvidia-open`, `nvidia-dkms` by `nvidia-open-dkms`, and `nvidia-lts` by `nvidia-lts-open`. Turing (RTX 20xx, GTX 16xx) and newer move over automatically.
+- Pascal (GTX 10xx), Maxwell, and older lost support in 590: remove `nvidia`/`nvidia-lts`/`nvidia-dkms` and install `nvidia-580xx-dkms` from the AUR (pulls `nvidia-580xx-utils`; add `lib32-nvidia-580xx-utils` for Steam), or the driver fails to load.
 - Keep the kernel package and NVIDIA module path coherent. Driver mismatch after a kernel move is a classic Arch breakage.
 - Wayland has improved a lot, but NVIDIA issues still often show up first in Hyprland, Gamescope, suspend or resume, HDR, and hybrid-GPU workflows.
 

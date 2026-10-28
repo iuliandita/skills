@@ -158,6 +158,42 @@ pins:
   trap - RETURN
 }
 
+test_pin_starting_with_other_key_is_separate() {
+  local tmp output status
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  write_receipt "$tmp/skills/fixture/references/versions.md" "---
+checked_at: \"$(date -u +%F)\"
+checked_by: \"manual\"
+pins:
+  - tool: \"X\"
+    version: \"1.0.0\"
+    source: \"https://example.com\"
+  - version: \"2.0.0\"
+    source: \"http://example.org\"
+---
+"
+
+  status=0
+  output="$(run_checker "$tmp/skills" 2>&1)" || status=$?
+  if (( status == 0 )); then
+    printf '%s\n' "$output" >&2
+    fail "checker passed despite a pin without tool"
+  fi
+  if [[ "$output" != *"pins[2] is missing tool, version, or source"* ]]; then
+    printf '%s\n' "$output" >&2
+    fail "checker did not report the second pin as missing tool"
+  fi
+  if [[ "$output" == *"pins[1]"* ]]; then
+    printf '%s\n' "$output" >&2
+    fail "second pin's fields leaked into the first pin"
+  fi
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
 test_no_versions_md_anywhere_passes() {
   local tmp
   tmp="$(mktemp -d)"
@@ -177,5 +213,6 @@ test_stale_checked_at_fails
 test_missing_checked_at_fails
 test_pin_missing_source_fails
 test_http_source_fails
+test_pin_starting_with_other_key_is_separate
 test_no_versions_md_anywhere_passes
-printf 'version receipt tests passed (6 cases)\n'
+printf 'version receipt tests passed (7 cases)\n'

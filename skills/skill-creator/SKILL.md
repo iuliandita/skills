@@ -115,7 +115,7 @@ possible update is destructive or would create a new class-level skill with unce
    "branch unavailable" and fall back to file modification dates.
 3. **Classify lifecycle status**: for existing targets and collection neighbors, parse YAML
    frontmatter, then read `metadata.deprecated`. In Mode 1, the new file does not yet exist:
-   classify existing neighbors now and validate the draft after it is created in Step 3.
+   classify existing neighbors now, and classify the new draft in Step 4, after Step 3 drafts it.
    Boolean `true` or a string equal to `true` after trimming and case-folding marks a
    deprecated notice (including quoted values); missing or false means active. Never use
    string truthiness or search body text. Report malformed frontmatter instead of assuming
@@ -209,10 +209,9 @@ Run through the AI Self-Check above. Then:
   inside a collection, or the user's specified path for standalone skills
 - Write reference files (if any) to `<skill-dir>/references/`
 - If a collection inventory exists, update it and re-run cross-reference checks
-- If the harness's skill-management tool cannot modify the target because the skill lives in an
-  external repo or non-managed directory, fall back to the harness's skill-management tool or a
-  direct file edit on the actual repo paths. Do not stop at the tool limitation if the files are
-  writable and the user asked for the change in-place.
+- If the harness's skill-management tool cannot write the target (external repo or unmanaged
+  directory), edit the files directly when they are writable and the user asked for an in-place
+  change; otherwise report the target paths and stop.
 
 #### Step 6: Forward-test
 

@@ -7,8 +7,9 @@ Report suspected vulnerabilities through [SECURITY.md](SECURITY.md), not a publi
 ## Sources and generated files
 
 Each installed skill must be self-contained. Edit `skills/<name>/SKILL.md` and its references.
-`skills/_shared/output-contract.md` is a build-time source: run
-`scripts/gen-contract-refs.sh` after changing it, rather than editing generated copies.
+`skills/_shared/output-contract.md` and `skills/_shared/agent-hygiene.md` are build-time
+sources: run `scripts/gen-contract-refs.sh` after changing either, rather than editing
+generated copies.
 Regenerate long reference contents lists with `python3 scripts/gen-ref-toc.py`.
 Keep protected overlays and private markers out of commits.
 

@@ -98,10 +98,10 @@ SHA commits are immutable content-addressed objects. They cannot be redirected.
 
 ```yaml
 # DO NOT
-- uses: actions/checkout@v4
+- uses: actions/checkout@v7
 
 # DO
-- uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+- uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
 ```
 
 ### How (GitLab CI/CD)
@@ -192,7 +192,6 @@ kind: ClusterPolicy
 metadata:
   name: verify-image-signatures
 spec:
-  validationFailureAction: Enforce
   rules:
     - name: verify-cosign
       match:
@@ -201,11 +200,13 @@ spec:
               kinds: ["Pod"]
       verifyImages:
         - imageReferences: ["ghcr.io/my-org/*"]
+          failureAction: Enforce
           attestors:
             - entries:
                 - keyless:
                     issuer: "https://token.actions.githubusercontent.com"
-                    subject: "https://github.com/my-org/my-repo/.github/workflows/release.yml@refs/heads/main"
+                    # release.yml runs on tag pushes, so the cert subject ends @refs/tags/vX.Y.Z
+                    subjectRegExp: '^https://github\.com/my-org/my-repo/\.github/workflows/release\.yml@refs/tags/v.*$'
 ```
 
 ---
@@ -300,7 +301,7 @@ Static analysis linter specifically for GitHub Actions. Low false-positive rate.
 - Dangerous triggers (pull_request_target)
 
 ```yaml
-- uses: woodruffw/zizmor-action@<sha>
+- uses: zizmorcore/zizmor-action@<sha>
 ```
 
 ### StepSecurity Harden-Runner

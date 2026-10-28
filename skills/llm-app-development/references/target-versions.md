@@ -1,7 +1,7 @@
 # AI/ML Target Versions
 
 October 2026 snapshot. Refreshed 2026-10-02 against provider docs, PyPI, npm, GitHub releases,
-and GitHub Security Advisories; Haiku 5.5 added 2026-10-08.
+and GitHub Security Advisories; Haiku 5.5 added 2026-10-08. Anthropic SDKs rechecked 2026-10-28.
 Verify current releases before pinning.
 
 ## Contents
@@ -11,7 +11,7 @@ Verify current releases before pinning.
 - GPT-6.1 Sol migration
 - Astra migration
 - SDKs, runtimes, and tooling
-- Security update (checked 2026-10-02)
+- Security update (checked 2026-10-28)
 
 ## Model families
 
@@ -60,7 +60,8 @@ and [thinking docs](https://platform.claude.com/docs/en/build-with-claude/thinki
   `medium`, or `high` effort only. That type takes no other fields; use adaptive thinking for
   `xhigh`/`max`, per-message effort changes, or reasoning tasks without tools.
 - Non-default `temperature`, `top_p`, or `top_k`, manual `budget_tokens` thinking, and assistant
-  prefill return 400. Use effort, prompting, and structured outputs instead.
+  prefill return 400. On API 2026-10-21 (Python SDK 2.x / TS 1.x), sending them at all returns
+  400. Use effort, prompting, and structured outputs instead.
 - Forced `tool_choice` (`any`/`tool`) returns 400 on Sonnet 5.5 as on Opus 5.5, Fable 5.1, and
   Mythos 5.1. Use `auto` plus strict tools and handle no-call replies, or `output_config.format`
   for extraction. Raw schemas need the provider's supported subset plus application validation.
@@ -80,7 +81,8 @@ Haiku 4.5 to Haiku 5.5, checked 2026-10-08 against
 [what's new in Haiku 5.5](https://platform.claude.com/docs/en/models/haiku-5-5/whats-new-haiku-5-5):
 
 - `budget_tokens`, non-default `temperature`/`top_p`/`top_k`, and assistant prefill now return
-  errors. Use effort and adaptive thinking; end `messages` with a user turn.
+  errors. On API 2026-10-21 (Python SDK 2.x / TS 1.x), sending them at all returns 400. Use
+  effort and adaptive thinking; end `messages` with a user turn.
 - Thinking is on by default and counts toward `max_tokens`, so small limits can stop after a
   `thinking` block. Select blocks by `type`. `thinking: {type: "disabled"}` works only at
   `high` effort or below; `xhigh`/`max` return 400.
@@ -146,8 +148,8 @@ adopt them only when the application can manage pending results and continuation
 
 | Component | Version | Notes |
 |-----------|---------|-------|
-| Anthropic Python SDK | 1.11.0 | Major release; review migration notes before upgrading |
-| Anthropic TS SDK | 0.131.0 | Claude models, streaming, tool use, structured output |
+| Anthropic Python SDK | 2.3.0 | 2.0.0 switched to API 2026-10-21: temperature/top_p/top_k removed (400), MessageParam is a per-role union; on Bedrock only Claude 4.7+ supports it. Follow the 2026-10-21 migration guide |
+| Anthropic TS SDK | 1.3.0 | 1.0.0 switched to API 2026-10-21 (same breaking changes); upgrade @anthropic-ai/bedrock-sdk / vertex-sdk / foundry-sdk to v1 together |
 | Claude Agent SDK (TS) | 0.3.288 | Programmatic agent building with Claude Code capabilities |
 | OpenAI Python SDK | 3.24.0 | Major release; GPT-6/GPT-5.6 models and Responses API |
 | OpenAI Agents SDK | 0.23.1 | Multi-agent orchestration, tracing, sessions |
@@ -156,7 +158,7 @@ adopt them only when the application can manage pending results and continuation
 | LangGraph | 1.2.12 | Stateful agent graphs, cycles, persistence |
 | LlamaIndex | 0.14.25 | RAG framework, 300+ integrations |
 | Transformers | 5.18.0 | Model inference, fine-tuning, PyTorch 2.5+ required |
-| vLLM | 0.30.0 | 0.28.0 is the minimum floor for the high-severity fixes (GHSA-3c86-2m5g-59q7, GHSA-25q3-v2hm-8vpf); 0.30.0 also fixes later medium/low advisories; review release notes before upgrading multi-tenant deployments |
+| vLLM | 0.32.0 | 0.32.0 is the floor for the high-severity fixes (GHSA-h3rc-j82p-2c3h EPS/Ghostscript RCE, GHSA-6757-hggm-hp2w; 0.31.0 fixed GHSA-h3rc-6mm3-gc2m and GHSA-823j-m4cj-hmjf); review release notes before upgrading multi-tenant deployments |
 | Ollama | 0.35.1 | Do not trust unreviewed GGUF files; see the advisory qualification below |
 | pgvector (extension) | 0.8.7 | PostgreSQL extension, not the `pgvector` Python client; HNSW + IVFFlat |
 | Qdrant | 1.19.1 | Self-hosted vector DB, hybrid search |
@@ -164,7 +166,8 @@ adopt them only when the application can manage pending results and continuation
 | ChromaDB | 1.5.9 | Lightweight vector DB, local-first |
 | promptfoo | 0.123.1 | LLM eval framework, red teaming |
 
-## Security update (checked 2026-10-02)
+## Security update (checked 2026-10-28)
 
+- vLLM 0.30.0 passes untrusted image bytes to Pillow format autodetection, so EPS reaches host Ghostscript ([GHSA-h3rc-j82p-2c3h](https://github.com/vllm-project/vllm/security/advisories/GHSA-h3rc-j82p-2c3h), high); fixed in 0.32.0. Also remove Ghostscript from inference images.
 - vLLM versions before 0.28.0 are affected by [LlavaOnevision2 model-code execution despite `trust_remote_code=False`](https://github.com/vllm-project/vllm/security/advisories/GHSA-3c86-2m5g-59q7) and [embedding/pooling input denial of service](https://github.com/vllm-project/vllm/security/advisories/GHSA-25q3-v2hm-8vpf). Both are fixed in 0.28.0; retain reviewed model sources and revisions after patching.
 - [CVE-2026-65315](https://github.com/advisories/GHSA-9hhj-2jwx-r87p) describes Ollama GGUF allocation denial of service. The retrieved advisory has unknown affected/patched release ranges; do not infer that 0.35.1 fixes it. Restrict model upload/create/pull access and accept only reviewed model files while checking publisher remediation.

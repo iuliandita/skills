@@ -60,9 +60,13 @@ parse_frontmatter() {
     }
     /^pins:[ \t]*$/ { in_pins = 1; next }
     in_pins && /^[a-zA-Z_]+:/ { in_pins = 0 }
-    in_pins && /^[ \t]*-[ \t]*tool:[ \t]*/ {
+    # Any "- key:" line starts a new pin, whichever key comes first.
+    in_pins && /^[ \t]*-[ \t]*[A-Za-z_]+:/ {
       pin_i++
-      v = $0; sub(/^[ \t]*-[ \t]*tool:[ \t]*/, "", v)
+      sub(/^[ \t]*-[ \t]*/, "  ")
+    }
+    in_pins && /^[ \t]+tool:[ \t]*/ {
+      v = $0; sub(/^[ \t]+tool:[ \t]*/, "", v)
       emit("PIN" pin_i "_TOOL", v)
       next
     }

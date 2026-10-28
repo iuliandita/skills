@@ -390,10 +390,12 @@ proxy_request_buffering on;
 ```
 
 ```
-# HAProxy: strict HTTP parsing
+# HAProxy: strict HTTP parsing. http-request rules go in the frontend: an anonymous
+# `defaults` section cannot hold them and HAProxy refuses to start.
 global
     tune.h2.header-table-size 4096
-defaults
+frontend fe_https
+    mode http
     # HTX is mandatory since 2.1; `option http-use-htx` was removed in 2.5 and a
     # config that still carries it will not start on a current HAProxy.
     http-request deny if { req.hdr_cnt(content-length) gt 1 }

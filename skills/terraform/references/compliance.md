@@ -334,7 +334,7 @@ Evaluates the JSON plan output - catches dynamic values static analysis misses.
 # policy/pci/no_public_ingress.rego
 package pci
 
-deny[msg] {
+deny contains msg if {
   resource := input.resource_changes[_]
   resource.type == "aws_security_group_rule"
   resource.change.after.type == "ingress"
@@ -343,7 +343,7 @@ deny[msg] {
   msg := sprintf("CDE security group allows public ingress on port %d", [resource.change.after.from_port])
 }
 
-deny[msg] {
+deny contains msg if {
   resource := input.resource_changes[_]
   resource.type == "aws_db_instance"
   resource.change.after.storage_encrypted != true

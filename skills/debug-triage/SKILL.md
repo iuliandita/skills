@@ -168,8 +168,9 @@ See `references/output-contract.md` for the full contract.
   symptom is localized to the cluster; kubernetes-health then sweeps node/workload/event/storage state.
 - **networking** - owns DNS, routing, TLS, and proxy deep dives once triage points there.
 - **databases** - owns the data-layer deep dive (slow queries, pools, replication) once implicated.
-- **security-audit** - owns the auth/secrets deep dive and exploitability; triage localizes a
-  401/403 or a broken Vault chain, security-audit investigates it.
+- **security-audit** - repository-side secret-handling and exploitability review only (repo-only,
+  no live endpoints). A live 401/403 or broken Vault chain goes to the failing runtime layer per
+  the routing table.
 - **repo-audit** / **code-review** - operate on repo files, not a live incident. Triage is for a
   running system that is currently broken.
 

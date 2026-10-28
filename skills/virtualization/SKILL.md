@@ -96,8 +96,7 @@ generated VM config, Terraform HCL, or Packer template, verify against this list
 - [ ] `fstrim.timer` enabled in guest for thin-provisioned storage (completes the discard chain)
 - [ ] SCSI controller explicitly set (`virtio-scsi-single` when using per-disk I/O threads;
   `virtio-scsi-pci` only when they are disabled)
-- [ ] Machine type matches BIOS: `i440fx` with `seabios`, `q35` with `ovmf` (UEFI). Mixing
-  `i440fx` + `ovmf` causes boot failures. `q35` + `seabios` works but wastes q35 features.
+- [ ] Machine type matches firmware needs: `q35` for PCIe passthrough and for OVMF Secure Boot / Windows 11 (SMM-backed firmware); `i440fx` boots with seabios or ovmf, but Proxmox then uses a no-SMM OVMF build (no enforced Secure Boot).
 - [ ] VGA type matches use case: `serial0` for headless cloud images, `virtio` for GUI VMs,
   omit for PCI passthrough display GPUs (`x-vga=1` replaces the virtual display)
 - [ ] **Hypervisor/version checked**: Proxmox, QEMU/KVM, libvirt, XCP-ng, vSphere, and cloud-init advice matches the target platform
@@ -204,7 +203,9 @@ The fastest path to a production-ready VM. Skip Packer and ISO installs for stan
 5. Start: `qm start 100`
 6. Verify: `qm agent 100 ping` (may take 1-2 min on first boot while cloud-init runs)
 
-To make a reusable template, stop the VM after verification and run `qm template 100`.
+To make a reusable template from this booted VM, reset per-instance state in the guest first:
+`sudo cloud-init clean --logs --machine-id && sudo rm -f /etc/ssh/ssh_host_* && sudo poweroff`
+(cloud-init regenerates host keys and machine-id on the clone's first boot), then `qm template 100`.
 Clone with `qm clone 100 101 --name new-vm --full`.
 
 ---

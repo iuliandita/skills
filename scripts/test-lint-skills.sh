@@ -39,7 +39,7 @@ metadata:
 
 ## Workflow
 
-1. Run the lint fixture. Fixture references, when present: details.md, shared.md, test-cases.md.
+1. Run the lint fixture. Fixture references, when present: references/details.md, references/shared.md, references/test-cases.md.
 
 ## Rules
 
@@ -526,6 +526,32 @@ test_skill_over_hard_max_lines_fails() {
   trap - RETURN
 }
 
+test_skill_over_token_guidance_warns() {
+  local tmp skill_dir output status i
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  skill_dir="$tmp/skills/lint-fixture"
+  write_minimal_skill "$skill_dir" "lint-fixture"
+  for ((i = 0; i < 250; i++)); do
+    printf '%099d\n' 0 >> "$skill_dir/SKILL.md"
+  done
+
+  status=0
+  output="$("$ROOT/scripts/lint-skills.sh" "$tmp/skills" 2>&1)" || status=$?
+  if (( status != 0 )); then
+    printf '%s\n' "$output" >&2
+    fail "lint-skills.sh failed on a SKILL.md body over the token guidance"
+  fi
+  if [[ "$output" != *"~"* || "$output" != *"tokens"* ]]; then
+    printf '%s\n' "$output" >&2
+    fail "lint-skills.sh did not warn about the SKILL.md body token estimate"
+  fi
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
 test_unlinked_reference_fails() {
   local tmp skill_dir output status
   tmp="$(mktemp -d)"
@@ -590,6 +616,109 @@ test_long_reference_needs_contents() {
   if (( status != 0 )); then
     printf '%s\n' "$output" >&2
     fail "lint-skills.sh still failed after gen-ref-toc.py added the contents list"
+  fi
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_unreadable_reference_fails() {
+  local tmp skill_dir output status
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  skill_dir="$tmp/skills/lint-fixture"
+  write_minimal_skill "$skill_dir" "lint-fixture"
+  printf '\nRead `references/bad.md` for details.\n' >> "$skill_dir/SKILL.md"
+  printf '# Bad\n\n\xff\xfe not utf-8\n' > "$skill_dir/references/bad.md"
+
+  status=0
+  output="$("$ROOT/scripts/lint-skills.sh" "$tmp/skills" 2>&1)" || status=$?
+  if (( status == 0 )); then
+    printf '%s\n' "$output" >&2
+    fail "lint-skills.sh passed despite a non-UTF-8 reference"
+  fi
+  if [[ "$output" != *"references/bad.md: unreadable reference"* ]]; then
+    printf '%s\n' "$output" >&2
+    fail "lint-skills.sh did not report the unreadable reference"
+  fi
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_reference_link_needs_exact_path() {
+  local tmp skill_dir output status
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  skill_dir="$tmp/skills/lint-fixture"
+  write_minimal_skill "$skill_dir" "lint-fixture"
+  printf '\nRead `references/anti-patterns.md` for details.\n' >> "$skill_dir/SKILL.md"
+  printf '# Anti-patterns\n' > "$skill_dir/references/anti-patterns.md"
+  printf '# Patterns\n' > "$skill_dir/references/patterns.md"
+
+  status=0
+  output="$("$ROOT/scripts/lint-skills.sh" "$tmp/skills" 2>&1)" || status=$?
+  if (( status == 0 )) || [[ "$output" != *"references/patterns.md is not linked from SKILL.md"* ]]; then
+    printf '%s\n' "$output" >&2
+    fail "lint-skills.sh treated references/patterns.md as linked by references/anti-patterns.md"
+  fi
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_author_contents_section_survives() {
+  local tmp skill_dir ref i j
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  skill_dir="$tmp/skills/lint-fixture"
+  write_minimal_skill "$skill_dir" "lint-fixture"
+  ref="$skill_dir/references/long.md"
+  printf '# Long\n\n' > "$ref"
+  for i in 1 2 3; do
+    printf '## Section %s\n\n' "$i" >> "$ref"
+    for ((j = 0; j < 40; j++)); do printf 'line\n' >> "$ref"; done
+  done
+  printf '## Contents\n\n- author item one\n- author item two\n' >> "$ref"
+
+  python3 "$ROOT/scripts/gen-ref-toc.py" "$skill_dir" > /dev/null
+  if ! grep -q '^- author item two$' "$ref"; then
+    fail "gen-ref-toc.py removed an author's '## Contents' section deep in the file"
+  fi
+  if ! python3 "$ROOT/scripts/gen-ref-toc.py" --check "$skill_dir" > /dev/null; then
+    fail "gen-ref-toc.py --check reported drift right after writing"
+  fi
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_reference_non_ascii_outside_code_fails() {
+  local tmp skill_dir output status
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  skill_dir="$tmp/skills/lint-fixture"
+  write_minimal_skill "$skill_dir" "lint-fixture"
+  printf '\nRead `references/details.md` for details.\n' >> "$skill_dir/SKILL.md"
+  printf '# Details\n\n```text\n\xe2\x9c\x93 fenced\n```\n\nInline `\xc3\xbc` code.\n' > "$skill_dir/references/details.md"
+
+  status=0
+  output="$("$ROOT/scripts/lint-skills.sh" "$tmp/skills" 2>&1)" || status=$?
+  if (( status != 0 )); then
+    printf '%s\n' "$output" >&2
+    fail "lint-skills.sh rejected non-ASCII inside a reference fence or code span"
+  fi
+
+  printf '\n\xe2\x9c\x93 done\n' >> "$skill_dir/references/details.md"
+  status=0
+  output="$("$ROOT/scripts/lint-skills.sh" "$tmp/skills" 2>&1)" || status=$?
+  if (( status == 0 )) || [[ "$output" != *"non-ASCII character at references/details.md:"* ]]; then
+    printf '%s\n' "$output" >&2
+    fail "lint-skills.sh passed despite non-ASCII in reference prose"
   fi
 
   rm -rf "$tmp"
@@ -787,8 +916,291 @@ test_deprecated_skill_not_counted() {
   rm -rf "$tmp"; trap - RETURN
 }
 
+test_ere_literal_pipe_is_flagged() {
+  local tmp skill_dir output status count
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  skill_dir="$tmp/skills/lint-fixture"
+  write_minimal_skill "$skill_dir" "lint-fixture"
+  cat >> "$skill_dir/SKILL.md" <<'EOF'
+
+  ```bash
+  grep -E 'a\|b' f
+  grep -i -E 'a\|b' f
+  grep --extended-regexp 'a\|b' f
+  egrep 'a\|b' f
+  rg 'a\|b' .
+  pgrep -f 'a\|b'
+  pkill -f 'a\|b'
+  grep -E -e 'a\|b' f
+  ```
+EOF
+
+  status=0
+  output="$("$ROOT/scripts/lint-skills.sh" "$tmp/skills" 2>&1)" || status=$?
+  if (( status == 0 )); then
+    printf '%s\n' "$output" >&2
+    fail "lint-skills.sh passed despite literal-pipe patterns in ERE commands"
+  fi
+  count="$(grep -c 'inside an ERE pattern' <<< "$output" || true)"
+  if [[ "$count" != "8" ]]; then
+    printf '%s\n' "$output" >&2
+    fail "lint-skills.sh reported $count of 8 literal-pipe patterns"
+  fi
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_ere_alternation_is_allowed() {
+  local tmp skill_dir output status
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  skill_dir="$tmp/skills/lint-fixture"
+  write_minimal_skill "$skill_dir" "lint-fixture"
+  cat >> "$skill_dir/SKILL.md" <<'EOF'
+
+```bash
+grep -iE 'http://|https://' access.log
+rg 'nginx|apache' .
+pgrep -f 'nginx|apache'
+grep -E a\|b f
+grep -E 'a\\|b' f
+grep -E 'a|b' f | grep 'c\|d'
+grep -E 'a' f; grep 'c\|d' f
+rg -F 'a\|b' .
+echo 'rg'; echo 'a\|b'
+```
+EOF
+
+  status=0
+  output="$("$ROOT/scripts/lint-skills.sh" "$tmp/skills" 2>&1)" || status=$?
+  if (( status != 0 )); then
+    printf '%s\n' "$output" >&2
+    fail "lint-skills.sh flagged valid ERE alternation, BRE, fixed strings, or an unrelated command"
+  fi
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_bre_alternation_is_allowed() {
+  local tmp skill_dir output status
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  skill_dir="$tmp/skills/lint-fixture"
+  write_minimal_skill "$skill_dir" "lint-fixture"
+  cat >> "$skill_dir/SKILL.md" <<'EOF'
+
+```bash
+grep 'password\|secret' config
+grep -e 'a\|b' f
+```
+EOF
+
+  status=0
+  output="$("$ROOT/scripts/lint-skills.sh" "$tmp/skills" 2>&1)" || status=$?
+  if (( status != 0 )); then
+    printf '%s\n' "$output" >&2
+    fail "lint-skills.sh flagged '\\|' in a BRE pattern"
+  fi
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_table_pipe_escape_is_allowed() {
+  local tmp skill_dir output status
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  skill_dir="$tmp/skills/lint-fixture"
+  write_minimal_skill "$skill_dir" "lint-fixture"
+  printf '\n| Vector | `grep -E docker\\|kube` |\n\nProse mentioning `grep -E a\\|b` outside a fence.\n' >> "$skill_dir/SKILL.md"
+
+  status=0
+  output="$("$ROOT/scripts/lint-skills.sh" "$tmp/skills" 2>&1)" || status=$?
+  if (( status != 0 )); then
+    printf '%s\n' "$output" >&2
+    fail "lint-skills.sh flagged a Markdown table escape or prose outside a fence"
+  fi
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_ere_literal_pipe_in_reference_is_flagged() {
+  local tmp skill_dir output status
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  skill_dir="$tmp/skills/lint-fixture"
+  write_minimal_skill "$skill_dir" "lint-fixture"
+  cat >> "$skill_dir/references/details.md" <<'EOF'
+
+```bash
+grep -E 'a\|b' f
+```
+EOF
+
+  status=0
+  output="$("$ROOT/scripts/lint-skills.sh" "$tmp/skills" 2>&1)" || status=$?
+  if (( status == 0 )); then
+    printf '%s\n' "$output" >&2
+    fail "lint-skills.sh did not scan a reference file for literal-pipe patterns"
+  fi
+  if [[ "$output" != *"details.md"* || "$output" != *"inside an ERE pattern"* ]]; then
+    printf '%s\n' "$output" >&2
+    fail "lint-skills.sh did not report the reference file literal-pipe match"
+  fi
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_ere_multiline_command_is_flagged() {
+  local tmp skill_dir output status
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  skill_dir="$tmp/skills/lint-fixture"
+  write_minimal_skill "$skill_dir" "lint-fixture"
+  cat >> "$skill_dir/SKILL.md" <<'EOF'
+
+```bash
+grep -E 'a' \
+  'x\|y'
+```
+EOF
+
+  status=0
+  output="$("$ROOT/scripts/lint-skills.sh" "$tmp/skills" 2>&1)" || status=$?
+  if (( status == 0 )); then
+    printf '%s\n' "$output" >&2
+    fail "lint-skills.sh missed a literal pipe on a continuation line"
+  fi
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_ere_shell_wrappers_are_flagged() {
+  local tmp skill_dir output status count
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  skill_dir="$tmp/skills/lint-fixture"
+  write_minimal_skill "$skill_dir" "lint-fixture"
+  cat >> "$skill_dir/SKILL.md" <<'EOF'
+
+```bash
+if grep -qE "a\|b" f; then echo y; fi
+FOO=1 grep -E "a\|b" f
+x=$(grep -E "a\|b" f)
+while ! grep -E "a\|b" f; do :; done
+```
+EOF
+
+  status=0
+  output="$("$ROOT/scripts/lint-skills.sh" "$tmp/skills" 2>&1)" || status=$?
+  if (( status == 0 )); then
+    printf '%s\n' "$output" >&2
+    fail "lint-skills.sh missed a literal pipe behind a shell keyword, assignment, or substitution"
+  fi
+  count="$(grep -c 'inside an ERE pattern' <<< "$output" || true)"
+  if [[ "$count" != "4" ]]; then
+    printf '%s\n' "$output" >&2
+    fail "lint-skills.sh reported $count of 4 wrapped literal-pipe patterns"
+  fi
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_ere_fence_variants_are_scanned() {
+  local tmp skill_dir output status count
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  skill_dir="$tmp/skills/lint-fixture"
+  write_minimal_skill "$skill_dir" "lint-fixture"
+  cat >> "$skill_dir/SKILL.md" <<'EOF'
+
+  ~~~
+  grep -E 'a\|b' f
+  ~~~
+
+````
+grep -E 'c\|d' f
+```
+grep -E 'e\|f' f
+````
+EOF
+
+  status=0
+  output="$("$ROOT/scripts/lint-skills.sh" "$tmp/skills" 2>&1)" || status=$?
+  if (( status == 0 )); then
+    printf '%s\n' "$output" >&2
+    fail "lint-skills.sh skipped a literal pipe in a tilde, indented, or long fence"
+  fi
+  count="$(grep -c 'inside an ERE pattern' <<< "$output" || true)"
+  if [[ "$count" != "3" ]]; then
+    printf '%s\n' "$output" >&2
+    fail "lint-skills.sh reported $count of 3 fence-variant literal-pipe patterns"
+  fi
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_ere_backslash_parity_and_matcher_order() {
+  local tmp skill_dir output status count
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  skill_dir="$tmp/skills/lint-fixture"
+  write_minimal_skill "$skill_dir" "lint-fixture"
+  cat >> "$skill_dir/SKILL.md" <<'EOF'
+
+```bash
+grep -E 'a\\\|b' f
+grep -F -E 'a\|b' f
+grep -E -F 'a\|b' f
+rg -F 'a\|b' .
+grep -E 'a\\|b' f
+```
+EOF
+
+  status=0
+  output="$("$ROOT/scripts/lint-skills.sh" "$tmp/skills" 2>&1)" || status=$?
+  if (( status == 0 )); then
+    printf '%s\n' "$output" >&2
+    fail "lint-skills.sh missed an odd backslash run or a later -E matcher"
+  fi
+  count="$(grep -c 'inside an ERE pattern' <<< "$output" || true)"
+  if [[ "$count" != "2" ]]; then
+    printf '%s\n' "$output" >&2
+    fail "lint-skills.sh reported $count of 2 backslash-parity/option-order patterns"
+  fi
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
 test_reference_files_are_scanned
 test_reference_examples_are_ignored
+test_ere_literal_pipe_is_flagged
+test_ere_alternation_is_allowed
+test_bre_alternation_is_allowed
+test_table_pipe_escape_is_allowed
+test_ere_literal_pipe_in_reference_is_flagged
+test_ere_multiline_command_is_flagged
+test_ere_shell_wrappers_are_flagged
+test_ere_fence_variants_are_scanned
+test_ere_backslash_parity_and_matcher_order
 test_unrelated_bold_does_not_mask_missing_reference
 test_real_cross_skill_reference_is_accepted
 test_generic_self_check_ratio_within_cap_passes
@@ -805,8 +1217,13 @@ test_missing_frontmatter_field_fails
 test_overlay_only_skill_dir_is_skipped
 test_non_ascii_character_fails
 test_skill_over_hard_max_lines_fails
+test_skill_over_token_guidance_warns
 test_unlinked_reference_fails
 test_long_reference_needs_contents
+test_unreadable_reference_fails
+test_reference_link_needs_exact_path
+test_author_contents_section_survives
+test_reference_non_ascii_outside_code_fails
 test_banned_word_is_reported
 test_canonical_section_without_test_case_fails
 test_docs_fixture_passes

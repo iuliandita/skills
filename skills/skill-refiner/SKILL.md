@@ -90,84 +90,11 @@ by default. Either way, phase 2 still pauses for review.
 
 ### Phase 0: Setup
 
-**Configurable roots.** Two environment variables make this workflow portable.
-`SKILL_REFINER_HISTORY` (default `<repo-root>/.refiner-runs.json`) is the run-history file, and
-`SKILL_REFINER_GATE_DIR` (default `<repo-root>/scripts`) is the directory holding
-`lint-skills.sh` and `validate-spec.sh`. An installed-standalone copy of this skill may point
-both at another location; set them before Phase 0 and use them wherever this workflow names a
-path.
-
-**Gate unavailable.** When `SKILL_REFINER_GATE_DIR` lacks `lint-skills.sh` or `validate-spec.sh`,
-do not invoke the nonexistent path and do not claim structural compliance: report the structural
-gate as "unavailable" for that run and continue with AI Self-Check and behavior scoring. If the
-user asked for the structural gate specifically, stop and report it unavailable instead of
-substituting a score. When `SKILL_REFINER_HISTORY` is absent, start a fresh baseline and skip
-delta comparisons against prior runs rather than failing the run. The same rule applies to the
-other `$SKILL_REFINER_GATE_DIR` helpers (`refiner-rubric-hash.sh`, `refiner-history-compact.sh`,
-`check-refiner-state.sh`): when one is absent, do not invoke it, record its result "unavailable"
-in the score ledger, skip the rubric-drift or state-integrity claim it would have supported, and
-continue.
-
-1. **Create feature branch**: `skill-refiner/YYYY-MM-DD-HHMMSS` from current HEAD.
-   Preserve dirty worktrees; branching isolates the run, it does not imply cleanup. If already
-   on a run branch for this sweep, record it instead of nesting another branch. Do not mix
-   unrelated dirty files into refiner commits; isolate them with a path-limited stash only
-   when authorized.
-2. **Load run history**: read `$SKILL_REFINER_HISTORY` (default `.refiner-runs.json` at the
-   repository root), beside `.refiner-ledger.md` (if it exists). The default sits at the
-   repository root, not the `skills/` directory: a second history file in `skills/` splits the
-   log and hides prior baselines.
-   Use previous run data for: baseline score comparison (detect regressions from external
-   changes), model/harness change detection (flag if the primary or secondary model changed
-   since last run - new model = new baseline, not a comparable delta), and skip analysis
-   (don't re-attempt improvements that were already tried and reverted in a recent run).
-   Compute the current rubric hash with `$SKILL_REFINER_GATE_DIR/refiner-rubric-hash.sh` (pass the
-   collection root as its argument when it is installed elsewhere; if absent, mark it
-   "unavailable" per the note above and skip rubric-drift claims) and record it. If it
-   differs from the most recent run's recorded `rubric_hash`, prior scores are not comparable:
-   start a fresh baseline and do not compute deltas against the old run.
-   Retention: the history keeps full detail for the most recent runs; older runs are compacted
-   into `.refiner-runs-archive.json` by `$SKILL_REFINER_GATE_DIR/refiner-history-compact.sh` (skip
-   if absent), run manually or periodically, never per run.
-3. **Build skill inventory**: enumerate published (non-gitignored) skills and parse YAML
-   frontmatter. `metadata.deprecated` is deprecated when boolean `true` or a string equal
-   to `true` after trimming and case-folding, including quoted values. Missing or false
-   means active; report malformed frontmatter rather than assuming active. Do not use
-   string truthiness or body-text matches. Record active, notice, and published counts.
-   Exclude deprecated notices and phase-2 targets (skill-creator, skill-refiner) from the
-   improvement pool. Notices receive no ordinary checklist/composite score and are excluded
-   from aggregates, thresholds, saturation decisions, and direct-neighbor/trigger pools.
-   Keep every published notice in canonical coverage and separate pass/fail integrity and
-   explicit legacy-invocation tests, following the target repository's migration policy.
-   **Early exit for a named notice or a collection with no active skills**: run applicable
-   lint/spec structural checks (or report gate unavailability), notice-integrity checks,
-   canonical coverage checks, and explicit legacy-invocation tests. Report results and
-   limitations as not scored, then stop. Bypass steps 4-15 and phase 2, including when
-   `--meta` is set; do not create a baseline, aggregate, saturation result, or scored history.
-   Do not redirect edits to a replacement or turn a notice into an active skill.
-   If active phase-2 targets exist but the phase-1 pool is empty, skip phase-1 scoring and
-   proceed to phase 2 only for a collection-wide run or explicit `--meta`, preserving its
-   snapshot and human-review gates. Otherwise report the empty pool without scores.
-4. **Record evaluator identity**: capture actual provider, resolved model, effective effort,
-   harness and version for primary and reviewer evaluations, with redacted runtime/config
-   evidence per `references/harness-detection.md`. Record unavailable fields as unknown;
-   requested flags and skill effort metadata do not prove effective runtime settings.
-5. **Probe for secondary harness**: run three-step validation (PATH check, config check,
-   smoke test) per `references/harness-detection.md`. Announce result.
-   Before sending a review payload, classify the source as public, private, or sensitive and
-   verify that the user authorized sharing it with that harness/provider.
-6. **If no authorized secondary is available**: **always fall back to self-review.** Spawn a fresh agent on
-   the current harness with the review prompt template from `references/harness-detection.md`.
-   Label as "same-model fresh-context review" only when identity is verified; otherwise use
-   "unknown-model fresh-context review". Review is penalty-only and identical in form at every
-   iteration that has a diff to review: verified flags deduct `cap * weight` from the composite,
-   with cap 5 for a verified distinct model and cap 3 for same-model or unknown-model review. A
-   clean review adds no bonus. Different harnesses alone do not establish model diversity.
-   **One exception**: at baseline (iteration 1) there is no diff yet, so cross-model review is
-   skipped and the baseline penalty is 0; ordinary scoring starts at iteration 2.
-   Skipping review entirely is not an option - a fresh-context self-review is the minimum bar.
-   If the harness doesn't support subagents, run the review prompt as a separate CLI
-   invocation (`claude -p`, `codex exec`, `gemini -p`, etc.).
+Before starting a run, read `references/phase-0-setup.md` in full and complete its steps 1-6:
+set the configurable roots (`SKILL_REFINER_HISTORY`, `SKILL_REFINER_GATE_DIR`) and apply the
+gate-unavailable rule, create the run branch, load run history and the rubric hash, build the
+skill inventory (with the deprecated-notice early exit), record evaluator identity, probe for a
+secondary harness, and set up the mandatory self-review fallback. Phase 1 continues at step 7.
 
 ### Phase 1: Regular Iterations
 
@@ -233,10 +160,10 @@ continue.
     j. Major flag upheld: hard revert; contested major flag: escalate to the human (circuit breaker)
     k. **Karpathy gate**: compute the lower-bound composite for the change and for the
        pre-change version with the same formula. Keep only when the lower-bound composite
-       strictly improves by at least the plateau delta (2 points) over the previous lower-bound
-       composite, or when it preserves that composite while reducing complexity or lines with
-       no behavior change; unverifiable point-estimate moves never keep a change. Otherwise
-       revert.
+       strictly improves by at least the plateau delta (`--plateau`, default 2 points) over the
+       previous lower-bound composite, or when it preserves that composite while reducing
+       complexity or lines with no behavior change; unverifiable point-estimate moves never
+       keep a change. Otherwise revert.
 12. **Commit iteration**: one commit with all improvements from this iteration
     Format: `refactor(skill-refiner): iteration N - skill1(+X), skill2(+Y)`
 13. **Regression sweep, then log iteration summary**: every iteration, after the improvement
@@ -281,94 +208,16 @@ continue.
 
 ### Phase 2: Meta-Improvement
 
-16. **Announce**: "Entering phase 2 - meta-improvement. This always requires human review."
-    Enter phase 2 only for a collection run or when `--meta` was passed; a single-skill run
-    that did not opt in stops after phase 1 and reports.
-    Present proposed meta changes and pause before applying them. Read-only snapshots and
-    preparation may happen before this checkpoint; step 22 still reviews the resulting changes.
-17. **Snapshot evaluation criteria** (Rule 4: snapshot before meta):
-    - Copy the complete **skill-creator** skill, its `SKILL.md` and every file under its
-      `references/`, to a temp location. This includes the AI Self-Check section and
-      `conventions.md`, and pins the evaluator itself.
-    - Copy `references/evaluation-criteria.md` to a temp location
-    These snapshots are the evaluation baseline and the evaluator for phase 2.
-18. **Improve skill-creator**: run the improvement cycle (steps 11a-11k) against the pinned
-    snapshot as the evaluator; invoke review mode from the snapshot path, never the live
-    `skills/skill-creator/SKILL.md` being edited. Reviews of **skill-creator** and
-    **skill-refiner** must not load the live copy being edited. If the harness cannot load a
-    skill from a snapshot path, label their scores "self-reported" and record the failure in
-    `control_failures`.
-19. **Improve skill-refiner**: same process, against the snapshot
-    - Compare every public `skills/*/SKILL.md` directory with the canonical `### <skill-name>`
-      headings in `references/test-cases.md`. Exclude the format-template heading.
-      Include deprecated notices: their canonical legacy cases remain required despite score exclusion.
-    - Promote stable generated or local cases into the canonical catalog for every gap, then
-      verify there are no missing, duplicate, or orphan headings. This edit is phase-2-only.
-20. **Improve lint scripts** (lint-skills.sh, validate-spec.sh):
-    - Capture baseline: run both scripts, save full output
-    - Propose improvements
-    - Apply changes
-    - Run regression: compare output to baseline
-    - If false positives or false negatives introduced: revert
-    - If clean: keep
-21. **Commit phase 2**: one commit per target
-    Format: `refactor(skill-refiner): meta - improve <target> (+N)`
-22. **Pause for human review**: display phase 2 changes, wait for approval.
-    This checkpoint is non-configurable - it fires even in `--mode auto`.
-    A direct user approval such as "continue" or "proceed" counts as approval to resume.
+Before entering phase 2, read `references/phase-2-3-meta-and-summary.md` and follow steps 16-22.
+Phase 2 runs only for a collection run or with `--meta`, snapshots the evaluator first (Rule 4),
+improves skill-creator, skill-refiner, and the lint scripts, and always pauses for human review.
 
 ### Phase 3: Summary
 
-23. **Final report**: write a human-readable report first, then machine-readable run history.
-    Include branch, pool, config, every changed skill, score before/after, delta, files changed,
-    verification commands, peer-review flags, reverted changes, regressions found by the
-    per-iteration sweep, private-skill handling, and skipped checks. If scoring was reconstructed
-    after the fact, label it retroactive and state which components were not captured during the
-    live loop. Do not output only JSON.
-    ```
-    === skill-refiner run complete ===================================
-    Branch:     skill-refiner/YYYY-MM-DD-HHMMSS
-    Primary:    <harness> <version> (<provider>/<resolved model>, effective effort: <level>)
-    Secondary:  <same identity fields> | none (baseline only)
-    Evidence:   <redacted runtime/config references; unknown fields and reasons>
-    Review:     <verified cross-model | same-model | unknown-model>, cap: <5 | 3>
-                <baseline: no diff, penalty 0>
-    Pool:       N active skills (notices and phase-2 targets excluded)
-    Inventory:  A active + D deprecated notices = P published; notice checks: pass/fail
-    Config:     iterations=M, threshold=T, mode=MODE, plateau=P
-
-    Iterations: N (of max M)
-    Terminated: plateau / threshold / cap / saturated / user
-
-    Score changes:
-      skill1:  62 > 88 (+26)  [G:pass A:84 B:86 pen:0]
-      skill2:  71 > 85 (+14)  [G:pass A:82 B:79 pen:0]
-      ...
-      skill-creator: 80 > 84 (+4)  [G:pass A:82 B:81 pen:0] [meta]
-      skill-refiner: 78 > 83 (+5)  [G:pass A:80 B:79 pen:0] [meta]
-
-    Aggregate:  active pool only: avg X.X | min X.X | max X.X
-    Reverted:   X changes across Y iterations
-    Contested:  Z flags escalated to human
-    Regressions: none / skillA (broken reference), skillB (asymmetric boundary)
-    =================================================================
-    ```
-24. **Write run history**: append this run's metadata to `$SKILL_REFINER_HISTORY` (the same
-    file read in Phase 0 step 2) using the schema in `references/run-history-schema.md`.
-    Every component score is numeric; omit a component rather than writing null. Record in
-    `control_failures` every fallback to same-model or unknown-model review, every unavailable
-    reviewer, and every reviewer that returned tool output instead of a verdict. When updating
-    an existing history file, append the new object without reserializing the whole file; do not
-    normalize or rewrite old entries just because a JSON writer changes escaping, commas, or
-    whitespace. Immediately after the append, run `$SKILL_REFINER_GATE_DIR/check-refiner-state.sh`
-    (if absent, mark state-integrity "unavailable" per the Phase 0 note; the commit may proceed
-    with that label in the summary). If it exits non-zero, do not commit, report the validation
-    error, and fix the entry first. Commit with the phase 3 summary only once the check exits 0
-    or is recorded unavailable.
-    Retention: the history keeps full detail for the most recent runs; older runs are compacted
-    into `.refiner-runs-archive.json` by `$SKILL_REFINER_GATE_DIR/refiner-history-compact.sh`, run
-    manually or periodically, never per run.
-25. **Announce branch**: remind user to review and merge when ready
+At the end of every run, follow steps 23-25 in `references/phase-2-3-meta-and-summary.md`: write
+the human-readable final report first, append run history (schema in
+`references/run-history-schema.md`) and validate it with `check-refiner-state.sh` before
+committing, then announce the branch for review.
 
 ## AI Self-Check
 
@@ -378,8 +227,8 @@ Before committing any skill modification, verify:
 - [ ] **Spec valid**: validate-spec.sh exits 0 for the modified skill
 - [ ] **Score improved**: a change is kept only when its lower-bound composite (minimum of
   k >= 3 fresh-context gradings per component) strictly improves by at least the plateau delta
-  (2 points), or when it preserves that composite while reducing complexity or lines with no
-  behavior change
+  (`--plateau`, default 2 points), or when it preserves that composite while reducing
+  complexity or lines with no behavior change
 - [ ] **No content regression**: change does not remove critical sections, warnings,
   or cross-references without replacement
 - [ ] **Simplicity maintained**: change does not add unnecessary complexity for marginal gains,
@@ -421,10 +270,10 @@ See `references/output-contract.md` for the full contract.
 - **skill-creator** - the evaluation and improvement engine. skill-refiner invokes
   skill-creator's review mode (Mode 2) for scoring and its improve mode for
   generating changes. skill-creator handles individual skill quality; skill-refiner
-  handles iteration, prioritization, and orchestration. Primary dependency.
-- **repo-audit** - one-off collection audit across code-review, code-simplification,
-  security-audit, and update-docs. Use **repo-audit** for a single pass over
-  application code; use skill-refiner for iterative improvement of skill files.
+  handles iteration, prioritization, and orchestration. Primary dependency. For a one-off
+  skill-collection audit without iteration, use skill-creator Mode 3 directly.
+- **repo-audit** - application-code audits only (code, security, docs); it does not audit
+  the skill collection.
 - **code-simplification** - code quality patterns. skill-refiner may invoke code-simplification
   principles through skill-creator during improvement, but does not call code-simplification
   directly. Different domain: code-simplification audits application code, skill-refiner
@@ -434,15 +283,17 @@ See `references/output-contract.md` for the full contract.
 
 1. **Immutability in phase 1**: never modify `references/evaluation-criteria.md`,
    `references/test-cases.md`, `references/test-cases-local.md`, lint-skills.sh,
-   validate-spec.sh, **skill-creator**, or **skill-refiner** during phase 1.
+   validate-spec.sh and the helpers they run (skill-lib.sh, skill-frontmatter.py,
+   gen-ref-toc.py, contract-lib.sh), refiner-rubric-hash.sh, the phase-1 guard,
+   lint.yml, **skill-creator**, or **skill-refiner** during phase 1.
    Violation = abort the run.
    `scripts/check-refiner-phase1-guard.sh` runs in CI and fails any phase-1
    iteration commit that touches this set, so the rule is not self-enforced.
 2. **Karpathy gate**: only lower-bound improvements at or above the noise floor survive.
    Keep a change only when its lower-bound composite strictly improves by at least the
-   plateau delta (2 points) over the previous lower-bound composite, or when it preserves
-   that composite while reducing complexity or lines with no behavior change. Revert
-   otherwise; unverifiable point-estimate moves never keep a change.
+   plateau delta (`--plateau`, default 2 points) over the previous lower-bound composite,
+   or when it preserves that composite while reducing complexity or lines with no behavior
+   change. Revert otherwise; unverifiable point-estimate moves never keep a change.
 3. **Independent flag adjudication**: never take peer flags at face value, and never let the
    context that authored the change adjudicate them. A fresh context independent of the author
    decides each flag: an upheld minor deducts penalty weight, a disputed minor is logged and left

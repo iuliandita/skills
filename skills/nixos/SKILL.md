@@ -111,7 +111,7 @@ Before returning NixOS or Nix commands, verify:
 - [ ] **disko / impermanence claims match the install**: declarative disk layouts change the recovery story. Confirm partition, filesystem, and subvolume layout before prescribing rollback or wipe steps.
 - [ ] **home-manager mode identified**: standalone, NixOS module, or nix-darwin module. `home-manager switch` vs `nixos-rebuild switch` vs `darwin-rebuild switch` is not interchangeable.
 - [ ] **Overlay placement sane**: overlays belong in `nixpkgs.overlays` (NixOS) or as a flake input overlay. Do not recommend global `~/.config/nixpkgs/overlays.nix` on a flakes system where that path is often ignored.
-- [ ] **Determinate / Lix advice scoped**: Determinate's `determinate-nixd` and Lix's CLI diverge from upstream in subtle places. Name the lane before suggesting daemon or CLI flags.
+- [ ] **Determinate / Lix advice scoped**: Determinate's `determinate-nixd` (run via `nix-daemon.service` on Linux) and Lix's CLI diverge from upstream in subtle places. Name the lane before suggesting daemon or CLI flags.
 - [ ] **Diagnostic errors are not silenced**: do not hide useful output with `2>/dev/null` when the error text is the evidence. Use `2>&1 || true` when gathering.
 - [ ] **Version pins justified**: if a pinned `system.stateVersion` is suggested, explain why; do not change `stateVersion` on an existing system casually - it controls migration semantics.
 - [ ] Cross-cutting agent hygiene applied - see `references/agent-hygiene.md`
@@ -138,7 +138,7 @@ The steps are ordered. Copy this checklist and track progress:
 | **nix-darwin on macOS** | declarative macOS config | `darwin-rebuild switch`; host owns kernel and firmware |
 | **Plain Nix on macOS (no darwin)** | package manager only | `nix profile` or `nix shell` for user tooling |
 | **WSL2 with NixOS** | full NixOS in WSL | boot and init differ; host owns kernel |
-| **Determinate Nix** | flakes on by default, daemon differs | `determinate-nixd`, parallel eval, lazy trees |
+| **Determinate Nix** | flakes on by default, daemon binary differs (Linux unit stays nix-daemon.service) | `determinate-nixd`, parallel eval, lazy trees |
 | **Lix** | upstream-compatible fork | CLI mostly matches; internals, error messages, and Meson build diverge |
 
 ### Step 2: Gather current system state

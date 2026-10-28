@@ -160,6 +160,8 @@ user confirmation in steps that could run unattended.
 | `metadata.source` | `owner/repo` or `custom` | identifies the publishing collection or an unpublished local skill |
 | `metadata.date_added` | ISO date string | staleness detection |
 | `metadata.effort` | `low`, `medium`, `high` | signals expected token usage and complexity |
+| `metadata.internal` | `"true"` or `"false"` (quoted: metadata values are strings) | marks a local skill the installer skips unless `--include-internal` |
+| `metadata.deprecated` | `"true"` or `"false"` (quoted) | marks a deprecated notice kept for migration |
 
 ### Lifecycle status
 
@@ -291,10 +293,10 @@ thorough.
   rewrite `--` inside code, command examples, or fenced blocks** - `--` is real syntax there
   (SQL/Lua comments, CLI long-flag separators like `npm test -- --filter`, `git ... --`),
   and stripping it to `-` produces broken, non-runnable examples.
-- **Approved non-ASCII**: output-contract/status emoji markers the linter permits (U+1F534, U+1F7E0, U+1F7E2,
-  U+1F7E1, U+1F535, U+26AA, U+26A1, U+1F3AF, U+1F480). `scripts/lint-skills.sh`
-  (`check_ascii`) is the single authority on this set; this list mirrors it and changes only
-  when the linter does, never the reverse.
+- **Approved non-ASCII**: the middle dot (U+00B7) and the output-contract/status emoji markers the
+  linter permits (U+1F534, U+1F7E0, U+1F7E2, U+1F7E1, U+1F535, U+26AA, U+26A1, U+1F3AF, U+1F480).
+  `scripts/lint-skills.sh` (`check_ascii`) is the single authority on this set; this list mirrors
+  it and changes only when the linter does, never the reverse.
 - **Explain why**: "Pin images to SHA256 digests because mutable tags are a proven attack vector
   (Trivy March 2026, tj-actions March 2025)" beats "Always pin images"
 - **Calm directives**: "Do X" outperforms "YOU MUST ALWAYS DO X" on most modern coding agents. Use ALL CAPS

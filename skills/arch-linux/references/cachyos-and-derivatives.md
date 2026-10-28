@@ -11,7 +11,7 @@ differences, not branding.
 | Repos | Optimized `x86-64-v3`, `x86-64-v4`, and `znver4` builds exist |
 | Kernels | Multiple Cachy kernel variants and scheduler-focused builds are available |
 | Packaging | The `cachyos` repo can install a forked `pacman` package |
-| Recovery posture | Btrfs + Snapper + `snap-pac` make rollback more convenient on default installs |
+| Recovery posture | Btrfs + Snapper + `snap-pac`, Limine bootloader with limine-snapper-sync snapshot entries (default since 2601) |
 | Tooling | Kernel Manager, settings helpers, and other Cachy-specific tooling exist |
 
 ## Optimized repos
@@ -57,7 +57,7 @@ Practical implication:
 
 - package installs, upgrades, and removals via `pacman` can create before/after snapshots automatically
 - that makes rollback easier, but it does not remove the need for real backups
-- old snapshots still need cleanup and bootloader integration varies by loader
+- old snapshots still need cleanup and on the default Limine install, limine-snapper-sync adds snapshot boot entries; other loaders vary
 
 Do not promise snapshot recovery for bootloader damage or disk failure.
 
@@ -66,7 +66,7 @@ Do not promise snapshot recovery for bootloader damage or disk failure.
 1. confirm repo tier and architecture target
 2. confirm whether the host uses the forked `pacman` package or vanilla Arch `pacman`
 3. confirm current kernel line
-4. confirm snapshot tooling and bootloader
+4. confirm snapshot tooling and bootloader (Limine by default)
 5. make one change at a time
 
 ## Other Arch derivatives

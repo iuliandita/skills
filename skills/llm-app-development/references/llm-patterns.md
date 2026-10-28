@@ -190,8 +190,9 @@ export async function POST(req: Request) {
     messages: [{ role: "user", content: prompt }],
   });
 
+  // NDJSON (one MessageStreamEvent per line), not SSE. Client: MessageStream.fromReadableStream(res.body)
   return new Response(stream.toReadableStream(), {
-    headers: { "Content-Type": "text/event-stream" },
+    headers: { "Content-Type": "application/x-ndjson" },
   });
 }
 ```
@@ -498,24 +499,30 @@ response = client.messages.create(
 ### Retry with exponential backoff
 
 ```python
-import time
 import random
+import time
 import anthropic
+
+# The SDK already retries connection errors, 408, 409, 429 and 5xx (incl. 529) twice with
+# backoff and honours retry-after; prefer tuning anthropic.Anthropic(max_retries=N).
+# Own the loop only when you need custom policy, and then disable SDK retries so they don't multiply.
+client = anthropic.Anthropic(max_retries=0)
+RETRYABLE = {408, 409, 429}
 
 def call_with_retry(fn, max_retries=3):
     for attempt in range(max_retries + 1):
         try:
             return fn()
-        except anthropic.RateLimitError:
-            if attempt == max_retries:
+        except (anthropic.APIConnectionError, anthropic.APIStatusError) as e:
+            status = getattr(e, "status_code", None)
+            if (status is not None and status not in RETRYABLE and status < 500) or attempt == max_retries:
                 raise
-            delay = (2 ** attempt) + random.uniform(0, 1)  # jitter
+            retry_after = e.response.headers.get("retry-after") if status is not None else None
+            try:
+                delay = float(retry_after)
+            except (TypeError, ValueError):
+                delay = min(2 ** attempt, 30) + random.uniform(0, 1)
             time.sleep(delay)
-        except anthropic.APIStatusError as e:
-            if e.status_code >= 500 and attempt < max_retries:
-                time.sleep(2 ** attempt)
-                continue
-            raise  # 4xx errors (except 429) are not retryable
 ```
 
 ### Key error categories
@@ -524,7 +531,8 @@ def call_with_retry(fn, max_retries=3):
 |-------|-----------|--------|
 | Rate limited | 429 | Retry with backoff, respect `Retry-After` header |
 | Overloaded | 529 (Anthropic) | Retry with longer backoff |
-| Server error | 500-503 | Retry with backoff |
+| Server error | 500 / 504 | Retry with backoff |
+| Conflict | 409 | Retry (SDK default); resolve state if it repeats |
 | Invalid request | 400 | Fix the request, don't retry |
 | Auth error | 401/403 | Check API key, don't retry |
 | Context too long | 400 | Truncate input, reduce context |

@@ -15,14 +15,14 @@ dependencies that may belong to an unrelated service.
 |-------|--------------|--------------------------------------|
 | testing | `*.test.*`, `*.spec.*`, `__tests__/`, `tests/`, `test/`, `pytest.ini`, `conftest.py`, `jest.config.*`, `vitest.config.*`, `playwright.config.*`, `.nycrc*`, `cypress.config.*`, `cypress/` | - |
 | shell-scripting | `*.sh`, `*.bash`, `*.zsh`, `Makefile`, `justfile`, `.envrc`, `scripts/` | Shebang detection (`#!/bin/bash` in extensionless files) is not implemented in the script - file-extension and directory patterns cover the common cases |
-| databases | `*.sql`, `migrations/`, `*.prisma`, `schema.prisma`, `knexfile.*`, `alembic/`, `alembic.ini`, `flyway/`, `drizzle.config.*`, `mongod.conf`, `my.cnf`, `pg_hba.conf`, `pgbouncer.ini` | `sequelize`, `typeorm`, `prisma`, `knex`, `drizzle-orm`, `mongoose`, `pg`, `mysql2` |
-| backend-api | `openapi.*`, `swagger.*` | `fastapi`, `flask`, `django`, `express`, `@nestjs/core`, `hono`, `elysia`, `@hono/node-server` |
+| databases | `*.sql`, `migrations/`, `*.prisma`, `schema.prisma`, `knexfile.*`, `alembic/`, `alembic.ini`, `flyway/`, `drizzle.config.*`, `mongod.conf`, `my.cnf`, `pg_hba.conf`, `pgbouncer.ini` | JS: `sequelize`, `typeorm`, `prisma`, `@prisma/client`, `knex`, `drizzle-orm`, `mongoose`, `mongodb`, `pg`, `mysql2`, `ioredis`, `redis`. Python: `sqlalchemy`, `sqlmodel`, `psycopg`, `psycopg2`, `psycopg2-binary`, `asyncpg`, `pymongo`, `motor`, `pymysql`, `mysqlclient`, `peewee`, `tortoise-orm`, `redis`. Go: `github.com/jackc/pgx`, `github.com/lib/pq`, `gorm.io/gorm`, `github.com/jmoiron/sqlx`, `go.mongodb.org/mongo-driver`, `github.com/redis/go-redis`, `github.com/go-sql-driver/mysql`, `entgo.io/ent`. Rust: `diesel`, `sqlx`, `sea-orm`, `tokio-postgres`, `redis`. Ruby: `activerecord`, `pg`, `sequel`, `mongoid`, `redis`. PHP: `doctrine/orm`, `doctrine/dbal`, `illuminate/database`, `predis/predis` |
+| backend-api | `openapi.*`, `swagger.*` | JS: `express`, `@nestjs/core`, `hono`, `@hono/node-server`, `elysia`, `fastify`, `koa`. Python: `fastapi`, `flask`, `django`, `starlette`, `litestar`, `aiohttp`. Go: `github.com/gin-gonic/gin`, `github.com/labstack/echo`, `github.com/gofiber/fiber`, `github.com/go-chi/chi`, `github.com/gorilla/mux`, `google.golang.org/grpc`. Rust: `actix-web`, `axum`, `rocket`, `warp`, `tonic`. Ruby: `rails`, `sinatra`, `grape`, `hanami`. PHP: `laravel/framework`, `symfony/http-kernel`, `slim/slim` |
 | frontend-design | `astro.config.*`, `svelte.config.*`, `next.config.*`, `vite.config.*`, `tailwind.config.*`, `src/app/`, `src/pages/`, `src/routes/`, `app/`, `pages/`, `components/`, `*.css`, `*.scss`, `*.sass`, `*.tsx`, `*.jsx`, `*.svelte`, `*.astro`, `*.vue` | `astro`, `@sveltejs/kit`, `svelte`, `next`, `react`, `vue`, `vite`, `tailwindcss`, `@vitejs/plugin-react`, `@astrojs/*` |
 | i18n-localization | `locales/`, `i18n/`, `*.po`, `*.pot`, `*.xliff`, `*.xlf`, `messages.*.json`, `messages.*.yaml` | `react-i18next`, `vue-i18n`, `next-intl`, `@formatjs/intl`, `i18next` |
-| llm-app-development | - | `anthropic`, `openai`, `langchain`, `llama-index`, `llama_index`, `transformers`, `torch`, `tensorflow`, `ollama`, `chromadb`, `pinecone-client`, `weaviate-client`, `qdrant-client` |
-| mcp | `.mcp.json`, `mcp.json` | `@modelcontextprotocol/sdk`, `@modelcontextprotocol/server`, `@modelcontextprotocol/client`, `@modelcontextprotocol/core`, `fastmcp`, Python `mcp` as a requirements/Poetry line (`mcp`, `mcp>=`, `mcp[cli]`, `mcp = `) or a quoted requirement with a version or extras (`"mcp>=2"`); a bare `"mcp"` string is not matched, so keywords and descriptions do not trigger it |
-| message-queues | `kafka.*`, `rabbitmq.*`, `nats.*`, `sqs.*`, `queues/`, `consumers/`, `producers/`, `dead-letter.*`, `dlq/` | `kafkajs`, `amqplib`, `bullmq`, `celery`, `nats`, `@aws-sdk/client-sqs` |
-| performance-debugging | `benchmarks/`, `profiling/`, `flamegraph.*`, `*.cpuprofile`, `*.heapprofile`, `*.pprof`, `k6.*.js`, `artillery.yml`, `locust.py`, `performance-budget.json` | `benchmark`, `autocannon`, `clinic`, `0x`, `k6`, `artillery`, `locust` |
+| llm-app-development | - | JS: `@anthropic-ai/sdk`, `openai`, `langchain`, `@langchain/*`, `ollama`, `chromadb`. Python: `anthropic`, `openai`, `langchain`, `langchain-*`, `llama-index`, `llama-index-*`, `transformers`, `torch`, `tensorflow`, `ollama`, `chromadb`, `pinecone-client`, `weaviate-client`, `qdrant-client`. Go: `github.com/anthropics/anthropic-sdk-go`, `github.com/openai/openai-go`, `github.com/sashabaranov/go-openai`. Rust: `async-openai`. Ruby: `ruby-openai`. PHP: `openai-php/client` |
+| mcp | `.mcp.json`, `mcp.json` | JS: `@modelcontextprotocol/sdk`, `@modelcontextprotocol/server`, `@modelcontextprotocol/client`, `@modelcontextprotocol/core`. Python: `mcp`, `fastmcp`. Go: `github.com/modelcontextprotocol/go-sdk`, `github.com/mark3labs/mcp-go`. Rust: `rmcp`. A `keywords` entry or description mentioning `mcp` is not a dependency |
+| message-queues | `kafka.*`, `rabbitmq.*`, `nats.*`, `sqs.*`, `queues/`, `consumers/`, `producers/`, `dead-letter.*`, `dlq/` | JS: `kafkajs`, `amqplib`, `bullmq`, `nats`, `@aws-sdk/client-sqs`. Python: `celery`, `kafka-python`, `confluent-kafka`, `aiokafka`, `pika`, `nats-py`. Go: `github.com/segmentio/kafka-go`, `github.com/IBM/sarama`, `github.com/rabbitmq/amqp091-go`, `github.com/nats-io/nats.go`. Rust: `rdkafka`, `lapin`, `async-nats`. Ruby: `bunny`, `ruby-kafka`. PHP: `php-amqplib/php-amqplib` |
+| performance-debugging | `benchmarks/`, `profiling/`, `flamegraph.*`, `*.cpuprofile`, `*.heapprofile`, `*.pprof`, `k6.*.js`, `artillery.yml`, `locust.py`, `performance-budget.json` | Exact package names: `benchmark`, `autocannon`, `clinic`, `0x`, `k6`, `artillery`, `locust` (so `0xproject` or `pytest-benchmark` does not match) |
 | docker | `Dockerfile*`, `docker-compose.*`, `compose.*`, `.dockerignore`, `Containerfile*` | - |
 | kubernetes | `Chart.yaml`, `helmfile.yaml`, `kustomization.yaml`, `kustomization.yml` | Also: any `.yaml`/`.yml` with both `apiVersion:` and `kind:` (excluding CI and compose files) |
 | terraform | `*.tf`, `*.tfvars`, `terragrunt.hcl`, `.terraform-version`, `.terraform.lock.hcl` | - |
@@ -39,6 +39,14 @@ dependencies that may belong to an unrelated service.
 
 Manifests to check for dependency patterns: `package.json`, `requirements.txt`,
 `pyproject.toml`, `go.mod`, `Cargo.toml`, `Gemfile`, `composer.json`.
+
+Dependency names are matched exactly, not as substrings, after per-format extraction:
+`package.json` and `composer.json` keys, `requirements.txt` requirement names,
+`pyproject.toml` and `Cargo.toml` keys under dependency tables plus requirement strings in
+dependency arrays, `go.mod` require paths without a `/vN` suffix, and `Gemfile` gems.
+Python and Cargo names compare with `-`, `_` and `.` as equal. Manifests under `.github/`,
+`vendor/`, `node_modules/` and `third_party/` are tool or vendored dependencies and are
+skipped. When nothing matches, the script prints nothing and exits 0: no candidates.
 
 ## Detection Script
 

@@ -155,7 +155,7 @@ pveam download local debian-12-standard_12.7-1_amd64.tar.zst
 **Boot:**
 - BIOS: `seabios` for most Linux VMs (simpler, faster boot)
 - BIOS: `ovmf` (UEFI) for Secure Boot, Windows 11, or when EFI is required
-- Machine: `q35` for PCIe passthrough, `i440fx` (default) for everything else
+- Machine: `q35` for PCIe passthrough and OVMF Secure Boot/Windows 11 (SMM firmware); `i440fx` (default) otherwise
 
 ### QEMU guest agent
 

@@ -6,6 +6,9 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # Git hooks export GIT_DIR and friends; fixture repos must not inherit them.
 while IFS= read -r var; do unset "$var"; done < <(git rev-parse --local-env-vars)
 
+# Installer overrides must not leak into test fixtures.
+while IFS= read -r var; do unset "$var"; done < <(compgen -e | grep -E '^([A-Z0-9_]+_SKILLS_DIR|SKILLS_[A-Z0-9_]+|OPENCODE_CONFIG_FILE|XDG_(CONFIG|STATE|DATA|CACHE)_HOME)$' || true)
+
 fail() {
   printf 'FAIL: %s\n' "$1" >&2
   exit 1
@@ -68,6 +71,64 @@ test_backups_stay_outside_skill_root() {
   trap - RETURN
 }
 
+test_backup_override_separates_destinations() {
+  local tmp count
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  HOME="$tmp" "$ROOT/install.sh" --tool claude --no-backup docker >/dev/null
+  HOME="$tmp" "$ROOT/install.sh" --tool cursor --no-backup docker >/dev/null
+  HOME="$tmp" SKILLS_BACKUP_DIR="$tmp/b" "$ROOT/install.sh" --tool claude,cursor --force docker >/dev/null
+  count="$(find "$tmp/b" -mindepth 1 -maxdepth 1 -type d -name 'skills-*' | wc -l)"
+  [[ "$count" -eq 2 ]] || fail "expected two destination backup folders"
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_unverified_lock_backups_are_unique() {
+  local tmp dest i
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  dest="$tmp/s"
+  for i in 1 2; do
+    mkdir -p "$dest"
+    printf '%s\n' '{"version":1,"source":"/nope","skills":{}}' > "$dest/.skills-lock.json"
+    HOME="$tmp" "$ROOT/install.sh" --tool portable --dest "$dest" --no-backup docker >/dev/null
+  done
+  [[ "$(find "$tmp/.skills-backups/s/.unverified-locks" -type f | wc -l)" -eq 2 ]] || fail "expected two lock backups"
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_shared_destination_is_installed_once() {
+  local tmp output
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  HOME="$tmp" "$ROOT/install.sh" --tool codex --no-backup docker >/dev/null
+  echo EDIT >> "$tmp/.agents/skills/docker/SKILL.md"
+  output="$(HOME="$tmp" "$ROOT/install.sh" --tool codex,opencode,gemini,commandcode --force docker)"
+  [[ "$(grep -c 'docker backed up' <<< "$output")" -eq 1 ]] || fail "shared destination backed up more than once"
+  [[ "$(grep -l EDIT "$tmp"/.agents/.skills-backups/skills/docker/*/SKILL.md | wc -l)" -eq 1 ]] || fail "edited backup missing"
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_backup_retention_keeps_three_unique() {
+  local tmp dest root i newest
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  dest="$tmp/s"; root="$tmp/.skills-backups/s/docker"
+  HOME="$tmp" "$ROOT/install.sh" --tool portable --dest "$dest" --no-backup docker >/dev/null
+  for i in 1 2 3 4 5; do
+    echo "EDIT$i" >> "$dest/docker/SKILL.md"
+    HOME="$tmp" "$ROOT/install.sh" --tool portable --dest "$dest" --force docker >/dev/null
+  done
+  [[ "$(find "$root" -mindepth 1 -maxdepth 1 -type d | wc -l)" -eq 3 ]] || fail "expected three backups"
+  newest="$(find "$root" -mindepth 1 -maxdepth 1 -type d | sort | tail -1)"
+  grep -q EDIT5 "$newest/SKILL.md" || fail "newest backup lacks last edit"
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
 test_legacy_backups_are_migrated_outside_skill_root() {
   local tmp dest migrated_root
   tmp="$(mktemp -d)"
@@ -88,6 +149,30 @@ test_legacy_backups_are_migrated_outside_skill_root() {
     fail "expected migrated legacy backup under $migrated_root"
   fi
 
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_legacy_backup_migration_keeps_layout_on_collision() {
+  local tmp dest root date_cmd
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  dest="$tmp/agent/skills"; root="$tmp/agent/.skills-backups/skills/.legacy"
+  date_cmd="$(command -v date)"
+  mkdir -p "$tmp/bin" "$root/20260101-000000-00" "$dest/.backups/docker/legacy" "$tmp/elsewhere"
+  # shellcheck disable=SC2016
+  printf '#!/bin/sh\n[ "$1" = +%%Y%%m%%d-%%H%%M%%S ] && { echo 20260101-000000; exit 0; }\nexec %s "$@"\n' "$date_cmd" > "$tmp/bin/date"
+  chmod +x "$tmp/bin/date"
+  echo keep > "$root/20260101-000000-00/keep"
+  echo legacy > "$dest/.backups/docker/legacy/SKILL.md"
+  echo hidden > "$dest/.backups/.hidden"
+  HOME="$tmp" PATH="$tmp/bin:$PATH" "$ROOT/install.sh" --tool portable --dest "$dest" --no-backup docker >/dev/null
+  [[ "$(find "$root/20260101-000000-00" -mindepth 1 | wc -l)" -eq 1 && -f "$root/20260101-000000-00/keep" ]] || fail "collision overwrote existing backup"
+  [[ -f "$root/20260101-000000-01/docker/legacy/SKILL.md" && -f "$root/20260101-000000-01/.hidden" && ! -e "$root/20260101-000000-01/.backups" && ! -e "$dest/.backups" ]] || fail "legacy backup layout changed"
+  echo untouched > "$tmp/elsewhere/keep"
+  ln -s "$tmp/elsewhere" "$dest/.backups"
+  HOME="$tmp" PATH="$tmp/bin:$PATH" "$ROOT/install.sh" --tool portable --dest "$dest" --no-backup docker >/dev/null
+  [[ -L "$root/20260101-000000-02" && "$(readlink "$root/20260101-000000-02")" == "$tmp/elsewhere" && "$(cat "$tmp/elsewhere/keep")" == untouched ]] || fail "legacy symlink migration changed target"
   rm -rf "$tmp"
   trap - RETURN
 }
@@ -117,6 +202,89 @@ assert skills["backend-api"] == "allow"
 assert skills["docker"] == "deny"
 PY
 
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_link_mode_never_links_canonical_onto_itself() {
+  local tmp output
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  output="$(HOME="$tmp" SKILLS_CANONICAL_DIR="$tmp/.agents/skills/" "$ROOT/install.sh" --tool codex --link --force --no-backup docker)"
+  [[ -f "$tmp/.agents/skills/docker/SKILL.md" && ! -L "$tmp/.agents/skills/docker" ]] || fail "trailing slash linked canonical onto itself"
+  grep -q 'matches canonical, skipping links' <<< "$output" || fail "trailing slash canonical match not reported"
+
+  mkdir -p "$tmp/other"
+  mv "$tmp/.agents/skills" "$tmp/other/skills"
+  rmdir "$tmp/.agents"
+  ln -s "$tmp/other" "$tmp/.agents"
+  output="$(HOME="$tmp" CODEX_SKILLS_DIR="$tmp/.agents/skills" SKILLS_CANONICAL_DIR="$tmp/other/skills" "$ROOT/install.sh" --tool codex --link --force --no-backup docker)"
+  [[ -f "$tmp/other/skills/docker/SKILL.md" && ! -L "$tmp/other/skills/docker" ]] || fail "symlinked path linked canonical onto itself"
+  grep -q 'matches canonical, skipping links' <<< "$output" || fail "symlinked canonical match not reported"
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_link_mode_keeps_foreign_symlink_without_force() {
+  local tmp backup
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  mkdir -p "$tmp/mine" "$tmp/.claude/skills"
+  ln -s "$tmp/mine" "$tmp/.claude/skills/docker"
+  HOME="$tmp" "$ROOT/install.sh" --tool claude --link docker >/dev/null
+  [[ "$(readlink "$tmp/.claude/skills/docker")" == "$tmp/mine" ]] || fail "foreign symlink replaced without force"
+  HOME="$tmp" "$ROOT/install.sh" --tool claude --link --force docker >/dev/null
+  [[ "$(readlink "$tmp/.claude/skills/docker")" == "$tmp/.agents/skills/docker" ]] || fail "foreign symlink not replaced with force"
+  backup="$(find "$tmp/.claude/.skills-backups" -type l -name docker)"
+  [[ -n "$backup" && "$(readlink "$backup")" == "$tmp/mine" ]] || fail "foreign symlink not backed up"
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_opencode_string_permissions_are_preserved() {
+  local tmp config case output
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  config="$tmp/.config/opencode/opencode.json"
+  mkdir -p "$(dirname "$config")"
+  for case in global skill invalid; do
+    case "$case" in
+      global) printf '%s\n' '{"permission":"ask"}' > "$config" ;;
+      skill) printf '%s\n' '{"permission":{"bash":"deny","skill":"deny"}}' > "$config" ;;
+      invalid) printf '%s\n' '{"permission":["x"]}' > "$config" ;;
+    esac
+    cp "$config" "$tmp/before.json"
+    if [[ "$case" == invalid ]]; then
+      if output="$(HOME="$tmp" "$ROOT/install.sh" --tool opencode --no-backup docker 2>&1)"; then
+        fail "invalid OpenCode permission was accepted"
+      fi
+      grep -q 'OpenCode permission sync failed' <<< "$output" || fail "OpenCode failure was not reported"
+      cmp "$tmp/before.json" "$config" || fail "invalid OpenCode permission was changed"
+    else
+      HOME="$tmp" "$ROOT/install.sh" --tool opencode --no-backup docker >/dev/null
+      python3 - "$config" "$case" <<'PYTEST'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as f:
+    permission = json.load(f)["permission"]
+if sys.argv[2] == "global":
+    assert list(permission) == ["*", "skill"]
+    assert permission["*"] == "ask"
+    expected = "ask"
+else:
+    assert permission["bash"] == "deny"
+    expected = "deny"
+skill = permission["skill"]
+assert list(skill) == ["*", "docker"]
+assert skill == {"*": expected, "docker": "allow"}
+PYTEST
+    fi
+  done
   rm -rf "$tmp"
   trap - RETURN
 }
@@ -1036,6 +1204,22 @@ PY
   trap - RETURN
 }
 
+test_embedded_python_ignores_cwd_modules() {
+  local tmp module
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  mkdir -p "$tmp/cwd"
+  for module in json os; do
+    printf 'open("%s", "w").close()\n' "$tmp/pwned" > "$tmp/cwd/$module.py"
+  done
+  (cd "$tmp/cwd" && HOME="$tmp" "$ROOT/install.sh" --list >/dev/null)
+  (cd "$tmp/cwd" && HOME="$tmp" "$ROOT/install.sh" --tool opencode --no-backup docker >/dev/null)
+  [[ ! -e "$tmp/pwned" ]] || fail "embedded Python imported a module from cwd"
+  ! grep -nE 'python3 -(c | |$)' "$ROOT/install.sh" || fail "embedded Python invocation is not isolated"
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
 test_doctor_frontmatter_identity() {
   local tmp output
   tmp="$(mktemp -d)"
@@ -1231,7 +1415,7 @@ make_frontmatter_fixture() {
   write_fixture_skill "$repo" public $'---\nname: public\ndescription: d\nmetadata:\n  internal: false\n---'
   write_fixture_skill "$repo" bare $'---\ndescription: no name or metadata\n---'
   write_fixture_skill "$repo" private $'---\nname: private\ndescription: d\nmetadata:\n  internal: true\n---'
-  write_fixture_skill "$repo" team $'---\nname: team\ndescription: tracked but internal\nmetadata:\n  internal: true\n---'
+  write_fixture_skill "$repo" team $'---\nname: team\ndescription: tracked but internal\nmetadata:\n  internal: "true"\n---'
   write_fixture_skill "$repo" ignored $'---\nname: ignored\ndescription: d\n---'
   write_fixture_skill "$repo" old $'---\nname: old\ndescription: d\nmetadata:\n  deprecated: true\n---'
   printf '%s\n' 'skills/private/' 'skills/ignored/' > "$repo/.gitignore"
@@ -1509,11 +1693,11 @@ test_link_fault_restores_previous_link() {
   isolated "$tmp" "$ROOT/install.sh" --tool claude --link --no-backup docker >/dev/null
   ln -sfn "$tmp/elsewhere" "$claude/docker"
   status=0
-  output="$(isolated "$tmp" SKILLS_INSTALL_FAULT=promote "$ROOT/install.sh" --tool claude --link docker 2>&1)" || status=$?
+  output="$(isolated "$tmp" SKILLS_INSTALL_FAULT=promote "$ROOT/install.sh" --tool claude --link --force --no-backup docker 2>&1)" || status=$?
   (( status == 1 )) || fail "link promote fault exited $status, want 1: $output"
   [[ "$(readlink "$claude/docker")" == "$tmp/elsewhere" ]] || fail "link promote fault did not restore the previous link"
   [[ ! -e "$(txn_area "$claude")" ]] || fail "link promote fault left the transaction area"
-  isolated "$tmp" "$ROOT/install.sh" --tool claude --link docker >/dev/null || fail "link rerun failed"
+  isolated "$tmp" "$ROOT/install.sh" --tool claude --link --force --no-backup docker >/dev/null || fail "link rerun failed"
   [[ "$(readlink "$claude/docker")" == "$tmp/.agents/skills/docker" ]] || fail "link rerun did not relink"
   rm -rf "$tmp"
   trap - RETURN
@@ -1544,6 +1728,18 @@ test_concurrent_installs_serialize() {
   if grep -q '\[[!r]\]' "$tmp/one" "$tmp/two"; then fail "concurrent installs interfered: $(cat "$tmp/one" "$tmp/two")"; fi
   [[ ! -e "$(txn_area "$dest")" ]] || fail "concurrent installs left the transaction area"
   assert_lock_matches_installs "$dest"
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_relative_xdg_state_home_is_ignored() {
+  local tmp
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  mkdir "$tmp/cwd"
+  (cd "$tmp/cwd" && isolated "$tmp" XDG_STATE_HOME=rel "$ROOT/install.sh" --tool portable --dest "$tmp/d" --no-backup docker >/dev/null)
+  [[ -f "$tmp/.local/state/iuliandita-skills/install.lock" && ! -e "$tmp/cwd/rel" ]] \
+    || fail "relative XDG_STATE_HOME was not ignored"
   rm -rf "$tmp"
   trap - RETURN
 }
@@ -1794,8 +1990,16 @@ test_unverified_copy_without_verified_prev_is_refused() {
 }
 
 test_backups_stay_outside_skill_root
+test_backup_override_separates_destinations
+test_unverified_lock_backups_are_unique
+test_shared_destination_is_installed_once
+test_backup_retention_keeps_three_unique
 test_legacy_backups_are_migrated_outside_skill_root
+test_legacy_backup_migration_keeps_layout_on_collision
 test_opencode_install_allows_installed_skills
+test_link_mode_never_links_canonical_onto_itself
+test_link_mode_keeps_foreign_symlink_without_force
+test_opencode_string_permissions_are_preserved
 test_link_mode_writes_tool_lock
 test_link_mode_writes_tool_lock_gemini
 test_omp_default_path
@@ -1835,6 +2039,7 @@ test_legacy_cleanup_converges_after_interruption
 test_legacy_cleanup_refuses_unsafe_layouts
 test_legacy_cleanup_custom_canonical_needs_replacement
 test_opencode_link_migration_on_canonical_allows_replacement
+test_embedded_python_ignores_cwd_modules
 test_doctor_frontmatter_identity
 test_doctor_reports_duplicates_read_only
 test_doctor_merges_only_equivalent_findings
@@ -1849,6 +2054,7 @@ test_lock_fault_leaves_records_until_publication
 test_opencode_fault_keeps_config_unchanged
 test_link_fault_restores_previous_link
 test_concurrent_installs_serialize
+test_relative_xdg_state_home_is_ignored
 test_installer_lock_contention_and_missing_flock
 test_migration_recovers_before_apply
 test_failed_retry_keeps_earlier_record

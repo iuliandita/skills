@@ -81,7 +81,7 @@ the bot to open PRs **only for security advisories**:
 
 - Dependabot: `open-pull-requests-limit: 0` on the main config + rely on the separate
   `version: 2` security updates path (security updates are opened regardless of limits)
-- Renovate: `"extends": ["default:disableAllUpdates", "security:only"]`
+- Renovate: `"extends": ["security:only-security-updates"]`
 
 Pair with a quarterly "update sweep" where someone manually bumps everything else.
 

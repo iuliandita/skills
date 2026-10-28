@@ -12,20 +12,27 @@ MIGRATOR="${SKILLS_MIGRATOR:-$SCRIPT_DIR/scripts/migrate-skills.py}"
 
 # Discover skills dynamically: scan skills/ for dirs with SKILL.md.
 # Gitignored skills are excluded unless --include-internal is active and the
-# skill declares metadata.internal: true.
+# skill declares metadata.internal: "true".
 discover_skills() {
   local include_internal="${1:-false}"
-  local skills=()
+  local skills=() names=() dir name
+  local -A ignored=()
   for dir in "$SKILLS_SRC"/*/; do
     [[ -f "$dir/SKILL.md" ]] || continue
-    local name
-    name="$(basename "$dir")"
-    # Skip gitignored skills - if not in a git repo, include everything.
-    if git -C "$SKILLS_SRC" rev-parse --git-dir &>/dev/null; then
-      if git -C "$SKILLS_SRC" check-ignore -q "$name" 2>/dev/null; then
-        if [[ "$include_internal" != "true" ]] || ! is_internal "$dir"; then
-          continue
-        fi
+    name="${dir%/}"
+    names+=("${name##*/}")
+  done
+  # Skip gitignored skills - if not in a git repo, include everything.
+  # One check-ignore over all names instead of one git process per skill.
+  if (( ${#names[@]} )) && git -C "$SKILLS_SRC" rev-parse --git-dir &>/dev/null; then
+    while IFS= read -r -d '' name; do
+      ignored[$name]=1
+    done < <(printf '%s\0' "${names[@]}" | git -C "$SKILLS_SRC" check-ignore -z --stdin 2>/dev/null || true)
+  fi
+  for name in "${names[@]}"; do
+    if [[ -n "${ignored[$name]:-}" ]]; then
+      if [[ "$include_internal" != "true" ]] || ! is_internal "$SKILLS_SRC/$name/"; then
+        continue
       fi
     fi
     skills+=("$name")
@@ -174,7 +181,7 @@ Options:
   --apply             Apply a migration preview; requires --migrate
   --force             Overwrite existing skills without prompting
   --no-backup         Skip backup of existing skills
-  --include-internal  Include skills marked metadata.internal: true
+  --include-internal  Include skills marked metadata.internal: "true"
   --doctor            Report skill names a harness can reach through more than
                       one directory (read-only; all known tools unless --tool)
   --verbose           With --doctor, list each overlap the harness resolves
@@ -244,7 +251,7 @@ cache_source_digest() {
 # changes count (skill_hash misses both). A path that is itself a symlink
 # prints link:<hash of target>; a missing path prints -, an unreadable one !.
 tree_digests() {
-  python3 - "$@" <<'PY'
+  python3 -I - "$@" <<'PY'
 import hashlib
 import os
 import stat
@@ -342,7 +349,7 @@ declare -A MIGRATION_REPLACEMENTS=()
 load_migrations() {
   [[ -f "$MIGRATIONS_FILE" ]] || return 0
   local rows old action replacement
-  if ! rows="$(python3 - "$MIGRATIONS_FILE" <<'PY'
+  if ! rows="$(python3 -I - "$MIGRATIONS_FILE" <<'PY'
 import json
 import re
 import sys
@@ -386,16 +393,34 @@ PY
 }
 
 # ── Backup ────────────────────────────────────────────────────────────
+backup_base_for() {
+  local dest_dir="$1"
+  if [[ -n "${SKILLS_BACKUP_DIR:-}" ]]; then
+    printf '%s/%s-%s\n' "$SKILLS_BACKUP_DIR" "$(basename "$dest_dir")" "$(readlink -f "$dest_dir" | hash_tool | cut -c1-12)"
+  else
+    printf '%s/.skills-backups/%s\n' "$(dirname "$dest_dir")" "$(basename "$dest_dir")"
+  fi
+}
+
 backup_skill() {
   local skill="$1" dest_dir="$2"
-  local backup_parent backup_name backup_base
-  backup_parent="$(dirname "$dest_dir")"
-  backup_name="$(basename "$dest_dir")"
-  backup_base="${SKILLS_BACKUP_DIR:-$backup_parent/.skills-backups/$backup_name}"
+  local backup_base
+  backup_base="$(backup_base_for "$dest_dir")"
   local ts
   ts="$(date +%Y%m%d-%H%M%S)"
-  local dest="$backup_base/$skill/$ts"
-  mkdir -p "$dest" || return 1
+  local dest n=0 prev
+  mkdir -p "$backup_base/$skill" || return 1
+  # Number past the highest backup from this second: pruning frees low numbers,
+  # and reusing one would sort the new backup first and prune it.
+  for prev in "$backup_base/$skill/$ts-"[0-9][0-9]; do
+    [[ -d "$prev" ]] || continue
+    prev="${prev##*-}"
+    (( 10#$prev < n )) || n=$(( 10#$prev + 1 ))
+  done
+  (( n < 100 )) || return 1
+  until dest="$backup_base/$skill/$ts-$(printf %02d "$n")"; mkdir "$dest" 2>/dev/null; do
+    (( ++n < 100 )) || return 1
+  done
 
   if [[ -L "$dest_dir/$skill" ]]; then
     cp -P "$dest_dir/$skill" "$dest/" || return 1
@@ -417,14 +442,20 @@ migrate_legacy_backups() {
   local legacy_dir="$dest_dir/.backups"
   [[ -d "$legacy_dir" || -L "$legacy_dir" ]] || return 0
 
-  local backup_parent backup_name backup_base ts dest
-  backup_parent="$(dirname "$dest_dir")"
-  backup_name="$(basename "$dest_dir")"
-  backup_base="${SKILLS_BACKUP_DIR:-$backup_parent/.skills-backups/$backup_name}"
+  local backup_base ts dest n=0
+  backup_base="$(backup_base_for "$dest_dir")"
   ts="$(date +%Y%m%d-%H%M%S)"
-  dest="$backup_base/.legacy/$ts"
-
-  mkdir -p "$(dirname "$dest")" && mv "$legacy_dir" "$dest" || return 1
+  mkdir -p "$backup_base/.legacy" || return 1
+  until dest="$backup_base/.legacy/$ts-$(printf %02d "$n")"; mkdir "$dest" 2>/dev/null; do
+    (( ++n < 100 )) || return 1
+  done
+  if [[ -L "$legacy_dir" ]]; then
+    rmdir "$dest" && mv "$legacy_dir" "$dest" || return 1
+    [[ -L "$dest" ]] || { printf '  [!] legacy .backups link landed inside %s\n' "$dest"; return 1; }
+  else
+    find "$legacy_dir" -mindepth 1 -maxdepth 1 -exec mv {} "$dest/" \;
+    rmdir "$legacy_dir" || return 1
+  fi
   printf '  [>] legacy .backups moved to %s\n' "$dest"
 }
 
@@ -432,12 +463,10 @@ migrate_legacy_backups() {
 backup_unverified_lock() {
   local lock_dir="$1"
   local lock_file="$lock_dir/.skills-lock.json"
-  local backup_parent backup_name backup_base
-  backup_parent="$(dirname "$lock_dir")"
-  backup_name="$(basename "$lock_dir")"
-  backup_base="${SKILLS_BACKUP_DIR:-$backup_parent/.skills-backups/$backup_name}"
+  local backup_base
+  backup_base="$(backup_base_for "$lock_dir")"
 
-  python3 - "$lock_file" "$lock_dir" "$backup_base" <<'PY'
+  python3 -I - "$lock_file" "$lock_dir" "$backup_base" <<'PY'
 from datetime import datetime, timezone
 from pathlib import Path
 import shutil
@@ -458,7 +487,7 @@ suffix = 1
 while backup.exists():
     suffix += 1
     backup = backup_base / ".unverified-locks" / f"{stamp}-{suffix}.skills-lock.json"
-backup.parent.mkdir(parents=True)
+backup.parent.mkdir(parents=True, exist_ok=True)
 shutil.copy2(lock_file, backup)
 lock_file.unlink()
 print(backup)
@@ -469,7 +498,7 @@ ensure_lock_source() {
   local lock_dir="$1"
   local lock_file="$lock_dir/.skills-lock.json"
   [[ -f "$lock_file" ]] || return 0
-  if python3 - "$lock_file" "$SKILLS_SRC" <<'PY'
+  if python3 -I - "$lock_file" "$SKILLS_SRC" <<'PY'
 import json
 from pathlib import Path
 import sys
@@ -536,7 +565,7 @@ write_lock() {
   # Records keep their v1 shape for --check and the migration helper. The v2
   # tree digest lives in `trees`, bound to the record's v1 hash so an entry a
   # v1-only writer left stale stops matching instead of vouching for it.
-  out="$(python3 - "$lock_file" "$SKILLS_SRC" "$now" "${updates[@]}" <<'PY'
+  out="$(python3 -I - "$lock_file" "$SKILLS_SRC" "$now" "${updates[@]}" <<'PY'
 import json
 import os
 import pathlib
@@ -616,21 +645,26 @@ PY
   [[ -z "$out" ]] || mapfile -t LOCK_PUBLISHED <<< "$out"
 }
 
-read_lock_hash() {
-  local lock_file="$1" skill="$2"
+# Print NUL-separated skill/hash pairs from a lock file in one python run, only
+# for skills whose record carries a hash.
+read_lock_hashes() {
+  local lock_file="$1"
+  shift
   [[ -f "$lock_file" ]] || return 0
-  python3 - "$lock_file" "$skill" <<'PY'
+  python3 -I - "$lock_file" "$@" <<'PY'
 import json
 import sys
 
-try:
-    value = json.load(open(sys.argv[1], encoding="utf-8"))["skills"].get(sys.argv[2])
-    if isinstance(value, str):
-        print(value)
-    elif isinstance(value, dict) and isinstance(value.get("hash"), str):
-        print(value["hash"])
-except (OSError, ValueError, TypeError, json.JSONDecodeError):
-    pass
+out = sys.stdout.buffer
+for skill in sys.argv[2:]:
+    try:
+        value = json.load(open(sys.argv[1], encoding="utf-8"))["skills"].get(skill)
+        if isinstance(value, dict):
+            value = value.get("hash")
+        if isinstance(value, str) and value.rstrip("\n"):
+            out.write(skill.encode() + b"\0" + value.rstrip("\n").encode("utf-8", "surrogateescape") + b"\0")
+    except (OSError, ValueError, TypeError, json.JSONDecodeError):
+        pass
 PY
 }
 
@@ -646,7 +680,9 @@ INSTALL_LOCK_FD=9
 INSTALL_LOCK_HELD=false
 
 install_lock_dir() {
-  printf '%s/iuliandita-skills\n' "${XDG_STATE_HOME:-$HOME/.local/state}"
+  local base="${XDG_STATE_HOME:-}"
+  [[ "$base" == /* ]] || base="$HOME/.local/state"
+  printf '%s/iuliandita-skills\n' "$base"
 }
 
 # Pass "required" to exit 10 without flock and 7 when the lock cannot be opened;
@@ -729,7 +765,7 @@ rename_path() {
   if [[ "$MV_NO_COPY" == "yes" ]]; then
     mv --no-copy -T -- "$1" "$2"
   else
-    python3 -c 'import os, sys; os.rename(sys.argv[1], sys.argv[2])' "$1" "$2"
+    python3 -I -c 'import os, sys; os.rename(sys.argv[1], sys.argv[2])' "$1" "$2"
   fi
 }
 
@@ -743,7 +779,7 @@ txn_root() {
   if [[ -z "${TXN_ROOTS[$1]:-}" ]]; then
     dest_abs="$(cd "$1" && pwd -P)" || { printf '  [!] cannot resolve %s\n' "$1"; return 1; }
     root="${dest_abs%/*}/.skills-txn/${dest_abs##*/}"
-    if fault_hit xdev || ! python3 - "$dest_abs" "$root" <<'PY'
+    if fault_hit xdev || ! python3 -I - "$dest_abs" "$root" <<'PY'
 import os
 import sys
 
@@ -1177,9 +1213,40 @@ publish_lock() {
 # for it and any existing record is left byte-identical.
 DIFFER_COUNT=0
 
+# Tree digests prefetched for the current install_into pass, keyed by path.
+# Only clean 64-hex digests are kept; anything else falls back to a per-skill
+# call so its error output appears where it did before.
+declare -A TREE_DIGESTS=()
+
+# Hash every existing copy in a destination and its source in one python run
+# instead of one run per skill. Args: <dest_dir> <skill>...
+prefetch_tree_digests() {
+  local dest_dir="$1" skill out i
+  shift
+  local -a paths=() digests=()
+  TREE_DIGESTS=()
+  for skill in "$@"; do
+    validate_skill_name "$skill" || continue
+    [[ -d "$SKILLS_SRC/$skill" ]] || continue
+    present "$dest_dir/$skill" || continue
+    paths+=("$dest_dir/$skill" "$SKILLS_SRC/$skill")
+  done
+  (( ${#paths[@]} )) || return 0
+  out="$(tree_digests "${paths[@]}" 2>/dev/null)" || return 0
+  mapfile -t digests <<< "$out"
+  (( ${#digests[@]} == ${#paths[@]} )) || return 0
+  for i in "${!paths[@]}"; do
+    [[ "${digests[i]}" =~ ^[0-9a-f]{64}$ ]] && TREE_DIGESTS[${paths[i]}]="${digests[i]}"
+  done
+  return 0
+}
+
 classify_installed_copy() {
   local skill="$1" work="$2" out dst_tree="" src_tree=""
-  if out="$(tree_digests "$work" "$SKILLS_SRC/$skill")"; then
+  if [[ -n "${TREE_DIGESTS[$work]:-}" && -n "${TREE_DIGESTS[$SKILLS_SRC/$skill]:-}" ]]; then
+    dst_tree="${TREE_DIGESTS[$work]}"
+    src_tree="${TREE_DIGESTS[$SKILLS_SRC/$skill]}"
+  elif out="$(tree_digests "$work" "$SKILLS_SRC/$skill")"; then
     mapfile -t out <<< "$out"
     dst_tree="${out[0]:-}"
     src_tree="${out[1]:-}"
@@ -1215,14 +1282,21 @@ create_link() {
   local skill="$1" tool_dir="$2" force="$3" no_backup="$4" backup=false
   local work="$tool_dir/$skill"
 
+  if paths_match "$tool_dir" "$CANONICAL_DIR"; then
+    printf '  [!] %s: %s is the canonical directory; refusing to link it onto itself\n' "$skill" "$tool_dir"
+    return 1
+  fi
+
   if [[ -L "$work" ]]; then
-    if [[ "$(readlink "$work")" == "$CANONICAL_DIR/$skill" ]]; then
+    if [[ "$(readlink "$work")" == "$CANONICAL_DIR/$skill" ]] || paths_match "$work" "$CANONICAL_DIR/$skill"; then
       printf '  [=] %s already linked\n' "$skill"
       return 0
     fi
-    replace_entry link "$skill" "$tool_dir" false || return
-    printf '  [+] %s relinked\n' "$skill"
-    return 0
+    if [[ "$force" != "true" ]]; then
+      printf '  [~] %s is a symlink to %s (use --force to replace it)\n' "$skill" "$(readlink "$work")"
+      return 3
+    fi
+    [[ "$no_backup" == "true" ]] || backup=true
   fi
   if [[ -e "$work" ]]; then
     # Real directory from a previous copy install
@@ -1260,7 +1334,7 @@ sync_opencode_permissions() {
     return 1
   fi
 
-  if ! python3 - "$config_file" "${synced_skills[@]}" <<'PY'
+  if ! python3 -I - "$config_file" "${synced_skills[@]}" <<'PY'
 import json
 import os
 import sys
@@ -1279,15 +1353,24 @@ else:
 if not isinstance(config, dict):
     raise ValueError("OpenCode config root must be a JSON object")
 
+ACTIONS = {"allow", "ask", "deny"}
 permission = config.get("permission")
-if not isinstance(permission, dict):
+if permission is None:
     permission = {}
-    config["permission"] = permission
+elif isinstance(permission, str) and permission in ACTIONS:
+    permission = {"*": permission, "skill": {"*": permission}}
+if not isinstance(permission, dict):
+    raise ValueError("permission must be an object or allow/ask/deny")
+config["permission"] = permission
 
 skill_permission = permission.get("skill")
-if not isinstance(skill_permission, dict):
+if skill_permission is None:
     skill_permission = {}
-    permission["skill"] = skill_permission
+elif isinstance(skill_permission, str) and skill_permission in ACTIONS:
+    skill_permission = {"*": skill_permission}
+if not isinstance(skill_permission, dict):
+    raise ValueError("permission.skill must be an object or allow/ask/deny")
+permission["skill"] = skill_permission
 
 changed = False
 for skill in skills:
@@ -1343,7 +1426,7 @@ sync_migrated_opencode_permissions() {
     target_hash="$(skill_hash "$target")"
     source_hash="$(skill_hash "$SKILLS_SRC/$replacement")"
     [[ "$target_hash" == "$source_hash" ]] || continue
-    lock_hash="$(python3 - "$lock_file" "$replacement" "$SKILLS_SRC" <<'PY'
+    lock_hash="$(python3 -I - "$lock_file" "$replacement" "$SKILLS_SRC" <<'PY'
 import json
 from pathlib import Path
 import sys
@@ -1382,6 +1465,9 @@ install_into() {
   if ! recover_dest "$dest"; then
     stopped=true
     (( INSTALL_FAILURES++ )) || true
+  fi
+  if [[ "$kind" == "copy" && "$force" != "true" && "$stopped" != "true" ]]; then
+    prefetch_tree_digests "$dest" "$@"
   fi
   for skill in "$@"; do
     if ! validate_skill_name "$skill"; then
@@ -1467,7 +1553,7 @@ run_doctor() {
       [[ "${row%%|*}" == "$tool" ]] && rows+=("$row")
     done
   done
-  python3 - "$verbose" "$(IFS=,; printf '%s' "$*")" "${rows[@]}" <<'PY'
+  python3 -I - "$verbose" "$(IFS=,; printf '%s' "$*")" "${rows[@]}" <<'PY'
 from pathlib import Path
 import os
 import re
@@ -1658,7 +1744,7 @@ DETECT_MARKERS=(
 )
 
 run_detect() {
-  python3 - "$HOME" "${PATH-}" "$(IFS=,; printf '%s' "${SUPPORTED_TOOLS[*]}")" "${DETECT_MARKERS[@]}" <<'PY'
+  python3 -I - "$HOME" "${PATH-}" "$(IFS=,; printf '%s' "${SUPPORTED_TOOLS[*]}")" "${DETECT_MARKERS[@]}" <<'PY'
 import os
 import sys
 
@@ -1747,7 +1833,7 @@ override_env_names() {
   local name
   while IFS= read -r name; do
     case "$name" in
-      *_SKILLS_DIR|SKILLS_CANONICAL_DIR|SKILLS_BACKUP_DIR|OPENCODE_CONFIG_FILE|SKILLS_TOOL) printf '%s\n' "$name" ;;
+      *_SKILLS_DIR|SKILLS_CANONICAL_DIR|SKILLS_BACKUP_DIR|OPENCODE_CONFIG_FILE|SKILLS_TOOL|SKILLS_MIGRATOR|SKILLS_MIGRATIONS_FILE) printf '%s\n' "$name" ;;
     esac
   done < <(compgen -e)
 }
@@ -1766,7 +1852,7 @@ reject_override_env() {
 CONFIG_FAIL_EXIT=""
 
 saved_config_py() {
-  python3 - "$@" <<'PY'
+  python3 -I - "$@" <<'PY'
 import errno
 import os
 import re
@@ -2088,14 +2174,27 @@ check_updates() {
 
   printf 'Checking for updates...\n\n'
 
-  local outdated=0 current=0 missing=0 legacy=0
+  local outdated=0 current=0 missing=0 legacy=0 tmp i
+  local -a checked=() pairs=()
+  local -A lock_hashes=()
   for skill in "${ALL_SKILLS[@]}"; do
     [[ -d "$SKILLS_SRC/$skill" ]] || continue
     is_deprecated "$SKILLS_SRC/$skill" && continue
+    checked+=("$skill")
+  done
+  # One python run reads every lock hash instead of one per skill.
+  tmp="$(mktemp)"
+  read_lock_hashes "$lock_file" "${checked[@]}" > "$tmp"
+  mapfile -d '' -t pairs < "$tmp"
+  rm -f "$tmp"
+  for (( i = 0; i + 1 < ${#pairs[@]}; i += 2 )); do
+    lock_hashes[${pairs[i]}]="${pairs[i+1]}"
+  done
 
+  for skill in "${checked[@]}"; do
     local src_hash installed_hash
     src_hash="$(skill_hash "$SKILLS_SRC/$skill")"
-    installed_hash="$(read_lock_hash "$lock_file" "$skill")"
+    installed_hash="${lock_hashes[$skill]:-}"
 
     if [[ -z "$installed_hash" ]]; then
       printf '  [?] %-24s not installed\n' "$skill"
@@ -2229,7 +2328,7 @@ run_update() {
   update_expect_config "$repo" "branch.$branch.remote" "$SAVED_SOURCE_REMOTE" "the upstream remote"
   update_expect_config "$repo" "remote.$SAVED_SOURCE_REMOTE.url" "$SAVED_SOURCE_REMOTE_URL" "the remote URL"
   update_expect_config "$repo" "branch.$branch.merge" "$SAVED_SOURCE_UPSTREAM" "the upstream branch"
-  status="$(ugit -C "$repo" status --porcelain)" || update_fail 4 "git status failed in $repo"
+  status="$(ugit -C "$repo" status --porcelain --untracked-files=all)" || update_fail 4 "git status failed in $repo"
   [[ -z "$status" ]] || update_fail 4 "$repo has uncommitted or untracked changes (${status%%$'\n'*}); checkout unchanged"
   old="$(ugit -C "$repo" rev-parse --verify HEAD)" || update_fail 4 "cannot resolve HEAD in $repo"
   ulog "source checks passed: $repo on $branch at ${old:0:12}"
@@ -2275,7 +2374,7 @@ run_update() {
     ulog "fast-forwarding ${old:0:12}..${sha:0:12}"
     if ! ugit -C "$repo" -c core.hooksPath=/dev/null merge --ff-only --quiet "$sha" </dev/null; then
       head="$(ugit -C "$repo" rev-parse --verify HEAD 2>/dev/null)" || head=""
-      status="$(ugit -C "$repo" status --porcelain 2>/dev/null)" || status="unknown"
+      status="$(ugit -C "$repo" status --porcelain --untracked-files=all 2>/dev/null)" || status="unknown"
       if [[ "$head" == "$old" && -z "$status" ]]; then
         update_fail 5 "fast-forward to ${sha:0:12} failed; HEAD is still ${old:0:12} and the working tree is unchanged"
       fi
@@ -2287,6 +2386,9 @@ run_update() {
     || update_fail 1 "HEAD is ${head:-unknown} after the fast-forward, not $sha; rerun install.sh --update"
 
   ulog "handing off to $repo/install.sh at ${sha:0:12}"
+  if [[ ! -r "$repo/install.sh" ]] || ! "$BASH" -n "$repo/install.sh" 2>/dev/null; then
+    update_fail 8 "$repo/install.sh at ${sha:0:12} is missing or does not parse; HEAD is at $sha; rerun install.sh --update once upstream is fixed"
+  fi
   shopt -s execfail
   exec "$BASH" "$repo/install.sh" --apply-update "$sha" "$old" || true
   update_fail 8 "could not start $repo/install.sh; HEAD is at $sha; rerun install.sh --update to complete the install"
@@ -2294,7 +2396,7 @@ run_update() {
 
 # Per-skill lock state for one destination: "none -", "v1 -", or "v2 <digest>".
 lock_tree_records() {
-  python3 - "$@" <<'PY'
+  python3 -I - "$@" <<'PY'
 import json
 import re
 import sys
@@ -2471,7 +2573,7 @@ run_apply_update() {
     || update_fail 1 "--apply-update is internal to --update"
   # The lock arrives as fd 9 from the coordinator; reopening the path would
   # take a new, unheld description, so only the inherited one is checked.
-  if ! python3 -c 'import os, sys
+  if ! python3 -I -c 'import os, sys
 a, b = os.fstat(9), os.stat(sys.argv[1])
 sys.exit((a.st_dev, a.st_ino) != (b.st_dev, b.st_ino))' "$(install_lock_dir)/install.lock" 2>/dev/null \
     || ! flock -n "$INSTALL_LOCK_FD" 2>/dev/null; then
@@ -2485,7 +2587,7 @@ sys.exit((a.st_dev, a.st_ino) != (b.st_dev, b.st_ino))' "$(install_lock_dir)/ins
     || update_fail 1 "$SCRIPT_DIR is not the saved checkout $SAVED_SOURCE_REPO"
   head="$(ugit -C "$repo" rev-parse --verify HEAD 2>/dev/null)" || head=""
   [[ "$head" == "$new" ]] || update_fail 1 "HEAD is ${head:-unknown}, not $new; rerun install.sh --update"
-  status="$(ugit -C "$repo" status --porcelain)" || update_fail 1 "git status failed in $repo; HEAD is at $new"
+  status="$(ugit -C "$repo" status --porcelain --untracked-files=all)" || update_fail 1 "git status failed in $repo; HEAD is at $new"
   [[ -z "$status" ]] || update_fail 1 "$repo changed during the update; HEAD is at $new; clean it and rerun install.sh --update"
 
   ulog "applying ${new:0:12} with $SAVED_CONFIG_PATH"
@@ -2872,7 +2974,7 @@ main() {
     for tool in "${tools[@]}"; do
       local tool_dir linked=()
       tool_dir="$(resolve_tool_path "$tool")"
-      if [[ "$tool_dir" == "$CANONICAL_DIR" ]]; then
+      if paths_match "$tool_dir" "$CANONICAL_DIR"; then
         printf '[%s] -> %s (matches canonical, skipping links)\n' "$tool" "$tool_dir"
         linked=("${canonical_ok[@]}")
       else
@@ -2902,19 +3004,30 @@ main() {
 
   # ── Install: copy mode ──────────────────────────────────────────────
   else
+    local -A copy_done=()
     for tool in "${tools[@]}"; do
-      local dest
+      local dest key
       if [[ -n "$dest_override" ]]; then
         dest="$dest_override"
       else
         dest="$(resolve_tool_path "$tool")"
       fi
       mkdir -p "$dest"
+      key="$(readlink -f "$dest")"
+      if [[ -v 'copy_done[$key]' ]]; then
+        printf '[%s] -> %s (same directory as an earlier tool; already installed)\n' "$tool" "$dest"
+        read -r -a INSTALLED <<< "${copy_done[$key]}"
+        if [[ "$tool" == "opencode" ]]; then
+          sync_opencode_permissions "$OPENCODE_CONFIG_FILE" "${INSTALLED[@]}" || (( failed++ )) || true
+        fi
+        continue
+      fi
       ensure_lock_source "$dest"
       migrate_legacy_backups "$dest"
 
       printf '[%s] -> %s\n' "$tool" "$dest"
       install_into copy "$dest" "$force" "$no_backup" "${skills[@]}"
+      copy_done[$key]="${INSTALLED[*]}"
       (( DIFFER_COUNT == 0 )) || printf '  %d skill(s) differ; use --force to overwrite\n' "$DIFFER_COUNT"
 
       if [[ "$tool" == "opencode" ]]; then

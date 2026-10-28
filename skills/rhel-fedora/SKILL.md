@@ -49,7 +49,7 @@ Do not transfer Ubuntu kernel patch floors to RHEL, Fedora, or a downstream clon
 ## When to use
 
 - Package management with `dnf`, `yum`, `rpm`, local `.rpm` files, repo configuration, or package provenance
-- Fedora repo, COPR, updates-testing, modularity, and release-upgrade work
+- Fedora repo, COPR, updates-testing, and release-upgrade work
 - RHEL subscription, entitlement, CodeReady Builder, Insights, EPEL, and clone compatibility questions
 - systemd service, timer, boot, and journal troubleshooting on Fedora or RHEL-family systems
 - GRUB, EFI, `dracut`, initramfs, kernel, `grubby`, and boot recovery work
@@ -87,7 +87,7 @@ Do not transfer Ubuntu kernel patch floors to RHEL, Fedora, or a downstream clon
 Before returning Fedora or RHEL-family commands, verify:
 
 - [ ] **Distro lane identified**: Fedora, CentOS Stream, RHEL, Rocky, AlmaLinux, Oracle Linux, Amazon Linux, or another derivative. Advice diverges fast.
-- [ ] **Release lane identified**: Fedora stable vs Rawhide/Branched, RHEL 8 vs 9 vs 10, AL2023 vs old Amazon Linux 2, Oracle Linux with RHCK vs UEK, and the lane's current lifecycle status.
+- [ ] **Release lane identified**: Fedora stable vs Rawhide/Branched, RHEL 8 vs 9 vs 10, AL2023 vs Amazon Linux 2 (end of support 2026-06-30; treat as unsupported and plan migration), Oracle Linux with RHCK vs UEK, and the lane's current lifecycle status.
 - [ ] **Package path identified**: `dnf`, legacy `yum`, plain `rpm`, or `microdnf`. If the host is rpm-ostree or image-mode, stop and route away instead of treating it like a normal DNF-managed host.
 - [ ] **Repo provenance understood**: base repos, EPEL, CRB/PowerTools/CodeReady Builder, COPR, vendor repos, and third-party release RPMs are not interchangeable.
 - [ ] **Fedora speed respected**: Fedora guidance that is fine on the current stable release can be stale or wrong on Rawhide and too new for enterprise clones.
@@ -99,7 +99,7 @@ Before returning Fedora or RHEL-family commands, verify:
 - [ ] **Fallback path exists**: do not remove the only known-good kernel or boot entry, especially on a remote, encrypted, or cloud system.
 - [ ] **Vendor kernel path identified**: Oracle UEK vs RHCK, Amazon kernel choices, and NVIDIA akmods/DKMS expectations matter.
 - [ ] **Subscription state known**: on RHEL, entitlement and repo enablement may be the real problem, not package naming.
-- [ ] **Module streams handled consciously**: if AppStream or module streams are involved, verify the active stream before suggesting installs, resets, or downgrades.
+- [ ] **Module streams handled consciously**: streams exist only on RHEL 8/9-family lanes and third-party modular repos; RHEL 10 ships no modular content and Fedora 39+ dropped its modular repos. On 8/9, verify the active stream before suggesting installs, resets, or downgrades.
 - [ ] **Desktop stack is coherent**: compositor, portal backend, PipeWire, session type, and user services line up.
 - [ ] **Gaming stack includes 32-bit userspace when needed**: Steam and Proton failures often come from missing multilib graphics pieces, not the game itself.
 - [ ] **Capture stack is coherent**: portal backend, PipeWire, WebRTC or Electron path, and any virtual camera module line up with the current session type.
@@ -154,7 +154,7 @@ dnf --version 2>&1 || yum --version 2>&1 || true
 rpm -qa | grep -E '^(kernel|kernel-core|kernel-uek|dnf|yum|podman|firewalld|selinux-policy)' | head -20
 rpm -qf /etc/redhat-release 2>&1 || true
 dnf repolist --enabled 2>&1 || yum repolist enabled 2>&1 || true
-dnf module list --enabled 2>&1 || true
+dnf module list --enabled 2>&1 || true   # RHEL 8/9 family only
 subscription-manager status 2>&1 || true
 subscription-manager repos --list-enabled 2>&1 || true
 systemctl --failed 2>&1 || true
@@ -318,7 +318,7 @@ When a bug looks desktop-only, compare one clean baseline:
 
 | Symptom | First checks |
 |---------|-------------|
-| Package weirdness after install | `dnf repolist`, `dnf check`, `rpm -q`, module stream mismatch, third-party repo drift |
+| Package weirdness after install | `dnf repolist`, `dnf check`, `rpm -q`, module stream mismatch (RHEL 8/9), third-party repo drift |
 | Package unavailable on RHEL | entitlement or CRB missing? `subscription-manager repos --list-enabled`, repo enablement, EPEL assumptions |
 | SELinux broke my app | `getenforce`, `ausearch -m avc -ts recent`, labeling vs boolean vs policy module |
 | Service fails after update | repo drift, dropped config, `systemctl status`, `journalctl -b`, `rpm -V package` |
@@ -344,12 +344,12 @@ When a bug looks desktop-only, compare one clean baseline:
 - `references/boot-kernel-and-recovery.md` - GRUB, `dracut`, kernel packages, `grubby`, EFI, Secure Boot, and recovery workflow
 - `references/derivatives-and-vendor-quirks.md` - Fedora, CentOS Stream, RHEL, Rocky, AlmaLinux, Oracle Linux, and Amazon Linux differences that actually matter
 - `references/desktop-audio-and-bluetooth.md` - X11 vs Wayland, GNOME and KDE notes, portals, PipeWire, and Bluetooth troubleshooting
-- `references/session-display-and-mobile.md` - GDM, SDDM, session env, suspend or resume, power profiles, and hybrid graphics routing
-- `references/graphics-and-gaming.md` - NVIDIA, AMD, Intel, Vulkan, Steam, Proton, Gamescope, MangoHud, and akmods or DKMS notes
-- `references/capture-and-sharing.md` - OBS, WebRTC screen sharing, Discord or Teams routing, hardware encoding, and virtual camera troubleshooting
-- `references/storage-and-rollback.md` - XFS, ext4, Btrfs, LUKS, LVM, Stratis, TRIM, hibernation, and rollback boundaries
+- `references/session-display-and-mobile.md` - first-pass checks for display managers, session env, suspend or resume, and power profiles
+- `references/graphics-and-gaming.md` - first-pass GPU driver, Vulkan, and gaming-stack checks with RPM Fusion, akmods, Secure Boot, and kernel-lane notes
+- `references/capture-and-sharing.md` - OBS, WebRTC screen sharing, and virtual camera troubleshooting
+- `references/storage-and-rollback.md` - storage fact gathering (XFS, ext4, Btrfs, LUKS, LVM, Stratis, TRIM) and rollback boundaries
 - `references/security-and-updates.md` - SELinux, firewalld, package signing, updates, FIPS-adjacent concerns, and compliance-sensitive defaults
-- `references/remote-gaming-input-and-tooling.md` - Moonlight, Sunshine, controllers, and Steam Remote Play
+- `references/remote-gaming-input-and-tooling.md` - first-pass remote-streaming and controller input notes
 - `references/base-linux-and-cli.md` - core Linux inspection commands and RPM-family tools such as `rpm -Va`, `repoquery`, and `restorecon`
 - `references/gotchas-and-special-situations.md` - recurring Fedora and RHEL-family failure patterns, special cases, and what-to-do-next guidance
 

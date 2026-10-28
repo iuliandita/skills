@@ -7,8 +7,9 @@ set -euo pipefail
 #   R1 (hard)  removed/renamed active skill: key in migrations.json at HEAD and
 #              a MIGRATION.md change in the range.
 #   R2 (hard)  tool removed from install.sh SUPPORTED_TOOLS: an added INSTALL.md
-#              line naming it. Changed TOOL_PATHS default for an existing tool:
-#              LEGACY_TOOL_PATHS[tool] at HEAD holds the old default.
+#              line naming its backticked id (`tool`). Changed TOOL_PATHS
+#              default for an existing tool: LEGACY_TOOL_PATHS[tool] at HEAD
+#              holds the old default.
 #   R3         install.sh changed: INSTALL.md or README.md changed.
 #   R4         scripts/{check-*,gen-*,lint-*,validate-*} added/deleted:
 #              README.md or docs/skill-authoring.md changed.
@@ -17,7 +18,8 @@ set -euo pipefail
 #
 # Usage: check-docs-impact.sh [base] | --release <prev-tag>
 # Base resolution matches check-refiner-phase1-guard.sh: argument, else BASE_REF,
-# else merge base with main or origin/main. install.sh is parsed, never sourced.
+# else BASE_SHA (push "before"; all zeros means unset), else merge base with main
+# or origin/main. install.sh is parsed, never sourced.
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
@@ -35,6 +37,15 @@ else
   arg_base="${1:-}"
 fi
 BASE_REF="${arg_base:-${BASE_REF:-}}"
+BASE_SHA="${BASE_SHA:-}"
+if [[ "$BASE_SHA" =~ ^0+$ ]]; then
+  # A push that creates a ref reports an all-zero "before" sha.
+  BASE_SHA=""
+fi
+if [[ -z "$BASE_REF" && -n "$BASE_SHA" ]] && ! git rev-parse --verify --quiet "${BASE_SHA}^{commit}" >/dev/null; then
+  echo "ERROR: BASE_SHA '${BASE_SHA}' is not a commit in this clone" >&2
+  exit 1
+fi
 
 ref_exists() {
   git rev-parse --verify --quiet "${1}^{commit}" >/dev/null 2>&1
@@ -58,6 +69,8 @@ resolve_base() {
 base=""
 if [[ -n "$BASE_REF" ]]; then
   resolve_base "$BASE_REF" "origin/$BASE_REF"
+elif [[ -n "$BASE_SHA" ]]; then
+  resolve_base "$BASE_SHA"
 else
   resolve_base main origin/main
 fi
@@ -123,7 +136,8 @@ skill_active_at_base() {
   git show "$base:skills/$1/SKILL.md" 2>/dev/null | awk '
     NR == 1 && $0 != "---" { exit }
     NR > 1 && $0 == "---" { exit }
-    /^[[:space:]]+deprecated:[[:space:]]*"?true"?[[:space:]]*$/ { dep = 1 }
+    { line = tolower($0) }
+    line ~ /^[[:space:]]+deprecated:[[:space:]]*["\047]?[[:space:]]*true[[:space:]]*["\047]?[[:space:]]*(#.*)?$/ { dep = 1 }
     END { exit dep ? 1 : 0 }'
 }
 
@@ -201,8 +215,8 @@ if git cat-file -e "$base:install.sh" 2>/dev/null && git cat-file -e "HEAD:insta
   while IFS= read -r tool; do
     [[ -n "$tool" ]] || continue
     grep -Fxq -- "$tool" <<<"$head_tools" && continue
-    if ! grep -Fwiq -- "$tool" <<<"$install_added"; then
-      finding error R2 "tool '${tool}' removed from SUPPORTED_TOOLS (install.sh) without an added INSTALL.md line mentioning it"
+    if ! grep -Fq -- "\`$tool\`" <<<"$install_added"; then
+      finding error R2 "tool '${tool}' removed from SUPPORTED_TOOLS (install.sh) without an added INSTALL.md line naming \`${tool}\`"
     fi
   done <<<"$base_tools"
 
