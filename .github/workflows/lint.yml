@@ -146,7 +146,9 @@ jobs:
 
       - name: Check shell syntax
         run: |
-          bash -n install.sh scripts/*.sh
+          for f in install.sh scripts/*.sh skills/repo-audit/references/detect.sh; do
+            bash -n "$f"
+          done
 
       - name: Test installer behavior
         run: ./scripts/test-install.sh
@@ -184,7 +186,7 @@ jobs:
         run: ./scripts/test-docs-impact.sh
 
       - name: Shellcheck scripts
-        run: shellcheck install.sh scripts/*.sh
+        run: shellcheck install.sh scripts/*.sh skills/repo-audit/references/detect.sh
 
       - name: Check Python helper syntax
         run: python3 -m py_compile scripts/*.py
@@ -294,4 +296,4 @@ jobs:
         run: >
           semgrep scan --metrics off --error
           --config p/ci --config p/github-actions
-          install.sh scripts .github/workflows
+          install.sh scripts .github/workflows skills/repo-audit/references/detect.sh

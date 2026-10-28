@@ -156,6 +156,50 @@ test_scoped_audit_detection() (
   grep -qx performance-debugging <<< "$output" || fail "scoped profiling artifact was not detected"
 )
 
+test_manifest_audit_detection() (
+  local fixture output bytes status=0
+  fixture="$(mktemp -d)"
+  trap 'rm -rf "$fixture"' EXIT
+  # detect_case <case> <path> <content>: one manifest per fresh repo; prints detected lanes.
+  detect_case() {
+    mkdir -p "$fixture/$1/$(dirname "$2")"
+    git -C "$fixture/$1" init -q
+    printf '%s\n' "$3" > "$fixture/$1/$2"
+    git -C "$fixture/$1" add .
+    (cd "$fixture/$1" && bash "$ROOT/skills/repo-audit/references/detect.sh")
+  }
+  output="$(detect_case go go.mod $'module x\n\nrequire (\n\tgithub.com/gin-gonic/gin v1.10.0\n\tgithub.com/jackc/pgx/v5 v5.7.0\n)')"
+  grep -qx backend-api <<< "$output" || fail "go.mod gin was not detected as backend-api"
+  grep -qx databases <<< "$output" || fail "go.mod pgx was not detected as databases"
+  output="$(detect_case py pyproject.toml $'[project]\nname = "x"\ndependencies = [\n  "SQLAlchemy>=2",\n  "psycopg[binary]>=3",\n]')"
+  grep -qx databases <<< "$output" || fail "pyproject sqlalchemy/psycopg was not detected as databases"
+  output="$(detect_case poetry pyproject.toml $'[tool.poetry.dependencies]\npython = "^3.12"\nfastapi = "^0.115"')"
+  grep -qx backend-api <<< "$output" || fail "Poetry fastapi was not detected as backend-api"
+  output="$(detect_case natsort pyproject.toml $'[project]\ndependencies = ["natsort>=8"]')"
+  grep -qx message-queues <<< "$output" && fail "natsort activated message-queues"
+  output="$(detect_case js package.json '{"dependencies":{"next-tick":"1","0xproject":"1"}}')"
+  grep -qx frontend-design <<< "$output" && fail "next-tick activated frontend-design"
+  grep -qx performance-debugging <<< "$output" && fail "0xproject activated performance-debugging"
+  output="$(detect_case keywords pyproject.toml $'[project]\nname = "x"\nkeywords = ["mcp"]\ndependencies = []')"
+  grep -qx mcp <<< "$output" && fail "a pyproject mcp keyword activated mcp"
+  output="$(detect_case tools .github/tools/x/requirements.txt 'mcp==1.0')"
+  grep -qx mcp <<< "$output" && fail "a .github tool manifest activated mcp"
+  output="$(detect_case rust Cargo.toml $'[package]\nname = "x"\n\n[dependencies]\naxum = "0.7"\nsqlx = { version = "0.8", features = ["postgres"] }')"
+  grep -qx backend-api <<< "$output" || fail "Cargo axum was not detected as backend-api"
+  grep -qx databases <<< "$output" || fail "Cargo sqlx was not detected as databases"
+  output="$(detect_case ruby Gemfile $'source "https://rubygems.org"\ngem "rails", "~> 7.2"\ngem \'pg\'')"
+  grep -qx backend-api <<< "$output" || fail "Gemfile rails was not detected as backend-api"
+  grep -qx databases <<< "$output" || fail "Gemfile pg was not detected as databases"
+  output="$(detect_case php composer.json '{"require":{"laravel/framework":"^11.0"}}')"
+  grep -qx backend-api <<< "$output" || fail "composer laravel/framework was not detected as backend-api"
+  mkdir -p "$fixture/empty"
+  git -C "$fixture/empty" init -q
+  bytes="$(cd "$fixture/empty" && bash "$ROOT/skills/repo-audit/references/detect.sh" | wc -c)" || status=$?
+  [[ "$status" == 0 ]] || fail "detection exited $status in an empty repo"
+  [[ "$bytes" -eq 0 ]] || fail "detection printed output in an empty repo"
+)
+
 test_scoped_audit_detection
+test_manifest_audit_detection
 python3 "$ROOT/scripts/test-llm-examples.py"
 printf 'All skill content tests passed.\n'
