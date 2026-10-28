@@ -9,9 +9,9 @@ check flags with `--help` before running against production.
 | Linux (any compiled/native process) | CPU | perf | `perf record -g -p <pid> -- sleep 30` then `perf report` |
 | Go | CPU | pprof (net/http/pprof) | `go tool pprof -http=: 'http://host/debug/pprof/profile?seconds=30'` |
 | Go | heap | pprof | `go tool pprof -http=: 'http://host/debug/pprof/heap'` |
-| Python | CPU | py-spy | `py-spy record -o out.svg --pid <pid>` |
+| Python | CPU | py-spy | `py-spy record -d 30 -o out.svg --pid <pid>` |
 | JVM | CPU/allocation | async-profiler | `asprof -d 30 -f out.html <pid>` |
-| .NET | CPU/general trace | dotnet-trace | `dotnet-trace collect -p <pid>` |
+| .NET | CPU/general trace | dotnet-trace | `dotnet-trace collect -p <pid> --duration 00:00:00:30` |
 | Node.js | CPU | node --cpu-prof | `node --cpu-prof --cpu-prof-dir=. app.js` |
 | Native (C/C++/Rust) | heap/allocation | heaptrack (default) | `heaptrack ./binary` |
 | Native (C/C++/Rust) | heap/allocation | valgrind massif (fallback) | `valgrind --tool=massif ./binary` |
