@@ -82,6 +82,8 @@ require_text "$mcp" 'const handle = await serveStdio(createServer);' "MCP scaffo
 require_text "$mcp" 'await handle.close();' "MCP scaffold does not close the stdio handle"
 require_text "$mcp" 'process.once("SIGINT"' "MCP scaffold does not handle SIGINT"
 require_text "$mcp" 'process.once("SIGTERM"' "MCP scaffold does not handle SIGTERM"
+reject_text "$mcp" 'mcp.server.fastmcp import' "MCP Python scaffold still imports the removed fastmcp module"
+require_text "$mcp" 'from mcp.server.mcpserver import MCPServer' "MCP Python scaffold does not import MCPServer"
 
 mcp_security="skills/mcp/references/security.md"
 require_text "$mcp_security" 'realpath' "MCP path guidance does not canonicalize paths"

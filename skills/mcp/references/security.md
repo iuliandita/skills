@@ -52,8 +52,14 @@ the MCP spec but strongly recommended when tools access user-specific resources.
 - MCP servers act as OAuth 2.1 resource servers
 - Implement OAuth 2.0 Protected Resource Metadata (RFC 9728) for discovery
 - All clients MUST use PKCE (Proof Key for Code Exchange)
-- Client ID Metadata Documents are the preferred client identification method
-- Dynamic Client Registration (DCR) is a fallback, not a requirement
+- Client ID Metadata Documents (CIMD) are the standard client registration method
+- Dynamic Client Registration (DCR) is deprecated in 2026-07-28 in favor of CIMD; it remains only
+  for backward compatibility and is eligible for removal in the first revision on or after 2027-07-28
+- Clients record the validated authorization server `issuer` before redirecting and, when the
+  response carries `iss` (RFC 9207, SEP-2468), compare it by exact string match before redeeming
+  the code; reject a missing `iss` when metadata sets `authorization_response_iss_parameter_supported`
+- Client credentials are bound to the issuer that minted them (SEP-2352): key stored credentials by
+  `issuer`, never reuse them with another authorization server, and re-register when it changes
 - Validate token audience - reject tokens not issued for your server
 - Use minimal scopes
 
@@ -320,8 +326,9 @@ The model follows the hidden instruction because it treats the description as au
 Server presents clean tool definitions during onboarding, then changes them after approval.
 The modified definitions contain poisoned instructions.
 
-**Defense:** Pin and hash tool schemas at approval time. Diff `tools/list` results on each
-session start. Alert users on any metadata change. Require re-approval for modified tools.
+**Defense:** Pin and hash tool schemas at approval time. Diff every fresh `tools/list` result
+(after `ttlMs` expiry or a list-changed notification) against the approved hash; 2026-07-28 has no
+sessions to anchor on. Alert users on any metadata change. Require re-approval for modified tools.
 
 ---
 
@@ -360,6 +367,8 @@ unintended operations, or leaking internal details in error messages.
 ## Elicitation Security
 
 Elicitation allows servers to request structured input from users mid-operation (spec 2025-06-18+).
+In 2026-07-28 it travels as a multi round-trip request (`resultType: "input_required"`, retried
+with `inputResponses`), not a server-initiated `elicitation/create` request.
 
 Schema restrictions (flat objects, primitive fields only) are listed in SKILL.md Step 5.
 
@@ -367,6 +376,8 @@ Schema restrictions (flat objects, primitive fields only) are listed in SKILL.md
 - Request passwords, tokens, API keys, or credentials via elicitation
 - Present fake "re-authenticate" or "session expired" dialogs
 - Auto-submit responses without user interaction
+- Trust `inputResponses` or an echoed `requestState` without validation; integrity-protect (HMAC or
+  AEAD) any `requestState` that affects authorization, resource access, or business logic
 - Send excessive elicitation requests (rate limit)
 
 **Clients SHOULD:**
