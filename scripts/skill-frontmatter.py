@@ -269,6 +269,39 @@ def batch(skills_dir: str) -> int:
     return 0
 
 
+SPEC_KEYS = ("name", "description", "license", "compatibility", "metadata", "allowed-tools")
+
+
+def spec_check(skills_dir: str) -> int:
+    """Print dir<TAB>message for top-level keys and metadata values outside the spec."""
+    root = pathlib.Path(skills_dir)
+    if not root.is_dir():
+        print(f"spec-check: not a directory: {skills_dir}", file=sys.stderr)
+        return 2
+
+    for entry in sorted(root.iterdir(), key=lambda item: item.name):
+        skill_md = entry / "SKILL.md"
+        if entry.name.startswith((".", "_")) or not entry.is_dir() or not skill_md.is_file():
+            continue
+        try:
+            data = load_frontmatter(str(skill_md))
+        except (OSError, ValueError):
+            continue
+        for key in data:
+            if key not in SPEC_KEYS:
+                print(f"{entry.name}\tunknown top-level key '{key}' (allowed: {', '.join(SPEC_KEYS)})")
+        metadata = data.get("metadata")
+        if metadata is None:
+            continue
+        if not isinstance(metadata, dict):
+            print(f"{entry.name}\tmetadata must be a mapping of string keys to string values")
+            continue
+        for key, value in metadata.items():
+            if type(value) is not str:
+                print(f"{entry.name}\tmetadata.{key} must be a string; quote it (got {format_value(value)})")
+    return 0
+
+
 def fields(skills_dir: str, paths: list[str]) -> int:
     """Emit NUL-separated records: dir, valid, then has and value per path.
 
@@ -304,7 +337,7 @@ def main(argv: list[str]) -> int:
     if len(argv) < 3:
         print(
             "usage: skill-frontmatter.py {valid|get|has} <file> [path] | batch <skills-dir>"
-            " | fields <skills-dir> <path>...",
+            " | fields <skills-dir> <path>... | spec-check <skills-dir>",
             file=sys.stderr,
         )
         return 2
@@ -314,6 +347,8 @@ def main(argv: list[str]) -> int:
         return batch(argv[2])
     if command == "fields":
         return fields(argv[2], argv[3:])
+    if command == "spec-check":
+        return spec_check(argv[2])
 
     file_path = argv[2]
 

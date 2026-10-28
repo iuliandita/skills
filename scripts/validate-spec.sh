@@ -68,8 +68,14 @@ validate_compatibility() {
 echo "Validating Agent Skills spec compliance in $SKILLS_DIR..."
 echo
 
+declare -A spec_issues=()
 if [[ -d "$SKILLS_DIR" ]]; then
   frontmatter_cache_load "$SKILLS_DIR" name description compatibility
+  spec_output="$(python3 "$FRONTMATTER_PY" spec-check "$SKILLS_DIR")"
+  while IFS=$'\t' read -r dir message; do
+    [[ -n "$dir" ]] || continue
+    spec_issues[$dir]+="$message"$'\n'
+  done <<< "$spec_output"
 fi
 
 skill_count=0
@@ -108,6 +114,12 @@ for skill_dir in "$SKILLS_DIR"/*/; do
   if ! frontmatter_has "$skill_file" "description"; then
     error "$name: missing required field 'description'"
   fi
+  # Spec: allowed top-level keys only; metadata maps string keys to string values
+  while IFS= read -r message; do
+    if [[ -n "$message" ]]; then
+      error "$name: $message"
+    fi
+  done <<< "${spec_issues[$name]:-}"
   # Spec: field constraints
   validate_description "$skill_file" "$name"
   validate_compatibility "$skill_file" "$name"

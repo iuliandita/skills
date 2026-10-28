@@ -80,7 +80,7 @@ check_frontmatter() {
     error "$name: metadata.argument_hint exceeds 100 characters"
   fi
 
-  # Optional: metadata.internal (boolean)
+  # Optional: metadata.internal ("true" or "false" string)
   local internal
   internal="$(frontmatter_get "$file" "metadata.internal" 2>/dev/null || true)"
   if [[ -n "$internal" && "$internal" != "true" && "$internal" != "false" ]]; then
