@@ -144,6 +144,18 @@ run_check
 expect_fail "trailer must not satisfy R2" "R2"
 
 new_fixture
+g checkout -q main
+write_install '$HOME/.agents/skills' "claude codex continue"
+commit "feat: add continue"
+g checkout -q -B feature
+write_install '$HOME/.agents/skills' "claude codex"
+put INSTALL.md "install
+fix the cause and continue."
+commit "feat: drop continue"
+run_check
+expect_fail "tool id only as a prose word" "tool 'continue' removed"
+
+new_fixture
 write_install '$HOME/.codex/skills'
 commit "feat: move codex default"
 run_check
@@ -265,7 +277,7 @@ expect_pass "install.sh change with specific trailer"
 new_fixture
 write_install '$HOME/.agents/skills' "claude"
 put INSTALL.md "install
-codex is no longer a supported target"
+\`codex\` is no longer a supported target"
 commit "feat: drop codex"
 run_check
 expect_pass "tool removal with INSTALL.md line"
