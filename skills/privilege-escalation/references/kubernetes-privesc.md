@@ -410,7 +410,7 @@ kubectl get ns TARGET_NAMESPACE -o jsonpath='{.metadata.labels}' | python3 -m js
 |-----|:----:|-----------|--------|
 | CVE-2025-1974 | 9.8 | ingress-nginx admission controller | **IngressNightmare**: unauth RCE via NGINX config injection. No creds needed - send malicious AdmissionReview to webhook, upload shared lib via body buffering, load via ssl_engine. Reads all cluster secrets. 40%+ of cloud envs vulnerable. Fixed in ingress-nginx 1.11.5/1.12.1. |
 | CVE-2024-10220 | 8.1 | kubelet gitRepo volume | Arbitrary command exec on host via malicious git hooks in gitRepo volume. Fixed in 1.28.12/1.29.7/1.30.3. |
-| nodes/proxy GET | N/A | RBAC/kubelet proxy | `nodes/proxy` GET enables exec into any pod via WebSocket upgrade. Monitoring SAs (Prometheus, Alloy) commonly have this. K8s team: "Won't Fix, Working as Intended." Fine-grained perms expected in k8s 1.36 (Apr 2026). |
+| nodes/proxy GET | N/A | RBAC/kubelet proxy | `nodes/proxy` GET enables exec into any pod via WebSocket upgrade. Monitoring SAs (Prometheus, Alloy) commonly have this. K8s team: "Won't Fix, Working as Intended." Fine-grained kubelet authorizations are GA and enabled by default since k8s 1.36 (Apr 2026); the kubelet still falls back to `nodes/proxy` for compatibility. |
 | CVE-2024-3177 | 2.7 | SA admission plugin | Bypass mountable secrets policy via envFrom in init/ephemeral containers. Fixed in 1.27.13/1.28.9/1.29.4. |
 
 ---

@@ -17,12 +17,12 @@ Structured, multi-pass security audit. Combines automated tooling with manual pa
 
 Patterns drawn from real OSS incidents (unauthenticated admin endpoints, credential exfiltration, zip slip, auth bypass whitelists, Trivy supply chain compromise) and OpenSSF/SLSA/OWASP standards.
 
-**Target versions** (October 2026, release check 2026-10-02):
-- Semgrep 1.179.0, Bandit 1.9.4
-- Gitleaks 8.30.1, [Betterleaks 1.9.0](https://github.com/betterleaks/betterleaks/releases/tag/v1.9.0) (same author as Gitleaks), TruffleHog 3.97.9
-- Trivy 0.75.0 (0.69.4-0.69.6 was compromised - see known incidents; upgrade past the 0.69.x window)
-- OpenSSF Scorecard 5.5.0 (v6 in proposal stage)
-- OWASP Top 10:2025 (confirmed January 2026), OWASP Agentic Top 10:2026 (released December 2025)
+**Target versions** (October 2026, release check 2026-10-28):
+- Semgrep 1.182.0, Bandit 1.9.4
+- Gitleaks 8.30.1, [Betterleaks 1.9.0](https://github.com/betterleaks/betterleaks/releases/tag/v1.9.0) (same author as Gitleaks), TruffleHog 3.99.7
+- Trivy 0.76.1 (0.69.4-0.69.6 was compromised - see known incidents; 0.69.3 is also inside the CVE-2026-63328 range, so stay on 0.72.0+)
+- OpenSSF Scorecard 5.6.0 (v6 in proposal stage)
+- OWASP Top 10:2025 (released November 2025), OWASP Agentic Top 10:2026 (released December 2025)
 
 **Scope**: TypeScript/JavaScript (Bun, Node.js, Deno), Python, Go, Rust web applications, CLI tools, Dockerfiles, Compose stacks, CI/CD workflows, Helm charts, Terraform, Proxmox/LXC configs, shell scripts. This skill is SAST + config + supply chain. Not DAST or network pentesting.
 
@@ -106,7 +106,7 @@ Find known CVEs in dependencies and assess supply chain risk.
 - **Python**: `pip-audit --format json` (use `safety check --json` only when pip-audit is unavailable)
 - **Go**: `govulncheck ./...`
 - **Rust**: `cargo audit --json` - also check for `unsafe` blocks without `// SAFETY:` comments, `transmute` misuse, unvalidated FFI boundaries
-- **General**: `trivy fs --scanners vuln .` (use Trivy 0.74.0+ from official releases, or 0.69.3 only as a March 2026 incident rollback; never use 0.69.4-0.69.6)
+- **General**: `trivy fs --scanners vuln .` (use Trivy 0.76.1 from official releases; never use 0.69.4-0.69.6, and do not roll back to 0.69.3 because CVE-2026-63328 affects every release before 0.72.0)
 
 **Flag**: reachable HIGH/CRITICAL CVEs whether or not a fix exists, deps unmaintained 2+ years, lockfile out of sync with manifest, non-standard registries. For production applications, prefer exact dependency versions plus a committed, integrity-checked lockfile; ranges alone do not make an install reproducible.
 
@@ -115,7 +115,7 @@ Find known CVEs in dependencies and assess supply chain risk.
 - `ua-parser-js` 0.7.29/0.8.0/1.0.0 (2021 cryptominer injection)
 - `colors` any version / `faker` 6.6.6 (2022 maintainer sabotage - the `colors` package carries ongoing maintainer-sabotage risk regardless of version; prefer `chalk` or `picocolors`)
 - `left-pad` (2016 unpublishing incident and trivial dependency fragility; replace the dependency with the platform's built-in padding support)
-- `lodash` <=2.x or any very outdated lodash (prototype pollution chain - high-risk for aged lockfiles; pin to 4.17.21+)
+- `lodash` <=2.x or any very outdated lodash (prototype pollution chain - high-risk for aged lockfiles; pin to 4.18.0+, the floor that fixes CVE-2026-2950 and CVE-2026-4800)
 - `polyfill.io` (2024 domain takeover, malicious CDN injection)
 - `xz-utils` 5.6.0-5.6.1 (2024 backdoor in compression library)
 - TrapDoor (2026-05 multi-registry campaign: 34+ malicious npm/PyPI/crates packages stealing SSH keys and cloud/crypto credentials; notably hides zero-width-Unicode prompt injection in `.cursorrules` / `CLAUDE.md` to subvert AI coding agents - check agent rule files, not just dependencies)
@@ -125,10 +125,10 @@ Confirm the affected artifact and execution path before assigning severity. Mali
 For active incident triage, use `references/hardening-checklists.md` for repo-wide package,
 IOC, local-runtime, and remote-repo checks.
 
-**Scanner security recheck** (October 2026, 2026-10-02):
+**Scanner security recheck** (October 2026, 2026-10-28):
 [CVE-2026-63328](https://github.com/aquasecurity/trivy/security/advisories/GHSA-8rc5-4fr6-64pw)
 affects Trivy before 0.72.0 when installing an attacker-controlled plugin; it permits writes
-outside the plugin directory. The 0.75.0 target includes the fix. This is separate from the
+outside the plugin directory. The 0.76.1 target includes the fix. This is separate from the
 March supply-chain compromise; only install trusted plugins.
 
 ### Step 4: Agentic AI & Supply Chain (Pass 3 - Manual)

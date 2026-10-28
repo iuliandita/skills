@@ -124,7 +124,7 @@ covering:
 3. **SUID/SGID binaries** - find + exploit via GTFOBins
 4. **Linux capabilities** - `getcap`, cap_setuid, cap_dac_read_search
 5. **Cron jobs** - writable scripts, PATH hijacking in cron context
-6. **Kernel exploits** - version-matched CVEs (Dirty Pipe, nf_tables, io_uring, OverlayFS; 2026: Copy Fail CVE-2026-31431 [CISA KEV, exploited], Dirty Frag CVE-2026-43284/43500, Fragnesia CVE-2026-46300 [ESP-in-TCP, no in-the-wild exploitation reported], ptrace CVE-2026-46333)
+6. **Kernel exploits** - version-matched CVEs (Dirty Pipe, nf_tables, io_uring, OverlayFS; 2026: Copy Fail CVE-2026-31431 [CISA KEV, exploited], Dirty Frag CVE-2026-43284/43500, Fragnesia CVE-2026-46300, ptrace CVE-2026-46333)
 7. **PATH hijacking** - SUID binaries calling relative commands
 8. **NFS** - no_root_squash exploitation
 9. **Writable files** - /etc/passwd, /etc/shadow, authorized_keys, systemd units
@@ -160,7 +160,7 @@ env | grep -iE 'aws|azure|gcp|cloud|token|key|secret|pass'
 
 # Process memory (credentials in running services)
 # Read environ of interesting processes (web servers, databases, agents)
-for pid in $(pgrep -f 'nginx\|apache\|postgres\|mysql\|node\|python\|java' 2>/dev/null); do
+for pid in $(pgrep -f 'nginx|apache|postgres|mysql|node|python|java' 2>/dev/null); do
   echo "=== PID $pid ($(cat /proc/$pid/cmdline 2>/dev/null | tr '\0' ' ')) ==="
   cat /proc/$pid/environ 2>/dev/null | tr '\0' '\n' | grep -iE 'pass|secret|token|key|dsn|database_url'
 done

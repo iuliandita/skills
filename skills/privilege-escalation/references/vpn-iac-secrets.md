@@ -147,7 +147,7 @@ psk-crack -d wordlist.txt captured_hash
 ikescan2john.py captured_response > hash.txt
 john --wordlist=rockyou.txt hash.txt
 
-# Or hashcat (mode 5300 for IKEv1, 5400 for IKEv2)
+# Or hashcat (mode 5300 for IKEv1 MD5, 5400 for IKEv1 SHA1; there is no IKEv2 mode)
 hashcat -m 5300 hash.txt wordlist.txt
 ```
 
