@@ -1,6 +1,6 @@
 # Security Audit: Grep Patterns
 
-Consolidated search patterns for manual audit passes. Use the host's available file-search capability, such as a built-in search tool, `rg`, or `grep`, and scope it to the target files.
+Consolidated search patterns for manual audit passes. Use the host's available file-search capability, such as a built-in search tool, `rg`, or `grep -E`, and scope it to the target files. The patterns use extended regular expressions, where `|` is alternation; in a BRE-only `grep`, `|` is a literal pipe. In the tables below, `\|` is Markdown table escaping and renders as `|`.
 
 ## Contents
 

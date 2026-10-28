@@ -377,6 +377,10 @@ exploit procedure. Historical ranges below also require vendor-specific confirma
 | CVE-2024-50264 | AF_VSOCK | 4.8+ | connect/signal race UAF (Pwnie 2025 "Best Privesc") |
 | CVE-2025-38617 | packet socket | multiple | UAF, needs only CAP_NET_RAW (available via userns) |
 | CVE-2026-23272 | nf_tables | 6.x | RCU race condition, refcount desync |
+| CVE-2026-31431 | Copy Fail (algif_aead) | 4.14+ (branch-specific fixes) | In-place AEAD operation on shared pages |
+| CVE-2026-43284 / CVE-2026-43500 | Dirty Frag (ESP, rxrpc) | 4.11+ (branch-specific fixes) | In-place decrypt on shared skb frags |
+| CVE-2026-46300 | Fragnesia (skbuff coalescing) | 3.9+ (branch-specific fixes) | Shared-frag marker lost during coalescing |
+| CVE-2026-46333 | ptrace get_dumpable | 3.16+ (branch-specific fixes) | Dumpability check exposes kernel-thread details |
 
 ### Compile and Run
 

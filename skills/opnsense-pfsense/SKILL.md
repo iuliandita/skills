@@ -17,9 +17,9 @@ Manage, troubleshoot, and harden OPNsense and pfSense firewalls via SSH. Both ar
 pf-powered firewall distributions - most concepts, commands, and patterns apply to both.
 
 **Target versions** (October 2026):
-- OPNsense CE: 26.7.5 (current Community Edition update, released 2026-09-30, "Xenial Xenops"). Business Edition remains a separate even-quarter lane - do not quote the BE number as the CE version
+- OPNsense CE: 26.7.7 (current Community Edition update, released 2026-10-13, "Xenial Xenops"). Business Edition remains a separate even-quarter lane - do not quote the BE number as the CE version
 - pfSense CE: 2.9.0 / pfSense Plus: 26.07
-- CrowdSec: v1.8.1
+- CrowdSec: v1.8.2
 
 Check [OPNsense release notes](https://docs.opnsense.org/releases/CE_26.7.html)
 and the [pfSense version matrix](https://docs.netgate.com/pfsense/en/latest/releases/versions.html)
@@ -107,12 +107,12 @@ talking to. Key differences at a glance:
 | Quick rule add | N/A | `easyrule pass wan tcp <src> <dst> <port>` |
 | IP blocking | CrowdSec (`os-crowdsec`) | pfBlockerNG |
 | Root shell | `csh` | `tcsh` (same heredoc workaround applies) |
-| IDS/IPS config | `/tmp/suricata_*.log`, eve.json | `/var/log/suricata/suricata.log`, eve.json |
-| Firmware CLI | `configctl firmware check/status` | `pkg-static update` + GUI |
+| IDS/IPS config | `/var/log/suricata/*.log`, eve.json | `/var/log/suricata/suricata.log`, eve.json |
+| Firmware CLI | `configctl firmware check/status` | `pfSense-upgrade` (metadata refresh: `pkg-static update`) + GUI |
 | Template engine | `configd` + `configctl template` | PHP-generated configs |
-| REST API | Yes (`/api/`, key/secret auth) | Yes (similar, different endpoints) |
+| REST API | Yes, built in (`/api/`, key/secret auth) | Unofficial `pfSense-pkg-RESTAPI` package (optional third-party install) |
 | Licensing | Free, open source | CE: free but slower updates; Plus: $129/yr on non-Netgate HW |
-| Release cadence | Bi-weekly, fixed schedule | Irregular, Netgate hardware prioritized |
+| Release cadence | Two majors a year (January/July) plus fortnightly point releases | Irregular, Netgate hardware prioritized |
 
 **2026 status**: OPNsense is the clear choice for new deployments. pfSense CE gets slower updates and zero priority; Plus costs $129/year on non-Netgate hardware. Migration from pfSense to OPNsense has no automated path - expect ~60% clean config transfer, manual rebuild for NAT rules, VPN, and DNS forwarder settings.
 

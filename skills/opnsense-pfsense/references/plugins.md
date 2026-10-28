@@ -16,7 +16,7 @@ inspect via `pkg info <name>` and check `/usr/local/etc/` for their configs.
 ## Security
 
 ### os-crowdsec (CrowdSec)
-Local LAPI + bouncer (verify OPNsense package with `pkg info os-crowdsec`; upstream CrowdSec v1.8.1 as of October 2026 recheck). Parses logs locally, applies local bans + crowd-sourced blocklists.
+Local LAPI + bouncer (verify OPNsense package with `pkg info os-crowdsec`; upstream CrowdSec v1.8.2 as of October 2026 recheck). Parses logs locally, applies local bans + crowd-sourced blocklists.
 
 **Two separate enforcement layers:**
 - **Local decisions** (`crowdsec_blacklists` pf table): IPs your firewall detected and banned
@@ -118,7 +118,7 @@ wg show <iface> dump             # machine-readable output
 - **DNS field**: leave blank on the server side to avoid overwriting OPNsense's DNS config.
   Only set on peer generator for road warriors.
 - Restart: `configctl wireguard stop && configctl wireguard start`
-- Zero-downtime reload: `/usr/local/etc/rc.d/wireguard reload` (uses `wg syncconf` under the hood)
+- Apply config without dropping peers: `configctl wireguard configure` (the sync step uses `wg syncconf` under the hood). There is no `rc.d/wireguard reload` action
 - Alternative: `pluginctl -s wireguard start` / `stop` / `status`
 - **pfSense**: WireGuard is available as `pfSense-pkg-WireGuard`. Commands differ -
   use `service wireguard restart` or manage via GUI (VPN > WireGuard).
@@ -158,7 +158,7 @@ configctl ids update             # update rule sets
 configctl ids restart            # restart Suricata
 ```
 
-- Logs: `/tmp/suricata_*.log`, also `/var/log/suricata/eve.json` (JSON event log)
+- Logs: `/var/log/suricata/` (`suricata.log`, `eve.json`, and the other rotated logs)
 - **RAM**: needs 1-2GB minimum. On 4GB devices, Suricata + CrowdSec together is tight.
 - **Silent drops**: IPS mode drops matching traffic without any pfctl state entry.
   If traffic vanishes between tcpdump on input and output interfaces, check Suricata logs.

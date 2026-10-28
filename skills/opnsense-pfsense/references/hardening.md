@@ -167,7 +167,7 @@ Without monitoring, you only find out something is broken when users complain.
       Suricata and CrowdSec logs fill disks fast. Monitor with Telegraf disk plugin
       or a cron script checking `df -h /var`
 - [ ] **State table monitoring** - `pfctl -si | grep entries` shows current state count.
-      Alert when approaching `net.pf.states_limit` (default 200000). Full state tables
+      Alert when approaching `net.pf.states_limit` (FreeBSD default 100000). Full state tables
       silently drop new connections
 - [ ] **Certificate expiry monitoring** - if using ACME/Let's Encrypt, monitor cert
       expiry dates. A silently-failed renewal is worse than no ACME at all
