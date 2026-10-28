@@ -4,18 +4,18 @@ Templates used by Steps 7, 8, and 9 of `references/exhaustive-workflow.md`. Read
 
 ## Contents
 
-- DEEP-AUDIT.md template
-- DEEP-AUDIT-TASKS.md template
+- DEEP-AUDIT report template
+- DEEP-AUDIT task-list template
 - Master execution plan template (Step 9b, vanilla-harness fallback only)
 - Per-phase execution plan template (Step 9b, vanilla-harness fallback only)
 
 ---
 
-## DEEP-AUDIT.md template
+## DEEP-AUDIT report template
 
-Write to `docs/local/audits/DEEP-AUDIT.md`. Back up any existing file to a dated copy before
-replacing it - git history is not retained because the dir is gitignored (see the
-backup-before-replace step in the workflow).
+Write to `docs/local/audits/repo-audit/<YYYY-MM-DD>-deep-audit.md`, adding a `-2`/`-3` suffix when
+that name exists. Never overwrite an earlier run: the dir is gitignored, so git history does
+not retain it.
 
 ```markdown
 # Exhaustive Repo Audit - {repo_name}
@@ -64,9 +64,10 @@ Preserve each skill's native report format inside its section - do not normalize
 
 ---
 
-## DEEP-AUDIT-TASKS.md template
+## DEEP-AUDIT task-list template
 
-Write to `docs/local/audits/DEEP-AUDIT-TASKS.md`. Each finding worth acting on becomes
+Write to `docs/local/audits/repo-audit/<YYYY-MM-DD>-deep-audit-tasks.md`, using the same date and suffix
+as the report. Each finding worth acting on becomes
 one task entry.
 
 ### Task entry format
@@ -82,7 +83,7 @@ one task entry.
 - **Effort**: rough human estimate (`15m`, `1-2h`, `1 day`). Err toward calibrated estimates,
   not optimistic ones.
 - **Finding ID**: reference the origin wave/section (e.g., `Z1` from vulnerability-research, `M3` from
-  security-audit, `CR-04` from code-review) so users can trace back to DEEP-AUDIT.md.
+  security-audit, `CR-04` from code-review) so users can trace back to the DEEP-AUDIT report.
 
 ### Phase ordering (top-to-bottom = execution order)
 
@@ -147,7 +148,7 @@ Required sections:
    - Files to create / modify
    - Step-by-step checklist (`- [ ]` checkboxes) with exact commands, diff sketches,
      test-gate commands
-   - Commit boundary at the end (version bump, checkbox tick in `DEEP-AUDIT-TASKS.md`,
+   - Commit boundary at the end (version bump, checkbox tick in the DEEP-AUDIT task list,
      Conventional Commit message)
 4. **Final sweep** - commands to run before pushing (lint, typecheck, test, phase-type gates).
 5. **Release** - push + PR + CI + merge + tag sequence.
