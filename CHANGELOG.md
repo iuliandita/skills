@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.6.3](https://github.com/iuliandita/skills/compare/v2.6.2...v2.6.3) (2026-10-28)
+
+### Bug Fixes
+
+* **install:** keep earlier backups when several tools or runs back up the same skill: each destination gets its own backup folder, including under `SKILLS_BACKUP_DIR`, each backup gets a unique folder, and tools sharing one directory are installed into it once per run ([#341](https://github.com/iuliandita/skills/pull/341), [#292](https://github.com/iuliandita/skills/issues/292)).
+* **install:** link mode no longer links the canonical directory onto itself through a trailing slash or symlinked path, and keeps a symlink it did not create unless `--force` is given, backing it up first ([#342](https://github.com/iuliandita/skills/pull/342), [#293](https://github.com/iuliandita/skills/issues/293)).
+* **install:** preserve string-form OpenCode `permission` and `permission.skill` values when syncing skills ([#344](https://github.com/iuliandita/skills/pull/344)).
+* **install:** run the installer's embedded Python helpers in isolated mode ([#350](https://github.com/iuliandita/skills/pull/350)).
+* **install:** `--update` counts untracked files even with `status.showUntrackedFiles=no`, exits 8 when the updated installer is missing or does not parse, ignores a relative `XDG_STATE_HOME`, and treats `SKILLS_MIGRATOR` and `SKILLS_MIGRATIONS_FILE` as overrides ([#352](https://github.com/iuliandita/skills/pull/352), [#295](https://github.com/iuliandita/skills/issues/295)).
+* **test:** the install tests no longer inherit the developer's installer override variables ([#351](https://github.com/iuliandita/skills/pull/351), [#294](https://github.com/iuliandita/skills/issues/294)).
+* **lint:** the frontmatter parser rejects YAML it would misread, and `deprecated`/`internal` flags use one trim-and-case-fold rule everywhere ([#319](https://github.com/iuliandita/skills/pull/319)).
+* **lint:** reject out-of-spec frontmatter keys and metadata values ([#320](https://github.com/iuliandita/skills/pull/320), [#298](https://github.com/iuliandita/skills/issues/298)).
+* **lint:** reference checks fail on generator crashes and substring-only link matches, and reference prose is checked for non-ASCII ([#323](https://github.com/iuliandita/skills/pull/323)).
+* **ci:** run the quality gates on every gated change and before release ([#315](https://github.com/iuliandita/skills/pull/315), [#297](https://github.com/iuliandita/skills/issues/297)).
+* **ci:** guard the helper scripts the gates run ([#313](https://github.com/iuliandita/skills/pull/313), [#296](https://github.com/iuliandita/skills/issues/296)).
+* **docs:** add contributor, reporting and documentation entry points, and check cumulative documentation impact at release ([#291](https://github.com/iuliandita/skills/pull/291), [#289](https://github.com/iuliandita/skills/issues/289), [#290](https://github.com/iuliandita/skills/issues/290)).
+
 ## [2.6.2](https://github.com/iuliandita/skills/compare/v2.6.1...v2.6.2) (2026-10-12)
 
 ### Bug Fixes
