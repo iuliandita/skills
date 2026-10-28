@@ -135,7 +135,8 @@ skill_active_at_base() {
   git show "$base:skills/$1/SKILL.md" 2>/dev/null | awk '
     NR == 1 && $0 != "---" { exit }
     NR > 1 && $0 == "---" { exit }
-    /^[[:space:]]+deprecated:[[:space:]]*"?true"?[[:space:]]*$/ { dep = 1 }
+    { line = tolower($0) }
+    line ~ /^[[:space:]]+deprecated:[[:space:]]*["\047]?[[:space:]]*true[[:space:]]*["\047]?[[:space:]]*(#.*)?$/ { dep = 1 }
     END { exit dep ? 1 : 0 }'
 }
 

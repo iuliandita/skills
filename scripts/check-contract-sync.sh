@@ -41,7 +41,7 @@ for target_name in "${SHARED_FILE_NAMES[@]}"; do
     [[ "$name" == _* ]] && continue
     git -C "$ROOT" check-ignore -q "$dir" 2>/dev/null && continue
     [[ -f "$dir/SKILL.md" ]] || continue
-    [[ "$(frontmatter_get "$dir/SKILL.md" metadata.deprecated)" == "true" ]] && continue
+    frontmatter_flag "$dir/SKILL.md" metadata.deprecated && continue
     copy="$dir/references/$target_name"
     if [[ ! -f "$copy" ]]; then
       printf '[!] %s: missing references/%s (run scripts/gen-contract-refs.sh)\n' "$name" "$target_name" >&2

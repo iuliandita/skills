@@ -11,7 +11,7 @@ mapfile -t public_skills < <(
     | sed 's#^skills/##; s#/SKILL.md$##' \
     | sort \
     | while IFS= read -r name; do
-        [[ "$(frontmatter_get "$ROOT/skills/$name/SKILL.md" metadata.deprecated)" == "true" ]] || printf '%s\n' "$name"
+        frontmatter_flag "$ROOT/skills/$name/SKILL.md" metadata.deprecated || printf '%s\n' "$name"
       done
 )
 

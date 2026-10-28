@@ -447,7 +447,7 @@ check_canonical_test_coverage() {
 # Active = public skill dir (same rules as the main loop) whose frontmatter
 # metadata.deprecated is not "true". Prints one name per line.
 list_active_skills() {
-  local skill_dir name visible_files dep
+  local skill_dir name visible_files
   for skill_dir in "$SKILLS_DIR"/*/; do
     name=$(basename "$skill_dir")
     [[ "$name" == ".backups" || "$name" == ".cook" ]] && continue
@@ -458,8 +458,7 @@ list_active_skills() {
       continue
     fi
     [[ -f "$skill_dir/SKILL.md" ]] || continue
-    dep="$(frontmatter_get "$skill_dir/SKILL.md" "metadata.deprecated" 2>/dev/null || true)"
-    [[ "$dep" == "true" ]] && continue
+    frontmatter_flag "$skill_dir/SKILL.md" metadata.deprecated && continue
     echo "$name"
   done
 }
@@ -551,10 +550,9 @@ check_collection_docs() {
 
 # Active skills must name current skills in bold, not retired old names.
 check_old_name_mentions() {
-  local file="$1" name="$2" old dep
+  local file="$1" name="$2" old
   [[ ${#OLD_SKILL_NAMES[@]} -gt 0 ]] || return 0
-  dep="$(frontmatter_get "$file" "metadata.deprecated" 2>/dev/null || true)"
-  [[ "$dep" == "true" ]] && return 0
+  frontmatter_flag "$file" metadata.deprecated && return 0
   for old in "${OLD_SKILL_NAMES[@]}"; do
     if grep -qF -- "**$old**" "$file"; then
       error "$name: SKILL.md mentions retired skill name '**$old**' (see migrations.json)"

@@ -35,7 +35,7 @@ for target_name in "${SHARED_FILE_NAMES[@]}"; do
     [[ "$name" == _* ]] && continue          # skip _shared and other build inputs
     git -C "$ROOT" check-ignore -q "$dir" 2>/dev/null && continue  # private local skills
     [[ -f "$dir/SKILL.md" ]] || continue
-    [[ "$(frontmatter_get "$dir/SKILL.md" metadata.deprecated)" == "true" ]] && continue
+    frontmatter_flag "$dir/SKILL.md" metadata.deprecated && continue
     mkdir -p "$dir/references"
     printf '%s\n' "$shipped" > "$dir/references/$target_name"
     count=$((count + 1))
