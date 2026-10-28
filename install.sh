@@ -401,8 +401,16 @@ backup_skill() {
   backup_base="$(backup_base_for "$dest_dir")"
   local ts
   ts="$(date +%Y%m%d-%H%M%S)"
-  local dest n=0
+  local dest n=0 prev
   mkdir -p "$backup_base/$skill" || return 1
+  # Number past the highest backup from this second: pruning frees low numbers,
+  # and reusing one would sort the new backup first and prune it.
+  for prev in "$backup_base/$skill/$ts-"[0-9][0-9]; do
+    [[ -d "$prev" ]] || continue
+    prev="${prev##*-}"
+    (( 10#$prev < n )) || n=$(( 10#$prev + 1 ))
+  done
+  (( n < 100 )) || return 1
   until dest="$backup_base/$skill/$ts-$(printf %02d "$n")"; mkdir "$dest" 2>/dev/null; do
     (( ++n < 100 )) || return 1
   done
