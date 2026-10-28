@@ -6,6 +6,9 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # Git hooks export GIT_DIR and friends; fixture repos must not inherit them.
 while IFS= read -r var; do unset "$var"; done < <(git rev-parse --local-env-vars)
 
+# Installer overrides must not leak into test fixtures.
+while IFS= read -r var; do unset "$var"; done < <(compgen -e | grep -E '^([A-Z0-9_]+_SKILLS_DIR|SKILLS_[A-Z0-9_]+|OPENCODE_CONFIG_FILE|XDG_(CONFIG|STATE|DATA|CACHE)_HOME)$' || true)
+
 fail() {
   printf 'FAIL: %s\n' "$1" >&2
   exit 1
