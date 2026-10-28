@@ -237,7 +237,7 @@ context and the diff.
 **Known issue**: Codex in `exec` mode may run tools (lint, validate) instead of producing
 text-only review output. If the secondary returns tool output instead of a
 NO_FLAGS/MINOR_FLAG/MAJOR_FLAG response, fall back to self-review: spawn a fresh agent
-on the primary harness with the review prompt template (see Phase 0, Step 6 in SKILL.md).
+on the primary harness with the review prompt template (see Phase 0, Step 6 in `references/phase-0-setup.md`).
 Classify the fallback as same-model or unknown-model fresh-context review using its attested
 evidence, apply `cap 3`, and record the fallback as a control failure in the run history
 (SKILL.md Phase 3 step 24). No bonus weight is restored when a distinct reviewer is unavailable.
