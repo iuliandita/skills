@@ -88,12 +88,12 @@ def validate(root: Path, retire: bool = False) -> None:
                 raise ValueError(f"{old}: replacement cannot be another deprecated name")
             target = root / "skills" / replacement / "SKILL.md"
             data = frontmatter.load_frontmatter(str(target))
-            if data["name"] != replacement or str(data["metadata"].get("deprecated", "")).lower() == "true":
+            if data["name"] != replacement or frontmatter.flag(data, "metadata.deprecated") == "true":
                 raise ValueError(f"{old}: replacement must be an active skill")
         notice = root / "skills" / old / "SKILL.md"
         if notice.exists():
             data = frontmatter.load_frontmatter(str(notice))
-            if data["name"] != old or str(data["metadata"].get("deprecated", "")).lower() != "true":
+            if data["name"] != old or frontmatter.flag(data, "metadata.deprecated") != "true":
                 raise ValueError(f"{old}: old name must be a deprecated notice")
             if not data["description"].startswith("Deprecated"):
                 raise ValueError(f"{old}: description must lead with Deprecated")
@@ -104,7 +104,7 @@ def validate(root: Path, retire: bool = False) -> None:
     check_migration_doc(root, mappings)
     for notice in (root / "skills").glob("*/SKILL.md"):
         data = frontmatter.load_frontmatter(str(notice))
-        if str(data.get("metadata", {}).get("deprecated", "")).lower() == "true" and notice.parent.name not in mappings:
+        if frontmatter.flag(data, "metadata.deprecated") == "true" and notice.parent.name not in mappings:
             raise ValueError(f"{notice.parent.name}: deprecated skill missing from manifest")
 
 

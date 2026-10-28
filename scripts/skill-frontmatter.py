@@ -5,8 +5,17 @@ from __future__ import annotations
 
 import json
 import pathlib
+import re
 import sys
 from typing import Any
+
+PLAIN_COMMENT = re.compile(r"\s+#.*$")
+PLAIN_NON_STRING = re.compile(r"~|null|Null|NULL|[-+]?\d+|[-+]?\d*\.\d+|\d{4}-\d{2}-\d{2}")
+PLAIN_BAD_START = tuple("[{&*!%@`|>")
+
+
+class PlainNonString(str):
+    """Plain scalar that YAML resolves to null, a number or a date, not a string."""
 
 
 def load_frontmatter(path_str: str) -> dict[str, Any]:
@@ -65,7 +74,13 @@ def parse_mapping(lines: list[str], start: int = 0, indent: int = 0) -> tuple[di
             raise ValueError(f"expected key/value pair: {line!r}")
 
         key, raw_value = stripped.split(":", 1)
+        if raw_value and not raw_value[0].isspace():
+            raise ValueError(f"expected space after key: {line!r}")
+        if key in data:
+            raise ValueError(f"duplicate key: {key!r}")
         raw_value = raw_value.lstrip()
+        if raw_value.startswith("#"):
+            raw_value = ""
 
         if not raw_value:
             value, index = parse_nested(lines, index + 1, indent + 2)
@@ -170,8 +185,17 @@ def parse_block(lines: list[str], start: int, indent: int, style: str) -> tuple[
 
 
 def parse_scalar(raw_value: str) -> Any:
-    if len(raw_value) >= 2 and raw_value[0] == raw_value[-1] and raw_value[0] in {"'", '"'}:
-        return raw_value[1:-1]
+    if raw_value[0] in {"'", '"'}:
+        return parse_quoted(raw_value)
+
+    raw_value = PLAIN_COMMENT.sub("", raw_value)
+    if ": " in raw_value or raw_value.endswith(":"):
+        raise ValueError(f"unquoted ': ' in plain value: {raw_value!r}")
+    if raw_value.startswith(PLAIN_BAD_START):
+        raise ValueError(f"unsupported plain value: {raw_value!r}")
+
+    if PLAIN_NON_STRING.fullmatch(raw_value):
+        return PlainNonString(raw_value)
 
     lowered = raw_value.lower()
     if lowered in {"true", "yes"}:
@@ -180,6 +204,23 @@ def parse_scalar(raw_value: str) -> Any:
         return False
 
     return raw_value
+
+
+def parse_quoted(raw_value: str) -> str:
+    quote = raw_value[0]
+    end = raw_value.find(quote, 1)
+    if quote == "'":
+        while end != -1 and raw_value[end + 1 : end + 2] == "'":
+            end = raw_value.find(quote, end + 2)
+    elif end != -1 and "\\" in raw_value[1:end]:
+        raise ValueError(f"unsupported escape in quoted value: {raw_value!r}")
+    if end == -1:
+        raise ValueError(f"unterminated quoted value: {raw_value!r}")
+    rest = raw_value[end + 1 :]
+    if rest and not re.fullmatch(r"\s+#.*", rest):
+        raise ValueError(f"unexpected text after quoted value: {raw_value!r}")
+    value = raw_value[1:end]
+    return value.replace("''", "'") if quote == "'" else value
 
 
 def format_value(value: Any) -> str:
@@ -192,9 +233,12 @@ def format_value(value: Any) -> str:
 
 def flag(data: dict[str, Any], path: str) -> str:
     try:
-        return "true" if format_value(get_value(data, path)) == "true" else "false"
+        value = get_value(data, path)
     except KeyError:
         return "false"
+    if value is True or (isinstance(value, str) and value.strip().casefold() == "true"):
+        return "true"
+    return "false"
 
 
 def batch(skills_dir: str) -> int:

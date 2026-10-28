@@ -83,6 +83,17 @@ frontmatter_has() {
   python3 "$FRONTMATTER_PY" has "$file" "$path"
 }
 
+# Succeed when a frontmatter flag is boolean true or a string that trims and
+# case-folds to "true" (the same rule as skill-frontmatter.py flag()).
+# Args: <file> <path>
+frontmatter_flag() {
+  local value
+  value="$(frontmatter_get "$1" "$2" 2>/dev/null)" || return 1
+  value="${value#"${value%%[![:space:]]*}"}"
+  value="${value%"${value##*[![:space:]]}"}"
+  [[ "${value,,}" == true ]]
+}
+
 # Check that frontmatter `name` matches the directory name.
 # Args: <skill_file> <dir_name> <error_fn>
 # Calls <error_fn> with the standard message on mismatch.
