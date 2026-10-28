@@ -50,13 +50,13 @@ workflow (waves + persistence + routing), not just the wave dispatch phase.
 - [ ] Each wave's results were presented before the next wave started
 - [ ] Each skill's native report format was preserved - no normalization across reports
 - [ ] Failed or timed-out agents noted with reason, not silently dropped
-- [ ] `docs/local/` added to `.gitignore` before writing any audit artifacts (verified with `git check-ignore`)
+- [ ] `docs/local/` confirmed ignored with `git check-ignore` before writing any audit artifacts; if it was not, `.gitignore` was left untouched and the user was asked to add it (or the report was delivered in chat)
 - [ ] `docs/local/audits/repo-audit/<YYYY-MM-DD>-deep-audit.md` written consolidating all wave findings in their native format
 - [ ] Security-audit used its canonical dated path under `docs/local/audits/security-audit/`
 - [ ] `docs/local/audits/repo-audit/<YYYY-MM-DD>-deep-audit-tasks.md` written with phased checklist (priority, effort, files, rationale per task)
 - [ ] Task-list size assessed; routing decision announced (SMALL: direct action list, LARGE: brainstorming handoff or vanilla-harness plan generation)
 - [ ] If LARGE and a brainstorming skill is available, user was told to invoke it manually (no silent auto-invocation)
-- [ ] If LARGE and no brainstorming skill is available, execution-plan files written to `docs/local/specs/` and `docs/local/plans/` using the standard naming convention
+- [ ] If LARGE and no brainstorming skill is available, execution-plan files were offered and written to `docs/local/specs/` and `docs/local/plans/` (standard naming) only after the user selected that path
 - [ ] When user specified a scope, all agents received that scope constraint and detection was filtered to the scoped file tree
 - [ ] Only skills from the iuliandita/skills collection were used - no built-in reviewers or platform audit modes
 - [ ] **Scope bounded**: audit waves match the repo type and user request, not every possible skill
@@ -80,12 +80,13 @@ Copy this checklist and track progress; the order is fixed (Rule 2):
 Gather context. Run independent reads in parallel, capturing each exit status and error
 separately; report unavailable context instead of masking failures with `; true`.
 
-Before dispatch or artifact writes, ensure `docs/local/` is ignored. Add the bare
-`docs/local/` entry to `.gitignore` if needed and verify with `git check-ignore`. Check
-that intended artifact paths are not already tracked (`git ls-files docs/local/` must be empty)
-and that each is ignored (`git check-ignore -q <path>` for the dated DEEP-AUDIT report and task list,
+Before dispatch or artifact writes, verify with `git check-ignore` that `docs/local/` is ignored.
+The audit is read-only and `.gitignore` is tracked, so do not edit it: if `docs/local/` is not
+ignored, stop artifact writes and ask the user to add the bare `docs/local/` entry, or deliver
+the report in chat. Check that intended artifact paths are not already tracked
+(`git ls-files docs/local/` must be empty) and that each is ignored (`git check-ignore -q <path>` for the dated DEEP-AUDIT report and task list,
 the security-audit/ report, and Step 9b plan paths). If any path is tracked or not ignored, stop
-artifact writes, fix the protection, and repeat this check before continuing.
+artifact writes, ask the user to fix the protection, and repeat this check before writing.
 
 If full-access agent dispatch is unavailable, run every assigned skill sequentially in the root
 context. Preserve wave order, separate native result sections, and report the compatibility limit.
@@ -421,7 +422,8 @@ OR any P0 finding):
   - `docs/local/plans/{YYYY-MM-DD}-audit-phase-{NN}-{slug}.md` per non-trivial phase
     (two-digit phase numbers)
 
-  Announce the write, then proceed - this path is mechanical, not interactive.
+  Offer these master and per-phase plan files and write them only after the user selects
+  this planning path. If the user declines or the session cannot confirm intent, follow 9c.
 
   **9c. Stop in headless / non-interactive mode.** If the session cannot confirm user
   intent and no brainstorming skill is available, write the two audit files, announce
@@ -483,10 +485,10 @@ Read `references/exclusions.md` before changing Wave 3 routing.
 3. **Present before proceeding.** Each wave's results are shown to the user before the next wave starts. No buffering all results to the end.
 4. **Detection gates Wave 3.** Only dispatch Wave 3 skills whose file patterns matched in the recon sweep. Do not run terraform on a repo with no .tf files.
 5. **Security is sequential.** security-audit completes before vulnerability-research starts. Vulnerability-research receives security-audit findings as input context.
-6. **Read-only audit, with explicit artifact exceptions.** No agent modifies source code, commits, or alters the repo's working tree. The only permitted writes are: (a) audit artifacts under `docs/local/audits/`, including the dated DEEP-AUDIT report and task list under `repo-audit/` and the dated `security-audit/` report, (b) Step 9b plan files under `docs/local/specs/` and `docs/local/plans/`, and (c) a one-line addition to `.gitignore` if `docs/local/` is not already covered.
+6. **Read-only audit, with explicit artifact exceptions.** No agent modifies source code, commits, or alters the repo's working tree. The only permitted writes are: (a) audit artifacts under `docs/local/audits/`, including the dated DEEP-AUDIT report and task list under `repo-audit/` and the dated `security-audit/` report, (b) Step 9b plan files under `docs/local/specs/` and `docs/local/plans/`. `.gitignore` is never edited; if `docs/local/` is not covered, ask the user to add it.
 7. **Preserve native formats.** Each skill produces its own report format. Do not normalize, merge, or editorialize across reports. Cross-wave synthesis is allowed only in three specific places: the Step 6 terminal summary, the headline verdict + scorecard of the DEEP-AUDIT report, and the phased ordering of its task list. Everywhere else, native format is preserved verbatim.
 8. **Don't stack with quick mode.** When exhaustive mode is selected, it supersedes quick mode's coverage. Do not also invoke quick mode.
 9. **Respect scope.** When the user specifies a scope, pass it to every agent and filter detection patterns to that scope's file tree.
-10. **Always persist the DEEP-AUDIT report and task list.** These two files are mandatory output of every run, regardless of audit size or whether an execution plan is generated. Write them as new dated files under `docs/local/audits/repo-audit/`; never overwrite an earlier run. Ensure `docs/local/` is in `.gitignore` first - these artifacts can contain sensitive security detail.
-11. **Brainstorming handoff is a recommendation, not an auto-invocation.** If a brainstorming/ideation skill is present in the host harness, announce the recommended invocation and stop - the user drives that step. When no brainstorming skill exists, proceed directly to Step 9b plan-file generation (this is deterministic file writing, not skill invocation). Only in headless / non-interactive mode, when neither option is available, fall back to Step 9c (stop and let the user continue in a follow-up session).
+10. **Always persist the DEEP-AUDIT report and task list.** These two files are mandatory output of every run, regardless of audit size or whether an execution plan is generated. Write them as new dated files under `docs/local/audits/repo-audit/`; never overwrite an earlier run. Confirm `docs/local/` is ignored first (Step 0) - these artifacts can contain sensitive security detail. If it is not and the user does not add it, deliver both in chat instead.
+11. **Brainstorming handoff is a recommendation, not an auto-invocation.** If a brainstorming/ideation skill is present in the host harness, announce the recommended invocation and stop - the user drives that step. When no brainstorming skill exists, offer Step 9b plan-file generation and write the files only after the user selects it (this is deterministic file writing, not skill invocation). In headless / non-interactive mode, or when the user does not select 9b, fall back to Step 9c (stop and let the user continue in a follow-up session).
 12. **Don't hardcode a specific brainstorming skill.** The skill collection is tool-agnostic (Claude, Codex, Opencode, others). Match by pattern (`*brainstorm*`, `*ideation*`, `*explore*`) rather than by a single hardcoded name like `superpowers:brainstorming`.
