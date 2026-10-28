@@ -163,14 +163,14 @@ RUN --mount=type=cache,target=/root/.npm \
 COPY . .
 RUN npm run build && npm prune --omit=dev
 
-FROM gcr.io/distroless/nodejs22-debian12
+FROM gcr.io/distroless/nodejs22-debian13
 WORKDIR /app
 COPY --from=build --chown=1001:1001 /app/dist ./dist
 COPY --from=build --chown=1001:1001 /app/node_modules ./node_modules
 USER 1001
 EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD ["node", "-e", "fetch('http://localhost:3000/health').then(r=>r.ok||process.exit(1)).catch(()=>process.exit(1))"]
+  CMD ["/nodejs/bin/node", "-e", "fetch('http://localhost:3000/health').then(r=>r.ok||process.exit(1)).catch(()=>process.exit(1))"]
 CMD ["dist/index.js"]
 ```
 
@@ -249,7 +249,7 @@ services:
 
 **Secrets**: use top-level `secrets:` with `file:` or `external: true`, reference via `_FILE` env convention (e.g., `POSTGRES_PASSWORD_FILE: /run/secrets/db_pass`). Never hardcode secrets in `environment:`. See `references/compose-patterns.md` for the full template with secret wiring.
 
-**Health-gated dependencies**: use `depends_on:` with `condition: service_healthy` - bare `depends_on` is ordering only, no readiness guarantee. Exception: dependencies that cannot expose a healthcheck (such as Model Runner provider services); comment the exception inline.
+**Health-gated dependencies**: use `depends_on:` with `condition: service_healthy` - bare `depends_on` is ordering only, no readiness guarantee. Exception: dependencies that cannot expose a healthcheck; comment the exception inline.
 
 ### Compose anti-patterns
 
@@ -327,7 +327,7 @@ For a hardened Dockerfile pattern, see `references/dockerfile-patterns.md` (Lang
 
 ### PCI-DSS 4.0 container requirements (summary)
 
-PCI-DSS 4.0 is the only active version. Key container-specific requirements:
+PCI-DSS 4.0.1 is the only active version (4.0 retired December 31, 2024). Key container-specific requirements:
 
 - **Req 1**: Network segmentation - use user-defined bridge networks, `internal: true` for backend services, never expose CDE containers on default bridge
 - **Req 2.2**: Harden containers - non-root, drop caps, read-only rootfs, one process per container
@@ -354,17 +354,17 @@ Full mapping in `references/security-and-compliance.md`.
 Docker Model Runner (Engine 29.x, Desktop 4.50+) serves AI models via OpenAI/Ollama-compatible APIs:
 
 ```yaml
-# Compose integration with Model Runner
+# Compose integration with Model Runner (Compose injects the endpoint; no hardcoded host)
 services:
-  model:
-    provider:
-      type: model
-      options:
-        model: ai/llama3.2:3B-Q4_K_M
   agent:
     build: .
-    environment:
-      OPENAI_BASE_URL: http://model/v1
+    models:
+      llm:
+        endpoint_var: OPENAI_BASE_URL   # default would be LLM_URL (already ends in /v1/)
+        model_var: OPENAI_MODEL
+models:
+  llm:
+    model: ai/llama3.2:3B-Q4_K_M
 ```
 
 GPU containers: use `deploy.resources.reservations.devices` with `capabilities: [gpu]`. Start `shm_size` at `16gb` for single GPU, `32gb` for multi-GPU (vLLM needs shared memory for tensor ops). See `references/compose-patterns.md` for the full AI/ML stack template.

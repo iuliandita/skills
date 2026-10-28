@@ -243,8 +243,8 @@ Push modules to your existing container registry (GHCR, ECR, Harbor):
 
 ```hcl
 module "vpc" {
-  source  = "oci://ghcr.io/org/terraform-modules/vpc"
-  version = "2.1.3"
+  source = "oci://ghcr.io/org/terraform-modules/vpc?tag=2.1.3"
+  # or pin the manifest: "oci://ghcr.io/org/terraform-modules/vpc?digest=sha256:<digest>"
 }
 ```
 

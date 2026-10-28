@@ -418,7 +418,16 @@ interface enp0s4
 
 ### Basic BGP
 
+`frr defaults traditional` enables `bgp ebgp-requires-policy` (RFC 8212): an eBGP peer with no in/out route-map exchanges nothing and shows `(Policy)` in `show bgp summary`.
+
 ```
+ip prefix-list PL-OUT seq 10 permit 10.0.1.0/24
+ip prefix-list PL-IN  seq 10 permit 10.0.2.0/24
+route-map RM-OUT permit 10
+  match ip address prefix-list PL-OUT
+route-map RM-IN permit 10
+  match ip address prefix-list PL-IN
+
 router bgp 65001
   bgp router-id 10.0.1.1
   neighbor 10.0.2.1 remote-as 65002
@@ -426,6 +435,8 @@ router bgp 65001
   address-family ipv4 unicast
     network 10.0.1.0/24
     neighbor 10.0.2.1 activate
+    neighbor 10.0.2.1 route-map RM-IN in
+    neighbor 10.0.2.1 route-map RM-OUT out
   exit-address-family
 ```
 

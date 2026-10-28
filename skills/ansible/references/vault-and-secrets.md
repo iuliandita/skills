@@ -202,19 +202,20 @@ The `hashicorp.vault` certified collection provides native Ansible integration w
 ```yaml
 - name: Read database credentials from Vault
   ansible.builtin.set_fact:
-    db_password: "{{ lookup('hashicorp.vault.vault_read', 'secret/data/production/db').data.data.password }}"
+    db_password: "{{ lookup('hashicorp.vault.kv2_secret_get', secret='production/db', url=vault_url).data.password }}"
   no_log: true
 
 # With specific auth method
 - name: Read with AppRole auth
   ansible.builtin.set_fact:
     api_key: >-
-      {{ lookup('hashicorp.vault.vault_read',
-         'secret/data/production/api',
+      {{ lookup('hashicorp.vault.kv2_secret_get',
+         secret='production/api',
+         url=vault_url,
          auth_method='approle',
          role_id=lookup('env', 'VAULT_ROLE_ID'),
          secret_id=lookup('env', 'VAULT_SECRET_ID')
-      ).data.data.key }}
+      ).data.key }}
   no_log: true
 ```
 
@@ -235,8 +236,8 @@ The `hashicorp.vault` certified collection provides native Ansible integration w
 
 ```yaml
 - name: Generate temporary database credentials
-  hashicorp.vault.vault_read:
-    path: database/creds/myapp-role
+  hashicorp.vault.database_dynamic_role_credentials:
+    name: myapp-role
     url: "{{ vault_url }}"
     auth_method: approle
     role_id: "{{ vault_role_id }}"
@@ -250,8 +251,8 @@ The `hashicorp.vault` certified collection provides native Ansible integration w
     dest: /etc/myapp/db.conf
     mode: "0600"
   vars:
-    db_user: "{{ db_creds.data.username }}"
-    db_pass: "{{ db_creds.data.password }}"
+    db_user: "{{ db_creds.dynamic_role_credentials.username }}"
+    db_pass: "{{ db_creds.dynamic_role_credentials.password }}"
   no_log: true
 ```
 
@@ -264,7 +265,7 @@ The `hashicorp.vault` certified collection provides native Ansible integration w
   register: host_public_key
 
 - name: Sign SSH host key
-  hashicorp.vault.vault_write:
+  community.hashi_vault.vault_write:  # hashicorp.vault has no generic write/SSH-sign module
     path: ssh-host/sign/host-role
     data:
       cert_type: host
@@ -278,7 +279,7 @@ The `hashicorp.vault` certified collection provides native Ansible integration w
 
 - name: Deploy signed certificate
   ansible.builtin.copy:
-    content: "{{ signed_cert.data.signed_key }}"
+    content: "{{ signed_cert.data.data.signed_key }}"
     dest: /etc/ssh/ssh_host_ed25519_key-cert.pub
     mode: "0644"
   notify: Restart sshd

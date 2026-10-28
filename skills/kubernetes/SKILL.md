@@ -374,7 +374,7 @@ Read `references/compliance.md` for the full PCI-DSS 4.0 requirements mapping to
 
 ### Quick reference: PCI-DSS 4.0 on K8s
 
-PCI-DSS 4.0 is the only active version (3.2.1 retired March 2024). 51 future-dated requirements became mandatory March 31, 2025.
+PCI-DSS 4.0.1 is the only active version (4.0 retired December 31, 2024; 3.2.1 retired March 2024). 51 future-dated requirements became mandatory March 31, 2025.
 
 **Critical K8s-specific requirements:**
 - **Req 1**: Network segmentation -> default-deny NetworkPolicies, private API server, VPC-native clusters

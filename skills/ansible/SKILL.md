@@ -354,7 +354,7 @@ All Ansible DevTools projects (molecule, ansible-lint, ansible-navigator, tox-an
 |-----|----------|-------------|------------|
 | CVE-2024-11079 | Low | Hostvars bypass unsafe content protections, enabling arbitrary code execution via templated content | Upgrade to ansible-core >= 2.16.14, 2.17.7, or 2.18.1 |
 | CVE-2024-8775 | Medium | Vault-encrypted variables exposed in plaintext via `include_vars` without `no_log` | Add `no_log: true` to all secret-handling tasks |
-| CVE-2025-14010 | Medium | community.general exposes Keycloak credentials in verbose output | Upgrade to community.general >= 12.2.0 |
+| CVE-2025-14010 | Medium | community.general exposes Keycloak credentials in verbose output | Upgrade to community.general >= 12.0.0 (or 11.4.1 / 10.7.6), i.e. the ansible package >= 12.2.0 |
 | CVE-2025-49520 | High | EDA authenticated argument injection in Git URL (command execution) | Patch AAP/EDA |
 | CVE-2025-49521 | High | EDA template injection via Git branch/refspec (command execution) | Patch AAP/EDA |
 
