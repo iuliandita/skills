@@ -267,7 +267,7 @@ Claude).
 
 `--save` covers default paths only. It is refused with `--dest` (exit 1) and when any of
 `*_SKILLS_DIR`, `SKILLS_CANONICAL_DIR`, `SKILLS_BACKUP_DIR`, `OPENCODE_CONFIG_FILE`, or
-`SKILLS_TOOL` is set (exit 2). A bare run that finds a saved config also exits 2 while any
+`SKILLS_TOOL`, `SKILLS_MIGRATOR`, or `SKILLS_MIGRATIONS_FILE` is set (exit 2). A bare run that finds a saved config also exits 2 while any
 of those variables is set. `--save` requires `flock` and takes the installer lock before it
 touches the config, holding it through the install and the save.
 
@@ -330,10 +330,11 @@ branch tracks a remote, then schedule the update:
    many seconds instead.
 2. Loads the saved config under the same rules as a bare install. A missing or invalid
    config, or any override variable (`*_SKILLS_DIR`, `SKILLS_CANONICAL_DIR`,
-   `SKILLS_BACKUP_DIR`, `OPENCODE_CONFIG_FILE`, `SKILLS_TOOL`), means exit 2.
+   `SKILLS_BACKUP_DIR`, `OPENCODE_CONFIG_FILE`, `SKILLS_TOOL`, `SKILLS_MIGRATOR`, or
+   `SKILLS_MIGRATIONS_FILE`), means exit 2.
 3. Checks the source: the checkout is the saved `source_repo`, it is on the saved branch,
    the branch's remote, that remote's URL, and the upstream ref match the saved values, and
-   `git status --porcelain` is empty (untracked files count).
+   `git status --porcelain --untracked-files=all` is empty (untracked files count).
 4. Fetches the saved upstream ref under `timeout -k 10 ${SKILLS_UPDATE_TIMEOUT:-300}`, with
    hooks disabled, and pins the result to a commit SHA. HEAD must be an ancestor of that
    commit; local commits or a rewritten upstream mean exit 4.
@@ -385,7 +386,7 @@ update: partial 1a2b3c4d5e6f..7a8b9c0d1e2f changed=2 skipped=1
 | 5 | Fetch failed or timed out, or the fast-forward failed |
 | 6 | Finished, but some skills were skipped (see above) |
 | 7 | The lock or config directory cannot be created or opened |
-| 8 | The updated installer could not be started; HEAD is at the new commit, rerun |
+| 8 | The updated installer could not be started (missing or does not parse); HEAD is at the new commit, rerun |
 | 10 | `flock`, `timeout`, `git`, or `python3` is missing |
 | 130, 143 | Interrupted by SIGINT or SIGTERM |
 
@@ -515,7 +516,7 @@ helper stages replacements in its own `.skills-migrate-staging` area and never o
 existing entry; see [MIGRATION.md](MIGRATION.md#users-of-the-bundled-installer).
 
 Runs that change files (installs, `--update`, and `--migrate --apply`) take an exclusive lock on
-`${XDG_STATE_HOME:-~/.local/state}/iuliandita-skills/install.lock` with `flock`, waiting up
+`${XDG_STATE_HOME:-~/.local/state}/iuliandita-skills/install.lock` (a relative value is ignored) with `flock`, waiting up
 to `SKILLS_LOCK_WAIT` seconds (default 30, or 0 for `--update`) and exiting with status 3 if another run still
 holds it. Without `flock` an install prints a warning and proceeds; runs exclude each
 other only when every one of them has `flock`. `--migrate --apply` requires `flock` and exits

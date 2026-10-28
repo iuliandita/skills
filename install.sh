@@ -646,7 +646,9 @@ INSTALL_LOCK_FD=9
 INSTALL_LOCK_HELD=false
 
 install_lock_dir() {
-  printf '%s/iuliandita-skills\n' "${XDG_STATE_HOME:-$HOME/.local/state}"
+  local base="${XDG_STATE_HOME:-}"
+  [[ "$base" == /* ]] || base="$HOME/.local/state"
+  printf '%s/iuliandita-skills\n' "$base"
 }
 
 # Pass "required" to exit 10 without flock and 7 when the lock cannot be opened;
@@ -1747,7 +1749,7 @@ override_env_names() {
   local name
   while IFS= read -r name; do
     case "$name" in
-      *_SKILLS_DIR|SKILLS_CANONICAL_DIR|SKILLS_BACKUP_DIR|OPENCODE_CONFIG_FILE|SKILLS_TOOL) printf '%s\n' "$name" ;;
+      *_SKILLS_DIR|SKILLS_CANONICAL_DIR|SKILLS_BACKUP_DIR|OPENCODE_CONFIG_FILE|SKILLS_TOOL|SKILLS_MIGRATOR|SKILLS_MIGRATIONS_FILE) printf '%s\n' "$name" ;;
     esac
   done < <(compgen -e)
 }
@@ -2229,7 +2231,7 @@ run_update() {
   update_expect_config "$repo" "branch.$branch.remote" "$SAVED_SOURCE_REMOTE" "the upstream remote"
   update_expect_config "$repo" "remote.$SAVED_SOURCE_REMOTE.url" "$SAVED_SOURCE_REMOTE_URL" "the remote URL"
   update_expect_config "$repo" "branch.$branch.merge" "$SAVED_SOURCE_UPSTREAM" "the upstream branch"
-  status="$(ugit -C "$repo" status --porcelain)" || update_fail 4 "git status failed in $repo"
+  status="$(ugit -C "$repo" status --porcelain --untracked-files=all)" || update_fail 4 "git status failed in $repo"
   [[ -z "$status" ]] || update_fail 4 "$repo has uncommitted or untracked changes (${status%%$'\n'*}); checkout unchanged"
   old="$(ugit -C "$repo" rev-parse --verify HEAD)" || update_fail 4 "cannot resolve HEAD in $repo"
   ulog "source checks passed: $repo on $branch at ${old:0:12}"
@@ -2275,7 +2277,7 @@ run_update() {
     ulog "fast-forwarding ${old:0:12}..${sha:0:12}"
     if ! ugit -C "$repo" -c core.hooksPath=/dev/null merge --ff-only --quiet "$sha" </dev/null; then
       head="$(ugit -C "$repo" rev-parse --verify HEAD 2>/dev/null)" || head=""
-      status="$(ugit -C "$repo" status --porcelain 2>/dev/null)" || status="unknown"
+      status="$(ugit -C "$repo" status --porcelain --untracked-files=all 2>/dev/null)" || status="unknown"
       if [[ "$head" == "$old" && -z "$status" ]]; then
         update_fail 5 "fast-forward to ${sha:0:12} failed; HEAD is still ${old:0:12} and the working tree is unchanged"
       fi
@@ -2287,6 +2289,9 @@ run_update() {
     || update_fail 1 "HEAD is ${head:-unknown} after the fast-forward, not $sha; rerun install.sh --update"
 
   ulog "handing off to $repo/install.sh at ${sha:0:12}"
+  if [[ ! -r "$repo/install.sh" ]] || ! "$BASH" -n "$repo/install.sh" 2>/dev/null; then
+    update_fail 8 "$repo/install.sh at ${sha:0:12} is missing or does not parse; HEAD is at $sha; rerun install.sh --update once upstream is fixed"
+  fi
   shopt -s execfail
   exec "$BASH" "$repo/install.sh" --apply-update "$sha" "$old" || true
   update_fail 8 "could not start $repo/install.sh; HEAD is at $sha; rerun install.sh --update to complete the install"
@@ -2485,7 +2490,7 @@ sys.exit((a.st_dev, a.st_ino) != (b.st_dev, b.st_ino))' "$(install_lock_dir)/ins
     || update_fail 1 "$SCRIPT_DIR is not the saved checkout $SAVED_SOURCE_REPO"
   head="$(ugit -C "$repo" rev-parse --verify HEAD 2>/dev/null)" || head=""
   [[ "$head" == "$new" ]] || update_fail 1 "HEAD is ${head:-unknown}, not $new; rerun install.sh --update"
-  status="$(ugit -C "$repo" status --porcelain)" || update_fail 1 "git status failed in $repo; HEAD is at $new"
+  status="$(ugit -C "$repo" status --porcelain --untracked-files=all)" || update_fail 1 "git status failed in $repo; HEAD is at $new"
   [[ -z "$status" ]] || update_fail 1 "$repo changed during the update; HEAD is at $new; clean it and rerun install.sh --update"
 
   ulog "applying ${new:0:12} with $SAVED_CONFIG_PATH"

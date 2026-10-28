@@ -1548,6 +1548,18 @@ test_concurrent_installs_serialize() {
   trap - RETURN
 }
 
+test_relative_xdg_state_home_is_ignored() {
+  local tmp
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  mkdir "$tmp/cwd"
+  (cd "$tmp/cwd" && isolated "$tmp" XDG_STATE_HOME=rel "$ROOT/install.sh" --tool portable --dest "$tmp/d" --no-backup docker >/dev/null)
+  [[ -f "$tmp/.local/state/iuliandita-skills/install.lock" && ! -e "$tmp/cwd/rel" ]] \
+    || fail "relative XDG_STATE_HOME was not ignored"
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
 test_installer_lock_contention_and_missing_flock() {
   local tmp lock_dir holder status=0 output dir file
   tmp="$(mktemp -d)"
@@ -1849,6 +1861,7 @@ test_lock_fault_leaves_records_until_publication
 test_opencode_fault_keeps_config_unchanged
 test_link_fault_restores_previous_link
 test_concurrent_installs_serialize
+test_relative_xdg_state_home_is_ignored
 test_installer_lock_contention_and_missing_flock
 test_migration_recovers_before_apply
 test_failed_retry_keeps_earlier_record

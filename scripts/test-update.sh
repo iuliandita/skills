@@ -313,6 +313,12 @@ test_source_checks() {
   : > "$F/repo/stray"
   expect_refused 4 "untracked file" "uncommitted or untracked changes"
   rm "$F/repo/stray"
+  g -C "$F/repo" config status.showUntrackedFiles no
+  mkdir "$F/repo/skills/wip"
+  : > "$F/repo/skills/wip/SKILL.md"
+  expect_refused 4 "untracked with showUntrackedFiles=no" "uncommitted or untracked changes"
+  rm -r "$F/repo/skills/wip"
+  g -C "$F/repo" config --unset status.showUntrackedFiles
   g -C "$F/repo" checkout -q -b other
   expect_refused 4 "wrong branch" "on branch other"
   g -C "$F/repo" checkout -q main
@@ -422,7 +428,7 @@ test_every_override_variable_is_refused() {
   new_fixture --tool claude
   mapfile -t vars < <(grep -oE '[A-Z_]+_SKILLS_DIR:-' "$ROOT/install.sh" | cut -d: -f1 | sort -u)
   (( ${#vars[@]} > 20 )) || fail "override matrix found only ${#vars[@]} *_SKILLS_DIR variables"
-  vars+=(SOMETOOL_SKILLS_DIR SKILLS_CANONICAL_DIR SKILLS_BACKUP_DIR OPENCODE_CONFIG_FILE SKILLS_TOOL)
+  vars+=(SOMETOOL_SKILLS_DIR SKILLS_CANONICAL_DIR SKILLS_BACKUP_DIR OPENCODE_CONFIG_FILE SKILLS_TOOL SKILLS_MIGRATOR SKILLS_MIGRATIONS_FILE)
   for var in "${vars[@]}"; do
     expect_refused 2 "$var" "$var is set" "$var=$F/o"
   done
@@ -557,6 +563,23 @@ PY
   [[ ! -e "$F/other" ]] || fail "contender installed during apply"
   wait "$pid" || fail "update with a new installer failed: $(cat "$F/first.out")"
   [[ "$(wc -l < "$H/marker")" -eq 1 ]] || fail "new installer ran $(wc -l < "$H/marker") times"
+}
+
+test_broken_new_installer_exits_8() {
+  local case_name
+  for case_name in syntax missing; do
+    new_fixture --tool claude
+    if [[ "$case_name" == syntax ]]; then
+      printf '\nif then\n' >> "$F/dev/install.sh"
+    else
+      g -C "$F/dev" rm -q install.sh
+    fi
+    publish
+    run_update
+    expect_rc 8 "broken installer $case_name"
+    [[ "$(repo_head)" == "$(dev_head)" ]] || fail "broken installer $case_name: HEAD not at new commit"
+    grep -q 'HEAD is at' <<< "$ERR" || fail "broken installer $case_name: $ERR"
+  done
 }
 
 test_apply_faults_then_rerun() {
@@ -711,6 +734,7 @@ test_concurrent_updates_one_proceeds
 test_fetch_timeout_and_signal
 test_prompts_fail_instead_of_hanging
 test_updated_installer_runs_once_holding_the_lock
+test_broken_new_installer_exits_8
 test_apply_faults_then_rerun
 test_edit_after_interrupted_update_is_kept
 test_lock_publication_fault_keeps_ownership

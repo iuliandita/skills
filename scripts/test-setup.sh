@@ -9,7 +9,7 @@ while IFS= read -r var; do unset "$var"; done < <(git rev-parse --local-env-vars
 
 SAFE_PATH="$(for cmd in python3 git sha256sum flock; do dirname "$(command -v "$cmd")"; done | awk '!seen[$0]++' | paste -sd:):/usr/bin:/bin"
 REAL_GIT="$(command -v git)"
-OVERRIDES=(CLAUDE_SKILLS_DIR CODEX_SKILLS_DIR SKILLS_CANONICAL_DIR SKILLS_BACKUP_DIR OPENCODE_CONFIG_FILE SKILLS_TOOL)
+OVERRIDES=(CLAUDE_SKILLS_DIR CODEX_SKILLS_DIR SKILLS_CANONICAL_DIR SKILLS_BACKUP_DIR OPENCODE_CONFIG_FILE SKILLS_TOOL SKILLS_MIGRATOR SKILLS_MIGRATIONS_FILE)
 
 fail() {
   printf 'FAIL: %s\n' "$1" >&2
