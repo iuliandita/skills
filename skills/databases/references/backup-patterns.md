@@ -1183,10 +1183,24 @@ Databases on Kubernetes add a layer of complexity because the data lives on PVCs
 
 ### CloudNativePG (cnpg)
 
-The recommended PostgreSQL operator for Kubernetes. Has first-class backup support via Barman (pgBackRest alternative).
+The recommended PostgreSQL operator for Kubernetes. Has first-class backup support via the Barman Cloud plugin (`plugin-barman-cloud`, v0.15.x; install it in the operator namespace, needs cert-manager). In-tree `.spec.backup.barmanObjectStore` is deprecated since 1.26 and is removed in 1.31.
 
 ```yaml
-# Backup configuration in CloudNativePG Cluster spec
+apiVersion: barmancloud.cnpg.io/v1
+kind: ObjectStore
+metadata:
+  name: mydb-store
+  namespace: databases
+spec:
+  retentionPolicy: "30d"
+  configuration:
+    destinationPath: "s3://pg-backups/mydb/"
+    s3Credentials:
+      accessKeyId: {name: s3-creds, key: ACCESS_KEY_ID}
+      secretAccessKey: {name: s3-creds, key: SECRET_ACCESS_KEY}
+    wal: {compression: zstd, maxParallel: 4}
+    data: {compression: zstd}
+---
 apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:
@@ -1194,24 +1208,12 @@ metadata:
   namespace: databases
 spec:
   instances: 3
-  backup:
-    barmanObjectStore:
-      destinationPath: "s3://pg-backups/mydb/"
-      s3Credentials:
-        accessKeyId:
-          name: s3-creds
-          key: ACCESS_KEY_ID
-        secretAccessKey:
-          name: s3-creds
-          key: SECRET_ACCESS_KEY
-      wal:
-        compression: zstd
-        maxParallel: 4
-      data:
-        compression: zstd
-    retentionPolicy: "30d"
+  plugins:
+    - name: barman-cloud.cloudnative-pg.io
+      isWALArchiver: true
+      parameters:
+        barmanObjectName: mydb-store
 ---
-# ScheduledBackup resource
 apiVersion: postgresql.cnpg.io/v1
 kind: ScheduledBackup
 metadata:
@@ -1221,6 +1223,9 @@ spec:
   schedule: "0 0 2 * * *"  # CloudNativePG: seconds, minutes, hours, day, month, weekday
   cluster:
     name: mydb
+  method: plugin
+  pluginConfiguration:
+    name: barman-cloud.cloudnative-pg.io
   backupOwnerReference: self
   immediate: false
 ```
@@ -1240,16 +1245,14 @@ spec:
         targetTime: "2026-03-24 14:30:00.000000+00"
   externalClusters:
     - name: mydb
-      barmanObjectStore:
-        destinationPath: "s3://pg-backups/mydb/"
-        s3Credentials:
-          accessKeyId:
-            name: s3-creds
-            key: ACCESS_KEY_ID
-          secretAccessKey:
-            name: s3-creds
-            key: SECRET_ACCESS_KEY
+      plugin:
+        name: barman-cloud.cloudnative-pg.io
+        parameters:
+          barmanObjectName: mydb-store
+          serverName: mydb
 ```
+
+The restored cluster does not archive WAL until you add its own `spec.plugins` entry. Point it at a different ObjectStore.
 
 ### Velero
 
@@ -1288,7 +1291,7 @@ Key differences in k8s:
 
 | Scenario | Primary Backup | Secondary | Cluster DR |
 |---|---|---|---|
-| PG on k8s (cnpg) | cnpg ScheduledBackup (Barman) | pg_dump CronJob | Velero |
+| PG on k8s (cnpg) | cnpg ScheduledBackup (Barman Cloud plugin) | pg_dump CronJob | Velero |
 | PG on k8s (manual) | pgBackRest sidecar | pg_dump CronJob | Velero |
 | MongoDB on k8s (operator) | Operator-managed backup | mongodump CronJob | Velero |
 | MySQL on k8s | XtraBackup CronJob | mysqldump CronJob | Velero |
