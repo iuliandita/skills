@@ -16,8 +16,8 @@ bluetoothctl show 2>&1 || true
 
 ## Notes
 
-- GNOME on Fedora usually assumes Wayland first.
-- KDE can flip between Wayland and X11 depending on driver quality.
+- GNOME on Fedora 43+ is Wayland-only: the GNOME X11 session packages are gone and GDM no longer starts X11 sessions; X11 apps run through XWayland.
+- Fedora KDE is Wayland by default since Fedora 40; an X11 session needs the community-maintained `plasma-workspace-x11` package and is not supported by the KDE SIG.
 - PipeWire and WirePlumber are usually the modern baseline.
 - Portal mismatches break screen sharing more often than the app itself.
 - Bluetooth audio issues often need card-profile inspection, not just pairing.

@@ -31,7 +31,7 @@ stale package-version table.
 |-----------|---------|----------------|
 | Debian stable | 13 (trixie) | current stable baseline and repo behavior |
 | Ubuntu LTS | 26.04 (Resolute Raccoon) | current LTS baseline for most Ubuntu guidance |
-| Ubuntu interim lane | verify live (25.10 EOL July 2026; 26.10 "Stonking Stingray" due 2026-10-15) | interim releases move fast; check the active upgrade path instead of memorizing one short-lived codename |
+| Ubuntu interim lane | verify live (26.10 "Stonking Stingray" released 2026-10-15, supported to July 2027; 25.10 EOL July 2026) | interim releases move fast; check the active upgrade path instead of memorizing one short-lived codename |
 | Ubuntu HWE lane | verify live | kernel metapackage and hardware-enablement behavior matter more than one exact kernel number |
 | NVIDIA driver branch | verify live | proprietary branch choice affects Wayland, gaming, and DKMS behavior |
 | Mesa stack | verify live | AMD and Intel graphics behavior tracks the shipped Mesa lane |
@@ -185,7 +185,7 @@ point upgrade.
 
 | Task type | Reference |
 |-----------|-----------|
-| `apt`, `dpkg`, pinning, PPAs, snaps, `.deb` handling | `references/packages-and-repos.md` |
+| `apt`, `dpkg`, PPAs, `.deb` handling | `references/packages-and-repos.md` |
 | systemd units, timers, journal, overrides | `references/systemd-and-journal.md` |
 | GRUB, kernel, initramfs, EFI, recovery | `references/boot-kernel-and-recovery.md` |
 | Ubuntu HWE, release upgrades, Debian lanes, Mint/Pop/Devuan/Kali specifics | `references/derivatives-and-hwe.md` |
@@ -194,7 +194,7 @@ point upgrade.
 | GPU drivers, Vulkan, Steam, Proton, gaming | `references/graphics-and-gaming.md` |
 | OBS, WebRTC, screen sharing, virtual cameras | `references/capture-and-sharing.md` |
 | ext4, Btrfs, LUKS, LVM, TRIM, hibernation | `references/storage-and-rollback.md` |
-| AppArmor, unattended-upgrades, debian-security | `references/security-and-updates.md` |
+| AppArmor denials, unattended-upgrades status | `references/security-and-updates.md` |
 | Remote gaming, controllers, input | `references/remote-gaming-input-and-tooling.md` |
 | Core Linux ops commands and Debian tools | `references/base-linux-and-cli.md` |
 | Recurring Debian/Ubuntu failure patterns | `references/gotchas-and-special-situations.md` |
@@ -312,19 +312,19 @@ When a bug looks desktop-only, compare one clean baseline:
 
 ## Reference Files
 
-- `references/packages-and-repos.md` - apt workflow, dpkg, pinning, PPAs, snaps, flatpaks, `.deb` handling
+- `references/packages-and-repos.md` - apt and dpkg quick checks, broken-dependency and interrupted-install recovery, PPA safety and ppa-purge
 - `references/systemd-and-journal.md` - systemd service debugging, unit overrides, user units, journal triage
 - `references/boot-kernel-and-recovery.md` - GRUB, kernel metapackages, initramfs, EFI, recovery, and live-ISO chroot
 - `references/derivatives-and-hwe.md` - Ubuntu HWE, release upgrades, Debian lane differences, Mint, Pop!_OS, Devuan, and Kali scope notes
 - `references/desktop-audio-and-bluetooth.md` - X11 vs Wayland, GNOME, KDE, Cinnamon, COSMIC, portals, PipeWire, Bluetooth
-- `references/session-display-and-mobile.md` - GDM, SDDM, LightDM, session env, suspend/resume, power profiles, hybrid graphics
+- `references/session-display-and-mobile.md` - first-pass checks for display managers, session startup, suspend/resume, and power
 - `references/graphics-and-gaming.md` - NVIDIA, AMD, Intel, Vulkan, Steam, Proton, Gamescope, MangoHud
 - `references/capture-and-sharing.md` - OBS, WebRTC screen sharing, Discord/Teams, hardware encoding, virtual cameras
 - `references/storage-and-rollback.md` - ext4, Btrfs, LUKS, LVM, TRIM, hibernation, resume
-- `references/security-and-updates.md` - AppArmor, unattended-upgrades, debian-security, needrestart
-- `references/remote-gaming-input-and-tooling.md` - Moonlight, Sunshine, controllers, Steam Remote Play
+- `references/security-and-updates.md` - first-pass AppArmor, unattended-upgrades, and needrestart checks
+- `references/remote-gaming-input-and-tooling.md` - first-pass remote-streaming and controller input checks
 - `references/base-linux-and-cli.md` - core Linux inspection commands and Debian tools such as `update-alternatives`
-- `references/gotchas-and-special-situations.md` - recurring Debian/Ubuntu failure patterns and edge cases
+- `references/gotchas-and-special-situations.md` - short checklist of recurring Debian/Ubuntu failure patterns
 
 ---
 

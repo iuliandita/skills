@@ -108,24 +108,37 @@ Two popular approaches:
 
 ### btrfs snapshot-wipe example
 
-Check which initrd the host uses first. With systemd initrd
-(`boot.initrd.systemd.enable = true;`) the scripted hooks below are rejected outright, and the
-wipe has to be a `boot.initrd.systemd.services.<name>` unit ordered before
-`sysroot.mount`. The scripted-initrd form is:
+Since NixOS 26.05 stage 1 is systemd-based by default, and scripted stage 1 is removed in
+26.11. Scripted hooks (`postDeviceCommands`, `postResumeCommands`) are rejected under systemd
+initrd, so the wipe is a `boot.initrd.systemd.services.<name>` unit ordered before
+`sysroot.mount`:
 
 ```nix
-# early in scripted initrd; postResumeCommands runs after any hibernation resume,
-# so it does not destroy the resume image the way postDeviceCommands can
-boot.initrd.postResumeCommands = lib.mkAfter ''
-  mkdir -p /mnt
-  mount -o subvol=/ /dev/mapper/cryptroot /mnt
-  btrfs subvolume list -o /mnt/root | cut -f9 -d' ' | \
-    while read sub; do btrfs subvolume delete "/mnt/$sub"; done
-  btrfs subvolume delete /mnt/root
-  btrfs subvolume snapshot /mnt/root-blank /mnt/root
-  umount /mnt
-'';
+boot.initrd.systemd.services.rollback-root = {
+  description = "Reset btrfs root subvolume to the blank snapshot";
+  wantedBy = [ "initrd.target" ];
+  requires = [ "dev-mapper-cryptroot.device" ];
+  # local-fs-pre.target: let a hibernation resume finish before touching data
+  after = [ "dev-mapper-cryptroot.device" "local-fs-pre.target" ];
+  before = [ "sysroot.mount" ];
+  unitConfig.DefaultDependencies = false;
+  serviceConfig.Type = "oneshot";
+  script = ''
+    mkdir -p /mnt
+    mount -o subvol=/ /dev/mapper/cryptroot /mnt
+    btrfs subvolume list -o /mnt/root | cut -f9 -d' ' | \
+      while read sub; do btrfs subvolume delete "/mnt/$sub"; done
+    btrfs subvolume delete /mnt/root
+    btrfs subvolume snapshot /mnt/root-blank /mnt/root
+    umount /mnt
+  '';
+};
 ```
+
+The device unit is the escaped path (`systemd-escape -p --suffix=device /dev/mapper/cryptroot`);
+with a `{ utils, ... }` module argument, `"${utils.escapeSystemdPath "/dev/mapper/cryptroot"}.device"`
+avoids hand-escaping. Pre-26.05 hosts with scripted initrd ran the same script body via
+`boot.initrd.postResumeCommands = lib.mkAfter ''...''`; that path does not exist in 26.11.
 
 (Create `/root-blank` once after the first install:
 `btrfs subvolume snapshot -r /mnt/root /mnt/root-blank`.)

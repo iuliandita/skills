@@ -10,7 +10,7 @@ Use this reference when the straightforward path failed and the system still loo
 - runtime `firewalld` fix never made permanent
 - Oracle Linux issue caused by UEK assumptions
 - Amazon Linux issue caused by treating AL2023 like generic RHEL 9
-- module stream mismatch causing solver chaos
+- module stream mismatch causing solver chaos (RHEL 8/9 lanes)
 - akmods or DKMS drift after a kernel update
 - Secure Boot blocking third-party kernel modules
 - cloud image missing tools that a full install would have

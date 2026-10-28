@@ -39,7 +39,7 @@ Use this reference when the distro family matters more than the package name.
 - AWS-shaped distro, not generic clone behavior
 - cloud-init and image defaults matter a lot
 - package naming and repo expectations can differ from RHEL examples
-- separate AL2023 from old Amazon Linux 2 advice before doing anything else
+- separate AL2023 from Amazon Linux 2 advice first; AL2 reached end of support 2026-06-30
 
 ## Rule of thumb
 

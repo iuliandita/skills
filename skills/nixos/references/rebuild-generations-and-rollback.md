@@ -57,7 +57,6 @@ behavior is the same for 95% of workflows, but internal tracing and some edge fl
 --no-reexec                # do not reexec into the new nixos-rebuild
 --rollback                 # revert to previous generation (then reboot for boot changes)
 --upgrade                  # bump channels before rebuild (channels only)
---fast                     # skip nix channel update and some sanity checks
 --target-host user@host    # deploy to a remote machine (SSH)
 --build-host user@host     # build on a remote, activate locally
 ```
