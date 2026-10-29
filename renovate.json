@@ -49,16 +49,6 @@
       "groupName": "markdownlint",
       "semanticCommitType": "deps",
       "semanticCommitScope": "ci"
-    },
-    {
-      "matchUpdateTypes": [
-        "minor",
-        "patch",
-        "pin",
-        "digest"
-      ],
-      "automerge": true,
-      "platformAutomerge": false
     }
   ]
 }
