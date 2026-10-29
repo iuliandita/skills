@@ -1,8 +1,11 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
+All notable changes to this project are documented in this file.
+The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [2.7.1](https://github.com/iuliandita/skills/compare/v2.7.0...v2.7.1) (2026-10-28)
+## [Unreleased]
+
+## [2.7.1] - 2026-10-28
 
 ### Bug Fixes
 
@@ -12,7 +15,7 @@ All notable changes to this project will be documented in this file.
 
 * lint, contract checks and the installer start far fewer subprocesses: `lint-skills.sh` 20.5 s to 10.9 s, `install.sh --check` 1.41 s to 0.27 s, with identical output ([#357](https://github.com/iuliandita/skills/pull/357), [#308](https://github.com/iuliandita/skills/issues/308)).
 
-## [2.7.0](https://github.com/iuliandita/skills/compare/v2.6.4...v2.7.0) (2026-10-28)
+## [2.7.0] - 2026-10-28
 
 ### Features
 
@@ -25,7 +28,7 @@ All notable changes to this project will be documented in this file.
 * **skills:** update-docs resolves roadmap versions to existing tags with or without `v`; repo-audit exhaustive runs write dated DEEP-AUDIT files and stay read-only; skill-refiner, skill-creator and prompt-generator instructions run as written and match the output contract ([#317](https://github.com/iuliandita/skills/pull/317), [#301](https://github.com/iuliandita/skills/issues/301)).
 * **ci:** docs-impact, deep-audit coverage and version-receipt checks no longer pass on wrong matches; audit coverage is derived from `detect.sh` ([#324](https://github.com/iuliandita/skills/pull/324)).
 
-## [2.6.4](https://github.com/iuliandita/skills/compare/v2.6.3...v2.6.4) (2026-10-28)
+## [2.6.4] - 2026-10-28
 
 ### Bug Fixes
 
@@ -48,7 +51,7 @@ All notable changes to this project will be documented in this file.
 * **performance-debugging:** correct the py-spy and dotnet-trace duration flags ([#339](https://github.com/iuliandita/skills/pull/339), [#307](https://github.com/iuliandita/skills/issues/307)).
 * **ci-cd:** pin the current actions/checkout, Docker image tags and runner version, and note the runner auto-update caveat ([#340](https://github.com/iuliandita/skills/pull/340), [#307](https://github.com/iuliandita/skills/issues/307)).
 
-## [2.6.3](https://github.com/iuliandita/skills/compare/v2.6.2...v2.6.3) (2026-10-28)
+## [2.6.3] - 2026-10-28
 
 ### Bug Fixes
 
@@ -65,13 +68,13 @@ All notable changes to this project will be documented in this file.
 * **ci:** guard the helper scripts the gates run ([#313](https://github.com/iuliandita/skills/pull/313), [#296](https://github.com/iuliandita/skills/issues/296)).
 * **docs:** add contributor, reporting and documentation entry points, and check cumulative documentation impact at release ([#291](https://github.com/iuliandita/skills/pull/291), [#289](https://github.com/iuliandita/skills/issues/289), [#290](https://github.com/iuliandita/skills/issues/290)).
 
-## [2.6.2](https://github.com/iuliandita/skills/compare/v2.6.1...v2.6.2) (2026-10-12)
+## [2.6.2] - 2026-10-12
 
 ### Bug Fixes
 
 * **testing:** keep suites proportional to the change: the testing skill now sizes tests to the change (one per behavior, parametrized variants, none for glue, config, or framework-guaranteed behavior), treats coverage gates as guidance rather than a reason to add tests, and makes TDD optional; code-simplification reports test bloat as a safe reduction without proposing new tests; dev-cycle, ci-cd, ansible, terraform, and repo-audit wording follows ([#281](https://github.com/iuliandita/skills/pull/281), [#280](https://github.com/iuliandita/skills/issues/280)).
 
-## [2.6.1](https://github.com/iuliandita/skills/compare/v2.6.0...v2.6.1) (2026-10-09)
+## [2.6.1] - 2026-10-09
 
 ### Bug Fixes
 
@@ -83,7 +86,7 @@ All notable changes to this project will be documented in this file.
 * **ci:** bump markdownlint-cli2 from 0.22.0 to 0.23.3 ([#274](https://github.com/iuliandita/skills/pull/274)).
 * **ci:** bump lychee from 0.23.0 to 0.24.2 and follow its new release archive layout ([#278](https://github.com/iuliandita/skills/pull/278), [#277](https://github.com/iuliandita/skills/issues/277)).
 
-## [2.6.0](https://github.com/iuliandita/skills/compare/v2.5.2...v2.6.0) (2026-10-08)
+## [2.6.0] - 2026-10-08
 
 ### Features
 
@@ -95,14 +98,14 @@ All notable changes to this project will be documented in this file.
 * **skills:** retire the 19 v2 old-name migration notices after the transition window. Updating the collection does not remove stale local copies of old names; migrate them with the steps in [MIGRATION.md](https://github.com/iuliandita/skills/blob/main/MIGRATION.md) ([#265](https://github.com/iuliandita/skills/pull/265), [#203](https://github.com/iuliandita/skills/issues/203)).
 * **vulnerability-research:** bump the Semgrep pin to 1.180.0 ([#264](https://github.com/iuliandita/skills/pull/264), [#241](https://github.com/iuliandita/skills/issues/241)).
 
-## [2.5.2](https://github.com/iuliandita/skills/compare/v2.5.1...v2.5.2) (2026-10-08)
+## [2.5.2] - 2026-10-08
 
 ### Bug Fixes
 
 * **llm-app-development:** add Haiku 5.5 (`claude-haiku-5-5`) as the current fast Anthropic tier with its pricing, limits, effort levels, and breaking changes from Haiku 4.5; mark Haiku 4.5 superseded and retiring; move the low-cost classifier example to Haiku 5.5; add Haiku 5.5 prompting caveats to prompt-generator and a migration test case to skill-refiner ([#260](https://github.com/iuliandita/skills/pull/260), [#259](https://github.com/iuliandita/skills/issues/259)).
 * **scripts:** skip gitignored local skills in the contract-sync check and generator, so private skills no longer fail the commit hooks or receive generated files ([#262](https://github.com/iuliandita/skills/pull/262), [#261](https://github.com/iuliandita/skills/issues/261)).
 
-## [2.5.1](https://github.com/iuliandita/skills/compare/v2.5.0...v2.5.1) (2026-10-03)
+## [2.5.1] - 2026-10-03
 
 ### Refactoring
 
@@ -113,7 +116,7 @@ All notable changes to this project will be documented in this file.
 * **skills:** fix issues found by independent review: restore dev-cycle release-authorization and first-release rules, the repo-audit tracked-artifact stop, and the databases bulk-write atomicity rule; correct the rhel rescue-chroot dracut target, the debian third-party source step, the pg_restore rehearsal claim, and the Proxmox PCI mapping command (missing required `id`); fix synology-dsm stating DSM 7.4 had no fix release ([#255](https://github.com/iuliandita/skills/pull/255)).
 * **skills:** align reference facts with verified sources: Kali deb822 sources since 2026.2, dnf5 system-upgrade with the DNF4 path kept, Harden-Runner v2.21.1, Nix 2.35.2, docker runc 1.4.0 and BuildKit 0.33.1 floors, and the CachyOS mirror tool; bind the llama-server example to loopback ([#255](https://github.com/iuliandita/skills/pull/255)).
 
-## [2.5.0](https://github.com/iuliandita/skills/compare/v2.4.0...v2.5.0) (2026-10-03)
+## [2.5.0] - 2026-10-03
 
 ### Features
 
@@ -123,7 +126,7 @@ All notable changes to this project will be documented in this file.
 
 * **skills:** refresh version markers to October 2026 after re-verifying pins, support windows, model IDs, and advisory floors; correct drifted facts (mkinitcpio 42.2, bpg/proxmox 0.115.0, Python `mcp` 2.3.0, Claude Agent SDK 0.3.288, Transformers PyTorch 2.5+ floor, Docker Desktop 4.62.0 floor for CVE-2026-28400, BuildKit 0.33.1 action floor, go-archive and ProxySQL advisory ranges, Caddy advisory fix version) and mark unconfirmable claims as unverified ([#249](https://github.com/iuliandita/skills/pull/249)).
 
-## [2.4.0](https://github.com/iuliandita/skills/compare/v2.3.0...v2.4.0) (2026-09-30)
+## [2.4.0] - 2026-09-30
 
 ### Features
 
@@ -133,7 +136,7 @@ All notable changes to this project will be documented in this file.
 
 * **llm:** send supported raw Anthropic schemas and validate domain constraints in application code; handle refusals, incomplete responses, invalid labels, and missing or unexpected tool calls; add executable checks for the Markdown examples ([#246](https://github.com/iuliandita/skills/pull/246), [#244](https://github.com/iuliandita/skills/issues/244)).
 
-## [2.3.0](https://github.com/iuliandita/skills/compare/v2.2.1...v2.3.0) (2026-09-25)
+## [2.3.0] - 2026-09-25
 
 ### Features
 
@@ -145,14 +148,14 @@ All notable changes to this project will be documented in this file.
 * **skills:** resolve contradictory instructions in nixos, debug-triage, terraform, kubernetes, ci-cd (Gitea Runner rename), and dev-cycle ([#238](https://github.com/iuliandita/skills/pull/238), [#234](https://github.com/iuliandita/skills/issues/234)).
 * **skills:** skill-refiner resolves helper scripts from `SKILL_REFINER_GATE_DIR` and records them unavailable when absent; fix severity markers, MCP detection for split SDK packages and Python `mcp`, and ownership conflicts in skill-creator, roadmap, update-docs, repo-audit, anti-ai-prose, and plan-review ([#239](https://github.com/iuliandita/skills/pull/239), [#235](https://github.com/iuliandita/skills/issues/235)).
 
-## [2.2.1](https://github.com/iuliandita/skills/compare/v2.2.0...v2.2.1) (2026-09-24)
+## [2.2.1] - 2026-09-24
 
 ### Bug Fixes
 
 * **install:** report up-to-date skills as `[=] <skill> current` instead of asking for `--force`; copies that differ or cannot be verified are reported as such and never published to the lock file ([#230](https://github.com/iuliandita/skills/pull/230), [#229](https://github.com/iuliandita/skills/issues/229)).
 * **migrate:** atomically publish each replacement skill and lock-file update, back up and retire legacy entries, and resume interrupted migration runs. `install.sh --migrate --apply` now requires `flock` and holds the installer lock through recovery ([#231](https://github.com/iuliandita/skills/pull/231), [#224](https://github.com/iuliandita/skills/issues/224)).
 
-## [2.2.0](https://github.com/iuliandita/skills/compare/v2.1.1...v2.2.0) (2026-09-24)
+## [2.2.0] - 2026-09-24
 
 ### Features
 
@@ -164,7 +167,7 @@ All notable changes to this project will be documented in this file.
 * **install:** stage, record, and roll back skill replacements under a shared lock when `flock` is available, recover interrupted runs, write the lock file and OpenCode config atomically, and exit non-zero whenever a step fails ([#225](https://github.com/iuliandita/skills/pull/225), [#223](https://github.com/iuliandita/skills/issues/223)).
 * **install:** make `--doctor` lead with blocking findings and collapse overlaps the harness resolves itself into counts, with `--verbose` for the full list ([#222](https://github.com/iuliandita/skills/pull/222), [#221](https://github.com/iuliandita/skills/issues/221)).
 
-## [2.1.1](https://github.com/iuliandita/skills/compare/v2.1.0...v2.1.1) (2026-09-24)
+## [2.1.1] - 2026-09-24
 
 ### Bug Fixes
 
@@ -176,7 +179,7 @@ All notable changes to this project will be documented in this file.
 
 * **install, lint:** parse skill frontmatter once per run and skip per-line forks in lint; a docs-only pre-push went from about 6 minutes to 25 seconds, and the installer tests run on pre-push only when installer files change ([#217](https://github.com/iuliandita/skills/pull/217), [#209](https://github.com/iuliandita/skills/issues/209), [#216](https://github.com/iuliandita/skills/issues/216)).
 
-## [2.1.0](https://github.com/iuliandita/skills/compare/v2.0.1...v2.1.0) (2026-09-24)
+## [2.1.0] - 2026-09-24
 
 ### Features
 
@@ -189,7 +192,7 @@ All notable changes to this project will be documented in this file.
 * **skill-refiner:** refresh harness detection for Antigravity, Command Code, Oh My Pi, Hermes, and OpenCode, with updated headless forms, recorded probe results, and exact process-name matching ([#206](https://github.com/iuliandita/skills/pull/206), [#199](https://github.com/iuliandita/skills/issues/199)).
 * **dev-cycle:** pass explicit conventional squash subjects and bodies per forge, and allow start through finish in one session on explicit request ([#208](https://github.com/iuliandita/skills/pull/208), [#201](https://github.com/iuliandita/skills/issues/201)).
 
-## [2.0.1](https://github.com/iuliandita/skills/compare/v2.0.0...v2.0.1) (2026-09-20)
+## [2.0.1] - 2026-09-20
 
 ### Bug Fixes
 
@@ -197,7 +200,7 @@ All notable changes to this project will be documented in this file.
 * **skills:** correct platform recipes and active routing; align workload probes, package operations, backup policy, locale loading, and workflow deliverables ([#196](https://github.com/iuliandita/skills/pull/196)).
 * **skill-refiner:** correct the active Kali routing test, require complete-read provenance and valid per-case grades, clarify review checkpoints, and record the v2 collection sweep ([#196](https://github.com/iuliandita/skills/pull/196)).
 
-## [2.0.0](https://github.com/iuliandita/skills/compare/v1.46.0...v2.0.0) (2026-09-20)
+## [2.0.0] - 2026-09-20
 
 ### Breaking Changes
 
@@ -216,13 +219,13 @@ All notable changes to this project will be documented in this file.
 * Harden migration hashing, moved-checkout updates, shared link preservation, backup destinations, and replacement permission synchronization ([#191](https://github.com/iuliandita/skills/pull/191)).
 
 
-## [1.46.0](https://github.com/iuliandita/skills/compare/v1.45.8...v1.46.0) (2026-09-17)
+## [1.46.0] - 2026-09-17
 
 ### Features
 
 * **install:** support the Command Code target (`~/.commandcode/skills`) and the `agy` alias for Antigravity, add the `command-code` and `cmdc` aliases, and fix the Antigravity skills path to `~/.gemini/config/skills` based on the `agy` CLI's documented global discovery ([#188](https://github.com/iuliandita/skills/pull/188)).
 
-## [1.45.8](https://github.com/iuliandita/skills/compare/v1.45.7...v1.45.8) (2026-09-17)
+## [1.45.8] - 2026-09-17
 
 ### Bug Fixes
 
@@ -230,7 +233,7 @@ All notable changes to this project will be documented in this file.
 * **skill-creator, skill-refiner, skill-router:** fix meta-skill defects found in review - the plateau boundary against the 2-point noise floor, the structural-gate re-score wording, a self-contradictory audit example, and the `allowed-tools` separator ([#186](https://github.com/iuliandita/skills/pull/186)).
 * **dev-cycle:** tolerate suffixless remotes in the Gitea run-lister and record the 2026-09-17 skill-refiner run in the ledger ([#186](https://github.com/iuliandita/skills/pull/186)).
 
-## [1.45.7](https://github.com/iuliandita/skills/compare/v1.45.6...v1.45.7) (2026-09-17)
+## [1.45.7] - 2026-09-17
 
 ### Bug Fixes
 
@@ -240,27 +243,27 @@ All notable changes to this project will be documented in this file.
 * **skill-refiner:** make peer review independent and attested, freeze the test oracle, and treat candidate content as data ([#180](https://github.com/iuliandita/skills/pull/180), [#181](https://github.com/iuliandita/skills/pull/181)).
 * **skill-refiner:** portability, focus-mode regression sweep, run-history retention, and a zero-skill validation guard ([#182](https://github.com/iuliandita/skills/pull/182), [#184](https://github.com/iuliandita/skills/pull/184)).
 
-## [1.45.6](https://github.com/iuliandita/skills/compare/v1.45.5...v1.45.6) (2026-09-10)
+## [1.45.6] - 2026-09-10
 
 ### Bug Fixes
 
 * **skills:** correct reference inaccuracies and behavioral gaps found by a third fresh-context refinement pass - Helm nil-value and QoS guidance, Terraform cross-variable validation and Checkov policy IDs, LVM thin-pool and Proxmox disk-resize semantics, ansible Galaxy token handling, NixOS systemd-initrd impermanence, and the deep-audit wave-3 list ([#153](https://github.com/iuliandita/skills/pull/153)).
 * **skill-creator, skill-refiner:** complete the deferred meta-improvement - correct LVM interpretation, scope reserved words to the platform, realistic routing-overlap and audience-led compliance, qualitative effort tiers, a hardened harness probe, and reconciled requested-round and simplicity rules ([#153](https://github.com/iuliandita/skills/pull/153)).
 
-## [1.45.5](https://github.com/iuliandita/skills/compare/v1.45.4...v1.45.5) (2026-09-10)
+## [1.45.5] - 2026-09-10
 
 ### Bug Fixes
 
 * **skills:** shorten descriptions, scope verification to the change, refresh September references, and correct shell, API, backup, infrastructure, prose, and audit guidance ([#151](https://github.com/iuliandita/skills/pull/151)).
 * **skill-refiner:** record two collection refinement rounds and retain remaining deductions; iteration 3 and meta-skill changes are deferred in [#150](https://github.com/iuliandita/skills/issues/150).
 
-## [1.45.4](https://github.com/iuliandita/skills/compare/v1.45.3...v1.45.4) (2026-09-09)
+## [1.45.4] - 2026-09-09
 
 ### Bug Fixes
 
 * **frontend-design:** ground visual direction in the brief, preserve brand choices, keep concise opinionated critiques, and correct theme and gesture examples ([#138](https://github.com/iuliandita/skills/pull/138)).
 
-## [1.45.3](https://github.com/iuliandita/skills/compare/v1.45.2...v1.45.3) (2026-09-08)
+## [1.45.3] - 2026-09-08
 
 ### Bug Fixes
 
@@ -268,28 +271,28 @@ All notable changes to this project will be documented in this file.
 * **ai-ml:** document model migration constraints and provide a Responses API example.
 * **skill-refiner:** verify reviewer model identity, apply review deductions before keeping changes, and expand behavioral coverage.
 
-## [1.45.2](https://github.com/iuliandita/skills/compare/v1.45.1...v1.45.2) (2026-09-04)
+## [1.45.2] - 2026-09-04
 
 
 ### Bug Fixes
 
 * **skills:** refresh September guidance and quality gates ([#131](https://github.com/iuliandita/skills/issues/131)) ([ccfce41](https://github.com/iuliandita/skills/commit/ccfce41274122bd06f27708bf73bdb89ecb44dd0))
 
-## [1.45.1](https://github.com/iuliandita/skills/compare/v1.45.0...v1.45.1) (2026-08-19)
+## [1.45.1] - 2026-08-19
 
 
 ### Bug Fixes
 
 * **skill-refiner:** consolidate split run history, harden CI ([#127](https://github.com/iuliandita/skills/issues/127)) ([aae1ce6](https://github.com/iuliandita/skills/commit/aae1ce6335d11829bc696043e9e28a6484057791))
 
-## [1.45.0](https://github.com/iuliandita/skills/compare/v1.44.0...v1.45.0) (2026-08-19)
+## [1.45.0] - 2026-08-19
 
 
 ### Features
 
 * **anti-ai-prose:** add inline mode and fold in unslop rules ([#126](https://github.com/iuliandita/skills/issues/126)) ([d3b3be3](https://github.com/iuliandita/skills/commit/d3b3be36fe64f594beb186495ab671f1cdf5c7f0))
 
-## [1.44.0](https://github.com/iuliandita/skills/compare/v1.43.0...v1.44.0) (2026-07-29)
+## [1.44.0] - 2026-07-29
 
 
 ### Features
@@ -315,21 +318,21 @@ All notable changes to this project will be documented in this file.
 * **skills:** drop injected generic self-check items ([4786b50](https://github.com/iuliandita/skills/commit/4786b50f74724e1cb31be86343f88723838e475b))
 * **scripts:** drop unused output-contract back-compat wrappers ([286529b](https://github.com/iuliandita/skills/commit/286529b332e715748a1f1d5a3e2c5d553978acea))
 
-## [1.43.0](https://github.com/iuliandita/skills/compare/v1.42.2...v1.43.0) (2026-07-27)
+## [1.43.0] - 2026-07-27
 
 
 ### Features
 
 * **synology-dsm:** add Synology DSM administration and btrfs recovery skill ([#118](https://github.com/iuliandita/skills/issues/118)) ([8857174](https://github.com/iuliandita/skills/commit/8857174))
 
-## [1.42.2](https://github.com/iuliandita/skills/compare/v1.42.1...v1.42.2) (2026-07-22)
+## [1.42.2] - 2026-07-22
 
 
 ### Bug Fixes
 
 * **virtualization:** validate Packer examples ([#116](https://github.com/iuliandita/skills/issues/116)) ([6d2eabc](https://github.com/iuliandita/skills/commit/6d2eabca54c9a8581c4ba0fd1d5297dde6aaf454))
 
-## [1.42.1](https://github.com/iuliandita/skills/compare/v1.42.0...v1.42.1) (2026-07-22)
+## [1.42.1] - 2026-07-22
 
 
 ### Bug Fixes
@@ -337,21 +340,21 @@ All notable changes to this project will be documented in this file.
 * **skills:** refresh July versions and advisories ([#107](https://github.com/iuliandita/skills/issues/107)) ([99f7e84](https://github.com/iuliandita/skills/commit/99f7e84))
 * **skills:** resolve collection-wide safety and behavioral gaps ([#112](https://github.com/iuliandita/skills/issues/112)) ([d313b9e](https://github.com/iuliandita/skills/commit/d313b9e))
 
-## [1.42.0](https://github.com/iuliandita/skills/compare/v1.41.0...v1.42.0) (2026-07-13)
+## [1.42.0] - 2026-07-13
 
 
 ### Features
 
 * **deep-grill:** four-outcome model, fog test, fuzzy-term and prototype moves ([#104](https://github.com/iuliandita/skills/issues/104)) ([248322d](https://github.com/iuliandita/skills/commit/248322d))
 
-## [1.41.0](https://github.com/iuliandita/skills/compare/v1.40.0...v1.41.0) (2026-07-12)
+## [1.41.0] - 2026-07-12
 
 
 ### Features
 
 * **code-slimming:** superseded code, leftover files, and AI-bloat shapes ([#102](https://github.com/iuliandita/skills/issues/102)) ([c5fbd94](https://github.com/iuliandita/skills/commit/c5fbd94))
 
-## [1.40.0](https://github.com/iuliandita/skills/compare/v1.39.0...v1.40.0) (2026-06-25)
+## [1.40.0] - 2026-06-25
 
 
 ### Features
@@ -364,7 +367,7 @@ All notable changes to this project will be documented in this file.
 
 * **code-slimming:** reconcile review inconsistencies + refiner polish ([#100](https://github.com/iuliandita/skills/issues/100)) ([57a61ae](https://github.com/iuliandita/skills/commit/57a61aec67facbfb98b4086d1ff55fa087dacef1))
 
-## [1.39.0](https://github.com/iuliandita/skills/compare/v1.38.1...v1.39.0) (2026-06-14)
+## [1.39.0] - 2026-06-14
 
 
 ### Features
@@ -372,7 +375,7 @@ All notable changes to this project will be documented in this file.
 * **debug-triage:** add live-incident layer-localization skill ([#96](https://github.com/iuliandita/skills/issues/96)) ([e08b95d](https://github.com/iuliandita/skills/commit/e08b95d102200305012eeda6583f3a012b667b9e))
 * **observability:** add observability/SRE skill as deep-audit Wave 3 lens ([#93](https://github.com/iuliandita/skills/issues/93)) ([839928d](https://github.com/iuliandita/skills/commit/839928d7ea6eeebb46ca2ff4081574fbc7a6dbda))
 
-## [1.38.1](https://github.com/iuliandita/skills/compare/v1.38.0...v1.38.1) (2026-06-14)
+## [1.38.1] - 2026-06-14
 
 
 ### Bug Fixes
@@ -384,7 +387,7 @@ All notable changes to this project will be documented in this file.
 
 * **scripts:** share name and length checks via skill-lib ([d370ab9](https://github.com/iuliandita/skills/commit/d370ab9acd99a8617d58951ff9bb7ea2d4cf3636))
 
-## [1.38.0](https://github.com/iuliandita/skills/compare/v1.37.0...v1.38.0) (2026-06-14)
+## [1.38.0] - 2026-06-14
 
 
 ### Features
@@ -398,14 +401,14 @@ All notable changes to this project will be documented in this file.
 * **skills:** refine handoff after review (commit path, deferred slot, secrets) ([#84](https://github.com/iuliandita/skills/issues/84)) ([4306da3](https://github.com/iuliandita/skills/commit/4306da3ca67457b6ec45073cd94a6425048ecc49))
 * **skills:** sharpen full-review vs deep-audit routing separation ([#86](https://github.com/iuliandita/skills/issues/86)) ([9602e91](https://github.com/iuliandita/skills/commit/9602e91d6fa35544d4d4052d19f6ae06a0664abb))
 
-## [1.37.0](https://github.com/iuliandita/skills/compare/v1.36.0...v1.37.0) (2026-06-13)
+## [1.37.0] - 2026-06-13
 
 
 ### Features
 
 * **skills:** add deep-grill plan interrogator skill ([#79](https://github.com/iuliandita/skills/issues/79)) ([bd5a9f7](https://github.com/iuliandita/skills/commit/bd5a9f7e1658292164d27aaa58216b75041278d0))
 
-## [1.36.0](https://github.com/iuliandita/skills/compare/v1.35.0...v1.36.0) (2026-05-29)
+## [1.36.0] - 2026-05-29
 
 
 ### Features
@@ -419,21 +422,21 @@ All notable changes to this project will be documented in this file.
 * **skills:** refresh CVE/advisory references with recent 2026 incidents ([#76](https://github.com/iuliandita/skills/issues/76)) ([09a8254](https://github.com/iuliandita/skills/commit/09a82548bac517998ddd4de435a89a50435ad546))
 * **skills:** refresh stale version pins in databases, ansible, git ([#73](https://github.com/iuliandita/skills/issues/73)) ([3add86a](https://github.com/iuliandita/skills/commit/3add86a5bcbcc598e3e310e5e08c48cedb3f7313))
 
-## [1.35.0](https://github.com/iuliandita/skills/compare/v1.34.1...v1.35.0) (2026-05-28)
+## [1.35.0] - 2026-05-28
 
 
 ### Features
 
 * **skills:** deep-audit remediation - model/version/CVE refresh and contract fixes ([#71](https://github.com/iuliandita/skills/issues/71)) ([3d87ef9](https://github.com/iuliandita/skills/commit/3d87ef9561e37dae62810261aff375da019d530b))
 
-## [1.34.1](https://github.com/iuliandita/skills/compare/v1.34.0...v1.34.1) (2026-05-28)
+## [1.34.1] - 2026-05-28
 
 
 ### Refactoring
 
 * **skills:** finish severity migration and harden self-checks ([9793e1c](https://github.com/iuliandita/skills/commit/9793e1cb0b4b4d8b508b1553aecaeb38408937a1))
 
-## [1.34.0](https://github.com/iuliandita/skills/compare/v1.33.1...v1.34.0) (2026-05-18)
+## [1.34.0] - 2026-05-18
 
 
 ### Features
@@ -445,7 +448,7 @@ All notable changes to this project will be documented in this file.
 
 * **skills:** refresh audit and supply-chain guidance ([3e92070](https://github.com/iuliandita/skills/commit/3e92070bd330ed55692f799a91a47c4576d24ea5))
 
-## [1.33.1](https://github.com/iuliandita/skills/compare/v1.33.0...v1.33.1) (2026-05-03)
+## [1.33.1] - 2026-05-03
 
 
 ### Bug Fixes
@@ -457,63 +460,63 @@ All notable changes to this project will be documented in this file.
 
 * **skills:** polish audit quality gates ([62a6324](https://github.com/iuliandita/skills/commit/62a632479f35c3652f1222d52d211dd6db3d084f))
 
-## [1.33.0](https://github.com/iuliandita/skills/compare/v1.32.2...v1.33.0) (2026-05-03)
+## [1.33.0] - 2026-05-03
 
 
 ### Features
 
 * **skills:** standardize output contract across all 42 skills ([16aaf12](https://github.com/iuliandita/skills/commit/16aaf12030fc0b609a06a1461c3d0e5337f3a5e0))
 
-## [1.32.2](https://github.com/iuliandita/skills/compare/v1.32.1...v1.32.2) (2026-05-02)
+## [1.32.2] - 2026-05-02
 
 
 ### Bug Fixes
 
 * **installer:** harden skill audit workflow ([2c9ed53](https://github.com/iuliandita/skills/commit/2c9ed538229935483f47ed9c6ec24beaddfb1f3f))
 
-## [1.32.1](https://github.com/iuliandita/skills/compare/v1.32.0...v1.32.1) (2026-05-02)
+## [1.32.1] - 2026-05-02
 
 
 ### Refactoring
 
 * **skills:** consolidate narrow references ([b4745e8](https://github.com/iuliandita/skills/commit/b4745e86989567ee581d69d410c7fe06fc0853b1))
 
-## [1.32.0](https://github.com/iuliandita/skills/compare/v1.31.1...v1.32.0) (2026-05-02)
+## [1.32.0] - 2026-05-02
 
 
 ### Features
 
 * add code slimming skill ([65da7df](https://github.com/iuliandita/skills/commit/65da7dfa1344a0184d1547f5ff77d41b5f1e944a))
 
-## [1.31.1](https://github.com/iuliandita/skills/compare/v1.31.0...v1.31.1) (2026-05-01)
+## [1.31.1] - 2026-05-01
 
 
 ### Documentation
 
 * **skills:** salvage workflow guidance ([a57c933](https://github.com/iuliandita/skills/commit/a57c9333f69eb7d4b73ed1294b367989ac05cc03))
 
-## [1.31.0](https://github.com/iuliandita/skills/compare/v1.30.1...v1.31.0) (2026-05-01)
+## [1.31.0] - 2026-05-01
 
 
 ### Features
 
 * **skills:** grow discovery and publish cluster health ([ada8247](https://github.com/iuliandita/skills/commit/ada8247bd8312d73add0437784fa704fcbc36dd0))
 
-## [1.30.1](https://github.com/iuliandita/skills/compare/v1.30.0...v1.30.1) (2026-04-30)
+## [1.30.1] - 2026-04-30
 
 
 ### Refactoring
 
 * refresh collection quality checks ([275a775](https://github.com/iuliandita/skills/commit/275a775b564c581a5142465399ededc033214f88))
 
-## [1.30.0](https://github.com/iuliandita/skills/compare/v1.29.0...v1.30.0) (2026-04-30)
+## [1.30.0] - 2026-04-30
 
 
 ### Features
 
 * refresh skills for May 2026 ([6f524bc](https://github.com/iuliandita/skills/commit/6f524bc81bf44072309f306c30a2b95f02c348e5))
 
-## [1.29.0](https://github.com/iuliandita/skills/compare/v1.28.1...v1.29.0) (2026-04-28)
+## [1.29.0] - 2026-04-28
 
 
 ### Features
@@ -521,21 +524,21 @@ All notable changes to this project will be documented in this file.
 * **frontend-design:** add opinionated UI/UX persona skill ([#41](https://github.com/iuliandita/skills/issues/41)) ([d00cd77](https://github.com/iuliandita/skills/commit/d00cd77877dc4083f8a473ffc4489bec126c9eab))
 * **jekyll-hyde:** add dual-lens advisor skill ([#43](https://github.com/iuliandita/skills/issues/43)) ([8192e5f](https://github.com/iuliandita/skills/commit/8192e5f306569de5835f17fe5eae8632d93c7c65))
 
-## [1.28.1](https://github.com/iuliandita/skills/compare/v1.28.0...v1.28.1) (2026-04-25)
+## [1.28.1] - 2026-04-25
 
 
 ### Bug Fixes
 
 * drop find -L in skill_hash + README narrative refresh ([f932f79](https://github.com/iuliandita/skills/commit/f932f7974114f4ece13bfc5e41807bbcbf3670cf))
 
-## [1.28.0](https://github.com/iuliandita/skills/compare/v1.27.0...v1.28.0) (2026-04-25)
+## [1.28.0] - 2026-04-25
 
 
 ### Features
 
 * **ai-ml:** llama.cpp CPU inference + collection-wide quality sweep ([#37](https://github.com/iuliandita/skills/issues/37)) ([e8a2636](https://github.com/iuliandita/skills/commit/e8a263601254082df4a0e62ca9abae1a45f73d2d))
 
-## [1.27.0](https://github.com/iuliandita/skills/compare/v1.26.2...v1.27.0) (2026-04-23)
+## [1.27.0] - 2026-04-23
 
 
 ### Features
@@ -547,42 +550,42 @@ All notable changes to this project will be documented in this file.
 
 * **installer:** include internal skills in linked installs ([ac17dbf](https://github.com/iuliandita/skills/commit/ac17dbfaeefdce270daff7dae64b060537c50e72))
 
-## [1.26.2](https://github.com/iuliandita/skills/compare/v1.26.1...v1.26.2) (2026-04-23)
+## [1.26.2] - 2026-04-23
 
 
 ### Bug Fixes
 
 * **skills:** tighten startup descriptions for Codex budget ([#32](https://github.com/iuliandita/skills/issues/32)) ([3766fb5](https://github.com/iuliandita/skills/commit/3766fb59922e6882fd7e0e079e200126829e2618))
 
-## [1.26.1](https://github.com/iuliandita/skills/compare/v1.26.0...v1.26.1) (2026-04-23)
+## [1.26.1] - 2026-04-23
 
 
 ### Bug Fixes
 
 * **routing:** wire new distro and routine skills into reference matrix ([#30](https://github.com/iuliandita/skills/issues/30)) ([6739e1f](https://github.com/iuliandita/skills/commit/6739e1f1e770c7409bbd5326548095dec3d2e19d))
 
-## [1.26.0](https://github.com/iuliandita/skills/compare/v1.25.0...v1.26.0) (2026-04-23)
+## [1.26.0] - 2026-04-23
 
 
 ### Features
 
 * **debian-ubuntu:** emphasize Ubuntu 26.04 upgrade deltas ([#28](https://github.com/iuliandita/skills/issues/28)) ([f54c73e](https://github.com/iuliandita/skills/commit/f54c73ea7eb07948f319d25125098b4e22763b4f))
 
-## [1.25.0](https://github.com/iuliandita/skills/compare/v1.24.0...v1.25.0) (2026-04-23)
+## [1.25.0] - 2026-04-23
 
 
 ### Features
 
 * **nixos-btw:** add NixOS, Nix, flakes, and nix-darwin skill ([#26](https://github.com/iuliandita/skills/issues/26)) ([e6362c4](https://github.com/iuliandita/skills/commit/e6362c4afc2a23da4843bb371ffa02c98ffe85f1))
 
-## [1.24.0](https://github.com/iuliandita/skills/compare/v1.23.0...v1.24.0) (2026-04-22)
+## [1.24.0] - 2026-04-22
 
 
 ### Features
 
 * **kali-linux:** add Kali distro admin skill ([#24](https://github.com/iuliandita/skills/issues/24)) ([4a819eb](https://github.com/iuliandita/skills/commit/4a819eba6b20a4d23cbff9e8cc8a99cdd53dd6c8))
 
-## [1.23.0](https://github.com/iuliandita/skills/compare/v1.22.0...v1.23.0) (2026-04-22)
+## [1.23.0] - 2026-04-22
 
 
 ### Features
@@ -595,14 +598,14 @@ All notable changes to this project will be documented in this file.
 
 * **skill-refiner:** 2026-04-16 run - avg 97.1 &gt; 98.0 across 32 skills ([#19](https://github.com/iuliandita/skills/issues/19)) ([e256d3f](https://github.com/iuliandita/skills/commit/e256d3fe01e12350fe19ceb7b9d55d01634acf02))
 
-## [1.22.0](https://github.com/iuliandita/skills/compare/v1.21.0...v1.22.0) (2026-04-16)
+## [1.22.0] - 2026-04-16
 
 
 ### Features
 
 * **git, ci-cd:** add forgejo-cli, Gitea/Woodpecker CI, runners, best-practices ([#17](https://github.com/iuliandita/skills/issues/17)) ([4777d3b](https://github.com/iuliandita/skills/commit/4777d3b8d793fb636c5b29d7bc09850b68079c9b))
 
-## [1.21.0](https://github.com/iuliandita/skills/compare/v1.20.0...v1.21.0) (2026-04-14)
+## [1.21.0] - 2026-04-14
 
 
 ### Features
@@ -616,8 +619,75 @@ All notable changes to this project will be documented in this file.
 * **anti-slop:** surface structural duplication findings ([#13](https://github.com/iuliandita/skills/issues/13)) ([2252cc9](https://github.com/iuliandita/skills/commit/2252cc928a390bc675a02a40a59f97236a4ba2ae))
 * **anti-slop:** tighten AI-specific smell detection ([#11](https://github.com/iuliandita/skills/issues/11)) ([ef3bbae](https://github.com/iuliandita/skills/commit/ef3bbae8b59b8c697f2072865e9637ce5718c712))
 
-## [1.20.0](https://github.com/iuliandita/skills/releases/tag/v1.20.0) (2026-04-14)
+## [1.20.0] - 2026-04-14
 
 ### Miscellaneous
 
 - Bootstrap baseline before release-please automation.
+
+[Unreleased]: https://github.com/iuliandita/skills/compare/v2.7.1...HEAD
+[2.7.1]: https://github.com/iuliandita/skills/compare/v2.7.0...v2.7.1
+[2.7.0]: https://github.com/iuliandita/skills/compare/v2.6.4...v2.7.0
+[2.6.4]: https://github.com/iuliandita/skills/compare/v2.6.3...v2.6.4
+[2.6.3]: https://github.com/iuliandita/skills/compare/v2.6.2...v2.6.3
+[2.6.2]: https://github.com/iuliandita/skills/compare/v2.6.1...v2.6.2
+[2.6.1]: https://github.com/iuliandita/skills/compare/v2.6.0...v2.6.1
+[2.6.0]: https://github.com/iuliandita/skills/compare/v2.5.2...v2.6.0
+[2.5.2]: https://github.com/iuliandita/skills/compare/v2.5.1...v2.5.2
+[2.5.1]: https://github.com/iuliandita/skills/compare/v2.5.0...v2.5.1
+[2.5.0]: https://github.com/iuliandita/skills/compare/v2.4.0...v2.5.0
+[2.4.0]: https://github.com/iuliandita/skills/compare/v2.3.0...v2.4.0
+[2.3.0]: https://github.com/iuliandita/skills/compare/v2.2.1...v2.3.0
+[2.2.1]: https://github.com/iuliandita/skills/compare/v2.2.0...v2.2.1
+[2.2.0]: https://github.com/iuliandita/skills/compare/v2.1.1...v2.2.0
+[2.1.1]: https://github.com/iuliandita/skills/compare/v2.1.0...v2.1.1
+[2.1.0]: https://github.com/iuliandita/skills/compare/v2.0.1...v2.1.0
+[2.0.1]: https://github.com/iuliandita/skills/compare/v2.0.0...v2.0.1
+[2.0.0]: https://github.com/iuliandita/skills/compare/v1.46.0...v2.0.0
+[1.46.0]: https://github.com/iuliandita/skills/compare/v1.45.8...v1.46.0
+[1.45.8]: https://github.com/iuliandita/skills/compare/v1.45.7...v1.45.8
+[1.45.7]: https://github.com/iuliandita/skills/compare/v1.45.6...v1.45.7
+[1.45.6]: https://github.com/iuliandita/skills/compare/v1.45.5...v1.45.6
+[1.45.5]: https://github.com/iuliandita/skills/compare/v1.45.4...v1.45.5
+[1.45.4]: https://github.com/iuliandita/skills/compare/v1.45.3...v1.45.4
+[1.45.3]: https://github.com/iuliandita/skills/compare/v1.45.2...v1.45.3
+[1.45.2]: https://github.com/iuliandita/skills/compare/v1.45.1...v1.45.2
+[1.45.1]: https://github.com/iuliandita/skills/compare/v1.45.0...v1.45.1
+[1.45.0]: https://github.com/iuliandita/skills/compare/v1.44.0...v1.45.0
+[1.44.0]: https://github.com/iuliandita/skills/compare/v1.43.0...v1.44.0
+[1.43.0]: https://github.com/iuliandita/skills/compare/v1.42.2...v1.43.0
+[1.42.2]: https://github.com/iuliandita/skills/compare/v1.42.1...v1.42.2
+[1.42.1]: https://github.com/iuliandita/skills/compare/v1.42.0...v1.42.1
+[1.42.0]: https://github.com/iuliandita/skills/compare/v1.41.0...v1.42.0
+[1.41.0]: https://github.com/iuliandita/skills/compare/v1.40.0...v1.41.0
+[1.40.0]: https://github.com/iuliandita/skills/compare/v1.39.0...v1.40.0
+[1.39.0]: https://github.com/iuliandita/skills/compare/v1.38.1...v1.39.0
+[1.38.1]: https://github.com/iuliandita/skills/compare/v1.38.0...v1.38.1
+[1.38.0]: https://github.com/iuliandita/skills/compare/v1.37.0...v1.38.0
+[1.37.0]: https://github.com/iuliandita/skills/compare/v1.36.0...v1.37.0
+[1.36.0]: https://github.com/iuliandita/skills/compare/v1.35.0...v1.36.0
+[1.35.0]: https://github.com/iuliandita/skills/compare/v1.34.1...v1.35.0
+[1.34.1]: https://github.com/iuliandita/skills/compare/v1.34.0...v1.34.1
+[1.34.0]: https://github.com/iuliandita/skills/compare/v1.33.1...v1.34.0
+[1.33.1]: https://github.com/iuliandita/skills/compare/v1.33.0...v1.33.1
+[1.33.0]: https://github.com/iuliandita/skills/compare/v1.32.2...v1.33.0
+[1.32.2]: https://github.com/iuliandita/skills/compare/v1.32.1...v1.32.2
+[1.32.1]: https://github.com/iuliandita/skills/compare/v1.32.0...v1.32.1
+[1.32.0]: https://github.com/iuliandita/skills/compare/v1.31.1...v1.32.0
+[1.31.1]: https://github.com/iuliandita/skills/compare/v1.31.0...v1.31.1
+[1.31.0]: https://github.com/iuliandita/skills/compare/v1.30.1...v1.31.0
+[1.30.1]: https://github.com/iuliandita/skills/compare/v1.30.0...v1.30.1
+[1.30.0]: https://github.com/iuliandita/skills/compare/v1.29.0...v1.30.0
+[1.29.0]: https://github.com/iuliandita/skills/compare/v1.28.1...v1.29.0
+[1.28.1]: https://github.com/iuliandita/skills/compare/v1.28.0...v1.28.1
+[1.28.0]: https://github.com/iuliandita/skills/compare/v1.27.0...v1.28.0
+[1.27.0]: https://github.com/iuliandita/skills/compare/v1.26.2...v1.27.0
+[1.26.2]: https://github.com/iuliandita/skills/compare/v1.26.1...v1.26.2
+[1.26.1]: https://github.com/iuliandita/skills/compare/v1.26.0...v1.26.1
+[1.26.0]: https://github.com/iuliandita/skills/compare/v1.25.0...v1.26.0
+[1.25.0]: https://github.com/iuliandita/skills/compare/v1.24.0...v1.25.0
+[1.24.0]: https://github.com/iuliandita/skills/compare/v1.23.0...v1.24.0
+[1.23.0]: https://github.com/iuliandita/skills/compare/v1.22.0...v1.23.0
+[1.22.0]: https://github.com/iuliandita/skills/compare/v1.21.0...v1.22.0
+[1.21.0]: https://github.com/iuliandita/skills/compare/v1.20.0...v1.21.0
+[1.20.0]: https://github.com/iuliandita/skills/releases/tag/v1.20.0

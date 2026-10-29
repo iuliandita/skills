@@ -185,6 +185,9 @@ jobs:
       - name: Test docs-impact check
         run: ./scripts/test-docs-impact.sh
 
+      - name: Test changelog notes extraction
+        run: ./scripts/test-changelog-notes.sh
+
       - name: Shellcheck scripts
         run: shellcheck install.sh scripts/*.sh skills/repo-audit/references/detect.sh
 
