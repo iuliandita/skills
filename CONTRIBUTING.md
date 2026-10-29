@@ -41,8 +41,8 @@ conventional-commit titles since the last tag: `feat` is minor, `fix` and `deps`
 
 1. On `develop`, bump the version and move the `Unreleased` changelog entries under the new
    version, by PR.
-2. Open a PR from `develop` to `main` and merge it with a merge commit, never a squash, so `main`
-   stays an ancestor of `develop`.
+2. Open a PR from `develop` to `main` and merge it with a merge commit, never a squash, so every
+   `develop` commit stays in `main`'s history and the next release PR carries only new work.
 3. Tag the merge on `main` as `v<version>` and push the tag. The release workflow checks the tag
    and publishes the notes from the changelog.
 

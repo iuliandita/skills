@@ -690,7 +690,8 @@ Release steps (start with a clean checkout and update `develop` with `git pull -
 2. Commit the changelog on that branch with `chore(release): X.Y.Z`, push the branch, and open
    a PR targeting `develop`. Require green CI and squash merge the PR.
 3. Open a release PR from `develop` to `main`. Require green CI and merge it with a merge
-   commit, never a squash, so `main` stays an ancestor of `develop`.
+   commit, never a squash, so every `develop` commit stays in `main`'s history and the next
+   release PR carries only new work.
 4. Switch to `main`, run `git pull --ff-only`, and verify that `HEAD` is the merge commit and
    that its checks passed. Do not commit or push directly to `main`.
    Run `./scripts/check-docs-impact.sh --release vPREV` before tagging.
