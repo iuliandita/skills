@@ -680,7 +680,7 @@ test_invalid_manifest_stops_installer() {
   if output="$(SKILLS_MIGRATIONS_FILE="$tmp/invalid.json" "$ROOT/install.sh" --list 2>&1)"; then
     fail "installer accepted malformed migrations manifest"
   fi
-  grep -q 'Cannot continue with an invalid migrations.json' <<< "$output" || fail "invalid manifest failure was unclear"
+  grep -q 'cannot continue with an invalid migrations.json' <<< "$output" || fail "invalid manifest failure was unclear"
   rm -rf "$tmp"
   trap - RETURN
 }
@@ -1464,7 +1464,7 @@ test_malformed_frontmatter_fails_install() {
     fail "install accepted malformed frontmatter"
   fi
   grep -q "invalid frontmatter in $repo/skills/public/SKILL.md" <<< "$output" || fail "malformed frontmatter error did not name the file"
-  grep -q 'Cannot continue with invalid skill frontmatter' <<< "$output" || fail "installer did not stop on malformed frontmatter"
+  grep -q 'cannot continue with invalid skill frontmatter' <<< "$output" || fail "installer did not stop on malformed frontmatter"
   [[ ! -e "$tmp/dest" ]] || fail "install wrote files despite malformed frontmatter"
   rm -rf "$tmp"
   trap - RETURN

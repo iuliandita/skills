@@ -147,8 +147,8 @@ test_detect_reports_candidates_without_running_anything() {
   while IFS= read -r line; do
     [[ "$line" =~ ^(candidate$'\t'[a-z]+$'\t'[^$'\t']+|nomarker$'\t'[a-z]+|suggested:\ .+)$ ]] || fail "unexpected output line: $line"
   done <<< "$out"
-  grep -q 'skipped PATH entry that is not absolute: (empty)' <<< "$err" || fail "empty PATH entry not reported on stderr: $err"
-  grep -q 'skipped PATH entry that is not absolute: relative/dir' <<< "$err" || fail "relative PATH entry not reported: $err"
+  grep -q 'detect skipped a PATH entry that is not absolute: (empty)' <<< "$err" || fail "empty PATH entry not reported on stderr: $err"
+  grep -q 'detect skipped a PATH entry that is not absolute: relative/dir' <<< "$err" || fail "relative PATH entry not reported: $err"
   rm -rf "$tmp"
   trap - RETURN
 }

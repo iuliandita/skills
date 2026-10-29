@@ -21,7 +21,7 @@ if [[ "$BASE_SHA" =~ ^0+$ ]]; then
   BASE_SHA=""
 fi
 if [[ -z "$BASE_REF" && -n "$BASE_SHA" ]] && ! git rev-parse --verify --quiet "${BASE_SHA}^{commit}" >/dev/null; then
-  echo "ERROR: BASE_SHA '${BASE_SHA}' is not a commit in this clone" >&2
+  echo "error: BASE_SHA '${BASE_SHA}' is not a commit in this clone" >&2
   exit 1
 fi
 
