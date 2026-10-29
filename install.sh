@@ -190,7 +190,10 @@ Options:
                       install.sh with no arguments then repeats it
   --update            Fast-forward this checkout from its saved upstream and
                       reinstall the saved selection (cron-safe; takes no other
-                      options; see INSTALL.md for exit codes)
+                      options except --json; see INSTALL.md for exit codes)
+  --json              Print one JSON object on stdout and send human output to
+                      stderr (installs, --list, --check, --detect, --doctor,
+                      --migrate, --update; keys are listed in INSTALL.md)
   --help              Show this help
 
 Symlink mode (--link):
@@ -215,7 +218,173 @@ Examples:
   install.sh --doctor --tool commandcode,opencode
   install.sh --tool portable --dest ~/.skills
   install.sh --list
+  install.sh --check --json
+
+Environment:
+  <TOOL>_SKILLS_DIR       Skill directory for one tool, for example CLAUDE_SKILLS_DIR
+  SKILLS_TOOL             Default tool when none is given (default: claude)
+  SKILLS_CANONICAL_DIR    Canonical directory for --link (default: ~/.agents/skills)
+  SKILLS_BACKUP_DIR       Backup directory (default: next to each destination)
+  SKILLS_MIGRATIONS_FILE  Alternate migrations.json
+  SKILLS_MIGRATOR         Alternate migration helper
+  SKILLS_LOCK_WAIT        Seconds to wait for the installer lock (default: 0)
+  SKILLS_UPDATE_TIMEOUT   Seconds allowed for the --update fetch (default: 300)
+  SKILLS_INSTALL_FAULT    Fault injection for tests; leave unset
+  OPENCODE_CONFIG_FILE    OpenCode config that receives skill permissions
+  XDG_CONFIG_HOME         Location of the saved install config
+  XDG_STATE_HOME          Location of the installer lock
+
+Exit codes:
+  0    Done, or --check found everything current
+  1    Failed, --check found something missing or outdated, or invalid usage
+  2    --update: bad config, override variable set, or extra options; --save: invalid saved config
+  3-10 --update and --save lock, source, fetch, and tool failures; see INSTALL.md
 EOF
+}
+
+# ── JSON output ───────────────────────────────────────────────────────
+# --json keeps stdout for one object, {"ok", "errors", "command", ...keys}, and
+# sends all human output to stderr once the run ends. Exit codes do not change.
+# Built in bash so no mode gains a python3 requirement it did not have.
+JSON_MODE=false
+JSON_COMMAND=""
+JSON_BODY=""
+JSON_FALLBACK_ERROR=""
+JSON_RECORDING=false
+JSON_LOG=""
+declare -A JSON_LISTS=()
+JSON_LIST_ORDER=()
+
+# json_q TEXT: sets REPLY to TEXT as a JSON string literal.
+json_q() {
+  local LC_ALL=C s="$1" out="" i ch code
+  s="${s//\\/\\\\}"
+  s="${s//\"/\\\"}"
+  s="${s//$'\n'/\\n}"
+  s="${s//$'\r'/\\r}"
+  s="${s//$'\t'/\\t}"
+  if [[ "$s" == *[[:cntrl:]]* ]]; then
+    for (( i = 0; i < ${#s}; i++ )); do
+      ch="${s:i:1}"
+      if [[ "$ch" == [[:cntrl:]] ]]; then
+        printf -v code '\\u%04x' "'$ch"
+        out+="$code"
+      else
+        out+="$ch"
+      fi
+    done
+    s="$out"
+  fi
+  REPLY="\"$s\""
+}
+
+# json_strings ITEM...: sets REPLY to a JSON array of strings.
+json_strings() {
+  local out="" item
+  for item in "$@"; do
+    json_q "$item"
+    out+="${out:+, }$REPLY"
+  done
+  REPLY="[$out]"
+}
+
+# json_add KEY VALUE_JSON: adds a top-level key to the report.
+json_add() {
+  [[ "$JSON_MODE" == true ]] || return 0
+  local value="$2"
+  json_q "$1"
+  JSON_BODY+="${JSON_BODY:+, }$REPLY: $value"
+}
+
+json_add_str() {
+  [[ "$JSON_MODE" == true ]] || return 0
+  json_q "$2"
+  json_add "$1" "$REPLY"
+}
+
+# json_list NAME starts an array key; json_push NAME ITEM_JSON appends to it.
+json_list() {
+  [[ "$JSON_MODE" == true ]] || return 0
+  JSON_LISTS[$1]=""
+  JSON_LIST_ORDER+=("$1")
+}
+
+json_push() {
+  [[ "$JSON_MODE" == true ]] || return 0
+  JSON_LISTS[$1]+="${JSON_LISTS[$1]:+, }$2"
+}
+
+# json_dest TOOL DEST KIND DIFFERING SKILL...: one install destination.
+json_dest() {
+  [[ "$JSON_MODE" == true ]] || return 0
+  local tool="$1" dest="$2" kind="$3" differing="$4" t d k s
+  shift 4
+  if [[ -n "$tool" ]]; then json_q "$tool"; t="$REPLY"; else t=null; fi
+  json_q "$dest"; d="$REPLY"
+  json_q "$kind"; k="$REPLY"
+  json_strings "$@"; s="$REPLY"
+  json_push destinations "{\"tool\": $t, \"dest\": $d, \"kind\": $k, \"installed\": $s, \"differing\": $differing}"
+}
+
+json_begin() {
+  JSON_LOG="$(mktemp)" || { printf 'error: cannot create a temporary file for --json output; check TMPDIR\n' >&2; exit 1; }
+  JSON_MODE=true
+  exec 3>&1 4>&2
+  exec >>"$JSON_LOG" 2>&1
+  trap json_emit EXIT
+  trap 'exit 130' INT
+  trap 'exit 143' TERM
+}
+
+# Gives the real stdout and stderr back, for example before an exec.
+json_pause() {
+  [[ "$JSON_MODE" == true ]] || return 0
+  local line
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    printf '%s\n' "$line" >&4
+  done < "$JSON_LOG"
+  : > "$JSON_LOG"
+  exec 1>&3 2>&4
+  trap - EXIT
+}
+
+json_resume() {
+  [[ "$JSON_MODE" == true ]] || return 0
+  exec >>"$JSON_LOG" 2>&1
+  trap json_emit EXIT
+}
+
+# shellcheck disable=SC2329  # runs as the EXIT trap
+json_emit() {
+  local rc=$? line msg errors="" ok=false name command body="$JSON_BODY"
+  trap - EXIT
+  exec 1>&3 2>&4 3>&- 4>&-
+  if [[ -s "$JSON_LOG" ]]; then
+    while IFS= read -r line || [[ -n "$line" ]]; do
+      printf '%s\n' "$line" >&2
+      case "$line" in
+        "error: "*) msg="${line#error: }" ;;
+        *" update: error: "*) msg="${line#* update: error: }" ;;
+        *) continue ;;
+      esac
+      json_q "$msg"
+      errors+="${errors:+, }$REPLY"
+    done < "$JSON_LOG"
+  fi
+  rm -f "$JSON_LOG"
+  if (( rc == 0 )); then
+    ok=true
+  elif [[ -z "$errors" ]]; then
+    json_q "${JSON_FALLBACK_ERROR:-install.sh exited with status $rc}"
+    errors="$REPLY"
+  fi
+  for name in "${JSON_LIST_ORDER[@]}"; do
+    json_q "$name"
+    body+="${body:+, }$REPLY: [${JSON_LISTS[$name]}]"
+  done
+  if [[ -n "$JSON_COMMAND" ]]; then json_q "$JSON_COMMAND"; command="$REPLY"; else command=null; fi
+  printf '{"ok": %s, "errors": [%s], "command": %s%s}\n' "$ok" "$errors" "$command" "${body:+, $body}"
+  exit "$rc"
 }
 
 # ── Hashing ───────────────────────────────────────────────────────────
@@ -1527,10 +1696,37 @@ legacy_cleanup_dir() {
   printf '%s\n' "$legacy"
 }
 
+# run_migrator RECORD_DEST ARGS...: runs the migration helper. During a --json
+# --migrate it also turns each report line (SKIP, DRY-RUN, APPLIED, BACKUP,
+# NOOP) into a record in the "records" list.
+run_migrator() {
+  local record_dest="$1" out rc=0 line status text dest_json status_json text_json
+  shift
+  if [[ "$JSON_MODE" != true || "$JSON_RECORDING" != true ]]; then
+    python3 "$MIGRATOR" "$@"
+    return
+  fi
+  out="$(python3 "$MIGRATOR" "$@")" || rc=$?
+  [[ -z "$out" ]] || printf '%s\n' "$out"
+  json_q "$record_dest"; dest_json="$REPLY"
+  while IFS= read -r line; do
+    [[ -n "$line" ]] || continue
+    status="${line%% *}"
+    status="${status%:}"
+    text="${line#"$status"}"
+    text="${text#:}"
+    text="${text# }"
+    json_q "${status,,}"; status_json="$REPLY"
+    json_q "$text"; text_json="$REPLY"
+    json_push records "{\"dest\": $dest_json, \"status\": $status_json, \"text\": $text_json}"
+  done <<< "$out"
+  return "$rc"
+}
+
 run_legacy_cleanup() {
   local tool="$1" legacy="$2"
   shift 2
-  python3 "$MIGRATOR" --source "$SKILLS_SRC" --legacy-dir "$legacy" \
+  run_migrator "$legacy" --source "$SKILLS_SRC" --legacy-dir "$legacy" \
     --new-dir "$(resolve_tool_path "$tool")" --link-root "$CANONICAL_DIR" \
     --backup-dir "${SKILLS_BACKUP_DIR:-$(dirname "$legacy")/.skills-backups/$(basename "$legacy")}" "$@"
 }
@@ -1553,15 +1749,22 @@ run_doctor() {
       [[ "${row%%|*}" == "$tool" ]] && rows+=("$row")
     done
   done
-  python3 -I - "$verbose" "$(IFS=,; printf '%s' "$*")" "${rows[@]}" <<'PY'
+  local out rc=0
+  out="$(python3 -I - "$verbose" "$JSON_MODE" "$(IFS=,; printf '%s' "$*")" "${rows[@]}" <<'PY'
 from pathlib import Path
+import json
 import os
 import re
 import sys
 
 verbose = sys.argv[1] == "true"
-tools = sys.argv[2].split(",")
-table = [row.split("|", 3) for row in sys.argv[3:]]
+json_mode = sys.argv[2] == "true"
+tools = sys.argv[3].split(",")
+table = [row.split("|", 3) for row in sys.argv[4:]]
+
+
+def say(*args, **kwargs):
+    print(*args, file=sys.stderr if json_mode else sys.stdout, **kwargs)
 
 
 YAML_ESCAPES = {"0": "\0", "a": "\a", "b": "\b", "t": "\t", "\t": "\t", "n": "\n",
@@ -1645,26 +1848,33 @@ def merge(findings):
     return sorted(merged, key=lambda item: (item[0], sorted(item[1].values())))
 
 
-print("Checking the static root table; harness config toggles are not read.")
+say("Checking the static root table; harness config toggles are not read.")
 blocking = 0
 blocking_tools = 0
+report = []
 for tool in tools:
-    print(f"\n[{tool}]")
+    say(f"\n[{tool}]")
+    entry_report = {"tool": tool, "roots": [], "note": None, "blocking": [], "advisory": []}
+    report.append(entry_report)
     roots = []
     seen = {}
     for _, path, group, evidence in (row for row in table if row[0] == tool):
         real = Path(path).resolve(strict=False)
         if real in seen:
-            print(f"  {path}  (same directory as {seen[real]})")
+            say(f"  {path}  (same directory as {seen[real]})")
+            entry_report["roots"].append({"path": path, "evidence": None, "same_as": seen[real]})
             continue
         seen[real] = path
         roots.append((path, group))
-        print(f"  {path}  ({evidence})")
+        say(f"  {path}  ({evidence})")
+        entry_report["roots"].append({"path": path, "evidence": evidence, "same_as": None})
     if not roots:
-        print("  not in the static root table; nothing to compare")
+        say("  not in the static root table; nothing to compare")
+        entry_report["note"] = "not in the static root table; nothing to compare"
         continue
     if len(roots) < 2:
-        print("  single root; nothing to compare")
+        say("  single root; nothing to compare")
+        entry_report["note"] = "single root; nothing to compare"
         continue
     found = {}
     for index, (path, _) in enumerate(roots):
@@ -1689,33 +1899,50 @@ for tool in tools:
         else:
             hard.append((*key, where))
     if not hard and not soft:
-        print("  no duplicates")
+        say("  no duplicates")
+        entry_report["note"] = "no duplicates"
         continue
     hard = merge(hard)
     if hard:
         blocking += len(hard)
         blocking_tools += 1
     for label, where in hard:
-        print(f"  [!] {label}: {', '.join(where[index] for index in sorted(where))}")
+        say(f"  [!] {label}: {', '.join(where[index] for index in sorted(where))}")
+        entry_report["blocking"].append({"label": label, "paths": [where[index] for index in sorted(where)]})
     for indexes in sorted(soft):
         items = merge(soft[indexes])
         where = ", ".join(tilde(roots[index][0]) for index in indexes)
-        print(f"  [i] {len(items)} finding(s) across {where}; {tool} resolves these")
+        say(f"  [i] {len(items)} finding(s) across {where}; {tool} resolves these")
+        entry_report["advisory"].append({
+            "roots": [roots[index][0] for index in indexes],
+            "labels": [label for label, _ in items],
+        })
         if verbose:
             line = ""
             for label, _ in items:
                 if line and len(line) + len(label) > 90:
-                    print(f"      {line},")
+                    say(f"      {line},")
                     line = ""
                 line += f", {label}" if line else label
-            print(f"      {line}")
+            say(f"      {line}")
 
-print()
+say()
+if json_mode:
+    print(json.dumps({"tools": report, "blocking": blocking, "blocking_tools": blocking_tools}))
 if blocking:
-    print(f"{blocking} blocking finding(s) across {blocking_tools} tool(s).")
+    say(f"{blocking} blocking finding(s) across {blocking_tools} tool(s).")
     sys.exit(1)
-print("No blocking duplicates.")
+say("No blocking duplicates.")
 PY
+)" || rc=$?
+  if [[ "$JSON_MODE" == true ]]; then
+    out="${out#\{}"
+    JSON_BODY+="${JSON_BODY:+, }${out%\}}"
+    JSON_FALLBACK_ERROR="doctor found blocking duplicate skills; see tools[].blocking"
+  else
+    printf '%s\n' "$out"
+  fi
+  return "$rc"
 }
 
 # ── Detect ────────────────────────────────────────────────────────────
@@ -1744,12 +1971,15 @@ DETECT_MARKERS=(
 )
 
 run_detect() {
-  python3 -I - "$HOME" "${PATH-}" "$(IFS=,; printf '%s' "${SUPPORTED_TOOLS[*]}")" "${DETECT_MARKERS[@]}" <<'PY'
+  local out rc=0
+  out="$(python3 -I - "$JSON_MODE" "$HOME" "${PATH-}" "$(IFS=,; printf '%s' "${SUPPORTED_TOOLS[*]}")" "${DETECT_MARKERS[@]}" <<'PY'
+import json
 import os
 import sys
 
-home, path_env, tools = sys.argv[1], sys.argv[2], sys.argv[3].split(",")
-markers = [row.split("|", 2) for row in sys.argv[4:]]
+json_mode = sys.argv[1] == "true"
+home, path_env, tools = sys.argv[2], sys.argv[3], sys.argv[4].split(",")
+markers = [row.split("|", 2) for row in sys.argv[5:]]
 
 
 def esc(text):
@@ -1797,21 +2027,40 @@ def found(kind, value):
 
 
 suggested = []
+candidates = []
+nomarker = []
 for tool in tools:
     rows = [(kind, value) for name, kind, value in markers if name == tool]
     if not rows:
-        print(f"nomarker\t{tool}")
+        nomarker.append(tool)
+        if not json_mode:
+            print(f"nomarker\t{tool}")
         continue
     evidence = []
+    found_markers = []
     for kind, value in rows:
         path = found(kind, value)
         if path is not None:
             evidence.append(f"{kind}:{esc(path)}")
+            found_markers.append({"kind": kind, "path": path})
     if evidence:
-        print(f"candidate\t{tool}\t{';'.join(evidence)}")
+        candidates.append({"tool": tool, "evidence": found_markers})
         suggested.append(tool)
-print(f"suggested: {','.join(suggested) or 'none'}")
+        if not json_mode:
+            print(f"candidate\t{tool}\t{';'.join(evidence)}")
+if json_mode:
+    print(json.dumps({"candidates": candidates, "nomarker": nomarker, "suggested": suggested}))
+else:
+    print(f"suggested: {','.join(suggested) or 'none'}")
 PY
+)" || rc=$?
+  if [[ "$JSON_MODE" == true ]]; then
+    out="${out#\{}"
+    JSON_BODY+="${JSON_BODY:+, }${out%\}}"
+  else
+    printf '%s\n' "$out"
+  fi
+  return "$rc"
 }
 
 # ── Saved install config ──────────────────────────────────────────────
@@ -2156,6 +2405,7 @@ save_install_config() {
     "source_branch=$branch" "source_remote=$remote" "source_remote_url=$remote_url" \
     "source_upstream=$upstream" || exit "$?"
   printf 'Saved install config: %s\n' "$dir/install.conf"
+  json_add_str config "$dir/install.conf"
   if [[ -z "$remote" || -z "$upstream" ]]; then
     printf '[i] %s has no upstream branch; upstream is saved empty, so a later --update will refuse to run\n' "$repo"
   fi
@@ -2167,14 +2417,18 @@ check_updates() {
   local lock_file="$dest_dir/.skills-lock.json"
 
   if [[ ! -f "$lock_file" ]]; then
-    printf 'No lock file found at %s\n' "$lock_file"
-    printf 'Run install.sh first to generate one.\n'
+    printf 'error: no lock file found at %s; run install.sh first to generate one\n' "$lock_file" >&2
     exit 1
   fi
 
   printf 'Checking for updates...\n\n'
+  json_add_str dest "$dest_dir"
+  json_add_str lock "$lock_file"
+  json_list skills
+  json_list legacy
+  JSON_FALLBACK_ERROR="some skills are outdated, not installed, or installed under a legacy name; see skills and legacy"
 
-  local outdated=0 current=0 missing=0 legacy=0 tmp i
+  local outdated=0 current=0 missing=0 legacy=0 tmp i state jname
   local -a checked=() pairs=()
   local -A lock_hashes=()
   for skill in "${ALL_SKILLS[@]}"; do
@@ -2199,12 +2453,20 @@ check_updates() {
     if [[ -z "$installed_hash" ]]; then
       printf '  [?] %-24s not installed\n' "$skill"
       (( missing++ )) || true
+      state="not-installed"
     elif [[ "$src_hash" != "$installed_hash" ]]; then
       printf '  [!] %-24s outdated\n' "$skill"
       (( outdated++ )) || true
+      state="outdated"
     else
       printf '  [=] %-24s current\n' "$skill"
       (( current++ )) || true
+      state="current"
+    fi
+    if [[ "$JSON_MODE" == true ]]; then
+      json_q "$skill"; jname="$REPLY"
+      json_q "$state"
+      json_push skills "{\"name\": $jname, \"state\": $REPLY}"
     fi
   done
 
@@ -2218,9 +2480,16 @@ check_updates() {
         printf '  [!] %-24s legacy installed (%s)\n' "$old" "${MIGRATION_ACTIONS[$old]}"
       fi
       (( legacy++ )) || true
+      if [[ "$JSON_MODE" == true ]]; then
+        json_q "$old"; jname="$REPLY"
+        json_q "${MIGRATION_ACTIONS[$old]}"; state="$REPLY"
+        json_q "${MIGRATION_REPLACEMENTS[$old]:-}"
+        json_push legacy "{\"name\": $jname, \"action\": $state, \"replacement\": $REPLY}"
+      fi
     fi
   done
 
+  json_add summary "{\"current\": $current, \"outdated\": $outdated, \"not_installed\": $missing, \"legacy\": $legacy}"
   printf '\n%d current, %d outdated, %d not installed, %d legacy\n' "$current" "$outdated" "$missing" "$legacy"
   if (( outdated > 0 || missing > 0 || legacy > 0 )); then
     exit 1
@@ -2231,12 +2500,21 @@ check_updates() {
 list_skills() {
   local dest_dir="$1"
   printf '\nAvailable skills (%d):\n\n' "${#ALL_SKILLS[@]}"
+  json_add_str dest "$dest_dir"
+  json_list skills
   for skill in "${ALL_SKILLS[@]}"; do
     local status=""
     if [[ -L "$dest_dir/$skill" ]]; then
       status="linked"
     elif [[ -d "$dest_dir/$skill" ]]; then
       status="installed"
+    fi
+    if [[ "$JSON_MODE" == true ]]; then
+      local deprecated=false
+      is_deprecated "$SKILLS_SRC/$skill" && deprecated=true
+      json_q "$skill"; local jname="$REPLY"
+      json_q "${status:-available}"
+      json_push skills "{\"name\": $jname, \"status\": $REPLY, \"deprecated\": $deprecated}"
     fi
     if is_deprecated "$SKILLS_SRC/$skill"; then
       if [[ -n "$status" ]]; then
@@ -2390,7 +2668,11 @@ run_update() {
     update_fail 8 "$repo/install.sh at ${sha:0:12} is missing or does not parse; HEAD is at $sha; rerun install.sh --update once upstream is fixed"
   fi
   shopt -s execfail
-  exec "$BASH" "$repo/install.sh" --apply-update "$sha" "$old" || true
+  local -a handoff_args=()
+  [[ "$JSON_MODE" != true ]] || handoff_args=(--json)
+  json_pause
+  exec "$BASH" "$repo/install.sh" --apply-update "$sha" "$old" "${handoff_args[@]}" || true
+  json_resume
   update_fail 8 "could not start $repo/install.sh; HEAD is at $sha; rerun install.sh --update to complete the install"
 }
 
@@ -2651,13 +2933,21 @@ sys.exit((a.st_dev, a.st_ino) != (b.st_dev, b.st_ino))' "$(install_lock_dir)/ins
   if (( UPD_FAILED > 0 )); then
     update_fail 1 "incomplete: changed=$UPD_CHANGED skipped=$UPD_SKIPPED failed=$UPD_FAILED; HEAD is at $new; rerun install.sh --update to complete the install"
   fi
+  json_add_str old "$old"
+  json_add_str new "$new"
+  json_add changed "$UPD_CHANGED"
+  json_add skipped "$UPD_SKIPPED"
   if (( UPD_SKIPPED > 0 )); then
+    json_add_str status partial
+    JSON_FALLBACK_ERROR="the update finished but $UPD_SKIPPED skill(s) were skipped; see the human output on stderr"
     printf 'update: partial %s..%s changed=%d skipped=%d\n' "${old:0:12}" "${new:0:12}" "$UPD_CHANGED" "$UPD_SKIPPED"
     exit 6
   fi
   if [[ "$old" == "$new" && "$UPD_CHANGED" -eq 0 ]]; then
+    json_add_str status current
     printf 'update: ok current\n'
   else
+    json_add_str status updated
     printf 'update: ok %s..%s changed=%d skipped=0\n' "${old:0:12}" "${new:0:12}" "$UPD_CHANGED"
   fi
   exit 0
@@ -2665,6 +2955,19 @@ sys.exit((a.st_dev, a.st_ino) != (b.st_dev, b.st_ino))' "$(install_lock_dir)/ins
 
 # ── Main ──────────────────────────────────────────────────────────────
 main() {
+  local json_arg json_requested=false json_rest=()
+  for json_arg in "$@"; do
+    if [[ "$json_arg" == "--json" ]]; then
+      json_requested=true
+    else
+      json_rest+=("$json_arg")
+    fi
+  done
+  if [[ "$json_requested" == "true" ]]; then
+    set -- "${json_rest[@]}"
+    json_begin
+  fi
+
   local force=false no_backup=false link_mode=false
   local check_mode=false show_list=false include_internal=false migrate_mode=false apply_migration=false
   local doctor_mode=false doctor_verbose=false detect_mode=false save_mode=false
@@ -2674,10 +2977,12 @@ main() {
 
   case "${1:-}" in
     --update)
-      (( $# == 1 )) || { printf '%s\n' "error: --update accepts no other options or skill names" >&2; exit 2; }
+      JSON_COMMAND=update
+      (( $# == 1 )) || { printf '%s\n' "error: --update accepts only --json; it takes no other options or skill names" >&2; exit 2; }
       run_update
       ;;
     --apply-update)
+      JSON_COMMAND=update
       (( $# == 3 )) || { printf '%s\n' "error: --apply-update is internal to --update; run --update instead" >&2; exit 2; }
       run_apply_update "$2" "$3"
       ;;
@@ -2715,12 +3020,20 @@ main() {
       --save)             save_mode=true ;;
       --update|--apply-update)
         printf '%s\n' "error: $1 accepts no other options or skill names" >&2; exit 2 ;;
-      --help|-h)          usage; exit 0 ;;
+      --help|-h)          JSON_COMMAND=help; usage; exit 0 ;;
       -*)                 printf 'error: unknown option: %s; run --help for usage\n' "$1" >&2; usage; exit 1 ;;
       *)                  skills+=("$1") ;;
     esac
     shift
   done
+
+  if [[ "$detect_mode" == "true" ]]; then JSON_COMMAND=detect
+  elif [[ "$doctor_mode" == "true" ]]; then JSON_COMMAND=doctor
+  elif [[ "$show_list" == "true" ]]; then JSON_COMMAND=list
+  elif [[ "$check_mode" == "true" ]]; then JSON_COMMAND=check
+  elif [[ "$migrate_mode" == "true" ]]; then JSON_COMMAND=migrate
+  else JSON_COMMAND=install
+  fi
 
   if [[ "$detect_mode" == "true" ]]; then
     if [[ "$link_mode$show_list$check_mode$migrate_mode$apply_migration$force$no_backup$include_internal$doctor_mode$doctor_verbose$save_mode" == *true* \
@@ -2865,6 +3178,13 @@ main() {
     else
       printf 'Previewing recorded legacy-skill migration. Re-run with --apply to change files.\n\n'
     fi
+    if [[ "$JSON_MODE" == true ]]; then
+      JSON_RECORDING=true
+      json_add apply "$apply_migration"
+      json_strings "${tools[@]}"; json_add tools "$REPLY"
+      json_list records
+      JSON_FALLBACK_ERROR="the migration did not finish cleanly; see records and the human output on stderr"
+    fi
     if [[ "$link_mode" == "true" ]]; then
       local canonical_applied="" canonical_args=()
       if [[ "$apply_migration" == "true" && " ${tools[*]} " == *" opencode "* ]] \
@@ -2875,7 +3195,7 @@ main() {
       if [[ "$apply_migration" == "true" ]] && ! guard_migration_dest "$CANONICAL_DIR"; then
         refused=1
       else
-        python3 "$MIGRATOR" "${migration_args[@]}" --dest "$CANONICAL_DIR" --backup-dir "${SKILLS_BACKUP_DIR:-$(dirname "$CANONICAL_DIR")/.skills-backups/$(basename "$CANONICAL_DIR")}" --protected-root "$CANONICAL_DIR" --preserve-shared-canonical "${canonical_args[@]}"
+        run_migrator "$CANONICAL_DIR" "${migration_args[@]}" --dest "$CANONICAL_DIR" --backup-dir "${SKILLS_BACKUP_DIR:-$(dirname "$CANONICAL_DIR")/.skills-backups/$(basename "$CANONICAL_DIR")}" --protected-root "$CANONICAL_DIR" --preserve-shared-canonical "${canonical_args[@]}"
       fi
       if [[ -n "$canonical_applied" && "$refused" == 0 ]]; then
         sync_migrated_opencode_permissions "$CANONICAL_DIR" "$canonical_applied" || sync_failed=1
@@ -2898,7 +3218,7 @@ main() {
           applied_file="$(mktemp)"
           applied_args=(--applied-file "$applied_file")
         fi
-        python3 "$MIGRATOR" "${migration_args[@]}" --dest "$tool_dir" --backup-dir "${SKILLS_BACKUP_DIR:-$(dirname "$tool_dir")/.skills-backups/$(basename "$tool_dir")}" --protected-root "$CANONICAL_DIR" --link-root "$CANONICAL_DIR" "${applied_args[@]}"
+        run_migrator "$tool_dir" "${migration_args[@]}" --dest "$tool_dir" --backup-dir "${SKILLS_BACKUP_DIR:-$(dirname "$tool_dir")/.skills-backups/$(basename "$tool_dir")}" --protected-root "$CANONICAL_DIR" --link-root "$CANONICAL_DIR" "${applied_args[@]}"
         if [[ "$apply_migration" == "true" && "$tool" == "opencode" ]]; then
           sync_migrated_opencode_permissions "$tool_dir" "$applied_file" || sync_failed=1
           rm -f "$applied_file"
@@ -2926,9 +3246,9 @@ main() {
           applied_args=(--applied-file "$applied_file")
         fi
         if paths_match "$tool_dir" "$CANONICAL_DIR"; then
-          python3 "$MIGRATOR" "${migration_args[@]}" --dest "$tool_dir" --backup-dir "${SKILLS_BACKUP_DIR:-$(dirname "$tool_dir")/.skills-backups/$(basename "$tool_dir")}" --protected-root "$CANONICAL_DIR" --preserve-shared-canonical "${applied_args[@]}"
+          run_migrator "$tool_dir" "${migration_args[@]}" --dest "$tool_dir" --backup-dir "${SKILLS_BACKUP_DIR:-$(dirname "$tool_dir")/.skills-backups/$(basename "$tool_dir")}" --protected-root "$CANONICAL_DIR" --preserve-shared-canonical "${applied_args[@]}"
         else
-          python3 "$MIGRATOR" "${migration_args[@]}" --dest "$tool_dir" --backup-dir "${SKILLS_BACKUP_DIR:-$(dirname "$tool_dir")/.skills-backups/$(basename "$tool_dir")}" --protected-root "$CANONICAL_DIR" "${applied_args[@]}"
+          run_migrator "$tool_dir" "${migration_args[@]}" --dest "$tool_dir" --backup-dir "${SKILLS_BACKUP_DIR:-$(dirname "$tool_dir")/.skills-backups/$(basename "$tool_dir")}" --protected-root "$CANONICAL_DIR" "${applied_args[@]}"
         fi
         if [[ "$apply_migration" == "true" && "$tool" == "opencode" ]]; then
           sync_migrated_opencode_permissions "$tool_dir" "$applied_file" || sync_failed=1
@@ -2958,6 +3278,13 @@ main() {
 
   # ── Install: link mode ──────────────────────────────────────────────
   local failed=0
+  if [[ "$JSON_MODE" == true ]]; then
+    json_strings "${tools[@]}"; json_add tools "$REPLY"
+    json_add link "$link_mode"
+    json_strings "${skills[@]}"; json_add skills "$REPLY"
+    json_list destinations
+    JSON_FALLBACK_ERROR="the install finished with errors; see the human output on stderr"
+  fi
   if [[ "$link_mode" == "true" ]]; then
     printf 'Installing %d skill(s) via symlink\n' "${#skills[@]}"
     printf 'Canonical: %s\n\n' "$CANONICAL_DIR"
@@ -2969,6 +3296,7 @@ main() {
     install_into copy "$CANONICAL_DIR" "$force" "$no_backup" "${skills[@]}"
     (( DIFFER_COUNT == 0 )) || printf '  %d skill(s) differ; use --force to overwrite\n' "$DIFFER_COUNT"
     local canonical_ok=("${INSTALLED[@]}")
+    json_dest "" "$CANONICAL_DIR" canonical "$DIFFER_COUNT" "${INSTALLED[@]}"
 
     # Create symlinks per tool
     for tool in "${tools[@]}"; do
@@ -2977,6 +3305,7 @@ main() {
       if paths_match "$tool_dir" "$CANONICAL_DIR"; then
         printf '[%s] -> %s (matches canonical, skipping links)\n' "$tool" "$tool_dir"
         linked=("${canonical_ok[@]}")
+        json_dest "$tool" "$tool_dir" canonical 0 "${canonical_ok[@]}"
       else
         mkdir -p "$tool_dir"
         ensure_lock_source "$tool_dir"
@@ -2984,6 +3313,7 @@ main() {
         printf '[%s] -> %s\n' "$tool" "$tool_dir"
         install_into link "$tool_dir" "$force" "$no_backup" "${canonical_ok[@]}"
         linked=("${INSTALLED[@]}")
+        json_dest "$tool" "$tool_dir" link "$DIFFER_COUNT" "${INSTALLED[@]}"
         publish_lock "$tool_dir" "${linked[@]}" || (( failed++ )) || true
       fi
       if [[ "$tool" == "opencode" ]]; then
@@ -2995,6 +3325,7 @@ main() {
 
     publish_lock "$CANONICAL_DIR" "${canonical_ok[@]}" || (( failed++ )) || true
     (( failed += INSTALL_FAILURES )) || true
+    json_add failed "$failed"
 
     if (( failed > 0 )); then
       printf 'Done with %d error(s).\n' "$failed"
@@ -3017,6 +3348,7 @@ main() {
       if [[ -v 'copy_done[$key]' ]]; then
         printf '[%s] -> %s (same directory as an earlier tool; already installed)\n' "$tool" "$dest"
         read -r -a INSTALLED <<< "${copy_done[$key]}"
+        json_dest "$tool" "$dest" copy 0 "${INSTALLED[@]}"
         if [[ "$tool" == "opencode" ]]; then
           sync_opencode_permissions "$OPENCODE_CONFIG_FILE" "${INSTALLED[@]}" || (( failed++ )) || true
         fi
@@ -3028,6 +3360,7 @@ main() {
       printf '[%s] -> %s\n' "$tool" "$dest"
       install_into copy "$dest" "$force" "$no_backup" "${skills[@]}"
       copy_done[$key]="${INSTALLED[*]}"
+      json_dest "$tool" "$dest" copy "$DIFFER_COUNT" "${INSTALLED[@]}"
       (( DIFFER_COUNT == 0 )) || printf '  %d skill(s) differ; use --force to overwrite\n' "$DIFFER_COUNT"
 
       if [[ "$tool" == "opencode" ]]; then
@@ -3039,6 +3372,7 @@ main() {
       printf '\n'
     done
     (( failed += INSTALL_FAILURES )) || true
+    json_add failed "$failed"
 
     if (( failed > 0 )); then
       printf 'Done with %d error(s).\n' "$failed"
@@ -3055,6 +3389,7 @@ main() {
     done
     (( requested_skill_count == 0 )) || skills_csv="$(IFS=,; printf '%s' "${skills[*]}")"
     save_install_config "$(IFS=,; printf '%s' "${saved_tools[*]}")" "$link_mode" "$include_internal" "$skills_csv"
+    json_add saved true
   fi
 }
 
