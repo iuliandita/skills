@@ -68,6 +68,9 @@ jobs:
       - name: Check refiner run-history state
         run: ./scripts/check-refiner-state.sh
 
+      - name: Check stack conventions
+        run: python3 .github/stack/stack-check.py
+
       - name: Lint skill collection
         run: ./scripts/lint-skills.sh
 

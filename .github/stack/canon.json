@@ -1,0 +1,96 @@
+{
+  "canon_version": 1,
+  "readme": {
+    "file": "README.md",
+    "wordmark": "assets/wordmark.png",
+    "wordmark_within_lines": 10,
+    "intro_min_chars": 110,
+    "intro_max_chars": 350,
+    "intro_version_regex": "\\bv\\d+(?:\\.\\d+)*\\b|\\b\\d+\\.\\d+\\.\\d+\\b",
+    "status_prefix": "Status:",
+    "status_mentions": ["`main`", "`develop`"],
+    "sections": [
+      "Install",
+      "Usage",
+      "Compatibility",
+      "License",
+      "Part of the stack",
+      "Project and support"
+    ],
+    "stack_heading": "Part of the stack",
+    "stack_url_prefix": "https://github.com/iuliandita/",
+    "stack_repos": [
+      {"name": "agents", "description": "global prompts and subagent roles for every harness you use."},
+      {"name": "skills", "description": "task skills, installed one at a time. idstack calls them by name."},
+      {"name": "mods", "description": "hooks for Claude Code, Codex, and OpenCode, installed one at a time."},
+      {"name": "idstack", "description": "infra, DevOps, and SRE playbooks layered on pstack."}
+    ],
+    "stack_closing": "Installing one does not install the others.",
+    "project_heading": "Project and support",
+    "project_line": "Made by [iuliandita](https://iuliandita.com). [Other projects](https://iuliandita.com/projects/)."
+  },
+  "assets": {
+    "files": ["assets/logo.png", "assets/logo-256.png", "assets/wordmark.png"],
+    "png_sizes": {
+      "assets/logo.png": [1024, 1024],
+      "assets/logo-256.png": [256, 256]
+    }
+  },
+  "contributing": {
+    "file": "CONTRIBUTING.md",
+    "opening": "Open an issue before starting a bug fix or a substantial change, and reference it in the PR (`Closes #NN` for a completed fix). Branch from `develop`, keep changes small, and preserve unrelated local settings. Report suspected vulnerabilities through [SECURITY.md](SECURITY.md), not a public issue.",
+    "headings": ["Sources and generated files", "Checks and documentation", "Releases"],
+    "checks_heading": "Checks and documentation",
+    "checks_fence_lang": "sh",
+    "releases_heading": "Releases",
+    "releases_mention": ["`develop`", "`main`", "Unreleased"]
+  },
+  "workflows": {
+    "dir": ".github/workflows",
+    "sha_regex": "^[0-9a-f]{40}$",
+    "version_comment_regex": "^#\\s*v\\d",
+    "job_name_equals_id": true,
+    "checkout_action": "actions/checkout",
+    "checkout_require": "persist-credentials: false"
+  },
+  "installer_help": {
+    "sections": ["Environment", "Exit codes"],
+    "timeout_seconds": 60
+  },
+  "errors": {
+    "forbidden_regex": "\\bERROR:",
+    "allowed_prefix_regex": "^(?:(?:error|warning|note): |[A-Za-z][\\w.-]*: (?:error|warning|note): )",
+    "exit_codes": {"0": "done", "1": "failed", "2": "usage error", "3": "a required tool is missing"}
+  },
+  "ascii": {
+    "suffixes": [".md"]
+  },
+  "private_patterns": {
+    "skip_dirs": [".git", "local", "node_modules", "__pycache__", ".pytest_cache", ".venv"],
+    "skip_names": ["private-patterns.txt", "private-patterns.example.txt"],
+    "patterns": [
+      {"id": "home-path", "regex": "/home/[a-z][a-z0-9_-]*/"},
+      {"id": "private-ipv4", "regex": "\\b(?:10\\.\\d{1,3}|192\\.168|172\\.(?:1[6-9]|2\\d|3[01]))\\.\\d{1,3}\\.\\d{1,3}\\b"},
+      {"id": "mac-home-path", "regex": "(?<![\\w./-])/Users/\\w[\\w.-]*/"},
+      {"id": "root-path", "regex": "(?<![\\w./-])/ro[o]t/"},
+      {"id": "email", "regex": "(?<![\\w.%+-])[\\w.%+-]+@[\\w-]+(?:\\.[\\w-]+)*\\.[A-Za-z]{2,}\\b"}
+    ],
+    "allowed_emails": [
+      "iulian\\.dita@gmail\\.com",
+      "noreply@users\\.noreply\\.github\\.com",
+      "git@(?:github|gitlab)\\.com",
+      "[\\w.%+-]+@(?:[\\w-]+\\.)*(?:example\\.(?:com|org|net)|example)"
+    ]
+  },
+  "allowed_identifiers": {
+    "handle": "iuliandita",
+    "email": "iulian.dita@gmail.com",
+    "url": "https://iuliandita.com"
+  },
+  "vendor": {
+    "dir": ".github/stack",
+    "source_file": "SOURCE",
+    "source_repo": "iuliandita/agents",
+    "files": ["canon.json", "stack-check.py"]
+  }
+}

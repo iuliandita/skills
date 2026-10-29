@@ -1,0 +1,97 @@
+{
+  "repo": "skills",
+  "required_jobs": [
+    "lint",
+    "test",
+    "secrets",
+    "zizmor"
+  ],
+  "installers": [
+    {
+      "argv": [
+        "./install.sh",
+        "--help"
+      ],
+      "flags": [
+        "--harness",
+        "--check",
+        "--detect",
+        "--json"
+      ]
+    }
+  ],
+  "error_scan": {
+    "paths": [
+      "scripts"
+    ],
+    "exclude": []
+  },
+  "allow": [
+    {
+      "check": "private-patterns",
+      "path": "skills/*",
+      "match": "pattern private-ipv4",
+      "reason": "Skill references teach network, firewall, and container setup with private-range example addresses in command and config snippets."
+    },
+    {
+      "check": "private-patterns",
+      "path": "skills/*",
+      "match": "pattern root-path",
+      "reason": "Skill references show system administration and privilege-escalation commands that name root-owned paths."
+    },
+    {
+      "check": "private-patterns",
+      "path": "skills/*",
+      "match": "pattern email",
+      "reason": "Skill references use placeholder addresses and SSH algorithm names that contain an at sign in snippets."
+    },
+    {
+      "check": "private-patterns",
+      "path": "skills/*",
+      "match": "pattern home-path",
+      "reason": "Skill references use placeholder home paths such as /home/user in shell and git examples."
+    },
+    {
+      "check": "private-patterns",
+      "path": "scripts/test-setup.sh",
+      "match": "pattern email",
+      "reason": "The test sets a throwaway git identity on the reserved .invalid domain for a temporary repository."
+    },
+    {
+      "check": "private-patterns",
+      "path": "scripts/test-update.sh",
+      "match": "pattern email",
+      "reason": "The test sets a throwaway git identity on the reserved .invalid domain for a temporary repository."
+    },
+    {
+      "check": "ascii-markdown",
+      "path": "skills/*",
+      "match": "U+1F534",
+      "reason": "The shared output contract uses colored severity markers that every skill copy and the contract-sync check keep byte-identical."
+    },
+    {
+      "check": "ascii-markdown",
+      "path": "skills/frontend-design/references/glitch-effects.md",
+      "match": "U+2713",
+      "reason": "The checklist uses check marks as part of the reference content."
+    },
+    {
+      "check": "ascii-markdown",
+      "path": "skills/i18n-localization/references/translation-quality.md",
+      "match": "U+00FC",
+      "reason": "The example shows a German word with a non-ASCII letter, which is the subject of the translation-quality rule."
+    },
+    {
+      "check": "ascii-markdown",
+      "path": "skills/plan-review/references/decision-record.md",
+      "match": "U+00B7",
+      "reason": "The decision-record template uses a middle dot as a field separator."
+    },
+    {
+      "check": "ascii-markdown",
+      "path": ".refiner-ledger.md",
+      "match": "U+2014",
+      "reason": "The refiner ledger is an append-only history guarded against edits to earlier iterations."
+    }
+  ]
+}

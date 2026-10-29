@@ -232,7 +232,7 @@ and ignores the saved config, skill metadata, and migrations:
 Output is one line per supported tool, tab-separated, then a suggestion:
 
 ```text
-candidate	claude	binary:/home/me/.local/bin/claude;config:/home/me/.claude/settings.json
+candidate	claude	binary:/path/to/bin/claude;config:/path/to/claude/settings.json
 nomarker	cursor
 suggested: claude
 ```
@@ -294,7 +294,7 @@ tools=codex,claude
 link=true
 include_internal=false
 skills=all
-source_repo=/home/me/src/skills
+source_repo=/path/to/skills
 source_branch=main
 source_remote=origin
 source_remote_url=git@github.com:iuliandita/skills.git
@@ -436,7 +436,7 @@ than your manual installs. Crontab (`crontab -e`):
 
 ```cron
 PATH=/usr/local/bin:/usr/bin:/bin
-17 4 * * * /home/me/src/skills/install.sh --update >>/home/me/.local/state/iuliandita-skills/update.log 2>&1
+17 4 * * * /path/to/skills/install.sh --update >>/path/to/state/update.log 2>&1
 ```
 
 systemd user units, `~/.config/systemd/user/skills-update.service`:
@@ -448,7 +448,7 @@ Description=Update agent skills
 [Service]
 Type=oneshot
 Environment=PATH=/usr/local/bin:/usr/bin:/bin
-ExecStart=/home/me/src/skills/install.sh --update
+ExecStart=/path/to/skills/install.sh --update
 ```
 
 and `~/.config/systemd/user/skills-update.timer`:
