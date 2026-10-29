@@ -1,0 +1,83 @@
+name: Stack Sync
+
+on:
+  schedule:
+    - cron: "15 5 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: stack-sync
+  cancel-in-progress: true
+
+jobs:
+  stack-sync:
+    name: stack-sync
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Compare vendored canon with agents
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          CANON_URL: https://raw.githubusercontent.com/iuliandita/agents/develop/.github/stack
+          ISSUE_TITLE: Stack canon is behind agents
+        run: |
+          set -euo pipefail
+          dir="$RUNNER_TEMP/stack-canon"
+          mkdir -p "$dir"
+          for f in canon.json stack-check.py; do
+            curl -fsSL --retry 3 -o "$dir/$f" "$CANON_URL/$f"
+          done
+
+          upstream_canon="$(sha256sum "$dir/canon.json" | cut -d' ' -f1)"
+          upstream_check="$(sha256sum "$dir/stack-check.py" | cut -d' ' -f1)"
+          vendored_canon="$(sed -nE 's/^canon\.json: sha256:([0-9a-f]+)$/\1/p' .github/stack/SOURCE)"
+          vendored_check="$(sed -nE 's/^stack-check\.py: sha256:([0-9a-f]+)$/\1/p' .github/stack/SOURCE)"
+          if [[ -z "$vendored_canon" || -z "$vendored_check" ]]; then
+            echo "error: .github/stack/SOURCE has no recorded hashes; regenerate it with stack-check.py --print-source" >&2
+            exit 1
+          fi
+
+          existing="$(gh issue list --state open --search "\"$ISSUE_TITLE\" in:title" --json number,title \
+            --jq ".[] | select(.title == \"$ISSUE_TITLE\") | .number" | head -n 1)"
+
+          if [[ "$upstream_canon" == "$vendored_canon" && "$upstream_check" == "$vendored_check" ]]; then
+            echo "Vendored canon matches agents develop."
+            if [[ -n "$existing" ]]; then
+              gh issue close "$existing" --comment "The vendored canon matches agents again."
+            fi
+            exit 0
+          fi
+
+          body="$RUNNER_TEMP/stack-sync-body.md"
+          {
+            echo "The vendored stack canon differs from iuliandita/agents on develop."
+            echo
+            echo "| File | Vendored sha256 | agents develop sha256 |"
+            echo "|---|---|---|"
+            echo "| canon.json | $vendored_canon | $upstream_canon |"
+            echo "| stack-check.py | $vendored_check | $upstream_check |"
+            echo
+            echo "To re-vendor:"
+            echo
+            echo "1. Copy \`canon.json\` and \`stack-check.py\` unchanged from \`.github/stack/\` in agents into \`.github/stack/\` here."
+            echo "2. Run \`python3 .github/stack/stack-check.py --print-source <agents commit sha> > .github/stack/SOURCE\`."
+            echo "3. Run \`python3 .github/stack/stack-check.py\` and fix any new findings."
+          } > "$body"
+
+          if [[ -n "$existing" ]]; then
+            gh issue edit "$existing" --body-file "$body"
+            echo "Updated issue #$existing"
+          else
+            gh issue create --title "$ISSUE_TITLE" --body-file "$body"
+          fi
