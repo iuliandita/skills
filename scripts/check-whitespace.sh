@@ -36,7 +36,7 @@ if [[ -n "$BASE_REF" ]]; then
   range="origin/$BASE_REF..HEAD"
 elif [[ -n "$BASE_SHA" ]]; then
   range="$BASE_SHA..HEAD"
-elif base="$(git merge-base HEAD origin/main 2>/dev/null)" && [[ "$base" != "$(git rev-parse HEAD)" ]]; then
+elif { base="$(git merge-base HEAD origin/develop 2>/dev/null)" || base="$(git merge-base HEAD origin/main 2>/dev/null)"; } && [[ "$base" != "$(git rev-parse HEAD)" ]]; then
   range="$base..HEAD"
 else
   # On the base branch itself the merge base is HEAD, which would compare nothing.
