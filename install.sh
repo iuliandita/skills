@@ -149,8 +149,7 @@ resolve_tool_path() {
   local path="${TOOL_PATHS[$tool]:-}"
 
   if [[ -z "$path" ]]; then
-    printf 'Unknown tool: %s\n' "$tool" >&2
-    printf 'Supported: %s\n' "$(supported_tools_text)" >&2
+    printf 'error: unknown tool: %s; supported tools: %s\n' "$tool" "$(supported_tools_text)" >&2
     exit 1
   fi
 
@@ -225,7 +224,7 @@ hash_tool() {
   elif command -v shasum &>/dev/null; then
     shasum -a 256 | cut -d' ' -f1
   else
-    printf 'No SHA-256 tool found\n' >&2
+    printf 'error: no SHA-256 tool found: install sha256sum or shasum and rerun\n' >&2
     return 1
   fi
 }
@@ -309,7 +308,7 @@ for path in sys.argv[1:]:
     try:
         print(tree(path))
     except OSError as error:
-        print(f"cannot hash {path}: {error.strerror}", file=sys.stderr)
+        print(f"error: cannot hash {path}: {error.strerror}", file=sys.stderr)
         print("!")
 PY
 }
@@ -379,7 +378,7 @@ try:
             raise ValueError(f"invalid replacement for {old}")
         print(f"{old}\t{action}\t{replacement}")
 except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError) as error:
-    print(f"Invalid migrations manifest: {error}", file=sys.stderr)
+    print(f"error: invalid migrations manifest: {error}", file=sys.stderr)
     sys.exit(1)
 PY
   )"; then
@@ -480,7 +479,7 @@ try:
 except ValueError:
     pass
 else:
-    raise SystemExit("Refusing to back up a lock inside the destination")
+    raise SystemExit("error: refusing to back up a lock inside the destination; move the lock out of the destination and rerun")
 stamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
 backup = backup_base / ".unverified-locks" / f"{stamp}.skills-lock.json"
 suffix = 1
@@ -590,7 +589,7 @@ if lock_path.exists():
         if isinstance(existing.get("trees"), dict):
             trees = dict(existing["trees"])
     except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError) as error:
-        raise SystemExit(f"Refusing to update unverified lock {lock_path}: {error}")
+        raise SystemExit(f"error: refusing to update unverified lock {lock_path}: {error}; inspect it or rerun with --force")
 published = []
 for item in sys.argv[4:]:
     skill, digest, tree = item.split("=", 2)
@@ -638,7 +637,7 @@ except BaseException as error:
         os.unlink(temp)
     except OSError:
         pass
-    raise SystemExit(f"Could not write {lock_path}: {error}")
+    raise SystemExit(f"error: could not write {lock_path}: {error}")
 print("\n".join(published))
 PY
   )" || return 1
@@ -695,18 +694,18 @@ acquire_install_lock() {
   [[ "$INSTALL_LOCK_HELD" == "false" ]] || return 0
   if ! command -v flock >/dev/null 2>&1; then
     if [[ "$required" == "required" ]]; then
-      printf 'flock (util-linux) is required for --save, --update, and --migrate --apply; install it and rerun\n' >&2
+      printf 'error: flock (util-linux) is required for --save, --update, and --migrate --apply; install it and rerun\n' >&2
       exit 10
     fi
-    printf '[!] flock not found; concurrent installer runs are not excluded\n' >&2
+    printf 'warning: flock not found; concurrent installer runs are not excluded\n' >&2
     return 0
   fi
   if [[ ! "$wait" =~ ^[0-9]+$ ]]; then
-    printf 'SKILLS_LOCK_WAIT must be a whole number of seconds: %s\n' "$wait" >&2
+    printf 'error: SKILLS_LOCK_WAIT must be a whole number of seconds: %s\n' "$wait" >&2
     exit 1
   fi
   if ! mkdir -p "$dir" || ! chmod 700 "$dir" || ! exec 9>>"$dir/install.lock"; then
-    printf 'Cannot open the installer lock in %s\n' "$dir" >&2
+    printf 'error: cannot open the installer lock in %s; check that the directory is writable\n' "$dir" >&2
     [[ "$required" == "required" ]] && exit 7
     exit 1
   fi
@@ -1776,11 +1775,11 @@ def esc(text):
 dirs = []
 for entry in path_env.split(":"):
     if not os.path.isabs(entry):
-        print(f"detect: skipped PATH entry that is not absolute: {esc(entry) or '(empty)'}", file=sys.stderr)
+        print(f"warning: detect skipped a PATH entry that is not absolute: {esc(entry) or '(empty)'}", file=sys.stderr)
     elif entry not in dirs:
         dirs.append(entry)
 if not os.path.isabs(home):
-    print("detect: HOME is not absolute; config markers skipped", file=sys.stderr)
+    print("warning: detect skipped config markers because HOME is not absolute", file=sys.stderr)
 
 
 def found(kind, value):
@@ -1842,7 +1841,7 @@ reject_override_env() {
   local names
   names="$(override_env_names | sort | paste -sd, -)"
   [[ -z "$names" ]] && return 0
-  printf '%s: %s is set; a saved install config covers only default paths. Unset it or pass explicit options.\n' \
+  printf 'error: %s: %s is set; a saved install config covers only default paths; unset it or pass explicit options\n' \
     "$1" "${names//,/, }" >&2
   exit "${CONFIG_FAIL_EXIT:-2}"
 }
@@ -1873,7 +1872,7 @@ uid = os.getuid()
 
 
 def fail(code, message):
-    print(f"Saved install config {path}: {message}", file=sys.stderr)
+    print(f"error: saved install config {path}: {message}", file=sys.stderr)
     sys.exit(code)
 
 
@@ -2106,10 +2105,10 @@ load_saved_config() {
     0) ;;
     20) return 1 ;;
     2|7) exit "${CONFIG_FAIL_EXIT:-$status}" ;;
-    *) printf 'Could not read the saved install config in %s\n' "$dir" >&2; exit "${CONFIG_FAIL_EXIT:-7}" ;;
+    *) printf 'error: could not read the saved install config in %s\n' "$dir" >&2; exit "${CONFIG_FAIL_EXIT:-7}" ;;
   esac
   if (( ${#fields[@]} != 2 * ${#SAVED_CONFIG_KEYS[@]} )); then
-    printf 'Saved install config parser returned malformed output\n' >&2
+    printf 'error: saved install config parser returned malformed output\n' >&2
     exit "${CONFIG_FAIL_EXIT:-2}"
   fi
   for (( i = 0; i < ${#fields[@]}; i += 2 )); do
@@ -2125,7 +2124,7 @@ load_saved_config() {
       source_remote_url) SAVED_SOURCE_REMOTE_URL="${fields[i+1]}" ;;
       source_upstream) SAVED_SOURCE_UPSTREAM="${fields[i+1]}" ;;
       version) ;;
-      *) printf 'Saved install config parser returned key %s\n' "$key" >&2; exit "${CONFIG_FAIL_EXIT:-2}" ;;
+      *) printf 'error: saved install config parser returned unknown key %s\n' "$key" >&2; exit "${CONFIG_FAIL_EXIT:-2}" ;;
     esac
   done
   SAVED_CONFIG_PATH="$dir/install.conf"
@@ -2674,11 +2673,11 @@ main() {
 
   case "${1:-}" in
     --update)
-      (( $# == 1 )) || { printf '%s\n' "--update accepts no other options or skill names" >&2; exit 2; }
+      (( $# == 1 )) || { printf '%s\n' "error: --update accepts no other options or skill names" >&2; exit 2; }
       run_update
       ;;
     --apply-update)
-      (( $# == 3 )) || { printf '%s\n' "--apply-update is internal to --update" >&2; exit 2; }
+      (( $# == 3 )) || { printf '%s\n' "error: --apply-update is internal to --update; run --update instead" >&2; exit 2; }
       run_apply_update "$2" "$3"
       ;;
   esac
@@ -2686,17 +2685,17 @@ main() {
   while (( $# > 0 )); do
     case "$1" in
       --tool)
-        [[ $# -ge 2 ]] || { printf '%s\n' "--tool requires a value" >&2; exit 1; }
+        [[ $# -ge 2 ]] || { printf '%s\n' "error: --tool requires a value" >&2; exit 1; }
         IFS=',' read -ra _parsed <<< "$2"
         if [[ -z "$2" || "$2" == ,* || "$2" == *, || "$2" == *,,* ]]; then
-          printf '%s\n' "--tool requires non-empty tool names" >&2; exit 1
+          printf '%s\n' "error: --tool requires non-empty tool names" >&2; exit 1
         fi
         tools+=("${_parsed[@]}")
         tool_given=true
         shift
         ;;
       --dest)
-        [[ $# -ge 2 && -n "$2" ]] || { printf '%s\n' "--dest requires a non-empty value" >&2; exit 1; }
+        [[ $# -ge 2 && -n "$2" ]] || { printf '%s\n' "error: --dest requires a non-empty value" >&2; exit 1; }
         dest_override="$2"
         dest_given=true
         shift
@@ -2714,9 +2713,9 @@ main() {
       --detect)           detect_mode=true ;;
       --save)             save_mode=true ;;
       --update|--apply-update)
-        printf '%s\n' "$1 accepts no other options or skill names" >&2; exit 2 ;;
+        printf '%s\n' "error: $1 accepts no other options or skill names" >&2; exit 2 ;;
       --help|-h)          usage; exit 0 ;;
-      -*)                 printf 'Unknown option: %s\n' "$1" >&2; usage; exit 1 ;;
+      -*)                 printf 'error: unknown option: %s; run --help for usage\n' "$1" >&2; usage; exit 1 ;;
       *)                  skills+=("$1") ;;
     esac
     shift
@@ -2725,7 +2724,7 @@ main() {
   if [[ "$detect_mode" == "true" ]]; then
     if [[ "$link_mode$show_list$check_mode$migrate_mode$apply_migration$force$no_backup$include_internal$doctor_mode$doctor_verbose$save_mode" == *true* \
       || "$dest_given$tool_given" == *true* || ${#skills[@]} -gt 0 ]]; then
-      printf '%s\n' "--detect is read-only and accepts no other options or skill names" >&2; exit 1
+      printf '%s\n' "error: --detect is read-only and accepts no other options or skill names" >&2; exit 1
     fi
     run_detect
     exit 0
@@ -2734,10 +2733,10 @@ main() {
   # A saved config is used only by a bare `install.sh`; any argument ignores it.
   if [[ "$save_mode" == "true" ]]; then
     if [[ "$show_list$check_mode$migrate_mode$apply_migration$doctor_mode$doctor_verbose" == *true* ]]; then
-      printf '%s\n' "--save applies only to installs, not to --list, --check, --migrate, or --doctor" >&2; exit 1
+      printf '%s\n' "error: --save applies only to installs, not to --list, --check, --migrate, or --doctor" >&2; exit 1
     fi
     if [[ "$dest_given" == "true" ]]; then
-      printf '%s\n' "--save cannot be used with --dest; saved configs cover default paths only" >&2; exit 1
+      printf '%s\n' "error: --save cannot be used with --dest; saved configs cover default paths only" >&2; exit 1
     fi
     reject_override_env "--save"
     acquire_install_lock required
@@ -2751,7 +2750,7 @@ main() {
       checkout="$(git_value rev-parse --show-toplevel)"
       [[ -n "$checkout" ]] || checkout="$(cd "$SCRIPT_DIR" && pwd -P)"
       if [[ "$checkout" != "$SAVED_SOURCE_REPO" ]]; then
-        printf '[i] the config was saved from %s; installing from %s\n' "$SAVED_SOURCE_REPO" "$checkout" >&2
+        printf 'note: the config was saved from %s; installing from %s\n' "$SAVED_SOURCE_REPO" "$checkout" >&2
       fi
       IFS=',' read -ra tools <<< "$SAVED_TOOLS"
       link_mode="$SAVED_LINK"
@@ -2773,9 +2772,9 @@ main() {
     tools=("${SKILLS_TOOL:-claude}")
   fi
 
-  load_skill_metadata || { printf '%s\n' "Cannot continue with invalid skill frontmatter" >&2; exit 1; }
+  load_skill_metadata || { printf '%s\n' "error: cannot continue with invalid skill frontmatter; run scripts/lint-skills.sh" >&2; exit 1; }
   mapfile -t ALL_SKILLS < <(discover_skills "$include_internal")
-  load_migrations || { printf '%s\n' "Cannot continue with an invalid migrations.json" >&2; exit 1; }
+  load_migrations || { printf '%s\n' "error: cannot continue with an invalid migrations.json; run scripts/check-migrations.sh" >&2; exit 1; }
 
   # Validate tool names
   for i in "${!tools[@]}"; do
@@ -2799,27 +2798,27 @@ main() {
 
   # Validate flag combinations
   if [[ -n "$dest_override" && ${#tools[@]} -gt 1 ]]; then
-    printf '%s\n' "--dest cannot be used with multiple tools" >&2; exit 1
+    printf '%s\n' "error: --dest cannot be used with multiple tools" >&2; exit 1
   fi
   if [[ "$link_mode" == "true" && -n "$dest_override" ]]; then
-    printf '%s\n' "--link and --dest cannot be used together" >&2; exit 1
+    printf '%s\n' "error: --link and --dest cannot be used together" >&2; exit 1
   fi
   if [[ "$apply_migration" == "true" && "$migrate_mode" != "true" ]]; then
-    printf '%s\n' "--apply requires --migrate" >&2; exit 1
+    printf '%s\n' "error: --apply requires --migrate" >&2; exit 1
   fi
   if [[ "$migrate_mode" == "true" && "$requested_skill_count" -gt 0 ]]; then
-    printf '%s\n' "--migrate does not accept skill names; it uses migrations.json" >&2; exit 1
+    printf '%s\n' "error: --migrate does not accept skill names; it uses migrations.json" >&2; exit 1
   fi
   if [[ "$migrate_mode" == "true" && ( "$force" == "true" || "$no_backup" == "true" ) ]]; then
-    printf '%s\n' "--force and --no-backup cannot be used with --migrate" >&2; exit 1
+    printf '%s\n' "error: --force and --no-backup cannot be used with --migrate" >&2; exit 1
   fi
   if [[ "$doctor_verbose" == "true" && "$doctor_mode" != "true" ]]; then
-    printf '%s\n' "--verbose requires --doctor" >&2; exit 1
+    printf '%s\n' "error: --verbose requires --doctor" >&2; exit 1
   fi
   if [[ "$doctor_mode" == "true" ]]; then
     if [[ "$link_mode$show_list$check_mode$migrate_mode$apply_migration$force$no_backup$include_internal" == *true* \
       || -n "$dest_override" || "$requested_skill_count" -gt 0 ]]; then
-      printf '%s\n' "--doctor is read-only and accepts only --tool and --verbose" >&2; exit 1
+      printf '%s\n' "error: --doctor is read-only and accepts only --tool and --verbose" >&2; exit 1
     fi
     run_doctor "$doctor_verbose" "${tools[@]}"
     exit 0
@@ -2856,8 +2855,8 @@ main() {
 
   # ── Migration ──────────────────────────────────────────────────────
   if [[ "$migrate_mode" == "true" ]]; then
-    command -v python3 >/dev/null || { printf '%s\n' "Migration requires python3" >&2; exit 1; }
-    [[ -f "$MIGRATOR" ]] || { printf 'Migration helper is unavailable: %s\n' "$MIGRATOR" >&2; exit 1; }
+    command -v python3 >/dev/null || { printf '%s\n' "error: migration requires python3; install it and rerun" >&2; exit 1; }
+    [[ -f "$MIGRATOR" ]] || { printf 'error: migration helper is unavailable: %s\n' "$MIGRATOR" >&2; exit 1; }
     local migration_args=(--manifest "$MIGRATIONS_FILE" --source "$SKILLS_SRC") sync_failed=0 refused=0
     if [[ "$apply_migration" == "true" ]]; then
       migration_args+=(--apply)

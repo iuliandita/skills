@@ -304,7 +304,7 @@ put install.sh "$(cat "$REPO/install.sh")
 commit "fix: tweak installer"
 run_check --release v0
 expect_pass "release: R3 is a warning"
-[[ "$OUT" == *"WARN"* ]] || fail "release: R3 warning not printed"
+[[ "$OUT" == *"warning:"* ]] || fail "release: R3 warning not printed"
 
 new_fixture
 g checkout -q main

@@ -54,9 +54,9 @@ for file in "${files[@]}"; do
     [[ "$line" =~ $freshness_line_re ]] || continue
     [[ "$line" == *"Month Year"* ]] && continue
     if [[ "$line" != *"$FRESHNESS_LABEL"* ]]; then
-      printf 'ERROR: stale freshness marker in %s:%d\n' "$file" "$line_no"
-      printf '  expected marker: %s\n' "$FRESHNESS_LABEL"
-      printf '  line: %s\n' "$line"
+      printf 'error: stale freshness marker in %s:%d\n' "$file" "$line_no" >&2
+      printf '  expected marker: %s\n' "$FRESHNESS_LABEL" >&2
+      printf '  line: %s\n' "$line" >&2
       errors=$((errors + 1))
     fi
   done < "$path"

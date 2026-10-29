@@ -22,7 +22,7 @@ detect_file="$ROOT/skills/repo-audit/references/detect.sh"
 workflow_file="$ROOT/skills/repo-audit/references/exhaustive-workflow.md"
 for f in "$detect_file" "$workflow_file"; do
   if [[ ! -f "$f" ]]; then
-    echo "ERROR: repo-audit file not found: $f" >&2
+    echo "error: repo-audit file not found: $f" >&2
     exit 1
   fi
 done
@@ -43,7 +43,7 @@ mapfile -t candidate_skills < <(
 
 require_parsed() {
   if (( $2 == 0 )); then
-    echo "ERROR: parsed no $1 (format changed?)" >&2
+    echo "error: parsed no $1 (format changed?)" >&2
     exit 1
   fi
 }
@@ -58,7 +58,7 @@ wave_skills=("${always_skills[@]}" "${detect_skills[@]}")
 # Add a skill there (and nowhere else) to exclude it from repo-audit coverage.
 exclusions_file="$ROOT/skills/repo-audit/references/exclusions.md"
 if [[ ! -f "$exclusions_file" ]]; then
-  echo "ERROR: exclusions file not found: $exclusions_file" >&2
+  echo "error: exclusions file not found: $exclusions_file" >&2
   exit 1
 fi
 
@@ -69,7 +69,7 @@ mapfile -t excluded_skills < <(
 )
 
 if (( ${#excluded_skills[@]} == 0 )); then
-  echo "ERROR: parsed no excluded skills from $exclusions_file (table format changed?)" >&2
+  echo "error: parsed no excluded skills from $exclusions_file (table format changed?)" >&2
   exit 1
 fi
 
@@ -87,27 +87,27 @@ contains() {
 
 for skill in "${detect_skills[@]}"; do
   if ! contains "$skill" "${candidate_skills[@]}"; then
-    echo "ERROR: detect.sh matches $skill but exhaustive-workflow.md does not list it as a Wave 3 candidate"
+    echo "error: detect.sh matches $skill but exhaustive-workflow.md does not list it as a Wave 3 candidate" >&2
     errors=$((errors + 1))
   fi
 done
 for skill in "${candidate_skills[@]}"; do
   if ! contains "$skill" "${detect_skills[@]}"; then
-    echo "ERROR: exhaustive-workflow.md lists Wave 3 candidate $skill but detect.sh never matches it"
+    echo "error: exhaustive-workflow.md lists Wave 3 candidate $skill but detect.sh never matches it" >&2
     errors=$((errors + 1))
   fi
 done
 
 for skill in "${public_skills[@]}"; do
   if ! contains "$skill" "${wave_skills[@]}" && ! contains "$skill" "${excluded_skills[@]}"; then
-    echo "ERROR: repo-audit does not cover public skill: $skill"
+    echo "error: repo-audit does not cover public skill: $skill" >&2
     errors=$((errors + 1))
   fi
 done
 
 for skill in "${wave_skills[@]}" "${excluded_skills[@]}"; do
   if ! contains "$skill" "${public_skills[@]}"; then
-    echo "ERROR: repo-audit references missing public skill: $skill"
+    echo "error: repo-audit references missing public skill: $skill" >&2
     errors=$((errors + 1))
   fi
 done

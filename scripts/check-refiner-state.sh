@@ -24,15 +24,15 @@ errors=0
 
 mapfile -t strays < <(cd "$ROOT" && git ls-files -- '*/.refiner-runs.json')
 if (( ${#strays[@]} > 0 )); then
-  echo "ERROR: run history must live only at .refiner-runs.json, found:"
-  printf '  %s\n' "${strays[@]}"
-  echo "Merge the entries into .refiner-runs.json sorted by date, then delete the stray."
+  echo "error: run history must live only at .refiner-runs.json, found:" >&2
+  printf '  %s\n' "${strays[@]}" >&2
+  echo "Merge the entries into .refiner-runs.json sorted by date, then delete the stray." >&2
   errors=$((errors + 1))
 fi
 
 if [[ -f "$HISTORY" ]]; then
   if ! python3 -c 'import json,sys; json.load(open(sys.argv[1]))' "$HISTORY" 2>/dev/null; then
-    echo "ERROR: $HISTORY is not valid JSON."
+    echo "error: $HISTORY is not valid JSON." >&2
     errors=$((errors + 1))
   else
     dupes="$(python3 - "$HISTORY" <<'PY'
@@ -44,7 +44,7 @@ print(" ".join(sorted(i for i, n in Counter(ids).items() if n > 1)))
 PY
 )"
     if [[ -n "$dupes" ]]; then
-      echo "ERROR: duplicate run_id values in .refiner-runs.json: $dupes"
+      echo "error: duplicate run_id values in .refiner-runs.json: $dupes" >&2
       errors=$((errors + 1))
     fi
 
@@ -169,9 +169,9 @@ for problem in problems:
 sys.exit(1 if problems else 0)
 PY
 )"; then
-      echo "ERROR: schema>=2 and compacted run-history entries failed validation:"
+      echo "error: schema>=2 and compacted run-history entries failed validation:" >&2
       while IFS= read -r line; do
-        echo "  $line"
+        echo "  $line" >&2
       done <<< "$schema_errors"
       errors=$((errors + 1))
     fi

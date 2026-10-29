@@ -574,6 +574,14 @@ using the content hashes.
 ./install.sh --check --link           # check canonical dir
 ```
 
+## Messages
+
+Refusals and usage errors go to stderr as one line starting with `error:`, followed by what
+failed and, when one exists, the next step. Degraded but non-fatal conditions start with
+`warning:` and neutral information with `note:`. Inventory lines on stdout keep their
+markers (`[+]`, `[=]`, `[?]`, `[!]`, `[~]`, `[<]`). The repository gate scripts use the same
+prefixes. Exit codes are unchanged.
+
 ## Skill anatomy
 
 Each skill follows the [Agent Skills specification](https://agentskills.io/specification):

@@ -13,8 +13,8 @@ SKILLS_DIR="${1:-skills}"
 errors=0
 warnings=0
 
-error() { echo "  ERROR: $1"; (( errors++ )) || true; }
-warn()  { echo "  WARN:  $1"; (( warnings++ )) || true; }
+error() { echo "error: $1" >&2; (( errors++ )) || true; }
+warn()  { echo "warning: $1" >&2; (( warnings++ )) || true; }
 
 # Private skills: present locally (gitignored) but must not be referenced
 # by public skills. They can reference public skills freely.

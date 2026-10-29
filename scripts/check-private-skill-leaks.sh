@@ -13,7 +13,7 @@ root_patterns="$ROOT/private-patterns.txt"
 
 if [[ -n "${SKILLS_PRIVATE_PATTERNS:-}" ]]; then
   if [[ ! -f "$SKILLS_PRIVATE_PATTERNS" || ! -r "$SKILLS_PRIVATE_PATTERNS" ]]; then
-    echo "ERROR: SKILLS_PRIVATE_PATTERNS is set to '$SKILLS_PRIVATE_PATTERNS' but that file does not exist or is not readable." >&2
+    echo "error: SKILLS_PRIVATE_PATTERNS is set to '$SKILLS_PRIVATE_PATTERNS' but that file does not exist or is not readable." >&2
     exit 1
   fi
   PATTERN_FILES+=("$SKILLS_PRIVATE_PATTERNS")
@@ -71,8 +71,8 @@ else
 fi
 
 if [[ -s "$tmp_matches" ]]; then
-  echo "ERROR: private patterns found in public files:"
-  sort -u "$tmp_matches" | sed 's/^/  /'
+  echo "error: private patterns found in public files:" >&2
+  sort -u "$tmp_matches" | sed 's/^/  /' >&2
   exit 1
 fi
 

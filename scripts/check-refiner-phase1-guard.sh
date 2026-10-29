@@ -49,7 +49,7 @@ if [[ "$BASE_SHA" =~ ^0+$ ]]; then
   BASE_SHA=""
 fi
 if [[ -z "$BASE_REF" && -n "$BASE_SHA" ]] && ! git rev-parse --verify --quiet "${BASE_SHA}^{commit}" >/dev/null; then
-  echo "ERROR: BASE_SHA '${BASE_SHA}' is not a commit in this clone" >&2
+  echo "error: BASE_SHA '${BASE_SHA}' is not a commit in this clone" >&2
   exit 1
 fi
 
@@ -64,7 +64,7 @@ resolve_base() {
       if base="$(git merge-base HEAD "$candidate" 2>/dev/null)"; then
         return 0
       fi
-      echo "ERROR: base ref '${candidate}' exists but no merge-base with HEAD could be computed" >&2
+      echo "error: base ref '${candidate}' exists but no merge-base with HEAD could be computed" >&2
       echo "(shallow clone or unrelated history); refusing to fall back to a non-ancestor tip." >&2
       exit 1
     fi
@@ -118,9 +118,9 @@ while IFS= read -r sha; do
   done < <(git diff-tree --no-commit-id --name-only -r "$sha")
 
   if (( ${#offending[@]} > 0 )); then
-    echo "ERROR: phase-1 iteration commit touches the immutable set:"
-    echo "  $(git rev-parse --short "$sha") $subject"
-    printf '    %s\n' "${offending[@]}"
+    echo "error: phase-1 iteration commit touches the immutable set:" >&2
+    echo "  $(git rev-parse --short "$sha") $subject" >&2
+    printf '    %s\n' "${offending[@]}" >&2
     errors=$((errors + 1))
   fi
 done < <(git rev-list --reverse "$base..HEAD")
