@@ -6,23 +6,26 @@ Full install, update, and structure docs for the skills repo. For a quick start,
 
 ### Quick install via skills.sh
 
+`main` is the stable channel and `develop` is the nightly. `npx skills add iuliandita/skills`
+installs the default branch, which is `develop`; append `#main` to install the stable channel.
+
 ```bash
 # Select skills interactively (prefer active names; see MIGRATION.md)
-npx skills add iuliandita/skills
+npx skills add iuliandita/skills#main
 
 # Pick specific ones
-npx skills add iuliandita/skills --skill kubernetes --skill docker --skill terraform
+npx skills add iuliandita/skills#main --skill kubernetes --skill docker --skill terraform
 
 # See what's available
-npx skills add iuliandita/skills --list
+npx skills add iuliandita/skills#main --list
 ```
 
 ### Bundled installer
 
-Clone, run, clean up:
+Clone, run, clean up. A plain `git clone` checks out `develop`, so pass `-b main` for stable:
 
 ```bash
-git clone https://github.com/iuliandita/skills.git /tmp/skills-install
+git clone -b main https://github.com/iuliandita/skills.git /tmp/skills-install
 
 # All active skills, Claude (default)
 /tmp/skills-install/install.sh
@@ -57,7 +60,7 @@ Install once to a canonical directory, symlink everywhere. Update the canonical 
 An existing symlink that points elsewhere is left alone unless you use `--force`, which backs it up first.
 
 ```bash
-git clone https://github.com/iuliandita/skills.git /tmp/skills-install
+git clone -b main https://github.com/iuliandita/skills.git /tmp/skills-install
 
 # Install for Claude, Cursor, and Gemini in one shot
 /tmp/skills-install/install.sh --tool claude,cursor,gemini --link
@@ -467,7 +470,9 @@ the agent socket, for example `Environment=SSH_AUTH_SOCK=%t/ssh-agent.socket`.
 ## Updating
 
 Pull the latest and re-run the installer with the same tool selection, skill selection,
-destination overrides, and copy or `--link` mode used for the original install:
+destination overrides, and copy or `--link` mode used for the original install. The checkout
+follows the branch it has checked out; keep it on `main` for stable, or run `git switch main`
+if it was cloned without `-b main`:
 
 ```bash
 cd /path/to/skills
@@ -616,8 +621,10 @@ appears under `skills/`, which is how the log silently split before.
 
 ## Releases
 
-Releases are cut manually from `main`. Version bump follows the squash-merge titles since the
-last tag:
+`develop` is the integration branch and the nightly channel; `main` is the stable channel.
+Feature and fix PRs target `develop` and are squash-merged. Releases are cut manually: a release PR
+from `develop` to `main` is merged with a merge commit, and the tag goes on the merge commit on
+`main`. The version bump follows the squash-merge titles since the last tag:
 
 - `feat:` - minor release
 - `fix:` - patch release
@@ -630,23 +637,24 @@ user-facing impact, usually `fix:`.
 
 For the catalog transition, follow the [publication and retirement checklist](MIGRATION.md#maintainer-retirement-checklist). Record the actual publication timestamp after publishing; notices cannot be retired before seven full days have elapsed.
 
-Release steps (start with a clean checkout and update `main` with `git pull --ff-only`):
+Release steps (start with a clean checkout and update `develop` with `git pull --ff-only`):
 
-1. Create a release preparation branch from `main`, such as `release/X.Y.Z`.
-   Prepend a `## [X.Y.Z](https://github.com/iuliandita/skills/compare/vPREV...vX.Y.Z) (YYYY-MM-DD)`
-   section to `CHANGELOG.md` listing the releasable squash commits since `vPREV`, grouped under
-   `### Features`, `### Bug Fixes`, `### Refactoring`, `### Performance Improvements`, and
-   `### Dependencies` as applicable.
-2. Commit the changelog on that branch with `chore(main): release X.Y.Z`, push the branch,
-   and open a PR targeting `main`. Require green CI and squash merge the PR.
-3. Switch to `main`, run `git pull --ff-only`, and verify that `HEAD` is the merged release
-   preparation commit and that its checks passed. If `main` advanced, reconcile the notes
-   through another PR before tagging. Do not commit or push directly to `main`.
+1. Create a release preparation branch from `develop`, such as `release/X.Y.Z`. In
+   `CHANGELOG.md`, move the `## [Unreleased]` entries under a new `## [X.Y.Z] - YYYY-MM-DD`
+   heading, grouped under `### Features`, `### Bug Fixes`, `### Refactoring`,
+   `### Performance Improvements`, and `### Dependencies` as applicable. Leave an empty
+   `## [Unreleased]` above it and add the `[X.Y.Z]` compare link at the bottom.
+2. Commit the changelog on that branch with `chore(release): X.Y.Z`, push the branch, and open
+   a PR targeting `develop`. Require green CI and squash merge the PR.
+3. Open a release PR from `develop` to `main`. Require green CI and merge it with a merge
+   commit, never a squash, so `main` stays an ancestor of `develop`.
+4. Switch to `main`, run `git pull --ff-only`, and verify that `HEAD` is the merge commit and
+   that its checks passed. Do not commit or push directly to `main`.
    Run `./scripts/check-docs-impact.sh --release vPREV` before tagging.
-4. Review the merged changelog section against the commits since `vPREV`.
-5. Tag the verified commit with `git tag -a vX.Y.Z -m "vX.Y.Z"`, then push only that tag with
-   `git push origin vX.Y.Z`.
-6. The tag push runs `.github/workflows/release.yml`, which checks that the tag is on `main`,
+5. Review the changelog section against the commits since `vPREV`.
+6. Tag the verified merge commit with `git tag -a vX.Y.Z -m "vX.Y.Z"`, then push only that tag
+   with `git push origin vX.Y.Z`.
+7. The tag push runs `.github/workflows/release.yml`, which checks that the tag is on `main`,
    checks cumulative documentation impact, and publishes the GitHub release from the
    `CHANGELOG.md` section. Follow it with
    `gh run watch <run-id> --exit-status` and confirm the release with `gh release view vX.Y.Z`.
