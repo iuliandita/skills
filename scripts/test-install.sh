@@ -1154,6 +1154,66 @@ PY
   trap - RETURN
 }
 
+# json_check JSON PYTHON_EXPRESSION LABEL: the expression sees the parsed object as d.
+# The expressions are written in this file; nothing external reaches eval.
+json_check() {
+  python3 -I -c 'import json, sys; d = json.loads(sys.argv[1]); sys.exit(0 if eval(sys.argv[2]) else 1)' "$1" "$2" \
+    || fail "$3: $1"
+}
+
+# run_json HOME ARGS...: sets JSON_OUT (stdout), JSON_ERR (stderr), JSON_STATUS.
+run_json() {
+  local home="$1"
+  JSON_STATUS=0
+  JSON_OUT="$(isolated "$home" "$ROOT/install.sh" "${@:2}" --json 2>"$home/json.err")" || JSON_STATUS=$?
+  JSON_ERR="$(<"$home/json.err")"
+  [[ "$(wc -l <<< "$JSON_OUT")" == 1 ]] || fail "--json did not print exactly one line: $JSON_OUT"
+}
+
+test_json_output() {
+  local tmp
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  run_json "$tmp" --tool claude docker
+  (( JSON_STATUS == 0 )) || fail "json install exited $JSON_STATUS: $JSON_ERR"
+  json_check "$JSON_OUT" 'd["ok"] is True and d["errors"] == [] and d["command"] == "install" and d["link"] is False and d["failed"] == 0' "install keys"
+  json_check "$JSON_OUT" 'd["destinations"][0]["tool"] == "claude" and d["destinations"][0]["kind"] == "copy" and d["destinations"][0]["installed"] == ["docker"]' "install destination"
+  grep -q 'Done. Skills installed for claude' <<< "$JSON_ERR" || fail "human output not on stderr: $JSON_ERR"
+
+  run_json "$tmp" --list --tool claude
+  json_check "$JSON_OUT" 'd["ok"] is True and d["command"] == "list" and {"name": "docker", "status": "installed", "deprecated": False} in d["skills"]' "list keys"
+
+  run_json "$tmp" --check --tool claude
+  (( JSON_STATUS == 1 )) || fail "json check with missing skills exited $JSON_STATUS"
+  json_check "$JSON_OUT" 'd["ok"] is False and d["command"] == "check" and d["summary"]["current"] == 1 and d["summary"]["not_installed"] > 0 and {"name": "docker", "state": "current"} in d["skills"] and d["legacy"] == [] and d["errors"]' "check keys"
+
+  run_json "$tmp" --check --tool cursor
+  (( JSON_STATUS == 1 )) || fail "json check without a lock exited $JSON_STATUS"
+  json_check "$JSON_OUT" 'd["ok"] is False and d["errors"][0].startswith("no lock file found at ")' "check without lock"
+
+  mkdir "$tmp/linked"
+  run_json "$tmp/linked" --tool claude,cursor --link docker
+  (( JSON_STATUS == 0 )) || fail "json link install exited $JSON_STATUS: $JSON_ERR"
+  json_check "$JSON_OUT" 'd["link"] is True and [x["kind"] for x in d["destinations"]] == ["canonical", "link", "link"] and d["destinations"][0]["tool"] is None' "link destinations"
+
+  run_json "$tmp" --migrate --tool claude
+  (( JSON_STATUS == 0 )) || fail "json migrate preview exited $JSON_STATUS: $JSON_ERR"
+  json_check "$JSON_OUT" 'd["ok"] is True and d["command"] == "migrate" and d["apply"] is False and d["tools"] == ["claude"] and all(set(r) == {"dest", "status", "text"} for r in d["records"]) and d["records"]' "migrate preview keys"
+
+  run_json "$tmp" --doctor --tool claude
+  json_check "$JSON_OUT" 'd["ok"] is True and d["command"] == "doctor" and d["blocking"] == 0 and d["tools"][0]["tool"] == "claude"' "doctor keys"
+
+  run_json "$tmp" --bogus
+  (( JSON_STATUS == 1 )) || fail "json usage error exited $JSON_STATUS"
+  json_check "$JSON_OUT" 'd["ok"] is False and d["errors"][0].startswith("unknown option: --bogus") and d["command"] is None' "usage error"
+
+  run_json "$tmp" --help
+  json_check "$JSON_OUT" 'd["ok"] is True and d["command"] == "help"' "help"
+  grep -q '^Environment:' <<< "$JSON_ERR" || fail "--help has no Environment section"
+  grep -q '^Exit codes:' <<< "$JSON_ERR" || fail "--help has no Exit codes section"
+}
+
 test_harness_alias_matches_tool() {
   local tmp output status=0
   tmp="$(mktemp -d)"
@@ -2058,6 +2118,7 @@ test_legacy_cleanup_backup_failure_removes_nothing
 test_legacy_cleanup_converges_after_interruption
 test_legacy_cleanup_refuses_unsafe_layouts
 test_harness_alias_matches_tool
+test_json_output
 test_legacy_cleanup_custom_canonical_needs_replacement
 test_opencode_link_migration_on_canonical_allows_replacement
 test_embedded_python_ignores_cwd_modules

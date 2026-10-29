@@ -263,6 +263,50 @@ test_local_modification_is_kept() {
   [[ "$(repo_head)" == "$(dev_head)" ]] || fail "checkout not fast-forwarded on partial"
 }
 
+# json_check JSON PYTHON_EXPRESSION LABEL: the expression sees the parsed object as d.
+# The expressions are written in this file; nothing external reaches eval.
+json_check() {
+  python3 -I -c 'import json, sys; d = json.loads(sys.argv[1]); sys.exit(0 if eval(sys.argv[2]) else 1)' "$1" "$2" \
+    || fail "$3: $1"
+}
+
+# run_update_json: like run_update, with --json.
+run_update_json() {
+  RC=0
+  isolated "$H" "$F/repo/install.sh" --update --json >"$F/out" 2>"$F/err" || RC=$?
+  OUT="$(cat "$F/out")"
+  ERR="$(cat "$F/err")"
+  [[ "$(wc -l < "$F/out")" == 1 ]] || fail "--update --json did not print exactly one line: $OUT"
+}
+
+test_json_output() {
+  local mine
+  new_fixture --tool claude
+  run_update_json
+  expect_rc 0 "json current"
+  json_check "$OUT" 'd["ok"] is True and d["errors"] == [] and d["command"] == "update" and d["status"] == "current" and d["changed"] == 0 and d["skipped"] == 0' "current keys"
+  grep -q 'update: ok current' <<< "$ERR" || fail "human update line not on stderr: $ERR"
+
+  printf 'upstream\n' >> "$F/dev/skills/git/SKILL.md"
+  publish
+  run_update_json
+  expect_rc 0 "json updated"
+  json_check "$OUT" "d['status'] == 'updated' and d['changed'] == 1 and d['new'] == '$(dev_head)' and len(d['old']) == 40" "updated keys"
+
+  mine="local edit"
+  printf '%s\n' "$mine" >> "$H/.claude/skills/docker/SKILL.md"
+  printf 'upstream\n' >> "$F/dev/skills/docker/SKILL.md"
+  publish
+  run_update_json
+  expect_rc 6 "json partial"
+  json_check "$OUT" 'd["ok"] is False and d["status"] == "partial" and d["skipped"] == 1 and d["errors"]' "partial keys"
+
+  mv "$H/.config/iuliandita-skills/install.conf" "$F/saved.conf"
+  run_update_json
+  expect_rc 2 "json missing config"
+  json_check "$OUT" 'd["ok"] is False and d["command"] == "update" and "no saved install config" in d["errors"][0]' "refusal keys"
+}
+
 test_legacy_v1_records() {
   local lock git_before
   new_fixture --tool claude
@@ -719,6 +763,7 @@ PY
 }
 
 test_current_is_a_noop
+test_json_output
 test_changed_skill_is_replaced_and_backed_up
 test_rename_and_symlink_target_changes_are_detected
 test_new_skill_is_installed

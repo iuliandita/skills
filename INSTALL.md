@@ -585,6 +585,38 @@ failed and, when one exists, the next step. Degraded but non-fatal conditions st
 markers (`[+]`, `[=]`, `[?]`, `[!]`, `[~]`, `[<]`). The repository gate scripts use the same
 prefixes. Exit codes are unchanged.
 
+## JSON output
+
+`--json` works with installs, `--list`, `--check`, `--detect`, `--doctor`, `--migrate`, and
+`--update`. It prints exactly one JSON object on stdout and sends all human output to stderr,
+after the run ends. Exit codes are the same as without `--json`, and `ok` is true only when the
+exit code is 0. The flag needs no dependency beyond what the command already uses, plus `mktemp`
+and `rm`.
+
+Every object has these keys:
+
+| Key | Meaning |
+|-----|---------|
+| `ok` | `true` when the command exited 0 |
+| `errors` | The `error:` messages printed during the run; a failed run with no message gets one generic entry |
+| `command` | `install`, `list`, `check`, `detect`, `doctor`, `migrate`, `update`, or `help`; `null` for a failure before the command is known |
+
+Command keys appear once the command gets far enough to know them, so a refusal carries only
+the common keys.
+
+| Command | Keys |
+|---------|------|
+| install | `tools`, `link`, `skills` (requested names), `failed` (error count), `destinations` (`tool` or `null`, `dest`, `kind` of `copy`, `link`, or `canonical`, `installed` names, `differing` count), and `saved` plus `config` with `--save` |
+| `--list` | `dest`, `skills` (`name`, `status` of `installed`, `linked`, or `available`, `deprecated`) |
+| `--check` | `dest`, `lock`, `skills` (`name`, `state` of `current`, `outdated`, or `not-installed`), `legacy` (`name`, `action`, `replacement`), `summary` (`current`, `outdated`, `not_installed`, `legacy`) |
+| `--detect` | `candidates` (`tool`, `evidence` of `kind` and `path`), `nomarker` tools, `suggested` tools |
+| `--doctor` | `tools` (`tool`, `roots`, `note`, `blocking`, `advisory`), `blocking` count, `blocking_tools` count |
+| `--migrate` | `apply`, `tools`, `records` (`dest`, `status` of `skip`, `dry-run`, `applied`, `backup`, or `noop`, `text`) |
+| `--update` | `status` of `current`, `updated`, or `partial`, `old` and `new` commit hashes, `changed`, `skipped` |
+
+`--help` with `--json` prints the usage text to stderr and an object with `command` set to `help`.
+`--update --json` is the only option combination `--update` accepts.
+
 ## Skill anatomy
 
 Each skill follows the [Agent Skills specification](https://agentskills.io/specification):
