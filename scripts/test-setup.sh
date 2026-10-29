@@ -101,7 +101,7 @@ conf_text() {
 make_sys_path() {
   local cmd
   mkdir -p "$1"
-  for cmd in bash dirname python3; do
+  for cmd in bash dirname python3 mktemp rm; do
     ln -s "$(command -v "$cmd")" "$1/$cmd"
   done
 }
@@ -147,10 +147,45 @@ test_detect_reports_candidates_without_running_anything() {
   while IFS= read -r line; do
     [[ "$line" =~ ^(candidate$'\t'[a-z]+$'\t'[^$'\t']+|nomarker$'\t'[a-z]+|suggested:\ .+)$ ]] || fail "unexpected output line: $line"
   done <<< "$out"
-  grep -q 'skipped PATH entry that is not absolute: (empty)' <<< "$err" || fail "empty PATH entry not reported on stderr: $err"
-  grep -q 'skipped PATH entry that is not absolute: relative/dir' <<< "$err" || fail "relative PATH entry not reported: $err"
+  grep -q 'detect skipped a PATH entry that is not absolute: (empty)' <<< "$err" || fail "empty PATH entry not reported on stderr: $err"
+  grep -q 'detect skipped a PATH entry that is not absolute: relative/dir' <<< "$err" || fail "relative PATH entry not reported: $err"
   rm -rf "$tmp"
   trap - RETURN
+}
+
+# json_check JSON PYTHON_EXPRESSION LABEL: the expression sees the parsed object as d.
+# The expressions are written in this file; nothing external reaches eval.
+json_check() {
+  python3 -I -c 'import json, sys; d = json.loads(sys.argv[1]); sys.exit(0 if eval(sys.argv[2]) else 1)' "$1" "$2" \
+    || fail "$3: $1"
+}
+
+test_json_detect_and_save() {
+  local tmp home bin sys out status=0 repo
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  home="$tmp/home"
+  bin="$tmp/bin"
+  sys="$tmp/sys"
+  make_sys_path "$sys"
+  mkdir -p "$bin" "$home/.codex"
+  : > "$home/.codex/config.toml"
+  printf '#!/bin/sh\n' > "$bin/claude"
+  chmod +x "$bin/claude"
+
+  out="$(isolated_path "$home" "$bin:$sys" "$ROOT/install.sh" --detect --json 2>/dev/null)" || fail "--detect --json exited non-zero"
+  [[ "$(wc -l <<< "$out")" == 1 ]] || fail "--detect --json printed more than one line: $out"
+  json_check "$out" 'd["ok"] is True and d["errors"] == [] and d["command"] == "detect" and d["suggested"] == ["claude", "codex"]' "detect keys"
+  json_check "$out" 'd["candidates"][0]["tool"] == "claude" and d["candidates"][0]["evidence"][0]["kind"] == "binary" and "cursor" in d["nomarker"]' "detect candidates"
+  out="$(isolated_path "$home" "$bin:$sys" "$ROOT/install.sh" --detect --save --json 2>/dev/null)" || status=$?
+  (( status == 1 )) || fail "--detect --save --json exited $status"
+  json_check "$out" 'd["ok"] is False and d["errors"][0].startswith("--detect is read-only")' "detect usage error"
+
+  repo="$tmp/repo"
+  mkdir -p "$home/.config"
+  make_fixture "$repo" true "$home"
+  out="$(isolated "$home" "$repo/install.sh" --save --tool codex --json docker 2>/dev/null)" || fail "--save --json exited non-zero"
+  json_check "$out" 'd["ok"] is True and d["command"] == "install" and d["saved"] is True and d["config"].endswith("/iuliandita-skills/install.conf")' "save keys"
 }
 
 test_detect_suggests_none() {
@@ -561,6 +596,7 @@ test_empty_option_values_are_rejected() {
 }
 
 test_detect_reports_candidates_without_running_anything
+test_json_detect_and_save
 test_detect_suggests_none
 test_detect_rejects_other_options_and_ignores_config
 test_save_round_trip_records_source

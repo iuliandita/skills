@@ -778,10 +778,10 @@ def main() -> int:
             return cleanup_legacy_dir(args)
         return migrate(args)
     except LockBusy as error:
-        print(f"ERROR: {error}", file=sys.stderr)
+        print(f"error: {error}", file=sys.stderr)
         return LOCK_BUSY_EXIT
     except (ValidationError, OSError) as error:
-        print(f"ERROR: {error}", file=sys.stderr)
+        print(f"error: {error}", file=sys.stderr)
         return 2
 
 

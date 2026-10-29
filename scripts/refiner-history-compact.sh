@@ -38,40 +38,40 @@ EOF
 while (( $# > 0 )); do
   case "$1" in
     --keep)
-      [[ $# -ge 2 ]] || { echo "ERROR: --keep requires a value" >&2; exit 2; }
+      [[ $# -ge 2 ]] || { echo "error: --keep requires a value" >&2; exit 2; }
       keep="$2"; shift 2 ;;
     --keep=*) keep="${1#*=}"; shift ;;
     --history)
-      [[ $# -ge 2 ]] || { echo "ERROR: --history requires a value" >&2; exit 2; }
+      [[ $# -ge 2 ]] || { echo "error: --history requires a value" >&2; exit 2; }
       history="$2"; shift 2 ;;
     --history=*) history="${1#*=}"; shift ;;
     --archive)
-      [[ $# -ge 2 ]] || { echo "ERROR: --archive requires a value" >&2; exit 2; }
+      [[ $# -ge 2 ]] || { echo "error: --archive requires a value" >&2; exit 2; }
       archive="$2"; shift 2 ;;
     --archive=*) archive="${1#*=}"; shift ;;
     --dry-run) dry_run=1; shift ;;
     -h|--help) usage; exit 0 ;;
-    *) echo "ERROR: unknown option: $1" >&2; usage >&2; exit 2 ;;
+    *) echo "error: unknown option: $1" >&2; usage >&2; exit 2 ;;
   esac
 done
 
 if [[ ! "$keep" =~ ^[0-9]+$ ]]; then
-  echo "ERROR: --keep must be a non-negative integer, got '$keep'" >&2
+  echo "error: --keep must be a non-negative integer, got '$keep'" >&2
   exit 2
 fi
 
 if [[ ! -f "$history" ]]; then
-  echo "ERROR: history file not found: $history" >&2
+  echo "error: history file not found: $history" >&2
   exit 1
 fi
 
 if [[ "$history" == "$archive" ]]; then
-  echo "ERROR: --history and --archive must differ" >&2
+  echo "error: --history and --archive must differ" >&2
   exit 2
 fi
 
 if [[ ! -f "$CHECK" ]]; then
-  echo "ERROR: validation script not found: $CHECK" >&2
+  echo "error: validation script not found: $CHECK" >&2
   exit 1
 fi
 
@@ -88,7 +88,7 @@ keep = int(keep_s)
 
 
 def die(message):
-    print(f"ERROR: {message}", file=sys.stderr)
+    print(f"error: {message}", file=sys.stderr)
     raise SystemExit(1)
 
 
@@ -225,7 +225,7 @@ if [[ "$state" == "nothing" ]]; then
   exit 0
 fi
 if [[ "$state" != "compact" ]]; then
-  echo "ERROR: compaction planner did not produce output" >&2
+  echo "error: compaction planner did not produce output" >&2
   exit 1
 fi
 
@@ -247,7 +247,7 @@ cp "$work/new-archive.json" "$archive"
 cp "$work/new-history.json" "$history"
 
 if ! "$CHECK" "$history"; then
-  echo "ERROR: validation failed after compaction; restoring original files." >&2
+  echo "error: validation failed after compaction; restoring original files." >&2
   cp -p "$backup_history" "$history"
   if (( archive_existed )); then
     cp -p "$backup_archive" "$archive"

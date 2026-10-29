@@ -21,7 +21,7 @@ if [[ "$BASE_SHA" =~ ^0+$ ]]; then
   BASE_SHA=""
 fi
 if [[ -z "$BASE_REF" && -n "$BASE_SHA" ]] && ! git rev-parse --verify --quiet "${BASE_SHA}^{commit}" >/dev/null; then
-  echo "ERROR: BASE_SHA '${BASE_SHA}' is not a commit in this clone" >&2
+  echo "error: BASE_SHA '${BASE_SHA}' is not a commit in this clone" >&2
   exit 1
 fi
 
@@ -36,7 +36,7 @@ if [[ -n "$BASE_REF" ]]; then
   range="origin/$BASE_REF..HEAD"
 elif [[ -n "$BASE_SHA" ]]; then
   range="$BASE_SHA..HEAD"
-elif base="$(git merge-base HEAD origin/main 2>/dev/null)" && [[ "$base" != "$(git rev-parse HEAD)" ]]; then
+elif { base="$(git merge-base HEAD origin/develop 2>/dev/null)" || base="$(git merge-base HEAD origin/main 2>/dev/null)"; } && [[ "$base" != "$(git rev-parse HEAD)" ]]; then
   range="$base..HEAD"
 else
   # On the base branch itself the merge base is HEAD, which would compare nothing.

@@ -64,7 +64,7 @@ def shared_copies() -> set[str]:
         elif in_block and ln.strip():
             names.add(ln.strip().strip("\"'"))
     if not names:
-        sys.exit(f"gen-ref-toc: no SHARED_FILE_NAMES parsed from {CONTRACT_LIB}")
+        sys.exit(f"error: gen-ref-toc: no SHARED_FILE_NAMES parsed from {CONTRACT_LIB}")
     return names
 
 
@@ -163,7 +163,7 @@ def collect(paths: list[Path]) -> list[Path]:
                 if skill.is_dir() and not skill.name.startswith(("_", ".")) and (skill / "references").is_dir():
                     files.extend(sorted((skill / "references").glob("*.md")))
         else:
-            sys.exit(f"gen-ref-toc: no such path: {p}")
+            sys.exit(f"error: gen-ref-toc: no such path: {p}")
     shared = shared_copies()
     return [f for f in files if f.name not in shared and not is_ignored(f)]
 

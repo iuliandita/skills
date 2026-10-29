@@ -38,7 +38,7 @@ for tool in LYCHEE ACTIONLINT GITLEAKS; do
   repo="${REPOS[$tool]}"
   pinned="$(pinned_version "$tool")"
   if [[ -z "$pinned" ]]; then
-    echo "ERROR: no ${tool}_VERSION pin found in $WORKFLOW" >&2
+    echo "error: no ${tool}_VERSION pin found in $WORKFLOW" >&2
     exit 1
   fi
   tag="$(gh api "repos/$repo/releases/latest" --jq .tag_name)"

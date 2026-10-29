@@ -18,8 +18,8 @@ set -euo pipefail
 #
 # Usage: check-docs-impact.sh [base] | --release <prev-tag>
 # Base resolution matches check-refiner-phase1-guard.sh: argument, else BASE_REF,
-# else BASE_SHA (push "before"; all zeros means unset), else merge base with main
-# or origin/main. install.sh is parsed, never sourced.
+# else BASE_SHA (push "before"; all zeros means unset), else merge base with develop,
+# origin/develop, main, or origin/main. install.sh is parsed, never sourced.
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
@@ -30,7 +30,7 @@ if [[ "${1:-}" == "--release" ]]; then
   release=1
   arg_base="${2:-}"
   if [[ -z "$arg_base" ]]; then
-    echo "ERROR: --release requires a previous tag" >&2
+    echo "error: --release requires a previous tag" >&2
     exit 2
   fi
 else
@@ -43,7 +43,7 @@ if [[ "$BASE_SHA" =~ ^0+$ ]]; then
   BASE_SHA=""
 fi
 if [[ -z "$BASE_REF" && -n "$BASE_SHA" ]] && ! git rev-parse --verify --quiet "${BASE_SHA}^{commit}" >/dev/null; then
-  echo "ERROR: BASE_SHA '${BASE_SHA}' is not a commit in this clone" >&2
+  echo "error: BASE_SHA '${BASE_SHA}' is not a commit in this clone" >&2
   exit 1
 fi
 
@@ -58,7 +58,7 @@ resolve_base() {
       if base="$(git merge-base HEAD "$candidate" 2>/dev/null)"; then
         return 0
       fi
-      echo "ERROR: base ref '${candidate}' exists but no merge-base with HEAD could be computed" >&2
+      echo "error: base ref '${candidate}' exists but no merge-base with HEAD could be computed" >&2
       echo "(shallow clone or unrelated history); refusing to fall back to a non-ancestor tip." >&2
       exit 1
     fi
@@ -72,11 +72,11 @@ if [[ -n "$BASE_REF" ]]; then
 elif [[ -n "$BASE_SHA" ]]; then
   resolve_base "$BASE_SHA"
 else
-  resolve_base main origin/main
+  resolve_base develop origin/develop main origin/main
 fi
 
 if (( release )) && [[ -z "$base" ]]; then
-  echo "ERROR: release base tag '${BASE_REF}' does not resolve" >&2
+  echo "error: release base tag '${BASE_REF}' does not resolve" >&2
   exit 1
 fi
 
@@ -92,10 +92,10 @@ finding() {
   local level="$1" rule="$2" msg="$3"
   if [[ "$level" == warn ]]; then
     warnings=$((warnings + 1))
-    printf 'WARN  %s: %s\n' "$rule" "$msg"
+    printf 'warning: %s: %s\n' "$rule" "$msg" >&2
   else
     errors=$((errors + 1))
-    printf 'ERROR %s: %s\n' "$rule" "$msg"
+    printf 'error: %s: %s\n' "$rule" "$msg" >&2
   fi
 }
 

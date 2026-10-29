@@ -5,7 +5,8 @@
 Security fixes are applied to:
 
 - the latest tagged release
-- the `main` branch
+- the `main` branch (stable)
+- the `develop` branch (nightly)
 
 Older releases may not receive backports.
 

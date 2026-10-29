@@ -13,11 +13,13 @@ concurrency:
 
 jobs:
   gates:
+    name: gates
     permissions:
       contents: read
     uses: ./.github/workflows/lint.yml
 
   publish:
+    name: publish
     needs: gates
     runs-on: ubuntu-24.04
     timeout-minutes: 10
@@ -65,16 +67,7 @@ jobs:
         env:
           TAG: ${{ github.ref_name }}
         run: |
-          version="${TAG#v}"
-          awk -v v="$version" '
-            index($0, "## [" v "]") == 1 { on = 1; next }
-            on && /^## \[/ { exit }
-            on { print }
-          ' CHANGELOG.md | sed '/./,$!d' > "$RUNNER_TEMP/notes.md"
-          if [[ ! -s "$RUNNER_TEMP/notes.md" ]]; then
-            echo "::error::CHANGELOG.md has no section for $version"
-            exit 1
-          fi
+          ./scripts/changelog-notes.sh "${TAG#v}" > "$RUNNER_TEMP/notes.md"
 
       - name: Publish GitHub release
         env:
