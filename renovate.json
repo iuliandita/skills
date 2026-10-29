@@ -1,0 +1,54 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":semanticCommits",
+    ":dependencyDashboard"
+  ],
+  "labels": [
+    "dependencies"
+  ],
+  "osvVulnerabilityAlerts": true,
+  "vulnerabilityAlerts": {
+    "labels": [
+      "security"
+    ]
+  },
+  "timezone": "Etc/UTC",
+  "schedule": [
+    "* 6 * * 1"
+  ],
+  "minimumReleaseAge": "7 days",
+  "packageRules": [
+    {
+      "matchManagers": [
+        "github-actions"
+      ],
+      "groupName": "GitHub Actions",
+      "semanticCommitType": "deps",
+      "semanticCommitScope": "ci"
+    },
+    {
+      "matchManagers": [
+        "pip"
+      ],
+      "matchFileNames": [
+        ".github/tools/semgrep/**"
+      ],
+      "groupName": "semgrep",
+      "semanticCommitType": "deps",
+      "semanticCommitScope": "ci"
+    },
+    {
+      "matchManagers": [
+        "npm"
+      ],
+      "matchFileNames": [
+        ".github/tools/markdownlint/**"
+      ],
+      "groupName": "markdownlint",
+      "semanticCommitType": "deps",
+      "semanticCommitScope": "ci"
+    }
+  ]
+}
