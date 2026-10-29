@@ -1,21 +1,31 @@
-# skills
+<h1><img src="assets/wordmark.png" alt="skills" width="360"></h1>
 
-Agent skills for infrastructure, security, software engineering, and agent workflows. Each skill provides task instructions, routing hints, and supporting references that can be installed individually.
+Agent skills for infrastructure, security, software engineering, and agent workflows, for people who use coding agents and want task instructions installed one skill at a time.
+
+Each skill provides task instructions, routing hints, and supporting references. Skills are instructions your agent follows with your permissions, and the installer writes only to the skill directories of the harnesses you choose.
+
+Status: stable since v2.0.0. `main` is the stable channel and `develop` the nightly.
 
 ## Install
 
+Set up with an agent: paste this into your coding agent.
+
+> Set up https://github.com/iuliandita/skills for the coding agents I use, following its INSTALL.md.
+
+`npx skills add iuliandita/skills` installs the default branch, which is the nightly `develop`. Add `#main` to install the stable channel:
+
 ```bash
 # Browse the collection
-npx skills add iuliandita/skills --list
+npx skills add iuliandita/skills#main --list
 
 # Install selected skills
-npx skills add iuliandita/skills --skill kubernetes --skill docker
+npx skills add iuliandita/skills#main --skill kubernetes --skill docker
 ```
 
 The bundled installer also supports copying skills or sharing one canonical copy across tools with symlinks:
 
 ```bash
-git clone https://github.com/iuliandita/skills.git
+git clone -b main https://github.com/iuliandita/skills.git
 cd skills
 ./install.sh --tool codex kubernetes docker
 ```
@@ -45,16 +55,18 @@ Choose skills for your actual work; there is no need to install the whole collec
 
 ```bash
 # Application development
-npx skills add iuliandita/skills --skill backend-api --skill frontend-design --skill testing
+npx skills add iuliandita/skills#main --skill backend-api --skill frontend-design --skill testing
 
 # Infrastructure
-npx skills add iuliandita/skills --skill terraform --skill kubernetes --skill observability
+npx skills add iuliandita/skills#main --skill terraform --skill kubernetes --skill observability
 
 # Skill maintenance
-npx skills add iuliandita/skills --skill skill-creator --skill skill-refiner
+npx skills add iuliandita/skills#main --skill skill-creator --skill skill-refiner
 ```
 
-## Using a skill
+## Usage
+
+### Using a skill
 
 Ask your agent to use a skill by name, or describe a task that matches its trigger description. For example: "Use code-review to review this diff" or "Use kubernetes-health to check the current cluster."
 
@@ -85,7 +97,7 @@ The [run history](.refiner-runs.json) and [score ledger](.refiner-ledger.md) rec
 
 ## Contributing
 
-Use a branch and pull request, with green CI before squash merge. See [skill authoring](docs/skill-authoring.md) for opening summaries and [INSTALL.md](INSTALL.md#releases) for the release workflow. Report vulnerabilities using [SECURITY.md](SECURITY.md).
+Branch from `develop` and open a pull request; CI must be green before squash merge. See [skill authoring](docs/skill-authoring.md) for opening summaries and [INSTALL.md](INSTALL.md#releases) for the release workflow. Report vulnerabilities using [SECURITY.md](SECURITY.md).
 
 Every skill must work when installed alone: runtime file references stay inside its own directory. Shared output and agent-hygiene instructions originate in `skills/_shared/`; edit those sources and regenerate the shipped copies:
 
@@ -104,11 +116,18 @@ New skills must also be registered in the repository-audit coverage check or its
 
 [MIT](LICENSE)
 
+## Part of the stack
+
+- [agents](https://github.com/iuliandita/agents): global prompts and subagent roles for every harness you use.
+- skills: task skills, installed one at a time. idstack calls them by name.
+- [mods](https://github.com/iuliandita/mods): hooks for Claude Code, Codex, and OpenCode, installed one at a time.
+- [idstack](https://github.com/iuliandita/idstack): infra, DevOps, and SRE playbooks layered on pstack.
+
+Installing one does not install the others.
+
 ## Project and support
 
 Made by [iuliandita](https://iuliandita.com). [Other projects](https://iuliandita.com/projects/).
 
 See [installation and recovery](INSTALL.md), [contributing](CONTRIBUTING.md),
 [documentation](docs/README.md), and [private security reporting](SECURITY.md).
-
-[agents](https://github.com/iuliandita/agents) provides global prompts and role definitions; [mods](https://github.com/iuliandita/mods) provides Claude Code hooks. Installing one collection does not install the others.
