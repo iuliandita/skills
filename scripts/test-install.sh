@@ -1154,6 +1154,26 @@ PY
   trap - RETURN
 }
 
+test_harness_alias_matches_tool() {
+  local tmp output status=0
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  isolated "$tmp" "$ROOT/install.sh" --harness portable --dest "$tmp/via-harness" --no-backup docker >/dev/null
+  isolated "$tmp" "$ROOT/install.sh" --tool portable --dest "$tmp/via-tool" --no-backup docker >/dev/null
+  diff -r "$tmp/via-harness/docker" "$tmp/via-tool/docker" >/dev/null || fail "--harness installed different files than --tool"
+  isolated "$tmp" "$ROOT/install.sh" --harness claude --harness cursor --no-backup docker >/dev/null
+  [[ -d "$tmp/.claude/skills/docker" && -d "$tmp/.cursor/skills/docker" ]] || fail "repeated --harness did not install both tools"
+  output="$(isolated "$tmp" "$ROOT/install.sh" --check --harness claude 2>&1)" || status=$?
+  grep -q 'docker' <<< "$output" || fail "--check --harness did not report the installed skill: $output"
+  status=0
+  output="$(isolated "$tmp" "$ROOT/install.sh" --harness 2>&1)" || status=$?
+  { (( status == 1 )) && grep -q 'error: --harness requires a value' <<< "$output"; } || fail "bare --harness: $status $output"
+  status=0
+  output="$(isolated "$tmp" "$ROOT/install.sh" --harness claude,,cursor 2>&1)" || status=$?
+  { (( status == 1 )) && grep -q 'error: --harness requires non-empty tool names' <<< "$output"; } || fail "empty --harness name: $status $output"
+  grep -q -- '--harness TOOL      Alias of --tool' < <("$ROOT/install.sh" --help) || fail "--help does not document --harness"
+}
+
 test_legacy_cleanup_custom_canonical_needs_replacement() {
   local tmp old canon
   tmp="$(mktemp -d)"
@@ -2037,6 +2057,7 @@ test_legacy_cleanup_end_to_end
 test_legacy_cleanup_backup_failure_removes_nothing
 test_legacy_cleanup_converges_after_interruption
 test_legacy_cleanup_refuses_unsafe_layouts
+test_harness_alias_matches_tool
 test_legacy_cleanup_custom_canonical_needs_replacement
 test_opencode_link_migration_on_canonical_allows_replacement
 test_embedded_python_ignores_cwd_modules
