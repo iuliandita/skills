@@ -171,6 +171,7 @@ Install skills for AI coding agents.
 Options:
   --tool TOOL         Target tool (repeatable, comma-separated)
                       Supported: $(supported_tools_text)
+  --harness TOOL      Alias of --tool
   --dest PATH         Override destination directory (single-tool mode only)
   --link              Symlink mode: install once to canonical dir, symlink per tool
   --list              List available skills and install status
@@ -2684,11 +2685,11 @@ main() {
 
   while (( $# > 0 )); do
     case "$1" in
-      --tool)
-        [[ $# -ge 2 ]] || { printf '%s\n' "error: --tool requires a value" >&2; exit 1; }
+      --tool|--harness)
+        [[ $# -ge 2 ]] || { printf '%s\n' "error: $1 requires a value" >&2; exit 1; }
         IFS=',' read -ra _parsed <<< "$2"
         if [[ -z "$2" || "$2" == ,* || "$2" == *, || "$2" == *,,* ]]; then
-          printf '%s\n' "error: --tool requires non-empty tool names" >&2; exit 1
+          printf '%s\n' "error: $1 requires non-empty tool names" >&2; exit 1
         fi
         tools+=("${_parsed[@]}")
         tool_given=true

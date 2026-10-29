@@ -42,6 +42,9 @@ git clone -b main https://github.com/iuliandita/skills.git /tmp/skills-install
 rm -rf /tmp/skills-install
 ```
 
+`--harness` is an alias of `--tool` with the same meaning: a comma-separated list, repeatable.
+Both flags work everywhere the other does.
+
 For OpenCode, the installer also updates `~/.config/opencode/opencode.json` so every installed
 skill has `permission.skill.<name>: "allow"`. This keeps installs visible when the user's config
 uses a deny-by-default policy such as `"permission": { "skill": { "*": "deny" } }`. Existing
