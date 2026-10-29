@@ -30,7 +30,7 @@
     },
     {
       "matchManagers": [
-        "pip"
+        "pip_requirements"
       ],
       "matchFileNames": [
         ".github/tools/semgrep/**"
