@@ -354,7 +354,7 @@ json_resume() {
   trap json_emit EXIT
 }
 
-# shellcheck disable=SC2329  # runs as the EXIT trap
+# shellcheck disable=SC2317,SC2329  # runs as the EXIT trap
 json_emit() {
   local rc=$? line msg errors="" ok=false name command body="$JSON_BODY"
   trap - EXIT
