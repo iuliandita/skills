@@ -5,6 +5,39 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [3.0.0] - 2026-10-29
+
+### Breaking Changes
+
+* `install.sh` and the gate scripts print errors to stderr as one line with a lower-case prefix: `error:`, `warning:`, or `note:`. Upper-case `ERROR:`, `WARN`, and unprefixed messages are gone, and findings from `check-docs-impact.sh` moved from stdout to stderr. Match on the new prefixes and read stderr instead of stdout. Exit codes are unchanged ([#371](https://github.com/iuliandita/skills/pull/371)).
+* `install.sh --check` with no lock file now prints an `error:` line on stderr instead of two lines on stdout, and still exits 1. Test for the exit code or the `error:` prefix on stderr ([#371](https://github.com/iuliandita/skills/pull/371)).
+* Some installer messages changed wording: `flock not found` is now a `warning:`, and `--detect` notices about a relative `PATH` entry or `HOME` start with `warning:`. Do not match on the old text ([#371](https://github.com/iuliandita/skills/pull/371)).
+* `CHANGELOG.md` uses `## [X.Y.Z] - date` headings with reference compare links at the bottom. Parse it with `scripts/changelog-notes.sh X.Y.Z` instead of the old heading format ([#367](https://github.com/iuliandita/skills/pull/367)).
+* `develop` is now the default and integration branch, and `main` is the stable channel. Pin installs to `main` (`git clone -b main`, `--ref main`) for stable releases; a plain clone gets the nightly `develop`. The CI jobs are now named `lint`, `test`, `secrets`, and `zizmor`, so required checks must use those names ([#365](https://github.com/iuliandita/skills/pull/365), [#369](https://github.com/iuliandita/skills/pull/369)).
+
+### Features
+
+* **install:** `--json` prints one object with `ok`, `errors`, `command`, and per-command keys on stdout and sends human output to stderr, for installs, `--list`, `--check`, `--detect`, `--doctor`, `--migrate`, and `--update`. `--help` gains Environment and Exit codes sections. Keys are listed in INSTALL.md ([#375](https://github.com/iuliandita/skills/pull/375)).
+* **install:** `--harness` is an alias of `--tool` ([#373](https://github.com/iuliandita/skills/pull/373)).
+* **lint:** flag literal pipes in ERE search patterns such as `grep -E 'a\|b'` ([#312](https://github.com/iuliandita/skills/pull/312)).
+* **ci:** the shared stack canon and checker are vendored and run in lint; a weekly stack-sync workflow opens an issue on drift ([#379](https://github.com/iuliandita/skills/pull/379)).
+* **ci:** add `scripts/changelog-notes.sh` with tests; the release workflow uses it to publish notes without the trailing links ([#367](https://github.com/iuliandita/skills/pull/367)).
+
+### Bug Fixes
+
+* **security skills:** fix commands that matched a literal pipe, the PIE check, and the SQL injection fix example; refresh stale version pins and the OPNsense/pfSense details ([#311](https://github.com/iuliandita/skills/pull/311)).
+* **ci:** the diff-based gate scripts fall back to `develop` before `main` when no base ref is given ([#369](https://github.com/iuliandita/skills/pull/369)).
+* **ci:** every quality job runs on every PR and push instead of only on listed paths ([#377](https://github.com/iuliandita/skills/pull/377)).
+
+### Documentation
+
+* **readme:** follow the shared layout with the wordmark, status line, agent setup prompt, and Part of the stack section; install commands pin `main` ([#363](https://github.com/iuliandita/skills/pull/363)).
+* Describe the `develop` to `main` branch model and release flow in CONTRIBUTING.md and INSTALL.md ([#365](https://github.com/iuliandita/skills/pull/365)).
+
+### Dependencies
+
+* **ci:** bump semgrep to 1.179.0 ([#288](https://github.com/iuliandita/skills/pull/288)).
+
 ## [2.7.1] - 2026-10-28
 
 ### Bug Fixes
@@ -625,7 +658,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Bootstrap baseline before release-please automation.
 
-[Unreleased]: https://github.com/iuliandita/skills/compare/v2.7.1...HEAD
+[Unreleased]: https://github.com/iuliandita/skills/compare/v3.0.0...HEAD
+[3.0.0]: https://github.com/iuliandita/skills/compare/v2.7.1...v3.0.0
 [2.7.1]: https://github.com/iuliandita/skills/compare/v2.7.0...v2.7.1
 [2.7.0]: https://github.com/iuliandita/skills/compare/v2.6.4...v2.7.0
 [2.6.4]: https://github.com/iuliandita/skills/compare/v2.6.3...v2.6.4
