@@ -2,7 +2,7 @@ name: Quality Gates
 
 on:
   push:
-    branches: [main]
+    branches: [develop, main]
     paths:
       - "skills/**"
       - "scripts/**"
@@ -22,6 +22,7 @@ on:
       - "lychee.toml"
       - ".github/workflows/**"
       - ".github/tools/**"
+      - ".github/zizmor.yml"
       - ".refiner-runs.json"
       - ".refiner-ledger.md"
       - ".gitignore"
@@ -46,6 +47,7 @@ on:
       - "lychee.toml"
       - ".github/workflows/**"
       - ".github/tools/**"
+      - ".github/zizmor.yml"
       - ".refiner-runs.json"
       - ".refiner-ledger.md"
       - ".gitignore"
@@ -64,7 +66,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  collection:
+  lint:
+    name: lint
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
@@ -136,7 +139,8 @@ jobs:
           BASE_SHA: ${{ github.event_name == 'push' && github.event.before || '' }}
         run: ./scripts/check-docs-impact.sh
 
-  shell-and-python:
+  test:
+    name: test
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
@@ -195,6 +199,7 @@ jobs:
         run: python3 -m py_compile scripts/*.py
 
   markdown:
+    name: markdown
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
@@ -213,6 +218,7 @@ jobs:
         run: markdownlint-cli2
 
   links:
+    name: links
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
@@ -243,6 +249,7 @@ jobs:
           lychee --config lychee.toml "${markdown_files[@]}"
 
   workflow:
+    name: workflow
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
@@ -264,7 +271,24 @@ jobs:
       - name: Lint GitHub Actions workflows
         run: actionlint -color
 
-  security:
+  zizmor:
+    name: zizmor
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Audit workflow security
+        uses: zizmorcore/zizmor-action@85b2b9fb8e3325e7a23d7d0a9d7ba5ae0f999e3e # v0.7.1
+        with:
+          version: "1.30.1"
+          advanced-security: false
+          annotations: true
+
+  secrets:
+    name: secrets
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:

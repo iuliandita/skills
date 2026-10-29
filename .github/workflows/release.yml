@@ -13,11 +13,13 @@ concurrency:
 
 jobs:
   gates:
+    name: gates
     permissions:
       contents: read
     uses: ./.github/workflows/lint.yml
 
   publish:
+    name: publish
     needs: gates
     runs-on: ubuntu-24.04
     timeout-minutes: 10

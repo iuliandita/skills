@@ -1,0 +1,5 @@
+rules:
+  self-repository:
+    # The release workflow calls the local lint workflow with the './' form.
+    ignore:
+      - release.yml:19

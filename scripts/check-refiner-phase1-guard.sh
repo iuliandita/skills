@@ -14,7 +14,7 @@ set -euo pipefail
 #
 # Base resolution: optional first argument, else BASE_REF, else BASE_SHA (the
 # push event's previous tip; all zeros means unset, a missing commit exits 1),
-# else the merge base with main or origin/main. The script only reads refs and
+# else the merge base with develop, origin/develop, main, or origin/main. The script only reads refs and
 # never mutates the repository. It exits 0 with an explicit message when no base
 # ref resolves at all, or running on the base branch itself: the check is a diff
 # guard and cannot run without a commit range. If a base ref resolves but no
@@ -78,7 +78,7 @@ if [[ -n "$BASE_REF" ]]; then
 elif [[ -n "$BASE_SHA" ]]; then
   resolve_base "$BASE_SHA"
 else
-  resolve_base main origin/main
+  resolve_base develop origin/develop main origin/main
 fi
 
 head_sha="$(git rev-parse HEAD)"

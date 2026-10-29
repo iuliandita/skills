@@ -18,8 +18,8 @@ set -euo pipefail
 #
 # Usage: check-docs-impact.sh [base] | --release <prev-tag>
 # Base resolution matches check-refiner-phase1-guard.sh: argument, else BASE_REF,
-# else BASE_SHA (push "before"; all zeros means unset), else merge base with main
-# or origin/main. install.sh is parsed, never sourced.
+# else BASE_SHA (push "before"; all zeros means unset), else merge base with develop,
+# origin/develop, main, or origin/main. install.sh is parsed, never sourced.
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
@@ -72,7 +72,7 @@ if [[ -n "$BASE_REF" ]]; then
 elif [[ -n "$BASE_SHA" ]]; then
   resolve_base "$BASE_SHA"
 else
-  resolve_base main origin/main
+  resolve_base develop origin/develop main origin/main
 fi
 
 if (( release )) && [[ -z "$base" ]]; then
