@@ -42,3 +42,7 @@ in Phase 3. `scripts/check-refiner-state.sh` validates it when the collection sh
 Optional per-skill fields: `executor_tiers` (array of `small|balanced|flagship` that ran its
 behavioral cases) and `baseline_lift` (`true` when the with-skill output beat the no-skill run on
 every case, `false` when any case showed no lift, omitted when not measured).
+
+Do not record paths into gitignored directories (such as `docs/local/`) in a tracked history
+file. When detailed evidence stays local, write `"local evidence (not tracked)"` in the field
+or omit it.

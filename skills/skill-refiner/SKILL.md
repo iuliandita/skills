@@ -125,7 +125,8 @@ secondary harness, and set up the mandatory self-review fallback. Phase 1 contin
    in a score ledger before any edits. The ledger must include structural gate (G),
    AI Self-Check (A), behavioral score (B), verified flag count and penalty, reviewer
    classification and applied cap, composite score, test source, evaluator identity and
-   evidence for each evaluation, and timestamp. After this step, if the ledger is
+   evidence for each evaluation, and timestamp. In a tracked ledger, refer to evidence kept in
+   gitignored directories as `local (not tracked)`, not by its path. After this step, if the ledger is
    missing, incomplete, or only records lint/spec status, pause and backfill scoring before
    applying changes. In headless mode, halt the run and report the missing score data.
    Validate individual checklist statuses, applicability, case coverage, and score arithmetic.
