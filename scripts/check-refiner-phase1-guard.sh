@@ -6,7 +6,7 @@ set -euo pipefail
 # Phase 1 iteration commits must not touch the set that defines or checks the
 # refiner's own quality (evaluation criteria, canonical test cases, the lint and
 # spec validators and the helpers they run, the rubric hash, this guard,
-# lint.yml, skill-creator, skill-refiner). Without this, a run could weaken the
+# the CI and Security workflows, skill-creator, skill-refiner). Without this, a run could weaken the
 # gate it is being scored against. The list is the union of this copy and the
 # base revision's copy, so a commit cannot drop an entry and edit it at once. Phase 2 (meta-improvement) is
 # allowed to edit those files, so only commits whose subject matches the phase-1
@@ -35,7 +35,8 @@ IMMUTABLE_PATHS=(
   "scripts/contract-lib.sh"
   "scripts/refiner-rubric-hash.sh"
   "scripts/check-refiner-phase1-guard.sh"
-  ".github/workflows/lint.yml"
+  ".github/workflows/ci.yml"
+  ".github/workflows/security.yml"
   "skills/skill-creator"
   "skills/skill-refiner"
 )
@@ -129,7 +130,7 @@ if (( errors > 0 )); then
   echo
   echo "Phase-1 refiner commits must not modify evaluation criteria, canonical tests,"
   echo "lint/validate scripts and the helpers they run, the rubric hash, this guard,"
-  echo "lint.yml, skill-creator, or skill-refiner. Move the change to phase 2."
+  echo "ci.yml, security.yml, skill-creator, or skill-refiner. Move the change to phase 2."
   exit 1
 fi
 

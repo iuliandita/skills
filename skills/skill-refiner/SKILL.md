@@ -285,7 +285,7 @@ See `references/output-contract.md` for the full contract.
    `references/test-cases.md`, `references/test-cases-local.md`, lint-skills.sh,
    validate-spec.sh and the helpers they run (skill-lib.sh, skill-frontmatter.py,
    gen-ref-toc.py, contract-lib.sh), refiner-rubric-hash.sh, the phase-1 guard,
-   lint.yml, **skill-creator**, or **skill-refiner** during phase 1.
+   the CI and Security workflows, **skill-creator**, or **skill-refiner** during phase 1.
    Violation = abort the run.
    `scripts/check-refiner-phase1-guard.sh` runs in CI and fails any phase-1
    iteration commit that touches this set, so the rule is not self-enforced.
