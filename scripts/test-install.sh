@@ -105,7 +105,7 @@ test_shared_destination_is_installed_once() {
   trap 'rm -rf "$tmp"' RETURN
   HOME="$tmp" "$ROOT/install.sh" --tool codex --no-backup docker >/dev/null
   echo EDIT >> "$tmp/.agents/skills/docker/SKILL.md"
-  output="$(HOME="$tmp" "$ROOT/install.sh" --tool codex,opencode,gemini,commandcode --force docker)"
+  output="$(HOME="$tmp" "$ROOT/install.sh" --tool codex,opencode,kimi,commandcode --force docker)"
   [[ "$(grep -c 'docker backed up' <<< "$output")" -eq 1 ]] || fail "shared destination backed up more than once"
   [[ "$(grep -l EDIT "$tmp"/.agents/.skills-backups/skills/docker/*/SKILL.md | wc -l)" -eq 1 ]] || fail "edited backup missing"
   rm -rf "$tmp"
@@ -301,13 +301,14 @@ test_link_mode_writes_tool_lock() {
   trap - RETURN
 }
 
-test_link_mode_writes_tool_lock_gemini() {
-  local tmp
+test_removed_gemini_tool_is_unknown() {
+  local tmp output rc=0
   tmp="$(mktemp -d)"
   trap 'rm -rf "$tmp"' RETURN
 
-  HOME="$tmp" "$ROOT/install.sh" --tool gemini --link --no-backup >/dev/null
-  HOME="$tmp" "$ROOT/install.sh" --check --tool gemini >/dev/null
+  output="$(HOME="$tmp" "$ROOT/install.sh" --check --tool gemini 2>&1)" || rc=$?
+  [[ "$rc" -eq 1 ]] || fail "--check --tool gemini exited $rc, expected 1"
+  grep -q 'error: unknown tool: gemini;' <<< "$output" || fail "--check --tool gemini did not report an unknown tool"
 
   rm -rf "$tmp"
   trap - RETURN
@@ -537,17 +538,17 @@ test_omp_check_mode() {
   trap - RETURN
 }
 
-test_omp_and_gemini_share_destination() {
+test_omp_and_kimi_share_destination() {
   local tmp
   tmp="$(mktemp -d)"
   trap 'rm -rf "$tmp"' RETURN
 
-  HOME="$tmp" "$ROOT/install.sh" --tool omp,gemini --link --no-backup docker >/dev/null
+  HOME="$tmp" "$ROOT/install.sh" --tool omp,kimi --link --no-backup docker >/dev/null
   if [[ ! -d "$tmp/.agents/skills/docker" ]]; then
-    fail "omp,gemini shared install did not populate ~/.agents/skills"
+    fail "omp,kimi shared install did not populate ~/.agents/skills"
   fi
   if [[ -L "$tmp/.agents/skills/docker" ]]; then
-    fail "omp,gemini shared install created a self-symlink"
+    fail "omp,kimi shared install created a self-symlink"
   fi
 
   rm -rf "$tmp"
@@ -813,7 +814,7 @@ with open(sys.argv[1], "w", encoding="utf-8") as f:
     json.dump({"version": 1, "source": sys.argv[2], "skills": {"anti-slop": {"hash": sys.argv[3], "provenance": "source-equal-v1"}}}, f)
 PY
   ln -s "$canonical/anti-slop" "$tmp/unselected/anti-slop"
-  GEMINI_SKILLS_DIR="$canonical" SKILLS_CANONICAL_DIR="$canonical" "$src/install.sh" --tool gemini --migrate --apply >/dev/null
+  KIMI_SKILLS_DIR="$canonical" SKILLS_CANONICAL_DIR="$canonical" "$src/install.sh" --tool kimi --migrate --apply >/dev/null
   [[ -d "$canonical/anti-slop" && -d "$canonical/code-simplification" ]] || fail "canonical migration retired shared legacy target"
   [[ -e "$tmp/unselected/anti-slop/SKILL.md" ]] || fail "canonical migration broke an unselected tool link"
   rm -rf "$tmp"
@@ -2081,7 +2082,7 @@ test_link_mode_never_links_canonical_onto_itself
 test_link_mode_keeps_foreign_symlink_without_force
 test_opencode_string_permissions_are_preserved
 test_link_mode_writes_tool_lock
-test_link_mode_writes_tool_lock_gemini
+test_removed_gemini_tool_is_unknown
 test_omp_default_path
 test_omp_skills_dir_override
 test_omp_link_mode_shares_canonical_dir
@@ -2093,7 +2094,7 @@ test_plain_install_reports_rename_and_symlink_target_differences
 test_plain_install_keeps_unverifiable_copy_unpublished
 test_force_still_overwrites_a_differing_copy
 test_omp_check_mode
-test_omp_and_gemini_share_destination
+test_omp_and_kimi_share_destination
 test_backup_preserves_top_level_symlink
 test_commandcode_and_agy_targets
 test_lock_preserves_unselected_records
