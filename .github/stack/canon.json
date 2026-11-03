@@ -45,6 +45,15 @@
     "releases_heading": "Releases",
     "releases_mention": ["`develop`", "`main`", "Unreleased"]
   },
+  "agent_entry": {
+    "file": "AGENTS.md",
+    "symlink": "CLAUDE.md",
+    "max_lines": 60,
+    "headings": ["Commands", "Layout", "Rules", "For agents"],
+    "local_sentence": "If `AGENTS.local.md` exists beside this file, read it too.",
+    "ignored": ["AGENTS.local.md", "CLAUDE.local.md"],
+    "not_ignored": ["AGENTS.md", "CLAUDE.md"]
+  },
   "workflows": {
     "dir": ".github/workflows",
     "sha_regex": "^[0-9a-f]{40}$",

@@ -46,7 +46,7 @@ ALL_SKILLS=()
 
 SUPPORTED_TOOLS=(
   claude codex cursor windsurf opencode commandcode
-  copilot gemini roo goose amp continue kiro cline warp
+  copilot roo goose amp continue kiro cline warp
   openclaw hermes qwen crush antigravity augment openhands trae qoder kimi omp
   portable
 )
@@ -58,8 +58,6 @@ declare -A TOOL_PATHS=(
   [windsurf]="${WINDSURF_SKILLS_DIR:-$HOME/.codeium/windsurf/skills}"
   [opencode]="${OPENCODE_SKILLS_DIR:-$HOME/.agents/skills}"
   [copilot]="${COPILOT_SKILLS_DIR:-$HOME/.copilot/skills}"
-  # Legacy: Gemini CLI consumer accounts moved to antigravity.
-  [gemini]="${GEMINI_SKILLS_DIR:-$HOME/.agents/skills}"
   [roo]="${ROO_SKILLS_DIR:-$HOME/.roo/skills}"
   [goose]="${GOOSE_SKILLS_DIR:-$HOME/.config/goose/skills}"
   [amp]="${AMP_SKILLS_DIR:-$HOME/.config/agents/skills}"
@@ -120,7 +118,6 @@ declare -A TOOL_ALIASES=(
   [claude-code]=claude
   [openai-codex]=codex
   [github-copilot]=copilot
-  [gemini-cli]=gemini
   [kiro-cli]=kiro
   [qwen-code]=qwen
   [kimi-cli]=kimi
@@ -209,7 +206,7 @@ Examples:
   install.sh                                    # All skills for Claude (default)
   install.sh --tool codex                       # All skills for Codex
   install.sh --tool cursor kubernetes docker    # Specific skills for Cursor
-  install.sh --tool claude,gemini,roo --link    # Canonical + symlinks
+  install.sh --tool claude,codex,roo --link     # Canonical + symlinks
   install.sh --tool claude,codex,opencode --link --include-internal
   install.sh --check                            # Check Claude install for updates
   install.sh --check --tool cursor              # Check Cursor install
@@ -1959,8 +1956,6 @@ DETECT_MARKERS=(
   "opencode|config|.config/opencode/opencode.json"
   "commandcode|binary|commandcode"
   "commandcode|config|.commandcode/settings.json"
-  "gemini|binary|gemini"
-  "gemini|config|.gemini/settings.json"
   "hermes|binary|hermes"
   "hermes|config|.hermes/config.yaml"
   "antigravity|binary|agy"
@@ -2112,6 +2107,7 @@ import sys
 KEYS = ("version", "tools", "link", "include_internal", "skills",
         "source_repo", "source_branch", "source_remote", "source_remote_url", "source_upstream")
 TOOL = re.compile(r"[a-z][a-z0-9-]{0,31}")
+REMOVED = {"gemini": "3.1.0", "gemini-cli": "3.1.0"}
 SKILL = re.compile(r"[a-z0-9](?:[a-z0-9-]*[a-z0-9])?")
 LIMIT = 65536
 ABSENT = 20
@@ -2247,6 +2243,9 @@ def read_config(supported, aliases):
         if not TOOL.fullmatch(tool):
             fail(2, f"invalid tool name {tool!r}")
         tool = aliases.get(tool, tool)
+        if tool in REMOVED:
+            fail(2, f"tool {tool!r} was removed in {REMOVED[tool]}; "
+                    "rerun install.sh --save with supported tools (codex uses the same ~/.agents/skills)")
         if tool not in supported:
             fail(2, f"unknown tool {tool!r}")
         if tool not in tools:

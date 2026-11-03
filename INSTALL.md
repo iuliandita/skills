@@ -65,8 +65,8 @@ An existing symlink that points elsewhere is left alone unless you use `--force`
 ```bash
 git clone -b main https://github.com/iuliandita/skills.git /tmp/skills-install
 
-# Install for Claude, Cursor, and Gemini in one shot
-/tmp/skills-install/install.sh --tool claude,cursor,gemini --link
+# Install for Claude, Cursor, and Codex in one shot
+/tmp/skills-install/install.sh --tool claude,cursor,codex --link
 
 # Check for updates later
 /tmp/skills-install/install.sh --check --link
@@ -125,7 +125,7 @@ cp -r skills/kubernetes ~/.cursor/skills/kubernetes
 
 ## Supported targets
 
-The installer ships paths for 27 targets. All paths are overridable via `--dest` (single-tool mode) or per-tool environment variables (e.g., `CLAUDE_SKILLS_DIR`).
+The installer ships paths for 26 targets. All paths are overridable via `--dest` (single-tool mode) or per-tool environment variables (e.g., `CLAUDE_SKILLS_DIR`).
 
 Support in this table means **path support**: the installer knows where to copy or symlink the skill folders for that target. Runtime behavior is owned by the consuming tool. Activation rules, trigger matching, context limits, subagent support, and reference-file loading can differ between agents, even when they all read the same skill directory.
 
@@ -145,7 +145,6 @@ For important workflows, smoke-test the target tool after install:
 | OpenCode | `opencode` | `~/.agents/skills` |
 | Command Code | `commandcode` | `~/.agents/skills` |
 | GitHub Copilot | `copilot` | `~/.copilot/skills` |
-| Gemini CLI (legacy; consumer accounts moved to Antigravity) | `gemini` | `~/.agents/skills` |
 | Roo Code | `roo` | `~/.roo/skills` |
 | Goose | `goose` | `~/.config/goose/skills` |
 | Amp | `amp` | `~/.config/agents/skills` |
@@ -169,6 +168,8 @@ For important workflows, smoke-test the target tool after install:
 `OMP_SKILLS_DIR` only controls where the installer writes for `omp`; Oh My Pi itself
 natively discovers `~/.agents/skills` (and also `~/.omp/agent/skills`) without reading
 that variable.
+
+`gemini` (Gemini CLI) and its `gemini-cli` alias were removed in 3.1.0; use `--tool codex` for the same `~/.agents/skills`, or `--tool portable --dest <dir>`, and rerun `install.sh --save` if a saved selection lists `gemini`.
 
 ### One copy per harness
 
@@ -215,7 +216,7 @@ findings stay separate and labeled. Overlaps the harness resolves itself are cou
 ./install.sh --doctor --verbose --tool opencode  # also list harness-resolved overlaps
 ```
 
-Common aliases also work: `claude-code`, `openai-codex`, `github-copilot`, `gemini-cli`, `kiro-cli`, `qwen-code`, `kimi-cli`, `agy` (Antigravity CLI), `command-code`, `cmdc` (Command Code), and `oh-my-pi` (Oh My Pi).
+Common aliases also work: `claude-code`, `openai-codex`, `github-copilot`, `kiro-cli`, `qwen-code`, `kimi-cli`, `agy` (Antigravity CLI), `command-code`, `cmdc` (Command Code), and `oh-my-pi` (Oh My Pi).
 
 For a target or project directory outside this table, use `--tool portable --dest /path/to/skills`.
 Verify that the consuming tool discovers skills at that destination.
@@ -256,7 +257,6 @@ stderr. `--detect` exits 0 and rejects every other option and skill name.
 | codex | `codex` | `.codex/config.toml` |
 | opencode | `opencode` | `.config/opencode/opencode.json` |
 | commandcode | `commandcode` | `.commandcode/settings.json` |
-| gemini | `gemini` | `.gemini/settings.json` |
 | antigravity | `agy` | `.gemini/antigravity-cli/settings.json` |
 | hermes | `hermes` | `.hermes/config.yaml` |
 | kimi | `kimi` | none |
@@ -487,7 +487,7 @@ Or check what changed first:
 
 ```bash
 ./install.sh --check --link
-./install.sh --tool claude,cursor,gemini --link --force
+./install.sh --tool claude,cursor,codex --link --force
 ```
 
 The first example updates two copied skills for Codex; the second checks and updates all
@@ -644,7 +644,7 @@ skills/
       dockerfile-patterns.md
       ...
   ...
-install.sh                # installer (27 targets, symlink mode, lock file)
+install.sh                # installer (26 targets, symlink mode, lock file)
 scripts/
   lint-skills.sh          # collection linter
   validate-spec.sh        # Agent Skills spec validator
@@ -690,7 +690,8 @@ Release steps (start with a clean checkout and update `develop` with `git pull -
 2. Commit the changelog on that branch with `chore(release): X.Y.Z`, push the branch, and open
    a PR targeting `develop`. Require green CI and squash merge the PR.
 3. Open a release PR from `develop` to `main`. Require green CI and merge it with a merge
-   commit, never a squash, so `main` stays an ancestor of `develop`.
+   commit, never a squash, so every `develop` commit stays in `main`'s history and the next
+   release PR carries only new work.
 4. Switch to `main`, run `git pull --ff-only`, and verify that `HEAD` is the merge commit and
    that its checks passed. Do not commit or push directly to `main`.
    Run `./scripts/check-docs-impact.sh --release vPREV` before tagging.
@@ -715,11 +716,11 @@ The existing R1/R2 migration and target-path obligations remain blocking; R3/R4 
 obligations remain warnings in release mode. This gate checks obligations, not prose quality,
 activation, or the completeness of release notes. Review those before tagging.
 
-Dependabot proposes weekly updates for the pinned workflow actions and for the semgrep and
-markdownlint-cli2 manifests under `.github/tools/`, after a 7-day cooldown. The
-checksum-pinned binaries in `lint.yml` (lychee, actionlint, gitleaks) are outside its reach;
-the weekly Tool Pins workflow runs `scripts/report-tool-pins.sh` and keeps one issue open
-while any of them is behind. Quality Gates also runs weekly on a schedule.
+Renovate proposes weekly updates for the pinned workflow actions and for the semgrep and
+markdownlint-cli2 manifests under `.github/tools/`, after a 7-day minimum release age. The
+checksum-pinned binaries in `ci.yml` (lychee, actionlint) and `security.yml` (gitleaks) are
+outside its reach; the weekly Tool Pins workflow runs `scripts/report-tool-pins.sh` and keeps
+one issue open while any of them is behind. CI and Security also run weekly on a schedule.
 
 ## Requirements
 

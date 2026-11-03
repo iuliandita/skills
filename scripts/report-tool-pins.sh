@@ -2,9 +2,9 @@
 set -euo pipefail
 
 # Advisory, networked report: compares the checksum-pinned CI binaries in
-# .github/workflows/lint.yml with each project's latest GitHub release.
-# Dependabot cannot see these pins, so the weekly tool-pins workflow runs this.
-# Not a gate: it never runs in Quality Gates.
+# .github/workflows/ci.yml and security.yml with each project's latest GitHub
+# release. Renovate cannot see these pins, so the weekly Tool Pins workflow
+# runs this. Not a gate: it never runs in CI or Security.
 #
 # Usage: report-tool-pins.sh [--issue]
 #   Prints one line per pin and exits 0. With --issue, opens or updates a
@@ -12,10 +12,10 @@ set -euo pipefail
 #   current (needs GH_TOKEN with issues: write).
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-WORKFLOW="$ROOT/.github/workflows/lint.yml"
+WORKFLOWS=("$ROOT/.github/workflows/ci.yml" "$ROOT/.github/workflows/security.yml")
 ISSUE_TITLE="CI binary pins behind upstream"
 
-# env var prefix in lint.yml -> upstream repository
+# env var prefix in the workflows -> upstream repository
 declare -A REPOS=(
   [LYCHEE]=lycheeverse/lychee
   [ACTIONLINT]=rhysd/actionlint
@@ -23,7 +23,7 @@ declare -A REPOS=(
 )
 
 pinned_version() {
-  sed -nE "s/^[[:space:]]*$1_VERSION:[[:space:]]*\"?([^\"[:space:]]+)\"?.*/\1/p" "$WORKFLOW" | head -n 1
+  sed -nE "s/^[[:space:]]*$1_VERSION:[[:space:]]*\"?([^\"[:space:]]+)\"?.*/\1/p" "${WORKFLOWS[@]}" | head -n 1
 }
 
 normalize() {
@@ -38,7 +38,7 @@ for tool in LYCHEE ACTIONLINT GITLEAKS; do
   repo="${REPOS[$tool]}"
   pinned="$(pinned_version "$tool")"
   if [[ -z "$pinned" ]]; then
-    echo "error: no ${tool}_VERSION pin found in $WORKFLOW" >&2
+    echo "error: no ${tool}_VERSION pin found in ${WORKFLOWS[*]}" >&2
     exit 1
   fi
   tag="$(gh api "repos/$repo/releases/latest" --jq .tag_name)"
@@ -67,11 +67,11 @@ fi
 body="$(mktemp)"
 trap 'rm -f "$body"' EXIT
 {
-  echo "These CI binaries are pinned with a checksum in .github/workflows/lint.yml and are behind their latest release:"
+  echo "These CI binaries are pinned with a checksum in .github/workflows/ci.yml or security.yml and are behind their latest release:"
   echo
   printf '%s\n' "${stale[@]}"
   echo
-  echo "Update the version and the matching *_SHA256 value from the release's published checksums, then let Quality Gates run. Reported by the weekly tool-pins workflow."
+  echo "Update the version and the matching *_SHA256 value from the release's published checksums, then let CI and Security run. Reported by the weekly Tool Pins workflow."
 } > "$body"
 
 if [[ -n "$existing" ]]; then

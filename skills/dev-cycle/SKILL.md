@@ -76,7 +76,7 @@ Before declaring finish-mode complete:
 
 - [ ] `$FORGE` detected from `git remote get-url origin` before any push/PR/merge step
 - [ ] Applicable checks and every required repository gate passed with output inspected. Missing verification remains unresolved; independent preparation does not make merge or release ready
-- [ ] `update-docs` ran over tracked AND gitignored context files (`CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, `.claude/`, `.codex/`, `.opencode/`, `.planning/`); findings addressed or deferred with a note. Only tracked files were staged for commit; gitignored edits remain local
+- [ ] `update-docs` ran over tracked AND gitignored context files (`CLAUDE.md`, `AGENTS.md`, `.claude/`, `.codex/`, `.opencode/`, `.planning/`); findings addressed or deferred with a note. Only tracked files were staged for commit; gitignored edits remain local
 - [ ] Current version sourced from primary manifest (or user confirmation) before proposing bumps
 - [ ] Version-bump sites checked: Dockerfile, K8s manifests, Helm Chart.yaml/values, package.json/pyproject.toml/Cargo.toml, CHANGELOG
 - [ ] `git fetch --tags origin` run before release-signal detection (local-only tag check misses remote history)

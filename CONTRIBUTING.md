@@ -10,9 +10,15 @@ not a public issue.
 Each installed skill must be self-contained. Edit `skills/<name>/SKILL.md` and its references.
 `skills/_shared/output-contract.md` and `skills/_shared/agent-hygiene.md` are build-time
 sources: run `scripts/gen-contract-refs.sh` after changing either, rather than editing
-generated copies.
+generated copies. Text below the `<!-- maintainer-notes:not-shipped` marker in those sources
+is not copied.
 Regenerate long reference contents lists with `python3 scripts/gen-ref-toc.py`.
 Keep protected overlays and private markers out of commits.
+
+A new active skill must be covered by repo-audit, or the coverage check fails. Domain and
+code-audit skills join a wave in `skills/repo-audit/references/exhaustive-workflow.md` (and
+`detect.sh` for conditional lanes); meta, workflow and operational skills get a
+`| **name** | reason |` row in `skills/repo-audit/references/exclusions.md`.
 
 ## Checks and documentation
 
@@ -22,7 +28,8 @@ Keep protected overlays and private markers out of commits.
 for f in scripts/check-*.sh; do "$f"; done
 ```
 
-Mirror the checks in `.github/workflows/lint.yml`.
+Mirror the checks in `.github/workflows/ci.yml` and `.github/workflows/security.yml`;
+[AGENTS.md](AGENTS.md) lists the full local set.
 Freshness labels and receipt age remain advisory. Installer changes also need the existing
 installer tests; use [skill authoring](docs/skill-authoring.md) for content checks.
 [INSTALL.md](INSTALL.md) documents installation, update, backups and recovery;
@@ -41,8 +48,8 @@ conventional-commit titles since the last tag: `feat` is minor, `fix` and `deps`
 
 1. On `develop`, bump the version and move the `Unreleased` changelog entries under the new
    version, by PR.
-2. Open a PR from `develop` to `main` and merge it with a merge commit, never a squash, so `main`
-   stays an ancestor of `develop`.
+2. Open a PR from `develop` to `main` and merge it with a merge commit, never a squash, so every
+   `develop` commit stays in `main`'s history and the next release PR carries only new work.
 3. Tag the merge on `main` as `v<version>` and push the tag. The release workflow checks the tag
    and publishes the notes from the changelog.
 

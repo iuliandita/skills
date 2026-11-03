@@ -81,4 +81,4 @@ continue.
    skipped and the baseline penalty is 0; ordinary scoring starts at iteration 2.
    Skipping review entirely is not an option - a fresh-context self-review is the minimum bar.
    If the harness doesn't support subagents, run the review prompt as a separate CLI
-   invocation (`claude -p`, `codex exec`, `gemini -p`, etc.).
+   invocation (`claude -p`, `codex exec`, `agy -p`, etc.).
