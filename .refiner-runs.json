@@ -4714,8 +4714,8 @@
     "Live infrastructure not exercised; runtime limitations retained in local receipts"
   ],
   "deferred_issue": 150,
-  "local_report": "docs/local/audits/skill-refiner/2026-09-10-collection/report.md",
-  "continuation": "docs/local/audits/skill-refiner/2026-09-10-collection/NEXT.md",
+  "local_report": "local evidence (not tracked)",
+  "continuation": "local evidence (not tracked)",
   "private_skill_handling": "Protected overlay unchanged; detailed working evidence remains gitignored",
   "files_changed": [
     ".refiner-ledger.md",
@@ -4950,8 +4950,8 @@
    "networking vpn.md Headscale/cloudflared vs SKILL.md",
    "cluster-health private overlay 2>/dev/null (local, not released)"
   ],
-  "local_report": "docs/local/audits/skill-refiner/2026-09-10-collection/iteration-3/report.md",
-  "scores": "docs/local/audits/skill-refiner/2026-09-10-collection/iteration-3/iteration-3.json"
+  "local_report": "local evidence (not tracked)",
+  "scores": "local evidence (not tracked)"
  },
 {
  "schema": 2,
