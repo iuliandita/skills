@@ -2107,7 +2107,7 @@ import sys
 KEYS = ("version", "tools", "link", "include_internal", "skills",
         "source_repo", "source_branch", "source_remote", "source_remote_url", "source_upstream")
 TOOL = re.compile(r"[a-z][a-z0-9-]{0,31}")
-REMOVED = {"gemini": "4.0.0", "gemini-cli": "4.0.0"}
+REMOVED = {"gemini": "3.1.0", "gemini-cli": "3.1.0"}
 SKILL = re.compile(r"[a-z0-9](?:[a-z0-9-]*[a-z0-9])?")
 LIMIT = 65536
 ABSENT = 20

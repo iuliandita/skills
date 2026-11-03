@@ -5,6 +5,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [3.1.0] - 2026-11-03
+
 ### Removed
 
 * **install:** the `gemini` (Gemini CLI) target and its `gemini-cli` alias are gone, with no alias to another tool. `--tool gemini` now fails with `unknown tool`, a saved config that lists `gemini` makes `--update` exit 2, and `--detect --json` no longer has a `gemini` key. Antigravity (`antigravity`, `agy`) is unchanged. Use `--tool codex` for the same `~/.agents/skills`, or `--tool portable --dest <dir>`, and rerun `install.sh --save` if a saved selection lists `gemini` ([#399](https://github.com/iuliandita/skills/pull/399)).
@@ -662,7 +664,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Bootstrap baseline before release-please automation.
 
-[Unreleased]: https://github.com/iuliandita/skills/compare/v3.0.0...HEAD
+[Unreleased]: https://github.com/iuliandita/skills/compare/v3.1.0...HEAD
+[3.1.0]: https://github.com/iuliandita/skills/compare/v3.0.0...v3.1.0
 [3.0.0]: https://github.com/iuliandita/skills/compare/v2.7.1...v3.0.0
 [2.7.1]: https://github.com/iuliandita/skills/compare/v2.7.0...v2.7.1
 [2.7.0]: https://github.com/iuliandita/skills/compare/v2.6.4...v2.7.0

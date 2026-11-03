@@ -169,7 +169,7 @@ For important workflows, smoke-test the target tool after install:
 natively discovers `~/.agents/skills` (and also `~/.omp/agent/skills`) without reading
 that variable.
 
-`gemini` (Gemini CLI) and its `gemini-cli` alias were removed in 4.0.0; use `--tool codex` for the same `~/.agents/skills`, or `--tool portable --dest <dir>`, and rerun `install.sh --save` if a saved selection lists `gemini`.
+`gemini` (Gemini CLI) and its `gemini-cli` alias were removed in 3.1.0; use `--tool codex` for the same `~/.agents/skills`, or `--tool portable --dest <dir>`, and rerun `install.sh --save` if a saved selection lists `gemini`.
 
 ### One copy per harness
 

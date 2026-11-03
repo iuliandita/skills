@@ -415,6 +415,8 @@ test_invalid_configs_are_rejected_unexecuted() {
   expect_rejected "$tmp" "capitalized boolean" "include_internal must be true or false"
   write_conf "$tmp" "${good/tools=claude/tools=notatool}"
   expect_rejected "$tmp" "unknown tool" "unknown tool 'notatool'"
+  write_conf "$tmp" "${good/tools=claude/tools=gemini}"
+  expect_rejected "$tmp" "removed tool" "tool 'gemini' was removed in 3.1.0"
   write_conf "$tmp" "${good/version=1/version=2}"
   expect_rejected "$tmp" "version" "unsupported version"
   write_conf "$tmp" "${good/tools=claude/tools claude}"
