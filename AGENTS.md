@@ -37,7 +37,7 @@ advisory. `pre-commit install --hook-type pre-commit --hook-type pre-push` wires
 - `skills/_shared/`: build-time sources only. Each skill's `references/output-contract.md` and
   `agent-hygiene.md` are generated from them; never hand-edit those copies.
 - `scripts/`: gates (`check-*.sh`, `lint-skills.sh`, `validate-spec.sh`) and their tests (`test-*`).
-- `.refiner-runs.json`, `.refiner-ledger.md`: skill-refiner history at the root by contract; append only.
+- `.refiner-runs.json`, `.refiner-ledger.md`: skill-refiner history at the root by contract; append only, except that private paths are removed.
 - `.github/stack/`: vendored from agents; do not edit.
 - Details: [CONTRIBUTING.md](CONTRIBUTING.md), [INSTALL.md](INSTALL.md), [MIGRATION.md](MIGRATION.md).
 
