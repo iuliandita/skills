@@ -76,6 +76,18 @@ Order-dependent workflows carry a progress checklist that sends the agent back t
 
 Audit and review skills share a report format. Small reviews use compact chat output; larger audits include findings and evidence in a saved report. Reports default to `docs/local/`, with the user's requested output format and location taking precedence. Keep that directory ignored when reports contain private project details.
 
+## How it works
+
+```mermaid
+flowchart LR
+    skill["skills/*/SKILL.md<br>plus its references"] --> npx["npx skills add"]
+    skill --> installer["install.sh --tool"]
+    npx --> dirs["skill directory of each<br>harness you choose"]
+    installer -->|"copy"| dirs
+    installer -->|"symlink to one<br>canonical copy"| dirs
+    dirs --> agent["your agent follows the skill<br>when you name it or the task matches"]
+```
+
 ## Compatibility
 
 Skills follow the [Agent Skills specification](https://agentskills.io/specification). The bundled installer provides paths for 26 targets, including Claude Code, Codex, Cursor, Copilot, OpenCode, Command Code, and Oh My Pi. See the [target table](INSTALL.md#supported-targets).
@@ -111,6 +123,28 @@ Every skill must work when installed alone: runtime file references stay inside 
 New skills must also be registered in the repository-audit coverage check or its [exclusions table](skills/repo-audit/references/exclusions.md). Run the repository's `scripts/check-*.sh` gates before pushing.
 
 `scripts/check-docs-impact.sh` compares the PR range against its base. Removing or renaming a skill needs a `migrations.json` entry and a `MIGRATION.md` change, and removing an installer target needs an `INSTALL.md` note. Other installer or gate-script changes need a doc change or a `Docs-Impact: none - <specific reason>` commit trailer.
+
+## How the stack fits together
+
+Each repo installs on its own. idstack calls skills by name and sits on pstack.
+
+```mermaid
+flowchart LR
+    agents["agents<br>global rules, subagent roles"]
+    skills["skills<br>task skills"]
+    mods["mods<br>hooks and panels"]
+    idstack["idstack<br>infra playbooks"]
+    pstack["pstack"]
+    harness["your coding agent<br>Claude Code, Codex, OpenCode, ..."]
+    agents --> harness
+    skills --> harness
+    mods --> harness
+    idstack --> harness
+    idstack -->|"layered on"| pstack
+    idstack -.->|"calls by name"| skills
+    classDef self fill:#123A6B,stroke:#123A6B,color:#fff
+    class skills self
+```
 
 ## License
 
