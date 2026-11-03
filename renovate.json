@@ -40,6 +40,20 @@
       "semanticCommitScope": "ci"
     },
     {
+      "description": "semgrep pins these exactly (mcp==, opentelemetry-api~=), so a bump alone cannot install; revisit when a semgrep release allows the fixed versions",
+      "matchManagers": [
+        "pip_requirements"
+      ],
+      "matchFileNames": [
+        ".github/tools/semgrep/**"
+      ],
+      "matchPackageNames": [
+        "mcp",
+        "opentelemetry-api"
+      ],
+      "enabled": false
+    },
+    {
       "matchManagers": [
         "npm"
       ],
