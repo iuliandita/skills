@@ -434,6 +434,74 @@ def check_contributing(ctx: Ctx) -> list[Finding]:
     return findings
 
 
+# ---------------------------------------------------------------- agent entry point
+
+def git_run(ctx: Ctx, *args: str) -> subprocess.CompletedProcess:
+    try:
+        return subprocess.run(["git", "-C", str(ctx.root), *args], capture_output=True, text=True, encoding="utf-8", errors="replace")
+    except FileNotFoundError as exc:
+        raise ToolMissing("git") from exc
+
+
+def index_entry(ctx: Ctx, rel: str) -> tuple[str, str] | None:
+    """(mode, blob) of a path in the git index, or None when it is not tracked."""
+    proc = git_run(ctx, "ls-files", "-s", "--", rel)
+    if proc.returncode != 0:
+        raise UsageError(f"git ls-files failed in {ctx.root}: {proc.stderr.strip()}")
+    meta = proc.stdout.split("\t", 1)[0].split()
+    return (meta[0], meta[1]) if len(meta) >= 2 else None
+
+
+def is_ignored(ctx: Ctx, rel: str) -> bool:
+    """Whether the repo's own ignore rules match the path; a global excludes file is not consulted."""
+    proc = git_run(ctx, "-c", f"core.excludesFile={os.devnull}", "check-ignore", "-q", "--no-index", "--", rel)
+    if proc.returncode not in (0, 1):
+        raise UsageError(f"git check-ignore failed in {ctx.root}: {proc.stderr.strip()}")
+    return proc.returncode == 0
+
+
+def check_agent_entry(ctx: Ctx) -> list[Finding]:
+    cfg = ctx.canon["agent_entry"]
+    rel, link = cfg["file"], cfg["symlink"]
+    text = ctx.text(rel)
+    if text is None:
+        return [Finding("agent-entry", rel, "file is missing", f"create {rel} from the shared outline")]
+    findings = []
+    expected = ctx.repo["repo"]
+    title = next(((n, m.group(1)) for n, line, fenced in md_lines(text) if not fenced and (m := re.match(r"^#\s+(.*?)\s*#*\s*$", line))), None)
+    if title is None:
+        findings.append(Finding("agent-entry", rel, "has no top-level heading", f'start with "# {expected}"'))
+    elif title[1] != expected:
+        findings.append(Finding("agent-entry", rel, f'first heading names "{title[1]}", not the repo name', f'change it to "{expected}"', title[0]))
+    count = len(text.splitlines())
+    if count > cfg["max_lines"]:
+        findings.append(Finding("agent-entry", rel, f'has {count} lines, the cap is {cfg["max_lines"]}', "move detail into README, CONTRIBUTING, or docs and link it"))
+    findings += order_findings("agent-entry", rel, text, cfg["headings"], "see canon.json")
+    if " ".join(cfg["local_sentence"].split()) not in " ".join(text.split()):
+        findings.append(Finding("agent-entry", rel, "does not tell agents to read AGENTS.local.md", f'add the sentence: {cfg["local_sentence"]}'))
+    if not (ctx.root / ".git").exists():
+        return findings
+    if index_entry(ctx, rel) is None:
+        findings.append(Finding("agent-entry", rel, "is not tracked by git", f"git add {rel}"))
+    entry = index_entry(ctx, link)
+    fix = f"ln -s {rel} {link} && git add {link}"
+    if entry is None:
+        findings.append(Finding("agent-entry", link, "is not tracked by git", fix))
+    elif entry[0] != "120000":
+        findings.append(Finding("agent-entry", link, f"is not a symlink in the git index (mode {entry[0]})", fix))
+    else:
+        target = git_run(ctx, "cat-file", "-p", entry[1]).stdout.strip()
+        if target != rel:
+            findings.append(Finding("agent-entry", link, f'links to "{target}", not {rel}', fix))
+    for name in cfg["ignored"]:
+        if not is_ignored(ctx, name):
+            findings.append(Finding("agent-entry", ".gitignore", f"{name} is not git-ignored", f"add {name} to .gitignore"))
+    for name in cfg["not_ignored"]:
+        if is_ignored(ctx, name):
+            findings.append(Finding("agent-entry", ".gitignore", f"{name} is git-ignored", f"remove the {name} entry from .gitignore"))
+    return findings
+
+
 # ---------------------------------------------------------------- workflows
 
 def workflow_files(ctx: Ctx) -> list[str]:
@@ -799,6 +867,7 @@ CHECKS: list[tuple[str, str, Callable[[Ctx], list[Finding]]]] = [
     ("readme-project", "README Project and support section", check_readme_project),
     ("assets", "logo and wordmark files exist with the right size", check_assets),
     ("contributing", "CONTRIBUTING opening, headings, and release notes", check_contributing),
+    ("agent-entry", "AGENTS.md outline, CLAUDE.md symlink, and local-file ignores", check_agent_entry),
     ("workflow-jobs", "required CI job ids exist and are named after their id", check_workflow_jobs),
     ("workflow-pins", "every uses: is pinned to a 40-hex SHA with a version comment", check_workflow_pins),
     ("workflow-timeouts", "every job has timeout-minutes", check_workflow_timeouts),
