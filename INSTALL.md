@@ -125,7 +125,7 @@ cp -r skills/kubernetes ~/.cursor/skills/kubernetes
 
 ## Supported targets
 
-The installer ships paths for 27 targets. All paths are overridable via `--dest` (single-tool mode) or per-tool environment variables (e.g., `CLAUDE_SKILLS_DIR`).
+The installer ships paths for 26 targets. All paths are overridable via `--dest` (single-tool mode) or per-tool environment variables (e.g., `CLAUDE_SKILLS_DIR`).
 
 Support in this table means **path support**: the installer knows where to copy or symlink the skill folders for that target. Runtime behavior is owned by the consuming tool. Activation rules, trigger matching, context limits, subagent support, and reference-file loading can differ between agents, even when they all read the same skill directory.
 
@@ -644,7 +644,7 @@ skills/
       dockerfile-patterns.md
       ...
   ...
-install.sh                # installer (27 targets, symlink mode, lock file)
+install.sh                # installer (26 targets, symlink mode, lock file)
 scripts/
   lint-skills.sh          # collection linter
   validate-spec.sh        # Agent Skills spec validator
