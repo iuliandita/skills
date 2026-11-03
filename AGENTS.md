@@ -20,7 +20,7 @@ for f in scripts/test-*.sh; do "$f" || echo "FAIL $f"; done
 python3 scripts/test-migrations.py
 shellcheck install.sh scripts/*.sh skills/repo-audit/references/detect.sh
 markdownlint-cli2
-lychee --config lychee.toml README.md SECURITY.md CONTRIBUTING.md CHANGELOG.md INSTALL.md MIGRATION.md AGENTS.md skills docs
+lychee --config lychee.toml README.md SECURITY.md CONTRIBUTING.md CHANGELOG.md INSTALL.md MIGRATION.md AGENTS.md 'skills/**/*.md' 'docs/**/*.md'
 actionlint
 gitleaks git --redact .
 semgrep scan --metrics off --error --config p/ci --config p/github-actions install.sh scripts .github/workflows skills/repo-audit/references/detect.sh
