@@ -2,13 +2,7 @@
 
 ## Supported Versions
 
-Security fixes are applied to:
-
-- the latest tagged release
-- the `main` branch (stable)
-- the `develop` branch (nightly)
-
-Older releases may not receive backports.
+Security fixes target `develop` and reach users through `main` and the next tagged release. The latest tagged release is the supported version; older releases may not receive backports.
 
 ## Reporting a Vulnerability
 
