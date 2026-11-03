@@ -12,6 +12,7 @@
     }
   },
   "globs": [
+    "AGENTS.md",
     "CHANGELOG.md",
     "INSTALL.md",
     "MIGRATION.md",
