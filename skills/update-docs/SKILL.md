@@ -155,7 +155,7 @@ Risky: "Current gates pass for all 42 skills" unless you verified the count in t
 
 ### 2. Categorize Doc Impact
 
-Map changes to documentation targets. Common instruction file names: `CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, `CODEX.md`. Adapt to the project's doc structure:
+Map changes to documentation targets. Common instruction file names: `CLAUDE.md`, `AGENTS.md`, `CODEX.md`. Adapt to the project's doc structure:
 
 | Change Type | Likely Docs to Update |
 |-------------|----------------------|

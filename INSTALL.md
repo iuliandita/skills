@@ -65,8 +65,8 @@ An existing symlink that points elsewhere is left alone unless you use `--force`
 ```bash
 git clone -b main https://github.com/iuliandita/skills.git /tmp/skills-install
 
-# Install for Claude, Cursor, and Gemini in one shot
-/tmp/skills-install/install.sh --tool claude,cursor,gemini --link
+# Install for Claude, Cursor, and Codex in one shot
+/tmp/skills-install/install.sh --tool claude,cursor,codex --link
 
 # Check for updates later
 /tmp/skills-install/install.sh --check --link
@@ -145,7 +145,6 @@ For important workflows, smoke-test the target tool after install:
 | OpenCode | `opencode` | `~/.agents/skills` |
 | Command Code | `commandcode` | `~/.agents/skills` |
 | GitHub Copilot | `copilot` | `~/.copilot/skills` |
-| Gemini CLI (legacy; consumer accounts moved to Antigravity) | `gemini` | `~/.agents/skills` |
 | Roo Code | `roo` | `~/.roo/skills` |
 | Goose | `goose` | `~/.config/goose/skills` |
 | Amp | `amp` | `~/.config/agents/skills` |
@@ -169,6 +168,8 @@ For important workflows, smoke-test the target tool after install:
 `OMP_SKILLS_DIR` only controls where the installer writes for `omp`; Oh My Pi itself
 natively discovers `~/.agents/skills` (and also `~/.omp/agent/skills`) without reading
 that variable.
+
+`gemini` (Gemini CLI) and its `gemini-cli` alias were removed in 4.0.0; use `--tool codex` for the same `~/.agents/skills`, or `--tool portable --dest <dir>`, and rerun `install.sh --save` if a saved selection lists `gemini`.
 
 ### One copy per harness
 
@@ -215,7 +216,7 @@ findings stay separate and labeled. Overlaps the harness resolves itself are cou
 ./install.sh --doctor --verbose --tool opencode  # also list harness-resolved overlaps
 ```
 
-Common aliases also work: `claude-code`, `openai-codex`, `github-copilot`, `gemini-cli`, `kiro-cli`, `qwen-code`, `kimi-cli`, `agy` (Antigravity CLI), `command-code`, `cmdc` (Command Code), and `oh-my-pi` (Oh My Pi).
+Common aliases also work: `claude-code`, `openai-codex`, `github-copilot`, `kiro-cli`, `qwen-code`, `kimi-cli`, `agy` (Antigravity CLI), `command-code`, `cmdc` (Command Code), and `oh-my-pi` (Oh My Pi).
 
 For a target or project directory outside this table, use `--tool portable --dest /path/to/skills`.
 Verify that the consuming tool discovers skills at that destination.
@@ -256,7 +257,6 @@ stderr. `--detect` exits 0 and rejects every other option and skill name.
 | codex | `codex` | `.codex/config.toml` |
 | opencode | `opencode` | `.config/opencode/opencode.json` |
 | commandcode | `commandcode` | `.commandcode/settings.json` |
-| gemini | `gemini` | `.gemini/settings.json` |
 | antigravity | `agy` | `.gemini/antigravity-cli/settings.json` |
 | hermes | `hermes` | `.hermes/config.yaml` |
 | kimi | `kimi` | none |
@@ -487,7 +487,7 @@ Or check what changed first:
 
 ```bash
 ./install.sh --check --link
-./install.sh --tool claude,cursor,gemini --link --force
+./install.sh --tool claude,cursor,codex --link --force
 ```
 
 The first example updates two copied skills for Codex; the second checks and updates all

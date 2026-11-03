@@ -28,7 +28,6 @@ How skill-refiner detects and validates AI CLI harnesses for cross-model peer re
 | Hermes | `hermes` | `~/.hermes/config.yaml` | `~/.hermes/.env` | `hermes chat -q "<P>" -Q` | yes (2026-09-24, 0.21.3) |
 | Aider | `aider` | `~/.aider.conf.yml` | `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` | unverified; confirm the flag with `aider --help` before use | no |
 | Goose | `goose` | `~/.config/goose/config.yaml` | varies by provider | unverified; confirm the flag with `goose --help` before use | no |
-| Gemini CLI (legacy) | `gemini` | `~/.gemini/settings.json` | `GEMINI_API_KEY` or `GOOGLE_API_KEY` | consumer accounts moved to `agy`; Google still supports enterprise licenses and paid API keys. The 0.42.0 probe here exited 55 (unsupported client) | no |
 
 **Important:** "yes" means the headless command form ran and answered in an isolated, timed
 probe on the listed date and version. It does not attest model identity; see Evaluator Identity
@@ -124,7 +123,6 @@ the smoke test cannot modify files.
 7. hermes
 8. aider
 9. goose
-10. gemini (legacy; enterprise or paid API key setups)
 ```
 
 The primary harness may also host the reviewer in a fresh invocation or agent context.
@@ -143,8 +141,7 @@ which may show `node` or `python` with the tool's script path):
 5. Parent process is `command-code` or `commandcode` - primary is cmd
 6. Parent process is `omp` - primary is omp
 7. Parent process is `hermes` - primary is hermes
-8. Parent process is `gemini` - primary is legacy gemini
-9. If the signal is ambiguous, record the harness and model as unknown and use `cap 3`
+8. If the signal is ambiguous, record the harness and model as unknown and use `cap 3`
    rather than guessing; inspect available runtime metadata, and ask only if the missing fact
    blocks an authorized invocation
 
