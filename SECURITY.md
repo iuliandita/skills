@@ -2,7 +2,7 @@
 
 ## Supported Versions
 
-Security fixes target `develop` and reach users through `main` and the next tagged release. The latest tagged release is the supported version; older releases may not receive backports.
+Security fixes target `develop` and reach users through `main` and the next tagged release. The only long-lived branches are `develop` and `main`, so fixes are not backported to older releases.
 
 ## Reporting a Vulnerability
 
