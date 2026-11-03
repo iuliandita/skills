@@ -16,11 +16,17 @@ jobs:
     name: gates
     permissions:
       contents: read
-    uses: ./.github/workflows/lint.yml
+    uses: ./.github/workflows/ci.yml
+
+  security:
+    name: security
+    permissions:
+      contents: read
+    uses: ./.github/workflows/security.yml
 
   publish:
     name: publish
-    needs: gates
+    needs: [gates, security]
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:

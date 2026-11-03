@@ -716,11 +716,11 @@ The existing R1/R2 migration and target-path obligations remain blocking; R3/R4 
 obligations remain warnings in release mode. This gate checks obligations, not prose quality,
 activation, or the completeness of release notes. Review those before tagging.
 
-Dependabot proposes weekly updates for the pinned workflow actions and for the semgrep and
-markdownlint-cli2 manifests under `.github/tools/`, after a 7-day cooldown. The
-checksum-pinned binaries in `lint.yml` (lychee, actionlint, gitleaks) are outside its reach;
-the weekly Tool Pins workflow runs `scripts/report-tool-pins.sh` and keeps one issue open
-while any of them is behind. Quality Gates also runs weekly on a schedule.
+Renovate proposes weekly updates for the pinned workflow actions and for the semgrep and
+markdownlint-cli2 manifests under `.github/tools/`, after a 7-day minimum release age. The
+checksum-pinned binaries in `ci.yml` (lychee, actionlint) and `security.yml` (gitleaks) are
+outside its reach; the weekly Tool Pins workflow runs `scripts/report-tool-pins.sh` and keeps
+one issue open while any of them is behind. CI and Security also run weekly on a schedule.
 
 ## Requirements
 
