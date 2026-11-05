@@ -5,6 +5,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Bug Fixes
+
+* **ci:** the link check passes the workflow token to lychee, so github.com links go through the authenticated API instead of failing on runner throttling ([#441](https://github.com/iuliandita/skills/issues/441)).
+
 ## [4.0.2] - 2026-11-05
 
 ### Bug Fixes
