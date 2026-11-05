@@ -403,7 +403,7 @@ See `references/output-contract.md` for the full contract.
 - **networking** - reverse proxies, TLS termination, CORS-adjacent network boundaries, and gateway behavior
 - **ci-cd** - delivery pipelines for API services
 - **mcp** - MCP-specific HTTP servers and auth patterns
-- **message-queues** - brokered async delivery, queues behind `202 Accepted` endpoints, and webhook fan-out via a broker
+- [Delivery semantics](references/delivery-semantics.md) - brokered delivery, queues behind `202 Accepted` endpoints, and webhook fan-out
 
 ## Rules
 

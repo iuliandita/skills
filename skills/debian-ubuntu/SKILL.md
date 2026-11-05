@@ -77,7 +77,7 @@ Security recheck (2026-10-02): [CVE-2026-53266](https://ubuntu.com/security/CVE-
 - RPM-family distros and tooling - use **rhel-fedora**. That includes RHEL, Fedora, Rocky, AlmaLinux, Oracle Linux, and Amazon Linux.
 - Ubuntu Core and snap-only transactional workflows - outside this skill; do not treat them like ordinary apt-managed Ubuntu hosts
 - NixOS or declarative system management - use **nixos**
-- Kali offensive tooling, pentest workflow, or training-image specifics - use **kali-linux**
+- Kali-specific branches, images and packages - see [Kali administration](references/kali.md)
 - OPNsense or pfSense appliance work - use **opnsense-pfsense**
 
 ---
@@ -136,7 +136,7 @@ The steps are ordered. Copy this checklist and track progress:
 | **Linux Mint** | Ubuntu LTS derivative | Cinnamon/XFCE focus. Mint-specific repos and update manager. PPAs from Ubuntu often work. |
 | **Pop!_OS** | Ubuntu derivative with extras | System76 firmware, COSMIC desktop, Pop repos, `system76-power`. NVIDIA ISO available. |
 | **Devuan** | Debian derivative with a major service-model split | Do not assume systemd, `systemctl`, or Ubuntu-style desktop/session plumbing. Verify init and service tooling first. |
-| **Kali** | Debian-derived security distro | Fine for base apt, kernel, boot, or service administration, but use **kali-linux** for Kali-specific branches, images, metapackages, training-image workflow, and offensive-distro context. |
+| **Kali** | Debian-derived security distro | Use [Kali administration](references/kali.md) for Kali-specific branches, images, metapackages, and hardware. |
 | **Other Debian-based** | Confirm repo model | Do not assume vanilla Debian or Ubuntu behavior. |
 
 ### Step 2: Gather current system state
@@ -347,7 +347,7 @@ See `references/output-contract.md` for the full contract.
 - **security-audit** - hardening and security review rather than normal package/service administration
 - **rhel-fedora** - RPM-family distro administration rather than Debian-family behavior
 - **nixos** - NixOS and declarative Nix system management rather than apt-based administration
-- **kali-linux** - Kali-specific branch, image, and offensive-workflow concerns
+- [Kali administration](references/kali.md) - Kali-specific branches, images, packages, and hardware
 - **opnsense-pfsense** - OPNsense and pfSense appliance work rather than Linux host administration
 - **arch-linux** - Arch Linux and CachyOS administration (the upstream inspiration for this skill)
 - **update-docs** - after substantial system administration changes that introduce new operational gotchas

@@ -35,13 +35,13 @@ See [installation and updates](INSTALL.md) for target paths, symlink mode, backu
 
 ## Collection
 
-43 active skills, grouped by the work they cover:
+40 active skills, grouped by the work they cover:
 
 | Area | Skills |
 |------|--------|
-| Infrastructure and operations | [ansible](skills/ansible/SKILL.md), [ci-cd](skills/ci-cd/SKILL.md), [kubernetes-health](skills/kubernetes-health/SKILL.md), [databases](skills/databases/SKILL.md), [message-queues](skills/message-queues/SKILL.md), [debug-triage](skills/debug-triage/SKILL.md), [docker](skills/docker/SKILL.md), [opnsense-pfsense](skills/opnsense-pfsense/SKILL.md), [kubernetes](skills/kubernetes/SKILL.md), [networking](skills/networking/SKILL.md), [observability](skills/observability/SKILL.md), [synology-dsm](skills/synology-dsm/SKILL.md), [terraform](skills/terraform/SKILL.md), [virtualization](skills/virtualization/SKILL.md) |
-| Linux systems | [arch-linux](skills/arch-linux/SKILL.md), [debian-ubuntu](skills/debian-ubuntu/SKILL.md), [kali-linux](skills/kali-linux/SKILL.md), [nixos](skills/nixos/SKILL.md), [rhel-fedora](skills/rhel-fedora/SKILL.md) |
-| Software development | [llm-app-development](skills/llm-app-development/SKILL.md), [backend-api](skills/backend-api/SKILL.md), [shell-scripting](skills/shell-scripting/SKILL.md), [frontend-design](skills/frontend-design/SKILL.md), [i18n-localization](skills/i18n-localization/SKILL.md), [mcp](skills/mcp/SKILL.md), [testing](skills/testing/SKILL.md), [performance-debugging](skills/performance-debugging/SKILL.md) |
+| Infrastructure and operations | [ansible](skills/ansible/SKILL.md), [ci-cd](skills/ci-cd/SKILL.md), [kubernetes-health](skills/kubernetes-health/SKILL.md), [databases](skills/databases/SKILL.md), [debug-triage](skills/debug-triage/SKILL.md), [docker](skills/docker/SKILL.md), [opnsense-pfsense](skills/opnsense-pfsense/SKILL.md), [kubernetes](skills/kubernetes/SKILL.md), [networking](skills/networking/SKILL.md), [observability](skills/observability/SKILL.md), [synology-dsm](skills/synology-dsm/SKILL.md), [terraform](skills/terraform/SKILL.md), [virtualization](skills/virtualization/SKILL.md) |
+| Linux systems | [arch-linux](skills/arch-linux/SKILL.md), [debian-ubuntu](skills/debian-ubuntu/SKILL.md), [nixos](skills/nixos/SKILL.md), [rhel-fedora](skills/rhel-fedora/SKILL.md) |
+| Software development | [llm-app-development](skills/llm-app-development/SKILL.md), [backend-api](skills/backend-api/SKILL.md), [shell-scripting](skills/shell-scripting/SKILL.md), [ui-build](skills/ui-build/SKILL.md), [i18n-localization](skills/i18n-localization/SKILL.md), [mcp](skills/mcp/SKILL.md), [testing](skills/testing/SKILL.md) |
 | Review and security | [anti-ai-prose](skills/anti-ai-prose/SKILL.md), [code-simplification](skills/code-simplification/SKILL.md), [code-review](skills/code-review/SKILL.md), [repo-audit](skills/repo-audit/SKILL.md), [privilege-escalation](skills/privilege-escalation/SKILL.md), [security-audit](skills/security-audit/SKILL.md), [vulnerability-research](skills/vulnerability-research/SKILL.md) |
 | Development workflows | [plan-review](skills/plan-review/SKILL.md), [dev-cycle](skills/dev-cycle/SKILL.md), [git](skills/git/SKILL.md), [session-handoff](skills/session-handoff/SKILL.md), [prompt-generator](skills/prompt-generator/SKILL.md), [roadmap](skills/roadmap/SKILL.md), [update-docs](skills/update-docs/SKILL.md) |
 | Skill maintenance | [skill-creator](skills/skill-creator/SKILL.md), [skill-refiner](skills/skill-refiner/SKILL.md) |
@@ -55,7 +55,7 @@ Choose skills for your actual work; there is no need to install the whole collec
 
 ```bash
 # Application development
-npx skills add iuliandita/skills#main --skill backend-api --skill frontend-design --skill testing
+npx skills add iuliandita/skills#main --skill backend-api --skill ui-build --skill testing
 
 # Infrastructure
 npx skills add iuliandita/skills#main --skill terraform --skill kubernetes --skill observability

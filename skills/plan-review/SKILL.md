@@ -29,7 +29,7 @@ Use both lenses by default: identify who benefits, who pays, what becomes hard t
 
 - Review existing code for bugs, security flaws, or repository health: use the appropriate code or **repo-audit** skill.
 - Create an implementation plan from scratch when the user has not offered a decision to review.
-- Perform hands-on interface design: use **frontend-design**.
+- Perform hands-on interface design: use **ui-build**.
 - Capture or prioritize a backlog: use **roadmap**.
 - Turn an accepted engineering decision into executable steps: use **dev-cycle** or the repository's planning workflow.
 - Format or improve a prompt: use **prompt-generator**.

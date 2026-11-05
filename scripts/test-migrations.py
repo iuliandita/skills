@@ -58,6 +58,24 @@ class MigrationPolicyTests(unittest.TestCase):
         (self.root / "skills/old/SKILL.md").unlink()
         checker.validate(self.root, retire=True)
 
+    def test_entry_window_overrides_old_published_window(self):
+        self.publish(8)
+        self.manifest["skills"]["recent"] = {
+            "action": "merge", "replacement": "new",
+            "transition": {"release": "v4.0.0", "published_at": None, "minimum_days": 7, "placeholder_releases": 1},
+        }
+        self.write()
+        self.write_doc("| old, recent | new |")
+        (self.root / "skills/old/SKILL.md").unlink()
+        with self.assertRaisesRegex(ValueError, "recent: notice removed"):
+            checker.validate(self.root)
+        notice = self.root / "skills/recent/SKILL.md"
+        notice.parent.mkdir(parents=True)
+        notice.write_text('---\nname: recent\ndescription: Deprecated name\nmetadata:\n  deprecated: "true"\n---\nUse **new**.\n')
+        checker.validate(self.root)
+        with self.assertRaisesRegex(ValueError, "recent: retirement"):
+            checker.validate(self.root, retire=True)
+
     def test_date_without_release_rejected(self):
         self.publish(8)
         self.manifest["transition"]["release"] = None

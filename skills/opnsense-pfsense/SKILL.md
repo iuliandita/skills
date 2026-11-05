@@ -39,7 +39,7 @@ before selecting a firmware image; CE, Plus, and Business Edition have separate 
 - Cloud firewall rules, WAF configuration, or AWS/GCP/Azure network ACLs - use **networking** or the relevant IaC skill (**terraform**, **ansible**)
 - General shell scripting or local shell behavior outside the BSD firewall context - use **shell-scripting**
 - Fleet-wide configuration management via playbooks - use **ansible**
-- Offensive testing, exploitation, or post-exploitation - use **privilege-escalation**
+- Offensive testing, exploitation, or post-exploitation - use **privilege-escalation** (opt-in; if installed)
 - Application-level security review or dependency scanning - use **security-audit**
 
 ## AI Self-Check
@@ -256,7 +256,7 @@ See `references/output-contract.md` for the full contract.
 - **ansible** - for fleet-wide firewall automation or playbook-based configuration management
 - **shell-scripting** - for general shell scripting and local shell behavior; this skill covers the FreeBSD firewall context
 - **security-audit** - for defensive security review of application code and supply chain, rather than firewall administration
-- **privilege-escalation** - for authorized offensive testing and post-exploitation, not defensive firewall operations
+- **privilege-escalation** (opt-in; if installed) - for authorized offensive testing and post-exploitation, not defensive firewall operations
 
 ---
 

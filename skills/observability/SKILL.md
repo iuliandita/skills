@@ -34,8 +34,8 @@ in that file). Do not restate version numbers here.
 
 ## When NOT to use
 
-- Profiling and optimizing an identified application bottleneck - use **performance-debugging**.
-- Broker acknowledgement, redelivery, dead-letter, or replay semantics - use **message-queues**.
+- Profiling and optimizing an identified application bottleneck - use **debug-triage**.
+- Broker acknowledgement, redelivery, dead-letter, or replay semantics - use **backend-api**.
 - Checking whether a live cluster is healthy right now (point-in-time, read-only diagnostics) -
   use **kubernetes-health**
 - Writing or reviewing Kubernetes manifests, Helm charts, or the Prometheus Operator CRDs as

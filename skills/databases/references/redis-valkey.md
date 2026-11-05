@@ -11,7 +11,7 @@ do not treat version compatibility as automatic.
 | Rebuildable cache | Set `maxmemory` and an eviction policy that matches the miss/rebuild path. Monitor evictions and hit rate. |
 | Session, rate-limit, or coordination state | Define loss and failover behavior; expiration must be intentional and observable. |
 | Durable primary data | Choose RDB/AOF and replication from an explicit RPO/RTO, test restore and failover, and keep an authoritative recovery path. |
-| Stream or queue | Define consumer-group acknowledgement, pending-entry recovery, retention, duplicate handling, and replay; use **message-queues** for cross-broker delivery semantics. |
+| Stream or queue | Define consumer-group acknowledgement, pending-entry recovery, retention, duplicate handling, and replay; use **backend-api** for cross-broker delivery semantics. |
 
 ## Safe operational checks
 

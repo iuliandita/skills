@@ -49,7 +49,7 @@ one that works:
 2. **Reorder.** If a bold block (version pins, warnings) sits above the
    prose, move the prose above it without editing either block's content.
    `i18n-localization` (then named `localize`) was this case. A variant applies when no split lands inside the
-   110-350 window: `kali-linux` moved an existing later sentence to open the
+   110-350 window: an existing skill moved a later sentence to open the
    paragraph instead, again with no words added or removed.
 3. **Write new copy - last resort.** Only when the paragraph is genuinely
    too short or ends in a colon with nothing reusable above it. The new

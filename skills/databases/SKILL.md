@@ -276,7 +276,7 @@ See `references/output-contract.md` for the full contract.
 - **ci-cd** - for CI/CD pipelines that run migrations (schema execution in CI, migration gating, rollback automation)
 - **observability** - for cross-service telemetry pipelines, dashboards, alert routing, and SLOs.
   This skill owns database-native metrics, engine health, and query diagnosis.
-- **message-queues** - broker delivery contracts, retries, dead letters, ordering, and replay. This
+- **backend-api** - broker delivery contracts, retries, dead letters, ordering, and replay. This
   skill owns Redis/Valkey engine configuration and stream data safety.
 
 ---

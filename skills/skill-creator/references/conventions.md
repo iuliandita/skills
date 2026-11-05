@@ -644,7 +644,7 @@ brevity; routing trials provide evidence about selection quality.
 
 ## 9. Skill Inventory (October 2026)
 
-### Active skills (43)
+### Active skills (40)
 
 | Skill | Effort | Date Added | Scope |
 |---|---|---|---|
@@ -660,20 +660,17 @@ brevity; routing trials provide evidence about selection quality.
 | debug-triage | high | 2026-06-14 | Triage live outages when the failing component is unknown; localize the fault and route further debugging. |
 | dev-cycle | high | 2026-04-14 | Run a requested full development workflow: branch, implement, check, review, PR, merge, and release. |
 | docker | high | 2026-03-24 | Build and debug Dockerfiles, Compose, Docker/Podman containers, and BuildKit images; review container security. |
-| frontend-design | high | 2026-04-26 | Design, build, and critique frontend UI/UX: layouts, CSS, Tailwind, landing pages, and visual polish. |
+| ui-build | high | 2026-04-26 | Build and refine accessible frontend interfaces, responsive layouts, components, and themes. |
 | git | high | 2026-03-24 | Manage git commits, branches, conflicts, rebases, PRs/MRs, tags, releases, and GitHub/GitLab/Forgejo/Gitea workflows. |
 | i18n-localization | high | 2026-04-12 | App i18n only, not standalone translation: localize UI catalogs, validate placeholders, and audit missing locale keys. |
-| kali-linux | high | 2026-04-22 | Administer Kali Linux: packages, metapackages, rolling upgrades, live USB persistence, and NetHunter. |
 | kubernetes | high | 2026-03-24 | Build and review Kubernetes/K8s manifests, Helm charts, Kustomize overlays, Gateway API, and ArgoCD deployments. |
 | kubernetes-health | high | 2026-03-30 | Check live Kubernetes cluster health with read-only diagnostics: nodes, pods, storage, networking, and GitOps. |
 | llm-app-development | high | 2026-04-02 | Build LLM applications: RAG, embeddings, agents, structured outputs, evaluations, fine-tuning, and local inference. |
 | mcp | high | 2026-03-30 | Build and debug Model Context Protocol (MCP) servers, clients, tools, resources, and OAuth integrations. |
-| message-queues | high | 2026-09-20 | Design, diagnose, and safely operate brokered delivery with Kafka, RabbitMQ, and compatible queues: acknowledgements, retries, dead letters, ordering, lag, and replay. |
 | networking | high | 2026-03-25 | Configure and debug Linux networking: DNS, reverse proxies, VPNs, WireGuard, VLANs, nftables, and routing. |
 | nixos | high | 2026-04-23 | Administer NixOS and Nix: flakes, Home Manager, nix-darwin, generations, overlays, and declarative configuration. |
 | observability | high | 2026-06-14 | Instrument, audit, and debug telemetry: metrics, traces, logs, alerts, SLOs, Prometheus, OpenTelemetry, Grafana. |
 | opnsense-pfsense | high | 2026-03-30 | Administer OPNsense and pfSense firewalls: pf rules, VPNs, CARP failover, upgrades, and SSH diagnostics. |
-| performance-debugging | high | 2026-09-20 | Diagnose a known application's CPU, heap, allocation, lock, and latency regressions with profiles, reproducible baselines, and measured verification. |
 | plan-review | high | 2026-09-20 | Review product, business, and engineering decisions and plans: clarify requirements, challenge assumptions, and assess risks. |
 | privilege-escalation | high | 2026-03-25 | Assess authorized Linux privilege escalation, container escapes, and post-exploitation paths in pentests and CTFs. |
 | prompt-generator | medium | 2026-03-25 | Write or improve one-off LLM prompts, system prompts, and prompt templates from rough notes. |

@@ -51,7 +51,7 @@ This skill covers four domains depending on context:
 - Security audits of application code (SAST, dependency scanning) - use **security-audit**
 - Shell scripting or one-off commands - use **shell-scripting**
 - Firewall appliance management (OPNsense/pfSense) - use **opnsense-pfsense**
-- Single-machine OS-level admin questions (package setup, user management, service config without automation context) - use the appropriate distro skill: **debian-ubuntu**, **rhel-fedora**, **kali-linux**, or **arch-linux**
+- Single-machine OS-level admin questions (package setup, user management, service config without automation context) - use the appropriate distro skill: **debian-ubuntu**, **rhel-fedora**, **debian-ubuntu**, or **arch-linux**
 
 ---
 
@@ -417,7 +417,7 @@ See `references/output-contract.md` for the full contract.
   or supply chain risks in Galaxy dependencies.
 - **debian-ubuntu** - for Debian/Ubuntu/Mint OS-level admin questions outside an automation context.
 - **rhel-fedora** - for RHEL/Fedora/CentOS OS-level admin questions outside an automation context.
-- **kali-linux** - for Kali Linux administration outside an automation context.
+- **debian-ubuntu** - for Kali Linux administration outside an automation context.
 - **arch-linux** - for Arch Linux / CachyOS OS-level admin questions outside an automation context.
 
 ---

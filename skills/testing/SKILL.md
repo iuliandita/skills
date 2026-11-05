@@ -50,8 +50,8 @@ patched release, so move off it.
 
 ## When NOT to use
 
-- Profiling and optimizing an identified application bottleneck - use **performance-debugging**.
-- Broker acknowledgement, redelivery, dead-letter, or replay semantics - use **message-queues**.
+- Profiling and optimizing an identified application bottleneck - use **debug-triage**.
+- Broker acknowledgement, redelivery, dead-letter, or replay semantics - use **backend-api**.
 - Reviewing existing test quality or correctness as part of a code review - use **code-review**
 - Security-specific testing (penetration testing, OWASP checks) - use **security-audit**
 - Cleaning up verbose/sloppy test code - use **code-simplification**
@@ -254,7 +254,7 @@ Catch WCAG violations automatically. Not a replacement for manual testing, but c
 
 Use `@axe-core/playwright` (if missing, add it as a dev dependency with the repo's package manager: `npm install -D`, `pnpm add -D`, `yarn add -D`, or `bun add -d` `@axe-core/playwright`) - run `new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze()` and assert zero violations. Scope axe scans to the pages or components the change touches, not the whole app on every change. Exclude known issues with `.exclude()` and track them as tech debt, not permanent exceptions.
 
-Own repeatable accessibility regression checks here; use **frontend-design** to repair interaction design and semantics. Record manual keyboard and screen-reader coverage separately from automated scan results.
+Own repeatable accessibility regression checks here; use **ui-build** to repair interaction design and semantics. Record manual keyboard and screen-reader coverage separately from automated scan results.
 
 Read `references/e2e-accessibility.md` for Playwright E2E patterns, visual regression setup, and CI accessibility gates.
 

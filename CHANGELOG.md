@@ -5,6 +5,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+* **BREAKING CHANGE:** Merge `kali-linux` into `debian-ubuntu` and `performance-debugging` into `debug-triage`, remove `message-queues`, and rename `frontend-design` to `ui-build`. Each migration has its own one-release, seven-day notice window.
+
 ### Bug Fixes
 
 * **install:** make `--update` migrate saved skill names and prune deselected, internal, deprecated, and retired copies only when installer ownership and version 2 tree digests match. Back up removals, keep local changes with warnings and JSON details, keep shared copies that a tool link still points to, keep internal skills you saved by name, and report leftovers in `--doctor` ([#409](https://github.com/iuliandita/skills/issues/409)).

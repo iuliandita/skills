@@ -72,13 +72,13 @@ Do not transfer Ubuntu kernel patch floors to RHEL, Fedora, or a downstream clon
 - Dockerfiles, Compose files, image builds, or container runtime architecture - use **docker**
 - Kubernetes cluster or manifest work - use **kubernetes**
 - Fleet-wide Linux configuration via playbooks - use **ansible**
-- Security review, vulnerability triage, or offensive testing - use **security-audit** or **privilege-escalation**
+- Security review, vulnerability triage, or offensive testing - use **security-audit** or **privilege-escalation** (opt-in; if installed)
 - Arch, CachyOS, or other pacman-family systems - use **arch-linux**
 - Debian, Ubuntu, Mint, Pop!_OS, or other apt-family systems - use **debian-ubuntu**
 - Fedora Silverblue, Kinoite, Bazzite, Bluefin, Universal Blue, CoreOS, bootc, or other rpm-ostree / image-mode workflows - outside this skill; do not treat them like ordinary dnf-managed hosts
 - OPNsense or pfSense appliance work - use **opnsense-pfsense**
 - NixOS declarative system configuration - use **nixos**
-- Kali Linux and offensive-tool distros - use **kali-linux**
+- Kali Linux and offensive-tool distros - use **debian-ubuntu**
 
 ---
 

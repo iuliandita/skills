@@ -13,17 +13,13 @@ metadata:
 
 # Debug Triage
 
-A live system is broken and you do not yet know which layer is at fault. This skill localizes the
-failure - narrows an unknown-layer outage to one layer with evidence - and then hands off to the
-skill that owns that layer. It does not fix; it finds where to look.
-
-It layers on top of the host harness's `systematic-debugging` skill: that skill is the root-cause
-method for one *known* component. Use this skill *first*, when the component is unknown, to decide
-which component `systematic-debugging` (or a domain skill) should then investigate. Triage
-localizes; the domain skill diagnoses; neither guesses a fix before the cause is found.
+Use this skill to localize an unknown failing layer or investigate a known component. For an
+unknown layer, collect evidence before proposing a fix. For a known component, use the mode below;
+the host `systematic-debugging` skill can supplement it if installed.
 
 ## When to use
 
+- A known component fails or regresses and needs a reproducible root-cause investigation
 - A live service is down or degraded and the failing layer is not yet known ("it's broken", "502s
   started", "pods CrashLooping", "users report timeouts")
 - An outage spans multiple layers (DNS, network, ingress, app, data, secrets) and you need to find
@@ -33,8 +29,6 @@ localizes; the domain skill diagnoses; neither guesses a fix before the cause is
 
 ## When NOT to use
 
-- The failing component is already known and you need the root-cause method - use the host
-  `systematic-debugging` skill, then the matching domain skill
 - Auditing repo files for problems that are not a live incident - use **repo-audit** or **code-review**
 - Running the standing Kubernetes health checklist when you already know it is a cluster question -
   use **kubernetes-health**
@@ -67,7 +61,16 @@ Diagnostic work fails in specific ways. Before reporting a localization or runni
 
 ---
 
+## Known-component mode
+
+1. Capture the observed and expected behavior, environment, recent changes, and a minimal reproducible case. Establish a baseline; identify what remains unverified if reproduction is unavailable.
+2. List competing hypotheses and choose the cheapest safe check with outcomes that distinguish them. Run it, record the result, and update or reject each hypothesis; do not treat correlation as cause.
+3. Once evidence supports a cause, make the smallest authorized fix. Reproduce the original case and check relevant regressions; if it fails, revisit the hypotheses. Report evidence, change, result, and remaining uncertainty.
+4. For CPU, heap, allocation, contention, throughput or latency regressions, use [performance diagnosis](references/performance.md). Use domain skills where appropriate; `systematic-debugging` is optional if installed.
+
 ## Workflow
+
+For an unknown failing layer:
 
 Run the checks listed for the candidate layers. Do not improvise checks with assumed service names
 or paths; if a layer needs coverage not listed here, note it as a gap and ask, do not invent it.
@@ -99,8 +102,7 @@ discriminating check exists, repeat Step 3; if every candidate is excluded, retu
 ### Step 4: Localize and hand off
 
 State the implicated layer, the evidence that localized it, and the skill that owns the next step.
-Do not cross into fixing - that is the domain skill's job, or `systematic-debugging`'s once the
-component is known.
+Continue with known-component mode or the owning domain skill once the component is known.
 
 ---
 
@@ -115,10 +117,10 @@ Work outside-in along the request path. Each layer is owned by a domain skill fo
 | TLS / certificates | cert expired, SAN mismatch, handshake failure | **networking** (or the distro/appliance skill) |
 | Load balancer / ingress | 502 (upstream sent an invalid/no reply), 503 (no healthy backend), 504 (upstream timed out) | **kubernetes** (ingress/Gateway) or **opnsense-pfsense** |
 | Service / pod | CrashLoopBackOff, OOMKilled, readiness failing | **kubernetes**, then **kubernetes-health** for the broad sweep |
-| App runtime | 500s, exceptions, deadlocks in one component | host `systematic-debugging`, then the language/domain skill |
+| App runtime | 500s, exceptions, deadlocks in one component | known-component mode and the language/domain skill |
 | Database/cache | slow queries, connection pool exhaustion, eviction | **databases** |
-| Message broker | consumer lag, redelivery, dead letters | **message-queues** |
-| Identified application bottleneck | CPU, heap, lock contention, latency regression | **performance-debugging** |
+| Message broker | consumer lag, redelivery, dead letters | **backend-api** |
+| Identified application bottleneck | CPU, heap, lock contention, latency regression | [performance diagnosis](references/performance.md) |
 | Secrets / auth chain | 401/403, token expired, Vault path unreachable | the failing runtime layer (**kubernetes-health**, **terraform**, **networking** as applicable) to trace the Vault->IaC->runtime chain; **security-audit** only for repository-side secret-handling review (repo-only, no live endpoints) |
 | Host / node | disk full, memory pressure, kernel/systemd unit down | the distro skill (**debian-ubuntu**, **rhel-fedora**, **arch-linux**, **nixos**) |
 | Config / deploy (GitOps) | broke right after a sync; drift from desired state | **kubernetes** / **terraform**, check the last change |

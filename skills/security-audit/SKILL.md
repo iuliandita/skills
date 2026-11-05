@@ -38,8 +38,8 @@ Patterns drawn from real OSS incidents (unauthenticated admin endpoints, credent
 - Correctness bugs, logic errors, or race conditions without a security angle - use **code-review**
 - Style, slop, or maintainability cleanup - use **code-simplification**
 - CI/CD pipeline design, runner architecture, or pipeline hardening strategy - use **ci-cd**
-- Offensive testing, privilege escalation, or post-exploitation work - use **privilege-escalation**
-- Novel vulnerability research, fuzzing, patch diffing, or exploit development - use **vulnerability-research**
+- Offensive testing, privilege escalation, or post-exploitation work - use **privilege-escalation** (opt-in; if installed)
+- Novel vulnerability research, fuzzing, patch diffing, or exploit development - use **vulnerability-research** (opt-in; if installed)
 - Network appliance administration or firewall tuning - use **opnsense-pfsense**
 - Linux networking setup and troubleshooting - use **networking**
 - Secure construction or hardening of a known domain artifact without repository-wide audit intent

@@ -71,7 +71,7 @@ rate CVE-2026-32665 high: DoQ-enabled 1.22.0-1.25.1 is affected, with a fix in
 - Docker/container networking: bridge, overlay, Compose networks (use **docker**)
 - Cloud VPCs, security groups, managed load balancers (use **terraform**)
 - Network config management at scale via playbooks (use **ansible**)
-- Offensive pentesting, exploitation, lateral movement (use **privilege-escalation**)
+- Offensive pentesting, exploitation, lateral movement (use **privilege-escalation** (opt-in; if installed))
 - Application-level security review, SSRF, header injection (use **security-audit**)
 - CI/CD-automated network configuration management at pipeline scale (use **ci-cd**)
 
@@ -393,7 +393,7 @@ See `references/output-contract.md` for the full contract.
   skill covers bare-metal/VM networking.
 - **ansible** - manages config at scale via playbooks. This skill provides the networking
   knowledge; ansible handles the automation wrapper.
-- **privilege-escalation** - offensive network testing, exploitation, lateral movement. This skill covers
+- **privilege-escalation** (opt-in; if installed) - offensive network testing, exploitation, lateral movement. This skill covers
   defensive configuration and hardening.
 - **security-audit** - application-level security review (SSRF, header injection). This skill
   covers network-layer security (firewalls, TLS, segmentation).

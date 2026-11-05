@@ -60,12 +60,12 @@ are repository-specific. Check the enabled Arch or CachyOS repository before com
 - Docker, Podman, image builds, or container runtime issues - use **docker**
 - Kubernetes cluster or manifest work - use **kubernetes**
 - Fleet-wide Linux configuration via playbooks or roles - use **ansible**
-- Security review, vulnerability triage, or offensive testing - use **security-audit** or **privilege-escalation**
+- Security review, vulnerability triage, or offensive testing - use **security-audit** or **privilege-escalation** (opt-in; if installed)
 - OPNsense or pfSense appliance work - use **opnsense-pfsense**
 - Nix/NixOS questions - use **nixos**
 - Debian, Ubuntu, Mint, or Pop!_OS administration - use **debian-ubuntu**
 - RHEL, Fedora, CentOS, or AlmaLinux administration - use **rhel-fedora**
-- Kali Linux and offensive-security tooling - use **kali-linux**
+- Kali Linux and offensive-security tooling - use **debian-ubuntu**
 
 ## AI Self-Check
 
@@ -311,7 +311,7 @@ See `references/output-contract.md` for the full contract.
 - **nixos** - use it for Nix/NixOS systems; the declarative model and tooling are fundamentally different from Arch
 - **debian-ubuntu** - use it for Debian, Ubuntu, Mint, and Pop!_OS administration
 - **rhel-fedora** - use it for RHEL, Fedora, CentOS, and AlmaLinux administration
-- **kali-linux** - use it for Kali Linux and offensive-security tooling
+- **debian-ubuntu** - use it for Kali Linux and offensive-security tooling
 
 ## Rules
 
