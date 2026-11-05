@@ -57,6 +57,27 @@ A string `permission` or `permission.skill` (for example, `"permission": "ask"`)
 to its object form with `"*"` first, preserving the original policy for everything else; any other
 non-object value fails the sync and leaves the file unchanged.
 
+The destination's `.skills-lock.json` records the named allows the installer adds in
+`opencode_permissions`, an object keyed by resolved config path. Switching config files
+preserves each config's ownership records. Pending additions are recorded before the atomic
+config replacement, so an interrupted write can be retried. On installs, updates, and migration
+applies, a recorded allow is removed only when its skill is absent from every OpenCode discovery
+root and every known installer root whose lock is bound to that config. An update that fails
+at the OpenCode destination keeps recorded allows. If a fresh lock cannot be published,
+allows are still added with a warning, without recording ownership. Existing user-created
+allows and every deny are preserved. Allows from older installers have no provenance and
+are never removed by an install or `--update`. `--doctor` lists those matching old names in
+`migrations.json`; `--migrate` previews the list, and `--migrate --apply --tool opencode`
+prints it, backs up `opencode.json` beside the config as `opencode.json.*.bak`, then removes
+those legacy allows. This explicit cleanup can include user-created allows for old names;
+review the preview first. Config writes still use an atomic rename.
+An unverifiable lock in any known root conservatively keeps recorded allows. The installer
+warns once per lock per run. `--doctor --tool opencode` reports these locks with the exact
+file to delete if its checkout is retired, or the command to rerun from that checkout to
+refresh the lock. Restore a missing checkout before rerunning its installer.
+A malformed OpenCode config produces one warning during `--migrate` preview, skips the
+permission preview, and leaves the config unchanged.
+
 ### Multi-tool with symlinks
 
 Install once to a canonical directory, symlink everywhere. Update the canonical copy and every tool sees the change.
@@ -85,7 +106,15 @@ SKILLS_CANONICAL_DIR=~/my-skills ./install.sh --tool claude,roo --link
 
 ### Local private overlays
 
-Skills declaring `metadata.internal: "true"` and gitignored locally are skipped by default. Pass `--include-internal` to install them too.
+Skills declaring `metadata.internal: "true"` and gitignored locally are skipped by default.
+Pass `--include-internal` to include them in a whole-collection selection, or name them
+explicitly. An explicitly saved name remains selected during `--update` even when internal
+and `--include-internal` was not saved.
+
+`privilege-escalation` and `vulnerability-research` are becoming opt-in under
+[#412](https://github.com/iuliandita/skills/issues/412). Once marked internal, they require
+either explicit saved names or `--include-internal` in a saved whole-collection setup to
+remain selected during `--update`.
 
 ```bash
 ./install.sh --tool claude,codex,opencode --link --include-internal --force
@@ -210,6 +239,16 @@ frontmatter name match across the same paths, it gets one line; otherwise the `d
 findings stay separate and labeled. Overlaps the harness resolves itself are counted in one
 `[i]` line per set of directories; add `--verbose` to list them.
 
+When a saved selection exists, doctor also lists installed copies outside that selection
+in its saved tool roots. It separates installer-owned copies from other copies and says
+whether an owned copy is prunable by `--update`. A modified or unverifiable owned copy is
+reported but kept. Other copies are left alone. Doctor also lists legacy OpenCode allows
+without provenance that match old names in `migrations.json`. These findings are advisory;
+only unresolved duplicates make doctor exit 1. An invalid saved setup produces a warning
+and skips selection reporting while duplicate discovery continues.
+Unverifiable OpenCode locks are advisory findings in `unverifiable_locks`, including each
+lock's path, reason, and remedy. They are reported even when the OpenCode config is absent.
+
 ```bash
 ./install.sh --doctor                            # all tools in the table
 ./install.sh --doctor --tool commandcode,opencode
@@ -269,9 +308,19 @@ stderr. `--detect` exits 0 and rejects every other option and skill name.
 ./install.sh            # later: repeats the saved selection
 ```
 
+A saved selection must name every harness you want and the link mode. For example:
+
+```bash
+./install.sh kubernetes docker --tool claude,codex,opencode,commandcode --link --save
+```
+
+Every non-bare install starts a fresh selection and defaults to Claude only when no tool
+is given. Saving a subset without the tool list or `--link` replaces those saved settings.
+
 A bare `./install.sh` with no arguments at all uses the saved config and prints its path
 first. Any argument, including `--force` alone, ignores the saved config completely; there is
-no merging. `--check`, `--list`, `--migrate`, `--doctor`, and `--detect` never read it.
+no merging. `--doctor` reads it to report copies outside the selection; `--check`, `--list`,
+`--migrate`, and `--detect` never use it.
 Without a saved config, a bare run keeps its old default (all skills for `SKILLS_TOOL`, or
 Claude).
 
@@ -374,8 +423,37 @@ In `--link` mode the canonical copies are handled that way; tool directories onl
 missing links created, and anything other than a link to the canonical copy is skipped.
 Skills added upstream are installed when the saved selection is `all`. OpenCode permissions
 are synced for the installed skills exactly as a manual install does, so a new skill gets a
-named `allow` entry that overrides a wildcard `deny`. Migrations are never applied; the
-usual `--migrate` hint is printed when old links remain.
+named `allow` entry that overrides a wildcard `deny`. The
+usual `--migrate` hint is printed when old tool-directory links remain.
+
+Before installing, `--update` rewrites explicit saved names through `migrations.json`:
+renames and merges select the replacement, including when a deprecated notice still ships
+for the old name; removals drop the name. It saves the rewritten list after a successful
+apply, so the next update uses the new names. A remove-only selection becomes an empty
+explicit selection and stays empty on later updates and bare installs.
+
+After installation, each saved tool root converges to the active selection. Unselected
+names, deprecated notices, retired names, and skills in a whole-collection selection that
+became internal without a saved `--include-internal` are prune candidates. Explicit saved
+names remain selected even if internal. Pruning requires an installer-owned lock record
+and a matching version 2 tree digest, including paths, entry types, executable bits, and
+symlink targets. A content hash alone never authorizes deletion. Each removed copy is
+backed up with the existing backup mechanism before deletion, and its lock entry is removed.
+Unrecorded copies are left alone. Changed owned copies are kept with a warning, included
+in JSON `prune_kept`, and make the run exit 6. Owned copies without a v2 digest and copies
+with an unselected pending recovery record are advisory: they are kept and listed without
+forcing a partial exit on every run. For a missing v2 digest, select the skill and run
+`install.sh --tool <tools> --force <skill>` once to record it, then deselect it and rerun
+`--update`. Include `--link` in that command if the saved setup uses links. Resolve pending
+records using the recovery message before retrying pruning.
+A saved name missing from upstream without a migration stays selected and installed; it
+reports "no longer in the source; see MIGRATION.md" and exits 6. In link mode only links to
+the canonical skill are removed; foreign links remain. Tool links are pruned before the
+canonical copies. Canonical pruning is skipped if any saved tool destination failed, and
+a canonical skill still targeted by a link in any known tool root is kept as advisory,
+including when the saved setup uses copy mode. An unselected skill whose installed directory
+is already gone has its stale ownership and tree records removed without a partial exit.
+`--doctor` shows any remaining copies and why they cannot be pruned.
 
 Progress goes to stdout as timestamped lines, errors to stderr. The last stdout line of a
 completed run is one of:
@@ -496,7 +574,9 @@ names installs all active skills. Retired old names are no longer installable; s
 [MIGRATION.md](MIGRATION.md). Omitting `--tool` uses `SKILLS_TOOL`, or Claude if unset.
 
 The installer backs up existing skills before overwriting unless `--no-backup` is set.
-It retains the last three backups per skill under
+Prune backups use the separate `.pruned/<skill>/` subdirectory under the backup base, so
+pruning never rotates away the only overwrite backup of a user-modified copy. Each backup
+series retains its last three copies. Overwrite backups are stored under
 `<destination-parent>/.skills-backups/<destination-name>/`, outside the skill discovery root.
 With `SKILLS_BACKUP_DIR`, backups go to `<SKILLS_BACKUP_DIR>/<destination-name>-<hash>/`,
 and tools sharing one directory are installed into it once per run. Backups support manual recovery;
@@ -610,9 +690,9 @@ the common keys.
 | `--list` | `dest`, `skills` (`name`, `status` of `installed`, `linked`, or `available`, `deprecated`) |
 | `--check` | `dest`, `lock`, `skills` (`name`, `state` of `current`, `outdated`, or `not-installed`), `legacy` (`name`, `action`, `replacement`), `summary` (`current`, `outdated`, `not_installed`, `legacy`) |
 | `--detect` | `candidates` (`tool`, `evidence` of `kind` and `path`), `nomarker` tools, `suggested` tools |
-| `--doctor` | `tools` (`tool`, `roots`, `note`, `blocking`, `advisory`), `blocking` count, `blocking_tools` count |
+| `--doctor` | `tools` (`tool`, `roots`, `note`, `blocking`, `advisory`), `blocking` count, `blocking_tools` count, `outside_selection` (`name`, `path`, `ownership` of `installer-owned` or `other`, `prunable`, `reason`), `legacy_permissions` (old names with unrecorded OpenCode allows), `unverifiable_locks` (`path`, `reason`, `remedy`) |
 | `--migrate` | `apply`, `tools`, `records` (`dest`, `status` of `skip`, `dry-run`, `applied`, `backup`, or `noop`, `text`) |
-| `--update` | `status` of `current`, `updated`, or `partial`, `old` and `new` commit hashes, `changed`, `skipped` |
+| `--update` | `status` of `current`, `updated`, or `partial`, `old` and `new` commit hashes, `changed` (installs, replacements, and pruned copies), `skipped`, `pruned` (`name`, `path`), `prune_kept` (`name`, `path`, `reason`) |
 
 `--help` with `--json` prints the usage text to stderr and an object with `command` set to `help`.
 `--update --json` is the only option combination `--update` accepts.

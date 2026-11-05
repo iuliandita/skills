@@ -9,6 +9,11 @@ while IFS= read -r var; do unset "$var"; done < <(git rev-parse --local-env-vars
 # Installer overrides must not leak into test fixtures.
 while IFS= read -r var; do unset "$var"; done < <(compgen -e | grep -E '^([A-Z0-9_]+_SKILLS_DIR|SKILLS_[A-Z0-9_]+|OPENCODE_CONFIG_FILE|XDG_(CONFIG|STATE|DATA|CACHE)_HOME)$' || true)
 
+# Even older --dest-only tests must acquire locks under a temporary HOME.
+TEST_INSTALL_HOME="$(mktemp -d)"
+export HOME="$TEST_INSTALL_HOME"
+trap 'rm -rf "$TEST_INSTALL_HOME"' EXIT
+
 fail() {
   printf 'FAIL: %s\n' "$1" >&2
   exit 1
@@ -1513,6 +1518,12 @@ test_frontmatter_cache_selects_skills() {
 
   HOME="$tmp" "$repo/install.sh" --tool portable --dest "$tmp/default" --no-backup >/dev/null
   [[ "$(installed_dirs "$tmp/default")" == "bare public" ]] || fail "default install picked: $(installed_dirs "$tmp/default")"
+  HOME="$tmp" "$repo/install.sh" --tool portable --dest "$tmp/default" --check > "$tmp/check" \
+    || fail "--check after a default install reported missing skills: $(cat "$tmp/check")"
+  if grep -q 'team' "$tmp/check"; then fail "--check expected the opt-in skill after a default install"; fi
+  if HOME="$tmp" "$repo/install.sh" --tool portable --dest "$tmp/default" --check --include-internal >/dev/null; then
+    fail "--check --include-internal did not report the missing opt-in skill"
+  fi
 
   HOME="$tmp" "$repo/install.sh" --tool portable --dest "$tmp/internal" --no-backup --include-internal >/dev/null
   [[ "$(installed_dirs "$tmp/internal")" == "bare private public team" ]] || fail "--include-internal picked: $(installed_dirs "$tmp/internal")"
@@ -2070,6 +2081,682 @@ test_unverified_copy_without_verified_prev_is_refused() {
   trap - RETURN
 }
 
+# Synthetic, clean upstream checkout: --update exercises its real fetch and
+# handoff path without reading or installing the collection's skill content.
+make_convergence_fixture() {
+  local tmp="$1" name
+  mkdir -p "$tmp/home" "$tmp/publisher/scripts"
+  cp "$ROOT/install.sh" "$tmp/publisher/"
+  cp "$ROOT/scripts/skill-lib.sh" "$ROOT/scripts/skill-frontmatter.py" "$ROOT/scripts/migrate-skills.py" "$tmp/publisher/scripts/"
+  for name in keep prune edited renamed linked unverified hash-only internal old new removed user-old deny-old; do
+    write_fixture_skill "$tmp/publisher" "$name" "$(printf '%s\n' --- "name: $name" 'description: synthetic fixture' ---)"
+  done
+  printf 'notes\n' > "$tmp/publisher/skills/renamed/notes-a"
+  ln -s SKILL.md "$tmp/publisher/skills/linked/alias"
+  cat > "$tmp/publisher/migrations.json" <<'JSON'
+{"version":1,"transition":{"release":null,"published_at":null,"minimum_days":7,"placeholder_releases":1},"skills":{"old":{"action":"rename","replacement":"new","transition":{"release":null,"published_at":null,"minimum_days":7,"placeholder_releases":1}},"removed":{"action":"remove","replacement":null},"user-old":{"action":"remove","replacement":null},"deny-old":{"action":"remove","replacement":null}}}
+JSON
+  isolated "$tmp/home" git init -q -b develop "$tmp/publisher"
+  isolated "$tmp/home" git -C "$tmp/publisher" add -A
+  isolated "$tmp/home" git -C "$tmp/publisher" -c user.name="test" -c user.email="test@example.com" -c commit.gpgsign=false commit -qm fixture
+  isolated "$tmp/home" git init -q --bare -b develop "$tmp/origin.git"
+  isolated "$tmp/home" git -C "$tmp/publisher" remote add origin "$tmp/origin.git"
+  isolated "$tmp/home" git -C "$tmp/publisher" push -qu origin develop
+  isolated "$tmp/home" git clone -q "$tmp/origin.git" "$tmp/repo"
+}
+
+publish_convergence_fixture() {
+  local tmp="$1"
+  isolated "$tmp/home" git -C "$tmp/publisher" add -A
+  isolated "$tmp/home" git -C "$tmp/publisher" -c user.name="test" -c user.email="test@example.com" -c commit.gpgsign=false commit -qm transition
+  isolated "$tmp/home" git -C "$tmp/publisher" push -q origin develop
+}
+
+test_update_prunes_only_verified_owned_trees() {
+  local tmp root name rc=0
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  make_convergence_fixture "$tmp"
+  isolated "$tmp/home" "$tmp/repo/install.sh" --tool claude,codex >/dev/null
+  for root in "$tmp/home/.claude/skills" "$tmp/home/.agents/skills"; do
+    printf 'local edit\n' >> "$root/edited/SKILL.md"
+    mv "$root/renamed/notes-a" "$root/renamed/notes-b"
+    ln -sfn missing "$root/linked/alias"
+    mkdir "$root/unowned"
+    cp "$root/keep/SKILL.md" "$root/unowned/SKILL.md"
+    python3 - "$root/.skills-lock.json" <<'PY'
+import json
+from pathlib import Path
+import sys
+path = Path(sys.argv[1])
+lock = json.loads(path.read_text())
+lock["trees"].pop("unverified")
+lock["skills"]["hash-only"] = lock["skills"]["hash-only"]["hash"]
+path.write_text(json.dumps(lock))
+PY
+  done
+  isolated "$tmp/home" "$tmp/repo/install.sh" keep --tool claude,codex --save >/dev/null
+  isolated "$tmp/home" "$tmp/repo/install.sh" --update --json > "$tmp/result.json" 2> "$tmp/err" || rc=$?
+  (( rc == 6 )) || fail "modified prune candidates did not make update partial: $rc $(cat "$tmp/err")"
+  for root in "$tmp/home/.claude/skills" "$tmp/home/.agents/skills"; do
+    for name in prune internal old new removed user-old deny-old; do
+      [[ ! -e "$root/$name" ]] || fail "$root/$name was not pruned"
+      [[ -d "$(dirname "$root")/.skills-backups/skills/.pruned/$name" ]] || fail "missing prune backup for $root/$name"
+      [[ -z "$(lock_entry "$root" "$name")" ]] || fail "pruned lock entry remains for $name"
+    done
+    for name in keep edited renamed linked unowned unverified hash-only; do [[ -e "$root/$name" ]] || fail "lost $root/$name"; done
+  done
+  grep -q 'warning: kept unselected' "$tmp/err" || fail 'prune warning missing'
+  python3 - "$tmp/result.json" <<'PY'
+import json
+import sys
+result = json.load(open(sys.argv[1], encoding="utf-8"))
+assert len(result["prune_kept"]) == 8, result
+assert {row["name"] for row in result["prune_kept"]} == {"edited", "renamed", "linked", "unverified"}
+assert len(result["pruned"]) == 14
+PY
+  isolated "$tmp/home" "$tmp/repo/install.sh" --doctor --tool claude,codex --json > "$tmp/doctor.json" 2> "$tmp/doctor.err"
+  python3 - "$tmp/doctor.json" <<'PY'
+import json
+import sys
+report = json.load(open(sys.argv[1], encoding="utf-8"))
+outside = report["outside_selection"]
+assert not any(row["prunable"] for row in outside), outside
+assert len([row for row in outside if row["ownership"] == "other"]) == 4
+assert {row["name"] for row in outside} == {"edited", "renamed", "linked", "unowned", "unverified", "hash-only"}
+PY
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_update_migrates_saved_names_and_filters_retired_skills() {
+  local tmp before after
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  make_convergence_fixture "$tmp"
+  isolated "$tmp/home" "$tmp/repo/install.sh" old --tool claude,codex --save >/dev/null
+  write_fixture_skill "$tmp/publisher" old $'---\nname: old\ndescription: deprecated fixture\nmetadata:\n  deprecated: true\n---'
+  publish_convergence_fixture "$tmp"
+  isolated "$tmp/home" "$tmp/repo/install.sh" --update >/dev/null
+  grep -qx 'skills=new' "$tmp/home/.config/iuliandita-skills/install.conf" || fail 'saved old name was not rewritten'
+  [[ ! -e "$tmp/home/.claude/skills/old" && ! -e "$tmp/home/.agents/skills/old" ]] || fail 'old name survived update'
+  [[ -f "$tmp/home/.claude/skills/new/SKILL.md" && -f "$tmp/home/.agents/skills/new/SKILL.md" ]] || fail 'replacement missing'
+  before="$(tree_hash "$tmp/home")"
+  isolated "$tmp/home" "$tmp/repo/install.sh" --update --json > "$tmp/result" 2> "$tmp/err"
+  after="$(tree_hash "$tmp/home")"
+  [[ "$before" == "$after" ]] || fail 'second migrated update changed the saved setup'
+  python3 - "$tmp/result" <<'PY'
+import json
+import sys
+result = json.load(open(sys.argv[1], encoding="utf-8"))
+assert result["status"] == "current" and result["changed"] == 0, result
+PY
+  # A remove-only selection must stay empty on a second update and bare run.
+  isolated "$tmp/home" "$tmp/repo/install.sh" removed --tool codex --save >/dev/null
+  isolated "$tmp/home" "$tmp/repo/install.sh" --update >/dev/null
+  grep -qx 'skills=' "$tmp/home/.config/iuliandita-skills/install.conf" || fail 'remove migration did not save an empty selection'
+  isolated "$tmp/home" "$tmp/repo/install.sh" --update >/dev/null
+  isolated "$tmp/home" "$tmp/repo/install.sh" >/dev/null
+  [[ -z "$(installed_dirs "$tmp/home/.agents/skills")" ]] || fail 'empty selection expanded to all skills'
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_update_prunes_internal_and_deprecated_from_all_selection() {
+  local tmp root
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  make_convergence_fixture "$tmp"
+  isolated "$tmp/home" "$tmp/repo/install.sh" --tool claude,codex --save >/dev/null
+  write_fixture_skill "$tmp/publisher" internal $'---\nname: internal\ndescription: internal fixture\nmetadata:\n  internal: true\n---'
+  write_fixture_skill "$tmp/publisher" prune $'---\nname: prune\ndescription: deprecated fixture\nmetadata:\n  deprecated: true\n---'
+  rm -rf "$tmp/publisher/skills/removed"
+  publish_convergence_fixture "$tmp"
+  isolated "$tmp/home" "$tmp/repo/install.sh" --update >/dev/null
+  for root in "$tmp/home/.claude/skills" "$tmp/home/.agents/skills"; do
+    [[ ! -e "$root/internal" && ! -e "$root/prune" && ! -e "$root/removed" && ! -e "$root/old" ]] || fail 'all selection kept inactive skills'
+  done
+  isolated "$tmp/home" "$tmp/repo/install.sh" internal --tool codex --include-internal --save >/dev/null
+  isolated "$tmp/home" "$tmp/repo/install.sh" --update >/dev/null
+  [[ -d "$tmp/home/.agents/skills/internal" ]] || fail 'saved include-internal was ignored'
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_update_link_pruning_and_permission_provenance() {
+  local tmp config root
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  make_convergence_fixture "$tmp"
+  config="$tmp/home/.config/opencode/opencode.json"
+  mkdir -p "$(dirname "$config")"
+  printf '%s\n' '{"permission":{"skill":{"*":"deny","user-old":"allow","deny-old":"deny","custom":"allow"}}}' > "$config"
+  isolated "$tmp/home" "$tmp/repo/install.sh" keep prune old --tool claude,codex,opencode --link --save >/dev/null
+  python3 - "$tmp/home/.agents/skills/.skills-lock.json" <<'PY'
+import json
+import sys
+lock = json.load(open(sys.argv[1], encoding="utf-8"))
+assert set(next(iter(lock["opencode_permissions"].values()))) == {"keep", "prune", "old"}, lock
+PY
+  isolated "$tmp/home" "$tmp/repo/install.sh" keep --tool claude,codex,opencode --link --save >/dev/null
+  isolated "$tmp/home" "$tmp/repo/install.sh" --update >/dev/null
+  [[ ! -L "$tmp/home/.claude/skills/prune" && ! -e "$tmp/home/.agents/skills/prune" ]] || fail 'link setup did not converge'
+  python3 - "$config" "$tmp/home/.agents/skills/.skills-lock.json" <<'PY'
+import json
+import sys
+permission = json.load(open(sys.argv[1], encoding="utf-8"))["permission"]["skill"]
+assert permission == {"*": "deny", "user-old": "allow", "deny-old": "deny", "custom": "allow", "keep": "allow"}, permission
+lock = json.load(open(sys.argv[2], encoding="utf-8"))
+assert list(lock["opencode_permissions"].values()) == [["keep"]], lock
+PY
+  isolated "$tmp/home" "$tmp/repo/install.sh" --doctor --tool opencode --json > "$tmp/doctor" 2> "$tmp/err"
+  python3 - "$tmp/doctor" <<'PY'
+import json
+import sys
+assert json.load(open(sys.argv[1], encoding="utf-8"))["legacy_permissions"] == ["user-old"]
+PY
+  isolated "$tmp/home" "$tmp/repo/install.sh" --migrate --tool opencode > "$tmp/preview"
+  grep -q 'user-old' "$tmp/preview" || fail 'migration preview omitted legacy permission'
+  isolated "$tmp/home" "$tmp/repo/install.sh" --migrate --apply --tool opencode > "$tmp/apply"
+  grep -q 'Legacy OpenCode allows.*user-old' "$tmp/apply" || fail 'apply did not print legacy permissions before removal'
+  python3 - "$config" <<'PY'
+import json
+from pathlib import Path
+import sys
+path = Path(sys.argv[1])
+permission = json.loads(path.read_text())["permission"]["skill"]
+assert "user-old" not in permission and permission["deny-old"] == "deny" and permission["custom"] == "allow"
+backups = list(path.parent.glob("opencode.json.*.bak"))
+assert len(backups) == 1 and json.loads(backups[0].read_text())["permission"]["skill"]["user-old"] == "allow"
+PY
+  # A canonical copy changed into a foreign link is never removed.
+  isolated "$tmp/home" "$tmp/repo/install.sh" prune --tool claude,codex --link >/dev/null
+  mkdir -p "$tmp/foreign"
+  rm "$tmp/home/.claude/skills/prune"
+  ln -s "$tmp/foreign" "$tmp/home/.claude/skills/prune"
+  local rc=0
+  isolated "$tmp/home" "$tmp/repo/install.sh" --update > "$tmp/out" 2> "$tmp/err" || rc=$?
+  (( rc == 6 )) || fail "foreign link prune exited $rc"
+  [[ "$(readlink "$tmp/home/.claude/skills/prune")" == "$tmp/foreign" ]] || fail 'foreign link was removed'
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_permission_provenance_on_install_migration_and_alternate_config() {
+  local tmp dest config
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  make_convergence_fixture "$tmp"
+  dest="$tmp/installed"
+  config="$tmp/home/.config/opencode/opencode.json"
+  isolated "$tmp/home" "$tmp/repo/install.sh" old prune --tool opencode --dest "$dest" >/dev/null
+  rm -rf "$dest/prune"
+  isolated "$tmp/home" "$tmp/repo/install.sh" old --tool opencode --dest "$dest" >/dev/null
+  python3 - "$config" <<'PY'
+import json
+import sys
+assert json.load(open(sys.argv[1]))["permission"]["skill"] == {"old": "allow"}
+PY
+  isolated "$tmp/home" "$tmp/repo/install.sh" --migrate --apply --tool opencode --dest "$dest" >/dev/null
+  python3 - "$config" "$dest/.skills-lock.json" <<'PY'
+import json
+import sys
+assert json.load(open(sys.argv[1]))["permission"]["skill"] == {"new": "allow"}
+assert list(json.load(open(sys.argv[2]))["opencode_permissions"].values()) == [["new"]]
+PY
+  rm -rf "$dest/new"
+  printf '%s\n' '{"permission":{"skill":{"new":"allow","old":"deny"}}}' > "$tmp/alternate.json"
+  isolated "$tmp/home" OPENCODE_CONFIG_FILE="$tmp/alternate.json" "$tmp/repo/install.sh" keep --tool opencode --dest "$dest" >/dev/null
+  python3 - "$tmp/alternate.json" <<'PY'
+import json
+import sys
+assert json.load(open(sys.argv[1]))["permission"]["skill"] == {"new": "allow", "old": "deny", "keep": "allow"}
+PY
+  rm "$tmp/alternate.json"
+  isolated "$tmp/home" OPENCODE_CONFIG_FILE="$tmp/alternate.json" "$tmp/repo/install.sh" --migrate --apply --tool opencode --dest "$dest" >/dev/null
+  [[ ! -e "$tmp/alternate.json" ]] || fail 'permission cleanup recreated an absent config'
+  python3 - "$dest/.skills-lock.json" <<'PY'
+import json
+import sys
+assert sorted(json.load(open(sys.argv[1]))["opencode_permissions"].values()) == [[], ["new"]]
+PY
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_prune_guard_cases() {
+  local tmp case dest kind backup rc output before
+  for case in backup-inside backup-symlink backup-fault pending real-link-root foreign-source old-source no-v2 no-v2-link; do
+    tmp="$(mktemp -d)"
+    trap 'rm -rf "$tmp"' RETURN
+    make_convergence_fixture "$tmp"
+    dest="$tmp/home/.agents/skills"
+    isolated "$tmp/home" "$tmp/repo/install.sh" keep prune --tool codex >/dev/null
+    kind=copy
+    backup="$tmp/backups"
+    case "$case" in
+      backup-inside) backup="$dest/backups" ;;
+      backup-symlink)
+        backup="$tmp/home/.agents/.skills-backups"
+        mkdir -p "$backup/skills"
+        ln -s "$dest" "$backup/skills/.pruned"
+        backup=""
+        ;;
+      pending)
+        printf 'new upstream content\n' > "$tmp/repo/skills/prune/new-file"
+        isolated "$tmp/home" SKILLS_INSTALL_FAULT=lock "$tmp/repo/install.sh" prune --tool codex --force >/dev/null 2>&1 && fail 'lock fault did not fail'
+        ;;
+      real-link-root) kind="link" ;;
+      foreign-source|old-source|no-v2|no-v2-link)
+        python3 - "$dest/.skills-lock.json" "$case" "$tmp" <<'PY'
+import json
+from pathlib import Path
+import sys
+path, case, tmp = Path(sys.argv[1]), sys.argv[2], Path(sys.argv[3])
+lock = json.loads(path.read_text())
+if case.startswith("no-v2"):
+    lock["trees"].pop("prune")
+else:
+    lock["source"] = str(tmp / ("publisher/skills" if case == "foreign-source" else "gone"))
+path.write_text(json.dumps(lock))
+PY
+        if [[ "$case" == no-v2-link ]]; then kind="link"; fi
+        ;;
+    esac
+    before="$(tree_hash "$dest/prune")"
+    sed '$d' "$tmp/repo/install.sh" > "$tmp/repo/install-library.sh"
+    cat >> "$tmp/repo/install-library.sh" <<'SH'
+SAVED_SELECTION=(keep)
+SAVED_LINK=true
+txn_root "$1"
+prune_updated_dest "$2" "$1"
+printf 'counts:%s:%s\n' "$UPD_FAILED" "$UPD_SKIPPED"
+SH
+    rc=0
+    output="$(isolated "$tmp/home" SKILLS_BACKUP_DIR="$backup" SKILLS_INSTALL_FAULT="$(if [[ "$case" == backup-fault ]]; then printf backup; fi)" \
+      bash "$tmp/repo/install-library.sh" "$dest" "$kind" 2>&1)" || rc=$?
+    (( rc == 0 )) || fail "$case: prune guard crashed: $output"
+    [[ "$(tree_hash "$dest/prune")" == "$before" ]] || fail "$case: guarded copy changed"
+    case "$case" in
+      backup-inside|backup-symlink) grep -q 'backup directory is inside the install root' <<< "$output" || fail "$case: $output" ;;
+      backup-fault) grep -q 'prune backup failed' <<< "$output" || fail "$case: $output" ;;
+      pending)
+        grep -q 'pending recovery' <<< "$output" || fail "$case: $output"
+        grep -q 'counts:0:0' <<< "$output" || fail "$case: $output"
+        ;;
+      real-link-root) grep -q 'not a link to the canonical skill' <<< "$output" || fail "$case: $output" ;;
+      no-v2|no-v2-link)
+        grep -q 'select this skill and run install.sh --tool <tools> --link --force prune' <<< "$output" || fail "$case: $output"
+        grep -q 'counts:0:0' <<< "$output" || fail "$case: $output"
+        ;;
+    esac
+    rm -rf "$tmp"
+    trap - RETURN
+  done
+}
+
+test_update_copy_mode_keeps_referenced_canonical() {
+  local tmp
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  make_convergence_fixture "$tmp"
+  isolated "$tmp/home" "$tmp/repo/install.sh" keep prune --tool claude --link >/dev/null
+  isolated "$tmp/home" "$tmp/repo/install.sh" keep --tool codex --save >/dev/null
+  isolated "$tmp/home" "$tmp/repo/install.sh" --doctor --tool codex --json > "$tmp/doctor" 2> "$tmp/err"
+  python3 - "$tmp/doctor" <<'PY'
+import json
+import sys
+rows = json.load(open(sys.argv[1]))["outside_selection"]
+assert any(row["name"] == "prune" and not row["prunable"] and row["reason"] == "still referenced by a tool link" for row in rows), rows
+PY
+  isolated "$tmp/home" "$tmp/repo/install.sh" --update --json > "$tmp/out" 2> "$tmp/err"
+  [[ -L "$tmp/home/.claude/skills/prune" && -f "$tmp/home/.claude/skills/prune/SKILL.md" ]] || fail 'copy-mode update left a dangling tool link'
+  python3 - "$tmp/out" <<'PY'
+import json
+import sys
+result = json.load(open(sys.argv[1]))
+assert result["pruned"] == [] and result["skipped"] == 0, result
+assert any(row["name"] == "prune" and row["reason"] == "still referenced by a tool link" for row in result["prune_kept"]), result
+PY
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_update_preserves_explicit_internal_selection() {
+  local tmp before
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  make_convergence_fixture "$tmp"
+  write_fixture_skill "$tmp/publisher" internal $'---\nname: internal\ndescription: internal fixture\nmetadata:\n  internal: true\n---'
+  publish_convergence_fixture "$tmp"
+  isolated "$tmp/home" git -C "$tmp/repo" pull -q --ff-only
+  isolated "$tmp/home" "$tmp/repo/install.sh" keep internal --tool codex --save >/dev/null
+  grep -qx 'include_internal=false' "$tmp/home/.config/iuliandita-skills/install.conf" || fail 'explicit internal fixture saved the flag'
+  before="$(tree_hash "$tmp/home")"
+  isolated "$tmp/home" "$tmp/repo/install.sh" --update --json > "$tmp/out" 2> "$tmp/err"
+  [[ -f "$tmp/home/.agents/skills/internal/SKILL.md" ]] || fail 'update pruned an explicitly saved internal skill'
+  [[ "$(tree_hash "$tmp/home")" == "$before" ]] || fail 'explicit internal update changed the installation'
+  isolated "$tmp/home" "$tmp/repo/install.sh" >/dev/null
+  [[ "$(tree_hash "$tmp/home")" == "$before" ]] || fail 'bare install disagrees with explicit internal update'
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_update_forgets_absent_unselected_record() {
+  local tmp
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  make_convergence_fixture "$tmp"
+  isolated "$tmp/home" "$tmp/repo/install.sh" keep prune --tool codex >/dev/null
+  isolated "$tmp/home" "$tmp/repo/install.sh" keep --tool codex --save >/dev/null
+  rm -rf "$tmp/home/.agents/skills/prune"
+  isolated "$tmp/home" "$tmp/repo/install.sh" --update --json > "$tmp/out" 2> "$tmp/err"
+  python3 - "$tmp/home/.agents/skills/.skills-lock.json" "$tmp/out" <<'PY'
+import json
+import sys
+lock = json.load(open(sys.argv[1]))
+assert "prune" not in lock["skills"] and "prune" not in lock["trees"], lock
+result = json.load(open(sys.argv[2]))
+assert result["status"] == "current" and result["skipped"] == 0 and result["prune_kept"] == [], result
+PY
+  isolated "$tmp/home" "$tmp/repo/install.sh" --update >/dev/null
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_update_missing_saved_name_and_canonical_guards() {
+  local tmp case rc root
+  for case in missing-saved failed-tool referenced-canonical; do
+    tmp="$(mktemp -d)"
+    trap 'rm -rf "$tmp"' RETURN
+    make_convergence_fixture "$tmp"
+    if [[ "$case" == missing-saved ]]; then
+      isolated "$tmp/home" "$tmp/repo/install.sh" keep prune --tool codex --save >/dev/null
+      rm -rf "$tmp/publisher/skills/prune"
+      publish_convergence_fixture "$tmp"
+    else
+      isolated "$tmp/home" "$tmp/repo/install.sh" keep prune --tool claude,codex --link >/dev/null
+      isolated "$tmp/home" "$tmp/repo/install.sh" keep --tool claude,codex --link --save >/dev/null
+      if [[ "$case" == failed-tool ]]; then
+        root="$(txn_area "$tmp/home/.claude/skills")/keep"
+        mkdir -p "$root"
+        printf 'bad record\n' > "$root/record"
+      else
+        mkdir -p "$tmp/home/.cursor/skills"
+        ln -s "$tmp/home/.agents/skills/prune" "$tmp/home/.cursor/skills/alias"
+      fi
+    fi
+    rc=0
+    isolated "$tmp/home" "$tmp/repo/install.sh" --update > "$tmp/out" 2> "$tmp/err" || rc=$?
+    [[ -f "$tmp/home/.agents/skills/prune/SKILL.md" ]] || fail "$case: canonical or saved copy lost"
+    if [[ "$case" == failed-tool ]]; then
+      (( rc == 1 )) || fail "$case: expected failure, got $rc"
+      [[ -f "$tmp/home/.claude/skills/prune/SKILL.md" ]] || fail 'failed tool has a dangling link'
+    else
+      if [[ "$case" == missing-saved ]]; then
+        (( rc == 6 )) || fail "$case: expected partial, got $rc"
+        grep -q 'no longer in the source; see MIGRATION.md' "$tmp/out" || fail 'missing saved name was silent'
+        grep -qx 'skills=keep,prune' "$tmp/home/.config/iuliandita-skills/install.conf" || fail 'missing name was forgotten'
+      else
+        (( rc == 0 )) || fail "$case: expected advisory success, got $rc"
+        grep -q 'still referenced by a tool link' "$tmp/err" || fail 'canonical reference not reported'
+        [[ -f "$tmp/home/.cursor/skills/alias/SKILL.md" ]] || fail 'known tool link dangles'
+        isolated "$tmp/home" "$tmp/repo/install.sh" --doctor --tool codex --json > "$tmp/doctor" 2> "$tmp/doctor.err"
+        python3 - "$tmp/doctor" <<'PY'
+import json
+import sys
+rows = json.load(open(sys.argv[1]))["outside_selection"]
+assert any(row["name"] == "prune" and not row["prunable"] and row["reason"] == "still referenced by a tool link" for row in rows), rows
+PY
+      fi
+    fi
+    rm -rf "$tmp"
+    trap - RETURN
+  done
+}
+
+test_doctor_advisory_errors_continue_discovery() {
+  local tmp case dest rc
+  for case in unreadable-lock gone-source bad-config; do
+    tmp="$(mktemp -d)"
+    trap 'rm -rf "$tmp"' RETURN
+    make_convergence_fixture "$tmp"
+    isolated "$tmp/home" "$tmp/repo/install.sh" keep prune --tool opencode --save >/dev/null
+    dest="$tmp/home/.agents/skills"
+    case "$case" in
+      unreadable-lock) rm "$dest/.skills-lock.json"; mkdir "$dest/.skills-lock.json" ;;
+      gone-source) python3 - "$dest/.skills-lock.json" <<'PY'
+import json
+from pathlib import Path
+import sys
+path = Path(sys.argv[1])
+lock = json.loads(path.read_text())
+lock["source"] += "/gone"
+path.write_text(json.dumps(lock))
+PY
+        ;;
+      bad-config) printf '{bad' > "$tmp/home/.config/opencode/opencode.json" ;;
+    esac
+    mkdir -p "$tmp/home/.config/opencode/skills"
+    cp -r "$dest/keep" "$tmp/home/.config/opencode/skills/keep"
+    rc=0
+    isolated "$tmp/home" "$tmp/repo/install.sh" --doctor --tool opencode --json > "$tmp/out" 2> "$tmp/err" || rc=$?
+    (( rc == 1 )) || fail "$case: duplicate status lost: $rc $(cat "$tmp/err")"
+    case "$case" in
+      unreadable-lock|gone-source)
+        grep -Fq "warning: cannot verify OpenCode lock $dest/.skills-lock.json;" "$tmp/err" || fail "$case: missing lock warning"
+        grep -Fq "delete $dest/.skills-lock.json if its checkout is retired" "$tmp/err" || fail "$case: missing lock remedy"
+        ;;
+      bad-config)
+        grep -Fq "warning: cannot read OpenCode config $tmp/home/.config/opencode/opencode.json:" "$tmp/err" || fail "$case: missing config warning"
+        ;;
+    esac
+    ! grep -q Traceback "$tmp/err" || fail "$case: doctor printed a traceback"
+    python3 - "$tmp/out" <<'PY'
+import json
+import sys
+assert json.load(open(sys.argv[1]))["blocking"] > 0
+PY
+    rm -rf "$tmp/home/.config/opencode/skills/keep"
+    isolated "$tmp/home" "$tmp/repo/install.sh" --doctor --tool opencode --json > "$tmp/out" 2> "$tmp/err" || fail "$case: advisory alone failed doctor"
+    rm -rf "$tmp"
+    trap - RETURN
+  done
+}
+
+test_migrate_preview_malformed_opencode_config() {
+  local tmp case before
+  for case in malformed scalar permission skill-permission; do
+    tmp="$(mktemp -d)"
+    trap 'rm -rf "$tmp"' RETURN
+    make_convergence_fixture "$tmp"
+    isolated "$tmp/home" "$tmp/repo/install.sh" keep --tool opencode >/dev/null
+    case "$case" in
+      malformed) printf '{bad' ;;
+      scalar) printf '1' ;;
+      permission) printf '{"permission":1}' ;;
+      skill-permission) printf '{"permission":{"skill":1}}' ;;
+    esac > "$tmp/home/.config/opencode/opencode.json"
+    before="$(tree_hash "$tmp/home")"
+    isolated "$tmp/home" "$tmp/repo/install.sh" --migrate --tool opencode > "$tmp/out" 2> "$tmp/err" || fail "$case: malformed-config preview failed"
+    [[ "$(grep -c '^warning:' "$tmp/err")" == 1 ]] || fail "$case: expected one warning: $(cat "$tmp/err")"
+    grep -q 'skipping permission preview:' "$tmp/err" || fail "$case: missing preview warning"
+    ! grep -q Traceback "$tmp/err" || fail "$case: preview printed a traceback"
+    ! grep -Eq 'permission preview complete|OpenCode permissions synced' "$tmp/out" || fail "$case: preview claimed completion"
+    [[ "$(tree_hash "$tmp/home")" == "$before" ]] || fail "$case: preview changed the installation"
+    rm -rf "$tmp"
+    trap - RETURN
+  done
+}
+
+test_unverifiable_permission_lock_warns_once_and_doctor_remedy() {
+  local tmp dest config lock
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  make_convergence_fixture "$tmp"
+  dest="$tmp/home/.agents/skills"
+  config="$tmp/home/.config/opencode/opencode.json"
+  lock="$tmp/home/.cursor/skills/.skills-lock.json"
+  isolated "$tmp/home" "$tmp/repo/install.sh" keep prune --tool opencode --save >/dev/null
+  mkdir -p "${lock%/*}"
+  python3 - "$dest/.skills-lock.json" "$lock" "$tmp/gone/skills" <<'PY'
+import json
+from pathlib import Path
+import sys
+lock = json.loads(Path(sys.argv[1]).read_text())
+lock["source"] = sys.argv[3]
+Path(sys.argv[2]).write_text(json.dumps(lock))
+PY
+  rm -rf "$dest/prune"
+  sed '$d' "$tmp/repo/install.sh" > "$tmp/repo/install-library.sh"
+  cat >> "$tmp/repo/install-library.sh" <<'SH'
+sync_opencode_permissions "$1" "$2" sync keep
+sync_opencode_permissions "$1" "$2" sync keep
+SH
+  isolated "$tmp/home" bash "$tmp/repo/install-library.sh" "$config" "$dest" > "$tmp/out" 2> "$tmp/err"
+  [[ "$(grep -Fc "warning: cannot verify OpenCode lock $lock;" "$tmp/err")" == 1 ]] || fail 'unverifiable lock warning repeated or missing'
+  python3 - "$config" <<'PY'
+import json
+import sys
+assert json.load(open(sys.argv[1]))["permission"]["skill"]["prune"] == "allow"
+PY
+  isolated "$tmp/home" "$tmp/repo/install.sh" --doctor --tool opencode --json > "$tmp/doctor" 2> "$tmp/err"
+  [[ "$(grep -Fc "warning: cannot verify OpenCode lock $lock;" "$tmp/err")" == 1 ]] || fail 'doctor lock warning repeated or missing'
+  python3 - "$tmp/doctor" "$lock" <<'PY'
+import json
+import sys
+findings = json.load(open(sys.argv[1]))["unverifiable_locks"]
+assert len(findings) == 1 and findings[0]["path"] == sys.argv[2], findings
+assert f"delete {sys.argv[2]} if its checkout is retired" in findings[0]["remedy"], findings
+assert "rerun install.sh --tool opencode" in findings[0]["remedy"], findings
+PY
+  rm "$config"
+  isolated "$tmp/home" "$tmp/repo/install.sh" --doctor --tool opencode --json > "$tmp/doctor" 2> "$tmp/err"
+  grep -Fq "delete $lock if its checkout is retired" "$tmp/err" || fail 'doctor requires a config to diagnose an unverifiable lock'
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_permission_guard_cases() {
+  local tmp case dest config rc
+  for case in other-root other-lock env-mode config-fault fresh-lock-fault preview-bad-lock preview-scalar-lock failed-update; do
+    tmp="$(mktemp -d)"
+    trap 'rm -rf "$tmp"' RETURN
+    make_convergence_fixture "$tmp"
+    dest="$tmp/home/.agents/skills"
+    config="$tmp/home/.config/opencode/opencode.json"
+    if [[ "$case" == fresh-lock-fault ]]; then
+      rc=0
+      isolated "$tmp/home" SKILLS_INSTALL_FAULT=lock "$tmp/repo/install.sh" prune --tool opencode --json > "$tmp/out" 2> "$tmp/err" || rc=$?
+      (( rc == 1 )) || fail 'fresh lock fault succeeded'
+      python3 - "$tmp/out" "$config" <<'PY'
+import json
+import sys
+assert json.load(open(sys.argv[1]))["failed"] == 1
+assert json.load(open(sys.argv[2]))["permission"]["skill"]["prune"] == "allow"
+PY
+      [[ "$(grep -c 'allows added without provenance' "$tmp/err")" == 1 ]] || fail 'fresh lock failure warning repeated'
+    elif [[ "$case" == config-fault ]]; then
+      rc=0
+      isolated "$tmp/home" SKILLS_INSTALL_FAULT=opencode "$tmp/repo/install.sh" prune --tool opencode > "$tmp/out" 2>&1 || rc=$?
+      (( rc == 1 )) || fail 'config fault succeeded'
+      [[ ! -e "$config" ]] || fail 'config fault wrote config'
+      python3 - "$dest/.skills-lock.json" "$config" <<'PY'
+import json
+import sys
+assert json.load(open(sys.argv[1]))["opencode_permissions"][sys.argv[2]] == ["prune"]
+PY
+      isolated "$tmp/home" "$tmp/repo/install.sh" prune --tool opencode >/dev/null
+    elif [[ "$case" == env-mode ]]; then
+      isolated "$tmp/home" OPENCODE_PERMISSION_MODE=preview "$tmp/repo/install.sh" prune --tool opencode >/dev/null
+      [[ -f "$config" ]] || fail 'exported permission mode affected install'
+    else
+      isolated "$tmp/home" "$tmp/repo/install.sh" keep prune --tool opencode --save >/dev/null
+      if [[ "$case" == preview-bad-lock || "$case" == preview-scalar-lock ]]; then
+        if [[ "$case" == preview-bad-lock ]]; then printf '{bad'; else printf '1'; fi > "$dest/.skills-lock.json"
+        isolated "$tmp/home" "$tmp/repo/install.sh" --migrate --tool opencode > "$tmp/out" 2> "$tmp/err" || fail 'unverified preview failed'
+        grep -q 'permission preview complete; no changes written' "$tmp/out" || fail 'preview omitted preview-specific line'
+        ! grep -q 'OpenCode permissions synced' "$tmp/out" || fail 'preview claimed a sync'
+      else
+        if [[ "$case" == other-root ]]; then
+          mkdir -p "$tmp/home/.claude/skills"
+          cp -r "$dest/prune" "$tmp/home/.claude/skills/prune"
+        elif [[ "$case" == other-lock ]]; then
+          isolated "$tmp/home" "$tmp/repo/install.sh" prune --tool opencode --dest "$tmp/home/.cursor/skills" >/dev/null
+        fi
+        if [[ "$case" == failed-update ]]; then
+          isolated "$tmp/home" "$tmp/repo/install.sh" keep --tool opencode --save >/dev/null
+        fi
+        rm -rf "$dest/prune"
+        if [[ "$case" == failed-update ]]; then
+          mkdir -p "$(txn_area "$dest")/keep"
+          printf 'bad record\n' > "$(txn_area "$dest")/keep/record"
+          rc=0
+          isolated "$tmp/home" "$tmp/repo/install.sh" --update > "$tmp/out" 2> "$tmp/err" || rc=$?
+          (( rc == 1 )) || fail 'failed OpenCode update succeeded'
+        else
+          isolated "$tmp/home" "$tmp/repo/install.sh" keep --tool opencode >/dev/null
+        fi
+        python3 - "$config" <<'PY'
+import json
+import sys
+assert json.load(open(sys.argv[1]))["permission"]["skill"]["prune"] == "allow"
+PY
+        if [[ "$case" == other-lock ]]; then
+          isolated "$tmp/home" "$tmp/repo/install.sh" old --tool opencode --dest "$tmp/home/.cursor/skills" >/dev/null
+          isolated "$tmp/home" "$tmp/repo/install.sh" --doctor --tool opencode --json > "$tmp/doctor" 2> "$tmp/doctor.err"
+          python3 - "$tmp/doctor" <<'PY'
+import json
+import sys
+assert "old" not in json.load(open(sys.argv[1]))["legacy_permissions"]
+PY
+          isolated "$tmp/home" "$tmp/repo/install.sh" --migrate --apply --tool opencode >/dev/null
+          python3 - "$config" <<'PY'
+import json
+import sys
+assert json.load(open(sys.argv[1]))["permission"]["skill"]["old"] == "allow"
+PY
+        fi
+      fi
+    fi
+    rm -rf "$tmp"
+    trap - RETURN
+  done
+}
+
+test_prune_backups_preserve_overwrite_history() {
+  local tmp dest before
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  make_convergence_fixture "$tmp"
+  dest="$tmp/home/.agents/skills"
+  isolated "$tmp/home" "$tmp/repo/install.sh" keep prune --tool codex >/dev/null
+  printf 'user modification\n' >> "$dest/prune/SKILL.md"
+  isolated "$tmp/home" "$tmp/repo/install.sh" prune --tool codex --force >/dev/null
+  before="$(tree_hash "$tmp/home/.agents/.skills-backups/skills/prune")"
+  isolated "$tmp/home" "$tmp/repo/install.sh" keep --tool codex --save >/dev/null
+  isolated "$tmp/home" "$tmp/repo/install.sh" --update >/dev/null
+  [[ "$(tree_hash "$tmp/home/.agents/.skills-backups/skills/prune")" == "$before" ]] || fail 'prune rotated overwrite history'
+  [[ -d "$tmp/home/.agents/.skills-backups/skills/.pruned/prune" ]] || fail 'prune backup namespace missing'
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_prune_guard_cases
+test_update_copy_mode_keeps_referenced_canonical
+test_update_preserves_explicit_internal_selection
+test_update_forgets_absent_unselected_record
+test_update_missing_saved_name_and_canonical_guards
+test_doctor_advisory_errors_continue_discovery
+test_migrate_preview_malformed_opencode_config
+test_unverifiable_permission_lock_warns_once_and_doctor_remedy
+test_permission_guard_cases
+test_prune_backups_preserve_overwrite_history
+test_update_prunes_only_verified_owned_trees
+test_update_migrates_saved_names_and_filters_retired_skills
+test_update_prunes_internal_and_deprecated_from_all_selection
+test_update_link_pruning_and_permission_provenance
+test_permission_provenance_on_install_migration_and_alternate_config
 test_backups_stay_outside_skill_root
 test_backup_override_separates_destinations
 test_unverified_lock_backups_are_unique
