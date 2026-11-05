@@ -618,20 +618,15 @@ check_canonical_test_coverage() {
   local catalog="$SKILLS_DIR/skill-refiner/references/test-cases.md"
   [[ -f "$catalog" ]] || return 0
 
-  local skill_dir name heading kind
+  local name heading kind
   declare -A public_skills=()
   declare -A heading_counts=()
   declare -A test_counts=()
   declare -A prompt_counts=()
 
-  for skill_dir in "$SKILLS_DIR"/*/; do
-    name=$(basename "$skill_dir")
-    [[ "$name" == ".backups" || "$name" == ".cook" ]] && continue
-    [[ "$name" == _* ]] && continue
-    git check-ignore -q "$skill_dir" 2>/dev/null && continue
-    [[ -f "$skill_dir/SKILL.md" ]] || continue
+  while IFS= read -r name; do
     public_skills["$name"]=1
-  done
+  done < <(list_public_skills "$SKILLS_DIR" --include-deprecated)
 
   while IFS=$'\t' read -r kind heading; do
     case "$kind" in
@@ -717,23 +712,9 @@ check_canonical_test_coverage() {
 }
 
 # ── Documentation drift checks ─────────────────────────────────────────
-# Active = public skill dir (same rules as the main loop) whose frontmatter
-# metadata.deprecated is not "true". Prints one name per line.
+# Active skills: the shared public-skill set (list_public_skills in skill-lib.sh).
 list_active_skills() {
-  local skill_dir name visible_files
-  for skill_dir in "$SKILLS_DIR"/*/; do
-    name=$(basename "$skill_dir")
-    [[ "$name" == ".backups" || "$name" == ".cook" ]] && continue
-    [[ "$name" == _* ]] && continue
-    git check-ignore -q "$skill_dir" 2>/dev/null && continue
-    if visible_files="$(git ls-files --cached --others --exclude-standard -- "$skill_dir" 2>/dev/null)" \
-      && [[ -z "$visible_files" ]]; then
-      continue
-    fi
-    [[ -f "$skill_dir/SKILL.md" ]] || continue
-    frontmatter_flag "$skill_dir/SKILL.md" metadata.deprecated && continue
-    echo "$name"
-  done
+  list_public_skills "$SKILLS_DIR"
 }
 
 # Old skill names from migrations.json, one per line (empty when absent).
@@ -821,6 +802,45 @@ check_collection_docs() {
   fi
 }
 
+# The hand-kept inventory in skill-creator's conventions.md must list exactly
+# the active skills, with a matching "Active skills (N)" count.
+check_skill_inventory() {
+  local file="$SKILLS_DIR/skill-creator/references/conventions.md"
+  [[ -f "$file" ]] || return 0
+
+  local name declared="" count
+  local -a inv_listed=() inv_active=()
+  while IFS= read -r name; do
+    [[ -n "$name" ]] && inv_active+=("$name")
+  done < <(list_active_skills)
+
+  declared="$(grep -oE '^### Active skills \([0-9]+\)' "$file" | grep -oE '[0-9]+' || true)"
+  if [[ -z "$declared" ]]; then
+    error "conventions.md has no '### Active skills (N)' inventory heading"
+    return 0
+  fi
+  while IFS= read -r name; do
+    [[ -n "$name" ]] && inv_listed+=("$name")
+  done < <(awk '
+    /^### Active skills \(/ {f = 1; next}
+    f && /^#/ {exit}
+    f && /^\| [a-z0-9-]+ \|/ && $2 != "Skill" {print $2}
+  ' "$file" | sort)
+
+  (( declared == ${#inv_active[@]} )) \
+    || error "conventions.md inventory says Active skills ($declared) but ${#inv_active[@]} are active"
+  count=$(printf '%s\n' "${inv_listed[@]}" | sort -u | grep -c . || true)
+  (( count == ${#inv_listed[@]} )) || error "conventions.md inventory lists a skill more than once"
+  for name in "${inv_active[@]}"; do
+    printf '%s\n' "${inv_listed[@]}" | grep -qxF -- "$name" \
+      || error "conventions.md inventory is missing active skill '$name'"
+  done
+  for name in "${inv_listed[@]}"; do
+    printf '%s\n' "${inv_active[@]}" | grep -qxF -- "$name" \
+      || error "conventions.md inventory lists '$name', which is not an active skill"
+  done
+}
+
 # Active skills must name current skills in bold, not retired old names.
 check_old_name_mentions() {
   local file="$1" name="$2" old
@@ -846,6 +866,7 @@ fi
 check_no_symlinks "$SKILLS_DIR"
 check_canonical_test_coverage
 check_collection_docs
+check_skill_inventory
 
 OLD_SKILL_NAMES=()
 while IFS= read -r old_name; do

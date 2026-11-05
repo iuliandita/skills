@@ -121,3 +121,28 @@ skill_length_check() {
     "$warn_fn" "$warn_message"
   fi
 }
+
+# One definition of "public skill", one name per line, sorted. A public skill
+# has a SKILL.md, is not a dot or underscore directory, is not git-ignored
+# (tracked or untracked-but-not-ignored files count), and is not a deprecated
+# notice. Opt-in (metadata.internal) skills are public: they are still published.
+# With --include-deprecated, deprecated notices are listed too.
+# Args: <skills_dir> [--include-deprecated]
+list_public_skills() {
+  local root="$1" with_deprecated="${2:-}" skill_dir name visible_files
+  for skill_dir in "$root"/*/; do
+    [[ -d "$skill_dir" ]] || continue
+    name="$(basename "$skill_dir")"
+    [[ "$name" == .* || "$name" == _* ]] && continue
+    git check-ignore -q "$skill_dir" 2>/dev/null && continue
+    if visible_files="$(git ls-files --cached --others --exclude-standard -- "$skill_dir" 2>/dev/null)" \
+      && [[ -z "$visible_files" ]]; then
+      continue
+    fi
+    [[ -f "$skill_dir/SKILL.md" ]] || continue
+    if [[ "$with_deprecated" != --include-deprecated ]]; then
+      frontmatter_flag "$skill_dir/SKILL.md" metadata.deprecated && continue
+    fi
+    printf '%s\n' "$name"
+  done | sort
+}

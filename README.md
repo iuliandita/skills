@@ -46,7 +46,7 @@ See [installation and updates](INSTALL.md) for target paths, symlink mode, backu
 | Development workflows | [plan-review](skills/plan-review/SKILL.md), [dev-cycle](skills/dev-cycle/SKILL.md), [git](skills/git/SKILL.md), [session-handoff](skills/session-handoff/SKILL.md), [prompt-generator](skills/prompt-generator/SKILL.md), [roadmap](skills/roadmap/SKILL.md), [update-docs](skills/update-docs/SKILL.md) |
 | Skill maintenance | [skill-creator](skills/skill-creator/SKILL.md), [skill-refiner](skills/skill-refiner/SKILL.md) |
 
-The nineteen v2 old-name notices have been retired. If you still have an old name installed,
+The v2 old-name notices have been retired. If you still have an old name installed,
 see [the old-name mapping and migration steps](MIGRATION.md).
 
 ### Install a focused selection
