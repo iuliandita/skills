@@ -5,6 +5,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [4.0.1] - 2026-11-05
+
 ### Bug Fixes
 
 * **install:** `--force` upgrades hash-only lock records with ownership provenance and a v2 tree digest for existing links and copies, so a later deselect and `--update` can prune them ([#423](https://github.com/iuliandita/skills/issues/423)).
@@ -695,7 +697,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Bootstrap baseline before release-please automation.
 
-[Unreleased]: https://github.com/iuliandita/skills/compare/v4.0.0...HEAD
+[Unreleased]: https://github.com/iuliandita/skills/compare/v4.0.1...HEAD
+[4.0.1]: https://github.com/iuliandita/skills/compare/v4.0.0...v4.0.1
 [4.0.0]: https://github.com/iuliandita/skills/compare/v3.1.0...v4.0.0
 [3.1.0]: https://github.com/iuliandita/skills/compare/v3.0.0...v3.1.0
 [3.0.0]: https://github.com/iuliandita/skills/compare/v2.7.1...v3.0.0
