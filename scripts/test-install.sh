@@ -1518,6 +1518,12 @@ test_frontmatter_cache_selects_skills() {
 
   HOME="$tmp" "$repo/install.sh" --tool portable --dest "$tmp/default" --no-backup >/dev/null
   [[ "$(installed_dirs "$tmp/default")" == "bare public" ]] || fail "default install picked: $(installed_dirs "$tmp/default")"
+  HOME="$tmp" "$repo/install.sh" --tool portable --dest "$tmp/default" --check > "$tmp/check" \
+    || fail "--check after a default install reported missing skills: $(cat "$tmp/check")"
+  if grep -q 'team' "$tmp/check"; then fail "--check expected the opt-in skill after a default install"; fi
+  if HOME="$tmp" "$repo/install.sh" --tool portable --dest "$tmp/default" --check --include-internal >/dev/null; then
+    fail "--check --include-internal did not report the missing opt-in skill"
+  fi
 
   HOME="$tmp" "$repo/install.sh" --tool portable --dest "$tmp/internal" --no-backup --include-internal >/dev/null
   [[ "$(installed_dirs "$tmp/internal")" == "bare private public team" ]] || fail "--include-internal picked: $(installed_dirs "$tmp/internal")"

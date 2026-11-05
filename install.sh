@@ -2708,7 +2708,7 @@ save_install_config() {
 
 # ── Check mode ────────────────────────────────────────────────────────
 check_updates() {
-  local dest_dir="$1"
+  local dest_dir="$1" include_internal="${2:-false}"
   local lock_file="$dest_dir/.skills-lock.json"
 
   if [[ ! -f "$lock_file" ]]; then
@@ -2745,6 +2745,10 @@ check_updates() {
     src_hash="$(skill_hash "$SKILLS_SRC/$skill")"
     installed_hash="${lock_hashes[$skill]:-}"
 
+    # Opt-in skills are only expected when requested; a default install leaves them out.
+    if [[ -z "$installed_hash" && "$include_internal" != true ]] && is_internal "$SKILLS_SRC/$skill"; then
+      continue
+    fi
     if [[ -z "$installed_hash" ]]; then
       printf '  [?] %-24s not installed\n' "$skill"
       (( missing++ )) || true
@@ -3631,7 +3635,7 @@ main() {
 
   # ── Check ───────────────────────────────────────────────────────────
   if [[ "$check_mode" == "true" ]]; then
-    check_updates "$primary_dest"
+    check_updates "$primary_dest" "$include_internal"
     exit 0
   fi
 
