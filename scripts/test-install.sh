@@ -910,7 +910,7 @@ test_migration_rejects_irrelevant_flags() {
   trap - RETURN
 }
 
-test_force_refreshes_active_legacy_hash_without_provenance_upgrade() {
+test_force_refreshes_active_legacy_hash_with_provenance() {
   local tmp digest output
   tmp="$(mktemp -d)"
   trap 'rm -rf "$tmp"' RETURN
@@ -930,7 +930,7 @@ import json
 import sys
 
 record = json.load(open(sys.argv[1], encoding="utf-8"))["skills"]["docker"]
-assert record == sys.argv[2]
+assert record == {"hash": sys.argv[2], "provenance": "source-equal-v1"}
 PY
   if output="$("$ROOT/install.sh" --tool portable --dest "$tmp/skills" --check 2>&1)"; then
     fail "check accepted incomplete legacy-only install"
@@ -2324,6 +2324,57 @@ PY
   trap - RETURN
 }
 
+test_force_upgrades_legacy_lock_for_pruning() {
+  local tmp mode dest
+  local -a options=() destinations=()
+  for mode in link copy; do
+    tmp="$(mktemp -d)"
+    trap 'rm -rf "$tmp"' RETURN
+    make_convergence_fixture "$tmp"
+    options=(--tool claude)
+    destinations=("$tmp/home/.claude/skills")
+    if [[ "$mode" == link ]]; then
+      options+=(--link)
+      destinations+=("$tmp/home/.agents/skills")
+    fi
+    isolated "$tmp/home" "$tmp/repo/install.sh" keep prune "${options[@]}" >/dev/null
+    for dest in "${destinations[@]}"; do
+      python3 - "$dest/.skills-lock.json" <<'PYTEST'
+import json
+from pathlib import Path
+import sys
+path = Path(sys.argv[1])
+lock = json.loads(path.read_text())
+lock["skills"]["prune"] = lock["skills"]["prune"]["hash"]
+lock["trees"].pop("prune")
+path.write_text(json.dumps(lock))
+PYTEST
+    done
+    isolated "$tmp/home" "$tmp/repo/install.sh" prune "${options[@]}" --force >/dev/null
+    for dest in "${destinations[@]}"; do
+      python3 - "$dest/.skills-lock.json" <<'PYTEST'
+import json
+import sys
+lock = json.load(open(sys.argv[1]))
+record = lock["skills"]["prune"]
+assert isinstance(record, dict), record
+assert record["provenance"] == "source-equal-v1", record
+tree = lock["trees"]["prune"]
+assert tree["hash_version"] == 2 and tree["hash"] == record["hash"], tree
+assert len(tree["digest"]) == 64 and all(c in "0123456789abcdef" for c in tree["digest"]), tree
+PYTEST
+    done
+    isolated "$tmp/home" "$tmp/repo/install.sh" keep "${options[@]}" --save >/dev/null
+    isolated "$tmp/home" "$tmp/repo/install.sh" --update >/dev/null
+    for dest in "${destinations[@]}"; do
+      [[ ! -e "$dest/prune" && ! -L "$dest/prune" ]] || fail "$mode: legacy destination was not pruned"
+      [[ -z "$(lock_entry "$dest" prune)" ]] || fail "$mode: pruned lock entry remains"
+    done
+    rm -rf "$tmp"
+    trap - RETURN
+  done
+}
+
 test_prune_guard_cases() {
   local tmp case dest kind backup rc output before
   for case in backup-inside backup-symlink backup-fault pending real-link-root foreign-source old-source no-v2 no-v2-link; do
@@ -2742,6 +2793,7 @@ test_prune_backups_preserve_overwrite_history() {
   trap - RETURN
 }
 
+test_force_upgrades_legacy_lock_for_pruning
 test_prune_guard_cases
 test_update_copy_mode_keeps_referenced_canonical
 test_update_preserves_explicit_internal_selection
@@ -2797,7 +2849,7 @@ test_opencode_migration_syncs_apply_only
 test_opencode_noop_apply_keeps_permissions_unchanged
 test_copy_migration_rejects_backup_inside_canonical_root
 test_migration_rejects_irrelevant_flags
-test_force_refreshes_active_legacy_hash_without_provenance_upgrade
+test_force_refreshes_active_legacy_hash_with_provenance
 test_remapped_tools_install_once_into_agents_dir
 test_opencode_link_into_canonical_syncs_permissions
 test_install_hints_at_legacy_cleanup
