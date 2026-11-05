@@ -19,10 +19,10 @@ pins:
     source: "https://mariadb.org/about/#maintenance-policy"
   - tool: "MySQL"
     version: "8.4.12"
-    source: "https://dev.mysql.com/downloads/mysql/"
+    source: "https://github.com/mysql/mysql-server/tags"
   - tool: "MySQL 9.7 LTS lane"
     version: "9.7.3"
-    source: "https://dev.mysql.com/downloads/mysql/"
+    source: "https://github.com/mysql/mysql-server/tags"
   - tool: "Redis"
     version: "8.10.2"
     source: "https://github.com/redis/redis/releases"
@@ -54,8 +54,8 @@ Pins referenced by `../SKILL.md`, moved unchanged from the former inline block (
 | MongoDB 8.0 lane | 8.0.34 | <https://www.mongodb.com/legal/support-policy/lifecycles> | EOL 2029-10; 8.0.32 fixes CVE-2026-89099 and is the security floor for the 8.0 lane |
 | MariaDB | 11.8.9 | <https://mariadb.org/about/#maintenance-policy> | LTS, EOL 2028-06 |
 | MariaDB | 12.3.3 | <https://mariadb.org/about/#maintenance-policy> | LTS, EOL 2029-06. 13.x rolling GA is quarterly and EOLs at each successor - verify live |
-| MySQL | 8.4.12 | <https://dev.mysql.com/downloads/mysql/> | LTS; August 18, 2026 release |
-| MySQL 9.7 LTS lane | 9.7.3 | <https://dev.mysql.com/downloads/mysql/> | August 18, 2026 release. The innovation lane has a short support window - verify live |
+| MySQL | 8.4.12 | <https://github.com/mysql/mysql-server/tags> | LTS; August 18, 2026 release |
+| MySQL 9.7 LTS lane | 9.7.3 | <https://github.com/mysql/mysql-server/tags> | August 18, 2026 release. The innovation lane has a short support window - verify live |
 | Redis | 8.10.2 | <https://github.com/redis/redis/releases> | Verify live before pinning |
 | Valkey | 9.1.2 | <https://github.com/valkey-io/valkey/releases> | 9.0.6 on the 9.0 lane; verify live before pinning |
 | SQL Server | 2025 RTM + CU9 | <https://learn.microsoft.com/en-us/troubleshoot/sql/releases/download-and-install-latest-updates> | Released 2026-09-15 |
