@@ -1,7 +1,9 @@
 ---
 name: privilege-escalation
 description: >
-  Assess authorized Linux privilege escalation, container escapes, and post-exploitation paths in pentests and CTFs.
+  Assess authorized Linux privilege escalation, container escapes, Kubernetes RBAC abuse, and
+  post-exploitation paths in pentests and CTFs. Use for privesc enumeration after a shell, sudo and
+  SUID checks, Docker breakout, and pivoting inside an authorized scope.
 license: MIT
 compatibility: Requires authorized access to target Linux systems and bash/python
 metadata:
@@ -9,6 +11,7 @@ metadata:
   date_added: "2026-03-25"
   effort: high
   argument_hint: "<target>"
+  internal: "true"
 ---
 
 # Privilege Escalation and Post-Exploitation Assessment
