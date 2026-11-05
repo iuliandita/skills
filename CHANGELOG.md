@@ -5,6 +5,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Bug Fixes
+
+* **install:** make `--update` migrate saved skill names and prune deselected, internal, deprecated, and retired copies only when installer ownership and version 2 tree digests match. Back up removals, keep local changes with warnings and JSON details, and report leftovers in `--doctor` ([#409](https://github.com/iuliandita/skills/issues/409)).
+* **install:** record OpenCode permission provenance and remove installer-added allows when their skills disappear. Report legacy allows in `--doctor` and remove them only through an explicit migration apply with a config backup; preserve other user allows and every deny ([#410](https://github.com/iuliandita/skills/issues/410)).
+
 ## [3.1.0] - 2026-11-03
 
 ### Removed

@@ -57,7 +57,7 @@ make_fixture() {
   printf '%s\n' 'lowercase replacement' > "$tmp/source/new/a"
   printf '%s\n' 'uppercase replacement' > "$tmp/source/new/B"
   cat > "$tmp/migrations.json" <<'JSON'
-{"version":1,"transition":{"release":null,"published_at":null,"minimum_days":7,"placeholder_releases":1},"skills":{"old":{"action":"rename","replacement":"new"}}}
+{"version":1,"transition":{"release":null,"published_at":null,"minimum_days":7,"placeholder_releases":1},"skills":{"old":{"action":"rename","replacement":"new","transition":{"release":null,"published_at":null,"minimum_days":7,"placeholder_releases":1}}}}
 JSON
 }
 
@@ -707,6 +707,42 @@ test_legacy_cleanup_backup_outside_staging_area() {
   trap - RETURN
 }
 
+test_transition_validation() {
+  python3 -I - "$MIGRATOR" <<'PY'
+import copy
+from pathlib import Path
+import runpy
+import sys
+import tempfile
+import json
+
+module = runpy.run_path(sys.argv[1])
+transition = {"release": None, "published_at": None, "minimum_days": 7, "placeholder_releases": 1}
+invalid = [None, {}, {**transition, "extra": 1}, {**transition, "release": 1},
+           {**transition, "published_at": 1}, {**transition, "minimum_days": -1},
+           {**transition, "placeholder_releases": -1}]
+with tempfile.TemporaryDirectory() as directory:
+    path = Path(directory) / "migrations.json"
+    base = {"version": 1, "transition": transition,
+            "skills": {"old": {"action": "rename", "replacement": "new", "transition": transition}}}
+    path.write_text(json.dumps(base))
+    assert module["read_manifest"](path, Path(directory))["old"]["replacement"] == "new"
+    for location in ("manifest", "entry"):
+        for value in invalid:
+            manifest = copy.deepcopy(base)
+            target = manifest if location == "manifest" else manifest["skills"]["old"]
+            target["transition"] = value
+            path.write_text(json.dumps(manifest))
+            try:
+                module["read_manifest"](path, Path(directory))
+            except module["ValidationError"] as error:
+                assert str(error).startswith("manifest transition" if location == "manifest" else "old: transition"), error
+            else:
+                raise AssertionError((location, value))
+PY
+}
+
+test_transition_validation
 test_dry_run_and_apply
 test_modified_unowned_and_collision_are_skipped
 test_remove_merge_and_link_target

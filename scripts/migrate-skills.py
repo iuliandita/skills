@@ -249,6 +249,22 @@ class _HashWriter:
         return len(data)
 
 
+def check_transition(transition: Any, label: str) -> None:
+    if not isinstance(transition, dict):
+        raise ValidationError(f"{label} must be an object")
+    required_transition = {"release", "published_at", "minimum_days", "placeholder_releases"}
+    if set(transition) != required_transition:
+        raise ValidationError(f"{label} has unexpected fields")
+    if transition["release"] is not None and not isinstance(transition["release"], str):
+        raise ValidationError(f"{label} release must be a string or null")
+    if transition["published_at"] is not None and not isinstance(transition["published_at"], str):
+        raise ValidationError(f"{label} published_at must be a string or null")
+    if not isinstance(transition["minimum_days"], int) or transition["minimum_days"] < 0:
+        raise ValidationError(f"{label} minimum_days must be a non-negative integer")
+    if not isinstance(transition["placeholder_releases"], int) or transition["placeholder_releases"] < 0:
+        raise ValidationError(f"{label} placeholder_releases must be a non-negative integer")
+
+
 def read_manifest(path: Path, source: Path) -> dict[str, dict[str, str | None]]:
     try:
         raw = json.loads(path.read_text(encoding="utf-8"))
@@ -256,20 +272,7 @@ def read_manifest(path: Path, source: Path) -> dict[str, dict[str, str | None]]:
         raise ValidationError(f"invalid manifest: {error}") from error
     if not isinstance(raw, dict) or raw.get("version") != 1:
         raise ValidationError("manifest version must be 1")
-    transition = raw.get("transition")
-    if not isinstance(transition, dict):
-        raise ValidationError("manifest transition must be an object")
-    required_transition = {"release", "published_at", "minimum_days", "placeholder_releases"}
-    if set(transition) != required_transition:
-        raise ValidationError("manifest transition has unexpected fields")
-    if transition["release"] is not None and not isinstance(transition["release"], str):
-        raise ValidationError("transition release must be a string or null")
-    if transition["published_at"] is not None and not isinstance(transition["published_at"], str):
-        raise ValidationError("transition published_at must be a string or null")
-    if not isinstance(transition["minimum_days"], int) or transition["minimum_days"] < 0:
-        raise ValidationError("transition minimum_days must be a non-negative integer")
-    if not isinstance(transition["placeholder_releases"], int) or transition["placeholder_releases"] < 0:
-        raise ValidationError("transition placeholder_releases must be a non-negative integer")
+    check_transition(raw.get("transition"), "manifest transition")
 
     skills = raw.get("skills")
     if not isinstance(skills, dict) or not skills:
@@ -278,8 +281,10 @@ def read_manifest(path: Path, source: Path) -> dict[str, dict[str, str | None]]:
     for old_name, entry in skills.items():
         if not isinstance(old_name, str) or not NAME_RE.fullmatch(old_name):
             raise ValidationError(f"invalid old skill name: {old_name!r}")
-        if not isinstance(entry, dict) or set(entry) != {"action", "replacement"}:
-            raise ValidationError(f"{old_name}: expected action and replacement")
+        if not isinstance(entry, dict) or set(entry) - {"transition"} != {"action", "replacement"}:
+            raise ValidationError(f"{old_name}: expected action, replacement and an optional transition")
+        if "transition" in entry:
+            check_transition(entry["transition"], f"{old_name}: transition")
         action = entry["action"]
         replacement = entry["replacement"]
         if action not in {"rename", "merge", "remove"}:
