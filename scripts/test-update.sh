@@ -721,7 +721,10 @@ test_missing_dependencies_exit_10() {
   path_without "$F/no-flock" flock
   path_without "$F/no-timeout" timeout
   expect_refused 10 "missing flock" "flock (util-linux) is required" PATH="$F/no-flock"
-  expect_refused 10 "missing timeout" "timeout is required" PATH="$F/no-timeout"
+  expect_refused 10 "missing timeout" "timeout (GNU coreutils, gtimeout on macOS) is required" PATH="$F/no-timeout"
+  ln -s "$(command -v timeout)" "$F/no-timeout/gtimeout"
+  run_update PATH="$F/no-timeout"
+  expect_rc 0 "gtimeout fallback"
 }
 
 test_link_mode() {

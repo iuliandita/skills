@@ -12,7 +12,7 @@ MIGRATOR="${SKILLS_MIGRATOR:-$SCRIPT_DIR/scripts/migrate-skills.py}"
 
 # Discover skills dynamically: scan skills/ for dirs with SKILL.md.
 # Gitignored skills are excluded unless --include-internal is active and the
-# skill declares metadata.internal: "true".
+# skill declares metadata.internal: true.
 discover_skills() {
   local include_internal="${1:-false}"
   local skills=() names=() dir name
@@ -178,7 +178,7 @@ Options:
   --apply             Apply a migration preview; requires --migrate
   --force             Overwrite existing skills without prompting
   --no-backup         Skip backup of existing skills
-  --include-internal  Include skills marked metadata.internal: "true"
+  --include-internal  Include skills marked metadata.internal: true
   --doctor            Report skill names a harness can reach through more than
                       one directory (read-only; all known tools unless --tool)
   --verbose           With --doctor, list each overlap the harness resolves
@@ -693,8 +693,8 @@ PY
 LOCK_PUBLISHED=()
 
 write_lock() {
-  local lock_dir="$1"
-  shift
+  local lock_dir="$1" force="$2"
+  shift 2
   local skills=("$@")
   local lock_file="$lock_dir/.skills-lock.json"
   local now
@@ -733,7 +733,7 @@ write_lock() {
   # Records keep their v1 shape for --check and the migration helper. The v2
   # tree digest lives in `trees`, bound to the record's v1 hash so an entry a
   # v1-only writer left stale stops matching instead of vouching for it.
-  out="$(python3 -I - "$lock_file" "$SKILLS_SRC" "$now" "${updates[@]}" <<'PY'
+  out="$(python3 -I - "$lock_file" "$SKILLS_SRC" "$now" "$force" "${updates[@]}" <<'PY'
 import json
 import os
 import pathlib
@@ -744,6 +744,7 @@ import tempfile
 lock_path = pathlib.Path(sys.argv[1])
 source = pathlib.Path(sys.argv[2]).resolve(strict=True)
 updated_at = sys.argv[3]
+force = sys.argv[4] == "true"
 name = re.compile(r"^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$")
 skills = {}
 trees = {}
@@ -760,13 +761,14 @@ if lock_path.exists():
     except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError) as error:
         raise SystemExit(f"error: refusing to update unverified lock {lock_path}: {error}; inspect it or rerun with --force")
 published = []
-for item in sys.argv[4:]:
+for item in sys.argv[5:]:
     skill, digest, tree = item.split("=", 2)
     if not name.fullmatch(skill):
         continue
     published.append(skill)
     previous = skills.get(skill)
-    if previous is None or (isinstance(previous, dict) and previous.get("provenance") == "source-equal-v1"):
+    if previous is None or (isinstance(previous, dict) and previous.get("provenance") == "source-equal-v1") \
+            or (force and isinstance(previous, str)):
         skills[skill] = {"hash": digest, "provenance": "source-equal-v1"}
     elif isinstance(previous, str):
         skills[skill] = digest
@@ -792,8 +794,6 @@ if trees:
     payload["trees"] = trees
 if existing is not None and "opencode_permissions" in existing:
     payload["opencode_permissions"] = existing["opencode_permissions"]
-    if isinstance(existing["opencode_permissions"], list):
-        payload["opencode_config"] = existing.get("opencode_config")
 # Unique temp name: concurrent runs must not share one.
 fd, temp = tempfile.mkstemp(dir=lock_path.parent, prefix=f".{lock_path.name}.", suffix=".tmp")
 try:
@@ -1361,9 +1361,9 @@ guard_migration_dest() {
 
 # Write the lock, then drop the records of skills it published.
 publish_lock() {
-  local dest="$1" skill status=0
-  shift
-  if ! write_lock "$dest" "$@"; then
+  local dest="$1" force="$2" skill status=0
+  shift 2
+  if ! write_lock "$dest" "$force" "$@"; then
     printf '  [!] could not write %s/.skills-lock.json; install records kept for the next run\n' "$dest"
     return 1
   fi
@@ -1551,9 +1551,6 @@ lock_path = destination / ".skills-lock.json"
 
 def permission_records(lock):
     records = lock.get("opencode_permissions", {})
-    # Preserve provenance written by the first provenance-aware installer.
-    if isinstance(records, list):
-        records = {lock.get("opencode_config", ""): records}
     if not isinstance(records, dict) or any(
         not isinstance(path, str) or not isinstance(names, list) or any(
             not isinstance(name, str) or not re.fullmatch(r"[a-z0-9](?:[a-z0-9-]*[a-z0-9])?", name)
@@ -1693,7 +1690,6 @@ def write_provenance(names):
     if lock.get("opencode_permissions") == updated:
         return
     lock["opencode_permissions"] = updated
-    lock.pop("opencode_config", None)
     fd, temp = tempfile.mkstemp(dir=lock_path.parent, prefix=".permissions.", suffix=".tmp")
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as handle:
@@ -1908,7 +1904,7 @@ legacy_cleanup_hint() {
 
 # ── Doctor ────────────────────────────────────────────────────────────
 doctor_selection() {
-  local tool dest skill owned record actual classification reason item rows
+  local tool dest skill owned kind classification reason item rows
   local -a saved_tools=() roots=()
   local -A seen=()
   json_list outside_selection
@@ -1940,29 +1936,10 @@ doctor_selection() {
         local prunable=false
         if [[ $'\n'"$owned"$'\n' == *$'\n'"$skill"$'\n'* ]]; then
           classification=installer-owned
-          reason='local changes or no verified v2 tree digest'
-          record="$(lock_tree_records "$dest/.skills-lock.json" "$skill")" || record="none -"
-          if [[ -L "$dest/$skill" ]]; then
-            if [[ "$SAVED_LINK" == true && "$(readlink "$dest/$skill")" == "$CANONICAL_DIR/$skill" ]]; then
-              actual="$(tree_digests "$CANONICAL_DIR/$skill")" || actual="!"
-            else actual='!'; fi
-          else
-            actual="$(tree_digests "$dest/$skill")" || actual="!"
-          fi
-          if [[ "$record" == v2\ * && "$actual" == "${record#* }" ]]; then
-            prunable=true
-            reason='prunable by --update'
-            if txn_root "$dest" && [[ -e "$TXN_ROOT/$skill/record" ]]; then
-              prunable=false
-              reason='pending recovery'
-            elif paths_match "$dest" "$CANONICAL_DIR" && canonical_referenced "$skill"; then
-              prunable=false
-              reason='still referenced by a tool link'
-            elif [[ "$SAVED_LINK" == true ]] && ! paths_match "$dest" "$CANONICAL_DIR" && [[ ! -L "$dest/$skill" ]]; then
-              prunable=false
-              reason='not a link to the canonical skill'
-            fi
-          fi
+          kind=copy
+          if [[ "$SAVED_LINK" == true ]] && ! paths_match "$dest" "$CANONICAL_DIR"; then kind="link"; fi
+          if prune_verdict "$kind" "$dest" "$skill"; then prunable=true; fi
+          reason="$PRUNE_REASON"
         fi
         printf '  [i] outside saved selection: %s (%s; %s)\n' "$dest/$skill" "$classification" "$reason"
         json_q "$skill"; item="{\"name\":$REPLY"
@@ -1991,8 +1968,6 @@ for candidate in sorted(locks):
         if lock.get("version") != 1 or (candidate == lock_path and lock_source != source.resolve(strict=True)):
             raise ValueError("unverified lock source")
         records = lock.get("opencode_permissions", {})
-        if isinstance(records, list):
-            records = {lock.get("opencode_config", ""): records}
         owned.update(records.get(str(config.resolve()), []))
     except (OSError, ValueError, KeyError, TypeError, AttributeError) as error:
         remedy = (f"delete {candidate} if its checkout is retired, otherwise rerun install.sh --tool opencode "
@@ -2875,10 +2850,18 @@ update_expect_config() {
 
 run_update() {
   local timeout_s="${SKILLS_UPDATE_TIMEOUT:-300}" wait="${SKILLS_LOCK_WAIT:-0}"
-  local cmd repo branch status old sha head rc
+  local cmd repo branch status old sha head rc timeout_cmd
   trap 'exit 130' INT
   trap 'exit 143' TERM
-  for cmd in timeout git python3; do
+  # macOS package managers install GNU coreutils with a g prefix.
+  if command -v timeout >/dev/null 2>&1; then
+    timeout_cmd=timeout
+  elif command -v gtimeout >/dev/null 2>&1; then
+    timeout_cmd=gtimeout
+  else
+    update_fail 10 "timeout (GNU coreutils, gtimeout on macOS) is required for --update; install it and rerun"
+  fi
+  for cmd in git python3; do
     command -v "$cmd" >/dev/null 2>&1 || update_fail 10 "$cmd is required for --update; install it and rerun"
   done
   [[ "$timeout_s" =~ ^[1-9][0-9]*$ ]] || update_fail 2 "SKILLS_UPDATE_TIMEOUT must be a positive whole number of seconds: $timeout_s"
@@ -2914,7 +2897,7 @@ run_update() {
   # timeout puts git in its own process group, out of reach of a signal sent
   # to this shell, and a trap would only run once it exits. Waiting on it as a
   # job lets a signal end the wait and be forwarded.
-  timeout -k 10 "$timeout_s" git -C "$repo" -c core.hooksPath=/dev/null fetch --quiet --no-tags \
+  "$timeout_cmd" -k 10 "$timeout_s" git -C "$repo" -c core.hooksPath=/dev/null fetch --quiet --no-tags \
     --no-recurse-submodules -- "$SAVED_SOURCE_REMOTE" "$SAVED_SOURCE_UPSTREAM" </dev/null 9>&- &
   UPDATE_FETCH_PID=$!
   trap 'kill -TERM "$UPDATE_FETCH_PID" 2>/dev/null || true; wait "$UPDATE_FETCH_PID" 2>/dev/null || true; exit 130' INT
@@ -3024,7 +3007,7 @@ declare -A UPD_DEST_FAILED=()
 SAVED_SELECTION=()
 REWRITTEN_SKILLS=""
 resolve_saved_selection() {
-  local skill old
+  local skill
   local -a listed=() rewritten=()
   local -A seen=()
   SAVED_SELECTION=()
@@ -3039,10 +3022,8 @@ resolve_saved_selection() {
     while [[ -n "${MIGRATION_ACTIONS[$skill]:-}" ]]; do
       [[ -z "${seen[$skill]:-}" ]] || { printf 'error: migration cycle at %s\n' "$skill" >&2; return 1; }
       seen[$skill]=true
-      old="$skill"
       skill="${MIGRATION_REPLACEMENTS[$skill]:-}"
       [[ -n "$skill" ]] || break
-      [[ "$old" != "$skill" ]] || { printf 'error: migration cycle at %s\n' "$skill" >&2; return 1; }
     done
     [[ -n "$skill" ]] || continue
     [[ " ${rewritten[*]} " == *" $skill "* ]] || rewritten+=("$skill")
@@ -3106,10 +3087,51 @@ finally:
 PY
 }
 
+# Verdict for an owned, unselected entry. Return 0 to prune, 1 to keep,
+# or 2 on inspection failure; both doctor and update use the same reason.
+PRUNE_REASON=""
+PRUNE_ADVISORY=false
+prune_verdict() {
+  local kind="$1" dest="$2" skill="$3" state digest actual hint
+  PRUNE_REASON=""
+  PRUNE_ADVISORY=false
+  state="$(lock_tree_records "$dest/.skills-lock.json" "$skill")" \
+    || { PRUNE_REASON='cannot read tree record'; return 2; }
+  digest="${state#* }"
+  # --update refuses a destination without a usable transaction root; doctor must agree.
+  if ! txn_root "$dest" >/dev/null; then
+    PRUNE_REASON='cannot prepare prune transaction root'
+    return 2
+  fi
+  if [[ -e "$TXN_ROOT/$skill/record" ]]; then
+    PRUNE_REASON='pending recovery'
+    PRUNE_ADVISORY=true
+  elif [[ "$state" != v2\ * ]]; then
+    hint="--tool ${SAVED_TOOLS:-<tools>}"
+    [[ "$SAVED_LINK" != true ]] || hint+=" --link"
+    PRUNE_REASON="no verified v2 tree digest; select this skill and run install.sh $hint --force $skill once to record it, then deselect it and rerun --update"
+    PRUNE_ADVISORY=true
+  elif [[ "$kind" == link ]] && { [[ ! -L "$dest/$skill" ]] || [[ "$(readlink "$dest/$skill")" != "$CANONICAL_DIR/$skill" ]]; }; then
+    PRUNE_REASON='not a link to the canonical skill'
+  elif [[ "$kind" == copy && -L "$dest/$skill" ]]; then
+    PRUNE_REASON='copy replaced by a symlink'
+  elif paths_match "$dest" "$CANONICAL_DIR" && canonical_referenced "$skill"; then
+    PRUNE_REASON='still referenced by a tool link'
+    PRUNE_ADVISORY=true
+  else
+    actual="$(tree_digests "$(if [[ "$kind" == link ]]; then printf '%s' "$CANONICAL_DIR/$skill"; else printf '%s' "$dest/$skill"; fi)")" \
+      || { PRUNE_REASON='cannot hash prune candidate'; return 2; }
+    if [[ "$actual" == "$digest" ]]; then
+      PRUNE_REASON='prunable by --update'
+      return 0
+    fi
+    PRUNE_REASON='local changes'
+  fi
+  return 1
+}
+
 prune_updated_dest() {
-  local kind="$1" dest="$2" skill names state digest actual backup advisory hint
-  hint="--tool ${SAVED_TOOLS:-<tools>}"
-  [[ "$SAVED_LINK" != true ]] || hint+=" --link"
+  local kind="$1" dest="$2" skill names backup rc
   names="$(owned_lock_names "$dest")" || { update_failed "$dest" 'cannot read prune ownership'; return; }
   [[ -n "$names" ]] || return 0
   backup="$(backup_base_for "$dest")/.pruned"
@@ -3125,46 +3147,30 @@ sys.exit(root == backup or root in backup.parents)' "$dest" "$backup"; then
       forget_lock_skills "$dest" "$skill" || update_failed "$skill" 'cannot remove stale lock record'
       continue
     fi
-    advisory=false
-    state="$(lock_tree_records "$dest/.skills-lock.json" "$skill")" || { update_failed "$skill" 'cannot read tree record'; continue; }
-    digest="${state#* }"
-    if [[ -e "$TXN_ROOT/$skill/record" ]]; then
-      state='pending recovery'
-      advisory=true
-    elif [[ "$state" != v2\ * ]]; then
-      state="no verified v2 tree digest; select this skill and run install.sh $hint --force $skill once to record it, then deselect it and rerun --update"
-      advisory=true
-    elif [[ "$kind" == link ]] && { [[ ! -L "$dest/$skill" ]] || [[ "$(readlink "$dest/$skill")" != "$CANONICAL_DIR/$skill" ]]; }; then
-      state='not a link to the canonical skill'
-    elif [[ "$kind" == copy && -L "$dest/$skill" ]]; then
-      state='copy replaced by a symlink'
-    elif paths_match "$dest" "$CANONICAL_DIR" && canonical_referenced "$skill"; then
-      state='still referenced by a tool link'
-      advisory=true
-    else
-      actual="$(tree_digests "$(if [[ "$kind" == link ]]; then printf '%s' "$CANONICAL_DIR/$skill"; else printf '%s' "$dest/$skill"; fi)")" \
-        || { update_failed "$skill" 'cannot hash prune candidate'; continue; }
-      if [[ "$actual" == "$digest" ]]; then
-        if ! backup_skill "$skill" "$dest" prune; then update_failed "$skill" 'prune backup failed; kept installed copy'; continue; fi
-        if [[ -L "$dest/$skill" ]]; then
-          rm -- "$dest/$skill" || { update_failed "$skill" 'cannot unlink prune candidate'; continue; }
-        else
-          rm -rf -- "${dest:?}/${skill:?}" || { update_failed "$skill" 'cannot remove prune candidate'; continue; }
-        fi
-        forget_lock_skills "$dest" "$skill" || { update_failed "$skill" 'cannot remove pruned lock entry'; continue; }
-        printf '  [-] %s pruned from %s (backed up)\n' "$skill" "$dest"
-        json_q "$skill"; local item="{\"name\":$REPLY"
-        json_q "$dest/$skill"; json_push pruned "$item,\"path\":$REPLY}"
-        (( UPD_CHANGED++ )) || true
-        continue
+    rc=0
+    prune_verdict "$kind" "$dest" "$skill" || rc=$?
+    if (( rc == 2 )); then
+      update_failed "$skill" "$PRUNE_REASON"
+      continue
+    elif (( rc == 0 )); then
+      if ! backup_skill "$skill" "$dest" prune; then update_failed "$skill" 'prune backup failed; kept installed copy'; continue; fi
+      if [[ -L "$dest/$skill" ]]; then
+        rm -- "$dest/$skill" || { update_failed "$skill" 'cannot unlink prune candidate'; continue; }
+      else
+        rm -rf -- "${dest:?}/${skill:?}" || { update_failed "$skill" 'cannot remove prune candidate'; continue; }
       fi
-      state='local changes'
+      forget_lock_skills "$dest" "$skill" || { update_failed "$skill" 'cannot remove pruned lock entry'; continue; }
+      printf '  [-] %s pruned from %s (backed up)\n' "$skill" "$dest"
+      json_q "$skill"; local item="{\"name\":$REPLY"
+      json_q "$dest/$skill"; json_push pruned "$item,\"path\":$REPLY}"
+      (( UPD_CHANGED++ )) || true
+      continue
     fi
-    printf 'warning: kept unselected %s: %s\n' "$dest/$skill" "$state" >&2
+    printf 'warning: kept unselected %s: %s\n' "$dest/$skill" "$PRUNE_REASON" >&2
     json_q "$skill"; local kept="{\"name\":$REPLY"
     json_q "$dest/$skill"; kept+=",\"path\":$REPLY"
-    json_q "$state"; json_push prune_kept "$kept,\"reason\":$REPLY}"
-    if [[ "$advisory" != true ]]; then
+    json_q "$PRUNE_REASON"; json_push prune_kept "$kept,\"reason\":$REPLY}"
+    if [[ "$PRUNE_ADVISORY" != true ]]; then
       (( UPD_SKIPPED++ )) || true
     fi
   done <<< "$names"
@@ -3291,7 +3297,7 @@ update_dest() {
       *) update_failed "$skill" "replacement failed and was rolled back" ;;
     esac
   done
-  if ! publish_lock "$dest" "${UPD_INPLACE[@]}"; then
+  if ! publish_lock "$dest" false "${UPD_INPLACE[@]}"; then
     printf '  [!] %s: lock not published\n' "$dest" >&2
     (( UPD_FAILED++ )) || true
   fi
@@ -3785,7 +3791,7 @@ main() {
     (( DIFFER_COUNT == 0 )) || printf '  %d skill(s) differ; use --force to overwrite\n' "$DIFFER_COUNT"
     local canonical_ok=("${INSTALLED[@]}")
     json_dest "" "$CANONICAL_DIR" canonical "$DIFFER_COUNT" "${INSTALLED[@]}"
-    publish_lock "$CANONICAL_DIR" "${canonical_ok[@]}" || (( failed++ )) || true
+    publish_lock "$CANONICAL_DIR" "$force" "${canonical_ok[@]}" || (( failed++ )) || true
 
     # Create symlinks per tool
     for tool in "${tools[@]}"; do
@@ -3803,7 +3809,7 @@ main() {
         install_into link "$tool_dir" "$force" "$no_backup" "${canonical_ok[@]}"
         linked=("${INSTALLED[@]}")
         json_dest "$tool" "$tool_dir" link "$DIFFER_COUNT" "${INSTALLED[@]}"
-        publish_lock "$tool_dir" "${linked[@]}" || (( failed++ )) || true
+        publish_lock "$tool_dir" "$force" "${linked[@]}" || (( failed++ )) || true
       fi
       if [[ "$tool" == "opencode" ]]; then
         sync_opencode_permissions "$OPENCODE_CONFIG_FILE" "$tool_dir" sync "${linked[@]}" || (( failed++ )) || true
@@ -3851,7 +3857,7 @@ main() {
       json_dest "$tool" "$dest" copy "$DIFFER_COUNT" "${INSTALLED[@]}"
       (( DIFFER_COUNT == 0 )) || printf '  %d skill(s) differ; use --force to overwrite\n' "$DIFFER_COUNT"
 
-      publish_lock "$dest" "${INSTALLED[@]}" || (( failed++ )) || true
+      publish_lock "$dest" "$force" "${INSTALLED[@]}" || (( failed++ )) || true
       if [[ "$tool" == "opencode" ]]; then
         sync_opencode_permissions "$OPENCODE_CONFIG_FILE" "$dest" sync "${INSTALLED[@]}" || (( failed++ )) || true
       fi

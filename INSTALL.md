@@ -8,6 +8,8 @@ Full install, update, and structure docs for the skills repo. For a quick start,
 
 `main` is the stable channel and `develop` is the nightly. `npx skills add iuliandita/skills`
 installs the default branch, which is `develop`; append `#main` to install the stable channel.
+The interactive list and `--all` leave out the two opt-in security skills; see
+[Local private overlays](#local-private-overlays).
 
 ```bash
 # Select skills interactively (prefer active names; see MIGRATION.md)
@@ -106,15 +108,17 @@ SKILLS_CANONICAL_DIR=~/my-skills ./install.sh --tool claude,roo --link
 
 ### Local private overlays
 
-Skills declaring `metadata.internal: "true"` and gitignored locally are skipped by default.
+Skills declaring `metadata.internal: true` and gitignored locally are skipped by default.
 Pass `--include-internal` to include them in a whole-collection selection, or name them
 explicitly. An explicitly saved name remains selected during `--update` even when internal
 and `--include-internal` was not saved.
 
-`privilege-escalation` and `vulnerability-research` are becoming opt-in under
-[#412](https://github.com/iuliandita/skills/issues/412). Once marked internal, they require
-either explicit saved names or `--include-internal` in a saved whole-collection setup to
-remain selected during `--update`.
+`privilege-escalation` and `vulnerability-research` are opt-in since v4.0.0
+([#412](https://github.com/iuliandita/skills/issues/412)). They need explicit saved names or
+`--include-internal` in a saved whole-collection setup to stay selected during `--update`.
+`npx skills add` skips them too, because they mark `internal` with the YAML boolean skills.sh
+reads. That is the pack's only non-string metadata value; the Agent Skills spec asks for strings
+([#431](https://github.com/iuliandita/skills/issues/431)). Add one there with `--skill <name>`.
 
 ```bash
 ./install.sh --tool claude,codex,opencode --link --include-internal --force
@@ -128,7 +132,7 @@ Before using `--force`, copy any overlay that exists only in the installed skill
 `skills/kubernetes-health/protected/` in the source checkout. Forced installs replace the whole
 skill directory; they do not preserve or merge installed-only files into the new copy.
 
-`kubernetes-health` is public, so it no longer needs `--include-internal`; that flag is only for separate gitignored skills with `metadata.internal: "true"`.
+`kubernetes-health` is public, so it no longer needs `--include-internal`; that flag is only for separate gitignored skills with `metadata.internal: true`.
 
 `scripts/check-private-skill-leaks.sh` scans public files for private markers, additively drawn from the `protected/private-patterns.txt` overlays above, a gitignored `private-patterns.txt` at the repo root (see `private-patterns.example.txt`), and a file path in `SKILLS_PRIVATE_PATTERNS`. CI never sees your local overlay or root file; it only sees markers you explicitly supply it, typically by writing a repository secret to a file and pointing `SKILLS_PRIVATE_PATTERNS` at it.
 
@@ -381,8 +385,8 @@ branch tracks a remote, then schedule the update:
 ./install.sh --update
 ```
 
-`--update` takes no other options or skill names. It needs `git`, `flock`, `timeout`, and
-`python3`. Each run:
+`--update` takes no other options or skill names. It needs `git`, `flock`, GNU `timeout` (or
+`gtimeout`, the name MacPorts and Homebrew coreutils use), and `python3`. Each run:
 
 1. Takes the installer lock without waiting, before it reads the saved config or touches
    the checkout. Another run holding it means exit 3; set `SKILLS_LOCK_WAIT` to wait that
@@ -475,7 +479,7 @@ update: partial 1a2b3c4d5e6f..7a8b9c0d1e2f changed=2 skipped=1
 | 6 | Finished, but some skills were skipped (see above) |
 | 7 | The lock or config directory cannot be created or opened |
 | 8 | The updated installer could not be started (missing or does not parse); HEAD is at the new commit, rerun |
-| 10 | `flock`, `timeout`, `git`, or `python3` is missing |
+| 10 | `flock`, `timeout` (and `gtimeout`), `git`, or `python3` is missing |
 | 130, 143 | Interrupted by SIGINT or SIGTERM |
 
 Exits 2, 3, 4, 5, 7, and 10 leave HEAD, the index, and the working tree unchanged (a fetch may
