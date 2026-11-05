@@ -1,7 +1,7 @@
 ---
 name: backend-api
 description: >
-  Design and review REST/HTTP APIs, with bounded GraphQL and gRPC contract guidance: OpenAPI, auth, pagination, compatibility, and retries.
+  Design and review REST/HTTP APIs, with bounded GraphQL, gRPC, and message-broker contract guidance. Use for OpenAPI specs, status codes, error formats, pagination, versioning, auth flows, idempotent retries, or queue delivery semantics such as acks, dead letters, and replay.
 license: MIT
 compatibility: "Optional: Python or Node.js framework context. Optional: OpenAPI-capable framework/docs tooling"
 metadata:
@@ -16,21 +16,8 @@ metadata:
 Design and review HTTP APIs that stay coherent as they grow. Focus on contracts, auth
 boundaries, error models, and framework structure for Python and Node.js services.
 
-**Target versions** (October 2026):
-- FastAPI **0.142.2**
-- Express **5.2.1** (published 2025-12-01)
-- NestJS **12.1.2** (major release; check migration notes before upgrading; 12.0.2+ fixes high-severity [microservice](https://github.com/nestjs/nest/security/advisories/GHSA-m8vh-jmq9-5rjg) and [Fastify middleware-bypass](https://github.com/nestjs/nest/security/advisories/GHSA-9c5c-9qcx-q35q) advisories)
-- OpenAPI Specification **3.2.1** (published 2026-09-10)
-- HTTP Semantics: **RFC 9110** (June 2022)
-- Problem Details for HTTP APIs: **RFC 9457** (July 2023)
-- OAuth 2.0 Security Best Current Practice: **RFC 9700** (January 2025)
-
-Security check (2026-10-28): Express/NestJS upload stacks using Multer <2.3.0 are affected by
-high-severity multipart denial of service, [CVE-2026-82333](https://github.com/expressjs/multer/security/advisories/GHSA-535w-7cp7-47q4).
-Upgrade Multer to 2.5.0+ (2.5.0 fixes high-severity DoS from a pending async `fileFilter` after
-request teardown, [CVE-2026-113872](https://github.com/expressjs/multer/security/advisories/GHSA-q7qp-rjg7-q26m); 2.4.0 fixed medium-severity aborted-upload disk exhaustion,
-[CVE-2026-88932](https://github.com/expressjs/multer/security/advisories/GHSA-3pph-fpjx-jg34)) and bound `limits.fieldArrayIndexLimit` to application needs; checking
-only the top-level framework version misses vulnerable middleware.
+**Target versions**: see `references/versions.md` (verified per the receipt date
+in that file). Do not restate version numbers here.
 
 This skill works across these concerns:
 - **Contract design** - resources, methods, status codes, schemas, versioning
@@ -382,6 +369,7 @@ Rolling deploys send SIGTERM to old instances while new ones come up. Handle it 
 - `references/http-api-patterns.md` - resource design, method semantics, status codes, versioning, pagination, filtering, idempotency
 - `references/auth-and-session-patterns.md` - sessions vs bearer tokens, OAuth/OIDC, BFF, refresh tokens, machine clients
 - `references/graphql-grpc-patterns.md` - bounded GraphQL and gRPC contract and compatibility patterns
+- `references/versions.md` - dated version receipts (pins, sources, security floors)
 
 ## Output Contract
 
@@ -403,7 +391,7 @@ See `references/output-contract.md` for the full contract.
 - **networking** - reverse proxies, TLS termination, CORS-adjacent network boundaries, and gateway behavior
 - **ci-cd** - delivery pipelines for API services
 - **mcp** - MCP-specific HTTP servers and auth patterns
-- **message-queues** - brokered async delivery, queues behind `202 Accepted` endpoints, and webhook fan-out via a broker
+- [Delivery semantics](references/delivery-semantics.md) - brokered delivery, queues behind `202 Accepted` endpoints, and webhook fan-out
 
 ## Rules
 

@@ -1,7 +1,7 @@
 ---
 name: nixos
 description: >
-  Administer NixOS and Nix: flakes, Home Manager, nix-darwin, generations, overlays, and declarative configuration.
+  Administer NixOS and Nix: configuration.nix, flakes, nixos-rebuild, Home Manager, nix-darwin, overlays, dev shells, and secrets with sops-nix or agenix. Use for a failing rebuild, flake inputs, rolling back a generation, or customizing packages with overrides.
 license: MIT
 compatibility: "Requires NixOS, or Nix/Determinate Nix/Lix on Linux/macOS/WSL"
 metadata:
@@ -32,23 +32,8 @@ disposable dev shells, fleet-wide configuration without a separate config-manage
 and a single language for a workstation, a server, a container image, a NixOS VM, and a
 macOS laptop via nix-darwin.
 
-**Versions worth pinning** (October 2026):
-
-Pin versions only when they shape compatibility or troubleshooting. For ordinary package
-work, trust the live channel or flake lock over a stale table.
-
-| Component | Version or date | Why it matters |
-|-----------|-----------------|----------------|
-| NixOS stable | 26.05 "Yarara" (May 2026) | current stable, released 2026-05-30, maintained until 2026-12-31 |
-| NixOS previous stable | 25.11 "Xantusia" (Nov 2025) | EOL 2026-06-30; upgrade off it now |
-| NixOS upcoming | 26.11 "Zokor" (planned 2026-11-23) | Branch-off 2026-11-16 per the release schedule (NixOS/nixpkgs#567567); do not target an unreleased version for production |
-| Nix (CLI / daemon) | 2.35.2 | stable upstream; verify the packaged distro lane before upgrading |
-| `nixos-rebuild-ng` | only implementation in 26.05 | Python rewrite; default since 25.11, Bash implementation and `system.rebuild.enableNg` removed in 26.05 |
-| home-manager | release-26.05 (May 2026) | matches NixOS 26.05; unstable tracks nixos-unstable |
-| nix-darwin | nix-darwin-26.05 | release branch matching nixpkgs 26.05; `master` tracks nixpkgs-unstable |
-| Determinate Nix | downstream, flakes-on by default | validated distribution; parallel eval, lazy trees |
-| Lix | fork of Nix | compatibility-focused fork; Meson build, improved errors |
-| Kernel default for 26.05 | Linux 6.18 LTS | 26.05 defaults to Linux 6.18 LTS and removed `linux_hardened` (source: https://nixos.org/blog/announcements/2026/nixos-2605/); consistent with `references/hardware-desktop-and-kernel.md` |
+**Target versions**: see `references/versions.md` (verified per the receipt date
+in that file). Do not restate version numbers here.
 
 ## When to use
 
@@ -78,14 +63,14 @@ work, trust the live channel or flake lock over a stale table.
 - Arch or CachyOS administration - use **arch-linux**
 - Debian, Ubuntu, Mint, or Pop!_OS administration - use **debian-ubuntu**
 - Fedora, RHEL, CentOS Stream, Rocky, or Alma administration - use **rhel-fedora**
-- Kali Linux and offensive-tool distros - use **kali-linux**
+- Kali Linux and offensive-tool distros - use **debian-ubuntu**
 - Shell syntax, quoting, or portability outside Nix expressions - use **shell-scripting**
 - Docker, Podman, image builds, or container runtime issues - use **docker**
 - Kubernetes cluster or manifest work - use **kubernetes**
 - Fleet-wide non-Nix Linux configuration via playbooks - use **ansible**
 - Terraform or OpenTofu infrastructure code - use **terraform**
 - CI/CD pipeline design for Nix-based builds (cachix push, build farm, pipeline stages) - use **ci-cd**
-- Offensive or privesc testing - use **privilege-escalation**
+- Offensive or privesc testing - use **privilege-escalation** (opt-in; if installed)
 - Repository-wide vulnerability audits of Nix code - use **security-audit**; NixOS host hardening stays in this skill
 - OPNsense or pfSense appliance work - use **opnsense-pfsense**
 
@@ -370,7 +355,7 @@ See `references/output-contract.md` for the full contract.
 - **arch-linux** - Arch and CachyOS administration. Use it when the host is Arch-family and Nix is a side tool, not the system.
 - **debian-ubuntu** - Debian-family administration. Use it when Nix runs on Debian/Ubuntu as a user-level package manager only.
 - **rhel-fedora** - RHEL-family administration. Use it when Nix runs on Fedora/RHEL as a user-level package manager only.
-- **kali-linux** - Kali distro workflow. Use it for Kali, not for Nix inside Kali.
+- **debian-ubuntu** - Kali distro workflow. Use it for Kali, not for Nix inside Kali.
 - **shell-scripting** - shell syntax, aliases, and one-liners outside Nix expressions.
 - **docker** - container runtime and image concerns. This skill builds images with `dockerTools`; **docker** runs them.
 - **kubernetes** - cluster workloads once the build output leaves Nix.
@@ -378,7 +363,7 @@ See `references/output-contract.md` for the full contract.
 - **terraform** - IaC for cloud resources that host NixOS VMs; this skill owns the guest.
 - **security-audit** - defensive review of a Nix-built artifact.
 - **ci-cd** - pipeline design when the CI side of a Nix build (cachix push, remote builders, pipeline stages) is the primary concern.
-- **privilege-escalation** - offensive and privesc testing; this skill covers NixOS administration, not exploitation.
+- **privilege-escalation** (opt-in; if installed) - offensive and privesc testing; this skill covers NixOS administration, not exploitation.
 - **opnsense-pfsense** - OPNsense/pfSense appliance work; this skill covers NixOS-based hosts, not BSD appliances.
 - **update-docs** - sync docs after substantial module or flake restructuring.
 

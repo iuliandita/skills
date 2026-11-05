@@ -1,7 +1,7 @@
 ---
 name: anti-ai-prose
 description: >
-  Edit prose that sounds AI-written: remove filler and canned phrasing in docs, emails, and replies.
+  Edit prose that sounds AI-written: strip filler, hedging, and canned phrasing from docs, READMEs, emails, PR bodies, and replies. Use when text "sounds like ChatGPT" or needs a de-slop pass; writing in one person's own voice belongs to a personal-voice skill.
 license: MIT
 compatibility: "None - works on any prose or text input"
 metadata:

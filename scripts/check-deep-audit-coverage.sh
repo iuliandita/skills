@@ -7,14 +7,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 source "$ROOT/scripts/skill-lib.sh"
 frontmatter_cache_load "$ROOT/skills" metadata.deprecated
 
-mapfile -t public_skills < <(
-  git -C "$ROOT" ls-files 'skills/*/SKILL.md' \
-    | sed 's#^skills/##; s#/SKILL.md$##' \
-    | sort \
-    | while IFS= read -r name; do
-        frontmatter_flag "$ROOT/skills/$name/SKILL.md" metadata.deprecated || printf '%s\n' "$name"
-      done
-)
+mapfile -t public_skills < <(list_public_skills "$ROOT/skills")
 
 # Wave lanes are derived from repo-audit itself: conditional lanes from the
 # shipped detector, always-run lanes from the workflow's Related Skills list.

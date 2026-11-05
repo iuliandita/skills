@@ -622,6 +622,34 @@ test_long_reference_needs_contents() {
   trap - RETURN
 }
 
+test_toc_goes_below_frontmatter() {
+  local tmp skill_dir ref i j
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  skill_dir="$tmp/skills/lint-fixture"
+  write_minimal_skill "$skill_dir" "lint-fixture"
+  ref="$skill_dir/references/versions.md"
+  printf -- '---\nchecked_at: "2026-10-01"\npins:\n' > "$ref"
+  for ((j = 0; j < 50; j++)); do printf '  - tool: "t%s"\n' "$j" >> "$ref"; done
+  printf -- '---\n\n# Versions\n\n' >> "$ref"
+  for i in 1 2 3; do
+    printf '## Section %s\n\n' "$i" >> "$ref"
+    for ((j = 0; j < 40; j++)); do printf 'line\n' >> "$ref"; done
+  done
+
+  python3 "$ROOT/scripts/gen-ref-toc.py" "$skill_dir" > /dev/null
+  if [[ "$(head -n 1 "$ref")" != "---" ]] || ! grep -q '^- Section 3$' "$ref"; then
+    fail "gen-ref-toc.py did not keep frontmatter first and add the list below it"
+  fi
+  if ! python3 "$ROOT/scripts/gen-ref-toc.py" --check "$skill_dir" > /dev/null; then
+    fail "gen-ref-toc.py --check reported drift after writing below frontmatter"
+  fi
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
 test_unreadable_reference_fails() {
   local tmp skill_dir output status
   tmp="$(mktemp -d)"
@@ -1190,6 +1218,21 @@ EOF
   trap - RETURN
 }
 
+test_size_reporting() {
+  local tmp output expected_chars
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  write_minimal_skill "$tmp/skills/lint-fixture" "lint-fixture"
+  printf '%020001d\n' 0 >> "$tmp/skills/lint-fixture/SKILL.md"
+  output="$("$ROOT/scripts/lint-skills.sh" "$tmp/skills" 2>&1)"
+  expected_chars=$(wc -m < "$tmp/skills/lint-fixture/SKILL.md")
+  [[ "$output" == *"Size: ~$(( expected_chars / 4 )) tokens (above 5000)"* ]] || fail "missing size advisory"
+  [[ "$output" == *"Descriptions:   87 characters (~21 tokens)"* ]] || fail "missing description budget"
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_size_reporting
 test_reference_files_are_scanned
 test_reference_examples_are_ignored
 test_ere_literal_pipe_is_flagged
@@ -1223,6 +1266,7 @@ test_long_reference_needs_contents
 test_unreadable_reference_fails
 test_reference_link_needs_exact_path
 test_author_contents_section_survives
+test_toc_goes_below_frontmatter
 test_reference_non_ascii_outside_code_fails
 test_banned_word_is_reported
 test_canonical_section_without_test_case_fails

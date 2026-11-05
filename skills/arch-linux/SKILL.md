@@ -1,7 +1,7 @@
 ---
 name: arch-linux
 description: >
-  Administer Arch Linux, CachyOS, EndeavourOS, and Manjaro: pacman, AUR, upgrades, boot, GPU, and desktop issues.
+  Administer Arch Linux, CachyOS, EndeavourOS, and Manjaro: pacman, paru/AUR, keyrings, rolling upgrades, boot, GPU, and desktop issues. Use for a broken update, .pacnew merges, initramfs or bootloader failures, NVIDIA, Hyprland, or Steam problems on an Arch-family host.
 license: MIT
 compatibility: "Requires Arch Linux, CachyOS, or an Arch-based distro with pacman. Optional: paru, pacman-contrib (pacdiff, paccache), reflector, sbctl, snapper"
 metadata:
@@ -17,25 +17,8 @@ Administer Arch Linux and Arch-style systems without falling into rolling-releas
 Focus on vanilla Arch first, then layer in CachyOS behavior, `paru` workflow, systemd-native
 service management, boot recovery, kernel handling, and derivative-specific cautions.
 
-**Versions worth pinning** (October 2026):
-
-Only pin versions here when they materially affect compatibility or troubleshooting shape. For
-ordinary rolling packages, prefer the current repo state over stale version tables.
-Versions below are upstream component versions; distro package release suffixes and epochs
-are repository-specific. Check the enabled Arch or CachyOS repository before comparing builds.
-
-| Component | Version | Why it matters |
-|-----------|---------|----------------|
-| systemd | 262 | boot and session behavior |
-| mkinitcpio | 42.2 | initramfs pipeline changed enough to matter |
-| dracut | 111 (Arch; upstream 112) | alternative initramfs pipeline with different expectations |
-| linux-cachyos | verify enabled CachyOS repo | kernel and module compatibility |
-| linux-cachyos-eevdf | verify enabled CachyOS repo | alternate kernel lane with different behavior surface |
-| Hyprland | 0.56.2 | old 0.4x and early 0.5x guidance is frequently stale here |
-| xdg-desktop-portal-hyprland | 1.4.1 | Wayland portal behavior depends on this layer |
-| PipeWire | 1.6.9 | audio and capture stack anchor |
-| WirePlumber | 0.5.18 (Arch; check derivative repo) | policy layer paired with PipeWire behavior |
-| nvidia-utils | 615.71.09 | driver branch matters for gaming and Wayland breakage |
+**Target versions**: see `references/versions.md` (verified per the receipt date
+in that file). Do not restate version numbers here.
 
 ## When to use
 
@@ -60,12 +43,12 @@ are repository-specific. Check the enabled Arch or CachyOS repository before com
 - Docker, Podman, image builds, or container runtime issues - use **docker**
 - Kubernetes cluster or manifest work - use **kubernetes**
 - Fleet-wide Linux configuration via playbooks or roles - use **ansible**
-- Security review, vulnerability triage, or offensive testing - use **security-audit** or **privilege-escalation**
+- Security review, vulnerability triage, or offensive testing - use **security-audit** or **privilege-escalation** (opt-in; if installed)
 - OPNsense or pfSense appliance work - use **opnsense-pfsense**
 - Nix/NixOS questions - use **nixos**
 - Debian, Ubuntu, Mint, or Pop!_OS administration - use **debian-ubuntu**
 - RHEL, Fedora, CentOS, or AlmaLinux administration - use **rhel-fedora**
-- Kali Linux and offensive-security tooling - use **kali-linux**
+- Kali Linux and offensive-security tooling - use **debian-ubuntu**
 
 ## AI Self-Check
 
@@ -311,7 +294,7 @@ See `references/output-contract.md` for the full contract.
 - **nixos** - use it for Nix/NixOS systems; the declarative model and tooling are fundamentally different from Arch
 - **debian-ubuntu** - use it for Debian, Ubuntu, Mint, and Pop!_OS administration
 - **rhel-fedora** - use it for RHEL, Fedora, CentOS, and AlmaLinux administration
-- **kali-linux** - use it for Kali Linux and offensive-security tooling
+- **debian-ubuntu** - use it for Kali Linux and offensive-security tooling
 
 ## Rules
 

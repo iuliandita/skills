@@ -82,6 +82,46 @@
     "skill-router": {
       "action": "remove",
       "replacement": null
+    },
+    "kali-linux": {
+      "action": "merge",
+      "replacement": "debian-ubuntu",
+      "transition": {
+        "release": "v4.0.0",
+        "published_at": null,
+        "minimum_days": 7,
+        "placeholder_releases": 1
+      }
+    },
+    "performance-debugging": {
+      "action": "merge",
+      "replacement": "debug-triage",
+      "transition": {
+        "release": "v4.0.0",
+        "published_at": null,
+        "minimum_days": 7,
+        "placeholder_releases": 1
+      }
+    },
+    "message-queues": {
+      "action": "remove",
+      "replacement": null,
+      "transition": {
+        "release": "v4.0.0",
+        "published_at": null,
+        "minimum_days": 7,
+        "placeholder_releases": 1
+      }
+    },
+    "frontend-design": {
+      "action": "rename",
+      "replacement": "ui-build",
+      "transition": {
+        "release": "v4.0.0",
+        "published_at": null,
+        "minimum_days": 7,
+        "placeholder_releases": 1
+      }
     }
   }
 }

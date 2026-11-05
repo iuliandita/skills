@@ -1,6 +1,7 @@
 ---
 name: plan-review
-description: "Review product, business, and engineering decisions and plans: clarify requirements, challenge assumptions, and assess risks."
+description: >
+  Pressure-test a plan or decision before building it: clarify requirements, challenge assumptions, and rank risks. Use for "review my plan", "is this a good idea", or architecture, pricing, roadmap, or infra choices; prefer it over brainstorming once a draft exists.
 license: MIT
 compatibility: "None - works on any decision context"
 metadata:
@@ -29,7 +30,7 @@ Use both lenses by default: identify who benefits, who pays, what becomes hard t
 
 - Review existing code for bugs, security flaws, or repository health: use the appropriate code or **repo-audit** skill.
 - Create an implementation plan from scratch when the user has not offered a decision to review.
-- Perform hands-on interface design: use **frontend-design**.
+- Perform hands-on interface design: use **ui-build**.
 - Capture or prioritize a backlog: use **roadmap**.
 - Turn an accepted engineering decision into executable steps: use **dev-cycle** or the repository's planning workflow.
 - Format or improve a prompt: use **prompt-generator**.

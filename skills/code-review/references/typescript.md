@@ -5,6 +5,7 @@ Bug patterns specific to TypeScript and JavaScript. These focus on correctness -
 ## Contents
 
 - Promise & Async Pitfalls
+- TypeScript Review Boundaries
 - Type System Gaps
 - Closure & Scope Traps
 - React-Specific Bugs
@@ -82,6 +83,25 @@ button.addEventListener('click', async () => {
   }
 });
 ```
+
+---
+
+## TypeScript Review Boundaries
+
+- Trace values from trust boundaries through validation and narrowing to callers. Treat parsed
+  JSON, network responses, environment variables, and storage as `unknown` until runtime checks
+  establish the expected shape; a type assertion does not validate data.
+- Check `any` for unchecked operations that can produce a concrete failure. Prefer `unknown`
+  with guards where the value is not yet known. Verify guards still hold after mutation or an
+  asynchronous boundary.
+- Check discriminated unions for exhaustive handling and ensure the discriminant is validated
+  at runtime when data crosses a trust boundary.
+- Inspect the effective `tsconfig` and inherited settings, including `strict` and relevant
+  null and indexed-access checks, before assuming the compiler enforces an invariant.
+- Check type-only imports against actual runtime use and the project's module and emit settings;
+  an import needed for a value or side effect must remain available at runtime.
+- Follow promise ownership through callbacks and callers: confirm rejections are handled where
+  they can be acted on, and that concurrent work completes or is deliberately managed.
 
 ---
 

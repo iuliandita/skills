@@ -5,6 +5,31 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [4.0.0] - 2026-11-05
+
+### Breaking Changes
+
+* Merge `kali-linux` into `debian-ubuntu` and `performance-debugging` into `debug-triage`, remove `message-queues`, and rename `frontend-design` to `ui-build`. Each old name ships a deprecated notice for this release and at least seven days after it; the notices are removed in a later release. Mapping: `kali-linux` -> `debian-ubuntu`, `performance-debugging` -> `debug-triage`, `frontend-design` -> `ui-build`, `message-queues` -> none (delivery semantics now live in `backend-api`).
+* Updating the checkout does not by itself remove stale local copies of the old names. Run `install.sh --update` for a saved selection, or `install.sh --migrate` to preview and `install.sh --migrate --apply` to migrate; see [MIGRATION.md](MIGRATION.md).
+* **privilege-escalation** and **vulnerability-research** are opt-in (`metadata.internal`): a default install skips them and `install.sh --include-internal` installs them ([#412](https://github.com/iuliandita/skills/issues/412)).
+
+### Features
+
+* **descriptions:** one rule for skill descriptions, a single 150-300 character paragraph, and rewritten trigger-rich descriptions for the collection ([#413](https://github.com/iuliandita/skills/issues/413)).
+* **scripts:** `list_public_skills` in `skill-lib.sh` is the one definition of a public skill, used by `lint-skills.sh` and `check-deep-audit-coverage.sh`. Opt-in skills count as public ([#416](https://github.com/iuliandita/skills/issues/416)).
+* **lint:** the "Active skills (N)" inventory in `skill-creator/references/conventions.md` must match the active skills in count and names ([#416](https://github.com/iuliandita/skills/issues/416)).
+* **docs:** CONTRIBUTING.md gains an add, merge, rename and remove checklist, and the ungated "nineteen old names" counts are gone from README.md and MIGRATION.md ([#416](https://github.com/iuliandita/skills/issues/416)).
+* **lint:** report active skill size and description budgets.
+* **versions:** move the inline "Target versions" blocks and `references/target-versions.md` snapshots of 22 skills into `references/versions.md` receipts. Versions and dates are unchanged; pins that had no source now link the project's release or advisory page.
+* **ci-cd:** add dependency update PR triage guidance.
+* **code-review:** expand TypeScript boundary and configuration review guidance.
+
+### Bug Fixes
+
+* **lint:** `gen-ref-toc.py` puts the contents list below a leading YAML frontmatter block instead of above it, so long version receipts keep a parseable frontmatter.
+* **install:** make `--update` migrate saved skill names and prune deselected, internal, deprecated, and retired copies only when installer ownership and version 2 tree digests match. Back up removals, keep local changes with warnings and JSON details, keep shared copies that a tool link still points to, keep internal skills you saved by name, and report leftovers in `--doctor` ([#409](https://github.com/iuliandita/skills/issues/409)).
+* **install:** record OpenCode permission provenance and remove installer-added allows when their skills disappear. Report legacy allows in `--doctor` and remove them only through an explicit migration apply with a config backup; preserve other user allows and every deny ([#410](https://github.com/iuliandita/skills/issues/410)).
+
 ## [3.1.0] - 2026-11-03
 
 ### Removed
@@ -664,7 +689,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Bootstrap baseline before release-please automation.
 
-[Unreleased]: https://github.com/iuliandita/skills/compare/v3.1.0...HEAD
+[Unreleased]: https://github.com/iuliandita/skills/compare/v4.0.0...HEAD
+[4.0.0]: https://github.com/iuliandita/skills/compare/v3.1.0...v4.0.0
 [3.1.0]: https://github.com/iuliandita/skills/compare/v3.0.0...v3.1.0
 [3.0.0]: https://github.com/iuliandita/skills/compare/v2.7.1...v3.0.0
 [2.7.1]: https://github.com/iuliandita/skills/compare/v2.7.0...v2.7.1

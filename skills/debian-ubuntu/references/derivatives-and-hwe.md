@@ -93,7 +93,7 @@ Ubuntu 24.04 LTS users inherit 24.10, 25.04, 25.10, and 26.04 changes.
 
 ### Kali
 - Kali is Debian-derived, so apt, dpkg, boot, and kernel basics can still fit this skill.
-- Do not treat Kali like a generic desktop or server distro when the question is really about offensive tooling, lab images, branch-specific behavior, or pentest workflow. Route those cases to **kali-linux**.
+- Do not treat Kali like a generic desktop or server distro when the question is really about offensive tooling, lab images, branch-specific behavior, or pentest workflow. See [Kali administration](kali.md).
 - Be conservative with desktop and hardening assumptions because Kali images, package sets, and intended use differ from stock Debian.
 
 ### Other Debian-based distros

@@ -1,7 +1,7 @@
 ---
 name: ansible
 description: >
-  Write, review, and debug Ansible playbooks, roles, inventories, Ansible Vault, Molecule tests, and AWX/AAP.
+  Write, review, and debug Ansible playbooks, roles, inventories, Vault secrets, Molecule tests, and AWX/AAP. Use for configuring servers after provisioning, OS hardening, idempotency bugs, or ansible-lint failures. Single-host admin goes to the distro skill.
 license: MIT
 compatibility: "Requires ansible-core; target controller Python 3.12+. Check managed-node support separately. Optional: ansible-lint, molecule, ansible-navigator"
 metadata:
@@ -15,13 +15,8 @@ metadata:
 
 Write, review, and architect Ansible automation - from single playbooks to multi-tier, compliance-hardened infrastructure management. The goal is idempotent, auditable, maintainable automation that works the same locally and in CI/CD.
 
-**Target versions** (October 2026):
-- ansible-core **2.21.4** (current stable, Python 3.12+ controller); verify managed-node Python support and branch EOL in the [support matrix](https://docs.ansible.com/projects/ansible-core/devel/reference_appendices/release_and_maintenance.html) before pinning
-- ansible (community package) **14.4.0** (depends on ansible-core 2.21)
-- molecule **26.9.0**, ansible-lint **26.9.0**, ansible-navigator **26.9.0** (CalVer)
-- ansible-builder **3.1.1** (EE definition v3)
-- AWX 24.6.1 (last formal release Jul 2024; upstream AWX releases paused for a major refactor, devel branch active - track ansible/awx; awx-operator ~2.19.x still ships for K8s deploys). Verify current AWX/AAP release status before recommending a specific version or install path.
-- AAP 2.7 (current stream); verify supported installation methods and patch builds in the [vendor lifecycle documentation](https://access.redhat.com/support/policy/updates/ansible-automation-platform) before deployment
+**Target versions**: see `references/versions.md` (verified per the receipt date
+in that file). Do not restate version numbers here.
 
 This skill covers four domains depending on context:
 - **Playbooks** - tasks, handlers, variables, conditions, loops, blocks, templates, Jinja2
@@ -51,7 +46,7 @@ This skill covers four domains depending on context:
 - Security audits of application code (SAST, dependency scanning) - use **security-audit**
 - Shell scripting or one-off commands - use **shell-scripting**
 - Firewall appliance management (OPNsense/pfSense) - use **opnsense-pfsense**
-- Single-machine OS-level admin questions (package setup, user management, service config without automation context) - use the appropriate distro skill: **debian-ubuntu**, **rhel-fedora**, **kali-linux**, or **arch-linux**
+- Single-machine OS-level admin questions (package setup, user management, service config without automation context) - use the appropriate distro skill: **debian-ubuntu**, **rhel-fedora**, **debian-ubuntu**, or **arch-linux**
 
 ---
 
@@ -118,7 +113,7 @@ Most real tasks blend domains. Start with the playbook, extract to roles when re
 
 Before writing YAML, determine:
 - **Target OS**: RHEL/CentOS, Ubuntu/Debian, Alpine, Windows - affects module choices
-- **Python version on targets**: check managed-node support for the pinned ansible-core in the support matrix linked under Target versions
+- **Python version on targets**: check managed-node support for the pinned ansible-core in the support matrix linked in `references/versions.md`
 - **Privilege escalation**: `become` method (sudo, su, doas, runas for Windows)
 - **Connection**: SSH (default), WinRM (Windows), local, network_cli (network devices)
 - **Idempotency**: every task must be safe to run multiple times
@@ -389,6 +384,7 @@ fixed-version range, so do not assume the target pin alone proves remediation.
 - `references/operations-and-execution.md` - inventory layout, ansible.cfg, execution environments, CI/CD integration, and navigator usage
 - `references/vault-and-secrets.md` - Vault usage, secret handling, and external secret-manager integration
 - `references/compliance.md` - PCI-DSS and CIS-oriented hardening guidance
+- `references/versions.md` - dated version receipts (pins, sources, security floors)
 
 ---
 
@@ -417,7 +413,7 @@ See `references/output-contract.md` for the full contract.
   or supply chain risks in Galaxy dependencies.
 - **debian-ubuntu** - for Debian/Ubuntu/Mint OS-level admin questions outside an automation context.
 - **rhel-fedora** - for RHEL/Fedora/CentOS OS-level admin questions outside an automation context.
-- **kali-linux** - for Kali Linux administration outside an automation context.
+- **debian-ubuntu** - for Kali Linux administration outside an automation context.
 - **arch-linux** - for Arch Linux / CachyOS OS-level admin questions outside an automation context.
 
 ---

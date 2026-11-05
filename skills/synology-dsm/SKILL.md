@@ -1,7 +1,7 @@
 ---
 name: synology-dsm
 description: >
-  Administer Synology DSM NAS over SSH: shares, packages, storage pools, crashed volumes, and btrfs recovery.
+  Administer a Synology DSM NAS over SSH: shares, packages, users, storage pools, RAID, crashed or read-only volumes, and btrfs recovery. Use for "Volume Crashed", a disk replacement, DSM hardening, or Container Manager paths. Generic Linux goes to the distro skill.
 license: MIT
 compatibility: "Requires SSH access to a Synology NAS running DSM 7, with an admin account for sudo. DSM 6 differences are noted but not covered in depth"
 metadata:
@@ -22,24 +22,8 @@ btrfs-progs DSM ships and diverges from mainline**, so stock tools report health
 corrupt; and **DSM regenerates `/etc/fstab` and package state at boot**, so hand edits do not
 survive.
 
-**Target versions** (October 2026):
-- DSM 7.4.1-90080 - current release (7.4 GA was 90075, 2026-06-16)
-- DSM 7.3 (released 2025-10-08) - Long-Term Support line, maintained to October 2027. Patch
-  floor is **7.3.2-86009-4 or above** ([SA-26:13](https://www.synology.com/en-global/security/advisory/Synology_SA_26_13),
-  critical, 2026-09-18). `-2` carries the SA-26:06 fixes but not SA-26:03 (CVE-2026-32746);
-  `-3` predates SA-26:13
-- DSM 7.2 - end of maintenance December 2025, yet it still received fixes in SA-26:06 (April
-  2026). Treat continued patching as unreliable rather than as policy, and plan an upgrade
-- Advisories: Synology-SA-26:03 (CVE-2026-32746, telnetd buffer overflow, CVSS 9.8, unauthenticated
-  RCE - keep Telnet off), Synology-SA-26:06 (multiple DSM CVEs, 2026-04-15), Synology-SA-26:11 (MailPlus Server), Synology-SA-26:13 (critical DSM file read/write, 2026-09-18)
-- [SA-26:11](https://www.synology.com/en-global/security/advisory/Synology_SA_26_11):
-  critical MailPlus Server CVE-2026-13136 and CVE-2025-15660; fixed in
-  4.0.1-31663+ for DSM 7.3 or 4.0.1-21663+ for DSM 7.2.2/7.2.1. Update the
-  package separately from DSM; the advisory lists no mitigation.
-- [SA-26:13](https://www.synology.com/en-global/security/advisory/Synology_SA_26_13) (critical,
-  CVE-2026-13684 CVSS 9.8 unauthenticated file read/write) raises DSM 7.2.2 to 7.2.2-72806-9+ and
-  DSM 7.2.1 to 7.2.1-69057-12+ ([SA-26:03](https://www.synology.com/en-global/security/advisory/Synology_SA_26_03)
-  floors were -8 / -11). These advisory floors do not establish ongoing lifecycle support.
+**Target versions**: see `references/versions.md` (verified per the receipt date
+in that file). Do not restate version numbers here.
 
 - Userspace `btrfs` on the appliance is old (v4.0 on DSM 7.1 avoton). Check with `btrfs --version`
   before assuming a subcommand exists

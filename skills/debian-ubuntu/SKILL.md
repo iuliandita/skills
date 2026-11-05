@@ -1,7 +1,7 @@
 ---
 name: debian-ubuntu
 description: >
-  Administer Debian, Ubuntu, Mint, and Pop!_OS: apt, dpkg, upgrades, boot, drivers, and desktop issues.
+  Administer Debian, Ubuntu, Mint, Pop!_OS, and Kali: apt/dpkg errors, release upgrades, PPAs, kernels, drivers, systemd, and unattended-upgrades. Use for any Debian-family host problem, server or desktop, such as a broken upgrade or a held package.
 license: MIT
 compatibility: "Requires Debian, Ubuntu, or a Debian-based distro with apt. Optional: ubuntu-release-upgrader-core (do-release-upgrade), ppa-purge, needrestart, fwupd"
 metadata:
@@ -21,32 +21,8 @@ Focus on Debian stable and Ubuntu LTS first, then layer in derivative-specific b
 workflows, snap confinement, Ubuntu HWE, and explicit checks for derivatives that diverge on
 init, packaging defaults, or intended use.
 
-**Versions worth pinning** (verified October 2026):
-
-Only pin versions here when they materially affect compatibility or troubleshooting shape. For
-ordinary Debian and Ubuntu package work, prefer the live distro lane and package policy over a
-stale package-version table.
-
-| Component | Version | Why it matters |
-|-----------|---------|----------------|
-| Debian stable | 13 (trixie) | current stable baseline and repo behavior |
-| Ubuntu LTS | 26.04 (Resolute Raccoon) | current LTS baseline for most Ubuntu guidance |
-| Ubuntu interim lane | verify live (26.10 "Stonking Stingray" released 2026-10-15, supported to July 2027; 25.10 EOL July 2026) | interim releases move fast; check the active upgrade path instead of memorizing one short-lived codename |
-| Ubuntu HWE lane | verify live | kernel metapackage and hardware-enablement behavior matter more than one exact kernel number |
-| NVIDIA driver branch | verify live | proprietary branch choice affects Wayland, gaming, and DKMS behavior |
-| Mesa stack | verify live | AMD and Intel graphics behavior tracks the shipped Mesa lane |
-| Kernel security | verify live via USN tracker | patch high-severity privesc CVEs promptly; mid-2026 examples to confirm fixed: Copy Fail CVE-2026-31431 (CISA KEV, exploited), Dirty Frag CVE-2026-43284/43500, Fragnesia CVE-2026-46300 (ESP-in-TCP, public PoC, not in CISA KEV), ptrace CVE-2026-46333 |
-
-Security recheck (2026-09-10): [CVE-2026-53362](https://ubuntu.com/security/CVE-2026-53362)
-is a high-priority Linux IPv6 flaw that Canonical lists as CISA KEV. Ubuntu 26.04's
-`linux` package is fixed in `7.0.0-31.31`; Ubuntu 24.04's `linux-hwe-7.0` is fixed in
-`7.0.0-31.31~24.04.1`. The 24.04 `linux` lane remains marked vulnerable in that record.
-Check the exact release and kernel package; these are not universal kernel version floors.
-
-Security recheck (2026-10-02): [CVE-2026-53266](https://ubuntu.com/security/CVE-2026-53266)
-(netfilter ebtables SNAT, high, CISA KEV 2026-09-18) has the same fixed versions: `linux`
-`7.0.0-31.31` on 26.04 and `linux-hwe-7.0` `7.0.0-31.31~24.04.1` on 24.04, while the 24.04
-`linux` lane is still listed as vulnerable.
+**Target versions**: see `references/versions.md` (verified per the receipt date
+in that file). Do not restate version numbers here.
 
 ## When to use
 
@@ -77,7 +53,7 @@ Security recheck (2026-10-02): [CVE-2026-53266](https://ubuntu.com/security/CVE-
 - RPM-family distros and tooling - use **rhel-fedora**. That includes RHEL, Fedora, Rocky, AlmaLinux, Oracle Linux, and Amazon Linux.
 - Ubuntu Core and snap-only transactional workflows - outside this skill; do not treat them like ordinary apt-managed Ubuntu hosts
 - NixOS or declarative system management - use **nixos**
-- Kali offensive tooling, pentest workflow, or training-image specifics - use **kali-linux**
+- Kali-specific branches, images and packages - see [Kali administration](references/kali.md)
 - OPNsense or pfSense appliance work - use **opnsense-pfsense**
 
 ---
@@ -136,7 +112,7 @@ The steps are ordered. Copy this checklist and track progress:
 | **Linux Mint** | Ubuntu LTS derivative | Cinnamon/XFCE focus. Mint-specific repos and update manager. PPAs from Ubuntu often work. |
 | **Pop!_OS** | Ubuntu derivative with extras | System76 firmware, COSMIC desktop, Pop repos, `system76-power`. NVIDIA ISO available. |
 | **Devuan** | Debian derivative with a major service-model split | Do not assume systemd, `systemctl`, or Ubuntu-style desktop/session plumbing. Verify init and service tooling first. |
-| **Kali** | Debian-derived security distro | Fine for base apt, kernel, boot, or service administration, but use **kali-linux** for Kali-specific branches, images, metapackages, training-image workflow, and offensive-distro context. |
+| **Kali** | Debian-derived security distro | Use [Kali administration](references/kali.md) for Kali-specific branches, images, metapackages, and hardware. |
 | **Other Debian-based** | Confirm repo model | Do not assume vanilla Debian or Ubuntu behavior. |
 
 ### Step 2: Gather current system state
@@ -347,7 +323,7 @@ See `references/output-contract.md` for the full contract.
 - **security-audit** - hardening and security review rather than normal package/service administration
 - **rhel-fedora** - RPM-family distro administration rather than Debian-family behavior
 - **nixos** - NixOS and declarative Nix system management rather than apt-based administration
-- **kali-linux** - Kali-specific branch, image, and offensive-workflow concerns
+- [Kali administration](references/kali.md) - Kali-specific branches, images, packages, and hardware
 - **opnsense-pfsense** - OPNsense and pfSense appliance work rather than Linux host administration
 - **arch-linux** - Arch Linux and CachyOS administration (the upstream inspiration for this skill)
 - **update-docs** - after substantial system administration changes that introduce new operational gotchas

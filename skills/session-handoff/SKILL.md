@@ -1,7 +1,7 @@
 ---
 name: session-handoff
 description: >
-  Write an agent session handoff with current state, decisions, unfinished work, verification, and next steps.
+  Write an agent session handoff with current state, decisions, unfinished work, verification, and next steps. Use for "hand this off", "write a handoff", "continue in a fresh session", or a context window that is running out. Durable docs go to update-docs.
 license: MIT
 compatibility: "None - writes a markdown file. Optional: git for gitignoring the .handoff/ directory"
 metadata:

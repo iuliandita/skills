@@ -1,7 +1,7 @@
 ---
 name: shell-scripting
 description: >
-  Write and debug Bash, Zsh, POSIX sh, and Fish scripts, commands, quoting, dotfiles, and shell completions.
+  Write and debug Bash, Zsh, POSIX sh, and Fish scripts, one-liners, functions, dotfiles, and shell completions. Use for quoting, globbing, or expansion bugs, porting a script between shells, shellcheck warnings, or .zshrc and .bashrc setup.
 license: MIT
 compatibility: "Use sh, Bash, or Zsh for POSIX examples; Fish and Nushell require their dedicated syntax. Optional: shellcheck, dash (strict POSIX check)"
 metadata:

@@ -328,6 +328,38 @@ Quality signals:
 - Flags :latest and untagged postgres image
 
 ### frontend-design
+**Test 1: Legacy invocation**
+Prompt: "I explicitly invoked frontend-design. How do I migrate?"
+Quality signals:
+- Identifies ui-build as the replacement
+- Preserves customizations before removal and does not install anything silently
+- Does not run the retired workflow
+
+### kali-linux
+**Test 1: Legacy invocation**
+Prompt: "I explicitly invoked kali-linux. How do I migrate?"
+Quality signals:
+- Identifies debian-ubuntu as the replacement
+- Preserves customizations before removal and does not install anything silently
+- Does not run the retired workflow
+
+### message-queues
+**Test 1: Legacy invocation**
+Prompt: "I explicitly invoked message-queues. How do I migrate?"
+Quality signals:
+- Identifies backend-api as related guidance and says the old skill was removed without a replacement
+- Preserves customizations before removal and does not install anything silently
+- Does not run the retired workflow
+
+### performance-debugging
+**Test 1: Legacy invocation**
+Prompt: "I explicitly invoked performance-debugging. How do I migrate?"
+Quality signals:
+- Identifies debug-triage as the replacement
+- Preserves customizations before removal and does not install anything silently
+- Does not run the retired workflow
+
+### ui-build
 **Test 1: Build a product UI**
 Prompt: "Build a responsive SaaS dashboard for support agents triaging tickets. It needs dark and light themes, a ticket queue, filters, and keyboard-friendly actions."
 Quality signals:
@@ -383,24 +415,6 @@ Quality signals:
 - Translations read naturally for the app's domain (music discovery), not mechanical word-for-word
 - Does not translate brand names or technical identifiers
 - Notes a validation step (placeholder check, completeness check) before commit
-
-### kali-linux
-**Test 1: Kali branch and metapackage hygiene**
-Prompt: "My Kali rolling VM is broken after I added Debian testing repos. I also installed kali-linux-everything because one wireless tool was missing."
-Quality signals:
-- Identifies Kali lane and source-list state first
-- Explains why mixing Debian testing with Kali branches is unsafe
-- Separates repo repair from metapackage planning
-- Recommends focused kali-tools-* bundles over kali-linux-everything when appropriate
-- Keeps authorization and lab hygiene distinct from package installation
-
-**Test 2: Live USB persistence and hardware**
-Prompt: "Build a Kali live USB with persistence for wireless testing on a laptop. Monitor mode does not work after boot."
-Quality signals:
-- Distinguishes live ISO, persistence-backed live media, installed system, and VM image
-- Checks persistence layout before assuming package failure
-- Checks chipset, firmware, driver, USB passthrough, rfkill, and monitor-mode support
-- Routes exploitation technique questions away to privilege-escalation
 
 ### kubernetes
 **Test 1: Manifest review**
@@ -505,20 +519,6 @@ Quality signals:
 - Flags missing error handling (unhandled promise rejection)
 - Does not suggest disabling the tool as the fix
 
-### message-queues
-**Test 1: Duplicate delivery**
-Prompt: "Our consumer charged a customer twice after a broker reconnect. Diagnose it before suggesting changes."
-Quality signals:
-- Establishes delivery, acknowledgement, retry, and transaction boundaries.
-- Distinguishes at-least-once delivery from business idempotency; checks deduplication lifetime.
-- Does not purge queues or replay production messages without authorization.
-
-**Test 2: Lag diagnosis**
-Prompt: "Consumer lag grows despite adding workers. The partition count is unchanged. What evidence do you need?"
-Quality signals:
-- Checks partition concurrency, skew, processing latency, downstream pressure, and rebalance behavior.
-- Avoids assuming more workers always increase throughput.
-
 ### networking
 **Test 1: Reverse proxy setup**
 Prompt: "Set up Caddy as a reverse proxy for three services: app (port 3000), api (port 8080), and grafana (port 3001). All on the same host, different subdomains."
@@ -591,20 +591,6 @@ Quality signals:
 - Covers interface assignment verification (is the VLAN actually assigned?)
 - Suggests using OPNsense packet capture or ping diagnostics to isolate the layer
 - Does not assume a single root cause without evidence
-
-### performance-debugging
-**Test 1: Measured bottleneck**
-Prompt: "This API got slower after a release. CPU is high; profile before changing its code."
-Quality signals:
-- Defines representative workload, baseline, latency distribution, and profiling overhead.
-- Separates CPU evidence from wall-clock waits and checks a specific hypothesis.
-- Requires correctness and before/after measurements under comparable conditions.
-
-**Test 2: Unknown outage**
-Prompt: "The whole site is down; we do not know which layer failed. Optimize the backend."
-Quality signals:
-- Localizes the failure with debug-triage before treating it as a confirmed application bottleneck.
-- Does not invent a performance fix from missing evidence.
 
 ### plan-review
 **Test 1: Dual-lens product decision**
@@ -744,7 +730,7 @@ Quality signals:
 - Wave 1 presents detected languages and the matched/skipped Wave 3 skills before Wave 2 starts
 - Wave 2 dispatches code-review, code-simplification, anti-ai-prose regardless of repo type, without duplicate merged lanes
 - Wave 3 dispatches only matched skills (testing, backend-api, databases, docker, ci-cd based on stack)
-- Wave 4 runs security-audit and vulnerability-research sequentially, with vulnerability-research receiving security-audit findings
+- Wave 4 runs security-audit; if opted in and installed, vulnerability-research follows and receives its findings
 - Dispatches read-only audit workers whose capabilities match each task, not write-focused roles
 - Preserves each skill's native report format, no cross-report normalization
 - Verifies docs/local/ ignore protection and preserves the dated security report under docs/local/audits/security-audit/

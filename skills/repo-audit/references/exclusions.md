@@ -10,8 +10,7 @@
 | **skill-refiner** | Improves skill collections through eval loops. |
 | **plan-review** | Reviews decisions after evidence exists, rather than repository files. |
 | **session-handoff** | Moves session context; it is not an audit lane. |
-| **privilege-escalation** | Offensive work has a different threat model; use defensive security and vulnerability research. |
-| **kali-linux** | Live Kali administration; repo packaging is covered by debian-ubuntu. |
+| **privilege-escalation** | Opt-in; if installed. Offensive work has a different threat model; use defensive security and vulnerability research. |
 | **synology-dsm** | Live NAS administration and recovery require appliance state. |
 | **repo-audit** | Self-invocation would loop. |
 
