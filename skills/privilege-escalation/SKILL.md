@@ -11,7 +11,7 @@ metadata:
   date_added: "2026-03-25"
   effort: high
   argument_hint: "<target>"
-  internal: "true"
+  internal: true
 ---
 
 # Privilege Escalation and Post-Exploitation Assessment

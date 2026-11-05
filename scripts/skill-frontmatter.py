@@ -297,6 +297,9 @@ def spec_check(skills_dir: str) -> int:
             print(f"{entry.name}\tmetadata must be a mapping of string keys to string values")
             continue
         for key, value in metadata.items():
+            # skills.sh hides a skill from whole-repo installs only for a boolean internal flag (#431).
+            if key == "internal" and value is True:
+                continue
             if type(value) is not str:
                 print(f"{entry.name}\tmetadata.{key} must be a string; quote it (got {format_value(value)})")
     return 0
