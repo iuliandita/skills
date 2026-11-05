@@ -8,6 +8,8 @@ Full install, update, and structure docs for the skills repo. For a quick start,
 
 `main` is the stable channel and `develop` is the nightly. `npx skills add iuliandita/skills`
 installs the default branch, which is `develop`; append `#main` to install the stable channel.
+The interactive list and `--all` also offer the two opt-in security skills; see
+[Local private overlays](#local-private-overlays).
 
 ```bash
 # Select skills interactively (prefer active names; see MIGRATION.md)
@@ -111,10 +113,12 @@ Pass `--include-internal` to include them in a whole-collection selection, or na
 explicitly. An explicitly saved name remains selected during `--update` even when internal
 and `--include-internal` was not saved.
 
-`privilege-escalation` and `vulnerability-research` are becoming opt-in under
-[#412](https://github.com/iuliandita/skills/issues/412). Once marked internal, they require
-either explicit saved names or `--include-internal` in a saved whole-collection setup to
-remain selected during `--update`.
+`privilege-escalation` and `vulnerability-research` are opt-in since v4.0.0
+([#412](https://github.com/iuliandita/skills/issues/412)). They need explicit saved names or
+`--include-internal` in a saved whole-collection setup to stay selected during `--update`.
+`npx skills add` does not skip them yet: skills.sh only honours a boolean `internal`, and this
+pack writes the string the Agent Skills spec requires
+([#431](https://github.com/iuliandita/skills/issues/431)). Pick skills with `--skill` there.
 
 ```bash
 ./install.sh --tool claude,codex,opencode --link --include-internal --force
