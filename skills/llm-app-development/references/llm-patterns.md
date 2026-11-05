@@ -41,7 +41,7 @@ print("".join(b.text for b in response.content if b.type == "text"))
 ```
 
 Claude 5-series models think by default. See the
-[Claude 5-series migration notes](target-versions.md#claude-5-series-migration) before porting
+[Claude 5-series migration notes](versions.md#claude-5-series-migration) before porting
 older examples: sampling parameters, prefill, and manual thinking budgets return 400.
 
 ### Anthropic (TypeScript)
@@ -84,10 +84,10 @@ print(response.output_text)
 
 Use `AsyncOpenAI` and await requests in async handlers. The output budget includes reasoning;
 handle incomplete responses rather than treating empty text as success. See the
-[GPT-6.1 Sol migration checklist](target-versions.md#gpt-61-sol-migration) before adapting
+[GPT-6.1 Sol migration checklist](versions.md#gpt-61-sol-migration) before adapting
 older examples. Use Responses for tools; GPT-6.1 Sol's Chat Completions support has no tools.
 Escalate to Astra only when Sol falls short on measured task quality; check its
-[migration checklist](target-versions.md#astra-migration) and account access first.
+[migration checklist](versions.md#astra-migration) and account access first.
 
 ### Vercel AI SDK (TypeScript)
 

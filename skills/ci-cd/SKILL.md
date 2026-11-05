@@ -17,8 +17,8 @@ Write, review, and architect CI/CD pipelines across GitHub Actions, GitLab CI/CD
 Actions, Gitea Actions, and Woodpecker. The goal is secure, fast, auditable pipelines that
 satisfy both engineering needs and compliance requirements (PCI-DSS 4.0).
 
-**Target versions**: October 2026 snapshot. Read `references/target-versions.md` before
-pinning forge, runner, CI, or supply-chain tool versions.
+**Target versions**: see `references/versions.md` (verified per the receipt date
+in that file). Do not restate version numbers here.
 
 This skill covers workflow design, security, compliance, cross-platform migration,
 runners, dependency updates, scanning, review gates, and rollout order.
@@ -157,6 +157,13 @@ the AI Self-Check fails, fix the config and return to Step 4; repeat until clean
 actionlint only auto-discovers `.github/workflows`; pass `.forgejo/workflows/*.yml` paths
 explicitly. Declare custom runner labels under `self-hosted-runner.labels` in `actionlint.yaml`;
 never change `runs-on` only to satisfy the linter.
+
+## Dependency update PRs
+
+For Renovate or Dependabot PRs, read the changelog and release notes across the version
+range, identify affected callers, and choose a behavioral check for the changed dependency.
+Check CI, lockfile consistency, and grouped updates before merging. See
+`references/dependency-prs.md` for triage and when to close or pin an update.
 
 ## Cross-Platform Patterns
 
@@ -319,7 +326,7 @@ for assessment boundaries and primary sources.
 - `references/runners.md` - Self-hosted runners (actions-runner, gitlab-runner, forgejo-runner, gitea-runner, woodpecker-agent) - install, register, executor choice, Linux vs macOS, security hardening
 - `references/best-practices.md` - Dependency updates (Dependabot/Renovate), layered linting, scanning matrix (secrets/SCA/container/IaC/SAST), review gates, merge queues, rollout order
 - `references/supply-chain.md` - supply chain security, incident timeline, SHA pinning, SBOM/SLSA, PCI-DSS compliance, image signing, post-compromise response; read its AI-Age Supply Chain Risks section for slopsquatting, AI agents in CI/CD, and prompt injection in pipelines
-- `references/target-versions.md` - dated version snapshot for forges, runners, CI systems, and supply-chain tools
+- `references/versions.md` - dated version receipts (pins, sources, security floors)
 
 ## Output Contract
 

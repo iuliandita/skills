@@ -5,7 +5,20 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-* **BREAKING CHANGE:** Merge `kali-linux` into `debian-ubuntu` and `performance-debugging` into `debug-triage`, remove `message-queues`, and rename `frontend-design` to `ui-build`. Each migration has its own one-release, seven-day notice window.
+### Breaking Changes
+
+* Merge `kali-linux` into `debian-ubuntu` and `performance-debugging` into `debug-triage`, remove `message-queues`, and rename `frontend-design` to `ui-build`. Each migration has its own one-release, seven-day notice window.
+
+### Features
+
+* **lint:** report active skill size and description budgets.
+* **versions:** move the inline "Target versions" blocks and `references/target-versions.md` snapshots of 21 skills into `references/versions.md` receipts. Versions and dates are unchanged; pins that had no source now link the project's release or advisory page.
+* **ci-cd:** add dependency update PR triage guidance.
+* **code-review:** expand TypeScript boundary and configuration review guidance.
+
+### Bug Fixes
+
+* **lint:** `gen-ref-toc.py` puts the contents list below a leading YAML frontmatter block instead of above it, so long version receipts keep a parseable frontmatter.
 
 ### Bug Fixes
 

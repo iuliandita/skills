@@ -853,6 +853,7 @@ while IFS= read -r old_name; do
 done < <(list_old_skill_names)
 
 skill_count=0
+description_chars=0
 for skill_dir in "$SKILLS_DIR"/*/; do
   name=$(basename "$skill_dir")
   [[ "$name" == ".backups" || "$name" == ".cook" ]] && continue
@@ -871,6 +872,17 @@ for skill_dir in "$SKILLS_DIR"/*/; do
   fi
 
   echo "[$name]"
+  if ! frontmatter_flag "$skill_file" metadata.deprecated; then
+    skill_chars=$(wc -m < "$skill_file")
+    skill_tokens=$(( skill_chars / 4 ))
+    description=$(frontmatter_get "$skill_file" description 2>/dev/null || true)
+    description_chars=$(( description_chars + ${#description} ))
+    if (( skill_tokens > 5000 )); then
+      echo "  Size: ~$skill_tokens tokens (above 5000)"
+    else
+      echo "  Size: ~$skill_tokens tokens"
+    fi
+  fi
   check_frontmatter "$skill_file" "$name"
   check_desc_prefix "$skill_file" "$name"
   check_sections "$skill_file" "$name"
@@ -893,6 +905,7 @@ done
 echo
 echo "────────────────────────────────────────"
 echo "Skills checked: $skill_count"
+echo "Descriptions:   $description_chars characters (~$(( description_chars / 4 )) tokens)"
 echo "Errors:         $errors"
 echo "Warnings:       $warnings"
 echo "────────────────────────────────────────"

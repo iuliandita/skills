@@ -19,29 +19,10 @@ preserve the user's brand and the existing application's conventions.
 
 This skill works independently. When **impeccable** or **design-taste-frontend** is installed, defer art direction and critique to it; retain implementation of layout, CSS/Tailwind, components, responsiveness, themes, and accessibility here.
 
-**Target versions** (October 2026 - pinned so staleness is visible):
+**Target versions**: see `references/versions.md` (verified per the receipt date
+in that file). Do not restate version numbers here.
 
-- Astro 7.3.5 (major: Rust compiler, Vite 8, advanced routing; verify advisory-specific fixed ranges before migration)
-- SvelteKit 3.0.0 + Svelte 5.57.1 runes (SvelteKit 3 is a major released 2026-10-01: TypeScript 6+, Node 22.17+; review migration notes)
-- Tailwind CSS v4.3.3
-- Vite 8.3.2
-- React 19.3.0 + Next.js 16.4.3 (heavier option, only when team is React-locked)
-- @use-gesture/react 10.3.1 (modern; Hammer.js considered legacy)
-
-The [August 2026 Next.js security release](https://nextjs.org/blog/august-2026-security-release)
-fixes critical AVIF image-optimization RCE and Windows mixed-router RCE (CVE-2026-75604).
-Its patched LTS releases are 15.5.24 and 16.3.3. The [September 22 out-of-band release](https://nextjs.org/blog/nextjs-security-update-september-22-2026)
-fixes a critical Node.js `ImageResponse` (`next/og`) RCE (GHSA-vcvr-r3jv-pc5j) affecting
-`>=16.2.0 <16.3.6`; the floor is 16.3.6 (15.5.26 adds hardening only; 15.x is not affected).
-The [September 30 security release](https://github.com/vercel/next.js/releases/tag/v16.3.8) fixes
-high-severity Image Optimization SSRF (CVE-2026-94483) plus medium cache-poisoning and cache-leak
-advisories (floors 16.3.8 / 15.5.27). The [October 14 security release](https://github.com/vercel/next.js/releases/tag/v16.4.1)
-fixes critical unauthenticated RCEs in SVG Image Optimization (GHSA-2464-fhr4-w9xw, 15.x and 16.x)
-and `use cache` typed arrays (GHSA-673q-mjm6-r5xr, 16.x only) plus high Server Actions DoS
-(GHSA-p3m5-59mp-jv5r); the floors are now 16.4.1 and 15.5.28.
-Check each advisory's deployment conditions when assessing an existing app (checked 2026-10-28).
-
-The version list is a reference for new-project selection, not an upgrade instruction.
+The pinned versions are a reference for new-project selection, not an upgrade instruction.
 Inspect installed packages and follow the project's stack. Verify current documentation when
 choosing dependencies or using an unfamiliar API; do not migrate frameworks for a visual change.
 
@@ -225,6 +206,7 @@ in severity-ranked findings; keep info notes outside the fix-ticket table.
 - `references/app-ui-patterns.md` - app shells, dashboards, forms, and states
 - `references/glitch-effects.md` - optional effects for a brief that warrants them
 - `references/critique-template.md` - evidence-based critique and priorities
+- `references/versions.md` - dated version receipts (pins, sources, security floors)
 
 ## Output Contract
 

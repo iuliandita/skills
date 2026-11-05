@@ -18,16 +18,8 @@ cut releases, and maintain audit-grade change history across GitHub, GitLab, and
 The goal is clean, signed, traceable history that satisfies both engineering standards and
 compliance requirements (PCI-DSS 4.0).
 
-**Target versions** (October 2026):
-- **git**: 2.56.0 (current stable, 2026-09-28). Additions include `git refs` create/delete/update/rename, `fetch.followRemoteHEAD`, and `git history drop`; 2.55 added Linux fsmonitor, remote-group push, and parallel compatible hooks.
-- **GitHub CLI (`gh`)**: 2.102.0
-- **GitLab CLI (`glab`)**: 1.120.0
-- **Forgejo CLI (`fj`)**: 0.6.0 (latest Codeberg release, rechecked 2026-10-02; `fj pr merge --help` confirmed September 25; source `codeberg.org/forgejo-contrib/forgejo-cli`). Rust-written, official community CLI. Covers PRs (incl. AGit), issues, repos, releases, tags, actions.
-- **Forgejo**: v16.0.5 current; v15.0.9 is the current LTS (both 2026-09-17). Critical RCE (CVE-2025-68937) patched in v13.0.2+.
-- **prek**: 0.5.4 (Rust, recommended) or **pre-commit**: 4.6.2 (Python, largest ecosystem)
-- **git-filter-repo**: 2.47.0
-- **gitleaks**: 8.30.1 (secret scanning)
-- **cosign**: 3.1.3 (Sigstore, for tag/release signing context)
+**Target versions**: see `references/versions.md` (verified per the receipt date
+in that file). Do not restate version numbers here.
 
 This skill covers five domains depending on context:
 - **Operations** - commits, branches, merges, rebases, stashing, bisect, reflog, recovery
@@ -389,6 +381,7 @@ signer completed security training or that the change was reviewed, tested, or a
   management, secret scanning, CVE reference, git security hardening
 - `references/recovery-and-maintenance.md` - reflog, bisect, rerere, filter-repo, stash,
   worktree, submodule/subtree, large repo optimization, housekeeping
+- `references/versions.md` - dated version receipts (pins, sources, security floors)
 
 ## Output Contract
 

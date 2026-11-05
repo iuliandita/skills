@@ -17,12 +17,8 @@ Structured, multi-pass security audit. Combines automated tooling with manual pa
 
 Patterns drawn from real OSS incidents (unauthenticated admin endpoints, credential exfiltration, zip slip, auth bypass whitelists, Trivy supply chain compromise) and OpenSSF/SLSA/OWASP standards.
 
-**Target versions** (October 2026, release check 2026-10-28):
-- Semgrep 1.182.0, Bandit 1.9.4
-- Gitleaks 8.30.1, [Betterleaks 1.9.0](https://github.com/betterleaks/betterleaks/releases/tag/v1.9.0) (same author as Gitleaks), TruffleHog 3.99.7
-- Trivy 0.76.1 (0.69.4-0.69.6 was compromised - see known incidents; 0.69.3 is also inside the CVE-2026-63328 range, so stay on 0.72.0+)
-- OpenSSF Scorecard 5.6.0 (v6 in proposal stage)
-- OWASP Top 10:2025 (released November 2025), OWASP Agentic Top 10:2026 (released December 2025)
+**Target versions**: see `references/versions.md` (verified per the receipt date
+in that file). Do not restate version numbers here.
 
 **Scope**: TypeScript/JavaScript (Bun, Node.js, Deno), Python, Go, Rust web applications, CLI tools, Dockerfiles, Compose stacks, CI/CD workflows, Helm charts, Terraform, Proxmox/LXC configs, shell scripts. This skill is SAST + config + supply chain. Not DAST or network pentesting.
 

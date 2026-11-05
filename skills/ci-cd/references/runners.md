@@ -236,7 +236,7 @@ when you want kernel-level isolation without the cost of a full VM.
 
 Binary `gitea-runner`, repo https://gitea.com/gitea/runner, image `gitea/runner`. There is
 no `act_runner` alias; older docs and scripts using `act_runner` refer to the same project
-pre-rename. Version pins live in `references/target-versions.md`.
+pre-rename. Version pins live in `references/versions.md`.
 
 ### Install
 
