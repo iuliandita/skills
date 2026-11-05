@@ -1,7 +1,7 @@
 ---
 name: nixos
 description: >
-  Administer NixOS and Nix: configuration.nix, flakes, nixos-rebuild, Home Manager, nix-darwin, overlays, dev shells, and secrets with sops-nix or agenix. Use for a failing rebuild, flake inputs, rolling back a generation, or customizing packages with overrides.
+  NixOS and Nix: configuration.nix, flakes, nixos-rebuild, Home Manager, nix-darwin, overlays, dev shells, sops-nix. Use for failing rebuilds, rollbacks.
 license: MIT
 compatibility: "Requires NixOS, or Nix/Determinate Nix/Lix on Linux/macOS/WSL"
 metadata:

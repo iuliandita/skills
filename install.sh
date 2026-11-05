@@ -882,7 +882,10 @@ acquire_install_lock() {
     [[ "$required" == "required" ]] && exit 7
     exit 1
   fi
-  if ! flock -w "$wait" "$INSTALL_LOCK_FD"; then
+  # BSD-style flock (MacPorts, Homebrew) rejects -w 0; -n is the portable no-wait form.
+  local -a flock_wait=(-w "$wait")
+  (( wait > 0 )) || flock_wait=(-n)
+  if ! flock "${flock_wait[@]}" "$INSTALL_LOCK_FD"; then
     printf 'Another install.sh run holds %s; gave up after %ss (set SKILLS_LOCK_WAIT to wait longer)\n' \
       "$dir/install.lock" "$wait" >&2
     exit 3

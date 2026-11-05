@@ -1,7 +1,7 @@
 ---
 name: kubernetes-health
 description: >
-  Check live Kubernetes cluster health with read-only kubectl diagnostics across nodes, pods, events, storage, networking, and GitOps sync. Use for "is the cluster healthy", post-upgrade or post-reboot checks, or a status report. Manifest authoring goes to kubernetes.
+  Read-only live cluster health check: nodes, pods, events, storage, networking, GitOps sync. Use for "is the cluster healthy" or post-upgrade checks.
 license: MIT
 compatibility: "Requires kubectl; jq for the event-window check. Optional: helm, openssl, dig, ssh"
 metadata:

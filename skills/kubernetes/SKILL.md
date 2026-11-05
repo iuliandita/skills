@@ -1,7 +1,7 @@
 ---
 name: kubernetes
 description: >
-  Write and review Kubernetes manifests, Helm charts, Kustomize overlays, Gateway API routes, and ArgoCD apps. Use for YAML, values files, probes, resource limits, RBAC, network policies, ingress, and GitOps repos. For live cluster health checks, use kubernetes-health.
+  Kubernetes manifests, Helm, Kustomize, Gateway API, ArgoCD: probes, limits, RBAC, network policies, ingress, GitOps. Live health: kubernetes-health.
 license: MIT
 compatibility: "Requires kubectl. Optional: helm, kustomize, kube-score, checkov, cosign"
 metadata:

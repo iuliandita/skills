@@ -1,7 +1,7 @@
 ---
 name: debug-triage
 description: >
-  Localize a live outage or post-deploy breakage when the failing layer is unknown, debug a known component to root cause, or profile slow or memory-hungry code. Use for "it's down", 502s, timeouts, CrashLoopBackOff, a regression, or a latency or CPU spike.
+  Find the failing layer in an outage or post-deploy break, debug to root cause, profile slow code. Use for "it's down", 502s, timeouts, latency spikes.
 license: MIT
 compatibility: "Optional, stack-dependent: kubectl, dig, curl, openssl, ss, journalctl, pg_isready, jq"
 metadata:

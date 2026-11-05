@@ -1,7 +1,7 @@
 ---
 name: repo-audit
 description: >
-  Audit a whole repository or PR across bugs, security, code quality, and docs, in quick or exhaustive mode. Use for "audit this repo", a pre-merge or pre-release check, or a repo health review. For one concern, use code-review or security-audit.
+  Whole-repo or PR audit across bugs, security, code quality, and docs, quick or exhaustive. Use for "audit this repo" or a pre-release check.
 license: MIT
 compatibility: "Requires git and bash (exhaustive detector); worker dispatch is optional"
 metadata:

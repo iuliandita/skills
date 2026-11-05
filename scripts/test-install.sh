@@ -1843,6 +1843,17 @@ test_installer_lock_contention_and_missing_flock() {
     || fail "install without flock failed: $output"
   [[ "$(grep -c 'flock not found' <<< "$output")" == 1 ]] || fail "missing flock warning not printed once: $output"
   [[ -d "$tmp/third/docker" ]] || fail "install without flock did not proceed"
+
+  # A flock that rejects -w 0 like the BSD-style one on macOS (#439).
+  mkdir "$tmp/strict-flock"
+  # shellcheck disable=SC2016
+  printf '#!/bin/bash\n[[ "$1 $2" != "-w 0" ]] || { echo "flock: timeout must be greater than 0" >&2; exit 64; }\nexec %q "$@"\n' \
+    "$(command -v flock)" > "$tmp/strict-flock/flock"
+  chmod +x "$tmp/strict-flock/flock"
+  output="$(env -i HOME="$tmp" PATH="$tmp/strict-flock:$tmp/no-flock" LANG=C SKILLS_LOCK_WAIT=0 \
+    "$ROOT/install.sh" --tool portable --dest "$tmp/fourth" docker 2>&1)" \
+    || fail "zero lock wait failed with a flock that rejects -w 0: $output"
+  [[ -d "$tmp/fourth/docker" ]] || fail "zero lock wait did not install"
   rm -rf "$tmp"
   trap - RETURN
 }

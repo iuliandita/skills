@@ -5,6 +5,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [4.0.2] - 2026-11-05
+
+### Bug Fixes
+
+* **descriptions:** shorter skill descriptions bring the listing every session loads from ~9,900 to ~5,500 characters for the 38 default skills, back under Claude Code's listing budget; routing accuracy on a 172-prompt set is unchanged. The advisory description window is now 80-170 characters ([#427](https://github.com/iuliandita/skills/issues/427)).
+* **install:** a zero `SKILLS_LOCK_WAIT`, the `--update` default, takes the lock with `flock -n`, so `--update` runs with the BSD-style `flock` on macOS instead of exiting 3 as if another run held the lock ([#439](https://github.com/iuliandita/skills/issues/439)).
+
 ## [4.0.1] - 2026-11-05
 
 ### Bug Fixes
@@ -13,6 +20,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 * **install:** `--doctor` uses the same prune verdict as `--update`. Its `reason` for an unprunable installer-owned skill now names the cause (`pending recovery`, `not a link to the canonical skill`, `copy replaced by a symlink`, the `--force` remedy, and so on) instead of always saying `local changes or no verified v2 tree digest`. It also no longer calls a skill prunable when `--update` would refuse its destination for lacking a transaction root on the same filesystem ([#419](https://github.com/iuliandita/skills/issues/419)).
 * **install:** `--update` falls back to `gtimeout` when `timeout` is missing, so it runs on macOS with MacPorts or Homebrew coreutils instead of exiting 10 ([#426](https://github.com/iuliandita/skills/issues/426)).
 * **skills:** `privilege-escalation` and `vulnerability-research` mark `metadata.internal` with a YAML boolean, so `npx skills add` with `--all` or the interactive list leaves them out as `install.sh` does. The spec check allows that one boolean ([#431](https://github.com/iuliandita/skills/issues/431)).
+* **skills:** descriptions are about 45% shorter (the 38 default skills went from 9,872 to 5,540 characters), and the advisory window is now 80-170 characters instead of 150-300. Claude Code gives the whole skill listing about 1% of the context window and drops descriptions past it. On a harder 172-prompt routing set, Haiku picked the right skill 167 times with both the old and the new descriptions ([#427](https://github.com/iuliandita/skills/issues/427)).
 
 ## [4.0.0] - 2026-11-05
 
@@ -698,7 +706,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Bootstrap baseline before release-please automation.
 
-[Unreleased]: https://github.com/iuliandita/skills/compare/v4.0.1...HEAD
+[Unreleased]: https://github.com/iuliandita/skills/compare/v4.0.2...HEAD
+[4.0.2]: https://github.com/iuliandita/skills/compare/v4.0.1...v4.0.2
 [4.0.1]: https://github.com/iuliandita/skills/compare/v4.0.0...v4.0.1
 [4.0.0]: https://github.com/iuliandita/skills/compare/v3.1.0...v4.0.0
 [3.1.0]: https://github.com/iuliandita/skills/compare/v3.0.0...v3.1.0

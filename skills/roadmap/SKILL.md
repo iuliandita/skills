@@ -1,7 +1,7 @@
 ---
 name: roadmap
 description: >
-  Capture and prioritize feature ideas and competitor findings in a private ROADMAP.md backlog, and mark shipped items. Use for "add to roadmap", "what should I build next", or "what are competitors doing". Not for sprint planning or bug tracking.
+  Private ROADMAP.md backlog: capture and rank feature ideas and competitor findings, mark shipped items. Use for "add to roadmap" or "what next".
 license: MIT
 compatibility: "Requires git. Optional: gh (GitHub CLI) or glab (GitLab CLI) for PR tracking and competitive scanning"
 metadata:

@@ -1,7 +1,7 @@
 ---
 name: code-simplification
 description: >
-  Review code for dead code, duplication, overengineering, invented APIs, and weak tests, and report safe reductions without editing. Use for "simplify this", AI-slop cleanup, or checking that a refactor lost no behavior. Logic bugs go to code-review.
+  Find dead code, duplication, overengineering, invented APIs, weak tests; report safe reductions, no edits. Use for "simplify this" or a refactor that lost behavior.
 license: MIT
 compatibility: "Works on any codebase. Optional: git (diff scope), rg (no-reference searches), and the project's configured non-mutating linters"
 metadata:

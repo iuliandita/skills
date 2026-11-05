@@ -1,7 +1,7 @@
 ---
 name: update-docs
 description: >
-  Update README, changelogs, API docs, runbooks, and instruction files after code or infra changes, and fix documentation drift. Use for "update the docs", a post-merge or post-release doc sweep, or stale setup steps. Commit and PR text goes to git.
+  Update READMEs, changelogs, API docs, runbooks, and instruction files after changes; fix doc drift. Use for "update the docs" or a release sweep.
 license: MIT
 compatibility: "Requires git. Optional: python3 (link check), wc (size audits)"
 metadata:

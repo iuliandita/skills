@@ -385,7 +385,7 @@ branch tracks a remote, then schedule the update:
 ./install.sh --update
 ```
 
-`--update` takes no other options or skill names. It needs `git`, `flock`, GNU `timeout` (or
+`--update` takes no other options or skill names. It needs `git`, `flock` (util-linux, or the `flock` package on macOS), GNU `timeout` (or
 `gtimeout`, the name MacPorts and Homebrew coreutils use), and `python3`. Each run:
 
 1. Takes the installer lock without waiting, before it reads the saved config or touches
@@ -709,7 +709,7 @@ Each skill follows the [Agent Skills specification](https://agentskills.io/speci
 - **Compact body** - the core instructions loaded when the skill is activated. Prefer 150-250 lines where practical, 500 hard max. Kept lean so it doesn't eat the context window.
 - **Reference files** in `references/` - detailed pattern libraries, compliance checklists, manifest templates. The agent reads these on-demand when the task requires depth. Expert-level detail without paying the token cost upfront. Every reference is linked directly from `SKILL.md`, and files over 100 lines open with a contents list so a partial read still sees their scope. `scripts/gen-ref-toc.py` writes those lists; `scripts/lint-skills.sh` fails when one is missing or stale.
 - **Argument hints** (`metadata.argument_hint`) - tells agents what arguments a skill expects (e.g., `<file-or-pattern>`, `[iterations]`). Angle brackets for required, square brackets for optional.
-- **Precise trigger descriptions** - usually 150-300 characters, with the task and distinctive terms first. The warning outside that window is advisory; hosts can still shorten entries to fit a shared catalog budget.
+- **Precise trigger descriptions** - usually 80-170 characters, with the task and distinctive terms first. The warning outside that window is advisory; hosts can still shorten entries to fit a shared catalog budget.
 - **Cross-skill awareness** - skills know about each other. Routing hints (`Not for X (use Y)`) prevent collisions. The security-audit skill defers to privilege-escalation on offensive work; docker defers to kubernetes on cluster networking.
 
 ## Structure

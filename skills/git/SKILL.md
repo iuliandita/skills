@@ -1,7 +1,7 @@
 ---
 name: git
 description: >
-  Manage git commits, branches, merges, rebases, conflicts, history recovery, tags, releases, and PRs/MRs on GitHub, GitLab, Forgejo, and Gitea. Use for a messy rebase, reflog rescue, commit messages, branch protection, or cutting a release. Reviewing PR code goes to code-review.
+  Git commits, branches, rebases, conflicts, reflog recovery, tags, releases, PRs/MRs on GitHub, GitLab, Forgejo, Gitea. Not code review.
 license: MIT
 compatibility: "Requires git. Optional: gh (GitHub CLI), glab (GitLab CLI), fj (Forgejo CLI), git-filter-repo, git-cliff"
 metadata:
