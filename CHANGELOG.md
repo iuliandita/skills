@@ -5,6 +5,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Bug Fixes
+
+* **install:** a zero `SKILLS_LOCK_WAIT`, the `--update` default, takes the lock with `flock -n`, so `--update` runs with the BSD-style `flock` on macOS instead of exiting 3 as if another run held the lock ([#439](https://github.com/iuliandita/skills/issues/439)).
+
 ## [4.0.1] - 2026-11-05
 
 ### Bug Fixes

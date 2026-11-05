@@ -385,7 +385,7 @@ branch tracks a remote, then schedule the update:
 ./install.sh --update
 ```
 
-`--update` takes no other options or skill names. It needs `git`, `flock`, GNU `timeout` (or
+`--update` takes no other options or skill names. It needs `git`, `flock` (util-linux, or the `flock` package on macOS), GNU `timeout` (or
 `gtimeout`, the name MacPorts and Homebrew coreutils use), and `python3`. Each run:
 
 1. Takes the installer lock without waiting, before it reads the saved config or touches
