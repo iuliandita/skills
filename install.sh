@@ -3018,7 +3018,7 @@ declare -A UPD_DEST_FAILED=()
 SAVED_SELECTION=()
 REWRITTEN_SKILLS=""
 resolve_saved_selection() {
-  local skill old
+  local skill
   local -a listed=() rewritten=()
   local -A seen=()
   SAVED_SELECTION=()
@@ -3033,10 +3033,8 @@ resolve_saved_selection() {
     while [[ -n "${MIGRATION_ACTIONS[$skill]:-}" ]]; do
       [[ -z "${seen[$skill]:-}" ]] || { printf 'error: migration cycle at %s\n' "$skill" >&2; return 1; }
       seen[$skill]=true
-      old="$skill"
       skill="${MIGRATION_REPLACEMENTS[$skill]:-}"
       [[ -n "$skill" ]] || break
-      [[ "$old" != "$skill" ]] || { printf 'error: migration cycle at %s\n' "$skill" >&2; return 1; }
     done
     [[ -n "$skill" ]] || continue
     [[ " ${rewritten[*]} " == *" $skill "* ]] || rewritten+=("$skill")
