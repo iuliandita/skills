@@ -808,37 +808,30 @@ check_skill_inventory() {
   local file="$SKILLS_DIR/skill-creator/references/conventions.md"
   [[ -f "$file" ]] || return 0
 
-  local name declared="" count
-  local -a inv_listed=() inv_active=()
-  while IFS= read -r name; do
-    [[ -n "$name" ]] && inv_active+=("$name")
-  done < <(list_active_skills)
-
+  local name declared active listed count
+  active="$(list_active_skills)"
+  count=$(printf '%s\n' "$active" | grep -c . || true)
   declared="$(grep -oE '^### Active skills \([0-9]+\)' "$file" | grep -oE '[0-9]+' || true)"
   if [[ -z "$declared" ]]; then
     error "conventions.md has no '### Active skills (N)' inventory heading"
     return 0
   fi
-  while IFS= read -r name; do
-    [[ -n "$name" ]] && inv_listed+=("$name")
-  done < <(awk '
+  listed="$(awk '
     /^### Active skills \(/ {f = 1; next}
     f && /^#/ {exit}
     f && /^\| [a-z0-9-]+ \|/ && $2 != "Skill" {print $2}
-  ' "$file" | sort)
+  ' "$file" | sort)"
 
-  (( declared == ${#inv_active[@]} )) \
-    || error "conventions.md inventory says Active skills ($declared) but ${#inv_active[@]} are active"
-  count=$(printf '%s\n' "${inv_listed[@]}" | sort -u | grep -c . || true)
-  (( count == ${#inv_listed[@]} )) || error "conventions.md inventory lists a skill more than once"
-  for name in "${inv_active[@]}"; do
-    printf '%s\n' "${inv_listed[@]}" | grep -qxF -- "$name" \
-      || error "conventions.md inventory is missing active skill '$name'"
-  done
-  for name in "${inv_listed[@]}"; do
-    printf '%s\n' "${inv_active[@]}" | grep -qxF -- "$name" \
-      || error "conventions.md inventory lists '$name', which is not an active skill"
-  done
+  (( declared == count )) \
+    || error "conventions.md inventory says Active skills ($declared) but $count are active"
+  [[ -z "$(printf '%s\n' "$listed" | uniq -d)" ]] \
+    || error "conventions.md inventory lists a skill more than once"
+  while IFS= read -r name; do
+    [[ -z "$name" ]] || error "conventions.md inventory is missing active skill '$name'"
+  done < <(comm -23 <(printf '%s\n' "$active") <(printf '%s\n' "$listed" | uniq))
+  while IFS= read -r name; do
+    [[ -z "$name" ]] || error "conventions.md inventory lists '$name', which is not an active skill"
+  done < <(comm -13 <(printf '%s\n' "$active") <(printf '%s\n' "$listed" | uniq))
 }
 
 # Active skills must name current skills in bold, not retired old names.

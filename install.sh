@@ -794,8 +794,6 @@ if trees:
     payload["trees"] = trees
 if existing is not None and "opencode_permissions" in existing:
     payload["opencode_permissions"] = existing["opencode_permissions"]
-    if isinstance(existing["opencode_permissions"], list):
-        payload["opencode_config"] = existing.get("opencode_config")
 # Unique temp name: concurrent runs must not share one.
 fd, temp = tempfile.mkstemp(dir=lock_path.parent, prefix=f".{lock_path.name}.", suffix=".tmp")
 try:
@@ -1553,9 +1551,6 @@ lock_path = destination / ".skills-lock.json"
 
 def permission_records(lock):
     records = lock.get("opencode_permissions", {})
-    # Preserve provenance written by the first provenance-aware installer.
-    if isinstance(records, list):
-        records = {lock.get("opencode_config", ""): records}
     if not isinstance(records, dict) or any(
         not isinstance(path, str) or not isinstance(names, list) or any(
             not isinstance(name, str) or not re.fullmatch(r"[a-z0-9](?:[a-z0-9-]*[a-z0-9])?", name)
@@ -1695,7 +1690,6 @@ def write_provenance(names):
     if lock.get("opencode_permissions") == updated:
         return
     lock["opencode_permissions"] = updated
-    lock.pop("opencode_config", None)
     fd, temp = tempfile.mkstemp(dir=lock_path.parent, prefix=".permissions.", suffix=".tmp")
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as handle:
@@ -1910,7 +1904,7 @@ legacy_cleanup_hint() {
 
 # ── Doctor ────────────────────────────────────────────────────────────
 doctor_selection() {
-  local tool dest skill owned record actual classification reason item rows
+  local tool dest skill owned kind classification reason item rows
   local -a saved_tools=() roots=()
   local -A seen=()
   json_list outside_selection
@@ -1942,29 +1936,10 @@ doctor_selection() {
         local prunable=false
         if [[ $'\n'"$owned"$'\n' == *$'\n'"$skill"$'\n'* ]]; then
           classification=installer-owned
-          reason='local changes or no verified v2 tree digest'
-          record="$(lock_tree_records "$dest/.skills-lock.json" "$skill")" || record="none -"
-          if [[ -L "$dest/$skill" ]]; then
-            if [[ "$SAVED_LINK" == true && "$(readlink "$dest/$skill")" == "$CANONICAL_DIR/$skill" ]]; then
-              actual="$(tree_digests "$CANONICAL_DIR/$skill")" || actual="!"
-            else actual='!'; fi
-          else
-            actual="$(tree_digests "$dest/$skill")" || actual="!"
-          fi
-          if [[ "$record" == v2\ * && "$actual" == "${record#* }" ]]; then
-            prunable=true
-            reason='prunable by --update'
-            if txn_root "$dest" && [[ -e "$TXN_ROOT/$skill/record" ]]; then
-              prunable=false
-              reason='pending recovery'
-            elif paths_match "$dest" "$CANONICAL_DIR" && canonical_referenced "$skill"; then
-              prunable=false
-              reason='still referenced by a tool link'
-            elif [[ "$SAVED_LINK" == true ]] && ! paths_match "$dest" "$CANONICAL_DIR" && [[ ! -L "$dest/$skill" ]]; then
-              prunable=false
-              reason='not a link to the canonical skill'
-            fi
-          fi
+          kind=copy
+          if [[ "$SAVED_LINK" == true ]] && ! paths_match "$dest" "$CANONICAL_DIR"; then kind="link"; fi
+          if prune_verdict "$kind" "$dest" "$skill"; then prunable=true; fi
+          reason="$PRUNE_REASON"
         fi
         printf '  [i] outside saved selection: %s (%s; %s)\n' "$dest/$skill" "$classification" "$reason"
         json_q "$skill"; item="{\"name\":$REPLY"
@@ -1993,8 +1968,6 @@ for candidate in sorted(locks):
         if lock.get("version") != 1 or (candidate == lock_path and lock_source != source.resolve(strict=True)):
             raise ValueError("unverified lock source")
         records = lock.get("opencode_permissions", {})
-        if isinstance(records, list):
-            records = {lock.get("opencode_config", ""): records}
         owned.update(records.get(str(config.resolve()), []))
     except (OSError, ValueError, KeyError, TypeError, AttributeError) as error:
         remedy = (f"delete {candidate} if its checkout is retired, otherwise rerun install.sh --tool opencode "
@@ -3026,7 +2999,7 @@ declare -A UPD_DEST_FAILED=()
 SAVED_SELECTION=()
 REWRITTEN_SKILLS=""
 resolve_saved_selection() {
-  local skill old
+  local skill
   local -a listed=() rewritten=()
   local -A seen=()
   SAVED_SELECTION=()
@@ -3041,10 +3014,8 @@ resolve_saved_selection() {
     while [[ -n "${MIGRATION_ACTIONS[$skill]:-}" ]]; do
       [[ -z "${seen[$skill]:-}" ]] || { printf 'error: migration cycle at %s\n' "$skill" >&2; return 1; }
       seen[$skill]=true
-      old="$skill"
       skill="${MIGRATION_REPLACEMENTS[$skill]:-}"
       [[ -n "$skill" ]] || break
-      [[ "$old" != "$skill" ]] || { printf 'error: migration cycle at %s\n' "$skill" >&2; return 1; }
     done
     [[ -n "$skill" ]] || continue
     [[ " ${rewritten[*]} " == *" $skill "* ]] || rewritten+=("$skill")
@@ -3108,10 +3079,51 @@ finally:
 PY
 }
 
+# Verdict for an owned, unselected entry. Return 0 to prune, 1 to keep,
+# or 2 on inspection failure; both doctor and update use the same reason.
+PRUNE_REASON=""
+PRUNE_ADVISORY=false
+prune_verdict() {
+  local kind="$1" dest="$2" skill="$3" state digest actual hint
+  PRUNE_REASON=""
+  PRUNE_ADVISORY=false
+  state="$(lock_tree_records "$dest/.skills-lock.json" "$skill")" \
+    || { PRUNE_REASON='cannot read tree record'; return 2; }
+  digest="${state#* }"
+  # --update refuses a destination without a usable transaction root; doctor must agree.
+  if ! txn_root "$dest" >/dev/null; then
+    PRUNE_REASON='cannot prepare prune transaction root'
+    return 2
+  fi
+  if [[ -e "$TXN_ROOT/$skill/record" ]]; then
+    PRUNE_REASON='pending recovery'
+    PRUNE_ADVISORY=true
+  elif [[ "$state" != v2\ * ]]; then
+    hint="--tool ${SAVED_TOOLS:-<tools>}"
+    [[ "$SAVED_LINK" != true ]] || hint+=" --link"
+    PRUNE_REASON="no verified v2 tree digest; select this skill and run install.sh $hint --force $skill once to record it, then deselect it and rerun --update"
+    PRUNE_ADVISORY=true
+  elif [[ "$kind" == link ]] && { [[ ! -L "$dest/$skill" ]] || [[ "$(readlink "$dest/$skill")" != "$CANONICAL_DIR/$skill" ]]; }; then
+    PRUNE_REASON='not a link to the canonical skill'
+  elif [[ "$kind" == copy && -L "$dest/$skill" ]]; then
+    PRUNE_REASON='copy replaced by a symlink'
+  elif paths_match "$dest" "$CANONICAL_DIR" && canonical_referenced "$skill"; then
+    PRUNE_REASON='still referenced by a tool link'
+    PRUNE_ADVISORY=true
+  else
+    actual="$(tree_digests "$(if [[ "$kind" == link ]]; then printf '%s' "$CANONICAL_DIR/$skill"; else printf '%s' "$dest/$skill"; fi)")" \
+      || { PRUNE_REASON='cannot hash prune candidate'; return 2; }
+    if [[ "$actual" == "$digest" ]]; then
+      PRUNE_REASON='prunable by --update'
+      return 0
+    fi
+    PRUNE_REASON='local changes'
+  fi
+  return 1
+}
+
 prune_updated_dest() {
-  local kind="$1" dest="$2" skill names state digest actual backup advisory hint
-  hint="--tool ${SAVED_TOOLS:-<tools>}"
-  [[ "$SAVED_LINK" != true ]] || hint+=" --link"
+  local kind="$1" dest="$2" skill names backup rc
   names="$(owned_lock_names "$dest")" || { update_failed "$dest" 'cannot read prune ownership'; return; }
   [[ -n "$names" ]] || return 0
   backup="$(backup_base_for "$dest")/.pruned"
@@ -3127,46 +3139,30 @@ sys.exit(root == backup or root in backup.parents)' "$dest" "$backup"; then
       forget_lock_skills "$dest" "$skill" || update_failed "$skill" 'cannot remove stale lock record'
       continue
     fi
-    advisory=false
-    state="$(lock_tree_records "$dest/.skills-lock.json" "$skill")" || { update_failed "$skill" 'cannot read tree record'; continue; }
-    digest="${state#* }"
-    if [[ -e "$TXN_ROOT/$skill/record" ]]; then
-      state='pending recovery'
-      advisory=true
-    elif [[ "$state" != v2\ * ]]; then
-      state="no verified v2 tree digest; select this skill and run install.sh $hint --force $skill once to record it, then deselect it and rerun --update"
-      advisory=true
-    elif [[ "$kind" == link ]] && { [[ ! -L "$dest/$skill" ]] || [[ "$(readlink "$dest/$skill")" != "$CANONICAL_DIR/$skill" ]]; }; then
-      state='not a link to the canonical skill'
-    elif [[ "$kind" == copy && -L "$dest/$skill" ]]; then
-      state='copy replaced by a symlink'
-    elif paths_match "$dest" "$CANONICAL_DIR" && canonical_referenced "$skill"; then
-      state='still referenced by a tool link'
-      advisory=true
-    else
-      actual="$(tree_digests "$(if [[ "$kind" == link ]]; then printf '%s' "$CANONICAL_DIR/$skill"; else printf '%s' "$dest/$skill"; fi)")" \
-        || { update_failed "$skill" 'cannot hash prune candidate'; continue; }
-      if [[ "$actual" == "$digest" ]]; then
-        if ! backup_skill "$skill" "$dest" prune; then update_failed "$skill" 'prune backup failed; kept installed copy'; continue; fi
-        if [[ -L "$dest/$skill" ]]; then
-          rm -- "$dest/$skill" || { update_failed "$skill" 'cannot unlink prune candidate'; continue; }
-        else
-          rm -rf -- "${dest:?}/${skill:?}" || { update_failed "$skill" 'cannot remove prune candidate'; continue; }
-        fi
-        forget_lock_skills "$dest" "$skill" || { update_failed "$skill" 'cannot remove pruned lock entry'; continue; }
-        printf '  [-] %s pruned from %s (backed up)\n' "$skill" "$dest"
-        json_q "$skill"; local item="{\"name\":$REPLY"
-        json_q "$dest/$skill"; json_push pruned "$item,\"path\":$REPLY}"
-        (( UPD_CHANGED++ )) || true
-        continue
+    rc=0
+    prune_verdict "$kind" "$dest" "$skill" || rc=$?
+    if (( rc == 2 )); then
+      update_failed "$skill" "$PRUNE_REASON"
+      continue
+    elif (( rc == 0 )); then
+      if ! backup_skill "$skill" "$dest" prune; then update_failed "$skill" 'prune backup failed; kept installed copy'; continue; fi
+      if [[ -L "$dest/$skill" ]]; then
+        rm -- "$dest/$skill" || { update_failed "$skill" 'cannot unlink prune candidate'; continue; }
+      else
+        rm -rf -- "${dest:?}/${skill:?}" || { update_failed "$skill" 'cannot remove prune candidate'; continue; }
       fi
-      state='local changes'
+      forget_lock_skills "$dest" "$skill" || { update_failed "$skill" 'cannot remove pruned lock entry'; continue; }
+      printf '  [-] %s pruned from %s (backed up)\n' "$skill" "$dest"
+      json_q "$skill"; local item="{\"name\":$REPLY"
+      json_q "$dest/$skill"; json_push pruned "$item,\"path\":$REPLY}"
+      (( UPD_CHANGED++ )) || true
+      continue
     fi
-    printf 'warning: kept unselected %s: %s\n' "$dest/$skill" "$state" >&2
+    printf 'warning: kept unselected %s: %s\n' "$dest/$skill" "$PRUNE_REASON" >&2
     json_q "$skill"; local kept="{\"name\":$REPLY"
     json_q "$dest/$skill"; kept+=",\"path\":$REPLY"
-    json_q "$state"; json_push prune_kept "$kept,\"reason\":$REPLY}"
-    if [[ "$advisory" != true ]]; then
+    json_q "$PRUNE_REASON"; json_push prune_kept "$kept,\"reason\":$REPLY}"
+    if [[ "$PRUNE_ADVISORY" != true ]]; then
       (( UPD_SKIPPED++ )) || true
     fi
   done <<< "$names"
