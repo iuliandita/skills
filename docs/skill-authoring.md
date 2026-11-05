@@ -10,7 +10,7 @@ activation hints and may also appear in skill listings.
 The first paragraph after the `# Title: Subtitle` H1 must:
 
 - be a single paragraph, 110-350 characters (the frontmatter `description`
-  has its own 150-300 window, below)
+  has its own 80-170 window, below)
 - not start with a bold block (`**...**`) - version tables, warnings, and
   other bold-led content go below it, never above it
 - not contain a version number (`\d+\.\d+\.\d+`)
@@ -69,15 +69,16 @@ something to default into.
 
 The YAML `description` field supplies agent routing hints, governed by the
 task-first description rule in `scripts/lint-skills.sh`. Its window differs from
-the first paragraph's: a single paragraph of 150-300 characters, made of one
-capability clause and one "Use for ..." or "Use when ..." clause in the words a
-user would actually type. Name the nearest neighbor in a short exclusion when
-the two are easy to confuse. `scripts/validate-spec.sh` warns outside 150-300
-and fails only above the 1024-character spec limit.
+the first paragraph's: a single paragraph of 80-170 characters that leads with
+the task and domain, then the requests or symptoms a user would actually type.
+Terse term lists are fine; every description loads in every session. Name the
+nearest neighbor in a short exclusion when the two are easy to confuse.
+`scripts/validate-spec.sh` warns outside 80-170 and fails only above the
+1024-character spec limit.
 
 ```yaml
 description: >
-  Build, debug, and harden Dockerfiles, Compose stacks, and Podman/BuildKit images. Use for build failures, Compose networking or volumes, image size, multi-arch publishing, signing, SBOMs, or container security. Not Kubernetes or CI pipelines.
+  Dockerfiles, Compose, Podman, BuildKit: build failures, networking, volumes, image size, multi-arch, signing, SBOMs, hardening. Not Kubernetes.
 ```
 
 Keep trigger descriptions and human-facing summaries consistent, but edit each

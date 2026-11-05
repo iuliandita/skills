@@ -1,7 +1,7 @@
 ---
 name: networking
 description: >
-  Configure and debug Linux networking: DNS, reverse proxies, load balancers, WireGuard and other VPNs, VLANs, nftables, routing, and TLS. Use for name resolution failures, proxy config, tunnels that won't connect, MTU issues, or packet captures. Firewall appliances go to opnsense-pfsense.
+  Linux networking: DNS, reverse proxies, load balancers, WireGuard/VPNs, VLANs, nftables, routing, TLS, MTU, packet captures. Not firewall appliances.
 license: MIT
 compatibility: "Requires Linux. Tools vary by task: nftables, WireGuard, dig, mtr, tcpdump"
 metadata:

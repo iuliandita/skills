@@ -1,7 +1,7 @@
 ---
 name: skill-refiner
 description: >
-  Improve skills through repeated scoring, behavioral tests, and cross-model peer review until a quality target is met. Use when asked for skill-refiner, several iterations, a score target, or a pre-release polish sweep of a collection. Single-pass reviews go to skill-creator.
+  Improve skills over several rounds of scoring, behavioral tests, and cross-model review until a target score. Use for a pre-release polish sweep.
 license: MIT
 compatibility: "Requires: skill-creator skill, git. Optional: secondary AI harness (claude, codex, agy, opencode, cmd, omp, hermes) for cross-model review"
 metadata:

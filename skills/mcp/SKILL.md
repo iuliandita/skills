@@ -1,7 +1,7 @@
 ---
 name: mcp
 description: >
-  Build and debug Model Context Protocol (MCP) servers and clients: tools, resources, prompts, stdio or streamable HTTP transport, and OAuth. Use for writing an MCP server, adding a tool handler, fixing client connection failures, or reviewing a server for tool poisoning.
+  Model Context Protocol servers and clients: tools, resources, prompts, stdio/HTTP transport, OAuth, tool poisoning. Use for writing a server or fixing a client.
 license: MIT
 compatibility: "Requires Node.js or Python runtime; uv for the Python dev inspector"
 metadata:

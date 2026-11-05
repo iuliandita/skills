@@ -1,7 +1,7 @@
 ---
 name: skill-creator
 description: >
-  Create or review agent skills: SKILL.md structure, frontmatter, references, trigger descriptions, and overlaps across a collection. Use for "make a skill for X", a skill that never triggers, or a collection consistency audit. Scored, iterative refinement goes to skill-refiner.
+  Create or review agent skills: SKILL.md, frontmatter, references, trigger descriptions, overlaps. Use for "make a skill" or a skill that never triggers.
 license: MIT
 compatibility: "Optional: git (for freshness and gitignore filtering)"
 metadata:
@@ -50,7 +50,7 @@ Before returning any generated or modified skill, verify against this list:
 - [ ] **Name spec-valid**: lowercase alphanumeric + hyphens only, no leading/trailing/consecutive
   hyphens, matches directory name. Reserved words (`anthropic`, `claude`) are an Anthropic platform restriction, not part of the portable spec - avoid them for compatibility
 - [ ] **No XML tags** in `name` or `description` fields (Anthropic platform restriction)
-- [ ] **Description is trigger-optimized**: one paragraph of 150-300 characters: a capability clause that front-loads the task, then a "Use for/when" clause in words a user would type, naming a likely neighbor when the two are easy to confuse (advisory warning outside 150-300; 1024-character spec ceiling in `validate-spec.sh`)
+- [ ] **Description is trigger-optimized**: one paragraph of 80-170 characters: a capability clause that front-loads the task, then a "Use for/when" clause in words a user would type, naming a likely neighbor when the two are easy to confuse (advisory warning outside 80-170; 1024-character spec ceiling in `validate-spec.sh`)
 - [ ] **Compatibility field present** (when skill requires specific tools/platforms): quotes values containing colons
 - [ ] **Scope sections present**: "When to use" with concrete scenarios, "When NOT to use"
   cross-referencing related skills by **bold** name (e.g., `use **skill-name**`)
@@ -394,10 +394,10 @@ description differentiates clearly. For standalone skills, skip this step.
 - **Lead with the task and domain** so the opening still routes usefully if the host shortens it.
 - **Use distinctive terms once** in natural prose: artifact names, domain aliases, and user intent.
 - **Disambiguate likely neighbors** with a specific task or short exclusion where it earns space.
-- **Write one paragraph of 150-300 characters in two clauses**: the capability, then "Use for ..." or "Use when ..." with the requests, symptoms, and error text a user would actually type.
+- **Write one paragraph of 80-170 characters**: the capability, then the requests, symptoms, and error text a user would actually type. Terse term lists are fine; do not restate the body.
 - **Test natural requests and near misses**; avoid generic "cleanup" or "start working" triggers.
 
-The validator warns outside 150-300 characters and rejects above the 1024-character spec ceiling.
+The validator warns outside 80-170 characters and rejects above the 1024-character spec ceiling.
 Hosts may shorten or omit entries to fit a shared catalog budget even below that ceiling.
 
 #### Step 4: Validate

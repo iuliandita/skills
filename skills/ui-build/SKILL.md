@@ -1,7 +1,7 @@
 ---
 name: ui-build
 description: >
-  Build and refine frontend interfaces: accessible components, responsive layouts, CSS, Tailwind, themes, and interaction states. Use for implementing a page, dashboard, form, or dark mode; defer art direction and design critique to impeccable or design-taste-frontend when installed.
+  Frontend UI: accessible components, responsive layouts, CSS, Tailwind, themes, interaction states. Use for building a page, dashboard, form, or dark mode.
 license: MIT
 compatibility: "Works on any frontend stack. Optional: a browser or screenshot tool for rendered inspection"
 metadata:

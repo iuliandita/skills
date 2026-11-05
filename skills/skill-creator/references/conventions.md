@@ -42,7 +42,7 @@ gotcha with that specific Helm chart version, the compliance requirement that is
 
 | Component | Budget | Why |
 |-----------|--------|-----|
-| Frontmatter (`name` + `description`) | description 150-300 characters | catalog entries share the host's context budget |
+| Frontmatter (`name` + `description`) | description 80-170 characters | catalog entries share the host's context budget |
 | SKILL.md body | 150-250 lines preferred, 500 hard max, <5k tokens recommended | loaded when the skill activates |
 | Reference files | unlimited per file, but keep individual files focused | loaded on demand |
 
@@ -99,7 +99,7 @@ succeeded" invites the agent to invent checks with wrong paths and service names
 ```yaml
 ---
 name: skill-name              # lowercase a-z, 0-9, hyphens; no leading/trailing/consecutive hyphens; max 64 chars; must match directory name. (anthropic, claude) are Anthropic platform-reserved, not barred by the portable spec - avoid for compatibility
-description: >                # 150-300 chars: capability clause + "Use for/when" clause; advisory warning outside
+description: >                # 80-170 chars: capability clause + "Use for/when" clause; advisory warning outside
   Write and debug Bash, Zsh, POSIX sh, and Fish scripts, one-liners, functions, dotfiles, and shell completions. Use for quoting, globbing, or expansion bugs, porting a script between shells, shellcheck warnings, or .zshrc and .bashrc setup.
 license: MIT                  # Agent Skills spec field
 metadata:
@@ -154,7 +154,7 @@ user confirmation in steps that could run unattended.
 | Field | Values | Purpose |
 |-------|--------|---------|
 | `name` | `a-z`, `0-9`, hyphens; no leading/trailing/consecutive hyphens; max 64 chars. `anthropic`/`claude` are Anthropic platform-reserved, not barred by the portable spec - avoid them | identifier, must match directory name |
-| `description` | one paragraph, 150-300 chars, warn outside that window, 1024 spec max, no XML tags | primary trigger mechanism - the agent scans this |
+| `description` | one paragraph, 80-170 chars, warn outside that window, 1024 spec max, no XML tags | primary trigger mechanism - the agent scans this |
 | `license` | license name (e.g., `MIT`) | Agent Skills spec field |
 | `compatibility` | free text, <500 chars | environment requirements (optional) |
 | `metadata.source` | `owner/repo` or `custom` | identifies the publishing collection or an unpublished local skill |
@@ -615,18 +615,20 @@ reasoning models. A skill's effect depends on the model reading it.
 
 ## 8. Trigger Description Patterns
 
-Write one paragraph of 150-300 characters: one capability clause that puts the task and
-distinguishing domain first, then one "Use for ..." or "Use when ..." clause made of the words a
-user would actually type (requests, symptoms, error text). Use each term once in natural prose;
-repeated keyword lists spend catalog space without adding scope. The first clause should still
-choose the skill when a host shortens the description.
+Write one paragraph of 80-170 characters: the task and distinguishing domain first, then the
+requests, symptoms, or error text a user would actually type, then a short exclusion only where a
+neighbor is easy to confuse. A terse list of distinctive terms beats full sentences; do not
+restate the body, which the agent reads once the skill is chosen. Every entry shares the host's
+catalog budget (Claude Code: about 1% of the context window, dropping whole descriptions when
+over), so length costs every session. The opening should still choose the skill when a host
+shortens the description.
 
 ```text
-Review code and diffs for correctness: bugs, regressions, edge cases, races, and resource leaks. Use for "review this diff", "check my PR for bugs", or a pre-merge sanity check. Vulnerabilities go to security-audit; a whole-repo audit goes to repo-audit.
-Write or improve one-off LLM prompts, system prompts, and reusable prompt templates from rough notes. Use for "write me a prompt for...", "turn this into a prompt", or a prompt that underperforms. Skill files go to skill-creator, SDK code to llm-app-development.
+Review code and diffs for bugs, regressions, edge cases, races, and leaks. Use for "review this diff" or a pre-merge check. Not security.
+Dockerfiles, Compose, Podman, BuildKit: build failures, networking, volumes, image size, multi-arch, signing, SBOMs, hardening. Not Kubernetes.
 ```
 
-`validate-spec.sh` warns outside 150-300; the warning is advisory. The 1024-character spec
+`validate-spec.sh` warns outside 80-170; the warning is advisory. The 1024-character spec
 ceiling is a validation limit, not a guarantee that a host will display or load the whole
 description. Hosts may shorten descriptions or omit entries to fit the combined catalog budget.
 
@@ -648,45 +650,45 @@ brevity; routing trials provide evidence about selection quality.
 
 | Skill | Effort | Date Added | Scope |
 |---|---|---|---|
-| ansible | high | 2026-03-24 | Write, review, and debug Ansible playbooks, roles, inventories, Vault secrets, Molecule tests, and AWX/AAP. Use for configuring servers after provisioning, OS hardening, idempotency bugs, or ansible-lint failures. Single-host admin goes to the distro skill. |
-| anti-ai-prose | medium | 2026-04-09 | Edit prose that sounds AI-written: strip filler, hedging, and canned phrasing from docs, READMEs, emails, PR bodies, and replies. Use when text "sounds like ChatGPT" or needs a de-slop pass; writing in one person's own voice belongs to a personal-voice skill. |
-| arch-linux | high | 2026-03-26 | Administer Arch Linux, CachyOS, EndeavourOS, and Manjaro: pacman, paru/AUR, keyrings, rolling upgrades, boot, GPU, and desktop issues. Use for a broken update, .pacnew merges, initramfs or bootloader failures, NVIDIA, Hyprland, or Steam problems on an Arch-family host. |
-| backend-api | high | 2026-04-06 | Design and review REST/HTTP APIs, with bounded GraphQL, gRPC, and message-broker contract guidance. Use for OpenAPI specs, status codes, error formats, pagination, versioning, auth flows, idempotent retries, or queue delivery semantics such as acks, dead letters, and replay. |
-| ci-cd | high | 2026-03-24 | Build, review, and debug CI/CD pipelines and runners: GitHub Actions, GitLab CI, Forgejo/Gitea Actions, and Woodpecker. Use for a failing or flaky job, caching, SHA pinning, runner setup, security scanning in CI, or migrating a pipeline between platforms. |
-| code-review | high | 2026-03-25 | Review code and diffs for correctness: bugs, regressions, edge cases, races, and resource leaks. Use for "review this diff", "check my PR for bugs", or a pre-merge sanity check. Vulnerabilities go to security-audit; a whole-repo audit goes to repo-audit. |
-| code-simplification | medium | 2026-09-20 | Review code for dead code, duplication, overengineering, invented APIs, and weak tests, and report safe reductions without editing. Use for "simplify this", AI-slop cleanup, or checking that a refactor lost no behavior. Logic bugs go to code-review. |
-| databases | high | 2026-03-24 | Design, tune, migrate, back up, and administer PostgreSQL, MySQL/MariaDB, MongoDB, MSSQL, Redis, and Valkey. Use for slow queries, EXPLAIN, indexes, schema changes, replication, pg_dump/PITR, connection pooling, or engine version upgrades. |
-| debian-ubuntu | high | 2026-04-22 | Administer Debian, Ubuntu, Mint, Pop!_OS, and Kali: apt/dpkg errors, release upgrades, PPAs, kernels, drivers, systemd, and unattended-upgrades. Use for any Debian-family host problem, server or desktop, such as a broken upgrade or a held package. |
-| debug-triage | high | 2026-06-14 | Localize a live outage or post-deploy breakage when the failing layer is unknown, debug a known component to root cause, or profile slow or memory-hungry code. Use for "it's down", 502s, timeouts, CrashLoopBackOff, a regression, or a latency or CPU spike. |
-| dev-cycle | high | 2026-04-14 | Run a full development workflow end to end: branch, implement, check, review, PR, merge, and release. Use when the user kicks off or wraps up a feature ("let's add X", "ship this", "ready to merge"). Single git operations go to git. |
-| docker | high | 2026-03-24 | Build, debug, and harden Dockerfiles, Compose stacks, and Podman/BuildKit images. Use for build failures, Compose networking or volumes, image size, multi-arch publishing, signing, SBOMs, or container security. Not Kubernetes or CI pipelines. |
-| ui-build | high | 2026-04-26 | Build and refine frontend interfaces: accessible components, responsive layouts, CSS, Tailwind, themes, and interaction states. Use for implementing a page, dashboard, form, or dark mode; defer art direction and design critique to impeccable or design-taste-frontend when installed. |
-| git | high | 2026-03-24 | Manage git commits, branches, merges, rebases, conflicts, history recovery, tags, releases, and PRs/MRs on GitHub, GitLab, Forgejo, and Gitea. Use for a messy rebase, reflog rescue, commit messages, branch protection, or cutting a release. Reviewing PR code goes to code-review. |
-| i18n-localization | high | 2026-04-12 | Internationalize apps: extract hardcoded UI strings, set up locale catalogs, validate placeholders, and audit missing keys and translation quality. Use for i18n, "add Spanish to the app", or catalog completeness; not for translating standalone documents. |
-| kubernetes | high | 2026-03-24 | Write and review Kubernetes manifests, Helm charts, Kustomize overlays, Gateway API routes, and ArgoCD apps. Use for YAML, values files, probes, resource limits, RBAC, network policies, ingress, and GitOps repos. For live cluster health checks, use kubernetes-health. |
-| kubernetes-health | high | 2026-03-30 | Check live Kubernetes cluster health with read-only kubectl diagnostics across nodes, pods, events, storage, networking, and GitOps sync. Use for "is the cluster healthy", post-upgrade or post-reboot checks, or a status report. Manifest authoring goes to kubernetes. |
-| llm-app-development | high | 2026-04-02 | Build LLM applications: API integration, RAG, embeddings, vector stores, agents and tool calling, structured outputs, evals, fine-tuning, and local inference with Ollama or vLLM. Use when adding an AI feature to an app; single prompts go to prompt-generator, MCP servers to mcp. |
-| mcp | high | 2026-03-30 | Build and debug Model Context Protocol (MCP) servers and clients: tools, resources, prompts, stdio or streamable HTTP transport, and OAuth. Use for writing an MCP server, adding a tool handler, fixing client connection failures, or reviewing a server for tool poisoning. |
-| networking | high | 2026-03-25 | Configure and debug Linux networking: DNS, reverse proxies, load balancers, WireGuard and other VPNs, VLANs, nftables, routing, and TLS. Use for name resolution failures, proxy config, tunnels that won't connect, MTU issues, or packet captures. Firewall appliances go to opnsense-pfsense. |
-| nixos | high | 2026-04-23 | Administer NixOS and Nix: configuration.nix, flakes, nixos-rebuild, Home Manager, nix-darwin, overlays, dev shells, and secrets with sops-nix or agenix. Use for a failing rebuild, flake inputs, rolling back a generation, or customizing packages with overrides. |
-| observability | high | 2026-06-14 | Instrument, audit, and debug telemetry: metrics, traces, logs, alert rules, SLOs, and dashboards with Prometheus, OpenTelemetry, and Grafana. Use for adding instrumentation, noisy or missing alerts, cardinality, or collector pipelines. Live incidents go to debug-triage. |
-| opnsense-pfsense | high | 2026-03-30 | Administer OPNsense and pfSense firewalls over SSH: pf rules, NAT, VLANs, Unbound, WireGuard, CARP failover, and upgrades. Use for appliance rule changes, inter-VLAN traffic through the firewall, or safe remote changes. Plain Linux hosts go to networking. |
-| plan-review | high | 2026-09-20 | Pressure-test a plan or decision before building it: clarify requirements, challenge assumptions, and rank risks. Use for "review my plan", "is this a good idea", or architecture, pricing, roadmap, or infra choices; prefer it over brainstorming once a draft exists. |
+| ansible | high | 2026-03-24 | Ansible playbooks, roles, inventories, Vault, Molecule, AWX/AAP. Use for server config after provisioning, OS hardening, idempotency bugs, ansible-lint. |
+| anti-ai-prose | medium | 2026-04-09 | Strip AI-sounding filler, hedging, and canned phrasing from docs, READMEs, emails, and PR bodies. Use when text sounds like ChatGPT. |
+| arch-linux | high | 2026-03-26 | Arch, CachyOS, EndeavourOS, Manjaro admin: pacman, paru/AUR, keyrings, broken upgrades, .pacnew, boot, NVIDIA, Hyprland. |
+| backend-api | high | 2026-04-06 | REST/HTTP API design and review, plus GraphQL, gRPC, and broker contracts: OpenAPI, errors, pagination, versioning, auth, retries, acks, DLQs. |
+| ci-cd | high | 2026-03-24 | CI/CD pipelines and runners: GitHub Actions, GitLab CI, Forgejo/Gitea Actions, Woodpecker. Use for failing or flaky jobs, caching, SHA pinning. |
+| code-review | high | 2026-03-25 | Review code and diffs for bugs, regressions, edge cases, races, and leaks. Use for "review this diff" or a pre-merge check. Not security. |
+| code-simplification | medium | 2026-09-20 | Find dead code, duplication, overengineering, invented APIs, weak tests; report safe reductions, no edits. Use for "simplify this" or a refactor that lost behavior. |
+| databases | high | 2026-03-24 | PostgreSQL, MySQL/MariaDB, MongoDB, MSSQL, Redis, Valkey: schemas, slow queries, EXPLAIN, indexes, migrations, replication, backups, upgrades. |
+| debian-ubuntu | high | 2026-04-22 | Debian, Ubuntu, Mint, Pop!_OS, Kali admin: apt/dpkg errors, held packages, release upgrades, PPAs, kernels, drivers, systemd. |
+| debug-triage | high | 2026-06-14 | Find the failing layer in an outage or post-deploy break, debug to root cause, profile slow code. Use for "it's down", 502s, timeouts, latency spikes. |
+| dev-cycle | high | 2026-04-14 | Full feature workflow: branch, implement, check, review, PR, merge, release. Use for "let's add X" or "ship this". Single git steps go to git. |
+| docker | high | 2026-03-24 | Dockerfiles, Compose, Podman, BuildKit: build failures, networking, volumes, image size, multi-arch, signing, SBOMs, hardening. Not Kubernetes. |
+| ui-build | high | 2026-04-26 | Frontend UI: accessible components, responsive layouts, CSS, Tailwind, themes, interaction states. Use for building a page, dashboard, form, or dark mode. |
+| git | high | 2026-03-24 | Git commits, branches, rebases, conflicts, reflog recovery, tags, releases, PRs/MRs on GitHub, GitLab, Forgejo, Gitea. Not code review. |
+| i18n-localization | high | 2026-04-12 | App i18n: extract UI strings, locale catalogs, placeholders, missing keys, translation quality. Use for "add Spanish to the app". Not document translation. |
+| kubernetes | high | 2026-03-24 | Kubernetes manifests, Helm, Kustomize, Gateway API, ArgoCD: probes, limits, RBAC, network policies, ingress, GitOps. Live health: kubernetes-health. |
+| kubernetes-health | high | 2026-03-30 | Read-only live cluster health check: nodes, pods, events, storage, networking, GitOps sync. Use for "is the cluster healthy" or post-upgrade checks. |
+| llm-app-development | high | 2026-04-02 | LLM apps: API calls, RAG, embeddings, vector stores, agents, tool calling, structured output, evals, fine-tuning, Ollama/vLLM. Use when adding AI features. |
+| mcp | high | 2026-03-30 | Model Context Protocol servers and clients: tools, resources, prompts, stdio/HTTP transport, OAuth, tool poisoning. Use for writing a server or fixing a client. |
+| networking | high | 2026-03-25 | Linux networking: DNS, reverse proxies, load balancers, WireGuard/VPNs, VLANs, nftables, routing, TLS, MTU, packet captures. Not firewall appliances. |
+| nixos | high | 2026-04-23 | NixOS and Nix: configuration.nix, flakes, nixos-rebuild, Home Manager, nix-darwin, overlays, dev shells, sops-nix. Use for failing rebuilds, rollbacks. |
+| observability | high | 2026-06-14 | Metrics, traces, logs, alerts, SLOs, dashboards: Prometheus, OpenTelemetry, Grafana. Use for instrumentation, noisy alerts, cardinality. Not live incidents. |
+| opnsense-pfsense | high | 2026-03-30 | OPNsense and pfSense firewalls over SSH: pf rules, NAT, VLANs, Unbound, WireGuard, CARP failover, upgrades. Not plain Linux hosts. |
+| plan-review | high | 2026-09-20 | Pressure-test a plan or decision before building: requirements, assumptions, risks. Use for "review my plan", "is this a good idea", architecture choices. |
 | privilege-escalation | high | 2026-03-25 | Assess authorized Linux privilege escalation, container escapes, and post-exploitation paths in pentests and CTFs. |
-| prompt-generator | medium | 2026-03-25 | Write or improve one-off LLM prompts, system prompts, and reusable prompt templates from rough notes. Use for "write me a prompt for...", "turn this into a prompt", or a prompt that underperforms. Skill files go to skill-creator, SDK code to llm-app-development. |
-| repo-audit | high | 2026-09-20 | Audit a whole repository or PR across bugs, security, code quality, and docs, in quick or exhaustive mode. Use for "audit this repo", a pre-merge or pre-release check, or a repo health review. For one concern, use code-review or security-audit. |
-| rhel-fedora | high | 2026-04-22 | Administer Fedora, RHEL, Rocky, AlmaLinux, CentOS Stream, and Amazon Linux: dnf/rpm, repos, EPEL, SELinux, firewalld, boot, and desktop issues. Use for AVC denials, dnf system-upgrade, subscription problems, dracut or GRUB recovery, or NVIDIA akmods. |
-| roadmap | medium | 2026-04-05 | Capture and prioritize feature ideas and competitor findings in a private ROADMAP.md backlog, and mark shipped items. Use for "add to roadmap", "what should I build next", or "what are competitors doing". Not for sprint planning or bug tracking. |
-| security-audit | high | 2026-03-25 | Audit code for vulnerabilities: auth flaws, injection, exposed secrets, OWASP risks, and dependency or supply-chain threats. Use for a security review, secret scan, dependency audit, or pre-release security gate. Plain logic bugs go to code-review; a multi-lens repo audit to repo-audit. |
-| session-handoff | medium | 2026-06-13 | Write an agent session handoff with current state, decisions, unfinished work, verification, and next steps. Use for "hand this off", "write a handoff", "continue in a fresh session", or a context window that is running out. Durable docs go to update-docs. |
-| shell-scripting | medium | 2026-03-25 | Write and debug Bash, Zsh, POSIX sh, and Fish scripts, one-liners, functions, dotfiles, and shell completions. Use for quoting, globbing, or expansion bugs, porting a script between shells, shellcheck warnings, or .zshrc and .bashrc setup. |
-| skill-creator | high | 2026-03-25 | Create or review agent skills: SKILL.md structure, frontmatter, references, trigger descriptions, and overlaps across a collection. Use for "make a skill for X", a skill that never triggers, or a collection consistency audit. Scored, iterative refinement goes to skill-refiner. |
-| skill-refiner | high | 2026-03-31 | Improve skills through repeated scoring, behavioral tests, and cross-model peer review until a quality target is met. Use when asked for skill-refiner, several iterations, a score target, or a pre-release polish sweep of a collection. Single-pass reviews go to skill-creator. |
-| synology-dsm | high | 2026-07-27 | Administer a Synology DSM NAS over SSH: shares, packages, users, storage pools, RAID, crashed or read-only volumes, and btrfs recovery. Use for "Volume Crashed", a disk replacement, DSM hardening, or Container Manager paths. Generic Linux goes to the distro skill. |
-| terraform | high | 2026-03-24 | Write and review Terraform and OpenTofu: HCL, modules, providers, state, imports, backends, and policy checks. Use for a plan that replaces resources, state moves, drift, provider upgrades, or module design. Kubernetes manifests go to kubernetes, Proxmox specifics to virtualization. |
-| testing | high | 2026-04-02 | Write and debug unit, integration, E2E, load, and accessibility tests: pytest, vitest/jest, Playwright, fixtures, mocks, coverage, and flaky or failing suites. Use when adding tests, fixing a red run, or deciding what to test. |
-| update-docs | medium | 2026-03-25 | Update README, changelogs, API docs, runbooks, and instruction files after code or infra changes, and fix documentation drift. Use for "update the docs", a post-merge or post-release doc sweep, or stale setup steps. Commit and PR text goes to git. |
-| virtualization | high | 2026-04-02 | Manage VMs and hypervisors: Proxmox, QEMU/KVM, libvirt, XCP-ng, and VMware/ESXi, with templates, storage, clustering, backups, and GPU passthrough. Use for creating VMs, cloud-init templates, slow disk I/O, live migration, or a passthrough that fails. |
+| prompt-generator | medium | 2026-03-25 | Write or improve LLM prompts, system prompts, and prompt templates from rough notes. Use for "write me a prompt". Not skill files or SDK code. |
+| repo-audit | high | 2026-09-20 | Whole-repo or PR audit across bugs, security, code quality, and docs, quick or exhaustive. Use for "audit this repo" or a pre-release check. |
+| rhel-fedora | high | 2026-04-22 | Fedora, RHEL, Rocky, AlmaLinux, CentOS Stream, Amazon Linux: dnf/rpm, EPEL, SELinux AVC denials, firewalld, system-upgrade, dracut, GRUB, akmods. |
+| roadmap | medium | 2026-04-05 | Private ROADMAP.md backlog: capture and rank feature ideas and competitor findings, mark shipped items. Use for "add to roadmap" or "what next". |
+| security-audit | high | 2026-03-25 | Find vulnerabilities: auth flaws, injection, exposed secrets, OWASP, dependency and supply-chain risk. Use for a security review, secret scan, or release gate. |
+| session-handoff | medium | 2026-06-13 | Write an agent session handoff: state, decisions, unfinished work, checks, next steps. Use for "hand this off" or a context window running out. |
+| shell-scripting | medium | 2026-03-25 | Bash, Zsh, POSIX sh, Fish scripts, one-liners, dotfiles, completions. Use for quoting or globbing bugs, shellcheck warnings, porting between shells. |
+| skill-creator | high | 2026-03-25 | Create or review agent skills: SKILL.md, frontmatter, references, trigger descriptions, overlaps. Use for "make a skill" or a skill that never triggers. |
+| skill-refiner | high | 2026-03-31 | Improve skills over several rounds of scoring, behavioral tests, and cross-model review until a target score. Use for a pre-release polish sweep. |
+| synology-dsm | high | 2026-07-27 | Synology DSM NAS over SSH: shares, packages, users, storage pools, RAID, crashed or read-only volumes, btrfs recovery, Container Manager. |
+| terraform | high | 2026-03-24 | Terraform and OpenTofu: HCL, modules, providers, state moves, imports, backends, drift, policy. Use for a plan that replaces resources. Proxmox VMs: virtualization. |
+| testing | high | 2026-04-02 | Unit, integration, E2E, load, and a11y tests: pytest, vitest/jest, Playwright, fixtures, mocks, coverage. Use for adding tests or fixing flaky suites. |
+| update-docs | medium | 2026-03-25 | Update READMEs, changelogs, API docs, runbooks, and instruction files after changes; fix doc drift. Use for "update the docs" or a release sweep. |
+| virtualization | high | 2026-04-02 | VMs and hypervisors: Proxmox, QEMU/KVM, libvirt, XCP-ng, VMware/ESXi; templates, cloud-init, storage, clustering, backups, GPU passthrough. |
 | vulnerability-research | high | 2026-04-03 | Research vulnerabilities in authorized targets through code analysis, reverse engineering, patch diffing, and fuzzing. |
 
 Deprecated notices are migration aids, excluded from the active inventory above but included

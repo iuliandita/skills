@@ -60,18 +60,18 @@ test_description_advisory_boundary() {
   local tmp output status length warned
   tmp="$(mktemp -d)"
   trap 'rm -rf "$tmp"' RETURN
-  for length in 149 150 300 301; do
+  for length in 79 80 170 171; do
     write_skill "$tmp/skills" description-boundary "$(make_description "$length")" yes 3
     run_validator "$tmp/skills" output status
     if (( status != 0 )); then
       fail "advisory description window rejected $length characters"
     fi
     warned=no
-    [[ "$output" == *"advisory 150-300 character window"* ]] && warned=yes
-    if (( length == 150 || length == 300 )) && [[ "$warned" == yes ]]; then
+    [[ "$output" == *"advisory 80-170 character window"* ]] && warned=yes
+    if (( length == 80 || length == 170 )) && [[ "$warned" == yes ]]; then
       fail "validator warned at the inclusive $length-character bound"
     fi
-    if (( length == 149 || length == 301 )) && [[ "$warned" == no ]]; then
+    if (( length == 79 || length == 171 )) && [[ "$warned" == no ]]; then
       fail "validator did not warn at $length characters, outside the description window"
     fi
   done

@@ -1,7 +1,7 @@
 ---
 name: prompt-generator
 description: >
-  Write or improve one-off LLM prompts, system prompts, and reusable prompt templates from rough notes. Use for "write me a prompt for...", "turn this into a prompt", or a prompt that underperforms. Skill files go to skill-creator, SDK code to llm-app-development.
+  Write or improve LLM prompts, system prompts, and prompt templates from rough notes. Use for "write me a prompt". Not skill files or SDK code.
 license: MIT
 compatibility: "Model-agnostic. Optional: tailor output format to Claude, GPT, or Gemini when target is known"
 metadata:

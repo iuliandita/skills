@@ -1,7 +1,7 @@
 ---
 name: code-review
 description: >
-  Review code and diffs for correctness: bugs, regressions, edge cases, races, and resource leaks. Use for "review this diff", "check my PR for bugs", or a pre-merge sanity check. Vulnerabilities go to security-audit; a whole-repo audit goes to repo-audit.
+  Review code and diffs for bugs, regressions, edge cases, races, and leaks. Use for "review this diff" or a pre-merge check. Not security.
 license: MIT
 compatibility: "Works on any codebase. Optional: git (diff scope, blame) and the project's own linters (tsc, eslint, ruff, mypy, shellcheck, terraform, ansible-lint)"
 metadata:
