@@ -2136,6 +2136,7 @@ path.write_text(json.dumps(lock))
 PY
   done
   isolated "$tmp/home" "$tmp/repo/install.sh" keep --tool claude,codex --save >/dev/null
+  isolated "$tmp/home" "$tmp/repo/install.sh" --doctor --tool claude,codex --json > "$tmp/doctor-before.json" 2> "$tmp/doctor.err"
   isolated "$tmp/home" "$tmp/repo/install.sh" --update --json > "$tmp/result.json" 2> "$tmp/err" || rc=$?
   (( rc == 6 )) || fail "modified prune candidates did not make update partial: $rc $(cat "$tmp/err")"
   for root in "$tmp/home/.claude/skills" "$tmp/home/.agents/skills"; do
@@ -2147,10 +2148,16 @@ PY
     for name in keep edited renamed linked unowned unverified hash-only; do [[ -e "$root/$name" ]] || fail "lost $root/$name"; done
   done
   grep -q 'warning: kept unselected' "$tmp/err" || fail 'prune warning missing'
-  python3 - "$tmp/result.json" <<'PY'
+  python3 - "$tmp/result.json" "$tmp/doctor-before.json" <<'PY'
 import json
 import sys
 result = json.load(open(sys.argv[1], encoding="utf-8"))
+pruned = {row["path"] for row in result["pruned"]}
+kept = {row["path"]: row["reason"] for row in result["prune_kept"]}
+for row in json.load(open(sys.argv[2]))["outside_selection"]:
+    assert row["prunable"] == (row["path"] in pruned), row
+    if row["path"] in kept:
+        assert row["reason"] == kept[row["path"]], row
 assert len(result["prune_kept"]) == 8, result
 assert {row["name"] for row in result["prune_kept"]} == {"edited", "renamed", "linked", "unverified"}
 assert len(result["pruned"]) == 14
@@ -2322,6 +2329,84 @@ assert sorted(json.load(open(sys.argv[1]))["opencode_permissions"].values()) == 
 PY
   rm -rf "$tmp"
   trap - RETURN
+}
+
+test_doctor_prunability_matches_update_guards() {
+  local tmp case dest tool rc prunable
+  local -a options=()
+  for case in clean-link wrong-link copy-in-link-root symlink-in-copy-root pending pending-edited referenced; do
+    tmp="$(mktemp -d)"
+    trap 'rm -rf "$tmp"' RETURN
+    make_convergence_fixture "$tmp"
+    tool=claude
+    options=(--tool "$tool")
+    case "$case" in
+      clean-link|wrong-link|copy-in-link-root) options+=(--link) ;;
+      referenced) tool=codex; options=(--tool "$tool") ;;
+    esac
+    isolated "$tmp/home" "$tmp/repo/install.sh" keep prune "${options[@]}" >/dev/null
+    isolated "$tmp/home" "$tmp/repo/install.sh" keep "${options[@]}" --save >/dev/null
+    dest="$tmp/home/.claude/skills"
+    [[ "$tool" != codex ]] || dest="$tmp/home/.agents/skills"
+    prunable=false
+    case "$case" in
+      clean-link) prunable=true ;;
+      wrong-link|symlink-in-copy-root)
+        cp -r "$tmp/repo/skills/prune" "$tmp/elsewhere"
+        rm -rf "$dest/prune"
+        ln -s "$tmp/elsewhere" "$dest/prune"
+        ;;
+      copy-in-link-root)
+        rm "$dest/prune"
+        cp -r "$tmp/repo/skills/prune" "$dest/prune"
+        ;;
+      pending*)
+        python3 - "$dest/.skills-lock.json" <<'PYTEST'
+import json
+from pathlib import Path
+import sys
+path = Path(sys.argv[1])
+lock = json.loads(path.read_text())
+lock["trees"].pop("prune")
+path.write_text(json.dumps(lock))
+PYTEST
+        if isolated "$tmp/home" SKILLS_INSTALL_FAULT=lock "$tmp/repo/install.sh" prune "${options[@]}" --force >/dev/null 2>&1; then
+          fail "$case: lock fault succeeded"
+        fi
+        [[ "$case" != pending-edited ]] || printf 'local edit\n' >> "$dest/prune/SKILL.md"
+        ;;
+      referenced)
+        mkdir -p "$tmp/home/.claude/skills"
+        ln -s "$dest/prune" "$tmp/home/.claude/skills/alias"
+        ;;
+    esac
+    isolated "$tmp/home" "$tmp/repo/install.sh" --doctor --tool "$tool" --json > "$tmp/doctor" 2> "$tmp/doctor.err"
+    rc=0
+    isolated "$tmp/home" "$tmp/repo/install.sh" --update --json > "$tmp/update" 2> "$tmp/err" || rc=$?
+    case "$case" in
+      wrong-link|copy-in-link-root|symlink-in-copy-root) (( rc == 6 )) || fail "$case: expected partial update, got $rc" ;;
+      *) (( rc == 0 )) || fail "$case: expected successful update, got $rc: $(cat "$tmp/err")" ;;
+    esac
+    python3 - "$tmp/doctor" "$tmp/update" "$dest/prune" "$prunable" <<'PYTEST'
+import json
+import sys
+path = sys.argv[3]
+row = next(row for row in json.load(open(sys.argv[1]))["outside_selection"] if row["path"] == path)
+result = json.load(open(sys.argv[2]))
+assert row["prunable"] == (sys.argv[4] == "true"), row
+assert row["prunable"] == any(item["path"] == path for item in result["pruned"]), (row, result)
+if not row["prunable"]:
+    kept = next(item for item in result["prune_kept"] if item["path"] == path)
+    assert row["reason"] == kept["reason"], (row, kept)
+PYTEST
+    if [[ "$prunable" == true ]]; then
+      [[ ! -e "$dest/prune" && ! -L "$dest/prune" ]] || fail "$case: doctor's prunable claim did not remove the entry"
+    else
+      [[ -f "$dest/prune/SKILL.md" ]] || fail "$case: guarded candidate was removed"
+    fi
+    rm -rf "$tmp"
+    trap - RETURN
+  done
 }
 
 test_force_upgrades_legacy_lock_for_pruning() {
@@ -2793,6 +2878,7 @@ test_prune_backups_preserve_overwrite_history() {
   trap - RETURN
 }
 
+test_doctor_prunability_matches_update_guards
 test_force_upgrades_legacy_lock_for_pruning
 test_prune_guard_cases
 test_update_copy_mode_keeps_referenced_canonical
