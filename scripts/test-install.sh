@@ -624,14 +624,7 @@ with open(path, "w", encoding="utf-8") as f:
     json.dump(payload, f)
 PY
   "$ROOT/install.sh" --tool portable --dest "$dest" --no-backup docker >/dev/null
-  python3 - "$dest/.skills-lock.json" <<'PY'
-import json
-import sys
-
-skills = json.load(open(sys.argv[1], encoding="utf-8"))["skills"]
-assert "docker" in skills
-assert skills["preserve-me"] == "0" * 64
-PY
+  json_assert "$dest/.skills-lock.json" '"docker" in d["skills"] and d["skills"]["preserve-me"] == "0" * 64'
   rm -rf "$tmp"
   trap - RETURN
 }
@@ -848,15 +841,7 @@ PY
   config_after="$(<"$tmp/config/opencode.json")"
   [[ "$config_after" == "$config_before" ]] || fail "OpenCode migration dry run changed permissions"
   OPENCODE_SKILLS_DIR="$tmp/skills" OPENCODE_CONFIG_FILE="$tmp/config/opencode.json" "$src/install.sh" --tool opencode --migrate --apply >/dev/null
-  python3 - "$tmp/config/opencode.json" <<'PY'
-import json
-import sys
-
-skills = json.load(open(sys.argv[1], encoding="utf-8"))["permission"]["skill"]
-assert skills["*"] == "deny"
-assert skills["custom"] == "deny"
-assert skills["code-simplification"] == "allow"
-PY
+  json_assert "$tmp/config/opencode.json" 'all(d["permission"]["skill"][name] == value for name, value in {"*": "deny", "custom": "deny", "code-simplification": "allow"}.items())'
   rm -rf "$tmp"
   trap - RETURN
 }
@@ -1003,13 +988,7 @@ test_opencode_link_into_canonical_syncs_permissions() {
   mkdir -p "$(dirname "$config")"
   printf '%s\n' '{"permission":{"skill":{"*":"deny","git":"deny"}}}' > "$config"
   HOME="$tmp" "$ROOT/install.sh" --tool opencode --link --no-backup docker git >/dev/null
-  python3 - "$config" <<'PY'
-import json
-import sys
-
-skills = json.load(open(sys.argv[1], encoding="utf-8"))["permission"]["skill"]
-assert skills == {"*": "deny", "git": "deny", "docker": "allow"}, skills
-PY
+  json_assert "$config" 'd["permission"]["skill"] == {"*": "deny", "git": "deny", "docker": "allow"}'
   before="$(tree_hash "$tmp")"
   HOME="$tmp" "$ROOT/install.sh" --tool opencode --link --migrate >/dev/null
   [[ "$(tree_hash "$tmp")" == "$before" ]] || fail "opencode migration preview on shared canonical changed files"
@@ -1167,6 +1146,17 @@ json_check() {
     || fail "$3: $1"
 }
 
+json_assert() {
+  json_check "$(cat "$1")" "$2" "${3:-$1}"
+}
+
+# Keep function-loading tied to the installer's single final main call.
+install_library() {
+  local src="$1"
+  sed '$d' "$src/install.sh" > "$src/install-library.sh"
+  cat >> "$src/install-library.sh"
+}
+
 # run_json HOME ARGS...: sets JSON_OUT (stdout), JSON_ERR (stderr), JSON_STATUS.
 run_json() {
   local home="$1"
@@ -1279,13 +1269,7 @@ PY
   printf '%s\n' '{"permission":{"skill":{"*":"deny"}}}' > "$config"
   HOME="$tmp" "$src/install.sh" --tool opencode --link --migrate --apply >/dev/null
   [[ -d "$canonical/code-simplification" ]] || fail "canonical link migration did not install the replacement"
-  python3 - "$config" <<'PY'
-import json
-import sys
-
-skills = json.load(open(sys.argv[1], encoding="utf-8"))["permission"]["skill"]
-assert skills == {"*": "deny", "code-simplification": "allow"}, skills
-PY
+  json_assert "$config" 'd["permission"]["skill"] == {"*": "deny", "code-simplification": "allow"}'
   rm -rf "$tmp"
   trap - RETURN
 }
@@ -1767,12 +1751,7 @@ test_opencode_fault_keeps_config_unchanged() {
 
   isolated "$tmp" "$ROOT/install.sh" --tool opencode --no-backup docker >/dev/null || fail "opencode rerun failed"
   [[ -L "$config" ]] || fail "opencode sync replaced the config symlink"
-  python3 - "$target" <<'PY'
-import json
-import sys
-
-assert json.load(open(sys.argv[1], encoding="utf-8"))["permission"]["skill"] == {"*": "deny", "docker": "allow"}
-PY
+  json_assert "$target" 'd["permission"]["skill"] == {"*": "deny", "docker": "allow"}'
   rm -rf "$tmp"
   trap - RETURN
 }
@@ -2192,12 +2171,7 @@ test_update_migrates_saved_names_and_filters_retired_skills() {
   isolated "$tmp/home" "$tmp/repo/install.sh" --update --json > "$tmp/result" 2> "$tmp/err"
   after="$(tree_hash "$tmp/home")"
   [[ "$before" == "$after" ]] || fail 'second migrated update changed the saved setup'
-  python3 - "$tmp/result" <<'PY'
-import json
-import sys
-result = json.load(open(sys.argv[1], encoding="utf-8"))
-assert result["status"] == "current" and result["changed"] == 0, result
-PY
+  json_assert "$tmp/result" 'd["status"] == "current" and d["changed"] == 0'
   # A remove-only selection must stay empty on a second update and bare run.
   isolated "$tmp/home" "$tmp/repo/install.sh" removed --tool codex --save >/dev/null
   isolated "$tmp/home" "$tmp/repo/install.sh" --update >/dev/null
@@ -2239,12 +2213,7 @@ test_update_link_pruning_and_permission_provenance() {
   mkdir -p "$(dirname "$config")"
   printf '%s\n' '{"permission":{"skill":{"*":"deny","user-old":"allow","deny-old":"deny","custom":"allow"}}}' > "$config"
   isolated "$tmp/home" "$tmp/repo/install.sh" keep prune old --tool claude,codex,opencode --link --save >/dev/null
-  python3 - "$tmp/home/.agents/skills/.skills-lock.json" <<'PY'
-import json
-import sys
-lock = json.load(open(sys.argv[1], encoding="utf-8"))
-assert set(next(iter(lock["opencode_permissions"].values()))) == {"keep", "prune", "old"}, lock
-PY
+  json_assert "$tmp/home/.agents/skills/.skills-lock.json" 'set(next(iter(d["opencode_permissions"].values()))) == {"keep", "prune", "old"}'
   isolated "$tmp/home" "$tmp/repo/install.sh" keep --tool claude,codex,opencode --link --save >/dev/null
   isolated "$tmp/home" "$tmp/repo/install.sh" --update >/dev/null
   [[ ! -L "$tmp/home/.claude/skills/prune" && ! -e "$tmp/home/.agents/skills/prune" ]] || fail 'link setup did not converge'
@@ -2257,11 +2226,7 @@ lock = json.load(open(sys.argv[2], encoding="utf-8"))
 assert list(lock["opencode_permissions"].values()) == [["keep"]], lock
 PY
   isolated "$tmp/home" "$tmp/repo/install.sh" --doctor --tool opencode --json > "$tmp/doctor" 2> "$tmp/err"
-  python3 - "$tmp/doctor" <<'PY'
-import json
-import sys
-assert json.load(open(sys.argv[1], encoding="utf-8"))["legacy_permissions"] == ["user-old"]
-PY
+  json_assert "$tmp/doctor" 'd["legacy_permissions"] == ["user-old"]'
   isolated "$tmp/home" "$tmp/repo/install.sh" --migrate --tool opencode > "$tmp/preview"
   grep -q 'user-old' "$tmp/preview" || fail 'migration preview omitted legacy permission'
   isolated "$tmp/home" "$tmp/repo/install.sh" --migrate --apply --tool opencode > "$tmp/apply"
@@ -2299,11 +2264,7 @@ test_permission_provenance_on_install_migration_and_alternate_config() {
   isolated "$tmp/home" "$tmp/repo/install.sh" old prune --tool opencode --dest "$dest" >/dev/null
   rm -rf "$dest/prune"
   isolated "$tmp/home" "$tmp/repo/install.sh" old --tool opencode --dest "$dest" >/dev/null
-  python3 - "$config" <<'PY'
-import json
-import sys
-assert json.load(open(sys.argv[1]))["permission"]["skill"] == {"old": "allow"}
-PY
+  json_assert "$config" 'd["permission"]["skill"] == {"old": "allow"}'
   isolated "$tmp/home" "$tmp/repo/install.sh" --migrate --apply --tool opencode --dest "$dest" >/dev/null
   python3 - "$config" "$dest/.skills-lock.json" <<'PY'
 import json
@@ -2314,19 +2275,11 @@ PY
   rm -rf "$dest/new"
   printf '%s\n' '{"permission":{"skill":{"new":"allow","old":"deny"}}}' > "$tmp/alternate.json"
   isolated "$tmp/home" OPENCODE_CONFIG_FILE="$tmp/alternate.json" "$tmp/repo/install.sh" keep --tool opencode --dest "$dest" >/dev/null
-  python3 - "$tmp/alternate.json" <<'PY'
-import json
-import sys
-assert json.load(open(sys.argv[1]))["permission"]["skill"] == {"new": "allow", "old": "deny", "keep": "allow"}
-PY
+  json_assert "$tmp/alternate.json" 'd["permission"]["skill"] == {"new": "allow", "old": "deny", "keep": "allow"}'
   rm "$tmp/alternate.json"
   isolated "$tmp/home" OPENCODE_CONFIG_FILE="$tmp/alternate.json" "$tmp/repo/install.sh" --migrate --apply --tool opencode --dest "$dest" >/dev/null
   [[ ! -e "$tmp/alternate.json" ]] || fail 'permission cleanup recreated an absent config'
-  python3 - "$dest/.skills-lock.json" <<'PY'
-import json
-import sys
-assert sorted(json.load(open(sys.argv[1]))["opencode_permissions"].values()) == [[], ["new"]]
-PY
+  json_assert "$dest/.skills-lock.json" 'sorted(d["opencode_permissions"].values()) == [[], ["new"]]'
   rm -rf "$tmp"
   trap - RETURN
 }
@@ -2500,8 +2453,7 @@ PY
         ;;
     esac
     before="$(tree_hash "$dest/prune")"
-    sed '$d' "$tmp/repo/install.sh" > "$tmp/repo/install-library.sh"
-    cat >> "$tmp/repo/install-library.sh" <<'SH'
+    install_library "$tmp/repo" <<'SH'
 SAVED_SELECTION=(keep)
 SAVED_LINK=true
 txn_root "$1"
@@ -2539,12 +2491,7 @@ test_update_copy_mode_keeps_referenced_canonical() {
   isolated "$tmp/home" "$tmp/repo/install.sh" keep prune --tool claude --link >/dev/null
   isolated "$tmp/home" "$tmp/repo/install.sh" keep --tool codex --save >/dev/null
   isolated "$tmp/home" "$tmp/repo/install.sh" --doctor --tool codex --json > "$tmp/doctor" 2> "$tmp/err"
-  python3 - "$tmp/doctor" <<'PY'
-import json
-import sys
-rows = json.load(open(sys.argv[1]))["outside_selection"]
-assert any(row["name"] == "prune" and not row["prunable"] and row["reason"] == "still referenced by a tool link" for row in rows), rows
-PY
+  json_assert "$tmp/doctor" 'any(row["name"] == "prune" and not row["prunable"] and row["reason"] == "still referenced by a tool link" for row in d["outside_selection"])'
   isolated "$tmp/home" "$tmp/repo/install.sh" --update --json > "$tmp/out" 2> "$tmp/err"
   [[ -L "$tmp/home/.claude/skills/prune" && -f "$tmp/home/.claude/skills/prune/SKILL.md" ]] || fail 'copy-mode update left a dangling tool link'
   python3 - "$tmp/out" <<'PY'
@@ -2638,12 +2585,7 @@ test_update_missing_saved_name_and_canonical_guards() {
         grep -q 'still referenced by a tool link' "$tmp/err" || fail 'canonical reference not reported'
         [[ -f "$tmp/home/.cursor/skills/alias/SKILL.md" ]] || fail 'known tool link dangles'
         isolated "$tmp/home" "$tmp/repo/install.sh" --doctor --tool codex --json > "$tmp/doctor" 2> "$tmp/doctor.err"
-        python3 - "$tmp/doctor" <<'PY'
-import json
-import sys
-rows = json.load(open(sys.argv[1]))["outside_selection"]
-assert any(row["name"] == "prune" and not row["prunable"] and row["reason"] == "still referenced by a tool link" for row in rows), rows
-PY
+        json_assert "$tmp/doctor" 'any(row["name"] == "prune" and not row["prunable"] and row["reason"] == "still referenced by a tool link" for row in d["outside_selection"])'
       fi
     fi
     rm -rf "$tmp"
@@ -2688,11 +2630,7 @@ PY
         ;;
     esac
     ! grep -q Traceback "$tmp/err" || fail "$case: doctor printed a traceback"
-    python3 - "$tmp/out" <<'PY'
-import json
-import sys
-assert json.load(open(sys.argv[1]))["blocking"] > 0
-PY
+    json_assert "$tmp/out" 'd["blocking"] > 0'
     rm -rf "$tmp/home/.config/opencode/skills/keep"
     isolated "$tmp/home" "$tmp/repo/install.sh" --doctor --tool opencode --json > "$tmp/out" 2> "$tmp/err" || fail "$case: advisory alone failed doctor"
     rm -rf "$tmp"
@@ -2744,18 +2682,13 @@ lock["source"] = sys.argv[3]
 Path(sys.argv[2]).write_text(json.dumps(lock))
 PY
   rm -rf "$dest/prune"
-  sed '$d' "$tmp/repo/install.sh" > "$tmp/repo/install-library.sh"
-  cat >> "$tmp/repo/install-library.sh" <<'SH'
+  install_library "$tmp/repo" <<'SH'
 sync_opencode_permissions "$1" "$2" sync keep
 sync_opencode_permissions "$1" "$2" sync keep
 SH
   isolated "$tmp/home" bash "$tmp/repo/install-library.sh" "$config" "$dest" > "$tmp/out" 2> "$tmp/err"
   [[ "$(grep -Fc "warning: cannot verify OpenCode lock $lock;" "$tmp/err")" == 1 ]] || fail 'unverifiable lock warning repeated or missing'
-  python3 - "$config" <<'PY'
-import json
-import sys
-assert json.load(open(sys.argv[1]))["permission"]["skill"]["prune"] == "allow"
-PY
+  json_assert "$config" 'd["permission"]["skill"]["prune"] == "allow"'
   isolated "$tmp/home" "$tmp/repo/install.sh" --doctor --tool opencode --json > "$tmp/doctor" 2> "$tmp/err"
   [[ "$(grep -Fc "warning: cannot verify OpenCode lock $lock;" "$tmp/err")" == 1 ]] || fail 'doctor lock warning repeated or missing'
   python3 - "$tmp/doctor" "$lock" <<'PY'
@@ -2773,88 +2706,93 @@ PY
   trap - RETURN
 }
 
+permission_fresh_lock_fault() {
+  local tmp="$1" rc=0
+  isolated "$tmp/home" SKILLS_INSTALL_FAULT=lock "$tmp/repo/install.sh" prune --tool opencode --json > "$tmp/out" 2> "$tmp/err" || rc=$?
+  (( rc == 1 )) || fail 'fresh lock fault succeeded'
+  json_assert "$tmp/out" 'd["failed"] == 1'
+  json_assert "$tmp/home/.config/opencode/opencode.json" 'd["permission"]["skill"]["prune"] == "allow"'
+  [[ "$(grep -c 'allows added without provenance' "$tmp/err")" == 1 ]] || fail 'fresh lock failure warning repeated'
+}
+
+permission_config_fault() {
+  local tmp="$1" rc=0
+  local dest="$tmp/home/.agents/skills" config="$tmp/home/.config/opencode/opencode.json"
+  isolated "$tmp/home" SKILLS_INSTALL_FAULT=opencode "$tmp/repo/install.sh" prune --tool opencode > "$tmp/out" 2>&1 || rc=$?
+  (( rc == 1 )) || fail 'config fault succeeded'
+  [[ ! -e "$config" ]] || fail 'config fault wrote config'
+  python3 - "$dest/.skills-lock.json" "$config" <<'PYTEST'
+import json
+import sys
+assert json.load(open(sys.argv[1]))["opencode_permissions"][sys.argv[2]] == ["prune"]
+PYTEST
+  isolated "$tmp/home" "$tmp/repo/install.sh" prune --tool opencode >/dev/null
+}
+
+permission_exported_mode() {
+  local tmp="$1"
+  isolated "$tmp/home" OPENCODE_PERMISSION_MODE=preview "$tmp/repo/install.sh" prune --tool opencode >/dev/null
+  [[ -f "$tmp/home/.config/opencode/opencode.json" ]] || fail 'exported permission mode affected install'
+}
+
+permission_unverified_preview() {
+  local tmp="$1" case="$2"
+  isolated "$tmp/home" "$tmp/repo/install.sh" keep prune --tool opencode --save >/dev/null
+  if [[ "$case" == preview-bad-lock ]]; then printf '{bad'; else printf '1'; fi > "$tmp/home/.agents/skills/.skills-lock.json"
+  isolated "$tmp/home" "$tmp/repo/install.sh" --migrate --tool opencode > "$tmp/out" 2> "$tmp/err" || fail 'unverified preview failed'
+  grep -q 'permission preview complete; no changes written' "$tmp/out" || fail 'preview omitted preview-specific line'
+  ! grep -q 'OpenCode permissions synced' "$tmp/out" || fail 'preview claimed a sync'
+}
+
+permission_used_elsewhere() {
+  local tmp="$1" case="$2"
+  local dest="$tmp/home/.agents/skills" config="$tmp/home/.config/opencode/opencode.json"
+  isolated "$tmp/home" "$tmp/repo/install.sh" keep prune --tool opencode --save >/dev/null
+  if [[ "$case" == other-root ]]; then
+    mkdir -p "$tmp/home/.claude/skills"
+    cp -r "$dest/prune" "$tmp/home/.claude/skills/prune"
+  else
+    isolated "$tmp/home" "$tmp/repo/install.sh" prune --tool opencode --dest "$tmp/home/.cursor/skills" >/dev/null
+  fi
+  rm -rf "$dest/prune"
+  isolated "$tmp/home" "$tmp/repo/install.sh" keep --tool opencode >/dev/null
+  json_assert "$config" 'd["permission"]["skill"]["prune"] == "allow"'
+  if [[ "$case" == other-lock ]]; then
+    isolated "$tmp/home" "$tmp/repo/install.sh" old --tool opencode --dest "$tmp/home/.cursor/skills" >/dev/null
+    isolated "$tmp/home" "$tmp/repo/install.sh" --doctor --tool opencode --json > "$tmp/doctor" 2> "$tmp/doctor.err"
+    json_assert "$tmp/doctor" '"old" not in d["legacy_permissions"]'
+    isolated "$tmp/home" "$tmp/repo/install.sh" --migrate --apply --tool opencode >/dev/null
+    json_assert "$config" 'd["permission"]["skill"]["old"] == "allow"'
+  fi
+}
+
+permission_failed_update() {
+  local tmp="$1" rc=0
+  local dest="$tmp/home/.agents/skills" config="$tmp/home/.config/opencode/opencode.json"
+  isolated "$tmp/home" "$tmp/repo/install.sh" keep prune --tool opencode --save >/dev/null
+  isolated "$tmp/home" "$tmp/repo/install.sh" keep --tool opencode --save >/dev/null
+  rm -rf "$dest/prune"
+  mkdir -p "$(txn_area "$dest")/keep"
+  printf 'bad record\n' > "$(txn_area "$dest")/keep/record"
+  isolated "$tmp/home" "$tmp/repo/install.sh" --update > "$tmp/out" 2> "$tmp/err" || rc=$?
+  (( rc == 1 )) || fail 'failed OpenCode update succeeded'
+  json_assert "$config" 'd["permission"]["skill"]["prune"] == "allow"'
+}
+
 test_permission_guard_cases() {
-  local tmp case dest config rc
+  local tmp case
   for case in other-root other-lock env-mode config-fault fresh-lock-fault preview-bad-lock preview-scalar-lock failed-update; do
     tmp="$(mktemp -d)"
     trap 'rm -rf "$tmp"' RETURN
     make_convergence_fixture "$tmp"
-    dest="$tmp/home/.agents/skills"
-    config="$tmp/home/.config/opencode/opencode.json"
-    if [[ "$case" == fresh-lock-fault ]]; then
-      rc=0
-      isolated "$tmp/home" SKILLS_INSTALL_FAULT=lock "$tmp/repo/install.sh" prune --tool opencode --json > "$tmp/out" 2> "$tmp/err" || rc=$?
-      (( rc == 1 )) || fail 'fresh lock fault succeeded'
-      python3 - "$tmp/out" "$config" <<'PY'
-import json
-import sys
-assert json.load(open(sys.argv[1]))["failed"] == 1
-assert json.load(open(sys.argv[2]))["permission"]["skill"]["prune"] == "allow"
-PY
-      [[ "$(grep -c 'allows added without provenance' "$tmp/err")" == 1 ]] || fail 'fresh lock failure warning repeated'
-    elif [[ "$case" == config-fault ]]; then
-      rc=0
-      isolated "$tmp/home" SKILLS_INSTALL_FAULT=opencode "$tmp/repo/install.sh" prune --tool opencode > "$tmp/out" 2>&1 || rc=$?
-      (( rc == 1 )) || fail 'config fault succeeded'
-      [[ ! -e "$config" ]] || fail 'config fault wrote config'
-      python3 - "$dest/.skills-lock.json" "$config" <<'PY'
-import json
-import sys
-assert json.load(open(sys.argv[1]))["opencode_permissions"][sys.argv[2]] == ["prune"]
-PY
-      isolated "$tmp/home" "$tmp/repo/install.sh" prune --tool opencode >/dev/null
-    elif [[ "$case" == env-mode ]]; then
-      isolated "$tmp/home" OPENCODE_PERMISSION_MODE=preview "$tmp/repo/install.sh" prune --tool opencode >/dev/null
-      [[ -f "$config" ]] || fail 'exported permission mode affected install'
-    else
-      isolated "$tmp/home" "$tmp/repo/install.sh" keep prune --tool opencode --save >/dev/null
-      if [[ "$case" == preview-bad-lock || "$case" == preview-scalar-lock ]]; then
-        if [[ "$case" == preview-bad-lock ]]; then printf '{bad'; else printf '1'; fi > "$dest/.skills-lock.json"
-        isolated "$tmp/home" "$tmp/repo/install.sh" --migrate --tool opencode > "$tmp/out" 2> "$tmp/err" || fail 'unverified preview failed'
-        grep -q 'permission preview complete; no changes written' "$tmp/out" || fail 'preview omitted preview-specific line'
-        ! grep -q 'OpenCode permissions synced' "$tmp/out" || fail 'preview claimed a sync'
-      else
-        if [[ "$case" == other-root ]]; then
-          mkdir -p "$tmp/home/.claude/skills"
-          cp -r "$dest/prune" "$tmp/home/.claude/skills/prune"
-        elif [[ "$case" == other-lock ]]; then
-          isolated "$tmp/home" "$tmp/repo/install.sh" prune --tool opencode --dest "$tmp/home/.cursor/skills" >/dev/null
-        fi
-        if [[ "$case" == failed-update ]]; then
-          isolated "$tmp/home" "$tmp/repo/install.sh" keep --tool opencode --save >/dev/null
-        fi
-        rm -rf "$dest/prune"
-        if [[ "$case" == failed-update ]]; then
-          mkdir -p "$(txn_area "$dest")/keep"
-          printf 'bad record\n' > "$(txn_area "$dest")/keep/record"
-          rc=0
-          isolated "$tmp/home" "$tmp/repo/install.sh" --update > "$tmp/out" 2> "$tmp/err" || rc=$?
-          (( rc == 1 )) || fail 'failed OpenCode update succeeded'
-        else
-          isolated "$tmp/home" "$tmp/repo/install.sh" keep --tool opencode >/dev/null
-        fi
-        python3 - "$config" <<'PY'
-import json
-import sys
-assert json.load(open(sys.argv[1]))["permission"]["skill"]["prune"] == "allow"
-PY
-        if [[ "$case" == other-lock ]]; then
-          isolated "$tmp/home" "$tmp/repo/install.sh" old --tool opencode --dest "$tmp/home/.cursor/skills" >/dev/null
-          isolated "$tmp/home" "$tmp/repo/install.sh" --doctor --tool opencode --json > "$tmp/doctor" 2> "$tmp/doctor.err"
-          python3 - "$tmp/doctor" <<'PY'
-import json
-import sys
-assert "old" not in json.load(open(sys.argv[1]))["legacy_permissions"]
-PY
-          isolated "$tmp/home" "$tmp/repo/install.sh" --migrate --apply --tool opencode >/dev/null
-          python3 - "$config" <<'PY'
-import json
-import sys
-assert json.load(open(sys.argv[1]))["permission"]["skill"]["old"] == "allow"
-PY
-        fi
-      fi
-    fi
+    case "$case" in
+      other-root|other-lock) permission_used_elsewhere "$tmp" "$case" ;;
+      env-mode) permission_exported_mode "$tmp" ;;
+      config-fault) permission_config_fault "$tmp" ;;
+      fresh-lock-fault) permission_fresh_lock_fault "$tmp" ;;
+      preview-*) permission_unverified_preview "$tmp" "$case" ;;
+      failed-update) permission_failed_update "$tmp" ;;
+    esac
     rm -rf "$tmp"
     trap - RETURN
   done
