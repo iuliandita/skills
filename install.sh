@@ -794,8 +794,6 @@ if trees:
     payload["trees"] = trees
 if existing is not None and "opencode_permissions" in existing:
     payload["opencode_permissions"] = existing["opencode_permissions"]
-    if isinstance(existing["opencode_permissions"], list):
-        payload["opencode_config"] = existing.get("opencode_config")
 # Unique temp name: concurrent runs must not share one.
 fd, temp = tempfile.mkstemp(dir=lock_path.parent, prefix=f".{lock_path.name}.", suffix=".tmp")
 try:
@@ -1553,9 +1551,6 @@ lock_path = destination / ".skills-lock.json"
 
 def permission_records(lock):
     records = lock.get("opencode_permissions", {})
-    # Preserve provenance written by the first provenance-aware installer.
-    if isinstance(records, list):
-        records = {lock.get("opencode_config", ""): records}
     if not isinstance(records, dict) or any(
         not isinstance(path, str) or not isinstance(names, list) or any(
             not isinstance(name, str) or not re.fullmatch(r"[a-z0-9](?:[a-z0-9-]*[a-z0-9])?", name)
@@ -1695,7 +1690,6 @@ def write_provenance(names):
     if lock.get("opencode_permissions") == updated:
         return
     lock["opencode_permissions"] = updated
-    lock.pop("opencode_config", None)
     fd, temp = tempfile.mkstemp(dir=lock_path.parent, prefix=".permissions.", suffix=".tmp")
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as handle:
@@ -1993,8 +1987,6 @@ for candidate in sorted(locks):
         if lock.get("version") != 1 or (candidate == lock_path and lock_source != source.resolve(strict=True)):
             raise ValueError("unverified lock source")
         records = lock.get("opencode_permissions", {})
-        if isinstance(records, list):
-            records = {lock.get("opencode_config", ""): records}
         owned.update(records.get(str(config.resolve()), []))
     except (OSError, ValueError, KeyError, TypeError, AttributeError) as error:
         remedy = (f"delete {candidate} if its checkout is retired, otherwise rerun install.sh --tool opencode "
