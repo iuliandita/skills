@@ -7,6 +7,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Bug Fixes
 
+* **install:** keep canonical copies referenced by tool links in copy-mode updates and preserve explicitly saved internal skills. Make malformed-config migration previews advisory and report unverifiable permission locks with cleanup remedies ([#409](https://github.com/iuliandita/skills/issues/409), [#410](https://github.com/iuliandita/skills/issues/410)).
 * **install:** make `--update` migrate saved skill names and prune deselected, internal, deprecated, and retired copies only when installer ownership and version 2 tree digests match. Back up removals, keep local changes with warnings and JSON details, and report leftovers in `--doctor` ([#409](https://github.com/iuliandita/skills/issues/409)).
 * **install:** record OpenCode permission provenance and remove installer-added allows when their skills disappear. Report legacy allows in `--doctor` and remove them only through an explicit migration apply with a config backup; preserve other user allows and every deny ([#410](https://github.com/iuliandita/skills/issues/410)).
 

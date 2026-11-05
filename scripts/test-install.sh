@@ -2389,6 +2389,75 @@ SH
   done
 }
 
+test_update_copy_mode_keeps_referenced_canonical() {
+  local tmp
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  make_convergence_fixture "$tmp"
+  isolated "$tmp/home" "$tmp/repo/install.sh" keep prune --tool claude --link >/dev/null
+  isolated "$tmp/home" "$tmp/repo/install.sh" keep --tool codex --save >/dev/null
+  isolated "$tmp/home" "$tmp/repo/install.sh" --doctor --tool codex --json > "$tmp/doctor" 2> "$tmp/err"
+  python3 - "$tmp/doctor" <<'PY'
+import json
+import sys
+rows = json.load(open(sys.argv[1]))["outside_selection"]
+assert any(row["name"] == "prune" and not row["prunable"] and row["reason"] == "still referenced by a tool link" for row in rows), rows
+PY
+  isolated "$tmp/home" "$tmp/repo/install.sh" --update --json > "$tmp/out" 2> "$tmp/err"
+  [[ -L "$tmp/home/.claude/skills/prune" && -f "$tmp/home/.claude/skills/prune/SKILL.md" ]] || fail 'copy-mode update left a dangling tool link'
+  python3 - "$tmp/out" <<'PY'
+import json
+import sys
+result = json.load(open(sys.argv[1]))
+assert result["pruned"] == [] and result["skipped"] == 0, result
+assert any(row["name"] == "prune" and row["reason"] == "still referenced by a tool link" for row in result["prune_kept"]), result
+PY
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_update_preserves_explicit_internal_selection() {
+  local tmp before
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  make_convergence_fixture "$tmp"
+  write_fixture_skill "$tmp/publisher" internal $'---\nname: internal\ndescription: internal fixture\nmetadata:\n  internal: true\n---'
+  publish_convergence_fixture "$tmp"
+  isolated "$tmp/home" git -C "$tmp/repo" pull -q --ff-only
+  isolated "$tmp/home" "$tmp/repo/install.sh" keep internal --tool codex --save >/dev/null
+  grep -qx 'include_internal=false' "$tmp/home/.config/iuliandita-skills/install.conf" || fail 'explicit internal fixture saved the flag'
+  before="$(tree_hash "$tmp/home")"
+  isolated "$tmp/home" "$tmp/repo/install.sh" --update --json > "$tmp/out" 2> "$tmp/err"
+  [[ -f "$tmp/home/.agents/skills/internal/SKILL.md" ]] || fail 'update pruned an explicitly saved internal skill'
+  [[ "$(tree_hash "$tmp/home")" == "$before" ]] || fail 'explicit internal update changed the installation'
+  isolated "$tmp/home" "$tmp/repo/install.sh" >/dev/null
+  [[ "$(tree_hash "$tmp/home")" == "$before" ]] || fail 'bare install disagrees with explicit internal update'
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_update_forgets_absent_unselected_record() {
+  local tmp
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  make_convergence_fixture "$tmp"
+  isolated "$tmp/home" "$tmp/repo/install.sh" keep prune --tool codex >/dev/null
+  isolated "$tmp/home" "$tmp/repo/install.sh" keep --tool codex --save >/dev/null
+  rm -rf "$tmp/home/.agents/skills/prune"
+  isolated "$tmp/home" "$tmp/repo/install.sh" --update --json > "$tmp/out" 2> "$tmp/err"
+  python3 - "$tmp/home/.agents/skills/.skills-lock.json" "$tmp/out" <<'PY'
+import json
+import sys
+lock = json.load(open(sys.argv[1]))
+assert "prune" not in lock["skills"] and "prune" not in lock["trees"], lock
+result = json.load(open(sys.argv[2]))
+assert result["status"] == "current" and result["skipped"] == 0 and result["prune_kept"] == [], result
+PY
+  isolated "$tmp/home" "$tmp/repo/install.sh" --update >/dev/null
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
 test_update_missing_saved_name_and_canonical_guards() {
   local tmp case rc root
   for case in missing-saved failed-tool referenced-canonical; do
@@ -2467,7 +2536,16 @@ PY
     rc=0
     isolated "$tmp/home" "$tmp/repo/install.sh" --doctor --tool opencode --json > "$tmp/out" 2> "$tmp/err" || rc=$?
     (( rc == 1 )) || fail "$case: duplicate status lost: $rc $(cat "$tmp/err")"
-    grep -q 'warning:' "$tmp/err" || fail "$case: missing advisory warning"
+    case "$case" in
+      unreadable-lock|gone-source)
+        grep -Fq "warning: cannot verify OpenCode lock $dest/.skills-lock.json;" "$tmp/err" || fail "$case: missing lock warning"
+        grep -Fq "delete $dest/.skills-lock.json if its checkout is retired" "$tmp/err" || fail "$case: missing lock remedy"
+        ;;
+      bad-config)
+        grep -Fq "warning: cannot read OpenCode config $tmp/home/.config/opencode/opencode.json:" "$tmp/err" || fail "$case: missing config warning"
+        ;;
+    esac
+    ! grep -q Traceback "$tmp/err" || fail "$case: doctor printed a traceback"
     python3 - "$tmp/out" <<'PY'
 import json
 import sys
@@ -2478,6 +2556,79 @@ PY
     rm -rf "$tmp"
     trap - RETURN
   done
+}
+
+test_migrate_preview_malformed_opencode_config() {
+  local tmp case before
+  for case in malformed scalar permission skill-permission; do
+    tmp="$(mktemp -d)"
+    trap 'rm -rf "$tmp"' RETURN
+    make_convergence_fixture "$tmp"
+    isolated "$tmp/home" "$tmp/repo/install.sh" keep --tool opencode >/dev/null
+    case "$case" in
+      malformed) printf '{bad' ;;
+      scalar) printf '1' ;;
+      permission) printf '{"permission":1}' ;;
+      skill-permission) printf '{"permission":{"skill":1}}' ;;
+    esac > "$tmp/home/.config/opencode/opencode.json"
+    before="$(tree_hash "$tmp/home")"
+    isolated "$tmp/home" "$tmp/repo/install.sh" --migrate --tool opencode > "$tmp/out" 2> "$tmp/err" || fail "$case: malformed-config preview failed"
+    [[ "$(grep -c '^warning:' "$tmp/err")" == 1 ]] || fail "$case: expected one warning: $(cat "$tmp/err")"
+    grep -q 'skipping permission preview:' "$tmp/err" || fail "$case: missing preview warning"
+    ! grep -q Traceback "$tmp/err" || fail "$case: preview printed a traceback"
+    ! grep -Eq 'permission preview complete|OpenCode permissions synced' "$tmp/out" || fail "$case: preview claimed completion"
+    [[ "$(tree_hash "$tmp/home")" == "$before" ]] || fail "$case: preview changed the installation"
+    rm -rf "$tmp"
+    trap - RETURN
+  done
+}
+
+test_unverifiable_permission_lock_warns_once_and_doctor_remedy() {
+  local tmp dest config lock
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  make_convergence_fixture "$tmp"
+  dest="$tmp/home/.agents/skills"
+  config="$tmp/home/.config/opencode/opencode.json"
+  lock="$tmp/home/.cursor/skills/.skills-lock.json"
+  isolated "$tmp/home" "$tmp/repo/install.sh" keep prune --tool opencode --save >/dev/null
+  mkdir -p "${lock%/*}"
+  python3 - "$dest/.skills-lock.json" "$lock" "$tmp/gone/skills" <<'PY'
+import json
+from pathlib import Path
+import sys
+lock = json.loads(Path(sys.argv[1]).read_text())
+lock["source"] = sys.argv[3]
+Path(sys.argv[2]).write_text(json.dumps(lock))
+PY
+  rm -rf "$dest/prune"
+  sed '$d' "$tmp/repo/install.sh" > "$tmp/repo/install-library.sh"
+  cat >> "$tmp/repo/install-library.sh" <<'SH'
+sync_opencode_permissions "$1" "$2" sync keep
+sync_opencode_permissions "$1" "$2" sync keep
+SH
+  isolated "$tmp/home" bash "$tmp/repo/install-library.sh" "$config" "$dest" > "$tmp/out" 2> "$tmp/err"
+  [[ "$(grep -Fc "warning: cannot verify OpenCode lock $lock;" "$tmp/err")" == 1 ]] || fail 'unverifiable lock warning repeated or missing'
+  python3 - "$config" <<'PY'
+import json
+import sys
+assert json.load(open(sys.argv[1]))["permission"]["skill"]["prune"] == "allow"
+PY
+  isolated "$tmp/home" "$tmp/repo/install.sh" --doctor --tool opencode --json > "$tmp/doctor" 2> "$tmp/err"
+  [[ "$(grep -Fc "warning: cannot verify OpenCode lock $lock;" "$tmp/err")" == 1 ]] || fail 'doctor lock warning repeated or missing'
+  python3 - "$tmp/doctor" "$lock" <<'PY'
+import json
+import sys
+findings = json.load(open(sys.argv[1]))["unverifiable_locks"]
+assert len(findings) == 1 and findings[0]["path"] == sys.argv[2], findings
+assert f"delete {sys.argv[2]} if its checkout is retired" in findings[0]["remedy"], findings
+assert "rerun install.sh --tool opencode" in findings[0]["remedy"], findings
+PY
+  rm "$config"
+  isolated "$tmp/home" "$tmp/repo/install.sh" --doctor --tool opencode --json > "$tmp/doctor" 2> "$tmp/err"
+  grep -Fq "delete $lock if its checkout is retired" "$tmp/err" || fail 'doctor requires a config to diagnose an unverifiable lock'
+  rm -rf "$tmp"
+  trap - RETURN
 }
 
 test_permission_guard_cases() {
@@ -2586,8 +2737,13 @@ test_prune_backups_preserve_overwrite_history() {
 }
 
 test_prune_guard_cases
+test_update_copy_mode_keeps_referenced_canonical
+test_update_preserves_explicit_internal_selection
+test_update_forgets_absent_unselected_record
 test_update_missing_saved_name_and_canonical_guards
 test_doctor_advisory_errors_continue_discovery
+test_migrate_preview_malformed_opencode_config
+test_unverifiable_permission_lock_warns_once_and_doctor_remedy
 test_permission_guard_cases
 test_prune_backups_preserve_overwrite_history
 test_update_prunes_only_verified_owned_trees

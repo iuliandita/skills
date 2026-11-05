@@ -1500,11 +1500,17 @@ canonical_referenced() {
   return 1
 }
 
+declare -A OPENCODE_CHECKED_LOCKS=()
 sync_opencode_permissions() {
   local config_file="$1" dest_dir="$2" permission_mode="$3"
   shift 3
   local skills=("$@")
   local synced_skills=()
+  local root known_roots checked_locks=""
+  known_roots="$(known_skill_roots)"
+  for root in "${!OPENCODE_CHECKED_LOCKS[@]}"; do checked_locks+="$root"$'\n'; done
+  while IFS= read -r root; do OPENCODE_CHECKED_LOCKS[$root/.skills-lock.json]=true; done <<< "$known_roots"
+  OPENCODE_CHECKED_LOCKS[$dest_dir/.skills-lock.json]=true
 
   for skill in "${skills[@]}"; do
     validate_skill_name "$skill" || continue
@@ -1522,7 +1528,8 @@ sync_opencode_permissions() {
     return 1
   fi
 
-  if ! python3 -I - "$config_file" "$dest_dir" "$SKILLS_SRC" "$MIGRATIONS_FILE" "$permission_mode" "$(known_skill_roots)" "${synced_skills[@]}" <<'PY'
+  local permission_status=0
+  python3 -I - "$config_file" "$dest_dir" "$SKILLS_SRC" "$MIGRATIONS_FILE" "$permission_mode" "$known_roots" "$checked_locks" "${synced_skills[@]}" <<'PY' || permission_status=$?
 import json
 import os
 from pathlib import Path
@@ -1536,7 +1543,8 @@ config_path = os.path.realpath(sys.argv[1])
 destination = Path(sys.argv[2])
 source = Path(sys.argv[3]).resolve(strict=True)
 manifest_path, mode, root_list = sys.argv[4:7]
-skills = sys.argv[7:]
+checked_locks = {Path(path).resolve() for path in sys.argv[7].splitlines()}
+skills = sys.argv[8:]
 roots = {Path(root).resolve() for root in root_list.splitlines()} | {destination.resolve()}
 lock_path = destination / ".skills-lock.json"
 
@@ -1594,7 +1602,10 @@ for root in roots:
             all_owned.update(other_records[config_path])
             installed_elsewhere.update(name for name in other["skills"] if (root / name / "SKILL.md").is_file())
     except (OSError, ValueError, KeyError, TypeError, AttributeError) as error:
-        print(f"  [!] cannot verify {other_path}; keeping recorded OpenCode allows: {error}")
+        if other_path.resolve() not in checked_locks:
+            print(f"warning: cannot verify OpenCode lock {other_path}; keeping recorded OpenCode allows: {error}; "
+                  f"delete {other_path} if its checkout is retired, otherwise rerun install.sh --tool opencode "
+                  "from the recorded source checkout to refresh the lock", file=sys.stderr)
         uncertain = True
 
 
@@ -1605,33 +1616,39 @@ def still_installed(name):
 if not os.path.exists(config_path) and not skills and not owned:
     sys.exit(0)
 
-if os.path.exists(config_path) and os.path.getsize(config_path) > 0:
-    with open(config_path, encoding="utf-8") as f:
-        config = json.load(f)
-else:
-    config = {}
+try:
+    if os.path.exists(config_path) and os.path.getsize(config_path) > 0:
+        with open(config_path, encoding="utf-8") as f:
+            config = json.load(f)
+    else:
+        config = {}
 
-if not isinstance(config, dict):
-    raise ValueError("OpenCode config root must be a JSON object")
+    if not isinstance(config, dict):
+        raise ValueError("OpenCode config root must be a JSON object")
 
-ACTIONS = {"allow", "ask", "deny"}
-permission = config.get("permission")
-if permission is None:
-    permission = {}
-elif isinstance(permission, str) and permission in ACTIONS:
-    permission = {"*": permission, "skill": {"*": permission}}
-if not isinstance(permission, dict):
-    raise ValueError("permission must be an object or allow/ask/deny")
-config["permission"] = permission
+    ACTIONS = {"allow", "ask", "deny"}
+    permission = config.get("permission")
+    if permission is None:
+        permission = {}
+    elif isinstance(permission, str) and permission in ACTIONS:
+        permission = {"*": permission, "skill": {"*": permission}}
+    if not isinstance(permission, dict):
+        raise ValueError("permission must be an object or allow/ask/deny")
+    config["permission"] = permission
 
-skill_permission = permission.get("skill")
-if skill_permission is None:
-    skill_permission = {}
-elif isinstance(skill_permission, str) and skill_permission in ACTIONS:
-    skill_permission = {"*": skill_permission}
-if not isinstance(skill_permission, dict):
-    raise ValueError("permission.skill must be an object or allow/ask/deny")
-permission["skill"] = skill_permission
+    skill_permission = permission.get("skill")
+    if skill_permission is None:
+        skill_permission = {}
+    elif isinstance(skill_permission, str) and skill_permission in ACTIONS:
+        skill_permission = {"*": skill_permission}
+    if not isinstance(skill_permission, dict):
+        raise ValueError("permission.skill must be an object or allow/ask/deny")
+    permission["skill"] = skill_permission
+except (OSError, ValueError) as error:
+    if mode != "preview":
+        raise
+    print(f"warning: cannot read OpenCode config {config_path}; skipping permission preview: {error}", file=sys.stderr)
+    sys.exit(2)
 
 changed = False
 recorded = set(owned)
@@ -1718,7 +1735,8 @@ if changed or (skills and not os.path.exists(config_path)):
 write_provenance(recorded)
 
 PY
-  then
+  if [[ "$permission_mode" == preview && "$permission_status" == 2 ]]; then return 0; fi
+  if (( permission_status != 0 )); then
     printf '  [!] OpenCode permission sync failed: could not finish syncing %s; inspect the config and lock before retrying\n' "$config_file"
     return 1
   fi
@@ -1895,6 +1913,7 @@ doctor_selection() {
   local -A seen=()
   json_list outside_selection
   json_list legacy_permissions
+  json_list unverifiable_locks
   if load_saved_config doctor-read; then
     resolve_saved_selection || printf 'warning: cannot resolve saved selection; continuing doctor\n' >&2
     IFS=',' read -ra saved_tools <<< "$SAVED_TOOLS"
@@ -1907,7 +1926,9 @@ doctor_selection() {
       [[ -d "$dest" && -z "${seen[$dest]:-}" ]] || continue
       seen[$dest]=true
       if ! owned="$(owned_lock_names "$dest" 2>/dev/null)"; then
-        printf 'warning: cannot verify %s/.skills-lock.json; treating copies as other\n' "$dest" >&2
+        if [[ " $* " != *' opencode '* ]]; then
+          printf 'warning: cannot verify %s/.skills-lock.json; treating copies as other\n' "$dest" >&2
+        fi
         owned=""
       fi
       for skill in "$dest"/*; do
@@ -1934,7 +1955,7 @@ doctor_selection() {
             if txn_root "$dest" && [[ -e "$TXN_ROOT/$skill/record" ]]; then
               prunable=false
               reason='pending recovery'
-            elif [[ "$SAVED_LINK" == true ]] && paths_match "$dest" "$CANONICAL_DIR" && canonical_referenced "$skill"; then
+            elif paths_match "$dest" "$CANONICAL_DIR" && canonical_referenced "$skill"; then
               prunable=false
               reason='still referenced by a tool link'
             elif [[ "$SAVED_LINK" == true ]] && ! paths_match "$dest" "$CANONICAL_DIR" && [[ ! -L "$dest/$skill" ]]; then
@@ -1959,17 +1980,6 @@ from pathlib import Path
 import sys
 
 config, lock_path, source, manifest = map(Path, sys.argv[1:5])
-if not config.is_file() or not manifest.is_file():
-    sys.exit(0)
-try:
-    config_data = json.loads(config.read_text(encoding="utf-8"))
-    permission = config_data.get("permission", {})
-    permission = permission.get("skill", {}) if isinstance(permission, dict) else {}
-    if not isinstance(permission, dict):
-        sys.exit(0)
-except (OSError, ValueError, AttributeError) as error:
-    print(f"warning: cannot read OpenCode config {config}: {error}", file=sys.stderr)
-    sys.exit(0)
 owned = set()
 locks = {Path(root) / ".skills-lock.json" for root in sys.argv[5].splitlines()} | {lock_path}
 for candidate in sorted(locks):
@@ -1985,18 +1995,40 @@ for candidate in sorted(locks):
             records = {lock.get("opencode_config", ""): records}
         owned.update(records.get(str(config.resolve()), []))
     except (OSError, ValueError, KeyError, TypeError, AttributeError) as error:
-        print(f"warning: cannot verify OpenCode lock {candidate}: {error}", file=sys.stderr)
+        remedy = (f"delete {candidate} if its checkout is retired, otherwise rerun install.sh --tool opencode "
+                  "from the recorded source checkout to refresh the lock")
+        print(f"warning: cannot verify OpenCode lock {candidate}; keeping recorded OpenCode allows: {error}; {remedy}", file=sys.stderr)
+        print("LOCK " + json.dumps({"path": str(candidate), "reason": str(error), "remedy": remedy}))
+if not config.is_file() or not manifest.is_file():
+    sys.exit(0)
+try:
+    config_data = json.loads(config.read_text(encoding="utf-8"))
+    permission = config_data.get("permission", {})
+    permission = permission.get("skill", {}) if isinstance(permission, dict) else {}
+    if not isinstance(permission, dict):
+        sys.exit(0)
+except (OSError, ValueError, AttributeError) as error:
+    print(f"warning: cannot read OpenCode config {config}: {error}", file=sys.stderr)
+    sys.exit(0)
 for name in sorted(json.loads(manifest.read_text(encoding="utf-8"))["skills"]):
     if permission.get(name) == "allow" and name not in owned:
         print(name)
 PY
 )" || return 1
-  if [[ -n "$rows" ]]; then
+  local -a legacy_names=()
+  while IFS= read -r skill; do
+    if [[ "$skill" == 'LOCK '* ]]; then
+      json_push unverifiable_locks "${skill#LOCK }"
+    elif [[ -n "$skill" ]]; then
+      legacy_names+=("$skill")
+    fi
+  done <<< "$rows"
+  if (( ${#legacy_names[@]} > 0 )); then
     printf 'Legacy OpenCode allows without installer provenance (use --migrate --apply to remove):\n'
     while IFS= read -r skill; do
       printf '  %s\n' "$skill"
       json_q "$skill"; json_push legacy_permissions "$REPLY"
-    done <<< "$rows"
+    done < <(printf '%s\n' "${legacy_names[@]}")
   fi
 }
 
@@ -3014,7 +3046,7 @@ resolve_saved_selection() {
       SAVED_SELECTION+=("$skill")
       continue
     fi
-    if [[ "$SAVED_INCLUDE_INTERNAL" != true ]] && is_internal "$SKILLS_SRC/$skill"; then continue; fi
+    if [[ "$SAVED_SKILLS" == all && "$SAVED_INCLUDE_INTERNAL" != true ]] && is_internal "$SKILLS_SRC/$skill"; then continue; fi
     is_deprecated "$SKILLS_SRC/$skill" && continue
     [[ " ${SAVED_SELECTION[*]} " == *" $skill "* ]] || SAVED_SELECTION+=("$skill")
   done
@@ -3102,7 +3134,7 @@ sys.exit(root == backup or root in backup.parents)' "$dest" "$backup"; then
       state='not a link to the canonical skill'
     elif [[ "$kind" == copy && -L "$dest/$skill" ]]; then
       state='copy replaced by a symlink'
-    elif [[ "$SAVED_LINK" == true ]] && paths_match "$dest" "$CANONICAL_DIR" && canonical_referenced "$skill"; then
+    elif paths_match "$dest" "$CANONICAL_DIR" && canonical_referenced "$skill"; then
       state='still referenced by a tool link'
       advisory=true
     else

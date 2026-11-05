@@ -71,6 +71,12 @@ are never removed by an install or `--update`. `--doctor` lists those matching o
 prints it, backs up `opencode.json` beside the config as `opencode.json.*.bak`, then removes
 those legacy allows. This explicit cleanup can include user-created allows for old names;
 review the preview first. Config writes still use an atomic rename.
+An unverifiable lock in any known root conservatively keeps recorded allows. The installer
+warns once per lock per run. `--doctor --tool opencode` reports these locks with the exact
+file to delete if its checkout is retired, or the command to rerun from that checkout to
+refresh the lock. Restore a missing checkout before rerunning its installer.
+A malformed OpenCode config produces one warning during `--migrate` preview, skips the
+permission preview, and leaves the config unchanged.
 
 ### Multi-tool with symlinks
 
@@ -100,11 +106,15 @@ SKILLS_CANONICAL_DIR=~/my-skills ./install.sh --tool claude,roo --link
 
 ### Local private overlays
 
-Skills declaring `metadata.internal: "true"` and gitignored locally are skipped by default. Pass `--include-internal` to install them too.
+Skills declaring `metadata.internal: "true"` and gitignored locally are skipped by default.
+Pass `--include-internal` to include them in a whole-collection selection, or name them
+explicitly. An explicitly saved name remains selected during `--update` even when internal
+and `--include-internal` was not saved.
 
 `privilege-escalation` and `vulnerability-research` are becoming opt-in under
 [#412](https://github.com/iuliandita/skills/issues/412). Once marked internal, they require
-`--include-internal` in a saved setup to remain selected during `--update`.
+either explicit saved names or `--include-internal` in a saved whole-collection setup to
+remain selected during `--update`.
 
 ```bash
 ./install.sh --tool claude,codex,opencode --link --include-internal --force
@@ -236,6 +246,8 @@ reported but kept. Other copies are left alone. Doctor also lists legacy OpenCod
 without provenance that match old names in `migrations.json`. These findings are advisory;
 only unresolved duplicates make doctor exit 1. An invalid saved setup produces a warning
 and skips selection reporting while duplicate discovery continues.
+Unverifiable OpenCode locks are advisory findings in `unverifiable_locks`, including each
+lock's path, reason, and remedy. They are reported even when the OpenCode config is absent.
 
 ```bash
 ./install.sh --doctor                            # all tools in the table
@@ -421,8 +433,9 @@ apply, so the next update uses the new names. A remove-only selection becomes an
 explicit selection and stays empty on later updates and bare installs.
 
 After installation, each saved tool root converges to the active selection. Unselected
-names, deprecated notices, retired names, and skills that became internal without a saved
-`--include-internal` are prune candidates. Pruning requires an installer-owned lock record
+names, deprecated notices, retired names, and skills in a whole-collection selection that
+became internal without a saved `--include-internal` are prune candidates. Explicit saved
+names remain selected even if internal. Pruning requires an installer-owned lock record
 and a matching version 2 tree digest, including paths, entry types, executable bits, and
 symlink targets. A content hash alone never authorizes deletion. Each removed copy is
 backed up with the existing backup mechanism before deletion, and its lock entry is removed.
@@ -437,7 +450,9 @@ A saved name missing from upstream without a migration stays selected and instal
 reports "no longer in the source; see MIGRATION.md" and exits 6. In link mode only links to
 the canonical skill are removed; foreign links remain. Tool links are pruned before the
 canonical copies. Canonical pruning is skipped if any saved tool destination failed, and
-a canonical skill still targeted by a link in any known tool root is kept as advisory.
+a canonical skill still targeted by a link in any known tool root is kept as advisory,
+including when the saved setup uses copy mode. An unselected skill whose installed directory
+is already gone has its stale ownership and tree records removed without a partial exit.
 `--doctor` shows any remaining copies and why they cannot be pruned.
 
 Progress goes to stdout as timestamped lines, errors to stderr. The last stdout line of a
@@ -675,7 +690,7 @@ the common keys.
 | `--list` | `dest`, `skills` (`name`, `status` of `installed`, `linked`, or `available`, `deprecated`) |
 | `--check` | `dest`, `lock`, `skills` (`name`, `state` of `current`, `outdated`, or `not-installed`), `legacy` (`name`, `action`, `replacement`), `summary` (`current`, `outdated`, `not_installed`, `legacy`) |
 | `--detect` | `candidates` (`tool`, `evidence` of `kind` and `path`), `nomarker` tools, `suggested` tools |
-| `--doctor` | `tools` (`tool`, `roots`, `note`, `blocking`, `advisory`), `blocking` count, `blocking_tools` count, `outside_selection` (`name`, `path`, `ownership` of `installer-owned` or `other`, `prunable`, `reason`), `legacy_permissions` (old names with unrecorded OpenCode allows) |
+| `--doctor` | `tools` (`tool`, `roots`, `note`, `blocking`, `advisory`), `blocking` count, `blocking_tools` count, `outside_selection` (`name`, `path`, `ownership` of `installer-owned` or `other`, `prunable`, `reason`), `legacy_permissions` (old names with unrecorded OpenCode allows), `unverifiable_locks` (`path`, `reason`, `remedy`) |
 | `--migrate` | `apply`, `tools`, `records` (`dest`, `status` of `skip`, `dry-run`, `applied`, `backup`, or `noop`, `text`) |
 | `--update` | `status` of `current`, `updated`, or `partial`, `old` and `new` commit hashes, `changed` (installs, replacements, and pruned copies), `skipped`, `pruned` (`name`, `path`), `prune_kept` (`name`, `path`, `reason`) |
 
