@@ -693,8 +693,8 @@ PY
 LOCK_PUBLISHED=()
 
 write_lock() {
-  local lock_dir="$1"
-  shift
+  local lock_dir="$1" force="$2"
+  shift 2
   local skills=("$@")
   local lock_file="$lock_dir/.skills-lock.json"
   local now
@@ -733,7 +733,7 @@ write_lock() {
   # Records keep their v1 shape for --check and the migration helper. The v2
   # tree digest lives in `trees`, bound to the record's v1 hash so an entry a
   # v1-only writer left stale stops matching instead of vouching for it.
-  out="$(python3 -I - "$lock_file" "$SKILLS_SRC" "$now" "${updates[@]}" <<'PY'
+  out="$(python3 -I - "$lock_file" "$SKILLS_SRC" "$now" "$force" "${updates[@]}" <<'PY'
 import json
 import os
 import pathlib
@@ -744,6 +744,7 @@ import tempfile
 lock_path = pathlib.Path(sys.argv[1])
 source = pathlib.Path(sys.argv[2]).resolve(strict=True)
 updated_at = sys.argv[3]
+force = sys.argv[4] == "true"
 name = re.compile(r"^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$")
 skills = {}
 trees = {}
@@ -760,13 +761,14 @@ if lock_path.exists():
     except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError) as error:
         raise SystemExit(f"error: refusing to update unverified lock {lock_path}: {error}; inspect it or rerun with --force")
 published = []
-for item in sys.argv[4:]:
+for item in sys.argv[5:]:
     skill, digest, tree = item.split("=", 2)
     if not name.fullmatch(skill):
         continue
     published.append(skill)
     previous = skills.get(skill)
-    if previous is None or (isinstance(previous, dict) and previous.get("provenance") == "source-equal-v1"):
+    if previous is None or (isinstance(previous, dict) and previous.get("provenance") == "source-equal-v1") \
+            or (force and isinstance(previous, str)):
         skills[skill] = {"hash": digest, "provenance": "source-equal-v1"}
     elif isinstance(previous, str):
         skills[skill] = digest
@@ -1361,9 +1363,9 @@ guard_migration_dest() {
 
 # Write the lock, then drop the records of skills it published.
 publish_lock() {
-  local dest="$1" skill status=0
-  shift
-  if ! write_lock "$dest" "$@"; then
+  local dest="$1" force="$2" skill status=0
+  shift 2
+  if ! write_lock "$dest" "$force" "$@"; then
     printf '  [!] could not write %s/.skills-lock.json; install records kept for the next run\n' "$dest"
     return 1
   fi
@@ -3291,7 +3293,7 @@ update_dest() {
       *) update_failed "$skill" "replacement failed and was rolled back" ;;
     esac
   done
-  if ! publish_lock "$dest" "${UPD_INPLACE[@]}"; then
+  if ! publish_lock "$dest" false "${UPD_INPLACE[@]}"; then
     printf '  [!] %s: lock not published\n' "$dest" >&2
     (( UPD_FAILED++ )) || true
   fi
@@ -3785,7 +3787,7 @@ main() {
     (( DIFFER_COUNT == 0 )) || printf '  %d skill(s) differ; use --force to overwrite\n' "$DIFFER_COUNT"
     local canonical_ok=("${INSTALLED[@]}")
     json_dest "" "$CANONICAL_DIR" canonical "$DIFFER_COUNT" "${INSTALLED[@]}"
-    publish_lock "$CANONICAL_DIR" "${canonical_ok[@]}" || (( failed++ )) || true
+    publish_lock "$CANONICAL_DIR" "$force" "${canonical_ok[@]}" || (( failed++ )) || true
 
     # Create symlinks per tool
     for tool in "${tools[@]}"; do
@@ -3803,7 +3805,7 @@ main() {
         install_into link "$tool_dir" "$force" "$no_backup" "${canonical_ok[@]}"
         linked=("${INSTALLED[@]}")
         json_dest "$tool" "$tool_dir" link "$DIFFER_COUNT" "${INSTALLED[@]}"
-        publish_lock "$tool_dir" "${linked[@]}" || (( failed++ )) || true
+        publish_lock "$tool_dir" "$force" "${linked[@]}" || (( failed++ )) || true
       fi
       if [[ "$tool" == "opencode" ]]; then
         sync_opencode_permissions "$OPENCODE_CONFIG_FILE" "$tool_dir" sync "${linked[@]}" || (( failed++ )) || true
@@ -3851,7 +3853,7 @@ main() {
       json_dest "$tool" "$dest" copy "$DIFFER_COUNT" "${INSTALLED[@]}"
       (( DIFFER_COUNT == 0 )) || printf '  %d skill(s) differ; use --force to overwrite\n' "$DIFFER_COUNT"
 
-      publish_lock "$dest" "${INSTALLED[@]}" || (( failed++ )) || true
+      publish_lock "$dest" "$force" "${INSTALLED[@]}" || (( failed++ )) || true
       if [[ "$tool" == "opencode" ]]; then
         sync_opencode_permissions "$OPENCODE_CONFIG_FILE" "$dest" sync "${INSTALLED[@]}" || (( failed++ )) || true
       fi

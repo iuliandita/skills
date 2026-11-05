@@ -5,6 +5,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Bug Fixes
+
+* **install:** `--force` upgrades hash-only lock records with ownership provenance and a v2 tree digest for existing links and copies, so a later deselect and `--update` can prune them ([#423](https://github.com/iuliandita/skills/issues/423)).
+
 ## [4.0.0] - 2026-11-05
 
 ### Breaking Changes
