@@ -674,7 +674,7 @@ brevity; routing trials provide evidence about selection quality.
 | observability | high | 2026-06-14 | Metrics, traces, logs, alerts, SLOs, dashboards: Prometheus, OpenTelemetry, Grafana. Use for instrumentation, noisy alerts, cardinality. Not live incidents. |
 | opnsense-pfsense | high | 2026-03-30 | OPNsense and pfSense firewalls over SSH: pf rules, NAT, VLANs, Unbound, WireGuard, CARP failover, upgrades. Not plain Linux hosts. |
 | plan-review | high | 2026-09-20 | Pressure-test a plan or decision before building: requirements, assumptions, risks. Use for "review my plan", "is this a good idea", architecture choices. |
-| privilege-escalation | high | 2026-03-25 | Assess authorized Linux privilege escalation, container escapes, and post-exploitation paths in pentests and CTFs. |
+| privilege-escalation | high | 2026-03-25 | Assess authorized Linux privilege escalation: privesc enumeration after a shell, sudo and SUID checks, container escape, Kubernetes RBAC abuse, pivoting. |
 | prompt-generator | medium | 2026-03-25 | Write or improve LLM prompts, system prompts, and prompt templates from rough notes. Use for "write me a prompt". Not skill files or SDK code. |
 | repo-audit | high | 2026-09-20 | Whole-repo or PR audit across bugs, security, code quality, and docs, quick or exhaustive. Use for "audit this repo" or a pre-release check. |
 | rhel-fedora | high | 2026-04-22 | Fedora, RHEL, Rocky, AlmaLinux, CentOS Stream, Amazon Linux: dnf/rpm, EPEL, SELinux AVC denials, firewalld, system-upgrade, dracut, GRUB, akmods. |
@@ -689,7 +689,7 @@ brevity; routing trials provide evidence about selection quality.
 | testing | high | 2026-04-02 | Unit, integration, E2E, load, and a11y tests: pytest, vitest/jest, Playwright, fixtures, mocks, coverage. Use for adding tests or fixing flaky suites. |
 | update-docs | medium | 2026-03-25 | Update READMEs, changelogs, API docs, runbooks, and instruction files after changes; fix doc drift. Use for "update the docs" or a release sweep. |
 | virtualization | high | 2026-04-02 | VMs and hypervisors: Proxmox, QEMU/KVM, libvirt, XCP-ng, VMware/ESXi; templates, cloud-init, storage, clustering, backups, GPU passthrough. |
-| vulnerability-research | high | 2026-04-03 | Research vulnerabilities in authorized targets through code analysis, reverse engineering, patch diffing, and fuzzing. |
+| vulnerability-research | high | 2026-04-03 | Find undisclosed vulnerabilities in authorized targets: code analysis, reverse engineering, patch diffing, fuzzing, PoC, disclosure report. Use for bug bounty. |
 
 Deprecated notices are migration aids, excluded from the active inventory above but included
 in published totals and migration-test coverage. Derive all counts from the live collection.
