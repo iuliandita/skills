@@ -1,7 +1,7 @@
 ---
 name: dev-cycle
 description: >
-  Run a full development workflow end to end: branch, implement, check, review, PR, merge, and release. Use when the user kicks off or wraps up a feature ("let's add X", "ship this", "ready to merge"). Single git operations go to git.
+  Full feature workflow: branch, implement, check, review, PR, merge, release. Use for "let's add X" or "ship this". Single git steps go to git.
 license: MIT
 compatibility: "Requires git. Optional forge CLIs by host: gh (GitHub), glab (GitLab), fj (Forgejo), tea (Gitea). Bitbucket uses web UI or REST API. Bare git (no remote) works via format-patch/bundle. Uses jq for JSON output and rg (ripgrep) for version search. Delegates to git, testing, code-review, update-docs, and a brainstorming skill if installed."
 metadata:

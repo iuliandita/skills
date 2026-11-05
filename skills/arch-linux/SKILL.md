@@ -1,7 +1,7 @@
 ---
 name: arch-linux
 description: >
-  Administer Arch Linux, CachyOS, EndeavourOS, and Manjaro: pacman, paru/AUR, keyrings, rolling upgrades, boot, GPU, and desktop issues. Use for a broken update, .pacnew merges, initramfs or bootloader failures, NVIDIA, Hyprland, or Steam problems on an Arch-family host.
+  Arch, CachyOS, EndeavourOS, Manjaro admin: pacman, paru/AUR, keyrings, broken upgrades, .pacnew, boot, NVIDIA, Hyprland.
 license: MIT
 compatibility: "Requires Arch Linux, CachyOS, or an Arch-based distro with pacman. Optional: paru, pacman-contrib (pacdiff, paccache), reflector, sbctl, snapper"
 metadata:

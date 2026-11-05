@@ -1,7 +1,7 @@
 ---
 name: docker
 description: >
-  Build, debug, and harden Dockerfiles, Compose stacks, and Podman/BuildKit images. Use for build failures, Compose networking or volumes, image size, multi-arch publishing, signing, SBOMs, or container security. Not Kubernetes or CI pipelines.
+  Dockerfiles, Compose, Podman, BuildKit: build failures, networking, volumes, image size, multi-arch, signing, SBOMs, hardening. Not Kubernetes.
 license: MIT
 compatibility: "Requires docker or podman. Optional: docker compose, buildkit, cosign, trivy, syft"
 metadata:

@@ -1,7 +1,7 @@
 ---
 name: backend-api
 description: >
-  Design and review REST/HTTP APIs, with bounded GraphQL, gRPC, and message-broker contract guidance. Use for OpenAPI specs, status codes, error formats, pagination, versioning, auth flows, idempotent retries, or queue delivery semantics such as acks, dead letters, and replay.
+  REST/HTTP API design and review, plus GraphQL, gRPC, and broker contracts: OpenAPI, errors, pagination, versioning, auth, retries, acks, DLQs.
 license: MIT
 compatibility: "Optional: Python or Node.js framework context. Optional: OpenAPI-capable framework/docs tooling"
 metadata:

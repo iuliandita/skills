@@ -1,7 +1,7 @@
 ---
 name: llm-app-development
 description: >
-  Build LLM applications: API integration, RAG, embeddings, vector stores, agents and tool calling, structured outputs, evals, fine-tuning, and local inference with Ollama or vLLM. Use when adding an AI feature to an app; single prompts go to prompt-generator, MCP servers to mcp.
+  LLM apps: API calls, RAG, embeddings, vector stores, agents, tool calling, structured output, evals, fine-tuning, Ollama/vLLM. Use when adding AI features.
 license: MIT
 compatibility: "Varies by task. Common: Python 3.10+, Node.js 18+. Optional: GPU for local inference"
 metadata:
