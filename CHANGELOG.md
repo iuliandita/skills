@@ -5,8 +5,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [4.0.2] - 2026-11-05
+
 ### Bug Fixes
 
+* **descriptions:** shorter skill descriptions bring the listing every session loads from ~9,900 to ~5,500 characters for the 38 default skills, back under Claude Code's listing budget; routing accuracy on a 172-prompt set is unchanged. The advisory description window is now 80-170 characters ([#427](https://github.com/iuliandita/skills/issues/427)).
 * **install:** a zero `SKILLS_LOCK_WAIT`, the `--update` default, takes the lock with `flock -n`, so `--update` runs with the BSD-style `flock` on macOS instead of exiting 3 as if another run held the lock ([#439](https://github.com/iuliandita/skills/issues/439)).
 
 ## [4.0.1] - 2026-11-05
@@ -703,7 +706,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Bootstrap baseline before release-please automation.
 
-[Unreleased]: https://github.com/iuliandita/skills/compare/v4.0.1...HEAD
+[Unreleased]: https://github.com/iuliandita/skills/compare/v4.0.2...HEAD
+[4.0.2]: https://github.com/iuliandita/skills/compare/v4.0.1...v4.0.2
 [4.0.1]: https://github.com/iuliandita/skills/compare/v4.0.0...v4.0.1
 [4.0.0]: https://github.com/iuliandita/skills/compare/v3.1.0...v4.0.0
 [3.1.0]: https://github.com/iuliandita/skills/compare/v3.0.0...v3.1.0
