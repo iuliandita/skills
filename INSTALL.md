@@ -8,7 +8,7 @@ Full install, update, and structure docs for the skills repo. For a quick start,
 
 `main` is the stable channel and `develop` is the nightly. `npx skills add iuliandita/skills`
 installs the default branch, which is `develop`; append `#main` to install the stable channel.
-The interactive list and `--all` also offer the two opt-in security skills; see
+The interactive list and `--all` leave out the two opt-in security skills; see
 [Local private overlays](#local-private-overlays).
 
 ```bash
@@ -108,7 +108,7 @@ SKILLS_CANONICAL_DIR=~/my-skills ./install.sh --tool claude,roo --link
 
 ### Local private overlays
 
-Skills declaring `metadata.internal: "true"` and gitignored locally are skipped by default.
+Skills declaring `metadata.internal: true` and gitignored locally are skipped by default.
 Pass `--include-internal` to include them in a whole-collection selection, or name them
 explicitly. An explicitly saved name remains selected during `--update` even when internal
 and `--include-internal` was not saved.
@@ -116,9 +116,9 @@ and `--include-internal` was not saved.
 `privilege-escalation` and `vulnerability-research` are opt-in since v4.0.0
 ([#412](https://github.com/iuliandita/skills/issues/412)). They need explicit saved names or
 `--include-internal` in a saved whole-collection setup to stay selected during `--update`.
-`npx skills add` does not skip them yet: skills.sh only honours a boolean `internal`, and this
-pack writes the string the Agent Skills spec requires
-([#431](https://github.com/iuliandita/skills/issues/431)). Pick skills with `--skill` there.
+`npx skills add` skips them too, because they mark `internal` with the YAML boolean skills.sh
+reads. That is the pack's only non-string metadata value; the Agent Skills spec asks for strings
+([#431](https://github.com/iuliandita/skills/issues/431)). Add one there with `--skill <name>`.
 
 ```bash
 ./install.sh --tool claude,codex,opencode --link --include-internal --force
@@ -132,7 +132,7 @@ Before using `--force`, copy any overlay that exists only in the installed skill
 `skills/kubernetes-health/protected/` in the source checkout. Forced installs replace the whole
 skill directory; they do not preserve or merge installed-only files into the new copy.
 
-`kubernetes-health` is public, so it no longer needs `--include-internal`; that flag is only for separate gitignored skills with `metadata.internal: "true"`.
+`kubernetes-health` is public, so it no longer needs `--include-internal`; that flag is only for separate gitignored skills with `metadata.internal: true`.
 
 `scripts/check-private-skill-leaks.sh` scans public files for private markers, additively drawn from the `protected/private-patterns.txt` overlays above, a gitignored `private-patterns.txt` at the repo root (see `private-patterns.example.txt`), and a file path in `SKILLS_PRIVATE_PATTERNS`. CI never sees your local overlay or root file; it only sees markers you explicitly supply it, typically by writing a repository secret to a file and pointing `SKILLS_PRIVATE_PATTERNS` at it.
 

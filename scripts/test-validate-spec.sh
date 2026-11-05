@@ -229,7 +229,9 @@ test_spec_keys_and_metadata_strings() {
   local -a cases=(
     "unknown key|paths: src/|unknown top-level key 'paths'"
     "boolean metadata|metadata:
-  internal: true|metadata.internal must be a string"
+  deprecated: true|metadata.deprecated must be a string"
+    "false internal|metadata:
+  internal: false|metadata.internal must be a string"
     "float metadata|metadata:
   version: 1.0|metadata.version must be a string"
   )
@@ -258,6 +260,16 @@ metadata:
   if (( status != 0 )); then
     printf '%s\n' "$output" >&2
     fail "validator rejected quoted metadata strings"
+  fi
+  rm -rf "$tmp/skills"
+  write_frontmatter "$tmp/skills" fixture 'name: fixture
+description: A fixture skill.
+metadata:
+  internal: true'
+  run_validator "$tmp/skills" output status
+  if (( status != 0 )); then
+    printf '%s\n' "$output" >&2
+    fail "validator rejected the boolean internal flag skills.sh needs"
   fi
   rm -rf "$tmp"
   trap - RETURN
