@@ -5,6 +5,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Bug Fixes
+
+* **install:** `--update` falls back to `gtimeout` when `timeout` is missing, so it runs on macOS with MacPorts or Homebrew coreutils instead of exiting 10 ([#426](https://github.com/iuliandita/skills/issues/426)).
+
 ## [4.0.0] - 2026-11-05
 
 ### Breaking Changes

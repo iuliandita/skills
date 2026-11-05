@@ -381,8 +381,8 @@ branch tracks a remote, then schedule the update:
 ./install.sh --update
 ```
 
-`--update` takes no other options or skill names. It needs `git`, `flock`, `timeout`, and
-`python3`. Each run:
+`--update` takes no other options or skill names. It needs `git`, `flock`, GNU `timeout` (or
+`gtimeout`, the name MacPorts and Homebrew coreutils use), and `python3`. Each run:
 
 1. Takes the installer lock without waiting, before it reads the saved config or touches
    the checkout. Another run holding it means exit 3; set `SKILLS_LOCK_WAIT` to wait that
@@ -475,7 +475,7 @@ update: partial 1a2b3c4d5e6f..7a8b9c0d1e2f changed=2 skipped=1
 | 6 | Finished, but some skills were skipped (see above) |
 | 7 | The lock or config directory cannot be created or opened |
 | 8 | The updated installer could not be started (missing or does not parse); HEAD is at the new commit, rerun |
-| 10 | `flock`, `timeout`, `git`, or `python3` is missing |
+| 10 | `flock`, `timeout` (and `gtimeout`), `git`, or `python3` is missing |
 | 130, 143 | Interrupted by SIGINT or SIGTERM |
 
 Exits 2, 3, 4, 5, 7, and 10 leave HEAD, the index, and the working tree unchanged (a fetch may
