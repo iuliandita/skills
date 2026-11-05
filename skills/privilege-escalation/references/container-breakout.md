@@ -231,7 +231,7 @@ Not technically a "container escape" but commonly found during Linux privesc enu
 | CVE-2024-24557 | Docker/Moby | Build cache poisoning | Docker < 25.0.2 |
 | CVE-2022-0492 | Linux kernel | cgroup v1 release_agent escape | kernel < 5.17 |
 
-Version ranges verified October 2026 against the upstream runc advisories for
+Version ranges verified November 2026 (2026-11-05) against the upstream runc advisories for
 [CVE-2024-21626](https://github.com/opencontainers/runc/security/advisories/GHSA-xr7r-f8xq-vfvv),
 [CVE-2025-31133](https://github.com/opencontainers/runc/security/advisories/GHSA-9493-h29p-rfm2),
 [CVE-2025-52565](https://github.com/opencontainers/runc/security/advisories/GHSA-qw9x-cqr3-wc7r),

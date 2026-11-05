@@ -1232,6 +1232,59 @@ test_size_reporting() {
   trap - RETURN
 }
 
+test_skill_inventory() {
+  local tmp case file output status expected
+  for case in valid missing-heading wrong-count duplicate missing extra empty; do
+    tmp="$(mktemp -d)"
+    trap 'rm -rf "$tmp"' RETURN
+    write_minimal_skill "$tmp/skills/lint-fixture" lint-fixture
+    write_minimal_skill "$tmp/skills/skill-creator" skill-creator
+    printf '\nSee [conventions](references/conventions.md).\n' >> "$tmp/skills/skill-creator/SKILL.md"
+    file="$tmp/skills/skill-creator/references/conventions.md"
+    printf '### Active skills (2)\n\n| Skill | Purpose |\n|---|---|\n| skill-creator | Fixture |\n| lint-fixture | Fixture |\n' > "$file"
+    case "$case" in
+      missing-heading)
+        sed -i 's/### Active skills (2)/### Inventory/' "$file"
+        expected="has no '### Active skills (N)' inventory heading"
+        ;;
+      wrong-count)
+        sed -i 's/Active skills (2)/Active skills (3)/' "$file"
+        expected='inventory says Active skills (3) but 2 are active'
+        ;;
+      duplicate)
+        printf '| lint-fixture | Duplicate |\n' >> "$file"
+        expected='inventory lists a skill more than once'
+        ;;
+      missing)
+        sed -i '/^| lint-fixture |/d' "$file"
+        expected="inventory is missing active skill 'lint-fixture'"
+        ;;
+      extra)
+        printf '| extra | Unknown |\n' >> "$file"
+        expected="inventory lists 'extra', which is not an active skill"
+        ;;
+      empty)
+        sed -i '/^|/d' "$file"
+        expected="inventory is missing active skill 'skill-creator'"
+        ;;
+    esac
+    status=0
+    output="$("$ROOT/scripts/lint-skills.sh" "$tmp/skills" 2>&1)" || status=$?
+    if [[ "$case" == valid ]]; then
+      (( status == 0 )) || fail "$case: $output"
+    else
+      (( status == 1 )) || fail "$case: expected lint failure, got $status"
+      grep -Fq "$expected" <<< "$output" || fail "$case: $output"
+      if [[ "$case" == duplicate ]]; then
+        ! grep -q 'which is not an active skill' <<< "$output" || fail 'duplicate active skill was called inactive'
+      fi
+    fi
+    rm -rf "$tmp"
+    trap - RETURN
+  done
+}
+
+test_skill_inventory
 test_size_reporting
 test_reference_files_are_scanned
 test_reference_examples_are_ignored
