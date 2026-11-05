@@ -1,7 +1,7 @@
 ---
 name: mcp
 description: >
-  Model Context Protocol servers and clients: tools, resources, prompts, stdio/HTTP transport, OAuth, tool poisoning. Use for writing a server or fixing a client.
+  MCP (Model Context Protocol) servers and clients: tools, resources, prompts, stdio/HTTP transport, OAuth, tool poisoning. Use for writing a server or fixing a client.
 license: MIT
 compatibility: "Requires Node.js or Python runtime; uv for the Python dev inspector"
 metadata:

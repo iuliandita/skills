@@ -668,7 +668,7 @@ brevity; routing trials provide evidence about selection quality.
 | kubernetes | high | 2026-03-24 | Kubernetes manifests, Helm, Kustomize, Gateway API, ArgoCD: probes, limits, RBAC, network policies, ingress, GitOps. Live health: kubernetes-health. |
 | kubernetes-health | high | 2026-03-30 | Read-only live cluster health check: nodes, pods, events, storage, networking, GitOps sync. Use for "is the cluster healthy" or post-upgrade checks. |
 | llm-app-development | high | 2026-04-02 | LLM apps: API calls, RAG, embeddings, vector stores, agents, tool calling, structured output, evals, fine-tuning, Ollama/vLLM. Use when adding AI features. |
-| mcp | high | 2026-03-30 | Model Context Protocol servers and clients: tools, resources, prompts, stdio/HTTP transport, OAuth, tool poisoning. Use for writing a server or fixing a client. |
+| mcp | high | 2026-03-30 | MCP (Model Context Protocol) servers and clients: tools, resources, prompts, stdio/HTTP transport, OAuth, tool poisoning. Use for writing a server or fixing a client. |
 | networking | high | 2026-03-25 | Linux networking: DNS, reverse proxies, load balancers, WireGuard/VPNs, VLANs, nftables, routing, TLS, MTU, packet captures. Not firewall appliances. |
 | nixos | high | 2026-04-23 | NixOS and Nix: configuration.nix, flakes, nixos-rebuild, Home Manager, nix-darwin, overlays, dev shells, sops-nix. Use for failing rebuilds, rollbacks. |
 | observability | high | 2026-06-14 | Metrics, traces, logs, alerts, SLOs, dashboards: Prometheus, OpenTelemetry, Grafana. Use for instrumentation, noisy alerts, cardinality. Not live incidents. |
