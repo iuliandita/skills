@@ -2850,10 +2850,18 @@ update_expect_config() {
 
 run_update() {
   local timeout_s="${SKILLS_UPDATE_TIMEOUT:-300}" wait="${SKILLS_LOCK_WAIT:-0}"
-  local cmd repo branch status old sha head rc
+  local cmd repo branch status old sha head rc timeout_cmd
   trap 'exit 130' INT
   trap 'exit 143' TERM
-  for cmd in timeout git python3; do
+  # macOS package managers install GNU coreutils with a g prefix.
+  if command -v timeout >/dev/null 2>&1; then
+    timeout_cmd=timeout
+  elif command -v gtimeout >/dev/null 2>&1; then
+    timeout_cmd=gtimeout
+  else
+    update_fail 10 "timeout (GNU coreutils, gtimeout on macOS) is required for --update; install it and rerun"
+  fi
+  for cmd in git python3; do
     command -v "$cmd" >/dev/null 2>&1 || update_fail 10 "$cmd is required for --update; install it and rerun"
   done
   [[ "$timeout_s" =~ ^[1-9][0-9]*$ ]] || update_fail 2 "SKILLS_UPDATE_TIMEOUT must be a positive whole number of seconds: $timeout_s"
@@ -2889,7 +2897,7 @@ run_update() {
   # timeout puts git in its own process group, out of reach of a signal sent
   # to this shell, and a trap would only run once it exits. Waiting on it as a
   # job lets a signal end the wait and be forwarded.
-  timeout -k 10 "$timeout_s" git -C "$repo" -c core.hooksPath=/dev/null fetch --quiet --no-tags \
+  "$timeout_cmd" -k 10 "$timeout_s" git -C "$repo" -c core.hooksPath=/dev/null fetch --quiet --no-tags \
     --no-recurse-submodules -- "$SAVED_SOURCE_REMOTE" "$SAVED_SOURCE_UPSTREAM" </dev/null 9>&- &
   UPDATE_FETCH_PID=$!
   trap 'kill -TERM "$UPDATE_FETCH_PID" 2>/dev/null || true; wait "$UPDATE_FETCH_PID" 2>/dev/null || true; exit 130' INT
