@@ -103,7 +103,7 @@ reject_trigger databases migration
 reject_trigger testing spec
 reject_trigger kubernetes deployment
 reject_trigger kubernetes gateway
-reject_trigger frontend-design 'design review'
+reject_trigger ui-build 'design review'
 reject_trigger vulnerability-research CVE
 reject_trigger repo-audit 'run all checks'
 reject_trigger repo-audit 'full check'
@@ -142,18 +142,18 @@ test_scoped_audit_detection() (
   git -C "$fixture" add .
   cd "$fixture"
   output="$(REPO_AUDIT_ROOT_MANIFESTS=0 bash "$ROOT/skills/repo-audit/references/detect.sh" service)"
-  if grep -Eq '^(message-queues|performance-debugging|observability)$' <<< "$output"; then
+  if grep -Eq '^(backend-api|debug-triage|observability)$' <<< "$output"; then
     fail "generic scoped filenames activated broker, profiling, or telemetry lanes"
   fi
   output="$(bash "$ROOT/skills/repo-audit/references/detect.sh" service)"
-  grep -qx message-queues <<< "$output" || fail "root queue dependency was not reported as a candidate"
-  grep -qx performance-debugging <<< "$output" || fail "root profiling dependency was not reported as a candidate"
+  grep -qx backend-api <<< "$output" || fail "root queue dependency was not reported as a candidate"
+  grep -qx debug-triage <<< "$output" || fail "root profiling dependency was not reported as a candidate"
   mkdir -p service/Consumers service/profiling other/queues
   touch service/Consumers/orders.ts service/profiling/cpu.cpuprofile other/queues/tasks.ts
   git add .
   output="$(REPO_AUDIT_ROOT_MANIFESTS=0 bash "$ROOT/skills/repo-audit/references/detect.sh" service)"
-  grep -qx message-queues <<< "$output" || fail "scoped queue component was not detected case-insensitively"
-  grep -qx performance-debugging <<< "$output" || fail "scoped profiling artifact was not detected"
+  grep -qx backend-api <<< "$output" || fail "scoped queue component was not detected case-insensitively"
+  grep -qx debug-triage <<< "$output" || fail "scoped profiling artifact was not detected"
 )
 
 test_manifest_audit_detection() (
@@ -176,10 +176,10 @@ test_manifest_audit_detection() (
   output="$(detect_case poetry pyproject.toml $'[tool.poetry.dependencies]\npython = "^3.12"\nfastapi = "^0.115"')"
   grep -qx backend-api <<< "$output" || fail "Poetry fastapi was not detected as backend-api"
   output="$(detect_case natsort pyproject.toml $'[project]\ndependencies = ["natsort>=8"]')"
-  grep -qx message-queues <<< "$output" && fail "natsort activated message-queues"
+  grep -qx backend-api <<< "$output" && fail "natsort activated backend-api"
   output="$(detect_case js package.json '{"dependencies":{"next-tick":"1","0xproject":"1"}}')"
-  grep -qx frontend-design <<< "$output" && fail "next-tick activated frontend-design"
-  grep -qx performance-debugging <<< "$output" && fail "0xproject activated performance-debugging"
+  grep -qx ui-build <<< "$output" && fail "next-tick activated ui-build"
+  grep -qx debug-triage <<< "$output" && fail "0xproject activated debug-triage"
   output="$(detect_case keywords pyproject.toml $'[project]\nname = "x"\nkeywords = ["mcp"]\ndependencies = []')"
   grep -qx mcp <<< "$output" && fail "a pyproject mcp keyword activated mcp"
   output="$(detect_case tools .github/tools/x/requirements.txt 'mcp==1.0')"

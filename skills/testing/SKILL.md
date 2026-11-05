@@ -1,7 +1,7 @@
 ---
 name: testing
 description: >
-  Write unit, integration, E2E, load, and accessibility tests; debug fixtures, mocks, coverage, and flaky suites.
+  Write and debug unit, integration, E2E, load, and accessibility tests: pytest, vitest/jest, Playwright, fixtures, mocks, coverage, and flaky or failing suites. Use when adding tests, fixing a red run, or deciding what to test.
 license: MIT
 compatibility: "Requires one or more of: vitest, jest, pytest, go test, cargo test, playwright. Optional: k6 (load tests), @axe-core/playwright, pytest-xdist, cargo-nextest"
 metadata:
@@ -15,28 +15,8 @@ metadata:
 
 Write, structure, and maintain tests across unit, integration, E2E, accessibility, and performance layers. The goal is tests that catch regressions, document behavior, and run fast in CI - not tests that exist to inflate coverage numbers.
 
-**Target versions** (October 2026):
-- Vitest **5.0.5**, Jest **30.5.2**
-- Playwright **1.64.1**, Cypress **16.1.1** (both Vitest and Cypress are major upgrades; review migration notes)
-- pytest **9.2.0**, pytest-cov **7.1.0**
-- Go **1.27.3** (testing stdlib, `testing/synctest` GA)
-- Rust **1.99.0** (`cargo test`, cargo-nextest **0.9.150**)
-- Testing Library **16.3.3** (`@testing-library/react`)
-- axe-core **4.14.0** (`@axe-core/playwright`)
-- Grafana k6 **2.3.0**
-
-Security check (2026-10-28): [GHSA-2h32-95rg-cppp](https://github.com/vitest-dev/vitest/security/advisories/GHSA-2h32-95rg-cppp)
-is critical browser-runner script injection that can expose the API token and lead to local code
-execution. It affects `@vitest/browser` >=4.0.17,<4.1.6 and >=5.0.0-beta.0,<5.0.0-beta.3;
-fixes are 4.1.6 and 5.0.0-beta.3. Keep browser packages aligned with the stable runner and do not
-open untrusted runner URLs while the server is active. Later critical browser-mode advisories
-([GHSA-g8mr-85jm-7xhm](https://github.com/advisories/GHSA-g8mr-85jm-7xhm), [GHSA-p63j-vcc4-9vmv](https://github.com/advisories/GHSA-p63j-vcc4-9vmv))
-raise the 4.x floor to 4.1.10 and the 3.x floor to 3.2.7. October 21 advisories raise them again:
-[GHSA-p458-7748-mcp3](https://github.com/advisories/GHSA-p458-7748-mcp3) (`server.fs.deny` bypass
-serving `.env`, keys, and the API token; `@vitest/ui`/`@vitest/browser` <5.0.5) and
-[GHSA-qxg6-89mg-rqv8](https://github.com/advisories/GHSA-qxg6-89mg-rqv8) (mock-registration code
-injection; `@vitest/mocker` <4.1.12 and 5.0.x <5.0.3). Floors are 5.0.5 and 4.1.12; 3.x has no
-patched release, so move off it.
+**Target versions**: see `references/versions.md` (verified per the receipt date
+in that file). Do not restate version numbers here.
 
 ## When to use
 
@@ -50,8 +30,8 @@ patched release, so move off it.
 
 ## When NOT to use
 
-- Profiling and optimizing an identified application bottleneck - use **performance-debugging**.
-- Broker acknowledgement, redelivery, dead-letter, or replay semantics - use **message-queues**.
+- Profiling and optimizing an identified application bottleneck - use **debug-triage**.
+- Broker acknowledgement, redelivery, dead-letter, or replay semantics - use **backend-api**.
 - Reviewing existing test quality or correctness as part of a code review - use **code-review**
 - Security-specific testing (penetration testing, OWASP checks) - use **security-audit**
 - Cleaning up verbose/sloppy test code - use **code-simplification**
@@ -254,7 +234,7 @@ Catch WCAG violations automatically. Not a replacement for manual testing, but c
 
 Use `@axe-core/playwright` (if missing, add it as a dev dependency with the repo's package manager: `npm install -D`, `pnpm add -D`, `yarn add -D`, or `bun add -d` `@axe-core/playwright`) - run `new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze()` and assert zero violations. Scope axe scans to the pages or components the change touches, not the whole app on every change. Exclude known issues with `.exclude()` and track them as tech debt, not permanent exceptions.
 
-Own repeatable accessibility regression checks here; use **frontend-design** to repair interaction design and semantics. Record manual keyboard and screen-reader coverage separately from automated scan results.
+Own repeatable accessibility regression checks here; use **ui-build** to repair interaction design and semantics. Record manual keyboard and screen-reader coverage separately from automated scan results.
 
 Read `references/e2e-accessibility.md` for Playwright E2E patterns, visual regression setup, and CI accessibility gates.
 

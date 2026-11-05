@@ -1,7 +1,7 @@
 ---
 name: mcp
 description: >
-  Build and debug Model Context Protocol (MCP) servers, clients, tools, resources, and OAuth integrations.
+  Build and debug Model Context Protocol (MCP) servers and clients: tools, resources, prompts, stdio or streamable HTTP transport, and OAuth. Use for writing an MCP server, adding a tool handler, fixing client connection failures, or reviewing a server for tool poisoning.
 license: MIT
 compatibility: "Requires Node.js or Python runtime; uv for the Python dev inspector"
 metadata:
@@ -17,11 +17,8 @@ Build, review, and debug MCP servers that expose tools, resources, and prompts t
 assistants. The goal is secure, well-structured servers that follow the protocol spec and don't
 become yet another server with preventable injection vulnerabilities.
 
-**Target versions** (October 2026):
-- MCP specification: 2026-07-28 (current stable; stateless core, extensions framework, and no initialize/session handshake)
-- TypeScript SDK: `@modelcontextprotocol/server`, `@modelcontextprotocol/client`, and `@modelcontextprotocol/core` 2.4.0 (the monolithic `@modelcontextprotocol/sdk` 1.32.2 is the legacy line; the 2026-10-02 releases restrict client redirects to the same origin, and 2.3.0+ serves one connection per `Server` instance). Security floors: server and client 2.3.0, sdk 1.32.0, server-legacy 2.3.1, express 2.0.2 (October 20 advisories, see references/security.md); these supersede the OAuth credential-redirect floors ([CVE-2026-104850](https://github.com/modelcontextprotocol/typescript-sdk/security/advisories/GHSA-6qxp-vccf-f47h)) of client 2.2.0 / sdk 1.31.0
-- Python SDK: mcp 2.3.0 (2.x stable; review the v1-to-v2 migration guide). 2.2.0 (or 1.30.0 on 1.x) is the floor for the high-severity OAuth credential-redirect (GHSA-qx49) and medium unreclaimed-session (CVE-2026-59951) advisories ([GHSA-qx49-fqc8-xw99](https://github.com/modelcontextprotocol/python-sdk/security/advisories/GHSA-qx49-fqc8-xw99), [CVE-2026-59951](https://github.com/modelcontextprotocol/python-sdk/security/advisories/GHSA-84m7-p3x7-pcfv))
-- Protocol transports: stdio and Streamable HTTP. The standalone HTTP+SSE transport is deprecated and available only as a temporary legacy bridge
+**Target versions**: see `references/versions.md` (verified per the receipt date
+in that file). Do not restate version numbers here.
 
 ## When to use
 
@@ -412,6 +409,7 @@ AI models consistently make these errors when generating MCP server code:
 - `references/security.md` - OAuth 2.1 details, known CVEs, injection test payloads,
   path traversal and SSRF prevention, stateless transport and legacy sessions, and tool poisoning defense. Read it
   when implementing auth, hardening handlers, or reviewing a server
+- `references/versions.md` - dated version receipts (pins, sources, security floors)
 
 ## Output Contract
 

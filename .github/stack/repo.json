@@ -71,7 +71,7 @@
     },
     {
       "check": "ascii-markdown",
-      "path": "skills/frontend-design/references/glitch-effects.md",
+      "path": "skills/ui-build/references/glitch-effects.md",
       "match": "U+2713",
       "reason": "The checklist uses check marks as part of the reference content."
     },

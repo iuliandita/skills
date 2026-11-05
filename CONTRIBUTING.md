@@ -20,6 +20,30 @@ code-audit skills join a wave in `skills/repo-audit/references/exhaustive-workfl
 `detect.sh` for conditional lanes); meta, workflow and operational skills get a
 `| **name** | reason |` row in `skills/repo-audit/references/exclusions.md`.
 
+## Adding, merging, renaming or removing a skill
+
+Catalog changes touch many files. `refiner-rubric-hash.sh` hashes
+`skills/skill-refiner/references/test-cases.md` and `skills/skill-creator/references/conventions.md`,
+so any change to either resets the refiner rubric: batch catalog changes into one PR.
+
+- [ ] `README.md`: the skill's row in its group, and the "N active skills" count.
+- [ ] `MIGRATION.md` and `migrations.json`: for a rename, merge or removal, add the old name with its
+  replacement and its own `transition`, and keep a `metadata.deprecated` notice skill until the
+  window ends. A new skill needs no entry.
+- [ ] `skills/skill-refiner/references/test-cases.md`: one section with tests and prompts per skill;
+  drop the section when the skill is retired (a deprecated notice keeps its section until removed).
+- [ ] repo-audit coverage: a wave in `exhaustive-workflow.md` and a lane in `detect.sh` for
+  domain skills, or a row in `exclusions.md` for meta and operational skills; update
+  `detection-patterns.md` when detection changes.
+- [ ] `skills/skill-creator/references/conventions.md`: the "Active skills (N)" inventory row and count.
+- [ ] Routing lines in other skills that name the skill ("goes to <skill>"), including old names.
+- [ ] Docs-impact: `scripts/check-docs-impact.sh` lists the docs a removal or rename must update.
+- [ ] `CHANGELOG.md`: an `Unreleased` entry; renames, merges and removals are Breaking Changes.
+
+`lint-skills.sh` gates the README count and links, the inventory, and the test-cases sections;
+`check-deep-audit-coverage.sh` gates repo-audit. Both use `list_public_skills` in
+`scripts/skill-lib.sh`, the one definition of a public skill.
+
 ## Checks and documentation
 
 ```sh

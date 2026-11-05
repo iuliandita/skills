@@ -1,6 +1,6 @@
 # Catalog migration
 
-The collection now has 43 active skills. The nineteen old names shipped as small deprecation
+The collection now has 40 active skills. The v2 old names shipped as small deprecation
 notices from v2.0.0 and were retired after the transition window. Updating the collection does
 not remove stale local copies of old names; migrate them with the steps below. Old tags still
 contain the notices.
@@ -23,9 +23,13 @@ contain the notices.
 | localize | i18n-localization |
 | handoff | session-handoff |
 | routine-writer, browse, skill-router | Removed without a replacement skill |
+| kali-linux | debian-ubuntu |
+| performance-debugging | debug-triage |
+| frontend-design | ui-build |
+| message-queues | Removed; see backend-api for delivery semantics |
 
 Use the host's browsing, scheduling, and normal skill-selection capabilities for the
-removed entries. New specialist entries are `message-queues` and `performance-debugging`.
+removed entries. Kali administration and performance diagnosis now live in their respective replacement skills.
 `databases` now includes Redis/Valkey; `backend-api` includes GraphQL/gRPC.
 
 ## Transition window
@@ -35,8 +39,7 @@ that release is published. Remove them in the following release once both condit
 hold. A fast follow-up release must retain them if seven days have not elapsed; the
 minimum time takes precedence. The window does not start at merge time.
 
-The release tag and actual publication time are recorded in [migrations.json](migrations.json).
-Null values mean the transition release has not been recorded and retirement is blocked.
+Each entry may define its own transition in [migrations.json](migrations.json); entries without one use the top-level v2 window. The tag identifies the transition release, and the actual publication time starts that entry's window. A null publication time or release blocks retirement for that entry.
 The manifest and this guide remain after the notices are removed.
 
 An upstream change cannot rewrite an old copied installation. Users must update during

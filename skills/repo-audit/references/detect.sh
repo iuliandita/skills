@@ -30,9 +30,9 @@ grep -qE '\.sql$|migrations/|\.prisma$|knexfile\.|alembic|flyway/|drizzle\.confi
 grep -qE 'openapi\.|swagger\.' <<< "$files" \
   && matched+=(backend-api)
 
-# frontend-design
+# ui-build
 grep -qE 'astro\.config|svelte\.config|next\.config|vite\.config|tailwind\.config|(^|/)(src/)?(app|pages|routes)/|(^|/)components/|\.(css|scss|sass|tsx|jsx|svelte|astro|vue)$' <<< "$files" \
-  && matched+=(frontend-design)
+  && matched+=(ui-build)
 
 # i18n-localization
 grep -qE 'locales/|i18n/|\.po$|\.pot$|\.xliff$|\.xlf$|messages\.[a-z].*\.json$|messages\.[a-z].*\.yaml$' <<< "$files" \
@@ -44,9 +44,9 @@ grep -qE '(^|/)\.?mcp\.json$' <<< "$files" \
 
 # message queues and performance debugging
 grep -qEi '(^|/)(kafka|rabbitmq|nats|sqs|queues?|consumers?|producers?|dead-letters?|dlq)(/|[._-])' <<< "$files" \
-  && matched+=(message-queues)
+  && matched+=(backend-api)
 grep -qEi '(^|/)(benchmarks?|profiling|flamegraphs?)(/|[._-])|(^|/)(k6|artillery|locust)([._-].*)?\.(js|ts|py|ya?ml|json)$|\.(cpuprofile|heapprofile|pprof)$|(^|/)performance[._-]budget\.(json|ya?ml)$' <<< "$files" \
-  && matched+=(performance-debugging)
+  && matched+=(debug-triage)
 
 # docker (no -i flag, no start-of-line anchors)
 grep -qE '(^|/)Dockerfile|(^|/)docker-compose\.|(^|/)compose\.|\.dockerignore$|(^|/)Containerfile' <<< "$files" \
@@ -175,13 +175,13 @@ check_manifest() {
 }
 
 check_manifest backend-api 'fastapi|flask|django|starlette|litestar|aiohttp|express|@nestjs/core|hono|@hono/node-server|elysia|fastify|koa|github\.com/(gin-gonic/gin|labstack/echo|gofiber/fiber|go-chi/chi|gorilla/mux)|google\.golang\.org/grpc|actix-web|axum|rocket|warp|tonic|rails|sinatra|grape|hanami|laravel/framework|symfony/http-kernel|slim/slim'
-check_manifest frontend-design 'astro|@astrojs/.*|@sveltejs/kit|svelte|next|react|vue|vite|@vitejs/plugin-react|tailwindcss'
+check_manifest ui-build 'astro|@astrojs/.*|@sveltejs/kit|svelte|next|react|vue|vite|@vitejs/plugin-react|tailwindcss'
 check_manifest databases 'sequelize|typeorm|prisma|@prisma/client|knex|drizzle-orm|mongoose|mongodb|pg|mysql2|ioredis|redis|sqlalchemy|sqlmodel|psycopg|psycopg2(-binary)?|asyncpg|pymongo|motor|pymysql|mysqlclient|peewee|tortoise-orm|github\.com/(jackc/pgx|lib/pq|jmoiron/sqlx|redis/go-redis|go-sql-driver/mysql)|gorm\.io/gorm|go\.mongodb\.org/mongo-driver|entgo\.io/ent|diesel|sqlx|sea-orm|tokio-postgres|activerecord|sequel|mongoid|doctrine/(orm|dbal)|illuminate/database|predis/predis'
 check_manifest i18n-localization 'react-i18next|vue-i18n|next-intl|@formatjs/.*|i18next'
 check_manifest llm-app-development 'anthropic|@anthropic-ai/sdk|openai|langchain|langchain-.*|@langchain/.*|llama-index(-.*)?|transformers|torch|tensorflow|ollama|chromadb|pinecone-client|weaviate-client|qdrant-client|github\.com/(anthropics/anthropic-sdk-go|openai/openai-go|sashabaranov/go-openai)|async-openai|ruby-openai|openai-php/client'
 check_manifest mcp '@modelcontextprotocol/(sdk|server|client|core)|fastmcp|mcp|github\.com/(modelcontextprotocol/go-sdk|mark3labs/mcp-go)|rmcp'
-check_manifest message-queues 'kafkajs|amqplib|bullmq|@aws-sdk/client-sqs|celery|kafka-python|confluent-kafka|aiokafka|pika|nats|nats-py|github\.com/(segmentio/kafka-go|ibm/sarama|rabbitmq/amqp091-go|nats-io/nats\.go)|rdkafka|lapin|async-nats|bunny|ruby-kafka|php-amqplib/php-amqplib'
-check_manifest performance-debugging 'benchmark|autocannon|clinic|0x|k6|artillery|locust'
+check_manifest backend-api 'kafkajs|amqplib|bullmq|@aws-sdk/client-sqs|celery|kafka-python|confluent-kafka|aiokafka|pika|nats|nats-py|github\.com/(segmentio/kafka-go|ibm/sarama|rabbitmq/amqp091-go|nats-io/nats\.go)|rdkafka|lapin|async-nats|bunny|ruby-kafka|php-amqplib/php-amqplib'
+check_manifest debug-triage 'benchmark|autocannon|clinic|0x|k6|artillery|locust'
 
 # kubernetes: check for raw manifests if Chart.yaml etc. not found
 printf '%s\n' ${matched[@]+"${matched[@]}"} | grep -qx kubernetes || {

@@ -121,8 +121,23 @@ def insert_at(lines: list[str]) -> int:
     return h1 + 1
 
 
+def split_frontmatter(lines: list[str]) -> tuple[list[str], list[str]]:
+    """Split off a leading YAML block (version receipts) so the list goes below it."""
+    if lines and lines[0].rstrip() == "---":
+        for i in range(1, len(lines)):
+            if lines[i].rstrip() == "---":
+                return lines[: i + 1], lines[i + 1 :]
+    return [], lines
+
+
 def render(lines: list[str]) -> list[str] | None:
     """Return the file with a fresh generated list, or None when none applies."""
+    front, rest = split_frontmatter(lines)
+    new = render_body(rest)
+    return None if new is None else front + new
+
+
+def render_body(lines: list[str]) -> list[str] | None:
     body = strip_generated(lines)
     if len(body) <= TOC_MIN_LINES or has_manual_toc(body):
         return None if body == lines else body

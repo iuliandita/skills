@@ -1,7 +1,7 @@
 ---
 name: databases
 description: >
-  Design schemas, tune queries, migrate, and administer PostgreSQL, MySQL/MariaDB, MongoDB, MSSQL, Redis, and Valkey.
+  Design, tune, migrate, back up, and administer PostgreSQL, MySQL/MariaDB, MongoDB, MSSQL, Redis, and Valkey. Use for slow queries, EXPLAIN, indexes, schema changes, replication, pg_dump/PITR, connection pooling, or engine version upgrades.
 license: MIT
 compatibility: "Use the relevant engine client: psql, mongosh, mysql, sqlcmd, redis-cli, or valkey-cli"
 metadata:
@@ -15,14 +15,8 @@ metadata:
 
 Configure, tune, design schemas, migrate, back up, and review database engines - from single-node dev setups to PCI-compliant production clusters. The goal is correct, performant, durable databases that survive failures and pass audits.
 
-**Target versions** (October 2026):
-- PostgreSQL **18.6** (EOL 2030-11; August 13, 2026 release), back-branches: 17.11, 16.15, 15.19, 14.24 (EOL 2026-11-12 - plan the upgrade off 14 now); PostgreSQL 19 RC 1 (2026-10-15) is for testing only
-- MongoDB **9.0.2** (new major, GA 2026-09-28, EOL 2031-10); 8.0 lane **8.0.34** (EOL 2029-10); 8.0.32 fixes CVE-2026-89099 and is the security floor for the 8.0 lane. The rapid lane is Atlas-only with a short window - verify live before pinning
-- MariaDB **11.8.9** (LTS, EOL 2028-06), **12.3.3** (LTS, EOL 2029-06); 13.x rolling GA is quarterly and EOLs at each successor - verify live
-- MySQL **8.4.12** (LTS; August 18, 2026 release), **9.7.3** (9.7 LTS lane; August 18, 2026 release); the innovation lane has a short support window - verify live
-- Redis **8.10.2**; Valkey **9.1.2** (9.0.6 on the 9.0 lane) - verify live before pinning
-- SQL Server **2025 RTM + CU9** (released 2026-09-15)
-- PgBouncer **1.26.0** (fixes CVE-2026-19888/6668/6669), Pgpool-II **4.7.3**, ProxySQL **3.0.11** (3.0.9+ fixes CVE-2026-48772/48773; CVE-2026-48774 affects the 4.0 lane, fixed in 4.0.9)
+**Target versions**: see `references/versions.md` (verified per the receipt date
+in that file). Do not restate version numbers here.
 
 This skill covers these domains depending on context:
 - **Configuration** - engine settings, authentication, TLS, tuning parameters
@@ -139,7 +133,7 @@ Based on the request:
 ### Step 2: Gather requirements
 
 Before writing SQL or config, determine these. If the user doesn't specify, use the sensible defaults shown:
-- **Engine and version** - behavior differs significantly across versions. Default: latest stable (see target versions above).
+- **Engine and version** - behavior differs significantly across versions. Default: latest stable (see `references/versions.md`).
 - **Deployment model** - self-hosted (bare metal, VM, container, K8s) vs managed (RDS, Cloud SQL, Atlas). Default: assume self-hosted unless context says otherwise.
 - **Workload type** - OLTP (many small transactions) vs OLAP (few large queries) vs mixed. Default: OLTP.
 - **Data volume** - row counts, table sizes, growth rate. Default: medium (1-100GB). If unknown, optimize for growth.
@@ -240,7 +234,7 @@ Read `references/migration-patterns.md` for cross-engine type mapping, ORM migra
 Then read `references/production-checklist.md` for the engine-specific checks (PostgreSQL,
 MySQL/MariaDB, MongoDB, MSSQL) and the PCI-DSS 4.0 compliance checks before finishing any review,
 config, or production change. Its CVE patch floors are minimums; for current releases use
-the **Target versions** block at the top.
+`references/versions.md`.
 
 ---
 
@@ -253,6 +247,7 @@ the **Target versions** block at the top.
 - `references/version-upgrades.md` - read before any PostgreSQL major version upgrade
 - `references/build-patterns.md` - read in Step 3 for query, lock, pooler, and migration-safety patterns, and before any destructive operation
 - `references/production-checklist.md` - read with the All Engines checklist for engine-specific and PCI-DSS 4.0 checks
+- `references/versions.md` - dated version receipts (pins, sources, security floors)
 
 ---
 
@@ -276,7 +271,7 @@ See `references/output-contract.md` for the full contract.
 - **ci-cd** - for CI/CD pipelines that run migrations (schema execution in CI, migration gating, rollback automation)
 - **observability** - for cross-service telemetry pipelines, dashboards, alert routing, and SLOs.
   This skill owns database-native metrics, engine health, and query diagnosis.
-- **message-queues** - broker delivery contracts, retries, dead letters, ordering, and replay. This
+- **backend-api** - broker delivery contracts, retries, dead letters, ordering, and replay. This
   skill owns Redis/Valkey engine configuration and stream data safety.
 
 ---

@@ -1,7 +1,7 @@
 ---
 name: docker
 description: >
-  Build and debug Dockerfiles, Compose, Docker/Podman containers, and BuildKit images; review container security.
+  Build, debug, and harden Dockerfiles, Compose stacks, and Podman/BuildKit images. Use for build failures, Compose networking or volumes, image size, multi-arch publishing, signing, SBOMs, or container security. Not Kubernetes or CI pipelines.
 license: MIT
 compatibility: "Requires docker or podman. Optional: docker compose, buildkit, cosign, trivy, syft"
 metadata:
@@ -15,8 +15,8 @@ metadata:
 
 Write, review, and architect Dockerfiles, Compose stacks, and container workflows - from single-service dev setups to multi-arch production pipelines with image signing and compliance gates. The goal is minimal, secure, reproducible images that a team can maintain and a QSA can audit.
 
-**Target versions**: October 2026 snapshot. Read `references/target-versions.md` before
-pinning Docker, Compose, BuildKit, containerd, Podman, Buildah, or runc.
+**Target versions**: see `references/versions.md` (verified per the receipt date
+in that file). Do not restate version numbers here.
 
 This skill covers Dockerfiles, Compose, container hardening, supply chain, registry/CI
 patterns, and runtime migration across Docker, Podman, Buildah, Skopeo, and containerd.
@@ -407,7 +407,7 @@ See AI Self-Check above for the full build-time checklist (Dockerfile correctnes
 - `references/compose-patterns.md` - Compose patterns and common stack layouts
 - `references/security-and-compliance.md` - full 2025-2026 CVE table, Trivy compromise lessons, scanning and signing, container hardening, compliance guidance, and safe public custom image publishing
 - `references/alternative-runtimes.md` - Podman, Buildah, Skopeo, and related runtime patterns
-- `references/target-versions.md` - October 2026 version snapshot for Docker, Compose, BuildKit, containerd, Podman, Buildah, and runc
+- `references/versions.md` - dated version receipts (pins, sources, security floors)
 
 ## Output Contract
 

@@ -1,7 +1,7 @@
 ---
 name: opnsense-pfsense
 description: >
-  Administer OPNsense and pfSense firewalls: pf rules, VPNs, CARP failover, upgrades, and SSH diagnostics.
+  Administer OPNsense and pfSense firewalls over SSH: pf rules, NAT, VLANs, Unbound, WireGuard, CARP failover, and upgrades. Use for appliance rule changes, inter-VLAN traffic through the firewall, or safe remote changes. Plain Linux hosts go to networking.
 license: MIT
 compatibility: "Requires SSH access to OPNsense or pfSense appliance"
 metadata:
@@ -16,14 +16,8 @@ metadata:
 Manage, troubleshoot, and harden OPNsense and pfSense firewalls via SSH. Both are FreeBSD-based,
 pf-powered firewall distributions - most concepts, commands, and patterns apply to both.
 
-**Target versions** (October 2026):
-- OPNsense CE: 26.7.7 (current Community Edition update, released 2026-10-13, "Xenial Xenops"). Business Edition remains a separate even-quarter lane - do not quote the BE number as the CE version
-- pfSense CE: 2.9.0 / pfSense Plus: 26.07
-- CrowdSec: v1.8.2
-
-Check [OPNsense release notes](https://docs.opnsense.org/releases/CE_26.7.html)
-and the [pfSense version matrix](https://docs.netgate.com/pfsense/en/latest/releases/versions.html)
-before selecting a firmware image; CE, Plus, and Business Edition have separate patch lanes.
+**Target versions**: see `references/versions.md` (verified per the receipt date
+in that file). Do not restate version numbers here.
 
 ## When to use
 
@@ -39,7 +33,7 @@ before selecting a firmware image; CE, Plus, and Business Edition have separate 
 - Cloud firewall rules, WAF configuration, or AWS/GCP/Azure network ACLs - use **networking** or the relevant IaC skill (**terraform**, **ansible**)
 - General shell scripting or local shell behavior outside the BSD firewall context - use **shell-scripting**
 - Fleet-wide configuration management via playbooks - use **ansible**
-- Offensive testing, exploitation, or post-exploitation - use **privilege-escalation**
+- Offensive testing, exploitation, or post-exploitation - use **privilege-escalation** (opt-in; if installed)
 - Application-level security review or dependency scanning - use **security-audit**
 
 ## AI Self-Check
@@ -256,7 +250,7 @@ See `references/output-contract.md` for the full contract.
 - **ansible** - for fleet-wide firewall automation or playbook-based configuration management
 - **shell-scripting** - for general shell scripting and local shell behavior; this skill covers the FreeBSD firewall context
 - **security-audit** - for defensive security review of application code and supply chain, rather than firewall administration
-- **privilege-escalation** - for authorized offensive testing and post-exploitation, not defensive firewall operations
+- **privilege-escalation** (opt-in; if installed) - for authorized offensive testing and post-exploitation, not defensive firewall operations
 
 ---
 

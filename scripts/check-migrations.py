@@ -52,22 +52,23 @@ def validate(root: Path, retire: bool = False) -> None:
     manifest = json.loads((root / "migrations.json").read_text())
     if manifest.get("version") != 1:
         raise ValueError("unsupported migration manifest version")
-    transition = manifest["transition"]
-    if transition["minimum_days"] != 7 or transition["placeholder_releases"] != 1:
-        raise ValueError("transition policy must be one release and seven days")
-    release, published = transition["release"], transition["published_at"]
-    if (release is None) != (published is None):
-        raise ValueError("release and published_at must both be set or both null")
-    eligible = False
-    if release is not None:
-        if not isinstance(release, str) or not release.strip():
-            raise ValueError("release must identify the published transition tag")
+    def eligible_transition(transition: dict) -> bool:
+        if transition["minimum_days"] != 7 or transition["placeholder_releases"] != 1:
+            raise ValueError("transition policy must be one release and seven days")
+        release, published = transition["release"], transition["published_at"]
+        if release is not None and (not isinstance(release, str) or not release.strip()):
+            raise ValueError("release must identify the transition tag")
+        if published is None:
+            return False
+        if release is None:
+            raise ValueError("published_at requires a release")
         timestamp = datetime.fromisoformat(published.replace("Z", "+00:00"))
         if timestamp.tzinfo is None:
             raise ValueError("published_at must include a timezone")
-        eligible = datetime.now(timezone.utc) >= timestamp + timedelta(days=7)
-    if retire and not eligible:
-        raise ValueError("retirement requires a recorded published release and seven elapsed days")
+        return datetime.now(timezone.utc) >= timestamp + timedelta(days=7)
+
+    default_transition = manifest["transition"]
+    eligible_transition(default_transition)
 
     mappings = manifest["skills"]
     if not isinstance(mappings, dict) or not mappings:
@@ -75,6 +76,9 @@ def validate(root: Path, retire: bool = False) -> None:
     for old, item in mappings.items():
         if not NAME.fullmatch(old):
             raise ValueError(f"invalid old skill name: {old!r}")
+        eligible = eligible_transition(item.get("transition", default_transition))
+        if retire and not eligible:
+            raise ValueError(f"{old}: retirement requires a recorded published release and seven elapsed days")
         action, replacement = item["action"], item["replacement"]
         if action not in {"rename", "merge", "remove"}:
             raise ValueError(f"{old}: invalid action")

@@ -2,7 +2,7 @@
 
 Run up to 31 audit agents against a repo in 5 sequential waves. This is the broadest application-repo dispatch plan (3 Wave 2 + up to 23 conditional Wave 3 lanes + 2 Wave 4 + 3 Wave 5), not the total skill count. Wave 1 detects the tech stack, Waves 2-5 dispatch only matching audit skills, and each wave reports before the next begins.
 
-The five waves are: Reconnaissance; Code Quality (code-review, code-simplification, anti-ai-prose); Domain-Specific (detected skills only); Security (security-audit then vulnerability-research); and Docs & Hygiene (update-docs, roadmap, git).
+The five waves are: Reconnaissance; Code Quality (code-review, code-simplification, anti-ai-prose); Domain-Specific (detected skills only); Security (security-audit, then vulnerability-research opt-in; if installed); and Docs & Hygiene (update-docs, roadmap, git).
 
 After the waves, Steps 7-9 persist findings to the DEEP-AUDIT report (`docs/local/audits/repo-audit/<YYYY-MM-DD>-deep-audit.md`), write the matching task list (`<YYYY-MM-DD>-deep-audit-tasks.md`), and route SMALL audits to the task list or LARGE audits to a brainstorming skill or generated plans under `docs/local/specs/` and `docs/local/plans/`.
 
@@ -31,7 +31,7 @@ For a quick 4-skill sweep, use **quick mode** instead.
 - Quick quality check on a PR or recent changes - use **quick mode** (4 skills, parallel)
 - Single-dimension audit (e.g., only security or only code quality) - use the individual skill directly (**security-audit**, **code-review**, etc.)
 - Auditing the skill collection itself - use **skill-creator** (Mode 3)
-- Offensive security engagement or CTF - use **privilege-escalation** directly
+- Offensive security engagement or CTF - use **privilege-escalation** (opt-in; if installed) directly
 - Live-system OS administration (running `pacman`/`apt`/`dnf`, fixing a NixOS rebuild, configuring SELinux on a host, debugging an OPNsense appliance, recovering a Synology volume) - use the matching distro/appliance skill directly (**arch-linux**, **debian-ubuntu**, **rhel-fedora**, **nixos**, **opnsense-pfsense**, **synology-dsm**). Repo-level audit of OS-related files (PKGBUILDs, `debian/`, `*.spec`, `flake.nix`, `pf.conf`, etc.) belongs in Wave 3 of this skill
 
 ## AI Self-Check
@@ -45,7 +45,7 @@ workflow (waves + persistence + routing), not just the wave dispatch phase.
 - [ ] Wave 2 (code quality) ran all 3 skills regardless of repo type
 - [ ] Wave 3 (domain) ran only skills whose detection patterns matched - no false activations
 - [ ] Wave 3 skills that were skipped are listed by name in the recon summary
-- [ ] Wave 4 ran sequentially: security-audit completed before vulnerability-research started
+- [ ] Wave 4 ran security-audit; if opted in and installed, vulnerability-research followed it
 - [ ] Vulnerability-research agent received a summary of security-audit findings as input context
 - [ ] Each wave's results were presented before the next wave started
 - [ ] Each skill's native report format was preserved - no normalization across reports
@@ -141,7 +141,7 @@ Skills that will run:
   Wave 3 (detected): {scoped_matched_skills}
   Wave 3 (root-manifest only): {root_manifest_only_skills}    # scoped mode only; omit line if empty
   Wave 3 (skipped): {unmatched_skills}
-  Wave 4 (always): security-audit, vulnerability-research
+  Wave 4: security-audit; vulnerability-research (opt-in; if installed)
   Wave 5 (always): update-docs, roadmap, git
 
 Total agents: {count}
@@ -154,9 +154,9 @@ Repo: myorg/api @ a3f91c2 (main)  |  Files: 412  |  Scope: full codebase
 Languages: TypeScript, SQL, YAML
 
 Wave 2 (always): code-review, code-simplification, anti-ai-prose
-Wave 3 (detected): testing, shell-scripting, databases, backend-api, frontend-design, i18n-localization, docker, kubernetes, ci-cd
-Wave 3 (skipped): terraform, ansible, networking, observability, message-queues, performance-debugging, llm-app-development, mcp, arch-linux, debian-ubuntu, rhel-fedora, nixos, opnsense-pfsense, virtualization
-Wave 4 (always): security-audit, vulnerability-research
+Wave 3 (detected): testing, shell-scripting, databases, backend-api, ui-build, i18n-localization, docker, kubernetes, ci-cd
+Wave 3 (skipped): terraform, ansible, networking, observability, backend-api, debug-triage, llm-app-development, mcp, arch-linux, debian-ubuntu, rhel-fedora, nixos, opnsense-pfsense, virtualization
+Wave 4: security-audit; vulnerability-research (opt-in; if installed)
 Wave 5 (always): update-docs, roadmap, git
 
 Total agents: 3 + 9 + 2 + 3 = 17
@@ -237,7 +237,7 @@ Scope: {scope}. Return the complete report.
 |-------|---------|
 | `testing` | Audit test quality, untested critical behavior or failure modes (a coverage number alone is not a gap), flaky test patterns, and test bloat (near-duplicates, glue tests, over-mocking). Do not write new tests - report only. |
 | `shell-scripting` | Audit shell scripts, dotfile config, and .env patterns for correctness, portability, and security. |
-| `frontend-design` | Audit frontend UI/UX implementation, visual hierarchy, accessibility, responsive behavior, framework drift, and AI design tells. Do not redesign or edit - report only. |
+| `ui-build` | Audit frontend UI/UX implementation, visual hierarchy, accessibility, responsive behavior, framework drift, and AI design tells. Do not redesign or edit - report only. |
 | `i18n-localization` | Audit i18n completeness. Find hardcoded user-facing strings, validate locale catalogs, check for missing translations. |
 | `ci-cd` | Audit pipeline config for security (SHA pinning, secret exposure), efficiency, and correctness. |
 | `observability` | Audit signal coverage: uninstrumented services, missing SLOs/error budgets, alert anti-patterns, metric cardinality risk, broken trace/log correlation. Do not add instrumentation - report only. |
@@ -259,7 +259,7 @@ If zero skills matched, skip Wave 3:
 
 ### Step 4: Security (Wave 4)
 
-Run sequentially. Security-audit first, vulnerability-research second.
+Run security-audit first. Run vulnerability-research only when opted in and installed, after security-audit.
 
 **Agent 1: Security Audit**
 
@@ -282,7 +282,7 @@ zero findings - hunt broadly" so the vulnerability-research agent has non-empty 
 ```
 {context_block}
 
-Load the `vulnerability-research` skill through the harness's native skill-loading mechanism. Hunt for novel vulnerabilities
+If opted in and installed, load the `vulnerability-research` skill through the harness's native skill-loading mechanism. Hunt for novel vulnerabilities
 in the source code. Scope: {scope}.
 
 Prior security-audit findings (for context, avoid duplicating these):
@@ -471,9 +471,9 @@ See `references/output-contract.md` for the full contract.
 
 - **quick mode** - the quick 4-skill version (code-review, code-simplification, security-audit, update-docs). Use when speed matters more than depth.
 - **code-review**, **code-simplification**, **anti-ai-prose** - Wave 2 participants.
-- **security-audit**, **vulnerability-research** - Wave 4 participants.
+- **security-audit**, **vulnerability-research** (opt-in; if installed) - Wave 4 participants.
 - **update-docs**, **roadmap**, **git** - Wave 5 participants.
-- **testing**, **shell-scripting**, **databases**, **backend-api**, **frontend-design**, **i18n-localization**, **llm-app-development**, **mcp**, **docker**, **kubernetes**, **terraform**, **ansible**, **ci-cd**, **networking**, **observability**, **message-queues**, **performance-debugging**, **arch-linux**, **debian-ubuntu**, **rhel-fedora**, **nixos**, **opnsense-pfsense**, **virtualization** - Wave 3 candidates (conditional).
+- **testing**, **shell-scripting**, **databases**, **backend-api**, **ui-build**, **i18n-localization**, **llm-app-development**, **mcp**, **docker**, **kubernetes**, **terraform**, **ansible**, **ci-cd**, **networking**, **observability**, **backend-api**, **debug-triage**, **arch-linux**, **debian-ubuntu**, **rhel-fedora**, **nixos**, **opnsense-pfsense**, **virtualization** - Wave 3 candidates (conditional).
 - **skill-creator** - audits the skill collection. This skill audits application repos.
 
 Read `references/exclusions.md` before changing Wave 3 routing.
@@ -484,7 +484,7 @@ Read `references/exclusions.md` before changing Wave 3 routing.
 2. **Wave order is sacred.** Execute waves 1-2-3-4-5 in sequence. Never reorder, skip, or merge waves. Within a wave, agents run in parallel (except Wave 4 which is sequential).
 3. **Present before proceeding.** Each wave's results are shown to the user before the next wave starts. No buffering all results to the end.
 4. **Detection gates Wave 3.** Only dispatch Wave 3 skills whose file patterns matched in the recon sweep. Do not run terraform on a repo with no .tf files.
-5. **Security is sequential.** security-audit completes before vulnerability-research starts. Vulnerability-research receives security-audit findings as input context.
+5. **Security is sequential.** If opted in and installed, security-audit completes before vulnerability-research starts. Vulnerability-research receives security-audit findings as input context.
 6. **Read-only audit, with explicit artifact exceptions.** No agent modifies source code, commits, or alters the repo's working tree. The only permitted writes are: (a) audit artifacts under `docs/local/audits/`, including the dated DEEP-AUDIT report and task list under `repo-audit/` and the dated `security-audit/` report, (b) Step 9b plan files under `docs/local/specs/` and `docs/local/plans/`. `.gitignore` is never edited; if `docs/local/` is not covered, ask the user to add it.
 7. **Preserve native formats.** Each skill produces its own report format. Do not normalize, merge, or editorialize across reports. Cross-wave synthesis is allowed only in three specific places: the Step 6 terminal summary, the headline verdict + scorecard of the DEEP-AUDIT report, and the phased ordering of its task list. Everywhere else, native format is preserved verbatim.
 8. **Don't stack with quick mode.** When exhaustive mode is selected, it supersedes quick mode's coverage. Do not also invoke quick mode.
