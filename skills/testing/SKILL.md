@@ -1,7 +1,7 @@
 ---
 name: testing
 description: >
-  Write unit, integration, E2E, load, and accessibility tests; debug fixtures, mocks, coverage, and flaky suites.
+  Write and debug unit, integration, E2E, load, and accessibility tests: pytest, vitest/jest, Playwright, fixtures, mocks, coverage, and flaky or failing suites. Use when adding tests, fixing a red run, or deciding what to test.
 license: MIT
 compatibility: "Requires one or more of: vitest, jest, pytest, go test, cargo test, playwright. Optional: k6 (load tests), @axe-core/playwright, pytest-xdist, cargo-nextest"
 metadata:

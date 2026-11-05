@@ -1,7 +1,7 @@
 ---
 name: databases
 description: >
-  Design schemas, tune queries, migrate, and administer PostgreSQL, MySQL/MariaDB, MongoDB, MSSQL, Redis, and Valkey.
+  Design, tune, migrate, back up, and administer PostgreSQL, MySQL/MariaDB, MongoDB, MSSQL, Redis, and Valkey. Use for slow queries, EXPLAIN, indexes, schema changes, replication, pg_dump/PITR, connection pooling, or engine version upgrades.
 license: MIT
 compatibility: "Use the relevant engine client: psql, mongosh, mysql, sqlcmd, redis-cli, or valkey-cli"
 metadata:

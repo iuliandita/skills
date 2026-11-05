@@ -1,7 +1,7 @@
 ---
 name: i18n-localization
 description: >
-  App i18n only, not standalone translation: localize UI catalogs, validate placeholders, and audit missing locale keys.
+  Internationalize apps: extract hardcoded UI strings, set up locale catalogs, validate placeholders, and audit missing keys and translation quality. Use for i18n, "add Spanish to the app", or catalog completeness; not for translating standalone documents.
 license: MIT
 compatibility: "Requires Node.js 20+. Optional: react-i18next, vue-i18n, next-intl, svelte-i18n, ngx-translate, i18next (per framework)"
 metadata:

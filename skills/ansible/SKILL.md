@@ -1,7 +1,7 @@
 ---
 name: ansible
 description: >
-  Write, review, and debug Ansible playbooks, roles, inventories, Ansible Vault, Molecule tests, and AWX/AAP.
+  Write, review, and debug Ansible playbooks, roles, inventories, Vault secrets, Molecule tests, and AWX/AAP. Use for configuring servers after provisioning, OS hardening, idempotency bugs, or ansible-lint failures. Single-host admin goes to the distro skill.
 license: MIT
 compatibility: "Requires ansible-core; target controller Python 3.12+. Check managed-node support separately. Optional: ansible-lint, molecule, ansible-navigator"
 metadata:

@@ -1,7 +1,7 @@
 ---
 name: rhel-fedora
 description: >
-  Administer Fedora/RHEL, Rocky, AlmaLinux, CentOS, and Amazon Linux: dnf, SELinux, boot, and desktop issues.
+  Administer Fedora, RHEL, Rocky, AlmaLinux, CentOS Stream, and Amazon Linux: dnf/rpm, repos, EPEL, SELinux, firewalld, boot, and desktop issues. Use for AVC denials, dnf system-upgrade, subscription problems, dracut or GRUB recovery, or NVIDIA akmods.
 license: MIT
 compatibility: "Requires Fedora, RHEL, or a RHEL-family distro with dnf, yum, or rpm. Optional: policycoreutils-python-utils (semanage), setroubleshoot-server, leapp-upgrade, fwupd"
 metadata:

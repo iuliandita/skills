@@ -51,8 +51,8 @@ validate_description() {
   fi
   if [[ ${#desc} -gt 1024 ]]; then
     error "$name: description exceeds 1024 characters (${#desc})"
-  elif [[ ${#desc} -gt 120 ]]; then
-    warn "$name: description exceeds the collection's advisory 120 character target (${#desc}); this is not a spec violation"
+  elif (( ${#desc} < 150 || ${#desc} > 300 )); then
+    warn "$name: description is outside the collection's advisory 150-300 character window (${#desc}); this is not a spec violation"
   fi
 }
 

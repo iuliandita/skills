@@ -1,7 +1,7 @@
 ---
 name: virtualization
 description: >
-  Manage VMs: Proxmox, QEMU/KVM, libvirt, XCP-ng, VMware/ESXi; debug hypervisors, storage, and GPU passthrough.
+  Manage VMs and hypervisors: Proxmox, QEMU/KVM, libvirt, XCP-ng, and VMware/ESXi, with templates, storage, clustering, backups, and GPU passthrough. Use for creating VMs, cloud-init templates, slow disk I/O, live migration, or a passthrough that fails.
 license: MIT
 compatibility: "Varies by hypervisor. Proxmox: pvesh, qm, pct. Libvirt: virsh, virt-install. Optional: packer, terraform, fio, cloud-localds"
 metadata:

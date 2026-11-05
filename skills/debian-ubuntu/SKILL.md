@@ -1,7 +1,7 @@
 ---
 name: debian-ubuntu
 description: >
-  Administer Debian, Ubuntu, Mint, and Pop!_OS: apt, dpkg, upgrades, boot, drivers, and desktop issues.
+  Administer Debian, Ubuntu, Mint, Pop!_OS, and Kali: apt/dpkg errors, release upgrades, PPAs, kernels, drivers, systemd, and unattended-upgrades. Use for any Debian-family host problem, server or desktop, such as a broken upgrade or a held package.
 license: MIT
 compatibility: "Requires Debian, Ubuntu, or a Debian-based distro with apt. Optional: ubuntu-release-upgrader-core (do-release-upgrade), ppa-purge, needrestart, fwupd"
 metadata:

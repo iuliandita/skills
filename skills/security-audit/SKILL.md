@@ -1,7 +1,7 @@
 ---
 name: security-audit
 description: >
-  Audit code for vulnerabilities: auth flaws, exposed secrets, OWASP risks, and dependency/supply-chain threats.
+  Audit code for vulnerabilities: auth flaws, injection, exposed secrets, OWASP risks, and dependency or supply-chain threats. Use for a security review, secret scan, dependency audit, or pre-release security gate. Plain logic bugs go to code-review; a multi-lens repo audit to repo-audit.
 license: MIT
 compatibility: "Optional: git, betterleaks, gitleaks, trufflehog, trivy, semgrep, bandit, pip-audit, govulncheck, cargo-audit, checkov, scorecard"
 metadata:

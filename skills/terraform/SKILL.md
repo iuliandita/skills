@@ -1,7 +1,7 @@
 ---
 name: terraform
 description: >
-  Write and review Terraform/OpenTofu infrastructure: HCL, modules, state, providers, and policy checks.
+  Write and review Terraform and OpenTofu: HCL, modules, providers, state, imports, backends, and policy checks. Use for a plan that replaces resources, state moves, drift, provider upgrades, or module design. Kubernetes manifests go to kubernetes, Proxmox specifics to virtualization.
 license: MIT
 compatibility: "Requires terraform or tofu CLI. Optional: tflint, checkov, conftest"
 metadata:

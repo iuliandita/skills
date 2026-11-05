@@ -1,6 +1,7 @@
 ---
 name: plan-review
-description: "Review product, business, and engineering decisions and plans: clarify requirements, challenge assumptions, and assess risks."
+description: >
+  Pressure-test a plan or decision before building it: clarify requirements, challenge assumptions, and rank risks. Use for "review my plan", "is this a good idea", or architecture, pricing, roadmap, or infra choices; prefer it over brainstorming once a draft exists.
 license: MIT
 compatibility: "None - works on any decision context"
 metadata:

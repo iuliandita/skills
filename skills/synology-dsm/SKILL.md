@@ -1,7 +1,7 @@
 ---
 name: synology-dsm
 description: >
-  Administer Synology DSM NAS over SSH: shares, packages, storage pools, crashed volumes, and btrfs recovery.
+  Administer a Synology DSM NAS over SSH: shares, packages, users, storage pools, RAID, crashed or read-only volumes, and btrfs recovery. Use for "Volume Crashed", a disk replacement, DSM hardening, or Container Manager paths. Generic Linux goes to the distro skill.
 license: MIT
 compatibility: "Requires SSH access to a Synology NAS running DSM 7, with an admin account for sudo. DSM 6 differences are noted but not covered in depth"
 metadata:

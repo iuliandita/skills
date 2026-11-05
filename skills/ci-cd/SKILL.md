@@ -1,7 +1,7 @@
 ---
 name: ci-cd
 description: >
-  Build, review, and debug CI/CD pipelines and runners: GitHub Actions, GitLab CI, Forgejo/Gitea, and Woodpecker.
+  Build, review, and debug CI/CD pipelines and runners: GitHub Actions, GitLab CI, Forgejo/Gitea Actions, and Woodpecker. Use for a failing or flaky job, caching, SHA pinning, runner setup, security scanning in CI, or migrating a pipeline between platforms.
 license: MIT
 compatibility: "Optional: gh (GitHub CLI), glab (GitLab CLI), fj (Forgejo CLI), actionlint"
 metadata:

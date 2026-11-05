@@ -1,7 +1,7 @@
 ---
 name: opnsense-pfsense
 description: >
-  Administer OPNsense and pfSense firewalls: pf rules, VPNs, CARP failover, upgrades, and SSH diagnostics.
+  Administer OPNsense and pfSense firewalls over SSH: pf rules, NAT, VLANs, Unbound, WireGuard, CARP failover, and upgrades. Use for appliance rule changes, inter-VLAN traffic through the firewall, or safe remote changes. Plain Linux hosts go to networking.
 license: MIT
 compatibility: "Requires SSH access to OPNsense or pfSense appliance"
 metadata:

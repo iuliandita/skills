@@ -1,7 +1,7 @@
 ---
 name: kubernetes
 description: >
-  Build and review Kubernetes/K8s manifests, Helm charts, Kustomize overlays, Gateway API, and ArgoCD deployments.
+  Write and review Kubernetes manifests, Helm charts, Kustomize overlays, Gateway API routes, and ArgoCD apps. Use for YAML, values files, probes, resource limits, RBAC, network policies, ingress, and GitOps repos. For live cluster health checks, use kubernetes-health.
 license: MIT
 compatibility: "Requires kubectl. Optional: helm, kustomize, kube-score, checkov, cosign"
 metadata:

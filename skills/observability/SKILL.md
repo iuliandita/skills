@@ -1,7 +1,7 @@
 ---
 name: observability
 description: >
-  Instrument, audit, and debug telemetry: metrics, traces, logs, alerts, SLOs, Prometheus, OpenTelemetry, Grafana.
+  Instrument, audit, and debug telemetry: metrics, traces, logs, alert rules, SLOs, and dashboards with Prometheus, OpenTelemetry, and Grafana. Use for adding instrumentation, noisy or missing alerts, cardinality, or collector pipelines. Live incidents go to debug-triage.
 license: MIT
 compatibility: "Optional: prometheus, otelcol, grafana, promtool, amtool, jq"
 metadata:

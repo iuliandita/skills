@@ -1,7 +1,7 @@
 ---
 name: docker
 description: >
-  Build and debug Dockerfiles, Compose, Docker/Podman containers, and BuildKit images; review container security.
+  Build, debug, and harden Dockerfiles, Compose stacks, and Podman/BuildKit images. Use for build failures, Compose networking or volumes, image size, multi-arch publishing, signing, SBOMs, or container security. Not Kubernetes or CI pipelines.
 license: MIT
 compatibility: "Requires docker or podman. Optional: docker compose, buildkit, cosign, trivy, syft"
 metadata:
