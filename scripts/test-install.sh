@@ -2285,9 +2285,9 @@ PY
 }
 
 test_doctor_prunability_matches_update_guards() {
-  local tmp case dest tool rc prunable
+  local tmp case dest tool rc prunable reason
   local -a options=()
-  for case in clean-link wrong-link copy-in-link-root symlink-in-copy-root pending pending-edited referenced; do
+  for case in clean-link wrong-link copy-in-link-root symlink-in-copy-root pending pending-edited referenced xdev; do
     tmp="$(mktemp -d)"
     trap 'rm -rf "$tmp"' RETURN
     make_convergence_fixture "$tmp"
@@ -2302,6 +2302,14 @@ test_doctor_prunability_matches_update_guards() {
     dest="$tmp/home/.claude/skills"
     [[ "$tool" != codex ]] || dest="$tmp/home/.agents/skills"
     prunable=false
+    case "$case" in
+      clean-link) reason='prunable by --update' ;;
+      wrong-link|copy-in-link-root) reason='not a link to the canonical skill' ;;
+      symlink-in-copy-root) reason='copy replaced by a symlink' ;;
+      pending*) reason='pending recovery' ;;
+      referenced) reason='still referenced by a tool link' ;;
+      xdev) reason='cannot prepare prune transaction root' ;;
+    esac
     case "$case" in
       clean-link) prunable=true ;;
       wrong-link|symlink-in-copy-root)
@@ -2333,6 +2341,18 @@ PYTEST
         ln -s "$dest/prune" "$tmp/home/.claude/skills/alias"
         ;;
     esac
+    if [[ "$case" == xdev ]]; then
+      isolated "$tmp/home" SKILLS_INSTALL_FAULT=xdev "$tmp/repo/install.sh" --doctor --tool "$tool" --json > "$tmp/doctor" 2> "$tmp/doctor.err"
+      python3 - "$tmp/doctor" "$dest/prune" "$reason" <<'PYTEST'
+import json
+import sys
+row = next(row for row in json.load(open(sys.argv[1]))["outside_selection"] if row["path"] == sys.argv[2])
+assert row["prunable"] is False and row["reason"] == sys.argv[3], row
+PYTEST
+      rm -rf "$tmp"
+      trap - RETURN
+      continue
+    fi
     isolated "$tmp/home" "$tmp/repo/install.sh" --doctor --tool "$tool" --json > "$tmp/doctor" 2> "$tmp/doctor.err"
     rc=0
     isolated "$tmp/home" "$tmp/repo/install.sh" --update --json > "$tmp/update" 2> "$tmp/err" || rc=$?
@@ -2340,13 +2360,14 @@ PYTEST
       wrong-link|copy-in-link-root|symlink-in-copy-root) (( rc == 6 )) || fail "$case: expected partial update, got $rc" ;;
       *) (( rc == 0 )) || fail "$case: expected successful update, got $rc: $(cat "$tmp/err")" ;;
     esac
-    python3 - "$tmp/doctor" "$tmp/update" "$dest/prune" "$prunable" <<'PYTEST'
+    python3 - "$tmp/doctor" "$tmp/update" "$dest/prune" "$prunable" "$reason" <<'PYTEST'
 import json
 import sys
 path = sys.argv[3]
 row = next(row for row in json.load(open(sys.argv[1]))["outside_selection"] if row["path"] == path)
 result = json.load(open(sys.argv[2]))
 assert row["prunable"] == (sys.argv[4] == "true"), row
+assert row["reason"] == sys.argv[5], row
 assert row["prunable"] == any(item["path"] == path for item in result["pruned"]), (row, result)
 if not row["prunable"]:
     kept = next(item for item in result["prune_kept"] if item["path"] == path)

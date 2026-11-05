@@ -8,6 +8,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Bug Fixes
 
 * **install:** `--force` upgrades hash-only lock records with ownership provenance and a v2 tree digest for existing links and copies, so a later deselect and `--update` can prune them ([#423](https://github.com/iuliandita/skills/issues/423)).
+* **install:** `--doctor` uses the same prune verdict as `--update`. Its `reason` for an unprunable installer-owned skill now names the cause (`pending recovery`, `not a link to the canonical skill`, `copy replaced by a symlink`, the `--force` remedy, and so on) instead of always saying `local changes or no verified v2 tree digest`. It also no longer calls a skill prunable when `--update` would refuse its destination for lacking a transaction root on the same filesystem ([#419](https://github.com/iuliandita/skills/issues/419)).
 
 ## [4.0.0] - 2026-11-05
 

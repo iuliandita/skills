@@ -3090,7 +3090,12 @@ prune_verdict() {
   state="$(lock_tree_records "$dest/.skills-lock.json" "$skill")" \
     || { PRUNE_REASON='cannot read tree record'; return 2; }
   digest="${state#* }"
-  if txn_root "$dest" && [[ -e "$TXN_ROOT/$skill/record" ]]; then
+  # --update refuses a destination without a usable transaction root; doctor must agree.
+  if ! txn_root "$dest" >/dev/null; then
+    PRUNE_REASON='cannot prepare prune transaction root'
+    return 2
+  fi
+  if [[ -e "$TXN_ROOT/$skill/record" ]]; then
     PRUNE_REASON='pending recovery'
     PRUNE_ADVISORY=true
   elif [[ "$state" != v2\ * ]]; then
