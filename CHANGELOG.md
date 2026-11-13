@@ -5,6 +5,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Breaking Changes
+
+* Retire the v4.0.0 deprecated notices for `kali-linux`, `performance-debugging`, `message-queues` and `frontend-design` after their seven-day window. The old names no longer install; use `debian-ubuntu`, `debug-triage`, `ui-build`, and `backend-api` for broker delivery semantics. Updating upstream does not remove stale local copies; see [MIGRATION.md](MIGRATION.md) to migrate them ([#445](https://github.com/iuliandita/skills/issues/445)).
+
 ### Bug Fixes
 
 * **ci:** the link check passes the workflow token to lychee, so github.com links go through the authenticated API instead of failing on runner throttling ([#441](https://github.com/iuliandita/skills/issues/441)).
