@@ -5,12 +5,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-### Breaking Changes
-
-* Retire the v4.0.0 deprecated notices for `kali-linux`, `performance-debugging`, `message-queues` and `frontend-design` after their seven-day window. The old names no longer install; use `debian-ubuntu`, `debug-triage`, `ui-build`, and `backend-api` for broker delivery semantics. Updating upstream does not remove stale local copies; see [MIGRATION.md](MIGRATION.md) to migrate them ([#445](https://github.com/iuliandita/skills/issues/445)).
+## [4.0.3] - 2026-11-13
 
 ### Bug Fixes
 
+* **skills:** retire the v4.0.0 deprecated notices for `kali-linux`, `performance-debugging`, `message-queues` and `frontend-design` after their seven-day window. The old names no longer install; use `debian-ubuntu`, `debug-triage`, `ui-build`, and `backend-api` for broker delivery semantics. Updating the collection does not remove stale local copies of old names; migrate them with the steps in [MIGRATION.md](https://github.com/iuliandita/skills/blob/main/MIGRATION.md) ([#446](https://github.com/iuliandita/skills/pull/446), [#445](https://github.com/iuliandita/skills/issues/445)).
 * **ci:** the link check passes the workflow token to lychee, so github.com links go through the authenticated API instead of failing on runner throttling ([#441](https://github.com/iuliandita/skills/issues/441)).
 
 ## [4.0.2] - 2026-11-05
@@ -714,7 +713,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Bootstrap baseline before release-please automation.
 
-[Unreleased]: https://github.com/iuliandita/skills/compare/v4.0.2...HEAD
+[Unreleased]: https://github.com/iuliandita/skills/compare/v4.0.3...HEAD
+[4.0.3]: https://github.com/iuliandita/skills/compare/v4.0.2...v4.0.3
 [4.0.2]: https://github.com/iuliandita/skills/compare/v4.0.1...v4.0.2
 [4.0.1]: https://github.com/iuliandita/skills/compare/v4.0.0...v4.0.1
 [4.0.0]: https://github.com/iuliandita/skills/compare/v3.1.0...v4.0.0
