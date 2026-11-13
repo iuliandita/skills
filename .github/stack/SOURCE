@@ -1,4 +1,4 @@
 repo: iuliandita/agents
-commit: 2ddd468c2da74300dd2838821b303c18980b0ae1
-canon.json: sha256:8feac249799d8f90ca539eeb437a361082207a9ce10e79f2fe72cd2a8ceb9f92
-stack-check.py: sha256:9a1ab3bc3785e7cf731fe147e0808f2be173ff2c851fd60eb30923487aef14fc
+commit: 48208c9b56ebc4364df4c606e32336e27c2371fa
+canon.json: sha256:f1aa29dcf32ef8dd34d919be39f4fd28049157d4fefd6416274cc7680bf05aaf
+stack-check.py: sha256:44bcc0287a6a3466caf103115a3e52adf3eacd8eb41a1faee5840b24d4504b63
