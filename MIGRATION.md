@@ -1,7 +1,8 @@
 # Catalog migration
 
 The collection now has 40 active skills. The v2 old names shipped as small deprecation
-notices from v2.0.0 and were retired after the transition window. Updating the collection does
+notices from v2.0.0, and the v4 old names from v4.0.0; both sets were retired after their
+transition windows. Updating the collection does
 not remove stale local copies of old names; migrate them with the steps below. Old tags still
 contain the notices.
 

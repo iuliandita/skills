@@ -194,6 +194,9 @@ jobs:
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
       - name: Check links
+        env:
+          # lychee checks github.com links through the API with it, avoiding anonymous throttling (#441).
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           mapfile -t markdown_files < <(
             {

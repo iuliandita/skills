@@ -327,38 +327,6 @@ Quality signals:
 - Flags hardcoded secret in environment (use secrets or env file)
 - Flags :latest and untagged postgres image
 
-### frontend-design
-**Test 1: Legacy invocation**
-Prompt: "I explicitly invoked frontend-design. How do I migrate?"
-Quality signals:
-- Identifies ui-build as the replacement
-- Preserves customizations before removal and does not install anything silently
-- Does not run the retired workflow
-
-### kali-linux
-**Test 1: Legacy invocation**
-Prompt: "I explicitly invoked kali-linux. How do I migrate?"
-Quality signals:
-- Identifies debian-ubuntu as the replacement
-- Preserves customizations before removal and does not install anything silently
-- Does not run the retired workflow
-
-### message-queues
-**Test 1: Legacy invocation**
-Prompt: "I explicitly invoked message-queues. How do I migrate?"
-Quality signals:
-- Identifies backend-api as related guidance and says the old skill was removed without a replacement
-- Preserves customizations before removal and does not install anything silently
-- Does not run the retired workflow
-
-### performance-debugging
-**Test 1: Legacy invocation**
-Prompt: "I explicitly invoked performance-debugging. How do I migrate?"
-Quality signals:
-- Identifies debug-triage as the replacement
-- Preserves customizations before removal and does not install anything silently
-- Does not run the retired workflow
-
 ### ui-build
 **Test 1: Build a product UI**
 Prompt: "Build a responsive SaaS dashboard for support agents triaging tickets. It needs dark and light themes, a ticket queue, filters, and keyboard-friendly actions."
