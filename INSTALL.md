@@ -230,7 +230,8 @@ symlinks recorded in that directory's `.skills-lock.json` from this checkout, po
 canonical copy of the same skill, and already have a replacement in `~/.agents/skills` that
 resolves to that same copy. Real directories, broken or foreign links, and unrecorded names
 stay and are reported. Before unlinking, it saves the links and the old lock under
-`<old-dir-parent>/.skills-backups/<old-dir-name>/.legacy-dir-cleanup/` (or `SKILLS_BACKUP_DIR`);
+`<old-dir-parent>/.skills-backups/<old-dir-name>/.legacy-dir-cleanup/` (with `SKILLS_BACKUP_DIR`,
+under `<SKILLS_BACKUP_DIR>/<old-dir-name>-<hash>/.legacy-dir-cleanup/`);
 if the backup fails, nothing is removed. The old lock is deleted once none of its entries remain.
 The cleanup is skipped with `--dest` or when the tool's `*_SKILLS_DIR` override is set.
 
@@ -583,7 +584,8 @@ pruning never rotates away the only overwrite backup of a user-modified copy. Ea
 series retains its last three copies. Overwrite backups are stored under
 `<destination-parent>/.skills-backups/<destination-name>/`, outside the skill discovery root.
 With `SKILLS_BACKUP_DIR`, backups go to `<SKILLS_BACKUP_DIR>/<destination-name>-<hash>/`,
-and tools sharing one directory are installed into it once per run. Backups support manual recovery;
+and tools sharing one directory are installed into it once per run. `--migrate --apply` uses
+the same per-destination folder. Backups support manual recovery;
 customizations are not merged into the replacement. Preserve edits in the source checkout
 before reinstalling if they must remain active.
 
@@ -620,6 +622,14 @@ other only when every one of them has `flock`. `--migrate --apply` requires `flo
 10 without it, before recovery or migration touches anything (earlier releases warned and
 proceeded). It holds the lock through recovery and the migration helper. A `--migrate`
 preview takes no lock.
+
+`--migrate --apply` handles each selected destination in turn. When the helper reports that it
+left part of one destination unmigrated (its `SKIP` lines give the reason and it returns
+status 6), the installer still syncs that destination's OpenCode permissions, goes on to the
+remaining destinations, and exits 1 at the end. Fix the cause and run it again; entries that
+are already migrated are skipped. Any other helper failure stops the run at that
+destination with the helper's own status: 2 for a validation or filesystem error, 3 for a
+busy lock, 1 for an unexpected failure.
 
 If a source checkout moved or an existing lock is incompatible, a normal install saves
 that lock under the backup base's `.unverified-locks/` directory and starts a fresh lock.
