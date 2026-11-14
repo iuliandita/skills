@@ -143,7 +143,7 @@ Attestations are stored in the registry alongside the image. Requires `--push`.
 
 ```dockerfile
 # syntax=docker/dockerfile:1
-FROM node:22-slim AS build
+FROM node:26-slim AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN --mount=type=cache,target=/root/.npm \
@@ -273,7 +273,7 @@ Dummy `main.rs` trick: builds deps first so they're cached, then real source bui
 
 ```dockerfile
 # syntax=docker/dockerfile:1
-FROM node:22-slim AS build
+FROM node:26-slim AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN --mount=type=cache,target=/root/.npm npm ci
