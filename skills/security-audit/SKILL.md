@@ -102,7 +102,7 @@ Find known CVEs in dependencies and assess supply chain risk.
 - **Python**: `pip-audit --format json` (use `safety check --json` only when pip-audit is unavailable)
 - **Go**: `govulncheck ./...`
 - **Rust**: `cargo audit --json` - also check for `unsafe` blocks without `// SAFETY:` comments, `transmute` misuse, unvalidated FFI boundaries
-- **General**: `trivy fs --scanners vuln .` (use Trivy 0.76.1 from official releases; never use 0.69.4-0.69.6, and do not roll back to 0.69.3 because CVE-2026-63328 affects every release before 0.72.0)
+- **General**: `trivy fs --scanners vuln .` (use the Trivy release pinned in `references/versions.md`, from official releases and never below 0.72.0: CVE-2026-63328 affects every earlier release, and 0.69.4-0.69.6 were compromised)
 
 **Flag**: reachable HIGH/CRITICAL CVEs whether or not a fix exists, deps unmaintained 2+ years, lockfile out of sync with manifest, non-standard registries. For production applications, prefer exact dependency versions plus a committed, integrity-checked lockfile; ranges alone do not make an install reproducible.
 
@@ -121,10 +121,10 @@ Confirm the affected artifact and execution path before assigning severity. Mali
 For active incident triage, use `references/hardening-checklists.md` for repo-wide package,
 IOC, local-runtime, and remote-repo checks.
 
-**Scanner security recheck** (October 2026, 2026-10-28):
+**Scanner security recheck** (November 2026, 2026-11-14):
 [CVE-2026-63328](https://github.com/aquasecurity/trivy/security/advisories/GHSA-8rc5-4fr6-64pw)
 affects Trivy before 0.72.0 when installing an attacker-controlled plugin; it permits writes
-outside the plugin directory. The 0.76.1 target includes the fix. This is separate from the
+outside the plugin directory. The target in `references/versions.md` includes the fix. This is separate from the
 March supply-chain compromise; only install trusted plugins.
 
 ### Step 4: Agentic AI & Supply Chain (Pass 3 - Manual)

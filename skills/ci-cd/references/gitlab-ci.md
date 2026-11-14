@@ -25,7 +25,7 @@ CI/CD Catalog GA, Components with typed inputs, rules-based workflows.
 
 ## Current State (2026)
 
-- **GitLab 19.4.1** (19.4 released September 17, 2026; 19.4.1 was the September 23 critical security release). Monthly releases land on the third Thursday; majors land each May. The 19.x major removed Redis 6 support (migrate to Redis 7.2 / Valkey 7.2), Ubuntu 20.04 packages, and NGINX Ingress as the Helm chart default in favor of Gateway API + Envoy Gateway. Current backport lanes are 19.3.3 and 19.2.7.
+- **GitLab 19.5.5** (19.5 released October 15, 2026; the November 10 critical security release 19.5.4 / 19.4.6 / 19.3.8 is the floor). Monthly releases land on the third Thursday; majors land each May. The 19.x major removed Redis 6 support (migrate to Redis 7.2 / Valkey 7.2), Ubuntu 20.04 packages, and NGINX Ingress as the Helm chart default in favor of Gateway API + Envoy Gateway. Current backport lanes are 19.4.7 and 19.3.8.
 - **CI/CD Catalog** GA since GitLab 17.0 (May 2024). Max 100 components per project (raised in 18.5).
 - **CI Components** are the endorsed path for reusable pipeline logic. `include:` templates still work
   but components have versioning, typed inputs, and discoverability.
@@ -506,13 +506,13 @@ include:
   - template: Security/Container-Scanning.gitlab-ci.yml
 ```
 
-### Custom Trivy scan (pinned to safe version)
+### Custom Trivy scan (pinned version and digest)
 
 ```yaml
 trivy-scan:
   stage: scan
   image:
-    name: aquasec/trivy:0.75.0@sha256:<digest>    # pin digest; do NOT use 0.69.4/5/6
+    name: aquasec/trivy:0.76.2@sha256:<digest>    # pin digest; minimum 0.72.0
   script:
     - trivy image --exit-code 1 --severity HIGH,CRITICAL $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
   allow_failure: true    # non-blocking for dev/staging; set to false for release pipelines (PCI 6.2.1)
@@ -879,7 +879,7 @@ build-worker:
     TRIVY_USERNAME: $CI_REGISTRY_USER
     TRIVY_PASSWORD: $CI_REGISTRY_PASSWORD
   image:
-    name: aquasec/trivy:0.75.0@sha256:<digest>
+    name: aquasec/trivy:0.76.2@sha256:<digest>
     entrypoint: [""]
   script:
     - trivy image --exit-code 1 --severity HIGH,CRITICAL "$CI_REGISTRY_IMAGE/$SERVICE_NAME:$CI_COMMIT_SHA"

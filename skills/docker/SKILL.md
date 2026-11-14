@@ -128,7 +128,7 @@ docker compose --dry-run up           # dry-run startup (Compose v5)
 
 # Security (Trivy default; Grype or Docker Scout if the repo already uses them)
 if command -v trivy >/dev/null; then
-  trivy image --severity HIGH,CRITICAL --exit-code 1 <image>   # use v0.74.0+; never v0.69.4-6
+  trivy image --severity HIGH,CRITICAL --exit-code 1 <image>   # use v0.76.2, minimum v0.72.0
 else
   echo "trivy not installed: image scan NOT run; report it as unverified"
 fi
@@ -323,7 +323,7 @@ For a hardened Dockerfile pattern, see `references/dockerfile-patterns.md` (Lang
 - **Verify at deploy**: `cosign verify --key cosign.pub <image>@<digest>`
 - **Pin CI tool images to SHA256 digests.** Mutable tags are a proven attack vector (Trivy March 2026, tj-actions/reviewdog March 2025).
 - **Rescan published images on a schedule** with the CI scanner or registry-side scanning.
-- **Trivy**: use v0.74.0+ from official releases for new pins. v0.69.3 was the March 2026 rollback version. v0.69.4-6 contained credential-stealing malware. If any CI pipeline ran compromised Trivy between March 19-23, 2026, rotate ALL secrets.
+- **Trivy**: use v0.76.2 from official releases, never below v0.72.0 (CVE-2026-63328 affects every earlier release). v0.69.4-6 contained credential-stealing malware; do not use any v0.69.x. If any CI pipeline ran compromised Trivy between March 19-23, 2026, rotate ALL secrets.
 
 ### PCI-DSS 4.0 container requirements (summary)
 
@@ -333,7 +333,7 @@ PCI-DSS 4.0.1 is the only active version (4.0 retired December 31, 2024). Key co
 - **Req 2.2**: Harden containers - non-root, drop caps, read-only rootfs, one process per container
 - **Req 4**: Encrypt transmissions - TLS between CDE containers in Compose (mount certs, use TLS-enabled images, or front with a TLS-terminating reverse proxy)
 - **Req 5.2/5.3**: Immutable images (deploy by digest), Falco for runtime detection
-- **Req 6.3**: Vulnerability scanning on every image before deployment (Docker Scout, Grype, Trivy v0.74.0+)
+- **Req 6.3**: Vulnerability scanning on every image before deployment (Docker Scout, Grype, Trivy v0.72.0+)
 - **Req 6.3.2**: SBOM for every production image
 - **Req 8.6.2**: No hardcoded secrets in images, compose files, or env vars
 - **Req 10**: Audit logging - container stdout/stderr to immutable log store
@@ -378,10 +378,10 @@ See AI Self-Check above for the full build-time checklist (Dockerfile correctnes
 - [ ] runc >= 1.4.0 (CVE-2025-31133/52565/52881 patched)
 - [ ] BuildKit >= 0.33.1 (includes CVE-2026-15793, CVE-2026-33747/33748, and CVE-2026-93318 fixes)
 - [ ] Docker Desktop >= 4.71.0 (adds CVE-2026-5817/5843 Model Runner container-to-host RCE fixes; see the CVE table in `references/security-and-compliance.md` for the earlier CVE-2025-9074 and CVE-2026-28400 floors)
-- [ ] Trivy v0.74.0+ from official releases (v0.69.4-6 COMPROMISED)
+- [ ] Trivy v0.72.0+ from official releases (v0.69.4-6 COMPROMISED)
 - [ ] Images signed with cosign, verified at deploy
 - [ ] SBOM generated for every production image
-- [ ] Vulnerability scanning in CI (Docker Scout, Grype, or Trivy v0.74.0+)
+- [ ] Vulnerability scanning in CI (Docker Scout, Grype, or Trivy v0.72.0+)
 - [ ] CI tools pinned to SHA256 digests (not mutable tags)
 - [ ] Base images rebuilt/updated regularly (weekly minimum)
 - [ ] Separate override files for dev/prod
@@ -440,5 +440,5 @@ See `references/output-contract.md` for the full contract.
 3. **Non-root user.** Every production container must run as non-root (numeric UID for K8s compat).
 4. **Meaningful service healthchecks.** Use Dockerfile, Compose, or orchestrator probes for long-running services; use exit status for one-shot jobs and document external monitoring.
 5. **Pin CI tools to SHA256 digests.** Mutable tags are compromised supply chain vectors (Trivy CVE-2026-33634 March 2026, tj-actions CVE-2025-30066 (upstream: reviewdog CVE-2025-30154) March 2025).
-6. **Trivy v0.74.0+ for new pins.** v0.69.3 was the March 2026 rollback version; v0.69.4-6 contained credential-stealing malware. If you ran it, rotate secrets.
+6. **Trivy v0.72.0 or newer, never v0.69.x.** v0.69.4-6 contained credential-stealing malware, and CVE-2026-63328 affects every release before v0.72.0. If you ran a compromised version, rotate secrets.
 7. **Resource limits on production containers.** Memory and CPU limits prevent noisy neighbors and OOM cascading.

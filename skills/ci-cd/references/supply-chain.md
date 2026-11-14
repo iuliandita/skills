@@ -51,12 +51,11 @@ they inform every recommendation in this document.
 - Downstream: stolen credentials used to compromise dozens of npm packages distributing **CanisterWorm** (self-propagating worm)
 - **Lesson**: even security tools' own CI is a target. "We trust our scanning tool" is circular reasoning.
 
-**Known safe Trivy versions**:
-- Current new pins (October 2026): binary v0.74.0+ (current v0.75.0) from official releases, pinned by checksum or image digest
-- March 2026 rollback: binary v0.69.2 or v0.69.3
-- `trivy-action`: **v0.35.0** was the March rollback tag; pin the verified commit SHA, not the tag
-- `setup-trivy`: v0.2.6 was the March rollback tag; pin the verified commit SHA, not the tag
-- **DO NOT USE**: v0.69.4, v0.69.5, v0.69.6
+**Trivy versions (November 2026)**:
+- Binary: minimum v0.72.0 (CVE-2026-63328 affects every earlier release), current v0.76.2, from official releases and pinned by checksum or image digest
+- `trivy-action`: current v0.36.0; pin the verified commit SHA, not the tag, and set its `version` input, because that tag installs Trivy v0.70.0 by default
+- `setup-trivy`: current v0.3.1; pin the verified commit SHA, not the tag, and set its `version` input, because the default is `latest`
+- **DO NOT USE**: v0.69.4, v0.69.5, v0.69.6 (compromised). The March 2026 fallback set (binary v0.69.2 / v0.69.3, `trivy-action` v0.35.0, `setup-trivy` v0.2.6) is below the minimum; do not use it either
 
 **IOC**: check for a repo named `tpcp-docs` in your org - its presence indicates the fallback
 exfiltration mechanism was triggered.
@@ -112,14 +111,14 @@ image: aquasec/trivy:latest
 
 # DO
 image:
-  name: aquasec/trivy:0.75.0@sha256:<digest>
+  name: aquasec/trivy:0.76.2@sha256:<digest>
 ```
 
 ### How (Docker images in any CI)
 
 ```bash
 # Get the digest
-docker inspect --format='{{index .RepoDigests 0}}' aquasec/trivy:0.75.0
+docker inspect --format='{{index .RepoDigests 0}}' aquasec/trivy:0.76.2
 
 # Pin to digest
 image: aquasec/trivy@sha256:abc123def456...

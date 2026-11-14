@@ -24,7 +24,7 @@ Security hardening, vulnerability management, supply chain integrity, and PCI-DS
 | CVE-2025-31133 | High | runc | Container escape via /dev/null symlink race | runc 1.2.8, 1.3.3, 1.4.0-rc.3 |
 | CVE-2025-52565 | High | runc | Container escape via /dev/console mount race | runc 1.2.8, 1.3.3, 1.4.0-rc.3 |
 | CVE-2025-52881 | High | runc | procfs write redirect bypasses LSM relabel; host procfs writes (DoS/escape) | runc 1.2.8, 1.3.3, 1.4.0-rc.3 |
-| CVE-2026-33634 | Critical | Trivy | Supply chain - credential-stealing malware in aquasec/trivy Docker Hub images v0.69.4-6 | Trivy v0.74.0+ for new pins; v0.69.3 only as rollback |
+| CVE-2026-33634 | Critical | Trivy | Supply chain - credential-stealing malware in aquasec/trivy Docker Hub images v0.69.4-6 | Trivy v0.72.0+ (current v0.76.2); no v0.69.x |
 | CVE-2026-2664 | Medium | Docker Desktop | gRPC-FUSE kernel module out-of-bounds read | Desktop 4.62.0+ |
 | CVE-2025-13743 | Low | Docker Desktop | Expired Hub PATs leaked in diagnostic bundles via error object serialization | Desktop 4.54.0+ |
 | CVE-2026-28400 | 7.5 High | Model Runner | Runtime flag injection via _configure endpoint - arbitrary file overwrite, container escape | Desktop 4.62.0+ |
@@ -89,7 +89,7 @@ The attackers are a cloud-native threat group active 2025-2026, known for Docker
 1. **Pin images to SHA256 digests**, not tags:
    ```dockerfile
    # BAD: mutable tag
-   FROM aquasec/trivy:0.70.0
+   FROM aquasec/trivy:0.76.2
 
    # GOOD: immutable digest
    FROM aquasec/trivy@sha256:abc123def456...
@@ -98,7 +98,7 @@ The attackers are a cloud-native threat group active 2025-2026, known for Docker
 2. **Pin CI actions to commit SHAs**:
    ```yaml
    # BAD: mutable tag
-   uses: aquasecurity/trivy-action@v0.35.0
+   uses: aquasecurity/trivy-action@v0.36.0
 
    # GOOD: immutable SHA
    uses: aquasecurity/trivy-action@<full-40-char-commit-sha>
@@ -117,7 +117,7 @@ The attackers are a cloud-native threat group active 2025-2026, known for Docker
 | Tool | Scans | SBOM | Signs | Free | Notes |
 |------|-------|------|-------|------|-------|
 | **Docker Scout** | Images, SBOM, policies | Generate | No | Free tier | Built into Docker CLI. `docker scout cves`, `docker scout sbom` |
-| **Trivy** (v0.74.0+) | Images, IaC, repos, SBOM | Generate | No | Yes | Multi-purpose. Pin exact version and digest |
+| **Trivy** (v0.72.0+) | Images, IaC, repos, SBOM | Generate | No | Yes | Multi-purpose. Pin exact version and digest |
 | **Grype** (Anchore) | Images | No | No | Yes | Fast CVE scanner. Pair with Syft |
 | **Syft** (Anchore) | N/A | Generate | No | Yes | SBOM generator. SPDX + CycloneDX |
 | **Cosign** (Sigstore) | N/A | Attest | Yes | Yes | Keyless OCI signing. Industry standard |
@@ -131,7 +131,7 @@ The attackers are a cloud-native threat group active 2025-2026, known for Docker
 docker buildx build --provenance=true --sbom=true -t $IMAGE --push .
 
 # 2. Scan (fail on HIGH/CRITICAL)
-trivy image --severity HIGH,CRITICAL --exit-code 1 $IMAGE    # pinned v0.74.0+ binary or image digest
+trivy image --severity HIGH,CRITICAL --exit-code 1 $IMAGE    # pinned v0.72.0+ binary or image digest
 
 # 3. Sign (keyless via Sigstore OIDC in CI)
 cosign sign $IMAGE@sha256:$DIGEST
@@ -176,7 +176,7 @@ cosign verify --key cosign.pub ghcr.io/org/app@sha256:<digest>
 syft ghcr.io/org/app:1.0.0 -o spdx-json > sbom.spdx.json
 syft ghcr.io/org/app:1.0.0 -o cyclonedx-json > sbom.cdx.json
 
-# Attest SBOM to image (signed in-toto attestation; `cosign attach sbom` / `sign --attachment` are deprecated, removed in cosign v4)
+# Attest SBOM to image (signed in-toto attestation; `cosign attach sbom` / `sign --attachment` are deprecated; `cosign attach` is to be removed in cosign v4)
 cosign attest --yes --type spdxjson --predicate sbom.spdx.json ghcr.io/org/app@sha256:<digest>
 cosign verify-attestation --type spdxjson <identity flags> ghcr.io/org/app@sha256:<digest>
 ```
@@ -321,7 +321,7 @@ PCI-DSS 4.0.1 is the only active version (4.0 retired December 31, 2024; 3.2.1 r
 | 2.2.4-6 | Remove unnecessary functionality | Distroless/Chainguard base images. No shells, package managers, or dev tools in production. |
 | 5.2/5.3 | Malware protection, FIM | Immutable images (deploy by digest). `read_only: true`. Runtime detection (Falco/Tetragon). |
 | 6.2.1 | Bespoke and custom software developed securely | Images from verified publishers. Signed with cosign. Verified at deployment (admission control). |
-| 6.3.1 | Vulnerability identification | Image scanning in CI (Docker Scout, Grype, Trivy v0.74.0+) and before every deployment. |
+| 6.3.1 | Vulnerability identification | Image scanning in CI (Docker Scout, Grype, Trivy v0.72.0+) and before every deployment. |
 | 6.3.2 | Component inventory | SBOM generated for every production image. Stored and queryable. |
 | 6.4.2 | WAF on public-facing apps | Reverse proxy with WAF (ModSecurity, Cloud Armor) in front of CDE containers. |
 | 8.6.2 | No hardcoded secrets | No secrets in Dockerfiles, Compose files, env vars, committed `.env` files. Use Compose secrets or Vault. |
