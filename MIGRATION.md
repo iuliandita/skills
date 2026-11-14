@@ -56,10 +56,11 @@ root, install replacements, verify they load, then remove the old names. For exa
 
 ```bash
 npx skills list
-npx skills add iuliandita/skills --skill shell-scripting
+npx skills add iuliandita/skills#main --skill shell-scripting
 npx skills remove command-prompt
 ```
 
+`#main` selects the stable channel; without it the CLI installs the nightly `develop` branch.
 For a many-to-one merge, install the replacement once and remove both old entries. For
 removed skills, back up and remove the old entry without installing a replacement.
 Check `npx skills --help` for the installed CLI's scope and agent options.
@@ -70,16 +71,17 @@ entries. Do not rely on `update` alone to prune old names. Its remove operation 
 provide the bundled installer's backup policy. The two installers' lock files are separate;
 do not edit one to impersonate the other. See the [upstream CLI source](https://github.com/vercel-labs/skills/tree/7407f3893ad4dceab546ac002c3ef806e4000c73/src).
 
-skills.sh may list temporary notices and retain historical pages or statistics. This
-repository cannot promise redirects, ranking, install-count transfer, or reindexing dates.
-Prefer explicit active skill selection over installing the whole transitional catalog.
+skills.sh may retain historical pages or statistics for old names, and may list temporary
+notices during a transition. This repository cannot promise redirects, ranking,
+install-count transfer, or reindexing dates. Select active skills explicitly.
 
 ## Users of the bundled installer
 
-Default installs select active skills; an explicitly named deprecated skill installs its
-notice. Normal updates do not remove old names. See `./install.sh --help` for migration
-options, then preview migration against the same destinations and copy/link mode used
-for the original installation:
+No notices ship now: every old name in the table above was retired, so naming one fails with
+`Unknown skill`. During a future transition, default installs select active skills and an
+explicitly named deprecated skill installs its notice. Normal updates do not remove old
+names. See `./install.sh --help` for migration options, then preview migration against the
+same destinations and copy/link mode used for the original installation:
 
 ```bash
 ./install.sh --tool codex --migrate
