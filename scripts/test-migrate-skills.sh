@@ -424,7 +424,7 @@ test_no_replace_unavailable_fails_closed() {
   setup_owned_copy "$tmp"
   cp "$tmp/dest/.skills-lock.json" "$tmp/lock-before"
   FAULT=force-enosys mig --apply > "$tmp/out" 2>&1 || status=$?
-  (( status == 1 )) || fail "unavailable no-replace rename exited $status, want 1"
+  (( status == 6 )) || fail "unavailable no-replace rename exited $status, want 6"
   grep -q 'SKIP old: atomic no-replace rename is unavailable' "$tmp/out" || fail "fail-closed reason missing"
   [[ ! -e "$tmp/dest/new" && -d "$tmp/dest/old" ]] || fail "fail-closed run changed skills"
   cmp -s "$tmp/lock-before" "$tmp/dest/.skills-lock.json" || fail "fail-closed run changed the lock"
@@ -661,6 +661,90 @@ PY
   trap - RETURN
 }
 
+# Two tool directories that each own the legacy skill, and a helper stand-in that
+# logs every destination and misbehaves for the first one only.
+setup_two_tools() {
+  local tmp="$1" dir
+  make_legacy_source "$tmp/src"
+  mkdir -p "$tmp/tmpdir"
+  for dir in "$tmp/first/skills" "$tmp/second/skills"; do
+    mkdir -p "$dir"
+    write_legacy_notice "$dir/anti-slop"
+    write_lock "$dir" "$tmp/src/skills" "anti-slop=$(hash_skill "$dir/anti-slop")"
+  done
+  cat > "$tmp/helper.py" <<'PY'
+import os
+import runpy
+import sys
+
+assert sys.flags.isolated, "the installer must run the helper with -I"
+dest = sys.argv[sys.argv.index("--dest") + 1]
+with open(os.environ["STUB_LOG"], "a", encoding="utf-8") as log:
+    log.write(dest + "\n")
+mode = os.environ["STUB_MODE"] if dest == os.environ["STUB_DEST"] else ""
+if mode == "crash":
+    raise RuntimeError("injected helper crash")
+if mode == "busy":
+    raise SystemExit(3)
+if mode == "partial":
+    os.environ["SKILLS_MIGRATE_FAULT"] = "force-enosys"
+runpy.run_path(os.environ["STUB_REAL"], run_name="__main__")
+PY
+}
+
+migrate_two_tools() {
+  env -i HOME="$TEST_HOME" PATH="$SAFE_PATH" LANG=C TMPDIR="$tmp/tmpdir" SKILLS_BACKUP_DIR="$tmp/backups" \
+    OPENCODE_SKILLS_DIR="$tmp/first/skills" CLAUDE_SKILLS_DIR="$tmp/second/skills" \
+    OPENCODE_CONFIG_FILE="$tmp/opencode.json" SKILLS_MIGRATOR="$tmp/helper.py" \
+    STUB_REAL="$tmp/src/scripts/migrate-skills.py" STUB_LOG="$tmp/helper.log" \
+    STUB_DEST="$tmp/first/skills" STUB_MODE="$1" \
+    "$tmp/src/install.sh" --tool opencode --tool claude --migrate --apply
+}
+
+test_installer_continues_past_partial_apply() {
+  local tmp status=0 backup
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  setup_two_tools "$tmp"
+  migrate_two_tools partial > "$tmp/out" 2>&1 || status=$?
+  (( status == 1 )) || fail "partial apply for the first tool exited $status, want 1: $(<"$tmp/out")"
+  grep -q 'SKIP anti-slop: atomic no-replace rename is unavailable' "$tmp/out" || fail "partial apply was not reported: $(<"$tmp/out")"
+  [[ -d "$tmp/first/skills/anti-slop" && ! -e "$tmp/first/skills/code-simplification" ]] || fail "partial apply changed the first tool"
+  [[ ! -e "$tmp/second/skills/anti-slop" && -d "$tmp/second/skills/code-simplification" ]] \
+    || fail "second tool was not migrated after a partial apply: $(<"$tmp/out")"
+  # Once for the opencode destination and once at the end of the run.
+  [[ "$(grep -c 'OpenCode permissions synced' "$tmp/out")" == 2 ]] || fail "permission sync did not run after a partial apply: $(<"$tmp/out")"
+  [[ -z "$(ls -A "$tmp/tmpdir")" ]] || fail "partial apply left a temp file: $(ls -A "$tmp/tmpdir")"
+
+  # SKILLS_BACKUP_DIR: one folder per destination, so two "skills" directories do not share one.
+  backup="$(printf '%s\n' "$tmp"/backups/skills-*/anti-slop)"
+  [[ -d "$backup" && "$backup" =~ /backups/skills-[0-9a-f]{12}/anti-slop$ ]] \
+    || fail "migration backup is not in the per-destination folder: $(find "$tmp/backups" -maxdepth 2)"
+  [[ ! -e "$tmp/backups/anti-slop" ]] || fail "migration backup landed in the shared backup root"
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_installer_stops_on_other_helper_failures() {
+  local tmp status mode want
+  for mode in crash:1 busy:3; do
+    want="${mode#*:}"
+    mode="${mode%:*}"
+    tmp="$(mktemp -d)"
+    trap 'rm -rf "$tmp"' RETURN
+    setup_two_tools "$tmp"
+    status=0
+    migrate_two_tools "$mode" > "$tmp/out" 2>&1 || status=$?
+    (( status == want )) || fail "helper $mode exited $status, want $want: $(<"$tmp/out")"
+    [[ "$(<"$tmp/helper.log")" == "$tmp/first/skills" ]] || fail "helper $mode did not stop the run: $(<"$tmp/helper.log")"
+    [[ -d "$tmp/second/skills/anti-slop" && ! -e "$tmp/second/skills/code-simplification" ]] || fail "helper $mode still migrated the second tool"
+    ! grep -q 'OpenCode permissions synced' "$tmp/out" || fail "helper $mode still synced permissions"
+    [[ -z "$(ls -A "$tmp/tmpdir")" ]] || fail "helper $mode left a temp file: $(ls -A "$tmp/tmpdir")"
+    rm -rf "$tmp"
+    trap - RETURN
+  done
+}
+
 setup_legacy_dir() {
   local tmp="$1"
   mkdir -p "$tmp/source/x" "$tmp/canonical" "$tmp/tools/legacy" "$tmp/tools/new"
@@ -762,5 +846,7 @@ test_backup_inside_staging_area_is_rejected
 test_apply_holds_installer_lock
 test_concurrent_applies_serialize
 test_installer_migration_apply_requires_lock
+test_installer_continues_past_partial_apply
+test_installer_stops_on_other_helper_failures
 test_legacy_cleanup_backup_outside_staging_area
 printf 'migration tests passed\n'

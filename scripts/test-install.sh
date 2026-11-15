@@ -707,7 +707,7 @@ PY
   SKILLS_BACKUP_DIR="$tmp/migration-backups" "$src/install.sh" --tool portable --dest "$tmp/skills" --migrate --apply > "$tmp/apply"
   [[ ! -e "$tmp/skills/anti-slop" ]] || fail "installer migration apply did not retire old skill"
   [[ -d "$tmp/skills/code-simplification" ]] || fail "installer migration apply did not install replacement"
-  if ! find "$tmp/migration-backups/anti-slop" -type f -name SKILL.md -print -quit | grep -q .; then
+  if ! find "$tmp"/migration-backups/skills-*/anti-slop -type f -name SKILL.md -print -quit | grep -q .; then
     fail "installer migration did not honor SKILLS_BACKUP_DIR"
   fi
   if output="$(LC_ALL=en_US.utf8 "$src/install.sh" --tool portable --dest "$tmp/skills" --check 2>&1)"; then
