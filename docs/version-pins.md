@@ -1,13 +1,14 @@
 # Version pin receipts
 
-Version receipts record which source was checked and when. This collection
-is migrating version pins from dated prose to `references/versions.md`;
-most skills still use the month-label convention. A receipt records a
-verification claim, not proof that the source or version remains current.
+Version receipts record which source was checked and when. Version pins live
+in `references/versions.md`: 23 of the 40 skills have a receipt. A skill
+without one keeps the month-label convention for any dated claim it still
+carries. A receipt records a verification claim, not proof that the source or
+version remains current.
 
 ## Mechanism
 
-- When migrating a skill's version pins, put them in `references/versions.md`.
+- A skill's version pins go in its `references/versions.md`.
 - That file has YAML frontmatter plus a human-readable table body describing
   the same pins for humans reading the rendered skill.
 - `scripts/check-version-receipts.sh` validates every `references/versions.md`
@@ -76,10 +77,10 @@ in that file). Do not restate version numbers here.
 
 `scripts/check-freshness-dates.sh` still enforces the `**Target versions**
 (Month Year):` label convention for any skill that has *not* migrated to a
-receipt file - that is still most of the collection. The moment a skill grows
-`references/versions.md`, the label check is skipped for that skill (it prints
-a `note:` line saying so) because the receipt file's `checked_at` field is now
-the source of truth for that skill's freshness.
+receipt file. The moment a skill grows `references/versions.md`, the label
+check is skipped for that skill (it prints a `note:` line saying so) because
+the receipt file's `checked_at` field is now the source of truth for that
+skill's freshness.
 
 Private overlays do not belong in the public version inventory. The receipt
 checker searches recursively for `references/versions.md`, so keep private
