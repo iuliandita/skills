@@ -149,7 +149,7 @@ pre-commit install --hook-type pre-commit --hook-type pre-push
 
 The hooks enforce that `skills/kubernetes-health/protected/` remains ignored and untracked, and they scan public files for protected private patterns when the local overlay is present. On push they also run the offline checks of the CI lint job. They are a subset of CI: most test suites, shellcheck, markdownlint-cli2, lychee, actionlint, zizmor, the secret scan and semgrep run only in CI or by hand (the full list is in `AGENTS.md`).
 
-They also check freshness markers in public skills. Lines that claim currentness, such as `Target versions`, `Reviewed`, `Updated for`, `verified <month year>`, `recheck`, `snapshot`, or `as of <month year>`, should use the current collection label. The check is advisory: CI and the hook report stale labels as warnings and do not block. Override the expected label during a refresh with `SKILLS_FRESHNESS_LABEL="July 2026" ./scripts/check-freshness-dates.sh`.
+They also check freshness markers in public skills. Lines that claim currentness, such as `Target versions`, `Reviewed`, `Updated for`, `verified <month year>`, `recheck`, `snapshot`, or `as of <month year>`, should use the current collection label. The check is advisory: CI and the hook report stale labels (exit 10) as warnings and do not block; any other failure, such as an unreadable file or a run outside a repository checkout, exits 1 and blocks. Override the expected label during a refresh with `SKILLS_FRESHNESS_LABEL="July 2026" ./scripts/check-freshness-dates.sh`.
 
 ### Manual
 
