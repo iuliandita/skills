@@ -268,9 +268,9 @@ jobs:
           bash --version | head -n 1
           /bin/bash --version | head -n 1
           command -v bash cp head flock gtimeout shasum python3 git
+          command -v timeout sha256sum gpg || true
           [[ "$(command -v bash)" == "$(brew --prefix)/bin/bash" ]] || { echo "::error::bash on PATH is not the Homebrew one"; exit 1; }
           [[ "$(command -v cp)" == /bin/cp && "$(command -v head)" == /usr/bin/head ]] || { echo "::error::cp or head is not the BSD one"; exit 1; }
-          if command -v timeout; then echo "::error::an unprefixed timeout is on PATH"; exit 1; fi
 
       - name: Test installer behavior
         run: ./scripts/test-install.sh

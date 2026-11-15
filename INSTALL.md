@@ -38,8 +38,9 @@ brew install bash flock coreutils
 sudo port install bash flock coreutils
 ```
 
-Both install coreutils with a `g` prefix and `--update` looks for `gtimeout`, so the GNU tools
-do not have to replace the system ones on `PATH`. The new bash does have to come before
+Both give the GNU versions of tools macOS already has a `g` prefix, and `--update` accepts
+`timeout` or `gtimeout`, so the GNU tools do not have to replace the system ones on `PATH`
+(no `gnubin` directory needed). The new bash does have to come before
 `/bin/bash` on `PATH`, because the script starts through `env bash`. CI runs the installer tests
 on macOS with Homebrew bash and the system `cp` and `head`.
 

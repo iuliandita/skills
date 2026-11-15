@@ -28,7 +28,7 @@ safe_path() {
   done
   printf '%s:/usr/bin:/bin\n' "$dirs"
 }
-# Homebrew and MacPorts coreutils install timeout as gtimeout.
+# MacPorts coreutils installs timeout only as gtimeout.
 TIMEOUT_TOOL=timeout
 command -v timeout >/dev/null 2>&1 || TIMEOUT_TOOL=gtimeout
 SAFE_PATH="$(safe_path bash python3 git "$HASH_TOOL" flock "$TIMEOUT_TOOL")"
