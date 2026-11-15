@@ -39,6 +39,7 @@ for marker in 'P0 🔴' 'P1 🟠' 'P2 🟡' 'P3 🔵' 'info ⚪'; do
   require_text "$contract" "$marker" "output contract is missing severity marker '$marker'"
 done
 require_text "$contract" '```text' "output contract does not use fenced text blocks"
+require_text "$contract" 'git check-ignore -q <path>' "output contract saves reports without an ignore check"
 for glyph in '╔' '═' '╗' '║' '╚' '╝' '╦' '╠' '╬' '╣' '╩'; do
   reject_text "$contract" "$glyph" "output contract still contains box-drawing glyph '$glyph'"
 done

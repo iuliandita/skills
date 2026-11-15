@@ -33,7 +33,9 @@ Separate observed defects from recommendations. Include enough evidence to repro
 ## Saved reports
 
 Save audit findings unless the user requests otherwise. Default to
-`docs/local/audits/<skill-name>/<YYYY-MM-DD>-<slug>.md`; use the bucket declared by the skill for other artifacts. Append `-2`, `-3`, etc. for collisions. Keep private reports out of version control.
+`docs/local/audits/<skill-name>/<YYYY-MM-DD>-<slug>.md`; use the bucket declared by the skill for other artifacts. Append `-2`, `-3`, etc. for collisions.
+
+Before writing to a default path inside a git repository, run `git check-ignore -q <path>`. If the path is not ignored, report inline and ask where to save; in a headless run, report inline, write nothing, and say so. A path outside a git repository needs no check. Keep private reports out of version control.
 
 Start with the skill, target, mode, date, scope, and verification state. Group findings under priority headings, omit empty groups, and number findings across the whole report. Each finding contains:
 
