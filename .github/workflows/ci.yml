@@ -34,6 +34,11 @@ jobs:
     name: lint
     runs-on: ubuntu-24.04
     timeout-minutes: 20
+    # The base-ref checks read these: the pull request's base branch, else the
+    # push event's previous tip.
+    env:
+      BASE_REF: ${{ github.base_ref }}
+      BASE_SHA: ${{ github.event_name == 'push' && github.event.before || '' }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -115,21 +120,12 @@ jobs:
         run: ./scripts/validate-spec.sh
 
       - name: Check whitespace and merge markers
-        env:
-          BASE_REF: ${{ github.base_ref }}
-          BASE_SHA: ${{ github.event_name == 'push' && github.event.before || '' }}
         run: ./scripts/check-whitespace.sh
 
       - name: Check refiner phase-1 immutability guard
-        env:
-          BASE_REF: ${{ github.base_ref }}
-          BASE_SHA: ${{ github.event_name == 'push' && github.event.before || '' }}
         run: ./scripts/check-refiner-phase1-guard.sh
 
       - name: Check docs impact
-        env:
-          BASE_REF: ${{ github.base_ref }}
-          BASE_SHA: ${{ github.event_name == 'push' && github.event.before || '' }}
         run: ./scripts/check-docs-impact.sh
 
       # A pull request into main is a release. Both checks need the full

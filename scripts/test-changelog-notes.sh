@@ -6,10 +6,8 @@ SCRIPT="$ROOT/scripts/changelog-notes.sh"
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
 
-fail() {
-  printf 'FAIL: %s\n' "$1" >&2
-  exit 1
-}
+# shellcheck source=./scripts/gate-test-lib.sh
+source "$ROOT/scripts/gate-test-lib.sh"
 
 cat > "$tmp/CHANGELOG.md" <<'EOF'
 # Changelog

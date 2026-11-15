@@ -26,6 +26,7 @@ FILES=(
   "skills/skill-creator/references/conventions.md"
   "$SELF_CHECK_FILE"
   "scripts/lint-skills.sh"
+  "scripts/check-ere-pipe.py"
   "scripts/validate-spec.sh"
   "scripts/skill-lib.sh"
   "scripts/skill-frontmatter.py"
@@ -48,15 +49,11 @@ ai_self_check_section() {
   ' "$ROOT/$SELF_CHECK_FILE"
 }
 
-{
-  cat "$ROOT/skills/skill-refiner/references/evaluation-criteria.md"
-  cat "$ROOT/skills/skill-refiner/references/test-cases.md"
-  cat "$ROOT/skills/skill-creator/references/conventions.md"
-  ai_self_check_section
-  cat "$ROOT/scripts/lint-skills.sh"
-  cat "$ROOT/scripts/validate-spec.sh"
-  cat "$ROOT/scripts/skill-lib.sh"
-  cat "$ROOT/scripts/skill-frontmatter.py"
-  cat "$ROOT/scripts/gen-ref-toc.py"
-  cat "$ROOT/scripts/contract-lib.sh"
-} | sha256sum | awk '{ print $1 }'
+# Only the AI Self-Check section of SELF_CHECK_FILE is a rubric input.
+for rel in "${FILES[@]}"; do
+  if [[ "$rel" == "$SELF_CHECK_FILE" ]]; then
+    ai_self_check_section
+  else
+    cat "$ROOT/$rel"
+  fi
+done | sha256sum | awk '{ print $1 }'

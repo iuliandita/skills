@@ -13,11 +13,8 @@ CASES=0
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
-fail() {
-  printf 'FAIL: %s\n' "$1" >&2
-  [[ -z "${OUT:-}" ]] || printf '%s\n' "$OUT" >&2
-  exit 1
-}
+# shellcheck source=./scripts/gate-test-lib.sh
+source "$ROOT/scripts/gate-test-lib.sh"
 
 g() {
   git -C "$REPO" -c user.email="test@example.com" -c user.name="test" -c commit.gpgsign=false "$@"
@@ -69,7 +66,10 @@ new_fixture() {
   mkdir -p "$REPO/scripts"
   g init -q
   g symbolic-ref HEAD refs/heads/main
-  cp "$ROOT/scripts/check-docs-impact.sh" "$REPO/scripts/check-docs-impact.sh"
+  local f
+  for f in check-docs-impact.sh base-lib.sh skill-lib.sh skill-frontmatter.py; do
+    cp "$ROOT/scripts/$f" "$REPO/scripts/$f"
+  done
   put skills/alpha/SKILL.md "$(skill_md alpha)"
   put skills/oldnotice/SKILL.md "$(skill_md oldnotice dep)"
   put skills/alpha/references/output-contract.md "contract"
@@ -94,16 +94,6 @@ new_fixture() {
 run_check() {
   STATUS=0
   OUT="$(cd "$REPO" && BASE_REF=main bash scripts/check-docs-impact.sh "$@" 2>&1)" || STATUS=$?
-}
-
-expect_fail() {
-  local label="$1" needle="$2"
-  (( STATUS != 0 )) || fail "$label: expected failure, got exit 0"
-  [[ "$OUT" == *"$needle"* ]] || fail "$label: output missing '$needle'"
-}
-
-expect_pass() {
-  (( STATUS == 0 )) || fail "$1: expected exit 0, got $STATUS"
 }
 
 # --- negative cases ---
