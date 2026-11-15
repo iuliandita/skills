@@ -1,7 +1,7 @@
 ---
 name: debian-ubuntu
 description: >
-  Debian, Ubuntu, Mint, Pop!_OS, Kali admin: apt/dpkg errors, held packages, release upgrades, PPAs, kernels, drivers, systemd.
+  Debian, Ubuntu, Mint, Pop!_OS, Kali admin: apt/dpkg errors, pinning, held packages, repo keys, snaps, unattended-upgrades, release upgrades, PPAs, kernels, systemd.
 license: MIT
 compatibility: "Requires Debian, Ubuntu, or a Debian-based distro with apt. Optional: ubuntu-release-upgrader-core (do-release-upgrade), ppa-purge, needrestart, fwupd"
 metadata:
@@ -161,7 +161,7 @@ point upgrade.
 
 | Task type | Reference |
 |-----------|-----------|
-| `apt`, `dpkg`, PPAs, `.deb` handling | `references/packages-and-repos.md` |
+| `apt`, `dpkg`, pinning, deb822 sources and keyrings, PPAs, snaps, Flatpak, local `.deb` files | `references/packages-and-repos.md` |
 | systemd units, timers, journal, overrides | `references/systemd-and-journal.md` |
 | GRUB, kernel, initramfs, EFI, recovery | `references/boot-kernel-and-recovery.md` |
 | Ubuntu HWE, release upgrades, Debian lanes, Mint/Pop/Devuan/Kali specifics | `references/derivatives-and-hwe.md` |
@@ -170,7 +170,7 @@ point upgrade.
 | GPU drivers, Vulkan, Steam, Proton, gaming | `references/graphics-and-gaming.md` |
 | OBS, WebRTC, screen sharing, virtual cameras | `references/capture-and-sharing.md` |
 | ext4, Btrfs, LUKS, LVM, TRIM, hibernation | `references/storage-and-rollback.md` |
-| AppArmor denials, unattended-upgrades status | `references/security-and-updates.md` |
+| AppArmor denials, unattended-upgrades setup and verification, Debian security suites, Ubuntu pockets | `references/security-and-updates.md` |
 | Remote gaming, controllers, input | `references/remote-gaming-input-and-tooling.md` |
 | Core Linux ops commands and Debian tools | `references/base-linux-and-cli.md` |
 | Recurring Debian/Ubuntu failure patterns | `references/gotchas-and-special-situations.md` |
@@ -189,11 +189,14 @@ only if the first layer is clean.
 - Snapshot or back up before release upgrades, kernel changes, filesystem work, or bootloader repair.
 
 **Consequential changes** (release upgrades, `full-upgrade` with removals, kernel removal, GRUB
-reinstall, PPA purge, LUKS or LVM changes): show the exact command and what it will do (simulated
+reinstall, PPA purge, new sources or keys, pin changes, unattended-upgrades origins, LUKS or LVM
+changes): show the exact command and what it will do (simulated
 transaction with `apt-get -s`, removal list, or target device), get explicit confirmation, run it,
 then go to Step 5. In unattended runs, stop at the plan. Exact commands live in
 `references/derivatives-and-hwe.md` (release upgrades), `references/boot-kernel-and-recovery.md`
-(kernels, GRUB, live-media chroot), and `references/storage-and-rollback.md` (LUKS, LVM).
+(kernels, GRUB, live-media chroot), `references/packages-and-repos.md` (sources, keys, pins),
+`references/security-and-updates.md` (unattended-upgrades), and
+`references/storage-and-rollback.md` (LUKS, LVM).
 
 ### Step 5: Validate before closing
 
@@ -288,7 +291,7 @@ When a bug looks desktop-only, compare one clean baseline:
 
 ## Reference Files
 
-- `references/packages-and-repos.md` - apt and dpkg quick checks, broken-dependency and interrupted-install recovery, PPA safety and ppa-purge
+- `references/packages-and-repos.md` - apt and dpkg recovery, pinning and priorities, deb822 sources and signed-by keyrings, PPA safety, snaps, Flatpak, local `.deb` files
 - `references/systemd-and-journal.md` - systemd service debugging, unit overrides, user units, journal triage
 - `references/boot-kernel-and-recovery.md` - GRUB, kernel metapackages, initramfs, EFI, recovery, and live-ISO chroot
 - `references/derivatives-and-hwe.md` - Ubuntu HWE, release upgrades, Debian lane differences, Mint, Pop!_OS, Devuan, and Kali scope notes
@@ -297,7 +300,7 @@ When a bug looks desktop-only, compare one clean baseline:
 - `references/graphics-and-gaming.md` - NVIDIA, AMD, Intel, Vulkan, Steam, Proton, Gamescope, MangoHud
 - `references/capture-and-sharing.md` - OBS, WebRTC screen sharing, Discord/Teams, hardware encoding, virtual cameras
 - `references/storage-and-rollback.md` - ext4, Btrfs, LUKS, LVM, TRIM, hibernation, resume
-- `references/security-and-updates.md` - first-pass AppArmor, unattended-upgrades, and needrestart checks
+- `references/security-and-updates.md` - AppArmor and needrestart checks, unattended-upgrades configuration and verification, Debian security suites, Ubuntu security pockets
 - `references/remote-gaming-input-and-tooling.md` - first-pass remote-streaming and controller input checks
 - `references/base-linux-and-cli.md` - core Linux inspection commands and Debian tools such as `update-alternatives`
 - `references/gotchas-and-special-situations.md` - short checklist of recurring Debian/Ubuntu failure patterns
