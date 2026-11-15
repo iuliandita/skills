@@ -4,6 +4,18 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
+# macOS hands out temp dirs behind a symlink (/var is /private/var), so every
+# temp dir is resolved here: paths built from one then match the resolved
+# paths the installer prints and records.
+mktemp() {
+  local dir
+  dir="$(command mktemp "$@")" || return 1
+  (cd "$dir" && pwd -P)
+}
+# macOS has shasum where Linux has sha256sum; both print the same format.
+HASH_TOOL=sha256sum
+command -v sha256sum >/dev/null 2>&1 || HASH_TOOL=shasum
+
 # Git hooks export GIT_DIR and friends; fixture repos must not inherit them.
 while IFS= read -r var; do unset "$var"; done < <(git rev-parse --local-env-vars)
 
@@ -20,7 +32,7 @@ safe_path() {
   done
   printf '%s:/usr/bin:/bin\n' "$dirs"
 }
-SAFE_PATH="$(safe_path python3 git sha256sum flock)"
+SAFE_PATH="$(safe_path bash python3 git "$HASH_TOOL" flock)"
 REAL_GIT="$(command -v git)"
 
 fail() {
@@ -129,7 +141,7 @@ make_sys_path() {
   local cmd
   mkdir -p "$1"
   for cmd in bash dirname python3 mktemp rm; do
-    ln -s "$(command -v "$cmd")" "$1/$cmd"
+    ln -s "$(type -P "$cmd")" "$1/$cmd"
   done
 }
 
@@ -201,7 +213,7 @@ test_json_detect_and_save() {
   chmod +x "$bin/claude"
 
   out="$(isolated_path "$home" "$bin:$sys" "$ROOT/install.sh" --detect --json 2>/dev/null)" || fail "--detect --json exited non-zero"
-  [[ "$(wc -l <<< "$out")" == 1 ]] || fail "--detect --json printed more than one line: $out"
+  [[ "$(wc -l <<< "$out")" -eq 1 ]] || fail "--detect --json printed more than one line: $out"
   json_check "$out" 'd["ok"] is True and d["errors"] == [] and d["command"] == "detect" and d["suggested"] == ["claude", "codex"]' "detect keys"
   json_check "$out" 'd["candidates"][0]["tool"] == "claude" and d["candidates"][0]["evidence"][0]["kind"] == "binary" and "cursor" in d["nomarker"]' "detect candidates"
   out="$(isolated_path "$home" "$bin:$sys" "$ROOT/install.sh" --detect --save --json 2>/dev/null)" || status=$?

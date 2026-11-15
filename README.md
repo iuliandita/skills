@@ -30,6 +30,8 @@ cd skills
 ./install.sh --tool codex kubernetes docker
 ```
 
+The installer needs bash 4.4 or newer, plus `flock` for `--save`, `--update`, and `--migrate --apply`. On macOS, `brew install bash flock coreutils` (or `sudo port install bash flock coreutils`) covers it; GNU coreutils is needed only for `timeout` (or `gtimeout`) on `--update` ([details](INSTALL.md#bundled-installer)).
+
 See [installation and updates](INSTALL.md) for target paths, symlink mode, backups, and private overlays.
 `./install.sh --detect` suggests which harnesses to target, and `--save` records a selection that a bare `./install.sh` repeats ([details](INSTALL.md#detect-and-save-a-setup)). `./install.sh --update` keeps a saved setup current from cron or a systemd timer ([details](INSTALL.md#scheduled-updates)).
 
