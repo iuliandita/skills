@@ -10,6 +10,11 @@ on:
     - cron: "0 5 * * 1"
   workflow_dispatch:
   workflow_call:
+    inputs:
+      advisory-links:
+        description: Report link check failures without failing the calling workflow.
+        type: boolean
+        default: false
     secrets:
       SKILLS_PRIVATE_PATTERNS:
         description: Private markers for the leak check, one per line. Optional.
@@ -18,9 +23,11 @@ on:
 permissions:
   contents: read
 
+# Only pull request runs share a group and cancel each other. Push, schedule,
+# dispatch and release runs each get their own, so every pushed range is checked.
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref == 'refs/heads/main' && github.sha || github.ref }}
-  cancel-in-progress: true
+  group: ci-${{ github.workflow }}-${{ github.event_name }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   lint:
@@ -112,6 +119,21 @@ jobs:
           BASE_SHA: ${{ github.event_name == 'push' && github.event.before || '' }}
         run: ./scripts/check-docs-impact.sh
 
+      # A pull request into main is a release. Both checks need the full
+      # history and tags this job fetches.
+      - name: Check release changelog section
+        if: github.event_name == 'pull_request' && github.base_ref == 'main'
+        run: ./scripts/check-release-changelog.sh main
+
+      # The step above compares with the merge base, which leaves out changes
+      # already on main; this one covers everything since the previous version tag.
+      - name: Check cumulative release documentation impact
+        if: github.event_name == 'pull_request' && github.base_ref == 'main'
+        run: |
+          previous="$(./scripts/check-release-changelog.sh --previous-tag main)"
+          echo "Checking cumulative documentation impact since $previous"
+          ./scripts/check-docs-impact.sh --release "$previous"
+
   test:
     name: test
     runs-on: ubuntu-24.04
@@ -174,6 +196,9 @@ jobs:
       - name: Test changelog notes extraction
         run: ./scripts/test-changelog-notes.sh
 
+      - name: Test release changelog check
+        run: ./scripts/test-release-changelog.sh
+
       - name: Shellcheck scripts
         run: shellcheck install.sh scripts/*.sh skills/repo-audit/references/detect.sh
 
@@ -201,6 +226,8 @@ jobs:
 
   links:
     name: links
+    # Advisory in a release run only: a flaky URL must not block publishing unchanged code.
+    continue-on-error: ${{ inputs.advisory-links == true }}
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:

@@ -124,6 +124,8 @@ New skills must also be registered in the repository-audit coverage check or its
 
 `scripts/check-docs-impact.sh` compares the PR range against its base. Removing or renaming a skill needs a `migrations.json` entry and a `MIGRATION.md` change, and removing an installer target needs an `INSTALL.md` note. Other installer or gate-script changes need a doc change or a `Docs-Impact: none - <specific reason>` commit trailer. The trailer counts only on a commit that itself changes `install.sh` or one of the added or removed gate scripts; on a squash merge, put it in the squash commit message.
 
+`scripts/check-release-changelog.sh` runs on pull requests into `main`, which are releases: the first numbered `CHANGELOG.md` section must be newer than the newest version tag merged into `main`, not tagged yet, and have notes. On any other base it skips.
+
 ## How the stack fits together
 
 Each repo installs on its own. idstack calls skills by name and sits on pstack.

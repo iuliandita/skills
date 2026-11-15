@@ -74,7 +74,10 @@ conventional-commit titles since the last tag: `feat` is minor, `fix` and `deps`
    new version, and squash-merge that PR into `develop`.
 2. Open a PR from `develop` to `main` and merge it with a merge commit, never a squash, so every
    `develop` commit stays in `main`'s history and the next release PR carries only new work.
-3. Tag the merge on `main` as `v<version>` and push the tag. The release workflow checks the tag
-   and publishes the notes from the changelog.
+   A PR into `main` is a release by definition: CI fails it unless the first numbered changelog
+   section is a new, untagged version with notes, and it checks documentation impact since the
+   previous version tag.
+3. Tag the merge on `main` as `v<version>` and push the tag. The release workflow checks that the
+   tag is on `main`'s first-parent line and publishes the notes from the changelog.
 
 The full procedure, including the documentation-impact gate, is in [INSTALL.md](INSTALL.md#releases).

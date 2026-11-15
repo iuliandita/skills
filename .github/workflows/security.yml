@@ -13,9 +13,11 @@ on:
 permissions:
   contents: read
 
+# Only pull request runs share a group and cancel each other. Push, schedule,
+# dispatch and release runs each get their own, so every pushed range is checked.
 concurrency:
-  group: security-${{ github.workflow }}-${{ github.ref == 'refs/heads/main' && github.sha || github.ref }}
-  cancel-in-progress: true
+  group: security-${{ github.workflow }}-${{ github.event_name }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   zizmor:

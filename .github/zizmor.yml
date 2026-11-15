@@ -2,5 +2,5 @@ rules:
   self-repository:
     # The release workflow calls the local CI and Security workflows with the './' form.
     ignore:
-      - release.yml:19
-      - release.yml:27
+      - release.yml:42
+      - release.yml:53

@@ -777,18 +777,25 @@ Release steps (start with a clean checkout and update `develop` with `git pull -
    a PR targeting `develop`. Require green CI and squash merge the PR.
 3. Open a release PR from `develop` to `main`. Require green CI and merge it with a merge
    commit, never a squash, so every `develop` commit stays in `main`'s history and the next
-   release PR carries only new work.
+   release PR carries only new work. A PR into `main` is a release by definition, so CI runs
+   two extra checks on it: `scripts/check-release-changelog.sh` fails unless the first numbered
+   `## [X.Y.Z]` section of `CHANGELOG.md` is newer than the newest version tag merged into
+   `main`, is not tagged yet, and has notes; and `./scripts/check-docs-impact.sh --release vPREV`
+   covers everything since that tag, including changes already on `main`.
 4. Switch to `main`, run `git pull --ff-only`, and verify that `HEAD` is the merge commit and
    that its checks passed. Do not commit or push directly to `main`.
    Run `./scripts/check-docs-impact.sh --release vPREV` before tagging.
 5. Review the changelog section against the commits since `vPREV`.
 6. Tag the verified merge commit with `git tag -a vX.Y.Z -m "vX.Y.Z"`, then push only that tag
    with `git push origin vX.Y.Z`.
-7. The tag push runs `.github/workflows/release.yml`, which checks that the tag is on `main`,
-   checks cumulative documentation impact, and publishes the GitHub release from the
-   `CHANGELOG.md` section. Follow it with
+7. The tag push runs `.github/workflows/release.yml`. Its first job checks that the tagged
+   commit is on `main`'s first-parent line, which a `develop` commit merged into `main` is not;
+   the CI and Security gates run only after it passes. It then checks cumulative documentation
+   impact and publishes the GitHub release from the `CHANGELOG.md` section. Follow it with
    `gh run watch <run-id> --exit-status` and confirm the release with `gh release view vX.Y.Z`.
-   It fails when the changelog has no section for the version.
+   It fails when the changelog has no section for the version. The link check is advisory in
+   this run only: a failing URL shows as a failed `links` job and does not block publishing. It
+   stays blocking on pull requests and pushes.
 
 The release documentation gate uses the highest strict `vX.Y.Z` version tag reachable from the
 release commit's parent. Tags on the current commit and unrelated branches are excluded; full
@@ -807,6 +814,8 @@ markdownlint-cli2 manifests under `.github/tools/`, after a 7-day minimum releas
 checksum-pinned binaries in `ci.yml` (lychee, actionlint) and `security.yml` (gitleaks) are
 outside its reach; the weekly Tool Pins workflow runs `scripts/report-tool-pins.sh` and keeps
 one issue open while any of them is behind. CI and Security also run weekly on a schedule.
+Only pull request runs cancel an older run of the same PR; push, schedule, dispatch and release
+runs never cancel each other, so every pushed range is checked.
 
 ## Requirements
 
