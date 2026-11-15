@@ -50,7 +50,8 @@ Both flags work everywhere the other does.
 For OpenCode, the installer also updates `~/.config/opencode/opencode.json` so every installed
 skill has `permission.skill.<name>: "allow"`. This keeps installs visible when the user's config
 uses a deny-by-default policy such as `"permission": { "skill": { "*": "deny" } }`. Existing
-explicit `deny` entries are left alone. Each named `allow` entry overrides a wildcard `deny`
+explicit `deny` and `ask` entries are left alone; skills kept at `ask` are listed in a
+`[i] OpenCode permission kept as "ask": <names>` line. Each named `allow` entry overrides a wildcard `deny`
 for that skill, the same as adding it by hand; remove the entry or set it to `deny` to hide
 the skill again. Only skills that installed successfully are added. The file is rewritten
 through a temporary file and a rename, following a symlinked config to its target; if the
@@ -337,6 +338,11 @@ Claude).
 of those variables is set. `--save` requires `flock` and takes the installer lock before it
 touches the config, holding it through the install and the save.
 
+`--save` is also refused (exit 2, nothing installed) when `install.sh` sits inside a git
+repository other than its own checkout, for example a copy vendored into another project:
+the saved source would be that outer repository. A copy outside any git repository can
+still save; it records the installer directory and no upstream.
+
 The config is `${XDG_CONFIG_HOME:-~/.config}/iuliandita-skills/install.conf`, directory mode
 700, file mode 600. The directory is opened without following a symlink and checked
 through that descriptor; the temporary file, its permissions, and the rename into place all
@@ -373,7 +379,7 @@ group- or world-writable.
 |------|---------|
 | 0 | Success |
 | 1 | Install failed (nothing saved), an invalid option combination, or an empty `--tool` or `--dest` value |
-| 2 | Saved config invalid or unsafe, or an override variable is set |
+| 2 | Saved config invalid or unsafe, an override variable is set, or `install.sh` is inside another git repository |
 | 3 | Another installer run holds the lock |
 | 7 | The config directory or file cannot be created or opened |
 | 10 | `flock` is missing (`--save` only) |
@@ -398,7 +404,8 @@ branch tracks a remote, then schedule the update:
    config, or any override variable (`*_SKILLS_DIR`, `SKILLS_CANONICAL_DIR`,
    `SKILLS_BACKUP_DIR`, `OPENCODE_CONFIG_FILE`, `SKILLS_TOOL`, `SKILLS_MIGRATOR`, or
    `SKILLS_MIGRATIONS_FILE`), means exit 2.
-3. Checks the source: the checkout is the saved `source_repo`, it is on the saved branch,
+3. Checks the source: `install.sh` is at the root of its git checkout, the checkout is the
+   saved `source_repo`, it is on the saved branch,
    the branch's remote, that remote's URL, and the upstream ref match the saved values, and
    `git status --porcelain --untracked-files=all` is empty (untracked files count).
 4. Fetches the saved upstream ref under `timeout -k 10 ${SKILLS_UPDATE_TIMEOUT:-300}`, with
@@ -474,10 +481,10 @@ update: partial 1a2b3c4d5e6f..7a8b9c0d1e2f changed=2 skipped=1
 | Exit | Meaning |
 |------|---------|
 | 0 | Everything selected is current |
-| 1 | HEAD moved but the install did not finish; the message names the HEAD commit, and a rerun completes it |
+| 1 | HEAD moved but the install did not finish, or the saved selection could not be rewritten afterwards; a rerun completes it |
 | 2 | No saved config, an invalid one, an override variable, a bad `SKILLS_UPDATE_TIMEOUT` or `SKILLS_LOCK_WAIT`, or extra options |
 | 3 | Another installer run holds the lock |
-| 4 | Source check failed: other checkout, branch, remote, URL, or upstream; detached HEAD; no saved upstream; uncommitted or untracked changes; local commits or divergence |
+| 4 | Source check failed: `install.sh` not at the checkout root; other checkout, branch, remote, URL, or upstream; detached HEAD; no saved upstream; uncommitted or untracked changes; local commits or divergence |
 | 5 | Fetch failed or timed out, or the fast-forward failed |
 | 6 | Finished, but some skills were skipped (see above) |
 | 7 | The lock or config directory cannot be created or opened |

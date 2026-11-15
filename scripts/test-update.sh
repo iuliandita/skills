@@ -91,6 +91,17 @@ publish() {
   g -C "$F/dev" push -q origin main
 }
 
+# Every override variable install.sh refuses, as its own override_env_names
+# reports them: each upper-case name in the script is offered to the function.
+override_names() {
+  local body
+  local -a names=()
+  body="$(sed -n '/^override_env_names() {$/,/^}$/p' "$ROOT/install.sh")"
+  [[ -n "$body" ]] || fail "override_env_names not found in install.sh"
+  mapfile -t names < <(grep -oE '[A-Z][A-Z0-9_]+' "$ROOT/install.sh" | grep -v '^LC_' | sort -u)
+  env -i "${names[@]/%/=x}" "$BASH" -c "$body"$'\n''override_env_names' | sort
+}
+
 # run_update [VAR=value...]: sets RC, OUT, ERR.
 run_update() {
   RC=0
@@ -400,6 +411,48 @@ test_source_checks() {
   expect_rc 0 "after the checks"
 }
 
+# A copy of the installer vendored in another repository, with a config an
+# older --save wrote there: the outer checkout must not be fast-forwarded.
+test_update_requires_the_checkout_root() {
+  local pack head
+  new_fixture --tool claude
+  pack="$F/outer/vendor/pack"
+  mkdir -p "$pack"
+  cp -R "$F/dev/install.sh" "$F/dev/migrations.json" "$F/dev/scripts" "$F/dev/skills" "$pack/"
+  g init -q -b main "$F/outer"
+  g -C "$F/outer" add -A
+  g -C "$F/outer" "${GIT_ID[@]}" commit -q -m outer
+  g init -q --bare -b main "$F/outer.git"
+  g -C "$F/outer" remote add origin "$F/outer.git"
+  g -C "$F/outer" push -q -u origin main
+  g clone -q "$F/outer.git" "$F/outer-dev"
+  g -C "$F/outer-dev" "${GIT_ID[@]}" commit -q --allow-empty -m upstream
+  g -C "$F/outer-dev" push -q origin main
+  conf_set source_repo "$F/outer"
+  conf_set source_remote_url "$F/outer.git"
+  head="$(g -C "$F/outer" rev-parse HEAD)"
+  RC=0
+  OUT="$(isolated "$H" "$pack/install.sh" --update 2>&1)" || RC=$?
+  ERR="$OUT"
+  expect_rc 4 "--update from a vendored copy"
+  grep -q "install.sh is in $pack, not at the root of the git checkout $F/outer" <<< "$OUT" \
+    || fail "vendored --update refusal unclear: $OUT"
+  [[ "$(g -C "$F/outer" rev-parse HEAD)" == "$head" ]] || fail "--update fast-forwarded the enclosing repository"
+}
+
+# The selection rewrite runs after the fast-forward, so a config failure
+# there exits 1 like every other failure once HEAD has moved.
+test_selection_rewrite_failure_exits_1() {
+  new_fixture --tool claude docker git
+  conf_set skills docker,git,docker
+  printf 'upstream\n' >> "$F/dev/skills/docker/SKILL.md"
+  publish
+  run_update SKILLS_INSTALL_FAULT=configswap
+  expect_rc 1 "selection rewrite failure after the fast-forward"
+  grep -q 'was replaced during the save' <<< "$ERR" || fail "selection rewrite failure not reported: $ERR"
+  [[ "$(repo_head)" == "$(dev_head)" ]] || fail "selection rewrite test did not move HEAD"
+}
+
 test_fast_forward_failure_changes_nothing() {
   local head index work
   new_fixture --tool claude
@@ -475,9 +528,9 @@ test_every_override_variable_is_refused() {
   local var
   local -a vars=()
   new_fixture --tool claude
-  mapfile -t vars < <(grep -oE '[A-Z_]+_SKILLS_DIR:-' "$ROOT/install.sh" | cut -d: -f1 | sort -u)
-  (( ${#vars[@]} > 20 )) || fail "override matrix found only ${#vars[@]} *_SKILLS_DIR variables"
-  vars+=(SOMETOOL_SKILLS_DIR SKILLS_CANONICAL_DIR SKILLS_BACKUP_DIR OPENCODE_CONFIG_FILE SKILLS_TOOL SKILLS_MIGRATOR SKILLS_MIGRATIONS_FILE)
+  mapfile -t vars < <(override_names)
+  (( ${#vars[@]} > 26 )) || fail "override matrix found only ${#vars[@]} variables: ${vars[*]}"
+  vars+=(SOMETOOL_SKILLS_DIR)
   for var in "${vars[@]}"; do
     expect_refused 2 "$var" "$var is set" "$var=$F/o"
   done
@@ -779,6 +832,8 @@ test_saved_duplicates_and_kept_renames
 test_local_modification_is_kept
 test_legacy_v1_records
 test_source_checks
+test_update_requires_the_checkout_root
+test_selection_rewrite_failure_exits_1
 test_fast_forward_failure_changes_nothing
 test_config_and_invocation_errors
 test_every_override_variable_is_refused

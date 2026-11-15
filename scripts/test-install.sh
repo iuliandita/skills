@@ -183,15 +183,17 @@ test_legacy_backup_migration_keeps_layout_on_collision() {
 }
 
 test_opencode_install_allows_installed_skills() {
-  local tmp config
+  local tmp config output
   tmp="$(mktemp -d)"
   trap 'rm -rf "$tmp"' RETURN
 
   config="$tmp/.config/opencode/opencode.json"
   mkdir -p "$(dirname "$config")"
-  printf '%s\n' '{"permission":{"skill":{"*":"deny","ai-ml":"allow","docker":"deny"}}}' > "$config"
+  printf '%s\n' '{"permission":{"skill":{"*":"deny","ai-ml":"allow","docker":"deny","git":"ask"}}}' > "$config"
 
-  HOME="$tmp" "$ROOT/install.sh" --tool opencode --no-backup backend-api docker >/dev/null
+  output="$(HOME="$tmp" "$ROOT/install.sh" --tool opencode --no-backup backend-api docker git)"
+  grep -qx '  \[i\] OpenCode permission kept as "ask": git' <<< "$output" \
+    || fail "kept OpenCode ask permission was not reported: $output"
 
   python3 - "$config" <<'PY'
 import json
@@ -205,7 +207,10 @@ assert skills["*"] == "deny"
 assert skills["ai-ml"] == "allow"
 assert skills["backend-api"] == "allow"
 assert skills["docker"] == "deny"
+assert skills["git"] == "ask"
 PY
+  json_assert "$tmp/.agents/skills/.skills-lock.json" \
+    'next(iter(d["opencode_permissions"].values())) == ["backend-api"]'
 
   rm -rf "$tmp"
   trap - RETURN

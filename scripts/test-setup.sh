@@ -9,12 +9,26 @@ while IFS= read -r var; do unset "$var"; done < <(git rev-parse --local-env-vars
 
 SAFE_PATH="$(for cmd in python3 git sha256sum flock; do dirname "$(command -v "$cmd")"; done | awk '!seen[$0]++' | paste -sd:):/usr/bin:/bin"
 REAL_GIT="$(command -v git)"
-OVERRIDES=(CLAUDE_SKILLS_DIR CODEX_SKILLS_DIR SKILLS_CANONICAL_DIR SKILLS_BACKUP_DIR OPENCODE_CONFIG_FILE SKILLS_TOOL SKILLS_MIGRATOR SKILLS_MIGRATIONS_FILE)
 
 fail() {
   printf 'FAIL: %s\n' "$1" >&2
   exit 1
 }
+
+# Every override variable install.sh refuses, as its own override_env_names
+# reports them: each upper-case name in the script is offered to the function.
+override_names() {
+  local body
+  local -a names=()
+  body="$(sed -n '/^override_env_names() {$/,/^}$/p' "$ROOT/install.sh")"
+  [[ -n "$body" ]] || fail "override_env_names not found in install.sh"
+  mapfile -t names < <(grep -oE '[A-Z][A-Z0-9_]+' "$ROOT/install.sh" | grep -v '^LC_' | sort -u)
+  env -i "${names[@]/%/=x}" "$BASH" -c "$body"$'\n''override_env_names' | sort
+}
+
+mapfile -t OVERRIDES < <(override_names)
+[[ " ${OVERRIDES[*]} " == *" CLAUDE_SKILLS_DIR "* && " ${OVERRIDES[*]} " == *" SKILLS_TOOL "* ]] \
+  || fail "override_env_names reported only: ${OVERRIDES[*]}"
 
 isolated() {
   local home="$1"
@@ -387,6 +401,33 @@ expect_rejected() {
   [[ ! -e "$tmp/.claude/skills" && ! -e "$tmp/.agents" ]] || fail "$label: rejected config still installed"
 }
 
+# install.sh vendored inside another repository: git reports the outer
+# checkout, which is not the installer's to record or update.
+test_save_refuses_an_enclosing_repository() {
+  local tmp status out pack
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  pack="$tmp/outer/vendor/pack"
+  make_fixture "$pack" false "$tmp"
+  rm -rf "$pack/.git"
+  isolated "$tmp" git -C "$tmp/outer" init -q -b main
+  status=0
+  out="$(isolated "$tmp" "$pack/install.sh" --save docker 2>&1)" || status=$?
+  { (( status == 2 )) && grep -q "error: --save: install.sh is in $pack, inside the git repository $tmp/outer" <<< "$out"; } \
+    || fail "--save inside another repository: $status $out"
+  [[ ! -e "$tmp/.claude" && ! -e "$(conf_dir "$tmp")" && ! -e "$tmp/.local" ]] \
+    || fail "a refused vendored --save changed files"
+  isolated "$tmp" "$pack/install.sh" docker >/dev/null || fail "a plain install from a vendored copy failed"
+
+  # Outside git the installer directory is the recorded source.
+  rm -rf "$tmp/outer/.git" "$tmp/.claude"
+  isolated "$tmp" "$pack/install.sh" --save docker >/dev/null || fail "--save outside git failed"
+  grep -qx "source_repo=$pack" "$(conf_dir "$tmp")/install.conf" || fail "--save outside git recorded another source"
+  grep -qx 'source_branch=' "$(conf_dir "$tmp")/install.conf" || fail "--save outside git recorded a branch"
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
 test_invalid_configs_are_rejected_unexecuted() {
   local tmp good dir
   tmp="$(mktemp -d)"
@@ -606,6 +647,7 @@ test_save_without_upstream_records_empty
 test_save_only_after_successful_install
 test_save_holds_lock_through_save
 test_save_refusals
+test_save_refuses_an_enclosing_repository
 test_invalid_configs_are_rejected_unexecuted
 test_saved_config_rejects_override_env
 test_explicit_options_ignore_saved_config
