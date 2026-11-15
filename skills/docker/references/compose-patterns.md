@@ -13,6 +13,7 @@ Production-ready Compose patterns for Docker Compose v5.5+ (no `version:` field)
 - Resource Limits Reference
 - Logging Configuration
 - Common Gotchas
+- Docker Model Runner (AI/ML)
 
 ---
 
@@ -497,3 +498,23 @@ tmpfs:
   - /run/postgresql
 ```
 And add capabilities: `CHOWN`, `SETUID`, `SETGID`, `FOWNER`, `DAC_OVERRIDE`.
+
+## Docker Model Runner (AI/ML)
+
+Docker Model Runner (Engine 29.x, Desktop 4.50+) serves AI models via OpenAI/Ollama-compatible APIs:
+
+```yaml
+# Compose integration with Model Runner (Compose injects the endpoint; no hardcoded host)
+services:
+  agent:
+    build: .
+    models:
+      llm:
+        endpoint_var: OPENAI_BASE_URL   # default would be LLM_URL (already ends in /v1/)
+        model_var: OPENAI_MODEL
+models:
+  llm:
+    model: ai/llama3.2:3B-Q4_K_M
+```
+
+GPU containers: use `deploy.resources.reservations.devices` with `capabilities: [gpu]`. Start `shm_size` at `16gb` for single GPU, `32gb` for multi-GPU (vLLM needs shared memory for tensor ops). See `references/compose-patterns.md` for the full AI/ML stack template.

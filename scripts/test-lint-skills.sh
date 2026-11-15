@@ -552,6 +552,40 @@ test_skill_over_token_guidance_warns() {
   trap - RETURN
 }
 
+test_repeated_version_floor_warns() {
+  local tmp skill_dir output status
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  # One statement per floor, plus a repeat inside a fenced block: no warning.
+  skill_dir="$tmp/skills/lint-fixture"
+  write_minimal_skill "$skill_dir" "lint-fixture"
+  printf '%s\n' '- Use Trivy v0.72.0+ from official releases.' '- Needs runc >= 1.4.0.' \
+    '```sh' '# Trivy v0.72.0+' '```' >> "$skill_dir/SKILL.md"
+  status=0
+  output="$("$ROOT/scripts/lint-skills.sh" "$tmp/skills" 2>&1)" || status=$?
+  if (( status != 0 )) || [[ "$output" == *"repeats the version floor"* ]]; then
+    printf '%s\n' "$output" >&2
+    fail "lint-skills.sh flagged version floors that are each stated once"
+  fi
+
+  # The same floor on a second line, spelled differently: advisory warning.
+  printf '%s\n' '- Scan with trivy >= 0.72.0 in CI.' >> "$skill_dir/SKILL.md"
+  status=0
+  output="$("$ROOT/scripts/lint-skills.sh" "$tmp/skills" 2>&1)" || status=$?
+  if (( status != 0 )); then
+    printf '%s\n' "$output" >&2
+    fail "lint-skills.sh failed on a repeated version floor (it is advisory)"
+  fi
+  if [[ "$output" != *"repeats the version floor 'trivy 0.72.0+' on 2 lines"* ]]; then
+    printf '%s\n' "$output" >&2
+    fail "lint-skills.sh did not warn about a repeated version floor"
+  fi
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
 test_unlinked_reference_fails() {
   local tmp skill_dir output status
   tmp="$(mktemp -d)"
@@ -1278,6 +1312,7 @@ test_overlay_only_skill_dir_is_skipped
 test_non_ascii_character_fails
 test_skill_over_hard_max_lines_fails
 test_skill_over_token_guidance_warns
+test_repeated_version_floor_warns
 test_unlinked_reference_fails
 test_long_reference_needs_contents
 test_unreadable_reference_fails

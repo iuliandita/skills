@@ -236,60 +236,7 @@ Choice" in `references/http-api-patterns.md`.
 
 ### Error model
 
-- Prefer RFC 9457 problem details with stable `type`, `title`, `status`, and domain-specific extension fields
-- Do not return one error shape from validation, another from auth, and a third from business rules
-- Never leak raw stack traces or ORM internals to clients
-
-Minimal RFC 9457 problem detail response:
-```json
-{
-  "type": "https://api.example.com/errors/insufficient-funds",
-  "title": "Insufficient funds",
-  "status": 422,
-  "detail": "Account balance is $10.00; transfer requires $50.00."
-}
-```
-
-Status code decision matrix (pick the narrowest correct code):
-
-| Scenario | Code | Notes |
-|----------|------|-------|
-| Malformed JSON, missing required field, wrong type | `400` | Client request is syntactically wrong |
-| Well-formed input but fails domain rule (insufficient funds, invalid state) | `422` | Semantic validation |
-| No credentials, expired token | `401` | Include `WWW-Authenticate` header |
-| Authenticated but not permitted | `403` | Do not challenge for credentials |
-| Resource does not exist, or exists but caller must not know | `404` | Pick one policy per resource and keep it |
-| Write conflicts with current state (stale ETag, duplicate unique key) | `409` | Problem detail should name the conflict |
-| Idempotency-Key reused with a different body | `422` | Not `409` - the key contract is broken |
-| Too many requests | `429` | Include `Retry-After` |
-| Unhandled server error | `500` | Never leak stack traces in the body |
-
-FastAPI exception handler wiring for consistent problem+json:
-```python
-from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
-from fastapi.exceptions import RequestValidationError
-
-app = FastAPI()
-
-@app.exception_handler(RequestValidationError)
-async def validation_handler(request: Request, exc: RequestValidationError):
-    return JSONResponse(
-        status_code=400,
-        media_type="application/problem+json",
-        content={
-            "type": "https://api.example.com/errors/validation",
-            "title": "Invalid request",
-            "status": 400,
-            "errors": [
-                {"location": [part for part in error.get("loc", ())
-                              if isinstance(part, (str, int))],
-                 "message": "Invalid value"}
-                for error in exc.errors()
-            ],
-        },
-    )
-```
+Read `references/http-api-patterns.md` for the error model rules and the RFC 9457 problem detail examples.
 
 ### Pagination and filtering
 
@@ -300,54 +247,7 @@ async def validation_handler(request: Request, exc: RequestValidationError):
 
 ### Idempotency and retries
 
-- Define idempotency for writes that clients or gateways may retry
-- Use explicit idempotency keys for payment-like or request-replay-prone operations
-- Distinguish "request accepted" from "side effect completed" when async workflows exist
-
-Use the same transaction protocol in Express/NestJS and FastAPI; a cache get/write/set
-sequence is not atomic:
-
-1. Authenticate and authorize the operation. Bound the header length and scope the key to
-   the caller or tenant plus operation; hash the normalized request into a fingerprint.
-2. Atomically reserve that scoped key with a unique database constraint. For an existing
-   record, reject a different fingerprint; report in-progress work without executing it again.
-   Replay a completed authorized outcome only for the matching caller and fingerprint.
-3. Commit the business mutation and completed response record in the same transaction.
-   For external effects, use a transactional outbox and the provider's idempotency facility;
-   a database rollback cannot undo an already sent payment or message.
-4. Retain outcomes for the documented retry window. Recover interrupted reservations through
-   a defined state transition, never by blindly executing the effect again. Test concurrent
-   duplicates, two callers sharing a key, body mismatch, and crashes between effect and reply.
-
-Cursor pagination response envelope:
-```json
-{
-  "data": [...],
-  "next_cursor": "eyJpZCI6MTIzfQ",
-  "has_more": true
-}
-```
-Decode the cursor server-side (`WHERE id > :cursor_id ORDER BY id LIMIT :limit`). Never expose raw DB offsets or row numbers in the cursor.
-
-Opaque cursor encode/decode (FastAPI, HMAC-signed to prevent client tampering):
-```python
-import base64, hmac, hashlib, json, os
-
-SECRET = os.environ["CURSOR_SECRET"].encode()
-
-def encode_cursor(payload: dict) -> str:
-    body = base64.urlsafe_b64encode(json.dumps(payload, separators=(",", ":")).encode()).rstrip(b"=")
-    sig = base64.urlsafe_b64encode(hmac.new(SECRET, body, hashlib.sha256).digest()[:8]).rstrip(b"=")
-    return f"{body.decode()}.{sig.decode()}"
-
-def decode_cursor(token: str) -> dict:
-    body, sig = token.split(".", 1)
-    expected = base64.urlsafe_b64encode(hmac.new(SECRET, body.encode(), hashlib.sha256).digest()[:8]).rstrip(b"=").decode()
-    if not hmac.compare_digest(sig, expected):
-        raise ValueError("invalid cursor")
-    return json.loads(base64.urlsafe_b64decode(body + "=="))
-```
-Clients treat `next_cursor` as opaque; the server controls shape and can change it without a breaking contract.
+Read `references/delivery-semantics.md` for the idempotency and retry rules and examples.
 
 ### Graceful shutdown and rolling deploys
 
