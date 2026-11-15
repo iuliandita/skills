@@ -4,6 +4,14 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
+# macOS keeps its temp dir behind a symlink: resolve it once, so paths built
+# here match the resolved ones the installer prints. It has shasum where
+# Linux has sha256sum.
+TMPDIR="$(cd "${TMPDIR:-/tmp}" && pwd -P)"
+export TMPDIR
+HASH_TOOL=sha256sum
+command -v sha256sum >/dev/null 2>&1 || HASH_TOOL=shasum
+
 # Git hooks export GIT_DIR and friends; fixture repos must not inherit them.
 while IFS= read -r var; do unset "$var"; done < <(git rev-parse --local-env-vars)
 
@@ -20,7 +28,7 @@ safe_path() {
   done
   printf '%s:/usr/bin:/bin\n' "$dirs"
 }
-SAFE_PATH="$(safe_path python3 git sha256sum flock)"
+SAFE_PATH="$(safe_path bash python3 git "$HASH_TOOL" flock)"
 REAL_GIT="$(command -v git)"
 
 fail() {
@@ -201,7 +209,7 @@ test_json_detect_and_save() {
   chmod +x "$bin/claude"
 
   out="$(isolated_path "$home" "$bin:$sys" "$ROOT/install.sh" --detect --json 2>/dev/null)" || fail "--detect --json exited non-zero"
-  [[ "$(wc -l <<< "$out")" == 1 ]] || fail "--detect --json printed more than one line: $out"
+  [[ "$(wc -l <<< "$out")" -eq 1 ]] || fail "--detect --json printed more than one line: $out"
   json_check "$out" 'd["ok"] is True and d["errors"] == [] and d["command"] == "detect" and d["suggested"] == ["claude", "codex"]' "detect keys"
   json_check "$out" 'd["candidates"][0]["tool"] == "claude" and d["candidates"][0]["evidence"][0]["kind"] == "binary" and "cursor" in d["nomarker"]' "detect candidates"
   out="$(isolated_path "$home" "$bin:$sys" "$ROOT/install.sh" --detect --save --json 2>/dev/null)" || status=$?

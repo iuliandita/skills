@@ -2,12 +2,20 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+# macOS keeps its temp dir behind a symlink: resolve it once, so paths built
+# here match the resolved ones the installer prints. shasum stands in for
+# sha256sum there; both print the same format.
+TMPDIR="$(cd "${TMPDIR:-/tmp}" && pwd -P)"
+export TMPDIR
+HASH_TOOL=sha256sum
+command -v sha256sum >/dev/null 2>&1 || { HASH_TOOL=shasum; sha256sum() { shasum -a 256; }; }
 MIGRATOR="$ROOT/scripts/migrate-skills.py"
 
 # Git hooks export GIT_DIR and friends; fixture runs must not inherit them.
 while IFS= read -r var; do unset "$var"; done < <(git rev-parse --local-env-vars)
 
-SAFE_PATH="$(for cmd in python3 git sha256sum; do dirname "$(command -v "$cmd")"; done | awk '!seen[$0]++' | paste -sd:):/usr/bin:/bin"
+SAFE_PATH="$(for cmd in bash python3 git "$HASH_TOOL" flock; do dirname "$(command -v "$cmd")"; done | awk '!seen[$0]++' | paste -sd: -):/usr/bin:/bin"
 TEST_HOME="$(mktemp -d)"
 LOCK_FILE="$TEST_HOME/.local/state/iuliandita-skills/install.lock"
 HOLDER=""
@@ -406,7 +414,7 @@ test_inserted_target_is_never_overwritten() {
     FAULT="insert-target-$kind" mig --apply > "$tmp/out"
     grep -q 'SKIP old: replacement collision' "$tmp/out" || fail "$kind insertion was not refused"
     if [[ "$kind" == dir ]]; then
-      [[ ! -L "$tmp/dest/new" && "$(<"$tmp/dest/new/SKILL.md")" == inserted && "$(find "$tmp/dest/new" -type f | wc -l)" == 1 ]] \
+      [[ ! -L "$tmp/dest/new" && "$(<"$tmp/dest/new/SKILL.md")" == inserted && "$(find "$tmp/dest/new" -type f | wc -l)" -eq 1 ]] \
         || fail "inserted directory was overwritten"
     else
       [[ "$(readlink "$tmp/dest/new")" == /nonexistent-inserted-target ]] || fail "inserted symlink was overwritten"

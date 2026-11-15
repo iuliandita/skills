@@ -15,6 +15,10 @@ on:
         description: Report link check failures without failing the calling workflow.
         type: boolean
         default: false
+      skip-macos:
+        description: Leave out the macOS installer job. Only a called run has this input, so it runs everywhere else.
+        type: boolean
+        default: true
     secrets:
       SKILLS_PRIVATE_PATTERNS:
         description: Private markers for the leak check, one per line. Optional.
@@ -237,6 +241,51 @@ jobs:
 
       - name: Check Python helper syntax
         run: python3 -m py_compile scripts/*.py
+
+  # The installer suites on macOS: Homebrew bash, BSD userland. A called run
+  # (the release workflow) skips this job, so it never gates publishing.
+  macos:
+    name: macos
+    if: ${{ !inputs.skip-macos }}
+    runs-on: macos-15
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # coreutils stays g-prefixed: no gnubin on PATH, so cp and head are the BSD ones.
+      - name: Install bash, flock and coreutils
+        env:
+          HOMEBREW_NO_INSTALL_CLEANUP: "1"
+        run: |
+          brew install bash flock coreutils
+          echo "$(brew --prefix)/bin" >> "$GITHUB_PATH"
+
+      - name: Check the tools under test
+        run: |
+          sw_vers
+          bash --version | head -n 1
+          /bin/bash --version | head -n 1
+          command -v bash cp head flock gtimeout shasum python3 git
+          [[ "$(command -v bash)" == "$(brew --prefix)/bin/bash" ]] || { echo "::error::bash on PATH is not the Homebrew one"; exit 1; }
+          [[ "$(command -v cp)" == /bin/cp && "$(command -v head)" == /usr/bin/head ]] || { echo "::error::cp or head is not the BSD one"; exit 1; }
+          if command -v timeout; then echo "::error::an unprefixed timeout is on PATH"; exit 1; fi
+
+      - name: Test installer behavior
+        run: ./scripts/test-install.sh
+
+      - name: Test installer scheduled updates
+        if: ${{ !cancelled() }}
+        run: ./scripts/test-update.sh
+
+      - name: Test installer detect and saved config
+        if: ${{ !cancelled() }}
+        run: ./scripts/test-setup.sh
+
+      - name: Test migration behavior
+        if: ${{ !cancelled() }}
+        run: ./scripts/test-migrate-skills.sh
 
   markdown:
     name: markdown

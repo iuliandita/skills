@@ -4,6 +4,14 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
+# macOS keeps its temp dir behind a symlink: resolve it once, so paths built
+# here match the resolved ones the installer prints. shasum stands in for
+# sha256sum there; both print the same format.
+TMPDIR="$(cd "${TMPDIR:-/tmp}" && pwd -P)"
+export TMPDIR
+HASH_TOOL=sha256sum
+command -v sha256sum >/dev/null 2>&1 || { HASH_TOOL=shasum; sha256sum() { shasum -a 256; }; }
+
 # Git hooks export GIT_DIR and friends; fixture repos must not inherit them.
 while IFS= read -r var; do unset "$var"; done < <(git rev-parse --local-env-vars)
 
@@ -20,7 +28,10 @@ safe_path() {
   done
   printf '%s:/usr/bin:/bin\n' "$dirs"
 }
-SAFE_PATH="$(safe_path bash python3 git sha256sum flock timeout)"
+# Homebrew and MacPorts coreutils install timeout as gtimeout.
+TIMEOUT_TOOL=timeout
+command -v timeout >/dev/null 2>&1 || TIMEOUT_TOOL=gtimeout
+SAFE_PATH="$(safe_path bash python3 git "$HASH_TOOL" flock "$TIMEOUT_TOOL")"
 REAL_GIT="$(command -v git)"
 HAVE_GPG=true
 command -v gpg >/dev/null 2>&1 || HAVE_GPG=false
@@ -241,7 +252,8 @@ test_rename_and_symlink_target_changes_are_detected() {
 test_new_skill_is_installed() {
   new_fixture --tool claude
   cp -R "$F/dev/skills/docker" "$F/dev/skills/extra"
-  sed -i 's/^name: docker$/name: extra/' "$F/dev/skills/extra/SKILL.md"
+  sed -i.bak 's/^name: docker$/name: extra/' "$F/dev/skills/extra/SKILL.md"
+  rm "$F/dev/skills/extra/SKILL.md.bak"
   publish
   run_update
   expect_rc 0 "new skill"
@@ -311,7 +323,7 @@ run_update_json() {
   isolated "$H" "$@" "$F/repo/install.sh" --update --json >"$F/out" 2>"$F/err" || RC=$?
   OUT="$(cat "$F/out")"
   ERR="$(cat "$F/err")"
-  [[ "$(wc -l < "$F/out")" == 1 ]] || fail "--update --json did not print exactly one line: $OUT"
+  [[ "$(wc -l < "$F/out")" -eq 1 ]] || fail "--update --json did not print exactly one line: $OUT"
 }
 
 test_json_output() {
@@ -807,9 +819,10 @@ test_missing_dependencies_exit_10() {
   new_fixture --tool claude
   path_without "$F/no-flock" flock
   path_without "$F/no-timeout" timeout
+  rm -f "$F/no-timeout/gtimeout"
   expect_refused 10 "missing flock" "flock (util-linux) is required" PATH="$F/no-flock"
   expect_refused 10 "missing timeout" "timeout (GNU coreutils, gtimeout on macOS) is required" PATH="$F/no-timeout"
-  ln -s "$(command -v timeout)" "$F/no-timeout/gtimeout"
+  ln -s "$(command -v "$TIMEOUT_TOOL")" "$F/no-timeout/gtimeout"
   run_update PATH="$F/no-timeout"
   expect_rc 0 "gtimeout fallback"
 }
@@ -1015,7 +1028,8 @@ test_link_mode() {
 test_opencode_new_skill_is_allowed() {
   new_fixture --tool opencode
   cp -R "$F/dev/skills/docker" "$F/dev/skills/extra"
-  sed -i 's/^name: docker$/name: extra/' "$F/dev/skills/extra/SKILL.md"
+  sed -i.bak 's/^name: docker$/name: extra/' "$F/dev/skills/extra/SKILL.md"
+  rm "$F/dev/skills/extra/SKILL.md.bak"
   publish
   run_update
   expect_rc 0 "opencode update"

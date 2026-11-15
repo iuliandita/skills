@@ -3,6 +3,14 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
+# macOS keeps its temp dir behind a symlink: resolve it once, so paths built
+# here match the resolved ones the installer prints. shasum stands in for
+# sha256sum there; both print the same format.
+TMPDIR="$(cd "${TMPDIR:-/tmp}" && pwd -P)"
+export TMPDIR
+HASH_TOOL=sha256sum
+command -v sha256sum >/dev/null 2>&1 || { HASH_TOOL=shasum; sha256sum() { shasum -a 256 "$@"; }; }
+
 # Git hooks export GIT_DIR and friends; fixture repos must not inherit them.
 while IFS= read -r var; do unset "$var"; done < <(git rev-parse --local-env-vars)
 
@@ -118,7 +126,7 @@ test_shared_destination_is_installed_once() {
 }
 
 test_backup_retention_keeps_three_unique() {
-  local tmp dest root i newest
+  local tmp dest root i newest oldest
   tmp="$(mktemp -d)"
   trap 'rm -rf "$tmp"' RETURN
   dest="$tmp/s"; root="$tmp/.skills-backups/s/docker"
@@ -130,6 +138,8 @@ test_backup_retention_keeps_three_unique() {
   [[ "$(find "$root" -mindepth 1 -maxdepth 1 -type d | wc -l)" -eq 3 ]] || fail "expected three backups"
   newest="$(find "$root" -mindepth 1 -maxdepth 1 -type d | sort | tail -1)"
   grep -q EDIT5 "$newest/SKILL.md" || fail "newest backup lacks last edit"
+  oldest="$(find "$root" -mindepth 1 -maxdepth 1 -type d | sort | head -1)"
+  [[ "$(tail -1 "$oldest/SKILL.md")" == EDIT3 ]] || fail "pruning did not remove the two oldest backups"
   rm -rf "$tmp"
   trap - RETURN
 }
@@ -614,6 +624,67 @@ test_backup_preserves_top_level_symlink() {
 
   rm -rf "$tmp"
   trap - RETURN
+}
+
+# BSD cp follows a nested symlink with -r, which would copy the files behind it.
+test_backup_keeps_nested_symlink() {
+  local tmp dest private backup
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  dest="$tmp/agent/skills"
+  private="$tmp/private"
+  mkdir -p "$private"
+  printf '%s\n' 'do not copy' > "$private/secret.txt"
+  "$ROOT/install.sh" --tool portable --dest "$dest" --no-backup docker >/dev/null
+  ln -s "$private" "$dest/docker/outside"
+
+  "$ROOT/install.sh" --tool portable --dest "$dest" --force docker >/dev/null
+
+  backup="$(find "$tmp/agent/.skills-backups/skills/docker" -mindepth 1 -maxdepth 1 -type d)"
+  [[ -L "$backup/outside" && "$(readlink "$backup/outside")" == "$private" ]] \
+    || fail "backup did not keep the nested symlink as a link: $(ls -la "$backup")"
+  if find "$tmp/agent/.skills-backups" -type f -name secret.txt -print -quit | grep -q .; then
+    fail "backup followed a nested symlink and copied external files"
+  fi
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+# BASH_VERSINFO is readonly, so the guard is run on its own with made-up versions.
+test_bash_version_guard() {
+  local body version out old
+  body="$(sed -n '/^require_bash() {$/,/^}$/p' "$ROOT/install.sh")"
+  [[ -n "$body" ]] || fail "require_bash not found in install.sh"
+  for version in "4 4" "4 5" "5 0" "5 3" "10 0"; do
+    # shellcheck disable=SC2086
+    out="$("$BASH" -c "$body"$'\n''require_bash "$@"' _ $version 2>&1)" || fail "guard refused bash $version: $out"
+    [[ -z "$out" ]] || fail "guard printed for bash $version: $out"
+  done
+  for version in "4 3" "4 0" "3 2"; do
+    # shellcheck disable=SC2086
+    if out="$("$BASH" -c "$body"$'\n''require_bash "$@"' _ $version 2>&1)"; then
+      fail "guard accepted bash $version"
+    fi
+    [[ "$out" == "error: bash ${version/ /.} found, 4.4 or newer is required; on macOS install it with "*"brew install bash"* ]] \
+      || fail "guard message for bash $version: $out"
+  done
+  # The call passes the running shell's version and comes before strict mode.
+  [[ "$(grep -n -m1 -E '^(require_bash "\$\{BASH_VERSINFO\[0\]\}" "\$\{BASH_VERSINFO\[1\]\}" \|\| exit 1|set -euo pipefail)$' "$ROOT/install.sh")" == *:require_bash* ]] \
+    || fail "install.sh does not call require_bash before set -euo pipefail"
+
+  # Stock macOS has bash 3.2 at /bin/bash: the whole script must stop at the guard there.
+  old="$(/bin/bash -c 'echo "${BASH_VERSINFO[0]} ${BASH_VERSINFO[1]}"')"
+  if (( ${old% *} > 4 || ( ${old% *} == 4 && ${old#* } >= 4 ) )); then
+    printf 'SKIP: /bin/bash is %s, not older than 4.4; install.sh was not run under an old bash\n' "${old/ /.}" >&2
+    return 0
+  fi
+  if out="$(/bin/bash "$ROOT/install.sh" --help 2>&1)"; then
+    fail "install.sh ran under bash ${old/ /.}"
+  fi
+  [[ "$out" == "error: bash ${old/ /.} found, 4.4 or newer is required;"* && "$(wc -l <<< "$out")" -eq 1 ]] \
+    || fail "install.sh under bash ${old/ /.} printed: $out"
 }
 
 test_commandcode_and_agy_targets() {
@@ -1284,7 +1355,7 @@ run_json() {
   JSON_STATUS=0
   JSON_OUT="$(isolated "$home" "$ROOT/install.sh" "${@:2}" --json 2>"$home/json.err")" || JSON_STATUS=$?
   JSON_ERR="$(<"$home/json.err")"
-  [[ "$(wc -l <<< "$JSON_OUT")" == 1 ]] || fail "--json did not print exactly one line: $JSON_OUT"
+  [[ "$(wc -l <<< "$JSON_OUT")" -eq 1 ]] || fail "--json did not print exactly one line: $JSON_OUT"
 }
 
 test_json_output() {
@@ -1647,7 +1718,7 @@ write_fixture_skill() {
 }
 
 installed_dirs() {
-  find "$1" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort | paste -sd' '
+  find "$1" -mindepth 1 -maxdepth 1 -type d | sed 's|.*/||' | sort | paste -sd' ' -
 }
 
 make_frontmatter_fixture() {
@@ -1720,7 +1791,7 @@ test_malformed_frontmatter_fails_install() {
 }
 
 # Replacement transaction tests run with an allowlisted environment.
-SAFE_PATH="$(for cmd in python3 git sha256sum; do dirname "$(command -v "$cmd")"; done | awk '!seen[$0]++' | paste -sd:):/usr/bin:/bin"
+SAFE_PATH="$(for cmd in bash python3 git "$HASH_TOOL" flock; do dirname "$(command -v "$cmd")"; done | awk '!seen[$0]++' | paste -sd: -):/usr/bin:/bin"
 
 isolated() {
   local home="$1"
@@ -2102,7 +2173,7 @@ test_failed_retry_keeps_earlier_record() {
     fail "stage fault did not fail"
   fi
   [[ "$(<"$txn/record")" == "$record" ]] || fail "failed retry replaced the earlier record"
-  [[ "$(find "$txn" -mindepth 1 -printf '%f\n')" == record ]] || fail "failed retry left files: $(find "$txn")"
+  [[ "$(find "$txn" -mindepth 1 | sed 's|.*/||')" == record ]] || fail "failed retry left files: $(find "$txn")"
   [[ "$(tree_hash "$dest/docker")" == "$before" ]] || fail "failed retry changed the working copy"
 
   # An interruption right after setting the record aside is put back by recovery.
@@ -3069,6 +3140,8 @@ test_force_still_overwrites_a_differing_copy
 test_omp_check_mode
 test_omp_and_kimi_share_destination
 test_backup_preserves_top_level_symlink
+test_backup_keeps_nested_symlink
+test_bash_version_guard
 test_commandcode_and_agy_targets
 test_lock_preserves_unselected_records
 test_check_reports_unusable_lock_once

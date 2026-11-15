@@ -1,4 +1,16 @@
 #!/usr/bin/env bash
+
+# Stock macOS bash is 3.2 and stops on syntax further down, so this check runs
+# first and stays in syntax that bash 3.2 parses.
+require_bash() {
+  if [ "$1" -gt 4 ] || { [ "$1" -eq 4 ] && [ "$2" -ge 4 ]; }; then
+    return 0
+  fi
+  printf 'error: bash %s.%s found, 4.4 or newer is required; on macOS install it with "brew install bash" or "sudo port install bash", then rerun with that bash first on PATH\n' "$1" "$2" >&2
+  return 1
+}
+require_bash "${BASH_VERSINFO[0]}" "${BASH_VERSINFO[1]}" || exit 1
+
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -612,15 +624,21 @@ backup_skill() {
   if [[ -L "$dest_dir/$skill" ]]; then
     cp -P "$dest_dir/$skill" "$dest/" || return 1
   else
-    cp -r "$dest_dir/$skill/." "$dest/" || return 1
+    # -R -P keeps a nested symlink a link; BSD cp follows it with -r.
+    cp -R -P "$dest_dir/$skill/." "$dest/" || return 1
   fi
 
-  # Prune old backups, keep last 3
-  local count
-  count=$(find "$backup_base/$skill" -maxdepth 1 -mindepth 1 -type d 2>/dev/null | wc -l)
-  if (( count > 3 )); then
-    find "$backup_base/$skill" -maxdepth 1 -mindepth 1 -type d -print0 \
-      | sort -z | head -z -n "$(( count - 3 ))" | xargs -0 rm -rf
+  # Prune old backups, keep last 3. The names are timestamps and a glob
+  # expands sorted, so the oldest come first.
+  local entry
+  local -a backups=()
+  for entry in "$backup_base/$skill"/*; do
+    if [[ -d "$entry" && ! -L "$entry" ]]; then
+      backups+=("$entry")
+    fi
+  done
+  if (( ${#backups[@]} > 3 )); then
+    rm -rf -- "${backups[@]:0:${#backups[@]}-3}"
   fi
 }
 
@@ -1070,7 +1088,7 @@ stage_entry() {
     STAGED_DIGEST="link:$CANONICAL_DIR/$skill"
     return 0
   fi
-  mkdir "$stage" && ! fault_hit stage "$skill" && cp -r "$SKILLS_SRC/$skill/." "$stage/" || return 1
+  mkdir "$stage" && ! fault_hit stage "$skill" && cp -R -P "$SKILLS_SRC/$skill/." "$stage/" || return 1
   STAGED_DIGEST="$(skill_hash "$stage")" || return 1
   cache_source_digest "$skill" || return 1
   [[ -n "$STAGED_DIGEST" && "$STAGED_DIGEST" == "${SOURCE_DIGESTS[$skill]}" ]]

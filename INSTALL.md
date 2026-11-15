@@ -24,6 +24,25 @@ npx skills add iuliandita/skills#main --list
 
 ### Bundled installer
 
+The installer needs bash 4.4 or newer and `python3`. On an older bash it stops before doing
+anything, prints the version it found and the one it needs, and exits 1. `flock` is required
+for `--save`, `--update`, and `--migrate --apply`; other runs warn and proceed without it. GNU
+`timeout` (coreutils) is needed only for `--update`. Linux distributions ship all of these
+(`flock` is part of util-linux).
+
+macOS ships bash 3.2 and neither `flock` nor `timeout`. Install them with Homebrew or MacPorts:
+
+```bash
+brew install bash flock coreutils
+# or
+sudo port install bash flock coreutils
+```
+
+Both install coreutils with a `g` prefix and `--update` looks for `gtimeout`, so the GNU tools
+do not have to replace the system ones on `PATH`. The new bash does have to come before
+`/bin/bash` on `PATH`, because the script starts through `env bash`. CI runs the installer tests
+on macOS with Homebrew bash and the system `cp` and `head`.
+
 Clone, run, clean up. A plain `git clone` checks out `develop`, so pass `-b main` for stable:
 
 ```bash
