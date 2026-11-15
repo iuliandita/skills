@@ -5,6 +5,8 @@ set -euo pipefail
 # Git-fixture tests for scripts/check-docs-impact.sh.
 
 while IFS= read -r var; do unset "$var"; done < <(git rev-parse --local-env-vars)
+# Fixture repos must not pick up the host's hooks, signing, or templates.
+export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CASES=0
@@ -213,6 +215,53 @@ run_check
 expect_fail "new gate script without README" "R4"
 
 new_fixture
+put scripts/check-new.py "#!/usr/bin/env python3"
+commit "ci: add python gate"
+run_check
+expect_fail "new python gate script without README" "R4"
+
+# a trailer counts only from a commit that touches the triggering path
+new_fixture
+put install.sh "$(cat "$REPO/install.sh")
+# tweak"
+commit "fix: tweak installer"
+put extra.txt "x"
+g add -A
+g commit -q -m "chore: unrelated" -m "Docs-Impact: none - this is a long and specific enough reason"
+run_check
+expect_fail "R3 trailer on a commit that leaves install.sh alone" "R3"
+
+new_fixture
+put scripts/check-new.sh "#!/usr/bin/env bash"
+commit "ci: add gate"
+put extra.txt "x"
+g add -A
+g commit -q -m "chore: unrelated" -m "Docs-Impact: none - this is a long and specific enough reason"
+run_check
+expect_fail "R4 trailer on a commit that touches no gate script" "R4"
+
+new_fixture
+put install.sh "$(cat "$REPO/install.sh")
+# tweak"
+g add -A
+g commit -q -m "fix: tweak installer" -m "Docs-Impact: none - comment-only change with no user-visible effect"
+put scripts/check-new.sh "#!/usr/bin/env bash"
+commit "ci: add gate"
+run_check
+expect_fail "R3 trailer does not cover R4" "R4"
+
+# an active skill larger than the pipe buffer is still active
+new_fixture
+g checkout -q main
+{ skill_md alpha; for ((i = 0; i < 4000; i++)); do printf '%0100d\n' 0; done; } > "$REPO/skills/alpha/SKILL.md"
+commit "docs: grow alpha"
+g checkout -q -B feature
+g rm -q -r skills/alpha
+commit "refactor: drop alpha"
+run_check
+expect_fail "large active skill deleted, no manifest" "R1"
+
+new_fixture
 g rm -q -r skills/alpha
 put migrations.json '{ "skills": { "alpha": { "action": "merge" } } }'
 put MIGRATION.md "migration
@@ -273,6 +322,28 @@ g add -A
 g commit -q -m "fix: tweak installer" -m "Docs-Impact: none - comment-only change with no user-visible effect"
 run_check
 expect_pass "install.sh change with specific trailer"
+
+# the trailer commit need not be the last one in the range
+new_fixture
+put install.sh "$(cat "$REPO/install.sh")
+# tweak"
+g add -A
+g commit -q -m "fix: tweak installer" -m "Docs-Impact: none - comment-only change with no user-visible effect"
+put extra.txt "x"
+commit "chore: unrelated"
+run_check
+expect_pass "trailer on the install.sh commit, later unrelated commit"
+
+# squash shape: one commit holds every path of the PR plus the trailer
+new_fixture
+put install.sh "$(cat "$REPO/install.sh")
+# tweak"
+put scripts/check-new.py "#!/usr/bin/env python3"
+put extra.txt "x"
+g add -A
+g commit -q -m "fix: squashed change (#1)" -m "Docs-Impact: none - internal gate with no user-visible surface"
+run_check
+expect_pass "squash commit with trailer covers R3 and R4"
 
 new_fixture
 write_install '$HOME/.agents/skills' "claude"

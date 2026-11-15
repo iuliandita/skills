@@ -116,7 +116,14 @@ while IFS= read -r sha; do
     if matches_immutable "$file"; then
       offending+=("$file")
     fi
-  done < <(git diff-tree --no-commit-id --name-only -r "$sha")
+  done < <(
+    # Compare with the first parent: diff-tree lists nothing for a merge commit.
+    if git rev-parse --verify --quiet "${sha}^1^{commit}" >/dev/null; then
+      git diff --name-only "${sha}^1" "$sha"
+    else
+      git diff-tree --root --no-commit-id --name-only -r "$sha"
+    fi
+  )
 
   if (( ${#offending[@]} > 0 )); then
     echo "error: phase-1 iteration commit touches the immutable set:" >&2

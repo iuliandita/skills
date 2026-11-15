@@ -4,6 +4,8 @@ set -euo pipefail
 
 # Git hooks export GIT_DIR and friends; fixture repos must not inherit them.
 while IFS= read -r var; do unset "$var"; done < <(git rev-parse --local-env-vars)
+# Fixture repos must not pick up the host's hooks, signing, or templates.
+export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
@@ -543,7 +545,7 @@ test_skill_over_token_guidance_warns() {
     printf '%s\n' "$output" >&2
     fail "lint-skills.sh failed on a SKILL.md body over the token guidance"
   fi
-  if [[ "$output" != *"~"* || "$output" != *"tokens"* ]]; then
+  if [[ "$output" != *"SKILL.md body is ~"* ]]; then
     printf '%s\n' "$output" >&2
     fail "lint-skills.sh did not warn about the SKILL.md body token estimate"
   fi
@@ -1218,6 +1220,58 @@ EOF
   trap - RETURN
 }
 
+test_self_check_variant_heading_is_capped() {
+  local tmp; tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' RETURN
+  write_minimal_skill "$tmp/skills/lint-fixture" "lint-fixture"
+  append_self_check_section "$tmp/skills/lint-fixture/SKILL.md" 5 10
+  sed -i 's/^## AI Self-Check$/## Output Self-Check/' "$tmp/skills/lint-fixture/SKILL.md"
+  expect_docs_lint "$tmp" "50% generic boilerplate" "generic items under a variant self-check heading"
+  rm -rf "$tmp"; trap - RETURN
+}
+
+test_section_heading_must_match_exactly() {
+  local tmp; tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' RETURN
+  write_minimal_skill "$tmp/skills/lint-fixture" "lint-fixture"
+  sed -i 's/^## Rules$/## Notes on old Rules/' "$tmp/skills/lint-fixture/SKILL.md"
+  expect_docs_lint "$tmp" "missing '## Rules' section" "a heading that only contains the section name"
+  rm -rf "$tmp"; trap - RETURN
+}
+
+# A scanner that cannot run must be an error, not an empty result.
+test_failed_scanners_are_errors() {
+  local tmp stub real_python output status
+  tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' RETURN
+  stub="$tmp/stub"
+  mkdir -p "$stub"
+  write_minimal_skill "$tmp/skills/lint-fixture" "lint-fixture"
+
+  printf '#!/usr/bin/env bash\nexit 1\n' > "$stub/perl"
+  chmod +x "$stub/perl"
+  printf '# Details\n\n\xe2\x9c\x93 done\n' > "$tmp/skills/lint-fixture/references/details.md"
+  status=0
+  output="$(PATH="$stub:$PATH" "$ROOT/scripts/lint-skills.sh" "$tmp/skills" 2>&1)" || status=$?
+  if (( status == 0 )) || [[ "$output" != *"non-ASCII scan of references/ did not run"* ]]; then
+    printf '%s\n' "$output" >&2
+    fail "lint-skills.sh passed a reference scan whose perl failed"
+  fi
+  rm -f "$stub/perl" "$tmp/skills/lint-fixture/references/details.md"
+
+  real_python="$(command -v python3)"
+  printf '#!/usr/bin/env bash\n[[ "${1:-}" != "-" ]] || exit 1\nexec "%s" "$@"\n' "$real_python" > "$stub/python3"
+  chmod +x "$stub/python3"
+  status=0
+  output="$(PATH="$stub:$PATH" "$ROOT/scripts/lint-skills.sh" "$tmp/skills" 2>&1)" || status=$?
+  if (( status == 0 )) || [[ "$output" != *"ERE literal-pipe scan of SKILL.md did not run"* ]]; then
+    printf '%s\n' "$output" >&2
+    fail "lint-skills.sh passed an ERE scan whose python3 failed"
+  fi
+  rm -f "$stub/python3"
+
+  printf '{ not json\n' > "$tmp/migrations.json"
+  expect_docs_lint "$tmp" "migrations.json could not be read" "unparseable migrations.json"
+  rm -rf "$tmp"; trap - RETURN
+}
+
 test_size_reporting() {
   local tmp output expected_chars
   tmp="$(mktemp -d)"
@@ -1225,8 +1279,10 @@ test_size_reporting() {
   write_minimal_skill "$tmp/skills/lint-fixture" "lint-fixture"
   printf '%020001d\n' 0 >> "$tmp/skills/lint-fixture/SKILL.md"
   output="$("$ROOT/scripts/lint-skills.sh" "$tmp/skills" 2>&1)"
-  expected_chars=$(wc -m < "$tmp/skills/lint-fixture/SKILL.md")
+  # The Size line and the warning report the same body estimate.
+  expected_chars=$(awk 'n>=2; /^---$/ && n<2 {n++}' "$tmp/skills/lint-fixture/SKILL.md" | wc -m)
   [[ "$output" == *"Size: ~$(( expected_chars / 4 )) tokens (above 5000)"* ]] || fail "missing size advisory"
+  [[ "$output" == *"SKILL.md body is ~$(( expected_chars / 4 )) tokens"* ]] || fail "size warning disagrees with the Size line"
   [[ "$output" == *"Descriptions:   87 characters (~21 tokens)"* ]] || fail "missing description budget"
   rm -rf "$tmp"
   trap - RETURN
@@ -1286,6 +1342,9 @@ test_skill_inventory() {
 
 test_skill_inventory
 test_size_reporting
+test_self_check_variant_heading_is_capped
+test_section_heading_must_match_exactly
+test_failed_scanners_are_errors
 test_reference_files_are_scanned
 test_reference_examples_are_ignored
 test_ere_literal_pipe_is_flagged
