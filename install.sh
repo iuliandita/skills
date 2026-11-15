@@ -1649,23 +1649,22 @@ try:
     if not isinstance(config, dict):
         raise ValueError("OpenCode config root must be a JSON object")
 
-    ACTIONS = {"allow", "ask", "deny"}
-    permission = config.get("permission")
-    if permission is None:
-        permission = {}
-    elif isinstance(permission, str) and permission in ACTIONS:
-        permission = {"*": permission, "skill": {"*": permission}}
-    if not isinstance(permission, dict):
-        raise ValueError("permission must be an object or allow/ask/deny")
+    # A bare allow/ask/deny is shorthand for {"*": action}.
+    def as_rules(value, what):
+        if value is None:
+            return {}
+        if isinstance(value, str) and value in {"allow", "ask", "deny"}:
+            return {"*": value}
+        if not isinstance(value, dict):
+            raise ValueError(f"{what} must be an object or allow/ask/deny")
+        return value
+
+    permission = as_rules(config.get("permission"), "permission")
+    if isinstance(config.get("permission"), str):
+        permission["skill"] = dict(permission)
     config["permission"] = permission
 
-    skill_permission = permission.get("skill")
-    if skill_permission is None:
-        skill_permission = {}
-    elif isinstance(skill_permission, str) and skill_permission in ACTIONS:
-        skill_permission = {"*": skill_permission}
-    if not isinstance(skill_permission, dict):
-        raise ValueError("permission.skill must be an object or allow/ask/deny")
+    skill_permission = as_rules(permission.get("skill"), "permission.skill")
     permission["skill"] = skill_permission
 except (OSError, ValueError) as error:
     if mode != "preview":
@@ -1700,13 +1699,17 @@ if mode in {"preview", "migrate"} and legacy:
         changed = True
 if mode == "preview":
     sys.exit(0)
+asking = []
 for skill in skills:
-    if skill_permission.get(skill) == "deny":
-        continue
-    if skill_permission.get(skill) != "allow":
+    current = skill_permission.get(skill)
+    if current == "ask":
+        asking.append(skill)
+    elif current not in {"allow", "deny"}:
         skill_permission[skill] = "allow"
         recorded.add(skill)
         changed = True
+if asking:
+    print('  [i] OpenCode permission kept as "ask": ' + ", ".join(asking))
 
 def write_provenance(names):
     if lock is None:
@@ -2696,6 +2699,20 @@ git_value() {
   git -C "$SCRIPT_DIR" "$@" 2>/dev/null || true
 }
 
+# The saved source is the git checkout that holds install.sh. Vendored inside
+# another repository that would be the outer one, which --update must never
+# fast-forward. Outside git there is no checkout to mistake, so that passes.
+reject_enclosing_repo() {
+  local repo here
+  command -v git >/dev/null 2>&1 || return 0
+  repo="$(git_value rev-parse --show-toplevel)"
+  here="$(cd "$SCRIPT_DIR" && pwd -P)"
+  [[ -z "$repo" || "$repo" == "$here" ]] && return 0
+  printf 'error: --save: install.sh is in %s, inside the git repository %s; a saved install config needs install.sh at the root of its own checkout or outside git\n' \
+    "$here" "$repo" >&2
+  exit 2
+}
+
 # Record the selection and the checkout it came from. Called under the lock
 # after a successful install.
 save_install_config() {
@@ -2715,7 +2732,7 @@ save_install_config() {
   saved_config_py write "$dir" version=1 "tools=$tools_csv" "link=$link" \
     "include_internal=$include_internal" "skills=$skills_csv" "source_repo=$repo" \
     "source_branch=$branch" "source_remote=$remote" "source_remote_url=$remote_url" \
-    "source_upstream=$upstream" || exit "$?"
+    "source_upstream=$upstream" || exit "${CONFIG_FAIL_EXIT:-$?}"
   printf 'Saved install config: %s\n' "$dir/install.conf"
   json_add_str config "$dir/install.conf"
   if [[ -z "$remote" || -z "$upstream" ]]; then
@@ -2919,6 +2936,8 @@ run_update() {
 
   repo="$(ugit -C "$SCRIPT_DIR" rev-parse --show-toplevel 2>/dev/null)" \
     || update_fail 4 "$SCRIPT_DIR is not a git checkout"
+  [[ "$repo" == "$(cd "$SCRIPT_DIR" && pwd -P)" ]] \
+    || update_fail 4 "install.sh is in $SCRIPT_DIR, not at the root of the git checkout $repo; run --update from a checkout of this repository"
   [[ "$repo" == "$SAVED_SOURCE_REPO" ]] \
     || update_fail 4 "the config was saved from $SAVED_SOURCE_REPO, not $repo; run --update from that checkout or --save again"
   if [[ -z "$SAVED_SOURCE_BRANCH" || -z "$SAVED_SOURCE_REMOTE" || "$SAVED_SOURCE_REMOTE" == "." \
@@ -3591,6 +3610,7 @@ main() {
       printf '%s\n' "error: --save cannot be used with --dest; saved configs cover default paths only" >&2; exit 1
     fi
     reject_override_env "--save"
+    reject_enclosing_repo
     acquire_install_lock required
     saved_config_py prepare "$(saved_config_dir)" || exit "$?"
   elif (( argc == 0 )); then
