@@ -200,7 +200,8 @@ Symlink mode (--link):
 
 Lock file:
   Each install writes .skills-lock.json with content hashes. Use --check
-  to compare installed hashes against the source and detect updates.
+  to compare the source against the hashes recorded in the lock and detect
+  updates; it does not read the installed copies.
 
 Examples:
   install.sh                                    # All skills for Claude (default)
@@ -765,7 +766,6 @@ for item in sys.argv[5:]:
     skill, digest, tree = item.split("=", 2)
     if not name.fullmatch(skill):
         continue
-    published.append(skill)
     previous = skills.get(skill)
     if previous is None or (isinstance(previous, dict) and previous.get("provenance") == "source-equal-v1") \
             or (force and isinstance(previous, str)):
@@ -774,6 +774,9 @@ for item in sys.argv[5:]:
         skills[skill] = digest
     else:
         continue
+    # Only a record this run wrote is published: publish_lock drops the install
+    # record of every published skill.
+    published.append(skill)
     if tree == "-":
         trees.pop(skill, None)
     else:
@@ -818,7 +821,8 @@ PY
 }
 
 # Print NUL-separated skill/hash pairs from a lock file in one python run, only
-# for skills whose record carries a hash.
+# for skills whose record carries a hash. The lock is loaded once; one that
+# cannot be read, is not JSON, or has no "skills" object fails with one error.
 read_lock_hashes() {
   local lock_file="$1"
   shift
@@ -827,16 +831,21 @@ read_lock_hashes() {
 import json
 import sys
 
+try:
+    with open(sys.argv[1], encoding="utf-8") as handle:
+        lock = json.load(handle)
+except (OSError, ValueError) as error:
+    sys.exit(f"error: cannot read lock file {sys.argv[1]}: {error}; fix or delete it and rerun install.sh")
+skills = lock.get("skills") if isinstance(lock, dict) else None
+if not isinstance(skills, dict):
+    sys.exit(f'error: lock file {sys.argv[1]} has no "skills" object; fix or delete it and rerun install.sh')
 out = sys.stdout.buffer
 for skill in sys.argv[2:]:
-    try:
-        value = json.load(open(sys.argv[1], encoding="utf-8"))["skills"].get(skill)
-        if isinstance(value, dict):
-            value = value.get("hash")
-        if isinstance(value, str) and value.rstrip("\n"):
-            out.write(skill.encode() + b"\0" + value.rstrip("\n").encode("utf-8", "surrogateescape") + b"\0")
-    except (OSError, ValueError, TypeError, json.JSONDecodeError):
-        pass
+    value = skills.get(skill)
+    if isinstance(value, dict):
+        value = value.get("hash")
+    if isinstance(value, str) and value.rstrip("\n"):
+        out.write(skill.encode() + b"\0" + value.rstrip("\n").encode("utf-8", "surrogateescape") + b"\0")
 PY
 }
 
@@ -1477,7 +1486,7 @@ create_link() {
     # Real directory from a previous copy install
     if [[ "$force" != "true" ]]; then
       printf '  [~] %s exists as copy (use --force to convert to symlink)\n' "$skill"
-      return 0
+      return 3
     fi
     [[ "$no_backup" == "true" ]] || backup=true
   fi
@@ -1841,7 +1850,7 @@ install_into() {
     case "$rc" in
       0) INSTALLED+=("$skill") ;;
       2) stopped=true; (( INSTALL_FAILURES++ )) || true ;;
-      3) : ;; # existing copy classified differs/unverified: successful skip, left unpublished
+      3) : ;; # a differing or unverified copy, or a link over a copy or foreign symlink: successful skip, left unpublished
       *) (( INSTALL_FAILURES++ )) || true ;;
     esac
   done
@@ -2725,7 +2734,10 @@ check_updates() {
   done
   # One python run reads every lock hash instead of one per skill.
   tmp="$(mktemp)"
-  read_lock_hashes "$lock_file" "${checked[@]}" > "$tmp"
+  if ! read_lock_hashes "$lock_file" "${checked[@]}" > "$tmp"; then
+    rm -f "$tmp"
+    exit 1
+  fi
   mapfile -d '' -t pairs < "$tmp"
   rm -f "$tmp"
   for (( i = 0; i + 1 < ${#pairs[@]}; i += 2 )); do
@@ -3818,8 +3830,9 @@ main() {
     publish_lock "$CANONICAL_DIR" "$force" "${canonical_ok[@]}" || (( failed++ )) || true
 
     # Create symlinks per tool
+    local -A link_counts=()
     for tool in "${tools[@]}"; do
-      local tool_dir linked=()
+      local tool_dir linked=() skill
       tool_dir="$(resolve_tool_path "$tool")"
       if paths_match "$tool_dir" "$CANONICAL_DIR"; then
         printf '[%s] -> %s (matches canonical, skipping links)\n' "$tool" "$tool_dir"
@@ -3838,6 +3851,9 @@ main() {
       if [[ "$tool" == "opencode" ]]; then
         sync_opencode_permissions "$OPENCODE_CONFIG_FILE" "$tool_dir" sync "${linked[@]}" || (( failed++ )) || true
       fi
+      for skill in "${linked[@]}"; do
+        link_counts[$skill]=$(( ${link_counts[$skill]:-0} + 1 ))
+      done
       legacy_cleanup_hint "$tool"
       printf '\n'
     done
@@ -3849,7 +3865,21 @@ main() {
       printf 'Done with %d error(s).\n' "$failed"
       exit 1
     fi
-    printf 'Done. %d skills linked for %s.\n' "${#skills[@]}" "${tools[*]}"
+    # Count a skill only when every selected tool ended up with it.
+    local linked_total=0 not_linked=0
+    local -A counted=()
+    for skill in "${skills[@]}"; do
+      [[ -z "${counted[$skill]:-}" ]] || continue
+      counted[$skill]=1
+      if (( ${link_counts[$skill]:-0} >= ${#tools[@]} )); then
+        (( linked_total++ )) || true
+      else
+        (( not_linked++ )) || true
+      fi
+    done
+    printf 'Done. %d skills linked for %s.' "$linked_total" "${tools[*]}"
+    (( not_linked == 0 )) || printf ' %d not linked; see above.' "$not_linked"
+    printf '\n'
 
   # ── Install: copy mode ──────────────────────────────────────────────
   else

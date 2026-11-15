@@ -5,15 +5,22 @@ retry_wait_time = 2
 timeout = 20
 accept = ["200", "203", "204", "206", "429"]
 
+# Every exclude carries its reason; add one with any new entry.
 exclude = [
+  # Loopback and wildcard addresses in health check and bind examples; nothing listens on a runner.
   "^http://localhost",
   "^http://127\\.0\\.0\\.1",
   "^http://0\\.0\\.0\\.0",
+  # Cloud metadata address cited in SSRF examples; link-local, unreachable by design.
   "^http://169\\.254\\.169\\.254",
+  # Reserved documentation domains (RFC 2606) used as placeholders in examples.
   "^https?://(?:[A-Za-z0-9-]+\\.)?example\\.(?:com|org)",
+  # Made-up placeholder hosts in examples; not real sites.
   "^https?://example-store\\.com",
   "^https?://internal\\.example\\.com",
+  # Reachable in a browser, 403 from CI runners (bot protection).
   "^https?://claude\\.ai",
+  # Lix forge; reachable in a browser, fails intermittently from CI runners.
   "^https://git\\.lix\\.systems/",
   # Serves the anti-ai-prose Elara citation; reachable in a browser, times out from CI runners.
   "^https://namerology\\.com/",
@@ -23,5 +30,6 @@ exclude = [
   "^https://slsa\\.dev/",
   # VirtualBox downloads page cited by virtualization; reachable in a browser, 410 from CI runners (#449).
   "^https://www\\.virtualbox\\.org/wiki/Downloads$",
+  # Changelog compare links; the newest one names a tag that exists only once the release is cut.
   "^https://github\\.com/iuliandita/skills/compare/v[0-9]+\\.[0-9]+\\.[0-9]+\\.\\.\\.(?:v[0-9]+\\.[0-9]+\\.[0-9]+|HEAD)$"
 ]

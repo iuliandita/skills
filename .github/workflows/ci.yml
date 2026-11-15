@@ -66,9 +66,15 @@ jobs:
 
       # Date-dependent freshness is advisory: a calendar rollover warns, it does not fail.
       - name: Check freshness date markers (advisory)
+        # Only exit 1 (stale markers) is downgraded; any other failure is a broken check.
         run: |
-          if ! ./scripts/check-freshness-dates.sh; then
+          rc=0
+          ./scripts/check-freshness-dates.sh || rc=$?
+          if (( rc == 1 )); then
             echo "::warning title=Freshness markers (advisory)::Currentness labels are behind the collection month; refresh them in the next sweep."
+          elif (( rc != 0 )); then
+            echo "::error title=Freshness markers::check-freshness-dates.sh exited $rc, not the stale-marker code 1."
+            exit "$rc"
           fi
 
       - name: Check version receipt structure
@@ -77,9 +83,16 @@ jobs:
         run: ./scripts/check-version-receipts.sh
 
       - name: Check version receipt age (advisory)
+        # The structure step above already passed, so exit 1 here means age only;
+        # any other failure is a broken check.
         run: |
-          if ! ./scripts/check-version-receipts.sh; then
+          rc=0
+          ./scripts/check-version-receipts.sh || rc=$?
+          if (( rc == 1 )); then
             echo "::warning title=Version receipts (advisory)::A version receipt is older than the 120-day budget; re-verify its pins."
+          elif (( rc != 0 )); then
+            echo "::error title=Version receipts::check-version-receipts.sh exited $rc, not the stale-receipt code 1."
+            exit "$rc"
           fi
 
       - name: Check first-paragraph storefront copy
