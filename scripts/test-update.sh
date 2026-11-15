@@ -106,7 +106,10 @@ PY
 # with two skills; the user installs and saves with the given options.
 new_fixture() {
   cleanup
-  F="$(mktemp -d)"
+  # Under /tmp, not TMPDIR: without /run/user, gpg-agent puts its sockets in
+  # the keyring dir, and macOS's per-user temp dir alone nearly fills the
+  # 104-byte limit on a socket path.
+  F="$(mktemp -d /tmp/skills-update-test.XXXXXX)"
   H="$F/home"
   mkdir -p "$H" "$F/dev/scripts" "$F/dev/skills"
   cp "$ROOT/install.sh" "$ROOT/migrations.json" "$F/dev/"
