@@ -17,6 +17,8 @@ jobs:
     permissions:
       contents: read
     uses: ./.github/workflows/ci.yml
+    secrets:
+      SKILLS_PRIVATE_PATTERNS: ${{ secrets.SKILLS_PRIVATE_PATTERNS }}
 
   security:
     name: security

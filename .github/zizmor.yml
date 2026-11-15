@@ -3,4 +3,4 @@ rules:
     # The release workflow calls the local CI and Security workflows with the './' form.
     ignore:
       - release.yml:19
-      - release.yml:25
+      - release.yml:27

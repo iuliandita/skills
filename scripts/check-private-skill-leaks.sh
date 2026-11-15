@@ -2,6 +2,19 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+# A run that scans nothing must not look like a clean scan: say so, as an
+# annotation in GitHub Actions, and still exit 0 (forks and fresh clones have no patterns).
+skip_unscanned() {
+  local message="private leak check did not scan: $1. Supply markers through a private-patterns.txt file or SKILLS_PRIVATE_PATTERNS."
+  if [[ "${GITHUB_ACTIONS:-}" == "true" ]]; then
+    echo "::warning title=Private leak check skipped::$message"
+  else
+    echo "warning: $message" >&2
+  fi
+  exit 0
+}
+
 PATTERN_FILES=()
 for skill in cluster-health kubernetes-health; do
   file="$ROOT/skills/$skill/protected/private-patterns.txt"
@@ -20,14 +33,22 @@ if [[ -n "${SKILLS_PRIVATE_PATTERNS:-}" ]]; then
 fi
 
 if (( ${#PATTERN_FILES[@]} == 0 )); then
-  echo "No private pattern sources configured; skipping private leak check."
-  exit 0
+  skip_unscanned "no private pattern source is configured"
 fi
 
-mapfile -t candidate_files < <(
-  git -C "$ROOT" ls-files --cached --others --exclude-standard \
-    | grep -vE '^skills/(cluster-health|kubernetes-health)/protected/' || true
-)
+if ! listed_files="$(git -C "$ROOT" ls-files --cached --others --exclude-standard)"; then
+  echo "error: git ls-files failed in '$ROOT'; cannot list public files to scan." >&2
+  exit 1
+fi
+
+# Tracked files deleted from the working tree are skipped: there is nothing to scan.
+candidate_files=()
+while IFS= read -r file; do
+  [[ -n "$file" ]] || continue
+  [[ ! "$file" =~ ^skills/(cluster-health|kubernetes-health)/protected/ ]] || continue
+  [[ -f "$ROOT/$file" ]] || continue
+  candidate_files+=("$file")
+done <<< "$listed_files"
 
 if (( ${#candidate_files[@]} == 0 )); then
   echo "No public files found to scan."
@@ -40,8 +61,7 @@ trap 'rm -f "$tmp_patterns" "$tmp_matches"' EXIT
 
 grep -vE '^[[:space:]]*(#|$)' "${PATTERN_FILES[@]}" -h > "$tmp_patterns" || [[ $? == 1 ]]
 if [[ ! -s "$tmp_patterns" ]]; then
-  echo "No private patterns configured."
-  exit 0
+  skip_unscanned "the configured pattern sources hold no patterns"
 fi
 
 cd "$ROOT"
@@ -58,7 +78,6 @@ if command -v rg >/dev/null 2>&1; then
 else
   while IFS= read -r pattern; do
     while IFS= read -r file; do
-      [[ -f "$file" ]] || continue
       status=0
       grep -qiF -- "$pattern" "$file" || status=$?
       if (( status == 0 )); then

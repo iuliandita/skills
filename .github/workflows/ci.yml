@@ -10,6 +10,10 @@ on:
     - cron: "0 5 * * 1"
   workflow_dispatch:
   workflow_call:
+    secrets:
+      SKILLS_PRIVATE_PATTERNS:
+        description: Private markers for the leak check, one per line. Optional.
+        required: false
 
 permissions:
   contents: read
@@ -32,8 +36,21 @@ jobs:
       - name: Check protected overlay guardrail
         run: ./scripts/check-protected-overlay.sh
 
+      # The secret is optional and absent on fork pull requests; without it the
+      # script warns and passes. The pattern file stays outside the workspace
+      # because the script also scans untracked files.
       - name: Check private cluster-health leak patterns
-        run: ./scripts/check-private-skill-leaks.sh
+        env:
+          PRIVATE_PATTERNS: ${{ secrets.SKILLS_PRIVATE_PATTERNS }}
+        run: |
+          if [[ -n "$PRIVATE_PATTERNS" ]]; then
+            patterns_file="$RUNNER_TEMP/private-patterns.txt"
+            trap 'rm -f "$patterns_file"' EXIT
+            (umask 077 && printf '%s\n' "$PRIVATE_PATTERNS" > "$patterns_file")
+            export SKILLS_PRIVATE_PATTERNS="$patterns_file"
+          fi
+          unset PRIVATE_PATTERNS
+          ./scripts/check-private-skill-leaks.sh
 
       # Date-dependent freshness is advisory: a calendar rollover warns, it does not fail.
       - name: Check freshness date markers (advisory)

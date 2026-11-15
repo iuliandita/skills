@@ -134,7 +134,9 @@ skill directory; they do not preserve or merge installed-only files into the new
 
 `kubernetes-health` is public, so it no longer needs `--include-internal`; that flag is only for separate gitignored skills with `metadata.internal: true`.
 
-`scripts/check-private-skill-leaks.sh` scans public files for private markers, additively drawn from the `protected/private-patterns.txt` overlays above, a gitignored `private-patterns.txt` at the repo root (see `private-patterns.example.txt`), and a file path in `SKILLS_PRIVATE_PATTERNS`. CI never sees your local overlay or root file; it only sees markers you explicitly supply it, typically by writing a repository secret to a file and pointing `SKILLS_PRIVATE_PATTERNS` at it.
+`scripts/check-private-skill-leaks.sh` scans public files for private markers, additively drawn from the `protected/private-patterns.txt` overlays above, a gitignored `private-patterns.txt` at the repo root (see `private-patterns.example.txt`), and a file path in `SKILLS_PRIVATE_PATTERNS`. A failed file listing is an error. When no source is configured, or the sources hold only comments and blank lines, the script scans nothing, prints a warning, and exits 0.
+
+CI never sees your local overlay or root file. It reads markers from the optional `SKILLS_PRIVATE_PATTERNS` repository secret (one marker per line, the same format as the files), writes them to a file outside the checkout, and points the script at it; the release workflow forwards the same secret. Without the secret, which is also the case for pull requests from forks, the step stays green and shows a "Private leak check skipped" warning annotation instead of scanning.
 
 Before committing local changes, install the repository hooks with either `prek` or `pre-commit`:
 
