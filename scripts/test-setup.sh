@@ -7,7 +7,20 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # Git hooks export GIT_DIR and friends; fixture repos must not inherit them.
 while IFS= read -r var; do unset "$var"; done < <(git rev-parse --local-env-vars)
 
-SAFE_PATH="$(for cmd in python3 git sha256sum flock; do dirname "$(command -v "$cmd")"; done | awk '!seen[$0]++' | paste -sd:):/usr/bin:/bin"
+# A listed tool that is missing stops the run: dirname of an empty path is ".",
+# which would put the current directory on PATH.
+safe_path() {
+  local cmd path dirs=""
+  for cmd in "$@"; do
+    path="$(command -v "$cmd")" || {
+      printf 'FAIL: %s is required to run these tests and is not on PATH\n' "$cmd" >&2
+      return 1
+    }
+    [[ ":$dirs:" == *":${path%/*}:"* ]] || dirs+="${dirs:+:}${path%/*}"
+  done
+  printf '%s:/usr/bin:/bin\n' "$dirs"
+}
+SAFE_PATH="$(safe_path python3 git sha256sum flock)"
 REAL_GIT="$(command -v git)"
 
 fail() {
@@ -275,6 +288,35 @@ test_save_round_trip_records_source() {
   trap - RETURN
 }
 
+test_save_records_signature_verification() {
+  local tmp conf out status=0
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  make_fixture "$tmp/repo" false "$tmp"
+  conf="$(conf_dir "$tmp")/install.conf"
+  out="$(isolated "$tmp" "$tmp/repo/install.sh" --save docker 2>&1)" || fail "--save failed: $out"
+  ! grep -q '^verify_signature=' "$conf" || fail "default --save wrote verify_signature: $(cat "$conf")"
+  grep -qFx 'Signature verification for --update: off' <<< "$out" || fail "save did not print the off state: $out"
+  ! grep -q 'previous saved config had it on' <<< "$out" || fail "first save reported an earlier opt-in: $out"
+
+  out="$(isolated "$tmp" "$tmp/repo/install.sh" --save --verify-signature --json docker 2>/dev/null)" \
+    || fail "--save --verify-signature failed: $out"
+  grep -qFx verify_signature=true "$conf" || fail "--verify-signature not recorded: $(cat "$conf")"
+  json_check "$out" 'd["saved"] is True and d["verify_signature"] is True' "save verify_signature key"
+  isolated "$tmp" "$tmp/repo/install.sh" >/dev/null 2>&1 || fail "bare install refused a config with verify_signature"
+
+  out="$(isolated "$tmp" "$tmp/repo/install.sh" --save docker 2>&1)" || fail "re-save failed: $out"
+  ! grep -q '^verify_signature=' "$conf" || fail "a --save without the option kept it on: $(cat "$conf")"
+  grep -q 'previous saved config had it on; add --verify-signature to --save to keep it' <<< "$out" \
+    || fail "turning verification off was not reported: $out"
+
+  out="$(isolated "$tmp" "$tmp/repo/install.sh" --verify-signature docker 2>&1)" || status=$?
+  { (( status == 1 )) && grep -q -- '--verify-signature is recorded by --save' <<< "$out"; } \
+    || fail "--verify-signature without --save: $status $out"
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
 test_save_without_upstream_records_empty() {
   local tmp out conf
   tmp="$(mktemp -d)"
@@ -458,6 +500,8 @@ test_invalid_configs_are_rejected_unexecuted() {
   expect_rejected "$tmp" "unknown tool" "unknown tool 'notatool'"
   write_conf "$tmp" "${good/tools=claude/tools=gemini}"
   expect_rejected "$tmp" "removed tool" "tool 'gemini' was removed in 3.1.0"
+  write_conf "$tmp" "$good"$'verify_signature=yes\n'
+  expect_rejected "$tmp" "bad verify_signature" "verify_signature must be true or false"
   write_conf "$tmp" "${good/version=1/version=2}"
   expect_rejected "$tmp" "version" "unsupported version"
   write_conf "$tmp" "${good/tools=claude/tools claude}"
@@ -643,6 +687,7 @@ test_json_detect_and_save
 test_detect_suggests_none
 test_detect_rejects_other_options_and_ignores_config
 test_save_round_trip_records_source
+test_save_records_signature_verification
 test_save_without_upstream_records_empty
 test_save_only_after_successful_install
 test_save_holds_lock_through_save

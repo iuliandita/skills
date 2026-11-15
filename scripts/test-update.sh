@@ -7,8 +7,23 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # Git hooks export GIT_DIR and friends; fixture repos must not inherit them.
 while IFS= read -r var; do unset "$var"; done < <(git rev-parse --local-env-vars)
 
-SAFE_PATH="$(for cmd in bash python3 git sha256sum flock timeout; do dirname "$(command -v "$cmd")"; done | awk '!seen[$0]++' | paste -sd:):/usr/bin:/bin"
+# A listed tool that is missing stops the run: dirname of an empty path is ".",
+# which would put the current directory on PATH.
+safe_path() {
+  local cmd path dirs=""
+  for cmd in "$@"; do
+    path="$(command -v "$cmd")" || {
+      printf 'FAIL: %s is required to run these tests and is not on PATH\n' "$cmd" >&2
+      return 1
+    }
+    [[ ":$dirs:" == *":${path%/*}:"* ]] || dirs+="${dirs:+:}${path%/*}"
+  done
+  printf '%s:/usr/bin:/bin\n' "$dirs"
+}
+SAFE_PATH="$(safe_path bash python3 git sha256sum flock timeout)"
 REAL_GIT="$(command -v git)"
+HAVE_GPG=true
+command -v gpg >/dev/null 2>&1 || HAVE_GPG=false
 GIT_ID=(-c user.name=t -c user.email=t@example.invalid -c commit.gpgsign=false)
 F=""
 H=""
@@ -17,7 +32,16 @@ OUT=""
 ERR=""
 
 cleanup() {
-  [[ -z "$F" ]] || rm -rf "$F"
+  local dir
+  [[ -n "$F" ]] || return 0
+  if [[ "$HAVE_GPG" == true ]]; then
+    for dir in "$H/.gnupg" "$F/signer" "$F/stranger"; do
+      [[ -d "$dir" ]] || continue
+      gpgconf --homedir "$dir" --kill all 2>/dev/null || true
+      gpgconf --homedir "$dir" --remove-socketdir 2>/dev/null || true
+    done
+  fi
+  rm -rf "$F"
 }
 trap cleanup EXIT
 
@@ -281,10 +305,10 @@ json_check() {
     || fail "$3: $1"
 }
 
-# run_update_json: like run_update, with --json.
+# run_update_json [VAR=value...]: like run_update, with --json.
 run_update_json() {
   RC=0
-  isolated "$H" "$F/repo/install.sh" --update --json >"$F/out" 2>"$F/err" || RC=$?
+  isolated "$H" "$@" "$F/repo/install.sh" --update --json >"$F/out" 2>"$F/err" || RC=$?
   OUT="$(cat "$F/out")"
   ERR="$(cat "$F/err")"
   [[ "$(wc -l < "$F/out")" == 1 ]] || fail "--update --json did not print exactly one line: $OUT"
@@ -469,6 +493,11 @@ test_fast_forward_failure_changes_nothing() {
   rm "$F/repo/.git/index.lock"
 
   # A fast-forward that fails partway changes the tree: that is not exit 5.
+  # Root writes into a read-only directory, so the case cannot be staged.
+  if (( $(id -u) == 0 )); then
+    printf 'SKIP: partial fast-forward case not run as root\n' >&2
+    return 0
+  fi
   printf 'new\n' > "$F/dev/skills/git/zz-new.md"
   publish
   chmod 555 "$F/repo/skills/git"
@@ -785,6 +814,181 @@ test_missing_dependencies_exit_10() {
   expect_rc 0 "gtimeout fallback"
 }
 
+test_missing_git_or_python3_exits_10() {
+  local cmd
+  new_fixture --tool claude
+  for cmd in git python3; do
+    path_without "$F/no-$cmd" "$cmd"
+    expect_refused 10 "missing $cmd" "$cmd is required for --update" PATH="$F/no-$cmd"
+  done
+}
+
+test_lock_wait_and_lock_dir_errors() {
+  new_fixture --tool claude
+  expect_refused 2 "bad lock wait" "SKILLS_LOCK_WAIT must be a whole number of seconds: soon" SKILLS_LOCK_WAIT=soon
+  # A file where the state directory belongs: the lock cannot be opened, for root too.
+  : > "$F/state"
+  expect_refused 7 "lock directory cannot be created" "cannot open the installer lock in $F/state/iuliandita-skills" \
+    XDG_STATE_HOME="$F/state"
+}
+
+# json_refusal CODE LABEL MESSAGE [VAR=value...]: one object, ok false, the message in errors.
+json_refusal() {
+  local code="$1" label="$2" message="$3"
+  shift 3
+  run_update_json "$@"
+  expect_rc "$code" "json $label"
+  json_check "$OUT" "d['ok'] is False and d['command'] == 'update' and any('$message' in e for e in d['errors'])" "json $label"
+}
+
+test_json_refusals() {
+  local holder
+  new_fixture --tool claude
+  : > "$F/repo/stray"
+  json_refusal 4 "source check" "uncommitted or untracked changes"
+  json_check "$OUT" 'd["verify_signature"] is False' "json source check carries verify_signature"
+  rm "$F/repo/stray"
+
+  ( exec 8>>"$H/.local/state/iuliandita-skills/install.lock"; flock 8; : > "$F/held"; exec sleep 30 ) &
+  holder=$!
+  for _ in $(seq 100); do [[ -e "$F/held" ]] && break; sleep 0.1; done
+  json_refusal 3 "held lock" "another install.sh run holds"
+  kill "$holder"
+  wait "$holder" 2>/dev/null || true
+
+  mv "$F/origin.git" "$F/gone.git"
+  json_refusal 5 "fetch failure" "fetch failed"
+  mv "$F/gone.git" "$F/origin.git"
+
+  printf 'upstream\n' >> "$F/dev/skills/docker/SKILL.md"
+  publish
+  json_refusal 1 "failure after the fast-forward" "rerun install.sh --update to complete the install" \
+    SKILLS_INSTALL_FAULT=stage:docker
+  [[ "$(repo_head)" == "$(dev_head)" ]] || fail "json exit 1 case did not move HEAD"
+
+  printf '\nif then\n' >> "$F/dev/install.sh"
+  publish
+  json_refusal 8 "broken installer" "is missing or does not parse"
+}
+
+# ── Signature verification ────────────────────────────────────────────
+# The user's keyring is $H/.gnupg, which gpg finds through HOME alone. The
+# publisher signs from $F/signer, whose public key the user imported, or from
+# $F/stranger, whose key the user never saw.
+gpg_fixture() {
+  local name
+  mkdir -m 700 "$H/.gnupg"
+  for name in signer stranger; do
+    mkdir -m 700 "$F/$name"
+    isolated "$H" GNUPGHOME="$F/$name" gpg --batch --quiet --pinentry-mode loopback --passphrase '' \
+      --quick-generate-key "$name <$name@example.invalid>" ed25519 sign never 2>"$F/gpg.err" \
+      || fail "could not generate the $name key: $(cat "$F/gpg.err")"
+  done
+  isolated "$H" GNUPGHOME="$F/signer" gpg --batch --quiet --export signer@example.invalid > "$F/signer.pub"
+  isolated "$H" gpg --batch --quiet --import "$F/signer.pub" 2>"$F/gpg.err" \
+    || fail "could not import the signer key: $(cat "$F/gpg.err")"
+}
+
+# publish_signed NAME: commit as NAME (signer or stranger) and push.
+publish_signed() {
+  g -C "$F/dev" add -A
+  isolated "$H" GNUPGHOME="$F/$1" git -C "$F/dev" "${GIT_ID[@]}" -c "user.signingkey=$1@example.invalid" \
+    commit -q -S -m "signed by $1" 2>"$F/gpg.err" || fail "could not sign as $1: $(cat "$F/gpg.err")"
+  g -C "$F/dev" push -q origin main
+}
+
+# The published installer leaves $HOME/marker when --update hands off to it.
+mark_fetched_installer() {
+  python3 - "$F/dev/install.sh" <<'PY'
+import sys
+
+path = sys.argv[1]
+text = open(path, encoding="utf-8").read()
+hook = 'if [[ "${1:-}" == --apply-update ]]; then printf \'ran\\n\' >> "$HOME/marker"; fi\n'
+assert "set -euo pipefail\n" in text
+text = text.replace("set -euo pipefail\n", "set -euo pipefail\n" + hook, 1)
+open(path, "w", encoding="utf-8").write(text)
+PY
+}
+
+test_verification_is_off_by_default() {
+  new_fixture --tool claude
+  ! grep -q '^verify_signature=' "$H/.config/iuliandita-skills/install.conf" \
+    || fail "a default --save wrote verify_signature: $(cat "$H/.config/iuliandita-skills/install.conf")"
+  printf 'upstream\n' >> "$F/dev/skills/docker/SKILL.md"
+  publish unsigned
+  run_update
+  expect_rc 0 "config without verify_signature"
+  [[ "$(last_line)" =~ $OK_RANGE ]] || fail "config without verify_signature: last line: $OUT"
+  grep -q ' update: signature verification: off ' <<< "$OUT" || fail "verification state not printed as off: $OUT"
+
+  # Turned on, an unsigned commit is refused before any verifier is needed.
+  printf 'verify_signature=true\n' >> "$H/.config/iuliandita-skills/install.conf"
+  printf 'again\n' >> "$F/dev/skills/docker/SKILL.md"
+  publish unsigned
+  expect_refused 9 "hand-set key, unsigned commit" "is not signed and the saved config requires a signature"
+  grep -q ' update: signature verification: on ' <<< "$OUT" || fail "verification state not printed as on: $OUT"
+  conf_set verify_signature maybe
+  expect_refused 2 "bad verify_signature" "verify_signature must be true or false"
+}
+
+test_signature_verification() {
+  local conf
+  if [[ "$HAVE_GPG" != true ]]; then
+    printf 'SKIP: gpg not found; signature verification tests not run\n' >&2
+    return 0
+  fi
+  new_fixture --tool claude --verify-signature
+  conf="$H/.config/iuliandita-skills/install.conf"
+  grep -qx 'verify_signature=true' "$conf" || fail "--save --verify-signature not recorded: $(cat "$conf")"
+  gpg_fixture
+  mark_fetched_installer
+
+  publish unsigned
+  expect_refused 9 "unsigned commit" "is not signed and the saved config requires a signature"
+  [[ ! -e "$H/marker" ]] || fail "unsigned commit: the fetched installer ran"
+
+  printf 'upstream\n' >> "$F/dev/skills/docker/SKILL.md"
+  publish_signed stranger
+  expect_refused 9 "key not in the keyring" "git verify-commit did not accept upstream"
+  [[ ! -e "$H/marker" ]] || fail "key not in the keyring: the fetched installer ran"
+  json_refusal 9 "signature refusal" "git verify-commit did not accept upstream"
+  json_check "$OUT" 'd["verify_signature"] is True' "json signature refusal carries verify_signature"
+  [[ ! -e "$H/marker" ]] || fail "json signature refusal: the fetched installer ran"
+
+  path_without "$F/no-gpg" gpg
+  expect_refused 10 "gpg absent" "gpg is required to check the openpgp signature" PATH="$F/no-gpg"
+  [[ ! -e "$H/marker" ]] || fail "gpg absent: the fetched installer ran"
+
+  # The signer's key is in the keyring with no trust assigned: that is enough.
+  printf 'more\n' >> "$F/dev/skills/docker/SKILL.md"
+  publish_signed signer
+  run_update
+  expect_rc 0 "trusted signature"
+  [[ "$(last_line)" =~ $OK_RANGE ]] || fail "trusted signature: last line: $OUT"
+  grep -q ' update: signature verification: on ' <<< "$OUT" || fail "verification state not printed as on: $OUT"
+  grep -q ' update: signature accepted on ' <<< "$OUT" || fail "accepted signature not reported: $OUT"
+  [[ "$(repo_head)" == "$(dev_head)" ]] || fail "trusted signature: checkout not fast-forwarded"
+  [[ "$(wc -l < "$H/marker")" -eq 1 ]] || fail "trusted signature: the fetched installer did not run once"
+  cmp -s "$F/dev/skills/docker/SKILL.md" "$H/.claude/skills/docker/SKILL.md" || fail "trusted signature: docker not updated"
+
+  run_update
+  expect_rc 0 "current with verification on"
+  [[ "$(last_line)" == "update: ok current" ]] || fail "current with verification on: $OUT"
+
+  # The selection rewrite after an update keeps the opt-in.
+  new_fixture --tool claude --verify-signature docker git
+  conf="$H/.config/iuliandita-skills/install.conf"
+  gpg_fixture
+  conf_set skills docker,git,docker
+  printf 'upstream\n' >> "$F/dev/skills/docker/SKILL.md"
+  publish_signed signer
+  run_update
+  expect_rc 0 "selection rewrite with verification on"
+  grep -qx 'skills=docker,git' "$conf" || fail "selection was not rewritten: $(cat "$conf")"
+  grep -qx 'verify_signature=true' "$conf" || fail "selection rewrite dropped verify_signature: $(cat "$conf")"
+}
+
 test_link_mode() {
   new_fixture --tool claude,cursor --link
   printf 'upstream\n' >> "$F/dev/skills/docker/SKILL.md"
@@ -847,6 +1051,11 @@ test_apply_faults_then_rerun
 test_edit_after_interrupted_update_is_kept
 test_lock_publication_fault_keeps_ownership
 test_missing_dependencies_exit_10
+test_missing_git_or_python3_exits_10
+test_lock_wait_and_lock_dir_errors
+test_json_refusals
+test_verification_is_off_by_default
+test_signature_verification
 test_link_mode
 test_opencode_new_skill_is_allowed
 
