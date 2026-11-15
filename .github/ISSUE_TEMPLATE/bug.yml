@@ -20,7 +20,7 @@ body:
     id: install
     attributes:
       label: Install mode, destination scope and affected component
-      description: Copy, symlink, marketplace or clone; user, project or local scope as applicable.
+      description: "`npx skills`, `install.sh` copy, `install.sh --link` or manual copy; global or project scope as applicable."
     validations:
       required: true
   - type: textarea
