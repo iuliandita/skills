@@ -1,6 +1,6 @@
 # Exhaustive Audit Workflow
 
-Run up to 31 audit agents against a repo in 5 sequential waves. This is the broadest application-repo dispatch plan (3 Wave 2 + up to 23 conditional Wave 3 lanes + 2 Wave 4 + 3 Wave 5), not the total skill count. Wave 1 detects the tech stack, Waves 2-5 dispatch only matching audit skills, and each wave reports before the next begins.
+Run up to 30 audit agents against a repo in 5 sequential waves. This is the broadest application-repo dispatch plan (3 Wave 2 + up to 22 conditional Wave 3 lanes + 2 Wave 4 + 3 Wave 5), not the total skill count. Wave 1 detects the tech stack, Waves 2-5 dispatch only matching audit skills, and each wave reports before the next begins.
 
 The five waves are: Reconnaissance; Code Quality (code-review, code-simplification, anti-ai-prose); Domain-Specific (detected skills only); Security (security-audit, then vulnerability-research opt-in; if installed); and Docs & Hygiene (update-docs, roadmap, git).
 
@@ -111,7 +111,7 @@ path/to/scope` instead of the full repo). If the shipped detector cannot run, re
 failure before performing the table's manual equivalent; do not silently replace detector evidence.
 
 After detection, present the recon summary before proceeding. Compute
-`{unmatched_skills}` as the 23 Wave 3 candidates minus the matched set.
+`{unmatched_skills}` as the 22 Wave 3 candidates minus the matched set.
 Compute `{count}` by summing: 3 (Wave 2) + matched Wave 3 skills + 2 (Wave 4) +
 3 (Wave 5). Example: if 6 Wave 3 skills match, count = 3 + 6 + 2 + 3 = 14. If the matched Wave 3 set is too broad for the user's goal, recommend a scoped repo-audit or **quick mode** instead of pretending every lane is equally valuable.
 
@@ -147,7 +147,7 @@ Skills that will run:
 Total agents: {count}
 ```
 
-Concrete example for a Node+Postgres+Docker+K8s repo with i18n, frontend code, and GitHub Actions (9 Wave 3 skills matched out of 23):
+Concrete example for a Node+Postgres+Docker+K8s repo with i18n, frontend code, and GitHub Actions (9 Wave 3 skills matched out of 22):
 
 ```
 Repo: myorg/api @ a3f91c2 (main)  |  Files: 412  |  Scope: full codebase
@@ -155,7 +155,7 @@ Languages: TypeScript, SQL, YAML
 
 Wave 2 (always): code-review, code-simplification, anti-ai-prose
 Wave 3 (detected): testing, shell-scripting, databases, backend-api, ui-build, i18n-localization, docker, kubernetes, ci-cd
-Wave 3 (skipped): terraform, ansible, networking, observability, backend-api, debug-triage, llm-app-development, mcp, arch-linux, debian-ubuntu, rhel-fedora, nixos, opnsense-pfsense, virtualization
+Wave 3 (skipped): terraform, ansible, networking, observability, debug-triage, llm-app-development, mcp, arch-linux, debian-ubuntu, rhel-fedora, nixos, opnsense-pfsense, virtualization
 Wave 4: security-audit; vulnerability-research (opt-in; if installed)
 Wave 5 (always): update-docs, roadmap, git
 
@@ -247,7 +247,7 @@ All other skills use the generic prompt.
 Present results:
 
 ```markdown
-## Wave 3: Domain-Specific [{N} of 23 skills matched]
+## Wave 3: Domain-Specific [{N} of 22 skills matched]
 
 ### {Skill Display Name}
 {report verbatim}
@@ -395,7 +395,7 @@ before acting.
 **SMALL** (all three must hold): `<=10 tasks` AND `<=2 phases` AND zero P0 findings.
 - No execution plan needed.
 - Present the final summary + path to the task list. Work can start directly
-  from the checkboxes.
+  from the checkboxes once the user authorizes fixes; the audit itself changes nothing.
 - Stop here.
 
 **LARGE** (anything that fails the SMALL criteria - i.e., `>10 tasks`, OR `>2 phases`,
@@ -473,7 +473,7 @@ See `references/output-contract.md` for the full contract.
 - **code-review**, **code-simplification**, **anti-ai-prose** - Wave 2 participants.
 - **security-audit**, **vulnerability-research** (opt-in; if installed) - Wave 4 participants.
 - **update-docs**, **roadmap**, **git** - Wave 5 participants.
-- **testing**, **shell-scripting**, **databases**, **backend-api**, **ui-build**, **i18n-localization**, **llm-app-development**, **mcp**, **docker**, **kubernetes**, **terraform**, **ansible**, **ci-cd**, **networking**, **observability**, **backend-api**, **debug-triage**, **arch-linux**, **debian-ubuntu**, **rhel-fedora**, **nixos**, **opnsense-pfsense**, **virtualization** - Wave 3 candidates (conditional).
+- **testing**, **shell-scripting**, **databases**, **backend-api**, **ui-build**, **i18n-localization**, **llm-app-development**, **mcp**, **docker**, **kubernetes**, **terraform**, **ansible**, **ci-cd**, **networking**, **observability**, **debug-triage**, **arch-linux**, **debian-ubuntu**, **rhel-fedora**, **nixos**, **opnsense-pfsense**, **virtualization** - Wave 3 candidates (conditional).
 - **skill-creator** - audits the skill collection. This skill audits application repos.
 
 Read `references/exclusions.md` before changing Wave 3 routing.

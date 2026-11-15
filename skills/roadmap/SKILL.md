@@ -240,7 +240,7 @@ Trigger: user throws ideas at the project, says "add to roadmap", or describes f
 
 Extract actionable items from the user's input. For each idea:
 - Write a clear, concise description (keep the user's voice - clean up only if unclear)
-- Place it in the right priority tier (ask if genuinely ambiguous, default to P1)
+- Place it in the right priority tier (ask if genuinely ambiguous; an unranked idea defaults to Later - P2, the quick-capture tier)
 - Add context: where the idea came from, what it enables, any constraints mentioned
 
 Append to the appropriate section. Don't reorder existing items.
@@ -409,6 +409,6 @@ See `references/output-contract.md` for the full contract.
    present external features as original ideas.
 3. **Ask before checking off.** Present matches and let the user confirm. Don't auto-complete
    roadmap items based on fuzzy matches alone.
-4. **Headless mode.** In non-interactive contexts (`--bare`, Cursor Automations, Codex
+4. **Headless mode.** In non-interactive contexts (`claude -p`, Cursor Automations, Codex
    `exec`): skip confirmation prompts, apply only exact matches in Mode 2, add only
    strong-signal items in Mode 3, and don't offer competitive scans in Mode 1.

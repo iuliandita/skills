@@ -77,7 +77,7 @@ The user will give you rough notes, bullet points, or a stream-of-consciousness 
 
 - **Core task**: What should the prompted model actually do?
 - **Target model**: Which LLM? Default: model-agnostic unless the user names one.
-- **Prompt type**: System prompt vs. task prompt
+- **Prompt type**: system prompt, task prompt, reusable template, evaluator prompt, or delegation prompt (the `prompt_type` values of a saved file)
 - **Constraints**: Any rules, format requirements, or behavioral boundaries mentioned
 - **Variables**: Any dynamic content that should become `{{PLACEHOLDERS}}`
 
@@ -122,7 +122,7 @@ Most of the time, skip this step entirely.
 name: Descriptive Prompt Name
 description: One-line summary
 target_model: model-agnostic
-prompt_type: system | task
+prompt_type: system | task | template | evaluator | delegation
 date_created: YYYY-MM-DD
 ---
 

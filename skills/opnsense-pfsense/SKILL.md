@@ -81,7 +81,7 @@ For any change (skip for read-only diagnostics), copy this checklist and track p
 ```markdown
 - [ ] Step 1: Platform and target device confirmed
 - [ ] Step 2: Config backup taken and copied off-box
-- [ ] Step 3: Change dry-run (`pfctl -n`), blast radius stated, then applied
+- [ ] Step 3: Hand-written rule files dry-run (`pfctl -n`), blast radius stated, then applied
 - [ ] Step 4: Verified (on failure: revert, confirm healthy, return to Step 3)
 ```
 
@@ -96,7 +96,7 @@ talking to. Key differences at a glance:
 | Base OS | FreeBSD (migrated from HardenedBSD in 2021) | FreeBSD |
 | Config path | `/conf/config.xml` | `/cf/conf/config.xml` |
 | Service control | `configctl service restart <svc>` | `pfSsh.php playback svc restart <svc>` or `service <svc> restart` |
-| Plugin prefix | `os-<name>` (e.g., `os-wireguard`) | No prefix (e.g., `pfSense-pkg-WireGuard`) |
+| Package prefix | `os-<name>` (e.g., `os-wireguard`) | `pfSense-pkg-<Name>` (e.g., `pfSense-pkg-WireGuard`) |
 | PHP shell | N/A | `pfSsh.php` (interactive PHP shell) |
 | Quick rule add | N/A | `easyrule pass wan tcp <src> <dst> <port>` |
 | IP blocking | CrowdSec (`os-crowdsec`) | pfBlockerNG |
@@ -137,7 +137,9 @@ Skip this step only for read-only operations (diagnostics, log review, status ch
 
 Apply changes using the platform-appropriate commands. Refer to the domain sections below
 and the reference files for specifics. For any change that affects connectivity:
-- Test `pfctl` rules with `-n` (dry run) before applying
+- Dry-run a hand-written pf rule file with `pfctl -n -f <file>` before loading it. A change made
+  through the GUI, API, or `config.xml` has no separate dry run: the filter reload generates the
+  ruleset and pf refuses a file that does not parse
 - State the blast radius ("this will drop all VPN tunnels for ~30s")
 - On HA pairs, always change on the master node and let XMLRPC sync propagate
 
@@ -170,13 +172,13 @@ healthy again, then return to Step 3 with a corrected change.
      curl --config "$FW_API_CURL_CONFIG" -H 'Content-Type: application/json' -X POST https://<fw>/api/firewall/alias/add_item \
        -d '{"alias":{"name":"WebServer","type":"host","content":"10.0.1.100"}}'
      ```
-   - OPNsense CLI: `configctl template reload OPNsense/Filter` (after editing alias via API or XML). To verify the alias was created: `configctl template list | grep Alias`, then confirm with `pfctl -t WebServer -T show`.
+   - Apply the aliases (`add_item` only saves them): `POST /api/firewall/alias/reconfigure` with the same curl config, or on the CLI `configctl template reload OPNsense/Filter && configctl filter refresh_aliases` (also after editing an alias in XML).
    - pfSense: `easyrule` doesn't support aliases - use GUI or edit `/cf/conf/config.xml` directly
-   - Verify both aliases: `pfctl -t SourceVLAN -T show && pfctl -t WebServer -T show`.
+   - After the apply, verify both aliases: `pfctl -t SourceVLAN -T show && pfctl -t WebServer -T show`. Before it the tables do not exist yet.
 5. Add a pass rule on the **VLAN interface** (not WAN - pf evaluates rules on the interface where traffic enters): source = SourceVLAN, destination = WebServer, port = 443
 6. Place the allow rule above any block-all rule for that interface (OPNsense/pfSense interface rules use `quick` by default, so the FIRST matching rule wins - put the specific allow above the broad block)
-7. Test: `pfctl -n -f /tmp/rules.debug` (OPNsense) to dry-run before applying
-8. Apply: `configctl filter reload` (OPNsense) or `pfSsh.php playback svc restart filter` (pfSense)
+7. Apply: `configctl filter reload` (OPNsense) or `pfSsh.php playback svc restart filter` (pfSense). On OPNsense the reload writes the new ruleset to `/tmp/rules.debug` and loads it; if pf rejects it, the previous ruleset (`/tmp/rules.debug.old`) is loaded again and "There were error(s) loading the rules" is logged.
+8. Check the generated ruleset: `pfctl -n -f /tmp/rules.debug` must report no errors. Run it after the reload: before it the file still holds the previous ruleset, so it cannot test the change.
 9. Verify: `pfctl -sr | grep <alias>` to confirm the rule is active
 
 ### Creating a block rule (isolate IoT VLAN)
@@ -188,7 +190,7 @@ Block IoT devices from reaching internal networks while allowing internet access
 3. Allow only required infrastructure exceptions first: for example, TCP/UDP 53 to the exact intended resolver, including a resolver on the firewall's private address. Account for DHCP if used.
 4. Below those exceptions, **block** IoT traffic to `RFC1918`, then **pass** only the intended internet services such as TCP 443. Leave other traffic denied.
 5. With `quick` rules, the FIRST match wins: narrow infrastructure exceptions, private-network block, then internet allow. RFC1918 covers only IPv4; define corresponding IPv6 isolation or disable IPv6 on this VLAN deliberately.
-6. Test and apply as above: `pfctl -n -f /tmp/rules.debug`, then `configctl filter reload`
+6. Apply and check as above: `configctl filter reload`, then `pfctl -n -f /tmp/rules.debug`
 
 ### Troubleshooting connectivity after VLAN changes
 
@@ -265,7 +267,8 @@ These exist because bricking a firewall remotely means driving to wherever it is
 - **Never** apply firmware or plugin updates without asking first - updates can reboot the device
   and may require physical console access if something goes wrong.
 - **Always** confirm destructive changes: rule deletions, service disables, plugin removals,
-  state table flushes (`pfctl -Fa`).
+  state table flushes (`pfctl -F states`, which drops every open connection). `pfctl -F all` is
+  not a state flush: it also flushes the filter and NAT rules and the tables.
 - **OPNsense CrowdSec**: don't delete decisions or bouncers without understanding why they exist.
   A ban that looks wrong might be catching a real attack.
 - **pfSense pfBlockerNG**: don't disable feed lists without understanding what they block.

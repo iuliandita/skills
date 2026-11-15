@@ -173,7 +173,9 @@ Key elements every custom skill needs:
 - **AI Self-Check**: required when the skill generates code, config, or structured files
 - **Reference Files / Related Skills**: when applicable
 
-For tool/platform skills, include a **Target versions** block with pinned versions and dates.
+For tool/platform skills, keep pinned versions, sources, and the verification date in a
+`versions.md` receipt in the new skill's references directory and point at it with a
+one-line **Target versions** pointer; do not restate version numbers in the body.
 
 **Writing guidelines** (detail in `references/conventions.md` Sections 1, 4, 5, and 7.6-7.8):
 - Imperative, calm, and brief; explain **why**; add only what a capable model does not already know
@@ -417,8 +419,9 @@ collection, run Mode 2 Step 2 (quality checks) to verify no regressions were int
 When the user asks to review a completed conversation and update the skill library, capture
 reusable class-level learning, not a session log. Patch a loaded or umbrella skill for
 reusable workflow, routing, preference, or pitfall changes; create a new skill only when no
-class-level fit exists. In the public skills repo, read gitignored instruction files such as
-`AGENTS.md`, but do not force-add them; stage only intended public skill paths and validate.
+class-level fit exists. In the public skills repo, read the tracked `AGENTS.md` and any gitignored
+local instruction file such as `AGENTS.local.md`; never force-add an ignored file, stage only
+intended public skill paths, and validate.
 
 ## Merge, Rename, or Removal Checklist
 
