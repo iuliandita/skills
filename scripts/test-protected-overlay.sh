@@ -36,7 +36,7 @@ new_fixture() {
 }
 
 commit() {
-  git -C "$REPO" -c user.name=test -c user.email=test@example.invalid commit -q -m fixture
+  git -C "$REPO" -c user.email="test@example.com" -c user.name="test" -c commit.gpgsign=false commit -q -m fixture
 }
 
 run_check() {
