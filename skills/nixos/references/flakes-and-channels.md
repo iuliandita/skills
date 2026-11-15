@@ -155,7 +155,7 @@ Migrating a working channel-based NixOS install to flakes without breaking it:
 ```bash
 nix flake metadata                 # show input URLs and revs from flake.lock
 nix flake update                   # update all inputs and write flake.lock
-nix flake update nixpkgs           # update one input (Nix 2.30+; replaces deprecated `nix flake lock --update-input`)
+nix flake update nixpkgs           # update one input (Nix 2.19+; replaces the removed `nix flake lock --update-input`)
 nix flake check                    # eval all outputs, run checks
 nix flake check --no-build         # eval without building - fast sanity check
 nix flake show                     # show outputs tree

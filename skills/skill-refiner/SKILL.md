@@ -68,6 +68,10 @@ contested major flags (non-configurable).
 
 **step**: pauses after every iteration for manual review. Best for first run or learning.
 
+**Headless runs** (nobody can answer): every pause is a stop. End the run at the pause point,
+keep the commits made so far, do not enter phase 2, and name the pause reason and the pending
+decision in the final report. An unanswered pause is never approval.
+
 Phase 2 (meta-improvement) is opt-in for a single-skill run: unless `--meta` is passed, a run
 that targets one named skill ends after phase 1 and reports. Collection-wide runs enter phase 2
 by default. Either way, phase 2 still pauses for review.
@@ -132,11 +136,12 @@ secondary harness, and set up the mandatory self-review fallback. Phase 1 contin
    Validate individual checklist statuses, applicability, case coverage, and score arithmetic.
    Reject default passes for unread content. Every deduction needs a named failed signal or
    verified defect; missing inputs and prohibited live actions are simulation limits, not failures.
-9. **Iteration 2+**: enter adaptive focus mode. Honor any explicitly requested minimum iteration
-   count and score target for the whole run, not only single-skill runs: keep iterating until the
-   requested rounds are complete and the target is reached across the pool, quality plateaus, or a
-   circuit breaker fires. A collection-wide requested minimum overrides an early plateau or
-   threshold termination. For a user-requested single-skill run, treat that skill as the whole
+9. **Iteration 2+**: enter adaptive focus mode. A requested minimum is an iteration count the
+   user states in the request itself (there is no flag for it); it applies to the whole run, not
+   only single-skill runs, and cannot exceed `--iterations`. A requested score target sets
+   `--threshold`. Until the requested rounds are complete, a plateau or an all-above-threshold
+   result does not end phase 1; after them the step 14 conditions apply unchanged. Saturation,
+   the iteration cap, and circuit breakers apply from the first round. For a user-requested single-skill run, treat that skill as the whole
    phase-1 pool only if active; the notice path from step 3 still applies.
 10. **Select targets**: identify skills scoring strictly below the focus threshold (a skill
     exactly at the threshold is skipped). Reopen any active pool skill that regressed in
@@ -269,7 +274,7 @@ See `references/output-contract.md` for the full contract.
 ## Related Skills
 
 - **skill-creator** - the evaluation and improvement engine. skill-refiner invokes
-  skill-creator's review mode (Mode 2) for scoring and its improve mode for
+  skill-creator's Mode 2 (Review / Improve) for scoring and for
   generating changes. skill-creator handles individual skill quality; skill-refiner
   handles iteration, prioritization, and orchestration. Primary dependency. For a one-off
   skill-collection audit without iteration, use skill-creator Mode 3 directly.

@@ -389,7 +389,7 @@ These look like AI tells but are not:
 
 - **Direct quotations** - do not edit words written by someone else, even if they contain banned vocabulary
 - **Genre conventions** - travel writing uses travel-guide voice because that is what travel writing sounds like. Marketing copy uses promotional tone. Journalism uses em-dashes. Fiction uses elegant variation and tricolons intentionally. Respect the genre.
-- **Technical terms of art** - `pivotal` in mechanical engineering, `realm` in networking or identity (Kerberos, OIDC) and in fantasy fiction, `foster` in child welfare, `landscape` in horticulture, graphic design, or ML (loss landscape), `robust` in statistics and ML (robust estimation), `crucial experiment` in philosophy of science. Each per-check `Exception:` block above applies here too - domain context always overrides a pattern match
+- **Technical terms of art** - `pivotal` in mechanical engineering, `realm` in networking or identity (Kerberos, OIDC) and in fantasy fiction, `foster` in child welfare, `landscape` in horticulture, graphic design, or ML (loss landscape), `robust` in statistics and ML (robust estimation), `crucial experiment` in philosophy of science. Each per-check `Exception:` block in the reference files applies here too - domain context always overrides a pattern match
 - **Deliberate register play** - satire, parody, pastiche, and stylistic experiments
 - **Direct speech / dialog** in fiction - characters can sound however they sound
 - **Lists that are actually lists** - a three-item list is only suspicious if the items are padded. An enumeration of three real things is fine

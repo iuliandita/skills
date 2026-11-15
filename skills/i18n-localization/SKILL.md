@@ -114,7 +114,7 @@ authorized; an existing request to fix or add i18n supplies that authority.
 
 **Entry points** (always read the AI Self-Check above first, regardless of entry point):
 - Adding i18n from scratch? Start at Step 1.
-- Already have i18n, checking completeness? Start at Step 1 (assess), then Step 3 (audit).
+- Already have i18n, checking completeness? Start at Step 1 (assess), then Step 5 (validate catalogs); use Step 3 only to find strings that were never extracted.
 - Just need translations for new keys? Jump to Step 4.
 - Just validating catalogs? Jump to Step 5.
 

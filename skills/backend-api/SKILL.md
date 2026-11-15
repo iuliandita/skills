@@ -144,6 +144,10 @@ For a GraphQL or gRPC boundary, keep REST/HTTP rules as the default where they f
 `references/graphql-grpc-patterns.md` for the protocol-specific contract, compatibility, deadline,
 authorization, pagination, and streaming safeguards.
 
+For a brokered boundary (a queue or stream behind a `202 Accepted` endpoint, a consumer, webhook
+fan-out), read `references/delivery-semantics.md` for acknowledgement, retry, dead-letter,
+ordering, and replay rules.
+
 Prefer:
 - Noun-based resources: `/users/{userId}/sessions`
 - Predictable list endpoints: `GET /orders?cursor=...&limit=...&status=paid`
@@ -369,6 +373,7 @@ Rolling deploys send SIGTERM to old instances while new ones come up. Handle it 
 - `references/http-api-patterns.md` - resource design, method semantics, status codes, versioning, pagination, filtering, idempotency
 - `references/auth-and-session-patterns.md` - sessions vs bearer tokens, OAuth/OIDC, BFF, refresh tokens, machine clients
 - `references/graphql-grpc-patterns.md` - bounded GraphQL and gRPC contract and compatibility patterns
+- `references/delivery-semantics.md` - brokered delivery, queues behind `202 Accepted` endpoints, and webhook fan-out
 - `references/versions.md` - dated version receipts (pins, sources, security floors)
 
 ## Output Contract
@@ -391,7 +396,6 @@ See `references/output-contract.md` for the full contract.
 - **networking** - reverse proxies, TLS termination, CORS-adjacent network boundaries, and gateway behavior
 - **ci-cd** - delivery pipelines for API services
 - **mcp** - MCP-specific HTTP servers and auth patterns
-- [Delivery semantics](references/delivery-semantics.md) - brokered delivery, queues behind `202 Accepted` endpoints, and webhook fan-out
 
 ## Rules
 

@@ -1,7 +1,7 @@
 ---
 name: code-review
 description: >
-  Review code and diffs for bugs, regressions, edge cases, races, and leaks. Use for "review this diff" or a pre-merge check. Not security.
+  Review a diff, file, or module for bugs, regressions, edge cases, races, and leaks. Use for "review this diff" or "is this change correct". Not security or repo audits.
 license: MIT
 compatibility: "Works on any codebase. Optional: git (diff scope, blame) and the project's own linters (tsc, eslint, ruff, mypy, shellcheck, terraform, ansible-lint)"
 metadata:
@@ -324,7 +324,7 @@ For Rust and other languages without dedicated reference files: apply the univer
 - **Defensive code at boundaries** - input validation on external data is correct, not a bug.
 - **Known framework quirks** - patterns that look wrong but are idiomatic for the framework.
 - **TODOs with issue references** - `// TODO(#1234)` shows awareness, not negligence.
-- **Generated / vendored code** - lock files, compiled output, auto-generated types, vendored deps, ORM migrations.
+- **Generated / vendored code** - lock files, compiled output, auto-generated types, vendored deps. Schema migrations are not in this group, even when a tool scaffolded them: review them with the Databases checks.
 - **Previously reviewed code** - if invoked multiple times in a session, focus on changes since the last review.
 - **Rewrite requests** - do not request rewrites unless the current structure blocks correctness or maintainability.
 - **Missing tests in general** - call out missing tests only when a specific behavior or risk needs coverage.

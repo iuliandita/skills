@@ -168,8 +168,9 @@ Do not load every reference by default. Pick the one that matches the failure mo
 - Prefer reversible steps: snapshots, package cache, fallback kernels, saved configs.
 - Snapshot or otherwise preserve rollback paths before kernel, bootloader, filesystem, or GPU driver changes.
 
-**Consequential changes** (kernel or bootloader work, package or kernel removal, full upgrades
-with file conflicts, mirrorlist replacement, snapshot rollback): show the exact command and what
+**Consequential changes** (kernel or bootloader work, package or kernel removal, any full
+system upgrade such as `pacman -Syu`, forcing past a file conflict, mirrorlist replacement,
+snapshot rollback): show the exact command and what
 it will do (transaction, removal list, or target device), get explicit confirmation, run it, then
 go to Step 5. In unattended runs, stop at the plan. Exact commands live in
 `references/packages-and-aur.md` (upgrades, conflicts, removals, mirrors) and
@@ -226,7 +227,7 @@ When a bug looks "desktop-only," compare one clean baseline:
 
 ## Default Decisions
 
-- **Arch means full upgrades.** Package skew is often self-inflicted. Resolve sync state first; run `pacman -Syu` before large installs.
+- **Arch means full upgrades.** Package skew is often self-inflicted. Resolve sync state first; a full `pacman -Syu` comes before large installs and is confirmed like any consequential change (Step 4).
 - **Keep package cache cleanup deliberate.** Retain at least one known-good package version when rollback may matter. For slow mirrors, rank mirrors before troubleshooting package-manager performance.
 - **Read pacman hooks and `.pacnew` files after major updates.** Do not assume config merges happened automatically.
 - **Use systemd-native tools first.** Reach for `systemctl`, `journalctl`, `bootctl`, `timedatectl`, and `localectl` before distro wrappers.

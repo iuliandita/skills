@@ -2,7 +2,7 @@
 
 Run four independent audits in parallel and present each report separately. One command that catches bugs, slop, security issues, and stale docs across the entire codebase without invoking each skill manually.
 
-**This is the fast path.** Fixed four passes, predictable cost, fire-and-forget before a merge. When you need exhaustive coverage across every applicable lane (up to 31 agents, conditional domain waves, persisted findings, generated tasks), use **repo-audit exhaustive mode**. Quick mode is the pre-merge reflex; exhaustive mode is the deliberate, heavyweight audit.
+**This is the fast path.** Fixed four passes, predictable cost, fire-and-forget before a merge. When you need exhaustive coverage across every applicable lane (up to 30 agents, conditional domain waves, persisted findings, generated tasks), use **repo-audit exhaustive mode**. Quick mode is the pre-merge reflex; exhaustive mode is the deliberate, heavyweight audit.
 
 The four audits:
 
@@ -35,7 +35,7 @@ Each audit runs in its own parallel agent/subprocess with a fresh context window
 - Style/slop cleanup without the other audit passes - use **code-simplification**
 - A dedicated security review only - use **security-audit**
 - A documentation-only maintenance sweep - use **update-docs**
-- A comprehensive audit across all applicable lanes (up to 31 audit agents, including 23 conditional Wave 3 domain lanes) - use **repo-audit exhaustive mode**
+- A comprehensive audit across all applicable lanes (up to 30 audit agents, including 22 conditional Wave 3 domain lanes) - use **repo-audit exhaustive mode**
 - Auditing the skill collection for consistency or quality - use **skill-creator**
 - CI/CD pipeline design or pipeline-config review - use **ci-cd**
 
