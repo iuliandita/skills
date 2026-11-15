@@ -208,6 +208,30 @@ jobs:
       - name: Test release changelog check
         run: ./scripts/test-release-changelog.sh
 
+      - name: Test refiner run-history check
+        run: ./scripts/test-refiner-state.sh
+
+      - name: Test refiner history compaction
+        run: ./scripts/test-refiner-history-compact.sh
+
+      - name: Test refiner rubric hash
+        run: ./scripts/test-refiner-rubric-hash.sh
+
+      - name: Test protected overlay check
+        run: ./scripts/test-protected-overlay.sh
+
+      - name: Test deep-audit coverage check
+        run: ./scripts/test-deep-audit-coverage.sh
+
+      - name: Test contract reference generator
+        run: ./scripts/test-gen-contract-refs.sh
+
+      - name: Test advisory gate exit codes
+        run: ./scripts/test-advisory-exit-codes.sh
+
+      - name: Test the pin report and the Renovate zizmor pattern
+        run: ./scripts/test-report-tool-pins.sh
+
       - name: Shellcheck scripts
         run: shellcheck install.sh scripts/*.sh skills/repo-audit/references/detect.sh
 
