@@ -1,6 +1,7 @@
 # Linux Privilege Escalation Techniques
 
-Core Linux privilege escalation vectors. Ordered by reliability and safety - start from the top.
+Core Linux privilege escalation vectors. Ordered by reliability and safety - start from the top;
+kernel exploits are last resort.
 
 ## Contents
 

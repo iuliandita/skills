@@ -181,20 +181,7 @@ done
 
 ### SSH Tunneling (Post-Compromise Pivoting)
 
-```bash
-# Local port forward: access remote_host:8080 via localhost:8080
-ssh -L 8080:remote_host:8080 user@pivot
-
-# Remote port forward: expose local port on the pivot
-ssh -R 9090:localhost:9090 user@pivot
-
-# Dynamic SOCKS proxy: route all traffic through pivot
-ssh -D 1080 user@pivot
-# Then use: proxychains nmap -sT internal_network
-
-# ProxyJump chain (multi-hop)
-ssh -J user@pivot1,user@pivot2 user@final_target
-```
+Covered in [shells-and-pivoting.md](shells-and-pivoting.md#ssh-tunneling).
 
 ---
 

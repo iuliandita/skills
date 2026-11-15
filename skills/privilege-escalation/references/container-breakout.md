@@ -87,6 +87,10 @@ cat /proc/self/uid_map
 
 ### Escape via Host Disk Mount
 
+**Stop before modifying the host filesystem.** Confirm that each write to it - key, account, or
+scheduled task - is authorized in the engagement scope and tracked for cleanup. If it is not,
+report the boundary crossing instead.
+
 ```bash
 # List host block devices
 fdisk -l 2>/dev/null || lsblk
