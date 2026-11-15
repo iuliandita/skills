@@ -527,9 +527,10 @@ security:
     # Dependency audit
     - run: bun audit  # fail on findings or operational error; tune a documented baseline before adoption
 
-    # Container scan (pin to known-safe version post-Trivy compromise)
-    - uses: aquasecurity/trivy-action@<sha>  # v0.35.0 (verified safe)
+    # Container scan (pin the action SHA and the Trivy version)
+    - uses: aquasecurity/trivy-action@<sha>  # v0.36.0
       with:
+        version: v0.76.2  # the v0.36.0 tag defaults to v0.70.0, below the v0.72.0 minimum
         image-ref: ghcr.io/${{ github.repository }}:${{ github.sha }}
         format: sarif
         output: trivy.sarif
@@ -541,10 +542,11 @@ security:
         sarif_file: trivy.sarif
 ```
 
-**Trivy safe versions (October 2026)**: use binary v0.74.0+ from official releases and pin
-actions to full commit SHAs. The March 2026 rollback set was binary v0.69.3,
-`trivy-action@v0.35.0`, and `setup-trivy@v0.2.6`. Do NOT use v0.69.4/5/6
-(compromised by TeamPCP).
+**Trivy versions (November 2026)**: use binary v0.76.2 from official releases, never below
+v0.72.0 (CVE-2026-63328 affects every earlier release), and pin actions to full commit SHAs
+(`trivy-action` v0.36.0, `setup-trivy` v0.3.1). Do NOT use v0.69.4/5/6 (compromised by
+TeamPCP) or the March 2026 fallback set (binary v0.69.3, `trivy-action@v0.35.0`,
+`setup-trivy@v0.2.6`), which is below the minimum.
 
 ---
 
