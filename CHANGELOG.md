@@ -5,6 +5,46 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [4.1.0] - 2026-11-15
+
+Most of this release comes from an independent review of the whole collection: skill content, the
+installer, the gate scripts and the workflows.
+
+### Features
+
+* **install:** `--save --verify-signature` stores an opt-in signature check. With it, `--update` runs `git verify-commit` on the fetched branch head against your own keyring before it fast-forwards. A refusal exits 9 with `HEAD` unchanged and the fetched installer not run; a missing verifier exits 10. Every `--update` prints whether the check is on, and `--json` reports `verify_signature`. A later `--save` without the flag turns it off and says so. See "Update Trust Model" in [SECURITY.md](https://github.com/iuliandita/skills/blob/main/SECURITY.md) ([#463](https://github.com/iuliandita/skills/issues/463)).
+* **install:** macOS is a supported platform. The installer needs bash 4.4 or newer and says so at startup instead of failing later on old bash; pruning and copying no longer rely on GNU-only options; CI runs the installer tests on macOS ([#458](https://github.com/iuliandita/skills/issues/458)).
+
+### Bug Fixes
+
+* **install:** `--migrate --apply` continues past a partial apply that the helper reported and exits 1 at the end, instead of stopping at the first one. Migration backups go under `<SKILLS_BACKUP_DIR>/<name>-<hash>/`, and the helper scripts run with `python3 -I` ([#457](https://github.com/iuliandita/skills/issues/457)).
+* **install:** lock and link state is reported as it is. The lock records only what this run wrote, a skipped copy directory is not counted as linked, `--check` on a broken lock prints one error and exits 1, a relative `XDG_STATE_HOME` is ignored as it is at install time, and retirement backups go under `.retired/<skill>/` ([#343](https://github.com/iuliandita/skills/issues/343), [#459](https://github.com/iuliandita/skills/issues/459)).
+* **install:** messages, help and JSON output match behavior. The lock-busy refusal starts with `error:`, `--update --json` leaves no temp log behind, the help documents `SKILLS_LOCK_WAIT` and `--force`, and more than one of `--list`, `--check`, `--migrate`, `--doctor` in one call is refused with exit 1 ([#380](https://github.com/iuliandita/skills/issues/380), [#460](https://github.com/iuliandita/skills/issues/460)).
+* **install:** an OpenCode per-skill `"ask"` permission is kept, with a notice, instead of being replaced by an allow. `--update` exits 4 unless `install.sh` sits at the root of its checkout, `--save` exits 2 when run inside a different enclosing repository, and a failed selection rewrite during an update exits 1 ([#359](https://github.com/iuliandita/skills/issues/359), [#461](https://github.com/iuliandita/skills/issues/461)).
+* **skills:** one Trivy floor (0.72.0) and one pin (0.76.2) across `security-audit`, `ci-cd`, `docker`, `terraform` and `kubernetes`; the 0.69.x fallback advice is gone. Every pin in the `security-audit` and `ci-cd` receipts was re-verified against its source on 2026-11-14 ([#322](https://github.com/iuliandita/skills/issues/322)).
+* **skills:** instructions agree with their own rules in `opnsense-pfsense` (a state flush no longer flushes everything), `nixos`, `arch-linux`, `repo-audit`, `code-review`, `skill-creator`, `skill-refiner`, `roadmap` and others ([#470](https://github.com/iuliandita/skills/issues/470)).
+* **testing:** quarantine is a tagged, non-blocking job with an owner, never a skip; coverage is gated on regression or patch coverage instead of a fixed number; repeated rules are stated once ([#283](https://github.com/iuliandita/skills/issues/283), [#284](https://github.com/iuliandita/skills/issues/284), [#286](https://github.com/iuliandita/skills/issues/286), [#287](https://github.com/iuliandita/skills/issues/287)).
+* **debian-ubuntu, rhel-fedora:** four reference stubs are now full references: packages and repositories, security updates, graphics drivers, and storage rollback ([#333](https://github.com/iuliandita/skills/issues/333)).
+* **skills:** broken snippets, stale pins and repeated text fixed in `llm-app-development`, `dev-cycle`, `git`, `update-docs`, `ansible` and others ([#318](https://github.com/iuliandita/skills/issues/318), [#361](https://github.com/iuliandita/skills/issues/361), [#474](https://github.com/iuliandita/skills/issues/474)).
+* **terraform:** the `terraform test` example asserts what a module computes and rejects, not that an input reaches a resource ([#285](https://github.com/iuliandita/skills/issues/285)).
+* **skills:** the shared output contract checks that a default report path is git-ignored before writing to it, and reports inline when it is not ([#471](https://github.com/iuliandita/skills/issues/471)).
+* **skills:** catalogs, tables and long examples moved from 18 `SKILL.md` bodies into their references, unchanged. Lint warns when one `SKILL.md` repeats a version floor ([#309](https://github.com/iuliandita/skills/issues/309)).
+* **privilege-escalation, vulnerability-research:** a contradiction, a missing confirmation gate and two repeats fixed ([#472](https://github.com/iuliandita/skills/issues/472)).
+* **scripts:** gates that passed when they should fail now fail: docs-impact trailers count only from a commit that touches the triggering path, a receipt dated in the future fails, failed producers and listings are errors, and `README.md` and `INSTALL.md` are scanned for stale dates ([#465](https://github.com/iuliandita/skills/issues/465)).
+* **scripts:** `check-freshness-dates.sh` and `check-version-receipts.sh` exit 10 for stale input and 1 for anything broken; CI and the pre-commit hook downgrade only 10 to a warning ([#495](https://github.com/iuliandita/skills/issues/495)).
+* **scripts:** one implementation for each repeated gate helper, one skill-folder loop and one base resolver. No gate verdict changes; the skill-refiner rubric hash does, because its inputs moved ([#356](https://github.com/iuliandita/skills/issues/356), [#360](https://github.com/iuliandita/skills/issues/360)).
+* **ci:** the tag job fails unless the tagged commit is on `main`'s first-parent line, and a PR into `main` must carry an untagged changelog section newer than the last release. The link check is advisory in the release run only ([#314](https://github.com/iuliandita/skills/issues/314), [#464](https://github.com/iuliandita/skills/issues/464)).
+* **ci:** the private-marker scan runs in CI when the optional `SKILLS_PRIVATE_PATTERNS` secret is set and warns when nothing is scanned ([#456](https://github.com/iuliandita/skills/issues/456)).
+* **ci:** Renovate tracks every pinned tool, regenerates the hashed semgrep lockfile with its manifest, and tracks the zizmor version; pre-commit runs more of the CI gates ([#468](https://github.com/iuliandita/skills/issues/468)).
+* **ci:** gate and build scripts that had no test have one, 67 cases in total ([#467](https://github.com/iuliandita/skills/issues/467)).
+* **ci:** the link check skips one download page that refuses automated requests ([#449](https://github.com/iuliandita/skills/issues/449)).
+* **docs:** the migration example, the receipts doc and the release steps match what the tools do ([#469](https://github.com/iuliandita/skills/issues/469)).
+
+### Dependencies
+
+* **ci:** semgrep 1.184.0, markdownlint-cli2 0.24.0, zizmor-action 0.8.1 ([#454](https://github.com/iuliandita/skills/pull/454), [#453](https://github.com/iuliandita/skills/pull/453), [#455](https://github.com/iuliandita/skills/pull/455)).
+* **docker:** the Rust image tag in the skill example is 1.98 ([#452](https://github.com/iuliandita/skills/pull/452)).
+
 ## [4.0.3] - 2026-11-13
 
 ### Bug Fixes
@@ -712,7 +752,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Bootstrap baseline before release-please automation.
 
-[Unreleased]: https://github.com/iuliandita/skills/compare/v4.0.3...HEAD
+[Unreleased]: https://github.com/iuliandita/skills/compare/v4.1.0...HEAD
+[4.1.0]: https://github.com/iuliandita/skills/compare/v4.0.3...v4.1.0
 [4.0.3]: https://github.com/iuliandita/skills/compare/v4.0.2...v4.0.3
 [4.0.2]: https://github.com/iuliandita/skills/compare/v4.0.1...v4.0.2
 [4.0.1]: https://github.com/iuliandita/skills/compare/v4.0.0...v4.0.1
