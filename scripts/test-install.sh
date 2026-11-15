@@ -1584,6 +1584,58 @@ test_doctor_flag_rules_and_alias() {
   trap - RETURN
 }
 
+test_modes_cannot_be_combined() {
+  local tmp output status args
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  isolated "$tmp" "$ROOT/install.sh" --tool claude docker >/dev/null
+  for args in "--list --check" "--check --list" "--migrate --apply --list" "--migrate --check" \
+    "--doctor --list" "--check --doctor" "--list --check --migrate --doctor"; do
+    status=0
+    # shellcheck disable=SC2086
+    output="$(isolated "$tmp" "$ROOT/install.sh" $args 2>&1)" || status=$?
+    (( status == 1 )) || fail "$args exited $status, want 1: $output"
+    grep -q '^error: --list, --check, --migrate, and --doctor cannot be combined' <<< "$output" \
+      || fail "$args was not refused as a mode conflict: $output"
+  done
+  run_json "$tmp" --migrate --apply --list
+  (( JSON_STATUS == 1 )) || fail "json mode conflict exited $JSON_STATUS"
+  json_check "$JSON_OUT" 'd["ok"] is False and len(d["errors"]) == 1 and "cannot be combined" in d["errors"][0]' "json mode conflict"
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_help_matches_behavior() {
+  local output
+  output="$("$ROOT/install.sh" --help)" || fail "--help failed"
+  grep -A1 'SKILLS_LOCK_WAIT' <<< "$output" | tr -s '\n ' ' ' | grep -q 'default: 30, or 0 for --update' \
+    || fail "--help does not state both SKILLS_LOCK_WAIT defaults: $output"
+  if grep -q 'prompt' <<< "$output"; then fail "--help mentions prompting, but nothing prompts"; fi
+  grep -q -- '--force  *Replace existing skills that differ from the source' <<< "$output" \
+    || fail "--help does not describe --force: $output"
+}
+
+test_doctor_json_reports_helper_failure() {
+  local tmp shim
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  shim="$tmp/shim"
+  mkdir "$shim"
+  # Fail only the duplicate-discovery helper: python3 -I - <verbose> <json_mode> ...
+  # shellcheck disable=SC2016
+  printf '#!/bin/bash\nif [[ "$1 $2" == "-I -" && "$3" == false && "$4" == true ]]; then echo "helper crashed" >&2; exit 1; fi\nexec %q "$@"\n' \
+    "$(command -v python3)" > "$shim/python3"
+  chmod +x "$shim/python3"
+  JSON_STATUS=0
+  JSON_OUT="$(env -i HOME="$tmp" PATH="$shim:$SAFE_PATH" LANG=C "$ROOT/install.sh" --doctor --tool claude --json 2>"$tmp/json.err")" || JSON_STATUS=$?
+  (( JSON_STATUS == 1 )) || fail "doctor with a crashed helper exited $JSON_STATUS, want 1: $JSON_OUT"
+  grep -q 'helper crashed' "$tmp/json.err" || fail "shim did not hit the doctor helper: $(<"$tmp/json.err")"
+  json_check "$JSON_OUT" 'd["ok"] is False and "tools" not in d and d["errors"] == ["the doctor helper failed without a report; see the human output on stderr"]' \
+    "doctor helper failure"
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
 write_fixture_skill() {
   mkdir -p "$1/skills/$2"
   printf '%s\n' "$3" > "$1/skills/$2/SKILL.md"
@@ -1943,10 +1995,14 @@ test_installer_lock_contention_and_missing_flock() {
   holder=$!
   for _ in $(seq 100); do [[ -e "$tmp/held" ]] && break; sleep 0.1; done
   output="$(isolated "$tmp" SKILLS_LOCK_WAIT=1 "$ROOT/install.sh" --tool portable --dest "$tmp/second" docker 2>&1)" || status=$?
+  JSON_STATUS=0
+  JSON_OUT="$(isolated "$tmp" SKILLS_LOCK_WAIT=0 "$ROOT/install.sh" --tool portable --dest "$tmp/second" docker --json 2>/dev/null)" || JSON_STATUS=$?
   kill "$holder"
   wait "$holder" 2>/dev/null || true
   (( status == 3 )) || fail "lock contention exited $status, want 3: $output"
-  grep -q 'Another install.sh run holds' <<< "$output" || fail "lock contention was not explained: $output"
+  grep -q '^error: another install.sh run holds' <<< "$output" || fail "lock contention was not explained: $output"
+  (( JSON_STATUS == 3 )) || fail "json lock contention exited $JSON_STATUS, want 3: $JSON_OUT"
+  json_check "$JSON_OUT" 'd["ok"] is False and len(d["errors"]) == 1 and "another install.sh run holds" in d["errors"][0]' "json lock contention reason"
   [[ ! -e "$tmp/second" ]] || fail "installer changed files without the lock"
 
   mkdir "$tmp/no-flock"
@@ -3044,6 +3100,9 @@ test_doctor_merges_only_equivalent_findings
 test_doctor_groups_and_verbose
 test_doctor_flag_rules_and_alias
 test_doctor_orders_blocking_first_across_tools
+test_doctor_json_reports_helper_failure
+test_modes_cannot_be_combined
+test_help_matches_behavior
 test_frontmatter_cache_selects_skills
 test_malformed_frontmatter_fails_install
 test_fault_before_promotion_keeps_previous_install

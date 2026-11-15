@@ -620,8 +620,8 @@ existing entry; see [MIGRATION.md](MIGRATION.md#users-of-the-bundled-installer).
 
 Runs that change files (installs, `--update`, and `--migrate --apply`) take an exclusive lock on
 `${XDG_STATE_HOME:-~/.local/state}/iuliandita-skills/install.lock` (a relative value is ignored) with `flock`, waiting up
-to `SKILLS_LOCK_WAIT` seconds (default 30, or 0 for `--update`) and exiting with status 3 if another run still
-holds it. Without `flock` an install prints a warning and proceeds; runs exclude each
+to `SKILLS_LOCK_WAIT` seconds (default 30, or 0 for `--update`) and exiting with status 3 and an `error:` line
+if another run still holds it. Without `flock` an install prints a warning and proceeds; runs exclude each
 other only when every one of them has `flock`. `--migrate --apply` requires `flock` and exits
 10 without it, before recovery or migration touches anything (earlier releases warned and
 proceeded). It holds the lock through recovery and the migration helper. A `--migrate`
@@ -688,6 +688,9 @@ failed and, when one exists, the next step. Degraded but non-fatal conditions st
 markers (`[+]`, `[=]`, `[?]`, `[!]`, `[~]`, `[<]`). The repository gate scripts use the same
 prefixes. Exit codes are unchanged.
 
+`--list`, `--check`, `--migrate`, and `--doctor` are separate commands. Passing more than one
+of them is refused with an `error:` line and exit 1 before anything is read or changed.
+
 ## JSON output
 
 `--json` works with installs, `--list`, `--check`, `--detect`, `--doctor`, `--migrate`, and
@@ -719,6 +722,9 @@ the common keys.
 
 `--help` with `--json` prints the usage text to stderr and an object with `command` set to `help`.
 `--update --json` is the only option combination `--update` accepts.
+A `--doctor` or `--detect` run whose helper fails before printing its report has no `tools` or
+`candidates` key, and its `errors` entry says the helper failed. A successful `--json` run leaves
+no temporary file behind.
 
 ## Skill anatomy
 
