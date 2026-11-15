@@ -179,8 +179,9 @@ list_public_skills() {
 }
 
 # Names in install.sh's SUPPORTED_TOOLS array, one per line. Reads the file
-# named by the first argument, or stdin. Tokens may share the opening line and
-# the closing parenthesis may sit anywhere; "#" starts a comment.
+# named by the first argument, or stdin for "-" or no argument. Tokens may share
+# the opening line and the closing parenthesis may sit anywhere; "#" starts a
+# comment.
 list_supported_tools() {
   awk '
     /^SUPPORTED_TOOLS=\(/ {f=1; sub(/^SUPPORTED_TOOLS=\(/, "")}

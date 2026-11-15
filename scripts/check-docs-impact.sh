@@ -203,8 +203,8 @@ if git cat-file -e "$base:install.sh" 2>/dev/null && git cat-file -e "HEAD:insta
   base_install="$(git show "$base:install.sh")"
   head_install="$(git show "HEAD:install.sh")"
 
-  base_tools="$(list_supported_tools <<<"$base_install")"
-  head_tools="$(list_supported_tools <<<"$head_install")"
+  base_tools="$(list_supported_tools - <<<"$base_install")"
+  head_tools="$(list_supported_tools - <<<"$head_install")"
   install_added="$(git diff "$base..HEAD" -- INSTALL.md | grep '^+' | grep -v '^+++' || true)"
   while IFS= read -r tool; do
     [[ -n "$tool" ]] || continue
