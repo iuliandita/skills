@@ -270,6 +270,25 @@ commit "refactor: drop alpha"
 run_check --release v0
 expect_fail "release: skill missing from CHANGELOG" "CHANGELOG.md"
 
+# Release PR (issue #314): main already holds an untagged removal, so the merge
+# base with main hides it from the ordinary run. Only the range since the
+# previous version tag sees it.
+new_fixture
+g checkout -q main
+g rm -q -r skills/alpha
+put migrations.json '{ "skills": { "alpha": { "action": "merge" } } }'
+put MIGRATION.md "migration
+alpha removed"
+commit "refactor: drop alpha"
+g checkout -q -B feature
+put CHANGELOG.md "changelog
+- release notes"
+commit "chore(release): next"
+run_check
+expect_pass "release pr: ordinary run does not see a removal already on main"
+run_check --release v0
+expect_fail "release pr: removal already on main, missing from CHANGELOG" "CHANGELOG.md"
+
 new_fixture
 g checkout -q --orphan orphan
 g rm -rq --cached . > /dev/null 2>&1 || true
