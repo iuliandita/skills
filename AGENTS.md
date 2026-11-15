@@ -9,7 +9,7 @@ relaxes the rules here.
 ## Commands
 
 Pre-push set mirroring `.github/workflows/ci.yml` and `security.yml`. Tools: shellcheck,
-markdownlint-cli2 (pinned in `.github/tools/markdownlint/`), lychee, actionlint, gitleaks, semgrep.
+markdownlint-cli2 (pinned in `.github/tools/markdownlint/`), lychee, actionlint, zizmor, gitleaks, semgrep.
 
 ```sh
 ./scripts/lint-skills.sh
@@ -22,14 +22,16 @@ shellcheck install.sh scripts/*.sh skills/repo-audit/references/detect.sh
 markdownlint-cli2
 lychee --config lychee.toml README.md SECURITY.md CONTRIBUTING.md CHANGELOG.md INSTALL.md MIGRATION.md AGENTS.md 'skills/**/*.md' 'docs/**/*.md'
 actionlint
+zizmor .
 gitleaks git --redact .
-semgrep scan --metrics off --error --config p/ci --config p/github-actions install.sh scripts .github/workflows skills/repo-audit/references/detect.sh
+semgrep scan --metrics off --error --config p/ci --config p/github-actions install.sh scripts .github/workflows .github/stack skills/repo-audit/references/detect.sh
 ./scripts/gen-contract-refs.sh
 python3 scripts/gen-ref-toc.py
 ```
 
 The last two regenerate files; commit their output. `check-freshness-dates.sh` and receipt age are
-advisory. `pre-commit install --hook-type pre-commit --hook-type pre-push` wires the local hooks.
+advisory. `pre-commit install --hook-type pre-commit --hook-type pre-push` wires the local hooks,
+which run a subset of this block (the list of what they skip heads `.pre-commit-config.yaml`).
 
 ## Layout
 

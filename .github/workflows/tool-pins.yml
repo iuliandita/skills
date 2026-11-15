@@ -4,13 +4,35 @@ on:
   schedule:
     - cron: "30 5 * * 1"
   workflow_dispatch:
+  # Pull requests run only the offline test job, when a file it reads changes.
+  pull_request:
+    paths:
+      - renovate.json
+      - scripts/report-tool-pins.sh
+      - scripts/test-report-tool-pins.sh
+      - .github/workflows/ci.yml
+      - .github/workflows/security.yml
+      - .github/workflows/tool-pins.yml
 
 permissions:
   contents: read
 
 jobs:
+  test:
+    name: pin tracking test
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Test the pin report and the Renovate zizmor pattern
+        run: ./scripts/test-report-tool-pins.sh
+
   report:
     name: report
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:

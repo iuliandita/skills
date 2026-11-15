@@ -146,7 +146,7 @@ prek install --hook-type pre-commit --hook-type pre-push
 pre-commit install --hook-type pre-commit --hook-type pre-push
 ```
 
-The hooks enforce that `skills/kubernetes-health/protected/` remains ignored and untracked, and they scan public files for protected private patterns when the local overlay is present.
+The hooks enforce that `skills/kubernetes-health/protected/` remains ignored and untracked, and they scan public files for protected private patterns when the local overlay is present. On push they also run the offline checks of the CI lint job. They are a subset of CI: most test suites, shellcheck, markdownlint-cli2, lychee, actionlint, zizmor, the secret scan and semgrep run only in CI or by hand (the full list is in `AGENTS.md`).
 
 They also check freshness markers in public skills. Lines that claim currentness, such as `Target versions`, `Reviewed`, `Updated for`, `verified <month year>`, `recheck`, `snapshot`, or `as of <month year>`, should use the current collection label. The check is advisory: CI and the hook report stale labels as warnings and do not block. Override the expected label during a refresh with `SKILLS_FRESHNESS_LABEL="July 2026" ./scripts/check-freshness-dates.sh`.
 
@@ -819,11 +819,15 @@ The existing R1/R2 migration and target-path obligations remain blocking; R3/R4 
 obligations remain warnings in release mode. This gate checks obligations, not prose quality,
 activation, or the completeness of release notes. Review those before tagging.
 
-Renovate proposes weekly updates for the pinned workflow actions and for the semgrep and
-markdownlint-cli2 manifests under `.github/tools/`, after a 7-day minimum release age. The
-checksum-pinned binaries in `ci.yml` (lychee, actionlint) and `security.yml` (gitleaks) are
-outside its reach; the weekly Tool Pins workflow runs `scripts/report-tool-pins.sh` and keeps
-one issue open while any of them is behind. CI and Security also run weekly on a schedule.
+Renovate proposes updates on Mondays (00:00 to 12:00 UTC) for the pinned workflow actions, the
+zizmor version in `security.yml`, and the semgrep and markdownlint-cli2 manifests under
+`.github/tools/`, after a 7-day minimum release age. A semgrep update changes
+`requirements.in` and regenerates the hashed `requirements.txt` with pip-compile, so the two
+stay in step. The checksum-pinned binaries in `ci.yml` (lychee, actionlint) and `security.yml`
+(gitleaks) are outside its reach; the weekly Tool Pins workflow runs
+`scripts/report-tool-pins.sh` and keeps one issue open while any of them is behind. The report
+fails without touching the issue when an upstream tag name is not a plain tag. CI and Security
+also run weekly on a schedule.
 Only pull request runs cancel an older run of the same PR; push, schedule, dispatch and release
 runs never cancel each other, so every pushed range is checked.
 
