@@ -604,7 +604,7 @@ The biggest release since 5.0. Headline feature: non-forking command substitutio
 
 ```bash
 # Non-forking command substitution - runs in current shell, no fork+pipe
-# zsh gains a similar ${ ... } / ${| ... } only in the unreleased 5.10 line; stable 5.9.x lacks it (zsh reference Section 13)
+# zsh 5.9.x lacks this; a similar ${ ... } / ${| ... } exists only on its development branch (zsh reference Section 13)
 
 # ${ cmd; } - captures stdout without forking
 result=${ printf '%s' "hello"; }    # note: space after { and ; before }

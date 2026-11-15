@@ -395,7 +395,8 @@ MSSQL doesn't use a config file like the others. Most settings are applied via T
 EXEC sp_configure 'max server memory (MB)', 12288;  -- 12GB on a 16GB server
 RECONFIGURE;
 
--- MAXDOP: <= LPs per (soft-)NUMA node; cap 8 (single NUMA) / half per node max 16 (multi-NUMA >16 LPs/node)
+-- MAXDOP per Microsoft guidance: <= logical processors (LPs) per (soft-)NUMA node, capped at 8
+-- on single-NUMA servers; multi-NUMA with >16 LPs/node uses half the LPs per node, max 16
 EXEC sp_configure 'max degree of parallelism', 4;
 RECONFIGURE;
 

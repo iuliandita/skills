@@ -96,12 +96,10 @@ Also check git history: `git log --all --diff-filter=A -- '*.env*'`
 - `ansible_become_password|ansible_ssh_pass` - Plaintext auth in inventory (`*.ini`, `*.yml`)
 
 ### Docker Compose
-| Pattern | What it finds | File types |
-|---------|---------------|------------|
-| `privileged:\s*true` | Privileged containers | `*.yml`, `*.yaml` |
-| `network_mode:\s*host` | Host network mode | `*.yml`, `*.yaml` |
-| `/var/run/docker\.sock` | Docker socket mount | `*.yml`, `*.yaml` |
-| `volumes:.*/:\/[^d]` | Sensitive host path mounts (/, /etc, /root) | `*.yml`, `*.yaml` |
+- `privileged:\s*true` - Privileged containers (`*.yml`, `*.yaml`)
+- `network_mode:\s*host` - Host network mode (`*.yml`, `*.yaml`)
+- `/var/run/docker\.sock` - Docker socket mount (`*.yml`, `*.yaml`)
+- `volumes:.*/:\/[^d]` - Sensitive host path mounts (/, /etc, /root) (`*.yml`, `*.yaml`)
 
 ### Proxmox / LXC
 - `root@pam` - Root PAM auth in API calls (should use dedicated tokens) (`*.sh`, `*.py`, `*.tf`, `*.yml`)
@@ -121,11 +119,8 @@ Also check git history: `git log --all --diff-filter=A -- '*.env*'`
 Workflow-level checks are a checklist, not grep patterns: see `references/hardening-checklists.md` (CI/CD & Supply Chain, Pass 9).
 
 ### Supply Chain: Image Pinning
-
-| Pattern | What it finds | File types |
-|---------|---------------|------------|
-| `image:.*:latest` | Unpinned `:latest` tags in CI/container configs | `*.yml`, `*.yaml`, `*.tf` |
-| `pull_policy:\s*always` | Always-pull policy (dangerous with unpinned tags) | `*.yml`, `*.yaml` |
-| `tag:\s*["']?latest["']?` | `:latest` tags in Helm values or Terraform | `*.yml`, `*.yaml`, `*.tf` |
-| `image:.*:[a-zA-Z0-9._-]+\s*$` | Image references with tag but no `@sha256:` digest | `*.yml`, `*.yaml` |
-| `DOCKER_AUTH_CONFIG` | Registry credentials in CI config (check scope) | `*.yml`, `*.yaml` |
+- `image:.*:latest` - Unpinned `:latest` tags in CI/container configs (`*.yml`, `*.yaml`, `*.tf`)
+- `pull_policy:\s*always` - Always-pull policy (dangerous with unpinned tags) (`*.yml`, `*.yaml`)
+- `tag:\s*["']?latest["']?` - `:latest` tags in Helm values or Terraform (`*.yml`, `*.yaml`, `*.tf`)
+- `image:.*:[a-zA-Z0-9._-]+\s*$` - Image references with tag but no `@sha256:` digest (`*.yml`, `*.yaml`)
+- `DOCKER_AUTH_CONFIG` - Registry credentials in CI config (check scope) (`*.yml`, `*.yaml`)

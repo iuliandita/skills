@@ -77,7 +77,7 @@ generated VM config, Terraform HCL, or Packer template, verify against this list
 - [ ] `fstrim.timer` enabled in guest for thin-provisioned storage (completes the discard chain)
 - [ ] SCSI controller explicitly set (`virtio-scsi-single` when using per-disk I/O threads;
   `virtio-scsi-pci` only when they are disabled)
-- [ ] Machine type matches firmware needs: `q35` for PCIe passthrough and for OVMF Secure Boot / Windows 11 (SMM-backed firmware); `i440fx` boots with seabios or ovmf, but Proxmox then uses a no-SMM OVMF build (no enforced Secure Boot).
+- [ ] Machine type matches firmware needs (`q35` vs `i440fx`: Boot settings in `references/proxmox.md`)
 - [ ] VGA type matches use case: `serial0` for headless cloud images, `virtio` for GUI VMs,
   omit for PCI passthrough display GPUs (`x-vga=1` replaces the virtual display)
 - [ ] **Hypervisor/version checked**: Proxmox, QEMU/KVM, libvirt, XCP-ng, vSphere, and cloud-init advice matches the target platform

@@ -523,6 +523,11 @@ def call_with_retry(fn, max_retries=3):
             except (TypeError, ValueError):
                 delay = min(2 ** attempt, 30) + random.uniform(0, 1)
             time.sleep(delay)
+
+response = call_with_retry(lambda: client.messages.create(
+    model="claude-sonnet-5-5", max_tokens=1024,
+    messages=[{"role": "user", "content": "..."}],
+))
 ```
 
 ### Key error categories
@@ -531,7 +536,7 @@ def call_with_retry(fn, max_retries=3):
 |-------|-----------|--------|
 | Rate limited | 429 | Retry with backoff, respect `Retry-After` header |
 | Overloaded | 529 (Anthropic) | Retry with longer backoff |
-| Server error | 500 / 504 | Retry with backoff |
+| Server error | 5xx (500, 502, 503, 504) | Retry with backoff |
 | Conflict | 409 | Retry (SDK default); resolve state if it repeats |
 | Invalid request | 400 | Fix the request, don't retry |
 | Auth error | 401/403 | Check API key, don't retry |

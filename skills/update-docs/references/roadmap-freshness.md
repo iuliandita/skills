@@ -62,8 +62,9 @@ if [[ -n "$ROADMAPS" ]]; then
 
     # Drift if ANY of: stated version older than latest tag; one or more releases cut since
     # the header date; or >14 calendar days since the header date with no release activity.
+    # Compare without the leading `v`, so 1.2.3 and v1.2.3 are the same version.
     DRIFT=0
-    [[ -n "$RM_VER" && -n "$LAST_TAG" && "$(printf '%s\n' "$RM_VER" "$LAST_TAG" | sort -V | tail -1)" != "$RM_VER" ]] && DRIFT=1
+    [[ -n "$RM_VER" && -n "$LAST_TAG" && "$(printf '%s\n' "${RM_VER#v}" "${LAST_TAG#v}" | sort -V | tail -1)" != "${RM_VER#v}" ]] && DRIFT=1
     [[ "$NEW_TAG_COUNT" -gt 0 ]] && DRIFT=1
     [[ "$DAYS_BEHIND" -gt 14 ]] && DRIFT=1
 
