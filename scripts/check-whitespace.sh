@@ -40,7 +40,12 @@ elif { base="$(git merge-base HEAD origin/develop 2>/dev/null)" || base="$(git m
   range="$base..HEAD"
 else
   # On the base branch itself the merge base is HEAD, which would compare nothing.
-  git diff-tree --check --no-commit-id -r HEAD
+  # Compare with the first parent: diff-tree prints nothing for a merge commit.
+  if git rev-parse --verify --quiet "HEAD^1^{commit}" >/dev/null; then
+    git diff --check HEAD^1 HEAD
+  else
+    git diff-tree --check --root --no-commit-id -r HEAD
+  fi
   echo "Whitespace clean (last commit)."
   exit 0
 fi

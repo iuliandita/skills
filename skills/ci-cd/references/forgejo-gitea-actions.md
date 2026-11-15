@@ -71,7 +71,7 @@ curl -s https://forgejo.example.com/api/v1/repos/actions/checkout/git/refs/tags/
 
 **If your instance mirrors from code.forgejo.org** (the default upstream):
 ```bash
-git ls-remote https://code.forgejo.org/actions/checkout.git 'refs/tags/v7*'  # or whatever major your mirror carries
+git ls-remote https://code.forgejo.org/actions/checkout.git 'refs/tags/v7*'
 ```
 
 **Verify a SHA matches what you expect**:

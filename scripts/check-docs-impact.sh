@@ -13,8 +13,11 @@ set -euo pipefail
 #   R3         install.sh changed: INSTALL.md or README.md changed.
 #   R4         scripts/{check-*,gen-*,lint-*,validate-*} added/deleted:
 #              README.md or docs/skill-authoring.md changed.
-#   R3/R4 accept a `Docs-Impact: none - <specific reason>` commit trailer in
-#   the range. A trailer never satisfies R1 or R2.
+#   R3/R4 accept a `Docs-Impact: none - <specific reason>` commit trailer, but
+#   only from a commit in the range that itself touches the path that triggered
+#   the rule (install.sh for R3, one of the added/deleted scripts for R4). A
+#   squash commit touches every path of its PR, so a trailer in the squash
+#   message still counts. A trailer never satisfies R1 or R2.
 #
 # Usage: check-docs-impact.sh [base] | --release <prev-tag>
 # Base resolution matches check-refiner-phase1-guard.sh: argument, else BASE_REF,
@@ -108,37 +111,57 @@ path_changed() {
 }
 
 # Trailer: valid only as "none - <specific reason>" (reason >= 20 chars).
-valid_trailer=""
-while IFS= read -r value; do
-  [[ -n "$value" ]] || continue
-  [[ "$value" == "none - "* ]] || continue
+trailer_valid() {
+  local value="$1" reason lowered
+  [[ "$value" == "none - "* ]] || return 1
   reason="${value#none - }"
   reason="${reason#"${reason%%[![:space:]]*}"}"
   reason="${reason%"${reason##*[![:space:]]}"}"
   lowered="$(printf '%s' "${reason%.}" | tr '[:upper:]' '[:lower:]')"
   case "$lowered" in
-    none|n/a|na|"no impact"|"docs reviewed"|internal|"not needed"|trivial|refactor) continue ;;
+    none|n/a|na|"no impact"|"docs reviewed"|internal|"not needed"|trivial|refactor) return 1 ;;
   esac
-  (( ${#reason} >= 20 )) || continue
-  valid_trailer="$value"
-  break
-done < <(git log --format='%(trailers:key=Docs-Impact,valueonly)' "$base..HEAD")
+  (( ${#reason} >= 20 ))
+}
+
+# Paths touched by the commits that carry a valid trailer, one per line. A
+# merge commit is compared with its first parent; a rename lists both names.
+trailer_paths=""
+while IFS= read -r sha; do
+  [[ -n "$sha" ]] || continue
+  while IFS= read -r value; do
+    trailer_valid "$value" || continue
+    trailer_paths+="$(git log -1 -m --first-parent --no-renames --format= --name-only "$sha")"$'\n'
+    break
+  done < <(git log -1 --format='%(trailers:key=Docs-Impact,valueonly)' "$sha")
+done < <(git rev-list "$base..HEAD")
 
 soft_level=error
 (( release )) && soft_level=warn
 
+# satisfied_by_trailer <triggering path>...
 satisfied_by_trailer() {
-  [[ -n "$valid_trailer" ]]
+  local path
+  for path in "$@"; do
+    if grep -Fxq -- "$path" <<<"$trailer_paths"; then
+      return 0
+    fi
+  done
+  return 1
 }
 
 # --- R1 ---------------------------------------------------------------
 skill_active_at_base() {
-  git show "$base:skills/$1/SKILL.md" 2>/dev/null | awk '
+  # Read the whole file first: awk exits at the closing fence, and under
+  # pipefail a SIGPIPE in git show would make a large active skill look inactive.
+  local content
+  content="$(git show "$base:skills/$1/SKILL.md" 2>/dev/null)" || return 1
+  awk '
     NR == 1 && $0 != "---" { exit }
     NR > 1 && $0 == "---" { exit }
     { line = tolower($0) }
     line ~ /^[[:space:]]+deprecated:[[:space:]]*["\047]?[[:space:]]*true[[:space:]]*["\047]?[[:space:]]*(#.*)?$/ { dep = 1 }
-    END { exit dep ? 1 : 0 }'
+    END { exit dep ? 1 : 0 }' <<<"$content"
 }
 
 removed_skills=()
@@ -236,8 +259,8 @@ fi
 
 # --- R3 ---------------------------------------------------------------
 if path_changed install.sh; then
-  if ! path_changed INSTALL.md && ! path_changed README.md && ! satisfied_by_trailer; then
-    finding "$soft_level" R3 "install.sh changed without an INSTALL.md or README.md change (or a valid 'Docs-Impact: none - <reason>' trailer)"
+  if ! path_changed INSTALL.md && ! path_changed README.md && ! satisfied_by_trailer install.sh; then
+    finding "$soft_level" R3 "install.sh changed without an INSTALL.md or README.md change (or a valid 'Docs-Impact: none - <reason>' trailer on a commit that changes install.sh)"
   fi
 fi
 
@@ -253,21 +276,21 @@ while IFS=$'\t' read -r status p1 p2; do
   esac
   for p in "${paths[@]}"; do
     case "$p" in
-      scripts/check-*.sh|scripts/gen-*|scripts/lint-*|scripts/validate-*) tooling+=("$p") ;;
+      scripts/check-*|scripts/gen-*|scripts/lint-*|scripts/validate-*) tooling+=("$p") ;;
     esac
   done
 done <<<"$changes"
 
 if (( ${#tooling[@]} > 0 )); then
-  if ! path_changed README.md && ! path_changed docs/skill-authoring.md && ! satisfied_by_trailer; then
-    finding "$soft_level" R4 "gate scripts added/removed (${tooling[*]}) without a README.md or docs/skill-authoring.md change (or a valid trailer)"
+  if ! path_changed README.md && ! path_changed docs/skill-authoring.md && ! satisfied_by_trailer "${tooling[@]}"; then
+    finding "$soft_level" R4 "gate scripts added/removed (${tooling[*]}) without a README.md or docs/skill-authoring.md change (or a valid trailer on a commit that touches one of them)"
   fi
 fi
 
 if (( errors > 0 )); then
   echo
   echo "Docs-impact check failed ($errors finding(s)). Update the docs named above, or for R3/R4 add a"
-  echo "'Docs-Impact: none - <specific reason, 20+ chars>' trailer to a commit in the range."
+  echo "'Docs-Impact: none - <specific reason, 20+ chars>' trailer to a commit that touches the path named in the finding."
   exit 1
 fi
 

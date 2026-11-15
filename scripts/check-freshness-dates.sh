@@ -2,11 +2,12 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-FRESHNESS_LABEL="${SKILLS_FRESHNESS_LABEL:-$(date +'%B %Y')}"
+# The markers are written with English month names, whatever the caller's locale.
+FRESHNESS_LABEL="${SKILLS_FRESHNESS_LABEL:-$(LC_ALL=C date +'%B %Y')}"
 
 mapfile -t files < <(
   git -C "$ROOT" ls-files \
-    | grep -E '^(skills/|README[.]md$|INSTALL[.]md$).*[.]md$' \
+    | grep -E '^(skills/.*|README|INSTALL)[.]md$' \
     | grep -vE '^skills/(cluster-health|kubernetes-health)/protected/' || true
 )
 

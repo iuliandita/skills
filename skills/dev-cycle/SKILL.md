@@ -117,7 +117,11 @@ If in doubt, determine the base branch first (`git symbolic-ref --quiet refs/rem
 ```bash
 BASE_BRANCH=$(git symbolic-ref --quiet refs/remotes/origin/HEAD | sed 's|refs/remotes/origin/||')
 git branch --show-current
-git log --oneline "origin/$BASE_BRANCH"..HEAD   # commits ahead of base: the mode signal
+if [ -z "$BASE_BRANCH" ]; then
+  echo "origin/HEAD is unset: run 'git remote set-head origin --auto', or ask the user for the base branch" >&2
+else
+  git log --oneline "origin/$BASE_BRANCH"..HEAD   # commits ahead of base: the mode signal
+fi
 git log --oneline @{u}.. 2>/dev/null            # unpushed commits, if an upstream exists
 ```
 
@@ -227,8 +231,12 @@ Then sanity-check the branch:
 ```bash
 # Staged or modified files block closing. Untracked files are fine (not part of HEAD).
 git diff --cached --stat; git diff --stat
-git log --oneline "$BASE_BRANCH"..HEAD   # commits exist on this branch
-git diff "$BASE_BRANCH"..HEAD --stat     # scope sanity check
+# Compare against the fetched remote base: a stale local base inflates the commit list.
+# With no remote ($FORGE=bare), skip the fetch and set BASE_REF="$BASE_BRANCH".
+git fetch origin "$BASE_BRANCH"
+BASE_REF="origin/$BASE_BRANCH"
+git log --oneline "$BASE_REF"..HEAD   # commits exist on this branch
+git diff "$BASE_REF"..HEAD --stat     # scope sanity check
 ```
 
 If the branch has no commits or the diff is empty, stop - there's nothing to ship.

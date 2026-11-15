@@ -27,6 +27,9 @@ PROVENANCE = "source-equal-v1"
 STAGING_NAMESPACE = ".skills-migrate-staging"
 INHERITED_LOCK_FD = 9
 LOCK_BUSY_EXIT = 3
+# A reported partial apply: every skipped entry was printed and the rest was applied.
+# Status 1 is left to unexpected failures such as an uncaught exception.
+PARTIAL_APPLY_EXIT = 6
 # Test hooks only: comma-separated fault names, see scripts/test-migrate-skills.sh.
 FAULTS = frozenset(filter(None, os.environ.get("SKILLS_MIGRATE_FAULT", "").split(",")))
 NO_REPLACE_UNSUPPORTED = {errno.ENOSYS, errno.EINVAL, errno.ENOTSUP, errno.EOPNOTSUPP}
@@ -642,7 +645,7 @@ def migrate_locked(
     if args.apply and args.applied_file:
         replacements = sorted(added)
         args.applied_file.write_text("\n".join(replacements) + ("\n" if replacements else ""), encoding="utf-8")
-    return 1 if failed else 0
+    return PARTIAL_APPLY_EXIT if failed else 0
 
 
 def cleanup_legacy_dir(args: argparse.Namespace) -> int:

@@ -221,9 +221,7 @@ This compatibility check does not refresh the other provider or SDK pins above o
 - Verify account access and processing-tier compatibility before rollout. EU data residency
   requires Standard processing for Astra; retain a compatible fallback for unavailable accounts.
 
-Start with the [Responses example](llm-patterns.md#openai-responses-python). Validate tool
-schemas and preserve response output items, including reasoning items, when returning tool
-results. Follow the [function-calling guide](https://developers.openai.com/api/docs/guides/function-calling)
+Validate tool schemas, and preserve output items as in the Sol migration above. Follow the [function-calling guide](https://developers.openai.com/api/docs/guides/function-calling)
 for the complete loop. Async tools, mid-turn steering, and effort updates are optional designs;
 adopt them only when the application can manage pending results and continuation state.
 
@@ -241,7 +239,7 @@ adopt them only when the application can manage pending results and continuation
 | LangGraph | 1.2.12 | Stateful agent graphs, cycles, persistence |
 | LlamaIndex | 0.14.25 | RAG framework, 300+ integrations |
 | Transformers | 5.18.0 | Model inference, fine-tuning, PyTorch 2.5+ required |
-| vLLM | 0.32.0 | 0.32.0 is the floor for the high-severity fixes (GHSA-h3rc-j82p-2c3h EPS/Ghostscript RCE, GHSA-6757-hggm-hp2w; 0.31.0 fixed GHSA-h3rc-6mm3-gc2m and GHSA-823j-m4cj-hmjf); review release notes before upgrading multi-tenant deployments |
+| vLLM | 0.32.0 | Floor for the high-severity fixes listed under Security update below; review release notes before upgrading multi-tenant deployments |
 | Ollama | 0.35.1 | Do not trust unreviewed GGUF files; see the advisory qualification below |
 | pgvector (extension) | 0.8.7 | PostgreSQL extension, not the `pgvector` Python client; HNSW + IVFFlat |
 | Qdrant | 1.19.1 | Self-hosted vector DB, hybrid search |
@@ -251,6 +249,6 @@ adopt them only when the application can manage pending results and continuation
 
 ## Security update (checked 2026-10-28)
 
-- vLLM 0.30.0 passes untrusted image bytes to Pillow format autodetection, so EPS reaches host Ghostscript ([GHSA-h3rc-j82p-2c3h](https://github.com/vllm-project/vllm/security/advisories/GHSA-h3rc-j82p-2c3h), high); fixed in 0.32.0. Also remove Ghostscript from inference images.
+- vLLM 0.30.0 passes untrusted image bytes to Pillow format autodetection, so EPS reaches host Ghostscript ([GHSA-h3rc-j82p-2c3h](https://github.com/vllm-project/vllm/security/advisories/GHSA-h3rc-j82p-2c3h), high); fixed in 0.32.0, which also fixes GHSA-6757-hggm-hp2w (0.31.0 fixed GHSA-h3rc-6mm3-gc2m and GHSA-823j-m4cj-hmjf). Also remove Ghostscript from inference images.
 - vLLM versions before 0.28.0 are affected by [LlavaOnevision2 model-code execution despite `trust_remote_code=False`](https://github.com/vllm-project/vllm/security/advisories/GHSA-3c86-2m5g-59q7) and [embedding/pooling input denial of service](https://github.com/vllm-project/vllm/security/advisories/GHSA-25q3-v2hm-8vpf). Both are fixed in 0.28.0; retain reviewed model sources and revisions after patching.
 - [CVE-2026-65315](https://github.com/advisories/GHSA-9hhj-2jwx-r87p) describes Ollama GGUF allocation denial of service. The retrieved advisory has unknown affected/patched release ranges; do not infer that 0.35.1 fixes it. Restrict model upload/create/pull access and accept only reviewed model files while checking publisher remediation.

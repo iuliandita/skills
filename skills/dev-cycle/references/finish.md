@@ -79,16 +79,22 @@ git diff --cached --stat; git diff --stat
 # If either is non-empty: commit, stash, or abort. Untracked files in `git status` output
 # are NOT a reason to stop - only staged/modified matter here.
 
+# Compare against the fetched remote base: a stale local base inflates the commit list.
+# A bare repo has no remote, so the local base is the only one.
+BASE_REF="$BASE_BRANCH"
+if [[ "$FORGE" != "bare" ]]; then
+  git fetch origin && BASE_REF="origin/$BASE_BRANCH"
+fi
+
 # Commits ahead of base?
-git log --oneline "$BASE_BRANCH"..HEAD
+git log --oneline "$BASE_REF"..HEAD
 # If empty: branch has no unique commits. Nothing to ship.
 
 # Diff scope sanity check
-git diff "$BASE_BRANCH"..HEAD --stat
+git diff "$BASE_REF"..HEAD --stat
 
 # Remote sync (skip if $FORGE is bare)
 if [[ "$FORGE" != "bare" ]]; then
-  git fetch origin
   git rev-list --left-right --count "origin/$BRANCH_NAME...HEAD" 2>/dev/null
   # left=0 right=N: N local commits not yet pushed (normal)
   # left=N right=0: N remote commits not yet pulled (pull first)
@@ -425,8 +431,10 @@ git format-patch "$BASE_BRANCH..HEAD" -o "/tmp/dev-cycle-patches/$BRANCH_NAME"
 echo "Patches in /tmp/dev-cycle-patches/$BRANCH_NAME - share via email/chat. Reviewer applies with: git am <files>"
 
 # Option B: bundle - portable single-file format, preserves history
-git bundle create "/tmp/$BRANCH_NAME.bundle" "$BASE_BRANCH..HEAD"
-echo "Bundle: /tmp/$BRANCH_NAME.bundle - share with reviewer. They apply with: git pull /path/to/bundle $BRANCH_NAME"
+# mktemp -d gives a private directory; the slash in a name like feat/x cannot be in a file name.
+BUNDLE="$(mktemp -d)/${BRANCH_NAME//\//-}.bundle"
+git bundle create "$BUNDLE" "$BASE_BRANCH..HEAD"
+echo "Bundle: $BUNDLE - share with reviewer. They apply with: git pull /path/to/bundle $BRANCH_NAME"
 ```
 
 CI and merge are entirely manual. Skip B6 (no CI to watch unless locally configured). Merge happens via Step B7 bare-git path.
