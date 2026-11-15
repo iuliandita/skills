@@ -343,6 +343,12 @@ repository other than its own checkout, for example a copy vendored into another
 the saved source would be that outer repository. A copy outside any git repository can
 still save; it records the installer directory and no upstream.
 
+`--save --verify-signature` also records that `--update` must check the signature on a
+fetched commit before it moves the checkout; see
+[Signature verification](#signature-verification). The option is only accepted with `--save`
+(exit 1 otherwise). Like the rest of the selection it is not merged: a later `--save` without
+it turns the check off and says so. Every `--save` prints the resulting state.
+
 The config is `${XDG_CONFIG_HOME:-~/.config}/iuliandita-skills/install.conf`, directory mode
 700, file mode 600. The directory is opened without following a symlink and checked
 through that descriptor; the temporary file, its permissions, and the rename into place all
@@ -364,13 +370,16 @@ source_upstream=refs/heads/main
 ```
 
 `tools` holds canonical tool names; `skills` is `all` or a comma list. The `source_*` keys
-identify the checkout that ran `--save`. A checkout without an upstream branch saves the
+identify the checkout that ran `--save`. `--verify-signature` adds an eleventh line,
+`verify_signature=true`; a file without it, including every file written before the key
+existed, means the check is off. A checkout without an upstream branch saves the
 upstream keys empty and prints a note; a later `--update` refuses to run from such a config.
 A bare run from a different checkout prints a note and installs from the checkout it runs in.
 
 The file is parsed, never sourced. Each line is `key=value`, split at the first `=`; lines
-starting with `#` and blank lines are skipped. All ten keys are required, unknown or repeated
-keys are errors, `link` and `include_internal` must be exactly `true` or `false`, tool names
+starting with `#` and blank lines are skipped. The ten keys above are required,
+`verify_signature` is optional, unknown or repeated keys are errors, `link`,
+`include_internal`, and `verify_signature` must be exactly `true` or `false`, tool names
 must be supported tools or aliases, and control characters are rejected anywhere. The file
 must be a regular file, not a symlink, and it and its directory must be owned by you and not
 group- or world-writable.
@@ -403,7 +412,8 @@ branch tracks a remote, then schedule the update:
 2. Loads the saved config under the same rules as a bare install. A missing or invalid
    config, or any override variable (`*_SKILLS_DIR`, `SKILLS_CANONICAL_DIR`,
    `SKILLS_BACKUP_DIR`, `OPENCODE_CONFIG_FILE`, `SKILLS_TOOL`, `SKILLS_MIGRATOR`, or
-   `SKILLS_MIGRATIONS_FILE`), means exit 2.
+   `SKILLS_MIGRATIONS_FILE`), means exit 2. It then prints whether
+   [signature verification](#signature-verification) is on or off, on every run.
 3. Checks the source: `install.sh` is at the root of its git checkout, the checkout is the
    saved `source_repo`, it is on the saved branch,
    the branch's remote, that remote's URL, and the upstream ref match the saved values, and
@@ -411,10 +421,13 @@ branch tracks a remote, then schedule the update:
 4. Fetches the saved upstream ref under `timeout -k 10 ${SKILLS_UPDATE_TIMEOUT:-300}`, with
    hooks disabled, and pins the result to a commit SHA. HEAD must be an ancestor of that
    commit; local commits or a rewritten upstream mean exit 4.
-5. Fast-forwards with `git merge --ff-only <sha>` (hooks disabled) and checks HEAD is that
+5. With signature verification on and a new commit fetched, runs `git verify-commit <sha>`
+   under the same timeout. Anything but an accepted signature means exit 9 with HEAD where
+   it was.
+6. Fast-forwards with `git merge --ff-only <sha>` (hooks disabled) and checks HEAD is that
    SHA. If the fast-forward fails partway and leaves the working tree changed, the run exits
    1 instead of 5; restore the checkout to HEAD before the next run.
-6. Replaces itself with the checkout's own, now updated `install.sh`, which inherits the
+7. Replaces itself with the checkout's own, now updated `install.sh`, which inherits the
    lock and applies the saved selection. New installer code therefore runs in the same
    locked run that fetched it.
 
@@ -489,10 +502,11 @@ update: partial 1a2b3c4d5e6f..7a8b9c0d1e2f changed=2 skipped=1
 | 6 | Finished, but some skills were skipped (see above) |
 | 7 | The lock or config directory cannot be created or opened |
 | 8 | The updated installer could not be started (missing or does not parse); HEAD is at the new commit, rerun |
-| 10 | `flock`, `timeout` (and `gtimeout`), `git`, or `python3` is missing |
+| 9 | Signature verification is on and the fetched commit was refused: unsigned, no good signature from a key in your keyring, or the check timed out. The fetched installer was not run |
+| 10 | `flock`, `timeout` (and `gtimeout`), `git`, or `python3` is missing, or signature verification is on and the program that checks the fetched commit's signature (`gpg` by default) is missing |
 | 130, 143 | Interrupted by SIGINT or SIGTERM |
 
-Exits 2, 3, 4, 5, 7, and 10 leave HEAD, the index, and the working tree unchanged (a fetch may
+Exits 2, 3, 4, 5, 7, 9, and 10 leave HEAD, the index, and the working tree unchanged (a fetch may
 still update remote-tracking refs). After HEAD moves there is no such guarantee; rerun
 `--update` and it picks up where the last run stopped.
 
@@ -514,10 +528,47 @@ The checkout, the saved config, and the state directory belong to your user; any
 running as you can already run code as you, so other same-user writers are trusted. The
 update source is the remote URL and branch recorded by `--save`: enabling `--update`
 authorizes running whatever future commits that branch receives, because each run executes
-the fetched `install.sh`. Editing the checkout while an update runs is unsupported.
+the fetched `install.sh`. By default nothing checks who made those commits: the run trusts
+the remote, the account that can push to the branch, and the transport. Editing the checkout
+while an update runs is unsupported.
 
 Runs exclude each other only when every participating run has `flock`. `--update`,
 `--save`, and `--migrate --apply` require it; ordinary installs warn and proceed without it.
+
+### Signature verification
+
+Off by default. Turn it on when you save the setup:
+
+```bash
+./install.sh --save --verify-signature --tool claude,codex --link
+```
+
+The choice lives in the saved config, not in the environment, so a scheduled run with an
+empty environment still checks. When it is on and the fetch brought a new commit,
+`--update` runs `git verify-commit` on that commit before the fast-forward. A refusal is
+exit 9: HEAD, the index, and the working tree are unchanged and the fetched `install.sh` is
+not run. An unsigned commit is refused without starting a verifier. If the program that
+checks the signature is missing (`gpg` for OpenPGP signatures, or what `gpg.program` or
+`gpg.<format>.program` names), the run exits 10 instead of passing.
+
+What an accepted check proves, and what it does not:
+
+- The fetched commit carries a good signature from a key in your keyring. Git accepts any
+  key that is present, whatever trust level you gave it, unless you set `gpg.minTrustLevel`.
+  The keyring is your own, so what you import decides what passes.
+- Only the fetched branch head is checked, not the commits between it and your old HEAD.
+  The head's tree is what gets installed.
+- For this repository, commits reach `develop` and `main` through GitHub merges, which GitHub
+  signs with its own web-flow key (<https://github.com/web-flow.gpg>). With that key
+  imported, an accepted check means "merged through GitHub", not "signed by the
+  maintainer": it does not protect against a compromised maintainer account or against
+  GitHub itself.
+- What it does stop is a branch head that no holder of an imported key signed: an unsigned
+  direct push, or other commits served by a tampered mirror or transport.
+
+SSH and X.509 signatures work when your git is configured to verify them
+(`gpg.ssh.allowedSignersFile`, `gpgsm`). When the checkout is already current nothing is
+fetched to verify and the run proceeds.
 
 ### Scheduling
 
@@ -719,13 +770,13 @@ the common keys.
 
 | Command | Keys |
 |---------|------|
-| install | `tools`, `link`, `skills` (requested names), `failed` (error count), `destinations` (`tool` or `null`, `dest`, `kind` of `copy`, `link`, or `canonical`, `installed` names, `differing` count), and `saved` plus `config` with `--save` |
+| install | `tools`, `link`, `skills` (requested names), `failed` (error count), `destinations` (`tool` or `null`, `dest`, `kind` of `copy`, `link`, or `canonical`, `installed` names, `differing` count), and `saved`, `config`, and `verify_signature` (boolean) with `--save` |
 | `--list` | `dest`, `skills` (`name`, `status` of `installed`, `linked`, or `available`, `deprecated`) |
 | `--check` | `dest`, `lock`, `skills` (`name`, `state` of `current`, `outdated`, or `not-installed`), `legacy` (`name`, `action`, `replacement`), `summary` (`current`, `outdated`, `not_installed`, `legacy`) |
 | `--detect` | `candidates` (`tool`, `evidence` of `kind` and `path`), `nomarker` tools, `suggested` tools |
 | `--doctor` | `tools` (`tool`, `roots`, `note`, `blocking`, `advisory`), `blocking` count, `blocking_tools` count, `outside_selection` (`name`, `path`, `ownership` of `installer-owned` or `other`, `prunable`, `reason`), `legacy_permissions` (old names with unrecorded OpenCode allows), `unverifiable_locks` (`path`, `reason`, `remedy`) |
 | `--migrate` | `apply`, `tools`, `records` (`dest`, `status` of `skip`, `dry-run`, `applied`, `backup`, or `noop`, `text`) |
-| `--update` | `status` of `current`, `updated`, or `partial`, `old` and `new` commit hashes, `changed` (installs, replacements, and pruned copies), `skipped`, `pruned` (`name`, `path`), `prune_kept` (`name`, `path`, `reason`) |
+| `--update` | `verify_signature` (boolean, once the saved config is loaded, so most refusals carry it), `status` of `current`, `updated`, or `partial`, `old` and `new` commit hashes, `changed` (installs, replacements, and pruned copies), `skipped`, `pruned` (`name`, `path`), `prune_kept` (`name`, `path`, `reason`) |
 
 `--help` with `--json` prints the usage text to stderr and an object with `command` set to `help`.
 `--update --json` is the only option combination `--update` accepts.
