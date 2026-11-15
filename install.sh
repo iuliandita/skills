@@ -1,4 +1,16 @@
 #!/usr/bin/env bash
+
+# Stock macOS bash is 3.2 and stops on syntax further down, so this check runs
+# first and stays in syntax that bash 3.2 parses.
+require_bash() {
+  if [ "$1" -gt 4 ] || { [ "$1" -eq 4 ] && [ "$2" -ge 4 ]; }; then
+    return 0
+  fi
+  printf 'error: bash %s.%s found, 4.4 or newer is required; on macOS install it with "brew install bash" or "sudo port install bash", then rerun with that bash first on PATH\n' "$1" "$2" >&2
+  return 1
+}
+require_bash "${BASH_VERSINFO[0]}" "${BASH_VERSINFO[1]}" || exit 1
+
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -176,7 +188,8 @@ Options:
   --migrate           Preview recorded legacy-skill migrations and old tool-dir
                       link cleanup (use --apply to run)
   --apply             Apply a migration preview; requires --migrate
-  --force             Overwrite existing skills without prompting
+  --force             Replace existing skills that differ from the source
+                      instead of skipping them
   --no-backup         Skip backup of existing skills
   --include-internal  Include skills marked metadata.internal: true
   --doctor            Report skill names a harness can reach through more than
@@ -185,6 +198,9 @@ Options:
   --detect            List harnesses that look installed (read-only, runs nothing)
   --save              After a successful install, save the selection; a bare
                       install.sh with no arguments then repeats it
+  --verify-signature  With --save: record that --update must run git
+                      verify-commit on the fetched commit before it moves the
+                      checkout (off unless given; see INSTALL.md)
   --update            Fast-forward this checkout from its saved upstream and
                       reinstall the saved selection (cron-safe; takes no other
                       options except --json; see INSTALL.md for exit codes)
@@ -225,7 +241,8 @@ Environment:
   SKILLS_BACKUP_DIR       Backup directory (default: next to each destination)
   SKILLS_MIGRATIONS_FILE  Alternate migrations.json
   SKILLS_MIGRATOR         Alternate migration helper
-  SKILLS_LOCK_WAIT        Seconds to wait for the installer lock (default: 0)
+  SKILLS_LOCK_WAIT        Seconds to wait for the installer lock (default: 30,
+                          or 0 for --update)
   SKILLS_UPDATE_TIMEOUT   Seconds allowed for the --update fetch (default: 300)
   SKILLS_INSTALL_FAULT    Fault injection for tests; leave unset
   OPENCODE_CONFIG_FILE    OpenCode config that receives skill permissions
@@ -236,7 +253,8 @@ Exit codes:
   0    Done, or --check found everything current
   1    Failed, --check found something missing or outdated, or invalid usage
   2    --update: bad config, override variable set, or extra options; --save: invalid saved config
-  3-10 --update and --save lock, source, fetch, and tool failures; see INSTALL.md
+  3-10 --update and --save lock, source, fetch, signature, and tool failures;
+       see INSTALL.md
 EOF
 }
 
@@ -312,6 +330,17 @@ json_push() {
   JSON_LISTS[$1]+="${JSON_LISTS[$1]:+, }$2"
 }
 
+# json_merge_object OBJECT_JSON: adds the keys of a helper's one-line JSON
+# object to the report. Returns 1 and adds nothing when the helper printed no
+# object, as a crashed one does.
+json_merge_object() {
+  local out="$1"
+  [[ "$out" == "{"*"}" ]] || return 1
+  out="${out#\{}"
+  out="${out%\}}"
+  [[ -z "$out" ]] || JSON_BODY+="${JSON_BODY:+, }$out"
+}
+
 # json_dest TOOL DEST KIND DIFFERING SKILL...: one install destination.
 json_dest() {
   [[ "$JSON_MODE" == true ]] || return 0
@@ -341,13 +370,14 @@ json_pause() {
   while IFS= read -r line || [[ -n "$line" ]]; do
     printf '%s\n' "$line" >&4
   done < "$JSON_LOG"
-  : > "$JSON_LOG"
+  rm -f "$JSON_LOG"
   exec 1>&3 2>&4
   trap - EXIT
 }
 
 json_resume() {
   [[ "$JSON_MODE" == true ]] || return 0
+  JSON_LOG="$(mktemp)" || { printf 'error: cannot create a temporary file for --json output; check TMPDIR\n' >&2; exit 1; }
   exec >>"$JSON_LOG" 2>&1
   trap json_emit EXIT
 }
@@ -401,7 +431,7 @@ skill_hash() {
   local dir="$1"
   # No -L: symlinks under skills/ are listed but not followed, so a malicious
   # symlink committed to a skill dir cannot leak external file contents into
-  # the lock-file hash or into install reads. See SECURITY-AUDIT.md SEC-007.
+  # the lock-file hash or into install reads.
   LC_ALL=C find "$dir" -type f -print0 | LC_ALL=C sort -z | xargs -0 cat 2>/dev/null | hash_tool
 }
 
@@ -594,15 +624,21 @@ backup_skill() {
   if [[ -L "$dest_dir/$skill" ]]; then
     cp -P "$dest_dir/$skill" "$dest/" || return 1
   else
-    cp -r "$dest_dir/$skill/." "$dest/" || return 1
+    # -R -P keeps a nested symlink a link; BSD cp follows it with -r.
+    cp -R -P "$dest_dir/$skill/." "$dest/" || return 1
   fi
 
-  # Prune old backups, keep last 3
-  local count
-  count=$(find "$backup_base/$skill" -maxdepth 1 -mindepth 1 -type d 2>/dev/null | wc -l)
-  if (( count > 3 )); then
-    find "$backup_base/$skill" -maxdepth 1 -mindepth 1 -type d -print0 \
-      | sort -z | head -z -n "$(( count - 3 ))" | xargs -0 rm -rf
+  # Prune old backups, keep last 3. The names are timestamps and a glob
+  # expands sorted, so the oldest come first.
+  local entry
+  local -a backups=()
+  for entry in "$backup_base/$skill"/*; do
+    if [[ -d "$entry" && ! -L "$entry" ]]; then
+      backups+=("$entry")
+    fi
+  done
+  if (( ${#backups[@]} > 3 )); then
+    rm -rf -- "${backups[@]:0:${#backups[@]}-3}"
   fi
 }
 
@@ -895,7 +931,7 @@ acquire_install_lock() {
   local -a flock_wait=(-w "$wait")
   (( wait > 0 )) || flock_wait=(-n)
   if ! flock "${flock_wait[@]}" "$INSTALL_LOCK_FD"; then
-    printf 'Another install.sh run holds %s; gave up after %ss (set SKILLS_LOCK_WAIT to wait longer)\n' \
+    printf 'error: another install.sh run holds %s; gave up after %ss (set SKILLS_LOCK_WAIT to wait longer)\n' \
       "$dir/install.lock" "$wait" >&2
     exit 3
   fi
@@ -1052,7 +1088,7 @@ stage_entry() {
     STAGED_DIGEST="link:$CANONICAL_DIR/$skill"
     return 0
   fi
-  mkdir "$stage" && ! fault_hit stage "$skill" && cp -r "$SKILLS_SRC/$skill/." "$stage/" || return 1
+  mkdir "$stage" && ! fault_hit stage "$skill" && cp -R -P "$SKILLS_SRC/$skill/." "$stage/" || return 1
   STAGED_DIGEST="$(skill_hash "$stage")" || return 1
   cache_source_digest "$skill" || return 1
   [[ -n "$STAGED_DIGEST" && "$STAGED_DIGEST" == "${SOURCE_DIGESTS[$skill]}" ]]
@@ -1635,23 +1671,22 @@ try:
     if not isinstance(config, dict):
         raise ValueError("OpenCode config root must be a JSON object")
 
-    ACTIONS = {"allow", "ask", "deny"}
-    permission = config.get("permission")
-    if permission is None:
-        permission = {}
-    elif isinstance(permission, str) and permission in ACTIONS:
-        permission = {"*": permission, "skill": {"*": permission}}
-    if not isinstance(permission, dict):
-        raise ValueError("permission must be an object or allow/ask/deny")
+    # A bare allow/ask/deny is shorthand for {"*": action}.
+    def as_rules(value, what):
+        if value is None:
+            return {}
+        if isinstance(value, str) and value in {"allow", "ask", "deny"}:
+            return {"*": value}
+        if not isinstance(value, dict):
+            raise ValueError(f"{what} must be an object or allow/ask/deny")
+        return value
+
+    permission = as_rules(config.get("permission"), "permission")
+    if isinstance(config.get("permission"), str):
+        permission["skill"] = dict(permission)
     config["permission"] = permission
 
-    skill_permission = permission.get("skill")
-    if skill_permission is None:
-        skill_permission = {}
-    elif isinstance(skill_permission, str) and skill_permission in ACTIONS:
-        skill_permission = {"*": skill_permission}
-    if not isinstance(skill_permission, dict):
-        raise ValueError("permission.skill must be an object or allow/ask/deny")
+    skill_permission = as_rules(permission.get("skill"), "permission.skill")
     permission["skill"] = skill_permission
 except (OSError, ValueError) as error:
     if mode != "preview":
@@ -1686,13 +1721,17 @@ if mode in {"preview", "migrate"} and legacy:
         changed = True
 if mode == "preview":
     sys.exit(0)
+asking = []
 for skill in skills:
-    if skill_permission.get(skill) == "deny":
-        continue
-    if skill_permission.get(skill) != "allow":
+    current = skill_permission.get(skill)
+    if current == "ask":
+        asking.append(skill)
+    elif current not in {"allow", "deny"}:
         skill_permission[skill] = "allow"
         recorded.add(skill)
         changed = True
+if asking:
+    print('  [i] OpenCode permission kept as "ask": ' + ", ".join(asking))
 
 def write_provenance(names):
     if lock is None:
@@ -2229,9 +2268,11 @@ say("No blocking duplicates.")
 PY
 )" || rc=$?
   if [[ "$JSON_MODE" == true ]]; then
-    out="${out#\{}"
-    JSON_BODY+="${JSON_BODY:+, }${out%\}}"
-    JSON_FALLBACK_ERROR="doctor found blocking duplicate skills; see tools[].blocking"
+    if json_merge_object "$out"; then
+      JSON_FALLBACK_ERROR="doctor found blocking duplicate skills; see tools[].blocking"
+    else
+      JSON_FALLBACK_ERROR="the doctor helper failed without a report; see the human output on stderr"
+    fi
   else
     printf '%s\n' "$out"
   fi
@@ -2346,8 +2387,8 @@ else:
 PY
 )" || rc=$?
   if [[ "$JSON_MODE" == true ]]; then
-    out="${out#\{}"
-    JSON_BODY+="${JSON_BODY:+, }${out%\}}"
+    json_merge_object "$out" \
+      || JSON_FALLBACK_ERROR="the detect helper failed without a report; see the human output on stderr"
   else
     printf '%s\n' "$out"
   fi
@@ -2360,7 +2401,7 @@ PY
 # as NUL-separated key/value pairs; it is never sourced or evaluated.
 # Exit codes: 2 invalid content or unsafe file, 7 cannot create or open.
 SAVED_CONFIG_KEYS=(version tools link include_internal skills
-  source_repo source_branch source_remote source_remote_url source_upstream)
+  source_repo source_branch source_remote source_remote_url source_upstream verify_signature)
 
 saved_config_dir() {
   local base="${XDG_CONFIG_HOME:-}"
@@ -2401,7 +2442,10 @@ import stat
 import sys
 
 KEYS = ("version", "tools", "link", "include_internal", "skills",
-        "source_repo", "source_branch", "source_remote", "source_remote_url", "source_upstream")
+        "source_repo", "source_branch", "source_remote", "source_remote_url", "source_upstream",
+        "verify_signature")
+# Absent in configs written before the key existed, which means off.
+OPTIONAL = {"verify_signature": "false"}
 TOOL = re.compile(r"[a-z][a-z0-9-]{0,31}")
 REMOVED = {"gemini": "3.1.0", "gemini-cli": "3.1.0"}
 SKILL = re.compile(r"[a-z0-9](?:[a-z0-9-]*[a-z0-9])?")
@@ -2527,12 +2571,14 @@ def read_config(supported, aliases):
         if key in values:
             fail(2, f"line {number} repeats key {key!r}")
         values[key] = value
-    missing = [key for key in KEYS if key not in values]
+    missing = [key for key in KEYS if key not in values and key not in OPTIONAL]
     if missing:
         fail(2, f"missing key(s): {', '.join(missing)}")
+    for key, default in OPTIONAL.items():
+        values.setdefault(key, default)
     if values["version"] != "1":
         fail(2, f"unsupported version {values['version']!r}")
-    for key in ("link", "include_internal"):
+    for key in ("link", "include_internal", "verify_signature"):
         if values[key] not in ("true", "false"):
             fail(2, f"{key} must be true or false, not {values[key]!r}")
     tools = []
@@ -2588,7 +2634,10 @@ def write(pairs):
         name, value = pair.split("=", 1)
         if name != key or controls(value):
             fail(2, f"refusing to save {name}: unexpected key or control character")
-        body.append(pair)
+        # A default is left out, so the file stays readable by an installer
+        # from before the key existed.
+        if OPTIONAL.get(key) != value:
+            body.append(pair)
     dfd = open_dir(True)
     swap("configswap")
     temp = f".install.conf.{os.getpid()}.{secrets.token_hex(8)}.tmp"
@@ -2669,6 +2718,7 @@ load_saved_config() {
       source_remote) SAVED_SOURCE_REMOTE="${fields[i+1]}" ;;
       source_remote_url) SAVED_SOURCE_REMOTE_URL="${fields[i+1]}" ;;
       source_upstream) SAVED_SOURCE_UPSTREAM="${fields[i+1]}" ;;
+      verify_signature) SAVED_VERIFY_SIGNATURE="${fields[i+1]}" ;;
       version) ;;
       *) printf 'error: saved install config parser returned unknown key %s\n' "$key" >&2; exit "${CONFIG_FAIL_EXIT:-2}" ;;
     esac
@@ -2680,10 +2730,24 @@ git_value() {
   git -C "$SCRIPT_DIR" "$@" 2>/dev/null || true
 }
 
+# The saved source is the git checkout that holds install.sh. Vendored inside
+# another repository that would be the outer one, which --update must never
+# fast-forward. Outside git there is no checkout to mistake, so that passes.
+reject_enclosing_repo() {
+  local repo here
+  command -v git >/dev/null 2>&1 || return 0
+  repo="$(git_value rev-parse --show-toplevel)"
+  here="$(cd "$SCRIPT_DIR" && pwd -P)"
+  [[ -z "$repo" || "$repo" == "$here" ]] && return 0
+  printf 'error: --save: install.sh is in %s, inside the git repository %s; a saved install config needs install.sh at the root of its own checkout or outside git\n' \
+    "$here" "$repo" >&2
+  exit 2
+}
+
 # Record the selection and the checkout it came from. Called under the lock
 # after a successful install.
 save_install_config() {
-  local tools_csv="$1" link="$2" include_internal="$3" skills_csv="$4"
+  local tools_csv="$1" link="$2" include_internal="$3" skills_csv="$4" verify="$5"
   local dir repo="" branch="" remote="" remote_url="" upstream=""
   dir="$(saved_config_dir)"
   if command -v git >/dev/null 2>&1; then
@@ -2699,9 +2763,10 @@ save_install_config() {
   saved_config_py write "$dir" version=1 "tools=$tools_csv" "link=$link" \
     "include_internal=$include_internal" "skills=$skills_csv" "source_repo=$repo" \
     "source_branch=$branch" "source_remote=$remote" "source_remote_url=$remote_url" \
-    "source_upstream=$upstream" || exit "$?"
+    "source_upstream=$upstream" "verify_signature=$verify" || exit "${CONFIG_FAIL_EXIT:-$?}"
   printf 'Saved install config: %s\n' "$dir/install.conf"
   json_add_str config "$dir/install.conf"
+  json_add verify_signature "$verify"
   if [[ -z "$remote" || -z "$upstream" ]]; then
     printf '[i] %s has no upstream branch; upstream is saved empty, so a later --update will refuse to run\n' "$repo"
   fi
@@ -2840,7 +2905,8 @@ list_skills() {
 # --apply-update, which inherits the lock on fd 9 and reconciles the saved
 # selection. Exit codes (INSTALL.md, "Scheduled updates"): before HEAD moves
 # 2 config, 3 lock, 4 source check, 5 fetch or fast-forward, 7 local state,
-# 10 missing tool; after it 1 failure, 6 skipped skills, 8 exec failure.
+# 9 signature check, 10 missing tool; after it 1 failure, 6 skipped skills,
+# 8 exec failure.
 
 ulog() {
   printf '%s update: %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$*"
@@ -2877,6 +2943,41 @@ update_expect_config() {
   [[ "$value" == "$want" ]] || update_fail 4 "$what is '$value' but the saved config says '$want'; checkout unchanged"
 }
 
+# The saved config asked for a signature check: SHA must pass git verify-commit
+# before HEAD moves. Git accepts a good signature from any key in the user's
+# keyring, whatever its trust level, unless gpg.minTrustLevel asks for more.
+update_verify_commit() {
+  local repo="$1" sha="$2" old="$3" timeout_cmd="$4" timeout_s="$5"
+  local line header="" format program default pattern rc=0
+  while IFS= read -r line && [[ -n "$line" ]]; do
+    case "$line" in
+      "gpgsig "*|"gpgsig-sha256 "*) header="${line#* }"; break ;;
+    esac
+  done < <(ugit -C "$repo" cat-file commit "$sha")
+  case "$header" in
+    "") update_fail 9 "upstream ${sha:0:12} is not signed and the saved config requires a signature; HEAD is still ${old:0:12}; checkout unchanged" ;;
+    *"BEGIN SSH SIGNATURE"*) format=ssh default=ssh-keygen ;;
+    *"BEGIN SIGNED MESSAGE"*) format=x509 default=gpgsm ;;
+    *) format=openpgp default=gpg ;;
+  esac
+  # Git fails without the verifier too, with an error that reads like a bad
+  # signature; a missing tool is exit 10 like the others.
+  pattern="^gpg\\.$format\\.program\$"
+  [[ "$format" != openpgp ]] || pattern='^gpg\.(openpgp\.)?program$'
+  program="$(ugit -C "$repo" config --type=path --get-regexp "$pattern" 2>/dev/null | tail -n 1)" || program=""
+  program="${program#* }"
+  [[ -n "$program" ]] || program="$default"
+  command -v "$program" >/dev/null 2>&1 \
+    || update_fail 10 "$program is required to check the $format signature on upstream ${sha:0:12} (the saved config requires a signature); install it and rerun; HEAD is still ${old:0:12}; checkout unchanged"
+  ulog "verifying the $format signature on ${sha:0:12} (timeout ${timeout_s}s)"
+  "$timeout_cmd" -k 10 "$timeout_s" git -C "$repo" verify-commit "$sha" </dev/null 9>&- || rc=$?
+  case "$rc" in
+    0) ulog "signature accepted on ${sha:0:12}" ;;
+    124|137) update_fail 9 "the signature check on upstream ${sha:0:12} timed out after ${timeout_s}s; HEAD is still ${old:0:12}; checkout unchanged" ;;
+    *) update_fail 9 "git verify-commit did not accept upstream ${sha:0:12}: no good signature from a key in your keyring (its output is above); HEAD is still ${old:0:12}; checkout unchanged" ;;
+  esac
+}
+
 run_update() {
   local timeout_s="${SKILLS_UPDATE_TIMEOUT:-300}" wait="${SKILLS_LOCK_WAIT:-0}"
   local cmd repo branch status old sha head rc timeout_cmd
@@ -2900,9 +3001,17 @@ run_update() {
   reject_override_env "--update"
   load_saved_config || update_fail 2 "no saved install config in $(saved_config_dir); run install.sh --save first"
   ulog "config $SAVED_CONFIG_PATH"
+  json_add verify_signature "$SAVED_VERIFY_SIGNATURE"
+  if [[ "$SAVED_VERIFY_SIGNATURE" == true ]]; then
+    ulog "signature verification: on (git verify-commit on a fetched commit before the checkout moves)"
+  else
+    ulog "signature verification: off (the fetched branch head is installed as is; see INSTALL.md)"
+  fi
 
   repo="$(ugit -C "$SCRIPT_DIR" rev-parse --show-toplevel 2>/dev/null)" \
     || update_fail 4 "$SCRIPT_DIR is not a git checkout"
+  [[ "$repo" == "$(cd "$SCRIPT_DIR" && pwd -P)" ]] \
+    || update_fail 4 "install.sh is in $SCRIPT_DIR, not at the root of the git checkout $repo; run --update from a checkout of this repository"
   [[ "$repo" == "$SAVED_SOURCE_REPO" ]] \
     || update_fail 4 "the config was saved from $SAVED_SOURCE_REPO, not $repo; run --update from that checkout or --save again"
   if [[ -z "$SAVED_SOURCE_BRANCH" || -z "$SAVED_SOURCE_REMOTE" || "$SAVED_SOURCE_REMOTE" == "." \
@@ -2960,6 +3069,8 @@ run_update() {
   if [[ "$old" == "$sha" ]]; then
     ulog "checkout is current at ${sha:0:12}"
   else
+    [[ "$SAVED_VERIFY_SIGNATURE" != true ]] \
+      || update_verify_commit "$repo" "$sha" "$old" "$timeout_cmd" "$timeout_s"
     ulog "fast-forwarding ${old:0:12}..${sha:0:12}"
     if ! ugit -C "$repo" -c core.hooksPath=/dev/null merge --ff-only --quiet "$sha" </dev/null; then
       head="$(ugit -C "$repo" rev-parse --verify HEAD 2>/dev/null)" || head=""
@@ -3368,6 +3479,7 @@ sys.exit((a.st_dev, a.st_ino) != (b.st_dev, b.st_ino))' "$(install_lock_dir)/ins
   IFS=',' read -ra tools <<< "$SAVED_TOOLS"
   resolve_saved_selection || update_fail 1 'cannot resolve saved selection'
   skills=("${SAVED_SELECTION[@]}")
+  json_add verify_signature "$SAVED_VERIFY_SIGNATURE"
   json_list pruned
   json_list prune_kept
 
@@ -3444,7 +3556,7 @@ sys.exit((a.st_dev, a.st_ino) != (b.st_dev, b.st_ino))' "$(install_lock_dir)/ins
     update_fail 1 "incomplete: changed=$UPD_CHANGED skipped=$UPD_SKIPPED failed=$UPD_FAILED; HEAD is at $new; rerun install.sh --update to complete the install"
   fi
   if [[ "$REWRITTEN_SKILLS" != "$SAVED_SKILLS" ]]; then
-    save_install_config "$SAVED_TOOLS" "$SAVED_LINK" "$SAVED_INCLUDE_INTERNAL" "$REWRITTEN_SKILLS"
+    save_install_config "$SAVED_TOOLS" "$SAVED_LINK" "$SAVED_INCLUDE_INTERNAL" "$REWRITTEN_SKILLS" "$SAVED_VERIFY_SIGNATURE"
   fi
   json_add_str old "$old"
   json_add_str new "$new"
@@ -3483,8 +3595,8 @@ main() {
 
   local force=false no_backup=false link_mode=false
   local check_mode=false show_list=false include_internal=false migrate_mode=false apply_migration=false
-  local doctor_mode=false doctor_verbose=false detect_mode=false save_mode=false
-  local dest_override="" tool_given=false dest_given=false saved_empty=false
+  local doctor_mode=false doctor_verbose=false detect_mode=false save_mode=false verify_signature=false
+  local dest_override="" tool_given=false dest_given=false saved_empty=false verify_was=false
   local tools=() skills=()
   local argc=$#
 
@@ -3531,6 +3643,7 @@ main() {
       --verbose)          doctor_verbose=true ;;
       --detect)           detect_mode=true ;;
       --save)             save_mode=true ;;
+      --verify-signature) verify_signature=true ;;
       --update|--apply-update)
         printf '%s\n' "error: $1 accepts no other options or skill names" >&2; exit 2 ;;
       --help|-h)          JSON_COMMAND=help; usage; exit 0 ;;
@@ -3549,12 +3662,25 @@ main() {
   fi
 
   if [[ "$detect_mode" == "true" ]]; then
-    if [[ "$link_mode$show_list$check_mode$migrate_mode$apply_migration$force$no_backup$include_internal$doctor_mode$doctor_verbose$save_mode" == *true* \
+    if [[ "$link_mode$show_list$check_mode$migrate_mode$apply_migration$force$no_backup$include_internal$doctor_mode$doctor_verbose$save_mode$verify_signature" == *true* \
       || "$dest_given$tool_given" == *true* || ${#skills[@]} -gt 0 ]]; then
       printf '%s\n' "error: --detect is read-only and accepts no other options or skill names" >&2; exit 1
     fi
     run_detect
     exit 0
+  fi
+
+  local modes=0
+  [[ "$show_list" != "true" ]] || (( ++modes ))
+  [[ "$check_mode" != "true" ]] || (( ++modes ))
+  [[ "$migrate_mode" != "true" ]] || (( ++modes ))
+  [[ "$doctor_mode" != "true" ]] || (( ++modes ))
+  if (( modes > 1 )); then
+    printf '%s\n' "error: --list, --check, --migrate, and --doctor cannot be combined; pass only one of them" >&2; exit 1
+  fi
+
+  if [[ "$verify_signature" == "true" && "$save_mode" != "true" ]]; then
+    printf '%s\n' "error: --verify-signature is recorded by --save; pass both" >&2; exit 1
   fi
 
   # A saved config is used only by a bare `install.sh`; any argument ignores it.
@@ -3566,8 +3692,12 @@ main() {
       printf '%s\n' "error: --save cannot be used with --dest; saved configs cover default paths only" >&2; exit 1
     fi
     reject_override_env "--save"
+    reject_enclosing_repo
     acquire_install_lock required
     saved_config_py prepare "$(saved_config_dir)" || exit "$?"
+    # Only to say so when this save turns the check off; an unreadable old
+    # config is replaced as before.
+    verify_was="$( (load_saved_config doctor-read 2>/dev/null && printf '%s' "$SAVED_VERIFY_SIGNATURE") || true)"
   elif (( argc == 0 )); then
     acquire_install_lock
     if load_saved_config; then
@@ -3935,8 +4065,15 @@ main() {
       [[ " ${saved_tools[*]} " == *" $tool "* ]] || saved_tools+=("$tool")
     done
     (( requested_skill_count == 0 )) || skills_csv="$(IFS=,; printf '%s' "${skills[*]}")"
-    save_install_config "$(IFS=,; printf '%s' "${saved_tools[*]}")" "$link_mode" "$include_internal" "$skills_csv"
+    save_install_config "$(IFS=,; printf '%s' "${saved_tools[*]}")" "$link_mode" "$include_internal" "$skills_csv" "$verify_signature"
     json_add saved true
+    if [[ "$verify_signature" == true ]]; then
+      printf 'Signature verification for --update: on\n'
+    else
+      printf 'Signature verification for --update: off\n'
+      [[ "$verify_was" != true ]] \
+        || printf '[i] the previous saved config had it on; add --verify-signature to --save to keep it\n'
+    fi
   fi
 }
 

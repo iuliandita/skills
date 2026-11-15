@@ -59,7 +59,19 @@ Those checks remain part of review.
 advisory and shows a warning; receipt structure stays a required check. Re-verify every pin
 against its `source` and bump `checked_at`, or remove pins that are no longer
 worth tracking. Override the budget locally with
-`SKILLS_PIN_MAX_AGE_DAYS` (days) if you need to test a different threshold.
+`SKILLS_PIN_MAX_AGE_DAYS` (a whole number of days) if you need to test a
+different threshold; any other value is refused.
+
+Both date gates, `scripts/check-version-receipts.sh` and
+`scripts/check-freshness-dates.sh`, use the same exit codes:
+
+| Exit | Meaning |
+| --- | --- |
+| 0 | Everything is current. |
+| 10 | Stale only: a receipt past the budget, or a marker behind the collection month. CI and the pre-commit hook downgrade this one code to a warning. |
+| 1 | Anything else: a malformed or unreadable file, a file listing that failed (for example outside a git repository), a budget that is not a number. This blocks. |
+
+A run with both a broken input and a stale one exits 1.
 
 ## SKILL.md bodies must not restate version numbers
 

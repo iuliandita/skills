@@ -14,11 +14,8 @@ TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 CASES=0
 
-fail() {
-  printf 'FAIL: %s\n' "$1" >&2
-  [[ -z "${OUT:-}" ]] || printf '%s\n' "$OUT" >&2
-  exit 1
-}
+# shellcheck source=./scripts/gate-test-lib.sh
+source "$ROOT/scripts/gate-test-lib.sh"
 
 # new_fixture <tracked file> <its one line>
 new_fixture() {
@@ -48,14 +45,13 @@ current_label="$(LC_ALL=C date +'%B %Y')"
 
 new_fixture skills/alpha/SKILL.md "Pins verified $current_label."
 run_check env PATH="$STUB:$PATH" LC_ALL=xx_XX.UTF-8
-(( STATUS == 0 )) || fail "current marker under a non-English locale: expected exit 0, got $STATUS"
+expect_pass "current marker under a non-English locale"
 
 # README.md and INSTALL.md are scanned, not only files under skills/.
 for doc in README.md INSTALL.md skills/alpha/SKILL.md; do
   new_fixture "$doc" "Pins verified January 2020."
   run_check env
-  (( STATUS != 0 )) || fail "stale marker in $doc: expected failure, got exit 0"
-  [[ "$OUT" == *"stale freshness marker in $doc:1"* ]] || fail "stale marker in $doc: finding not printed"
+  expect_fail "stale marker in $doc" "stale freshness marker in $doc:1"
 done
 
 printf 'freshness-date tests passed (%d cases)\n' "$CASES"

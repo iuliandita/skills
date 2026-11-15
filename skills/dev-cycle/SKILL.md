@@ -383,36 +383,7 @@ Full procedures, extract-changelog function, and per-forge release-watch command
 
 ## Concrete end-to-end finish on GitHub
 
-Branch `feat/oauth-login` on a Node repo with `gh` available, Dockerfile, Helm chart, `"version": "1.4.2"` in `package.json`, CHANGELOG present, GitHub Actions release workflow.
-
-```
-B1  git remote get-url origin  -> github.com  -> FORGE=github, FORGE_CLI=gh
-    git log main..HEAD          -> 6 commits; diff 340 lines across 12 files
-B2  bun run lint && bun run typecheck && bun test  -> all green, 184 tests
-B3  update-docs: README badges, CHANGELOG [1.5.0] section dated 2026-04-16
-    Bump: package.json 1.4.2 -> 1.5.0, Dockerfile LABEL, helm/Chart.yaml appVersion, values.yaml image tag
-B4  code-review on main..HEAD   -> 2 nits addressed, re-run tests green
-B5  git push -u origin feat/oauth-login
-    gh pr create --base main --title "feat(auth): OAuth login" --body-file .github/pr-body.md
-B6  gh pr checks --watch --fail-fast     # then:
-    gh pr view --json headRefOid,statusCheckRollup
-    # Match the tested head SHA and inspect required check runs and legacy status contexts.
-B7  PR_NUMBER=$(gh pr view --json number --jq '.number')
-    gh pr merge "$PR_NUMBER" --squash --delete-branch \
-      --subject "feat(auth): OAuth login (#$PR_NUMBER)" --body "Closes #118"
-B8  # Set RELEASE_SHA to the verified merged release commit before tagging.
-    git fetch --tags origin
-    if git show-ref --verify --quiet refs/tags/v1.5.0; then
-      echo "Tag exists; verify the existing release before proceeding" >&2; exit 1
-    fi
-    git tag -a v1.5.0 -m "v1.5.0" "$RELEASE_SHA" && git push origin refs/tags/v1.5.0
-    gh release create v1.5.0 --title v1.5.0 --notes-file <(extract_changelog 1.5.0)  # helper in references/finish.md
-    # Resolve RELEASE_SHA from the merged release commit, not the former feature HEAD.
-    # Select the exact workflow/tag/SHA/event using references/finish.md, then:
-    gh run watch "$RUN_ID" --exit-status
-```
-
-GitLab substitutes `glab mr create`, `glab ci status --live`, `glab mr merge --squash --remove-source-branch`, `glab release create`. Forgejo substitutes `fj pr create`, `fj pr merge --method squash --delete`, `fj release`. Gitea substitutes `tea pulls create`, `tea pulls merge --style squash`, `tea releases create`. Bitbucket and bare paths skip B5-B8 CLI steps and use web UI / `format-patch` respectively.
+A worked finish run on GitHub, step B1 through B8, is in `references/finish.md`.
 
 ---
 

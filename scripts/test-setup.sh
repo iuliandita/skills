@@ -4,17 +4,56 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
+# macOS hands out temp dirs behind a symlink (/var is /private/var), so every
+# temp dir is resolved here: paths built from one then match the resolved
+# paths the installer prints and records.
+mktemp() {
+  local dir
+  dir="$(command mktemp "$@")" || return 1
+  (cd "$dir" && pwd -P)
+}
+# macOS has shasum where Linux has sha256sum; both print the same format.
+HASH_TOOL=sha256sum
+command -v sha256sum >/dev/null 2>&1 || HASH_TOOL=shasum
+
 # Git hooks export GIT_DIR and friends; fixture repos must not inherit them.
 while IFS= read -r var; do unset "$var"; done < <(git rev-parse --local-env-vars)
 
-SAFE_PATH="$(for cmd in python3 git sha256sum flock; do dirname "$(command -v "$cmd")"; done | awk '!seen[$0]++' | paste -sd:):/usr/bin:/bin"
+# A listed tool that is missing stops the run: dirname of an empty path is ".",
+# which would put the current directory on PATH.
+safe_path() {
+  local cmd path dirs=""
+  for cmd in "$@"; do
+    path="$(command -v "$cmd")" || {
+      printf 'FAIL: %s is required to run these tests and is not on PATH\n' "$cmd" >&2
+      return 1
+    }
+    [[ ":$dirs:" == *":${path%/*}:"* ]] || dirs+="${dirs:+:}${path%/*}"
+  done
+  printf '%s:/usr/bin:/bin\n' "$dirs"
+}
+SAFE_PATH="$(safe_path bash python3 git "$HASH_TOOL" flock)"
 REAL_GIT="$(command -v git)"
-OVERRIDES=(CLAUDE_SKILLS_DIR CODEX_SKILLS_DIR SKILLS_CANONICAL_DIR SKILLS_BACKUP_DIR OPENCODE_CONFIG_FILE SKILLS_TOOL SKILLS_MIGRATOR SKILLS_MIGRATIONS_FILE)
 
 fail() {
   printf 'FAIL: %s\n' "$1" >&2
   exit 1
 }
+
+# Every override variable install.sh refuses, as its own override_env_names
+# reports them: each upper-case name in the script is offered to the function.
+override_names() {
+  local body
+  local -a names=()
+  body="$(sed -n '/^override_env_names() {$/,/^}$/p' "$ROOT/install.sh")"
+  [[ -n "$body" ]] || fail "override_env_names not found in install.sh"
+  mapfile -t names < <(grep -oE '[A-Z][A-Z0-9_]+' "$ROOT/install.sh" | grep -v '^LC_' | sort -u)
+  env -i "${names[@]/%/=x}" "$BASH" -c "$body"$'\n''override_env_names' | sort
+}
+
+mapfile -t OVERRIDES < <(override_names)
+[[ " ${OVERRIDES[*]} " == *" CLAUDE_SKILLS_DIR "* && " ${OVERRIDES[*]} " == *" SKILLS_TOOL "* ]] \
+  || fail "override_env_names reported only: ${OVERRIDES[*]}"
 
 isolated() {
   local home="$1"
@@ -102,7 +141,7 @@ make_sys_path() {
   local cmd
   mkdir -p "$1"
   for cmd in bash dirname python3 mktemp rm; do
-    ln -s "$(command -v "$cmd")" "$1/$cmd"
+    ln -s "$(type -P "$cmd")" "$1/$cmd"
   done
 }
 
@@ -174,7 +213,7 @@ test_json_detect_and_save() {
   chmod +x "$bin/claude"
 
   out="$(isolated_path "$home" "$bin:$sys" "$ROOT/install.sh" --detect --json 2>/dev/null)" || fail "--detect --json exited non-zero"
-  [[ "$(wc -l <<< "$out")" == 1 ]] || fail "--detect --json printed more than one line: $out"
+  [[ "$(wc -l <<< "$out")" -eq 1 ]] || fail "--detect --json printed more than one line: $out"
   json_check "$out" 'd["ok"] is True and d["errors"] == [] and d["command"] == "detect" and d["suggested"] == ["claude", "codex"]' "detect keys"
   json_check "$out" 'd["candidates"][0]["tool"] == "claude" and d["candidates"][0]["evidence"][0]["kind"] == "binary" and "cursor" in d["nomarker"]' "detect candidates"
   out="$(isolated_path "$home" "$bin:$sys" "$ROOT/install.sh" --detect --save --json 2>/dev/null)" || status=$?
@@ -257,6 +296,35 @@ test_save_round_trip_records_source() {
   out="$(isolated "$home" "$repo/install.sh" --save --tool codex --include-internal 2>&1)" || fail "--save all failed: $out"
   { grep -qFx skills=all "$conf" && grep -qFx include_internal=true "$conf" \
     && grep -qFx link=false "$conf"; } || fail "all-skills save wrong: $(cat "$conf")"
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_save_records_signature_verification() {
+  local tmp conf out status=0
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  make_fixture "$tmp/repo" false "$tmp"
+  conf="$(conf_dir "$tmp")/install.conf"
+  out="$(isolated "$tmp" "$tmp/repo/install.sh" --save docker 2>&1)" || fail "--save failed: $out"
+  ! grep -q '^verify_signature=' "$conf" || fail "default --save wrote verify_signature: $(cat "$conf")"
+  grep -qFx 'Signature verification for --update: off' <<< "$out" || fail "save did not print the off state: $out"
+  ! grep -q 'previous saved config had it on' <<< "$out" || fail "first save reported an earlier opt-in: $out"
+
+  out="$(isolated "$tmp" "$tmp/repo/install.sh" --save --verify-signature --json docker 2>/dev/null)" \
+    || fail "--save --verify-signature failed: $out"
+  grep -qFx verify_signature=true "$conf" || fail "--verify-signature not recorded: $(cat "$conf")"
+  json_check "$out" 'd["saved"] is True and d["verify_signature"] is True' "save verify_signature key"
+  isolated "$tmp" "$tmp/repo/install.sh" >/dev/null 2>&1 || fail "bare install refused a config with verify_signature"
+
+  out="$(isolated "$tmp" "$tmp/repo/install.sh" --save docker 2>&1)" || fail "re-save failed: $out"
+  ! grep -q '^verify_signature=' "$conf" || fail "a --save without the option kept it on: $(cat "$conf")"
+  grep -q 'previous saved config had it on; add --verify-signature to --save to keep it' <<< "$out" \
+    || fail "turning verification off was not reported: $out"
+
+  out="$(isolated "$tmp" "$tmp/repo/install.sh" --verify-signature docker 2>&1)" || status=$?
+  { (( status == 1 )) && grep -q -- '--verify-signature is recorded by --save' <<< "$out"; } \
+    || fail "--verify-signature without --save: $status $out"
   rm -rf "$tmp"
   trap - RETURN
 }
@@ -387,6 +455,33 @@ expect_rejected() {
   [[ ! -e "$tmp/.claude/skills" && ! -e "$tmp/.agents" ]] || fail "$label: rejected config still installed"
 }
 
+# install.sh vendored inside another repository: git reports the outer
+# checkout, which is not the installer's to record or update.
+test_save_refuses_an_enclosing_repository() {
+  local tmp status out pack
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  pack="$tmp/outer/vendor/pack"
+  make_fixture "$pack" false "$tmp"
+  rm -rf "$pack/.git"
+  isolated "$tmp" git -C "$tmp/outer" init -q -b main
+  status=0
+  out="$(isolated "$tmp" "$pack/install.sh" --save docker 2>&1)" || status=$?
+  { (( status == 2 )) && grep -q "error: --save: install.sh is in $pack, inside the git repository $tmp/outer" <<< "$out"; } \
+    || fail "--save inside another repository: $status $out"
+  [[ ! -e "$tmp/.claude" && ! -e "$(conf_dir "$tmp")" && ! -e "$tmp/.local" ]] \
+    || fail "a refused vendored --save changed files"
+  isolated "$tmp" "$pack/install.sh" docker >/dev/null || fail "a plain install from a vendored copy failed"
+
+  # Outside git the installer directory is the recorded source.
+  rm -rf "$tmp/outer/.git" "$tmp/.claude"
+  isolated "$tmp" "$pack/install.sh" --save docker >/dev/null || fail "--save outside git failed"
+  grep -qx "source_repo=$pack" "$(conf_dir "$tmp")/install.conf" || fail "--save outside git recorded another source"
+  grep -qx 'source_branch=' "$(conf_dir "$tmp")/install.conf" || fail "--save outside git recorded a branch"
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
 test_invalid_configs_are_rejected_unexecuted() {
   local tmp good dir
   tmp="$(mktemp -d)"
@@ -417,6 +512,8 @@ test_invalid_configs_are_rejected_unexecuted() {
   expect_rejected "$tmp" "unknown tool" "unknown tool 'notatool'"
   write_conf "$tmp" "${good/tools=claude/tools=gemini}"
   expect_rejected "$tmp" "removed tool" "tool 'gemini' was removed in 3.1.0"
+  write_conf "$tmp" "$good"$'verify_signature=yes\n'
+  expect_rejected "$tmp" "bad verify_signature" "verify_signature must be true or false"
   write_conf "$tmp" "${good/version=1/version=2}"
   expect_rejected "$tmp" "version" "unsupported version"
   write_conf "$tmp" "${good/tools=claude/tools claude}"
@@ -602,10 +699,12 @@ test_json_detect_and_save
 test_detect_suggests_none
 test_detect_rejects_other_options_and_ignores_config
 test_save_round_trip_records_source
+test_save_records_signature_verification
 test_save_without_upstream_records_empty
 test_save_only_after_successful_install
 test_save_holds_lock_through_save
 test_save_refusals
+test_save_refuses_an_enclosing_repository
 test_invalid_configs_are_rejected_unexecuted
 test_saved_config_rejects_override_env
 test_explicit_options_ignore_saved_config

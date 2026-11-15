@@ -13,6 +13,7 @@ into a full HTTP textbook.
 - Filtering and Sorting
 - Idempotency
 - Problem Details
+- Error model
 
 ## Resource Modeling
 
@@ -170,3 +171,60 @@ Add stable extension fields when helpful:
 - `fieldErrors`
 
 Do not invent a new top-level error envelope for every layer of the service.
+
+## Error model
+
+- Prefer RFC 9457 problem details with stable `type`, `title`, `status`, and domain-specific extension fields
+- Do not return one error shape from validation, another from auth, and a third from business rules
+- Never leak raw stack traces or ORM internals to clients
+
+Minimal RFC 9457 problem detail response:
+```json
+{
+  "type": "https://api.example.com/errors/insufficient-funds",
+  "title": "Insufficient funds",
+  "status": 422,
+  "detail": "Account balance is $10.00; transfer requires $50.00."
+}
+```
+
+Status code decision matrix (pick the narrowest correct code):
+
+| Scenario | Code | Notes |
+|----------|------|-------|
+| Malformed JSON, missing required field, wrong type | `400` | Client request is syntactically wrong |
+| Well-formed input but fails domain rule (insufficient funds, invalid state) | `422` | Semantic validation |
+| No credentials, expired token | `401` | Include `WWW-Authenticate` header |
+| Authenticated but not permitted | `403` | Do not challenge for credentials |
+| Resource does not exist, or exists but caller must not know | `404` | Pick one policy per resource and keep it |
+| Write conflicts with current state (stale ETag, duplicate unique key) | `409` | Problem detail should name the conflict |
+| Idempotency-Key reused with a different body | `422` | Not `409` - the key contract is broken |
+| Too many requests | `429` | Include `Retry-After` |
+| Unhandled server error | `500` | Never leak stack traces in the body |
+
+FastAPI exception handler wiring for consistent problem+json:
+```python
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
+
+app = FastAPI()
+
+@app.exception_handler(RequestValidationError)
+async def validation_handler(request: Request, exc: RequestValidationError):
+    return JSONResponse(
+        status_code=400,
+        media_type="application/problem+json",
+        content={
+            "type": "https://api.example.com/errors/validation",
+            "title": "Invalid request",
+            "status": 400,
+            "errors": [
+                {"location": [part for part in error.get("loc", ())
+                              if isinstance(part, (str, int))],
+                 "message": "Invalid value"}
+                for error in exc.errors()
+            ],
+        },
+    )
+```

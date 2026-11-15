@@ -512,3 +512,48 @@ Track these metrics continuously:
 | Stale index | Answers are outdated | Automate re-indexing on content changes |
 | Low similarity threshold | Noise in context | Raise threshold, add reranking |
 | No relevance check | Model hallucinates from bad context | Add similarity threshold, handle no-results |
+
+## Minimal RAG example (Python + pgvector)
+
+```python
+from anthropic import Anthropic
+import psycopg
+
+client = Anthropic()
+
+def search(query: str, limit: int = 5) -> list[dict]:
+    embedding = get_embedding(query)  # same model used at index time
+    with psycopg.connect(DB_URL) as conn:
+        rows = conn.execute(
+            "SELECT content, 1 - (embedding <=> %s::vector) AS score "
+            "FROM documents WHERE 1 - (embedding <=> %s::vector) > 0.7 "
+            "ORDER BY embedding <=> %s::vector LIMIT %s",
+            [embedding, embedding, embedding, limit],
+        ).fetchall()
+    return [{"content": r[0], "score": r[1]} for r in rows]
+
+def ask(question: str) -> str:
+    context = search(question)
+    if not context:
+        return "No relevant documents found."
+    response = client.messages.create(
+        model="claude-sonnet-5-5",
+        max_tokens=4096,
+        messages=[{"role": "user", "content": (
+            f"Answer based on these documents:\n\n"
+            + "\n---\n".join(d["content"] for d in context)
+            + f"\n\nQuestion: {question}"
+        )}],
+    )
+    if response.stop_reason != "end_turn":  # max_tokens can be spent on thinking; refusal has no answer
+        raise RuntimeError(f"incomplete answer: {response.stop_reason}")
+    # Thinking blocks can precede the text; select by type, not position.
+    return "".join(b.text for b in response.content if b.type == "text")
+```
+
+Key patterns: relevance threshold (0.7), same embedding model for index/query, context passed as user message prefix.
+`get_embedding` and the indexing loop are the pieces most often left out of a "build a RAG pipeline"
+answer; a delivered pipeline includes both (sections 3 and 4 of `references/rag-patterns.md`).
+
+Read `references/rag-patterns.md` for indexing pipelines, metadata filtering, multi-index
+strategies, and production RAG architecture.

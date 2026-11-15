@@ -253,31 +253,7 @@ Two categories: **micro-benchmarks** (is this function fast enough?) and **load 
 
 ### Load testing (k6)
 
-Detect first: `command -v k6 >/dev/null || echo "k6 missing"`.
-
-```javascript
-// k6 load test
-import http from "k6/http";
-import { check, sleep } from "k6";
-
-export const options = {
-  stages: [
-    { duration: "30s", target: 50 },   // ramp up
-    { duration: "1m",  target: 50 },   // sustain
-    { duration: "10s", target: 0 },    // ramp down
-  ],
-  thresholds: {
-    checks: ["rate==1"],              // fail the run when any status check fails
-    http_req_duration: ["p(95)<500"],   // 95th percentile under 500ms
-  },
-};
-
-export default function () {
-  const res = http.get("http://localhost:3000/api/health");
-  check(res, { "status 200": (r) => r.status === 200 });
-  sleep(1);
-}
-```
+Read `references/load-testing.md` for the k6 detection step and the starter script with thresholds.
 
 Don't run load tests against production without explicit approval. Don't run them in CI unless you have dedicated infrastructure for it.
 
@@ -344,6 +320,7 @@ Same position as **ci-cd**. A gate is a guard rail, not a goal (see Proportional
 
 - `references/language-patterns.md` - language-specific test patterns for JS/TS (Vitest, Jest), Python (pytest), Go (testing stdlib), and Rust (cargo test). Covers mocking, table-driven tests, async testing, snapshot testing, and framework-specific idioms.
 - `references/e2e-accessibility.md` - E2E testing with Playwright, visual regression (screenshot comparison, component snapshots), accessibility testing patterns, and CI integration for browser tests.
+- `references/load-testing.md` - k6 detection and starter script with thresholds
 
 ---
 

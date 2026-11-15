@@ -96,3 +96,14 @@ Choose the narrowest installed skill that covers the request. Use repo-audit onl
 broad audit, plan-review for decisions, and the host's normal browsing or scheduling
 capabilities for those tasks. When routing stays ambiguous, compare boundaries or ask
 for the missing scope. Use skill-creator to repair recurring description conflicts.
+
+## Body size and repeated version floors
+
+`scripts/lint-skills.sh` prints two advisory warnings about a `SKILL.md` body. One fires when
+the body is over about 5000 tokens: move catalogs (long tables, version lists, option lists)
+into `references/` and leave a one-line pointer. The other fires when the same version floor
+appears on more than one line of one `SKILL.md`, outside fenced blocks. It matches
+`tool v1.2+`, `tool >= 1.2`, and `tool 1.2 or later` (or `or newer`), compares them without
+case or the `v`, and reports `repeats the version floor 'tool 1.2+' on N lines`. State a
+floor once and keep the other copies in a reference such as `references/versions.md`, so a
+bump cannot leave one copy behind.
