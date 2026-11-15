@@ -25,6 +25,7 @@ NAME_RE = re.compile(r"^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$")
 HASH_RE = re.compile(r"^[0-9a-f]{64}$")
 PROVENANCE = "source-equal-v1"
 STAGING_NAMESPACE = ".skills-migrate-staging"
+RETIRED_DIR = ".retired"
 INHERITED_LOCK_FD = 9
 LOCK_BUSY_EXIT = 3
 # A reported partial apply: every skipped entry was printed and the rest was applied.
@@ -59,7 +60,10 @@ def overlaps(first: Path, second: Path) -> bool:
 
 
 def installer_lock_path() -> Path:
-    state = os.environ.get("XDG_STATE_HOME") or os.path.join(os.environ.get("HOME") or str(Path.home()), ".local", "state")
+    # Same rule as install.sh: a relative XDG_STATE_HOME is ignored.
+    state = os.environ.get("XDG_STATE_HOME") or ""
+    if not os.path.isabs(state):
+        state = os.path.join(os.environ.get("HOME") or str(Path.home()), ".local", "state")
     return Path(state) / "iuliandita-skills" / "install.lock"
 
 
@@ -441,7 +445,8 @@ def promote_replacement(
 
 def retire(path: Path, backup_base: Path, name: str, staging_area: Any) -> None:
     """Move a legacy entry into its backup; its working path is intact or absent, never partial."""
-    backup_root = backup_base / name
+    # Outside the per-skill folders install.sh prunes to three backups.
+    backup_root = backup_base / RETIRED_DIR / name
     stamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
     backup = backup_root / stamp
     suffix = 1

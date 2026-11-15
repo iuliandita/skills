@@ -249,6 +249,31 @@ test_link_mode_keeps_foreign_symlink_without_force() {
   trap - RETURN
 }
 
+# A copy left in the tool dir is skipped, so the run neither records it nor counts it.
+test_link_mode_skips_copy_without_recording_it() {
+  local tmp output
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  mkdir -p "$tmp/.claude/skills"
+  cp -r "$ROOT/skills/docker" "$tmp/.claude/skills/docker"
+  output="$(HOME="$tmp" "$ROOT/install.sh" --tool claude --link --no-backup docker git)"
+  grep -q 'docker exists as copy' <<< "$output" || fail "copy dir was not reported: $output"
+  [[ -d "$tmp/.claude/skills/docker" && ! -L "$tmp/.claude/skills/docker" && -L "$tmp/.claude/skills/git" ]] \
+    || fail "link run did not keep the copy and link git"
+  json_assert "$tmp/.claude/skills/.skills-lock.json" '"git" in d["skills"] and "docker" not in d["skills"]' \
+    "skipped copy dir was recorded in the tool lock"
+  grep -q '^Done\. 1 skills linked for claude\. 1 not linked; see above\.$' <<< "$output" \
+    || fail "link summary did not count linked skills: $output"
+
+  output="$(HOME="$tmp" "$ROOT/install.sh" --tool claude --link --force --no-backup docker git)"
+  [[ -L "$tmp/.claude/skills/docker" ]] || fail "--force did not convert the copy to a link"
+  json_assert "$tmp/.claude/skills/.skills-lock.json" '"docker" in d["skills"]' "forced link was not recorded"
+  grep -q '^Done\. 2 skills linked for claude\.$' <<< "$output" || fail "full link summary is wrong: $output"
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
 test_opencode_string_permissions_are_preserved() {
   local tmp config case output
   tmp="$(mktemp -d)"
@@ -605,6 +630,62 @@ test_commandcode_and_agy_targets() {
   trap - RETURN
 }
 
+# A corrupt lock is one error, not a "not installed" line per skill.
+test_check_reports_unusable_lock_once() {
+  local tmp dest status output lock
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  dest="$tmp/skills"
+  mkdir "$tmp/tmpdir"
+  "$ROOT/install.sh" --tool portable --dest "$dest" --no-backup docker >/dev/null
+
+  for lock in 'not json' '{"version": 1, "skills": []}' '[]'; do
+    printf '%s\n' "$lock" > "$dest/.skills-lock.json"
+    status=0
+    output="$(TMPDIR="$tmp/tmpdir" "$ROOT/install.sh" --tool portable --dest "$dest" --check 2>&1)" || status=$?
+    (( status == 1 )) || fail "--check with lock '$lock' exited $status, want 1: $output"
+    [[ "$(grep -c '^error: ' <<< "$output")" == 1 ]] || fail "--check with lock '$lock' did not report one error: $output"
+    grep -q "^error: .*lock file $dest/.skills-lock.json" <<< "$output" || fail "--check error does not name the lock: $output"
+    if grep -q 'Traceback\|not installed' <<< "$output"; then fail "--check with lock '$lock' hid the lock error: $output"; fi
+    [[ -z "$(ls -A "$tmp/tmpdir")" ]] || fail "--check with lock '$lock' left a temp file: $(ls -A "$tmp/tmpdir")"
+  done
+
+  status=0
+  output="$(TMPDIR="$tmp/tmpdir" "$ROOT/install.sh" --tool portable --dest "$dest" --check --json 2>/dev/null)" || status=$?
+  (( status == 1 )) || fail "--check --json with a corrupt lock exited $status, want 1"
+  json_check "$output" 'd["ok"] is False and len(d["errors"]) == 1 and "lock file" in d["errors"][0]' "corrupt lock --check --json"
+  [[ -z "$(ls -A "$tmp/tmpdir")" ]] || fail "--check --json left a temp file: $(ls -A "$tmp/tmpdir")"
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+# write_lock leaves a record with another provenance alone, so it must not
+# report that skill as published: publish_lock would drop its install record.
+test_untouched_lock_record_keeps_install_record() {
+  local tmp dest txn lock_before output
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  dest="$tmp/agent/skills"
+  if isolated "$tmp" SKILLS_INSTALL_FAULT=lock "$ROOT/install.sh" --tool portable --dest "$dest" --no-backup docker >/dev/null 2>&1; then
+    fail "lock fault did not fail the install"
+  fi
+  txn="$(txn_area "$dest")"
+  [[ "$(record_phase "$txn/docker")" == promoted ]] || fail "fixture has no install record"
+  python3 - "$dest/.skills-lock.json" "$ROOT/skills" "$(digest "$dest/docker")" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], "w", encoding="utf-8") as f:
+    json.dump({"version": 1, "source": sys.argv[2], "skills": {"docker": {"hash": sys.argv[3], "provenance": "other"}}}, f)
+PY
+  lock_before="$(sha256sum < "$dest/.skills-lock.json")"
+  output="$(isolated "$tmp" "$ROOT/install.sh" --tool portable --dest "$dest" docker 2>&1)" || fail "rerun failed: $output"
+  [[ "$(sha256sum < "$dest/.skills-lock.json")" == "$lock_before" ]] || fail "record with another provenance was rewritten"
+  [[ "$(record_phase "$txn/docker")" == promoted ]] || fail "install record was dropped for a lock record the run left alone"
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
 test_lock_preserves_unselected_records() {
   local tmp dest docker_hash
   tmp="$(mktemp -d)"
@@ -707,13 +788,48 @@ PY
   SKILLS_BACKUP_DIR="$tmp/migration-backups" "$src/install.sh" --tool portable --dest "$tmp/skills" --migrate --apply > "$tmp/apply"
   [[ ! -e "$tmp/skills/anti-slop" ]] || fail "installer migration apply did not retire old skill"
   [[ -d "$tmp/skills/code-simplification" ]] || fail "installer migration apply did not install replacement"
-  if ! find "$tmp"/migration-backups/skills-*/anti-slop -type f -name SKILL.md -print -quit | grep -q .; then
+  if ! find "$tmp"/migration-backups/skills-*/.retired/anti-slop -type f -name SKILL.md -print -quit | grep -q .; then
     fail "installer migration did not honor SKILLS_BACKUP_DIR"
   fi
   if output="$(LC_ALL=en_US.utf8 "$src/install.sh" --tool portable --dest "$tmp/skills" --check 2>&1)"; then
     fail "check accepted incomplete migration fixture"
   fi
   grep -q 'code-simplification.*current' <<< "$output" || fail "locale check did not recognize migrated replacement"
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+# Overwrite backups of the same name are pruned to three; the retirement backup is not theirs.
+test_retirement_backup_survives_overwrite_pruning() {
+  local tmp digest src i base
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  src="$tmp/src"
+  make_legacy_source "$src"
+  mkdir -p "$tmp/skills"
+  write_legacy_notice "$tmp/skills/anti-slop"
+  digest="$(LC_ALL=C find "$tmp/skills/anti-slop" -type f -print0 | LC_ALL=C sort -z | xargs -0 cat | sha256sum | cut -d' ' -f1)"
+  python3 - "$tmp/skills/.skills-lock.json" "$src/skills" "$digest" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], "w", encoding="utf-8") as f:
+    json.dump({"version": 1, "source": sys.argv[2], "skills": {"anti-slop": {"hash": sys.argv[3], "provenance": "source-equal-v1"}}}, f)
+PY
+  base="$tmp/.skills-backups/skills"
+  TZ=UTC "$src/install.sh" --tool portable --dest "$tmp/skills" --migrate --apply >/dev/null
+  [[ -f "$(find "$base/.retired/anti-slop" -mindepth 2 -maxdepth 2 -name anti-slop)/SKILL.md" ]] \
+    || fail "retirement backup is not under .retired: $(find "$base" -maxdepth 3)"
+  [[ ! -e "$base/anti-slop" ]] || fail "retirement backup landed in the pruned per-skill folder"
+
+  TZ=UTC "$src/install.sh" --tool portable --dest "$tmp/skills" --no-backup anti-slop >/dev/null 2>&1
+  for i in 1 2 3 4; do
+    echo "EDIT$i" >> "$tmp/skills/anti-slop/SKILL.md"
+    TZ=UTC "$src/install.sh" --tool portable --dest "$tmp/skills" --force anti-slop >/dev/null 2>&1
+  done
+  [[ "$(find "$base/anti-slop" -mindepth 1 -maxdepth 1 -type d | wc -l)" -eq 3 ]] || fail "overwrite backups were not pruned to three"
+  [[ -f "$(find "$base/.retired/anti-slop" -mindepth 2 -maxdepth 2 -name anti-slop)/SKILL.md" ]] \
+    || fail "overwrite pruning removed the retirement backup"
   rm -rf "$tmp"
   trap - RETURN
 }
@@ -2875,6 +2991,7 @@ test_legacy_backup_migration_keeps_layout_on_collision
 test_opencode_install_allows_installed_skills
 test_link_mode_never_links_canonical_onto_itself
 test_link_mode_keeps_foreign_symlink_without_force
+test_link_mode_skips_copy_without_recording_it
 test_opencode_string_permissions_are_preserved
 test_link_mode_writes_tool_lock
 test_removed_gemini_tool_is_unknown
@@ -2893,10 +3010,13 @@ test_omp_and_kimi_share_destination
 test_backup_preserves_top_level_symlink
 test_commandcode_and_agy_targets
 test_lock_preserves_unselected_records
+test_check_reports_unusable_lock_once
+test_untouched_lock_record_keeps_install_record
 test_deprecated_selection_and_notice
 test_check_reports_legacy_manifest_skill
 test_invalid_manifest_stops_installer
 test_installer_migration_dry_run_and_apply
+test_retirement_backup_survives_overwrite_pruning
 test_skipped_custom_skill_keeps_old_lock_and_migration_skips_it
 test_foreign_lock_is_backed_up_before_fresh_install
 test_copy_mode_migrates_each_selected_tool_destination
