@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -Eeuo pipefail
 
 # Verify version-pin receipts: skills/*/references/versions.md.
 #
 # Each file carries YAML frontmatter (checked_at, checked_by, pins: [...]).
-# This script fails a skill's receipt if:
+# This script reports a skill's receipt as stale if:
+#   - checked_at is older than the staleness budget (default 120 days,
+#     SKILLS_PIN_MAX_AGE_DAYS overrides it)
+# and fails it if:
 #   - checked_at is missing or not YYYY-MM-DD
-#   - checked_at is older than the staleness budget (default 120 days)
 #   - checked_at is more than one day in the future (one day covers authors
 #     in timezones ahead of the UTC runners)
 #   - any pins: entry is missing tool, version, or source
@@ -14,12 +16,28 @@ set -euo pipefail
 #
 # See docs/version-pins.md for the contract. Nothing to check (no
 # versions.md anywhere) is success, not an error.
+#
+# Exit codes:
+#   0   every receipt is well formed and inside the budget
+#   10  stale receipts only (the advisory wrapper downgrades this one code)
+#   1   anything else: a malformed or unreadable receipt, a failed receipt
+#       listing, a budget that is not a whole number of days, a command that
+#       failed. A run with both a broken and a stale receipt exits 1.
+STALE_EXIT=10
+trap 'exit 1' ERR
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SKILLS_ROOT="${SKILLS_ROOT:-$ROOT/skills}"
 MAX_AGE_DAYS="${SKILLS_PIN_MAX_AGE_DAYS:-120}"
 
+if [[ ! "$MAX_AGE_DAYS" =~ ^[0-9]+$ ]]; then
+  printf 'error: SKILLS_PIN_MAX_AGE_DAYS must be a whole number of days, got %q\n' "$MAX_AGE_DAYS" >&2
+  exit 1
+fi
+MAX_AGE_DAYS=$(( 10#$MAX_AGE_DAYS ))
+
 fail=0
+stale=0
 
 # Parse frontmatter of a versions.md file into machine-readable lines:
 #   CHECKED_AT=<value>
@@ -102,7 +120,13 @@ seconds_since() {
   echo $(( now_epoch - then_epoch ))
 }
 
-mapfile -t receipt_files < <(find "$SKILLS_ROOT" -type f -path '*/references/versions.md' 2>/dev/null | sort)
+if ! receipt_list="$(find "$SKILLS_ROOT" -type f -path '*/references/versions.md')"; then
+  printf 'error: could not list receipts under %s\n' "$SKILLS_ROOT" >&2
+  exit 1
+fi
+
+receipt_files=()
+[[ -z "$receipt_list" ]] || mapfile -t receipt_files < <(sort <<< "$receipt_list")
 
 if (( ${#receipt_files[@]} == 0 )); then
   printf 'Version receipts OK: no skills carry references/versions.md yet.\n'
@@ -146,7 +170,7 @@ for file in "${receipt_files[@]}"; do
   elif (( age_days > MAX_AGE_DAYS )); then
     printf '[!] %s: checked_at %s is %d days old (budget %d days) - re-verify pins or remove them\n' \
       "$skill" "$CHECKED_AT" "$age_days" "$MAX_AGE_DAYS" >&2
-    fail=1
+    stale=1
   fi
 
   pin_count="${PIN_COUNT:-0}"
@@ -184,6 +208,11 @@ done
 if (( fail )); then
   printf '\nVersion receipt check failed.\n' >&2
   exit 1
+fi
+
+if (( stale )); then
+  printf '\nVersion receipts are past the age budget.\n' >&2
+  exit "$STALE_EXIT"
 fi
 
 printf 'Version receipts OK: %d skill(s), oldest check %s.\n' "$skill_count" "$oldest_date"

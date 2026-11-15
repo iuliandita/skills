@@ -21,8 +21,8 @@ repos:
 
       - id: freshness-date-check
         name: freshness markers use current collection month (advisory)
-        # Only exit 1 (stale markers) is downgraded; any other failure blocks.
-        entry: bash -c 'rc=0; ./scripts/check-freshness-dates.sh || rc=$?; if (( rc == 1 )); then echo "advisory - freshness markers are stale, not blocking"; else exit "$rc"; fi'
+        # Only exit 10 (stale markers) is downgraded; any other failure blocks.
+        entry: bash -c 'rc=0; ./scripts/check-freshness-dates.sh || rc=$?; if (( rc == 10 )); then echo "advisory - freshness markers are stale, not blocking"; else exit "$rc"; fi'
         verbose: true
         language: system
         pass_filenames: false

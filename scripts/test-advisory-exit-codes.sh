@@ -4,9 +4,9 @@ set -euo pipefail
 # Pins the exit codes of the two gates that CI and pre-commit run as advisory:
 # scripts/check-freshness-dates.sh and scripts/check-version-receipts.sh.
 #
-# The advisory wrappers downgrade exit 1 to a warning and fail on any other
-# code. These cases record which inputs produce 1, so a change that moves a
-# code has to change the wrappers with it.
+# The advisory wrappers downgrade the stale code (10) to a warning and fail
+# on any other code. These cases record which inputs produce 10 and which
+# produce 1, so a change that moves a code has to change the wrappers with it.
 
 # Git hooks export GIT_DIR and friends; fixture repos must not inherit them.
 while IFS= read -r var; do unset "$var"; done < <(git rev-parse --local-env-vars)
@@ -17,6 +17,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 CASES=0
+STALE=10
 
 # shellcheck source=./scripts/gate-test-lib.sh
 source "$ROOT/scripts/gate-test-lib.sh"
@@ -55,9 +56,9 @@ expect_pass "freshness: current marker"
 
 new_freshness_fixture "Pins verified January 2020."
 run_freshness env
-expect_code "freshness: stale marker" 1 "stale freshness marker"
+expect_code "freshness: stale marker" "$STALE" "stale freshness marker"
 
-# A tracked file that cannot be read also exits 1: the wrapper reports it as stale.
+# A tracked file that cannot be read is a broken input, not a stale one.
 if can_deny_read; then
   new_freshness_fixture "Pins verified January 2020."
   chmod 000 "$REPO/skills/alpha/SKILL.md"
@@ -65,15 +66,32 @@ if can_deny_read; then
   chmod 644 "$REPO/skills/alpha/SKILL.md"
   expect_code "freshness: unreadable tracked file" 1 "Permission denied"
   [[ "$OUT" != *"stale freshness marker"* ]] || fail "freshness: unreadable file was reported as a stale marker"
+
+  # Broken wins: a stale marker is reported first, then the unreadable file.
+  new_freshness_fixture "Pins verified January 2020."
+  mkdir -p "$REPO/skills/beta"
+  printf 'Pins verified January 2020.\n' > "$REPO/skills/beta/SKILL.md"
+  git -C "$REPO" add skills
+  chmod 000 "$REPO/skills/beta/SKILL.md"
+  run_freshness env
+  chmod 644 "$REPO/skills/beta/SKILL.md"
+  expect_code "freshness: stale marker and unreadable file" 1 "stale freshness marker in skills/alpha/SKILL.md"
+  [[ "$OUT" == *"Permission denied"* ]] || fail "freshness: unreadable file was not reported"
 fi
 
-# A failing date keeps its own exit code, which the wrapper does not downgrade.
+# Outside a git repository the file listing fails: an error, not an empty scan.
+new_freshness_fixture "Pins verified January 2020."
+rm -rf "$REPO/.git"
+run_freshness env GIT_CEILING_DIRECTORIES="$TMP"
+expect_code "freshness: outside a git repository" 1 "could not list tracked files"
+
+# A failing command is exit 1 whatever its own code, here the stale code itself.
 new_freshness_fixture "Pins verified January 2020."
 mkdir -p "$TMP/stub"
-printf '#!/usr/bin/env bash\nexit 3\n' > "$TMP/stub/date"
+printf '#!/usr/bin/env bash\nexit %d\n' "$STALE" > "$TMP/stub/date"
 chmod +x "$TMP/stub/date"
 run_freshness env PATH="$TMP/stub:$PATH"
-expect_code "freshness: date fails" 3 ""
+expect_code "freshness: date fails" 1 ""
 
 # --- check-version-receipts.sh ---
 
@@ -101,10 +119,9 @@ expect_pass "receipts: fresh receipt"
 
 new_receipt_fixture "$(receipt 2020-01-01)"
 run_receipts
-expect_code "receipts: receipt past the age budget" 1 "days old (budget 120 days)"
+expect_code "receipts: receipt past the age budget" "$STALE" "days old (budget 120 days)"
 
-# Structure failures share exit 1, which is why CI runs the structure step
-# (age budget lifted) before the advisory age step.
+# The structure step and hook lift the age budget, so an old receipt passes there.
 new_receipt_fixture "$(receipt 2020-01-01)"
 run_receipts SKILLS_PIN_MAX_AGE_DAYS=36500
 expect_pass "receipts: old receipt with the age budget lifted"
@@ -121,10 +138,32 @@ if can_deny_read; then
   expect_code "receipts: unreadable receipt" 1 "missing checked_at"
 fi
 
-# A budget that is not a number stops the script with exit 1 as well.
+# Broken wins: one receipt past the budget and one malformed, in either order.
+for broken in beta aaa; do
+  new_receipt_fixture "$(receipt 2020-01-01)"
+  mkdir -p "$SKILLS/$broken/references"
+  printf -- '---\nchecked_by: fixture\n---\n' > "$SKILLS/$broken/references/versions.md"
+  run_receipts
+  expect_code "receipts: stale receipt and malformed $broken receipt" 1 "$broken: missing checked_at"
+  [[ "$OUT" == *"days old (budget 120 days)"* ]] || fail "receipts: stale receipt was not reported beside the malformed one"
+done
+
+# A receipt listing that fails is an error, not "nothing to check".
 new_receipt_fixture "$(receipt 2020-01-01)"
-run_receipts SKILLS_PIN_MAX_AGE_DAYS=many
-expect_code "receipts: non-numeric age budget" 1 "unbound variable"
-[[ "$OUT" != *"days old"* ]] || fail "receipts: non-numeric budget was reported as a stale receipt"
+run_receipts SKILLS_ROOT="$SKILLS/missing"
+expect_code "receipts: skills root that does not exist" 1 "could not list receipts"
+
+# A budget that is not a whole number is refused before any receipt is read.
+for budget in many 12x -5 ""; do
+  new_receipt_fixture "$(receipt 2020-01-01)"
+  run_receipts SKILLS_PIN_MAX_AGE_DAYS="$budget"
+  if [[ -z "$budget" ]]; then
+    # Empty means unset: the default budget applies.
+    expect_code "receipts: empty age budget" "$STALE" "days old (budget 120 days)"
+    continue
+  fi
+  expect_code "receipts: age budget '$budget'" 1 "SKILLS_PIN_MAX_AGE_DAYS must be a whole number"
+  [[ "$OUT" != *"days old"* ]] || fail "receipts: budget '$budget' was reported as a stale receipt"
+done
 
 printf 'advisory-exit-code tests passed (%d cases)\n' "$CASES"
