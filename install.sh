@@ -487,7 +487,7 @@ declare -A SKILL_DEPRECATED=()
 
 load_skill_metadata() {
   local rows line dir
-  rows="$(python3 "$FRONTMATTER_PY" batch "$SKILLS_SRC")" || return 1
+  rows="$(python3 -I "$FRONTMATTER_PY" batch "$SKILLS_SRC")" || return 1
   while IFS= read -r line; do
     [[ -n "$line" ]] || continue
     dir="${line%%$'\t'*}"
@@ -1868,10 +1868,10 @@ run_migrator() {
   local record_dest="$1" out rc=0 line status text dest_json status_json text_json
   shift
   if [[ "$JSON_MODE" != true || "$JSON_RECORDING" != true ]]; then
-    python3 "$MIGRATOR" "$@"
+    python3 -I "$MIGRATOR" "$@"
     return
   fi
-  out="$(python3 "$MIGRATOR" "$@")" || rc=$?
+  out="$(python3 -I "$MIGRATOR" "$@")" || rc=$?
   [[ -z "$out" ]] || printf '%s\n' "$out"
   json_q "$record_dest"; dest_json="$REPLY"
   while IFS= read -r line; do
@@ -1888,12 +1888,26 @@ run_migrator() {
   return "$rc"
 }
 
+# migrator_result STATUS DEST APPLIED_FILE: 0 when the helper succeeded, 1 after
+# a reported partial apply (the helper's status 6), so the caller goes on and
+# the run exits 1 at the end. Any other status removes APPLIED_FILE and ends
+# the run with that status: the helper did not report what it left behind.
+migrator_result() {
+  (( $1 != 0 )) || return 0
+  if (( $1 == 6 )); then
+    printf '  [!] migration of %s is incomplete; see the SKIP lines above, then rerun\n' "$2"
+    return 1
+  fi
+  [[ -z "$3" ]] || rm -f "$3"
+  exit "$1"
+}
+
 run_legacy_cleanup() {
   local tool="$1" legacy="$2"
   shift 2
   run_migrator "$legacy" --source "$SKILLS_SRC" --legacy-dir "$legacy" \
     --new-dir "$(resolve_tool_path "$tool")" --link-root "$CANONICAL_DIR" \
-    --backup-dir "${SKILLS_BACKUP_DIR:-$(dirname "$legacy")/.skills-backups/$(basename "$legacy")}" "$@"
+    --backup-dir "$(backup_base_for "$legacy")" "$@"
 }
 
 legacy_cleanup_hint() {
@@ -3659,7 +3673,7 @@ main() {
   if [[ "$migrate_mode" == "true" ]]; then
     command -v python3 >/dev/null || { printf '%s\n' "error: migration requires python3; install it and rerun" >&2; exit 1; }
     [[ -f "$MIGRATOR" ]] || { printf 'error: migration helper is unavailable: %s\n' "$MIGRATOR" >&2; exit 1; }
-    local migration_args=(--manifest "$MIGRATIONS_FILE" --source "$SKILLS_SRC") sync_failed=0 refused=0
+    local migration_args=(--manifest "$MIGRATIONS_FILE" --source "$SKILLS_SRC") sync_failed=0 refused=0 partial=0 helper_rc
     if [[ "$apply_migration" == "true" ]]; then
       migration_args+=(--apply)
       printf 'Applying recorded legacy-skill migration. Backups are always retained.\n\n'
@@ -3683,7 +3697,9 @@ main() {
       if [[ "$apply_migration" == "true" ]] && ! guard_migration_dest "$CANONICAL_DIR"; then
         refused=1
       else
-        run_migrator "$CANONICAL_DIR" "${migration_args[@]}" --dest "$CANONICAL_DIR" --backup-dir "${SKILLS_BACKUP_DIR:-$(dirname "$CANONICAL_DIR")/.skills-backups/$(basename "$CANONICAL_DIR")}" --protected-root "$CANONICAL_DIR" --preserve-shared-canonical "${canonical_args[@]}"
+        helper_rc=0
+        run_migrator "$CANONICAL_DIR" "${migration_args[@]}" --dest "$CANONICAL_DIR" --backup-dir "$(backup_base_for "$CANONICAL_DIR")" --protected-root "$CANONICAL_DIR" --preserve-shared-canonical "${canonical_args[@]}" || helper_rc=$?
+        migrator_result "$helper_rc" "$CANONICAL_DIR" "$canonical_applied" || partial=1
       fi
       if [[ -n "$canonical_applied" && "$refused" == 0 ]]; then
         sync_migrated_opencode_permissions "$CANONICAL_DIR" "$canonical_applied" || sync_failed=1
@@ -3706,7 +3722,9 @@ main() {
           applied_file="$(mktemp)"
           applied_args=(--applied-file "$applied_file")
         fi
-        run_migrator "$tool_dir" "${migration_args[@]}" --dest "$tool_dir" --backup-dir "${SKILLS_BACKUP_DIR:-$(dirname "$tool_dir")/.skills-backups/$(basename "$tool_dir")}" --protected-root "$CANONICAL_DIR" --link-root "$CANONICAL_DIR" "${applied_args[@]}"
+        helper_rc=0
+        run_migrator "$tool_dir" "${migration_args[@]}" --dest "$tool_dir" --backup-dir "$(backup_base_for "$tool_dir")" --protected-root "$CANONICAL_DIR" --link-root "$CANONICAL_DIR" "${applied_args[@]}" || helper_rc=$?
+        migrator_result "$helper_rc" "$tool_dir" "$applied_file" || partial=1
         if [[ "$apply_migration" == "true" && "$tool" == "opencode" ]]; then
           sync_migrated_opencode_permissions "$tool_dir" "$applied_file" || sync_failed=1
           rm -f "$applied_file"
@@ -3733,11 +3751,13 @@ main() {
           applied_file="$(mktemp)"
           applied_args=(--applied-file "$applied_file")
         fi
+        helper_rc=0
         if paths_match "$tool_dir" "$CANONICAL_DIR"; then
-          run_migrator "$tool_dir" "${migration_args[@]}" --dest "$tool_dir" --backup-dir "${SKILLS_BACKUP_DIR:-$(dirname "$tool_dir")/.skills-backups/$(basename "$tool_dir")}" --protected-root "$CANONICAL_DIR" --preserve-shared-canonical "${applied_args[@]}"
+          run_migrator "$tool_dir" "${migration_args[@]}" --dest "$tool_dir" --backup-dir "$(backup_base_for "$tool_dir")" --protected-root "$CANONICAL_DIR" --preserve-shared-canonical "${applied_args[@]}" || helper_rc=$?
         else
-          run_migrator "$tool_dir" "${migration_args[@]}" --dest "$tool_dir" --backup-dir "${SKILLS_BACKUP_DIR:-$(dirname "$tool_dir")/.skills-backups/$(basename "$tool_dir")}" --protected-root "$CANONICAL_DIR" "${applied_args[@]}"
+          run_migrator "$tool_dir" "${migration_args[@]}" --dest "$tool_dir" --backup-dir "$(backup_base_for "$tool_dir")" --protected-root "$CANONICAL_DIR" "${applied_args[@]}" || helper_rc=$?
         fi
+        migrator_result "$helper_rc" "$tool_dir" "$applied_file" || partial=1
         if [[ "$apply_migration" == "true" && "$tool" == "opencode" ]]; then
           sync_migrated_opencode_permissions "$tool_dir" "$applied_file" || sync_failed=1
           rm -f "$applied_file"
@@ -3770,6 +3790,7 @@ main() {
         sync_opencode_permissions "$OPENCODE_CONFIG_FILE" "$permission_dest" preview || exit 1
       fi
     fi
+    (( partial == 0 )) || exit 1
     exit 0
   fi
 
