@@ -12,6 +12,7 @@ Deep-dive reference for cluster design, GitOps strategy, security architecture, 
 - Cost Optimization Playbook
 - Disaster Recovery
 - Platform Requirements (K8s 1.35+)
+- Platform awareness
 
 ---
 
@@ -413,3 +414,12 @@ Keep these in mind when upgrading:
 | **autoscaling/v2** | Now | v2beta1/v2beta2 removed in 1.25/1.26. |
 | **User namespaces** | 1.33+ (on by default) | `hostUsers: false` maps container UID 0 to unprivileged host UID. Huge for multi-tenancy/PCI. |
 | **Pod-level mTLS** | 1.35 beta | KEP-4317. Native X.509 certs for pods without service mesh. Future alternative to Istio/Cilium for zero-trust. |
+
+## Platform awareness
+
+- **cgroup v2 required** on K8s 1.36+ (`FailCgroupV1` defaults to true; kubelet won't start on cgroup v1 unless `failCgroupV1: false`). Nodes on cgroup v1 (CentOS 7, RHEL 7, Ubuntu 18.04) will fail.
+- **containerd 2.0 required** on K8s 1.36+. Last release supporting containerd 1.x is 1.35.
+- **AppArmor annotation auto-population stopped** in 1.34; full removal in 1.36. Use `securityContext.appArmorProfile` field.
+- **DRA (Dynamic Resource Allocation)** GA in 1.34 for GPU/FPGA/hardware scheduling. Replaces device plugin model.
+- **User namespaces** (`hostUsers: false`) enabled by default since K8s 1.33. Maps container UID 0 to unprivileged host UID. Huge for PCI multi-tenancy - container breakout doesn't yield host root.
+- **Pod-level mTLS** (KEP-4317) beta in 1.35, feature gate `PodCertificates` must be manually enabled. Native X.509 certs for pods without service mesh. Future alternative to Istio/Cilium for Req 4 compliance.

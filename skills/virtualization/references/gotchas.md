@@ -378,3 +378,44 @@ For thin-provisioned storage on SSDs, all four pieces must be in place:
 Missing any link means deleted data never gets reclaimed at the storage level.
 And remember: adding `discard=on` to an existing VM requires a graceful shutdown, verified
 stopped state, and a fresh start (not reboot), because QEMU reads disk config when it starts.
+
+## Critical gotchas (battle-tested)
+
+These come from production Proxmox environments and will save hours of debugging:
+
+**Stop/start vs reboot:** Guest `reboot` does NOT restart the QEMU process. Disk config
+changes (discard, cache mode, iothread, bus type) only apply when QEMU starts fresh.
+Use `qm shutdown`, verify stopped state, then `qm start` for hardware config changes.
+This also applies to memory balloon device changes. Reserve `qm stop` for an explicitly
+justified forced-stop recovery after graceful shutdown fails; it cuts guest power.
+
+**LVM thin pool at 100%:** When data_percent hits 100%, ALL VM I/O on that pool fails
+instantly - guests hang, no graceful degradation. Recovery requires `lvextend` on the
+thin pool or migrating VMs off. Monitor thin pool usage and alert well before 100% (80%
+warning, 90% critical). `data_percent` is the share of the pool's data space currently
+allocated to its thin volumes (lvmthin(7)), not in-guest filesystem usage - a VM that wrote
+then deleted 50GB keeps that 50GB allocated until a discard reaches the pool.
+
+**Live migration via SSH:** `qm migrate` runs in the foreground. If the SSH session drops,
+the migration aborts. For large VMs (32GB+ disk), use:
+```bash
+nohup qm migrate <vmid> <target> --online --with-local-disks \
+  > /tmp/migrate-<vmid>.log 2>&1 &
+```
+Migration is abort-safe: source VM stays running on failure, target LVs are cleaned up.
+
+**KVM ballooning:** The balloon device lets the host reclaim unused guest memory between the
+configured minimum and `memory:`. It needs the guest's `virtio_balloon` driver: minimal Alpine
+images and some BSDs do not load it, so the host's request is simply ignored. Raising `memory:`
+above the running maximum is a different mechanism - DIMM hotplug, which needs `hotplug: memory`
+plus NUMA and a guest that onlines new blocks, or a full stop/start. Even on Debian, balloon
+behavior is unpredictable under memory pressure. Recommendation: use `floating = 0` in the
+bpg/proxmox Terraform `memory` block, or set `balloon: 0` in native Proxmox config, and
+provision VMs with the memory they actually need.
+
+**fail2ban on Proxmox (Debian 13):** `/var/log/daemon.log` doesn't exist under journald.
+Use `backend = systemd` with `journalmatch = _COMM=pvedaemon` in the jail config.
+
+**openipmi on non-IPMI hardware:** Fails on boot, generates spurious alerts. Safe to
+`systemctl mask openipmi` on nodes without BMC/IPMI hardware. Masking survives package
+updates; disabling doesn't.

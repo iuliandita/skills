@@ -12,6 +12,7 @@ real recovery; the rest are DSM behaviors that reliably mislead.
 - Behavior of a damaged volume
 - DSM behaviors that mislead
 - Remote work discipline
+- Environment facts
 
 ## Never do these on a damaged Synology btrfs volume
 
@@ -111,3 +112,26 @@ succeed where approaches that *remove* it cannot. Reach for the ignoring lever f
   the whole device. Verify overlay mapping and origin write protection separately.
 - Log to a file on persistent storage, not to the terminal. The terminal is the least durable
   place the output can live.
+
+## Environment facts
+
+Observed on a DS415+ running DSM 7.1.1 (avoton). The mechanisms hold broadly, but re-check any
+row that a decision rests on - `scp -O`, in particular, follows from DSM's SFTP service being
+off, which is a toggle rather than a fixed property.
+
+| Fact | Consequence |
+|---|---|
+| `/tmp` is `noexec` | Deploy binaries to `/root/` or a package dir |
+| sftp subsystem disabled | `scp` needs `-O` (legacy protocol) or it fails with `subsystem request failed` |
+| User homes live on the data volume (`/volume1/homes/<user>`) | If the volume is down, key auth breaks (`authorized_keys` unreadable) and login prints `Could not chdir to home directory` |
+| Every SSH session lands in the home dir | `umount /volume1` fails with "target is busy". Always `cd /` first |
+| `/bin/sh` is ash | No bashisms, no process substitution `<(...)` |
+| Missing tools | `fuser`, `mountpoint`, `modinfo`, `lsof` absent - read `/proc` directly |
+| Present tools | `python3`, `mdadm`, `dmsetup`, `losetup`, `truncate`, `blockdev`, `btrfs`, `systemctl`, `smartctl` |
+| Root login | DSM 7 disables direct root SSH. Log in as an admin user and `sudo -i` |
+| `/etc/fstab` is regenerated at boot | Hand-edited mount options do not persist |
+| `syno_poweroff_task` | Exists on DSM 6, **not** on DSM 7.1+. Stop packages and services individually |
+| Defaults live in `/etc.defaults/` | Edits there survive DSM updates better than `/etc/`; both can be overwritten by a major upgrade |
+
+Read `references/dsm-cli.md` for the command reference (packages, services, shares, users,
+indexing, logs, SMART, notifications).

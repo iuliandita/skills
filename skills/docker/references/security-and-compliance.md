@@ -11,6 +11,7 @@ Security hardening, vulnerability management, supply chain integrity, and PCI-DS
 - Runtime Hardening
 - PCI-DSS 4.0 Container Requirements
 - Public Custom Image Publishing
+- PCI-DSS 4.0 container requirements (summary)
 
 ---
 
@@ -463,3 +464,19 @@ green public builds.
 - Document any root entrypoint or permission-fixing behavior clearly. A root entrypoint
   that chowns volumes then drops privileges can be useful, but it is a public-image
   security expectation that must be explicit.
+
+## PCI-DSS 4.0 container requirements (summary)
+
+PCI-DSS 4.0.1 is the only active version (4.0 retired December 31, 2024). Key container-specific requirements:
+
+- **Req 1**: Network segmentation - use user-defined bridge networks, `internal: true` for backend services, never expose CDE containers on default bridge
+- **Req 2.2**: Harden containers - non-root, drop caps, read-only rootfs, one process per container
+- **Req 4**: Encrypt transmissions - TLS between CDE containers in Compose (mount certs, use TLS-enabled images, or front with a TLS-terminating reverse proxy)
+- **Req 5.2/5.3**: Immutable images (deploy by digest), Falco for runtime detection
+- **Req 6.3**: Vulnerability scanning on every image before deployment (Docker Scout, Grype, Trivy v0.72.0+)
+- **Req 6.3.2**: SBOM for every production image
+- **Req 8.6.2**: No hardcoded secrets in images, compose files, or env vars
+- **Req 10**: Audit logging - container stdout/stderr to immutable log store
+- **Req 11.5**: Image digest pinning + Falco = FIM for containers
+
+Full mapping in `references/security-and-compliance.md`.

@@ -13,6 +13,7 @@ Key shift: PCI-DSS 4.0 is outcome-based with a "customized approach" - prove you
 - PCI MPoC (Mobile Payments on COTS)
 - Compliance Tooling
 - Actionable Checklist
+- Quick reference: PCI-DSS 4.0 on K8s
 
 ---
 
@@ -328,3 +329,21 @@ All PCI-DSS 4.0 controls in this document apply to the A&M backend cluster. Addi
 14. **Incident response**: Runbooks for container forensics, pod isolation, snapshot-before-kill
 15. **Node hardening**: Container-Optimized OS / Talos; kube-bench CIS pass; auto-patching
 16. **Documentation**: Network diagrams (showing K8s objects), data flow diagrams, risk assessments, RBAC review records
+
+## Quick reference: PCI-DSS 4.0 on K8s
+
+PCI-DSS 4.0.1 is the only active version (4.0 retired December 31, 2024; 3.2.1 retired March 2024). 51 future-dated requirements became mandatory March 31, 2025.
+
+**Critical K8s-specific requirements:**
+- **Req 1**: Network segmentation -> default-deny NetworkPolicies, private API server, VPC-native clusters
+- **Req 3.5**: Data encryption -> etcd encryption via KMS v2 (not just disk encryption - Req 3.5.1.2 forbids relying on disk-level alone)
+- **Req 4**: Encrypt transmissions -> mTLS between all CDE services (Istio strict / Cilium mutual auth)
+- **Req 6.3.2**: Component inventory -> SBOMs for every image
+- **Req 8.4.2**: MFA for all CDE access -> OIDC + MFA on all kubectl paths
+- **Req 8.6.2**: No hardcoded secrets -> External Secrets Operator, never in manifests/values/env vars
+- **Req 10.4.1.1**: Automated audit log review -> K8s audit policy with Metadata for sensitive payloads and RequestResponse only for reviewed non-sensitive resources, ship to SIEM with alert rules
+- **Req 11.5**: FIM / change detection -> Falco runtime detection, ArgoCD drift detection, image digest pinning
+
+**CDE isolation**: dedicated cluster strongly preferred. Shared cluster puts the entire cluster in PCI scope and requires dedicated node pools + taints, gVisor/Kata for CDE pods, separate DNS, separate audit streams, and extensive QSA documentation. Most QSAs push back on shared clusters.
+
+**PCI MPoC**: MPoC backends (attestation/monitoring for tap-to-pay) fall under full PCI-DSS scope. No K8s-specific addenda - standard PCI-DSS 4.0 controls apply.
