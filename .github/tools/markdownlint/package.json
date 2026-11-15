@@ -3,6 +3,6 @@
   "private": true,
   "description": "Pinned markdownlint-cli2 for the CI markdown job",
   "devDependencies": {
-    "markdownlint-cli2": "0.23.3"
+    "markdownlint-cli2": "0.24.0"
   }
 }

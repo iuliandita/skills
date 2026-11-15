@@ -21,5 +21,7 @@ exclude = [
   "^https://www\\.synology\\.com/[a-z-]+/security/advisory/",
   # SLSA spec cited by ci-cd; reachable in a browser, times out from CI runners (#424).
   "^https://slsa\\.dev/",
+  # VirtualBox downloads page cited by virtualization; reachable in a browser, 410 from CI runners (#449).
+  "^https://www\\.virtualbox\\.org/wiki/Downloads$",
   "^https://github\\.com/iuliandita/skills/compare/v[0-9]+\\.[0-9]+\\.[0-9]+\\.\\.\\.(?:v[0-9]+\\.[0-9]+\\.[0-9]+|HEAD)$"
 ]

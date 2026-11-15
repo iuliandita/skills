@@ -236,7 +236,7 @@ The Trivy supply chain attack (CVE-2026-33634) demonstrated that **mutable Git t
 - **Vendor critical CI tools** or use pre-built, verified binaries instead of pulling from upstream on every run.
 - **Rotate secrets** if any CI pipeline ran compromised Trivy (v0.69.4/5/6) between March 19-23, 2026. The infostealer exfiltrated SSH keys, cloud creds, Docker configs, and k8s tokens.
 
-**Trivy safe versions (September 2026):** use binary v0.74.0+ from official releases for new pins. The March 2026 rollback set was binary v0.69.3, `trivy-action@v0.35.0`, and `setup-trivy@v0.2.6`; those actions still need verified commit SHAs, not mutable tags. Do NOT use v0.69.4/5/6.
+**Trivy versions (November 2026):** use binary v0.76.2 from official releases, never below v0.72.0 (CVE-2026-63328 affects every earlier release). Pin `trivy-action` and `setup-trivy` to verified commit SHAs, not mutable tags, and set their `version` input. Do NOT use v0.69.4/5/6 (compromised) or the March 2026 fallback set (binary v0.69.3, `trivy-action@v0.35.0`, `setup-trivy@v0.2.6`), which is below the minimum.
 
 ### Secrets Management
 
