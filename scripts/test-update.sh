@@ -293,6 +293,11 @@ test_json_output() {
   expect_rc 0 "json updated"
   json_check "$OUT" "d['status'] == 'updated' and d['changed'] == 1 and d['new'] == '$(dev_head)' and len(d['old']) == 40" "updated keys"
 
+  mkdir "$F/tmpdir"
+  isolated "$H" TMPDIR="$F/tmpdir" "$F/repo/install.sh" --update --json >"$F/out" 2>"$F/err" \
+    || fail "--update --json with TMPDIR failed: $(cat "$F/err")"
+  [[ -z "$(ls -A "$F/tmpdir")" ]] || fail "--update --json left a temp file: $(ls -A "$F/tmpdir")"
+
   mine="local edit"
   printf '%s\n' "$mine" >> "$H/.claude/skills/docker/SKILL.md"
   printf 'upstream\n' >> "$F/dev/skills/docker/SKILL.md"
@@ -487,7 +492,7 @@ test_held_lock_exits_3() {
   ( exec 8>>"$H/.local/state/iuliandita-skills/install.lock"; flock 8; : > "$F/held"; exec sleep 30 ) &
   holder=$!
   for _ in $(seq 100); do [[ -e "$F/held" ]] && break; sleep 0.1; done
-  expect_refused 3 "held lock" "Another install.sh run holds"
+  expect_refused 3 "held lock" "^error: another install.sh run holds"
   kill "$holder"
   wait "$holder" 2>/dev/null || true
   [[ ! -e "$F/repo/.git/FETCH_HEAD" ]] || fail "fetched without the lock"

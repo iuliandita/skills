@@ -176,7 +176,8 @@ Options:
   --migrate           Preview recorded legacy-skill migrations and old tool-dir
                       link cleanup (use --apply to run)
   --apply             Apply a migration preview; requires --migrate
-  --force             Overwrite existing skills without prompting
+  --force             Replace existing skills that differ from the source
+                      instead of skipping them
   --no-backup         Skip backup of existing skills
   --include-internal  Include skills marked metadata.internal: true
   --doctor            Report skill names a harness can reach through more than
@@ -225,7 +226,8 @@ Environment:
   SKILLS_BACKUP_DIR       Backup directory (default: next to each destination)
   SKILLS_MIGRATIONS_FILE  Alternate migrations.json
   SKILLS_MIGRATOR         Alternate migration helper
-  SKILLS_LOCK_WAIT        Seconds to wait for the installer lock (default: 0)
+  SKILLS_LOCK_WAIT        Seconds to wait for the installer lock (default: 30,
+                          or 0 for --update)
   SKILLS_UPDATE_TIMEOUT   Seconds allowed for the --update fetch (default: 300)
   SKILLS_INSTALL_FAULT    Fault injection for tests; leave unset
   OPENCODE_CONFIG_FILE    OpenCode config that receives skill permissions
@@ -312,6 +314,17 @@ json_push() {
   JSON_LISTS[$1]+="${JSON_LISTS[$1]:+, }$2"
 }
 
+# json_merge_object OBJECT_JSON: adds the keys of a helper's one-line JSON
+# object to the report. Returns 1 and adds nothing when the helper printed no
+# object, as a crashed one does.
+json_merge_object() {
+  local out="$1"
+  [[ "$out" == "{"*"}" ]] || return 1
+  out="${out#\{}"
+  out="${out%\}}"
+  [[ -z "$out" ]] || JSON_BODY+="${JSON_BODY:+, }$out"
+}
+
 # json_dest TOOL DEST KIND DIFFERING SKILL...: one install destination.
 json_dest() {
   [[ "$JSON_MODE" == true ]] || return 0
@@ -341,13 +354,14 @@ json_pause() {
   while IFS= read -r line || [[ -n "$line" ]]; do
     printf '%s\n' "$line" >&4
   done < "$JSON_LOG"
-  : > "$JSON_LOG"
+  rm -f "$JSON_LOG"
   exec 1>&3 2>&4
   trap - EXIT
 }
 
 json_resume() {
   [[ "$JSON_MODE" == true ]] || return 0
+  JSON_LOG="$(mktemp)" || { printf 'error: cannot create a temporary file for --json output; check TMPDIR\n' >&2; exit 1; }
   exec >>"$JSON_LOG" 2>&1
   trap json_emit EXIT
 }
@@ -401,7 +415,7 @@ skill_hash() {
   local dir="$1"
   # No -L: symlinks under skills/ are listed but not followed, so a malicious
   # symlink committed to a skill dir cannot leak external file contents into
-  # the lock-file hash or into install reads. See SECURITY-AUDIT.md SEC-007.
+  # the lock-file hash or into install reads.
   LC_ALL=C find "$dir" -type f -print0 | LC_ALL=C sort -z | xargs -0 cat 2>/dev/null | hash_tool
 }
 
@@ -895,7 +909,7 @@ acquire_install_lock() {
   local -a flock_wait=(-w "$wait")
   (( wait > 0 )) || flock_wait=(-n)
   if ! flock "${flock_wait[@]}" "$INSTALL_LOCK_FD"; then
-    printf 'Another install.sh run holds %s; gave up after %ss (set SKILLS_LOCK_WAIT to wait longer)\n' \
+    printf 'error: another install.sh run holds %s; gave up after %ss (set SKILLS_LOCK_WAIT to wait longer)\n' \
       "$dir/install.lock" "$wait" >&2
     exit 3
   fi
@@ -2229,9 +2243,11 @@ say("No blocking duplicates.")
 PY
 )" || rc=$?
   if [[ "$JSON_MODE" == true ]]; then
-    out="${out#\{}"
-    JSON_BODY+="${JSON_BODY:+, }${out%\}}"
-    JSON_FALLBACK_ERROR="doctor found blocking duplicate skills; see tools[].blocking"
+    if json_merge_object "$out"; then
+      JSON_FALLBACK_ERROR="doctor found blocking duplicate skills; see tools[].blocking"
+    else
+      JSON_FALLBACK_ERROR="the doctor helper failed without a report; see the human output on stderr"
+    fi
   else
     printf '%s\n' "$out"
   fi
@@ -2346,8 +2362,8 @@ else:
 PY
 )" || rc=$?
   if [[ "$JSON_MODE" == true ]]; then
-    out="${out#\{}"
-    JSON_BODY+="${JSON_BODY:+, }${out%\}}"
+    json_merge_object "$out" \
+      || JSON_FALLBACK_ERROR="the detect helper failed without a report; see the human output on stderr"
   else
     printf '%s\n' "$out"
   fi
@@ -3555,6 +3571,15 @@ main() {
     fi
     run_detect
     exit 0
+  fi
+
+  local modes=0
+  [[ "$show_list" != "true" ]] || (( ++modes ))
+  [[ "$check_mode" != "true" ]] || (( ++modes ))
+  [[ "$migrate_mode" != "true" ]] || (( ++modes ))
+  [[ "$doctor_mode" != "true" ]] || (( ++modes ))
+  if (( modes > 1 )); then
+    printf '%s\n' "error: --list, --check, --migrate, and --doctor cannot be combined; pass only one of them" >&2; exit 1
   fi
 
   # A saved config is used only by a bare `install.sh`; any argument ignores it.
