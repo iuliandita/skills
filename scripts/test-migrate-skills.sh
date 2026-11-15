@@ -3,11 +3,15 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-# macOS keeps its temp dir behind a symlink: resolve it once, so paths built
-# here match the resolved ones the installer prints. shasum stands in for
-# sha256sum there; both print the same format.
-TMPDIR="$(cd "${TMPDIR:-/tmp}" && pwd -P)"
-export TMPDIR
+# macOS hands out temp dirs behind a symlink (/var is /private/var), so every
+# temp dir is resolved here: paths built from one then match the resolved
+# paths the installer prints and records.
+mktemp() {
+  local dir
+  dir="$(command mktemp "$@")" || return 1
+  (cd "$dir" && pwd -P)
+}
+# macOS has shasum where Linux has sha256sum; both print the same format.
 HASH_TOOL=sha256sum
 command -v sha256sum >/dev/null 2>&1 || { HASH_TOOL=shasum; sha256sum() { shasum -a 256; }; }
 MIGRATOR="$ROOT/scripts/migrate-skills.py"
