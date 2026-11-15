@@ -25,6 +25,10 @@ MIGRATOR="${SKILLS_MIGRATOR:-$SCRIPT_DIR/scripts/migrate-skills.py}"
 # Discover skills dynamically: scan skills/ for dirs with SKILL.md.
 # Gitignored skills are excluded unless --include-internal is active and the
 # skill declares metadata.internal: true.
+# This is the installer's own rule, not list_public_skills from skill-lib.sh
+# (the set the repo gates check): a gitignored skill is admitted per skill
+# when it opts in, deprecated notices are listed because they install with a
+# warning, and a copy that is not a git clone lists every skill.
 discover_skills() {
   local include_internal="${1:-false}"
   local skills=() names=() dir name
@@ -56,6 +60,8 @@ discover_skills() {
 
 ALL_SKILLS=()
 
+# The gates read this array as text (list_supported_tools in skill-lib.sh);
+# keep it a plain list of names.
 SUPPORTED_TOOLS=(
   claude codex cursor windsurf opencode commandcode
   copilot roo goose amp continue kiro cline warp

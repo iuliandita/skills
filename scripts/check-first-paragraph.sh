@@ -11,7 +11,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 source "$(dirname "${BASH_SOURCE[0]}")/skill-lib.sh"
 cd "$ROOT"
 
-frontmatter_cache_load skills metadata.deprecated
+frontmatter_cache_load skills flag:metadata.deprecated
 
 files=()
 while IFS= read -r name; do

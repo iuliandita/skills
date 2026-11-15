@@ -847,6 +847,151 @@ test_canonical_section_without_test_case_fails() {
 
 # Full docs-drift fixture: git repo with README, INSTALL, MIGRATION, install.sh,
 # migrations.json and two active skills (alpha, beta). Callers mutate it after.
+# Fixture for the shared skill-folder loop: a public skill, a tracked opt-in
+# (internal) skill, a gitignored internal skill, two deprecated notices, a
+# folder without SKILL.md, a folder holding only an ignored overlay, and the
+# underscore and dot build directories.
+make_loop_fixture() {
+  local tmp="$1"
+  git init -q "$tmp"
+  printf '%s\n' 'skills/private/' 'skills/retired/protected/' > "$tmp/.gitignore"
+  write_minimal_skill "$tmp/skills/alpha" "alpha"
+  write_minimal_skill "$tmp/skills/team" "team"
+  sed -i.bak 's/^  effort: low$/  effort: low\n  internal: true/' "$tmp/skills/team/SKILL.md"
+  write_minimal_skill "$tmp/skills/private" "private"
+  sed -i.bak 's/^  effort: low$/  effort: low\n  internal: true/' "$tmp/skills/private/SKILL.md"
+  write_minimal_skill "$tmp/skills/old" "old"
+  sed -i.bak 's/^  effort: low$/  effort: low\n  deprecated: true/' "$tmp/skills/old/SKILL.md"
+  write_minimal_skill "$tmp/skills/older" "older"
+  sed -i.bak 's/^  effort: low$/  effort: low\n  deprecated: " TRUE "/' "$tmp/skills/older/SKILL.md"
+  rm -f "$tmp"/skills/*/SKILL.md.bak
+  write_minimal_skill "$tmp/skills/_shared" "_shared"
+  write_minimal_skill "$tmp/skills/.cook" ".cook"
+  mkdir -p "$tmp/skills/draft" "$tmp/skills/retired/protected"
+  printf '%s\n' 'draft' > "$tmp/skills/draft/notes.md"
+  printf '%s\n' 'private' > "$tmp/skills/retired/protected/notes.md"
+}
+
+# skill_lib <function> [args...]: call a skill-lib.sh function in a fresh
+# shell started in /, so the answer cannot depend on the caller's directory.
+skill_lib() {
+  (cd / && bash -c 'source "$1"; shift; "$@"' _ "$ROOT/scripts/skill-lib.sh" "$@")
+}
+
+# The same for list_public_skills with the frontmatter cache loaded first.
+# Args: <skills_dir> [switch...]
+skill_lib_cached_list() {
+  (cd / && bash -c '
+    source "$1"; shift
+    frontmatter_cache_load "$1" flag:metadata.deprecated 2>/dev/null || true
+    list_public_skills "$@"' _ "$ROOT/scripts/skill-lib.sh" "$@")
+}
+
+# expect_loop <label> <expected names, space separated> <skills_dir> [switch...]
+# Checked once without and once with the frontmatter cache.
+expect_loop() {
+  local label="$1" expected="$2" got
+  shift 2
+  got="$(skill_lib list_public_skills "$@" | paste -sd' ' -)"
+  [[ "$got" == "$expected" ]] || fail "$label: expected '$expected', got '$got'"
+  got="$(skill_lib_cached_list "$@" | paste -sd' ' -)"
+  [[ "$got" == "$expected" ]] || fail "$label (cached): expected '$expected', got '$got'"
+}
+
+test_list_public_skills_modes() {
+  local tmp status=0
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  make_loop_fixture "$tmp"
+
+  expect_loop "public" "alpha team" "$tmp/skills"
+  expect_loop "include-deprecated" "alpha old older team" "$tmp/skills" --include-deprecated
+  expect_loop "include-gitignored" "alpha private team" "$tmp/skills" --include-gitignored
+  expect_loop "include-missing" "alpha draft team" "$tmp/skills" --include-missing
+  expect_loop "all switches" "alpha draft old older private retired team" "$tmp/skills" \
+    --include-missing --include-gitignored --include-deprecated
+  expect_loop "missing skills dir" "" "$tmp/absent"
+
+  skill_lib list_public_skills "$tmp/skills" --include-everything >/dev/null 2>&1 || status=$?
+  (( status == 2 )) || fail "unknown switch: expected exit 2, got $status"
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+# The gates that take the public set agree with it: an internal tracked skill
+# is linted, a gitignored one is not, a deprecated notice is linted but not
+# counted as active, and a folder without SKILL.md is an error.
+test_lint_uses_the_shared_loop() {
+  local tmp
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  make_loop_fixture "$tmp"
+
+  run_gate bash -c 'cd "$1" && "$2/scripts/lint-skills.sh" "$1/skills"' _ "$tmp" "$ROOT"
+  expect_fail "folder without SKILL.md" "draft: no SKILL.md found"
+  [[ "$OUT" == *"[team]"* && "$OUT" == *"[old]"* && "$OUT" == *"[older]"* ]] \
+    || fail "lint skipped a tracked internal skill or a deprecated notice"
+  [[ "$OUT" != *"[private]"* && "$OUT" != *"retired"* && "$OUT" != *"[_shared]"* ]] \
+    || fail "lint visited a gitignored, overlay-only or underscore directory"
+  [[ "$OUT" == *"Skills checked: 4"* ]] || fail "lint did not check exactly alpha, old, older and team"
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+# One parser for install.sh's SUPPORTED_TOOLS: tokens on the opening line and
+# a closing parenthesis that ends a token line are both read, from a file or
+# from stdin.
+test_supported_tools_parser_reads_reflowed_array() {
+  local tmp got text
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  text=$'#!/usr/bin/env bash\nSUPPORTED_TOOLS=(one two # lead\n  three\n  four) # tail\nOTHER=(five)\n'
+  printf '%s' "$text" > "$tmp/install.sh"
+
+  got="$(skill_lib list_supported_tools "$tmp/install.sh" | paste -sd' ' -)"
+  [[ "$got" == "one two three four" ]] || fail "reflowed array from a file: got '$got'"
+  got="$(skill_lib list_supported_tools <<< "$text" | paste -sd' ' -)"
+  [[ "$got" == "one two three four" ]] || fail "reflowed array from stdin: got '$got'"
+  got="$(printf 'SUPPORTED_TOOLS=(solo)\nX=(no)\n' | skill_lib list_supported_tools | paste -sd' ' -)"
+  [[ "$got" == "solo" ]] || fail "one-line array: got '$got'"
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+# The deprecated rule lives in skill-frontmatter.py flag(); the shell helper
+# and the cache both ask it.
+test_frontmatter_flag_asks_the_python_rule() {
+  local tmp value
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  mkdir -p "$tmp/skills"
+  for value in 'true' '"true"' '" True "' 'yes'; do
+    printf -- '---\nname: s\ndescription: d\nmetadata:\n  deprecated: %s\n---\n' "$value" > "$tmp/SKILL.md"
+    python3 "$ROOT/scripts/skill-frontmatter.py" flag "$tmp/SKILL.md" metadata.deprecated \
+      || fail "flag command rejected deprecated: $value"
+  done
+  for value in 'false' '"no"' '"truthy"' '2026'; do
+    printf -- '---\nname: s\ndescription: d\nmetadata:\n  deprecated: %s\n---\n' "$value" > "$tmp/SKILL.md"
+    if python3 "$ROOT/scripts/skill-frontmatter.py" flag "$tmp/SKILL.md" metadata.deprecated; then
+      fail "flag command accepted deprecated: $value"
+    fi
+  done
+  printf -- '---\nname: s\ndescription: d\n---\n' > "$tmp/SKILL.md"
+  if python3 "$ROOT/scripts/skill-frontmatter.py" flag "$tmp/SKILL.md" metadata.deprecated; then
+    fail "flag command accepted a missing key"
+  fi
+  printf 'no frontmatter\n' > "$tmp/SKILL.md"
+  if python3 "$ROOT/scripts/skill-frontmatter.py" flag "$tmp/SKILL.md" metadata.deprecated; then
+    fail "flag command accepted a file without frontmatter"
+  fi
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
 make_docs_fixture() {
   local tmp="$1"
   git init -q "$tmp"
@@ -1334,4 +1479,8 @@ test_install_table_missing_tool_fails
 test_bold_old_skill_name_fails
 test_gitignored_skill_not_counted
 test_deprecated_skill_not_counted
+test_list_public_skills_modes
+test_lint_uses_the_shared_loop
+test_supported_tools_parser_reads_reflowed_array
+test_frontmatter_flag_asks_the_python_rule
 printf 'lint tests passed\n'

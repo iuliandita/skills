@@ -16,7 +16,8 @@ source "$(dirname "${BASH_SOURCE[0]}")/contract-lib.sh"
 # shellcheck source=./scripts/skill-lib.sh
 source "$(dirname "${BASH_SOURCE[0]}")/skill-lib.sh"
 
-frontmatter_cache_load "$ROOT/skills" metadata.deprecated
+frontmatter_cache_load "$ROOT/skills" flag:metadata.deprecated
+mapfile -t public_skills < <(list_public_skills "$ROOT/skills")
 
 fail=0
 exempt_pattern=""
@@ -40,13 +41,8 @@ for target_name in "${SHARED_FILE_NAMES[@]}"; do
   fi
   expected="$(render_shipped_file "$src")"
 
-  for dir in "$ROOT"/skills/*/; do
-    name="$(basename "$dir")"
-    [[ "$name" == _* ]] && continue
-    git -C "$ROOT" check-ignore -q "$dir" 2>/dev/null && continue
-    [[ -f "$dir/SKILL.md" ]] || continue
-    frontmatter_flag "$dir/SKILL.md" metadata.deprecated && continue
-    copy="$dir/references/$target_name"
+  for name in "${public_skills[@]}"; do
+    copy="$ROOT/skills/$name/references/$target_name"
     if [[ ! -f "$copy" ]]; then
       printf '[!] %s: missing references/%s (run scripts/gen-contract-refs.sh)\n' "$name" "$target_name" >&2
       fail=1

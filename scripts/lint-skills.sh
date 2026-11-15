@@ -549,21 +549,6 @@ list_old_skill_names() {
   python3 -c 'import json,sys; print("\n".join(json.load(open(sys.argv[1]))["skills"]))' "$manifest"
 }
 
-# Number of entries in install.sh's SUPPORTED_TOOLS array, names one per line.
-list_supported_tools() {
-  awk '
-    /^SUPPORTED_TOOLS=\(/ {f=1; sub(/^SUPPORTED_TOOLS=\(/, "")}
-    f {
-      sub(/#.*/, "")
-      closed = ($0 ~ /\)/)
-      sub(/\).*/, "")
-      n = split($0, t, /[[:space:]]+/)
-      for (i = 1; i <= n; i++) if (t[i] != "") print t[i]
-      if (closed) exit
-    }
-  ' "$1"
-}
-
 check_collection_docs() {
   local root="$SKILLS_DIR/.."
   local readme="$root/README.md" install="$root/install.sh" install_doc="$root/INSTALL.md" migration="$root/MIGRATION.md"
@@ -678,7 +663,7 @@ echo
 if [[ -d "$SKILLS_DIR" ]]; then
   frontmatter_cache_load "$SKILLS_DIR" name description license metadata \
     metadata.source metadata.date_added metadata.effort metadata.argument_hint metadata.internal \
-    metadata.deprecated
+    flag:metadata.deprecated
 fi
 
 check_no_symlinks "$SKILLS_DIR"
@@ -699,16 +684,11 @@ fi
 
 skill_count=0
 description_chars=0
-for skill_dir in "$SKILLS_DIR"/*/; do
-  name=$(basename "$skill_dir")
-  [[ "$name" == ".backups" || "$name" == ".cook" ]] && continue
-  [[ "$name" == _* ]] && continue
-  git check-ignore -q "$skill_dir" 2>/dev/null && continue
-  # A retired skill can leave only an ignored private overlay behind.
-  if visible_files="$(git ls-files --cached --others --exclude-standard -- "$skill_dir" 2>/dev/null)" \
-    && [[ -z "$visible_files" ]]; then
-    continue
-  fi
+# Deprecated notices are linted with a reduced rule set and a folder without a
+# SKILL.md is an error, so both stay in the loop.
+mapfile -t lint_names < <(list_public_skills "$SKILLS_DIR" --include-deprecated --include-missing)
+for name in "${lint_names[@]}"; do
+  skill_dir="$SKILLS_DIR/$name/"
 
   skill_file="$skill_dir/SKILL.md"
   if [[ ! -f "$skill_file" ]]; then

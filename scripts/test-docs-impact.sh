@@ -126,6 +126,23 @@ commit "feat: drop codex"
 run_check
 expect_fail "tool removed without INSTALL line" "R2"
 
+# A reflowed array: tokens share the opening line and the closing parenthesis
+# ends a token line. Both tools are still read, so dropping one is seen.
+new_fixture
+g checkout -q main
+write_install
+sed -i.bak -e '/^SUPPORTED_TOOLS=($/{N;N;s/.*/SUPPORTED_TOOLS=(claude\n  codex)/;}' "$REPO/install.sh"
+rm -f "$REPO/install.sh.bak"
+grep -q '^SUPPORTED_TOOLS=(claude$' "$REPO/install.sh" || fail "reflowed fixture was not written"
+commit "chore: reflow the tool array"
+g checkout -q feature
+g merge -q --ff-only main
+sed -i.bak -e 's/^SUPPORTED_TOOLS=(claude$/SUPPORTED_TOOLS=(/' "$REPO/install.sh"
+rm -f "$REPO/install.sh.bak"
+commit "feat: drop claude"
+run_check
+expect_fail "tool removed from the opening line of a reflowed array" "tool 'claude' removed"
+
 new_fixture
 write_install '$HOME/.agents/skills' "claude"
 put INSTALL.md "install
