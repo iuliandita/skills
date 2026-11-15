@@ -50,25 +50,6 @@ PHASE1_SUBJECT='^refactor\(skill-refiner\): iteration'
 BASE_REF="${1:-${BASE_REF:-}}"
 normalize_base_sha
 
-ref_exists() {
-  git rev-parse --verify --quiet "${1}^{commit}" >/dev/null 2>&1
-}
-
-resolve_base() {
-  local candidate
-  for candidate in "$@"; do
-    if ref_exists "$candidate"; then
-      if base="$(git merge-base HEAD "$candidate" 2>/dev/null)"; then
-        return 0
-      fi
-      echo "error: base ref '${candidate}' exists but no merge-base with HEAD could be computed" >&2
-      echo "(shallow clone or unrelated history); refusing to fall back to a non-ancestor tip." >&2
-      exit 1
-    fi
-  done
-  base=""
-}
-
 base=""
 if [[ -n "$BASE_REF" ]]; then
   resolve_base "$BASE_REF" "origin/$BASE_REF"

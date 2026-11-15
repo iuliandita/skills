@@ -46,25 +46,6 @@ fi
 BASE_REF="${arg_base:-${BASE_REF:-}}"
 normalize_base_sha
 
-ref_exists() {
-  git rev-parse --verify --quiet "${1}^{commit}" >/dev/null 2>&1
-}
-
-resolve_base() {
-  local candidate
-  for candidate in "$@"; do
-    if ref_exists "$candidate"; then
-      if base="$(git merge-base HEAD "$candidate" 2>/dev/null)"; then
-        return 0
-      fi
-      echo "error: base ref '${candidate}' exists but no merge-base with HEAD could be computed" >&2
-      echo "(shallow clone or unrelated history); refusing to fall back to a non-ancestor tip." >&2
-      exit 1
-    fi
-  done
-  base=""
-}
-
 base=""
 if [[ -n "$BASE_REF" ]]; then
   resolve_base "$BASE_REF" "origin/$BASE_REF"
@@ -189,13 +170,6 @@ if (( release )) && (( ${#removed_skills[@]} > 0 )); then
 fi
 
 # --- R2 ---------------------------------------------------------------
-supported_tools() {
-  awk '
-    /^SUPPORTED_TOOLS=\(/ { on = 1; next }
-    on && /^\)/ { exit }
-    on { sub(/#.*/, ""); for (i = 1; i <= NF; i++) print $i }'
-}
-
 # Emits "tool<TAB>default" from `[tool]="${VAR:-default}"` lines of TOOL_PATHS.
 tool_path_defaults() {
   awk '
@@ -229,8 +203,8 @@ if git cat-file -e "$base:install.sh" 2>/dev/null && git cat-file -e "HEAD:insta
   base_install="$(git show "$base:install.sh")"
   head_install="$(git show "HEAD:install.sh")"
 
-  base_tools="$(supported_tools <<<"$base_install")"
-  head_tools="$(supported_tools <<<"$head_install")"
+  base_tools="$(list_supported_tools <<<"$base_install")"
+  head_tools="$(list_supported_tools <<<"$head_install")"
   install_added="$(git diff "$base..HEAD" -- INSTALL.md | grep '^+' | grep -v '^+++' || true)"
   while IFS= read -r tool; do
     [[ -n "$tool" ]] || continue

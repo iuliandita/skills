@@ -309,7 +309,8 @@ def fields(skills_dir: str, paths: list[str]) -> int:
     """Emit NUL-separated records: dir, valid, then has and value per path.
 
     Mirrors the valid, has and get subcommands for every skill dir at once, so
-    shell callers can answer per-field lookups without a python fork each.
+    shell callers can answer per-field lookups without a python fork each. A
+    path written "flag:<path>" always has a value: flag() of <path>.
     """
     root = pathlib.Path(skills_dir)
     if not root.is_dir():
@@ -328,6 +329,9 @@ def fields(skills_dir: str, paths: list[str]) -> int:
             data = {}
             record = [entry.name, "0"]
         for path in paths:
+            if path.startswith("flag:"):
+                record += ["1", flag(data, path[len("flag:") :])]
+                continue
             try:
                 record += ["1", format_value(get_value(data, path))]
             except KeyError:
@@ -339,7 +343,7 @@ def fields(skills_dir: str, paths: list[str]) -> int:
 def main(argv: list[str]) -> int:
     if len(argv) < 3:
         print(
-            "usage: skill-frontmatter.py {valid|get|has} <file> [path] | batch <skills-dir>"
+            "usage: skill-frontmatter.py {valid|get|has|flag} <file> [path] | batch <skills-dir>"
             " | fields <skills-dir> <path>... | spec-check <skills-dir>",
             file=sys.stderr,
         )
@@ -362,6 +366,8 @@ def main(argv: list[str]) -> int:
         if len(argv) < 4:
             print(f"{command}: missing path", file=sys.stderr)
             return 2
+        if command == "flag":
+            return 0 if flag(data, argv[3]) == "true" else 1
         value = get_value(data, argv[3])
     except (OSError, ValueError, KeyError):
         return 1
