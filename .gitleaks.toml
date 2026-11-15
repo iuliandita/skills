@@ -1,15 +1,17 @@
 # Gitleaks configuration - allowlist for false positives in skill examples.
 # Keep allowlists content-specific. Do not exclude whole skill/reference paths.
+# Each regex is anchored on the whole detected secret, so a longer value that
+# merely contains the placeholder is still reported.
 
 [extend]
   useDefault = true
 
 [[allowlists]]
   description = "Non-secret placeholder used in documentation examples"
-  regexTarget = "match"
-  regexes = ['''key:secret''']
+  regexTarget = "secret"
+  regexes = ['''^key:secret$''']
 
 [[allowlists]]
   description = "Example Idempotency-Key UUID in backend-api HTTP docs, not a credential"
-  regexTarget = "match"
-  regexes = ['''77a5e517-0b63-42c2-8fb7-d4df0f1e30e6''']
+  regexTarget = "secret"
+  regexes = ['''^77a5e517-0b63-42c2-8fb7-d4df0f1e30e6$''']
