@@ -35,7 +35,7 @@ Reverify before use if the receipt exceeds 120 days.
 - DSM 7.2 - end of maintenance December 2025, yet it still received fixes in SA-26:06 (April
   2026). Treat continued patching as unreliable rather than as policy, and plan an upgrade
 - Advisories: Synology-SA-26:03 (CVE-2026-32746, telnetd buffer overflow, CVSS 9.8, unauthenticated
-  RCE - keep Telnet off), Synology-SA-26:06 (multiple DSM CVEs, 2026-04-15), Synology-SA-26:11 (MailPlus Server), Synology-SA-26:13 (critical DSM file read/write, 2026-09-18)
+  RCE - keep Telnet off), Synology-SA-26:06 (multiple DSM CVEs, 2026-04-15); SA-26:11 and SA-26:13 are detailed below
 - [SA-26:11](https://www.synology.com/en-global/security/advisory/Synology_SA_26_11):
   critical MailPlus Server CVE-2026-13136 and CVE-2025-15660; fixed in
   4.0.1-31663+ for DSM 7.3 or 4.0.1-21663+ for DSM 7.2.2/7.2.1. Update the

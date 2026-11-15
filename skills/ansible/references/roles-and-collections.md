@@ -241,7 +241,7 @@ tags:
   - hardening
 dependencies:
   ansible.posix: ">=1.5.0"
-  community.general: ">=12.0.0"
+  community.general: ">=13.0.0,<14.0.0"
 repository: https://github.com/myorg/ansible-infrastructure
 issues: https://github.com/myorg/ansible-infrastructure/issues
 build_ignore:
