@@ -157,6 +157,24 @@ check_length() {
   fi
 }
 
+# ── Repeated version floor ─────────────────────────────────────────────
+# The same floor ("tool v1.2+", "tool >= 1.2", "tool 1.2 or later") on more than
+# one SKILL.md line drifts when only one copy is bumped. Advisory only: state it
+# once and keep the rest in references/. Fenced blocks are ignored.
+check_repeated_floor() {
+  local file="$1" name="$2" count floor
+  while read -r count floor; do
+    [[ -n "$floor" ]] || continue
+    warn "$name: SKILL.md repeats the version floor '$floor+' on $count lines (state it once; move the rest to references/)"
+  done < <(
+    awk '/^```/{skip=!skip; next} !skip{print NR ":" $0}' "$file" \
+      | { grep -oiE '^[0-9]+:|[a-z][a-z0-9_.-]* ?>= ?v?[0-9]+(\.[0-9]+)+|[a-z][a-z0-9_.-]* v?[0-9]+(\.[0-9]+)+(\+| or (later|newer))' || true; } \
+      | awk '/^[0-9]+:$/{line=$0; next} {print line tolower($0)}' \
+      | sed -E 's/ ?>= ?v?/ /; s/ v([0-9])/ \1/; s/(\+| or (later|newer))$//' \
+      | sort -u | cut -d: -f2- | sort | uniq -c | awk '$1 > 1 {print $1, $2, $3}'
+  )
+}
+
 # ── Reference file checks ──────────────────────────────────────────────
 check_references() {
   local file="$1" name="$2" dir="$3"
@@ -714,6 +732,7 @@ for skill_dir in "$SKILLS_DIR"/*/; do
   check_sections "$skill_file" "$name"
   check_ascii "$skill_file" "$name" "$skill_dir"
   check_length "$skill_file" "$name"
+  check_repeated_floor "$skill_file" "$name"
   check_references "$skill_file" "$name" "$skill_dir"
   check_reference_depth "$skill_file" "$name" "$skill_dir"
   check_reference_toc "$name" "$skill_dir"

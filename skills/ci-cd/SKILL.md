@@ -227,73 +227,11 @@ Forgejo: manual dispatch (`workflow_dispatch`).
 
 ## Monorepo Patterns
 
-When a repo contains multiple services sharing a common library:
-
-### Path-based triggering
-Keep required workflows reporting on every applicable PR; condition expensive jobs inside
-them instead. See `references/best-practices.md` for the required-status pending trap.
-
-- **GitHub Actions**: `on.push.paths` / `on.pull_request.paths` to scope workflows per service
-- **GitLab CI/CD**: `rules: changes: paths:` with `compare_to: refs/heads/main`
-- **Forgejo**: same as GitHub Actions (`on.push.paths`)
-
-### Shared library detection
-If `libs/common/` changes, rebuild all services that depend on it:
-- List dependent services in a matrix or trigger all service workflows
-- `paths` filters accept globs: `paths: ['services/api/**', 'libs/common/**']`
-
-### Selective builds
-Build only what changed. Two approaches:
-1. **Per-service workflows** with `paths:` filters (simplest, recommended)
-2. **Single workflow with matrix** + change detection job that outputs which services need building
-
-**Rule**: always rebuild when the shared lib changes. A "nothing changed" optimization that misses a shared dependency is worse than rebuilding everything.
-
-### Python monorepo specifics (GitLab / GitHub / Forgejo)
-
-For Python monorepos with multiple services sharing a common library (`libs/common/`):
-- **Cache the resolver output, not the install step.** Key on `hashFiles('**/requirements*.txt')` or `**/poetry.lock`/`**/uv.lock`. With `uv` or `pip`, cache `~/.cache/uv` or `~/.cache/pip` plus each service's `.venv/` keyed on the service path + lockfile hash.
-- **Install the shared lib editable** (`pip install -e libs/common`) so services import the in-repo version, not a stale wheel.
-- **Scope jobs per service with path filters.** GitLab: `rules: - changes: paths: ['services/api/**', 'libs/common/**'] compare_to: refs/heads/main`. GitHub/Forgejo: `on.push.paths` / `on.pull_request.paths`. Always include `libs/common/**` in every service's filter so a shared-lib change triggers all services.
-- **YAML anchors (GitLab) / reusable workflows (GitHub) for the per-service job template.** Three near-identical blocks for `api`, `worker`, `scheduler` is a maintenance trap.
-
-See `references/gitlab-ci.md` for a full monorepo `.gitlab-ci.yml` (YAML anchors, `compare_to`, per-service change rules, shared-lib detection).
+For a repo with several services sharing a library, read `references/monorepo-patterns.md`: path-based triggering, shared library detection, selective builds, and Python monorepo specifics.
 
 ## Forgejo CI/CD
 
-Forgejo Actions is "designed to be familiar, not designed to be compatible" with GitHub Actions.
-It reuses the workflow syntax but makes no compatibility guarantees.
-
-### Key differences from GitHub Actions
-
-| Feature | GitHub Actions | Forgejo Actions |
-|---------|---------------|-----------------|
-| **`permissions:`** | Controls GITHUB_TOKEN scope | **Not enforced** - token always has full rw (read-only for fork PRs) |
-| **`continue-on-error:`** (job level) | Allows job failure without failing workflow | **Not supported** - step-level only |
-| **Runner images** | Managed `ubuntu-24.04` with 200+ tools | Self-hosted, typically lean Debian/Alpine |
-| **Action resolution** | `actions/checkout@v7` -> github.com | Resolves from Forgejo mirror (configurable) |
-| **OIDC** | `permissions: id-token: write` | `enable-openid-connect` key |
-| **Workflow call defaults** | `inputs.<id>.default` populated | **Always empty** |
-| **Matrix + dynamic runs-on** | Supported | Supported since v14.0 |
-| **LXC execution** | Not supported | Supported (Forgejo-specific) |
-
-Read `references/forgejo-gitea-actions.md` (Forgejo Actions patterns) for the workflow and
-release templates, action SHA discovery on a Forgejo mirror, Forgejo gotchas (TLS, missing
-tools, unenforced `permissions:`), and `fj` Actions management.
-
-### Gitea CI/CD
-
-Gitea ships two viable CI paths: **Gitea Actions** (same `act`-based engine as Forgejo
-Actions, since Gitea 1.21) and **Woodpecker CI** (separate service, container-native,
-webhook-driven). Drone is legacy - do not start new installs.
-
-Quick rule of thumb: if you are migrating from GitHub or want one service to operate,
-use Gitea Actions. If you need proper matrix builds, caching primitives, or lighter
-resource usage, use Woodpecker. Do not run both against the same repo.
-
-See `references/forgejo-gitea-actions.md` for: action SHA discovery, Gitea-vs-Forgejo Actions
-differences, Woodpecker YAML examples, plugin vs command steps, OAuth setup, matrix
-patterns, and Drone migration guidance.
+Forgejo Actions reuses the GitHub Actions syntax without a compatibility guarantee. Read `references/forgejo-gitea-actions.md` for the key differences from GitHub Actions and the Gitea notes.
 
 ## PCI-DSS: CI/CD Compliance Mapping
 
@@ -327,6 +265,7 @@ for assessment boundaries and primary sources.
 - `references/best-practices.md` - Dependency updates (Dependabot/Renovate), layered linting, scanning matrix (secrets/SCA/container/IaC/SAST), review gates, merge queues, rollout order
 - `references/supply-chain.md` - supply chain security, incident timeline, SHA pinning, SBOM/SLSA, PCI-DSS compliance, image signing, post-compromise response; read its AI-Age Supply Chain Risks section for slopsquatting, AI agents in CI/CD, and prompt injection in pipelines
 - `references/versions.md` - dated version receipts (pins, sources, security floors)
+- `references/monorepo-patterns.md` - path-based triggering, shared library detection, selective builds, Python monorepos
 
 ## Output Contract
 
