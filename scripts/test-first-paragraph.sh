@@ -15,11 +15,8 @@ CASES=0
 
 GOOD_PARA='Fixture skill that explains one bounded task in plain words, long enough to pass the storefront length floor and short enough to stay under the ceiling.'
 
-fail() {
-  printf 'FAIL: %s\n' "$1" >&2
-  [[ -z "${OUT:-}" ]] || printf '%s\n' "$OUT" >&2
-  exit 1
-}
+# shellcheck source=./scripts/gate-test-lib.sh
+source "$ROOT/scripts/gate-test-lib.sh"
 
 # write_skill <name> <first paragraph> [description]
 write_skill() {
@@ -45,16 +42,6 @@ new_fixture() {
 run_check() {
   STATUS=0
   OUT="$(cd "$REPO" && bash scripts/check-first-paragraph.sh 2>&1)" || STATUS=$?
-}
-
-expect_pass() {
-  (( STATUS == 0 )) || fail "$1: expected exit 0, got $STATUS"
-}
-
-expect_fail() {
-  local label="$1" needle="$2"
-  (( STATUS != 0 )) || fail "$label: expected failure, got exit 0"
-  [[ "$OUT" == *"$needle"* ]] || fail "$label: output missing '$needle'"
 }
 
 new_fixture

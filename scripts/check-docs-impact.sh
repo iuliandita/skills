@@ -26,6 +26,10 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
+# shellcheck source=./scripts/base-lib.sh
+source "$ROOT/scripts/base-lib.sh"
+# shellcheck source=./scripts/skill-lib.sh
+source "$ROOT/scripts/skill-lib.sh"
 
 release=0
 arg_base=""
@@ -40,15 +44,7 @@ else
   arg_base="${1:-}"
 fi
 BASE_REF="${arg_base:-${BASE_REF:-}}"
-BASE_SHA="${BASE_SHA:-}"
-if [[ "$BASE_SHA" =~ ^0+$ ]]; then
-  # A push that creates a ref reports an all-zero "before" sha.
-  BASE_SHA=""
-fi
-if [[ -z "$BASE_REF" && -n "$BASE_SHA" ]] && ! git rev-parse --verify --quiet "${BASE_SHA}^{commit}" >/dev/null; then
-  echo "error: BASE_SHA '${BASE_SHA}' is not a commit in this clone" >&2
-  exit 1
-fi
+normalize_base_sha
 
 ref_exists() {
   git rev-parse --verify --quiet "${1}^{commit}" >/dev/null 2>&1
@@ -152,16 +148,17 @@ satisfied_by_trailer() {
 
 # --- R1 ---------------------------------------------------------------
 skill_active_at_base() {
-  # Read the whole file first: awk exits at the closing fence, and under
-  # pipefail a SIGPIPE in git show would make a large active skill look inactive.
-  local content
-  content="$(git show "$base:skills/$1/SKILL.md" 2>/dev/null)" || return 1
-  awk '
-    NR == 1 && $0 != "---" { exit }
-    NR > 1 && $0 == "---" { exit }
-    { line = tolower($0) }
-    line ~ /^[[:space:]]+deprecated:[[:space:]]*["\047]?[[:space:]]*true[[:space:]]*["\047]?[[:space:]]*(#.*)?$/ { dep = 1 }
-    END { exit dep ? 1 : 0 }' <<<"$content"
+  # The shared frontmatter parser reads files, so the base revision goes
+  # through a temp file.
+  local tmp rc=0
+  tmp="$(mktemp)"
+  if ! git show "$base:skills/$1/SKILL.md" > "$tmp" 2>/dev/null; then
+    rm -f "$tmp"
+    return 1
+  fi
+  frontmatter_flag "$tmp" metadata.deprecated && rc=1
+  rm -f "$tmp"
+  return "$rc"
 }
 
 removed_skills=()

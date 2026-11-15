@@ -19,10 +19,8 @@ export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-fail() {
-  printf 'FAIL: %s\n' "$1" >&2
-  exit 1
-}
+# shellcheck source=./scripts/gate-test-lib.sh
+source "$ROOT/scripts/gate-test-lib.sh"
 
 git_q() {
   git -C "$1" -c user.email="test@example.com" -c user.name="test" -c commit.gpgsign=false "${@:2}"
@@ -86,6 +84,8 @@ clone_fixture() {
   cp "$ROOT/scripts/check-whitespace.sh" "$clone/scripts/check-whitespace.sh"
   cp "$ROOT/scripts/check-refiner-phase1-guard.sh" "$clone/scripts/check-refiner-phase1-guard.sh"
   cp "$ROOT/scripts/check-docs-impact.sh" "$clone/scripts/check-docs-impact.sh"
+  # Helpers the three checks source.
+  cp "$ROOT/scripts/base-lib.sh" "$ROOT/scripts/skill-lib.sh" "$ROOT/scripts/skill-frontmatter.py" "$clone/scripts/"
   chmod +x "$clone/scripts/check-whitespace.sh" "$clone/scripts/check-refiner-phase1-guard.sh" "$clone/scripts/check-docs-impact.sh"
   printf '%s\n' "$clone"
 }
@@ -386,6 +386,8 @@ test_push_missing_base_sha_fails_loudly() {
 test_full_clone_stays_full_and_guard_passes
 test_phase1_commit_touching_immutable_path_fails skills/skill-refiner/SKILL.md
 test_phase1_commit_touching_immutable_path_fails scripts/skill-lib.sh
+test_phase1_commit_touching_immutable_path_fails scripts/check-ere-pipe.py
+test_phase1_commit_touching_immutable_path_fails scripts/base-lib.sh
 test_phase1_merge_commit_touching_immutable_path_fails
 test_guard_list_shrink_uses_base_list
 test_unrelated_history_base_fails_loudly
@@ -394,4 +396,4 @@ test_docs_impact_unrelated_history_fails_loudly
 test_push_base_sha_checks_the_pushed_range
 test_push_zero_base_sha_keeps_fallback
 test_push_missing_base_sha_fails_loudly
-printf 'CI base check tests passed (11 cases)\n'
+printf 'CI base check tests passed (13 cases)\n'

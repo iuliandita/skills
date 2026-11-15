@@ -23,11 +23,14 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
+# shellcheck source=./scripts/base-lib.sh
+source "$ROOT/scripts/base-lib.sh"
 
 IMMUTABLE_PATHS=(
   "skills/skill-refiner/references/evaluation-criteria.md"
   "skills/skill-refiner/references/test-cases.md"
   "scripts/lint-skills.sh"
+  "scripts/check-ere-pipe.py"
   "scripts/validate-spec.sh"
   "scripts/skill-lib.sh"
   "scripts/skill-frontmatter.py"
@@ -35,6 +38,7 @@ IMMUTABLE_PATHS=(
   "scripts/contract-lib.sh"
   "scripts/refiner-rubric-hash.sh"
   "scripts/check-refiner-phase1-guard.sh"
+  "scripts/base-lib.sh"
   ".github/workflows/ci.yml"
   ".github/workflows/security.yml"
   "skills/skill-creator"
@@ -44,15 +48,7 @@ IMMUTABLE_PATHS=(
 PHASE1_SUBJECT='^refactor\(skill-refiner\): iteration'
 
 BASE_REF="${1:-${BASE_REF:-}}"
-BASE_SHA="${BASE_SHA:-}"
-if [[ "$BASE_SHA" =~ ^0+$ ]]; then
-  # A push that creates a ref reports an all-zero "before" sha.
-  BASE_SHA=""
-fi
-if [[ -z "$BASE_REF" && -n "$BASE_SHA" ]] && ! git rev-parse --verify --quiet "${BASE_SHA}^{commit}" >/dev/null; then
-  echo "error: BASE_SHA '${BASE_SHA}' is not a commit in this clone" >&2
-  exit 1
-fi
+normalize_base_sha
 
 ref_exists() {
   git rev-parse --verify --quiet "${1}^{commit}" >/dev/null 2>&1

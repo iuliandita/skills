@@ -6,10 +6,8 @@ while IFS= read -r var; do unset "$var"; done < <(git rev-parse --local-env-vars
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-fail() {
-  printf 'FAIL: %s\n' "$1" >&2
-  exit 1
-}
+# shellcheck source=./scripts/gate-test-lib.sh
+source "$ROOT/scripts/gate-test-lib.sh"
 
 # Builds a throwaway git repo fixture with the checker script installed at
 # scripts/check-private-skill-leaks.sh, so ROOT resolution inside the

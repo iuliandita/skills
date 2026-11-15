@@ -12,11 +12,8 @@ CASES=0
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
-fail() {
-  printf 'FAIL: %s\n' "$1" >&2
-  [[ -z "${OUT:-}" ]] || printf '%s\n' "$OUT" >&2
-  exit 1
-}
+# shellcheck source=./scripts/gate-test-lib.sh
+source "$ROOT/scripts/gate-test-lib.sh"
 
 g() {
   git -C "$REPO" -c user.email="test@example.com" -c user.name="test" -c commit.gpgsign=false "$@"
@@ -61,16 +58,6 @@ new_fixture() {
 run_check() {
   STATUS=0
   OUT="$(cd "$REPO" && BASE_REF=main bash scripts/check-release-changelog.sh "$@" 2>&1)" || STATUS=$?
-}
-
-expect_fail() {
-  local label="$1" needle="$2"
-  (( STATUS != 0 )) || fail "$label: expected failure, got exit 0"
-  [[ "$OUT" == *"$needle"* ]] || fail "$label: output missing '$needle'"
-}
-
-expect_pass() {
-  (( STATUS == 0 )) || fail "$1: expected exit 0, got $STATUS"
 }
 
 # --- negative cases ---
