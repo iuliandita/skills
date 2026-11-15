@@ -22,10 +22,12 @@ fail=0
 exempt_pattern=""
 for n in "${SHARED_FILE_NAMES[@]}"; do
   esc="${n//./\\.}"
+  # Anchored to the path column of `git grep -n` output (path:line:text), so
+  # text that merely quotes a generated file's path is not exempt.
   if [[ -z "$exempt_pattern" ]]; then
-    exempt_pattern="/references/${esc}:"
+    exempt_pattern="^skills/[^/:]+/references/${esc}:"
   else
-    exempt_pattern="${exempt_pattern}|/references/${esc}:"
+    exempt_pattern="${exempt_pattern}|^skills/[^/:]+/references/${esc}:"
   fi
 done
 
@@ -62,8 +64,15 @@ done
 # The generated copies (references/<name>.md for each SHARED_FILE_NAMES
 # entry) are exempt: their content is the source file itself, governed by
 # the drift check above, not authored per skill.
-shared_refs="$(git -C "$ROOT" grep -n --untracked 'skills/_shared/' -- 'skills/*/SKILL.md' 'skills/*/references/*.md' \
-  | grep -vE "$exempt_pattern" || true)"
+# git grep exits 1 for "no match"; anything higher means the search did not run.
+grep_status=0
+all_refs="$(git -C "$ROOT" grep -n --untracked 'skills/_shared/' -- 'skills/*/SKILL.md' 'skills/*/references/*.md')" \
+  || grep_status=$?
+if (( grep_status > 1 )); then
+  printf '[!] git grep for skills/_shared/ references failed (exit %d)\n' "$grep_status" >&2
+  exit 1
+fi
+shared_refs="$(grep -vE "$exempt_pattern" <<< "$all_refs" || true)"
 if [[ -n "$shared_refs" ]]; then
   printf '[!] runtime reference to skills/_shared/ (use local references/<name>.md instead):\n' >&2
   printf '%s\n' "$shared_refs" >&2

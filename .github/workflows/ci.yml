@@ -145,6 +145,15 @@ jobs:
       - name: Test docs-impact check
         run: ./scripts/test-docs-impact.sh
 
+      - name: Test contract sync check
+        run: ./scripts/test-contract-sync.sh
+
+      - name: Test first-paragraph check
+        run: ./scripts/test-first-paragraph.sh
+
+      - name: Test freshness marker check
+        run: ./scripts/test-freshness-dates.sh
+
       - name: Test changelog notes extraction
         run: ./scripts/test-changelog-notes.sh
 

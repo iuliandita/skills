@@ -16,24 +16,6 @@ warnings=0
 error() { echo "error: $1" >&2; (( errors++ )) || true; }
 warn()  { echo "warning: $1" >&2; (( warnings++ )) || true; }
 
-# Private skills: present locally (gitignored) but must not be referenced
-# by public skills. They can reference public skills freely.
-PRIVATE_SKILLS=()
-
-# ── Private skill reference check ──────────────────────────────────────
-check_private_refs() {
-  local dir="$1" name="$2"
-  for priv in "${PRIVATE_SKILLS[@]}"; do
-    [[ "$name" == "$priv" ]] && continue  # private skill can reference itself
-    for f in "$dir"/SKILL.md "$dir"/references/*.md; do
-      [[ -f "$f" ]] || continue
-      if grep -q "\\b${priv}\\b" "$f" 2>/dev/null; then
-        error "$name: references private skill '$priv' in $(basename "$f") (public skills must not reference private skills)"
-      fi
-    done
-  done
-}
-
 # ── Frontmatter checks ─────────────────────────────────────────────────
 check_frontmatter() {
   local file="$1" name="$2"
@@ -95,7 +77,7 @@ check_frontmatter() {
 check_sections() {
   local file="$1" name="$2"
   for section in "When to use" "When NOT to use" "Workflow" "Rules"; do
-    if ! grep -qi "^## .*${section}" "$file"; then
+    if ! grep -qiE "^## ${section}[[:space:]]*$" "$file"; then
       error "$name: missing '## $section' section"
     fi
   done
@@ -124,14 +106,13 @@ check_ascii() {
 # References: same rule, but fenced blocks and inline code spans may show
 # literal characters (e.g. locale examples).
 check_ascii_refs() {
-  local dir="$1" name="$2" refs=() f hit
+  local dir="$1" name="$2" refs=() f hit hits
   for f in "$dir"/references/*.md; do
     [[ -f "$f" ]] && refs+=("$f")
   done
   (( ${#refs[@]} )) || return 0
-  while IFS= read -r hit; do
-    [[ -n "$hit" ]] && error "$name: non-ASCII character at ${hit#"$dir"/}"
-  done < <(ALLOWED="$ASCII_ALLOWED" perl -CSD -ne '
+  # Capture the scan so a scanner that cannot run is an error, not zero hits.
+  if ! hits="$(ALLOWED="$ASCII_ALLOWED" perl -CSD -ne '
     if (/^\s*(```|~~~)/) { $fence = !$fence }
     elsif (!$fence) {
       (my $s = $_) =~ s/(`+).*?\1//g;
@@ -139,10 +120,25 @@ check_ascii_refs() {
       if ($s =~ /[^\x00-\x7F]/) { chomp; print "$ARGV:$.:$_\n" }
     }
     if (eof) { $fence = 0; close ARGV }
-  ' "${refs[@]}")
+  ' "${refs[@]}")"; then
+    error "$name: non-ASCII scan of references/ did not run (perl failed)"
+    return 0
+  fi
+  while IFS= read -r hit; do
+    [[ -n "$hit" ]] || continue
+    error "$name: non-ASCII character at ${hit#"$dir"/}"
+  done <<< "$hits"
 }
 
 # ── Line count check ───────────────────────────────────────────────────
+# The one token estimate, shared by the size warning and the per-skill Size
+# line: characters of the body after frontmatter, divided by 4.
+skill_body_tokens() {
+  local body_chars
+  body_chars=$(awk 'n>=2; /^---$/ && n<2 {n++}' "$1" | wc -m)
+  echo $(( body_chars / 4 ))
+}
+
 check_length() {
   local file="$1" name="$2"
   local lines
@@ -150,11 +146,9 @@ check_length() {
   local warn_msg="$name: SKILL.md is $lines lines (near the 500 hard max; extract to references/)"
   skill_length_check "$file" "$name" error warn "$warn_msg"
 
-  # Activation size: spec guidance keeps the body under ~5000 tokens.
-  # Estimate tokens as chars/4 of the body after frontmatter. Advisory only.
-  local body_bytes body_tokens
-  body_bytes=$(awk 'n>=2; /^---$/ && n<2 {n++}' "$file" | wc -c)
-  body_tokens=$(( body_bytes / 4 ))
+  # Activation size: spec guidance keeps the body under ~5000 tokens. Advisory only.
+  local body_tokens
+  body_tokens="$(skill_body_tokens "$file")"
   if (( body_tokens > 5000 )); then
     warn "$name: SKILL.md body is ~$body_tokens tokens (spec guidance ~5000; move detail to references/)"
   fi
@@ -292,13 +286,11 @@ check_prose_double_dash() {
 # unquoted '|', ';', and '&&', and ignore BRE grep and fixed-string modes.
 # sed -E and awk are outside this check.
 check_ere_literal_pipe() {
-  local dir="$1" name="$2" f line_no
+  local dir="$1" name="$2" f line_no line_nos
   for f in "$dir"/SKILL.md "$dir"/references/*.md; do
     [[ -f "$f" ]] || continue
-    while IFS= read -r line_no; do
-      [[ -n "$line_no" ]] || continue
-      error "$name: '\\|' inside an ERE pattern in $(basename "$f"):$line_no (use '|' for alternation)"
-    done < <(python3 - "$f" <<'PY'
+    # Capture the scan so a scanner that cannot run is an error, not zero hits.
+    if ! line_nos="$(python3 - "$f" <<'PY'
 import re
 import shlex
 import sys
@@ -514,7 +506,14 @@ def main(path):
 if __name__ == "__main__":
     main(sys.argv[1])
 PY
-)
+)"; then
+      error "$name: ERE literal-pipe scan of $(basename "$f") did not run (python3 failed)"
+      continue
+    fi
+    while IFS= read -r line_no; do
+      [[ -n "$line_no" ]] || continue
+      error "$name: '\\|' inside an ERE pattern in $(basename "$f"):$line_no (use '|' for alternation)"
+    done <<< "$line_nos"
   done
 }
 
@@ -528,12 +527,17 @@ check_desc_prefix() {
 }
 
 # ── AI Self-Check section check ────────────────────────────────────────
+# One heading pattern (matched against the lower-cased line) for both the
+# existence check and the boilerplate cap, so a heading the first accepts
+# cannot hide its section from the second.
+SELF_CHECK_HEADING_RE='^## .*self.check'
+
 check_ai_self_check() {
   local file="$1" name="$2"
   local effort
   effort="$(frontmatter_get "$file" "metadata.effort" 2>/dev/null || true)"
   if [[ "$effort" == "high" ]]; then
-    if ! grep -qi '^## .*Self.Check' "$file"; then
+    if ! grep -qi "$SELF_CHECK_HEADING_RE" "$file"; then
       warn "$name: high-effort skill without 'AI Self-Check' section (recommended for skills that generate output)"
     fi
   fi
@@ -571,7 +575,7 @@ check_generic_self_check_ratio() {
   done
 
   local section
-  section="$(awk '/^## AI Self-Check/{f=1; next} /^## /{f=0} f' "$file")"
+  section="$(awk -v re="$SELF_CHECK_HEADING_RE" 'tolower($0) ~ re {f=1; next} /^## /{f=0} f' "$file")"
   [[ -z "$section" ]] && return
 
   local total generic canonical_item line
@@ -862,9 +866,13 @@ check_collection_docs
 check_skill_inventory
 
 OLD_SKILL_NAMES=()
-while IFS= read -r old_name; do
-  [[ -n "$old_name" ]] && OLD_SKILL_NAMES+=("$old_name")
-done < <(list_old_skill_names)
+if old_names="$(list_old_skill_names)"; then
+  while IFS= read -r old_name; do
+    [[ -n "$old_name" ]] && OLD_SKILL_NAMES+=("$old_name")
+  done <<< "$old_names"
+else
+  error "migrations.json could not be read; retired skill names were not checked"
+fi
 
 skill_count=0
 description_chars=0
@@ -887,8 +895,7 @@ for skill_dir in "$SKILLS_DIR"/*/; do
 
   echo "[$name]"
   if ! frontmatter_flag "$skill_file" metadata.deprecated; then
-    skill_chars=$(wc -m < "$skill_file")
-    skill_tokens=$(( skill_chars / 4 ))
+    skill_tokens="$(skill_body_tokens "$skill_file")"
     description=$(frontmatter_get "$skill_file" description 2>/dev/null || true)
     description_chars=$(( description_chars + ${#description} ))
     if (( skill_tokens > 5000 )); then
@@ -906,7 +913,6 @@ for skill_dir in "$SKILLS_DIR"/*/; do
   check_references "$skill_file" "$name" "$skill_dir"
   check_reference_depth "$skill_file" "$name" "$skill_dir"
   check_reference_toc "$name" "$skill_dir"
-  check_private_refs "$skill_dir" "$name"
   check_ai_self_check "$skill_file" "$name"
   check_generic_self_check_ratio "$skill_file" "$name"
   check_banned_words "$skill_dir" "$name"
