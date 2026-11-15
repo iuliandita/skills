@@ -78,7 +78,8 @@ test_dry_run_and_apply() {
   run_migrator --manifest "$tmp/migrations.json" --source "$tmp/source" --dest "$tmp/dest" --apply > "$tmp/apply"
   [[ ! -e "$tmp/dest/old" ]] || fail "apply kept migrated old skill"
   [[ -f "$tmp/dest/new/SKILL.md" ]] || fail "apply did not install replacement"
-  [[ -e "$tmp/.skills-backups/dest/old" ]] || fail "apply did not create external backup"
+  [[ -e "$tmp/.skills-backups/dest/.retired/old" ]] || fail "apply did not create external backup"
+  [[ ! -e "$tmp/.skills-backups/dest/old" ]] || fail "retirement backup landed in the pruned per-skill folder"
   python3 - "$tmp/dest/.skills-lock.json" <<'PY'
 import json
 import sys
@@ -248,7 +249,7 @@ JSON
   [[ ! -e "$tmp/tool/one" ]] || fail "owned selected link was not retired"
   [[ -L "$tmp/tool/new" ]] || fail "replacement link was not created"
   [[ "$(readlink "$tmp/tool/new")" == "$tmp/canonical/new" ]] || fail "replacement link target is wrong"
-  if ! find "$tmp/.skills-backups/tool/one" -path '*/one.target/SKILL.md' -type f -print -quit | grep -q .; then
+  if ! find "$tmp/.skills-backups/tool/.retired/one" -path '*/one.target/SKILL.md' -type f -print -quit | grep -q .; then
     fail "link backup did not preserve target contents"
   fi
 
@@ -288,9 +289,9 @@ assert_converged() {
   [[ "$(hash_skill "$tmp/dest/new")" == "$(hash_skill "$tmp/source/new")" ]] || fail "$label: replacement differs from source"
   [[ "$(lock_names "$tmp/dest/.skills-lock.json")" == "keep new" ]] || fail "$label: lock records are $(lock_names "$tmp/dest/.skills-lock.json")"
   [[ ! -e "$tmp/.skills-migrate-staging" ]] || fail "$label: staging area left behind"
-  backups="$(find "$tmp/.skills-backups/dest/old" -mindepth 1 -maxdepth 1 | wc -l)"
+  backups="$(find "$tmp/.skills-backups/dest/.retired/old" -mindepth 1 -maxdepth 1 | wc -l)"
   (( backups == 1 )) || fail "$label: expected one backup of old, found $backups"
-  [[ "$(hash_skill "$(find "$tmp/.skills-backups/dest/old" -mindepth 2 -maxdepth 2 -name old)")" == "$(hash_skill "$tmp/source/old")" ]] \
+  [[ "$(hash_skill "$(find "$tmp/.skills-backups/dest/.retired/old" -mindepth 2 -maxdepth 2 -name old)")" == "$(hash_skill "$tmp/source/old")" ]] \
     || fail "$label: backup of old is incomplete"
 }
 
@@ -605,6 +606,24 @@ make_legacy_source() {
   write_legacy_notice "$src/skills/anti-slop"
 }
 
+# install.sh ignores a relative XDG_STATE_HOME; the helper must lock the same file.
+test_relative_xdg_state_home_is_ignored() {
+  local tmp old_hash
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  make_fixture "$tmp"
+  mkdir "$tmp/cwd" "$tmp/home"
+  cp -r "$tmp/source/old" "$tmp/dest/old"
+  old_hash="$(hash_skill "$tmp/dest/old")"
+  write_lock "$tmp/dest" "$tmp/source" "old=$old_hash"
+  (cd "$tmp/cwd" && env -i HOME="$tmp/home" PATH="$SAFE_PATH" LANG=C XDG_STATE_HOME=rel \
+    python3 "$MIGRATOR" --manifest "$tmp/migrations.json" --source "$tmp/source" --dest "$tmp/dest" --apply >/dev/null)
+  [[ -f "$tmp/home/.local/state/iuliandita-skills/install.lock" && ! -e "$tmp/cwd/rel" ]] \
+    || fail "relative XDG_STATE_HOME was not ignored: $(find "$tmp/cwd" "$tmp/home")"
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
 test_installer_migration_apply_requires_lock() {
   local tmp dir file status digest debris src
   tmp="$(mktemp -d)"
@@ -717,8 +736,8 @@ test_installer_continues_past_partial_apply() {
   [[ -z "$(ls -A "$tmp/tmpdir")" ]] || fail "partial apply left a temp file: $(ls -A "$tmp/tmpdir")"
 
   # SKILLS_BACKUP_DIR: one folder per destination, so two "skills" directories do not share one.
-  backup="$(printf '%s\n' "$tmp"/backups/skills-*/anti-slop)"
-  [[ -d "$backup" && "$backup" =~ /backups/skills-[0-9a-f]{12}/anti-slop$ ]] \
+  backup="$(printf '%s\n' "$tmp"/backups/skills-*/.retired/anti-slop)"
+  [[ -d "$backup" && "$backup" =~ /backups/skills-[0-9a-f]{12}/\.retired/anti-slop$ ]] \
     || fail "migration backup is not in the per-destination folder: $(find "$tmp/backups" -maxdepth 2)"
   [[ ! -e "$tmp/backups/anti-slop" ]] || fail "migration backup landed in the shared backup root"
   rm -rf "$tmp"
@@ -845,6 +864,7 @@ test_staging_area_clearing_is_scoped
 test_backup_inside_staging_area_is_rejected
 test_apply_holds_installer_lock
 test_concurrent_applies_serialize
+test_relative_xdg_state_home_is_ignored
 test_installer_migration_apply_requires_lock
 test_installer_continues_past_partial_apply
 test_installer_stops_on_other_helper_failures

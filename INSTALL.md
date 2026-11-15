@@ -587,7 +587,9 @@ series retains its last three copies. Overwrite backups are stored under
 `<destination-parent>/.skills-backups/<destination-name>/`, outside the skill discovery root.
 With `SKILLS_BACKUP_DIR`, backups go to `<SKILLS_BACKUP_DIR>/<destination-name>-<hash>/`,
 and tools sharing one directory are installed into it once per run. `--migrate --apply` uses
-the same per-destination folder. Backups support manual recovery;
+the same per-destination folder and puts each retired entry under `.retired/<skill>/` there.
+Nothing prunes `.retired/`, so retirement backups stay until you delete them. Backups support
+manual recovery;
 customizations are not merged into the replacement. Preserve edits in the source checkout
 before reinstalling if they must remain active.
 
@@ -652,12 +654,17 @@ retains old canonical targets until remaining links have been reviewed and clean
 
 Each install writes a `.skills-lock.json` with content hashes. In `--link` mode, the installer
 writes the lock file to both the canonical directory and each selected tool directory, so either
-canonical or tool-specific checks work after install. `--check` compares current source hashes
+canonical or tool-specific checks work after install. A tool-directory entry the run skipped
+(an existing copy or a symlink to somewhere else, without `--force`) gets no record in that
+tool's lock, and the closing summary counts only skills linked for every selected tool.
+`--check` compares current source hashes
 with the hashes recorded in that lock file. It does not hash the installed files again, so it
 does not detect edits or deletions made there after installation. It checks all discoverable
 active source skills, even when skill names are passed, and separately reports legacy
 names recorded in the lock. It exits with status 1 if an active skill is outdated or absent, or a legacy
-entry remains. Deprecated notices are excluded from active update checks. With `--link`,
+entry remains. A lock that cannot be read, is not JSON, or has no `skills` object is reported
+once as an error, also with status 1, and no skill is checked. Deprecated notices are excluded
+from active update checks. With `--link`,
 only the canonical lock is checked; tool-directory
 links are not verified. Check a tool's lock separately without `--link`, which checks only
 the first selected tool.
