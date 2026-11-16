@@ -248,7 +248,7 @@ Always use a venv in the container (Python 3.12+ externally managed). Use either
 
 ```dockerfile
 # syntax=docker/dockerfile:1
-FROM rust:1.98-slim AS build
+FROM rust:1.99-slim AS build
 WORKDIR /app
 COPY Cargo.toml Cargo.lock ./
 RUN mkdir src && echo "fn main() {}" > src/main.rs
