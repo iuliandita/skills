@@ -219,7 +219,7 @@ ENTRYPOINT ["/app"]
 
 ```dockerfile
 # syntax=docker/dockerfile:1
-FROM python:3.14-slim AS build
+FROM python:3.15-slim AS build
 WORKDIR /app
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
@@ -228,7 +228,7 @@ RUN --mount=type=cache,target=/root/.cache/pip \
     pip install -r requirements.txt
 COPY . .
 
-FROM python:3.14-slim
+FROM python:3.15-slim
 RUN addgroup --system --gid 1001 app && \
     adduser --system --uid 1001 --ingroup app app
 WORKDIR /app
