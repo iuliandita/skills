@@ -231,8 +231,8 @@ pipeline.
 
 - **Trivy** - one binary, scans images + filesystems + IaC + secrets + licenses. Good
   default for teams who want fewer tools. After the 2026 TeamPCP incident, pin to a
-  verified version (`v0.74.0+` from official releases; `v0.69.3` was the March 2026
-  rollback version; avoid `v0.69.4/5/6` which were compromised).
+  verified version from official releases (minimum `v0.72.0`, current `v0.76.2`; never
+  `v0.69.4/5/6`, which were compromised, or any other `v0.69.x`).
 - **Grype** - vulnerability-matching only, but has **risk scoring** that combines CVSS
   + EPSS (exploit probability) + CISA KEV. Better signal-to-noise on severity gates -
   a critical CVE with 0.1% EPSS is not the same as a high CVE in CISA KEV with 95% EPSS,

@@ -2,12 +2,24 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+# macOS hands out temp dirs behind a symlink (/var is /private/var), so every
+# temp dir is resolved here: paths built from one then match the resolved
+# paths the installer prints and records.
+mktemp() {
+  local dir
+  dir="$(command mktemp "$@")" || return 1
+  (cd "$dir" && pwd -P)
+}
+# macOS has shasum where Linux has sha256sum; both print the same format.
+HASH_TOOL=sha256sum
+command -v sha256sum >/dev/null 2>&1 || { HASH_TOOL=shasum; sha256sum() { shasum -a 256; }; }
 MIGRATOR="$ROOT/scripts/migrate-skills.py"
 
 # Git hooks export GIT_DIR and friends; fixture runs must not inherit them.
 while IFS= read -r var; do unset "$var"; done < <(git rev-parse --local-env-vars)
 
-SAFE_PATH="$(for cmd in python3 git sha256sum; do dirname "$(command -v "$cmd")"; done | awk '!seen[$0]++' | paste -sd:):/usr/bin:/bin"
+SAFE_PATH="$(for cmd in bash python3 git "$HASH_TOOL" flock; do dirname "$(command -v "$cmd")"; done | awk '!seen[$0]++' | paste -sd: -):/usr/bin:/bin"
 TEST_HOME="$(mktemp -d)"
 LOCK_FILE="$TEST_HOME/.local/state/iuliandita-skills/install.lock"
 HOLDER=""
@@ -78,7 +90,8 @@ test_dry_run_and_apply() {
   run_migrator --manifest "$tmp/migrations.json" --source "$tmp/source" --dest "$tmp/dest" --apply > "$tmp/apply"
   [[ ! -e "$tmp/dest/old" ]] || fail "apply kept migrated old skill"
   [[ -f "$tmp/dest/new/SKILL.md" ]] || fail "apply did not install replacement"
-  [[ -e "$tmp/.skills-backups/dest/old" ]] || fail "apply did not create external backup"
+  [[ -e "$tmp/.skills-backups/dest/.retired/old" ]] || fail "apply did not create external backup"
+  [[ ! -e "$tmp/.skills-backups/dest/old" ]] || fail "retirement backup landed in the pruned per-skill folder"
   python3 - "$tmp/dest/.skills-lock.json" <<'PY'
 import json
 import sys
@@ -248,7 +261,7 @@ JSON
   [[ ! -e "$tmp/tool/one" ]] || fail "owned selected link was not retired"
   [[ -L "$tmp/tool/new" ]] || fail "replacement link was not created"
   [[ "$(readlink "$tmp/tool/new")" == "$tmp/canonical/new" ]] || fail "replacement link target is wrong"
-  if ! find "$tmp/.skills-backups/tool/one" -path '*/one.target/SKILL.md' -type f -print -quit | grep -q .; then
+  if ! find "$tmp/.skills-backups/tool/.retired/one" -path '*/one.target/SKILL.md' -type f -print -quit | grep -q .; then
     fail "link backup did not preserve target contents"
   fi
 
@@ -288,9 +301,9 @@ assert_converged() {
   [[ "$(hash_skill "$tmp/dest/new")" == "$(hash_skill "$tmp/source/new")" ]] || fail "$label: replacement differs from source"
   [[ "$(lock_names "$tmp/dest/.skills-lock.json")" == "keep new" ]] || fail "$label: lock records are $(lock_names "$tmp/dest/.skills-lock.json")"
   [[ ! -e "$tmp/.skills-migrate-staging" ]] || fail "$label: staging area left behind"
-  backups="$(find "$tmp/.skills-backups/dest/old" -mindepth 1 -maxdepth 1 | wc -l)"
+  backups="$(find "$tmp/.skills-backups/dest/.retired/old" -mindepth 1 -maxdepth 1 | wc -l)"
   (( backups == 1 )) || fail "$label: expected one backup of old, found $backups"
-  [[ "$(hash_skill "$(find "$tmp/.skills-backups/dest/old" -mindepth 2 -maxdepth 2 -name old)")" == "$(hash_skill "$tmp/source/old")" ]] \
+  [[ "$(hash_skill "$(find "$tmp/.skills-backups/dest/.retired/old" -mindepth 2 -maxdepth 2 -name old)")" == "$(hash_skill "$tmp/source/old")" ]] \
     || fail "$label: backup of old is incomplete"
 }
 
@@ -405,7 +418,7 @@ test_inserted_target_is_never_overwritten() {
     FAULT="insert-target-$kind" mig --apply > "$tmp/out"
     grep -q 'SKIP old: replacement collision' "$tmp/out" || fail "$kind insertion was not refused"
     if [[ "$kind" == dir ]]; then
-      [[ ! -L "$tmp/dest/new" && "$(<"$tmp/dest/new/SKILL.md")" == inserted && "$(find "$tmp/dest/new" -type f | wc -l)" == 1 ]] \
+      [[ ! -L "$tmp/dest/new" && "$(<"$tmp/dest/new/SKILL.md")" == inserted && "$(find "$tmp/dest/new" -type f | wc -l)" -eq 1 ]] \
         || fail "inserted directory was overwritten"
     else
       [[ "$(readlink "$tmp/dest/new")" == /nonexistent-inserted-target ]] || fail "inserted symlink was overwritten"
@@ -424,7 +437,7 @@ test_no_replace_unavailable_fails_closed() {
   setup_owned_copy "$tmp"
   cp "$tmp/dest/.skills-lock.json" "$tmp/lock-before"
   FAULT=force-enosys mig --apply > "$tmp/out" 2>&1 || status=$?
-  (( status == 1 )) || fail "unavailable no-replace rename exited $status, want 1"
+  (( status == 6 )) || fail "unavailable no-replace rename exited $status, want 6"
   grep -q 'SKIP old: atomic no-replace rename is unavailable' "$tmp/out" || fail "fail-closed reason missing"
   [[ ! -e "$tmp/dest/new" && -d "$tmp/dest/old" ]] || fail "fail-closed run changed skills"
   cmp -s "$tmp/lock-before" "$tmp/dest/.skills-lock.json" || fail "fail-closed run changed the lock"
@@ -605,6 +618,24 @@ make_legacy_source() {
   write_legacy_notice "$src/skills/anti-slop"
 }
 
+# install.sh ignores a relative XDG_STATE_HOME; the helper must lock the same file.
+test_relative_xdg_state_home_is_ignored() {
+  local tmp old_hash
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  make_fixture "$tmp"
+  mkdir "$tmp/cwd" "$tmp/home"
+  cp -r "$tmp/source/old" "$tmp/dest/old"
+  old_hash="$(hash_skill "$tmp/dest/old")"
+  write_lock "$tmp/dest" "$tmp/source" "old=$old_hash"
+  (cd "$tmp/cwd" && env -i HOME="$tmp/home" PATH="$SAFE_PATH" LANG=C XDG_STATE_HOME=rel \
+    python3 "$MIGRATOR" --manifest "$tmp/migrations.json" --source "$tmp/source" --dest "$tmp/dest" --apply >/dev/null)
+  [[ -f "$tmp/home/.local/state/iuliandita-skills/install.lock" && ! -e "$tmp/cwd/rel" ]] \
+    || fail "relative XDG_STATE_HOME was not ignored: $(find "$tmp/cwd" "$tmp/home")"
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
 test_installer_migration_apply_requires_lock() {
   local tmp dir file status digest debris src
   tmp="$(mktemp -d)"
@@ -659,6 +690,90 @@ PY
   [[ ! -e "$tmp/skills/anti-slop" && -d "$tmp/skills/code-simplification" ]] || fail "locked migration apply did not migrate"
   rm -rf "$tmp"
   trap - RETURN
+}
+
+# Two tool directories that each own the legacy skill, and a helper stand-in that
+# logs every destination and misbehaves for the first one only.
+setup_two_tools() {
+  local tmp="$1" dir
+  make_legacy_source "$tmp/src"
+  mkdir -p "$tmp/tmpdir"
+  for dir in "$tmp/first/skills" "$tmp/second/skills"; do
+    mkdir -p "$dir"
+    write_legacy_notice "$dir/anti-slop"
+    write_lock "$dir" "$tmp/src/skills" "anti-slop=$(hash_skill "$dir/anti-slop")"
+  done
+  cat > "$tmp/helper.py" <<'PY'
+import os
+import runpy
+import sys
+
+assert sys.flags.isolated, "the installer must run the helper with -I"
+dest = sys.argv[sys.argv.index("--dest") + 1]
+with open(os.environ["STUB_LOG"], "a", encoding="utf-8") as log:
+    log.write(dest + "\n")
+mode = os.environ["STUB_MODE"] if dest == os.environ["STUB_DEST"] else ""
+if mode == "crash":
+    raise RuntimeError("injected helper crash")
+if mode == "busy":
+    raise SystemExit(3)
+if mode == "partial":
+    os.environ["SKILLS_MIGRATE_FAULT"] = "force-enosys"
+runpy.run_path(os.environ["STUB_REAL"], run_name="__main__")
+PY
+}
+
+migrate_two_tools() {
+  env -i HOME="$TEST_HOME" PATH="$SAFE_PATH" LANG=C TMPDIR="$tmp/tmpdir" SKILLS_BACKUP_DIR="$tmp/backups" \
+    OPENCODE_SKILLS_DIR="$tmp/first/skills" CLAUDE_SKILLS_DIR="$tmp/second/skills" \
+    OPENCODE_CONFIG_FILE="$tmp/opencode.json" SKILLS_MIGRATOR="$tmp/helper.py" \
+    STUB_REAL="$tmp/src/scripts/migrate-skills.py" STUB_LOG="$tmp/helper.log" \
+    STUB_DEST="$tmp/first/skills" STUB_MODE="$1" \
+    "$tmp/src/install.sh" --tool opencode --tool claude --migrate --apply
+}
+
+test_installer_continues_past_partial_apply() {
+  local tmp status=0 backup
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  setup_two_tools "$tmp"
+  migrate_two_tools partial > "$tmp/out" 2>&1 || status=$?
+  (( status == 1 )) || fail "partial apply for the first tool exited $status, want 1: $(<"$tmp/out")"
+  grep -q 'SKIP anti-slop: atomic no-replace rename is unavailable' "$tmp/out" || fail "partial apply was not reported: $(<"$tmp/out")"
+  [[ -d "$tmp/first/skills/anti-slop" && ! -e "$tmp/first/skills/code-simplification" ]] || fail "partial apply changed the first tool"
+  [[ ! -e "$tmp/second/skills/anti-slop" && -d "$tmp/second/skills/code-simplification" ]] \
+    || fail "second tool was not migrated after a partial apply: $(<"$tmp/out")"
+  # Once for the opencode destination and once at the end of the run.
+  [[ "$(grep -c 'OpenCode permissions synced' "$tmp/out")" == 2 ]] || fail "permission sync did not run after a partial apply: $(<"$tmp/out")"
+  [[ -z "$(ls -A "$tmp/tmpdir")" ]] || fail "partial apply left a temp file: $(ls -A "$tmp/tmpdir")"
+
+  # SKILLS_BACKUP_DIR: one folder per destination, so two "skills" directories do not share one.
+  backup="$(printf '%s\n' "$tmp"/backups/skills-*/.retired/anti-slop)"
+  [[ -d "$backup" && "$backup" =~ /backups/skills-[0-9a-f]{12}/\.retired/anti-slop$ ]] \
+    || fail "migration backup is not in the per-destination folder: $(find "$tmp/backups" -maxdepth 2)"
+  [[ ! -e "$tmp/backups/anti-slop" ]] || fail "migration backup landed in the shared backup root"
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_installer_stops_on_other_helper_failures() {
+  local tmp status mode want
+  for mode in crash:1 busy:3; do
+    want="${mode#*:}"
+    mode="${mode%:*}"
+    tmp="$(mktemp -d)"
+    trap 'rm -rf "$tmp"' RETURN
+    setup_two_tools "$tmp"
+    status=0
+    migrate_two_tools "$mode" > "$tmp/out" 2>&1 || status=$?
+    (( status == want )) || fail "helper $mode exited $status, want $want: $(<"$tmp/out")"
+    [[ "$(<"$tmp/helper.log")" == "$tmp/first/skills" ]] || fail "helper $mode did not stop the run: $(<"$tmp/helper.log")"
+    [[ -d "$tmp/second/skills/anti-slop" && ! -e "$tmp/second/skills/code-simplification" ]] || fail "helper $mode still migrated the second tool"
+    ! grep -q 'OpenCode permissions synced' "$tmp/out" || fail "helper $mode still synced permissions"
+    [[ -z "$(ls -A "$tmp/tmpdir")" ]] || fail "helper $mode left a temp file: $(ls -A "$tmp/tmpdir")"
+    rm -rf "$tmp"
+    trap - RETURN
+  done
 }
 
 setup_legacy_dir() {
@@ -761,6 +876,9 @@ test_staging_area_clearing_is_scoped
 test_backup_inside_staging_area_is_rejected
 test_apply_holds_installer_lock
 test_concurrent_applies_serialize
+test_relative_xdg_state_home_is_ignored
 test_installer_migration_apply_requires_lock
+test_installer_continues_past_partial_apply
+test_installer_stops_on_other_helper_failures
 test_legacy_cleanup_backup_outside_staging_area
 printf 'migration tests passed\n'

@@ -60,8 +60,9 @@ Before returning any generated network configuration, verify:
   1450). Mismatched MTU causes silent packet drops
 - [ ] **DNS resolver order**: systemd-resolved vs /etc/resolv.conf vs NetworkManager - check
   which DNS manager is active before modifying
-- [ ] **Firewall persistence**: install the validated rules file as /etc/nftables.conf and
-  enable nftables.service to persist across reboots. Raw `nft add` commands are ephemeral
+- [ ] **Firewall persistence**: install the validated rules file where the distro's
+  nftables.service loads it (Debian, Ubuntu, Arch: /etc/nftables.conf; RHEL family:
+  /etc/sysconfig/nftables.conf) and enable the service to persist across reboots. Raw `nft add` commands are ephemeral
 - [ ] **Port conflicts checked**: reverse proxy ports (80, 443) may conflict with existing
   services. Verify with `ss -tlnp`
 - [ ] **TLS versions**: minimum TLS 1.2 for all services. TLS 1.3 preferred where supported
@@ -130,7 +131,7 @@ Read the appropriate reference file for detailed patterns. Key principles:
 
 - **Test before persisting.** Add nftables rules, verify connectivity, then save. Apply reverse
   proxy config changes with `--dry-run` or syntax check first (`caddy validate`, `nginx -t`,
-  `haproxy -c`).
+  `haproxy -c -f <cfg>`).
 - **One change at a time.** Over SSH, save the exact rules/routes/manager configuration being
   changed and schedule a tested restoration command before applying. A generic networking
   restart is not a rollback. Verify the timer exists with
@@ -320,7 +321,7 @@ Network configuration touches several PCI-DSS requirements:
 | 1.4 | Trusted/untrusted boundaries | Reverse proxy TLS termination, WAF placement |
 | 2.2 | Hardening | Disable unnecessary services, unused ports closed |
 | 4.1 | Encryption in transit | TLS 1.2+ everywhere, no plaintext on untrusted segments |
-| 11.3 | Network monitoring | IDS/IPS (Suricata), log aggregation, flow analysis |
+| 11.5 | Network monitoring | IDS/IPS (Suricata), log aggregation, flow analysis |
 
 ---
 

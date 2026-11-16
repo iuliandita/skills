@@ -13,8 +13,11 @@ set -euo pipefail
 #   R3         install.sh changed: INSTALL.md or README.md changed.
 #   R4         scripts/{check-*,gen-*,lint-*,validate-*} added/deleted:
 #              README.md or docs/skill-authoring.md changed.
-#   R3/R4 accept a `Docs-Impact: none - <specific reason>` commit trailer in
-#   the range. A trailer never satisfies R1 or R2.
+#   R3/R4 accept a `Docs-Impact: none - <specific reason>` commit trailer, but
+#   only from a commit in the range that itself touches the path that triggered
+#   the rule (install.sh for R3, one of the added/deleted scripts for R4). A
+#   squash commit touches every path of its PR, so a trailer in the squash
+#   message still counts. A trailer never satisfies R1 or R2.
 #
 # Usage: check-docs-impact.sh [base] | --release <prev-tag>
 # Base resolution matches check-refiner-phase1-guard.sh: argument, else BASE_REF,
@@ -23,6 +26,10 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
+# shellcheck source=./scripts/base-lib.sh
+source "$ROOT/scripts/base-lib.sh"
+# shellcheck source=./scripts/skill-lib.sh
+source "$ROOT/scripts/skill-lib.sh"
 
 release=0
 arg_base=""
@@ -37,34 +44,7 @@ else
   arg_base="${1:-}"
 fi
 BASE_REF="${arg_base:-${BASE_REF:-}}"
-BASE_SHA="${BASE_SHA:-}"
-if [[ "$BASE_SHA" =~ ^0+$ ]]; then
-  # A push that creates a ref reports an all-zero "before" sha.
-  BASE_SHA=""
-fi
-if [[ -z "$BASE_REF" && -n "$BASE_SHA" ]] && ! git rev-parse --verify --quiet "${BASE_SHA}^{commit}" >/dev/null; then
-  echo "error: BASE_SHA '${BASE_SHA}' is not a commit in this clone" >&2
-  exit 1
-fi
-
-ref_exists() {
-  git rev-parse --verify --quiet "${1}^{commit}" >/dev/null 2>&1
-}
-
-resolve_base() {
-  local candidate
-  for candidate in "$@"; do
-    if ref_exists "$candidate"; then
-      if base="$(git merge-base HEAD "$candidate" 2>/dev/null)"; then
-        return 0
-      fi
-      echo "error: base ref '${candidate}' exists but no merge-base with HEAD could be computed" >&2
-      echo "(shallow clone or unrelated history); refusing to fall back to a non-ancestor tip." >&2
-      exit 1
-    fi
-  done
-  base=""
-}
+normalize_base_sha
 
 base=""
 if [[ -n "$BASE_REF" ]]; then
@@ -108,37 +88,58 @@ path_changed() {
 }
 
 # Trailer: valid only as "none - <specific reason>" (reason >= 20 chars).
-valid_trailer=""
-while IFS= read -r value; do
-  [[ -n "$value" ]] || continue
-  [[ "$value" == "none - "* ]] || continue
+trailer_valid() {
+  local value="$1" reason lowered
+  [[ "$value" == "none - "* ]] || return 1
   reason="${value#none - }"
   reason="${reason#"${reason%%[![:space:]]*}"}"
   reason="${reason%"${reason##*[![:space:]]}"}"
   lowered="$(printf '%s' "${reason%.}" | tr '[:upper:]' '[:lower:]')"
   case "$lowered" in
-    none|n/a|na|"no impact"|"docs reviewed"|internal|"not needed"|trivial|refactor) continue ;;
+    none|n/a|na|"no impact"|"docs reviewed"|internal|"not needed"|trivial|refactor) return 1 ;;
   esac
-  (( ${#reason} >= 20 )) || continue
-  valid_trailer="$value"
-  break
-done < <(git log --format='%(trailers:key=Docs-Impact,valueonly)' "$base..HEAD")
+  (( ${#reason} >= 20 ))
+}
+
+# Paths touched by the commits that carry a valid trailer, one per line. A
+# merge commit is compared with its first parent; a rename lists both names.
+trailer_paths=""
+while IFS= read -r sha; do
+  [[ -n "$sha" ]] || continue
+  while IFS= read -r value; do
+    trailer_valid "$value" || continue
+    trailer_paths+="$(git log -1 -m --first-parent --no-renames --format= --name-only "$sha")"$'\n'
+    break
+  done < <(git log -1 --format='%(trailers:key=Docs-Impact,valueonly)' "$sha")
+done < <(git rev-list "$base..HEAD")
 
 soft_level=error
 (( release )) && soft_level=warn
 
+# satisfied_by_trailer <triggering path>...
 satisfied_by_trailer() {
-  [[ -n "$valid_trailer" ]]
+  local path
+  for path in "$@"; do
+    if grep -Fxq -- "$path" <<<"$trailer_paths"; then
+      return 0
+    fi
+  done
+  return 1
 }
 
 # --- R1 ---------------------------------------------------------------
 skill_active_at_base() {
-  git show "$base:skills/$1/SKILL.md" 2>/dev/null | awk '
-    NR == 1 && $0 != "---" { exit }
-    NR > 1 && $0 == "---" { exit }
-    { line = tolower($0) }
-    line ~ /^[[:space:]]+deprecated:[[:space:]]*["\047]?[[:space:]]*true[[:space:]]*["\047]?[[:space:]]*(#.*)?$/ { dep = 1 }
-    END { exit dep ? 1 : 0 }'
+  # The shared frontmatter parser reads files, so the base revision goes
+  # through a temp file.
+  local tmp rc=0
+  tmp="$(mktemp)"
+  if ! git show "$base:skills/$1/SKILL.md" > "$tmp" 2>/dev/null; then
+    rm -f "$tmp"
+    return 1
+  fi
+  frontmatter_flag "$tmp" metadata.deprecated && rc=1
+  rm -f "$tmp"
+  return "$rc"
 }
 
 removed_skills=()
@@ -169,13 +170,6 @@ if (( release )) && (( ${#removed_skills[@]} > 0 )); then
 fi
 
 # --- R2 ---------------------------------------------------------------
-supported_tools() {
-  awk '
-    /^SUPPORTED_TOOLS=\(/ { on = 1; next }
-    on && /^\)/ { exit }
-    on { sub(/#.*/, ""); for (i = 1; i <= NF; i++) print $i }'
-}
-
 # Emits "tool<TAB>default" from `[tool]="${VAR:-default}"` lines of TOOL_PATHS.
 tool_path_defaults() {
   awk '
@@ -209,8 +203,8 @@ if git cat-file -e "$base:install.sh" 2>/dev/null && git cat-file -e "HEAD:insta
   base_install="$(git show "$base:install.sh")"
   head_install="$(git show "HEAD:install.sh")"
 
-  base_tools="$(supported_tools <<<"$base_install")"
-  head_tools="$(supported_tools <<<"$head_install")"
+  base_tools="$(list_supported_tools - <<<"$base_install")"
+  head_tools="$(list_supported_tools - <<<"$head_install")"
   install_added="$(git diff "$base..HEAD" -- INSTALL.md | grep '^+' | grep -v '^+++' || true)"
   while IFS= read -r tool; do
     [[ -n "$tool" ]] || continue
@@ -236,8 +230,8 @@ fi
 
 # --- R3 ---------------------------------------------------------------
 if path_changed install.sh; then
-  if ! path_changed INSTALL.md && ! path_changed README.md && ! satisfied_by_trailer; then
-    finding "$soft_level" R3 "install.sh changed without an INSTALL.md or README.md change (or a valid 'Docs-Impact: none - <reason>' trailer)"
+  if ! path_changed INSTALL.md && ! path_changed README.md && ! satisfied_by_trailer install.sh; then
+    finding "$soft_level" R3 "install.sh changed without an INSTALL.md or README.md change (or a valid 'Docs-Impact: none - <reason>' trailer on a commit that changes install.sh)"
   fi
 fi
 
@@ -253,21 +247,21 @@ while IFS=$'\t' read -r status p1 p2; do
   esac
   for p in "${paths[@]}"; do
     case "$p" in
-      scripts/check-*.sh|scripts/gen-*|scripts/lint-*|scripts/validate-*) tooling+=("$p") ;;
+      scripts/check-*|scripts/gen-*|scripts/lint-*|scripts/validate-*) tooling+=("$p") ;;
     esac
   done
 done <<<"$changes"
 
 if (( ${#tooling[@]} > 0 )); then
-  if ! path_changed README.md && ! path_changed docs/skill-authoring.md && ! satisfied_by_trailer; then
-    finding "$soft_level" R4 "gate scripts added/removed (${tooling[*]}) without a README.md or docs/skill-authoring.md change (or a valid trailer)"
+  if ! path_changed README.md && ! path_changed docs/skill-authoring.md && ! satisfied_by_trailer "${tooling[@]}"; then
+    finding "$soft_level" R4 "gate scripts added/removed (${tooling[*]}) without a README.md or docs/skill-authoring.md change (or a valid trailer on a commit that touches one of them)"
   fi
 fi
 
 if (( errors > 0 )); then
   echo
   echo "Docs-impact check failed ($errors finding(s)). Update the docs named above, or for R3/R4 add a"
-  echo "'Docs-Impact: none - <specific reason, 20+ chars>' trailer to a commit in the range."
+  echo "'Docs-Impact: none - <specific reason, 20+ chars>' trailer to a commit that touches the path named in the finding."
   exit 1
 fi
 

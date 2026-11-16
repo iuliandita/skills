@@ -16,9 +16,29 @@
   },
   "timezone": "Etc/UTC",
   "schedule": [
-    "* 6 * * 1"
+    "* 0-11 * * 1"
   ],
   "minimumReleaseAge": "7 days",
+  "pip-compile": {
+    "managerFilePatterns": [
+      "/^\\.github/tools/semgrep/requirements\\.txt$/"
+    ]
+  },
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "zizmor binary version passed to zizmor-action; scripts/test-report-tool-pins.sh asserts this pattern against security.yml",
+      "managerFilePatterns": [
+        "/^\\.github/workflows/security\\.yml$/"
+      ],
+      "matchStrings": [
+        "uses: zizmorcore/zizmor-action@[^\\n]*\\n\\s+with:\\n\\s+version: \"(?<currentValue>[0-9][^\"]*)\""
+      ],
+      "depNameTemplate": "zizmorcore/zizmor",
+      "datasourceTemplate": "github-releases",
+      "extractVersionTemplate": "^v(?<version>.+)$"
+    }
+  ],
   "packageRules": [
     {
       "matchManagers": [
@@ -29,8 +49,18 @@
       "semanticCommitScope": "ci"
     },
     {
+      "description": "requirements.txt is a pip-compile lockfile: the pip-compile manager bumps requirements.in and regenerates the hashes, so pip_requirements must not edit single pins in it",
       "matchManagers": [
         "pip_requirements"
+      ],
+      "matchFileNames": [
+        ".github/tools/semgrep/**"
+      ],
+      "enabled": false
+    },
+    {
+      "matchManagers": [
+        "pip-compile"
       ],
       "matchFileNames": [
         ".github/tools/semgrep/**"
@@ -40,18 +70,14 @@
       "semanticCommitScope": "ci"
     },
     {
-      "description": "semgrep pins these exactly (mcp==, opentelemetry-api~=), so a bump alone cannot install; revisit when a semgrep release allows the fixed versions",
       "matchManagers": [
-        "pip_requirements"
-      ],
-      "matchFileNames": [
-        ".github/tools/semgrep/**"
+        "custom.regex"
       ],
       "matchPackageNames": [
-        "mcp",
-        "opentelemetry-api"
+        "zizmorcore/zizmor"
       ],
-      "enabled": false
+      "semanticCommitType": "deps",
+      "semanticCommitScope": "ci"
     },
     {
       "matchManagers": [
@@ -63,6 +89,22 @@
       "groupName": "markdownlint",
       "semanticCommitType": "deps",
       "semanticCommitScope": "ci"
+    },
+    {
+      "description": "the docker skill's Node example builds on node:NN-slim and runs on distroless nodejsNN; the runtime major is part of the image name, which a tag bump cannot change, so a node major alone would split the two stages",
+      "matchFileNames": [
+        "skills/docker/**"
+      ],
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "node"
+      ],
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "enabled": false
     }
   ]
 }

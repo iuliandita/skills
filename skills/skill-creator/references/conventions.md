@@ -206,8 +206,8 @@ All high-effort custom skills follow this pattern:
 
 Overview paragraph. Goal statement.
 
-**Target versions** (Month Year):   # optional, for tool/platform skills
-- Tool: version
+[Target versions pointer]   # optional, for tool/platform skills: one line that points
+                            # at the dated versions.md receipt; no versions in the body
 
 ## When to use
 ## When NOT to use
@@ -314,7 +314,7 @@ thorough.
   SKILL.md and references. Mixed terms read as different things to some models.
 - **No time-conditional instructions**: never "before June 2026 use X, after use Y". State the
   current method; move legacy behavior to an "Old patterns" section, collapsed with
-  `<details>` where the host renders it. Dated `Target versions` pins are fine: they record when
+  `<details>` where the host renders it. Dated version receipts (a skill's `versions.md`) are fine: they record when
   a fact was verified, they do not branch behavior on the calendar.
 - **Portable paths and tool names**: forward slashes only (`references/<topic>.md`), relative to
   the skill directory. Name MCP tools fully qualified (`server:tool`, e.g. `github:create_issue`)
@@ -624,7 +624,7 @@ over), so length costs every session. The opening should still choose the skill 
 shortens the description.
 
 ```text
-Review code and diffs for bugs, regressions, edge cases, races, and leaks. Use for "review this diff" or a pre-merge check. Not security.
+Review a diff, file, or module for bugs, regressions, edge cases, races, and leaks. Use for "review this diff" or "is this change correct". Not security or repo audits.
 Dockerfiles, Compose, Podman, BuildKit: build failures, networking, volumes, image size, multi-arch, signing, SBOMs, hardening. Not Kubernetes.
 ```
 
@@ -655,8 +655,8 @@ brevity; routing trials provide evidence about selection quality.
 | arch-linux | high | 2026-03-26 | Arch, CachyOS, EndeavourOS, Manjaro admin: pacman, paru/AUR, keyrings, broken upgrades, .pacnew, boot, NVIDIA, Hyprland. |
 | backend-api | high | 2026-04-06 | REST/HTTP API design and review, plus GraphQL, gRPC, and broker contracts: OpenAPI, errors, pagination, versioning, auth, retries, acks, DLQs. |
 | ci-cd | high | 2026-03-24 | CI/CD pipelines and runners: GitHub Actions, GitLab CI, Forgejo/Gitea Actions, Woodpecker. Use for failing or flaky jobs, caching, SHA pinning. |
-| code-review | high | 2026-03-25 | Review code and diffs for bugs, regressions, edge cases, races, and leaks. Use for "review this diff" or a pre-merge check. Not security. |
-| code-simplification | medium | 2026-09-20 | Find dead code, duplication, overengineering, invented APIs, weak tests; report safe reductions, no edits. Use for "simplify this" or a refactor that lost behavior. |
+| code-review | high | 2026-03-25 | Review a diff, file, or module for bugs, regressions, edge cases, races, and leaks. Use for "review this diff" or "is this change correct". Not security or repo audits. |
+| code-simplification | medium | 2026-09-20 | Find dead code, duplication, overengineering, invented APIs, weak tests; report safe reductions, no edits. Use for "simplify this" or a removal diff. Not bug review. |
 | databases | high | 2026-03-24 | PostgreSQL, MySQL/MariaDB, MongoDB, MSSQL, Redis, Valkey: schemas, slow queries, EXPLAIN, indexes, migrations, replication, backups, upgrades. |
 | debian-ubuntu | high | 2026-04-22 | Debian, Ubuntu, Mint, Pop!_OS, Kali admin: apt/dpkg errors, held packages, release upgrades, PPAs, kernels, drivers, systemd. |
 | debug-triage | high | 2026-06-14 | Find the failing layer in an outage or post-deploy break, debug to root cause, profile slow code. Use for "it's down", 502s, timeouts, latency spikes. |
@@ -676,7 +676,7 @@ brevity; routing trials provide evidence about selection quality.
 | plan-review | high | 2026-09-20 | Pressure-test a plan or decision before building: requirements, assumptions, risks. Use for "review my plan", "is this a good idea", architecture choices. |
 | privilege-escalation | high | 2026-03-25 | Assess authorized Linux privilege escalation: privesc enumeration after a shell, sudo and SUID checks, container escape, Kubernetes RBAC abuse, pivoting. |
 | prompt-generator | medium | 2026-03-25 | Write or improve LLM prompts, system prompts, and prompt templates from rough notes. Use for "write me a prompt". Not skill files or SDK code. |
-| repo-audit | high | 2026-09-20 | Whole-repo or PR audit across bugs, security, code quality, and docs, quick or exhaustive. Use for "audit this repo" or a pre-release check. |
+| repo-audit | high | 2026-09-20 | Multi-lane audit of a whole repo or PR: bugs, security, code quality, and docs in one run, quick or exhaustive. Use for "audit this repo" or a pre-release check. |
 | rhel-fedora | high | 2026-04-22 | Fedora, RHEL, Rocky, AlmaLinux, CentOS Stream, Amazon Linux: dnf/rpm, EPEL, SELinux AVC denials, firewalld, system-upgrade, dracut, GRUB, akmods. |
 | roadmap | medium | 2026-04-05 | Private ROADMAP.md backlog: capture and rank feature ideas and competitor findings, mark shipped items. Use for "add to roadmap" or "what next". |
 | security-audit | high | 2026-03-25 | Find vulnerabilities: auth flaws, injection, exposed secrets, OWASP, dependency and supply-chain risk. Use for a security review, secret scan, or release gate. |

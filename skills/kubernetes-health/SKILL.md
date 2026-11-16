@@ -65,8 +65,9 @@ Before running checks or reporting results, verify:
 
 This public skill has no built-in private cluster registry.
 
-Users may create local-only overlays under `skills/kubernetes-health/protected/` for private lab,
-homelab, work, or customer cluster details. The directory is gitignored by this collection. If it
+Users may create local-only overlays under `protected/` inside this skill's own directory, next
+to this file, for private lab, homelab, work, or customer cluster details. In a checkout of this
+collection that is `skills/kubernetes-health/protected/`, which the collection gitignores. If it
 exists in the installed skill, read it while using this skill. A user can ask their agent to create
 or update these files.
 
@@ -113,6 +114,8 @@ Copy this checklist and track progress:
 
 If a protected registry maps the request or current directory to an alias, use that mapping. If no
 mapping exists, require an explicit kube context or ask whether to use `kubectl config current-context`.
+In a headless run with neither, stop and report that a context is required; an unconfirmed
+current context is not a target.
 
 ### Step 2: Confirm read-only scope
 

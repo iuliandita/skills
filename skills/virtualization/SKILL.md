@@ -77,7 +77,7 @@ generated VM config, Terraform HCL, or Packer template, verify against this list
 - [ ] `fstrim.timer` enabled in guest for thin-provisioned storage (completes the discard chain)
 - [ ] SCSI controller explicitly set (`virtio-scsi-single` when using per-disk I/O threads;
   `virtio-scsi-pci` only when they are disabled)
-- [ ] Machine type matches firmware needs: `q35` for PCIe passthrough and for OVMF Secure Boot / Windows 11 (SMM-backed firmware); `i440fx` boots with seabios or ovmf, but Proxmox then uses a no-SMM OVMF build (no enforced Secure Boot).
+- [ ] Machine type matches firmware needs (`q35` vs `i440fx`: Boot settings in `references/proxmox.md`)
 - [ ] VGA type matches use case: `serial0` for headless cloud images, `virtio` for GUI VMs,
   omit for PCI passthrough display GPUs (`x-vga=1` replaces the virtual display)
 - [ ] **Hypervisor/version checked**: Proxmox, QEMU/KVM, libvirt, XCP-ng, vSphere, and cloud-init advice matches the target platform
@@ -225,44 +225,7 @@ ha-manager status                     # HA status
 
 ### Critical gotchas (battle-tested)
 
-These come from production Proxmox environments and will save hours of debugging:
-
-**Stop/start vs reboot:** Guest `reboot` does NOT restart the QEMU process. Disk config
-changes (discard, cache mode, iothread, bus type) only apply when QEMU starts fresh.
-Use `qm shutdown`, verify stopped state, then `qm start` for hardware config changes.
-This also applies to memory balloon device changes. Reserve `qm stop` for an explicitly
-justified forced-stop recovery after graceful shutdown fails; it cuts guest power.
-
-**LVM thin pool at 100%:** When data_percent hits 100%, ALL VM I/O on that pool fails
-instantly - guests hang, no graceful degradation. Recovery requires `lvextend` on the
-thin pool or migrating VMs off. Monitor thin pool usage and alert well before 100% (80%
-warning, 90% critical). `data_percent` is the share of the pool's data space currently
-allocated to its thin volumes (lvmthin(7)), not in-guest filesystem usage - a VM that wrote
-then deleted 50GB keeps that 50GB allocated until a discard reaches the pool.
-
-**Live migration via SSH:** `qm migrate` runs in the foreground. If the SSH session drops,
-the migration aborts. For large VMs (32GB+ disk), use:
-```bash
-nohup qm migrate <vmid> <target> --online --with-local-disks \
-  > /tmp/migrate-<vmid>.log 2>&1 &
-```
-Migration is abort-safe: source VM stays running on failure, target LVs are cleaned up.
-
-**KVM ballooning:** The balloon device lets the host reclaim unused guest memory between the
-configured minimum and `memory:`. It needs the guest's `virtio_balloon` driver: minimal Alpine
-images and some BSDs do not load it, so the host's request is simply ignored. Raising `memory:`
-above the running maximum is a different mechanism - DIMM hotplug, which needs `hotplug: memory`
-plus NUMA and a guest that onlines new blocks, or a full stop/start. Even on Debian, balloon
-behavior is unpredictable under memory pressure. Recommendation: use `floating = 0` in the
-bpg/proxmox Terraform `memory` block, or set `balloon: 0` in native Proxmox config, and
-provision VMs with the memory they actually need.
-
-**fail2ban on Proxmox (Debian 13):** `/var/log/daemon.log` doesn't exist under journald.
-Use `backend = systemd` with `journalmatch = _COMM=pvedaemon` in the jail config.
-
-**openipmi on non-IPMI hardware:** Fails on boot, generates spurious alerts. Safe to
-`systemctl mask openipmi` on nodes without BMC/IPMI hardware. Masking survives package
-updates; disabling doesn't.
+Read the critical Proxmox gotchas in `references/gotchas.md` before changing a production VM or host.
 
 ---
 

@@ -12,6 +12,7 @@ Deep-dive reference for cluster design, GitOps strategy, security architecture, 
 - Cost Optimization Playbook
 - Disaster Recovery
 - Platform Requirements (K8s 1.35+)
+- Platform awareness
 
 ---
 
@@ -236,7 +237,7 @@ The Trivy supply chain attack (CVE-2026-33634) demonstrated that **mutable Git t
 - **Vendor critical CI tools** or use pre-built, verified binaries instead of pulling from upstream on every run.
 - **Rotate secrets** if any CI pipeline ran compromised Trivy (v0.69.4/5/6) between March 19-23, 2026. The infostealer exfiltrated SSH keys, cloud creds, Docker configs, and k8s tokens.
 
-**Trivy safe versions (September 2026):** use binary v0.74.0+ from official releases for new pins. The March 2026 rollback set was binary v0.69.3, `trivy-action@v0.35.0`, and `setup-trivy@v0.2.6`; those actions still need verified commit SHAs, not mutable tags. Do NOT use v0.69.4/5/6.
+**Trivy versions (November 2026):** use binary v0.76.2 from official releases, never below v0.72.0 (CVE-2026-63328 affects every earlier release). Pin `trivy-action` and `setup-trivy` to verified commit SHAs, not mutable tags, and set their `version` input. Do NOT use v0.69.4/5/6 (compromised) or the March 2026 fallback set (binary v0.69.3, `trivy-action@v0.35.0`, `setup-trivy@v0.2.6`), which is below the minimum.
 
 ### Secrets Management
 
@@ -413,3 +414,12 @@ Keep these in mind when upgrading:
 | **autoscaling/v2** | Now | v2beta1/v2beta2 removed in 1.25/1.26. |
 | **User namespaces** | 1.33+ (on by default) | `hostUsers: false` maps container UID 0 to unprivileged host UID. Huge for multi-tenancy/PCI. |
 | **Pod-level mTLS** | 1.35 beta | KEP-4317. Native X.509 certs for pods without service mesh. Future alternative to Istio/Cilium for zero-trust. |
+
+## Platform awareness
+
+- **cgroup v2 required** on K8s 1.36+ (`FailCgroupV1` defaults to true; kubelet won't start on cgroup v1 unless `failCgroupV1: false`). Nodes on cgroup v1 (CentOS 7, RHEL 7, Ubuntu 18.04) will fail.
+- **containerd 2.0 required** on K8s 1.36+. Last release supporting containerd 1.x is 1.35.
+- **AppArmor annotation auto-population stopped** in 1.34; full removal in 1.36. Use `securityContext.appArmorProfile` field.
+- **DRA (Dynamic Resource Allocation)** GA in 1.34 for GPU/FPGA/hardware scheduling. Replaces device plugin model.
+- **User namespaces** (`hostUsers: false`) enabled by default since K8s 1.33. Maps container UID 0 to unprivileged host UID. Huge for PCI multi-tenancy - container breakout doesn't yield host root.
+- **Pod-level mTLS** (KEP-4317) beta in 1.35, feature gate `PodCertificates` must be manually enabled. Native X.509 certs for pods without service mesh. Future alternative to Istio/Cilium for Req 4 compliance.

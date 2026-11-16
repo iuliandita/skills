@@ -297,7 +297,7 @@ jobs:
   eval:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@<sha>  # v7; pin the full commit SHA
       - uses: actions/setup-node@v4
         with:
           node-version: "22"

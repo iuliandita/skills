@@ -3,6 +3,18 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
+# macOS hands out temp dirs behind a symlink (/var is /private/var), so every
+# temp dir is resolved here: paths built from one then match the resolved
+# paths the installer prints and records.
+mktemp() {
+  local dir
+  dir="$(command mktemp "$@")" || return 1
+  (cd "$dir" && pwd -P)
+}
+# macOS has shasum where Linux has sha256sum; both print the same format.
+HASH_TOOL=sha256sum
+command -v sha256sum >/dev/null 2>&1 || { HASH_TOOL=shasum; sha256sum() { shasum -a 256 "$@"; }; }
+
 # Git hooks export GIT_DIR and friends; fixture repos must not inherit them.
 while IFS= read -r var; do unset "$var"; done < <(git rev-parse --local-env-vars)
 
@@ -118,7 +130,7 @@ test_shared_destination_is_installed_once() {
 }
 
 test_backup_retention_keeps_three_unique() {
-  local tmp dest root i newest
+  local tmp dest root i newest oldest
   tmp="$(mktemp -d)"
   trap 'rm -rf "$tmp"' RETURN
   dest="$tmp/s"; root="$tmp/.skills-backups/s/docker"
@@ -130,6 +142,8 @@ test_backup_retention_keeps_three_unique() {
   [[ "$(find "$root" -mindepth 1 -maxdepth 1 -type d | wc -l)" -eq 3 ]] || fail "expected three backups"
   newest="$(find "$root" -mindepth 1 -maxdepth 1 -type d | sort | tail -1)"
   grep -q EDIT5 "$newest/SKILL.md" || fail "newest backup lacks last edit"
+  oldest="$(find "$root" -mindepth 1 -maxdepth 1 -type d | sort | head -1)"
+  [[ "$(tail -1 "$oldest/SKILL.md")" == EDIT3 ]] || fail "pruning did not remove the two oldest backups"
   rm -rf "$tmp"
   trap - RETURN
 }
@@ -183,15 +197,17 @@ test_legacy_backup_migration_keeps_layout_on_collision() {
 }
 
 test_opencode_install_allows_installed_skills() {
-  local tmp config
+  local tmp config output
   tmp="$(mktemp -d)"
   trap 'rm -rf "$tmp"' RETURN
 
   config="$tmp/.config/opencode/opencode.json"
   mkdir -p "$(dirname "$config")"
-  printf '%s\n' '{"permission":{"skill":{"*":"deny","ai-ml":"allow","docker":"deny"}}}' > "$config"
+  printf '%s\n' '{"permission":{"skill":{"*":"deny","ai-ml":"allow","docker":"deny","git":"ask"}}}' > "$config"
 
-  HOME="$tmp" "$ROOT/install.sh" --tool opencode --no-backup backend-api docker >/dev/null
+  output="$(HOME="$tmp" "$ROOT/install.sh" --tool opencode --no-backup backend-api docker git)"
+  grep -qx '  \[i\] OpenCode permission kept as "ask": git' <<< "$output" \
+    || fail "kept OpenCode ask permission was not reported: $output"
 
   python3 - "$config" <<'PY'
 import json
@@ -205,7 +221,10 @@ assert skills["*"] == "deny"
 assert skills["ai-ml"] == "allow"
 assert skills["backend-api"] == "allow"
 assert skills["docker"] == "deny"
+assert skills["git"] == "ask"
 PY
+  json_assert "$tmp/.agents/skills/.skills-lock.json" \
+    'next(iter(d["opencode_permissions"].values())) == ["backend-api"]'
 
   rm -rf "$tmp"
   trap - RETURN
@@ -245,6 +264,31 @@ test_link_mode_keeps_foreign_symlink_without_force() {
   [[ "$(readlink "$tmp/.claude/skills/docker")" == "$tmp/.agents/skills/docker" ]] || fail "foreign symlink not replaced with force"
   backup="$(find "$tmp/.claude/.skills-backups" -type l -name docker)"
   [[ -n "$backup" && "$(readlink "$backup")" == "$tmp/mine" ]] || fail "foreign symlink not backed up"
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+# A copy left in the tool dir is skipped, so the run neither records it nor counts it.
+test_link_mode_skips_copy_without_recording_it() {
+  local tmp output
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  mkdir -p "$tmp/.claude/skills"
+  cp -r "$ROOT/skills/docker" "$tmp/.claude/skills/docker"
+  output="$(HOME="$tmp" "$ROOT/install.sh" --tool claude --link --no-backup docker git)"
+  grep -q 'docker exists as copy' <<< "$output" || fail "copy dir was not reported: $output"
+  [[ -d "$tmp/.claude/skills/docker" && ! -L "$tmp/.claude/skills/docker" && -L "$tmp/.claude/skills/git" ]] \
+    || fail "link run did not keep the copy and link git"
+  json_assert "$tmp/.claude/skills/.skills-lock.json" '"git" in d["skills"] and "docker" not in d["skills"]' \
+    "skipped copy dir was recorded in the tool lock"
+  grep -q '^Done\. 1 skills linked for claude\. 1 not linked; see above\.$' <<< "$output" \
+    || fail "link summary did not count linked skills: $output"
+
+  output="$(HOME="$tmp" "$ROOT/install.sh" --tool claude --link --force --no-backup docker git)"
+  [[ -L "$tmp/.claude/skills/docker" ]] || fail "--force did not convert the copy to a link"
+  json_assert "$tmp/.claude/skills/.skills-lock.json" '"docker" in d["skills"]' "forced link was not recorded"
+  grep -q '^Done\. 2 skills linked for claude\.$' <<< "$output" || fail "full link summary is wrong: $output"
   rm -rf "$tmp"
   trap - RETURN
 }
@@ -586,6 +630,67 @@ test_backup_preserves_top_level_symlink() {
   trap - RETURN
 }
 
+# BSD cp follows a nested symlink with -r, which would copy the files behind it.
+test_backup_keeps_nested_symlink() {
+  local tmp dest private backup
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  dest="$tmp/agent/skills"
+  private="$tmp/private"
+  mkdir -p "$private"
+  printf '%s\n' 'do not copy' > "$private/secret.txt"
+  "$ROOT/install.sh" --tool portable --dest "$dest" --no-backup docker >/dev/null
+  ln -s "$private" "$dest/docker/outside"
+
+  "$ROOT/install.sh" --tool portable --dest "$dest" --force docker >/dev/null
+
+  backup="$(find "$tmp/agent/.skills-backups/skills/docker" -mindepth 1 -maxdepth 1 -type d)"
+  [[ -L "$backup/outside" && "$(readlink "$backup/outside")" == "$private" ]] \
+    || fail "backup did not keep the nested symlink as a link: $(ls -la "$backup")"
+  if find "$tmp/agent/.skills-backups" -type f -name secret.txt -print -quit | grep -q .; then
+    fail "backup followed a nested symlink and copied external files"
+  fi
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+# BASH_VERSINFO is readonly, so the guard is run on its own with made-up versions.
+test_bash_version_guard() {
+  local body version out old
+  body="$(sed -n '/^require_bash() {$/,/^}$/p' "$ROOT/install.sh")"
+  [[ -n "$body" ]] || fail "require_bash not found in install.sh"
+  for version in "4 4" "4 5" "5 0" "5 3" "10 0"; do
+    # shellcheck disable=SC2086
+    out="$("$BASH" -c "$body"$'\n''require_bash "$@"' _ $version 2>&1)" || fail "guard refused bash $version: $out"
+    [[ -z "$out" ]] || fail "guard printed for bash $version: $out"
+  done
+  for version in "4 3" "4 0" "3 2"; do
+    # shellcheck disable=SC2086
+    if out="$("$BASH" -c "$body"$'\n''require_bash "$@"' _ $version 2>&1)"; then
+      fail "guard accepted bash $version"
+    fi
+    [[ "$out" == "error: bash ${version/ /.} found, 4.4 or newer is required; on macOS install it with "*"brew install bash"* ]] \
+      || fail "guard message for bash $version: $out"
+  done
+  # The call passes the running shell's version and comes before strict mode.
+  [[ "$(grep -n -m1 -E '^(require_bash "\$\{BASH_VERSINFO\[0\]\}" "\$\{BASH_VERSINFO\[1\]\}" \|\| exit 1|set -euo pipefail)$' "$ROOT/install.sh")" == *:require_bash* ]] \
+    || fail "install.sh does not call require_bash before set -euo pipefail"
+
+  # Stock macOS has bash 3.2 at /bin/bash: the whole script must stop at the guard there.
+  old="$(/bin/bash -c 'echo "${BASH_VERSINFO[0]} ${BASH_VERSINFO[1]}"')"
+  if (( ${old% *} > 4 || ( ${old% *} == 4 && ${old#* } >= 4 ) )); then
+    printf 'SKIP: /bin/bash is %s, not older than 4.4; install.sh was not run under an old bash\n' "${old/ /.}" >&2
+    return 0
+  fi
+  if out="$(/bin/bash "$ROOT/install.sh" --help 2>&1)"; then
+    fail "install.sh ran under bash ${old/ /.}"
+  fi
+  [[ "$out" == "error: bash ${old/ /.} found, 4.4 or newer is required;"* && "$(wc -l <<< "$out")" -eq 1 ]] \
+    || fail "install.sh under bash ${old/ /.} printed: $out"
+}
+
 test_commandcode_and_agy_targets() {
   local tmp
   tmp="$(mktemp -d)"
@@ -601,6 +706,62 @@ test_commandcode_and_agy_targets() {
     fail "agy alias did not resolve to the Antigravity global skills path"
   fi
 
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+# A corrupt lock is one error, not a "not installed" line per skill.
+test_check_reports_unusable_lock_once() {
+  local tmp dest status output lock
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  dest="$tmp/skills"
+  mkdir "$tmp/tmpdir"
+  "$ROOT/install.sh" --tool portable --dest "$dest" --no-backup docker >/dev/null
+
+  for lock in 'not json' '{"version": 1, "skills": []}' '[]'; do
+    printf '%s\n' "$lock" > "$dest/.skills-lock.json"
+    status=0
+    output="$(TMPDIR="$tmp/tmpdir" "$ROOT/install.sh" --tool portable --dest "$dest" --check 2>&1)" || status=$?
+    (( status == 1 )) || fail "--check with lock '$lock' exited $status, want 1: $output"
+    [[ "$(grep -c '^error: ' <<< "$output")" == 1 ]] || fail "--check with lock '$lock' did not report one error: $output"
+    grep -q "^error: .*lock file $dest/.skills-lock.json" <<< "$output" || fail "--check error does not name the lock: $output"
+    if grep -q 'Traceback\|not installed' <<< "$output"; then fail "--check with lock '$lock' hid the lock error: $output"; fi
+    [[ -z "$(ls -A "$tmp/tmpdir")" ]] || fail "--check with lock '$lock' left a temp file: $(ls -A "$tmp/tmpdir")"
+  done
+
+  status=0
+  output="$(TMPDIR="$tmp/tmpdir" "$ROOT/install.sh" --tool portable --dest "$dest" --check --json 2>/dev/null)" || status=$?
+  (( status == 1 )) || fail "--check --json with a corrupt lock exited $status, want 1"
+  json_check "$output" 'd["ok"] is False and len(d["errors"]) == 1 and "lock file" in d["errors"][0]' "corrupt lock --check --json"
+  [[ -z "$(ls -A "$tmp/tmpdir")" ]] || fail "--check --json left a temp file: $(ls -A "$tmp/tmpdir")"
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+# write_lock leaves a record with another provenance alone, so it must not
+# report that skill as published: publish_lock would drop its install record.
+test_untouched_lock_record_keeps_install_record() {
+  local tmp dest txn lock_before output
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  dest="$tmp/agent/skills"
+  if isolated "$tmp" SKILLS_INSTALL_FAULT=lock "$ROOT/install.sh" --tool portable --dest "$dest" --no-backup docker >/dev/null 2>&1; then
+    fail "lock fault did not fail the install"
+  fi
+  txn="$(txn_area "$dest")"
+  [[ "$(record_phase "$txn/docker")" == promoted ]] || fail "fixture has no install record"
+  python3 - "$dest/.skills-lock.json" "$ROOT/skills" "$(digest "$dest/docker")" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], "w", encoding="utf-8") as f:
+    json.dump({"version": 1, "source": sys.argv[2], "skills": {"docker": {"hash": sys.argv[3], "provenance": "other"}}}, f)
+PY
+  lock_before="$(sha256sum < "$dest/.skills-lock.json")"
+  output="$(isolated "$tmp" "$ROOT/install.sh" --tool portable --dest "$dest" docker 2>&1)" || fail "rerun failed: $output"
+  [[ "$(sha256sum < "$dest/.skills-lock.json")" == "$lock_before" ]] || fail "record with another provenance was rewritten"
+  [[ "$(record_phase "$txn/docker")" == promoted ]] || fail "install record was dropped for a lock record the run left alone"
   rm -rf "$tmp"
   trap - RETURN
 }
@@ -707,13 +868,48 @@ PY
   SKILLS_BACKUP_DIR="$tmp/migration-backups" "$src/install.sh" --tool portable --dest "$tmp/skills" --migrate --apply > "$tmp/apply"
   [[ ! -e "$tmp/skills/anti-slop" ]] || fail "installer migration apply did not retire old skill"
   [[ -d "$tmp/skills/code-simplification" ]] || fail "installer migration apply did not install replacement"
-  if ! find "$tmp/migration-backups/anti-slop" -type f -name SKILL.md -print -quit | grep -q .; then
+  if ! find "$tmp"/migration-backups/skills-*/.retired/anti-slop -type f -name SKILL.md -print -quit | grep -q .; then
     fail "installer migration did not honor SKILLS_BACKUP_DIR"
   fi
   if output="$(LC_ALL=en_US.utf8 "$src/install.sh" --tool portable --dest "$tmp/skills" --check 2>&1)"; then
     fail "check accepted incomplete migration fixture"
   fi
   grep -q 'code-simplification.*current' <<< "$output" || fail "locale check did not recognize migrated replacement"
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+# Overwrite backups of the same name are pruned to three; the retirement backup is not theirs.
+test_retirement_backup_survives_overwrite_pruning() {
+  local tmp digest src i base
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  src="$tmp/src"
+  make_legacy_source "$src"
+  mkdir -p "$tmp/skills"
+  write_legacy_notice "$tmp/skills/anti-slop"
+  digest="$(LC_ALL=C find "$tmp/skills/anti-slop" -type f -print0 | LC_ALL=C sort -z | xargs -0 cat | sha256sum | cut -d' ' -f1)"
+  python3 - "$tmp/skills/.skills-lock.json" "$src/skills" "$digest" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], "w", encoding="utf-8") as f:
+    json.dump({"version": 1, "source": sys.argv[2], "skills": {"anti-slop": {"hash": sys.argv[3], "provenance": "source-equal-v1"}}}, f)
+PY
+  base="$tmp/.skills-backups/skills"
+  TZ=UTC "$src/install.sh" --tool portable --dest "$tmp/skills" --migrate --apply >/dev/null
+  [[ -f "$(find "$base/.retired/anti-slop" -mindepth 2 -maxdepth 2 -name anti-slop)/SKILL.md" ]] \
+    || fail "retirement backup is not under .retired: $(find "$base" -maxdepth 3)"
+  [[ ! -e "$base/anti-slop" ]] || fail "retirement backup landed in the pruned per-skill folder"
+
+  TZ=UTC "$src/install.sh" --tool portable --dest "$tmp/skills" --no-backup anti-slop >/dev/null 2>&1
+  for i in 1 2 3 4; do
+    echo "EDIT$i" >> "$tmp/skills/anti-slop/SKILL.md"
+    TZ=UTC "$src/install.sh" --tool portable --dest "$tmp/skills" --force anti-slop >/dev/null 2>&1
+  done
+  [[ "$(find "$base/anti-slop" -mindepth 1 -maxdepth 1 -type d | wc -l)" -eq 3 ]] || fail "overwrite backups were not pruned to three"
+  [[ -f "$(find "$base/.retired/anti-slop" -mindepth 2 -maxdepth 2 -name anti-slop)/SKILL.md" ]] \
+    || fail "overwrite pruning removed the retirement backup"
   rm -rf "$tmp"
   trap - RETURN
 }
@@ -1163,7 +1359,7 @@ run_json() {
   JSON_STATUS=0
   JSON_OUT="$(isolated "$home" "$ROOT/install.sh" "${@:2}" --json 2>"$home/json.err")" || JSON_STATUS=$?
   JSON_ERR="$(<"$home/json.err")"
-  [[ "$(wc -l <<< "$JSON_OUT")" == 1 ]] || fail "--json did not print exactly one line: $JSON_OUT"
+  [[ "$(wc -l <<< "$JSON_OUT")" -eq 1 ]] || fail "--json did not print exactly one line: $JSON_OUT"
 }
 
 test_json_output() {
@@ -1468,13 +1664,65 @@ test_doctor_flag_rules_and_alias() {
   trap - RETURN
 }
 
+test_modes_cannot_be_combined() {
+  local tmp output status args
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  isolated "$tmp" "$ROOT/install.sh" --tool claude docker >/dev/null
+  for args in "--list --check" "--check --list" "--migrate --apply --list" "--migrate --check" \
+    "--doctor --list" "--check --doctor" "--list --check --migrate --doctor"; do
+    status=0
+    # shellcheck disable=SC2086
+    output="$(isolated "$tmp" "$ROOT/install.sh" $args 2>&1)" || status=$?
+    (( status == 1 )) || fail "$args exited $status, want 1: $output"
+    grep -q '^error: --list, --check, --migrate, and --doctor cannot be combined' <<< "$output" \
+      || fail "$args was not refused as a mode conflict: $output"
+  done
+  run_json "$tmp" --migrate --apply --list
+  (( JSON_STATUS == 1 )) || fail "json mode conflict exited $JSON_STATUS"
+  json_check "$JSON_OUT" 'd["ok"] is False and len(d["errors"]) == 1 and "cannot be combined" in d["errors"][0]' "json mode conflict"
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_help_matches_behavior() {
+  local output
+  output="$("$ROOT/install.sh" --help)" || fail "--help failed"
+  grep -A1 'SKILLS_LOCK_WAIT' <<< "$output" | tr -s '\n ' ' ' | grep -q 'default: 30, or 0 for --update' \
+    || fail "--help does not state both SKILLS_LOCK_WAIT defaults: $output"
+  if grep -q 'prompt' <<< "$output"; then fail "--help mentions prompting, but nothing prompts"; fi
+  grep -q -- '--force  *Replace existing skills that differ from the source' <<< "$output" \
+    || fail "--help does not describe --force: $output"
+}
+
+test_doctor_json_reports_helper_failure() {
+  local tmp shim
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  shim="$tmp/shim"
+  mkdir "$shim"
+  # Fail only the duplicate-discovery helper: python3 -I - <verbose> <json_mode> ...
+  # shellcheck disable=SC2016
+  printf '#!/bin/bash\nif [[ "$1 $2" == "-I -" && "$3" == false && "$4" == true ]]; then echo "helper crashed" >&2; exit 1; fi\nexec %q "$@"\n' \
+    "$(command -v python3)" > "$shim/python3"
+  chmod +x "$shim/python3"
+  JSON_STATUS=0
+  JSON_OUT="$(env -i HOME="$tmp" PATH="$shim:$SAFE_PATH" LANG=C "$ROOT/install.sh" --doctor --tool claude --json 2>"$tmp/json.err")" || JSON_STATUS=$?
+  (( JSON_STATUS == 1 )) || fail "doctor with a crashed helper exited $JSON_STATUS, want 1: $JSON_OUT"
+  grep -q 'helper crashed' "$tmp/json.err" || fail "shim did not hit the doctor helper: $(<"$tmp/json.err")"
+  json_check "$JSON_OUT" 'd["ok"] is False and "tools" not in d and d["errors"] == ["the doctor helper failed without a report; see the human output on stderr"]' \
+    "doctor helper failure"
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
 write_fixture_skill() {
   mkdir -p "$1/skills/$2"
   printf '%s\n' "$3" > "$1/skills/$2/SKILL.md"
 }
 
 installed_dirs() {
-  find "$1" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort | paste -sd' '
+  find "$1" -mindepth 1 -maxdepth 1 -type d | sed 's|.*/||' | sort | paste -sd' ' -
 }
 
 make_frontmatter_fixture() {
@@ -1547,7 +1795,7 @@ test_malformed_frontmatter_fails_install() {
 }
 
 # Replacement transaction tests run with an allowlisted environment.
-SAFE_PATH="$(for cmd in python3 git sha256sum; do dirname "$(command -v "$cmd")"; done | awk '!seen[$0]++' | paste -sd:):/usr/bin:/bin"
+SAFE_PATH="$(for cmd in bash python3 git "$HASH_TOOL" flock; do dirname "$(command -v "$cmd")"; done | awk '!seen[$0]++' | paste -sd: -):/usr/bin:/bin"
 
 isolated() {
   local home="$1"
@@ -1827,10 +2075,14 @@ test_installer_lock_contention_and_missing_flock() {
   holder=$!
   for _ in $(seq 100); do [[ -e "$tmp/held" ]] && break; sleep 0.1; done
   output="$(isolated "$tmp" SKILLS_LOCK_WAIT=1 "$ROOT/install.sh" --tool portable --dest "$tmp/second" docker 2>&1)" || status=$?
+  JSON_STATUS=0
+  JSON_OUT="$(isolated "$tmp" SKILLS_LOCK_WAIT=0 "$ROOT/install.sh" --tool portable --dest "$tmp/second" docker --json 2>/dev/null)" || JSON_STATUS=$?
   kill "$holder"
   wait "$holder" 2>/dev/null || true
   (( status == 3 )) || fail "lock contention exited $status, want 3: $output"
-  grep -q 'Another install.sh run holds' <<< "$output" || fail "lock contention was not explained: $output"
+  grep -q '^error: another install.sh run holds' <<< "$output" || fail "lock contention was not explained: $output"
+  (( JSON_STATUS == 3 )) || fail "json lock contention exited $JSON_STATUS, want 3: $JSON_OUT"
+  json_check "$JSON_OUT" 'd["ok"] is False and len(d["errors"]) == 1 and "another install.sh run holds" in d["errors"][0]' "json lock contention reason"
   [[ ! -e "$tmp/second" ]] || fail "installer changed files without the lock"
 
   mkdir "$tmp/no-flock"
@@ -1925,7 +2177,7 @@ test_failed_retry_keeps_earlier_record() {
     fail "stage fault did not fail"
   fi
   [[ "$(<"$txn/record")" == "$record" ]] || fail "failed retry replaced the earlier record"
-  [[ "$(find "$txn" -mindepth 1 -printf '%f\n')" == record ]] || fail "failed retry left files: $(find "$txn")"
+  [[ "$(find "$txn" -mindepth 1 | sed 's|.*/||')" == record ]] || fail "failed retry left files: $(find "$txn")"
   [[ "$(tree_hash "$dest/docker")" == "$before" ]] || fail "failed retry changed the working copy"
 
   # An interruption right after setting the record aside is put back by recovery.
@@ -2875,6 +3127,7 @@ test_legacy_backup_migration_keeps_layout_on_collision
 test_opencode_install_allows_installed_skills
 test_link_mode_never_links_canonical_onto_itself
 test_link_mode_keeps_foreign_symlink_without_force
+test_link_mode_skips_copy_without_recording_it
 test_opencode_string_permissions_are_preserved
 test_link_mode_writes_tool_lock
 test_removed_gemini_tool_is_unknown
@@ -2891,12 +3144,17 @@ test_force_still_overwrites_a_differing_copy
 test_omp_check_mode
 test_omp_and_kimi_share_destination
 test_backup_preserves_top_level_symlink
+test_backup_keeps_nested_symlink
+test_bash_version_guard
 test_commandcode_and_agy_targets
 test_lock_preserves_unselected_records
+test_check_reports_unusable_lock_once
+test_untouched_lock_record_keeps_install_record
 test_deprecated_selection_and_notice
 test_check_reports_legacy_manifest_skill
 test_invalid_manifest_stops_installer
 test_installer_migration_dry_run_and_apply
+test_retirement_backup_survives_overwrite_pruning
 test_skipped_custom_skill_keeps_old_lock_and_migration_skips_it
 test_foreign_lock_is_backed_up_before_fresh_install
 test_copy_mode_migrates_each_selected_tool_destination
@@ -2924,6 +3182,9 @@ test_doctor_merges_only_equivalent_findings
 test_doctor_groups_and_verbose
 test_doctor_flag_rules_and_alias
 test_doctor_orders_blocking_first_across_tools
+test_doctor_json_reports_helper_failure
+test_modes_cannot_be_combined
+test_help_matches_behavior
 test_frontmatter_cache_selects_skills
 test_malformed_frontmatter_fails_install
 test_fault_before_promotion_keeps_previous_install

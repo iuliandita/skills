@@ -6,10 +6,8 @@ while IFS= read -r var; do unset "$var"; done < <(git rev-parse --local-env-vars
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-fail() {
-  printf 'FAIL: %s\n' "$1" >&2
-  exit 1
-}
+# shellcheck source=./scripts/gate-test-lib.sh
+source "$ROOT/scripts/gate-test-lib.sh"
 
 # Builds a throwaway git repo fixture with the checker script installed at
 # scripts/check-private-skill-leaks.sh, so ROOT resolution inside the
@@ -33,18 +31,104 @@ run_checker() {
   (cd "$tmp" && "$@" ./scripts/check-private-skill-leaks.sh)
 }
 
-test_no_sources_passes() {
-  local tmp
+test_no_sources_warns_and_passes() {
+  local tmp output
   tmp="$(make_fixture)"
   trap 'rm -rf "$tmp"' RETURN
 
   printf 'hello world\n' > "$tmp/public.txt"
   git -C "$tmp" add -A
 
-  run_checker "$tmp" >/dev/null
+  output="$(run_checker "$tmp" env -u SKILLS_PRIVATE_PATTERNS -u GITHUB_ACTIONS 2>&1)" \
+    || fail "checker failed with no pattern source"
+  [[ "$output" == *"warning: private leak check did not scan: no private pattern source is configured"* ]] \
+    || fail "checker did not warn that nothing was scanned (got: $output)"
+
+  output="$(run_checker "$tmp" env -u SKILLS_PRIVATE_PATTERNS GITHUB_ACTIONS=true 2>/dev/null)" \
+    || fail "checker failed with no pattern source in GitHub Actions"
+  [[ "$output" == "::warning title=Private leak check skipped::private leak check did not scan: no private pattern source is configured"* ]] \
+    || fail "checker did not emit a warning annotation in GitHub Actions (got: $output)"
 
   rm -rf "$tmp"
   trap - RETURN
+}
+
+test_comments_only_patterns_warn_and_pass() {
+  local tmp envfile output status=0
+  tmp="$(make_fixture)"
+  envfile="$(mktemp)"
+  trap 'rm -rf "$tmp" "$envfile"' RETURN
+
+  printf '# only a comment\n\n' > "$envfile"
+  printf 'hello world\n' > "$tmp/public.txt"
+  git -C "$tmp" add -A
+
+  output="$(run_checker "$tmp" env "SKILLS_PRIVATE_PATTERNS=$envfile" GITHUB_ACTIONS=true 2>/dev/null)" || status=$?
+  (( status == 0 )) || fail "checker failed on a comments-only pattern file (got $status)"
+  [[ "$output" == "::warning title=Private leak check skipped::private leak check did not scan: the configured pattern sources hold no patterns"* ]] \
+    || fail "checker did not warn about a comments-only pattern file (got: $output)"
+
+  rm -rf "$tmp" "$envfile"
+  trap - RETURN
+}
+
+test_file_listing_failure_fails() {
+  local tmp envfile output status=0
+  tmp="$(make_fixture)"
+  envfile="$(mktemp)"
+  trap 'rm -rf "$tmp" "$envfile"' RETURN
+
+  printf 'envmarker\n' > "$envfile"
+  printf 'contains envmarker here\n' > "$tmp/public.txt"
+  git -C "$tmp" add -A
+  # A corrupt index makes git ls-files exit non-zero.
+  printf 'not an index\n' > "$tmp/.git/index"
+
+  output="$(run_checker "$tmp" env "SKILLS_PRIVATE_PATTERNS=$envfile" 2>&1)" || status=$?
+  if (( status == 0 )); then
+    printf '%s\n' "$output" >&2
+    fail "checker passed although the file listing failed"
+  fi
+  [[ "$output" == *"git ls-files failed"* ]] \
+    || fail "checker did not report the failed file listing (got: $output)"
+
+  rm -rf "$tmp" "$envfile"
+  trap - RETURN
+}
+
+# $1 is an optional PATH override, used to force the grep fallback.
+test_deleted_tracked_file_is_skipped() {
+  local path="${1:-$PATH}" tmp output status=0
+  tmp="$(make_fixture)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  printf 'somemarker\n' > "$tmp/private-patterns.txt"
+  printf 'clean\n' > "$tmp/public.txt"
+  printf 'clean\n' > "$tmp/deleted.txt"
+  git -C "$tmp" add -A
+  rm "$tmp/deleted.txt"
+
+  output="$(cd "$tmp" && PATH="$path" ./scripts/check-private-skill-leaks.sh 2>&1)" || status=$?
+  if (( status != 0 )); then
+    printf '%s\n' "$output" >&2
+    fail "checker failed on a tracked file deleted from the working tree (got $status)"
+  fi
+
+  printf 'contains somemarker here\n' > "$tmp/public.txt"
+  status=0
+  output="$(cd "$tmp" && PATH="$path" ./scripts/check-private-skill-leaks.sh 2>&1)" || status=$?
+  (( status == 1 )) || fail "checker did not report a leak next to a deleted tracked file (got $status)"
+  [[ "$output" == *"public.txt"* ]] || fail "checker did not name the leaking file next to a deleted tracked file"
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_deleted_tracked_file_is_skipped_grep_fallback() {
+  local fakebin
+  fakebin="$(path_without_rg)"
+  test_deleted_tracked_file_is_skipped "$fakebin"
+  rm -rf "$fakebin"
 }
 
 test_root_file_only_detects_leak() {
@@ -300,7 +384,11 @@ test_grep_fallback_read_error_fails() {
   trap - RETURN
 }
 
-test_no_sources_passes
+test_no_sources_warns_and_passes
+test_comments_only_patterns_warn_and_pass
+test_file_listing_failure_fails
+test_deleted_tracked_file_is_skipped
+test_deleted_tracked_file_is_skipped_grep_fallback
 test_root_file_only_detects_leak
 test_env_file_only_detects_leak
 test_combined_sources_detect_both
@@ -312,4 +400,4 @@ test_grep_fallback_detects_leak
 test_tracked_example_is_scanned
 test_rg_failure_fails
 test_grep_fallback_read_error_fails
-printf 'private leak marker tests passed (12 cases)\n'
+printf 'private leak marker tests passed (16 cases)\n'

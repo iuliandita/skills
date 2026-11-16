@@ -168,8 +168,9 @@ Do not load every reference by default. Pick the one that matches the failure mo
 - Prefer reversible steps: snapshots, package cache, fallback kernels, saved configs.
 - Snapshot or otherwise preserve rollback paths before kernel, bootloader, filesystem, or GPU driver changes.
 
-**Consequential changes** (kernel or bootloader work, package or kernel removal, full upgrades
-with file conflicts, mirrorlist replacement, snapshot rollback): show the exact command and what
+**Consequential changes** (kernel or bootloader work, package or kernel removal, any full
+system upgrade such as `pacman -Syu`, forcing past a file conflict, mirrorlist replacement,
+snapshot rollback): show the exact command and what
 it will do (transaction, removal list, or target device), get explicit confirmation, run it, then
 go to Step 5. In unattended runs, stop at the plan. Exact commands live in
 `references/packages-and-aur.md` (upgrades, conflicts, removals, mirrors) and
@@ -226,7 +227,7 @@ When a bug looks "desktop-only," compare one clean baseline:
 
 ## Default Decisions
 
-- **Arch means full upgrades.** Package skew is often self-inflicted. Resolve sync state first; run `pacman -Syu` before large installs.
+- **Arch means full upgrades.** Package skew is often self-inflicted. Resolve sync state first; a full `pacman -Syu` comes before large installs and is confirmed like any consequential change (Step 4).
 - **Keep package cache cleanup deliberate.** Retain at least one known-good package version when rollback may matter. For slow mirrors, rank mirrors before troubleshooting package-manager performance.
 - **Read pacman hooks and `.pacnew` files after major updates.** Do not assume config merges happened automatically.
 - **Use systemd-native tools first.** Reach for `systemctl`, `journalctl`, `bootctl`, `timedatectl`, and `localectl` before distro wrappers.
@@ -238,22 +239,7 @@ When a bug looks "desktop-only," compare one clean baseline:
 
 ## Quick Triage Checklist
 
-| Symptom | First checks |
-|---------|-------------|
-| Package weirdness after install | Partial upgrade? `pacman -Syu` first. For a conflict, run `pacman -Qo /exact/path` first. Fix or remove an unowned manual file; report an owned-file conflict. Use `--overwrite exact/path` (package-archive path without the leading `/`) only when that verified file is intentionally being replaced; never use `'*'` or an inferred glob. |
-| Service fails after update | `.pacnew` merge needed? `pacdiff` (from `pacman-contrib`), or `DIFFPROG='nvim -d' pacdiff`. Check unit overrides and `journalctl -b` |
-| Won't boot after kernel work | Confirm root/subvolume, separate boot and ESP mounts, installed kernel, active initramfs generator and bootloader. Inspect available snapshots before changing boot artifacts. Follow `references/boot-kernel-and-recovery.md`; use the confirmed generator/loader for CachyOS too. |
-| CachyOS unstable after repo tuning | CPU capability, repo tier, forked `pacman` |
-| AUR build failure | `PKGBUILD`, keys, pinned deps, repo conflicts |
-| Hyprland desktop weirdness | `XDG_SESSION_TYPE`, portal, Xwayland, user services |
-| Hyprland lock/wallpaper/idle | Separate compositor from `hyprpaper`/`hypridle`/`hyprlock` |
-| Bluetooth audio issues | BlueZ pairing, PipeWire nodes, card profile |
-| Game blackscreen/crash | GPU stack, Vulkan, Steam multilib, Gamescope/MangoHud |
-| Screen share broken | Wayland vs X11, portal backend, PipeWire user units |
-| Suspend/resume breaks desktop | Sleep state, GPU logs, lock-screen, display manager |
-| Snapshot rollback failed | Subvolume layout, bootloader path, encryption scope |
-| NVIDIA/module vanished after kernel change | DKMS drift: `dkms status`, confirm module built for `uname -r`, rebuild if missing |
-| Nothing makes sense | Check gotchas reference - partial upgrades, stale portals, DKMS drift explain most chaos |
+Match the symptom to its first checks with the table in `references/quick-triage.md`.
 
 ---
 
@@ -271,6 +257,7 @@ When a bug looks "desktop-only," compare one clean baseline:
 - `references/remote-gaming-input-and-tooling.md` - Moonlight, Sunshine-style hosting, controllers, and Steam Remote Play
 - `references/base-linux-and-cli.md` - core Linux inspection commands and optional tools such as `nvim`, `jq`, `ripgrep`, `bat`, and `eza`
 - `references/gotchas-and-special-situations.md` - recurring Arch and CachyOS failure patterns, special cases, and what-to-do-next guidance
+- `references/quick-triage.md` - symptom to first-checks triage table
 
 ---
 

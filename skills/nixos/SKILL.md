@@ -91,7 +91,7 @@ Before returning NixOS or Nix commands, verify:
 - [ ] **Unfree / insecure gates named explicitly**: set `nixpkgs.config.allowUnfree = true;` or `allowUnfreePredicate`, and list insecure packages under `permittedInsecurePackages`. Do not default to `NIXPKGS_ALLOW_UNFREE=1` as the permanent answer.
 - [ ] **Hardware module present**: for fresh installs, `hardware-configuration.nix` must be regenerated with `nixos-generate-config` and not hand-edited for filesystem UUIDs. For laptops, check nixos-hardware profile.
 - [ ] **Kernel and initrd coherence**: `boot.kernelPackages`, initrd modules, filesystems, and bootloader agree. Do not casually swap kernels on a system with ZFS, NVIDIA, or custom out-of-tree modules.
-- [ ] **Module fields real**: options named in advice exist in the version of nixpkgs the user has. `options` graveyards drift between 24.05, 24.11, 25.05, 25.11, and 26.05 - verify against the `nixpkgs` tag the user pinned.
+- [ ] **Module fields real**: options named in advice exist in the version of nixpkgs the user has. `options` graveyards drift between NixOS releases - verify against the `nixpkgs` tag the user pinned.
 - [ ] **Secrets not put in the store**: anything under `./secret.age`, `./sops.yaml`, or similar must be decrypted at activation time by sops-nix or agenix, not embedded directly in a Nix string that ends up world-readable in `/nix/store`.
 - [ ] **disko / impermanence claims match the install**: declarative disk layouts change the recovery story. Confirm partition, filesystem, and subvolume layout before prescribing rollback or wipe steps.
 - [ ] **home-manager mode identified**: standalone, NixOS module, or nix-darwin module. `home-manager switch` vs `nixos-rebuild switch` vs `darwin-rebuild switch` is not interchangeable.
@@ -117,8 +117,8 @@ The steps are ordered. Copy this checklist and track progress:
 
 | Lane | Default stance | What changes |
 |------|----------------|--------------|
-| **NixOS installed (stable 26.05)** | configuration.nix or flake.nix drives everything | full system is Nix-managed; rollbacks via bootloader |
-| **NixOS unstable / 26.11 pre-release** | treat as rolling-ish | expect breakage; verify options still exist |
+| **NixOS installed (stable release)** | configuration.nix or flake.nix drives everything | full system is Nix-managed; rollbacks via bootloader |
+| **NixOS unstable / next pre-release** | treat as rolling-ish | expect breakage; verify options still exist |
 | **Nix on non-NixOS Linux** | user-level only | host distro still owns services and boot; no `nixos-rebuild` |
 | **nix-darwin on macOS** | declarative macOS config | `darwin-rebuild switch`; host owns kernel and firmware |
 | **Plain Nix on macOS (no darwin)** | package manager only | `nix profile` or `nix shell` for user tooling |
@@ -275,10 +275,11 @@ journalctl -u nixos-rebuild -b 2>&1 || true
 ```
 
 Build and eval failures are loudest in the rebuild output itself; pipe through `--show-trace`
-and, for opaque errors, `--print-build-logs`:
+and, for opaque errors, `--print-build-logs`. Capture them with `build`, which evaluates and
+builds without activating anything or changing the boot entry:
 
 ```bash
-nixos-rebuild switch --flake .#host --show-trace --print-build-logs 2>&1 | tail -200
+nixos-rebuild build --flake .#host --show-trace --print-build-logs 2>&1 | tail -200
 ```
 
 When a problem looks "flake-only," default to rolling the suspect input back to its previous rev
@@ -307,20 +308,7 @@ committing the current `flake.lock`.
 
 ## Quick Triage Checklist
 
-| Symptom | First checks |
-|---------|-------------|
-| `nixos-rebuild` evaluation error | `--show-trace`, check option name against the current nixpkgs tag, check `imports` paths |
-| Build fails mid-derivation | `--print-build-logs`, check sandbox violations, check unfree or insecure gates |
-| Boot drops to emergency shell | previous generation from bootloader menu, check `hardware-configuration.nix`, LUKS, kernel modules |
-| Flake input won't update | `nix flake update <name>` (the `nix flake lock --update-input` form is deprecated on Nix 2.30+), check `inputs.<x>.follows`, check registry override |
-| System is huge, `/nix/store` fills disk | inspect GC roots and generations, preserve known-good rollback, selectively prune, then plain `nix-collect-garbage` |
-| `nix-env -i` installed something that won't stick | user profile vs system config; move to `environment.systemPackages` or `home.packages` |
-| home-manager drift vs NixOS | standalone vs module mode, which one owns the file, `home-manager switch` vs `nixos-rebuild switch` |
-| Unfree package refuses to build | `nixpkgs.config.allowUnfree = true;` or predicate, or `NIXPKGS_ALLOW_UNFREE=1 nix-build --impure` for one-off |
-| Secrets in a module show up world-readable | moved to sops-nix/agenix and re-deploy; rotate the exposed secrets |
-| ZFS or NVIDIA breaks after kernel bump | `boot.kernelPackages = pkgs.linuxPackages_<pin>;` or wait for out-of-tree module to rebuild |
-| nix-darwin change did not apply | `darwin-rebuild switch`, not `nixos-rebuild`; check `users.users.<name>.home` and `nix.enable` |
-| Nothing makes sense | check gotchas reference - channel vs flake mixing, stale lock, overlay collisions, GC of an active dev shell |
+Match the symptom to its first checks with the table in `references/quick-triage.md`.
 
 ---
 
@@ -338,6 +326,7 @@ committing the current `flake.lock`.
 - `references/secrets-sops-and-agenix.md` - sops-nix, agenix, activation-time decryption, age key management, avoiding store-world-readable secrets
 - `references/determinate-lix-and-lanes.md` - Determinate Nix (enterprise lane, daemon differences, flakes-on-by-default), Lix (compat-focused fork), coexistence
 - `references/gotchas-and-special-situations.md` - recurring NixOS and Nix failure patterns and edge cases
+- `references/quick-triage.md` - symptom to first-checks triage table
 
 ---
 

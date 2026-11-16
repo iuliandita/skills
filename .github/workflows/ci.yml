@@ -10,19 +10,39 @@ on:
     - cron: "0 5 * * 1"
   workflow_dispatch:
   workflow_call:
+    inputs:
+      advisory-links:
+        description: Report link check failures without failing the calling workflow.
+        type: boolean
+        default: false
+      skip-macos:
+        description: Leave out the macOS installer job. Only a called run has this input, so it runs everywhere else.
+        type: boolean
+        default: true
+    secrets:
+      SKILLS_PRIVATE_PATTERNS:
+        description: Private markers for the leak check, one per line. Optional.
+        required: false
 
 permissions:
   contents: read
 
+# Only pull request runs share a group and cancel each other. Push, schedule,
+# dispatch and release runs each get their own, so every pushed range is checked.
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref == 'refs/heads/main' && github.sha || github.ref }}
-  cancel-in-progress: true
+  group: ci-${{ github.workflow }}-${{ github.event_name }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   lint:
     name: lint
     runs-on: ubuntu-24.04
     timeout-minutes: 20
+    # The base-ref checks read these: the pull request's base branch, else the
+    # push event's previous tip.
+    env:
+      BASE_REF: ${{ github.base_ref }}
+      BASE_SHA: ${{ github.event_name == 'push' && github.event.before || '' }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -32,14 +52,33 @@ jobs:
       - name: Check protected overlay guardrail
         run: ./scripts/check-protected-overlay.sh
 
+      # The secret is optional and absent on fork pull requests; without it the
+      # script warns and passes. The pattern file stays outside the workspace
+      # because the script also scans untracked files.
       - name: Check private cluster-health leak patterns
-        run: ./scripts/check-private-skill-leaks.sh
+        env:
+          PRIVATE_PATTERNS: ${{ secrets.SKILLS_PRIVATE_PATTERNS }}
+        run: |
+          if [[ -n "$PRIVATE_PATTERNS" ]]; then
+            patterns_file="$RUNNER_TEMP/private-patterns.txt"
+            trap 'rm -f "$patterns_file"' EXIT
+            (umask 077 && printf '%s\n' "$PRIVATE_PATTERNS" > "$patterns_file")
+            export SKILLS_PRIVATE_PATTERNS="$patterns_file"
+          fi
+          unset PRIVATE_PATTERNS
+          ./scripts/check-private-skill-leaks.sh
 
       # Date-dependent freshness is advisory: a calendar rollover warns, it does not fail.
       - name: Check freshness date markers (advisory)
+        # Only exit 10 (stale markers) is downgraded; any other failure is a broken check.
         run: |
-          if ! ./scripts/check-freshness-dates.sh; then
+          rc=0
+          ./scripts/check-freshness-dates.sh || rc=$?
+          if (( rc == 10 )); then
             echo "::warning title=Freshness markers (advisory)::Currentness labels are behind the collection month; refresh them in the next sweep."
+          elif (( rc != 0 )); then
+            echo "::error title=Freshness markers::check-freshness-dates.sh exited $rc, not the stale-marker code 10."
+            exit "$rc"
           fi
 
       - name: Check version receipt structure
@@ -48,9 +87,16 @@ jobs:
         run: ./scripts/check-version-receipts.sh
 
       - name: Check version receipt age (advisory)
+        # Only exit 10 (a receipt past the age budget) is downgraded;
+        # any other failure is a broken check.
         run: |
-          if ! ./scripts/check-version-receipts.sh; then
+          rc=0
+          ./scripts/check-version-receipts.sh || rc=$?
+          if (( rc == 10 )); then
             echo "::warning title=Version receipts (advisory)::A version receipt is older than the 120-day budget; re-verify its pins."
+          elif (( rc != 0 )); then
+            echo "::error title=Version receipts::check-version-receipts.sh exited $rc, not the stale-receipt code 10."
+            exit "$rc"
           fi
 
       - name: Check first-paragraph storefront copy
@@ -78,22 +124,28 @@ jobs:
         run: ./scripts/validate-spec.sh
 
       - name: Check whitespace and merge markers
-        env:
-          BASE_REF: ${{ github.base_ref }}
-          BASE_SHA: ${{ github.event_name == 'push' && github.event.before || '' }}
         run: ./scripts/check-whitespace.sh
 
       - name: Check refiner phase-1 immutability guard
-        env:
-          BASE_REF: ${{ github.base_ref }}
-          BASE_SHA: ${{ github.event_name == 'push' && github.event.before || '' }}
         run: ./scripts/check-refiner-phase1-guard.sh
 
       - name: Check docs impact
-        env:
-          BASE_REF: ${{ github.base_ref }}
-          BASE_SHA: ${{ github.event_name == 'push' && github.event.before || '' }}
         run: ./scripts/check-docs-impact.sh
+
+      # A pull request into main is a release. Both checks need the full
+      # history and tags this job fetches.
+      - name: Check release changelog section
+        if: github.event_name == 'pull_request' && github.base_ref == 'main'
+        run: ./scripts/check-release-changelog.sh main
+
+      # The step above compares with the merge base, which leaves out changes
+      # already on main; this one covers everything since the previous version tag.
+      - name: Check cumulative release documentation impact
+        if: github.event_name == 'pull_request' && github.base_ref == 'main'
+        run: |
+          previous="$(./scripts/check-release-changelog.sh --previous-tag main)"
+          echo "Checking cumulative documentation impact since $previous"
+          ./scripts/check-docs-impact.sh --release "$previous"
 
   test:
     name: test
@@ -145,14 +197,95 @@ jobs:
       - name: Test docs-impact check
         run: ./scripts/test-docs-impact.sh
 
+      - name: Test contract sync check
+        run: ./scripts/test-contract-sync.sh
+
+      - name: Test first-paragraph check
+        run: ./scripts/test-first-paragraph.sh
+
+      - name: Test freshness marker check
+        run: ./scripts/test-freshness-dates.sh
+
       - name: Test changelog notes extraction
         run: ./scripts/test-changelog-notes.sh
+
+      - name: Test release changelog check
+        run: ./scripts/test-release-changelog.sh
+
+      - name: Test refiner run-history check
+        run: ./scripts/test-refiner-state.sh
+
+      - name: Test refiner history compaction
+        run: ./scripts/test-refiner-history-compact.sh
+
+      - name: Test refiner rubric hash
+        run: ./scripts/test-refiner-rubric-hash.sh
+
+      - name: Test protected overlay check
+        run: ./scripts/test-protected-overlay.sh
+
+      - name: Test deep-audit coverage check
+        run: ./scripts/test-deep-audit-coverage.sh
+
+      - name: Test contract reference generator
+        run: ./scripts/test-gen-contract-refs.sh
+
+      - name: Test advisory gate exit codes
+        run: ./scripts/test-advisory-exit-codes.sh
+
+      - name: Test the pin report and the Renovate zizmor pattern
+        run: ./scripts/test-report-tool-pins.sh
 
       - name: Shellcheck scripts
         run: shellcheck install.sh scripts/*.sh skills/repo-audit/references/detect.sh
 
       - name: Check Python helper syntax
         run: python3 -m py_compile scripts/*.py
+
+  # The installer suites on macOS: Homebrew bash, BSD userland. A called run
+  # (the release workflow) skips this job, so it never gates publishing.
+  macos:
+    name: macos
+    if: ${{ !inputs.skip-macos }}
+    runs-on: macos-15
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # coreutils stays g-prefixed: no gnubin on PATH, so cp and head are the BSD ones.
+      - name: Install bash, flock and coreutils
+        env:
+          HOMEBREW_NO_INSTALL_CLEANUP: "1"
+        run: |
+          brew install bash flock coreutils
+          echo "$(brew --prefix)/bin" >> "$GITHUB_PATH"
+
+      - name: Check the tools under test
+        run: |
+          sw_vers
+          bash --version | head -n 1
+          /bin/bash --version | head -n 1
+          command -v bash cp head flock gtimeout shasum python3 git
+          command -v timeout sha256sum gpg || true
+          [[ "$(command -v bash)" == "$(brew --prefix)/bin/bash" ]] || { echo "::error::bash on PATH is not the Homebrew one"; exit 1; }
+          [[ "$(command -v cp)" == /bin/cp && "$(command -v head)" == /usr/bin/head ]] || { echo "::error::cp or head is not the BSD one"; exit 1; }
+
+      - name: Test installer behavior
+        run: ./scripts/test-install.sh
+
+      - name: Test installer scheduled updates
+        if: ${{ !cancelled() }}
+        run: ./scripts/test-update.sh
+
+      - name: Test installer detect and saved config
+        if: ${{ !cancelled() }}
+        run: ./scripts/test-setup.sh
+
+      - name: Test migration behavior
+        if: ${{ !cancelled() }}
+        run: ./scripts/test-migrate-skills.sh
 
   markdown:
     name: markdown
@@ -175,6 +308,8 @@ jobs:
 
   links:
     name: links
+    # Advisory in a release run only: a flaky URL must not block publishing unchanged code.
+    continue-on-error: ${{ inputs.advisory-links == true }}
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:

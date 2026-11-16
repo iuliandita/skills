@@ -1,7 +1,7 @@
 ---
 name: code-simplification
 description: >
-  Find dead code, duplication, overengineering, invented APIs, weak tests; report safe reductions, no edits. Use for "simplify this" or a refactor that lost behavior.
+  Find dead code, duplication, overengineering, invented APIs, weak tests; report safe reductions, no edits. Use for "simplify this" or a removal diff. Not bug review.
 license: MIT
 compatibility: "Works on any codebase. Optional: git (diff scope), rg (no-reference searches), and the project's configured non-mutating linters"
 metadata:

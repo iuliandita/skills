@@ -1,7 +1,7 @@
 ---
 name: rhel-fedora
 description: >
-  Fedora, RHEL, Rocky, AlmaLinux, CentOS Stream, Amazon Linux: dnf/rpm, EPEL, SELinux AVC denials, firewalld, system-upgrade, dracut, GRUB, akmods.
+  Fedora, RHEL, Rocky, AlmaLinux, CentOS Stream, Amazon Linux: dnf/rpm, EPEL, SELinux AVC denials, firewalld, system-upgrade, dracut, GRUB, akmods, snapshot rollback.
 license: MIT
 compatibility: "Requires Fedora, RHEL, or a RHEL-family distro with dnf, yum, or rpm. Optional: policycoreutils-python-utils (semanage), setroubleshoot-server, leapp-upgrade, fwupd"
 metadata:
@@ -184,9 +184,9 @@ dnf check-update
 | Fedora vs RHEL vs Rocky vs Alma vs Oracle vs Amazon behavior | `references/derivatives-and-vendor-quirks.md` |
 | Wayland, X11, GNOME, KDE, PipeWire, Bluetooth | `references/desktop-audio-and-bluetooth.md` |
 | Display managers, session startup, suspend or resume, power, hybrid graphics | `references/session-display-and-mobile.md` |
-| GPU drivers, Vulkan, Steam, Proton, gaming | `references/graphics-and-gaming.md` |
+| GPU drivers, RPM Fusion NVIDIA akmods, MOK enrollment for Secure Boot, Vulkan, Steam, Proton, gaming | `references/graphics-and-gaming.md` |
 | OBS, WebRTC, screen sharing, virtual cameras | `references/capture-and-sharing.md` |
-| XFS, ext4, Btrfs, LUKS, LVM, Stratis, TRIM, hibernation | `references/storage-and-rollback.md` |
+| XFS, ext4, Btrfs, LUKS, LVM, Stratis, TRIM, hibernation, Btrfs and LVM snapshot rollback | `references/storage-and-rollback.md` |
 | SELinux, firewalld, package signing, updates, compliance-adjacent checks | `references/security-and-updates.md` |
 | Remote gaming, controllers, input | `references/remote-gaming-input-and-tooling.md` |
 | Core Linux inspection commands and RPM-family tools | `references/base-linux-and-cli.md` |
@@ -213,12 +213,15 @@ read-only commands and runtime/permanent verification.
 - Snapshot or back up before release upgrades, bootloader work, storage changes, or major SELinux relabels.
 
 **Consequential changes** (release upgrades, kernel removal, `dracut` or bootloader rebuilds,
-module stream resets, SELinux policy or port mappings, firewalld exposure, LUKS or LVM changes):
+module stream resets, SELinux policy or port mappings, firewalld exposure, third-party repos and
+kernel modules, MOK enrollment, snapshot rollback, LUKS or LVM changes):
 show the exact command and what it will do (DNF transaction, removal list, zone and port, or
 target device), get explicit confirmation, run it, then go to Step 5. In unattended runs, stop at
 the plan. Exact commands live in `references/packages-and-repos.md` (transactions, modules,
-release upgrades), `references/boot-kernel-and-recovery.md` (kernels, `dracut`, rescue chroot), and
-`references/security-and-updates.md` (SELinux and firewalld changes).
+release upgrades), `references/boot-kernel-and-recovery.md` (kernels, `dracut`, rescue chroot),
+`references/security-and-updates.md` (SELinux and firewalld changes),
+`references/graphics-and-gaming.md` (NVIDIA akmods, MOK enrollment), and
+`references/storage-and-rollback.md` (Btrfs and LVM snapshot rollback).
 
 ### Step 5: Validate before closing
 
@@ -294,24 +297,7 @@ When a bug looks desktop-only, compare one clean baseline:
 
 ## Quick Triage Checklist
 
-| Symptom | First checks |
-|---------|-------------|
-| Package weirdness after install | `dnf repolist`, `dnf check`, `rpm -q`, module stream mismatch (RHEL 8/9), third-party repo drift |
-| Package unavailable on RHEL | entitlement or CRB missing? `subscription-manager repos --list-enabled`, repo enablement, EPEL assumptions |
-| SELinux broke my app | `getenforce`, `ausearch -m avc -ts recent`, labeling vs boolean vs policy module |
-| Service fails after update | repo drift, dropped config, `systemctl status`, `journalctl -b`, `rpm -V package` |
-| Won't boot after kernel work | EFI mount, `grubby --info=ALL`, `dracut` image, Secure Boot, fallback kernel |
-| Fedora upgrade weirdness | exact Fedora release, `dnf system-upgrade` state, third-party repos, COPR packages |
-| RHEL clone behaves oddly | clone-specific release docs, vault state, EPEL assumptions, unsupported in-place upgrade folklore |
-| Oracle Linux issue | RHCK vs UEK first, then driver/storage/virtualization path |
-| Amazon Linux mismatch | AL2023 vs AL2, cloud-init defaults, AWS package docs, missing extra repos |
-| Desktop weirdness after update | `XDG_SESSION_TYPE`, portal, Xwayland, user services |
-| Bluetooth audio issues | BlueZ pairing, PipeWire nodes, card profile |
-| Game blackscreen/crash | GPU driver, Vulkan, multilib graphics libs, Gamescope/MangoHud |
-| Screen share broken | Wayland vs X11, portal backend, PipeWire user units |
-| Suspend/resume breaks desktop | sleep state, GPU logs, lock-screen, display manager |
-| NVIDIA/module vanished after kernel change | akmods or DKMS drift, Secure Boot signing, current kernel vs installed module |
-| Nothing makes sense | check gotchas reference - repo drift, SELinux labeling, module stream confusion, stale third-party repos, and kernel lane mismatch explain a lot |
+Match the symptom to its first checks with the table in `references/quick-triage.md`.
 
 ---
 
@@ -323,13 +309,14 @@ When a bug looks desktop-only, compare one clean baseline:
 - `references/derivatives-and-vendor-quirks.md` - Fedora, CentOS Stream, RHEL, Rocky, AlmaLinux, Oracle Linux, and Amazon Linux differences that actually matter
 - `references/desktop-audio-and-bluetooth.md` - X11 vs Wayland, GNOME and KDE notes, portals, PipeWire, and Bluetooth troubleshooting
 - `references/session-display-and-mobile.md` - first-pass checks for display managers, session env, suspend or resume, and power profiles
-- `references/graphics-and-gaming.md` - first-pass GPU driver, Vulkan, and gaming-stack checks with RPM Fusion, akmods, Secure Boot, and kernel-lane notes
+- `references/graphics-and-gaming.md` - GPU driver, Vulkan, and gaming-stack checks; RPM Fusion NVIDIA akmods install, MOK enrollment for Secure Boot, and verifying the module built and loaded
 - `references/capture-and-sharing.md` - OBS, WebRTC screen sharing, and virtual camera troubleshooting
-- `references/storage-and-rollback.md` - storage fact gathering (XFS, ext4, Btrfs, LUKS, LVM, Stratis, TRIM) and rollback boundaries
+- `references/storage-and-rollback.md` - storage fact gathering (XFS, ext4, Btrfs, LUKS, LVM, Stratis, TRIM), Btrfs and LVM snapshot rollback, and the limits of each
 - `references/security-and-updates.md` - SELinux, firewalld, package signing, updates, FIPS-adjacent concerns, and compliance-sensitive defaults
 - `references/remote-gaming-input-and-tooling.md` - first-pass remote-streaming and controller input notes
 - `references/base-linux-and-cli.md` - core Linux inspection commands and RPM-family tools such as `rpm -Va`, `repoquery`, and `restorecon`
 - `references/gotchas-and-special-situations.md` - recurring Fedora and RHEL-family failure patterns, special cases, and what-to-do-next guidance
+- `references/quick-triage.md` - symptom to first-checks triage table
 
 ---
 

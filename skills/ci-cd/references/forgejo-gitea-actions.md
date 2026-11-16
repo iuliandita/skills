@@ -25,6 +25,7 @@ means two sets of webhooks, two runners, double the secret surface.
 - Choosing between Gitea Actions and Woodpecker
 - Drone (legacy)
 - Cross-references
+- Forgejo CI/CD
 
 ---
 
@@ -71,7 +72,7 @@ curl -s https://forgejo.example.com/api/v1/repos/actions/checkout/git/refs/tags/
 
 **If your instance mirrors from code.forgejo.org** (the default upstream):
 ```bash
-git ls-remote https://code.forgejo.org/actions/checkout.git 'refs/tags/v7*'  # or whatever major your mirror carries
+git ls-remote https://code.forgejo.org/actions/checkout.git 'refs/tags/v7*'
 ```
 
 **Verify a SHA matches what you expect**:
@@ -395,3 +396,39 @@ the YAML is related but not drop-in compatible.
 - Forgejo Actions patterns (same engine, mostly transferable): Forgejo Actions patterns section above and the `SKILL.md` key-differences table
 - GitHub Actions supply chain hardening: `references/github-actions.md`
 - Supply chain incident patterns: `references/supply-chain.md`
+
+## Forgejo CI/CD
+
+Forgejo Actions is "designed to be familiar, not designed to be compatible" with GitHub Actions.
+It reuses the workflow syntax but makes no compatibility guarantees.
+
+### Key differences from GitHub Actions
+
+| Feature | GitHub Actions | Forgejo Actions |
+|---------|---------------|-----------------|
+| **`permissions:`** | Controls GITHUB_TOKEN scope | **Not enforced** - token always has full rw (read-only for fork PRs) |
+| **`continue-on-error:`** (job level) | Allows job failure without failing workflow | **Not supported** - step-level only |
+| **Runner images** | Managed `ubuntu-24.04` with 200+ tools | Self-hosted, typically lean Debian/Alpine |
+| **Action resolution** | `actions/checkout@v7` -> github.com | Resolves from Forgejo mirror (configurable) |
+| **OIDC** | `permissions: id-token: write` | `enable-openid-connect` key |
+| **Workflow call defaults** | `inputs.<id>.default` populated | **Always empty** |
+| **Matrix + dynamic runs-on** | Supported | Supported since v14.0 |
+| **LXC execution** | Not supported | Supported (Forgejo-specific) |
+
+Read `references/forgejo-gitea-actions.md` (Forgejo Actions patterns) for the workflow and
+release templates, action SHA discovery on a Forgejo mirror, Forgejo gotchas (TLS, missing
+tools, unenforced `permissions:`), and `fj` Actions management.
+
+### Gitea CI/CD
+
+Gitea ships two viable CI paths: **Gitea Actions** (same `act`-based engine as Forgejo
+Actions, since Gitea 1.21) and **Woodpecker CI** (separate service, container-native,
+webhook-driven). Drone is legacy - do not start new installs.
+
+Quick rule of thumb: if you are migrating from GitHub or want one service to operate,
+use Gitea Actions. If you need proper matrix builds, caching primitives, or lighter
+resource usage, use Woodpecker. Do not run both against the same repo.
+
+See `references/forgejo-gitea-actions.md` for: action SHA discovery, Gitea-vs-Forgejo Actions
+differences, Woodpecker YAML examples, plugin vs command steps, OAuth setup, matrix
+patterns, and Drone migration guidance.

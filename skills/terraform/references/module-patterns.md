@@ -122,43 +122,39 @@ output "connection_string" {
 
 ```hcl
 # tests/basic.tftest.hcl
-run "creates_vpc" {
+variables {
+  project    = "test"
+  cidr_block = "10.0.0.0/16"
+}
+
+run "derives_private_subnet_cidrs" {
   command = plan  # or apply for integration tests
 
   variables {
-    project     = "test"
     environment = "dev"
-    cidr_block  = "10.0.0.0/16"
   }
 
+  # Derived value: the module computes it with cidrsubnet(); no input carries it.
+  # tolist() on both sides: a tuple never equals a list, even with the same elements.
   assert {
-    condition     = aws_vpc.main.cidr_block == "10.0.0.0/16"
-    error_message = "VPC CIDR mismatch"
-  }
-
-  assert {
-    condition     = aws_vpc.main.enable_dns_hostnames == true
-    error_message = "DNS hostnames must be enabled"
+    condition     = tolist(output.private_subnet_cidrs) == tolist(["10.0.0.0/20", "10.0.16.0/20", "10.0.32.0/20"])
+    error_message = "Private subnets must be the first three /20 blocks of the VPC CIDR"
   }
 }
 
-run "validates_tags" {
+run "rejects_unknown_environment" {
   command = plan
 
   variables {
-    project     = "test"
-    environment = "prod"
-    cidr_block  = "10.0.0.0/16"
+    environment = "qa"
   }
 
-  assert {
-    condition     = aws_vpc.main.tags["Environment"] == "prod"
-    error_message = "Environment tag must match variable"
-  }
+  # Validation rule: the run passes only when the plan fails on var.environment.
+  expect_failures = [var.environment]
 }
 ```
 
-Assert what the module computes or enforces (conditionals, validation rules, derived values). Asserting that an input lands in a resource attribute only tests the provider; the runs above show syntax, not what to cover.
+Assert what the module computes or enforces (conditionals, validation rules, derived values), as the two runs above do. Asserting that an input lands in a resource attribute (`aws_vpc.main.cidr_block == var.cidr_block`) only tests the provider.
 
 Run with: `terraform test` (or `terraform test -parallelism=4` for speed)
 

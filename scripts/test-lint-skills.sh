@@ -4,13 +4,13 @@ set -euo pipefail
 
 # Git hooks export GIT_DIR and friends; fixture repos must not inherit them.
 while IFS= read -r var; do unset "$var"; done < <(git rev-parse --local-env-vars)
+# Fixture repos must not pick up the host's hooks, signing, or templates.
+export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-fail() {
-  printf 'FAIL: %s\n' "$1" >&2
-  exit 1
-}
+# shellcheck source=./scripts/gate-test-lib.sh
+source "$ROOT/scripts/gate-test-lib.sh"
 
 write_minimal_skill() {
   local skill_dir="$1" name="$2"
@@ -543,9 +543,43 @@ test_skill_over_token_guidance_warns() {
     printf '%s\n' "$output" >&2
     fail "lint-skills.sh failed on a SKILL.md body over the token guidance"
   fi
-  if [[ "$output" != *"~"* || "$output" != *"tokens"* ]]; then
+  if [[ "$output" != *"SKILL.md body is ~"* ]]; then
     printf '%s\n' "$output" >&2
     fail "lint-skills.sh did not warn about the SKILL.md body token estimate"
+  fi
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+test_repeated_version_floor_warns() {
+  local tmp skill_dir output status
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  # One statement per floor, plus a repeat inside a fenced block: no warning.
+  skill_dir="$tmp/skills/lint-fixture"
+  write_minimal_skill "$skill_dir" "lint-fixture"
+  printf '%s\n' '- Use Trivy v0.72.0+ from official releases.' '- Needs runc >= 1.4.0.' \
+    '```sh' '# Trivy v0.72.0+' '```' >> "$skill_dir/SKILL.md"
+  status=0
+  output="$("$ROOT/scripts/lint-skills.sh" "$tmp/skills" 2>&1)" || status=$?
+  if (( status != 0 )) || [[ "$output" == *"repeats the version floor"* ]]; then
+    printf '%s\n' "$output" >&2
+    fail "lint-skills.sh flagged version floors that are each stated once"
+  fi
+
+  # The same floor on a second line, spelled differently: advisory warning.
+  printf '%s\n' '- Scan with trivy >= 0.72.0 in CI.' >> "$skill_dir/SKILL.md"
+  status=0
+  output="$("$ROOT/scripts/lint-skills.sh" "$tmp/skills" 2>&1)" || status=$?
+  if (( status != 0 )); then
+    printf '%s\n' "$output" >&2
+    fail "lint-skills.sh failed on a repeated version floor (it is advisory)"
+  fi
+  if [[ "$output" != *"repeats the version floor 'trivy 0.72.0+' on 2 lines"* ]]; then
+    printf '%s\n' "$output" >&2
+    fail "lint-skills.sh did not warn about a repeated version floor"
   fi
 
   rm -rf "$tmp"
@@ -813,6 +847,151 @@ test_canonical_section_without_test_case_fails() {
 
 # Full docs-drift fixture: git repo with README, INSTALL, MIGRATION, install.sh,
 # migrations.json and two active skills (alpha, beta). Callers mutate it after.
+# Fixture for the shared skill-folder loop: a public skill, a tracked opt-in
+# (internal) skill, a gitignored internal skill, two deprecated notices, a
+# folder without SKILL.md, a folder holding only an ignored overlay, and the
+# underscore and dot build directories.
+make_loop_fixture() {
+  local tmp="$1"
+  git init -q "$tmp"
+  printf '%s\n' 'skills/private/' 'skills/retired/protected/' > "$tmp/.gitignore"
+  write_minimal_skill "$tmp/skills/alpha" "alpha"
+  write_minimal_skill "$tmp/skills/team" "team"
+  sed -i.bak 's/^  effort: low$/  effort: low\n  internal: true/' "$tmp/skills/team/SKILL.md"
+  write_minimal_skill "$tmp/skills/private" "private"
+  sed -i.bak 's/^  effort: low$/  effort: low\n  internal: true/' "$tmp/skills/private/SKILL.md"
+  write_minimal_skill "$tmp/skills/old" "old"
+  sed -i.bak 's/^  effort: low$/  effort: low\n  deprecated: true/' "$tmp/skills/old/SKILL.md"
+  write_minimal_skill "$tmp/skills/older" "older"
+  sed -i.bak 's/^  effort: low$/  effort: low\n  deprecated: " TRUE "/' "$tmp/skills/older/SKILL.md"
+  rm -f "$tmp"/skills/*/SKILL.md.bak
+  write_minimal_skill "$tmp/skills/_shared" "_shared"
+  write_minimal_skill "$tmp/skills/.cook" ".cook"
+  mkdir -p "$tmp/skills/draft" "$tmp/skills/retired/protected"
+  printf '%s\n' 'draft' > "$tmp/skills/draft/notes.md"
+  printf '%s\n' 'private' > "$tmp/skills/retired/protected/notes.md"
+}
+
+# skill_lib <function> [args...]: call a skill-lib.sh function in a fresh
+# shell started in /, so the answer cannot depend on the caller's directory.
+skill_lib() {
+  (cd / && bash -c 'source "$1"; shift; "$@"' _ "$ROOT/scripts/skill-lib.sh" "$@")
+}
+
+# The same for list_public_skills with the frontmatter cache loaded first.
+# Args: <skills_dir> [switch...]
+skill_lib_cached_list() {
+  (cd / && bash -c '
+    source "$1"; shift
+    frontmatter_cache_load "$1" flag:metadata.deprecated 2>/dev/null || true
+    list_public_skills "$@"' _ "$ROOT/scripts/skill-lib.sh" "$@")
+}
+
+# expect_loop <label> <expected names, space separated> <skills_dir> [switch...]
+# Checked once without and once with the frontmatter cache.
+expect_loop() {
+  local label="$1" expected="$2" got
+  shift 2
+  got="$(skill_lib list_public_skills "$@" | paste -sd' ' -)"
+  [[ "$got" == "$expected" ]] || fail "$label: expected '$expected', got '$got'"
+  got="$(skill_lib_cached_list "$@" | paste -sd' ' -)"
+  [[ "$got" == "$expected" ]] || fail "$label (cached): expected '$expected', got '$got'"
+}
+
+test_list_public_skills_modes() {
+  local tmp status=0
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  make_loop_fixture "$tmp"
+
+  expect_loop "public" "alpha team" "$tmp/skills"
+  expect_loop "include-deprecated" "alpha old older team" "$tmp/skills" --include-deprecated
+  expect_loop "include-gitignored" "alpha private team" "$tmp/skills" --include-gitignored
+  expect_loop "include-missing" "alpha draft team" "$tmp/skills" --include-missing
+  expect_loop "all switches" "alpha draft old older private retired team" "$tmp/skills" \
+    --include-missing --include-gitignored --include-deprecated
+  expect_loop "missing skills dir" "" "$tmp/absent"
+
+  skill_lib list_public_skills "$tmp/skills" --include-everything >/dev/null 2>&1 || status=$?
+  (( status == 2 )) || fail "unknown switch: expected exit 2, got $status"
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+# The gates that take the public set agree with it: an internal tracked skill
+# is linted, a gitignored one is not, a deprecated notice is linted but not
+# counted as active, and a folder without SKILL.md is an error.
+test_lint_uses_the_shared_loop() {
+  local tmp
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  make_loop_fixture "$tmp"
+
+  run_gate bash -c 'cd "$1" && "$2/scripts/lint-skills.sh" "$1/skills"' _ "$tmp" "$ROOT"
+  expect_fail "folder without SKILL.md" "draft: no SKILL.md found"
+  [[ "$OUT" == *"[team]"* && "$OUT" == *"[old]"* && "$OUT" == *"[older]"* ]] \
+    || fail "lint skipped a tracked internal skill or a deprecated notice"
+  [[ "$OUT" != *"[private]"* && "$OUT" != *"retired"* && "$OUT" != *"[_shared]"* ]] \
+    || fail "lint visited a gitignored, overlay-only or underscore directory"
+  [[ "$OUT" == *"Skills checked: 4"* ]] || fail "lint did not check exactly alpha, old, older and team"
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+# One parser for install.sh's SUPPORTED_TOOLS: tokens on the opening line and
+# a closing parenthesis that ends a token line are both read, from a file or
+# from stdin.
+test_supported_tools_parser_reads_reflowed_array() {
+  local tmp got text
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  text=$'#!/usr/bin/env bash\nSUPPORTED_TOOLS=(one two # lead\n  three\n  four) # tail\nOTHER=(five)\n'
+  printf '%s' "$text" > "$tmp/install.sh"
+
+  got="$(skill_lib list_supported_tools "$tmp/install.sh" | paste -sd' ' -)"
+  [[ "$got" == "one two three four" ]] || fail "reflowed array from a file: got '$got'"
+  got="$(skill_lib list_supported_tools <<< "$text" | paste -sd' ' -)"
+  [[ "$got" == "one two three four" ]] || fail "reflowed array from stdin: got '$got'"
+  got="$(printf 'SUPPORTED_TOOLS=(solo)\nX=(no)\n' | skill_lib list_supported_tools | paste -sd' ' -)"
+  [[ "$got" == "solo" ]] || fail "one-line array: got '$got'"
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+# The deprecated rule lives in skill-frontmatter.py flag(); the shell helper
+# and the cache both ask it.
+test_frontmatter_flag_asks_the_python_rule() {
+  local tmp value
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  mkdir -p "$tmp/skills"
+  for value in 'true' '"true"' '" True "' 'yes'; do
+    printf -- '---\nname: s\ndescription: d\nmetadata:\n  deprecated: %s\n---\n' "$value" > "$tmp/SKILL.md"
+    python3 "$ROOT/scripts/skill-frontmatter.py" flag "$tmp/SKILL.md" metadata.deprecated \
+      || fail "flag command rejected deprecated: $value"
+  done
+  for value in 'false' '"no"' '"truthy"' '2026'; do
+    printf -- '---\nname: s\ndescription: d\nmetadata:\n  deprecated: %s\n---\n' "$value" > "$tmp/SKILL.md"
+    if python3 "$ROOT/scripts/skill-frontmatter.py" flag "$tmp/SKILL.md" metadata.deprecated; then
+      fail "flag command accepted deprecated: $value"
+    fi
+  done
+  printf -- '---\nname: s\ndescription: d\n---\n' > "$tmp/SKILL.md"
+  if python3 "$ROOT/scripts/skill-frontmatter.py" flag "$tmp/SKILL.md" metadata.deprecated; then
+    fail "flag command accepted a missing key"
+  fi
+  printf 'no frontmatter\n' > "$tmp/SKILL.md"
+  if python3 "$ROOT/scripts/skill-frontmatter.py" flag "$tmp/SKILL.md" metadata.deprecated; then
+    fail "flag command accepted a file without frontmatter"
+  fi
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
 make_docs_fixture() {
   local tmp="$1"
   git init -q "$tmp"
@@ -944,14 +1123,21 @@ test_deprecated_skill_not_counted() {
   rm -rf "$tmp"; trap - RETURN
 }
 
-test_ere_literal_pipe_is_flagged() {
-  local tmp skill_dir output status count
+# lint_fenced <file in the skill>: appends stdin (a fenced block) to that file
+# of a minimal fixture skill and lints the fixture into STATUS and OUT.
+lint_fenced() {
+  local tmp
   tmp="$(mktemp -d)"
-  trap 'rm -rf "$tmp"' RETURN
+  write_minimal_skill "$tmp/skills/lint-fixture" "lint-fixture"
+  cat >> "$tmp/skills/lint-fixture/$1"
+  run_gate "$ROOT/scripts/lint-skills.sh" "$tmp/skills"
+  rm -rf "$tmp"
+}
 
-  skill_dir="$tmp/skills/lint-fixture"
-  write_minimal_skill "$skill_dir" "lint-fixture"
-  cat >> "$skill_dir/SKILL.md" <<'EOF'
+test_ere_literal_pipe_is_flagged() {
+  local count
+  local STATUS OUT
+  lint_fenced SKILL.md <<'EOF'
 
   ```bash
   grep -E 'a\|b' f
@@ -964,31 +1150,14 @@ test_ere_literal_pipe_is_flagged() {
   grep -E -e 'a\|b' f
   ```
 EOF
-
-  status=0
-  output="$("$ROOT/scripts/lint-skills.sh" "$tmp/skills" 2>&1)" || status=$?
-  if (( status == 0 )); then
-    printf '%s\n' "$output" >&2
-    fail "lint-skills.sh passed despite literal-pipe patterns in ERE commands"
-  fi
-  count="$(grep -c 'inside an ERE pattern' <<< "$output" || true)"
-  if [[ "$count" != "8" ]]; then
-    printf '%s\n' "$output" >&2
-    fail "lint-skills.sh reported $count of 8 literal-pipe patterns"
-  fi
-
-  rm -rf "$tmp"
-  trap - RETURN
+  expect_fail "lint-skills.sh passed despite literal-pipe patterns in ERE commands"
+  count="$(grep -c 'inside an ERE pattern' <<< "$OUT" || true)"
+  [[ "$count" == "8" ]] || fail "lint-skills.sh reported $count of 8 literal-pipe patterns"
 }
 
 test_ere_alternation_is_allowed() {
-  local tmp skill_dir output status
-  tmp="$(mktemp -d)"
-  trap 'rm -rf "$tmp"' RETURN
-
-  skill_dir="$tmp/skills/lint-fixture"
-  write_minimal_skill "$skill_dir" "lint-fixture"
-  cat >> "$skill_dir/SKILL.md" <<'EOF'
+  local STATUS OUT
+  lint_fenced SKILL.md <<'EOF'
 
 ```bash
 grep -iE 'http://|https://' access.log
@@ -1002,42 +1171,19 @@ rg -F 'a\|b' .
 echo 'rg'; echo 'a\|b'
 ```
 EOF
-
-  status=0
-  output="$("$ROOT/scripts/lint-skills.sh" "$tmp/skills" 2>&1)" || status=$?
-  if (( status != 0 )); then
-    printf '%s\n' "$output" >&2
-    fail "lint-skills.sh flagged valid ERE alternation, BRE, fixed strings, or an unrelated command"
-  fi
-
-  rm -rf "$tmp"
-  trap - RETURN
+  expect_pass "lint-skills.sh flagged valid ERE alternation, BRE, fixed strings, or an unrelated command"
 }
 
 test_bre_alternation_is_allowed() {
-  local tmp skill_dir output status
-  tmp="$(mktemp -d)"
-  trap 'rm -rf "$tmp"' RETURN
-
-  skill_dir="$tmp/skills/lint-fixture"
-  write_minimal_skill "$skill_dir" "lint-fixture"
-  cat >> "$skill_dir/SKILL.md" <<'EOF'
+  local STATUS OUT
+  lint_fenced SKILL.md <<'EOF'
 
 ```bash
 grep 'password\|secret' config
 grep -e 'a\|b' f
 ```
 EOF
-
-  status=0
-  output="$("$ROOT/scripts/lint-skills.sh" "$tmp/skills" 2>&1)" || status=$?
-  if (( status != 0 )); then
-    printf '%s\n' "$output" >&2
-    fail "lint-skills.sh flagged '\\|' in a BRE pattern"
-  fi
-
-  rm -rf "$tmp"
-  trap - RETURN
+  expect_pass "lint-skills.sh flagged '\\|' in a BRE pattern"
 }
 
 test_table_pipe_escape_is_allowed() {
@@ -1061,68 +1207,34 @@ test_table_pipe_escape_is_allowed() {
 }
 
 test_ere_literal_pipe_in_reference_is_flagged() {
-  local tmp skill_dir output status
-  tmp="$(mktemp -d)"
-  trap 'rm -rf "$tmp"' RETURN
-
-  skill_dir="$tmp/skills/lint-fixture"
-  write_minimal_skill "$skill_dir" "lint-fixture"
-  cat >> "$skill_dir/references/details.md" <<'EOF'
+  local STATUS OUT
+  lint_fenced references/details.md <<'EOF'
 
 ```bash
 grep -E 'a\|b' f
 ```
 EOF
-
-  status=0
-  output="$("$ROOT/scripts/lint-skills.sh" "$tmp/skills" 2>&1)" || status=$?
-  if (( status == 0 )); then
-    printf '%s\n' "$output" >&2
-    fail "lint-skills.sh did not scan a reference file for literal-pipe patterns"
-  fi
-  if [[ "$output" != *"details.md"* || "$output" != *"inside an ERE pattern"* ]]; then
-    printf '%s\n' "$output" >&2
-    fail "lint-skills.sh did not report the reference file literal-pipe match"
-  fi
-
-  rm -rf "$tmp"
-  trap - RETURN
+  expect_fail "lint-skills.sh did not scan a reference file for literal-pipe patterns"
+  [[ "$OUT" == *"details.md"* && "$OUT" == *"inside an ERE pattern"* ]] \
+    || fail "lint-skills.sh did not report the reference file literal-pipe match"
 }
 
 test_ere_multiline_command_is_flagged() {
-  local tmp skill_dir output status
-  tmp="$(mktemp -d)"
-  trap 'rm -rf "$tmp"' RETURN
-
-  skill_dir="$tmp/skills/lint-fixture"
-  write_minimal_skill "$skill_dir" "lint-fixture"
-  cat >> "$skill_dir/SKILL.md" <<'EOF'
+  local STATUS OUT
+  lint_fenced SKILL.md <<'EOF'
 
 ```bash
 grep -E 'a' \
   'x\|y'
 ```
 EOF
-
-  status=0
-  output="$("$ROOT/scripts/lint-skills.sh" "$tmp/skills" 2>&1)" || status=$?
-  if (( status == 0 )); then
-    printf '%s\n' "$output" >&2
-    fail "lint-skills.sh missed a literal pipe on a continuation line"
-  fi
-
-  rm -rf "$tmp"
-  trap - RETURN
+  expect_fail "lint-skills.sh missed a literal pipe on a continuation line"
 }
 
 test_ere_shell_wrappers_are_flagged() {
-  local tmp skill_dir output status count
-  tmp="$(mktemp -d)"
-  trap 'rm -rf "$tmp"' RETURN
-
-  skill_dir="$tmp/skills/lint-fixture"
-  write_minimal_skill "$skill_dir" "lint-fixture"
-  cat >> "$skill_dir/SKILL.md" <<'EOF'
+  local count
+  local STATUS OUT
+  lint_fenced SKILL.md <<'EOF'
 
 ```bash
 if grep -qE "a\|b" f; then echo y; fi
@@ -1131,31 +1243,15 @@ x=$(grep -E "a\|b" f)
 while ! grep -E "a\|b" f; do :; done
 ```
 EOF
-
-  status=0
-  output="$("$ROOT/scripts/lint-skills.sh" "$tmp/skills" 2>&1)" || status=$?
-  if (( status == 0 )); then
-    printf '%s\n' "$output" >&2
-    fail "lint-skills.sh missed a literal pipe behind a shell keyword, assignment, or substitution"
-  fi
-  count="$(grep -c 'inside an ERE pattern' <<< "$output" || true)"
-  if [[ "$count" != "4" ]]; then
-    printf '%s\n' "$output" >&2
-    fail "lint-skills.sh reported $count of 4 wrapped literal-pipe patterns"
-  fi
-
-  rm -rf "$tmp"
-  trap - RETURN
+  expect_fail "lint-skills.sh missed a literal pipe behind a shell keyword, assignment, or substitution"
+  count="$(grep -c 'inside an ERE pattern' <<< "$OUT" || true)"
+  [[ "$count" == "4" ]] || fail "lint-skills.sh reported $count of 4 wrapped literal-pipe patterns"
 }
 
 test_ere_fence_variants_are_scanned() {
-  local tmp skill_dir output status count
-  tmp="$(mktemp -d)"
-  trap 'rm -rf "$tmp"' RETURN
-
-  skill_dir="$tmp/skills/lint-fixture"
-  write_minimal_skill "$skill_dir" "lint-fixture"
-  cat >> "$skill_dir/SKILL.md" <<'EOF'
+  local count
+  local STATUS OUT
+  lint_fenced SKILL.md <<'EOF'
 
   ~~~
   grep -E 'a\|b' f
@@ -1167,31 +1263,15 @@ grep -E 'c\|d' f
 grep -E 'e\|f' f
 ````
 EOF
-
-  status=0
-  output="$("$ROOT/scripts/lint-skills.sh" "$tmp/skills" 2>&1)" || status=$?
-  if (( status == 0 )); then
-    printf '%s\n' "$output" >&2
-    fail "lint-skills.sh skipped a literal pipe in a tilde, indented, or long fence"
-  fi
-  count="$(grep -c 'inside an ERE pattern' <<< "$output" || true)"
-  if [[ "$count" != "3" ]]; then
-    printf '%s\n' "$output" >&2
-    fail "lint-skills.sh reported $count of 3 fence-variant literal-pipe patterns"
-  fi
-
-  rm -rf "$tmp"
-  trap - RETURN
+  expect_fail "lint-skills.sh skipped a literal pipe in a tilde, indented, or long fence"
+  count="$(grep -c 'inside an ERE pattern' <<< "$OUT" || true)"
+  [[ "$count" == "3" ]] || fail "lint-skills.sh reported $count of 3 fence-variant literal-pipe patterns"
 }
 
 test_ere_backslash_parity_and_matcher_order() {
-  local tmp skill_dir output status count
-  tmp="$(mktemp -d)"
-  trap 'rm -rf "$tmp"' RETURN
-
-  skill_dir="$tmp/skills/lint-fixture"
-  write_minimal_skill "$skill_dir" "lint-fixture"
-  cat >> "$skill_dir/SKILL.md" <<'EOF'
+  local count
+  local STATUS OUT
+  lint_fenced SKILL.md <<'EOF'
 
 ```bash
 grep -E 'a\\\|b' f
@@ -1201,21 +1281,78 @@ rg -F 'a\|b' .
 grep -E 'a\\|b' f
 ```
 EOF
+  expect_fail "lint-skills.sh missed an odd backslash run or a later -E matcher"
+  count="$(grep -c 'inside an ERE pattern' <<< "$OUT" || true)"
+  [[ "$count" == "2" ]] || fail "lint-skills.sh reported $count of 2 backslash-parity/option-order patterns"
+}
 
+test_self_check_variant_heading_is_capped() {
+  local tmp; tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' RETURN
+  write_minimal_skill "$tmp/skills/lint-fixture" "lint-fixture"
+  append_self_check_section "$tmp/skills/lint-fixture/SKILL.md" 5 10
+  sed -i 's/^## AI Self-Check$/## Output Self-Check/' "$tmp/skills/lint-fixture/SKILL.md"
+  expect_docs_lint "$tmp" "50% generic boilerplate" "generic items under a variant self-check heading"
+  rm -rf "$tmp"; trap - RETURN
+}
+
+test_section_heading_must_match_exactly() {
+  local tmp; tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' RETURN
+  write_minimal_skill "$tmp/skills/lint-fixture" "lint-fixture"
+  sed -i 's/^## Rules$/## Notes on old Rules/' "$tmp/skills/lint-fixture/SKILL.md"
+  expect_docs_lint "$tmp" "missing '## Rules' section" "a heading that only contains the section name"
+  rm -rf "$tmp"; trap - RETURN
+}
+
+# The scanner decides lint results, so it is a rubric input: editing it must
+# move the refiner rubric hash.
+test_rubric_hash_covers_ere_scanner() {
+  local tmp before after
+  tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' RETURN
+  mkdir -p "$tmp/skills"
+  cp -r "$ROOT/scripts" "$tmp/scripts"
+  cp -r "$ROOT/skills/skill-refiner" "$ROOT/skills/skill-creator" "$tmp/skills/"
+
+  before="$("$ROOT/scripts/refiner-rubric-hash.sh" "$tmp")"
+  printf '# edited\n' >> "$tmp/scripts/check-ere-pipe.py"
+  after="$("$ROOT/scripts/refiner-rubric-hash.sh" "$tmp")"
+  [[ -n "$before" && "$before" != "$after" ]] \
+    || fail "refiner-rubric-hash.sh did not change after an edit to check-ere-pipe.py"
+  rm -rf "$tmp"; trap - RETURN
+}
+
+# A scanner that cannot run must be an error, not an empty result.
+test_failed_scanners_are_errors() {
+  local tmp stub real_python output status
+  tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' RETURN
+  stub="$tmp/stub"
+  mkdir -p "$stub"
+  write_minimal_skill "$tmp/skills/lint-fixture" "lint-fixture"
+
+  printf '#!/usr/bin/env bash\nexit 1\n' > "$stub/perl"
+  chmod +x "$stub/perl"
+  printf '# Details\n\n\xe2\x9c\x93 done\n' > "$tmp/skills/lint-fixture/references/details.md"
   status=0
-  output="$("$ROOT/scripts/lint-skills.sh" "$tmp/skills" 2>&1)" || status=$?
-  if (( status == 0 )); then
+  output="$(PATH="$stub:$PATH" "$ROOT/scripts/lint-skills.sh" "$tmp/skills" 2>&1)" || status=$?
+  if (( status == 0 )) || [[ "$output" != *"non-ASCII scan of references/ did not run"* ]]; then
     printf '%s\n' "$output" >&2
-    fail "lint-skills.sh missed an odd backslash run or a later -E matcher"
+    fail "lint-skills.sh passed a reference scan whose perl failed"
   fi
-  count="$(grep -c 'inside an ERE pattern' <<< "$output" || true)"
-  if [[ "$count" != "2" ]]; then
-    printf '%s\n' "$output" >&2
-    fail "lint-skills.sh reported $count of 2 backslash-parity/option-order patterns"
-  fi
+  rm -f "$stub/perl" "$tmp/skills/lint-fixture/references/details.md"
 
-  rm -rf "$tmp"
-  trap - RETURN
+  real_python="$(command -v python3)"
+  printf '#!/usr/bin/env bash\n[[ "${1:-}" != */check-ere-pipe.py ]] || exit 1\nexec "%s" "$@"\n' "$real_python" > "$stub/python3"
+  chmod +x "$stub/python3"
+  status=0
+  output="$(PATH="$stub:$PATH" "$ROOT/scripts/lint-skills.sh" "$tmp/skills" 2>&1)" || status=$?
+  if (( status == 0 )) || [[ "$output" != *"ERE literal-pipe scan of SKILL.md did not run"* ]]; then
+    printf '%s\n' "$output" >&2
+    fail "lint-skills.sh passed an ERE scan whose python3 failed"
+  fi
+  rm -f "$stub/python3"
+
+  printf '{ not json\n' > "$tmp/migrations.json"
+  expect_docs_lint "$tmp" "migrations.json could not be read" "unparseable migrations.json"
+  rm -rf "$tmp"; trap - RETURN
 }
 
 test_size_reporting() {
@@ -1225,8 +1362,10 @@ test_size_reporting() {
   write_minimal_skill "$tmp/skills/lint-fixture" "lint-fixture"
   printf '%020001d\n' 0 >> "$tmp/skills/lint-fixture/SKILL.md"
   output="$("$ROOT/scripts/lint-skills.sh" "$tmp/skills" 2>&1)"
-  expected_chars=$(wc -m < "$tmp/skills/lint-fixture/SKILL.md")
+  # The Size line and the warning report the same body estimate.
+  expected_chars=$(awk 'n>=2; /^---$/ && n<2 {n++}' "$tmp/skills/lint-fixture/SKILL.md" | wc -m)
   [[ "$output" == *"Size: ~$(( expected_chars / 4 )) tokens (above 5000)"* ]] || fail "missing size advisory"
+  [[ "$output" == *"SKILL.md body is ~$(( expected_chars / 4 )) tokens"* ]] || fail "size warning disagrees with the Size line"
   [[ "$output" == *"Descriptions:   87 characters (~21 tokens)"* ]] || fail "missing description budget"
   rm -rf "$tmp"
   trap - RETURN
@@ -1286,6 +1425,9 @@ test_skill_inventory() {
 
 test_skill_inventory
 test_size_reporting
+test_self_check_variant_heading_is_capped
+test_section_heading_must_match_exactly
+test_failed_scanners_are_errors
 test_reference_files_are_scanned
 test_reference_examples_are_ignored
 test_ere_literal_pipe_is_flagged
@@ -1297,6 +1439,7 @@ test_ere_multiline_command_is_flagged
 test_ere_shell_wrappers_are_flagged
 test_ere_fence_variants_are_scanned
 test_ere_backslash_parity_and_matcher_order
+test_rubric_hash_covers_ere_scanner
 test_unrelated_bold_does_not_mask_missing_reference
 test_real_cross_skill_reference_is_accepted
 test_generic_self_check_ratio_within_cap_passes
@@ -1314,6 +1457,7 @@ test_overlay_only_skill_dir_is_skipped
 test_non_ascii_character_fails
 test_skill_over_hard_max_lines_fails
 test_skill_over_token_guidance_warns
+test_repeated_version_floor_warns
 test_unlinked_reference_fails
 test_long_reference_needs_contents
 test_unreadable_reference_fails
@@ -1335,4 +1479,8 @@ test_install_table_missing_tool_fails
 test_bold_old_skill_name_fails
 test_gitignored_skill_not_counted
 test_deprecated_skill_not_counted
+test_list_public_skills_modes
+test_lint_uses_the_shared_loop
+test_supported_tools_parser_reads_reflowed_array
+test_frontmatter_flag_asks_the_python_rule
 printf 'lint tests passed\n'

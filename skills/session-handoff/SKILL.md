@@ -269,5 +269,5 @@ See `references/output-contract.md` for the full contract.
 
 1. **Every decision carries its why.** A locked decision without a rationale invites
    relitigation. Record the reason or do not lock it.
-2. **Headless mode.** In non-interactive contexts (`--bare`, Cursor Automations, Codex `exec`):
+2. **Headless mode.** In non-interactive contexts (`claude -p`, Cursor Automations, Codex `exec`):
    write to `.handoff/`, add the gitignore entry without prompting, and report the path.

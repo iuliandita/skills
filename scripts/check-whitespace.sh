@@ -13,17 +13,11 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
+# shellcheck source=./scripts/base-lib.sh
+source "$ROOT/scripts/base-lib.sh"
 
 BASE_REF="${BASE_REF:-}"
-BASE_SHA="${BASE_SHA:-}"
-if [[ "$BASE_SHA" =~ ^0+$ ]]; then
-  # A push that creates a ref reports an all-zero "before" sha.
-  BASE_SHA=""
-fi
-if [[ -z "$BASE_REF" && -n "$BASE_SHA" ]] && ! git rev-parse --verify --quiet "${BASE_SHA}^{commit}" >/dev/null; then
-  echo "error: BASE_SHA '${BASE_SHA}' is not a commit in this clone" >&2
-  exit 1
-fi
+normalize_base_sha
 
 if [[ -n "$BASE_REF" ]]; then
   # --depth on a full clone writes .git/shallow and breaks merge-base for later checks.
@@ -40,7 +34,12 @@ elif { base="$(git merge-base HEAD origin/develop 2>/dev/null)" || base="$(git m
   range="$base..HEAD"
 else
   # On the base branch itself the merge base is HEAD, which would compare nothing.
-  git diff-tree --check --no-commit-id -r HEAD
+  # Compare with the first parent: diff-tree prints nothing for a merge commit.
+  if git rev-parse --verify --quiet "HEAD^1^{commit}" >/dev/null; then
+    git diff --check HEAD^1 HEAD
+  else
+    git diff-tree --check --root --no-commit-id -r HEAD
+  fi
   echo "Whitespace clean (last commit)."
   exit 0
 fi

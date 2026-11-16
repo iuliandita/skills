@@ -47,7 +47,7 @@ Engine-specific production checks for PostgreSQL, MySQL/MariaDB, MongoDB, and MS
 ## MSSQL-Specific
 
 - [ ] `Max Server Memory` set explicitly (not unlimited)
-- [ ] `MAXDOP` per Microsoft guidance: <= logical processors per (soft-)NUMA node, capped at 8 on single-NUMA servers; multi-NUMA with >16 LPs/node uses half the LPs per node, max 16
+- [ ] `MAXDOP` set per Microsoft guidance (rule in the SQL Server template, `config-templates.md`)
 - [ ] `Cost Threshold for Parallelism` raised from default 5
 - [ ] TempDB files = min(CPU cores, 8), equal size
 - [ ] Query Store enabled

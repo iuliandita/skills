@@ -86,7 +86,7 @@ X findings: N P0, N P1, N P2, N P3, N info.
 - semgrep: `pip install semgrep` or `brew install semgrep`
 - gitleaks: `brew install gitleaks` or `go install github.com/gitleaks/gitleaks/v8@latest`
 - trufflehog: `brew install trufflehog` or `go install github.com/trufflesecurity/trufflehog/v3@latest`
-- trivy: `brew install trivy` or see https://aquasecurity.github.io/trivy (use v0.76.1 from official releases; never use v0.69.4-0.69.6, and do not roll back to v0.69.3 because CVE-2026-63328 affects every release before v0.72.0)
+- trivy: `brew install trivy` or see https://aquasecurity.github.io/trivy (use the release pinned in `versions.md`, from official releases and never below v0.72.0: CVE-2026-63328 affects every earlier release, and v0.69.4-0.69.6 were compromised)
 - scorecard: `go install github.com/ossf/scorecard/v5/cmd/scorecard@latest`
 - checkov: `pip install checkov`
 

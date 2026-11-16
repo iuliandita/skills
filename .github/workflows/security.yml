@@ -13,9 +13,11 @@ on:
 permissions:
   contents: read
 
+# Only pull request runs share a group and cancel each other. Push, schedule,
+# dispatch and release runs each get their own, so every pushed range is checked.
 concurrency:
-  group: security-${{ github.workflow }}-${{ github.ref == 'refs/heads/main' && github.sha || github.ref }}
-  cancel-in-progress: true
+  group: security-${{ github.workflow }}-${{ github.event_name }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   zizmor:
@@ -27,8 +29,10 @@ jobs:
         with:
           persist-credentials: false
 
+      # The Renovate custom manager in renovate.json tracks the version below. Keep
+      # uses, with and version on consecutive lines; scripts/test-report-tool-pins.sh checks it.
       - name: Audit workflow security
-        uses: zizmorcore/zizmor-action@85b2b9fb8e3325e7a23d7d0a9d7ba5ae0f999e3e # v0.7.1
+        uses: zizmorcore/zizmor-action@45d7276c9ca790aabd705e31ca99c6185c3e76dd # v0.8.1
         with:
           version: "1.30.1"
           advanced-security: false
@@ -70,4 +74,4 @@ jobs:
         run: >
           semgrep scan --metrics off --error
           --config p/ci --config p/github-actions
-          install.sh scripts .github/workflows skills/repo-audit/references/detect.sh
+          install.sh scripts .github/workflows .github/stack skills/repo-audit/references/detect.sh

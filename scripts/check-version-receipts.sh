@@ -1,23 +1,43 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -Eeuo pipefail
 
 # Verify version-pin receipts: skills/*/references/versions.md.
 #
 # Each file carries YAML frontmatter (checked_at, checked_by, pins: [...]).
-# This script fails a skill's receipt if:
+# This script reports a skill's receipt as stale if:
+#   - checked_at is older than the staleness budget (default 120 days,
+#     SKILLS_PIN_MAX_AGE_DAYS overrides it)
+# and fails it if:
 #   - checked_at is missing or not YYYY-MM-DD
-#   - checked_at is older than the staleness budget (default 120 days)
+#   - checked_at is more than one day in the future (one day covers authors
+#     in timezones ahead of the UTC runners)
 #   - any pins: entry is missing tool, version, or source
 #   - any pins: entry's source is not an https:// URL
 #
 # See docs/version-pins.md for the contract. Nothing to check (no
 # versions.md anywhere) is success, not an error.
+#
+# Exit codes:
+#   0   every receipt is well formed and inside the budget
+#   10  stale receipts only (the advisory wrapper downgrades this one code)
+#   1   anything else: a malformed or unreadable receipt, a failed receipt
+#       listing, a budget that is not a whole number of days, a command that
+#       failed. A run with both a broken and a stale receipt exits 1.
+STALE_EXIT=10
+trap 'exit 1' ERR
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SKILLS_ROOT="${SKILLS_ROOT:-$ROOT/skills}"
 MAX_AGE_DAYS="${SKILLS_PIN_MAX_AGE_DAYS:-120}"
 
+if [[ ! "$MAX_AGE_DAYS" =~ ^[0-9]+$ ]]; then
+  printf 'error: SKILLS_PIN_MAX_AGE_DAYS must be a whole number of days, got %q\n' "$MAX_AGE_DAYS" >&2
+  exit 1
+fi
+MAX_AGE_DAYS=$(( 10#$MAX_AGE_DAYS ))
+
 fail=0
+stale=0
 
 # Parse frontmatter of a versions.md file into machine-readable lines:
 #   CHECKED_AT=<value>
@@ -84,10 +104,10 @@ parse_frontmatter() {
   ' "$1"
 }
 
-# Portable day count from a YYYY-MM-DD date to now. Tries GNU date first
-# (the CI runner, ubuntu-24.04, has it), falls back to BSD date for local
-# macOS use.
-days_since() {
+# Portable seconds from a YYYY-MM-DD date to now; negative for a future date.
+# Tries GNU date first (the CI runner, ubuntu-24.04, has it),
+# falls back to BSD date for local macOS use.
+seconds_since() {
   local date_str="$1" then_epoch now_epoch
   now_epoch="$(date -u +%s)"
   if then_epoch="$(date -u -d "$date_str" +%s 2>/dev/null)"; then
@@ -97,10 +117,16 @@ days_since() {
   else
     return 1
   fi
-  echo $(( (now_epoch - then_epoch) / 86400 ))
+  echo $(( now_epoch - then_epoch ))
 }
 
-mapfile -t receipt_files < <(find "$SKILLS_ROOT" -type f -path '*/references/versions.md' 2>/dev/null | sort)
+if ! receipt_list="$(find "$SKILLS_ROOT" -type f -path '*/references/versions.md')"; then
+  printf 'error: could not list receipts under %s\n' "$SKILLS_ROOT" >&2
+  exit 1
+fi
+
+receipt_files=()
+[[ -z "$receipt_list" ]] || mapfile -t receipt_files < <(sort <<< "$receipt_list")
 
 if (( ${#receipt_files[@]} == 0 )); then
   printf 'Version receipts OK: no skills carry references/versions.md yet.\n'
@@ -114,6 +140,9 @@ for file in "${receipt_files[@]}"; do
   rel="${file#"$SKILLS_ROOT"/}"
   skill="${rel%%/references/versions.md}"
 
+  # Start clean: a value left by the environment or by an earlier receipt that
+  # failed part-way must not fill a field this receipt lacks.
+  unset CHECKED_AT CHECKED_BY "${!PIN@}"
   eval "$(parse_frontmatter "$file")"
 
   if [[ -z "${CHECKED_AT:-}" ]]; then
@@ -128,16 +157,20 @@ for file in "${receipt_files[@]}"; do
     continue
   fi
 
-  age_days="$(days_since "$CHECKED_AT")" || {
+  age_seconds="$(seconds_since "$CHECKED_AT")" || {
     printf '[!] %s: could not parse checked_at date %q\n' "$skill" "$CHECKED_AT" >&2
     fail=1
     continue
   }
+  age_days=$(( age_seconds / 86400 ))
 
-  if (( age_days > MAX_AGE_DAYS )); then
+  if (( age_seconds < -86400 )); then
+    printf '[!] %s: checked_at %s is more than one day in the future\n' "$skill" "$CHECKED_AT" >&2
+    fail=1
+  elif (( age_days > MAX_AGE_DAYS )); then
     printf '[!] %s: checked_at %s is %d days old (budget %d days) - re-verify pins or remove them\n' \
       "$skill" "$CHECKED_AT" "$age_days" "$MAX_AGE_DAYS" >&2
-    fail=1
+    stale=1
   fi
 
   pin_count="${PIN_COUNT:-0}"
@@ -170,16 +203,16 @@ for file in "${receipt_files[@]}"; do
   if [[ -z "$oldest_date" || "$CHECKED_AT" < "$oldest_date" ]]; then
     oldest_date="$CHECKED_AT"
   fi
-
-  unset CHECKED_AT CHECKED_BY PIN_COUNT
-  for (( i = 1; i <= pin_count; i++ )); do
-    unset "PIN${i}_TOOL" "PIN${i}_VERSION" "PIN${i}_SOURCE"
-  done
 done
 
 if (( fail )); then
   printf '\nVersion receipt check failed.\n' >&2
   exit 1
+fi
+
+if (( stale )); then
+  printf '\nVersion receipts are past the age budget.\n' >&2
+  exit "$STALE_EXIT"
 fi
 
 printf 'Version receipts OK: %d skill(s), oldest check %s.\n' "$skill_count" "$oldest_date"

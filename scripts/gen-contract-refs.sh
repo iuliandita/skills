@@ -18,7 +18,10 @@ source "$(dirname "${BASH_SOURCE[0]}")/contract-lib.sh"
 # shellcheck source=./scripts/skill-lib.sh
 source "$(dirname "${BASH_SOURCE[0]}")/skill-lib.sh"
 
-frontmatter_cache_load "$ROOT/skills" metadata.deprecated
+frontmatter_cache_load "$ROOT/skills" flag:metadata.deprecated
+# Public skills only: build inputs (_shared), private local skills and
+# deprecated notices get no copy.
+mapfile -t public_skills < <(list_public_skills "$ROOT/skills")
 
 total=0
 for target_name in "${SHARED_FILE_NAMES[@]}"; do
@@ -32,12 +35,8 @@ for target_name in "${SHARED_FILE_NAMES[@]}"; do
   shipped="$(render_shipped_file "$src")"
 
   count=0
-  for dir in "$ROOT"/skills/*/; do
-    name="$(basename "$dir")"
-    [[ "$name" == _* ]] && continue          # skip _shared and other build inputs
-    git -C "$ROOT" check-ignore -q "$dir" 2>/dev/null && continue  # private local skills
-    [[ -f "$dir/SKILL.md" ]] || continue
-    frontmatter_flag "$dir/SKILL.md" metadata.deprecated && continue
+  for name in "${public_skills[@]}"; do
+    dir="$ROOT/skills/$name"
     mkdir -p "$dir/references"
     printf '%s\n' "$shipped" > "$dir/references/$target_name"
     count=$((count + 1))

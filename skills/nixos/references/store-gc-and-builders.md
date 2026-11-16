@@ -68,7 +68,7 @@ nix-store --gc --print-dead
 # Delete unreachable paths
 nix-collect-garbage                       # keep all generations
 sudo nix-collect-garbage --delete-older-than 30d
-sudo nix-collect-garbage -d               # deletes ALL old generations; only after the new one rebooted cleanly
+sudo nix-collect-garbage -d               # deletes ALL old generations; only after the new one booted cleanly twice
 
 # See roots that protect paths
 nix-store --gc --print-roots

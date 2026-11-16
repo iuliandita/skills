@@ -1,3 +1,7 @@
+# Local hooks are a subset of CI, not a replacement. They run the offline
+# checks of the CI lint job plus the installer and pin-report tests. Not run here:
+# the other test-*.sh suites, shellcheck, markdownlint-cli2, lychee, actionlint,
+# zizmor, the secret scan and semgrep. The full list is in AGENTS.md.
 repos:
   - repo: local
     hooks:
@@ -17,7 +21,8 @@ repos:
 
       - id: freshness-date-check
         name: freshness markers use current collection month (advisory)
-        entry: bash -c './scripts/check-freshness-dates.sh || echo "advisory - freshness markers are stale, not blocking"'
+        # Only exit 10 (stale markers) is downgraded; any other failure blocks.
+        entry: bash -c 'rc=0; ./scripts/check-freshness-dates.sh || rc=$?; if (( rc == 10 )); then echo "advisory - freshness markers are stale, not blocking"; else exit "$rc"; fi'
         verbose: true
         language: system
         pass_filenames: false
@@ -51,6 +56,55 @@ repos:
         pass_filenames: false
         stages: [pre-push]
 
+      - id: version-receipt-structure
+        name: version receipts are well formed (receipt age is advisory, CI only)
+        entry: env SKILLS_PIN_MAX_AGE_DAYS=36500 ./scripts/check-version-receipts.sh
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
+
+      - id: first-paragraph-check
+        name: first-paragraph storefront copy
+        entry: ./scripts/check-first-paragraph.sh
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
+
+      - id: migration-notice-check
+        name: migration notices and grace period
+        entry: ./scripts/check-migrations.sh
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
+
+      - id: refiner-state-check
+        name: refiner run-history state
+        entry: ./scripts/check-refiner-state.sh
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
+
+      - id: stack-conventions-check
+        name: stack conventions
+        entry: python3 .github/stack/stack-check.py
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
+
+      - id: whitespace-check
+        name: whitespace and merge markers
+        entry: ./scripts/check-whitespace.sh
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
+
+      - id: refiner-phase1-guard
+        name: refiner phase-1 immutability guard
+        entry: ./scripts/check-refiner-phase1-guard.sh
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
+
       - id: docs-impact-check
         name: docs follow installer, tooling, and skill removals
         entry: ./scripts/check-docs-impact.sh
@@ -64,4 +118,12 @@ repos:
         language: system
         pass_filenames: false
         files: ^(install\.sh|scripts/(test-install\.sh|test-setup\.sh|test-update\.sh|skill-frontmatter\.py|skill-lib\.sh|migrate-skills\.py)|migrations\.json|\.pre-commit-config\.yaml)$
+        stages: [pre-push]
+
+      - id: tool-pin-report-tests
+        name: test the pin report and the Renovate zizmor pattern
+        entry: ./scripts/test-report-tool-pins.sh
+        language: system
+        pass_filenames: false
+        files: ^(renovate\.json|scripts/(test-)?report-tool-pins\.sh|\.github/workflows/(ci|security)\.yml)$
         stages: [pre-push]

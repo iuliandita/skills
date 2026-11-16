@@ -16,24 +16,6 @@ warnings=0
 error() { echo "error: $1" >&2; (( errors++ )) || true; }
 warn()  { echo "warning: $1" >&2; (( warnings++ )) || true; }
 
-# Private skills: present locally (gitignored) but must not be referenced
-# by public skills. They can reference public skills freely.
-PRIVATE_SKILLS=()
-
-# ── Private skill reference check ──────────────────────────────────────
-check_private_refs() {
-  local dir="$1" name="$2"
-  for priv in "${PRIVATE_SKILLS[@]}"; do
-    [[ "$name" == "$priv" ]] && continue  # private skill can reference itself
-    for f in "$dir"/SKILL.md "$dir"/references/*.md; do
-      [[ -f "$f" ]] || continue
-      if grep -q "\\b${priv}\\b" "$f" 2>/dev/null; then
-        error "$name: references private skill '$priv' in $(basename "$f") (public skills must not reference private skills)"
-      fi
-    done
-  done
-}
-
 # ── Frontmatter checks ─────────────────────────────────────────────────
 check_frontmatter() {
   local file="$1" name="$2"
@@ -95,7 +77,7 @@ check_frontmatter() {
 check_sections() {
   local file="$1" name="$2"
   for section in "When to use" "When NOT to use" "Workflow" "Rules"; do
-    if ! grep -qi "^## .*${section}" "$file"; then
+    if ! grep -qiE "^## ${section}[[:space:]]*$" "$file"; then
       error "$name: missing '## $section' section"
     fi
   done
@@ -105,44 +87,61 @@ check_sections() {
 # Approved non-ASCII: middle dot and the emoji status indicators.
 ASCII_ALLOWED='\x{00B7}\x{1F534}\x{1F7E0}\x{1F7E2}\x{1F7E1}\x{1F535}\x{26AA}\x{26A1}\x{1F3AF}\x{1F480}'
 
-check_ascii() {
-  local file="$1" name="$2"
-  local bad_lines
-  bad_lines=$(grep -Pn '[^\x00-\x7F]' "$file" 2>/dev/null || true)
-  if [[ -n "$bad_lines" ]]; then
-    while IFS= read -r line; do
-      # Strip allowed emoji status indicators, then check for remaining non-ASCII
-      local stripped
-      stripped=$(echo "$line" | ALLOWED="$ASCII_ALLOWED" perl -CSD -pe 's/[$ENV{ALLOWED}]//g' 2>/dev/null || echo "$line")
-      if echo "$stripped" | grep -Pq '[^\x00-\x7F]' 2>/dev/null; then
-        error "$name: non-ASCII character at $line"
-      fi
-    done <<< "$bad_lines"
-  fi
-}
-
-# References: same rule, but fenced blocks and inline code spans may show
-# literal characters (e.g. locale examples).
-check_ascii_refs() {
-  local dir="$1" name="$2" refs=() f hit
-  for f in "$dir"/references/*.md; do
-    [[ -f "$f" ]] && refs+=("$f")
-  done
-  (( ${#refs[@]} )) || return 0
-  while IFS= read -r hit; do
-    [[ -n "$hit" ]] && error "$name: non-ASCII character at ${hit#"$dir"/}"
-  done < <(ALLOWED="$ASCII_ALLOWED" perl -CSD -ne '
-    if (/^\s*(```|~~~)/) { $fence = !$fence }
+# Print "file:line:text" for every line that still holds non-ASCII once the
+# approved characters are removed. With strip_code=1, fenced blocks and inline
+# code spans may show literal characters (e.g. locale examples).
+# Args: <strip_code 0|1> <file>...
+ascii_scan() {
+  local strip_code="$1"
+  shift
+  ALLOWED="$ASCII_ALLOWED" STRIP_CODE="$strip_code" perl -CSD -ne '
+    if ($ENV{STRIP_CODE} && /^\s*(```|~~~)/) { $fence = !$fence }
     elsif (!$fence) {
-      (my $s = $_) =~ s/(`+).*?\1//g;
+      my $s = $_;
+      $s =~ s/(`+).*?\1//g if $ENV{STRIP_CODE};
       $s =~ s/[$ENV{ALLOWED}]//g;
       if ($s =~ /[^\x00-\x7F]/) { chomp; print "$ARGV:$.:$_\n" }
     }
     if (eof) { $fence = 0; close ARGV }
-  ' "${refs[@]}")
+  ' "$@"
+}
+
+# SKILL.md is checked whole; references/ get the code exemption.
+check_ascii() {
+  local file="$1" name="$2" dir="$3" refs=() f hit hits
+  # Capture each scan so a scanner that cannot run is an error, not zero hits.
+  if hits="$(ascii_scan 0 "$file")"; then
+    while IFS= read -r hit; do
+      [[ -n "$hit" ]] || continue
+      error "$name: non-ASCII character at ${hit#"$file":}"
+    done <<< "$hits"
+  else
+    error "$name: non-ASCII scan of SKILL.md did not run (perl failed)"
+  fi
+
+  for f in "$dir"/references/*.md; do
+    [[ -f "$f" ]] && refs+=("$f")
+  done
+  (( ${#refs[@]} )) || return 0
+  if ! hits="$(ascii_scan 1 "${refs[@]}")"; then
+    error "$name: non-ASCII scan of references/ did not run (perl failed)"
+    return 0
+  fi
+  while IFS= read -r hit; do
+    [[ -n "$hit" ]] || continue
+    error "$name: non-ASCII character at ${hit#"$dir"/}"
+  done <<< "$hits"
 }
 
 # ── Line count check ───────────────────────────────────────────────────
+# The one token estimate, shared by the size warning and the per-skill Size
+# line: characters of the body after frontmatter, divided by 4.
+skill_body_tokens() {
+  local body_chars
+  body_chars=$(awk 'n>=2; /^---$/ && n<2 {n++}' "$1" | wc -m)
+  echo $(( body_chars / 4 ))
+}
+
 check_length() {
   local file="$1" name="$2"
   local lines
@@ -150,14 +149,30 @@ check_length() {
   local warn_msg="$name: SKILL.md is $lines lines (near the 500 hard max; extract to references/)"
   skill_length_check "$file" "$name" error warn "$warn_msg"
 
-  # Activation size: spec guidance keeps the body under ~5000 tokens.
-  # Estimate tokens as chars/4 of the body after frontmatter. Advisory only.
-  local body_bytes body_tokens
-  body_bytes=$(awk 'n>=2; /^---$/ && n<2 {n++}' "$file" | wc -c)
-  body_tokens=$(( body_bytes / 4 ))
+  # Activation size: spec guidance keeps the body under ~5000 tokens. Advisory only.
+  local body_tokens
+  body_tokens="$(skill_body_tokens "$file")"
   if (( body_tokens > 5000 )); then
     warn "$name: SKILL.md body is ~$body_tokens tokens (spec guidance ~5000; move detail to references/)"
   fi
+}
+
+# ── Repeated version floor ─────────────────────────────────────────────
+# The same floor ("tool v1.2+", "tool >= 1.2", "tool 1.2 or later") on more than
+# one SKILL.md line drifts when only one copy is bumped. Advisory only: state it
+# once and keep the rest in references/. Fenced blocks are ignored.
+check_repeated_floor() {
+  local file="$1" name="$2" count floor
+  while read -r count floor; do
+    [[ -n "$floor" ]] || continue
+    warn "$name: SKILL.md repeats the version floor '$floor+' on $count lines (state it once; move the rest to references/)"
+  done < <(
+    awk '/^```/{skip=!skip; next} !skip{print NR ":" $0}' "$file" \
+      | { grep -oiE '^[0-9]+:|[a-z][a-z0-9_.-]* ?>= ?v?[0-9]+(\.[0-9]+)+|[a-z][a-z0-9_.-]* v?[0-9]+(\.[0-9]+)+(\+| or (later|newer))' || true; } \
+      | awk '/^[0-9]+:$/{line=$0; next} {print line tolower($0)}' \
+      | sed -E 's/ ?>= ?v?/ /; s/ v([0-9])/ \1/; s/(\+| or (later|newer))$//' \
+      | sort -u | cut -d: -f2- | sort | uniq -c | awk '$1 > 1 {print $1, $2, $3}'
+  )
 }
 
 # ── Reference file checks ──────────────────────────────────────────────
@@ -285,236 +300,41 @@ check_prose_double_dash() {
 }
 
 # ── ERE literal-pipe check ─────────────────────────────────────────────
-# grep -E, egrep, rg, pgrep, and pkill use extended regular expressions,
-# where '|' is alternation and '\|' inside a quoted pattern matches a literal
-# pipe. A stray '\|' in one of those patterns silently matches nothing.
-# Scan fenced command examples (indented fences included), split commands on
-# unquoted '|', ';', and '&&', and ignore BRE grep and fixed-string modes.
-# sed -E and awk are outside this check.
+# scripts/check-ere-pipe.py owns the scan: '\|' inside a quoted ERE pattern
+# (grep -E, egrep, rg, pgrep, pkill) in a fenced command example. It runs once
+# over the whole collection; ERE_PIPE_HITS maps a file to its line numbers.
+declare -A ERE_PIPE_HITS=()
+ERE_PIPE_SCANNED=0
+
+ere_pipe_scan_load() {
+  local f hit hits files=()
+  for f in "$SKILLS_DIR"/*/SKILL.md "$SKILLS_DIR"/*/references/*.md; do
+    [[ -f "$f" ]] && files+=("$f")
+  done
+  if (( ${#files[@]} )); then
+    # Capture the scan so a scanner that cannot run is an error, not zero hits.
+    hits="$(python3 "$SCRIPT_DIR/check-ere-pipe.py" "${files[@]}")" || return 0
+    while IFS= read -r hit; do
+      [[ -n "$hit" ]] || continue
+      _fm_key "${hit%:*}"
+      ERE_PIPE_HITS[$FM_KEY]+="${hit##*:} "
+    done <<< "$hits"
+  fi
+  ERE_PIPE_SCANNED=1
+}
+
 check_ere_literal_pipe() {
   local dir="$1" name="$2" f line_no
   for f in "$dir"/SKILL.md "$dir"/references/*.md; do
     [[ -f "$f" ]] || continue
-    while IFS= read -r line_no; do
-      [[ -n "$line_no" ]] || continue
+    if (( ! ERE_PIPE_SCANNED )); then
+      error "$name: ERE literal-pipe scan of $(basename "$f") did not run (python3 failed)"
+      continue
+    fi
+    _fm_key "$f"
+    for line_no in ${ERE_PIPE_HITS[$FM_KEY]:-}; do
       error "$name: '\\|' inside an ERE pattern in $(basename "$f"):$line_no (use '|' for alternation)"
-    done < <(python3 - "$f" <<'PY'
-import re
-import shlex
-import sys
-
-ERE_COMMANDS = {"grep", "egrep", "rg", "pgrep", "pkill"}
-SEPARATORS = {"|", ";", "&&", "||", "&"}
-PREFIXES = {"sudo", "doas", "command", "time", "nohup", "nice"}
-KEYWORDS = {"if", "then", "elif", "else", "while", "until", "do", "done", "fi", "esac", "!", "("}
-
-
-def split_segments(tokens):
-    segments = []
-    current = []
-    for token in tokens:
-        if token in SEPARATORS:
-            if current:
-                segments.append(current)
-            current = []
-        else:
-            current.append(token)
-    if current:
-        segments.append(current)
-    return segments
-
-
-def command_start(tokens):
-    i = 0
-    while i < len(tokens):
-        token = tokens[i]
-        if token in {"$", ">"}:
-            i += 1
-            continue
-        if token == "#":
-            return len(tokens)
-        if token in KEYWORDS or re.match(r"^[A-Za-z_][A-Za-z0-9_]*=", token):
-            i += 1
-            continue
-        if token in PREFIXES:
-            i += 1
-            while i < len(tokens) and tokens[i].startswith("-"):
-                i += 1
-            continue
-        if token == "env":
-            i += 1
-            while i < len(tokens) and (
-                tokens[i].startswith("-") or re.match(r"^[A-Za-z_][A-Za-z0-9_]*=", tokens[i])
-            ):
-                i += 1
-            continue
-        if token == "xargs":
-            i += 1
-            while i < len(tokens) and tokens[i].startswith("-"):
-                i += 1
-            continue
-        break
-    return i
-
-
-def has_literal_pipe(pattern):
-    i = 0
-    while i < len(pattern):
-        if pattern[i] != "\\":
-            i += 1
-            continue
-        count = 0
-        while i < len(pattern) and pattern[i] == "\\":
-            count += 1
-            i += 1
-        if i < len(pattern) and pattern[i] == "|" and count % 2 == 1:
-            return True
-    return False
-
-
-def find_patterns(command, args):
-    extended = command in {"egrep", "rg", "pgrep", "pkill"}
-    fixed = False
-    regexp_patterns = []
-    operands = []
-    has_regexp = False
-    has_pattern_file = False
-    end_of_options = False
-    i = 0
-    while i < len(args):
-        token = args[i]
-        if not end_of_options and token == "--":
-            end_of_options = True
-            i += 1
-            continue
-        if not end_of_options and token.startswith("--"):
-            name, eq, value = token.partition("=")
-            if name == "--extended-regexp":
-                extended, fixed = True, False
-            elif name == "--perl-regexp":
-                extended, fixed = True, False
-            elif name == "--basic-regexp":
-                extended, fixed = False, False
-            elif name == "--fixed-strings":
-                fixed, extended = True, False
-            elif name == "--regexp":
-                has_regexp = True
-                if eq:
-                    regexp_patterns.append(value)
-                elif i + 1 < len(args):
-                    regexp_patterns.append(args[i + 1])
-                    i += 1
-            elif name == "--file" and command in {"grep", "rg"}:
-                has_pattern_file = True
-                if not eq and i + 1 < len(args):
-                    i += 1
-            i += 1
-            continue
-        if not end_of_options and token.startswith("-") and token != "-":
-            cluster = token[1:]
-            j = 0
-            while j < len(cluster):
-                flag = cluster[j]
-                if flag == "E" and command == "grep":
-                    extended, fixed = True, False
-                elif flag == "P" and command == "grep":
-                    extended, fixed = True, False
-                elif flag == "G" and command == "grep":
-                    extended, fixed = False, False
-                elif flag == "F" and command in {"grep", "rg"}:
-                    fixed, extended = True, False
-                elif flag == "e" and command in {"grep", "rg"}:
-                    has_regexp = True
-                    rest = cluster[j + 1 :]
-                    if rest:
-                        regexp_patterns.append(rest)
-                    elif i + 1 < len(args):
-                        regexp_patterns.append(args[i + 1])
-                        i += 1
-                    j = len(cluster)
-                    break
-                elif flag == "f" and command in {"grep", "rg"}:
-                    has_pattern_file = True
-                    j = len(cluster)
-                    break
-                j += 1
-            i += 1
-            continue
-        operands.append(token)
-        i += 1
-    if fixed:
-        return [], False
-    if has_regexp:
-        return regexp_patterns, extended
-    if has_pattern_file and command in {"grep", "rg"}:
-        return [], False
-    return operands, extended
-
-
-def scan_line(line):
-    try:
-        lexer = shlex.shlex(line, posix=True, punctuation_chars=True)
-        lexer.whitespace_split = True
-        tokens = list(lexer)
-    except ValueError:
-        return False
-    for segment in split_segments(tokens):
-        start = command_start(segment)
-        if start >= len(segment):
-            continue
-        command = segment[start]
-        if command not in ERE_COMMANDS:
-            continue
-        patterns, match_as_ere = find_patterns(command, segment[start + 1 :])
-        if match_as_ere and any(has_literal_pipe(pattern) for pattern in patterns):
-            return True
-    return False
-
-
-def main(path):
-    fence = None
-    buffer = ""
-    start_line = 0
-    with open(path, encoding="utf-8", errors="replace") as handle:
-        for number, raw in enumerate(handle, 1):
-            line = raw.rstrip("\n")
-            if fence is None:
-                match = re.match(r"^\s*(`{3,}|~{3,})", line)
-                if match:
-                    fence = match.group(1)
-                continue
-            closing = re.match(r"^\s*(`{3,}|~{3,})\s*$", line)
-            if closing and closing.group(1)[0] == fence[0] and len(closing.group(1)) >= len(fence):
-                if buffer and scan_line(buffer):
-                    print(start_line)
-                fence = None
-                buffer = ""
-                continue
-            if buffer:
-                buffer = (
-                    (buffer[:-1] + " " + line.strip()).rstrip()
-                    if buffer.endswith("\\")
-                    else (buffer + " " + line.strip()).rstrip()
-                )
-                if not buffer.endswith("\\"):
-                    if scan_line(buffer):
-                        print(start_line)
-                    buffer = ""
-                continue
-            if line.rstrip().endswith("\\"):
-                buffer = line.rstrip()[:-1] + " "
-                start_line = number
-                continue
-            if scan_line(line):
-                print(number)
-        if buffer and scan_line(buffer):
-            print(start_line)
-
-
-if __name__ == "__main__":
-    main(sys.argv[1])
-PY
-)
+    done
   done
 }
 
@@ -528,12 +348,17 @@ check_desc_prefix() {
 }
 
 # ── AI Self-Check section check ────────────────────────────────────────
+# One heading pattern (matched against the lower-cased line) for both the
+# existence check and the boilerplate cap, so a heading the first accepts
+# cannot hide its section from the second.
+SELF_CHECK_HEADING_RE='^## .*self.check'
+
 check_ai_self_check() {
   local file="$1" name="$2"
   local effort
   effort="$(frontmatter_get "$file" "metadata.effort" 2>/dev/null || true)"
   if [[ "$effort" == "high" ]]; then
-    if ! grep -qi '^## .*Self.Check' "$file"; then
+    if ! grep -qi "$SELF_CHECK_HEADING_RE" "$file"; then
       warn "$name: high-effort skill without 'AI Self-Check' section (recommended for skills that generate output)"
     fi
   fi
@@ -571,7 +396,7 @@ check_generic_self_check_ratio() {
   done
 
   local section
-  section="$(awk '/^## AI Self-Check/{f=1; next} /^## /{f=0} f' "$file")"
+  section="$(awk -v re="$SELF_CHECK_HEADING_RE" 'tolower($0) ~ re {f=1; next} /^## /{f=0} f' "$file")"
   [[ -z "$section" ]] && return
 
   local total generic canonical_item line
@@ -724,21 +549,6 @@ list_old_skill_names() {
   python3 -c 'import json,sys; print("\n".join(json.load(open(sys.argv[1]))["skills"]))' "$manifest"
 }
 
-# Number of entries in install.sh's SUPPORTED_TOOLS array, names one per line.
-list_supported_tools() {
-  awk '
-    /^SUPPORTED_TOOLS=\(/ {f=1; sub(/^SUPPORTED_TOOLS=\(/, "")}
-    f {
-      sub(/#.*/, "")
-      closed = ($0 ~ /\)/)
-      sub(/\).*/, "")
-      n = split($0, t, /[[:space:]]+/)
-      for (i = 1; i <= n; i++) if (t[i] != "") print t[i]
-      if (closed) exit
-    }
-  ' "$1"
-}
-
 check_collection_docs() {
   local root="$SKILLS_DIR/.."
   local readme="$root/README.md" install="$root/install.sh" install_doc="$root/INSTALL.md" migration="$root/MIGRATION.md"
@@ -853,7 +663,7 @@ echo
 if [[ -d "$SKILLS_DIR" ]]; then
   frontmatter_cache_load "$SKILLS_DIR" name description license metadata \
     metadata.source metadata.date_added metadata.effort metadata.argument_hint metadata.internal \
-    metadata.deprecated
+    flag:metadata.deprecated
 fi
 
 check_no_symlinks "$SKILLS_DIR"
@@ -861,23 +671,24 @@ check_canonical_test_coverage
 check_collection_docs
 check_skill_inventory
 
+ere_pipe_scan_load
+
 OLD_SKILL_NAMES=()
-while IFS= read -r old_name; do
-  [[ -n "$old_name" ]] && OLD_SKILL_NAMES+=("$old_name")
-done < <(list_old_skill_names)
+if old_names="$(list_old_skill_names)"; then
+  while IFS= read -r old_name; do
+    [[ -n "$old_name" ]] && OLD_SKILL_NAMES+=("$old_name")
+  done <<< "$old_names"
+else
+  error "migrations.json could not be read; retired skill names were not checked"
+fi
 
 skill_count=0
 description_chars=0
-for skill_dir in "$SKILLS_DIR"/*/; do
-  name=$(basename "$skill_dir")
-  [[ "$name" == ".backups" || "$name" == ".cook" ]] && continue
-  [[ "$name" == _* ]] && continue
-  git check-ignore -q "$skill_dir" 2>/dev/null && continue
-  # A retired skill can leave only an ignored private overlay behind.
-  if visible_files="$(git ls-files --cached --others --exclude-standard -- "$skill_dir" 2>/dev/null)" \
-    && [[ -z "$visible_files" ]]; then
-    continue
-  fi
+# Deprecated notices are linted with a reduced rule set and a folder without a
+# SKILL.md is an error, so both stay in the loop.
+mapfile -t lint_names < <(list_public_skills "$SKILLS_DIR" --include-deprecated --include-missing)
+for name in "${lint_names[@]}"; do
+  skill_dir="$SKILLS_DIR/$name/"
 
   skill_file="$skill_dir/SKILL.md"
   if [[ ! -f "$skill_file" ]]; then
@@ -887,8 +698,7 @@ for skill_dir in "$SKILLS_DIR"/*/; do
 
   echo "[$name]"
   if ! frontmatter_flag "$skill_file" metadata.deprecated; then
-    skill_chars=$(wc -m < "$skill_file")
-    skill_tokens=$(( skill_chars / 4 ))
+    skill_tokens="$(skill_body_tokens "$skill_file")"
     description=$(frontmatter_get "$skill_file" description 2>/dev/null || true)
     description_chars=$(( description_chars + ${#description} ))
     if (( skill_tokens > 5000 )); then
@@ -900,13 +710,12 @@ for skill_dir in "$SKILLS_DIR"/*/; do
   check_frontmatter "$skill_file" "$name"
   check_desc_prefix "$skill_file" "$name"
   check_sections "$skill_file" "$name"
-  check_ascii "$skill_file" "$name"
-  check_ascii_refs "$skill_dir" "$name"
+  check_ascii "$skill_file" "$name" "$skill_dir"
   check_length "$skill_file" "$name"
+  check_repeated_floor "$skill_file" "$name"
   check_references "$skill_file" "$name" "$skill_dir"
   check_reference_depth "$skill_file" "$name" "$skill_dir"
   check_reference_toc "$name" "$skill_dir"
-  check_private_refs "$skill_dir" "$name"
   check_ai_self_check "$skill_file" "$name"
   check_generic_self_check_ratio "$skill_file" "$name"
   check_banned_words "$skill_dir" "$name"

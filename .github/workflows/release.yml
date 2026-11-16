@@ -12,14 +12,42 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  tag:
+    name: tag
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      # Ancestry is not enough: every develop commit is reachable from main.
+      # The tag belongs on a commit of main itself, the merge of a release PR.
+      - name: Verify the tag is on main's first-parent line
+        run: |
+          git fetch --quiet origin main
+          commit="$(git rev-parse "${GITHUB_SHA}^{commit}")"
+          main_line="$(git rev-list --first-parent origin/main)"
+          if ! grep -Fxq -- "$commit" <<<"$main_line"; then
+            echo "::error::Tagged commit $commit is not on main's first-parent line"
+            exit 1
+          fi
+
   gates:
     name: gates
+    needs: [tag]
     permissions:
       contents: read
     uses: ./.github/workflows/ci.yml
+    with:
+      advisory-links: true
+    secrets:
+      SKILLS_PRIVATE_PATTERNS: ${{ secrets.SKILLS_PRIVATE_PATTERNS }}
 
   security:
     name: security
+    needs: [tag]
     permissions:
       contents: read
     uses: ./.github/workflows/security.yml
@@ -36,14 +64,6 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
-
-      - name: Verify the tag points at main
-        run: |
-          git fetch --quiet origin main
-          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
-            echo "::error::Tagged commit $GITHUB_SHA is not on main"
-            exit 1
-          fi
 
       - name: Check cumulative release documentation impact
         run: |

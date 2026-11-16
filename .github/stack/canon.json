@@ -68,8 +68,7 @@
   },
   "errors": {
     "forbidden_regex": "\\bERROR:",
-    "allowed_prefix_regex": "^(?:(?:error|warning|note): |[A-Za-z][\\w.-]*: (?:error|warning|note): )",
-    "exit_codes": {"0": "done", "1": "failed", "2": "usage error", "3": "a required tool is missing"}
+    "allowed_prefix_regex": "^(?:(?:error|warning|note): |[A-Za-z][\\w.-]*: (?:error|warning|note): )"
   },
   "ascii": {
     "suffixes": [".md"]
@@ -90,11 +89,6 @@
       "git@(?:github|gitlab)\\.com",
       "[\\w.%+-]+@(?:[\\w-]+\\.)*(?:example\\.(?:com|org|net)|example)"
     ]
-  },
-  "allowed_identifiers": {
-    "handle": "iuliandita",
-    "email": "iulian.dita@gmail.com",
-    "url": "https://iuliandita.com"
   },
   "vendor": {
     "dir": ".github/stack",

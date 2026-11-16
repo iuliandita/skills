@@ -48,7 +48,7 @@ Cause: `flake.lock` pins the input at the old rev.
 Fix:
 ```bash
 nix flake update                               # update all inputs
-nix flake update nixpkgs                        # just one (Nix 2.30+; replaces the deprecated `nix flake lock --update-input nixpkgs`)
+nix flake update nixpkgs                        # just one (Nix 2.19+; replaces the removed `nix flake lock --update-input nixpkgs`)
 nix flake metadata                             # confirm revs
 ```
 

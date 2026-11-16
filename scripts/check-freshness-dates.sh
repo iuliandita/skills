@@ -1,12 +1,29 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -Eeuo pipefail
+
+# Check that currentness markers in tracked docs name the collection month.
+#
+# Exit codes:
+#   0   every marker is current
+#   10  stale markers only (the advisory wrappers downgrade this one code)
+#   1   anything else: the tracked-file listing failed, a file could not be
+#       read, a command failed. A run with both a broken and a stale input
+#       exits 1.
+STALE_EXIT=10
+trap 'exit 1' ERR
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-FRESHNESS_LABEL="${SKILLS_FRESHNESS_LABEL:-$(date +'%B %Y')}"
+# The markers are written with English month names, whatever the caller's locale.
+FRESHNESS_LABEL="${SKILLS_FRESHNESS_LABEL:-$(LC_ALL=C date +'%B %Y')}"
+
+if ! tracked="$(git -C "$ROOT" ls-files)"; then
+  printf 'error: could not list tracked files in %s\n' "$ROOT" >&2
+  exit 1
+fi
 
 mapfile -t files < <(
-  git -C "$ROOT" ls-files \
-    | grep -E '^(skills/|README[.]md$|INSTALL[.]md$).*[.]md$' \
+  printf '%s\n' "$tracked" \
+    | grep -E '^(skills/.*|README|INSTALL)[.]md$' \
     | grep -vE '^skills/(cluster-health|kubernetes-health)/protected/' || true
 )
 
@@ -63,7 +80,7 @@ for file in "${files[@]}"; do
 done
 
 if (( errors > 0 )); then
-  exit 1
+  exit "$STALE_EXIT"
 fi
 
 printf 'Freshness markers use %s.\n' "$FRESHNESS_LABEL"

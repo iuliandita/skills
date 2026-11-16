@@ -4,11 +4,41 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
+# macOS hands out temp dirs behind a symlink (/var is /private/var), so every
+# temp dir is resolved here: paths built from one then match the resolved
+# paths the installer prints and records.
+mktemp() {
+  local dir
+  dir="$(command mktemp "$@")" || return 1
+  (cd "$dir" && pwd -P)
+}
+# macOS has shasum where Linux has sha256sum; both print the same format.
+HASH_TOOL=sha256sum
+command -v sha256sum >/dev/null 2>&1 || { HASH_TOOL=shasum; sha256sum() { shasum -a 256; }; }
+
 # Git hooks export GIT_DIR and friends; fixture repos must not inherit them.
 while IFS= read -r var; do unset "$var"; done < <(git rev-parse --local-env-vars)
 
-SAFE_PATH="$(for cmd in bash python3 git sha256sum flock timeout; do dirname "$(command -v "$cmd")"; done | awk '!seen[$0]++' | paste -sd:):/usr/bin:/bin"
+# A listed tool that is missing stops the run: dirname of an empty path is ".",
+# which would put the current directory on PATH.
+safe_path() {
+  local cmd path dirs=""
+  for cmd in "$@"; do
+    path="$(command -v "$cmd")" || {
+      printf 'FAIL: %s is required to run these tests and is not on PATH\n' "$cmd" >&2
+      return 1
+    }
+    [[ ":$dirs:" == *":${path%/*}:"* ]] || dirs+="${dirs:+:}${path%/*}"
+  done
+  printf '%s:/usr/bin:/bin\n' "$dirs"
+}
+# MacPorts coreutils installs timeout only as gtimeout.
+TIMEOUT_TOOL=timeout
+command -v timeout >/dev/null 2>&1 || TIMEOUT_TOOL=gtimeout
+SAFE_PATH="$(safe_path bash python3 git "$HASH_TOOL" flock "$TIMEOUT_TOOL")"
 REAL_GIT="$(command -v git)"
+HAVE_GPG=true
+command -v gpg >/dev/null 2>&1 || HAVE_GPG=false
 GIT_ID=(-c user.name=t -c user.email=t@example.invalid -c commit.gpgsign=false)
 F=""
 H=""
@@ -17,7 +47,16 @@ OUT=""
 ERR=""
 
 cleanup() {
-  [[ -z "$F" ]] || rm -rf "$F"
+  local dir
+  [[ -n "$F" ]] || return 0
+  if [[ "$HAVE_GPG" == true ]]; then
+    for dir in "$H/.gnupg" "$F/signer" "$F/stranger"; do
+      [[ -d "$dir" ]] || continue
+      gpgconf --homedir "$dir" --kill all 2>/dev/null || true
+      gpgconf --homedir "$dir" --remove-socketdir 2>/dev/null || true
+    done
+  fi
+  rm -rf "$F"
 }
 trap cleanup EXIT
 
@@ -67,7 +106,10 @@ PY
 # with two skills; the user installs and saves with the given options.
 new_fixture() {
   cleanup
-  F="$(mktemp -d)"
+  # Under /tmp, not TMPDIR: without /run/user, gpg-agent puts its sockets in
+  # the keyring dir, and macOS's per-user temp dir alone nearly fills the
+  # 104-byte limit on a socket path.
+  F="$(mktemp -d /tmp/skills-update-test.XXXXXX)"
   H="$F/home"
   mkdir -p "$H" "$F/dev/scripts" "$F/dev/skills"
   cp "$ROOT/install.sh" "$ROOT/migrations.json" "$F/dev/"
@@ -89,6 +131,17 @@ publish() {
   g -C "$F/dev" add -A
   g -C "$F/dev" "${GIT_ID[@]}" commit -q -m "${1:-change}"
   g -C "$F/dev" push -q origin main
+}
+
+# Every override variable install.sh refuses, as its own override_env_names
+# reports them: each upper-case name in the script is offered to the function.
+override_names() {
+  local body
+  local -a names=()
+  body="$(sed -n '/^override_env_names() {$/,/^}$/p' "$ROOT/install.sh")"
+  [[ -n "$body" ]] || fail "override_env_names not found in install.sh"
+  mapfile -t names < <(grep -oE '[A-Z][A-Z0-9_]+' "$ROOT/install.sh" | grep -v '^LC_' | sort -u)
+  env -i "${names[@]/%/=x}" "$BASH" -c "$body"$'\n''override_env_names' | sort
 }
 
 # run_update [VAR=value...]: sets RC, OUT, ERR.
@@ -206,7 +259,8 @@ test_rename_and_symlink_target_changes_are_detected() {
 test_new_skill_is_installed() {
   new_fixture --tool claude
   cp -R "$F/dev/skills/docker" "$F/dev/skills/extra"
-  sed -i 's/^name: docker$/name: extra/' "$F/dev/skills/extra/SKILL.md"
+  sed -i.bak 's/^name: docker$/name: extra/' "$F/dev/skills/extra/SKILL.md"
+  rm "$F/dev/skills/extra/SKILL.md.bak"
   publish
   run_update
   expect_rc 0 "new skill"
@@ -270,13 +324,13 @@ json_check() {
     || fail "$3: $1"
 }
 
-# run_update_json: like run_update, with --json.
+# run_update_json [VAR=value...]: like run_update, with --json.
 run_update_json() {
   RC=0
-  isolated "$H" "$F/repo/install.sh" --update --json >"$F/out" 2>"$F/err" || RC=$?
+  isolated "$H" "$@" "$F/repo/install.sh" --update --json >"$F/out" 2>"$F/err" || RC=$?
   OUT="$(cat "$F/out")"
   ERR="$(cat "$F/err")"
-  [[ "$(wc -l < "$F/out")" == 1 ]] || fail "--update --json did not print exactly one line: $OUT"
+  [[ "$(wc -l < "$F/out")" -eq 1 ]] || fail "--update --json did not print exactly one line: $OUT"
 }
 
 test_json_output() {
@@ -292,6 +346,11 @@ test_json_output() {
   run_update_json
   expect_rc 0 "json updated"
   json_check "$OUT" "d['status'] == 'updated' and d['changed'] == 1 and d['new'] == '$(dev_head)' and len(d['old']) == 40" "updated keys"
+
+  mkdir "$F/tmpdir"
+  isolated "$H" TMPDIR="$F/tmpdir" "$F/repo/install.sh" --update --json >"$F/out" 2>"$F/err" \
+    || fail "--update --json with TMPDIR failed: $(cat "$F/err")"
+  [[ -z "$(ls -A "$F/tmpdir")" ]] || fail "--update --json left a temp file: $(ls -A "$F/tmpdir")"
 
   mine="local edit"
   printf '%s\n' "$mine" >> "$H/.claude/skills/docker/SKILL.md"
@@ -395,6 +454,48 @@ test_source_checks() {
   expect_rc 0 "after the checks"
 }
 
+# A copy of the installer vendored in another repository, with a config an
+# older --save wrote there: the outer checkout must not be fast-forwarded.
+test_update_requires_the_checkout_root() {
+  local pack head
+  new_fixture --tool claude
+  pack="$F/outer/vendor/pack"
+  mkdir -p "$pack"
+  cp -R "$F/dev/install.sh" "$F/dev/migrations.json" "$F/dev/scripts" "$F/dev/skills" "$pack/"
+  g init -q -b main "$F/outer"
+  g -C "$F/outer" add -A
+  g -C "$F/outer" "${GIT_ID[@]}" commit -q -m outer
+  g init -q --bare -b main "$F/outer.git"
+  g -C "$F/outer" remote add origin "$F/outer.git"
+  g -C "$F/outer" push -q -u origin main
+  g clone -q "$F/outer.git" "$F/outer-dev"
+  g -C "$F/outer-dev" "${GIT_ID[@]}" commit -q --allow-empty -m upstream
+  g -C "$F/outer-dev" push -q origin main
+  conf_set source_repo "$F/outer"
+  conf_set source_remote_url "$F/outer.git"
+  head="$(g -C "$F/outer" rev-parse HEAD)"
+  RC=0
+  OUT="$(isolated "$H" "$pack/install.sh" --update 2>&1)" || RC=$?
+  ERR="$OUT"
+  expect_rc 4 "--update from a vendored copy"
+  grep -q "install.sh is in $pack, not at the root of the git checkout $F/outer" <<< "$OUT" \
+    || fail "vendored --update refusal unclear: $OUT"
+  [[ "$(g -C "$F/outer" rev-parse HEAD)" == "$head" ]] || fail "--update fast-forwarded the enclosing repository"
+}
+
+# The selection rewrite runs after the fast-forward, so a config failure
+# there exits 1 like every other failure once HEAD has moved.
+test_selection_rewrite_failure_exits_1() {
+  new_fixture --tool claude docker git
+  conf_set skills docker,git,docker
+  printf 'upstream\n' >> "$F/dev/skills/docker/SKILL.md"
+  publish
+  run_update SKILLS_INSTALL_FAULT=configswap
+  expect_rc 1 "selection rewrite failure after the fast-forward"
+  grep -q 'was replaced during the save' <<< "$ERR" || fail "selection rewrite failure not reported: $ERR"
+  [[ "$(repo_head)" == "$(dev_head)" ]] || fail "selection rewrite test did not move HEAD"
+}
+
 test_fast_forward_failure_changes_nothing() {
   local head index work
   new_fixture --tool claude
@@ -411,6 +512,11 @@ test_fast_forward_failure_changes_nothing() {
   rm "$F/repo/.git/index.lock"
 
   # A fast-forward that fails partway changes the tree: that is not exit 5.
+  # Root writes into a read-only directory, so the case cannot be staged.
+  if (( $(id -u) == 0 )); then
+    printf 'SKIP: partial fast-forward case not run as root\n' >&2
+    return 0
+  fi
   printf 'new\n' > "$F/dev/skills/git/zz-new.md"
   publish
   chmod 555 "$F/repo/skills/git"
@@ -470,9 +576,9 @@ test_every_override_variable_is_refused() {
   local var
   local -a vars=()
   new_fixture --tool claude
-  mapfile -t vars < <(grep -oE '[A-Z_]+_SKILLS_DIR:-' "$ROOT/install.sh" | cut -d: -f1 | sort -u)
-  (( ${#vars[@]} > 20 )) || fail "override matrix found only ${#vars[@]} *_SKILLS_DIR variables"
-  vars+=(SOMETOOL_SKILLS_DIR SKILLS_CANONICAL_DIR SKILLS_BACKUP_DIR OPENCODE_CONFIG_FILE SKILLS_TOOL SKILLS_MIGRATOR SKILLS_MIGRATIONS_FILE)
+  mapfile -t vars < <(override_names)
+  (( ${#vars[@]} > 26 )) || fail "override matrix found only ${#vars[@]} variables: ${vars[*]}"
+  vars+=(SOMETOOL_SKILLS_DIR)
   for var in "${vars[@]}"; do
     expect_refused 2 "$var" "$var is set" "$var=$F/o"
   done
@@ -487,7 +593,7 @@ test_held_lock_exits_3() {
   ( exec 8>>"$H/.local/state/iuliandita-skills/install.lock"; flock 8; : > "$F/held"; exec sleep 30 ) &
   holder=$!
   for _ in $(seq 100); do [[ -e "$F/held" ]] && break; sleep 0.1; done
-  expect_refused 3 "held lock" "Another install.sh run holds"
+  expect_refused 3 "held lock" "^error: another install.sh run holds"
   kill "$holder"
   wait "$holder" 2>/dev/null || true
   [[ ! -e "$F/repo/.git/FETCH_HEAD" ]] || fail "fetched without the lock"
@@ -720,11 +826,187 @@ test_missing_dependencies_exit_10() {
   new_fixture --tool claude
   path_without "$F/no-flock" flock
   path_without "$F/no-timeout" timeout
+  rm -f "$F/no-timeout/gtimeout"
   expect_refused 10 "missing flock" "flock (util-linux) is required" PATH="$F/no-flock"
   expect_refused 10 "missing timeout" "timeout (GNU coreutils, gtimeout on macOS) is required" PATH="$F/no-timeout"
-  ln -s "$(command -v timeout)" "$F/no-timeout/gtimeout"
+  ln -s "$(command -v "$TIMEOUT_TOOL")" "$F/no-timeout/gtimeout"
   run_update PATH="$F/no-timeout"
   expect_rc 0 "gtimeout fallback"
+}
+
+test_missing_git_or_python3_exits_10() {
+  local cmd
+  new_fixture --tool claude
+  for cmd in git python3; do
+    path_without "$F/no-$cmd" "$cmd"
+    expect_refused 10 "missing $cmd" "$cmd is required for --update" PATH="$F/no-$cmd"
+  done
+}
+
+test_lock_wait_and_lock_dir_errors() {
+  new_fixture --tool claude
+  expect_refused 2 "bad lock wait" "SKILLS_LOCK_WAIT must be a whole number of seconds: soon" SKILLS_LOCK_WAIT=soon
+  # A file where the state directory belongs: the lock cannot be opened, for root too.
+  : > "$F/state"
+  expect_refused 7 "lock directory cannot be created" "cannot open the installer lock in $F/state/iuliandita-skills" \
+    XDG_STATE_HOME="$F/state"
+}
+
+# json_refusal CODE LABEL MESSAGE [VAR=value...]: one object, ok false, the message in errors.
+json_refusal() {
+  local code="$1" label="$2" message="$3"
+  shift 3
+  run_update_json "$@"
+  expect_rc "$code" "json $label"
+  json_check "$OUT" "d['ok'] is False and d['command'] == 'update' and any('$message' in e for e in d['errors'])" "json $label"
+}
+
+test_json_refusals() {
+  local holder
+  new_fixture --tool claude
+  : > "$F/repo/stray"
+  json_refusal 4 "source check" "uncommitted or untracked changes"
+  json_check "$OUT" 'd["verify_signature"] is False' "json source check carries verify_signature"
+  rm "$F/repo/stray"
+
+  ( exec 8>>"$H/.local/state/iuliandita-skills/install.lock"; flock 8; : > "$F/held"; exec sleep 30 ) &
+  holder=$!
+  for _ in $(seq 100); do [[ -e "$F/held" ]] && break; sleep 0.1; done
+  json_refusal 3 "held lock" "another install.sh run holds"
+  kill "$holder"
+  wait "$holder" 2>/dev/null || true
+
+  mv "$F/origin.git" "$F/gone.git"
+  json_refusal 5 "fetch failure" "fetch failed"
+  mv "$F/gone.git" "$F/origin.git"
+
+  printf 'upstream\n' >> "$F/dev/skills/docker/SKILL.md"
+  publish
+  json_refusal 1 "failure after the fast-forward" "rerun install.sh --update to complete the install" \
+    SKILLS_INSTALL_FAULT=stage:docker
+  [[ "$(repo_head)" == "$(dev_head)" ]] || fail "json exit 1 case did not move HEAD"
+
+  printf '\nif then\n' >> "$F/dev/install.sh"
+  publish
+  json_refusal 8 "broken installer" "is missing or does not parse"
+}
+
+# ── Signature verification ────────────────────────────────────────────
+# The user's keyring is $H/.gnupg, which gpg finds through HOME alone. The
+# publisher signs from $F/signer, whose public key the user imported, or from
+# $F/stranger, whose key the user never saw.
+gpg_fixture() {
+  local name
+  mkdir -m 700 "$H/.gnupg"
+  for name in signer stranger; do
+    mkdir -m 700 "$F/$name"
+    isolated "$H" GNUPGHOME="$F/$name" gpg --batch --quiet --pinentry-mode loopback --passphrase '' \
+      --quick-generate-key "$name <$name@example.invalid>" ed25519 sign never 2>"$F/gpg.err" \
+      || fail "could not generate the $name key: $(cat "$F/gpg.err")"
+  done
+  isolated "$H" GNUPGHOME="$F/signer" gpg --batch --quiet --export signer@example.invalid > "$F/signer.pub"
+  isolated "$H" gpg --batch --quiet --import "$F/signer.pub" 2>"$F/gpg.err" \
+    || fail "could not import the signer key: $(cat "$F/gpg.err")"
+}
+
+# publish_signed NAME: commit as NAME (signer or stranger) and push.
+publish_signed() {
+  g -C "$F/dev" add -A
+  isolated "$H" GNUPGHOME="$F/$1" git -C "$F/dev" "${GIT_ID[@]}" -c "user.signingkey=$1@example.invalid" \
+    commit -q -S -m "signed by $1" 2>"$F/gpg.err" || fail "could not sign as $1: $(cat "$F/gpg.err")"
+  g -C "$F/dev" push -q origin main
+}
+
+# The published installer leaves $HOME/marker when --update hands off to it.
+mark_fetched_installer() {
+  python3 - "$F/dev/install.sh" <<'PY'
+import sys
+
+path = sys.argv[1]
+text = open(path, encoding="utf-8").read()
+hook = 'if [[ "${1:-}" == --apply-update ]]; then printf \'ran\\n\' >> "$HOME/marker"; fi\n'
+assert "set -euo pipefail\n" in text
+text = text.replace("set -euo pipefail\n", "set -euo pipefail\n" + hook, 1)
+open(path, "w", encoding="utf-8").write(text)
+PY
+}
+
+test_verification_is_off_by_default() {
+  new_fixture --tool claude
+  ! grep -q '^verify_signature=' "$H/.config/iuliandita-skills/install.conf" \
+    || fail "a default --save wrote verify_signature: $(cat "$H/.config/iuliandita-skills/install.conf")"
+  printf 'upstream\n' >> "$F/dev/skills/docker/SKILL.md"
+  publish unsigned
+  run_update
+  expect_rc 0 "config without verify_signature"
+  [[ "$(last_line)" =~ $OK_RANGE ]] || fail "config without verify_signature: last line: $OUT"
+  grep -q ' update: signature verification: off ' <<< "$OUT" || fail "verification state not printed as off: $OUT"
+
+  # Turned on, an unsigned commit is refused before any verifier is needed.
+  printf 'verify_signature=true\n' >> "$H/.config/iuliandita-skills/install.conf"
+  printf 'again\n' >> "$F/dev/skills/docker/SKILL.md"
+  publish unsigned
+  expect_refused 9 "hand-set key, unsigned commit" "is not signed and the saved config requires a signature"
+  grep -q ' update: signature verification: on ' <<< "$OUT" || fail "verification state not printed as on: $OUT"
+  conf_set verify_signature maybe
+  expect_refused 2 "bad verify_signature" "verify_signature must be true or false"
+}
+
+test_signature_verification() {
+  local conf
+  if [[ "$HAVE_GPG" != true ]]; then
+    printf 'SKIP: gpg not found; signature verification tests not run\n' >&2
+    return 0
+  fi
+  new_fixture --tool claude --verify-signature
+  conf="$H/.config/iuliandita-skills/install.conf"
+  grep -qx 'verify_signature=true' "$conf" || fail "--save --verify-signature not recorded: $(cat "$conf")"
+  gpg_fixture
+  mark_fetched_installer
+
+  publish unsigned
+  expect_refused 9 "unsigned commit" "is not signed and the saved config requires a signature"
+  [[ ! -e "$H/marker" ]] || fail "unsigned commit: the fetched installer ran"
+
+  printf 'upstream\n' >> "$F/dev/skills/docker/SKILL.md"
+  publish_signed stranger
+  expect_refused 9 "key not in the keyring" "git verify-commit did not accept upstream"
+  [[ ! -e "$H/marker" ]] || fail "key not in the keyring: the fetched installer ran"
+  json_refusal 9 "signature refusal" "git verify-commit did not accept upstream"
+  json_check "$OUT" 'd["verify_signature"] is True' "json signature refusal carries verify_signature"
+  [[ ! -e "$H/marker" ]] || fail "json signature refusal: the fetched installer ran"
+
+  path_without "$F/no-gpg" gpg
+  expect_refused 10 "gpg absent" "gpg is required to check the openpgp signature" PATH="$F/no-gpg"
+  [[ ! -e "$H/marker" ]] || fail "gpg absent: the fetched installer ran"
+
+  # The signer's key is in the keyring with no trust assigned: that is enough.
+  printf 'more\n' >> "$F/dev/skills/docker/SKILL.md"
+  publish_signed signer
+  run_update
+  expect_rc 0 "trusted signature"
+  [[ "$(last_line)" =~ $OK_RANGE ]] || fail "trusted signature: last line: $OUT"
+  grep -q ' update: signature verification: on ' <<< "$OUT" || fail "verification state not printed as on: $OUT"
+  grep -q ' update: signature accepted on ' <<< "$OUT" || fail "accepted signature not reported: $OUT"
+  [[ "$(repo_head)" == "$(dev_head)" ]] || fail "trusted signature: checkout not fast-forwarded"
+  [[ "$(wc -l < "$H/marker")" -eq 1 ]] || fail "trusted signature: the fetched installer did not run once"
+  cmp -s "$F/dev/skills/docker/SKILL.md" "$H/.claude/skills/docker/SKILL.md" || fail "trusted signature: docker not updated"
+
+  run_update
+  expect_rc 0 "current with verification on"
+  [[ "$(last_line)" == "update: ok current" ]] || fail "current with verification on: $OUT"
+
+  # The selection rewrite after an update keeps the opt-in.
+  new_fixture --tool claude --verify-signature docker git
+  conf="$H/.config/iuliandita-skills/install.conf"
+  gpg_fixture
+  conf_set skills docker,git,docker
+  printf 'upstream\n' >> "$F/dev/skills/docker/SKILL.md"
+  publish_signed signer
+  run_update
+  expect_rc 0 "selection rewrite with verification on"
+  grep -qx 'skills=docker,git' "$conf" || fail "selection was not rewritten: $(cat "$conf")"
+  grep -qx 'verify_signature=true' "$conf" || fail "selection rewrite dropped verify_signature: $(cat "$conf")"
 }
 
 test_link_mode() {
@@ -753,7 +1035,8 @@ test_link_mode() {
 test_opencode_new_skill_is_allowed() {
   new_fixture --tool opencode
   cp -R "$F/dev/skills/docker" "$F/dev/skills/extra"
-  sed -i 's/^name: docker$/name: extra/' "$F/dev/skills/extra/SKILL.md"
+  sed -i.bak 's/^name: docker$/name: extra/' "$F/dev/skills/extra/SKILL.md"
+  rm "$F/dev/skills/extra/SKILL.md.bak"
   publish
   run_update
   expect_rc 0 "opencode update"
@@ -774,6 +1057,8 @@ test_saved_duplicates_and_kept_renames
 test_local_modification_is_kept
 test_legacy_v1_records
 test_source_checks
+test_update_requires_the_checkout_root
+test_selection_rewrite_failure_exits_1
 test_fast_forward_failure_changes_nothing
 test_config_and_invocation_errors
 test_every_override_variable_is_refused
@@ -787,6 +1072,11 @@ test_apply_faults_then_rerun
 test_edit_after_interrupted_update_is_kept
 test_lock_publication_fault_keeps_ownership
 test_missing_dependencies_exit_10
+test_missing_git_or_python3_exits_10
+test_lock_wait_and_lock_dir_errors
+test_json_refusals
+test_verification_is_off_by_default
+test_signature_verification
 test_link_mode
 test_opencode_new_skill_is_allowed
 

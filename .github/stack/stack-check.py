@@ -77,7 +77,7 @@ class Ctx:
         self.root = root
         self.canon = canon
         self.repo = repo
-        self.files = list_files(root)
+        self.files = list_files(root, set(canon["private_patterns"]["skip_dirs"]))
         self._text: dict[str, str | None] = {}
 
     def text(self, rel: str) -> str | None:
@@ -89,7 +89,7 @@ class Ctx:
         return self._text[rel]
 
 
-def list_files(root: Path) -> list[str]:
+def list_files(root: Path, skip_dirs: set[str]) -> list[str]:
     """Tracked plus untracked-but-not-ignored files, so a check also sees work before it is committed."""
     if (root / ".git").exists():
         try:
@@ -104,10 +104,9 @@ def list_files(root: Path) -> list[str]:
             raise UsageError(f"git ls-files failed in {root}: {exc.stderr.decode(errors='replace').strip()}") from exc
         names = proc.stdout.decode("utf-8", errors="surrogateescape").split("\0")
         return sorted({n for n in names if n and os.path.lexists(root / n)})
-    skip = {".git", "__pycache__", ".pytest_cache", ".venv", "node_modules"}
     found: list[str] = []
     for base, dirs, names in os.walk(root):
-        dirs[:] = [d for d in dirs if d not in skip]
+        dirs[:] = [d for d in dirs if d not in skip_dirs]
         for name in names:
             found.append(Path(base, name).relative_to(root).as_posix())
     return sorted(found)
@@ -632,7 +631,8 @@ def step_range(lines: list[str], i: int) -> tuple[int, int]:
 
 def check_workflow_checkout(ctx: Ctx) -> list[Finding]:
     cfg = ctx.canon["workflows"]
-    want = re.escape(cfg["checkout_require"].split(":")[0]) + r":\s*['\"]?false['\"]?\s*(?:#.*)?$"
+    key, value = (part.strip() for part in cfg["checkout_require"].split(":", 1))
+    want = re.escape(key) + r":\s*" + rf"(?:{re.escape(value)}|'{re.escape(value)}'|\"{re.escape(value)}\")\s*(?:#.*)?$"
     findings = []
     for rel in workflow_files(ctx):
         lines = (ctx.text(rel) or "").splitlines()
@@ -642,7 +642,7 @@ def check_workflow_checkout(ctx: Ctx) -> list[Finding]:
                 continue
             start, end = step_range(lines, i)
             if not any(re.match(rf"^\s*{want}", step) for step in lines[start:end]):
-                findings.append(Finding("workflow-checkout", rel, "checkout step does not set persist-credentials: false", f"add {cfg['checkout_require']} under with:", i + 1))
+                findings.append(Finding("workflow-checkout", rel, f"checkout step does not set {cfg['checkout_require']}", f"add {cfg['checkout_require']} under with:", i + 1))
     return findings
 
 
@@ -788,7 +788,7 @@ def check_private_patterns(ctx: Ctx) -> list[Finding]:
     findings = []
     for rel in ctx.files:
         parts = Path(rel).parts
-        if parts[0] in skip_dirs or (len(parts) == 1 and parts[0] in skip_names):
+        if skip_dirs.intersection(parts[:-1]) or (len(parts) == 1 and parts[0] in skip_names):
             continue
         path = ctx.root / rel
         if Path(rel).suffix.lower() in BINARY_SUFFIXES:
@@ -978,6 +978,8 @@ def run(args: argparse.Namespace) -> int:
         if unknown:
             raise UsageError(f"unknown check id {', '.join(unknown)}; run --list-checks")
     canon, repo = load_json("canon.json"), load_json("repo.json")
+    if type(canon.get("canon_version")) is not int or canon["canon_version"] != 1:
+        raise UsageError("canon.json needs supported canon_version 1")
     validate_repo(repo)
     root = Path(args.root).resolve()
     ctx = Ctx(root, canon, repo)

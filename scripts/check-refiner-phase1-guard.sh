@@ -23,11 +23,14 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
+# shellcheck source=./scripts/base-lib.sh
+source "$ROOT/scripts/base-lib.sh"
 
 IMMUTABLE_PATHS=(
   "skills/skill-refiner/references/evaluation-criteria.md"
   "skills/skill-refiner/references/test-cases.md"
   "scripts/lint-skills.sh"
+  "scripts/check-ere-pipe.py"
   "scripts/validate-spec.sh"
   "scripts/skill-lib.sh"
   "scripts/skill-frontmatter.py"
@@ -35,6 +38,7 @@ IMMUTABLE_PATHS=(
   "scripts/contract-lib.sh"
   "scripts/refiner-rubric-hash.sh"
   "scripts/check-refiner-phase1-guard.sh"
+  "scripts/base-lib.sh"
   ".github/workflows/ci.yml"
   ".github/workflows/security.yml"
   "skills/skill-creator"
@@ -44,34 +48,7 @@ IMMUTABLE_PATHS=(
 PHASE1_SUBJECT='^refactor\(skill-refiner\): iteration'
 
 BASE_REF="${1:-${BASE_REF:-}}"
-BASE_SHA="${BASE_SHA:-}"
-if [[ "$BASE_SHA" =~ ^0+$ ]]; then
-  # A push that creates a ref reports an all-zero "before" sha.
-  BASE_SHA=""
-fi
-if [[ -z "$BASE_REF" && -n "$BASE_SHA" ]] && ! git rev-parse --verify --quiet "${BASE_SHA}^{commit}" >/dev/null; then
-  echo "error: BASE_SHA '${BASE_SHA}' is not a commit in this clone" >&2
-  exit 1
-fi
-
-ref_exists() {
-  git rev-parse --verify --quiet "${1}^{commit}" >/dev/null 2>&1
-}
-
-resolve_base() {
-  local candidate
-  for candidate in "$@"; do
-    if ref_exists "$candidate"; then
-      if base="$(git merge-base HEAD "$candidate" 2>/dev/null)"; then
-        return 0
-      fi
-      echo "error: base ref '${candidate}' exists but no merge-base with HEAD could be computed" >&2
-      echo "(shallow clone or unrelated history); refusing to fall back to a non-ancestor tip." >&2
-      exit 1
-    fi
-  done
-  base=""
-}
+normalize_base_sha
 
 base=""
 if [[ -n "$BASE_REF" ]]; then
@@ -116,7 +93,14 @@ while IFS= read -r sha; do
     if matches_immutable "$file"; then
       offending+=("$file")
     fi
-  done < <(git diff-tree --no-commit-id --name-only -r "$sha")
+  done < <(
+    # Compare with the first parent: diff-tree lists nothing for a merge commit.
+    if git rev-parse --verify --quiet "${sha}^1^{commit}" >/dev/null; then
+      git diff --name-only "${sha}^1" "$sha"
+    else
+      git diff-tree --root --no-commit-id --name-only -r "$sha"
+    fi
+  )
 
   if (( ${#offending[@]} > 0 )); then
     echo "error: phase-1 iteration commit touches the immutable set:" >&2

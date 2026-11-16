@@ -1,13 +1,14 @@
 # Version pin receipts
 
-Version receipts record which source was checked and when. This collection
-is migrating version pins from dated prose to `references/versions.md`;
-most skills still use the month-label convention. A receipt records a
-verification claim, not proof that the source or version remains current.
+Version receipts record which source was checked and when. Version pins live
+in `references/versions.md`: 23 of the 40 skills have a receipt. A skill
+without one keeps the month-label convention for any dated claim it still
+carries. A receipt records a verification claim, not proof that the source or
+version remains current.
 
 ## Mechanism
 
-- When migrating a skill's version pins, put them in `references/versions.md`.
+- A skill's version pins go in its `references/versions.md`.
 - That file has YAML frontmatter plus a human-readable table body describing
   the same pins for humans reading the rendered skill.
 - `scripts/check-version-receipts.sh` validates every `references/versions.md`
@@ -58,7 +59,19 @@ Those checks remain part of review.
 advisory and shows a warning; receipt structure stays a required check. Re-verify every pin
 against its `source` and bump `checked_at`, or remove pins that are no longer
 worth tracking. Override the budget locally with
-`SKILLS_PIN_MAX_AGE_DAYS` (days) if you need to test a different threshold.
+`SKILLS_PIN_MAX_AGE_DAYS` (a whole number of days) if you need to test a
+different threshold; any other value is refused.
+
+Both date gates, `scripts/check-version-receipts.sh` and
+`scripts/check-freshness-dates.sh`, use the same exit codes:
+
+| Exit | Meaning |
+| --- | --- |
+| 0 | Everything is current. |
+| 10 | Stale only: a receipt past the budget, or a marker behind the collection month. CI and the pre-commit hook downgrade this one code to a warning. |
+| 1 | Anything else: a malformed or unreadable file, a file listing that failed (for example outside a git repository), a budget that is not a number. This blocks. |
+
+A run with both a broken input and a stale one exits 1.
 
 ## SKILL.md bodies must not restate version numbers
 
@@ -76,10 +89,10 @@ in that file). Do not restate version numbers here.
 
 `scripts/check-freshness-dates.sh` still enforces the `**Target versions**
 (Month Year):` label convention for any skill that has *not* migrated to a
-receipt file - that is still most of the collection. The moment a skill grows
-`references/versions.md`, the label check is skipped for that skill (it prints
-a `note:` line saying so) because the receipt file's `checked_at` field is now
-the source of truth for that skill's freshness.
+receipt file. The moment a skill grows `references/versions.md`, the label
+check is skipped for that skill (it prints a `note:` line saying so) because
+the receipt file's `checked_at` field is now the source of truth for that
+skill's freshness.
 
 Private overlays do not belong in the public version inventory. The receipt
 checker searches recursively for `references/versions.md`, so keep private

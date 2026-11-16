@@ -24,6 +24,26 @@ npx skills add iuliandita/skills#main --list
 
 ### Bundled installer
 
+The installer needs bash 4.4 or newer and `python3`. On an older bash it stops before doing
+anything, prints the version it found and the one it needs, and exits 1. `flock` is required
+for `--save`, `--update`, and `--migrate --apply`; other runs warn and proceed without it. GNU
+`timeout` (coreutils) is needed only for `--update`. Linux distributions ship all of these
+(`flock` is part of util-linux).
+
+macOS ships bash 3.2 and neither `flock` nor `timeout`. Install them with Homebrew or MacPorts:
+
+```bash
+brew install bash flock coreutils
+# or
+sudo port install bash flock coreutils
+```
+
+Both give the GNU versions of tools macOS already has a `g` prefix, and `--update` accepts
+`timeout` or `gtimeout`, so the GNU tools do not have to replace the system ones on `PATH`
+(no `gnubin` directory needed). The new bash does have to come before
+`/bin/bash` on `PATH`, because the script starts through `env bash`. CI runs the installer tests
+on macOS with Homebrew bash and the system `cp` and `head`.
+
 Clone, run, clean up. A plain `git clone` checks out `develop`, so pass `-b main` for stable:
 
 ```bash
@@ -50,7 +70,8 @@ Both flags work everywhere the other does.
 For OpenCode, the installer also updates `~/.config/opencode/opencode.json` so every installed
 skill has `permission.skill.<name>: "allow"`. This keeps installs visible when the user's config
 uses a deny-by-default policy such as `"permission": { "skill": { "*": "deny" } }`. Existing
-explicit `deny` entries are left alone. Each named `allow` entry overrides a wildcard `deny`
+explicit `deny` and `ask` entries are left alone; skills kept at `ask` are listed in a
+`[i] OpenCode permission kept as "ask": <names>` line. Each named `allow` entry overrides a wildcard `deny`
 for that skill, the same as adding it by hand; remove the entry or set it to `deny` to hide
 the skill again. Only skills that installed successfully are added. The file is rewritten
 through a temporary file and a rename, following a symlinked config to its target; if the
@@ -134,7 +155,9 @@ skill directory; they do not preserve or merge installed-only files into the new
 
 `kubernetes-health` is public, so it no longer needs `--include-internal`; that flag is only for separate gitignored skills with `metadata.internal: true`.
 
-`scripts/check-private-skill-leaks.sh` scans public files for private markers, additively drawn from the `protected/private-patterns.txt` overlays above, a gitignored `private-patterns.txt` at the repo root (see `private-patterns.example.txt`), and a file path in `SKILLS_PRIVATE_PATTERNS`. CI never sees your local overlay or root file; it only sees markers you explicitly supply it, typically by writing a repository secret to a file and pointing `SKILLS_PRIVATE_PATTERNS` at it.
+`scripts/check-private-skill-leaks.sh` scans public files for private markers, additively drawn from the `protected/private-patterns.txt` overlays above, a gitignored `private-patterns.txt` at the repo root (see `private-patterns.example.txt`), and a file path in `SKILLS_PRIVATE_PATTERNS`. A failed file listing is an error. When no source is configured, or the sources hold only comments and blank lines, the script scans nothing, prints a warning, and exits 0.
+
+CI never sees your local overlay or root file. It reads markers from the optional `SKILLS_PRIVATE_PATTERNS` repository secret (one marker per line, the same format as the files), writes them to a file outside the checkout, and points the script at it; the release workflow forwards the same secret. Without the secret, which is also the case for pull requests from forks, the step stays green and shows a "Private leak check skipped" warning annotation instead of scanning.
 
 Before committing local changes, install the repository hooks with either `prek` or `pre-commit`:
 
@@ -144,9 +167,9 @@ prek install --hook-type pre-commit --hook-type pre-push
 pre-commit install --hook-type pre-commit --hook-type pre-push
 ```
 
-The hooks enforce that `skills/kubernetes-health/protected/` remains ignored and untracked, and they scan public files for protected private patterns when the local overlay is present.
+The hooks enforce that `skills/kubernetes-health/protected/` remains ignored and untracked, and they scan public files for protected private patterns when the local overlay is present. On push they also run the offline checks of the CI lint job. They are a subset of CI: most test suites, shellcheck, markdownlint-cli2, lychee, actionlint, zizmor, the secret scan and semgrep run only in CI or by hand (the full list is in `AGENTS.md`).
 
-They also check freshness markers in public skills. Lines that claim currentness, such as `Target versions`, `Reviewed`, `Updated for`, `verified <month year>`, `recheck`, `snapshot`, or `as of <month year>`, should use the current collection label. The check is advisory: CI and the hook report stale labels as warnings and do not block. Override the expected label during a refresh with `SKILLS_FRESHNESS_LABEL="July 2026" ./scripts/check-freshness-dates.sh`.
+They also check freshness markers in public skills. Lines that claim currentness, such as `Target versions`, `Reviewed`, `Updated for`, `verified <month year>`, `recheck`, `snapshot`, or `as of <month year>`, should use the current collection label. The check is advisory: CI and the hook report stale labels (exit 10) as warnings and do not block; any other failure, such as an unreadable file or a run outside a repository checkout, exits 1 and blocks. Override the expected label during a refresh with `SKILLS_FRESHNESS_LABEL="July 2026" ./scripts/check-freshness-dates.sh`.
 
 ### Manual
 
@@ -230,7 +253,8 @@ symlinks recorded in that directory's `.skills-lock.json` from this checkout, po
 canonical copy of the same skill, and already have a replacement in `~/.agents/skills` that
 resolves to that same copy. Real directories, broken or foreign links, and unrecorded names
 stay and are reported. Before unlinking, it saves the links and the old lock under
-`<old-dir-parent>/.skills-backups/<old-dir-name>/.legacy-dir-cleanup/` (or `SKILLS_BACKUP_DIR`);
+`<old-dir-parent>/.skills-backups/<old-dir-name>/.legacy-dir-cleanup/` (with `SKILLS_BACKUP_DIR`,
+under `<SKILLS_BACKUP_DIR>/<old-dir-name>-<hash>/.legacy-dir-cleanup/`);
 if the backup fails, nothing is removed. The old lock is deleted once none of its entries remain.
 The cleanup is skipped with `--dest` or when the tool's `*_SKILLS_DIR` override is set.
 
@@ -334,6 +358,17 @@ Claude).
 of those variables is set. `--save` requires `flock` and takes the installer lock before it
 touches the config, holding it through the install and the save.
 
+`--save` is also refused (exit 2, nothing installed) when `install.sh` sits inside a git
+repository other than its own checkout, for example a copy vendored into another project:
+the saved source would be that outer repository. A copy outside any git repository can
+still save; it records the installer directory and no upstream.
+
+`--save --verify-signature` also records that `--update` must check the signature on a
+fetched commit before it moves the checkout; see
+[Signature verification](#signature-verification). The option is only accepted with `--save`
+(exit 1 otherwise). Like the rest of the selection it is not merged: a later `--save` without
+it turns the check off and says so. Every `--save` prints the resulting state.
+
 The config is `${XDG_CONFIG_HOME:-~/.config}/iuliandita-skills/install.conf`, directory mode
 700, file mode 600. The directory is opened without following a symlink and checked
 through that descriptor; the temporary file, its permissions, and the rename into place all
@@ -355,13 +390,16 @@ source_upstream=refs/heads/main
 ```
 
 `tools` holds canonical tool names; `skills` is `all` or a comma list. The `source_*` keys
-identify the checkout that ran `--save`. A checkout without an upstream branch saves the
+identify the checkout that ran `--save`. `--verify-signature` adds an eleventh line,
+`verify_signature=true`; a file without it, including every file written before the key
+existed, means the check is off. A checkout without an upstream branch saves the
 upstream keys empty and prints a note; a later `--update` refuses to run from such a config.
 A bare run from a different checkout prints a note and installs from the checkout it runs in.
 
 The file is parsed, never sourced. Each line is `key=value`, split at the first `=`; lines
-starting with `#` and blank lines are skipped. All ten keys are required, unknown or repeated
-keys are errors, `link` and `include_internal` must be exactly `true` or `false`, tool names
+starting with `#` and blank lines are skipped. The ten keys above are required,
+`verify_signature` is optional, unknown or repeated keys are errors, `link`,
+`include_internal`, and `verify_signature` must be exactly `true` or `false`, tool names
 must be supported tools or aliases, and control characters are rejected anywhere. The file
 must be a regular file, not a symlink, and it and its directory must be owned by you and not
 group- or world-writable.
@@ -370,7 +408,7 @@ group- or world-writable.
 |------|---------|
 | 0 | Success |
 | 1 | Install failed (nothing saved), an invalid option combination, or an empty `--tool` or `--dest` value |
-| 2 | Saved config invalid or unsafe, or an override variable is set |
+| 2 | Saved config invalid or unsafe, an override variable is set, or `install.sh` is inside another git repository |
 | 3 | Another installer run holds the lock |
 | 7 | The config directory or file cannot be created or opened |
 | 10 | `flock` is missing (`--save` only) |
@@ -394,17 +432,22 @@ branch tracks a remote, then schedule the update:
 2. Loads the saved config under the same rules as a bare install. A missing or invalid
    config, or any override variable (`*_SKILLS_DIR`, `SKILLS_CANONICAL_DIR`,
    `SKILLS_BACKUP_DIR`, `OPENCODE_CONFIG_FILE`, `SKILLS_TOOL`, `SKILLS_MIGRATOR`, or
-   `SKILLS_MIGRATIONS_FILE`), means exit 2.
-3. Checks the source: the checkout is the saved `source_repo`, it is on the saved branch,
+   `SKILLS_MIGRATIONS_FILE`), means exit 2. It then prints whether
+   [signature verification](#signature-verification) is on or off, on every run.
+3. Checks the source: `install.sh` is at the root of its git checkout, the checkout is the
+   saved `source_repo`, it is on the saved branch,
    the branch's remote, that remote's URL, and the upstream ref match the saved values, and
    `git status --porcelain --untracked-files=all` is empty (untracked files count).
 4. Fetches the saved upstream ref under `timeout -k 10 ${SKILLS_UPDATE_TIMEOUT:-300}`, with
    hooks disabled, and pins the result to a commit SHA. HEAD must be an ancestor of that
    commit; local commits or a rewritten upstream mean exit 4.
-5. Fast-forwards with `git merge --ff-only <sha>` (hooks disabled) and checks HEAD is that
+5. With signature verification on and a new commit fetched, runs `git verify-commit <sha>`
+   under the same timeout. Anything but an accepted signature means exit 9 with HEAD where
+   it was.
+6. Fast-forwards with `git merge --ff-only <sha>` (hooks disabled) and checks HEAD is that
    SHA. If the fast-forward fails partway and leaves the working tree changed, the run exits
    1 instead of 5; restore the checkout to HEAD before the next run.
-6. Replaces itself with the checkout's own, now updated `install.sh`, which inherits the
+7. Replaces itself with the checkout's own, now updated `install.sh`, which inherits the
    lock and applies the saved selection. New installer code therefore runs in the same
    locked run that fetched it.
 
@@ -471,18 +514,19 @@ update: partial 1a2b3c4d5e6f..7a8b9c0d1e2f changed=2 skipped=1
 | Exit | Meaning |
 |------|---------|
 | 0 | Everything selected is current |
-| 1 | HEAD moved but the install did not finish; the message names the HEAD commit, and a rerun completes it |
+| 1 | HEAD moved but the install did not finish, or the saved selection could not be rewritten afterwards; a rerun completes it |
 | 2 | No saved config, an invalid one, an override variable, a bad `SKILLS_UPDATE_TIMEOUT` or `SKILLS_LOCK_WAIT`, or extra options |
 | 3 | Another installer run holds the lock |
-| 4 | Source check failed: other checkout, branch, remote, URL, or upstream; detached HEAD; no saved upstream; uncommitted or untracked changes; local commits or divergence |
+| 4 | Source check failed: `install.sh` not at the checkout root; other checkout, branch, remote, URL, or upstream; detached HEAD; no saved upstream; uncommitted or untracked changes; local commits or divergence |
 | 5 | Fetch failed or timed out, or the fast-forward failed |
 | 6 | Finished, but some skills were skipped (see above) |
 | 7 | The lock or config directory cannot be created or opened |
 | 8 | The updated installer could not be started (missing or does not parse); HEAD is at the new commit, rerun |
-| 10 | `flock`, `timeout` (and `gtimeout`), `git`, or `python3` is missing |
+| 9 | Signature verification is on and the fetched commit was refused: unsigned, no good signature from a key in your keyring, or the check timed out. The fetched installer was not run |
+| 10 | `flock`, `timeout` (and `gtimeout`), `git`, or `python3` is missing, or signature verification is on and the program that checks the fetched commit's signature (`gpg` by default) is missing |
 | 130, 143 | Interrupted by SIGINT or SIGTERM |
 
-Exits 2, 3, 4, 5, 7, and 10 leave HEAD, the index, and the working tree unchanged (a fetch may
+Exits 2, 3, 4, 5, 7, 9, and 10 leave HEAD, the index, and the working tree unchanged (a fetch may
 still update remote-tracking refs). After HEAD moves there is no such guarantee; rerun
 `--update` and it picks up where the last run stopped.
 
@@ -504,10 +548,47 @@ The checkout, the saved config, and the state directory belong to your user; any
 running as you can already run code as you, so other same-user writers are trusted. The
 update source is the remote URL and branch recorded by `--save`: enabling `--update`
 authorizes running whatever future commits that branch receives, because each run executes
-the fetched `install.sh`. Editing the checkout while an update runs is unsupported.
+the fetched `install.sh`. By default nothing checks who made those commits: the run trusts
+the remote, the account that can push to the branch, and the transport. Editing the checkout
+while an update runs is unsupported.
 
 Runs exclude each other only when every participating run has `flock`. `--update`,
 `--save`, and `--migrate --apply` require it; ordinary installs warn and proceed without it.
+
+### Signature verification
+
+Off by default. Turn it on when you save the setup:
+
+```bash
+./install.sh --save --verify-signature --tool claude,codex --link
+```
+
+The choice lives in the saved config, not in the environment, so a scheduled run with an
+empty environment still checks. When it is on and the fetch brought a new commit,
+`--update` runs `git verify-commit` on that commit before the fast-forward. A refusal is
+exit 9: HEAD, the index, and the working tree are unchanged and the fetched `install.sh` is
+not run. An unsigned commit is refused without starting a verifier. If the program that
+checks the signature is missing (`gpg` for OpenPGP signatures, or what `gpg.program` or
+`gpg.<format>.program` names), the run exits 10 instead of passing.
+
+What an accepted check proves, and what it does not:
+
+- The fetched commit carries a good signature from a key in your keyring. Git accepts any
+  key that is present, whatever trust level you gave it, unless you set `gpg.minTrustLevel`.
+  The keyring is your own, so what you import decides what passes.
+- Only the fetched branch head is checked, not the commits between it and your old HEAD.
+  The head's tree is what gets installed.
+- For this repository, commits reach `develop` and `main` through GitHub merges, which GitHub
+  signs with its own web-flow key (<https://github.com/web-flow.gpg>). With that key
+  imported, an accepted check means "merged through GitHub", not "signed by the
+  maintainer": it does not protect against a compromised maintainer account or against
+  GitHub itself.
+- What it does stop is a branch head that no holder of an imported key signed: an unsigned
+  direct push, or other commits served by a tampered mirror or transport.
+
+SSH and X.509 signatures work when your git is configured to verify them
+(`gpg.ssh.allowedSignersFile`, `gpgsm`). When the checkout is already current nothing is
+fetched to verify and the run proceeds.
 
 ### Scheduling
 
@@ -583,7 +664,10 @@ pruning never rotates away the only overwrite backup of a user-modified copy. Ea
 series retains its last three copies. Overwrite backups are stored under
 `<destination-parent>/.skills-backups/<destination-name>/`, outside the skill discovery root.
 With `SKILLS_BACKUP_DIR`, backups go to `<SKILLS_BACKUP_DIR>/<destination-name>-<hash>/`,
-and tools sharing one directory are installed into it once per run. Backups support manual recovery;
+and tools sharing one directory are installed into it once per run. `--migrate --apply` uses
+the same per-destination folder and puts each retired entry under `.retired/<skill>/` there.
+Nothing prunes `.retired/`, so retirement backups stay until you delete them. Backups support
+manual recovery;
 customizations are not merged into the replacement. Preserve edits in the source checkout
 before reinstalling if they must remain active.
 
@@ -614,12 +698,20 @@ existing entry; see [MIGRATION.md](MIGRATION.md#users-of-the-bundled-installer).
 
 Runs that change files (installs, `--update`, and `--migrate --apply`) take an exclusive lock on
 `${XDG_STATE_HOME:-~/.local/state}/iuliandita-skills/install.lock` (a relative value is ignored) with `flock`, waiting up
-to `SKILLS_LOCK_WAIT` seconds (default 30, or 0 for `--update`) and exiting with status 3 if another run still
-holds it. Without `flock` an install prints a warning and proceeds; runs exclude each
+to `SKILLS_LOCK_WAIT` seconds (default 30, or 0 for `--update`) and exiting with status 3 and an `error:` line
+if another run still holds it. Without `flock` an install prints a warning and proceeds; runs exclude each
 other only when every one of them has `flock`. `--migrate --apply` requires `flock` and exits
 10 without it, before recovery or migration touches anything (earlier releases warned and
 proceeded). It holds the lock through recovery and the migration helper. A `--migrate`
 preview takes no lock.
+
+`--migrate --apply` handles each selected destination in turn. When the helper reports that it
+left part of one destination unmigrated (its `SKIP` lines give the reason and it returns
+status 6), the installer still syncs that destination's OpenCode permissions, goes on to the
+remaining destinations, and exits 1 at the end. Fix the cause and run it again; entries that
+are already migrated are skipped. Any other helper failure stops the run at that
+destination with the helper's own status: 2 for a validation or filesystem error, 3 for a
+busy lock, 1 for an unexpected failure.
 
 If a source checkout moved or an existing lock is incompatible, a normal install saves
 that lock under the backup base's `.unverified-locks/` directory and starts a fresh lock.
@@ -640,12 +732,17 @@ retains old canonical targets until remaining links have been reviewed and clean
 
 Each install writes a `.skills-lock.json` with content hashes. In `--link` mode, the installer
 writes the lock file to both the canonical directory and each selected tool directory, so either
-canonical or tool-specific checks work after install. `--check` compares current source hashes
+canonical or tool-specific checks work after install. A tool-directory entry the run skipped
+(an existing copy or a symlink to somewhere else, without `--force`) gets no record in that
+tool's lock, and the closing summary counts only skills linked for every selected tool.
+`--check` compares current source hashes
 with the hashes recorded in that lock file. It does not hash the installed files again, so it
 does not detect edits or deletions made there after installation. It checks all discoverable
 active source skills, even when skill names are passed, and separately reports legacy
 names recorded in the lock. It exits with status 1 if an active skill is outdated or absent, or a legacy
-entry remains. Deprecated notices are excluded from active update checks. With `--link`,
+entry remains. A lock that cannot be read, is not JSON, or has no `skills` object is reported
+once as an error, also with status 1, and no skill is checked. Deprecated notices are excluded
+from active update checks. With `--link`,
 only the canonical lock is checked; tool-directory
 links are not verified. Check a tool's lock separately without `--link`, which checks only
 the first selected tool.
@@ -669,6 +766,9 @@ failed and, when one exists, the next step. Degraded but non-fatal conditions st
 markers (`[+]`, `[=]`, `[?]`, `[!]`, `[~]`, `[<]`). The repository gate scripts use the same
 prefixes. Exit codes are unchanged.
 
+`--list`, `--check`, `--migrate`, and `--doctor` are separate commands. Passing more than one
+of them is refused with an `error:` line and exit 1 before anything is read or changed.
+
 ## JSON output
 
 `--json` works with installs, `--list`, `--check`, `--detect`, `--doctor`, `--migrate`, and
@@ -690,16 +790,19 @@ the common keys.
 
 | Command | Keys |
 |---------|------|
-| install | `tools`, `link`, `skills` (requested names), `failed` (error count), `destinations` (`tool` or `null`, `dest`, `kind` of `copy`, `link`, or `canonical`, `installed` names, `differing` count), and `saved` plus `config` with `--save` |
+| install | `tools`, `link`, `skills` (requested names), `failed` (error count), `destinations` (`tool` or `null`, `dest`, `kind` of `copy`, `link`, or `canonical`, `installed` names, `differing` count), and `saved`, `config`, and `verify_signature` (boolean) with `--save` |
 | `--list` | `dest`, `skills` (`name`, `status` of `installed`, `linked`, or `available`, `deprecated`) |
 | `--check` | `dest`, `lock`, `skills` (`name`, `state` of `current`, `outdated`, or `not-installed`), `legacy` (`name`, `action`, `replacement`), `summary` (`current`, `outdated`, `not_installed`, `legacy`) |
 | `--detect` | `candidates` (`tool`, `evidence` of `kind` and `path`), `nomarker` tools, `suggested` tools |
 | `--doctor` | `tools` (`tool`, `roots`, `note`, `blocking`, `advisory`), `blocking` count, `blocking_tools` count, `outside_selection` (`name`, `path`, `ownership` of `installer-owned` or `other`, `prunable`, `reason`), `legacy_permissions` (old names with unrecorded OpenCode allows), `unverifiable_locks` (`path`, `reason`, `remedy`) |
 | `--migrate` | `apply`, `tools`, `records` (`dest`, `status` of `skip`, `dry-run`, `applied`, `backup`, or `noop`, `text`) |
-| `--update` | `status` of `current`, `updated`, or `partial`, `old` and `new` commit hashes, `changed` (installs, replacements, and pruned copies), `skipped`, `pruned` (`name`, `path`), `prune_kept` (`name`, `path`, `reason`) |
+| `--update` | `verify_signature` (boolean, once the saved config is loaded, so most refusals carry it), `status` of `current`, `updated`, or `partial`, `old` and `new` commit hashes, `changed` (installs, replacements, and pruned copies), `skipped`, `pruned` (`name`, `path`), `prune_kept` (`name`, `path`, `reason`) |
 
 `--help` with `--json` prints the usage text to stderr and an object with `command` set to `help`.
 `--update --json` is the only option combination `--update` accepts.
+A `--doctor` or `--detect` run whose helper fails before printing its report has no `tools` or
+`candidates` key, and its `errors` entry says the helper failed. A successful `--json` run leaves
+no temporary file behind.
 
 ## Skill anatomy
 
@@ -775,18 +878,25 @@ Release steps (start with a clean checkout and update `develop` with `git pull -
    a PR targeting `develop`. Require green CI and squash merge the PR.
 3. Open a release PR from `develop` to `main`. Require green CI and merge it with a merge
    commit, never a squash, so every `develop` commit stays in `main`'s history and the next
-   release PR carries only new work.
+   release PR carries only new work. A PR into `main` is a release by definition, so CI runs
+   two extra checks on it: `scripts/check-release-changelog.sh` fails unless the first numbered
+   `## [X.Y.Z]` section of `CHANGELOG.md` is newer than the newest version tag merged into
+   `main`, is not tagged yet, and has notes; and `./scripts/check-docs-impact.sh --release vPREV`
+   covers everything since that tag, including changes already on `main`.
 4. Switch to `main`, run `git pull --ff-only`, and verify that `HEAD` is the merge commit and
    that its checks passed. Do not commit or push directly to `main`.
    Run `./scripts/check-docs-impact.sh --release vPREV` before tagging.
 5. Review the changelog section against the commits since `vPREV`.
 6. Tag the verified merge commit with `git tag -a vX.Y.Z -m "vX.Y.Z"`, then push only that tag
    with `git push origin vX.Y.Z`.
-7. The tag push runs `.github/workflows/release.yml`, which checks that the tag is on `main`,
-   checks cumulative documentation impact, and publishes the GitHub release from the
-   `CHANGELOG.md` section. Follow it with
+7. The tag push runs `.github/workflows/release.yml`. Its first job checks that the tagged
+   commit is on `main`'s first-parent line, which a `develop` commit merged into `main` is not;
+   the CI and Security gates run only after it passes. It then checks cumulative documentation
+   impact and publishes the GitHub release from the `CHANGELOG.md` section. Follow it with
    `gh run watch <run-id> --exit-status` and confirm the release with `gh release view vX.Y.Z`.
-   It fails when the changelog has no section for the version.
+   It fails when the changelog has no section for the version. The link check is advisory in
+   this run only: a failing URL shows as a failed `links` job and does not block publishing. It
+   stays blocking on pull requests and pushes.
 
 The release documentation gate uses the highest strict `vX.Y.Z` version tag reachable from the
 release commit's parent. Tags on the current commit and unrelated branches are excluded; full
@@ -800,11 +910,17 @@ The existing R1/R2 migration and target-path obligations remain blocking; R3/R4 
 obligations remain warnings in release mode. This gate checks obligations, not prose quality,
 activation, or the completeness of release notes. Review those before tagging.
 
-Renovate proposes weekly updates for the pinned workflow actions and for the semgrep and
-markdownlint-cli2 manifests under `.github/tools/`, after a 7-day minimum release age. The
-checksum-pinned binaries in `ci.yml` (lychee, actionlint) and `security.yml` (gitleaks) are
-outside its reach; the weekly Tool Pins workflow runs `scripts/report-tool-pins.sh` and keeps
-one issue open while any of them is behind. CI and Security also run weekly on a schedule.
+Renovate proposes updates on Mondays (00:00 to 12:00 UTC) for the pinned workflow actions, the
+zizmor version in `security.yml`, and the semgrep and markdownlint-cli2 manifests under
+`.github/tools/`, after a 7-day minimum release age. A semgrep update changes
+`requirements.in` and regenerates the hashed `requirements.txt` with pip-compile, so the two
+stay in step. The checksum-pinned binaries in `ci.yml` (lychee, actionlint) and `security.yml`
+(gitleaks) are outside its reach; the weekly Tool Pins workflow runs
+`scripts/report-tool-pins.sh` and keeps one issue open while any of them is behind. The report
+fails without touching the issue when an upstream tag name is not a plain tag. CI and Security
+also run weekly on a schedule.
+Only pull request runs cancel an older run of the same PR; push, schedule, dispatch and release
+runs never cancel each other, so every pushed range is checked.
 
 ## Requirements
 

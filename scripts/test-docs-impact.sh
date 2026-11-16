@@ -5,17 +5,16 @@ set -euo pipefail
 # Git-fixture tests for scripts/check-docs-impact.sh.
 
 while IFS= read -r var; do unset "$var"; done < <(git rev-parse --local-env-vars)
+# Fixture repos must not pick up the host's hooks, signing, or templates.
+export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CASES=0
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
-fail() {
-  printf 'FAIL: %s\n' "$1" >&2
-  [[ -z "${OUT:-}" ]] || printf '%s\n' "$OUT" >&2
-  exit 1
-}
+# shellcheck source=./scripts/gate-test-lib.sh
+source "$ROOT/scripts/gate-test-lib.sh"
 
 g() {
   git -C "$REPO" -c user.email="test@example.com" -c user.name="test" -c commit.gpgsign=false "$@"
@@ -67,7 +66,10 @@ new_fixture() {
   mkdir -p "$REPO/scripts"
   g init -q
   g symbolic-ref HEAD refs/heads/main
-  cp "$ROOT/scripts/check-docs-impact.sh" "$REPO/scripts/check-docs-impact.sh"
+  local f
+  for f in check-docs-impact.sh base-lib.sh skill-lib.sh skill-frontmatter.py; do
+    cp "$ROOT/scripts/$f" "$REPO/scripts/$f"
+  done
   put skills/alpha/SKILL.md "$(skill_md alpha)"
   put skills/oldnotice/SKILL.md "$(skill_md oldnotice dep)"
   put skills/alpha/references/output-contract.md "contract"
@@ -92,16 +94,6 @@ new_fixture() {
 run_check() {
   STATUS=0
   OUT="$(cd "$REPO" && BASE_REF=main bash scripts/check-docs-impact.sh "$@" 2>&1)" || STATUS=$?
-}
-
-expect_fail() {
-  local label="$1" needle="$2"
-  (( STATUS != 0 )) || fail "$label: expected failure, got exit 0"
-  [[ "$OUT" == *"$needle"* ]] || fail "$label: output missing '$needle'"
-}
-
-expect_pass() {
-  (( STATUS == 0 )) || fail "$1: expected exit 0, got $STATUS"
 }
 
 # --- negative cases ---
@@ -133,6 +125,23 @@ write_install '$HOME/.agents/skills' "claude"
 commit "feat: drop codex"
 run_check
 expect_fail "tool removed without INSTALL line" "R2"
+
+# A reflowed array: tokens share the opening line and the closing parenthesis
+# ends a token line. Both tools are still read, so dropping one is seen.
+new_fixture
+g checkout -q main
+write_install
+sed -i.bak -e '/^SUPPORTED_TOOLS=($/{N;N;s/.*/SUPPORTED_TOOLS=(claude\n  codex)/;}' "$REPO/install.sh"
+rm -f "$REPO/install.sh.bak"
+grep -q '^SUPPORTED_TOOLS=(claude$' "$REPO/install.sh" || fail "reflowed fixture was not written"
+commit "chore: reflow the tool array"
+g checkout -q feature
+g merge -q --ff-only main
+sed -i.bak -e 's/^SUPPORTED_TOOLS=(claude$/SUPPORTED_TOOLS=(/' "$REPO/install.sh"
+rm -f "$REPO/install.sh.bak"
+commit "feat: drop claude"
+run_check
+expect_fail "tool removed from the opening line of a reflowed array" "tool 'claude' removed"
 
 new_fixture
 write_install '$HOME/.agents/skills' "claude"
@@ -213,6 +222,53 @@ run_check
 expect_fail "new gate script without README" "R4"
 
 new_fixture
+put scripts/check-new.py "#!/usr/bin/env python3"
+commit "ci: add python gate"
+run_check
+expect_fail "new python gate script without README" "R4"
+
+# a trailer counts only from a commit that touches the triggering path
+new_fixture
+put install.sh "$(cat "$REPO/install.sh")
+# tweak"
+commit "fix: tweak installer"
+put extra.txt "x"
+g add -A
+g commit -q -m "chore: unrelated" -m "Docs-Impact: none - this is a long and specific enough reason"
+run_check
+expect_fail "R3 trailer on a commit that leaves install.sh alone" "R3"
+
+new_fixture
+put scripts/check-new.sh "#!/usr/bin/env bash"
+commit "ci: add gate"
+put extra.txt "x"
+g add -A
+g commit -q -m "chore: unrelated" -m "Docs-Impact: none - this is a long and specific enough reason"
+run_check
+expect_fail "R4 trailer on a commit that touches no gate script" "R4"
+
+new_fixture
+put install.sh "$(cat "$REPO/install.sh")
+# tweak"
+g add -A
+g commit -q -m "fix: tweak installer" -m "Docs-Impact: none - comment-only change with no user-visible effect"
+put scripts/check-new.sh "#!/usr/bin/env bash"
+commit "ci: add gate"
+run_check
+expect_fail "R3 trailer does not cover R4" "R4"
+
+# an active skill larger than the pipe buffer is still active
+new_fixture
+g checkout -q main
+{ skill_md alpha; for ((i = 0; i < 4000; i++)); do printf '%0100d\n' 0; done; } > "$REPO/skills/alpha/SKILL.md"
+commit "docs: grow alpha"
+g checkout -q -B feature
+g rm -q -r skills/alpha
+commit "refactor: drop alpha"
+run_check
+expect_fail "large active skill deleted, no manifest" "R1"
+
+new_fixture
 g rm -q -r skills/alpha
 put migrations.json '{ "skills": { "alpha": { "action": "merge" } } }'
 put MIGRATION.md "migration
@@ -220,6 +276,25 @@ alpha removed"
 commit "refactor: drop alpha"
 run_check --release v0
 expect_fail "release: skill missing from CHANGELOG" "CHANGELOG.md"
+
+# Release PR (issue #314): main already holds an untagged removal, so the merge
+# base with main hides it from the ordinary run. Only the range since the
+# previous version tag sees it.
+new_fixture
+g checkout -q main
+g rm -q -r skills/alpha
+put migrations.json '{ "skills": { "alpha": { "action": "merge" } } }'
+put MIGRATION.md "migration
+alpha removed"
+commit "refactor: drop alpha"
+g checkout -q -B feature
+put CHANGELOG.md "changelog
+- release notes"
+commit "chore(release): next"
+run_check
+expect_pass "release pr: ordinary run does not see a removal already on main"
+run_check --release v0
+expect_fail "release pr: removal already on main, missing from CHANGELOG" "CHANGELOG.md"
 
 new_fixture
 g checkout -q --orphan orphan
@@ -273,6 +348,28 @@ g add -A
 g commit -q -m "fix: tweak installer" -m "Docs-Impact: none - comment-only change with no user-visible effect"
 run_check
 expect_pass "install.sh change with specific trailer"
+
+# the trailer commit need not be the last one in the range
+new_fixture
+put install.sh "$(cat "$REPO/install.sh")
+# tweak"
+g add -A
+g commit -q -m "fix: tweak installer" -m "Docs-Impact: none - comment-only change with no user-visible effect"
+put extra.txt "x"
+commit "chore: unrelated"
+run_check
+expect_pass "trailer on the install.sh commit, later unrelated commit"
+
+# squash shape: one commit holds every path of the PR plus the trailer
+new_fixture
+put install.sh "$(cat "$REPO/install.sh")
+# tweak"
+put scripts/check-new.py "#!/usr/bin/env python3"
+put extra.txt "x"
+g add -A
+g commit -q -m "fix: squashed change (#1)" -m "Docs-Impact: none - internal gate with no user-visible surface"
+run_check
+expect_pass "squash commit with trailer covers R3 and R4"
 
 new_fixture
 write_install '$HOME/.agents/skills' "claude"

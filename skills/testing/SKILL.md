@@ -54,6 +54,7 @@ Size the suite to the change. This overrides any urge to test every function or 
 - Past ~5 new tests, or when the tests are longer than the code under test, state why each earns its place or cut.
 - Bug fix: one regression test that fails before the fix. Not a suite.
 - Prefer the fewest tests that would fail if the behavior broke.
+- Coverage is never a reason to add a test.
 
 ---
 
@@ -71,7 +72,7 @@ AI tools consistently produce the same testing mistakes. **Before returning any 
 - [ ] Test data is isolated - each test creates its own state, no dependency on test execution order
 - [ ] Cleanup happens even when assertions fail (use `afterEach`/`teardown`/`t.Cleanup`/`Drop`)
 - [ ] No `sleep()` or fixed delays for async waits - use polling, retries, or event-based waits
-- [ ] Coverage threshold is realistic (80% line coverage is a good default; 100% is a lie), and coverage was not the reason any test was added
+- [ ] Any coverage gate added or changed follows Coverage gates: no-regression or patch coverage, no new absolute threshold
 - [ ] Snapshot tests have been reviewed manually before committing (blind `--update` is a bug factory)
 - [ ] E2E selectors use role or accessible name first, `data-testid` as a last resort - not CSS classes or DOM structure
 - [ ] **Runner APIs current**: pytest, Vitest, Jest, Playwright, and Testing Library examples match current runner behavior
@@ -93,14 +94,14 @@ AI tools consistently produce the same testing mistakes. **Before returning any 
 Copy this checklist and track progress:
 - [ ] Step 1: Scope and existing framework identified
 - [ ] Step 2: Test layer chosen
-- [ ] Step 3: Test written (for a bug fix, confirmed failing before the fix)
-- [ ] Step 4: Affected checks pass; failures not caused by the behavior under test fixed via Step 3
+- [ ] Step 3: Test written (bug fix: the regression test from Proportionality)
+- [ ] Step 4: Affected checks pass; a new test that fails for an unrelated reason is fixed via Step 3
 
 ### Step 1: Determine scope
 
 Based on context:
 - **New feature** -> test the behaviors that matter, alongside or after the code; not every function
-- **Bug fix** -> write one failing test first that reproduces the bug, then fix
+- **Bug fix** -> write the regression test first (see Proportionality), then fix
 - **Existing untested code** -> prioritize critical paths, not 100% coverage
 - **Test infrastructure** -> set up runners, CI config, coverage gates
 
@@ -117,7 +118,7 @@ Identify the project's existing test framework from config files (`vitest.config
 | **Visual** | Screenshot comparison | seconds | UI components after style changes |
 | **Performance** | Load, latency, throughput | minutes | Before releases, after arch changes |
 
-**The pyramid is about where a test sits, not a quota.** Push each check to the cheapest layer that would still catch the failure; do not write tests to fill the layers. Invert it (slow E2E checks for logic a unit test covers) and CI takes 45 minutes and everyone ignores failures. Prefer the fewest tests that would fail if the behavior broke.
+**The pyramid is about where a test sits, not a quota.** Push each check to the cheapest layer that would still catch the failure; do not write tests to fill the layers. Invert it (slow E2E checks for logic a unit test covers) and CI takes 45 minutes and everyone ignores failures.
 
 ### Step 3: Write the test
 
@@ -140,18 +141,17 @@ Follow the language-specific patterns below. Universal principles:
 ### Step 4: Validate
 
 - Run checks appropriate to the changed behavior and every required repository gate. Run the
-  full suite when required or when the affected surface warrants it; do not add tests that
-  mirror reversible, low-impact edits. Repeat or broaden passing checks only for new changes,
-  failures, or unresolved concerns.
+  full suite when required or when the affected surface warrants it. Repeat or broaden passing
+  checks only for new changes, failures, or unresolved concerns.
 - If a new test fails for a reason other than the behavior under test, fix the test or fixture and return to Step 3
-- Check coverage delta as a signal for missed behavior, not a target: new code is not a reason to chase a number, and coverage is never a reason to add a test
+- Check coverage delta as a signal for missed behavior, not a target (see Proportionality)
 - Run in CI if possible - tests that pass locally but fail in CI are the worst kind
 
 ---
 
 ## TDD Workflow
 
-Optional. Use red-green for bug fixes and non-trivial logic where the behavior is well-defined upfront. It does not mean no code without a test or a test for every function. Skip it when exploring or prototyping.
+Optional. Use red-green for a bug fix's regression test (see Proportionality) and for non-trivial logic where the behavior is well-defined upfront. It does not mean no code without a test or a test for every function. Skip it when exploring or prototyping.
 
 1. **Red**: write a test that fails (confirm it fails for the right reason)
 2. **Green**: write the minimum code to make the test pass (ugly is fine)
@@ -247,37 +247,13 @@ Two categories: **micro-benchmarks** (is this function fast enough?) and **load 
 ### Micro-benchmarks
 
 - **Go**: `func BenchmarkX(b *testing.B)` - built into the stdlib
-- **Rust**: `cargo bench` with criterion (`criterion = "0.8"`)
+- **Rust**: `cargo bench` with criterion (use the project's `Cargo.toml` version or the current registry release; pins live in `references/versions.md`, not here)
 - **JS/TS**: `vitest bench` (use `tinybench` directly outside Vitest)
 - **Python**: `pytest-benchmark` (`timeit` for a one-off measurement)
 
 ### Load testing (k6)
 
-Detect first: `command -v k6 >/dev/null || echo "k6 missing"`.
-
-```javascript
-// k6 load test
-import http from "k6/http";
-import { check, sleep } from "k6";
-
-export const options = {
-  stages: [
-    { duration: "30s", target: 50 },   // ramp up
-    { duration: "1m",  target: 50 },   // sustain
-    { duration: "10s", target: 0 },    // ramp down
-  ],
-  thresholds: {
-    checks: ["rate==1"],              // fail the run when any status check fails
-    http_req_duration: ["p(95)<500"],   // 95th percentile under 500ms
-  },
-};
-
-export default function () {
-  const res = http.get("http://localhost:3000/api/health");
-  check(res, { "status 200": (r) => r.status === 200 });
-  sleep(1);
-}
-```
+Read `references/load-testing.md` for the k6 detection step and the starter script with thresholds.
 
 Don't run load tests against production without explicit approval. Don't run them in CI unless you have dedicated infrastructure for it.
 
@@ -298,7 +274,10 @@ Don't run load tests against production without explicit approval. Don't run the
 Flaky tests erode trust. Fix or quarantine immediately.
 
 1. **Identify**: track test stability over time (most CI systems have flaky test dashboards)
-2. **Quarantine**: move to a separate job that doesn't block merges. Tag with `@flaky` or `skip`.
+2. **Quarantine**: tag the test (for example `@flaky`) and run the tagged tests in a separate job
+   that does not block merges. Do not `skip` it: a skipped test runs nowhere. Next to the tag,
+   name a tracking issue or an owner for each quarantined test, so a search for the tag lists
+   every quarantined test and who owns it.
 3. **Fix root causes** - common culprits by framework:
    - **Playwright/Cypress**: race conditions on navigation or animation. Use `waitForLoadState`,
      `waitForSelector`, or Playwright's auto-waiting. Avoid `page.waitForTimeout`. Stub network
@@ -315,21 +294,24 @@ Flaky tests erode trust. Fix or quarantine immediately.
      Check for goroutine leaks with `goleak`.
 4. **Retry with caution**: `--retries 2` (Playwright) or `--reruns 2` (pytest-rerunfailures) is a bandaid, not a fix
 
-### Coverage thresholds
+### Coverage gates
 
-Keep these as CI gate guidance for projects that already set coverage gates; otherwise do not introduce one for a small change. Reasonable defaults:
+Same position as **ci-cd**. A gate is a guard rail, not a goal (see Proportionality).
 
-| Metric | Threshold | Why |
-|--------|-----------|-----|
-| Line coverage | 80% | Catches obvious gaps |
-| Branch coverage | 70% | Catches untested conditions |
-
-A threshold is a CI gate, not a goal: never add a test just to move the number. Enforce via `vitest --coverage --coverage.thresholds.lines=80`, `pytest --cov --cov-fail-under=80`, or `go test -coverprofile` + threshold script.
+- **No gate today**: do not introduce one for a small change.
+- **Adding a gate to an existing project**: use a no-regression gate (fail when coverage drops
+  below the base branch's baseline) or a patch-coverage floor (changed lines must meet a floor).
+  Do not add an absolute overall threshold.
+- **Project already enforces an absolute threshold**: keep its number; do not raise or lower it
+  unasked. Example for a project that already gates at 80% lines:
+  `vitest --coverage --coverage.thresholds.lines=80`, `pytest --cov --cov-fail-under=80`, or
+  `go test -coverprofile` + threshold script.
 
 **Minimal CI example (pytest + GitHub Actions)**:
 ```yaml
 - run: pip install pytest pytest-xdist pytest-cov
-- run: pytest -n auto --cov=src --cov-fail-under=80 --tb=short
+# append --cov-fail-under=<N> only when the project already gates at N
+- run: pytest -n auto --cov=src --tb=short
 ```
 
 ---
@@ -338,6 +320,7 @@ A threshold is a CI gate, not a goal: never add a test just to move the number. 
 
 - `references/language-patterns.md` - language-specific test patterns for JS/TS (Vitest, Jest), Python (pytest), Go (testing stdlib), and Rust (cargo test). Covers mocking, table-driven tests, async testing, snapshot testing, and framework-specific idioms.
 - `references/e2e-accessibility.md` - E2E testing with Playwright, visual regression (screenshot comparison, component snapshots), accessibility testing patterns, and CI integration for browser tests.
+- `references/load-testing.md` - k6 detection and starter script with thresholds
 
 ---
 

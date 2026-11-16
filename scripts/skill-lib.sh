@@ -84,14 +84,17 @@ frontmatter_has() {
 }
 
 # Succeed when a frontmatter flag is boolean true or a string that trims and
-# case-folds to "true" (the same rule as skill-frontmatter.py flag()).
+# case-folds to "true". The rule itself is skill-frontmatter.py flag(); this
+# only asks it, through the cache when the caller preloaded "flag:<path>".
 # Args: <file> <path>
 frontmatter_flag() {
-  local value
-  value="$(frontmatter_get "$1" "$2" 2>/dev/null)" || return 1
-  value="${value#"${value%%[![:space:]]*}"}"
-  value="${value%"${value##*[![:space:]]}"}"
-  [[ "${value,,}" == true ]]
+  local file="$1" path="$2"
+  _fm_key "$file"
+  if [[ -n "${FM_CACHE_HAS[$FM_KEY|flag:$path]+x}" ]]; then
+    [[ "${FM_CACHE_VALUE[$FM_KEY|flag:$path]}" == true ]]
+    return
+  fi
+  python3 "$FRONTMATTER_PY" flag "$file" "$path"
 }
 
 # Check that frontmatter `name` matches the directory name.
@@ -122,27 +125,73 @@ skill_length_check() {
   fi
 }
 
-# One definition of "public skill", one name per line, sorted. A public skill
-# has a SKILL.md, is not a dot or underscore directory, is not git-ignored
-# (tracked or untracked-but-not-ignored files count), and is not a deprecated
-# notice. Opt-in (metadata.internal) skills are public: they are still published.
-# With --include-deprecated, deprecated notices are listed too.
-# Args: <skills_dir> [--include-deprecated]
+# The one skill-folder loop: names under <skills_dir>, one per line, sorted.
+# With no switch it lists public skills. A public skill has a SKILL.md, is not
+# a dot or underscore directory, is not git-ignored (it needs a tracked or
+# untracked-but-not-ignored file: a retired skill can leave only an ignored
+# private overlay behind), and is not a deprecated notice. Opt-in
+# (metadata.internal) skills are public: they are still published.
+# Each switch drops one filter:
+#   --include-deprecated  deprecated notices are listed too
+#   --include-gitignored  the two git filters are skipped
+#   --include-missing     folders without a SKILL.md are listed too
+# Git is asked from <skills_dir>, so the caller's working directory does not
+# matter; outside a git repo nothing counts as ignored. install.sh keeps its
+# own discover_skills (see the comment there).
+# Args: <skills_dir> [switch...]
 list_public_skills() {
-  local root="$1" with_deprecated="${2:-}" skill_dir name visible_files
-  for skill_dir in "$root"/*/; do
+  local root="$1" with_deprecated=0 with_gitignored=0 with_missing=0
+  local abs_root skill_dir name visible_files
+  shift
+  while (( $# )); do
+    case "$1" in
+      --include-deprecated) with_deprecated=1 ;;
+      --include-gitignored) with_gitignored=1 ;;
+      --include-missing) with_missing=1 ;;
+      *)
+        printf 'list_public_skills: unknown switch %s\n' "$1" >&2
+        return 2
+        ;;
+    esac
+    shift
+  done
+  abs_root="$(cd "$root" 2>/dev/null && pwd)" || return 0
+  for skill_dir in "$abs_root"/*/; do
     [[ -d "$skill_dir" ]] || continue
     name="$(basename "$skill_dir")"
     [[ "$name" == .* || "$name" == _* ]] && continue
-    git check-ignore -q "$skill_dir" 2>/dev/null && continue
-    if visible_files="$(git ls-files --cached --others --exclude-standard -- "$skill_dir" 2>/dev/null)" \
-      && [[ -z "$visible_files" ]]; then
+    if (( ! with_gitignored )); then
+      git -C "$abs_root" check-ignore -q "$skill_dir" 2>/dev/null && continue
+      if visible_files="$(git -C "$abs_root" ls-files --cached --others --exclude-standard -- "$skill_dir" 2>/dev/null)" \
+        && [[ -z "$visible_files" ]]; then
+        continue
+      fi
+    fi
+    if [[ ! -f "$skill_dir/SKILL.md" ]]; then
+      (( with_missing )) && printf '%s\n' "$name"
       continue
     fi
-    [[ -f "$skill_dir/SKILL.md" ]] || continue
-    if [[ "$with_deprecated" != --include-deprecated ]]; then
-      frontmatter_flag "$skill_dir/SKILL.md" metadata.deprecated && continue
+    if (( ! with_deprecated )); then
+      frontmatter_flag "$root/$name/SKILL.md" metadata.deprecated && continue
     fi
     printf '%s\n' "$name"
   done | sort
+}
+
+# Names in install.sh's SUPPORTED_TOOLS array, one per line. Reads the file
+# named by the first argument, or stdin for "-" or no argument. Tokens may share
+# the opening line and the closing parenthesis may sit anywhere; "#" starts a
+# comment.
+list_supported_tools() {
+  awk '
+    /^SUPPORTED_TOOLS=\(/ {f=1; sub(/^SUPPORTED_TOOLS=\(/, "")}
+    f {
+      sub(/#.*/, "")
+      closed = ($0 ~ /\)/)
+      sub(/\).*/, "")
+      n = split($0, t, /[[:space:]]+/)
+      for (i = 1; i <= n; i++) if (t[i] != "") print t[i]
+      if (closed) exit
+    }
+  ' "${1:--}"
 }

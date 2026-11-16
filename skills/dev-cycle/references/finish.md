@@ -15,6 +15,7 @@ Detailed procedures for finishing a unit of work - from verification through mer
 - Step B8 details: Release
 - Rollback playbook
 - Failure modes and recovery
+- Concrete end-to-end finish on GitHub
 
 ## When this reference loads
 
@@ -79,16 +80,22 @@ git diff --cached --stat; git diff --stat
 # If either is non-empty: commit, stash, or abort. Untracked files in `git status` output
 # are NOT a reason to stop - only staged/modified matter here.
 
+# Compare against the fetched remote base: a stale local base inflates the commit list.
+# A bare repo has no remote, so the local base is the only one.
+BASE_REF="$BASE_BRANCH"
+if [[ "$FORGE" != "bare" ]]; then
+  git fetch origin && BASE_REF="origin/$BASE_BRANCH"
+fi
+
 # Commits ahead of base?
-git log --oneline "$BASE_BRANCH"..HEAD
+git log --oneline "$BASE_REF"..HEAD
 # If empty: branch has no unique commits. Nothing to ship.
 
 # Diff scope sanity check
-git diff "$BASE_BRANCH"..HEAD --stat
+git diff "$BASE_REF"..HEAD --stat
 
 # Remote sync (skip if $FORGE is bare)
 if [[ "$FORGE" != "bare" ]]; then
-  git fetch origin
   git rev-list --left-right --count "origin/$BRANCH_NAME...HEAD" 2>/dev/null
   # left=0 right=N: N local commits not yet pushed (normal)
   # left=N right=0: N remote commits not yet pulled (pull first)
@@ -425,8 +432,10 @@ git format-patch "$BASE_BRANCH..HEAD" -o "/tmp/dev-cycle-patches/$BRANCH_NAME"
 echo "Patches in /tmp/dev-cycle-patches/$BRANCH_NAME - share via email/chat. Reviewer applies with: git am <files>"
 
 # Option B: bundle - portable single-file format, preserves history
-git bundle create "/tmp/$BRANCH_NAME.bundle" "$BASE_BRANCH..HEAD"
-echo "Bundle: /tmp/$BRANCH_NAME.bundle - share with reviewer. They apply with: git pull /path/to/bundle $BRANCH_NAME"
+# mktemp -d gives a private directory; the slash in a name like feat/x cannot be in a file name.
+BUNDLE="$(mktemp -d)/${BRANCH_NAME//\//-}.bundle"
+git bundle create "$BUNDLE" "$BASE_BRANCH..HEAD"
+echo "Bundle: $BUNDLE - share with reviewer. They apply with: git pull /path/to/bundle $BRANCH_NAME"
 ```
 
 CI and merge are entirely manual. Skip B6 (no CI to watch unless locally configured). Merge happens via Step B7 bare-git path.
@@ -938,3 +947,36 @@ Never force-push to the base branch. Never delete a published tag.
 | Merge conflict at B7 | Rebase onto latest base, resolve, push, return to B6 (CI rerun). |
 | Tag already exists at B8 | Investigate - is this a retry of a completed release? If so, stop (already released). If a mistake, discuss with user before any destructive action. |
 | Release workflow fails at B8 | Release is cut (tag exists) but artifacts didn't publish. Debug workflow; do not re-tag. |
+
+## Concrete end-to-end finish on GitHub
+
+Branch `feat/oauth-login` on a Node repo with `gh` available, Dockerfile, Helm chart, `"version": "1.4.2"` in `package.json`, CHANGELOG present, GitHub Actions release workflow.
+
+```
+B1  git remote get-url origin  -> github.com  -> FORGE=github, FORGE_CLI=gh
+    git log main..HEAD          -> 6 commits; diff 340 lines across 12 files
+B2  bun run lint && bun run typecheck && bun test  -> all green, 184 tests
+B3  update-docs: README badges, CHANGELOG [1.5.0] section dated 2026-04-16
+    Bump: package.json 1.4.2 -> 1.5.0, Dockerfile LABEL, helm/Chart.yaml appVersion, values.yaml image tag
+B4  code-review on main..HEAD   -> 2 nits addressed, re-run tests green
+B5  git push -u origin feat/oauth-login
+    gh pr create --base main --title "feat(auth): OAuth login" --body-file .github/pr-body.md
+B6  gh pr checks --watch --fail-fast     # then:
+    gh pr view --json headRefOid,statusCheckRollup
+    # Match the tested head SHA and inspect required check runs and legacy status contexts.
+B7  PR_NUMBER=$(gh pr view --json number --jq '.number')
+    gh pr merge "$PR_NUMBER" --squash --delete-branch \
+      --subject "feat(auth): OAuth login (#$PR_NUMBER)" --body "Closes #118"
+B8  # Set RELEASE_SHA to the verified merged release commit before tagging.
+    git fetch --tags origin
+    if git show-ref --verify --quiet refs/tags/v1.5.0; then
+      echo "Tag exists; verify the existing release before proceeding" >&2; exit 1
+    fi
+    git tag -a v1.5.0 -m "v1.5.0" "$RELEASE_SHA" && git push origin refs/tags/v1.5.0
+    gh release create v1.5.0 --title v1.5.0 --notes-file <(extract_changelog 1.5.0)  # helper in references/finish.md
+    # Resolve RELEASE_SHA from the merged release commit, not the former feature HEAD.
+    # Select the exact workflow/tag/SHA/event using references/finish.md, then:
+    gh run watch "$RUN_ID" --exit-status
+```
+
+GitLab substitutes `glab mr create`, `glab ci status --live`, `glab mr merge --squash --remove-source-branch`, `glab release create`. Forgejo substitutes `fj pr create`, `fj pr merge --method squash --delete`, `fj release`. Gitea substitutes `tea pulls create`, `tea pulls merge --style squash`, `tea releases create`. Bitbucket and bare paths skip B5-B8 CLI steps and use web UI / `format-patch` respectively.

@@ -3,6 +3,8 @@ set -euo pipefail
 
 # Git hooks export GIT_DIR and friends; fixture repos must not inherit them.
 while IFS= read -r var; do unset "$var"; done < <(git rev-parse --local-env-vars)
+# Nor the host's hooks, signing, or templates.
+export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null
 
 # Reproduces the CI shape from issue #211: a full clone (actions/checkout
 # fetch-depth 0) with a PR merge ref checked out as HEAD, built by merging
@@ -17,10 +19,8 @@ while IFS= read -r var; do unset "$var"; done < <(git rev-parse --local-env-vars
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-fail() {
-  printf 'FAIL: %s\n' "$1" >&2
-  exit 1
-}
+# shellcheck source=./scripts/gate-test-lib.sh
+source "$ROOT/scripts/gate-test-lib.sh"
 
 git_q() {
   git -C "$1" -c user.email="test@example.com" -c user.name="test" -c commit.gpgsign=false "${@:2}"
@@ -84,6 +84,8 @@ clone_fixture() {
   cp "$ROOT/scripts/check-whitespace.sh" "$clone/scripts/check-whitespace.sh"
   cp "$ROOT/scripts/check-refiner-phase1-guard.sh" "$clone/scripts/check-refiner-phase1-guard.sh"
   cp "$ROOT/scripts/check-docs-impact.sh" "$clone/scripts/check-docs-impact.sh"
+  # Helpers the three checks source.
+  cp "$ROOT/scripts/base-lib.sh" "$ROOT/scripts/skill-lib.sh" "$ROOT/scripts/skill-frontmatter.py" "$clone/scripts/"
   chmod +x "$clone/scripts/check-whitespace.sh" "$clone/scripts/check-refiner-phase1-guard.sh" "$clone/scripts/check-docs-impact.sh"
   printf '%s\n' "$clone"
 }
@@ -150,6 +152,32 @@ test_phase1_commit_touching_immutable_path_fails() {
   (( status != 0 )) || { printf '%s\n' "$output" >&2; fail "guard passed despite a phase-1 commit touching $target"; }
   [[ "$output" == *"$target"* ]] \
     || { printf '%s\n' "$output" >&2; fail "guard did not name the offending file $target"; }
+
+  rm -rf "$tmp"
+  trap - RETURN
+}
+
+# A phase-1 subject on a merge commit must not hide what the merge brings in.
+test_phase1_merge_commit_touching_immutable_path_fails() {
+  local tmp clone status output target="scripts/skill-lib.sh"
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  build_base_repo "$tmp"
+  clone="$(clone_fixture "$tmp")"
+  git_q "$clone" checkout -qb work "$BRANCH_POINT_SHA"
+  git_q "$clone" checkout -qb side
+  write_file "$clone/$target" "edited on a side branch"
+  git_q "$clone" add -A "$target"
+  git_q "$clone" commit -q -m "chore: side work"
+  git_q "$clone" checkout -q work
+  git_q "$clone" merge -q --no-ff -m "refactor(skill-refiner): iteration 2" side
+
+  status=0
+  output="$(cd "$clone" && BASE_REF=main bash scripts/check-refiner-phase1-guard.sh 2>&1)" || status=$?
+  (( status != 0 )) || { printf '%s\n' "$output" >&2; fail "guard passed a phase-1 merge commit that brings in $target"; }
+  [[ "$output" == *"$target"* ]] \
+    || { printf '%s\n' "$output" >&2; fail "guard did not name $target for the merge commit"; }
 
   rm -rf "$tmp"
   trap - RETURN
@@ -275,9 +303,11 @@ test_push_base_sha_checks_the_pushed_range() {
   push_merge_to_main "$tmp"
   range="$PRE_PUSH_SHA..HEAD"
 
+  # Without BASE_SHA the fallback checks the last commit, here the merge itself.
   status=0
   output="$(cd "$PUSH_CLONE" && bash scripts/check-whitespace.sh 2>&1)" || status=$?
-  (( status == 0 )) || { printf '%s\n' "$output" >&2; fail "fixture: whitespace check without BASE_SHA was expected to miss the merge"; }
+  (( status != 0 )) || { printf '%s\n' "$output" >&2; fail "last-commit fallback passed a merge commit that adds trailing whitespace"; }
+  [[ "$output" == *"dirty.md"* ]] || { printf '%s\n' "$output" >&2; fail "last-commit fallback did not name the offending file"; }
 
   status=0
   output="$(cd "$PUSH_CLONE" && BASE_SHA="$PRE_PUSH_SHA" bash scripts/check-whitespace.sh 2>&1)" || status=$?
@@ -307,9 +337,19 @@ test_push_zero_base_sha_keeps_fallback() {
 
   status=0
   output="$(cd "$PUSH_CLONE" && BASE_SHA="$zero" bash scripts/check-whitespace.sh 2>&1)" || status=$?
-  if (( status != 0 )) || [[ "$output" != *"(last commit)"* ]]; then
+  # Unset means the last-commit fallback, which sees the merge's whitespace.
+  if (( status == 0 )) || [[ "$output" != *"dirty.md"* || "$output" == *"BASE_SHA"* ]]; then
     printf '%s\n' "$output" >&2
     fail "whitespace check did not treat an all-zero BASE_SHA as unset"
+  fi
+
+  git_q "$PUSH_CLONE" commit -q --allow-empty -m "chore: clean tip"
+  git_q "$PUSH_CLONE" update-ref refs/remotes/origin/main HEAD
+  status=0
+  output="$(cd "$PUSH_CLONE" && BASE_SHA="$zero" bash scripts/check-whitespace.sh 2>&1)" || status=$?
+  if (( status != 0 )) || [[ "$output" != *"(last commit)"* ]]; then
+    printf '%s\n' "$output" >&2
+    fail "whitespace check failed a clean last commit with an all-zero BASE_SHA"
   fi
 
   for script in check-refiner-phase1-guard.sh check-docs-impact.sh; do
@@ -346,6 +386,9 @@ test_push_missing_base_sha_fails_loudly() {
 test_full_clone_stays_full_and_guard_passes
 test_phase1_commit_touching_immutable_path_fails skills/skill-refiner/SKILL.md
 test_phase1_commit_touching_immutable_path_fails scripts/skill-lib.sh
+test_phase1_commit_touching_immutable_path_fails scripts/check-ere-pipe.py
+test_phase1_commit_touching_immutable_path_fails scripts/base-lib.sh
+test_phase1_merge_commit_touching_immutable_path_fails
 test_guard_list_shrink_uses_base_list
 test_unrelated_history_base_fails_loudly
 test_docs_impact_passes_on_merge_ref
@@ -353,4 +396,4 @@ test_docs_impact_unrelated_history_fails_loudly
 test_push_base_sha_checks_the_pushed_range
 test_push_zero_base_sha_keeps_fallback
 test_push_missing_base_sha_fails_loudly
-printf 'CI base check tests passed (10 cases)\n'
+printf 'CI base check tests passed (13 cases)\n'

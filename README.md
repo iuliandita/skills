@@ -30,6 +30,8 @@ cd skills
 ./install.sh --tool codex kubernetes docker
 ```
 
+The installer needs bash 4.4 or newer, plus `flock` for `--save`, `--update`, and `--migrate --apply`. On macOS, `brew install bash flock coreutils` (or `sudo port install bash flock coreutils`) covers it; GNU coreutils is needed only for `timeout` (or `gtimeout`) on `--update` ([details](INSTALL.md#bundled-installer)).
+
 See [installation and updates](INSTALL.md) for target paths, symlink mode, backups, and private overlays.
 `./install.sh --detect` suggests which harnesses to target, and `--save` records a selection that a bare `./install.sh` repeats ([details](INSTALL.md#detect-and-save-a-setup)). `./install.sh --update` keeps a saved setup current from cron or a systemd timer ([details](INSTALL.md#scheduled-updates)).
 
@@ -120,9 +122,13 @@ Every skill must work when installed alone: runtime file references stay inside 
 
 `SKILL.md` files stay at 500 lines or fewer (lint warns above 450), and every reference is linked directly from `SKILL.md`. After editing a reference over 100 lines, run `python3 scripts/gen-ref-toc.py` to refresh its generated contents list; the linter fails on a missing or stale one.
 
-New skills must also be registered in the repository-audit coverage check or its [exclusions table](skills/repo-audit/references/exclusions.md). Run the repository's `scripts/check-*.sh` gates before pushing.
+New skills must also be registered in the repository-audit coverage check or its [exclusions table](skills/repo-audit/references/exclusions.md). Run the repository's `scripts/check-*.sh` gates before pushing. `scripts/check-ere-pipe.py` is not a separate gate: `lint-skills.sh` runs it once over the collection to find `\|` inside an extended regular expression in a fenced command example, and `python3 scripts/check-ere-pipe.py <file>...` prints the same `file:line` findings on its own.
 
-`scripts/check-docs-impact.sh` compares the PR range against its base. Removing or renaming a skill needs a `migrations.json` entry and a `MIGRATION.md` change, and removing an installer target needs an `INSTALL.md` note. Other installer or gate-script changes need a doc change or a `Docs-Impact: none - <specific reason>` commit trailer.
+The gates and the installer list skills differently on purpose. Gates take the public set from `list_public_skills` in `scripts/skill-lib.sh`: a folder with a `SKILL.md` that is not gitignored, not a `_` or dot directory, and not a deprecated notice; `--include-deprecated`, `--include-gitignored`, and `--include-missing` each drop one of those filters for a gate that needs it. `install.sh` keeps its own rule: it also lists deprecated notices, admits a gitignored skill only with `--include-internal` and `metadata.internal: true`, and lists everything in a copy that is not a git clone.
+
+`scripts/check-docs-impact.sh` compares the PR range against its base. Removing or renaming a skill needs a `migrations.json` entry and a `MIGRATION.md` change, and removing an installer target needs an `INSTALL.md` note. Other installer or gate-script changes need a doc change or a `Docs-Impact: none - <specific reason>` commit trailer. The trailer counts only on a commit that itself changes `install.sh` or one of the added or removed gate scripts; on a squash merge, put it in the squash commit message.
+
+`scripts/check-release-changelog.sh` runs on pull requests into `main`, which are releases: the first numbered `CHANGELOG.md` section must be newer than the newest version tag merged into `main`, not tagged yet, and have notes. On any other base it skips.
 
 ## How the stack fits together
 
