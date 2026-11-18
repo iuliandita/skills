@@ -145,7 +145,7 @@ def check_openai_responses() -> None:
                 run(source, response)
                 assert output in captured.getvalue()
         request = calls[0]
-        assert request["model"] == "gpt-6.1-sol"
+        assert request["model"] == "gpt-6.2-sol"
         assert request["reasoning"]["effort"] in {"low", "medium", "high", "xhigh", "max"}
         assert not {"temperature", "top_p", "messages", "max_tokens"}.intersection(request)
 

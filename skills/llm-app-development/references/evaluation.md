@@ -65,7 +65,7 @@ providers:
       effort: medium
       max_tokens: 4096  # thinking plus text; omit sampling controls
       showThinking: false  # grade the answer, not progress or reasoning summaries
-  - id: openai:responses:gpt-6.1-sol
+  - id: openai:responses:gpt-6.2-sol
     config:
       reasoning:
         effort: medium
@@ -74,7 +74,7 @@ providers:
 defaultTest:
   options:
     provider:
-      id: openai:responses:gpt-6.1-sol
+      id: openai:responses:gpt-6.2-sol
       config:
         reasoning:
           effort: low
@@ -119,7 +119,7 @@ npx promptfoo eval
 # Compare models
 npx promptfoo eval --providers \
   anthropic:messages:claude-sonnet-5-5 \
-  openai:responses:gpt-6.1-sol
+  openai:responses:gpt-6.2-sol
 
 # View results
 npx promptfoo view
