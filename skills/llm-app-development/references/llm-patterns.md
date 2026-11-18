@@ -70,7 +70,7 @@ from openai import OpenAI
 client = OpenAI()  # reads OPENAI_API_KEY
 
 response = client.responses.create(
-    model="gpt-6.1-sol",
+    model="gpt-6.2-sol",
     input="Explain why a queue needs a retry limit in one sentence.",
     reasoning={"effort": "low"},
     max_output_tokens=4096,
@@ -156,7 +156,7 @@ returns those summaries without a `display` field. See the
 
 ```python
 stream = client.responses.create(
-    model="gpt-6.1-sol",
+    model="gpt-6.2-sol",
     input=prompt,
     reasoning={"effort": "low"},
     max_output_tokens=4096,
@@ -287,7 +287,7 @@ validate(data, APPLICATION_SCHEMA, format_checker=FormatChecker())
 
 ```python
 response = client.responses.create(
-    model="gpt-6.1-sol",
+    model="gpt-6.2-sol",
     input=f"Extract info from: {text}",
     reasoning={"effort": "low"},
     max_output_tokens=4096,

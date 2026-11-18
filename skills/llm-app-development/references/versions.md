@@ -14,6 +14,12 @@ pins:
   - tool: "Claude Haiku 5.5"
     version: "claude-haiku-5-5"
     source: "https://platform.claude.com/docs/en/models/haiku-5-5/whats-new-haiku-5-5"
+  - tool: "OpenAI GPT-6.2 Astra"
+    version: "gpt-6.2-astra"
+    source: "https://developers.openai.com/api/docs/models/gpt-6.2-astra"
+  - tool: "OpenAI GPT-6.2 Sol"
+    version: "gpt-6.2-sol"
+    source: "https://developers.openai.com/api/docs/models/gpt-6.2-sol"
   - tool: "OpenAI GPT-6 Astra"
     version: "gpt-6-astra"
     source: "https://developers.openai.com/api/docs/models"
@@ -91,6 +97,7 @@ Verify current releases before pinning.
 
 - Model families
 - Claude 5-series migration
+- GPT-6.2 Sol migration
 - GPT-6.1 Sol migration
 - Astra migration
 - SDKs, runtimes, and tooling
@@ -112,8 +119,10 @@ bumps. Verify against provider docs before pinning. Prices are USD per million i
 | Anthropic | Fast | `claude-haiku-5-5` | Released 2026-10-07 (checked 2026-10-08); $0.10/$0.50 up to 100K input tokens, $0.50/$2.50 above. 1M ctx, 128K output, cutoff Jun 2026. Effort `low`..`max`, default `medium`; adaptive thinking on by default |
 | Anthropic | Superseded (retiring) | `claude-haiku-4-5` | Do not use in new code; migrate to `claude-haiku-5-5`, which is cheaper and more capable. $1/$5, 200K ctx, no effort control. Alias of `claude-haiku-4-5-20251001`. Still callable; retirement not sooner than 2026-10-15 |
 | Anthropic | Limited | `claude-mythos-5-1` | $10/$50, invitation-only access (Project Glasswing) |
-| OpenAI | Apex | `gpt-6-astra` | $10/$50, effort `low`..`max` (`none` returns 400). Tools require Responses |
-| OpenAI | Flagship | `gpt-6.1-sol` | Released 2026-09-29; $2/$10, 1,050,000 ctx, 128K output. Above 272K input, full request costs 2x input/cache and 1.5x output. Effort `low`..`max`, default `medium`; no `none`/`minimal`. Tools require Responses |
+| OpenAI | Apex | [`gpt-6.2-astra`](https://developers.openai.com/api/docs/models/gpt-6.2-astra) | $8/$40, 1,050,000 ctx, 128,000 output; `none` rejected |
+| OpenAI | Flagship | [`gpt-6.2-sol`](https://developers.openai.com/api/docs/models/gpt-6.2-sol) | $2/$10, 1,050,000 ctx, 128,000 output; `none` rejected |
+| OpenAI | Previous gen | `gpt-6-astra` | $10/$50, effort `low`..`max` (`none` returns 400). Tools require Responses |
+| OpenAI | Previous gen | `gpt-6.1-sol` | Released 2026-09-29; $2/$10, 1,050,000 ctx, 128K output. Above 272K input, full request costs 2x input/cache and 1.5x output. Effort `low`..`max`, default `medium`; no `none`/`minimal`. Tools require Responses |
 | OpenAI | Cost tier | `gpt-6-luna` | $0.10/$0.50, effort `none`..`max`, default `medium`; `minimal` is not a listed level |
 | OpenAI | Previous gen | `gpt-5.6-sol`, `gpt-5.6-terra`, `gpt-5.6-luna` | Still listed, no deprecation notice. `gpt-5.6` routes to Sol. There is no GPT-6 Terra |
 | DeepSeek | Fast | `deepseek-flash` | V4.1 Flash; legacy `deepseek-v4-flash` routes to it. Thinking on by default, `reasoning_effort` `low`/`high`/`max`, default `high` |
@@ -184,6 +193,13 @@ Haiku 4.5 to Haiku 5.5, checked 2026-10-08 against
 
 DeepSeek thinking mode ignores `temperature`; with `tools`, pass `reasoning_content` back on
 every later request ([thinking mode](https://api-docs.deepseek.com/guides/thinking_mode)).
+
+## GPT-6.2 Sol migration
+
+Checked 2026-11-18 against the [model pages](https://developers.openai.com/api/docs/models/gpt-6.2-sol), [pricing](https://developers.openai.com/api/docs/pricing), and [migration guide](https://developers.openai.com/api/docs/guides/latest-model). Both 6.2 models charge 2x input/cache and 1.5x output for the full request above 272K input tokens.
+
+- Responses now appends top-level `instructions` after `input`; put reusable instructions in the first `developer` message for caching.
+- Prefix edits, certain model changes, or a change of user or organization drop reasoning items; keep the prefix unchanged to preserve reasoning.
 
 ## GPT-6.1 Sol migration
 
