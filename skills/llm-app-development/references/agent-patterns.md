@@ -238,7 +238,7 @@ support_agent = Agent(
     name="Support Agent",
     instructions="Help users with technical issues. Use the knowledge base.",
     tools=[search_knowledge_base],
-    model="gpt-6.1-sol",
+    model="gpt-6.2-sol",
 )
 
 # Run the agent
@@ -255,14 +255,14 @@ billing_agent = Agent(
     name="Billing Agent",
     instructions="Handle billing and subscription questions.",
     tools=[get_invoice, update_subscription],
-    model="gpt-6.1-sol",
+    model="gpt-6.2-sol",
 )
 
 triage_agent = Agent(
     name="Triage Agent",
     instructions="Route to the appropriate specialist agent.",
     handoffs=[support_agent, billing_agent],
-    model="gpt-6.1-sol",
+    model="gpt-6.2-sol",
 )
 
 # Triage agent decides which specialist handles the request
@@ -288,7 +288,7 @@ from openai import OpenAI
 
 client = OpenAI()
 response = client.beta.responses.create(
-    model="gpt-6.1-sol",
+    model="gpt-6.2-sol",
     input="Compare these proposals with two subagents, then reconcile their findings: " + proposals,
     reasoning={"effort": "medium"},
     multi_agent={"enabled": True, "max_concurrent_subagents": 2},

@@ -5,6 +5,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [4.1.1] - 2026-11-18
+
+### Bug Fixes
+
+* **llm-app-development:** GPT-6.2 Astra and Sol are the current OpenAI apex and flagship models, with pricing, limits and migration notes checked against the 6.2 guide; GPT-6 Astra and GPT-6.1 Sol move to previous gen, and the examples use `gpt-6.2-sol` ([#509](https://github.com/iuliandita/skills/issues/509)).
+
+### Dependencies
+
+* **docker:** the Python image tag in the skill example is 3.15 and the Rust tag is 1.99 ([#505](https://github.com/iuliandita/skills/pull/505), [#506](https://github.com/iuliandita/skills/pull/506)).
+
 ## [4.1.0] - 2026-11-15
 
 Most of this release comes from an independent review of the whole collection: skill content, the
@@ -752,7 +762,8 @@ installer, the gate scripts and the workflows.
 
 - Bootstrap baseline before release-please automation.
 
-[Unreleased]: https://github.com/iuliandita/skills/compare/v4.1.0...HEAD
+[Unreleased]: https://github.com/iuliandita/skills/compare/v4.1.1...HEAD
+[4.1.1]: https://github.com/iuliandita/skills/compare/v4.1.0...v4.1.1
 [4.1.0]: https://github.com/iuliandita/skills/compare/v4.0.3...v4.1.0
 [4.0.3]: https://github.com/iuliandita/skills/compare/v4.0.2...v4.0.3
 [4.0.2]: https://github.com/iuliandita/skills/compare/v4.0.1...v4.0.2
